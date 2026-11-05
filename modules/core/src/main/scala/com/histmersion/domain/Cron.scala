@@ -10,14 +10,14 @@ import java.time.temporal.ChronoUnit
   * runs (the classic cron rule). Shortcuts: `@hourly`, `@daily`, `@weekly`, `@monthly`. Pure.
   */
 final case class Cron(
-    text: String,
-    minutes: List[Int],
-    hours: List[Int],
-    days: Set[Int],
-    months: Set[Int],
-    weekdays: Set[Int],
-    anyDay: Boolean,
-    anyWeekday: Boolean
+    text: Cron.Text,
+    minutes: List[Cron.Minutes],
+    hours: List[Cron.Hours],
+    days: Set[Cron.Days],
+    months: Set[Cron.Months],
+    weekdays: Set[Cron.Weekdays],
+    anyDay: Cron.AnyDay,
+    anyWeekday: Cron.AnyWeekday
 ):
 
   private def dayMatches(d: LocalDate): Boolean =
@@ -60,6 +60,23 @@ final case class Cron(
 
 object Cron:
   /** How far ahead [[Cron.next]] looks: four years and a day covers every leap-day expression. */
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Minutes = Minutes.T
+  object Minutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Hours = Hours.T
+  object Hours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Days = Days.T
+  object Days extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Months = Months.T
+  object Months extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Weekdays = Weekdays.T
+  object Weekdays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnyDay = AnyDay.T
+  object AnyDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnyWeekday = AnyWeekday.T
+  object AnyWeekday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val HorizonDays = 4 * 366 + 1
 
   private val Shortcuts = Map(
@@ -70,7 +87,15 @@ object Cron:
     "@monthly" -> "0 0 1 * *"
   )
 
-  final private case class Field(name: String, min: Int, max: Int)
+  final private case class Field(name: Field.Name, min: Field.Min, max: Field.Max)
+
+  object Field:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Min = Min.T
+    object Min extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Max = Max.T
+    object Max extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val Fields = List(
     Field("minute", 0, 59),
     Field("hour", 0, 23),

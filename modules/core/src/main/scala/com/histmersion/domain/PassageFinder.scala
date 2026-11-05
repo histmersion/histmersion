@@ -174,7 +174,19 @@ object PassageFinder:
     (out.result(), capped)
 
   /** A passage being built: `spans` in reverse order of discovery. */
-  final private case class Range(start: Int, end: Int, firstMatch: Int, spans: List[(Int, Int)])
+  final private case class Range(start: Range.Start, end: Range.End, firstMatch: Range.FirstMatch, spans: List[(Range.SpansPart1, Range.SpansPart2)])
+
+  object Range:
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstMatch = FirstMatch.T
+    object FirstMatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpansPart1 = SpansPart1.T
+    object SpansPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpansPart2 = SpansPart2.T
+    object SpansPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Matches → passages. A match that starts inside the previous passage joins it (the passage then ends no earlier
     * than the match does); any other starts a passage of its own, which begins no earlier than where the previous one

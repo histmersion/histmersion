@@ -7,9 +7,16 @@ import scala.annotation.tailrec
   * takes over an existing row with the same sha256 that no name claimed (`renames`, existing → incoming); every
   * existing row left over is `deletes`.
   */
-final case class Reconciled(renames: List[(String, String)], deletes: List[String])
+final case class Reconciled(renames: List[(Reconciled.RenamesPart1, Reconciled.RenamesPart2)], deletes: List[Reconciled.Deletes])
 
 object Reconciled:
+  type RenamesPart1 = RenamesPart1.T
+  object RenamesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenamesPart2 = RenamesPart2.T
+  object RenamesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Deletes = Deletes.T
+  object Deletes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def of(existing: List[(String, String)], incoming: List[(String, String)]): Reconciled =
     val incomingNames = incoming.map(_._1).toSet
     val byName = existing.filter((n, _) => incomingNames(n)).map(_._1).toSet

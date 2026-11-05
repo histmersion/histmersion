@@ -11,7 +11,7 @@ object AstRecipe {
     implicit val decoder: ConfDecoder[Edit] = generic.deriveDecoder(Edit()).noTypos
   }
   case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "", appliedPlans: List[String] = Nil,
-    definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty)
+    definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -54,7 +54,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       require(frozen.contains(path))
       val source = read(path)
       val tree = source.parse[Source].get
-      val definitionPatches = if(definitionPaths(path)) ModelDefinitions.patches(tree, source, path, policy.reuse, policy.names, evidence) else Nil
+      val definitionPatches = if(definitionPaths(path)) ModelDefinitions.patches(tree, source, path, policy.reuse, policy.names, policy.defer, evidence) else Nil
       val patches = definitionPatches ++ recipes.flatMap { recipe =>
         require(Set("stat","type")(recipe.kind))
         val pattern: Tree = if(recipe.kind == "type") recipe.before.parse[Type].get else recipe.before.parse[Stat].get
@@ -105,7 +105,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
 }
 
 object ModelDefinitions {
-  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String],
+  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String], defer: Map[String,String],
       evidence: scala.collection.mutable.ListBuffer[List[String]]): List[(Int,Int,String)] = {
     val primitive = Set("String", "Boolean", "Byte", "Short", "Int", "Long", "Float", "Double", "Char")
     val result = scala.collection.mutable.ListBuffer.empty[(Int,Int,String)]
@@ -158,9 +158,10 @@ object ModelDefinitions {
               case d: Defn.Class => d.name eq n
               case _ => false
             } => n }.nonEmpty
-          val blocked = ancestry.exists(_.is[Defn.Def]) || shadowed ||
+          val reason = defer.get(owner + "." + p.name.value)
+          val blocked = reason.nonEmpty || ancestry.exists(_.is[Defn.Def]) || shadowed ||
             (target.isEmpty && (occupied(name) || companion.exists(_.templ.stats.isEmpty) || declarations.get(name).exists(_ != b)))
-          if(blocked) evidence += List(path,(t.pos.startLine + 1).toString,"UNRESOLVED " + key,t.structure)
+          if(blocked) evidence += List(path,(t.pos.startLine + 1).toString,"UNRESOLVED " + key,t.structure + reason.map(" deferred: " + _).getOrElse(""))
           else {
             val replacement = target.getOrElse(c.name.value + "." + name)
             if(target.isEmpty) declarations(name) = b

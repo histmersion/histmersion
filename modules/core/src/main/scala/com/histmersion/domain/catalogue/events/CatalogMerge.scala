@@ -13,7 +13,13 @@ object CatalogMerge:
   /** How close two records of the same kind must be to be one event: their outer spans overlap once each is widened by
     * `years`, and their points are within `km`.
     */
-  final case class Tolerance(km: Double, years: Long)
+  final case class Tolerance(km: Tolerance.Km, years: Tolerance.Years)
+
+  object Tolerance:
+    type Km = Km.T
+    object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Years = Years.T
+    object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Where one record goes: into a stored event (`existing`), or into the NEW event `id` (several records of one thing
     * share it). `why` says what matched.
@@ -48,8 +54,17 @@ object CatalogMerge:
     * best), then the smaller `years` (between the spans' midpoints), then the smaller `km`, then the smaller id.
     * Undated or unplaced sides rank last on that criterion (∞), never first.
     */
-  final case class Fit(score: Double, years: Double, km: Double, id: String)
+  final case class Fit(score: Fit.Score, years: Fit.Years, km: Fit.Km, id: Fit.Id)
   object Fit:
+    type Score = Score.T
+    object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Years = Years.T
+    object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Km = Km.T
+    object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score, f.years, f.km, f.id))
 
   /** Pure: the [[Fit]] of a candidate (`ts`, `lat`/`lon`, `id`) to a record. */

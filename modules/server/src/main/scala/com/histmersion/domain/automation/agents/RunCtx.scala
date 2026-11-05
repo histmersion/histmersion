@@ -551,8 +551,15 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
   /** What the provider said about an attempt that came back: the model that served it, the input of its first model
     * call, its turns.
     */
-  final private case class Served(model: Option[String], firstCallTokens: Option[Long], turns: Option[Int])
+  final private case class Served(model: Option[Served.Model], firstCallTokens: Option[Served.FirstCallTokens], turns: Option[Served.Turns])
   private object Served:
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstCallTokens = FirstCallTokens.T
+    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Turns = Turns.T
+    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Unknown: Served = Served(None, None, None)
 
   /** One attempt of an LLM step: done when it carries no `error` (its `output` is then the checkpoint), failed

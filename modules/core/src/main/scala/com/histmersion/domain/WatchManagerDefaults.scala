@@ -5,7 +5,7 @@ import com.histmersion.api.automation.Managers.{ManagerConfig, Sweep}
 /** A research area's watcher when it saves no settings of its own (`agents.managers.watch`): its runs at once and the
   * daily cap of its opt-in auto-ingest.
   */
-final case class WatchManagerDefaults(maxRuns: Int, autoIngestPerDay: Int):
+final case class WatchManagerDefaults(maxRuns: WatchManagerDefaults.MaxRuns, autoIngestPerDay: WatchManagerDefaults.AutoIngestPerDay):
 
   /** A watcher's settings when it saves none: every sweep, auto-ingest off, its cap. */
   def managerDefaults(m: ManagerDefaults): ManagerConfig =
@@ -25,3 +25,9 @@ final case class WatchManagerDefaults(maxRuns: Int, autoIngestPerDay: Int):
   def ingestAllowance(c: ManagerConfig, ingestedToday: Int): Int =
     if !c.autoIngest.contains(true) then 0
     else math.max(0, c.autoIngestPerDay.getOrElse(autoIngestPerDay) - math.max(0, ingestedToday))
+
+object WatchManagerDefaults:
+  type MaxRuns = MaxRuns.T
+  object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AutoIngestPerDay = AutoIngestPerDay.T
+  object AutoIngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

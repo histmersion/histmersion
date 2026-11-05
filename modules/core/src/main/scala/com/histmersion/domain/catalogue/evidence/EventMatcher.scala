@@ -14,19 +14,43 @@ object EventMatcher:
     * name match and a finding weigh, the least score kept, and the least length of a name worth searching for.
     */
   final case class Weights(
-      km: Double,
-      years: Long,
-      name: Double,
-      finding: Double,
-      minScore: Double,
-      minNameChars: Int,
-      maxCandidates: Int
+      km: Weights.Km,
+      years: Weights.Years,
+      name: Weights.Name,
+      finding: Weights.Finding,
+      minScore: Weights.MinScore,
+      minNameChars: Weights.MinNameChars,
+      maxCandidates: Weights.MaxCandidates
   )
+
+  object Weights:
+    type Km = Km.T
+    object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Years = Years.T
+    object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Finding = Finding.T
+    object Finding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinScore = MinScore.T
+    object MinScore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinNameChars = MinNameChars.T
+    object MinNameChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxCandidates = MaxCandidates.T
+    object MaxCandidates extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One finding near the event: its id, source, distance and the years between its period and the event's span (0 when
     * they overlap).
     */
-  final case class NearFinding(id: String, citekey: String, km: Double, yearGap: Long)
+  final case class NearFinding(id: NearFinding.Id, citekey: com.histmersion.domain.library.Citekey, km: NearFinding.Km, yearGap: NearFinding.YearGap)
+
+  object NearFinding:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Km = Km.T
+    object Km extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearGap = YearGap.T
+    object YearGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the names worth searching a body for — distinct ignoring case, at least `minChars` long and more than a bare
     * kind word ("Battle", "Siege"), longest first (a longer name is the stronger match).

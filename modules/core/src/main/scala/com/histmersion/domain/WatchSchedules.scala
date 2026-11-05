@@ -26,12 +26,26 @@ object WatchSchedules:
     case Sweep.Acquisition => ScheduleKind.Acquisition
 
   /** What a watcher has before the migration (None: it does not exist yet). */
-  final case class Existing(config: ManagerConfig, cron: Option[String], nextTick: Option[String])
+  final case class Existing(config: ManagerConfig, cron: Option[Existing.Cron], nextTick: Option[Existing.NextTick])
+
+  object Existing:
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NextTick = NextTick.T
+    object NextTick extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The watcher a goal's schedules become: its config (sweeps, per-run budget), its cron and next firing, and what was
     * carried over or left out (the migration's event and log line).
     */
-  final case class Plan(config: ManagerConfig, cron: Option[String], nextTick: Option[String], notes: List[String])
+  final case class Plan(config: ManagerConfig, cron: Option[Plan.Cron], nextTick: Option[Plan.NextTick], notes: List[Plan.Notes])
+
+  object Plan:
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NextTick = NextTick.T
+    object NextTick extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A goal's schedules into its watcher. The watcher's own settings win (an existing one keeps its cron; as a bundle
     * import keeps this collection's schedules, #881): its sweeps gain the ENABLED schedules' kinds; a disabled schedule

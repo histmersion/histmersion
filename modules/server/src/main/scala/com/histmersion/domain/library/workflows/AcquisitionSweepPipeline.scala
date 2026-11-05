@@ -332,20 +332,46 @@ object AcquisitionSweepPipeline:
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */
   final case class Found(
-      title: String,
-      notes: Option[String],
-      queries: List[String],
+      title: Found.Title,
+      notes: Option[Found.Notes],
+      queries: List[Found.Queries],
       candidates: List[Candidate],
-      skipped: Map[String, Int],
-      stored: Map[String, Long] = Map.empty
+      skipped: Map[Found.SkippedKey, Found.SkippedValue],
+      stored: Map[Found.StoredKey, Found.StoredValue] = Map.empty
   ) derives KindlingsCodecAsObject
-  final case class Picked(candidate: Candidate, why: String) derives KindlingsCodecAsObject
+
+  object Found:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queries = Queries.T
+    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SkippedKey = SkippedKey.T
+    object SkippedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SkippedValue = SkippedValue.T
+    object SkippedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKey = StoredKey.T
+    object StoredKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredValue = StoredValue.T
+    object StoredValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Picked(candidate: Candidate, why: Picked.Why) derives KindlingsCodecAsObject
+
+  object Picked:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A pick the watcher's auto-ingest brought in (`citekey` the new source's). */
-  final case class Ingested(doi: String, citekey: String) derives KindlingsCodecAsObject
+  final case class Ingested(doi: com.histmersion.domain.library.Doi, citekey: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject
 
   /** An open-access pick whose ingest failed: why, and whether the legal chain has no file for it. */
-  final case class Failed(doi: String, why: String, noCopy: Boolean) derives KindlingsCodecAsObject
+  final case class Failed(doi: com.histmersion.domain.library.Doi, why: Failed.Why, noCopy: Failed.NoCopy) derives KindlingsCodecAsObject
+
+  object Failed:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NoCopy = NoCopy.T
+    object NoCopy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the ingest step of a run with a backlog did. */
   final case class Tried(ingested: List[Ingested] = Nil, failed: List[Failed] = Nil) derives KindlingsCodecAsObject
@@ -353,4 +379,10 @@ object AcquisitionSweepPipeline:
   /** What the backlog step did: picks waiting in a backlog (new entries and ones joined), and picks the corpus or the
     * acquisition list had already.
     */
-  final case class Parked(waiting: Int, known: Int) derives KindlingsCodecAsObject
+  final case class Parked(waiting: Parked.Waiting, known: Parked.Known) derives KindlingsCodecAsObject
+
+  object Parked:
+    type Waiting = Waiting.T
+    object Waiting extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Known = Known.T
+    object Known extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -17,3 +17,5 @@ final case class Choice(kind: String)
 object Choice:
   enum Kind:
     case One
+
+final case class Payload(bytes: Array[Byte])

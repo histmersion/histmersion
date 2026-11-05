@@ -17,16 +17,33 @@ object EventLinksTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class EventLinksInput(
-      id: Option[String] = None,
-      recompute: Boolean = false,
-      confirm: List[String] = Nil,
-      reject: List[String] = Nil,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      kind: Option[String] = None,
-      limit: Option[Int] = None
+      id: Option[EventLinksInput.Id] = None,
+      recompute: EventLinksInput.Recompute = false,
+      confirm: List[EventLinksInput.Confirm] = Nil,
+      reject: List[EventLinksInput.Reject] = Nil,
+      from: Option[EventLinksInput.From] = None,
+      to: Option[EventLinksInput.To] = None,
+      kind: Option[EventLinksInput.Kind] = None,
+      limit: Option[EventLinksInput.Limit] = None
   ) derives KindlingsCodecAsObject
   object EventLinksInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Recompute = Recompute.T
+    object Recompute extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Confirm = Confirm.T
+    object Confirm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reject = Reject.T
+    object Reject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[EventLinksInput] = KindlingsSchema
       .derived[EventLinksInput]
       .schema

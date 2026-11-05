@@ -21,19 +21,41 @@ object AcquireRecheck:
     * re-check may take, and the hours after which a check that got no answer is due again.
     */
   final case class Settings(
-      enabled: Boolean,
-      everyDays: Int,
-      perDay: Int,
-      perPass: Int,
-      passMinutes: Int,
-      sharePercent: Int,
-      retryHours: Int
+      enabled: Settings.Enabled,
+      everyDays: Settings.EveryDays,
+      perDay: Settings.PerDay,
+      perPass: Settings.PerPass,
+      passMinutes: Settings.PassMinutes,
+      sharePercent: Settings.SharePercent,
+      retryHours: Settings.RetryHours
   )
+
+  object Settings:
+    type Enabled = Enabled.T
+    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EveryDays = EveryDays.T
+    object EveryDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PerDay = PerDay.T
+    object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PerPass = PerPass.T
+    object PerPass extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PassMinutes = PassMinutes.T
+    object PassMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SharePercent = SharePercent.T
+    object SharePercent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RetryHours = RetryHours.T
+    object RetryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** An item's last check: when, under which fetcher generation ([[generation]]), and whether it got no answer
     * ([[Outcome.Failed]]: a rate limit, an upstream down).
     */
-  final case class LastCheck(at: Instant, generation: String, failed: Boolean = false)
+  final case class LastCheck(at: Instant, generation: LastCheck.Generation, failed: LastCheck.Failed = false)
+
+  object LastCheck:
+    type Generation = Generation.T
+    object Generation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Failed = Failed.T
+    object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** When an item is next due: never checked, or checked under another fetcher generation (a fetcher or a key was added
     * since) = now (None); a check that got no answer `retryHours` after it; else `everyDays` after its check.
@@ -52,7 +74,11 @@ object AcquireRecheck:
   /** What the corpus holds under an item's DOI: the source, and whether it has its original (a converted body or a
     * stored file).
     */
-  final case class Held(citekey: String, hasOriginal: Boolean)
+  final case class Held(citekey: com.histmersion.domain.library.Citekey, hasOriginal: Held.HasOriginal)
+
+  object Held:
+    type HasOriginal = HasOriginal.T
+    object HasOriginal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a pass does with one open item. */
   enum Action:
@@ -127,7 +153,17 @@ object AcquireRecheck:
     * cap): what is `left` of the `cap` today, the watchers' backlog waiting for it, and what the re-check fetched
     * today.
     */
-  final case class Shared(left: Int, cap: Int, backlogPending: Int, fetchedToday: Int)
+  final case class Shared(left: Shared.Left, cap: Shared.Cap, backlogPending: Shared.BacklogPending, fetchedToday: Shared.FetchedToday)
+
+  object Shared:
+    type Left = Left.T
+    object Left extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cap = Cap.T
+    object Cap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BacklogPending = BacklogPending.T
+    object BacklogPending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchedToday = FetchedToday.T
+    object FetchedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How many items this pass may try: within the day's cap (after `checkedToday`) and the pass's; and, under a shared
     * allowance, within what the watchers' backlog leaves of it (the backlog and the watchers' new finds come first) and
@@ -159,7 +195,11 @@ object AcquireRecheck:
   // ── the re-check job ─────────────────────────────────────────────────────────────────────────────
 
   /** An open item that names a DOI, as a pass or a job orders it: its id and its last check. */
-  final case class Candidate(item: Int, last: Option[LastCheck])
+  final case class Candidate(item: Candidate.Item, last: Option[LastCheck])
+
+  object Candidate:
+    type Item = Item.T
+    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The order items are tried in: the never-checked first, then the oldest check, then the item id. */
   def order(candidates: List[Candidate]): List[Candidate] =
@@ -170,7 +210,13 @@ object AcquireRecheck:
     * started). `since` = when it first started: an item checked since then was checked by it, so a job resumed after a
     * restart or a drain skips it.
     */
-  final case class JobPlan(all: Boolean, upTo: Int, since: Instant)
+  final case class JobPlan(all: JobPlan.All, upTo: JobPlan.UpTo, since: Instant)
+
+  object JobPlan:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpTo = UpTo.T
+    object UpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Was this item checked by a job that started at `since` (or since then by anything else)? */
   def checkedSince(last: Option[LastCheck], since: Instant): Boolean = last.exists(l => !l.at.isBefore(since))
@@ -201,19 +247,35 @@ object AcquireRecheck:
     * got no answer, why (the job goes on with the next).
     */
   final case class Tally(
-      total: Int,
-      tried: Int = 0,
-      closed: Int = 0,
-      fetched: Int = 0,
-      noCopy: Int = 0,
-      failed: Int = 0,
-      lastFailure: Option[String] = None
+      total: Tally.Total,
+      tried: Tally.Tried = 0,
+      closed: Tally.Closed = 0,
+      fetched: Tally.Fetched = 0,
+      noCopy: Tally.NoCopy = 0,
+      failed: Tally.Failed = 0,
+      lastFailure: Option[Tally.LastFailure] = None
   ):
     def add(outcome: Outcome, detail: String): Tally = outcome match
       case Outcome.Closed  => this.modify(_.closed).setTo(closed + 1)
       case Outcome.Fetched => this.modify(_.tried).setTo(tried + 1).modify(_.fetched).setTo(fetched + 1)
       case Outcome.NoCopy  => this.modify(_.tried).setTo(tried + 1).modify(_.noCopy).setTo(noCopy + 1)
       case Outcome.Failed  => this.modify(_.tried).setTo(tried + 1).modify(_.failed).setTo(failed + 1).modify(_.lastFailure).setTo(Some(detail))
+
+  object Tally:
+    type Total = Total.T
+    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tried = Tried.T
+    object Tried extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Closed = Closed.T
+    object Closed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fetched = Fetched.T
+    object Fetched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NoCopy = NoCopy.T
+    object NoCopy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Failed = Failed.T
+    object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastFailure = LastFailure.T
+    object LastFailure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The job's progress: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)`. */
   def progressLine(t: Tally): String =

@@ -14,13 +14,25 @@ object BuiltinMedia:
     * judged by (its own `media.<provider>.licences`).
     */
   final case class Entry(
-      plugin: String,
-      name: String,
-      title: String,
-      check: String,
-      provider: String,
+      plugin: Entry.Plugin,
+      name: Entry.Name,
+      title: Entry.Title,
+      check: Entry.Check,
+      provider: Entry.Provider,
       licences: MediaConfig => String
   )
+
+  object Entry:
+    type Plugin = Plugin.T
+    object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Check = Check.T
+    object Check extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provider = Provider.T
+    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** In the order `media import`'s list names them. */
   val entries: List[Entry] = List(

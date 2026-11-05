@@ -4,13 +4,18 @@ import com.histmersion.api.catalogue.MatchSpan
 
 /** A passage of a source's text a search found: where it starts in the body, its text, and where in it the matches are.
   */
-final case class Passage(offset: Int, text: String, matches: List[MatchSpan])
+final case class Passage(offset: Passage.Offset, text: Passage.Text, matches: List[MatchSpan])
 
 object Passage:
 
   /** The sources whose text attests a data point, as the catalogue's evidence reads them: which source a citekey names
     * now (an old citekey resolves to it), and the passages of its text. The library implements it.
     */
+  type Offset = Offset.T
+  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   trait Source:
     /** The citekey the source named `citekey` has now; `None` when no source has it. */
     def canonical(citekey: String): Option[String]

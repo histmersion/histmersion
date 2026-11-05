@@ -14,13 +14,28 @@ object ArticleReviewStatus:
   /** The review manager's `article-review` item for the article: its status, its last outcome line and how many runs it
     * started.
     */
-  final case class ItemFacts(status: ItemStatus, outcome: Option[String] = None, attempts: Int = 0)
+  final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = 0)
+
+  object ItemFacts:
+    type Outcome = Outcome.T
+    object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempts = Attempts.T
+    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The ledger's findings counted: the open MAJOR and minor ones, all of them, and the runs that raised or closed one.
     */
-  final case class LedgerFacts(openMajors: Int, openMinors: Int, findings: Int, runs: Int)
+  final case class LedgerFacts(openMajors: LedgerFacts.OpenMajors, openMinors: LedgerFacts.OpenMinors, findings: LedgerFacts.Findings, runs: LedgerFacts.Runs)
 
   object LedgerFacts:
+    type OpenMajors = OpenMajors.T
+    object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenMinors = OpenMinors.T
+    object OpenMinors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Findings = Findings.T
+    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Runs = Runs.T
+    object Runs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def of(l: Ledger): LedgerFacts =
       LedgerFacts(l.openMajors.size, l.open.count(!_.major), l.entries.size, runOrder(l, Map.empty).size)
 
@@ -30,9 +45,13 @@ object ArticleReviewStatus:
   final case class Facts(
       item: Option[ItemFacts] = None,
       ledger: Option[LedgerFacts] = None,
-      round: Option[Int] = None,
+      round: Option[Facts.Round] = None,
       waiting: List[ReviewApproval] = Nil
   )
+
+  object Facts:
+    type Round = Round.T
+    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The state, from the item first (a run going on, queued, stopped), then the ledger's open MAJOR findings. A
     * cancelled item counts as no item: what the ledger says stands.

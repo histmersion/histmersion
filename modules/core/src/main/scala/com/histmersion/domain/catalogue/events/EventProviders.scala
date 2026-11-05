@@ -82,12 +82,22 @@ object EventProviders:
     */
   final case class Thresholds(
       region: Option[BBox],
-      regionVei: Int,
-      outsideVei: Int,
-      regionMagnitude: Double,
-      outsideMagnitude: Double,
+      regionVei: Thresholds.RegionVei,
+      outsideVei: Thresholds.OutsideVei,
+      regionMagnitude: Thresholds.RegionMagnitude,
+      outsideMagnitude: Thresholds.OutsideMagnitude,
       area: Option[BBox] = None
   )
+
+  object Thresholds:
+    type RegionVei = RegionVei.T
+    object RegionVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OutsideVei = OutsideVei.T
+    object OutsideVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RegionMagnitude = RegionMagnitude.T
+    object RegionMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OutsideMagnitude = OutsideMagnitude.T
+    object OutsideMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** #6561: what a read part was kept under. A part is recorded as read together with the thresholds that judged its
     * records, so widening the region (or lowering a VEI or magnitude floor) makes every part due again instead of

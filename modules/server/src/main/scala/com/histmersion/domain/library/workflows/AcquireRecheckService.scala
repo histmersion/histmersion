@@ -441,7 +441,11 @@ final class AcquireRecheckService(
         Some(RecheckRow(f.item.id, doiOf(f), Closed, "in the corpus with its original", Some(citekey)))
 
   /** One item tried: its row, what it found, and the fetcher's or the chain's own words. */
-  final private case class Tried(row: RecheckRow, outcome: Outcome, detail: String)
+  final private case class Tried(row: RecheckRow, outcome: Outcome, detail: Tried.Detail)
+
+  object Tried:
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One item through the legal chain, recorded. */
   private def attempt(f: Facts, generation: String, now: Instant): Tried =

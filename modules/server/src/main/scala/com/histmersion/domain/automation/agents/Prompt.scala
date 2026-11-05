@@ -5,7 +5,7 @@ import java.nio.charset.StandardCharsets.UTF_8
 /** One LLM step's prompt. `system` is the step's prompt FILE(S) (bundled as resources, so one copy per prompt and its
   * hash recorded on every attempt); `user` carries the data.
   */
-final case class Prompt(system: String, user: String):
+final case class Prompt(system: Prompt.System, user: Prompt.User):
   /** sha256 of the system prompt — which prompt version produced a checkpoint. */
   def hash: String = Prompt.sha256(system)
 
@@ -13,6 +13,11 @@ object Prompt:
   /** Untrusted text (an OCR'd body, an article under review) as DATA: fenced in tags the system prompt names, with any
     * copy of the closing tag inside it defused so the text cannot end its own fence.
     */
+  type System = System.T
+  object System extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type User = User.T
+  object User extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def data(tag: String, text: String): String =
     val safe = text.replace(s"</$tag>", s"</ $tag>")
     s"<$tag>\n$safe\n</$tag>"

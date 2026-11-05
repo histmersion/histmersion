@@ -328,30 +328,30 @@ object LibraryTools:
     * what it knows. `Filter.of` is the single interpreter of this shape (REST and CLI share it).
     */
   final case class SearchInput(
-      query: Option[String] = None,
-      tags: List[String] = Nil,
-      authors: List[String] = Nil,
-      places: List[String] = Nil,
-      topics: List[String] = Nil,
-      status: List[String] = Nil,
-      yearFrom: Option[Long] = None,
-      yearTo: Option[Long] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      minLon: Option[Double] = None,
-      minLat: Option[Double] = None,
-      maxLon: Option[Double] = None,
-      maxLat: Option[Double] = None,
-      sort: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None,
-      title: Option[String] = None,
+      query: Option[SearchInput.Query] = None,
+      tags: List[SearchInput.Tags] = Nil,
+      authors: List[SearchInput.Authors] = Nil,
+      places: List[SearchInput.Places] = Nil,
+      topics: List[SearchInput.Topics] = Nil,
+      status: List[SearchInput.Status] = Nil,
+      yearFrom: Option[SearchInput.YearFrom] = None,
+      yearTo: Option[SearchInput.YearTo] = None,
+      from: Option[SearchInput.From] = None,
+      to: Option[SearchInput.To] = None,
+      minLon: Option[SearchInput.MinLon] = None,
+      minLat: Option[SearchInput.MinLat] = None,
+      maxLon: Option[SearchInput.MaxLon] = None,
+      maxLat: Option[SearchInput.MaxLat] = None,
+      sort: Option[SearchInput.Sort] = None,
+      limit: Option[SearchInput.Limit] = None,
+      offset: Option[SearchInput.Offset] = None,
+      title: Option[SearchInput.Title] = None,
       // ── the §1.6 nested grouping. Absent = the ordinary list of hits. ──
-      groupBy: Option[String] = None,
-      depth: Option[Int] = None,
-      asOf: Option[Long] = None,
-      samples: Option[Int] = None,
-      verbose: Boolean = true
+      groupBy: Option[SearchInput.GroupBy] = None,
+      depth: Option[SearchInput.Depth] = None,
+      asOf: Option[SearchInput.AsOf] = None,
+      samples: Option[SearchInput.Samples] = None,
+      verbose: SearchInput.Verbose = true
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(
       query,
@@ -375,6 +375,53 @@ object LibraryTools:
     )
   object SearchInput:
     // the filter's fields are described once, in FilterDocs (the REST parameters and the CLI flags read it too)
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Places = Places.T
+    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearFrom = YearFrom.T
+    object YearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearTo = YearTo.T
+    object YearTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLon = MinLon.T
+    object MinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLat = MinLat.T
+    object MinLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLon = MaxLon.T
+    object MaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLat = MaxLat.T
+    object MaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sort = Sort.T
+    object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GroupBy = GroupBy.T
+    object GroupBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AsOf = AsOf.T
+    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Samples = Samples.T
+    object Samples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Verbose = Verbose.T
+    object Verbose extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[SearchInput] = Filter.Docs
       .describe(KindlingsSchema.derived[SearchInput].schema)
       .modify(_.groupBy)(_.description("Group into a tree instead of listing: time|region|time,region|region,time"))
@@ -388,23 +435,23 @@ object LibraryTools:
       )
 
   final case class FacetsInput(
-      field: String,
-      prefix: Option[String] = None,
-      query: Option[String] = None,
-      tags: List[String] = Nil,
-      authors: List[String] = Nil,
-      places: List[String] = Nil,
-      topics: List[String] = Nil,
-      status: List[String] = Nil,
-      yearFrom: Option[Long] = None,
-      yearTo: Option[Long] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      minLon: Option[Double] = None,
-      minLat: Option[Double] = None,
-      maxLon: Option[Double] = None,
-      maxLat: Option[Double] = None,
-      limit: Option[Int] = None
+      field: FacetsInput.Field,
+      prefix: Option[FacetsInput.Prefix] = None,
+      query: Option[FacetsInput.Query] = None,
+      tags: List[FacetsInput.Tags] = Nil,
+      authors: List[FacetsInput.Authors] = Nil,
+      places: List[FacetsInput.Places] = Nil,
+      topics: List[FacetsInput.Topics] = Nil,
+      status: List[FacetsInput.Status] = Nil,
+      yearFrom: Option[FacetsInput.YearFrom] = None,
+      yearTo: Option[FacetsInput.YearTo] = None,
+      from: Option[FacetsInput.From] = None,
+      to: Option[FacetsInput.To] = None,
+      minLon: Option[FacetsInput.MinLon] = None,
+      minLat: Option[FacetsInput.MinLat] = None,
+      maxLon: Option[FacetsInput.MaxLon] = None,
+      maxLat: Option[FacetsInput.MaxLat] = None,
+      limit: Option[FacetsInput.Limit] = None
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter = Filter.of(
       query,
@@ -426,6 +473,41 @@ object LibraryTools:
       None
     )
   object FacetsInput:
+    type Field = Field.T
+    object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Prefix = Prefix.T
+    object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Places = Places.T
+    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearFrom = YearFrom.T
+    object YearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearTo = YearTo.T
+    object YearTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLon = MinLon.T
+    object MinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLat = MinLat.T
+    object MinLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLon = MaxLon.T
+    object MaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLat = MaxLat.T
+    object MaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[FacetsInput] = Filter.Docs
       .describe(KindlingsSchema.derived[FacetsInput].schema)
       .modify(_.field)(_.description("Dimension to enumerate: tags|authors|places|topics|status|provenance"))
@@ -433,14 +515,25 @@ object LibraryTools:
       .modify(_.limit)(_.description("At most this many values"))
 
   final case class GetSourceInput(
-      citekey: String,
-      fullText: Boolean = false,
-      section: Option[String] = None,
-      heading: Option[String] = None,
-      offset: Option[Int] = None,
-      chars: Option[Int] = None
+      citekey: com.histmersion.domain.library.Citekey,
+      fullText: GetSourceInput.FullText = false,
+      section: Option[GetSourceInput.Section] = None,
+      heading: Option[GetSourceInput.Heading] = None,
+      offset: Option[GetSourceInput.Offset] = None,
+      chars: Option[GetSourceInput.Chars] = None
   ) derives KindlingsCodecAsObject
   object GetSourceInput:
+    type FullText = FullText.T
+    object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Section = Section.T
+    object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Heading = Heading.T
+    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Chars = Chars.T
+    object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[GetSourceInput] = KindlingsSchema
       .derived[GetSourceInput]
       .schema
@@ -477,13 +570,22 @@ object LibraryTools:
       case Left(e) => McpOut.refusal(e)
 
   final case class PassagesInput(
-      citekey: String,
-      query: String,
-      regex: Boolean = false,
-      limit: Option[Int] = None,
-      context: Option[Int] = None
+      citekey: com.histmersion.domain.library.Citekey,
+      query: PassagesInput.Query,
+      regex: PassagesInput.Regex = false,
+      limit: Option[PassagesInput.Limit] = None,
+      context: Option[PassagesInput.Context] = None
   ) derives KindlingsCodecAsObject
   object PassagesInput:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regex = Regex.T
+    object Regex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Context = Context.T
+    object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PassagesInput] = KindlingsSchema
       .derived[PassagesInput]
       .schema
@@ -500,28 +602,28 @@ object LibraryTools:
     * are deprecated aliases for `from`/`to` — kept for one release.
     */
   final case class GeoWhenInput(
-      query: Option[String] = None,
-      tags: List[String] = Nil,
-      authors: List[String] = Nil,
-      places: List[String] = Nil,
-      topics: List[String] = Nil,
-      status: List[String] = Nil,
-      yearFrom: Option[Long] = None,
-      yearTo: Option[Long] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      minLon: Option[Double] = None,
-      minLat: Option[Double] = None,
-      maxLon: Option[Double] = None,
-      maxLat: Option[Double] = None,
-      limit: Option[Int] = None,
+      query: Option[GeoWhenInput.Query] = None,
+      tags: List[GeoWhenInput.Tags] = Nil,
+      authors: List[GeoWhenInput.Authors] = Nil,
+      places: List[GeoWhenInput.Places] = Nil,
+      topics: List[GeoWhenInput.Topics] = Nil,
+      status: List[GeoWhenInput.Status] = Nil,
+      yearFrom: Option[GeoWhenInput.YearFrom] = None,
+      yearTo: Option[GeoWhenInput.YearTo] = None,
+      from: Option[GeoWhenInput.From] = None,
+      to: Option[GeoWhenInput.To] = None,
+      minLon: Option[GeoWhenInput.MinLon] = None,
+      minLat: Option[GeoWhenInput.MinLat] = None,
+      maxLon: Option[GeoWhenInput.MaxLon] = None,
+      maxLat: Option[GeoWhenInput.MaxLat] = None,
+      limit: Option[GeoWhenInput.Limit] = None,
       /** @deprecated use `from` */
-      periodStart: Option[Long] = None,
+      periodStart: Option[com.histmersion.Year] = None,
       /** @deprecated use `to` */
-      periodEnd: Option[Long] = None,
+      periodEnd: Option[com.histmersion.Year] = None,
       /** @deprecated use `places` */
-      region: Option[String] = None,
-      offset: Option[Int] = None
+      region: Option[GeoWhenInput.Region] = None,
+      offset: Option[GeoWhenInput.Offset] = None
   ) derives KindlingsCodecAsObject:
     def toQuery: Api.FindingsQuery =
       val effectiveFrom = from.orElse(periodStart)
@@ -550,14 +652,52 @@ object LibraryTools:
         None
       ) // region is folded into places, not passed separately
   object GeoWhenInput:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Places = Places.T
+    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearFrom = YearFrom.T
+    object YearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearTo = YearTo.T
+    object YearTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLon = MinLon.T
+    object MinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLat = MinLat.T
+    object MinLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLon = MaxLon.T
+    object MaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLat = MaxLat.T
+    object MaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[GeoWhenInput] = Filter.Docs
       .describe(KindlingsSchema.derived[GeoWhenInput].schema)
       .modify(_.region)(_.description("Deprecated alias for a places entry"))
       .modify(_.periodStart)(_.description("Deprecated alias for from"))
       .modify(_.periodEnd)(_.description("Deprecated alias for to"))
 
-  final case class NeighborsInput(citekey: String, kinds: List[String] = Nil) derives KindlingsCodecAsObject
+  final case class NeighborsInput(citekey: com.histmersion.domain.library.Citekey, kinds: List[NeighborsInput.Kinds] = Nil) derives KindlingsCodecAsObject
   object NeighborsInput:
+    type Kinds = Kinds.T
+    object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[NeighborsInput] = KindlingsSchema
       .derived[NeighborsInput]
       .schema
@@ -567,10 +707,13 @@ object LibraryTools:
       )
 
   final case class GraphInput(
-      citekey: String,
-      depth: Option[Int] = None
+      citekey: com.histmersion.domain.library.Citekey,
+      depth: Option[GraphInput.Depth] = None
   ) derives KindlingsCodecAsObject
   object GraphInput:
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[GraphInput] = KindlingsSchema
       .derived[GraphInput]
       .schema
@@ -578,10 +721,13 @@ object LibraryTools:
       .modify(_.depth)(_.description("BFS depth 0–4 (default 2)"))
 
   final case class ContradictionsInput(
-      citekey: Option[String] = None,
-      since: Option[Long] = None
+      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      since: Option[ContradictionsInput.Since] = None
   ) derives KindlingsCodecAsObject
   object ContradictionsInput:
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ContradictionsInput] = KindlingsSchema
       .derived[ContradictionsInput]
       .schema
@@ -591,11 +737,14 @@ object LibraryTools:
   // The write tools reuse the REST DTOs verbatim, so the MCP tool schema and the HTTP body are the
   // same shape — one contract, two transports.
   final case class PutSourceInput(
-      citekey: String,
+      citekey: com.histmersion.domain.library.Citekey,
       source: com.histmersion.api.library.Source.Put,
-      strict: Boolean = false
+      strict: PutSourceInput.Strict = false
   )
   object PutSourceInput:
+    type Strict = Strict.T
+    object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PutSourceInput] = KindlingsSchema
       .derived[PutSourceInput]
       .schema
@@ -603,55 +752,61 @@ object LibraryTools:
     given Codec.AsObject[PutSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PutSourceInput]) // #813
 
   final case class PatchSourceInput(
-      citekey: String,
+      citekey: com.histmersion.domain.library.Citekey,
       patch: com.histmersion.api.library.Source.Patch,
-      strict: Boolean = false
+      strict: PatchSourceInput.Strict = false
   )
   object PatchSourceInput:
+    type Strict = Strict.T
+    object Strict extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PatchSourceInput] = KindlingsSchema
       .derived[PatchSourceInput]
       .schema
       .modify(_.strict)(_.description(StrictDoc))
     given Codec.AsObject[PatchSourceInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchSourceInput]) // #813
 
-  final case class RenameSourceInput(citekey: String, newCitekey: String) derives KindlingsCodecAsObject
+  final case class RenameSourceInput(citekey: com.histmersion.domain.library.Citekey, newCitekey: RenameSourceInput.NewCitekey) derives KindlingsCodecAsObject
   object RenameSourceInput:
+    type NewCitekey = NewCitekey.T
+    object NewCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[RenameSourceInput] = KindlingsSchema
       .derived[RenameSourceInput]
       .schema
       .modify(_.citekey)(_.description("The source's current citekey"))
       .modify(_.newCitekey)(_.description("The citekey it should have from now on"))
 
-  final case class ExportSourceInput(citekey: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class ExportSourceInput(citekey: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
   /** The MCP spelling of [[com.histmersion.api.library.Filter]] for `histogram` — now the FULL filter shape (A2).
     * `periodStart`/`periodEnd` and `region` are deprecated aliases (A1).
     */
   final case class HistogramInput(
-      query: Option[String] = None,
-      tags: List[String] = Nil,
-      authors: List[String] = Nil,
-      places: List[String] = Nil,
-      topics: List[String] = Nil,
-      status: List[String] = Nil,
-      yearFrom: Option[Long] = None,
-      yearTo: Option[Long] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      minLon: Option[Double] = None,
-      minLat: Option[Double] = None,
-      maxLon: Option[Double] = None,
-      maxLat: Option[Double] = None,
-      sort: Option[String] = None,
-      limit: Option[Int] = None,
-      unit: Option[String] = None,
+      query: Option[HistogramInput.Query] = None,
+      tags: List[HistogramInput.Tags] = Nil,
+      authors: List[HistogramInput.Authors] = Nil,
+      places: List[HistogramInput.Places] = Nil,
+      topics: List[HistogramInput.Topics] = Nil,
+      status: List[HistogramInput.Status] = Nil,
+      yearFrom: Option[HistogramInput.YearFrom] = None,
+      yearTo: Option[HistogramInput.YearTo] = None,
+      from: Option[HistogramInput.From] = None,
+      to: Option[HistogramInput.To] = None,
+      minLon: Option[HistogramInput.MinLon] = None,
+      minLat: Option[HistogramInput.MinLat] = None,
+      maxLon: Option[HistogramInput.MaxLon] = None,
+      maxLat: Option[HistogramInput.MaxLat] = None,
+      sort: Option[HistogramInput.Sort] = None,
+      limit: Option[HistogramInput.Limit] = None,
+      unit: Option[HistogramInput.Unit] = None,
       /** @deprecated use `from` */
-      periodStart: Option[Long] = None,
+      periodStart: Option[com.histmersion.Year] = None,
       /** @deprecated use `to` */
-      periodEnd: Option[Long] = None,
+      periodEnd: Option[com.histmersion.Year] = None,
       /** @deprecated use `places` */
-      region: Option[String] = None
+      region: Option[HistogramInput.Region] = None
   ) derives KindlingsCodecAsObject:
     def toFilter: Filter =
       val effectiveFrom = from.orElse(periodStart)
@@ -677,6 +832,43 @@ object LibraryTools:
         None
       )
   object HistogramInput:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Places = Places.T
+    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearFrom = YearFrom.T
+    object YearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type YearTo = YearTo.T
+    object YearTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLon = MinLon.T
+    object MinLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinLat = MinLat.T
+    object MinLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLon = MaxLon.T
+    object MaxLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLat = MaxLat.T
+    object MaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sort = Sort.T
+    object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unit = Unit.T
+    object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[HistogramInput] = Filter.Docs
       .describe(KindlingsSchema.derived[HistogramInput].schema)
       .modify(_.unit)(_.description("What to count: sources (default) | findings"))

@@ -1,5 +1,40 @@
 # Priority-family status
 
+## Definition sweep applied: core and server domain packages
+
+definitions-domain-1 converts 1698 explicit primitive leaves across 364 production
+models in 157 files. Cumulative definition conversion is 4883 leaves in 986 models
+across 448 production files. These are definition conversions, not a verified
+repair percentage or a complete project-wide model inventory. Caller compilation,
+validation migration, duplicate consolidation and behavioral testing remain later
+phases. Existing constraints and newtypes are preserved; reviewed references reuse
+domain Citekey/Doi, Year, coordinates, event/place IDs, run/job IDs and goal slugs.
+Other supported properties receive companion-owned Pure newtypes.
+
+Ten explicit primitive leaves remain unresolved: seven in SchedulerPolicy's
+method-local Acc, two in SourceMatcher's method-local Scored and one in
+NewFigure.bytes (Array[Byte]). The existing rule deliberately leaves method-local
+classes unresolved; relocation/ownership needs a separate design decision. Binary
+payloads need a whole-payload type, since wrapping individual bytes would change
+representation. These findings remain detected and receive no exception or repair
+credit. No difficult case blocked application of the other model definitions.
+
+The existing rule now accepts an explicit field-to-reason defer mapping, retaining
+deferred leaves as UNRESOLVED evidence rather than treating them as compliant.
+The fixture adds a deferred binary payload without altering prior expectations.
+Generated output exactly matches expected source; expected definitions compile
+with Scala 3.10.0 and Iron 3.4.1. The fixture reports seven conversions and two
+blocked leaves (one name collision and one deliberate deferral).
+
+The frozen applicator checks and applies all 157 files. The post-application
+definitions-domain-remaining-1 run validates the seven-plan hash chain and reports
+zero further conversions and the same ten unresolved leaves. Application whitespace
+checks pass. Alias/import resolution, unsupported type shapes, inferred types,
+enum cases, non-case-class models and source roots outside the configured domain
+directories remain unverified. Historical finding identities, denominators and
+repair credit remain unchanged. Next sweep: remaining supporting models and
+module roots; keep the ten unresolved domain leaves in the migration work.
+
 ## Definition sweep applied: remaining shared API records
 
 definitions-api-support-1 converts 810 explicit primitive leaves in 172 production

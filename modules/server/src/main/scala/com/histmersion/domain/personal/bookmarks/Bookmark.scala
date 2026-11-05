@@ -40,7 +40,7 @@ object Bookmark:
   /** A live bookmark as the table answers it. */
   final private[bookmarks] case class Row(
       id: com.histmersion.api.personal.Bookmark.Id,
-      kind: String,
+      kind: Row.Kind,
       key: Option[ItemKey],
       uid: Option[ItemUid],
       lat: Option[Latitude],
@@ -51,10 +51,18 @@ object Bookmark:
       view: Option[ViewState],
       label: Option[com.histmersion.api.personal.Bookmark.Label],
       targetLabel: Option[TargetLabel],
-      createdAt: String,
-      updatedAt: String
+      createdAt: Row.CreatedAt,
+      updatedAt: Row.UpdatedAt
   ) derives DbCodec:
     def stored(user: UserId): Option[StoredBookmark] =
       MarkTarget
         .ofColumns(kind, key, uid, lat, lon, zoom, from, to, view)
         .map(t => StoredBookmark(user, id, t, label, targetLabel, MarkTime.parse(createdAt), MarkTime.parse(updatedAt)))
+
+  object Row:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

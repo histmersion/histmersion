@@ -24,7 +24,11 @@ object AutoEnrich:
     case Enriched(why: String)
 
   /** One earlier `enrich-source` run of the source: its id and state. */
-  final case class PriorRun(id: String, state: Run.State)
+  final case class PriorRun(id: PriorRun.Id, state: Run.State)
+
+  object PriorRun:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Whether to queue; Left = why not. */
   def decide(

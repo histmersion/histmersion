@@ -189,60 +189,129 @@ object AcquisitionTools:
     hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 
   final case class DiscoverInput(
-      query: Option[String] = None,
-      doi: Option[String] = None,
-      wikipediaUrl: Option[String] = None,
-      since: Option[Int] = None,
-      sort: Option[String] = None,
-      limit: Option[Int] = None,
-      notInDb: Boolean = false
+      query: Option[DiscoverInput.Query] = None,
+      doi: Option[com.histmersion.domain.library.Doi] = None,
+      wikipediaUrl: Option[DiscoverInput.WikipediaUrl] = None,
+      since: Option[DiscoverInput.Since] = None,
+      sort: Option[DiscoverInput.Sort] = None,
+      limit: Option[DiscoverInput.Limit] = None,
+      notInDb: DiscoverInput.NotInDb = false
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object DiscoverInput:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WikipediaUrl = WikipediaUrl.T
+    object WikipediaUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sort = Sort.T
+    object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotInDb = NotInDb.T
+    object NotInDb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class CandidatesInput(
-      goal: Option[String] = None,
-      state: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None,
-      mark: List[Long] = Nil,
-      as: Option[String] = None,
-      sweep: Boolean = false,
-      dryRun: Boolean = false
+      goal: Option[CandidatesInput.Goal] = None,
+      state: Option[CandidatesInput.State] = None,
+      limit: Option[CandidatesInput.Limit] = None,
+      offset: Option[CandidatesInput.Offset] = None,
+      mark: List[CandidatesInput.Mark] = Nil,
+      as: Option[CandidatesInput.As] = None,
+      sweep: CandidatesInput.Sweep = false,
+      dryRun: CandidatesInput.DryRun = false
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object CandidatesInput:
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mark = Mark.T
+    object Mark extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type As = As.T
+    object As extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sweep = Sweep.T
+    object Sweep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class RefsInput(id: String, apply: Boolean = false) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class RefsInput(id: RefsInput.Id, apply: RefsInput.Apply = false) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object RefsInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Apply = Apply.T
+    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class AssessInput(
-      id: Option[String] = None,
-      apply: Boolean = false,
-      forceStatus: Boolean = false,
-      updateRetractions: Boolean = false,
-      retractionsStatus: Boolean = false
+      id: Option[AssessInput.Id] = None,
+      apply: AssessInput.Apply = false,
+      forceStatus: AssessInput.ForceStatus = false,
+      updateRetractions: AssessInput.UpdateRetractions = false,
+      retractionsStatus: AssessInput.RetractionsStatus = false
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object AssessInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Apply = Apply.T
+    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ForceStatus = ForceStatus.T
+    object ForceStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdateRetractions = UpdateRetractions.T
+    object UpdateRetractions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RetractionsStatus = RetractionsStatus.T
+    object RetractionsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class FollowupsInput(
-      id: String,
-      since: Option[Int] = None,
-      limit: Option[Int] = None,
-      apply: Boolean = false
+      id: FollowupsInput.Id,
+      since: Option[FollowupsInput.Since] = None,
+      limit: Option[FollowupsInput.Limit] = None,
+      apply: FollowupsInput.Apply = false
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object FollowupsInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Apply = Apply.T
+    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class IngestInput(
-      id: String,
-      citekey: Option[String] = None,
-      arxiv: Option[String] = None,
-      refetch: Boolean = false,
-      legalOnly: Boolean = false
+      id: IngestInput.Id,
+      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      arxiv: Option[IngestInput.Arxiv] = None,
+      refetch: IngestInput.Refetch = false,
+      legalOnly: IngestInput.LegalOnly = false
   ) derives KindlingsCodecAsObject
   object IngestInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Arxiv = Arxiv.T
+    object Arxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refetch = Refetch.T
+    object Refetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LegalOnly = LegalOnly.T
+    object LegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[IngestInput] = KindlingsSchema
       .derived[IngestInput]
       .schema
@@ -251,11 +320,23 @@ object AcquisitionTools:
       )
 
   final case class ArchiveInput(
-      query: Option[String] = None,
-      id: Option[String] = None,
-      `import`: Boolean = false,
-      citekey: Option[String] = None,
-      format: Option[String] = None,
-      rows: Option[Int] = None
+      query: Option[ArchiveInput.Query] = None,
+      id: Option[ArchiveInput.Id] = None,
+      `import`: ArchiveInput.Import = false,
+      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      format: Option[ArchiveInput.Format] = None,
+      rows: Option[ArchiveInput.Rows] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ArchiveInput:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Import = Import.T
+    object Import extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Format = Format.T
+    object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rows = Rows.T
+    object Rows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

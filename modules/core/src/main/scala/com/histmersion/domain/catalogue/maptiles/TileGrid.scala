@@ -4,12 +4,19 @@ package com.histmersion.domain.catalogue.maptiles
   * holding more than `maxPoints` items counts them by square cells of `cellUnits` tile units, one feature a cell; at
   * `maxZoom` (the deepest tile cut — deeper views draw it larger) every item is one.
   */
-final case class TileGrid private (maxZoom: Int, maxPoints: Int, cellUnits: Int):
+final case class TileGrid private (maxZoom: TileGrid.MaxZoom, maxPoints: TileGrid.MaxPoints, cellUnits: TileGrid.CellUnits):
   /** The most items `c` keeps as features of their own before it groups them by cell. */
   def pointsAt(c: TileCoord): Int = if c.z >= maxZoom then Int.MaxValue else maxPoints
 
 object TileGrid:
   /** A tile is 512 CSS pixels a side where MapLibre draws it at its own zoom. */
+  type MaxZoom = MaxZoom.T
+  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxPoints = MaxPoints.T
+  object MaxPoints extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CellUnits = CellUnits.T
+  object CellUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val TilePx: Int = 512
 
   /** The grid of `ui.map-tiles`: tiles to `maxZoom`, groups above `maxPoints` items, cells of `cellPx` pixels (each

@@ -35,7 +35,13 @@ final class OwnImport(name: String, col: MediaCollection, fetch: Polite, cfg: Me
   /** What the host decided about one picture: its licence key for the counts, and the item and rights when it may be
     * stored, else why not.
     */
-  final private case class Verdict(licence: Option[String], decision: Either[String, (MediaItem, Rights)])
+  final private case class Verdict(licence: Option[Verdict.Licence], decision: Either[Verdict.DecisionPart1, (MediaItem, Rights)])
+
+  object Verdict:
+    type Licence = Licence.T
+    object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DecisionPart1 = DecisionPart1.T
+    object DecisionPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def idOf(t: Target): com.histmersion.plugin.MediaTarget.Id =
     com.histmersion.plugin.MediaTarget

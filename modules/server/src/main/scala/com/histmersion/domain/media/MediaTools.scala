@@ -22,21 +22,30 @@ import com.histmersion.api.media.AssetLink
 object MediaTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
-  final case class AssetsInput(citekey: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class AssetsInput(citekey: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
   final case class PatchAssetInput(
-      citekey: String,
-      name: String,
-      kind: Option[String] = None,
-      caption: Option[String] = None,
-      license: Option[String] = None,
-      lat: Option[Double] = None,
-      lon: Option[Double] = None,
-      periodStart: Option[Long] = None,
-      periodEnd: Option[Long] = None
+      citekey: com.histmersion.domain.library.Citekey,
+      name: PatchAssetInput.Name,
+      kind: Option[PatchAssetInput.Kind] = None,
+      caption: Option[PatchAssetInput.Caption] = None,
+      license: Option[PatchAssetInput.License] = None,
+      lat: Option[com.histmersion.Latitude] = None,
+      lon: Option[com.histmersion.Longitude] = None,
+      periodStart: Option[com.histmersion.Year] = None,
+      periodEnd: Option[com.histmersion.Year] = None
   )
   object PatchAssetInput:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Caption = Caption.T
+    object Caption extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type License = License.T
+    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PatchAssetInput] = KindlingsSchema
       .derived[PatchAssetInput]
       .schema
@@ -46,15 +55,28 @@ object MediaTools:
     given Codec.AsObject[PatchAssetInput] = StrictJson.codec(KindlingsCodecAsObject.derived[PatchAssetInput]) // #813
 
   final case class AssetLinksInput(
-      citekey: Option[String] = None,
-      asset: Option[String] = None,
-      targetType: Option[String] = None,
-      targetId: Option[String] = None,
-      relation: Option[String] = None,
-      xywh: Option[String] = None,
-      notes: Option[String] = None
+      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      asset: Option[AssetLinksInput.Asset] = None,
+      targetType: Option[AssetLinksInput.TargetType] = None,
+      targetId: Option[AssetLinksInput.TargetId] = None,
+      relation: Option[AssetLinksInput.Relation] = None,
+      xywh: Option[AssetLinksInput.Xywh] = None,
+      notes: Option[AssetLinksInput.Notes] = None
   ) derives KindlingsCodecAsObject
   object AssetLinksInput:
+    type Asset = Asset.T
+    object Asset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetType = TargetType.T
+    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetId = TargetId.T
+    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Relation = Relation.T
+    object Relation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Xywh = Xywh.T
+    object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[AssetLinksInput] = KindlingsSchema
       .derived[AssetLinksInput]
       .schema
@@ -64,8 +86,11 @@ object MediaTools:
       .modify(_.targetId)(_.description("Filter by target id"))
       .modify(_.relation)(_.description("Set to create a link: depicts, taken_at, illustrates, page_of"))
 
-  final case class DeleteAssetLinkInput(id: Long) derives KindlingsCodecAsObject
+  final case class DeleteAssetLinkInput(id: DeleteAssetLinkInput.Id) derives KindlingsCodecAsObject
   object DeleteAssetLinkInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[DeleteAssetLinkInput] = KindlingsSchema
       .derived[DeleteAssetLinkInput]
       .schema

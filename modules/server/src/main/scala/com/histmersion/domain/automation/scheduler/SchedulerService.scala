@@ -43,7 +43,11 @@ final class SchedulerService(
   def settings: Settings = SchedulerPolicy.settings(ManagerDefaultsViews.scheduler(cfg.scheduler), chosen.map(_._1))
 
   /** One pass as shown: when, whether it was dry, its inputs and its decision. */
-  final private case class Snapshot(at: Instant, dry: Boolean, in: Inputs, s: Settings, d: Decision)
+  final private case class Snapshot(at: Instant, dry: Snapshot.Dry, in: Inputs, s: Settings, d: Decision)
+
+  object Snapshot:
+    type Dry = Dry.T
+    object Dry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The last real pass (a `var`: the supervisor's tick writes it, the status reads it). */
   @volatile private var last: Option[Snapshot] = None
@@ -52,11 +56,19 @@ final class SchedulerService(
     * its sources.
     */
   final private case class GoalInfo(
-      priority: Int,
+      priority: GoalInfo.Priority,
       created: Option[Instant],
-      gathering: Boolean,
-      inProgress: Option[String]
+      gathering: GoalInfo.Gathering,
+      inProgress: Option[GoalInfo.InProgress]
   )
+
+  object GoalInfo:
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Gathering = Gathering.T
+    object Gathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InProgress = InProgress.T
+    object InProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def goals(): Map[String, GoalInfo] =
     agents.focus
@@ -72,7 +84,11 @@ final class SchedulerService(
       .toMap
 
   /** The inputs of one pass: the candidates (with their manager and item), the resources. */
-  final case class Inputs(cands: List[Candidate], items: Map[Long, (ManagerInfo, ManagerItem)], res: Resources)
+  final case class Inputs(cands: List[Candidate], items: Map[Inputs.ItemsKey, (ManagerInfo, ManagerItem)], res: Resources)
+
+  object Inputs:
+    type ItemsKey = ItemsKey.T
+    object ItemsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Why nothing may start for any manager now (a spend cap reached), if so. */
   def budgetBlock(): Option[Block] =

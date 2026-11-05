@@ -22,24 +22,53 @@ object ManagerPolicy:
     * refill).
     */
   final case class ReviewSettings(
-      maxRuns: Int,
-      maxOpen: Int,
-      rounds: Int,
-      maxRunsPerArticle: Int,
-      noProgressRuns: Int,
-      reopenLimit: Int,
-      cooldownMinutes: Int,
-      lowWater: Int,
-      refillBatch: Int,
-      maxFailures: Int,
-      backoffMinutes: Int,
-      maxBackoffMinutes: Int,
-      staleAfterDays: Int = 0,
-      inferFilter: Boolean = false
+      maxRuns: ReviewSettings.MaxRuns,
+      maxOpen: ReviewSettings.MaxOpen,
+      rounds: ReviewSettings.Rounds,
+      maxRunsPerArticle: ReviewSettings.MaxRunsPerArticle,
+      noProgressRuns: ReviewSettings.NoProgressRuns,
+      reopenLimit: ReviewSettings.ReopenLimit,
+      cooldownMinutes: ReviewSettings.CooldownMinutes,
+      lowWater: ReviewSettings.LowWater,
+      refillBatch: ReviewSettings.RefillBatch,
+      maxFailures: ReviewSettings.MaxFailures,
+      backoffMinutes: ReviewSettings.BackoffMinutes,
+      maxBackoffMinutes: ReviewSettings.MaxBackoffMinutes,
+      staleAfterDays: ReviewSettings.StaleAfterDays = 0,
+      inferFilter: ReviewSettings.InferFilter = false
   )
 
   object ReviewSettings:
     /** The settings of a manager of kind `k`. */
+    type MaxRuns = MaxRuns.T
+    object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxOpen = MaxOpen.T
+    object MaxOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rounds = Rounds.T
+    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxRunsPerArticle = MaxRunsPerArticle.T
+    object MaxRunsPerArticle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NoProgressRuns = NoProgressRuns.T
+    object NoProgressRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReopenLimit = ReopenLimit.T
+    object ReopenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CooldownMinutes = CooldownMinutes.T
+    object CooldownMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LowWater = LowWater.T
+    object LowWater extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefillBatch = RefillBatch.T
+    object RefillBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxFailures = MaxFailures.T
+    object MaxFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BackoffMinutes = BackoffMinutes.T
+    object BackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxBackoffMinutes = MaxBackoffMinutes.T
+    object MaxBackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StaleAfterDays = StaleAfterDays.T
+    object StaleAfterDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InferFilter = InferFilter.T
+    object InferFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def forKind(k: Manager.Kind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
       val maxRuns = math.max(0, c.maxRuns.getOrElse(simple(k, m).maxRuns))
       ReviewSettings(
@@ -258,7 +287,15 @@ object ManagerPolicy:
   // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
 
   /** What dispatch needs of an item. */
-  final case class Candidate(id: Long, target: String, priority: Int, notBefore: Option[Instant])
+  final case class Candidate(id: Candidate.Id, target: Candidate.Target, priority: Candidate.Priority, notBefore: Option[Instant])
+
+  object Candidate:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** May it start now? */
   def due(c: Candidate, now: Instant): Boolean = c.notBefore.forall(!_.isAfter(now))

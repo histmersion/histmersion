@@ -23,15 +23,30 @@ import com.histmersion.api.research.Article
 object PlanArticles:
 
   final case class ArticleAnswer(
-      slug: String,
-      title: String,
-      kind: Option[String] = None,
-      query: Option[String] = None,
-      topics: List[String] = Nil,
-      tags: List[String] = Nil,
-      why: String = ""
+      slug: ArticleAnswer.Slug,
+      title: ArticleAnswer.Title,
+      kind: Option[ArticleAnswer.Kind] = None,
+      query: Option[ArticleAnswer.Query] = None,
+      topics: List[ArticleAnswer.Topics] = Nil,
+      tags: List[ArticleAnswer.Tags] = Nil,
+      why: ArticleAnswer.Why = ""
   ) derives KindlingsCodecAsObject
   object ArticleAnswer:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ArticleAnswer] = KindlingsSchema
       .derived[ArticleAnswer]
       .schema
@@ -45,8 +60,11 @@ object PlanArticles:
       .modify(_.tags)(_.description("Tags every source must have, from the corpus vocabulary (facets)"))
       .modify(_.why)(_.description("What the article would establish that the area's articles do not, in one sentence"))
 
-  final case class ArticlesAnswer(rationale: String, articles: List[ArticleAnswer] = Nil) derives KindlingsCodecAsObject
+  final case class ArticlesAnswer(rationale: ArticlesAnswer.Rationale, articles: List[ArticleAnswer] = Nil) derives KindlingsCodecAsObject
   object ArticlesAnswer:
+    type Rationale = Rationale.T
+    object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ArticlesAnswer] = KindlingsSchema
       .derived[ArticlesAnswer]
       .schema
@@ -56,10 +74,28 @@ object PlanArticles:
       .modify(_.articles)(_.description("The new articles, the most needed first"))
 
   /** The checks (config `agents.seed.*`, a seeding manager's `minSources`/`maxArticles` over them). */
-  final case class Limits(minSources: Int, maxOverlap: Double, maxArticles: Int)
+  final case class Limits(minSources: Limits.MinSources, maxOverlap: Limits.MaxOverlap, maxArticles: Limits.MaxArticles)
+
+  object Limits:
+    type MinSources = MinSources.T
+    object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxOverlap = MaxOverlap.T
+    object MaxOverlap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxArticles = MaxArticles.T
+    object MaxArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One proposal whose shape passed: what [[verify]] measures. */
-  final case class Candidate(slug: String, title: String, kind: String, filter: Article.Filter, why: String)
+  final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+
+  object Candidate:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The share of `mine` that `theirs` holds already (0 when `mine` is empty). */
   def overlap(mine: Set[String], theirs: Set[String]): Double =

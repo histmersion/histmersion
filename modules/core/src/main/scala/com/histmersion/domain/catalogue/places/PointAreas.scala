@@ -34,7 +34,15 @@ object PointAreas:
       else Dated
 
   /** The places of one source, kind and dating. */
-  final case class Group(source: String, kind: String, dating: Dating, places: Int)
+  final case class Group(source: Group.Source, kind: Group.Kind, dating: Dating, places: Group.Places)
+
+  object Group:
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Places = Places.T
+    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A listed place. `findings` are the findings matched to it (`finding_places`); `alone` how many of them it is the
     * ONLY place of — those would be left unplaced by a removal; `pinned` the attestations, asset links and place
@@ -42,14 +50,14 @@ object PointAreas:
     * a person's decision about the place.
     */
   final case class Listed(
-      id: String,
-      label: String,
-      source: String,
-      kind: String,
+      id: Listed.Id,
+      label: Listed.Label,
+      source: Listed.Source,
+      kind: Listed.Kind,
       dating: Dating,
-      findings: Int = 0,
-      alone: Int = 0,
-      pinned: Int = 0
+      findings: Listed.Findings = 0,
+      alone: Listed.Alone = 0,
+      pinned: Listed.Pinned = 0
   ):
     def detail: String =
       val what = s"$label ($source $kind, ${dating.wire})"
@@ -65,6 +73,22 @@ object PointAreas:
         s" — kept: named by $pinned attestation(s)/asset link(s)/place override(s); move or reset those first"
       else ""
       what + held + kept
+
+  object Listed:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Findings = Findings.T
+    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Alone = Alone.T
+    object Alone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pinned = Pinned.T
+    object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The rule's report. `count` is the true number of places; the items are the group lines (always), every place
     * holding a finding or pinned by evidence (always — they are what a person must see before a removal), then `sample`

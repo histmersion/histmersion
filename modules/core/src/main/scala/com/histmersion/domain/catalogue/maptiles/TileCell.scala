@@ -6,16 +6,40 @@ package com.histmersion.domain.catalogue.maptiles
   * no known date (`undated`: drawn only when a viewer asks for them).
   */
 final case class TileCell(
-    key: String,
-    x: Int,
-    y: Int,
-    n: Int,
-    midLo: Option[Double],
-    midHi: Option[Double],
-    west: Double,
-    south: Double,
-    east: Double,
-    north: Double,
-    undated: Int = 0
+    key: TileCell.Key,
+    x: TileCell.X,
+    y: TileCell.Y,
+    n: TileCell.N,
+    midLo: Option[TileCell.MidLo],
+    midHi: Option[TileCell.MidHi],
+    west: TileCell.West,
+    south: TileCell.South,
+    east: TileCell.East,
+    north: TileCell.North,
+    undated: TileCell.Undated = 0
 ):
   def isItem: Boolean = n == 1
+
+object TileCell:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type X = X.T
+  object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Y = Y.T
+  object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type N = N.T
+  object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidLo = MidLo.T
+  object MidLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidHi = MidHi.T
+  object MidHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type West = West.T
+  object West extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type South = South.T
+  object South extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type East = East.T
+  object East extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type North = North.T
+  object North extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Undated = Undated.T
+  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

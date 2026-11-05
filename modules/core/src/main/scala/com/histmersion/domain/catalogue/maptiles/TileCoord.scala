@@ -4,7 +4,7 @@ package com.histmersion.domain.catalogue.maptiles
   * tile format): zoom `z`, column `x` from the antimeridian eastwards, row `y` from the north. Only a tile inside the
   * grid exists.
   */
-final case class TileCoord private (z: Int, x: Long, y: Long):
+final case class TileCoord private (z: TileCoord.Z, x: TileCoord.X, y: TileCoord.Y):
   /** Tiles a side at this zoom. */
   def side: Long = 1L << z
 
@@ -23,6 +23,13 @@ final case class TileCoord private (z: Int, x: Long, y: Long):
 
 object TileCoord:
   /** The units a tile's side is divided into (the vector tile format's usual extent). */
+  type Z = Z.T
+  object Z extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type X = X.T
+  object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Y = Y.T
+  object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Extent: Int = 4096
 
   /** How far north and south the grid goes: Web Mercator's square world. */

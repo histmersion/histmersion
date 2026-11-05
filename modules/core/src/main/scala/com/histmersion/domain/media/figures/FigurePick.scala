@@ -17,22 +17,48 @@ object FigurePick:
     * a share of the text (0 = its start); both `None`/0 when the text has none.
     */
   final case class Figure(
-      name: String,
-      width: Option[Int],
-      height: Option[Int],
-      refs: Int = 1,
-      firstAt: Option[Double] = None
+      name: Figure.Name,
+      width: Option[Figure.Width],
+      height: Option[Figure.Height],
+      refs: Figure.Refs = 1,
+      firstAt: Option[Figure.FirstAt] = None
   )
+
+  object Figure:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Width = Width.T
+    object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Height = Height.T
+    object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refs = Refs.T
+    object Refs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstAt = FirstAt.T
+    object FirstAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The thresholds (`media.illustrations`). */
   final case class Rules(
-      minSide: Int = 160,
-      minArea: Int = 40000,
-      maxAspect: Double = 4.0,
-      maxRefs: Int = 2,
-      earlyPages: Int = 6,
-      pageScanMin: Int = 5
+      minSide: Rules.MinSide = 160,
+      minArea: Rules.MinArea = 40000,
+      maxAspect: Rules.MaxAspect = 4.0,
+      maxRefs: Rules.MaxRefs = 2,
+      earlyPages: Rules.EarlyPages = 6,
+      pageScanMin: Rules.PageScanMin = 5
   )
+
+  object Rules:
+    type MinSide = MinSide.T
+    object MinSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinArea = MinArea.T
+    object MinArea extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxAspect = MaxAspect.T
+    object MaxAspect extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxRefs = MaxRefs.T
+    object MaxRefs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EarlyPages = EarlyPages.T
+    object EarlyPages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PageScanMin = PageScanMin.T
+    object PageScanMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val PageName = """^fig-(\d{1,5})-\d+(?:-\d+)?\.[A-Za-z0-9]+$""".r
   private val SeqName = """^image_(\d{1,7})(?:_.*)?\.[A-Za-z0-9]+$""".r

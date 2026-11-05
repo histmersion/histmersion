@@ -7,19 +7,51 @@ package com.histmersion.domain.catalogue.maptiles
   * least and greatest middle of their dated spans, their bounding box in degrees, and the least key among them.
   */
 final case class GridCell(
-    gx: Long,
-    gy: Long,
-    n: Int,
-    dup: Int,
-    sumX: Double,
-    sumY: Double,
-    dupX: Double,
-    dupY: Double,
-    midLo: Option[Double],
-    midHi: Option[Double],
-    west: Double,
-    south: Double,
-    east: Double,
-    north: Double,
-    one: String
+    gx: GridCell.Gx,
+    gy: GridCell.Gy,
+    n: GridCell.N,
+    dup: GridCell.Dup,
+    sumX: GridCell.SumX,
+    sumY: GridCell.SumY,
+    dupX: GridCell.DupX,
+    dupY: GridCell.DupY,
+    midLo: Option[GridCell.MidLo],
+    midHi: Option[GridCell.MidHi],
+    west: GridCell.West,
+    south: GridCell.South,
+    east: GridCell.East,
+    north: GridCell.North,
+    one: GridCell.One
 )
+
+object GridCell:
+  type Gx = Gx.T
+  object Gx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Gy = Gy.T
+  object Gy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type N = N.T
+  object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Dup = Dup.T
+  object Dup extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SumX = SumX.T
+  object SumX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SumY = SumY.T
+  object SumY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DupX = DupX.T
+  object DupX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DupY = DupY.T
+  object DupY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidLo = MidLo.T
+  object MidLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MidHi = MidHi.T
+  object MidHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type West = West.T
+  object West extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type South = South.T
+  object South extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type East = East.T
+  object East extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type North = North.T
+  object North extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type One = One.T
+  object One extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -18,16 +18,33 @@ object HintProposals:
 
   /** The `hint-effect` step's typed answer. `action` "none" = the hint asks for no structured action. */
   final case class HintAnswer(
-      action: String,
-      why: String = "",
-      targets: List[String] = Nil,
-      tag: Option[String] = None,
-      until: Option[String] = None,
-      untilSource: Option[String] = None,
-      priority: Option[Int] = None,
-      settings: List[String] = Nil
+      action: HintAnswer.Action,
+      why: HintAnswer.Why = "",
+      targets: List[HintAnswer.Targets] = Nil,
+      tag: Option[HintAnswer.Tag] = None,
+      until: Option[HintAnswer.Until] = None,
+      untilSource: Option[HintAnswer.UntilSource] = None,
+      priority: Option[HintAnswer.Priority] = None,
+      settings: List[HintAnswer.Settings] = Nil
   ) derives KindlingsCodecAsObject
   object HintAnswer:
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Targets = Targets.T
+    object Targets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tag = Tag.T
+    object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UntilSource = UntilSource.T
+    object UntilSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Settings = Settings.T
+    object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[HintAnswer] = KindlingsSchema
       .derived[HintAnswer]
       .schema
@@ -117,5 +134,11 @@ object HintProposals:
   /** What the step checkpoints: the proposal that passed (None: nothing asked for, or nothing passed), why, and the
     * warnings.
     */
-  final case class Proposed(effect: Option[HintEffect], why: String, problems: List[String] = Nil)
+  final case class Proposed(effect: Option[HintEffect], why: Proposed.Why, problems: List[Proposed.Problems] = Nil)
       derives KindlingsCodecAsObject
+
+  object Proposed:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problems = Problems.T
+    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

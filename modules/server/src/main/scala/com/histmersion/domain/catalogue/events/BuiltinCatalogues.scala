@@ -15,8 +15,14 @@ import scala.collection.immutable.ListMap
 object BuiltinCatalogues:
 
   /** A first-party catalogue: its plugin and the name it registers. */
-  final case class Entry(plugin: String, name: String):
+  final case class Entry(plugin: Entry.Plugin, name: Entry.Name):
     def title: String = CatalogProvider.info(name).fold(name)(_.title)
+
+  object Entry:
+    type Plugin = Plugin.T
+    object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val entries: List[Entry] = List(
     Entry("events-gvp", CatalogProvider.Gvp),

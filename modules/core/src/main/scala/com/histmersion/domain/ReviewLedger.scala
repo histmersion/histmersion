@@ -64,13 +64,25 @@ object ReviewLedger:
     * citekey), or the reason a minor one is declined.
     */
   final case class Closure(
-      by: String,
-      round: Int,
-      run: String,
-      note: String = "",
-      quote: String = "",
-      citekey: Option[String] = None
+      by: Closure.By,
+      round: Closure.Round,
+      run: Closure.Run,
+      note: Closure.Note = "",
+      quote: Closure.Quote = "",
+      citekey: Option[com.histmersion.domain.library.Citekey] = None
   ) derives KindlingsCodecAsObject
+
+  object Closure:
+    type By = By.T
+    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Round = Round.T
+    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Run = Run.T
+    object Run extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One finding in the ledger. `claimed`: the fixer lists it as applied, and its reviewer has not checked it yet.
     * `notFixed`: the last check's word that it is not (or the rejection it was raised again after); `notFixedCount`:
@@ -81,15 +93,15 @@ object ReviewLedger:
     */
   final case class Entry(
       finding: Finding,
-      run: String,
-      round: Int,
+      run: Entry.Run,
+      round: Entry.Round,
       status: Status = Status.Open,
-      claimed: Boolean = false,
-      notFixed: Option[String] = None,
-      reopened: Int = 0,
+      claimed: Entry.Claimed = false,
+      notFixed: Option[Entry.NotFixed] = None,
+      reopened: Entry.Reopened = 0,
       closed: Option[Closure] = None,
-      notFixedCount: Int = 0,
-      deferred: Option[String] = None
+      notFixedCount: Entry.NotFixedCount = 0,
+      deferred: Option[Entry.Deferred] = None
   ) derives KindlingsCodecAsObject:
     def id: String = finding.id
     def open: Boolean = status == Status.Open
@@ -99,14 +111,38 @@ object ReviewLedger:
     /** Deferred by `run`'s final pass: not part of that run's verdict. */
     def deferredIn(run: String): Boolean = open && deferred.contains(run)
 
-  final case class Lesson(text: String, source: LessonSource, run: String, round: Int) derives KindlingsCodecAsObject
+  object Entry:
+    type Run = Run.T
+    object Run extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Round = Round.T
+    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Claimed = Claimed.T
+    object Claimed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotFixed = NotFixed.T
+    object NotFixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reopened = Reopened.T
+    object Reopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotFixedCount = NotFixedCount.T
+    object NotFixedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Deferred = Deferred.T
+    object Deferred extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class Lesson(text: Lesson.Text, source: LessonSource, run: Lesson.Run, round: Lesson.Round) derives KindlingsCodecAsObject
+
+  object Lesson:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Run = Run.T
+    object Run extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Round = Round.T
+    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `task`: the article's one backlog item (#934), while it has one. */
   final case class Ledger(
-      slug: String,
+      slug: Ledger.Slug,
       entries: List[Entry] = Nil,
       lessons: List[Lesson] = Nil,
-      task: Option[Int] = None
+      task: Option[Ledger.Task] = None
   ) derives KindlingsCodecAsObject:
     def open: List[Entry] = entries.filter(_.open)
     def openMajors: List[Entry] = open.filter(_.major)
@@ -115,6 +151,12 @@ object ReviewLedger:
     /** The open findings the fixer claims, of one reviewer: what its re-check verifies. */
     def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed && e.reviewer == r)
     def verdict: Verdict = Verdict.of(open.map(_.finding))
+
+  object Ledger:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Task = Task.T
+    object Task extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** At most this many lessons are kept (the newest). */
   val MaxLessons = 15
@@ -444,8 +486,14 @@ object ReviewLedger:
   /** A run of changed paragraphs of the new body (with its margin), under the heading it sits in, and the paragraphs of
     * the old body that are gone.
     */
-  final case class Passage(heading: Option[String], text: String) derives KindlingsCodecAsObject
-  final case class Edited(passages: List[Passage], removed: List[String]) derives KindlingsCodecAsObject:
+  final case class Passage(heading: Option[Passage.Heading], text: Passage.Text) derives KindlingsCodecAsObject
+
+  object Passage:
+    type Heading = Heading.T
+    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Edited(passages: List[Passage], removed: List[Edited.Removed]) derives KindlingsCodecAsObject:
     def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
     /** The text a finding's quote is looked up in (to scope it). */
@@ -457,6 +505,10 @@ object ReviewLedger:
       val rs =
         if removed.isEmpty then "" else "\n\n---\n\nRemoved:\n" + removed.map(r => s"- ${r.take(300)}").mkString("\n")
       ps + rs
+
+  object Edited:
+    type Removed = Removed.T
+    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def paragraphs(body: String): Vector[String] =
     body.replace("\r\n", "\n").split("\n[ \t]*\n").map(_.trim).filter(_.nonEmpty).toVector
@@ -526,8 +578,14 @@ object ReviewLedger:
     )
 
   /** One closed finding a revision would reopen, and why. */
-  final case class Regression(id: String, why: String) derives KindlingsCodecAsObject:
+  final case class Regression(id: Regression.Id, why: Regression.Why) derives KindlingsCodecAsObject:
     def line: String = s"$id (closed): $why"
+
+  object Regression:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** THE REGRESSION GUARD: what a revision (`before` → `after`) does to the findings the ledger has closed as fixed —
     * checked by code, before any reviewer reads it:

@@ -11,19 +11,19 @@ import scala.jdk.CollectionConverters.*
   * body, which speaks of tools by `{{tool:<name>}}` placeholder.
   */
 final case class AgentDef(
-    name: String,
-    description: String,
+    name: AgentDef.Name,
+    description: AgentDef.Description,
     role: Role,
-    skills: List[String],
-    include: List[String],
+    skills: List[AgentDef.Skills],
+    include: List[AgentDef.Include],
     tools: List[ToolName],
     web: WebAccess,
     writes: Writes,
-    maxTurns: Int,
-    answer: Option[String],
+    maxTurns: AgentDef.MaxTurns,
+    answer: Option[AgentDef.Answer],
     runtimes: Set[AgentRuntime],
     interactive: Option[InteractiveSpec],
-    body: String
+    body: AgentDef.Body
 ):
   def runsOn(r: AgentRuntime): Boolean = runtimes.contains(r)
 
@@ -44,6 +44,21 @@ final case class AgentDef(
 
 object AgentDef:
   /** `get_source` as `GetSource`. */
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Skills = Skills.T
+  object Skills extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Include = Include.T
+  object Include extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxTurns = MaxTurns.T
+  object MaxTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Answer = Answer.T
+  object Answer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def enumerated(t: ToolName): String = t.value.split('_').map(_.capitalize).mkString
 
   /** A web access as its enumeration printed it when the fingerprint was first taken (`search` as `Search`). */

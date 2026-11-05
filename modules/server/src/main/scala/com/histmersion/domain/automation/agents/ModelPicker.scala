@@ -123,7 +123,13 @@ final class ModelPicker(
   /** One allowance in effect: the parsed allowance (or why it cannot be read — then it BLOCKS what it covers: a broken
     * cap must not read as no cap) and where it comes from.
     */
-  final case class Effective(target: String, allowance: Either[String, Allowance], source: SettingSource)
+  final case class Effective(target: Effective.Target, allowance: Either[Effective.AllowancePart1, Allowance], source: SettingSource)
+
+  object Effective:
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AllowancePart1 = AllowancePart1.T
+    object AllowancePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Config's allowances with the saved ones over them (a saved target replaces config's). A config string that does
     * not parse is one problem, and caps nothing it could not read.
@@ -172,17 +178,35 @@ final class ModelPicker(
     * only when released).
     */
   final case class ModelState(
-      usable: Boolean,
-      why: Option[String],
-      freesAt: Option[Long],
-      headroomTokens: Option[Long],
+      usable: ModelState.Usable,
+      why: Option[ModelState.Why],
+      freesAt: Option[ModelState.FreesAt],
+      headroomTokens: Option[ModelState.HeadroomTokens],
       headroomUsd: Option[BigDecimal],
-      planBlocked: Boolean = false,
-      unavailable: Boolean = false,
-      refreshed: Option[String] = None,
+      planBlocked: ModelState.PlanBlocked = false,
+      unavailable: ModelState.Unavailable = false,
+      refreshed: Option[ModelState.Refreshed] = None,
       held: Option[PlanQuota.PoolId] = None,
-      cooling: Boolean = false
+      cooling: ModelState.Cooling = false
   )
+
+  object ModelState:
+    type Usable = Usable.T
+    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FreesAt = FreesAt.T
+    object FreesAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeadroomTokens = HeadroomTokens.T
+    object HeadroomTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlanBlocked = PlanBlocked.T
+    object PlanBlocked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unavailable = Unavailable.T
+    object Unavailable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refreshed = Refreshed.T
+    object Refreshed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cooling = Cooling.T
+    object Cooling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `refresh`: the caller WANTS the model (a pick), so a pool that would wait only on a stale reading, or was never
     * read, takes a fresh one first ([[PlanPools.decide]]); None = just looking.
@@ -316,7 +340,13 @@ final class ModelPicker(
   /** One model of a chain passed over for want of headroom: why, when it frees by itself (None = not by itself), and
     * the held pool it draws on, if any.
     */
-  final private case class Exhaust(model: ModelRef, text: String, freesAt: Option[Long], held: Option[PlanQuota.PoolId])
+  final private case class Exhaust(model: ModelRef, text: Exhaust.Text, freesAt: Option[Exhaust.FreesAt], held: Option[PlanQuota.PoolId])
+
+  object Exhaust:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FreesAt = FreesAt.T
+    object FreesAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── the picture (`agent models`) ───────────────────────────────────────────────────────────────
 

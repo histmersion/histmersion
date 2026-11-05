@@ -9,9 +9,13 @@ import java.time.Instant
   */
 final case class GoalRecord(
     goal: Goal,
-    plan: Option[String],
+    plan: Option[GoalRecord.Plan],
     planApprovedAt: Option[Instant],
     budgetUsd: Option[BigDecimal],
     createdAt: Instant,
     updatedAt: Instant
 )
+
+object GoalRecord:
+  type Plan = Plan.T
+  object Plan extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -478,9 +478,16 @@ object AgentsTools:
         )
     }
 
-  final case class ModelsInput(doctor: Boolean = false, offline: Boolean = false, quota: Boolean = false)
+  final case class ModelsInput(doctor: ModelsInput.Doctor = false, offline: ModelsInput.Offline = false, quota: ModelsInput.Quota = false)
       derives KindlingsCodecAsObject
   object ModelsInput:
+    type Doctor = Doctor.T
+    object Doctor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offline = Offline.T
+    object Offline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quota = Quota.T
+    object Quota extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ModelsInput] = KindlingsSchema
       .derived[ModelsInput]
       .schema
@@ -491,19 +498,42 @@ object AgentsTools:
       .modify(_.quota)(_.description("Show the subscription pools instead: windows, floors, resets, reading age, hold"))
 
   final case class SetModelsInput(
-      role: Option[String] = None,
-      models: List[String] = Nil,
-      target: Option[String] = None,
-      limits: List[String] = Nil,
-      reservePct: Int = 0,
-      reset: Boolean = false,
-      pool: Option[String] = None,
-      hold: Option[Boolean] = None,
-      floors: Option[String] = None,
-      fallthrough: Option[Boolean] = None,
-      refresh: Boolean = false
+      role: Option[SetModelsInput.Role] = None,
+      models: List[SetModelsInput.Models] = Nil,
+      target: Option[SetModelsInput.Target] = None,
+      limits: List[SetModelsInput.Limits] = Nil,
+      reservePct: SetModelsInput.ReservePct = 0,
+      reset: SetModelsInput.Reset = false,
+      pool: Option[SetModelsInput.Pool] = None,
+      hold: Option[SetModelsInput.Hold] = None,
+      floors: Option[SetModelsInput.Floors] = None,
+      fallthrough: Option[SetModelsInput.Fallthrough] = None,
+      refresh: SetModelsInput.Refresh = false
   ) derives KindlingsCodecAsObject
   object SetModelsInput:
+    type Role = Role.T
+    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Models = Models.T
+    object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limits = Limits.T
+    object Limits extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReservePct = ReservePct.T
+    object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reset = Reset.T
+    object Reset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pool = Pool.T
+    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hold = Hold.T
+    object Hold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Floors = Floors.T
+    object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fallthrough = Fallthrough.T
+    object Fallthrough extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refresh = Refresh.T
+    object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[SetModelsInput] = KindlingsSchema
       .derived[SetModelsInput]
       .schema
@@ -536,23 +566,54 @@ object AgentsTools:
       )
 
   final case class RunInput(
-      pipeline: String,
-      target: String,
-      model: Option[String] = None,
-      budgetUsd: Option[Double] = None,
-      fix: Boolean = false,
-      rounds: Option[Int] = None,
-      acquireItem: Option[Int] = None,
-      title: Option[String] = None,
-      kind: Option[String] = None,
-      query: Option[String] = None,
-      topics: List[String] = Nil,
-      tags: List[String] = Nil,
-      goal: Option[String] = None,
-      dryRun: Boolean = false,
-      modelFor: List[String] = Nil
+      pipeline: RunInput.Pipeline,
+      target: RunInput.Target,
+      model: Option[RunInput.Model] = None,
+      budgetUsd: Option[RunInput.BudgetUsd] = None,
+      fix: RunInput.Fix = false,
+      rounds: Option[RunInput.Rounds] = None,
+      acquireItem: Option[RunInput.AcquireItem] = None,
+      title: Option[RunInput.Title] = None,
+      kind: Option[RunInput.Kind] = None,
+      query: Option[RunInput.Query] = None,
+      topics: List[RunInput.Topics] = Nil,
+      tags: List[RunInput.Tags] = Nil,
+      goal: Option[RunInput.Goal] = None,
+      dryRun: RunInput.DryRun = false,
+      modelFor: List[RunInput.ModelFor] = Nil
   ) derives KindlingsCodecAsObject
   object RunInput:
+    type Pipeline = Pipeline.T
+    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetUsd = BudgetUsd.T
+    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fix = Fix.T
+    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rounds = Rounds.T
+    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AcquireItem = AcquireItem.T
+    object AcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ModelFor = ModelFor.T
+    object ModelFor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[RunInput] = KindlingsSchema
       .derived[RunInput]
       .schema
@@ -602,21 +663,21 @@ object AgentsTools:
       )
 
   final case class RunsInput(
-      id: Option[String] = None,
-      status: Option[String] = None,
-      limit: Option[Int] = None,
-      messages: Boolean = false,
-      goal: Option[String] = None,
-      compare: List[String] = Nil,
-      before: Option[String] = None,
-      manager: Option[String] = None,
-      pipeline: List[String] = Nil,
-      origin: List[String] = Nil,
-      model: List[String] = Nil,
-      provider: List[String] = Nil,
-      since: Option[String] = None,
-      until: Option[String] = None,
-      subject: Option[String] = None
+      id: Option[RunsInput.Id] = None,
+      status: Option[RunsInput.Status] = None,
+      limit: Option[RunsInput.Limit] = None,
+      messages: RunsInput.Messages = false,
+      goal: Option[RunsInput.Goal] = None,
+      compare: List[RunsInput.Compare] = Nil,
+      before: Option[RunsInput.Before] = None,
+      manager: Option[RunsInput.Manager] = None,
+      pipeline: List[RunsInput.Pipeline] = Nil,
+      origin: List[RunsInput.Origin] = Nil,
+      model: List[RunsInput.Model] = Nil,
+      provider: List[RunsInput.Provider] = Nil,
+      since: Option[RunsInput.Since] = None,
+      until: Option[RunsInput.Until] = None,
+      subject: Option[RunsInput.Subject] = None
   ) derives KindlingsCodecAsObject:
     /** The listing's filter ([[ListFilters.RunFilter]]): `status` and `manager` may be comma-separated. */
     def filter: ListFilters.RunFilter =
@@ -633,6 +694,37 @@ object AgentsTools:
         subject
       )
   object RunsInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Messages = Messages.T
+    object Messages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Compare = Compare.T
+    object Compare extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Before = Before.T
+    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Manager = Manager.T
+    object Manager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pipeline = Pipeline.T
+    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Origin = Origin.T
+    object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provider = Provider.T
+    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[RunsInput] = KindlingsSchema
       .derived[RunsInput]
       .schema
@@ -662,13 +754,24 @@ object AgentsTools:
       .modify(_.before)(_.description("Listing: the next older page — the id of the last run shown"))
 
   final case class GoalLinkInput(
-      goal: String,
-      kind: String,
-      ref: String,
-      note: Option[String] = None,
-      remove: Boolean = false
+      goal: GoalLinkInput.Goal,
+      kind: GoalLinkInput.Kind,
+      ref: GoalLinkInput.Ref,
+      note: Option[GoalLinkInput.Note] = None,
+      remove: GoalLinkInput.Remove = false
   ) derives KindlingsCodecAsObject
   object GoalLinkInput:
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ref = Ref.T
+    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Remove = Remove.T
+    object Remove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[GoalLinkInput] = KindlingsSchema
       .derived[GoalLinkInput]
       .schema
@@ -679,14 +782,27 @@ object AgentsTools:
       .modify(_.remove)(_.description("Unlink instead of link"))
 
   final case class ScheduleInput(
-      goal: Option[String] = None,
-      kind: Option[String] = None,
-      cron: Option[String] = None,
-      enabled: Boolean = true,
-      budgetUsd: Option[Double] = None,
-      remove: Boolean = false
+      goal: Option[ScheduleInput.Goal] = None,
+      kind: Option[ScheduleInput.Kind] = None,
+      cron: Option[ScheduleInput.Cron] = None,
+      enabled: ScheduleInput.Enabled = true,
+      budgetUsd: Option[ScheduleInput.BudgetUsd] = None,
+      remove: ScheduleInput.Remove = false
   ) derives KindlingsCodecAsObject
   object ScheduleInput:
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Enabled = Enabled.T
+    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetUsd = BudgetUsd.T
+    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Remove = Remove.T
+    object Remove extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ScheduleInput] = KindlingsSchema
       .derived[ScheduleInput]
       .schema
@@ -702,17 +818,34 @@ object AgentsTools:
       .modify(_.remove)(_.description("Delete the schedule"))
 
   final case class ApprovalsInput(
-      state: Option[String] = None,
-      limit: Option[Int] = None,
-      before: Option[String] = None,
-      kind: List[String] = Nil,
-      subject: Option[String] = None,
-      goal: Option[String] = None,
-      decidedBy: List[String] = Nil,
-      digest: Boolean = false
+      state: Option[ApprovalsInput.State] = None,
+      limit: Option[ApprovalsInput.Limit] = None,
+      before: Option[ApprovalsInput.Before] = None,
+      kind: List[ApprovalsInput.Kind] = Nil,
+      subject: Option[ApprovalsInput.Subject] = None,
+      goal: Option[ApprovalsInput.Goal] = None,
+      decidedBy: List[ApprovalsInput.DecidedBy] = Nil,
+      digest: ApprovalsInput.Digest = false
   ) derives KindlingsCodecAsObject:
     def filter: ListFilters.ApprovalFilter = ListFilters.ApprovalFilter(state, kind, subject, goal, decidedBy)
   object ApprovalsInput:
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Before = Before.T
+    object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DecidedBy = DecidedBy.T
+    object DecidedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Digest = Digest.T
+    object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ApprovalsInput] = KindlingsSchema
       .derived[ApprovalsInput]
       .schema
@@ -733,16 +866,33 @@ object AgentsTools:
       )
 
   final case class DecideInput(
-      id: Option[Long] = None,
-      decision: String,
-      note: Option[String] = None,
-      kind: Option[String] = None,
-      subject: Option[String] = None,
-      ids: List[Long] = Nil,
-      dryRun: Boolean = false,
-      limit: Option[Int] = None
+      id: Option[DecideInput.Id] = None,
+      decision: DecideInput.Decision,
+      note: Option[DecideInput.Note] = None,
+      kind: Option[DecideInput.Kind] = None,
+      subject: Option[DecideInput.Subject] = None,
+      ids: List[DecideInput.Ids] = Nil,
+      dryRun: DecideInput.DryRun = false,
+      limit: Option[DecideInput.Limit] = None
   ) derives KindlingsCodecAsObject
   object DecideInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Decision = Decision.T
+    object Decision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ids = Ids.T
+    object Ids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[DecideInput] = KindlingsSchema
       .derived[DecideInput]
       .schema
@@ -758,13 +908,24 @@ object AgentsTools:
       .modify(_.limit)(_.description("A group: at most this many, the oldest first"))
 
   final case class SchedulerInput(
-      action: String = "status",
-      item: Option[String] = None,
-      strategy: Option[String] = None,
-      limit: Option[Int] = None,
-      days: Option[Int] = None
+      action: SchedulerInput.Action = "status",
+      item: Option[SchedulerInput.Item] = None,
+      strategy: Option[SchedulerInput.Strategy] = None,
+      limit: Option[SchedulerInput.Limit] = None,
+      days: Option[SchedulerInput.Days] = None
   ) derives KindlingsCodecAsObject
   object SchedulerInput:
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Item = Item.T
+    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Strategy = Strategy.T
+    object Strategy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Days = Days.T
+    object Days extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[SchedulerInput] = KindlingsSchema
       .derived[SchedulerInput]
       .schema
@@ -777,28 +938,67 @@ object AgentsTools:
       .modify(_.limit)(_.description("status, queue: how many waiting items to show (default 50; queue 200)"))
 
   final case class ManagerInput(
-      action: String = "list",
-      id: Option[String] = None,
-      target: Option[String] = None,
-      text: Option[String] = None,
-      item: Option[String] = None,
-      once: Boolean = false,
-      runs: Boolean = false,
-      priority: Option[Int] = None,
-      until: Option[String] = None,
-      untilSource: Option[String] = None,
-      kind: Option[String] = None,
-      goal: Option[String] = None,
-      cron: Option[String] = None,
+      action: ManagerInput.Action = "list",
+      id: Option[ManagerInput.Id] = None,
+      target: Option[ManagerInput.Target] = None,
+      text: Option[ManagerInput.Text] = None,
+      item: Option[ManagerInput.Item] = None,
+      once: ManagerInput.Once = false,
+      runs: ManagerInput.Runs = false,
+      priority: Option[ManagerInput.Priority] = None,
+      until: Option[ManagerInput.Until] = None,
+      untilSource: Option[ManagerInput.UntilSource] = None,
+      kind: Option[ManagerInput.Kind] = None,
+      goal: Option[ManagerInput.Goal] = None,
+      cron: Option[ManagerInput.Cron] = None,
       effect: Option[Managers.HintEffect] = None,
-      suggest: Boolean = false,
-      on: Option[Boolean] = None,
-      dryRun: Boolean = false,
-      focus: Option[String] = None,
-      value: Option[Int] = None,
-      mode: Option[String] = None
+      suggest: ManagerInput.Suggest = false,
+      on: Option[ManagerInput.On] = None,
+      dryRun: ManagerInput.DryRun = false,
+      focus: Option[ManagerInput.Focus] = None,
+      value: Option[ManagerInput.Value] = None,
+      mode: Option[ManagerInput.Mode] = None
   ) derives KindlingsCodecAsObject
   object ManagerInput:
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Item = Item.T
+    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Once = Once.T
+    object Once extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Runs = Runs.T
+    object Runs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UntilSource = UntilSource.T
+    object UntilSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Goal = Goal.T
+    object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cron = Cron.T
+    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Suggest = Suggest.T
+    object Suggest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type On = On.T
+    object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Focus = Focus.T
+    object Focus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mode = Mode.T
+    object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[ManagerInput] = KindlingsSchema
       .derived[ManagerInput]
       .schema

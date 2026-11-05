@@ -227,19 +227,51 @@ object PlanGoalPipeline:
 
   /** The goal as the planner sees it (checkpointed). `tags0` = the corpus's tags (`tags` are the goal's). */
   final case class Loaded(
-      slug: String,
-      title: String,
-      notes: Option[String],
-      tags: List[String],
-      regions: List[String],
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
-      children: List[String],
-      queries: List[String],
-      linked: List[String],
-      topics: List[String],
-      tags0: List[String]
+      slug: Loaded.Slug,
+      title: Loaded.Title,
+      notes: Option[Loaded.Notes],
+      tags: List[Loaded.Tags],
+      regions: List[Loaded.Regions],
+      periodStart: Option[com.histmersion.Year],
+      periodEnd: Option[com.histmersion.Year],
+      children: List[Loaded.Children],
+      queries: List[Loaded.Queries],
+      linked: List[Loaded.Linked],
+      topics: List[Loaded.Topics],
+      tags0: List[Loaded.Tags0]
   ) derives KindlingsCodecAsObject
 
+  object Loaded:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Children = Children.T
+    object Children extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queries = Queries.T
+    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Linked = Linked.T
+    object Linked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags0 = Tags0.T
+    object Tags0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** What applying the plan did. */
-  final case class Applied(line: String, created: Int, linked: Int, queued: Int) derives KindlingsCodecAsObject
+  final case class Applied(line: Applied.Line, created: Applied.Created, linked: Applied.Linked, queued: Applied.Queued) derives KindlingsCodecAsObject
+
+  object Applied:
+    type Line = Line.T
+    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Created = Created.T
+    object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Linked = Linked.T
+    object Linked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queued = Queued.T
+    object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

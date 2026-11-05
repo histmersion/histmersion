@@ -82,38 +82,70 @@ import com.histmersion.api.exchange.Bundle
 object MergePlanner:
 
   /** One row of `merge_ledger`: the foreign rev merged, the local uid it maps to, the local rev left. */
-  final case class LedgerEntry(foreignRev: String, localUid: UUID, localRevAfter: Option[String])
+  final case class LedgerEntry(foreignRev: LedgerEntry.ForeignRev, localUid: UUID, localRevAfter: Option[LedgerEntry.LocalRevAfter])
+
+  object LedgerEntry:
+    type ForeignRev = ForeignRev.T
+    object ForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LocalRevAfter = LocalRevAfter.T
+    object LocalRevAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Who has which label here: citekeys and old citekeys (aliases) → source uid; finding ids, article slugs, event ids,
     * goal slugs → uid; (source uid, asset name) → asset uid.
     */
   final case class Labels(
-      citekeys: Map[String, UUID] = Map.empty,
-      aliases: Map[String, UUID] = Map.empty,
-      findings: Map[String, UUID] = Map.empty,
-      slugs: Map[String, UUID] = Map.empty,
-      events: Map[String, UUID] = Map.empty,
-      goals: Map[String, UUID] = Map.empty,
-      assets: Map[(UUID, String), UUID] = Map.empty,
+      citekeys: Map[Labels.CitekeysKey, UUID] = Map.empty,
+      aliases: Map[Labels.AliasesKey, UUID] = Map.empty,
+      findings: Map[Labels.FindingsKey, UUID] = Map.empty,
+      slugs: Map[Labels.SlugsKey, UUID] = Map.empty,
+      events: Map[Labels.EventsKey, UUID] = Map.empty,
+      goals: Map[Labels.GoalsKey, UUID] = Map.empty,
+      assets: Map[(UUID, Labels.AssetsKeyPart2), UUID] = Map.empty,
       /** Old article slugs here (`article_aliases`) → the article's uid. */
-      articleAliases: Map[String, UUID] = Map.empty,
+      articleAliases: Map[Labels.ArticleAliasesKey, UUID] = Map.empty,
       /** Old event ids and goal slugs here (V053) → the record's uid. */
-      eventAliases: Map[String, UUID] = Map.empty,
-      goalAliases: Map[String, UUID] = Map.empty,
+      eventAliases: Map[Labels.EventAliasesKey, UUID] = Map.empty,
+      goalAliases: Map[Labels.GoalAliasesKey, UUID] = Map.empty,
       /** Place ids here among the names the bundle uses (its places' ids and old ids) → uid, and the old place ids here
         * (V055) → the place's uid.
         */
-      places: Map[String, UUID] = Map.empty,
-      placeAliases: Map[String, UUID] = Map.empty
+      places: Map[Labels.PlacesKey, UUID] = Map.empty,
+      placeAliases: Map[Labels.PlaceAliasesKey, UUID] = Map.empty
   )
+
+  object Labels:
+    type CitekeysKey = CitekeysKey.T
+    object CitekeysKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AliasesKey = AliasesKey.T
+    object AliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FindingsKey = FindingsKey.T
+    object FindingsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SlugsKey = SlugsKey.T
+    object SlugsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EventsKey = EventsKey.T
+    object EventsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GoalsKey = GoalsKey.T
+    object GoalsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AssetsKeyPart2 = AssetsKeyPart2.T
+    object AssetsKeyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArticleAliasesKey = ArticleAliasesKey.T
+    object ArticleAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EventAliasesKey = EventAliasesKey.T
+    object EventAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GoalAliasesKey = GoalAliasesKey.T
+    object GoalAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlacesKey = PlacesKey.T
+    object PlacesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceAliasesKey = PlaceAliasesKey.T
+    object PlaceAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Input(
       manifest: com.histmersion.api.exchange.Bundle.Manifest,
       here: com.histmersion.api.exchange.Bundle.Instance,
       /** Format and schema against this server (`BundleFormat.compatible`). */
-      compat: List[String],
+      compat: List[Input.Compat],
       /** What reading the bundle found wrong (bad lines, checksums, missing blobs). */
-      readProblems: List[String],
+      readProblems: List[Input.ReadProblems],
       foreign: BundleEntities,
       uidAliases: Map[UUID, UUID],
       ledger: Map[UUID, LedgerEntry],
@@ -129,29 +161,29 @@ object MergePlanner:
       /** Uids alive here, among those the bundle's lines refer to. */
       live: Set[UUID],
       /** Gazetteer ids present here, among those the bundle's events name. */
-      places: Set[String],
+      places: Set[Input.Places],
       reference: com.histmersion.api.exchange.Bundle.Reference,
       /** Old citekeys dropped here by renaming back (V050), with when — ISO-8601 UTC, as bundle timestamps are written,
         * so the two compare as strings.
         */
-      aliasTombstones: Map[String, String] = Map.empty,
+      aliasTombstones: Map[Input.AliasTombstonesKey, Input.AliasTombstonesValue] = Map.empty,
       /** OCR bodies (sha256 → text) of the pairs whose attestations must be re-anchored ([[bodiesWanted]]).
         */
-      bodies: Map[String, String] = Map.empty,
+      bodies: Map[Input.BodiesKey, Input.BodiesValue] = Map.empty,
       /** This collection's recorded versions of its articles (article uid → (sha256, body)), newest first: where a
         * common base for a three-way merge is looked for.
         */
-      articleHistory: Map[UUID, List[(String, String)]] = Map.empty,
+      articleHistory: Map[UUID, List[(Input.ArticleHistoryValuePart1, Input.ArticleHistoryValuePart2)]] = Map.empty,
       /** Decisions an earlier `merge apply` carried out, by issue id (`merge_decisions`). */
-      remembered: Map[String, MergeDecision] = Map.empty,
+      remembered: Map[Input.RememberedKey, MergeDecision] = Map.empty,
       /** `limits.chunk-chars`: to place a re-anchored attestation in its FTS chunk (0 leaves it unplaced). */
-      chunkChars: Int = 0,
+      chunkChars: Input.ChunkChars = 0,
       /** A bundle place (by uid) whose id is not here, but whose label and geometry name a place here (the database
         * compares the geometries): that place's id.
         */
-      placeMatches: Map[UUID, String] = Map.empty,
+      placeMatches: Map[UUID, Input.PlaceMatchesValue] = Map.empty,
       /** Likewise for a named period: the same label and an overlapping span. */
-      periodMatches: Map[UUID, String] = Map.empty
+      periodMatches: Map[UUID, Input.PeriodMatchesValue] = Map.empty
   ):
     def ownBundle: Boolean = manifest.instance.id == here.id
 
@@ -159,18 +191,58 @@ object MergePlanner:
     def fromLabel: String =
       manifest.instance.label.map(_.trim).filter(_.nonEmpty).getOrElse(manifest.instance.id.toString.take(8))
 
+  object Input:
+    type Compat = Compat.T
+    object Compat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadProblems = ReadProblems.T
+    object ReadProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Places = Places.T
+    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AliasTombstonesKey = AliasTombstonesKey.T
+    object AliasTombstonesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AliasTombstonesValue = AliasTombstonesValue.T
+    object AliasTombstonesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BodiesKey = BodiesKey.T
+    object BodiesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BodiesValue = BodiesValue.T
+    object BodiesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArticleHistoryValuePart1 = ArticleHistoryValuePart1.T
+    object ArticleHistoryValuePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArticleHistoryValuePart2 = ArticleHistoryValuePart2.T
+    object ArticleHistoryValuePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RememberedKey = RememberedKey.T
+    object RememberedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChunkChars = ChunkChars.T
+    object ChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceMatchesValue = PlaceMatchesValue.T
+    object PlaceMatchesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodMatchesValue = PeriodMatchesValue.T
+    object PeriodMatchesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** A line's fate, for the importer: its uid in the bundle and here, its revs, the decision. */
   final case class Row(
       kind: Bundle.Kind,
       foreignUid: UUID,
       uid: UUID,
-      label: String,
-      foreignRev: String,
-      localizedRev: String,
-      localRev: Option[String],
+      label: Row.Label,
+      foreignRev: Row.ForeignRev,
+      localizedRev: Row.LocalizedRev,
+      localRev: Option[Row.LocalRev],
       decision: Decision,
-      tombstone: Boolean
+      tombstone: Row.Tombstone
   )
+
+  object Row:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ForeignRev = ForeignRev.T
+    object ForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LocalizedRev = LocalizedRev.T
+    object LocalizedRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LocalRev = LocalRev.T
+    object LocalRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tombstone = Tombstone.T
+    object Tombstone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A record of the bundle folded into one here: its uid becomes a redirect (`uid_aliases`). */
   final case class Fold(kind: Bundle.Kind, foreignUid: UUID, localUid: UUID)
@@ -178,18 +250,32 @@ object MergePlanner:
   /** One of THIS collection's attestations, moved because the merge keeps the bundle's body: its new place, or `None`
     * (kept without a place — `keep-unanchored`); `drop` deletes it.
     */
-  final case class AttestationFix(uid: UUID, anchor: Option[Anchor], chunkOrd: Option[Int], drop: Boolean)
+  final case class AttestationFix(uid: UUID, anchor: Option[Anchor], chunkOrd: Option[AttestationFix.ChunkOrd], drop: AttestationFix.Drop)
+
+  object AttestationFix:
+    type ChunkOrd = ChunkOrd.T
+    object ChunkOrd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Drop = Drop.T
+    object Drop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A version to record for an article here: the bundle's text, so the next merge finds it in this collection's
     * history (a common base).
     */
-  final case class ExtraVersion(articleUid: UUID, body: String, summary: Option[String], versionOf: String)
+  final case class ExtraVersion(articleUid: UUID, body: ExtraVersion.Body, summary: Option[ExtraVersion.Summary], versionOf: ExtraVersion.VersionOf)
+
+  object ExtraVersion:
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type VersionOf = VersionOf.T
+    object VersionOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What `merge apply` does besides writing the decided lines. */
   final case class Apply(
       folds: List[Fold] = Nil,
       /** Sources here given another citekey first (`rename-left`): uid, old, new. */
-      renames: List[(UUID, String, String)] = Nil,
+      renames: List[(UUID, Apply.RenamesPart2, Apply.RenamesPart3)] = Nil,
       /** Articles here whose current text is recorded as a version before the merge replaces it. */
       snapshots: Set[UUID] = Set.empty,
       versions: List[ExtraVersion] = Nil,
@@ -203,11 +289,11 @@ object MergePlanner:
       /** Asset references to rewrite in a body the merge takes from the bundle: source uid → (old name, new name), for
         * its figures renamed because the name was taken.
         */
-      bodyRenames: Map[UUID, List[(String, String)]] = Map.empty,
+      bodyRenames: Map[UUID, List[(Apply.BodyRenamesValuePart1, Apply.BodyRenamesValuePart2)]] = Map.empty,
       /** Articles (their slugs as they will be) to queue for `/review-article`. */
-      reviews: List[String] = Nil,
+      reviews: List[Apply.Reviews] = Nil,
       /** The decisions to remember for the next plan (an issue id → its decision). */
-      remember: List[(String, MergeDecision)] = Nil,
+      remember: List[(Apply.RememberPart1, MergeDecision)] = Nil,
       /** The rows here whose new content the merge made (a fold, a three-way merge): their change clock moves to the
         * moment of the apply, so the next export carries them.
         */
@@ -215,19 +301,41 @@ object MergePlanner:
       tally: MergeTally = MergeTally()
   )
 
+  object Apply:
+    type RenamesPart2 = RenamesPart2.T
+    object RenamesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenamesPart3 = RenamesPart3.T
+    object RenamesPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BodyRenamesValuePart1 = BodyRenamesValuePart1.T
+    object BodyRenamesValuePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BodyRenamesValuePart2 = BodyRenamesValuePart2.T
+    object BodyRenamesValuePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reviews = Reviews.T
+    object Reviews extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RememberPart1 = RememberPart1.T
+    object RememberPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Result(
       plan: MergePlan,
       /** The bundle in this collection's uids and labels, folded records already merged. */
       localized: BundleEntities,
       rows: List[Row],
       /** What an import cannot carry out (it needs `merge apply`), one line each. */
-      needsApply: List[String],
+      needsApply: List[Result.NeedsApply],
       /** Old citekeys of the bundle not to import (a resolved alias conflict, or one dropped here). */
-      skipAliases: Set[String],
+      skipAliases: Set[Result.SkipAliases],
       /** Optional links the import leaves out, and other notes for the import report. */
-      notes: List[String],
+      notes: List[Result.Notes],
       apply: Apply = Apply()
   )
+
+  object Result:
+    type NeedsApply = NeedsApply.T
+    object NeedsApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SkipAliases = SkipAliases.T
+    object SkipAliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── identity ────────────────────────────────────────────────────────────────────────────────
 

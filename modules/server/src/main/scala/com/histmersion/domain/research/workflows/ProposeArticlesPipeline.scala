@@ -202,22 +202,54 @@ object ProposeArticlesPipeline:
   val OverlapCap = 1000
 
   /** An article of the area (linked to the goal, or planned by its seeding manager). */
-  final case class Existing(slug: String, title: String, filter: Option[Article.Filter], cited: List[String])
+  final case class Existing(slug: Existing.Slug, title: Existing.Title, filter: Option[Article.Filter], cited: List[Existing.Cited])
       derives KindlingsCodecAsObject
+
+  object Existing:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cited = Cited.T
+    object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The area as the planner sees it (checkpointed). `tags0` = the corpus's tags. */
   final case class Loaded(
-      slug: String,
-      title: String,
-      notes: Option[String],
-      tags: List[String],
-      regions: List[String],
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
+      slug: Loaded.Slug,
+      title: Loaded.Title,
+      notes: Option[Loaded.Notes],
+      tags: List[Loaded.Tags],
+      regions: List[Loaded.Regions],
+      periodStart: Option[com.histmersion.Year],
+      periodEnd: Option[com.histmersion.Year],
       articles: List[Existing],
-      queries: List[String],
-      topics: List[String],
-      tags0: List[String]
+      queries: List[Loaded.Queries],
+      topics: List[Loaded.Topics],
+      tags0: List[Loaded.Tags0]
   ) derives KindlingsCodecAsObject
 
-  final case class Recorded(approval: Option[Long], line: String) derives KindlingsCodecAsObject
+  object Loaded:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Queries = Queries.T
+    object Queries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags0 = Tags0.T
+    object Tags0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class Recorded(approval: Option[Recorded.Approval], line: Recorded.Line) derives KindlingsCodecAsObject
+
+  object Recorded:
+    type Approval = Approval.T
+    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Line = Line.T
+    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

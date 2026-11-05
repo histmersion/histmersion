@@ -14,24 +14,41 @@ import java.time.temporal.ChronoUnit
   */
 final case class AutomationState(
     autopilot: Option[AutopilotRowState],
-    goals: Map[String, GoalRecord],
+    goals: Map[AutomationState.GoalsKey, GoalRecord],
     links: Vector[GoalLinkRecord],
     schedules: Vector[GoalScheduleRecord],
-    focus: Map[String, FocusRecord],
+    focus: Map[AutomationState.FocusKey, FocusRecord],
     approvals: Vector[ApprovalRecord],
-    lastApprovalId: Long,
+    lastApprovalId: AutomationState.LastApprovalId,
     steps: Vector[StepRecordState],
     messages: Vector[MessageRecordState],
     managers: Vector[ManagerRecord],
     items: Vector[ManagerItemRecord],
-    lastItemId: Long,
+    lastItemId: AutomationState.LastItemId,
     events: Vector[ManagerEventRecord],
-    lastEventId: Long,
-    goalAliases: Map[String, String] = Map.empty,
-    agentState: Map[String, com.histmersion.domain.automation.agents.AgentStateRecord] = Map.empty
+    lastEventId: AutomationState.LastEventId,
+    goalAliases: Map[AutomationState.GoalAliasesKey, AutomationState.GoalAliasesValue] = Map.empty,
+    agentState: Map[AutomationState.AgentStateKey, com.histmersion.domain.automation.agents.AgentStateRecord] = Map.empty
 )
 
 object AutomationState:
+  type GoalsKey = GoalsKey.T
+  object GoalsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusKey = FocusKey.T
+  object FocusKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastApprovalId = LastApprovalId.T
+  object LastApprovalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastItemId = LastItemId.T
+  object LastItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastEventId = LastEventId.T
+  object LastEventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalAliasesKey = GoalAliasesKey.T
+  object GoalAliasesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalAliasesValue = GoalAliasesValue.T
+  object GoalAliasesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgentStateKey = AgentStateKey.T
+  object AgentStateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import hearth.kindlings.optics.syntax.*
 
   def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => Boolean)(make: Long => ApprovalRecord): Option[Long] =

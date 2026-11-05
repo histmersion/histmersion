@@ -15,11 +15,18 @@ object CorrectionsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class EventCorrectionsInput(
-      status: Option[String] = None,
-      id: Option[String] = None,
-      limit: Option[Int] = None
+      status: Option[EventCorrectionsInput.Status] = None,
+      id: Option[EventCorrectionsInput.Id] = None,
+      limit: Option[EventCorrectionsInput.Limit] = None
   ) derives KindlingsCodecAsObject
   object EventCorrectionsInput:
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[EventCorrectionsInput] = KindlingsSchema
       .derived[EventCorrectionsInput]
       .schema

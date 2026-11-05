@@ -31,7 +31,15 @@ object IngestBacklog:
     math.max(0, math.min(mine, all))
 
   /** One pending backlog item, as the drain sees it. */
-  final case class Entry(id: Long, managerId: String, priority: Int, notBefore: Option[Instant])
+  final case class Entry(id: Entry.Id, managerId: Entry.ManagerId, priority: Entry.Priority, notBefore: Option[Instant])
+
+  object Entry:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManagerId = ManagerId.T
+    object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Priority = Priority.T
+    object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The backlog items to ingest now, in order: the due ones (`notBefore` passed), highest priority first, then the
     * oldest; each within what is left of its watcher's own allowance today (`ownLeft`; a watcher missing there —
@@ -97,7 +105,15 @@ object IngestBacklog:
       else Failure.Retry(now.plus(ManagerPolicy.backoff(backoffMinutes, maxBackoffMinutes, n)), n, why)
 
   /** One watcher's share of the drain: its backlog, its own daily cap, and what is left of it today. */
-  final case class Lane(backlog: Int, perDay: Int, leftToday: Int)
+  final case class Lane(backlog: Lane.Backlog, perDay: Lane.PerDay, leftToday: Lane.LeftToday)
+
+  object Lane:
+    type Backlog = Backlog.T
+    object Backlog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PerDay = PerDay.T
+    object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftToday = LeftToday.T
+    object LeftToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How many more UTC days the backlogs take to drain at the current allowance: 0 = today, None = never (no cap leaves
     * room). Day by day: each lane takes up to what its own cap leaves (today: `leftToday`, then `perDay`), the largest
@@ -138,14 +154,28 @@ object IngestBacklog:
     * holding the DOI now, if any.
     */
   final case class RepairFacts(
-      item: Int,
-      doi: String,
-      isOa: Boolean,
-      watcher: String,
-      watcherExists: Boolean,
-      watcherAutoIngest: Boolean,
-      inCorpus: Option[String]
+      item: RepairFacts.Item,
+      doi: com.histmersion.domain.library.Doi,
+      isOa: RepairFacts.IsOa,
+      watcher: RepairFacts.Watcher,
+      watcherExists: RepairFacts.WatcherExists,
+      watcherAutoIngest: RepairFacts.WatcherAutoIngest,
+      inCorpus: Option[RepairFacts.InCorpus]
   )
+
+  object RepairFacts:
+    type Item = Item.T
+    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsOa = IsOa.T
+    object IsOa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Watcher = Watcher.T
+    object Watcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WatcherExists = WatcherExists.T
+    object WatcherExists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WatcherAutoIngest = WatcherAutoIngest.T
+    object WatcherAutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InCorpus = InCorpus.T
+    object InCorpus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum RepairAction:
     /** Into the watcher's ingest backlog; the acquisition item leaves the list. */

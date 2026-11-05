@@ -11,12 +11,12 @@ import scala.concurrent.duration.*
   * (tracing, the run's budget).
   */
 final case class LlmCall[Out](
-    system: String,
-    user: String,
+    system: LlmCall.System,
+    user: LlmCall.User,
     tools: List[AgentTool[Identity, ?]],
     schema: ResponseSchema[Out],
-    maxIterations: Int,
-    maxTokens: Int,
+    maxIterations: LlmCall.MaxIterations,
+    maxTokens: LlmCall.MaxTokens,
     interceptors: List[AgentInterceptor[Identity]] = Nil,
     /** The canonical definition this call runs as: a CLI runtime launches it by name (the generated agent carries the
       * same prompt, rendered for that runtime), and a run token is bound to it.
@@ -25,3 +25,13 @@ final case class LlmCall[Out](
     /** The run and step the call belongs to (None: a probe outside any run). */
     scope: Option[RunScope] = None
 )
+
+object LlmCall:
+  type System = System.T
+  object System extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type User = User.T
+  object User extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxIterations = MaxIterations.T
+  object MaxIterations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxTokens = MaxTokens.T
+  object MaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

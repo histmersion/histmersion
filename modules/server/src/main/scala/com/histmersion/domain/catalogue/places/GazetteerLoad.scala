@@ -42,9 +42,13 @@ object GazetteerLoad:
       extracts: Store,
       legacy: Option[Store],
       lpf: Store,
-      manifestAt: String,
+      manifestAt: Stores.ManifestAt,
       manifestText: () => Either[String, String]
   )
+
+  object Stores:
+    type ManifestAt = ManifestAt.T
+    object ManifestAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
   def locate(p: Stores, file: String): Option[(Store, Store.Key)] =
@@ -213,14 +217,30 @@ object GazetteerLoad:
     */
   final case class Settings(
       stores: Stores,
-      batch: Int,
-      maxLpfBytes: Long,
-      downloadTimeoutSeconds: Int,
-      toleranceKm: Double,
-      rebuild: Boolean = true,
-      openStartWindowYears: Int = Gazetteer.DefaultOpenStartWindowYears,
-      pointAreaKinds: Set[String] = Gazetteer.DefaultPointAreaKinds.toSet
+      batch: Settings.Batch,
+      maxLpfBytes: Settings.MaxLpfBytes,
+      downloadTimeoutSeconds: Settings.DownloadTimeoutSeconds,
+      toleranceKm: Settings.ToleranceKm,
+      rebuild: Settings.Rebuild = true,
+      openStartWindowYears: Settings.OpenStartWindowYears = Gazetteer.DefaultOpenStartWindowYears,
+      pointAreaKinds: Set[Settings.PointAreaKinds] = Gazetteer.DefaultPointAreaKinds.toSet
   )
+
+  object Settings:
+    type Batch = Batch.T
+    object Batch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxLpfBytes = MaxLpfBytes.T
+    object MaxLpfBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DownloadTimeoutSeconds = DownloadTimeoutSeconds.T
+    object DownloadTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToleranceKm = ToleranceKm.T
+    object ToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rebuild = Rebuild.T
+    object Rebuild extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenStartWindowYears = OpenStartWindowYears.T
+    object OpenStartWindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointAreaKinds = PointAreaKinds.T
+    object PointAreaKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def settings(cfg: AppConfig, stores: Stores): Settings =
     Settings(

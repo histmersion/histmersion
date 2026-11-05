@@ -92,10 +92,18 @@ object MergeText:
     * surname is known (`Surname, Given`) or guessed (`Given Surname`, where a multi-word surname cannot be told from a
     * middle name).
     */
-  final case class Person(surname: List[String], forenames: List[String], surnameKnown: Boolean):
+  final case class Person(surname: List[Person.Surname], forenames: List[Person.Forenames], surnameKnown: Person.SurnameKnown):
     /** The surname as one key (`lopezruiz`). */
     def key: String = surname.mkString
     def all: List[String] = forenames ++ surname
+
+  object Person:
+    type Surname = Surname.T
+    object Surname extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Forenames = Forenames.T
+    object Forenames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SurnameKnown = SurnameKnown.T
+    object SurnameKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Words that belong to a surname when they come before it (`van`, `de la`). */
   private val particles: Set[String] =

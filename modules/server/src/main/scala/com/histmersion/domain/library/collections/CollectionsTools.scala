@@ -22,20 +22,44 @@ object CollectionsTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class CollectionInput(
-      action: String,
-      name: Option[String] = None,
-      query: Option[String] = None,
-      id: Option[String] = None,
-      citekey: Option[String] = None,
-      format: Option[String] = None,
-      limit: Option[Int] = None,
-      unlinked: Boolean = false,
-      convert: Boolean = true,
-      replace: Boolean = false,
-      apply: Boolean = false,
-      fields: List[String] = Nil
+      action: CollectionInput.Action,
+      name: Option[CollectionInput.Name] = None,
+      query: Option[CollectionInput.Query] = None,
+      id: Option[CollectionInput.Id] = None,
+      citekey: Option[com.histmersion.domain.library.Citekey] = None,
+      format: Option[CollectionInput.Format] = None,
+      limit: Option[CollectionInput.Limit] = None,
+      unlinked: CollectionInput.Unlinked = false,
+      convert: CollectionInput.Convert = true,
+      replace: CollectionInput.Replace = false,
+      apply: CollectionInput.Apply = false,
+      fields: List[CollectionInput.Fields] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object CollectionInput:
+    type Action = Action.T
+    object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Format = Format.T
+    object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unlinked = Unlinked.T
+    object Unlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Convert = Convert.T
+    object Convert extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Replace = Replace.T
+    object Replace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Apply = Apply.T
+    object Apply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fields = Fields.T
+    object Fields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   def apply(c: CollectionsControllers) =
