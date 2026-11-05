@@ -51,18 +51,18 @@ object EventLinkService:
       extends EventLinkService:
     def candidates(id: String, withRejected: Boolean): List[EventLinkCandidate] =
       state.get.candidates
-        .filter(c => c.eventId == id && (withRejected || c.status != Event.LinkStatus.Rejected))
-        .flatMap(c => title(c.citekey).map(t => c.modify(_.title).setTo(t)))
-        .sortBy(c => (c.status != Event.LinkStatus.Confirmed, -c.score, c.citekey))
+        .filter(c => c.eventId == com.histmersion.api.catalogue.Event.Id(id) && (withRejected || c.status != Event.LinkStatus.Rejected))
+        .flatMap(c => title(c.citekey.value).map(t => c.modify(_.title).setTo(t)))
+        .sortBy(c => (c.status != Event.LinkStatus.Confirmed, -c.score, c.citekey.value.toString))
         .toList
 
     def saveCandidates(id: String, cs: List[EventLinkCandidate]): Unit =
       val _ = state.updateAndGet { s =>
-        val kept = s.candidates.filterNot(c => c.eventId == id && c.status == Event.LinkStatus.Proposed)
+        val kept = s.candidates.filterNot(c => c.eventId == com.histmersion.api.catalogue.Event.Id(id) && c.status == Event.LinkStatus.Proposed)
         @tailrec def loop(rest: List[EventLinkCandidate], acc: Vector[EventLinkCandidate]): Vector[EventLinkCandidate] =
           rest match
             case c :: tail =>
-              val decided = acc.indexWhere(o => o.eventId == id && o.citekey == c.citekey)
+              val decided = acc.indexWhere(o => o.eventId == com.histmersion.api.catalogue.Event.Id(id) && o.citekey == c.citekey)
               val next =
                 if decided >= 0 then
                   acc.updated(
@@ -77,7 +77,7 @@ object EventLinkService:
                       .modify(_.reasons)
                       .setTo(c.reasons)
                   )
-                else acc :+ c.modify(_.eventId).setTo(id).modify(_.status).setTo(Event.LinkStatus.Proposed)
+                else acc :+ c.modify(_.eventId).setTo(com.histmersion.api.catalogue.Event.Id(id)).modify(_.status).setTo(Event.LinkStatus.Proposed)
               loop(tail, next)
             case Nil => acc
         val written = loop(cs, kept)
@@ -85,10 +85,10 @@ object EventLinkService:
       }
 
     def setStatus(id: String, citekey: String, status: String): Boolean =
-      val had = state.get.candidates.exists(c => c.eventId == id && c.citekey == citekey)
+      val had = state.get.candidates.exists(c => c.eventId == com.histmersion.api.catalogue.Event.Id(id) && c.citekey == com.histmersion.api.library.Citekey(citekey))
       val _ = state.updateAndGet(
         _.modify(_.candidates)
-          .using(_.map(c => if c.eventId == id && c.citekey == citekey then c.modify(_.status).setTo(status) else c))
+          .using(_.map(c => if c.eventId == com.histmersion.api.catalogue.Event.Id(id) && c.citekey == com.histmersion.api.library.Citekey(citekey) then c.modify(_.status).setTo(status) else c))
       )
       had
 

@@ -42,7 +42,7 @@ final class EventImportsControllers(
         write = !req.dryRun
       ) { (job, progress) =>
         val r = imports.runImport(provider, req, area, progress)
-        jobs.amend(job.id)(_.set(EventImportReport.Detail, Some(r)))
+        jobs.amend(job.id.value)(_.set(EventImportReport.Detail, Some(r)))
         Right(EventImportReport.summary(r))
       }
     yield job
@@ -60,7 +60,7 @@ final class EventImportsControllers(
         write = !req.dryRun
       ) { (job, progress) =>
         val r = imports.runRederive(provider, req.dryRun, progress)
-        jobs.amend(job.id)(_.set(EventRederiveReport.Detail, Some(r)))
+        jobs.amend(job.id.value)(_.set(EventRederiveReport.Detail, Some(r)))
         Right(EventRederiveReport.summary(r))
       }
     yield job

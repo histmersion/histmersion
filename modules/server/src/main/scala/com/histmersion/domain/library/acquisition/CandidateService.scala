@@ -127,7 +127,7 @@ object CandidateService:
       }
       created
 
-    def dois(goal: String): Set[String] = state.get.candidates.filter(_.goal == goal).map(_.doi).toSet
+    def dois(goal: String): Set[String] = state.get.candidates.filter(_.goal == goal).map(_.doi.value.toString).toSet
 
     def list(goal: Option[String], st: String, limit: Int, offset: Int): List[Source.Candidate] =
       state.get.candidates
