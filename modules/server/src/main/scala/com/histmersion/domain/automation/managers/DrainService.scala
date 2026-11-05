@@ -26,7 +26,7 @@ final class DrainService(
 ):
 
   /** Draining now? */
-  def draining: Boolean = agents.autopilotRow.drain().isDefined
+  def draining: com.histmersion.domain.automation.managers.DrainService.DrainingResult = agents.autopilotRow.drain().isDefined
 
   /** The drain as shown (None: not draining). */
   def info(): Option[DrainInfo] =
@@ -51,7 +51,7 @@ final class DrainService(
     * which stops after the item in flight — records it drained (a run that resumes by itself afterwards — an allowance,
     * a restart — makes it draining again).
     */
-  def tick(now: Instant): List[String] =
+  def tick(now: Instant): List[com.histmersion.domain.automation.managers.DrainService.TickResult] =
     agents.autopilotRow.drain() match
       case None                 => Nil
       case Some((since, _, at)) =>
@@ -85,6 +85,14 @@ final class DrainService(
     val _ = tick(now)
     agents.autopilot.status(now).copy(changes = List(line))
 
-  private def log(line: String): Unit =
+  private def log(line: com.histmersion.domain.automation.managers.DrainService.LogLine): Unit =
     val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
     scribe.info(line)
+
+object DrainService:
+  type DrainingResult = DrainingResult.T
+  object DrainingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TickResult = TickResult.T
+  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLine = LogLine.T
+  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

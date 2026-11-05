@@ -30,16 +30,32 @@ trait LibrarySite:
   def jobs: JobListing
 
   /** Where a place name is, for a finding of period `at` about a place of kind `hint` (the catalogue's geocoder). */
-  def geocode(name: String, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution]
+  def geocode(name: com.histmersion.domain.library.workflows.LibrarySite.GeocodeName, hint: Geocode.KindHint, at: Option[Period]): Option[Geocode.Resolution]
 
   /** The sources the body of article `slug` cites, as its links resolve (research's article); why not, when none. */
-  def articleSources(slug: String): Either[Api.Error, List[String]]
+  def articleSources(slug: com.histmersion.domain.library.workflows.LibrarySite.ArticleSourcesSlug): Either[Api.Error, List[com.histmersion.domain.library.workflows.LibrarySite.ArticleSourcesResultPart2]]
 
   /** The stored sources article `slug` cites, its record's list (none when there is no such article). */
-  def citedSources(slug: String): List[String]
+  def citedSources(slug: com.histmersion.domain.library.workflows.LibrarySite.CitedSourcesSlug): List[com.histmersion.domain.library.workflows.LibrarySite.CitedSourcesResult]
 
   /** Whether an article has slug `slug`. */
-  def articleExists(slug: String): Boolean
+  def articleExists(slug: com.histmersion.domain.library.workflows.LibrarySite.ArticleExistsSlug): com.histmersion.domain.library.workflows.LibrarySite.ArticleExistsResult
 
   /** The upstreams' kept quotas now. */
   def upstreamQuotas(now: Instant): List[UpstreamQuota]
+
+object LibrarySite:
+  type GeocodeName = GeocodeName.T
+  object GeocodeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleSourcesResultPart2 = ArticleSourcesResultPart2.T
+  object ArticleSourcesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleSourcesSlug = ArticleSourcesSlug.T
+  object ArticleSourcesSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedSourcesResult = CitedSourcesResult.T
+  object CitedSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedSourcesSlug = CitedSourcesSlug.T
+  object CitedSourcesSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleExistsResult = ArticleExistsResult.T
+  object ArticleExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleExistsSlug = ArticleExistsSlug.T
+  object ArticleExistsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

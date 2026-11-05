@@ -25,7 +25,7 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
     scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.AssetLink]
   private val renames = scala.collection.mutable.Map.empty[UUID, List[(String, String)]]
   private def assetIn(es: BundleEntities, u: UUID) = es.assets.find(_.uid == u).get
-  private def renamed(source: UUID, from: String, to: String): Unit =
+  private def renamed(source: UUID, from: com.histmersion.domain.media.assets.AssetPlan.RenamedFrom, to: com.histmersion.domain.media.assets.AssetPlan.RenamedTo): Unit =
     renames(source) = renames.getOrElse(source, Nil) :+ (from -> to)
 
   override def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = kind match
@@ -109,12 +109,25 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
   override def bodyRenames: Map[UUID, List[(String, String)]] = renames.toMap
 
 object AssetPlan extends PlanRules:
+  type RenamedFrom = RenamedFrom.T
+  object RenamedFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenamedTo = RenamedTo.T
+  object RenamedTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FreeNameResult = FreeNameResult.T
+  object FreeNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FreeNameName = FreeNameName.T
+  object FreeNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FreeNameLabel = FreeNameLabel.T
+  object FreeNameLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FreeNameTaken = FreeNameTaken.T
+  object FreeNameTaken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def start(in: MergePlanner.Input): PlanRun = AssetPlan(in)
 
   /** An asset name not taken in the survivor: `<stem>-<label>.<ext>` (then `-2`, `-3`…). `~` of the design is not
     * link-safe in Markdown, so a hyphen.
     */
-  def freeName(name: String, label: String, taken: Set[String]): String =
+  def freeName(name: com.histmersion.domain.media.assets.AssetPlan.FreeNameName, label: com.histmersion.domain.media.assets.AssetPlan.FreeNameLabel, taken: Set[com.histmersion.domain.media.assets.AssetPlan.FreeNameTaken]): com.histmersion.domain.media.assets.AssetPlan.FreeNameResult =
     val dot = name.lastIndexOf('.')
     val (stem, ext) = if dot > 0 then (name.take(dot), name.drop(dot)) else (name, "")
     val tag = SafeName.of(label)

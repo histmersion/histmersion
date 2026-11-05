@@ -35,7 +35,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
       folds.fold(f, o, Bundle.Kind.Period)
       periodLine(o) = _ => localPeriod(o)
       folds.count(_.modify(_.periodsMerged).using(_ + 1))
-    def info(label: String, bundleLabel: String): String =
+    def info(label: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoBundleLabel): com.histmersion.domain.catalogue.periods.PeriodPlan.InfoResult =
       s"named period $label: the bundle's $bundleLabel is the same period — this collection's kept"
 
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
@@ -122,7 +122,20 @@ object PeriodPlan:
   /** Periods point at their parents by id: a bundle period matched to one here under another id is pointed at under
     * that id. Pure.
     */
-  def repoint(es: BundleEntities, periods: Map[String, String]): BundleEntities =
+  type InfoResult = InfoResult.T
+  object InfoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoLabel = InfoLabel.T
+  object InfoLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoBundleLabel = InfoBundleLabel.T
+  object InfoBundleLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepointPeriodsPart1 = RepointPeriodsPart1.T
+  object RepointPeriodsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepointPeriodsPart2 = RepointPeriodsPart2.T
+  object RepointPeriodsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SamePeriodResult = SamePeriodResult.T
+  object SamePeriodResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def repoint(es: BundleEntities, periods: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart2]): BundleEntities =
     if periods.isEmpty then es
     else
       es.modify(_.periods)
@@ -132,5 +145,5 @@ object PeriodPlan:
   def samePeriod(
       l: com.histmersion.api.exchange.Bundle.Period,
       r: com.histmersion.api.exchange.Bundle.Period
-  ): Boolean =
+  ): com.histmersion.domain.catalogue.periods.PeriodPlan.SamePeriodResult =
     l.period == r.period && Fingerprint.of(l.label) == Fingerprint.of(r.label)

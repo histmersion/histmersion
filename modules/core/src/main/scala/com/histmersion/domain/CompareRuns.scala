@@ -15,6 +15,35 @@ object CompareRuns:
   // ── what is compared: the recorded runs ──────────────────────────────────────────────────────
 
   /** Tokens, as a provider reports them; `input` includes the cached ones. */
+  type CompareResultPart1 = CompareResultPart1.T
+  object CompareResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompareBillingArg1 = CompareBillingArg1.T
+  object CompareBillingArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompareBillingResult = CompareBillingResult.T
+  object CompareBillingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionInOrderResult = UnionInOrderResult.T
+  object UnionInOrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionInOrderLists = UnionInOrderLists.T
+  object UnionInOrderLists extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Seconds = Seconds.T
+  object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepSideBillingArg1 = StepSideBillingArg1.T
+  object StepSideBillingArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepSideBillingResult = StepSideBillingResult.T
+  object StepSideBillingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutputName = OutputName.T
+  object OutputName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WordsResult = WordsResult.T
+  object WordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WordsS = WordsS.T
+  object WordsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SimilarityResult = SimilarityResult.T
+  object SimilarityResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SimilarityA = SimilarityA.T
+  object SimilarityA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SimilarityB = SimilarityB.T
+  object SimilarityB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
     def +(o: Tokens): Tokens =
       Tokens(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
@@ -297,9 +326,9 @@ object CompareRuns:
   /** `outputs` compares what the runs' workflow produced (its owner's, [[OutputComparison]]). */
   def compare(
       runs: List[Run],
-      billing: String => Option[String],
+      billing: com.histmersion.domain.CompareRuns.CompareBillingArg1 => Option[com.histmersion.domain.CompareRuns.CompareBillingResult],
       outputs: OutputComparison
-  ): Either[String, Comparison] =
+  ): Either[com.histmersion.domain.CompareRuns.CompareResultPart1, Comparison] =
     for
       _ <- Either.cond(runs.size >= 2, (), "give at least two runs to compare")
       _ <- Either.cond(runs.map(_.run.id).distinct.size == runs.size, (), "a run is given twice")
@@ -335,7 +364,7 @@ object CompareRuns:
   /** Every list's names in one order: the first list's, each later name placed after the name it follows in its own
     * list (a run with more rounds or windows slots its extra steps in).
     */
-  def unionInOrder(lists: List[List[String]]): List[String] =
+  def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.UnionInOrderLists]]): List[com.histmersion.domain.CompareRuns.UnionInOrderResult] =
     lists
       .foldLeft(Vector.empty[String]) { (acc, names) =>
         @tailrec def place(rest: List[String], a: Vector[String], pos: Int): Vector[String] =
@@ -350,7 +379,7 @@ object CompareRuns:
       .toList
 
   /** A step's duration in whole seconds (the store keeps seconds); 0 when a time is unreadable. */
-  def seconds(s: Step): Long =
+  def seconds(s: Step): com.histmersion.domain.CompareRuns.Seconds =
     (for
       a <- scala.util.Try(java.time.Instant.parse(s.startedAt)).toOption
       b <- scala.util.Try(java.time.Instant.parse(s.finishedAt)).toOption
@@ -358,7 +387,7 @@ object CompareRuns:
 
   private def sum(us: List[Tokens]): Tokens = us.foldLeft(Tokens.Zero)(_ + _)
 
-  def stepSide(attempts: List[Step], billing: String => Option[String]): StepSide =
+  def stepSide(attempts: List[Step], billing: com.histmersion.domain.CompareRuns.StepSideBillingArg1 => Option[com.histmersion.domain.CompareRuns.StepSideBillingResult]): StepSide =
     val models = attempts.flatMap(_.model).distinct
     StepSide(
       models,
@@ -389,17 +418,17 @@ object CompareRuns:
     )
 
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
-  def output[O: Decoder](d: Run, name: String): Option[O] =
+  def output[O: Decoder](d: Run, name: com.histmersion.domain.CompareRuns.OutputName): Option[O] =
     d.steps
       .filter(s => s.name == name && s.status == com.histmersion.domain.automation.Step.Status.Done.wire)
       .lastOption
       .flatMap(_.output)
       .flatMap(decode[O](_).toOption)
 
-  private def words(s: String): Set[String] =
+  private def words(s: com.histmersion.domain.CompareRuns.WordsS): Set[com.histmersion.domain.CompareRuns.WordsResult] =
     ComparedText.normalise(Option(s).getOrElse("")).split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
 
   /** Jaccard similarity of two texts' words (0 when both have none). */
-  def similarity(a: String, b: String): Double =
+  def similarity(a: com.histmersion.domain.CompareRuns.SimilarityA, b: com.histmersion.domain.CompareRuns.SimilarityB): com.histmersion.domain.CompareRuns.SimilarityResult =
     val (x, y) = (words(a), words(b))
     if x.isEmpty && y.isEmpty then 0.0 else (x intersect y).size.toDouble / (x union y).size

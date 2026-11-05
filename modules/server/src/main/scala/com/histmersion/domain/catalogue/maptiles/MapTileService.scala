@@ -56,11 +56,11 @@ final class MapTileService(
         TilesApi.TileAnswer(bytes, TilesApi.ContentType, tag, CacheControl, StatusCode.Ok)
 
   /** The groups' versions, their change rows folded first where they have grown many. */
-  private def currentVersions(): Map[String, Long] =
+  private def currentVersions(): Map[com.histmersion.domain.catalogue.maptiles.MapTileService.CurrentVersionsResultPart1, com.histmersion.domain.catalogue.maptiles.MapTileService.CurrentVersionsResultPart2] =
     db.read(TileRepo.changeRows).foreach((g, n) => if n > CompactAbove then db.transact(TileRepo.compact(g)))
     db.read(TileRepo.versions)
 
-  private def window(f: Filter): Option[(Long, Long)] = f.period.map(p => (p.start.min(p.end), p.start.max(p.end)))
+  private def window(f: Filter): Option[(com.histmersion.domain.catalogue.maptiles.MapTileService.WindowResultPart1, com.histmersion.domain.catalogue.maptiles.MapTileService.WindowResultPart2)] = f.period.map(p => (p.start.min(p.end), p.start.max(p.end)))
 
   /** A sites tile with the sites of no known date: the dated ones of the span and the undated ones (an undated one the
     * span shows by its findings counted once, as dated), each alone when the tile keeps that many, else counted by its
@@ -69,8 +69,8 @@ final class MapTileService(
   private def sitesWithUndated(
       c: TileCoord,
       grid: TileGrid,
-      window: (Long, Long),
-      siteType: Option[String]
+      window: (com.histmersion.domain.catalogue.maptiles.MapTileService.SitesWithUndatedWindowPart1, com.histmersion.domain.catalogue.maptiles.MapTileService.SitesWithUndatedWindowPart2),
+      siteType: Option[com.histmersion.domain.catalogue.maptiles.MapTileService.SitesWithUndatedSiteType]
   ): List[TileCell] =
     val dated = TileRepo.datedSites(c, window, siteType, modernFrom())
     val datedCounts = db.read(TileRepo.gridCells(dated, c, grid))
@@ -81,7 +81,7 @@ final class MapTileService(
       datedItems.map(_.modify(_.undated).setTo(0)) ++ undatedSites.items(c, siteType, shownByFindings)
     else UndatedCells.merge(c.z, datedCounts, undatedCounts)
 
-  private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): Array[Byte] =
+  private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): Array[com.histmersion.domain.catalogue.maptiles.MapTileService.CutResult] =
     val points = layer match
       case TileLayer.Sites =>
         // a sites tile with no span is every year's: the time rule needs a window
@@ -113,3 +113,21 @@ final class MapTileService(
         val drawn = media.features(cells.filter(_.isItem).map(_.key))
         TileFeatures.of(c.z, cells, drawn.get, (cell, feature) => feature(cell))
     VectorTileWriter.tile(Seq(layer.wire -> points))
+
+object MapTileService:
+  type CurrentVersionsResultPart1 = CurrentVersionsResultPart1.T
+  object CurrentVersionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentVersionsResultPart2 = CurrentVersionsResultPart2.T
+  object CurrentVersionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowResultPart1 = WindowResultPart1.T
+  object WindowResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowResultPart2 = WindowResultPart2.T
+  object WindowResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SitesWithUndatedWindowPart1 = SitesWithUndatedWindowPart1.T
+  object SitesWithUndatedWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SitesWithUndatedWindowPart2 = SitesWithUndatedWindowPart2.T
+  object SitesWithUndatedWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SitesWithUndatedSiteType = SitesWithUndatedSiteType.T
+  object SitesWithUndatedSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CutResult = CutResult.T
+  object CutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]

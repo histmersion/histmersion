@@ -25,7 +25,7 @@ final class SearchControllers(
   /** Legacy `GET /api/search` — kept working (the web page uses it) by delegating to the filtered search and dropping
     * the evidence, so there is ONE query path (FTS ranking and snippets included). New callers should use [[sources]].
     */
-  def search(q: Option[String], limit: Option[Int]): List[SearchHit] =
+  def search(q: Option[com.histmersion.domain.library.search.SearchControllers.SearchQ], limit: Option[com.histmersion.domain.library.search.SearchControllers.SearchLimit]): List[SearchHit] =
     sources(Filter(q = q.map(_.trim).filter(_.nonEmpty), limit = limit.getOrElse(0))).hits.map(_.source)
 
   /** `GET /api/sources` — THE discovery operation: sources with their matched findings and reasons. */
@@ -70,7 +70,7 @@ final class SearchControllers(
     * built them one `TimeBucket` at a time until the heap gave out, and `to = Long.MaxValue` overflowed the bucket
     * arithmetic on top of that.
     */
-  private def aggregateOn(axes: List[String], unit: String, q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
+  private def aggregateOn(axes: List[com.histmersion.domain.library.search.SearchControllers.AggregateOnAxes], unit: com.histmersion.domain.library.search.SearchControllers.AggregateOnUnit, q: Api.AggregateQuery): Either[Api.Error, TimeHistogram] =
     val ui = cfg().ui
     val t = ui.time
     // the window to bucket = the filter's deep-time range, defaulted (half-open bounds included)
@@ -92,15 +92,15 @@ final class SearchControllers(
   /** A caller's year, forced inside the configured span. `ui.time.min/max` is what the web UI can draw and what the
     * corpus covers; nothing outside it can have a non-empty answer anyway.
     */
-  private def clampToSpan(v: Long, min: Long, max: Long): Long = math.max(min, math.min(max, v))
+  private def clampToSpan(v: com.histmersion.domain.library.search.SearchControllers.ClampToSpanV, min: com.histmersion.domain.library.search.SearchControllers.ClampToSpanMin, max: com.histmersion.domain.library.search.SearchControllers.ClampToSpanMax): com.histmersion.domain.library.search.SearchControllers.ClampToSpanResult = math.max(min, math.min(max, v))
 
   private def aggregateWindow(
-      axes: List[String],
-      unit: String,
+      axes: List[com.histmersion.domain.library.search.SearchControllers.AggregateWindowAxes],
+      unit: com.histmersion.domain.library.search.SearchControllers.AggregateWindowUnit,
       q: Api.AggregateQuery,
-      from: Long,
-      to: Long,
-      size: Long
+      from: com.histmersion.domain.library.search.SearchControllers.AggregateWindowFrom,
+      to: com.histmersion.domain.library.search.SearchControllers.AggregateWindowTo,
+      size: com.histmersion.domain.library.search.SearchControllers.AggregateWindowSize
   ): TimeHistogram =
     val ui = cfg().ui
     val window = q.filter.modify(_.period).setTo(Some(Period(from, to)))
@@ -126,15 +126,15 @@ final class SearchControllers(
 
   /** The nested part of [[aggregateOn]] — split out so the flat strip never pays for it. */
   private def treeOn(
-      axes: List[String],
-      unit: String,
+      axes: List[com.histmersion.domain.library.search.SearchControllers.TreeOnAxes],
+      unit: com.histmersion.domain.library.search.SearchControllers.TreeOnUnit,
       window: Filter,
       scope: PlaceScope,
-      from: Long,
-      to: Long,
-      depth: Int,
-      samples: Int,
-      askedAsOf: Option[Long],
+      from: com.histmersion.domain.library.search.SearchControllers.TreeOnFrom,
+      to: com.histmersion.domain.library.search.SearchControllers.TreeOnTo,
+      depth: com.histmersion.domain.library.search.SearchControllers.TreeOnDepth,
+      samples: com.histmersion.domain.library.search.SearchControllers.TreeOnSamples,
+      askedAsOf: Option[com.histmersion.domain.library.search.SearchControllers.TreeOnAskedAsOf],
       base: TimeHistogram
   ): TimeHistogram =
     val rows = search.treeRows(unit, window, scope)
@@ -164,3 +164,45 @@ final class SearchControllers(
       .setTo(if axes == List(Tree.KindTime, Tree.KindRegion) || axes == List(Tree.KindTime) then None else asOf)
       .modify(_.tree)
       .setTo(tree)
+
+object SearchControllers:
+  type SearchQ = SearchQ.T
+  object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AggregateOnAxes = AggregateOnAxes.T
+  object AggregateOnAxes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AggregateOnUnit = AggregateOnUnit.T
+  object AggregateOnUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampToSpanResult = ClampToSpanResult.T
+  object ClampToSpanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampToSpanV = ClampToSpanV.T
+  object ClampToSpanV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampToSpanMin = ClampToSpanMin.T
+  object ClampToSpanMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClampToSpanMax = ClampToSpanMax.T
+  object ClampToSpanMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AggregateWindowAxes = AggregateWindowAxes.T
+  object AggregateWindowAxes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AggregateWindowUnit = AggregateWindowUnit.T
+  object AggregateWindowUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AggregateWindowFrom = AggregateWindowFrom.T
+  object AggregateWindowFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AggregateWindowTo = AggregateWindowTo.T
+  object AggregateWindowTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AggregateWindowSize = AggregateWindowSize.T
+  object AggregateWindowSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeOnAxes = TreeOnAxes.T
+  object TreeOnAxes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeOnUnit = TreeOnUnit.T
+  object TreeOnUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeOnFrom = TreeOnFrom.T
+  object TreeOnFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeOnTo = TreeOnTo.T
+  object TreeOnTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeOnDepth = TreeOnDepth.T
+  object TreeOnDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeOnSamples = TreeOnSamples.T
+  object TreeOnSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeOnAskedAsOf = TreeOnAskedAsOf.T
+  object TreeOnAskedAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

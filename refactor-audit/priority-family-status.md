@@ -1,5 +1,53 @@
 # Priority-family status
 
+## Applied: callback, member and method signatures in domain packages
+
+member-types-domain-1 converts 6401 explicit primitive type positions across 342
+production files in core/server domain packages with the existing AST pipeline.
+This covers constructor callback arguments/results, explicit member values and
+variables, and method parameter/result types. It is declaration conversion;
+implementations, callers, timestamp construction and tests remain deferred. No
+behavioral repair credit is claimed. Overlap indexing/consolidation follows the
+conversion batches as requested; provisional distinct owner types are retained.
+
+All three reviewed examples changed: FindingGuards.resolves takes PlaceQuery and
+returns a typed result; Plan.activeSet uses the existing Pick.Slug; seconds returns
+CompareRuns.Seconds. The timestamp parsing body is retained for later repair.
+Configuration contains scope, concept names and reuse decisions, not expressions.
+Signatures create types in the enclosing object's or class/trait's companion;
+existing member names are protected. Local declarations, overrides, naming
+conflicts and unsupported cases remain detected in the scoped residual (549
+leaves), without accepted exceptions. Explicitly inferred types are untouched.
+
+The fixture covers callbacks, lazy member collections, method arguments/results,
+existing and new companions, combined field/method additions and an unchanged
+override. Output matches expected exactly; expected code compiles with Scala
+3.10.0/Iron 3.4.1. The rule merges generated companion insertions and retains
+non-overlapping source patches. The frozen applicator checks all 342 files;
+application whitespace checks pass. The scoped rerun produces zero further edits
+and the same 549 blocked leaves. No application compile or test pass is asserted.
+
+type-positions-after-members-1 measures all 3167 current source files and validates
+the eleven-plan source hash chain. Against type-positions-3, stable position/route
+comparison reports exactly 6401 raw primitive leaves removed and zero introduced;
+changes.tsv retains the individual identities. Overall explicit primitive leaves
+fall from 28022 to 21621. New named references remain unresolved by AST measurement,
+so this is not proof of behavioral fixes or semantic compliance. The earlier three
+confirmed occurrences retain their history in the baseline and raw-elimination
+delta; the new scan's unconfigured confirmed count of zero is not repair credit.
+
+The initial configuration attempt failed on an absent names substitution; it was
+corrected before preview and application. Next apply the reusable transformation
+to other production module scopes, then resolve the blocked cases. Keep the
+broader inference, alias, shadowing and boundary-classification limits explicit.
+
+The consolidated ledger's growing coverage-history cell now points here and to
+the existing review directories instead of repeating every historical batch in
+one TSV cell. Baseline/residual columns retain their earlier denominators and
+all historical report files and finding identities remain preserved. The three
+reviewed type examples are tracked as applied-unverified declarations, without
+claiming verified behavioral repairs or a new global denominator.
+
 ## Current measurement: callback, member and method type gaps
 
 type-positions-3 measures all 3167 current main/test source files (113827 source

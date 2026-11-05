@@ -16,7 +16,7 @@ import com.histmersion.plugin.*
   *   the name its checks are recorded and its pictures stored under
   */
 final class PluginCollection(val provider: String, col: MediaCollection, allowed: String) extends SearchedCollection:
-  val role: String = col.role
+  val role: com.histmersion.domain.media.imports.PluginCollection.Role = col.role
   private val latest = col.latestYear.map(_.value)
   val conf: MediaCollectionConfig =
     MediaCollectionConfig(
@@ -34,7 +34,7 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
   // the items as the plugin returned them, by key, for `complete` — one import run's own state
   private val items = scala.collection.concurrent.TrieMap.empty[String, MediaItem]
 
-  def search(fetch: Polite, place: PlaceFacts): Either[String, List[Either[String, MediaRecord]]] =
+  def search(fetch: Polite, place: PlaceFacts): Either[com.histmersion.domain.media.imports.PluginCollection.SearchResultPart1, List[Either[com.histmersion.domain.media.imports.PluginCollection.SearchResultPart2Part1, MediaRecord]]] =
     PluginMedia
       .guard(col.search(PluginCollection.place(place), PluginMedia.http(fetch)))
       .map(_.map(_.map { it =>
@@ -66,7 +66,16 @@ final class PluginCollection(val provider: String, col: MediaCollection, allowed
 
 object PluginCollection:
 
-  def maxYear(rule: MediaMatchRule): Int = rule match
+  type Role = Role.T
+  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart1 = SearchResultPart1.T
+  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart2Part1 = SearchResultPart2Part1.T
+  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxYearResult = MaxYearResult.T
+  object MaxYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def maxYear(rule: MediaMatchRule): com.histmersion.domain.media.imports.PluginCollection.MaxYearResult = rule match
     case MediaMatchRule.Map(y) => y.value
     case _                     => 0
 

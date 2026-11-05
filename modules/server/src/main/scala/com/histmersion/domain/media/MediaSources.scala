@@ -5,11 +5,16 @@ package com.histmersion.domain.media
   * its figures are linked from.
   */
 trait MediaSources:
-  def current(citekey: String): Option[String]
-  def lookup(citekey: String): Either[MediaSources.Error, MediaSources.Key]
-  def markdown(citekey: String): String
+  def current(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.media.MediaSources.CurrentResult]
+  def lookup(citekey: com.histmersion.domain.library.Citekey): Either[MediaSources.Error, MediaSources.Key]
+  def markdown(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.MediaSources.MarkdownResult
 
 object MediaSources:
+  type CurrentResult = CurrentResult.T
+  object CurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Key = Key.T
   object Key extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.Pure]
 

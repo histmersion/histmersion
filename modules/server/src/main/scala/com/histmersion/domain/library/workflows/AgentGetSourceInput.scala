@@ -15,12 +15,15 @@ final case class AgentGetSourceInput(
     offset: Option[AgentGetSourceInput.Offset] = None,
     chars: Option[AgentGetSourceInput.Chars] = None
 ) derives KindlingsCodecAsObject:
-  def sectionOrBody: Option[String] =
+  def sectionOrBody: Option[com.histmersion.domain.library.workflows.AgentGetSourceInput.SectionOrBodyResult] =
     section
       .map(_.trim)
       .filter(_.nonEmpty)
       .orElse(Option.when(offset.isDefined || chars.isDefined || heading.isDefined)("body"))
 object AgentGetSourceInput:
+  type SectionOrBodyResult = SectionOrBodyResult.T
+  object SectionOrBodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Section = Section.T
   object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Heading = Heading.T

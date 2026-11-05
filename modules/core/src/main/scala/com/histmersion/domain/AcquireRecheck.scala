@@ -20,6 +20,67 @@ object AcquireRecheck:
     * a day and a pass, the minutes between passes, the share (percent) of the shared daily legal ingest allowance the
     * re-check may take, and the hours after which a check that got no answer is due again.
     */
+  type DueAtGeneration = DueAtGeneration.T
+  object DueAtGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DueAtEveryDays = DueAtEveryDays.T
+  object DueAtEveryDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DueAtRetryHours = DueAtRetryHours.T
+  object DueAtRetryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDueResult = IsDueResult.T
+  object IsDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDueGeneration = IsDueGeneration.T
+  object IsDueGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDueEveryDays = IsDueEveryDays.T
+  object IsDueEveryDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDueRetryHours = IsDueRetryHours.T
+  object IsDueRetryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionDois = ActionDois.T
+  object ActionDois extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionHeldArg1 = ActionHeldArg1.T
+  object ActionHeldArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailureMessage = FailureMessage.T
+  object FailureMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnswersResult = AnswersResult.T
+  object AnswersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnswersMessage = AnswersMessage.T
+  object AnswersMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReasonResult = ReasonResult.T
+  object ReasonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReasonDetail = ReasonDetail.T
+  object ReasonDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowanceResult = AllowanceResult.T
+  object AllowanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowanceCheckedToday = AllowanceCheckedToday.T
+  object AllowanceCheckedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassDueResult = PassDueResult.T
+  object PassDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassDuePassMinutes = PassDuePassMinutes.T
+  object PassDuePassMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GenerationResult = GenerationResult.T
+  object GenerationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GenerationParts = GenerationParts.T
+  object GenerationParts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextDueGeneration = NextDueGeneration.T
+  object NextDueGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextDueEveryDays = NextDueEveryDays.T
+  object NextDueEveryDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextDueRetryHours = NextDueRetryHours.T
+  object NextDueRetryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckedSinceResult = CheckedSinceResult.T
+  object CheckedSinceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobPicksTriedByJob = JobPicksTriedByJob.T
+  object JobPicksTriedByJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobPicksDueResult = JobPicksDueResult.T
+  object JobPicksDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResumableResult = ResumableResult.T
+  object ResumableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResumableStatus = ResumableStatus.T
+  object ResumableStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResumableError = ResumableError.T
+  object ResumableError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProgressLineResult = ProgressLineResult.T
+  object ProgressLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Settings(
       enabled: Settings.Enabled,
       everyDays: Settings.EveryDays,
@@ -60,7 +121,7 @@ object AcquireRecheck:
   /** When an item is next due: never checked, or checked under another fetcher generation (a fetcher or a key was added
     * since) = now (None); a check that got no answer `retryHours` after it; else `everyDays` after its check.
     */
-  def dueAt(last: Option[LastCheck], generation: String, everyDays: Int, retryHours: Int): Option[Instant] =
+  def dueAt(last: Option[LastCheck], generation: com.histmersion.domain.AcquireRecheck.DueAtGeneration, everyDays: com.histmersion.domain.AcquireRecheck.DueAtEveryDays, retryHours: com.histmersion.domain.AcquireRecheck.DueAtRetryHours): Option[Instant] =
     last
       .filter(_.generation == generation)
       .map(l =>
@@ -68,7 +129,7 @@ object AcquireRecheck:
         else l.at.plusSeconds(math.max(1, everyDays).toLong * 86400L)
       )
 
-  def isDue(last: Option[LastCheck], generation: String, everyDays: Int, retryHours: Int, now: Instant): Boolean =
+  def isDue(last: Option[LastCheck], generation: com.histmersion.domain.AcquireRecheck.IsDueGeneration, everyDays: com.histmersion.domain.AcquireRecheck.IsDueEveryDays, retryHours: com.histmersion.domain.AcquireRecheck.IsDueRetryHours, now: Instant): com.histmersion.domain.AcquireRecheck.IsDueResult =
     dueAt(last, generation, everyDays, retryHours).forall(!_.isAfter(now))
 
   /** What the corpus holds under an item's DOI: the source, and whether it has its original (a converted body or a
@@ -92,7 +153,7 @@ object AcquireRecheck:
     case Fetch(doi: String, into: Option[String])
 
   /** The first DOI an item names decides (an item is one work). */
-  def action(dois: List[String], held: String => Option[Held]): Action =
+  def action(dois: List[com.histmersion.domain.AcquireRecheck.ActionDois], held: com.histmersion.domain.AcquireRecheck.ActionHeldArg1 => Option[Held]): Action =
     dois.headOption match
       case None      => Action.NoDoi
       case Some(doi) =>
@@ -115,16 +176,19 @@ object AcquireRecheck:
     case Failed extends Outcome("failed")
 
   object Outcome:
-    def parse(s: String): Option[Outcome] = values.find(_.wire == s.trim)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.AcquireRecheck.Outcome.ParseS): Option[Outcome] = values.find(_.wire == s.trim)
 
   /** A failed legal ingest: no legal copy, or something else in the way. */
-  def failure(message: String): Outcome =
+  def failure(message: com.histmersion.domain.AcquireRecheck.FailureMessage): Outcome =
     if IngestBacklog.isNoLegalCopy(message) then Outcome.NoCopy else Outcome.Failed
 
   /** What each fetcher answered, from the legal ingest's refusal (`no legal open-access copy of <doi>: <the chain's
     * message> — <fetcher>: <answer>; …`): the answers when there are any, else the message.
     */
-  def answers(message: String): String =
+  def answers(message: com.histmersion.domain.AcquireRecheck.AnswersMessage): com.histmersion.domain.AcquireRecheck.AnswersResult =
     val m = Option(message).map(_.trim).getOrElse("")
     val rest =
       if !IngestBacklog.isNoLegalCopy(m) then m
@@ -137,7 +201,7 @@ object AcquireRecheck:
       case i  => rest.drop(i + 3).trim
 
   /** The short reason an item carries: `checked 2026-10-27: no legal copy (unpaywall: no copy — none; …)`. */
-  def reason(at: Instant, outcome: Outcome, detail: String): String =
+  def reason(at: Instant, outcome: Outcome, detail: com.histmersion.domain.AcquireRecheck.ReasonDetail): com.histmersion.domain.AcquireRecheck.ReasonResult =
     val day = LocalDate.ofInstant(at, ZoneOffset.UTC)
     val d = Option(detail).map(_.trim).getOrElse("")
     val text = outcome match
@@ -169,7 +233,7 @@ object AcquireRecheck:
     * allowance, within what the watchers' backlog leaves of it (the backlog and the watchers' new finds come first) and
     * within the re-check's share of the cap — each try may fetch one work.
     */
-  def allowance(s: Settings, checkedToday: Int, shared: Option[Shared]): Int =
+  def allowance(s: Settings, checkedToday: com.histmersion.domain.AcquireRecheck.AllowanceCheckedToday, shared: Option[Shared]): com.histmersion.domain.AcquireRecheck.AllowanceResult =
     val own = math.min(math.max(0, s.perDay) - math.max(0, checkedToday), math.max(0, s.perPass))
     val room = shared.fold(Int.MaxValue) { sh =>
       val share = math.max(0, sh.cap) * math.max(0, math.min(100, s.sharePercent)) / 100
@@ -178,18 +242,18 @@ object AcquireRecheck:
     math.max(0, math.min(own, room))
 
   /** Is a pass due: never run (since the start), or `passMinutes` passed since the last. */
-  def passDue(last: Option[Instant], passMinutes: Int, now: Instant): Boolean =
+  def passDue(last: Option[Instant], passMinutes: com.histmersion.domain.AcquireRecheck.PassDuePassMinutes, now: Instant): com.histmersion.domain.AcquireRecheck.PassDueResult =
     last.forall(l => !l.plusSeconds(math.max(1, passMinutes).toLong * 60L).isAfter(now))
 
   /** The fetcher generation: one short digest of what the legal chain is — its fetchers in order, and each one's plugin
     * and settings (secrets as references) — so a fetcher or a key added changes it.
     */
-  def generation(parts: List[String]): String =
+  def generation(parts: List[com.histmersion.domain.AcquireRecheck.GenerationParts]): com.histmersion.domain.AcquireRecheck.GenerationResult =
     val md = java.security.MessageDigest.getInstance("SHA-256")
     md.digest(parts.mkString("\n").getBytes(StandardCharsets.UTF_8)).take(8).map(b => f"${b & 0xff}%02x").mkString
 
   /** The earliest time one of the checked items falls due again (None: none waits). */
-  def nextDue(checks: List[LastCheck], generation: String, everyDays: Int, retryHours: Int): Option[Instant] =
+  def nextDue(checks: List[LastCheck], generation: com.histmersion.domain.AcquireRecheck.NextDueGeneration, everyDays: com.histmersion.domain.AcquireRecheck.NextDueEveryDays, retryHours: com.histmersion.domain.AcquireRecheck.NextDueRetryHours): Option[Instant] =
     checks.flatMap(c => dueAt(Some(c), generation, everyDays, retryHours)).minOption
 
   // ── the re-check job ─────────────────────────────────────────────────────────────────────────────
@@ -219,7 +283,7 @@ object AcquireRecheck:
     object UpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Was this item checked by a job that started at `since` (or since then by anything else)? */
-  def checkedSince(last: Option[LastCheck], since: Instant): Boolean = last.exists(l => !l.at.isBefore(since))
+  def checkedSince(last: Option[LastCheck], since: Instant): com.histmersion.domain.AcquireRecheck.CheckedSinceResult = last.exists(l => !l.at.isBefore(since))
 
   /** What a job — or its resumption — still tries, in [[order]]: the items not checked since it started; for a capped
     * job only the `due` ones, and no more than its `upTo` less the `triedByJob` already.
@@ -227,8 +291,8 @@ object AcquireRecheck:
   def jobPicks(
       plan: JobPlan,
       candidates: List[Candidate],
-      triedByJob: Int,
-      due: Candidate => Boolean
+      triedByJob: com.histmersion.domain.AcquireRecheck.JobPicksTriedByJob,
+      due: Candidate => com.histmersion.domain.AcquireRecheck.JobPicksDueResult
   ): List[Candidate] =
     val left = order(candidates.filterNot(c => checkedSince(c.last, plan.since)))
     if plan.all then left else left.filter(due).take(math.max(0, plan.upTo - math.max(0, triedByJob)))
@@ -239,7 +303,7 @@ object AcquireRecheck:
   /** Does a later job take up where this one stopped? Only one a restart (`interrupted`) or the drain stopped; one that
     * finished, or failed for another reason, is over.
     */
-  def resumable(status: String, error: Option[String]): Boolean =
+  def resumable(status: com.histmersion.domain.AcquireRecheck.ResumableStatus, error: Option[com.histmersion.domain.AcquireRecheck.ResumableError]): com.histmersion.domain.AcquireRecheck.ResumableResult =
     status == JobState.Failed.wire &&
       error.exists(e => e == JobState.Interrupted || e == StoppedDraining)
 
@@ -255,13 +319,16 @@ object AcquireRecheck:
       failed: Tally.Failed = 0,
       lastFailure: Option[Tally.LastFailure] = None
   ):
-    def add(outcome: Outcome, detail: String): Tally = outcome match
+    def add(outcome: Outcome, detail: com.histmersion.domain.AcquireRecheck.Tally.AddDetail): Tally = outcome match
       case Outcome.Closed  => this.modify(_.closed).setTo(closed + 1)
       case Outcome.Fetched => this.modify(_.tried).setTo(tried + 1).modify(_.fetched).setTo(fetched + 1)
       case Outcome.NoCopy  => this.modify(_.tried).setTo(tried + 1).modify(_.noCopy).setTo(noCopy + 1)
       case Outcome.Failed  => this.modify(_.tried).setTo(tried + 1).modify(_.failed).setTo(failed + 1).modify(_.lastFailure).setTo(Some(detail))
 
   object Tally:
+    type AddDetail = AddDetail.T
+    object AddDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Total = Total.T
     object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tried = Tried.T
@@ -278,7 +345,7 @@ object AcquireRecheck:
     object LastFailure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The job's progress: `120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429 …)`. */
-  def progressLine(t: Tally): String =
+  def progressLine(t: Tally): com.histmersion.domain.AcquireRecheck.ProgressLineResult =
     val why = t.lastFailure.map(_.trim).filter(_.nonEmpty).map(w => if w.length > 60 then w.take(60).trim + " …" else w)
     s"${t.tried}/${t.total} items · ${t.closed} closed · ${t.fetched} fetched · ${t.noCopy} no legal copy · " +
       s"${t.failed} failed" + why.fold("")(w => s" ($w)")

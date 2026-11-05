@@ -69,17 +69,17 @@ final class IngestControllers(
     * bind-mounted corpus) OR a base64 payload bounded by `limits.inlineBytes`. Both end up in the same [[ingest]].
     */
   def fromTool(
-      citekey: String,
-      path: Option[String],
-      base64: Option[String],
-      filename: Option[String],
-      quality: Boolean,
-      force: Boolean,
-      title: Option[String],
-      authors: List[String],
-      year: Option[Int],
-      doi: Option[String],
-      acquireItem: Option[Int] = None
+      citekey: com.histmersion.domain.library.Citekey,
+      path: Option[com.histmersion.domain.library.ingest.IngestControllers.FromToolPath],
+      base64: Option[com.histmersion.domain.library.ingest.IngestControllers.FromToolBase64],
+      filename: Option[com.histmersion.domain.library.ingest.IngestControllers.FromToolFilename],
+      quality: com.histmersion.domain.library.ingest.IngestControllers.FromToolQuality,
+      force: com.histmersion.domain.library.ingest.IngestControllers.FromToolForce,
+      title: Option[com.histmersion.domain.library.ingest.IngestControllers.FromToolTitle],
+      authors: List[com.histmersion.domain.library.ingest.IngestControllers.FromToolAuthors],
+      year: Option[com.histmersion.Year],
+      doi: Option[com.histmersion.domain.library.Doi],
+      acquireItem: Option[com.histmersion.domain.library.ingest.IngestControllers.FromToolAcquireItem] = None
   ): Either[Api.Error, Ingest.Accepted] =
     def params(name: String) =
       Ingest.Params(citekey.trim, Some(name), quality, force, title, authors, year, doi, acquireItem = acquireItem)
@@ -120,12 +120,12 @@ final class IngestControllers(
   /** `POST /api/sources/{ck}/reocr` — convert the stored original again (a scan first read on the fast path, re-run
     * under docling with `quality`).
     */
-  def reocr(citekey: String, quality: Boolean): Either[Api.Error, Ingest.Accepted] =
+  def reocr(citekey: com.histmersion.domain.library.Citekey, quality: com.histmersion.domain.library.ingest.IngestControllers.ReocrQuality): Either[Api.Error, Ingest.Accepted] =
     maintenance.guard("reocr")(
       Citekey.parse(citekey).left.map(Write.invalid).flatMap(_ => reocrValid(citekey, quality))
     )
 
-  private def reocrValid(citekey: String, quality: Boolean): Either[Api.Error, Ingest.Accepted] =
+  private def reocrValid(citekey: com.histmersion.domain.library.Citekey, quality: com.histmersion.domain.library.ingest.IngestControllers.ReocrValidQuality): Either[Api.Error, Ingest.Accepted] =
     sources.load(citekey) match
       case None    => Left(Write.notFound(citekey))
       case Some(_) =>
@@ -151,7 +151,7 @@ final class IngestControllers(
   /** `GET /api/sources/{ck}/original` — the stored original and its download name. Read-only, so no maintenance guard;
     * 404 when the source or its stored file is missing.
     */
-  def original(citekey: String): Either[Api.Error, (Blob, String)] =
+  def original(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, (Blob, com.histmersion.domain.library.ingest.IngestControllers.OriginalResultPart2Part2)] =
     Citekey.parse(citekey).left.map(Write.invalid).flatMap { _ =>
       sources.load(citekey) match
         case None    => Left(Write.notFound(citekey))
@@ -173,7 +173,7 @@ final class IngestControllers(
   /** Refuse an upload that names an item it cannot fulfil — BEFORE the file is stored and a long OCR is started for
     * nothing.
     */
-  private def acquireItemOk(item: Option[Int]): Either[Api.Error, Unit] =
+  private def acquireItemOk(item: Option[com.histmersion.domain.library.ingest.IngestControllers.AcquireItemOkItem]): Either[Api.Error, Unit] =
     item.fold(Right(()))(id => Queue.fulfillable(id, queues.get(QueueItemId(id))).map(_ => ()).left.map(Api.Error(_)))
 
   // ── the originals' store ───────────────────────────────────────────────────────────────────
@@ -181,7 +181,7 @@ final class IngestControllers(
   /** `<sha256>.<ext>` — content-addressed, so the same file uploaded twice is stored once and `reocr` can find the
     * original from `sources.sha256` alone.
     */
-  private def store(upload: Upload, sha: String, filename: String): Either[Api.Error, Store.Key] =
+  private def store(upload: Upload, sha: com.histmersion.domain.library.ingest.IngestControllers.StoreSha, filename: com.histmersion.domain.library.ingest.IngestControllers.StoreFilename): Either[Api.Error, Store.Key] =
     val ext = AssetLinks.safeName(filename).reverse.takeWhile(_ != '.').reverse match
       case e if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) => e.toLowerCase
       case _                                                               => "bin"
@@ -207,10 +207,10 @@ final class IngestControllers(
         .map(_ => key)
 
   /** The stored original of content hash `sha`: `<sha>.<ext>`, if it is there. */
-  private def storedFor(sha: String): Option[Store.Key] =
+  private def storedFor(sha: com.histmersion.domain.library.ingest.IngestControllers.StoredForSha): Option[Store.Key] =
     originals().names().find(_.startsWith(sha + ".")).map(Store.Key.applyUnsafe)
 
-  private def digest(upload: Upload): Either[Api.Error, String] =
+  private def digest(upload: Upload): Either[Api.Error, com.histmersion.domain.library.ingest.IngestControllers.DigestResultPart2] =
     scala.util
       .Try {
         val md = java.security.MessageDigest.getInstance("SHA-256")
@@ -231,7 +231,7 @@ final class IngestControllers(
       .map(e => Api.Error(s"cannot read the upload: ${e.getMessage}"))
 
   /** 409 unless `force`: the same bytes are already stored under another citekey. */
-  private def duplicate(sha: String, citekey: String, force: Boolean): Either[Api.Error, Unit] =
+  private def duplicate(sha: com.histmersion.domain.library.ingest.IngestControllers.DuplicateSha, citekey: com.histmersion.domain.library.Citekey, force: com.histmersion.domain.library.ingest.IngestControllers.DuplicateForce): Either[Api.Error, Unit] =
     sources.holderOf(sha) match
       case Some(other) if other != citekey && !force =>
         Left(
@@ -242,3 +242,41 @@ final class IngestControllers(
           )
         )
       case _ => Right(())
+
+object IngestControllers:
+  type FromToolPath = FromToolPath.T
+  object FromToolPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromToolBase64 = FromToolBase64.T
+  object FromToolBase64 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromToolFilename = FromToolFilename.T
+  object FromToolFilename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromToolQuality = FromToolQuality.T
+  object FromToolQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromToolForce = FromToolForce.T
+  object FromToolForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromToolTitle = FromToolTitle.T
+  object FromToolTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromToolAuthors = FromToolAuthors.T
+  object FromToolAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromToolAcquireItem = FromToolAcquireItem.T
+  object FromToolAcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReocrQuality = ReocrQuality.T
+  object ReocrQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReocrValidQuality = ReocrValidQuality.T
+  object ReocrValidQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginalResultPart2Part2 = OriginalResultPart2Part2.T
+  object OriginalResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireItemOkItem = AcquireItemOkItem.T
+  object AcquireItemOkItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreSha = StoreSha.T
+  object StoreSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreFilename = StoreFilename.T
+  object StoreFilename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredForSha = StoredForSha.T
+  object StoredForSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DigestResultPart2 = DigestResultPart2.T
+  object DigestResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicateSha = DuplicateSha.T
+  object DuplicateSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicateForce = DuplicateForce.T
+  object DuplicateForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

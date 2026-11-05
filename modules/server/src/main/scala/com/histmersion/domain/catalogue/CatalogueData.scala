@@ -16,6 +16,9 @@ import com.histmersion.util.storage.Store
   * the map, what a bundle carries of it and how a merge treats it, its counts and its checks.
   */
 object CatalogueData extends DataContribution:
+  type OnDemandDirectory = OnDemandDirectory.T
+  object OnDemandDirectory extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val owner: DataOwner = DataOwner("catalogue")
 
   val tables: List[OwnedTable] = OwnedTable.all(
@@ -60,7 +63,7 @@ object CatalogueData extends DataContribution:
   override val mergeRules: List[MergeRules] = CatalogueExchange.mergeRules
 
   /** The base map's tiles read on demand: the relief deeper, the map and the sea floor outside the focus region. */
-  private def onDemand(directory: String): CacheHolding =
+  private def onDemand(directory: com.histmersion.domain.catalogue.CatalogueData.OnDemandDirectory): CacheHolding =
     CacheHolding.InStore(Location.Basemap, Store.Key.applyUnsafe(directory))
 
   override val caches: List[CacheSpec] = List(

@@ -38,31 +38,97 @@ object GazetteerLoad:
     * dir>/gazetteer`, until 2026-10-17: a pinned extract found there and not in `extracts` is moved over once,
     * [[extract]]), the drop folder, and the manifest's text (`manifestAt` names it in messages).
     */
+  type LocateFile = LocateFile.T
+  object LocateFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Names = Names.T
+  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManifestResultPart1 = ManifestResultPart1.T
+  object ManifestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PinResultPart1 = PinResultPart1.T
+  object PinResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyResultPart1 = VerifyResultPart1.T
+  object VerifyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MissingResult = MissingResult.T
+  object MissingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AdoptResultPart1 = AdoptResultPart1.T
+  object AdoptResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractResultPart1 = ExtractResultPart1.T
+  object ExtractResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractTimeoutSeconds = ExtractTimeoutSeconds.T
+  object ExtractTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinesEachArg1 = LinesEachArg1.T
+  object LinesEachArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinesEachArg2 = LinesEachArg2.T
+  object LinesEachArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadResultPart1 = LoadResultPart1.T
+  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadApply = LoadApply.T
+  object LoadApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadNoteArg1 = LoadNoteArg1.T
+  object LoadNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseLineResultPart1 = ParseLineResultPart1.T
+  object ParseLineResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseLineLine = ParseLineLine.T
+  object ParseLineLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseLineN = ParseLineN.T
+  object ParseLineN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseLineDataset = ParseLineDataset.T
+  object ParseLineDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseLineSource = ParseLineSource.T
+  object ParseLineSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunKey = RunKey.T
+  object RunKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunVersion = RunVersion.T
+  object RunVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunApply = RunApply.T
+  object RunApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunNoteArg1 = RunNoteArg1.T
+  object RunNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunLabel = RunLabel.T
+  object RunLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfResultPart1 = LoadLpfResultPart1.T
+  object LoadLpfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfApply = LoadLpfApply.T
+  object LoadLpfApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfNoteArg1 = LoadLpfNoteArg1.T
+  object LoadLpfNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfFileResultPart1 = LoadLpfFileResultPart1.T
+  object LoadLpfFileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfFileApply = LoadLpfFileApply.T
+  object LoadLpfFileApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfFileNoteArg1 = LoadLpfFileNoteArg1.T
+  object LoadLpfFileNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Stores(
       extracts: Store,
       legacy: Option[Store],
       lpf: Store,
       manifestAt: Stores.ManifestAt,
-      manifestText: () => Either[String, String]
+      manifestText: () => Either[Stores.ManifestTextResultPart1, Stores.ManifestTextResultPart2]
   )
 
   object Stores:
+    type ManifestTextResultPart1 = ManifestTextResultPart1.T
+    object ManifestTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManifestTextResultPart2 = ManifestTextResultPart2.T
+    object ManifestTextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ManifestAt = ManifestAt.T
     object ManifestAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Where a pinned file is: in `extracts`, else at the legacy place, else `None`. */
-  def locate(p: Stores, file: String): Option[(Store, Store.Key)] =
+  def locate(p: Stores, file: com.histmersion.domain.catalogue.places.GazetteerLoad.LocateFile): Option[(Store, Store.Key)] =
     Store.Key
       .of(file)
       .toOption
       .flatMap(k => (p.extracts :: p.legacy.toList).find(_.isFile(k)).map(_ -> k))
 
   /** Every name `histmersion places load` and `init.fetch-sources` accept for these sources. */
-  val names: List[String] = Gazetteer.Kind.values.toList.map(_.wire)
+  val names: List[com.histmersion.domain.catalogue.places.GazetteerLoad.Names] = Gazetteer.Kind.values.toList.map(_.wire)
 
   // ── the manifest ───────────────────────────────────────────────────────────────────────────────
 
-  def manifest(p: Stores): Either[String, Gazetteer.Manifest] =
+  def manifest(p: Stores): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.ManifestResultPart1, Gazetteer.Manifest] =
     p.manifestText()
       .flatMap(text =>
         io.circe.parser
@@ -71,7 +137,7 @@ object GazetteerLoad:
           .map(e => s"${p.manifestAt}: ${e.getMessage}")
       )
 
-  private def pin(p: Stores, kind: Gazetteer.Kind): Either[String, Gazetteer.Extract] =
+  private def pin(p: Stores, kind: Gazetteer.Kind): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.PinResultPart1, Gazetteer.Extract] =
     manifest(p).flatMap(
       _.extracts
         .find(_.name == kind.wire)
@@ -83,7 +149,7 @@ object GazetteerLoad:
   /** Is the file at `key` the pinned one? `Left` says why not — a missing file or a checksum mismatch, which is
     * REFUSED: an extract that is not the pinned one is never imported.
     */
-  def verify(store: Store, key: Store.Key, x: Gazetteer.Extract): Either[String, Blob] =
+  def verify(store: Store, key: Store.Key, x: Gazetteer.Extract): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.VerifyResultPart1, Blob] =
     store.get(key) match
       case None    => Left(s"${store.where(key)} is missing")
       case Some(f) =>
@@ -104,7 +170,7 @@ object GazetteerLoad:
     * pin has no download url (the extracts are not hosted) must be PUT at the exact path the import reads — named here
     * with its checksum and size, and the setting that moves it.
     */
-  def missing(p: Stores, x: Gazetteer.Extract): String =
+  def missing(p: Stores, x: Gazetteer.Extract): com.histmersion.domain.catalogue.places.GazetteerLoad.MissingResult =
     if x.sha256.trim.isEmpty || x.file.trim.isEmpty then
       s"${x.name} is not pinned yet (${p.manifestAt} names no built file or sha256 for it) — build it with " +
         s"db/gazetteer/build.py and pin it (db/gazetteer/README.md, \"Rebuilding and re-pinning\")"
@@ -120,7 +186,7 @@ object GazetteerLoad:
     * that kept its extracts in `<data dir>/gazetteer` keeps them. When the move fails it is read where it is. Importing
     * is idempotent either way: what was imported stays imported.
     */
-  private def adopt(p: Stores, x: Gazetteer.Extract, old: Store, key: Store.Key): Either[String, Blob] =
+  private def adopt(p: Stores, x: Gazetteer.Extract, old: Store, key: Store.Key): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.AdoptResultPart1, Blob] =
     verify(old, key, x).map { found =>
       val moved =
         for
@@ -148,7 +214,7 @@ object GazetteerLoad:
   /** The pinned extract (moved over from the legacy place once), fetched first when it is missing and its pin names a
     * url.
     */
-  def extract(p: Stores, x: Gazetteer.Extract, download: Download, timeoutSeconds: Int): Either[String, Blob] =
+  def extract(p: Stores, x: Gazetteer.Extract, download: Download, timeoutSeconds: com.histmersion.domain.catalogue.places.GazetteerLoad.ExtractTimeoutSeconds): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.ExtractResultPart1, Blob] =
     if x.sha256.trim.isEmpty || x.file.trim.isEmpty then Left(missing(p, x))
     else
       Store.Key.of(x.file) match
@@ -179,7 +245,7 @@ object GazetteerLoad:
     if f.key.name.endsWith(".gz") then new GZIPInputStream(raw, 1 << 16) else raw
 
   /** Lines of a (gzip) text file, handed to `each` with their 1-based number. */
-  private def lines(f: Blob)(each: (String, Int) => Unit): Unit =
+  private def lines(f: Blob)(each: (com.histmersion.domain.catalogue.places.GazetteerLoad.LinesEachArg1, com.histmersion.domain.catalogue.places.GazetteerLoad.LinesEachArg2) => Unit): Unit =
     Using.resource(new BufferedReader(new InputStreamReader(open(f), StandardCharsets.UTF_8), 1 << 16)) { r =>
       @tailrec def next(n: Int): Unit =
         val line = r.readLine()
@@ -196,7 +262,7 @@ object GazetteerLoad:
     var total: Gazetteer.LoadCounts = Gazetteer.LoadCounts("", "") // the running sum
     var span: Span = Span.always // the widest known years of the records, for an LPF dataset that states none
 
-    def add(r: Either[String, GazRecord]): Unit = r match
+    def add(r: Either[com.histmersion.domain.catalogue.places.GazetteerLoad.Batcher.AddRPart1, GazRecord]): Unit = r match
       case Left(e)    => total = total.copy(skipped = (total.skipped :+ e).take(20))
       case Right(rec) =>
         span = Span((span.from ++ rec.span.from).minOption, (span.to ++ rec.span.to).maxOption)
@@ -209,6 +275,10 @@ object GazetteerLoad:
         total = total + sink(buf.result())
         buf.clear()
         n = 0
+
+  object Batcher:
+    type AddRPart1 = AddRPart1.T
+    object AddRPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── a run ──────────────────────────────────────────────────────────────────────────────────────
 
@@ -258,10 +328,10 @@ object GazetteerLoad:
       db: Transactor,
       s: Settings,
       kind: Gazetteer.Kind,
-      apply: Boolean,
-      note: String => Unit,
+      apply: com.histmersion.domain.catalogue.places.GazetteerLoad.LoadApply,
+      note: com.histmersion.domain.catalogue.places.GazetteerLoad.LoadNoteArg1 => Unit,
       download: Download
-  ): Either[String, List[Gazetteer.LoadCounts]] =
+  ): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.LoadResultPart1, List[Gazetteer.LoadCounts]] =
     val result = kind match
       case Gazetteer.Kind.Lpf => loadLpf(db, s, apply, note)
       case k                  =>
@@ -295,7 +365,7 @@ object GazetteerLoad:
       cs
     }
 
-  private def parseLine(line: String, n: Int, dataset: String, source: Option[String]): Either[String, GazRecord] =
+  private def parseLine(line: com.histmersion.domain.catalogue.places.GazetteerLoad.ParseLineLine, n: com.histmersion.domain.catalogue.places.GazetteerLoad.ParseLineN, dataset: com.histmersion.domain.catalogue.places.GazetteerLoad.ParseLineDataset, source: Option[com.histmersion.domain.catalogue.places.GazetteerLoad.ParseLineSource]): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.ParseLineResultPart1, GazRecord] =
     io.circe.parser
       .parse(line)
       .left
@@ -306,11 +376,11 @@ object GazetteerLoad:
   private def run(
       db: Transactor,
       s: Settings,
-      key: String,
-      version: String,
-      apply: Boolean,
-      note: String => Unit,
-      label: String
+      key: com.histmersion.domain.catalogue.places.GazetteerLoad.RunKey,
+      version: com.histmersion.domain.catalogue.places.GazetteerLoad.RunVersion,
+      apply: com.histmersion.domain.catalogue.places.GazetteerLoad.RunApply,
+      note: com.histmersion.domain.catalogue.places.GazetteerLoad.RunNoteArg1 => Unit,
+      label: com.histmersion.domain.catalogue.places.GazetteerLoad.RunLabel
   )(feed: Batcher => Unit): (Gazetteer.LoadCounts, Span) =
     db.read:
       val session = GazetteerImport.session(key, version, apply, s.openStartWindowYears, s.pointAreaKinds)
@@ -355,9 +425,9 @@ object GazetteerLoad:
   private def loadLpf(
       db: Transactor,
       s: Settings,
-      apply: Boolean,
-      note: String => Unit
-  ): Either[String, List[Gazetteer.LoadCounts]] =
+      apply: com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfApply,
+      note: com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfNoteArg1 => Unit
+  ): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfResultPart1, List[Gazetteer.LoadCounts]] =
     val files = lpfFiles(s.stores.lpf)
     if files.isEmpty then
       Left(s"no LPF files in ${s.stores.lpf.where()} (put World Historical Gazetteer downloads there)")
@@ -370,9 +440,9 @@ object GazetteerLoad:
       db: Transactor,
       s: Settings,
       f: Blob,
-      apply: Boolean,
-      note: String => Unit
-  ): Either[String, Gazetteer.LoadCounts] =
+      apply: com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileApply,
+      note: com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileNoteArg1 => Unit
+  ): Either[com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileResultPart1, Gazetteer.LoadCounts] =
     val name = f.key.name
     val slug = Gazetteer.datasetSlug(name)
     val key = Gazetteer.sourceKey(Gazetteer.Kind.Lpf, Some(slug))

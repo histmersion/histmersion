@@ -24,7 +24,7 @@ final class GazetteerControllers(
   private val slot = BackgroundJob.Slot()
 
   /** A places job: `about` says what it does (the jobs list shows it), `run` answers its summary or why it failed. */
-  private def job(kind: String, about: String)(run: => Either[String, String]): Either[Api.Error, JobInfo] =
+  private def job(kind: com.histmersion.domain.catalogue.places.GazetteerControllers.JobKind, about: com.histmersion.domain.catalogue.places.GazetteerControllers.JobAbout)(run: => Either[String, String]): Either[Api.Error, JobInfo] =
     BackgroundJob.start(ds, kind, Some(JobDetail.Purpose(Some(about))), slot, "a places job", pins = pins)(
       (_, progress) =>
         progress(about)
@@ -38,7 +38,7 @@ final class GazetteerControllers(
     * re-running upserts over existing entries. A real run is a background job (the download and its upserts exceed any
     * reasonable HTTP timeout).
     */
-  def fetch(caller: Caller, source: String, dryRun: Boolean): Either[Api.Error, Place.ImportResult] =
+  def fetch(caller: Caller, source: com.histmersion.domain.catalogue.places.GazetteerControllers.FetchSource, dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.FetchDryRun): Either[Api.Error, Place.ImportResult] =
     maintenance.guard("places/fetch"):
       if source.trim.toLowerCase == NaturalEarthLand.name then land(dryRun)
       else
@@ -66,7 +66,7 @@ final class GazetteerControllers(
   /** `places fetch land`: Natural Earth land for clipping polities to the coast (V025); like the gazetteers, a real run
     * is a background job — two downloads and a re-clip of every polity.
     */
-  private def land(dryRun: Boolean): Either[Api.Error, Place.ImportResult] =
+  private def land(dryRun: com.histmersion.domain.catalogue.places.GazetteerControllers.LandDryRun): Either[Api.Error, Place.ImportResult] =
     if dryRun then imports.land(dryRun = true).left.map(Api.Error(_))
     else
       job(com.histmersion.api.catalogue.PlacesJobKinds.PlacesFetch.kind.value, "fetch land")(
@@ -87,3 +87,15 @@ final class GazetteerControllers(
         val r = geometry.buildHierarchy()
         Right(s"${r.edgesCreated} edges from ${r.polygonPlaces} polygons × ${r.pointPlaces} points")
       }.map(j => SpatialHierarchyResult(edgesCreated = 0, polygonPlaces = 0, pointPlaces = 0, job = Some(j.id.value)))
+
+object GazetteerControllers:
+  type JobKind = JobKind.T
+  object JobKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobAbout = JobAbout.T
+  object JobAbout extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchSource = FetchSource.T
+  object FetchSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchDryRun = FetchDryRun.T
+  object FetchDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LandDryRun = LandDryRun.T
+  object LandDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

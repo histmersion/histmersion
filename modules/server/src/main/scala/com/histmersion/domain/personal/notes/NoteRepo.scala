@@ -11,7 +11,16 @@ import com.augustnagro.magnum.*
 /** The `notes` table. Takes the connection it runs on; a removed note stays as its tombstone. */
 private[notes] object NoteRepo:
 
-  private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
+  type IsoResult = IsoResult.T
+  object IsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsoCol = IsoCol.T
+  object IsoCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteResult = RewriteResult.T
+  object RewriteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TombstoneResult = TombstoneResult.T
+  object TombstoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def iso(col: com.histmersion.domain.personal.notes.NoteRepo.IsoCol): com.histmersion.domain.personal.notes.NoteRepo.IsoResult = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
     s"""SELECT n.id::text, n.target_kind, n.target_id, n.target_uid, n.lat, n.lon, n.period_start, n.period_end, n.body,
@@ -67,12 +76,12 @@ private[notes] object NoteRepo:
       id: com.histmersion.api.personal.Note.Id,
       text: com.histmersion.api.personal.Note.Text,
       at: MarkTime
-  )(using DbCon): Int =
+  )(using DbCon): com.histmersion.domain.personal.notes.NoteRepo.RewriteResult =
     val stamp = at.iso
     sql"""UPDATE notes SET body = $text, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()
 
-  def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): Int =
+  def tombstone(user: UserId, id: com.histmersion.api.personal.Note.Id, at: MarkTime)(using DbCon): com.histmersion.domain.personal.notes.NoteRepo.TombstoneResult =
     val stamp = at.iso
     sql"""UPDATE notes SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()

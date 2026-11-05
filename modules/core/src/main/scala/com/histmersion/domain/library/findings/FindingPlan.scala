@@ -192,6 +192,45 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 object FindingPlan:
 
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
+  type TextResult = TextResult.T
+  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextO = TextO.T
+  object TextO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimKeyResult = ClaimKeyResult.T
+  object ClaimKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimKeyClaim = ClaimKeyClaim.T
+  object ClaimKeyClaim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimWordsResult = ClaimWordsResult.T
+  object ClaimWordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimWordsClaim = ClaimWordsClaim.T
+  object ClaimWordsClaim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KmResult = KmResult.T
+  object KmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KmLon1 = KmLon1.T
+  object KmLon1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KmLat1 = KmLat1.T
+  object KmLat1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KmLon2 = KmLon2.T
+  object KmLon2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KmLat2 = KmLat2.T
+  object KmLat2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SamePlaceResult = SamePlaceResult.T
+  object SamePlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SamePlaceWithinKm = SamePlaceWithinKm.T
+  object SamePlaceWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CautionResult = CautionResult.T
+  object CautionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesWithinKm = MatchesWithinKm.T
+  object MatchesWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesNearAtLeast = MatchesNearAtLeast.T
+  object MatchesNearAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextIdsResult = NextIdsResult.T
+  object NextIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextIdsTaken = NextIdsTaken.T
+  object NextIdsTaken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextIdsCount = NextIdsCount.T
+  object NextIdsCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Match:
     /** The same claim (and a compatible time and place): one finding. */
     case Same(right: com.histmersion.api.exchange.Bundle.Finding, left: com.histmersion.api.exchange.Bundle.Finding)
@@ -206,15 +245,15 @@ object FindingPlan:
     /** Nothing here like it: a new finding of the survivor. */
     case Unmatched(right: com.histmersion.api.exchange.Bundle.Finding)
 
-  private def text(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
+  private def text(o: Option[com.histmersion.domain.library.findings.FindingPlan.TextO]): Option[com.histmersion.domain.library.findings.FindingPlan.TextResult] = o.map(_.trim).filter(_.nonEmpty)
 
   /** The claim as compared: folded, stopwords out, de-duplicated, sorted. */
-  def claimKey(claim: String): String = MergeText.significant(MergeText.tokens(claim)).distinct.sorted.mkString(" ")
+  def claimKey(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimKeyClaim): com.histmersion.domain.library.findings.FindingPlan.ClaimKeyResult = MergeText.significant(MergeText.tokens(claim)).distinct.sorted.mkString(" ")
 
-  private def claimWords(claim: String): Set[String] = MergeText.significant(MergeText.tokens(claim)).toSet
+  private def claimWords(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimWordsClaim): Set[com.histmersion.domain.library.findings.FindingPlan.ClaimWordsResult] = MergeText.significant(MergeText.tokens(claim)).toSet
 
   /** Great-circle distance in km. */
-  def km(lon1: Double, lat1: Double, lon2: Double, lat2: Double): Double =
+  def km(lon1: com.histmersion.domain.library.findings.FindingPlan.KmLon1, lat1: com.histmersion.domain.library.findings.FindingPlan.KmLat1, lon2: com.histmersion.domain.library.findings.FindingPlan.KmLon2, lat2: com.histmersion.domain.library.findings.FindingPlan.KmLat2): com.histmersion.domain.library.findings.FindingPlan.KmResult =
     val (p1, p2) = (math.toRadians(lat1), math.toRadians(lat2))
     val dp = p2 - p1
     val dl = math.toRadians(lon2 - lon1)
@@ -227,14 +266,14 @@ object FindingPlan:
   def samePlace(
       a: com.histmersion.api.exchange.Bundle.Finding,
       b: com.histmersion.api.exchange.Bundle.Finding,
-      withinKm: Double
-  ): Boolean =
+      withinKm: com.histmersion.domain.library.findings.FindingPlan.SamePlaceWithinKm
+  ): com.histmersion.domain.library.findings.FindingPlan.SamePlaceResult =
     val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v) <= withinKm
     val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(x) == MergeText.fingerprint(y))
     points.orElse(regions).forall(identity) || points.contains(true) || regions.contains(true)
 
   /** Caution ranks: contested is the least sure, then low, medium, high. */
-  private def caution(c: Confidence): Int = c match
+  private def caution(c: Confidence): com.histmersion.domain.library.findings.FindingPlan.CautionResult = c match
     case Confidence.Contested => 0
     case Confidence.Low       => 1
     case Confidence.Medium    => 2
@@ -246,8 +285,8 @@ object FindingPlan:
   def matches(
       lefts: List[com.histmersion.api.exchange.Bundle.Finding],
       rights: List[com.histmersion.api.exchange.Bundle.Finding],
-      withinKm: Double,
-      nearAtLeast: Double
+      withinKm: com.histmersion.domain.library.findings.FindingPlan.MatchesWithinKm,
+      nearAtLeast: com.histmersion.domain.library.findings.FindingPlan.MatchesNearAtLeast
   ): List[Match] =
     val rs = rights.sortBy(_.id)
     val ls = lefts.sortBy(_.id)
@@ -309,7 +348,7 @@ object FindingPlan:
     )
 
   /** `<citekey>#<n>` labels for `count` new findings: after the highest number in use, never one that is taken. */
-  def nextIds(citekey: String, taken: Set[String], count: Int): List[String] =
+  def nextIds(citekey: com.histmersion.domain.library.Citekey, taken: Set[com.histmersion.domain.library.findings.FindingPlan.NextIdsTaken], count: com.histmersion.domain.library.findings.FindingPlan.NextIdsCount): List[com.histmersion.domain.library.findings.FindingPlan.NextIdsResult] =
     val Num = s"""^${java.util.regex.Pattern.quote(citekey)}#(\\d+)$$""".r
     val top = taken.toList.collect { case Num(n) => n.toInt }.maxOption.getOrElse(0)
     Iterator.from(top + 1).map(n => s"$citekey#$n").filterNot(taken).take(count).toList

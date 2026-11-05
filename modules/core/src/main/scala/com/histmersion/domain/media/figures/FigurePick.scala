@@ -16,6 +16,37 @@ object FigurePick:
   /** One stored figure of a source. `refs`: how many times the text links it; `firstAt`: where the first link sits, as
     * a share of the text (0 = its start); both `None`/0 when the text has none.
     */
+  type PageResult = PageResult.T
+  object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageName = PageName.T
+  object PageName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderResult = OrderResult.T
+  object OrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderName = OrderName.T
+  object OrderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageScanSizesResultPart1 = PageScanSizesResultPart1.T
+  object PageScanSizesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageScanSizesResultPart2 = PageScanSizesResultPart2.T
+  object PageScanSizesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RejectResult = RejectResult.T
+  object RejectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RejectScansPart1 = RejectScansPart1.T
+  object RejectScansPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RejectScansPart2 = RejectScansPart2.T
+  object RejectScansPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScoreResult = ScoreResult.T
+  object ScoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefsResultPart1 = RefsResultPart1.T
+  object RefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefsResultPart2Part1 = RefsResultPart2Part1.T
+  object RefsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefsResultPart2Part2 = RefsResultPart2Part2.T
+  object RefsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefsBody = RefsBody.T
+  object RefsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithRefsBody = WithRefsBody.T
+  object WithRefsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Figure(
       name: Figure.Name,
       width: Option[Figure.Width],
@@ -66,21 +97,21 @@ object FigurePick:
   /** Pure: the page a figure's name says it is on (pymupdf4llm's `fig-<page>-<n>`, pages counted from 1 as the
     * converter writes them), `None` for any other name.
     */
-  def page(name: String): Option[Int] = name match
+  def page(name: com.histmersion.domain.media.figures.FigurePick.PageName): Option[com.histmersion.domain.media.figures.FigurePick.PageResult] = name match
     case PageName(p) => p.toIntOption
     case _           => None
 
   /** Pure: a figure's order in its document by its name alone — the page for `fig-…`, the sequence number for docling's
     * `image_…`.
     */
-  def order(name: String): Option[Int] = page(name).orElse(name match
+  def order(name: com.histmersion.domain.media.figures.FigurePick.OrderName): Option[com.histmersion.domain.media.figures.FigurePick.OrderResult] = page(name).orElse(name match
     case SeqName(n) => n.toIntOption
     case _          => None)
 
   /** Pure: the sizes that are page scans — `pageScanMin` or more portrait figures (height/width between 1.2 and 1.6)
     * whose sides agree within 2 %.
     */
-  def pageScanSizes(figs: List[Figure], rules: Rules): Set[(Int, Int)] =
+  def pageScanSizes(figs: List[Figure], rules: Rules): Set[(com.histmersion.domain.media.figures.FigurePick.PageScanSizesResultPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesResultPart2)] =
     val portrait = figs.flatMap(f =>
       for w <- f.width; h <- f.height if w > 0 && h.toDouble / w >= 1.2 && h.toDouble / w <= 1.6 yield (w, h)
     )
@@ -89,7 +120,7 @@ object FigurePick:
     portrait.distinct.filter(s => portrait.count(near(s, _)) >= rules.pageScanMin.max(2)).toSet
 
   /** Pure: why a figure cannot illustrate its source, or `None` when it can. */
-  def reject(f: Figure, rules: Rules, scans: Set[(Int, Int)] = Set.empty): Option[String] =
+  def reject(f: Figure, rules: Rules, scans: Set[(com.histmersion.domain.media.figures.FigurePick.RejectScansPart1, com.histmersion.domain.media.figures.FigurePick.RejectScansPart2)] = Set.empty): Option[com.histmersion.domain.media.figures.FigurePick.RejectResult] =
     (f.width, f.height) match
       case (Some(w), Some(h)) if w > 0 && h > 0 =>
         val aspect = math.max(w, h).toDouble / math.min(w, h)
@@ -104,7 +135,7 @@ object FigurePick:
   /** Pure: the figure's weight — its area, halved past the early pages (or, without a page in its name, past the first
     * third of the text).
     */
-  def score(f: Figure, rules: Rules): Double =
+  def score(f: Figure, rules: Rules): com.histmersion.domain.media.figures.FigurePick.ScoreResult =
     val area = f.width.getOrElse(0).toDouble * f.height.getOrElse(0)
     val early = page(f.name) match
       case Some(p) => p <= rules.earlyPages
@@ -124,7 +155,7 @@ object FigurePick:
   /** Pure: every figure a converted text links (`assets/<name>`, the form the converter writes), with how many times
     * and where first (a share of the text) — one pass, whatever the number of figures.
     */
-  def refs(body: String): Map[String, (Int, Double)] =
+  def refs(body: com.histmersion.domain.media.figures.FigurePick.RefsBody): Map[com.histmersion.domain.media.figures.FigurePick.RefsResultPart1, (com.histmersion.domain.media.figures.FigurePick.RefsResultPart2Part1, com.histmersion.domain.media.figures.FigurePick.RefsResultPart2Part2)] =
     if body.isEmpty then Map.empty
     else
       val len = body.length.toDouble
@@ -137,6 +168,6 @@ object FigurePick:
         .toMap
 
   /** Pure: the figures with their links counted in `body`. */
-  def withRefs(figs: List[Figure], body: String): List[Figure] =
+  def withRefs(figs: List[Figure], body: com.histmersion.domain.media.figures.FigurePick.WithRefsBody): List[Figure] =
     val r = refs(body)
     figs.map(f => r.get(f.name).fold(f.copy(refs = 0, firstAt = None))((n, at) => f.copy(refs = n, firstAt = Some(at))))

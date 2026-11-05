@@ -39,7 +39,7 @@ final class HintEffectPipeline(
   val pipeline: Pipeline = Pipeline.HintEffect
   import HintEffectPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, String] =
+  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.automation.managers.HintEffectPipeline.RunResultPart2] =
     val mid = ctx.run.target
     for
       loaded <- ctx.code[Loaded]("load")(load(mid, ctx.run.params.hint))
@@ -64,7 +64,7 @@ final class HintEffectPipeline(
       )
     yield closed
 
-  private def load(mid: String, hint: Option[Long]): Either[String, Loaded] =
+  private def load(mid: com.histmersion.domain.automation.managers.HintEffectPipeline.LoadMid, hint: Option[com.histmersion.domain.automation.managers.HintEffectPipeline.LoadHint]): Either[com.histmersion.domain.automation.managers.HintEffectPipeline.LoadResultPart1, Loaded] =
     for
       m <- connect(ds)(ManagerRepo.get(mid)).toRight(s"no manager '$mid'")
       id <- hint.toRight("the run names no hint (RunParams.hint)")
@@ -88,7 +88,7 @@ final class HintEffectPipeline(
         ManagersMarkdown.configLine(m.config)
       )
 
-  private def input(l: Loaded): String =
+  private def input(l: Loaded): com.histmersion.domain.automation.managers.HintEffectPipeline.InputResult =
     val manager = s"id: ${l.managerId}\nkind: ${l.kind}\nresearch area: ${l.goal.getOrElse("none (library-wide)")}\n" +
       s"its settings now: ${l.settings}" + l.itemTarget.fold("")(t => s"\nthe hint is about the item: $t")
     s"Propose the action this hint asks the manager to take, if any.\n\n${Prompt.data("hint", l.text)}\n\n" +
@@ -99,7 +99,7 @@ final class HintEffectPipeline(
   /** The proposal, through the write gate: an open `hint-effect` approval about the manager (and the manager's event).
     * Nothing passed or asked for: nothing is recorded.
     */
-  private def record(ctx: RunCtx, l: Loaded, p: Proposed): Either[String, String] =
+  private def record(ctx: RunCtx, l: Loaded, p: Proposed): Either[com.histmersion.domain.automation.managers.HintEffectPipeline.RecordResultPart1, com.histmersion.domain.automation.managers.HintEffectPipeline.RecordResultPart2] =
     p.effect match
       case None =>
         Right(if p.problems.isEmpty then "the hint asks for no structured action"
@@ -124,6 +124,21 @@ final class HintEffectPipeline(
 
 object HintEffectPipeline:
   /** Items the model is shown (the most urgent first). */
+  type RunResultPart2 = RunResultPart2.T
+  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadResultPart1 = LoadResultPart1.T
+  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadMid = LoadMid.T
+  object LoadMid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadHint = LoadHint.T
+  object LoadHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputResult = InputResult.T
+  object InputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart1 = RecordResultPart1.T
+  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart2 = RecordResultPart2.T
+  object RecordResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val ItemsShown = 60
 
   /** The keys a `config` action may name (what [[ManagerConfig.parse]] reads). */

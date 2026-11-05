@@ -13,12 +13,17 @@ import com.histmersion.api.catalogue.Gazetteer
   * pinned extracts and the drop folder).
   */
 object PlacesRoutes:
+  type ApplyLoadArg1 = ApplyLoadArg1.T
+  object ApplyLoadArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLoadArg2 = ApplyLoadArg2.T
+  object ApplyLoadArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(
       places: PlacesControllers,
       gazetteer: GazetteerControllers,
       card: ServerEndpoint[Any, Identity],
       sources: () => List[Gazetteer.SourceInfo],
-      load: (String, Boolean) => Either[Api.Error, JobInfo]
+      load: (com.histmersion.domain.catalogue.places.PlacesRoutes.ApplyLoadArg1, com.histmersion.domain.catalogue.places.PlacesRoutes.ApplyLoadArg2) => Either[Api.Error, JobInfo]
   ): List[ServerEndpoint[Any, Identity]] =
     val me = Caller.Local
     List(

@@ -28,10 +28,21 @@ import com.histmersion.api.library.Rename
   * renders a source as its Markdown note (the mirror's).
   */
 object LibraryTools:
+  type StrictDoc = StrictDoc.T
+  object StrictDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyExportNoteArg1 = ApplyExportNoteArg1.T
+  object ApplyExportNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyExportNoteResultPart2 = ApplyExportNoteResultPart2.T
+  object ApplyExportNoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassagesDoc = PassagesDoc.T
+  object PassagesDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassagesMarkdownResult = PassagesMarkdownResult.T
+  object PassagesMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import com.histmersion.util.mcp.ToolInputs.given
 
   /** The `strict` flag of every Markdown-writing tool. */
-  val StrictDoc: String =
+  val StrictDoc: com.histmersion.domain.library.LibraryTools.StrictDoc =
     "Refuse the write when its Markdown has a formatting ERROR (a table that will not render, unpaired **, " +
       "a broken link). Default false: the write goes through and the problems are listed under 'Formatting'."
 
@@ -41,7 +52,7 @@ object LibraryTools:
       sources: SourcesControllers,
       findings: FindingsControllers,
       citations: CitationsControllers,
-      exportNote: String => Either[Api.Error, String]
+      exportNote: com.histmersion.domain.library.LibraryTools.ApplyExportNoteArg1 => Either[Api.Error, com.histmersion.domain.library.LibraryTools.ApplyExportNoteResultPart2]
   ) =
     val searchTool =
       tool("search")
@@ -551,7 +562,7 @@ object LibraryTools:
       .modify(_.chars)(_.description("Body slice length in characters (default: configured full-text-chars limit)"))
 
   /** What `passages` does — shared by the MCP tool and the agents' toolbox. */
-  val PassagesDoc: String =
+  val PassagesDoc: com.histmersion.domain.library.LibraryTools.PassagesDoc =
     "Find a word, phrase or quotation inside ONE source's full text — `grep` over its body. Returns the " +
       "passages around each match (the match in **bold**), each with its `offset` into the body (pass it " +
       "to `get_source` as `offset` to read on) and the heading it sits under, then how many more there " +
@@ -562,7 +573,7 @@ object LibraryTools:
       "says about a term instead of paging through `get_source` slices."
 
   /** `passages` as Markdown, with the same wording for an unknown citekey as `get_source`. */
-  def passagesMarkdown(sources: SourcesControllers, in: PassagesInput): String =
+  def passagesMarkdown(sources: SourcesControllers, in: PassagesInput): com.histmersion.domain.library.LibraryTools.PassagesMarkdownResult =
     sources.passages(Api.PassagesQuery(in.citekey, in.query, in.regex, in.limit, in.context)) match
       case Right(r)                                       => PassagesMarkdown.render(r)
       case Left(e) if e.code.contains(Write.CodeNotFound) =>

@@ -23,13 +23,13 @@ private[workflows] trait GoalSweep:
   protected def goals: GoalService
 
   /** The sources a goal is about: linked directly, and cited by the articles linked to it. */
-  protected def goalSources(goal: String, max: Int): List[String] =
+  protected def goalSources(goal: com.histmersion.domain.library.workflows.GoalSweep.GoalSourcesGoal, max: com.histmersion.domain.library.workflows.GoalSweep.GoalSourcesMax): List[com.histmersion.domain.library.workflows.GoalSweep.GoalSourcesResult] =
     val direct = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Source)
     val viaArts = goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Article).flatMap(site.citedSources)
     (direct ++ viaArts).distinct.take(math.max(0, max))
 
   /** Every DOI in the acquisition queue (open or done) → its item id. */
-  protected def queuedDois(): Map[String, Int] =
+  protected def queuedDois(): Map[com.histmersion.domain.library.workflows.GoalSweep.QueuedDoisResultPart1, com.histmersion.domain.library.workflows.GoalSweep.QueuedDoisResultPart2] =
     site.queues
       .list(Queue.Kind.Acquire, QueueScope.All)
       .flatMap(i => Scheduling.dois(i.text).map(_ -> i.id))
@@ -41,11 +41,11 @@ private[workflows] trait GoalSweep:
     */
   protected def queueOnce(
       ctx: RunCtx,
-      goal: String,
-      doi: String,
-      text: String,
-      queued: Map[String, Int]
-  ): Either[String, Boolean] =
+      goal: com.histmersion.domain.library.workflows.GoalSweep.QueueOnceGoal,
+      doi: com.histmersion.domain.library.Doi,
+      text: com.histmersion.domain.library.workflows.GoalSweep.QueueOnceText,
+      queued: Map[com.histmersion.domain.library.workflows.GoalSweep.QueueOnceQueuedPart1, com.histmersion.domain.library.workflows.GoalSweep.QueueOnceQueuedPart2]
+  ): Either[com.histmersion.domain.library.workflows.GoalSweep.QueueOnceResultPart1, com.histmersion.domain.library.workflows.GoalSweep.QueueOnceResultPart2] =
     queued.get(doi).orElse(site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)) match
       case Some(id) =>
         ctx.write(
@@ -62,4 +62,34 @@ private[workflows] trait GoalSweep:
           }
         )(Right(true))
 
-  protected def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(site.workLists, ctx, line)
+  protected def log(ctx: RunCtx, line: com.histmersion.domain.library.workflows.GoalSweep.LogLine): Either[com.histmersion.domain.library.workflows.GoalSweep.LogResultPart1, com.histmersion.domain.library.workflows.GoalSweep.LogResultPart2] = Pipelines.log(site.workLists, ctx, line)
+
+object GoalSweep:
+  type GoalSourcesResult = GoalSourcesResult.T
+  object GoalSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalSourcesGoal = GoalSourcesGoal.T
+  object GoalSourcesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalSourcesMax = GoalSourcesMax.T
+  object GoalSourcesMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueuedDoisResultPart1 = QueuedDoisResultPart1.T
+  object QueuedDoisResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueuedDoisResultPart2 = QueuedDoisResultPart2.T
+  object QueuedDoisResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueOnceResultPart1 = QueueOnceResultPart1.T
+  object QueueOnceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueOnceResultPart2 = QueueOnceResultPart2.T
+  object QueueOnceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueOnceGoal = QueueOnceGoal.T
+  object QueueOnceGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueOnceText = QueueOnceText.T
+  object QueueOnceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueOnceQueuedPart1 = QueueOnceQueuedPart1.T
+  object QueueOnceQueuedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueOnceQueuedPart2 = QueueOnceQueuedPart2.T
+  object QueueOnceQueuedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogResultPart1 = LogResultPart1.T
+  object LogResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogResultPart2 = LogResultPart2.T
+  object LogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLine = LogLine.T
+  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -22,6 +22,45 @@ import com.histmersion.api.research.Article
   */
 object PlanArticles:
 
+  type OverlapResult = OverlapResult.T
+  object OverlapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapMine = OverlapMine.T
+  object OverlapMine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapTheirs = OverlapTheirs.T
+  object OverlapTheirs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart2Part2 = CheckResultPart2Part2.T
+  object CheckResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckMaxArticles = CheckMaxArticles.T
+  object CheckMaxArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLast = CheckLast.T
+  object CheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyGoal = VerifyGoal.T
+  object VerifyGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyRationale = VerifyRationale.T
+  object VerifyRationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyDropped = VerifyDropped.T
+  object VerifyDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifySlugFreeArg1 = VerifySlugFreeArg1.T
+  object VerifySlugFreeArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifySlugFreeResult = VerifySlugFreeResult.T
+  object VerifySlugFreeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyHitsResultPart1 = VerifyHitsResultPart1.T
+  object VerifyHitsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyHitsResultPart2 = VerifyHitsResultPart2.T
+  object VerifyHitsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyExistingPart1 = VerifyExistingPart1.T
+  object VerifyExistingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyExistingPart2 = VerifyExistingPart2.T
+  object VerifyExistingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineResult = LogLineResult.T
+  object LogLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineGoal = LogLineGoal.T
+  object LogLineGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineOutcome = LogLineOutcome.T
+  object LogLineOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class ArticleAnswer(
       slug: ArticleAnswer.Slug,
       title: ArticleAnswer.Title,
@@ -98,14 +137,14 @@ object PlanArticles:
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The share of `mine` that `theirs` holds already (0 when `mine` is empty). */
-  def overlap(mine: Set[String], theirs: Set[String]): Double =
+  def overlap(mine: Set[com.histmersion.domain.PlanArticles.OverlapMine], theirs: Set[com.histmersion.domain.PlanArticles.OverlapTheirs]): com.histmersion.domain.PlanArticles.OverlapResult =
     if mine.isEmpty then 0.0 else mine.count(theirs).toDouble / mine.size
 
   /** The shape of each proposed article: a valid slug (not the goal's, not twice), a title, a kind, a filter that
     * selects something. Left = the problems a retry should fix (nothing usable, an empty rationale); the ones it cannot
     * fix are dropped with why.
     */
-  def check(a: ArticlesAnswer, maxArticles: Int, last: Boolean): Either[List[String], (List[Candidate], List[String])] =
+  def check(a: ArticlesAnswer, maxArticles: com.histmersion.domain.PlanArticles.CheckMaxArticles, last: com.histmersion.domain.PlanArticles.CheckLast): Either[List[com.histmersion.domain.PlanArticles.CheckResultPart1], (List[Candidate], List[com.histmersion.domain.PlanArticles.CheckResultPart2Part2])] =
     val problems = List.newBuilder[String]
     val dropped = List.newBuilder[String]
     val kept = a.articles
@@ -139,13 +178,13 @@ object PlanArticles:
     * is kept, and the next ones are measured against it too.
     */
   def verify(
-      goal: String,
-      rationale: String,
+      goal: com.histmersion.domain.PlanArticles.VerifyGoal,
+      rationale: com.histmersion.domain.PlanArticles.VerifyRationale,
       cs: List[Candidate],
-      dropped: List[String],
-      slugFree: String => Boolean,
-      hits: Article.Filter => (Int, Set[String]),
-      existing: List[(String, Set[String])],
+      dropped: List[com.histmersion.domain.PlanArticles.VerifyDropped],
+      slugFree: com.histmersion.domain.PlanArticles.VerifySlugFreeArg1 => com.histmersion.domain.PlanArticles.VerifySlugFreeResult,
+      hits: Article.Filter => (com.histmersion.domain.PlanArticles.VerifyHitsResultPart1, Set[com.histmersion.domain.PlanArticles.VerifyHitsResultPart2]),
+      existing: List[(com.histmersion.domain.PlanArticles.VerifyExistingPart1, Set[com.histmersion.domain.PlanArticles.VerifyExistingPart2])],
       limits: Limits
   ): ArticlePlan =
     @tailrec def loop(
@@ -196,6 +235,6 @@ object PlanArticles:
     loop(cs, Vector.empty, Vector.empty)
 
   /** The worklog line of a run. */
-  def logLine(goal: String, plan: ArticlePlan, outcome: String, runId: String): String =
+  def logLine(goal: com.histmersion.domain.PlanArticles.LogLineGoal, plan: ArticlePlan, outcome: com.histmersion.domain.PlanArticles.LogLineOutcome, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.PlanArticles.LogLineResult =
     s"propose-articles $goal: ${Plural.count(plan.articles.size, "article")} proposed, ${plan.dropped.size} dropped — $outcome " +
       s"(agent run ${runId.take(8)})"

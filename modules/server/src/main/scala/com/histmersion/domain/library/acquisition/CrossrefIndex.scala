@@ -13,7 +13,7 @@ import java.time.LocalDate
 /** Crossref: what was DEPOSITED since (`from-created-date`), newest first — a watermark on deposits. */
 final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = "crossref"
-  def search(query: String, since: LocalDate, limit: Int) =
+  def search(query: com.histmersion.domain.library.acquisition.CrossrefIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.CrossrefIndex.SearchLimit) =
     http
       .json(
         Url(
@@ -29,3 +29,9 @@ final class CrossrefIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex
         )
       )
       .map(AcquireParse.crossrefWorks(_).map(_.wire))
+
+object CrossrefIndex:
+  type SearchQuery = SearchQuery.T
+  object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

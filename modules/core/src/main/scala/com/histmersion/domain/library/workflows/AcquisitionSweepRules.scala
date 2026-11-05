@@ -16,6 +16,43 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 object AcquisitionSweepRules:
 
   /** A candidate a sweep found, as the ranking step sees it. */
+  type CandidatesResultPart2Part1 = CandidatesResultPart2Part1.T
+  object CandidatesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesResultPart2Part2 = CandidatesResultPart2Part2.T
+  object CandidatesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesFoundPart1 = CandidatesFoundPart1.T
+  object CandidatesFoundPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesQueued = CandidatesQueued.T
+  object CandidatesQueued extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesMax = CandidatesMax.T
+  object CandidatesMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRankingResultPart1 = CheckRankingResultPart1.T
+  object CheckRankingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRankingResultPart2Part1Part2 = CheckRankingResultPart2Part1Part2.T
+  object CheckRankingResultPart2Part1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRankingResultPart2Part2 = CheckRankingResultPart2Part2.T
+  object CheckRankingResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRankingLast = CheckRankingLast.T
+  object CheckRankingLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestPicksIsOaResult = IngestPicksIsOaResult.T
+  object IngestPicksIsOaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestPicksAllowed = IngestPicksAllowed.T
+  object IngestPicksAllowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOaResultPart2Part2 = IngestOaResultPart2Part2.T
+  object IngestOaResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOaIsOaResult = IngestOaIsOaResult.T
+  object IngestOaIsOaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOaAllowed = IngestOaAllowed.T
+  object IngestOaAllowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOaIngestResultPart1 = IngestOaIngestResultPart1.T
+  object IngestOaIngestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireTextResult = AcquireTextResult.T
+  object AcquireTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireTextGoal = AcquireTextGoal.T
+  object AcquireTextGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireTextWhy = AcquireTextWhy.T
+  object AcquireTextWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Candidate(
     doi: com.histmersion.domain.library.Doi,
     title: com.histmersion.api.library.Title,
@@ -39,7 +76,7 @@ object AcquisitionSweepRules:
     * (open or done), each once (the first query that found it). Returns the candidates and how many were left out for
     * each reason.
     */
-  def candidates(found: List[(String, WorkRef)], queued: Set[String], max: Int): (List[Candidate], Map[String, Int]) =
+  def candidates(found: List[(com.histmersion.domain.library.workflows.AcquisitionSweepRules.CandidatesFoundPart1, WorkRef)], queued: Set[com.histmersion.domain.library.workflows.AcquisitionSweepRules.CandidatesQueued], max: com.histmersion.domain.library.workflows.AcquisitionSweepRules.CandidatesMax): (List[Candidate], Map[com.histmersion.domain.library.workflows.AcquisitionSweepRules.CandidatesResultPart2Part1, com.histmersion.domain.library.workflows.AcquisitionSweepRules.CandidatesResultPart2Part2]) =
     val seen = scala.collection.mutable.LinkedHashMap.empty[String, Candidate] // insertion-ordered dedupe
     val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
     found.foreach { (q, w) =>
@@ -91,8 +128,8 @@ object AcquisitionSweepRules:
   def checkRanking(
       r: Ranking,
       offered: List[Candidate],
-      last: Boolean
-  ): Either[List[String], (List[(Candidate, String)], List[String])] =
+      last: com.histmersion.domain.library.workflows.AcquisitionSweepRules.CheckRankingLast
+  ): Either[List[com.histmersion.domain.library.workflows.AcquisitionSweepRules.CheckRankingResultPart1], (List[(Candidate, com.histmersion.domain.library.workflows.AcquisitionSweepRules.CheckRankingResultPart2Part1Part2)], List[com.histmersion.domain.library.workflows.AcquisitionSweepRules.CheckRankingResultPart2Part2])] =
     val byDoi = offered.map(c => c.doi -> c).toMap
     val parsed = r.picks.map(p => (p, Ident.doi(Option(p.doi).getOrElse("")).flatMap(byDoi.get)))
     val problems = parsed.collect { case (p, None) => s"'${p.doi}' is not one of the listed candidates" }
@@ -105,7 +142,7 @@ object AcquisitionSweepRules:
     * every closed pick, every failed one and the open ones past the cap stay for the acquisition list. Returns what was
     * ingested, in order. Nothing is offered past the cap.
     */
-  def ingestPicks[A, B](picks: List[A], isOa: A => Boolean, allowed: Int)(ingest: A => Option[B]): List[(A, B)] =
+  def ingestPicks[A, B](picks: List[A], isOa: A => com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestPicksIsOaResult, allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestPicksAllowed)(ingest: A => Option[B]): List[(A, B)] =
     picks
       .filter(isOa)
       .foldLeft(Vector.empty[(A, B)]) { (done, p) =>
@@ -117,9 +154,9 @@ object AcquisitionSweepRules:
     * offered and FAILED, with why — a work with no legal file goes to the acquisition list, any other failure back to
     * the backlog. The open-access picks never offered are the caller's: they wait in the backlog.
     */
-  def ingestOa[A, B](picks: List[A], isOa: A => Boolean, allowed: Int)(
-      ingest: A => Either[String, B]
-  ): (List[(A, B)], List[(A, String)]) =
+  def ingestOa[A, B](picks: List[A], isOa: A => com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaIsOaResult, allowed: com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaAllowed)(
+      ingest: A => Either[com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaIngestResultPart1, B]
+  ): (List[(A, B)], List[(A, com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestOaResultPart2Part2)]) =
     @tailrec def loop(rest: List[A], ok: Vector[(A, B)], ko: Vector[(A, String)]): (List[(A, B)], List[(A, String)]) =
       rest match
         case p :: tail if ok.size < allowed =>
@@ -132,7 +169,7 @@ object AcquisitionSweepRules:
   /** The acquisition item a picked candidate becomes (the DOI as a resolver URL, so
     * [[com.histmersion.domain.Scheduling.dois]] finds it).
     */
-  def acquireText(c: Candidate, goal: String, why: String): String =
+  def acquireText(c: Candidate, goal: com.histmersion.domain.library.workflows.AcquisitionSweepRules.AcquireTextGoal, why: com.histmersion.domain.library.workflows.AcquisitionSweepRules.AcquireTextWhy): com.histmersion.domain.library.workflows.AcquisitionSweepRules.AcquireTextResult =
     val who = c.authors.headOption.map(a => if c.authors.size > 1 then s"$a et al." else a)
     val head = List(who, c.year.map(y => s"($y)")).flatten.mkString(" ")
     val oa = if c.isOa then " (open access)" else ""

@@ -18,9 +18,12 @@ final case class TileCell(
     north: TileCell.North,
     undated: TileCell.Undated = 0
 ):
-  def isItem: Boolean = n == 1
+  def isItem: com.histmersion.domain.catalogue.maptiles.TileCell.IsItemResult = n == 1
 
 object TileCell:
+  type IsItemResult = IsItemResult.T
+  object IsItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type X = X.T

@@ -14,6 +14,33 @@ object ArticleReviewStatus:
   /** The review manager's `article-review` item for the article: its status, its last outcome line and how many runs it
     * started.
     */
+  type SoFarResult = SoFarResult.T
+  object SoFarResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MajorsLineResult = MajorsLineResult.T
+  object MajorsLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutcomeSuffixResult = OutcomeSuffixResult.T
+  object OutcomeSuffixResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutcomeSuffixOutcome = OutcomeSuffixOutcome.T
+  object OutcomeSuffixOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutcomeSuffixLead = OutcomeSuffixLead.T
+  object OutcomeSuffixLead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutcomeSuffixNone = OutcomeSuffixNone.T
+  object OutcomeSuffixNone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunOrderResult = RunOrderResult.T
+  object RunOrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunOrderRunStartsPart1 = RunOrderRunStartsPart1.T
+  object RunOrderRunStartsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunOrderRunStartsPart2 = RunOrderRunStartsPart2.T
+  object RunOrderRunStartsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistoryRunStartsPart1 = HistoryRunStartsPart1.T
+  object HistoryRunStartsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistoryRunStartsPart2 = HistoryRunStartsPart2.T
+  object HistoryRunStartsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingNumberPart1 = FindingNumberPart1.T
+  object FindingNumberPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingNumberPart2 = FindingNumberPart2.T
+  object FindingNumberPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = 0)
 
   object ItemFacts:
@@ -120,16 +147,16 @@ object ArticleReviewStatus:
       f.round.filter(_ => state == ReviewState.InReview)
     )
 
-  private def soFar(c: LedgerFacts): String =
+  private def soFar(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.SoFarResult =
     if c.findings == 0 then "" else s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor."
 
-  private def majorsLine(c: LedgerFacts): String =
+  private def majorsLine(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.MajorsLineResult =
     s"${Plural.count(c.openMajors.toLong, "MAJOR finding")} ${if c.openMajors == 1 then "is" else "are"} still open."
 
   /** `: <outcome>.` after a sentence still open, or ` <lead><outcome>.` after a finished one; `none` when the manager
     * recorded no outcome. The manager's own leading `stopped:`/`failed:` is dropped.
     */
-  private def outcomeSuffix(outcome: Option[String], lead: String = "", none: String = "."): String =
+  private def outcomeSuffix(outcome: Option[com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixOutcome], lead: com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixLead = "", none: com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixNone = "."): com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixResult =
     outcome
       .map(_.trim.stripPrefix("stopped:").stripPrefix("failed:").trim)
       .filter(_.nonEmpty)
@@ -141,14 +168,14 @@ object ArticleReviewStatus:
     * (`runStarts`, run id → UTC time), a run whose record is gone before those, and otherwise in the order the ledger
     * first names them (it only ever appends).
     */
-  def runOrder(l: Ledger, runStarts: Map[String, String]): List[String] =
+  def runOrder(l: Ledger, runStarts: Map[com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1, com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2]): List[com.histmersion.domain.ArticleReviewStatus.RunOrderResult] =
     val named = l.entries.flatMap(e => e.run :: e.closed.map(_.run).toList).filter(_.nonEmpty).distinct
     named.zipWithIndex.sortBy((run, i) => (runStarts.get(run), i)).map(_._1)
 
   /** The findings grouped by the pass that first raised them, in time order: run by run ([[runOrder]]), pass by pass,
     * each with what became of it.
     */
-  def history(l: Ledger, runStarts: Map[String, String]): List[ReviewRound] =
+  def history(l: Ledger, runStarts: Map[com.histmersion.domain.ArticleReviewStatus.HistoryRunStartsPart1, com.histmersion.domain.ArticleReviewStatus.HistoryRunStartsPart2]): List[ReviewRound] =
     val order = runOrder(l, runStarts)
     val number = order.zipWithIndex.map((r, i) => r -> (i + 1)).toMap
     l.entries
@@ -159,7 +186,7 @@ object ArticleReviewStatus:
         ReviewRound(run, number.getOrElse(run, 0), round, runStarts.get(run), es.map(finding(_, number)))
       }
 
-  private def finding(e: Entry, number: Map[String, Int]): ReviewFinding =
+  private def finding(e: Entry, number: Map[com.histmersion.domain.ArticleReviewStatus.FindingNumberPart1, com.histmersion.domain.ArticleReviewStatus.FindingNumberPart2]): ReviewFinding =
     val f = e.finding
     ReviewFinding(
       id = f.id,

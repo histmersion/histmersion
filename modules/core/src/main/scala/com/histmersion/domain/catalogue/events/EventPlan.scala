@@ -28,13 +28,13 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   /** The same dating and place on both sides: one event. */
   private val SameEvent: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
-    def info(label: String, bundleLabel: String): String =
+    def info(label: com.histmersion.domain.catalogue.events.EventPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel): com.histmersion.domain.catalogue.events.EventPlan.InfoResult =
       s"event $label: the same dating and place on both sides — one event, datings and participants unioned"
 
   /** Under another id here, with the same label, dates and place: one event. */
   private val AcrossIds: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
-    def info(label: String, bundleLabel: String): String =
+    def info(label: com.histmersion.domain.catalogue.events.EventPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel): com.histmersion.domain.catalogue.events.EventPlan.InfoResult =
       s"event $label: the bundle's $bundleLabel has the same label, dates and place — one event"
 
   private def merged(f: UUID, o: UUID, folds: PlanFolds): Unit =
@@ -130,10 +130,21 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
 object EventPlan:
 
   /** A label for an event id. */
+  type InfoResult = InfoResult.T
+  object InfoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoLabel = InfoLabel.T
+  object InfoLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoBundleLabel = InfoBundleLabel.T
+  object InfoBundleLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameCoreResult = SameCoreResult.T
+  object SameCoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameEventAcrossIdsResult = SameEventAcrossIdsResult.T
+  object SameEventAcrossIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val SlugShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
   /** Two events with one id that say the same about when and where (§5.4): they are one. */
-  def sameCore(l: com.histmersion.api.exchange.Bundle.Event, r: com.histmersion.api.exchange.Bundle.Event): Boolean =
+  def sameCore(l: com.histmersion.api.exchange.Bundle.Event, r: com.histmersion.api.exchange.Bundle.Event): com.histmersion.domain.catalogue.events.EventPlan.SameCoreResult =
     l.notBefore == r.notBefore && l.beginBy == r.beginBy && l.endFrom == r.endFrom && l.notAfter == r.notAfter &&
       l.geom == r.geom && l.placeId == r.placeId
 
@@ -143,7 +154,7 @@ object EventPlan:
   def sameEventAcrossIds(
       l: com.histmersion.api.exchange.Bundle.Event,
       r: com.histmersion.api.exchange.Bundle.Event
-  ): Boolean =
+  ): com.histmersion.domain.catalogue.events.EventPlan.SameEventAcrossIdsResult =
     def outer(e: com.histmersion.api.exchange.Bundle.Event) = Some(
       com.histmersion.api.exchange.Bundle.Range(e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom))
     )

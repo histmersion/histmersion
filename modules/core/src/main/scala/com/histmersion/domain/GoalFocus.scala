@@ -30,6 +30,85 @@ import com.histmersion.domain.automation.Goal
 object GoalFocus:
 
   /** How close a goal is to done (lower = closer). */
+  type UsesModelResult = UsesModelResult.T
+  object UsesModelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UsesModelKind = UsesModelKind.T
+  object UsesModelKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishedResult = FinishedResult.T
+  object FinishedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishedStatus = FinishedStatus.T
+  object FinishedStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfinishedKidsKidsPart1 = UnfinishedKidsKidsPart1.T
+  object UnfinishedKidsKidsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildWorkPart1 = BuildWorkPart1.T
+  object BuildWorkPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildSourcesPart1 = BuildSourcesPart1.T
+  object BuildSourcesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildSourcesPart2 = BuildSourcesPart2.T
+  object BuildSourcesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildArticlesPart1 = BuildArticlesPart1.T
+  object BuildArticlesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildArticlesPart2 = BuildArticlesPart2.T
+  object BuildArticlesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildPassed = BuildPassed.T
+  object BuildPassed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildCompileOpenPart1 = BuildCompileOpenPart1.T
+  object BuildCompileOpenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildCompileOpenPart2 = BuildCompileOpenPart2.T
+  object BuildCompileOpenPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildLastStopsPart1 = BuildLastStopsPart1.T
+  object BuildLastStopsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildLastStopsPart2 = BuildLastStopsPart2.T
+  object BuildLastStopsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoingResult = DoingResult.T
+  object DoingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StageMinSources = StageMinSources.T
+  object StageMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StageWhyResult = StageWhyResult.T
+  object StageWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StageWhyMinSources = StageWhyMinSources.T
+  object StageWhyMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FitKidsPart1 = FitKidsPart1.T
+  object FitKidsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootResult = RootResult.T
+  object RootResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootSlug = RootSlug.T
+  object RootSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootParentOfArg1 = RootParentOfArg1.T
+  object RootParentOfArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootParentOfResult = RootParentOfResult.T
+  object RootParentOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KinResultPart1 = KinResultPart1.T
+  object KinResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KinResultPart2 = KinResultPart2.T
+  object KinResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KinRootOfArg1 = KinRootOfArg1.T
+  object KinRootOfArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KinRootOfResult = KinRootOfResult.T
+  object KinRootOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyK = KeyK.T
+  object KeyK extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickWhyResult = PickWhyResult.T
+  object PickWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickWhyKPart1 = PickWhyKPart1.T
+  object PickWhyKPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickWhyKPart2 = PickWhyKPart2.T
+  object PickWhyKPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickWhyMinSources = PickWhyMinSources.T
+  object PickWhyMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FairOrderFocusResult = FairOrderFocusResult.T
+  object FairOrderFocusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FairOrderRecent = FairOrderRecent.T
+  object FairOrderRecent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FairOrderRatio = FairOrderRatio.T
+  object FairOrderRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EtaDaysResult = EtaDaysResult.T
+  object EtaDaysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EtaDaysOpen = EtaDaysOpen.T
+  object EtaDaysOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EtaDaysDoneLast7 = EtaDaysDoneLast7.T
+  object EtaDaysDoneLast7 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Stage(val rank: Int, val wire: String):
     case Reviewing extends Stage(0, "reviewing")
     case Compiling extends Stage(1, "compiling")
@@ -37,15 +116,18 @@ object GoalFocus:
     case Gathering extends Stage(3, "gathering")
 
   object Stage:
-    def parse(s: String): Option[Stage] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.GoalFocus.Stage.ParseS): Option[Stage] = values.find(_.wire == s.trim.toLowerCase)
 
   /** Whether an item kind's pipeline calls a model (the currency check and the ingest backlog do not: they run for
     * every goal whatever the focus).
     */
-  def usesModel(kind: String): Boolean = kind != CurrencyCheck && kind != OaIngest
+  def usesModel(kind: com.histmersion.domain.GoalFocus.UsesModelKind): com.histmersion.domain.GoalFocus.UsesModelResult = kind != CurrencyCheck && kind != OaIngest
 
   /** Reviewed or done: the focus has nothing more to do for it. */
-  def finished(status: String): Boolean = status == Goal.Status.Reviewed || status == Goal.Status.Done
+  def finished(status: com.histmersion.domain.GoalFocus.FinishedStatus): com.histmersion.domain.GoalFocus.FinishedResult = status == Goal.Status.Reviewed || status == Goal.Status.Done
 
   /** One open (pending, held, active) model-using item of a goal: its seeding manager's, its watcher's sweep, or the
     * review manager's on one of its articles. `focusHeld` = held by the focus; `personHeld` = held by a person (not for
@@ -63,12 +145,17 @@ object GoalFocus:
       approval: Option[Work.Approval] = None,
       approvalByPerson: Work.ApprovalByPerson = false
   ):
-    def waitsForPerson: Boolean = approval.isDefined && approvalByPerson
+    def waitsForPerson: com.histmersion.domain.GoalFocus.Work.WaitsForPersonResult = approval.isDefined && approvalByPerson
 
     /** It can still use a model without a person: not waiting for a person's approval, not held by one. */
-    def runnable: Boolean = !waitsForPerson && !personHeld
+    def runnable: com.histmersion.domain.GoalFocus.Work.RunnableResult = !waitsForPerson && !personHeld
 
   object Work:
+    type WaitsForPersonResult = WaitsForPersonResult.T
+    object WaitsForPersonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunnableResult = RunnableResult.T
+    object RunnableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ItemId = ItemId.T
     object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
@@ -192,7 +279,7 @@ object GoalFocus:
       left: List[(Plan.LeftPart1, Plan.LeftPart2)] = Nil,
       waiting: List[(Plan.WaitingPart1, Plan.WaitingPart2, Plan.WaitingPart3)] = Nil
   ):
-    lazy val activeSet: Set[String] = active.map(_.slug).toSet
+    lazy val activeSet: Set[com.histmersion.domain.GoalFocus.Pick.Slug] = active.map(_.slug).toSet
 
   object Plan:
     type Joined = Joined.T
@@ -208,7 +295,7 @@ object GoalFocus:
     type WaitingPart3 = WaitingPart3.T
     object WaitingPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def unfinishedKids(f: Facts, kids: Map[String, List[Facts]]): List[Facts] =
+  private def unfinishedKids(f: Facts, kids: Map[com.histmersion.domain.GoalFocus.UnfinishedKidsKidsPart1, List[Facts]]): List[Facts] =
     kids.getOrElse(f.slug, Nil).filterNot(k => finished(k.status))
 
   /** Every goal's facts from what the store reads for all of them at once: `goals` with their identity and what the
@@ -217,12 +304,12 @@ object GoalFocus:
     */
   def build(
       goals: List[Facts],
-      work: List[(List[String], Work)],
-      sources: Map[String, Int],
-      articles: Map[String, List[String]],
-      passed: Set[String],
-      compileOpen: Map[String, Int],
-      lastStops: Map[String, String]
+      work: List[(List[com.histmersion.domain.GoalFocus.BuildWorkPart1], Work)],
+      sources: Map[com.histmersion.domain.GoalFocus.BuildSourcesPart1, com.histmersion.domain.GoalFocus.BuildSourcesPart2],
+      articles: Map[com.histmersion.domain.GoalFocus.BuildArticlesPart1, List[com.histmersion.domain.GoalFocus.BuildArticlesPart2]],
+      passed: Set[com.histmersion.domain.GoalFocus.BuildPassed],
+      compileOpen: Map[com.histmersion.domain.GoalFocus.BuildCompileOpenPart1, com.histmersion.domain.GoalFocus.BuildCompileOpenPart2],
+      lastStops: Map[com.histmersion.domain.GoalFocus.BuildLastStopsPart1, com.histmersion.domain.GoalFocus.BuildLastStopsPart2]
   ): List[Facts] =
     val byGoal = work.flatMap((gs, w) => gs.distinct.map(_ -> w)).groupMap(_._1)(_._2)
     goals.map { g =>
@@ -235,7 +322,7 @@ object GoalFocus:
   /** What an active goal is doing or waiting for, in a line: its runs in flight, the approvals it waits for (and who
     * decides them), its next item.
     */
-  def doing(work: List[Work]): Option[String] =
+  def doing(work: List[Work]): Option[com.histmersion.domain.GoalFocus.DoingResult] =
     def name(w: Work) = s"${w.kind} ${w.target}".trim
     val running = work.filter(w => w.status == ItemStatus.Active.wire && w.approval.isEmpty)
     val waiting = work.filter(_.approval.isDefined)
@@ -260,14 +347,14 @@ object GoalFocus:
     Option.when(parts.nonEmpty)(parts.mkString("; "))
 
   /** The stage the facts put a goal at. */
-  def stage(f: Facts, minSources: Int): Stage =
+  def stage(f: Facts, minSources: com.histmersion.domain.GoalFocus.StageMinSources): Stage =
     if f.unreviewed > 0 then Stage.Reviewing
     else if f.compileOpen > 0 then Stage.Compiling
     else if f.sources >= math.max(1, minSources) then Stage.Ready
     else Stage.Gathering
 
   /** The stage in words, with the numbers behind it. */
-  def stageWhy(f: Facts, st: Stage, minSources: Int): String = st match
+  def stageWhy(f: Facts, st: Stage, minSources: com.histmersion.domain.GoalFocus.StageWhyMinSources): com.histmersion.domain.GoalFocus.StageWhyResult = st match
     case Stage.Reviewing => s"${f.unreviewed} of ${Plural.count(f.articles, "article")} still to pass review"
     case Stage.Compiling => s"${Plural.count(f.compileOpen, "approved article")} to compile"
     case Stage.Ready => s"${Plural.count(f.sources, "source")} (at least ${math.max(1, minSources)}), no article yet"
@@ -277,7 +364,7 @@ object GoalFocus:
     * all wait for a person (an approval only a person decides, or a person's hold), or that has none left (stopped:
     * stuck; else idle until its cron or new sources), cannot use a slot.
     */
-  def fit(f: Facts, kids: Map[String, List[Facts]], s: Settings): Fit =
+  def fit(f: Facts, kids: Map[com.histmersion.domain.GoalFocus.FitKidsPart1, List[Facts]], s: Settings): Fit =
     if finished(f.status) then Fit.Finished
     else
       val open = unfinishedKids(f, kids)
@@ -319,7 +406,7 @@ object GoalFocus:
     case _               => Nil
 
   /** The root of a goal's tree (a cycle or a missing parent stops the walk). */
-  def root(slug: String, parentOf: String => Option[String]): String =
+  def root(slug: com.histmersion.domain.GoalFocus.RootSlug, parentOf: com.histmersion.domain.GoalFocus.RootParentOfArg1 => Option[com.histmersion.domain.GoalFocus.RootParentOfResult]): com.histmersion.domain.GoalFocus.RootResult =
     @annotation.tailrec
     def go(s: String, seen: Set[String]): String = parentOf(s) match
       case Some(p) if !seen(p) && seen.size < 64 => go(p, seen + p)
@@ -329,7 +416,7 @@ object GoalFocus:
   /** How near `f` is to the goals already chosen: 0 = a sibling (or a sub-goal) of one, 1 = in the same tree, 2 =
     * elsewhere.
     */
-  private def kin(f: Facts, chosen: List[Facts], rootOf: String => String): (Int, Option[String]) =
+  private def kin(f: Facts, chosen: List[Facts], rootOf: com.histmersion.domain.GoalFocus.KinRootOfArg1 => com.histmersion.domain.GoalFocus.KinRootOfResult): (com.histmersion.domain.GoalFocus.KinResultPart1, Option[com.histmersion.domain.GoalFocus.KinResultPart2]) =
     chosen.find(c => (c.parent.isDefined && c.parent == f.parent) || f.parent.contains(c.slug)) match
       case Some(c) => (0, Some(c.slug))
       case None    =>
@@ -339,9 +426,9 @@ object GoalFocus:
           case None    => (2, None)
 
   private type Key = (Int, Int, Int, Int, String, String)
-  private def key(f: Facts, st: Stage, k: Int): Key = (st.rank, k, -f.priority, -f.sources, f.createdAt, f.slug)
+  private def key(f: Facts, st: Stage, k: com.histmersion.domain.GoalFocus.KeyK): Key = (st.rank, k, -f.priority, -f.sources, f.createdAt, f.slug)
 
-  private def pickWhy(f: Facts, st: Stage, k: (Int, Option[String]), minSources: Int): String =
+  private def pickWhy(f: Facts, st: Stage, k: (com.histmersion.domain.GoalFocus.PickWhyKPart1, Option[com.histmersion.domain.GoalFocus.PickWhyKPart2]), minSources: com.histmersion.domain.GoalFocus.PickWhyMinSources): com.histmersion.domain.GoalFocus.PickWhyResult =
     val near = k match
       case (0, Some(s)) if f.parent.contains(s) => List(s"a sub-goal of $s (active)")
       case (0, Some(s)) => List(s"a sibling of $s (active): one parent's sub-goals are finished before another's")
@@ -544,7 +631,7 @@ object GoalFocus:
     * items to one of any other, counting on from the last starts (`recent`, newest first: true = an active goal's). The
     * order inside each class is kept. `ratio` ≤ 0: the active goals' first, the others only after them.
     */
-  def fairOrder[A](cs: List[A], focus: A => Boolean, recent: List[Boolean], ratio: Int): List[A] =
+  def fairOrder[A](cs: List[A], focus: A => com.histmersion.domain.GoalFocus.FairOrderFocusResult, recent: List[com.histmersion.domain.GoalFocus.FairOrderRecent], ratio: com.histmersion.domain.GoalFocus.FairOrderRatio): List[A] =
     val (fs, os) = cs.partition(focus)
     if ratio <= 0 || fs.isEmpty || os.isEmpty then fs ++ os
     else
@@ -560,4 +647,4 @@ object GoalFocus:
   /** Days until a goal's open items are done at its pace of the last week (None: nothing open or nothing done to
     * measure by).
     */
-  def etaDays(open: Int, doneLast7: Int): Option[Int] = AutopilotPolicy.etaDays(open, doneLast7)
+  def etaDays(open: com.histmersion.domain.GoalFocus.EtaDaysOpen, doneLast7: com.histmersion.domain.GoalFocus.EtaDaysDoneLast7): Option[com.histmersion.domain.GoalFocus.EtaDaysResult] = AutopilotPolicy.etaDays(open, doneLast7)

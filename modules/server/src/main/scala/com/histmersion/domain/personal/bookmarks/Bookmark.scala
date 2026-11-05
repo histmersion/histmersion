@@ -22,14 +22,21 @@ final case class Bookmark(
     updatedAt: MarkTime
 ):
   /** Its name, its item's title and its item's key hold every word. */
-  def matches(words: SearchWords): Boolean =
+  def matches(words: SearchWords): com.histmersion.domain.personal.bookmarks.Bookmark.MatchesResult =
     words.matches(label.fold("")(_.value), title.value, target.itemRef.fold("")(_.key.value))
 
   def wire: WireBookmark = WireBookmark(id, target.wire, title.value, label, createdAt.iso, updatedAt.iso)
 
 object Bookmark:
   /** The id a client sent, checked here, once: a bookmark's id is a lower-case UUID. */
-  def idOf(raw: String): Either[String, WireBookmark.Id] =
+  type MatchesResult = MatchesResult.T
+  object MatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdOfResultPart1 = IdOfResultPart1.T
+  object IdOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdOfRaw = IdOfRaw.T
+  object IdOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def idOf(raw: com.histmersion.domain.personal.bookmarks.Bookmark.IdOfRaw): Either[com.histmersion.domain.personal.bookmarks.Bookmark.IdOfResultPart1, WireBookmark.Id] =
     val id = Option(raw).fold("")(_.trim.toLowerCase)
     Either.cond(PersonalUuid.matches(id), WireBookmark.Id(id), s"not a bookmark id: '$raw'")
 

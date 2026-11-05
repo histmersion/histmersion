@@ -12,7 +12,7 @@ object AstRecipe {
   }
   case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "", appliedPlans: List[String] = Nil,
     definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty, buffers: Map[String,String] = Map.empty, localModels: List[String] = Nil,
-    measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil)
+    measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil, memberTypes: Boolean = false, previousTypes: String = "")
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -55,7 +55,21 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       require(frozen.contains(path))
       val source = read(path)
       val tree = source.parse[Source].get
-      val definitionPatches = if(definitionPaths(path)) ModelDefinitions.patches(tree, source, path, policy.reuse, policy.names, policy.defer, policy.buffers, policy.localModels, evidence) else Nil
+      val definitionPatches = if(definitionPaths(path)) {
+        val records = ModelDefinitions.patches(tree, source, path, policy.reuse, policy.names, policy.defer, policy.buffers, policy.localModels, evidence)
+        val members = if(policy.memberTypes) MemberDefinitions.patches(tree,source,path,policy.reuse,policy.names,evidence) else Nil
+        (records ++ members).groupBy(p => (p._1,p._2)).toList.flatMap { case((a,b),ps) =>
+          if(a == b) {
+            val snippets = ps.map(_._3)
+            val combined = if(snippets.size > 1 && snippets.forall(_.trim.startsWith("object "))) {
+              val headers = snippets.map(s => s.take(s.indexOf(":\n") + 2))
+              require(headers.distinct.size == 1,"Conflicting generated companions")
+              headers.head + snippets.map(s => s.drop(s.indexOf(":\n") + 2)).mkString("\n")
+            } else snippets.mkString("")
+            List((a,b,combined))
+          } else ps
+        }
+      } else Nil
       val patches = definitionPatches ++ recipes.flatMap { recipe =>
         require(Set("stat","type")(recipe.kind))
         val pattern: Tree = if(recipe.kind == "type") recipe.before.parse[Type].get else recipe.before.parse[Stat].get
@@ -87,7 +101,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       require(!Files.exists(Paths.get(p)) && !policy.edits.exists(_.path == p)); s.parse[Source].get; (p,"",s)
     }
     Files.createDirectories(out)
-    if(policy.measureTypes) TypeMeasurement.run(frozen,out,policy.confirmedTypes,policy.expectedTypeSelectors)
+    if(policy.measureTypes) TypeMeasurement.run(frozen,out,policy.confirmedTypes,policy.expectedTypeSelectors,policy.previousTypes)
     (changed ++ created).foreach { case(p,b,n) =>
       val dest = out.resolve("sources").resolve(p); Files.createDirectories(dest.getParent); Files.writeString(dest,n)
       if(b.nonEmpty) { val old = out.resolve("before").resolve(p); Files.createDirectories(old.getParent); Files.writeString(old,b) }
@@ -108,7 +122,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
 }
 
 object TypeMeasurement {
-  def run(sources: Map[String,String], out: java.nio.file.Path, confirmed: List[String], expected: List[String]): Unit = {
+  def run(sources: Map[String,String], out: java.nio.file.Path, confirmed: List[String], expected: List[String], previous: String): Unit = {
     import scala.jdk.CollectionConverters._
     implicit val dialect: Dialect = dialects.Scala3
     val primitives = Set("String","Boolean","Byte","Short","Int","Long","Float","Double","Char")
@@ -210,8 +224,107 @@ object TypeMeasurement {
     write("counts.tsv","scope\tmodule\tlocality\tfamily\tstatus\tclassification\tpositions\tleaves",groups.map { case((s,m,o,f,t,c),ls) => List(s,m,o,f,t,c,ls.map(_.head).distinct.size.toString,ls.size.toString) })
     val summary = leaves.toList.groupBy(l => (byId(l.head)(3),byId(l.head)(4),l(5),l(2),l(6))).toList.sortBy(_._1)
     write("totals.tsv","scope\tlocality\tfamily\tstatus\tclassification\tpositions\tleaves",summary.map { case((s,o,f,t,c),ls) => List(s,o,f,t,c,ls.map(_.head).distinct.size.toString,ls.size.toString) })
+    if(previous.nonEmpty) {
+      val before = Files.readAllLines(Paths.get(previous,"leaves.tsv")).asScala.drop(1).map(_.split("\t",-1)).filter(_(2) == "primitive").map(r => r(0) + "|" + r(1)).toSet
+      val after = leaves.filter(_(2) == "primitive").map(r => esc(r.head) + "|" + esc(r(1))).toSet
+      val delta = before.diff(after).toList.sorted.map(id => List("raw-primitive-eliminated-unverified",id)) ++ after.diff(before).toList.sorted.map(id => List("new-primitive",id))
+      write("changes.tsv","change\tstable-position-and-route",delta)
+      println(s"Stable-ID delta: ${before.diff(after).size} raw leaves eliminated; ${after.diff(before).size} new primitive leaves")
+    }
     Files.writeString(out.resolve("measurement.txt"),s"${sources.size} files; ${positions.size} positions; ${leaves.count(_(2) == "primitive")} explicit primitive leaves; ${leaves.count(_(6) == "confirmed")} confirmed occurrences.\nAST-only: inference, aliases, named references and primitive shadowing require semantic review. Candidates are not confirmed violations; no accepted exceptions inferred. IDs omit line numbers; same-name overloads use source-order ordinals. Historical semantic inventory remains unchanged.\n")
     println(Files.readString(out.resolve("measurement.txt")))
+  }
+}
+
+object MemberDefinitions {
+  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String],
+      evidence: scala.collection.mutable.ListBuffer[List[String]]): List[(Int,Int,String)] = {
+    val result = scala.collection.mutable.ListBuffer.empty[(Int,Int,String)]
+    val additions = scala.collection.mutable.LinkedHashMap.empty[Tree,scala.collection.mutable.LinkedHashMap[String,String]]
+    def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
+    def indent(t: Tree): String = source.substring(source.lastIndexOf('\n',t.pos.start - 1) + 1,t.pos.start).takeWhile(_ == ' ')
+    def upper(s: String): String = if(s.isEmpty) "Anonymous" else s.head.toUpper + s.tail
+    def ownerName(t: Tree): String = (parents(t).reverse :+ t).collect {
+      case p: Pkg => p.ref.syntax
+      case o: Defn.Object => o.name.value
+      case c: Defn.Class => c.name.value
+      case c: Defn.Trait => c.name.value
+      case c: Defn.Enum => c.name.value
+    }.mkString(".")
+    def stats(t: Tree): List[Stat] = t match {
+      case o: Defn.Object => o.templ.stats
+      case _ => Nil
+    }
+    def leaves(t: Type,suffix: String = ""): List[(Type,String,String)] = t match {
+      case Type.Name(n) if Set("String","Int","Long","Double","Boolean","Float","Short","Byte","Char")(n) => List((t,n,suffix))
+      case a: Type.Apply => a.argClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + (if(a.argClause.values.size == 1) "" else "Part" + (i + 1))) }
+      case f: Type.Function => f.paramClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "Arg" + (i + 1)) } ++ leaves(f.res,suffix + "Result")
+      case f: Type.ContextFunction => f.paramClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "ContextArg" + (i + 1)) } ++ leaves(f.res,suffix + "Result")
+      case t: Type.Tuple => t.args.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "Part" + (i + 1)) }
+      case _ => Nil
+    }
+    def rewrite(declaration: Tree, keyName: String, prefix: String, t: Type, blocked: Boolean): Unit = {
+      val context = parents(declaration)
+      val enclosing = context.collectFirst { case o: Defn.Object => o; case c: Defn.Class => c; case c: Defn.Trait => c; case c: Defn.Enum => c }
+      enclosing.foreach { entity =>
+        val owner = ownerName(entity)
+        val targetOwner: Tree = entity match {
+          case o: Defn.Object => o
+          case _ => entity.parent.toList.flatMap(_.children).collectFirst {
+            case o: Defn.Object if o.name.value == owner.split('.').last => o
+          }.getOrElse(entity)
+        }
+        val occupied = stats(targetOwner).flatMap {
+          case d: Defn.Type => List(d.name.value)
+          case d: Defn.Object => List(d.name.value)
+          case d: Defn.Class => List(d.name.value)
+          case d: Defn.Trait => List(d.name.value)
+          case d: Defn.Enum => List(d.name.value)
+          case _ => Nil
+        }.toSet
+        leaves(t).foreach { case(leaf,base,suffix) =>
+          val key = owner + "." + keyName + (if(suffix.isEmpty) "" else "." + suffix)
+          val name = names.getOrElse(key,prefix + suffix)
+          val mappings = reuse.toList.collect { case(pattern,value) if key.matches(pattern.split("\\*",-1).map(java.util.regex.Pattern.quote).mkString(".*")) => value }.distinct
+          require(mappings.size <= 1,"Conflicting member concept mappings: " + key)
+          val declared = additions.getOrElseUpdate(targetOwner,scala.collection.mutable.LinkedHashMap.empty[String,String])
+          val shadowed = tree.collect { case d: Defn.Type if d.name.value == base => d }.nonEmpty
+          val local = context.exists(_.is[Defn.Def])
+          if(blocked || local || shadowed || !name.matches("[A-Z][A-Za-z0-9_]*") ||
+            (mappings.isEmpty && (occupied(name) || declared.get(name).exists(_ != base)))) {
+            evidence += List(path,(leaf.pos.startLine + 1).toString,"UNRESOLVED member " + key,leaf.structure)
+          } else {
+            val replacement = mappings.headOption.getOrElse(owner + "." + name)
+            if(mappings.isEmpty) declared(name) = base
+            result += ((leaf.pos.start,leaf.pos.end,replacement))
+            evidence += List(path,(leaf.pos.startLine + 1).toString,owner + "#" + keyName + "/" + suffix + " " + leaf.structure,replacement)
+          }
+        }
+      }
+    }
+    tree.collect {
+      case d: Defn.Def =>
+        val blocked = d.mods.exists(_.is[Mod.Override])
+        d.decltpe.foreach(rewrite(d,d.name.value,upper(d.name.value) + "Result",_,blocked))
+        d.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values).foreach(p => p.decltpe.foreach(rewrite(d,d.name.value + "." + p.name.value,upper(d.name.value) + upper(p.name.value),_,blocked)))
+      case d: Decl.Def =>
+        rewrite(d,d.name.value,upper(d.name.value) + "Result",d.decltpe,false)
+        d.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values).foreach(p => p.decltpe.foreach(rewrite(d,d.name.value + "." + p.name.value,upper(d.name.value) + upper(p.name.value),_,false)))
+      case v: Defn.Val => v.pats.collect { case Pat.Var(n) => n }.foreach(n => v.decltpe.foreach(rewrite(v,n.value,upper(n.value),_,false)))
+      case v: Defn.Var => v.pats.collect { case Pat.Var(n) => n }.foreach(n => v.decltpe.foreach(rewrite(v,n.value,upper(n.value),_,false)))
+    }
+    additions.foreach { case(target,declared) => if(declared.nonEmpty) {
+      val own = ownerName(target).split('.').last
+      val pad = target match { case o: Defn.Object if o.templ.stats.nonEmpty => indent(o.templ.stats.head); case _ => indent(target) + "  " }
+      val definitions = declared.toList.flatMap { case(n,b) => List("type " + n + " = " + n + ".T",
+        "object " + n + " extends _root_.io.github.iltotore.iron.RefinedType[" + (if(b == "String") "_root_.java.lang.String" else "_root_.scala." + b) + ", _root_.io.github.iltotore.iron.constraint.any.Pure]") }.mkString("\n" + pad)
+      target match {
+        case o: Defn.Object if o.templ.stats.nonEmpty => val at = o.templ.stats.head.pos.start; result += ((at,at,definitions + "\n\n" + pad))
+        case _: Defn.Object => sys.error("Empty companion requires explicit treatment: " + own)
+        case _ => result += ((target.pos.end,target.pos.end,"\n\n" + indent(target) + "object " + own + ":\n" + pad + definitions))
+      }
+    }}
+    result.toList
   }
 }
 
@@ -235,6 +348,8 @@ object ModelDefinitions {
         leaves(v,suffix + role)
       }
       case t: Type.Tuple => t.args.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "Part" + (i + 1)) }
+      case f: Type.Function => f.paramClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "Arg" + (i + 1)) } ++ leaves(f.res,suffix + "Result")
+      case f: Type.ContextFunction => f.paramClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "ContextArg" + (i + 1)) } ++ leaves(f.res,suffix + "Result")
       case _ => Nil
     })
     tree.collect { case c: Defn.Class if c.mods.exists(_.is[Mod.Case]) => c }.foreach { c =>

@@ -18,6 +18,95 @@ import scala.jdk.CollectionConverters.*
 object AgentDefinitions:
 
   /** The MCP server's name in every runtime's configuration. */
+  type ForAudienceResult = ForAudienceResult.T
+  object ForAudienceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ForAudienceText = ForAudienceText.T
+  object ForAudienceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkerProblemsResult = MarkerProblemsResult.T
+  object MarkerProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkerProblemsText = MarkerProblemsText.T
+  object MarkerProblemsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderResult = RenderResult.T
+  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderText = RenderText.T
+  object RenderText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholdersResult = PlaceholdersResult.T
+  object PlaceholdersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholdersText = PlaceholdersText.T
+  object PlaceholdersText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitResultPart1 = SplitResultPart1.T
+  object SplitResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitResultPart2Part1 = SplitResultPart2Part1.T
+  object SplitResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitResultPart2Part2 = SplitResultPart2Part2.T
+  object SplitResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitMd = SplitMd.T
+  object SplitMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YamlResultPart1 = YamlResultPart1.T
+  object YamlResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YamlResultPart2Part1 = YamlResultPart2Part1.T
+  object YamlResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YamlText = YamlText.T
+  object YamlText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StringsResultPart1 = StringsResultPart1.T
+  object StringsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StringsResultPart2 = StringsResultPart2.T
+  object StringsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseName = ParseName.T
+  object ParseName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseMd = ParseMd.T
+  object ParseMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSkillResultPart1 = ParseSkillResultPart1.T
+  object ParseSkillResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSkillName = ParseSkillName.T
+  object ParseSkillName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSkillMd = ParseSkillMd.T
+  object ParseSkillMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SystemResultPart1 = SystemResultPart1.T
+  object SystemResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SystemResultPart2 = SystemResultPart2.T
+  object SystemResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SystemFragmentsPart1 = SystemFragmentsPart1.T
+  object SystemFragmentsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SystemFragmentsPart2 = SystemFragmentsPart2.T
+  object SystemFragmentsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SystemSkillsPart1 = SystemSkillsPart1.T
+  object SystemSkillsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IndexResult = IndexResult.T
+  object IndexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgentNamesResult = AgentNamesResult.T
+  object AgentNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillNamesResult = SkillNamesResult.T
+  object SkillNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FragmentNamesResult = FragmentNamesResult.T
+  object FragmentNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgentResultPart1 = AgentResultPart1.T
+  object AgentResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgentName = AgentName.T
+  object AgentName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillResultPart1 = SkillResultPart1.T
+  object SkillResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillName = SkillName.T
+  object SkillName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FragmentsResultPart1 = FragmentsResultPart1.T
+  object FragmentsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FragmentsResultPart2Part1 = FragmentsResultPart2Part1.T
+  object FragmentsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FragmentsResultPart2Part2 = FragmentsResultPart2Part2.T
+  object FragmentsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillsResultPart1 = SkillsResultPart1.T
+  object SkillsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillsResultPart2Part1 = SkillsResultPart2Part1.T
+  object SkillsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgentsResultPart1 = AgentsResultPart1.T
+  object AgentsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllResultPart1 = AllResultPart1.T
+  object AllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllFResultPart1 = AllFResultPart1.T
+  object AllFResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val McpServer = "histmersion"
 
   /** The include fragment that is the writing guide, and the heading it is sent under. */
@@ -36,7 +125,7 @@ object AgentDefinitions:
   /** `text` as `keep` reads it: a part marked for an audience not in `keep` is removed, a kept one loses its markers.
     * Removing a part never leaves more than one blank line behind.
     */
-  def forAudience(text: String, keep: Set[Audience]): String =
+  def forAudience(text: com.histmersion.domain.automation.agents.AgentDefinitions.ForAudienceText, keep: Set[Audience]): com.histmersion.domain.automation.agents.AgentDefinitions.ForAudienceResult =
     if !text.contains("<!-- only:") then text
     else
       val out = Marked.replaceAllIn(
@@ -47,7 +136,7 @@ object AgentDefinitions:
 
   /** Audience markers that do not pair up or name no audience — a part that would leak into the wrong prompt.
     */
-  def markerProblems(text: String): List[String] =
+  def markerProblems(text: com.histmersion.domain.automation.agents.AgentDefinitions.MarkerProblemsText): List[com.histmersion.domain.automation.agents.AgentDefinitions.MarkerProblemsResult] =
     val ms = Marker.findAllMatchIn(text).map(m => (m.group(1) == "/", m.group(2))).toList
     val unknown =
       ms.map(_._2).distinct.filterNot(a => Audience.values.exists(_.wire == a)).map(a => s"names no audience: only:$a")
@@ -63,7 +152,7 @@ object AgentDefinitions:
   private val Placeholder = """\{\{tool:([a-z_]+|\*)\}\}""".r
 
   /** `{{tool:x}}` → the runtime's name for tool `x`; `{{tool:*}}` → every Histmersion tool. */
-  def render(text: String, style: ToolStyle): String =
+  def render(text: com.histmersion.domain.automation.agents.AgentDefinitions.RenderText, style: ToolStyle): com.histmersion.domain.automation.agents.AgentDefinitions.RenderResult =
     Placeholder.replaceAllIn(
       text,
       m =>
@@ -76,11 +165,11 @@ object AgentDefinitions:
     )
 
   /** Every tool a text names by placeholder (`*` left out). */
-  def placeholders(text: String): List[String] =
+  def placeholders(text: com.histmersion.domain.automation.agents.AgentDefinitions.PlaceholdersText): List[com.histmersion.domain.automation.agents.AgentDefinitions.PlaceholdersResult] =
     Placeholder.findAllMatchIn(text).map(_.group(1)).filter(_ != "*").toList.distinct
 
   /** `---\n<yaml>\n---\n<body>` → (yaml, body); the body keeps its leading newline, as written. */
-  def split(md: String): Either[String, (String, String)] =
+  def split(md: com.histmersion.domain.automation.agents.AgentDefinitions.SplitMd): Either[com.histmersion.domain.automation.agents.AgentDefinitions.SplitResultPart1, (com.histmersion.domain.automation.agents.AgentDefinitions.SplitResultPart2Part1, com.histmersion.domain.automation.agents.AgentDefinitions.SplitResultPart2Part2)] =
     val t = md.replace("\r\n", "\n")
     if !t.startsWith("---\n") then Left("no YAML header (--- … ---)")
     else
@@ -88,7 +177,7 @@ object AgentDefinitions:
         case -1 => Left("the YAML header is not closed")
         case i  => Right((t.substring(4, i), t.substring(i + 5)))
 
-  private def yaml(text: String): Either[String, Map[String, Any]] =
+  private def yaml(text: com.histmersion.domain.automation.agents.AgentDefinitions.YamlText): Either[com.histmersion.domain.automation.agents.AgentDefinitions.YamlResultPart1, Map[com.histmersion.domain.automation.agents.AgentDefinitions.YamlResultPart2Part1, Any]] =
     try
       Option(Yaml(SafeConstructor(LoaderOptions())).load[Any](text)).map(_.asMatchable) match
         case Some(m: java.util.Map[?, ?]) => Right(m.asScala.toMap.map((k, v) => k.toString -> v))
@@ -97,14 +186,14 @@ object AgentDefinitions:
       case e: Exception =>
         Left(s"the YAML header does not parse: ${e.getMessage.linesIterator.nextOption().getOrElse("")}")
 
-  private def strings(v: Any): Either[String, List[String]] = v.asMatchable match
+  private def strings(v: Any): Either[com.histmersion.domain.automation.agents.AgentDefinitions.StringsResultPart1, List[com.histmersion.domain.automation.agents.AgentDefinitions.StringsResultPart2]] = v.asMatchable match
     case null                        => Right(Nil)
     case l: java.util.List[?]        => Right(l.asScala.toList.map(String.valueOf))
     case s: String if s.trim.isEmpty => Right(Nil)
     case other                       => Left(s"expected a list, not '$other'")
 
   /** Parse one definition. `name` is its file name; the header's `name` must agree. */
-  def parse(name: String, md: String, known: List[ToolName]): Either[String, AgentDef] =
+  def parse(name: com.histmersion.domain.automation.agents.AgentDefinitions.ParseName, md: com.histmersion.domain.automation.agents.AgentDefinitions.ParseMd, known: List[ToolName]): Either[com.histmersion.domain.automation.agents.AgentDefinitions.ParseResultPart1, AgentDef] =
     def fail(m: String) = Left(s"agents/$name.md: $m")
     split(md).flatMap((h, body) => yaml(h).map(_ -> body)).left.map(m => s"agents/$name.md: $m").flatMap { (m, body) =>
       def str(k: String) = m.get(k).map(String.valueOf).map(_.trim).filter(_.nonEmpty)
@@ -162,7 +251,7 @@ object AgentDefinitions:
     }
 
   /** Parse one skill (`skills/<name>/SKILL.md`). */
-  def parseSkill(name: String, md: String): Either[String, SkillDef] =
+  def parseSkill(name: com.histmersion.domain.automation.agents.AgentDefinitions.ParseSkillName, md: com.histmersion.domain.automation.agents.AgentDefinitions.ParseSkillMd): Either[com.histmersion.domain.automation.agents.AgentDefinitions.ParseSkillResultPart1, SkillDef] =
     split(md).left.map(m => s"skills/$name/SKILL.md: $m").flatMap { (h, body) =>
       yaml(h).left.map(m => s"skills/$name/SKILL.md: $m").flatMap { m =>
         Either.cond(
@@ -180,10 +269,10 @@ object AgentDefinitions:
     */
   def system(
       d: AgentDef,
-      fragments: Map[String, String],
-      skills: Map[String, SkillDef],
+      fragments: Map[com.histmersion.domain.automation.agents.AgentDefinitions.SystemFragmentsPart1, com.histmersion.domain.automation.agents.AgentDefinitions.SystemFragmentsPart2],
+      skills: Map[com.histmersion.domain.automation.agents.AgentDefinitions.SystemSkillsPart1, SkillDef],
       style: ToolStyle
-  ): Either[String, String] =
+  ): Either[com.histmersion.domain.automation.agents.AgentDefinitions.SystemResultPart1, com.histmersion.domain.automation.agents.AgentDefinitions.SystemResultPart2] =
     val keep = headlessAudience(d)
     val parts = d.include.map { i =>
       val name = if i == WritingRules then WritingGuide else i
@@ -220,16 +309,16 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
   val tools: List[ToolName] = roster.tools
 
   /** Every bundled file, relative to `agents/`. */
-  def index: List[String] =
+  def index: List[com.histmersion.domain.automation.agents.AgentDefinitions.IndexResult] =
     prompts.bundledText("index.txt").toOption.toList.flatMap(_.linesIterator.map(_.trim).filter(_.nonEmpty))
 
-  def agentNames: List[String] = index.filter(r => !r.contains('/') && r.endsWith(".md")).map(_.stripSuffix(".md"))
-  def skillNames: List[String] = index.collect { case r if r.startsWith("skills/") => r.split('/')(1) }.distinct
-  def fragmentNames: List[String] = index.collect {
+  def agentNames: List[com.histmersion.domain.automation.agents.AgentDefinitions.AgentNamesResult] = index.filter(r => !r.contains('/') && r.endsWith(".md")).map(_.stripSuffix(".md"))
+  def skillNames: List[com.histmersion.domain.automation.agents.AgentDefinitions.SkillNamesResult] = index.collect { case r if r.startsWith("skills/") => r.split('/')(1) }.distinct
+  def fragmentNames: List[com.histmersion.domain.automation.agents.AgentDefinitions.FragmentNamesResult] = index.collect {
     case r if r.startsWith("_shared/") => r.stripPrefix("_shared/").stripSuffix(".md")
   }
 
-  def agent(name: String): Either[String, AgentDef] =
+  def agent(name: com.histmersion.domain.automation.agents.AgentDefinitions.AgentName): Either[com.histmersion.domain.automation.agents.AgentDefinitions.AgentResultPart1, AgentDef] =
     prompts
       .load(s"$name.md")
       .flatMap(AgentDefinitions.parse(name, _, tools))
@@ -241,24 +330,24 @@ final class AgentDefinitions(prompts: Prompts, val roster: AgentRoster):
             s"(one of: ${roster.roles.map(_.wire).mkString(", ")})"
         )
       )
-  def agent(s: StepAgent): Either[String, AgentDef] = agent(s.wire)
-  def skill(name: String): Either[String, SkillDef] =
+  def agent(s: StepAgent): Either[com.histmersion.domain.automation.agents.AgentDefinitions.AgentResultPart1, AgentDef] = agent(s.wire)
+  def skill(name: com.histmersion.domain.automation.agents.AgentDefinitions.SkillName): Either[com.histmersion.domain.automation.agents.AgentDefinitions.SkillResultPart1, SkillDef] =
     prompts.load(s"skills/$name/SKILL.md").flatMap(AgentDefinitions.parseSkill(name, _))
 
-  def fragments: Either[String, Map[String, String]] =
+  def fragments: Either[com.histmersion.domain.automation.agents.AgentDefinitions.FragmentsResultPart1, Map[com.histmersion.domain.automation.agents.AgentDefinitions.FragmentsResultPart2Part1, com.histmersion.domain.automation.agents.AgentDefinitions.FragmentsResultPart2Part2]] =
     all(fragmentNames)(n => prompts.load(s"_shared/$n.md").map(n -> _)).map(_.toMap)
-  def skills: Either[String, Map[String, SkillDef]] = all(skillNames)(n => skill(n).map(n -> _)).map(_.toMap)
-  def agents: Either[String, List[AgentDef]] = all(agentNames)(agent)
+  def skills: Either[com.histmersion.domain.automation.agents.AgentDefinitions.SkillsResultPart1, Map[com.histmersion.domain.automation.agents.AgentDefinitions.SkillsResultPart2Part1, SkillDef]] = all(skillNames)(n => skill(n).map(n -> _)).map(_.toMap)
+  def agents: Either[com.histmersion.domain.automation.agents.AgentDefinitions.AgentsResultPart1, List[AgentDef]] = all(agentNames)(agent)
 
   /** The system prompt `d` runs with in a runtime that names tools `style`'s way. */
-  def system(d: AgentDef, style: ToolStyle): Either[String, String] =
+  def system(d: AgentDef, style: ToolStyle): Either[com.histmersion.domain.automation.agents.AgentDefinitions.SystemResultPart1, com.histmersion.domain.automation.agents.AgentDefinitions.SystemResultPart2] =
     for
       fs <- fragments
       ss <- skills
       s <- AgentDefinitions.system(d, fs, ss, style)
     yield s
 
-  private def all[A, B](as: List[A])(f: A => Either[String, B]): Either[String, List[B]] =
+  private def all[A, B](as: List[A])(f: A => Either[com.histmersion.domain.automation.agents.AgentDefinitions.AllFResultPart1, B]): Either[com.histmersion.domain.automation.agents.AgentDefinitions.AllResultPart1, List[B]] =
     as.map(f).partitionMap(identity) match
       case (Nil, ok) => Right(ok)
       case (errs, _) => Left(errs.mkString("; "))

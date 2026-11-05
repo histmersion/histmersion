@@ -15,11 +15,14 @@ import com.augustnagro.magnum.DbCon
   */
 object PlacesData:
 
+  type RuleOfName = RuleOfName.T
+  object RuleOfName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def figures(using DbCon): List[DataCount] = List(DataCount("places", PlaceRepo.count().toLong))
 
   def checks(owner: DataOwner): List[CheckRule] = List(Kind(owner), GridPoint(owner), PointArea(owner))
 
-  private def ruleOf(name: String): Rule = Lint.rule(name).getOrElse(Rule(name, name))
+  private def ruleOf(name: com.histmersion.domain.catalogue.places.PlacesData.RuleOfName): Rule = Lint.rule(name).getOrElse(Rule(name, name))
 
   /** `place-imported-point-area`'s knobs (`places.sources.point-area-*`). */
   def pointAreaOf(cfg: AppConfig): PointAreaRepo.Settings =
@@ -36,7 +39,7 @@ object PlacesData:
   /** `place-kind`: what the record says a place is, where its source filed it otherwise. */
   final private class Kind(val owner: DataOwner) extends CheckRule:
     val rule: Rule = ruleOf(PlaceKindRule)
-    def report(context: CheckContext, maxItems: Int)(using CheckRun)(using DbCon): LintRuleReport =
+    def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.places.PlacesData.Kind.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       Lint.report(rule, PlaceReviewRepo.proposalsIn().map(p => LintItem(p.id, p.detail)), maxItems)
     override val fix: Option[SafeFix] = Some(
       SafeFix(
@@ -56,10 +59,14 @@ object PlacesData:
       )
     )
 
+  object Kind:
+    type ReportMaxItems = ReportMaxItems.T
+    object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** `place-grid-point`: a place at the centre of an atlas grid square whose linked record gives its point. */
   final private class GridPoint(val owner: DataOwner) extends CheckRule:
     val rule: Rule = ruleOf(PlaceGridPoint)
-    def report(context: CheckContext, maxItems: Int)(using CheckRun)(using DbCon): LintRuleReport =
+    def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.places.PlacesData.GridPoint.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       Lint.report(rule, PlaceReviewRepo.relocationsIn().map(r => LintItem(r.id, r.detail)), maxItems)
     override val fix: Option[SafeFix] = Some(
       SafeFix(
@@ -80,10 +87,14 @@ object PlacesData:
       )
     )
 
+  object GridPoint:
+    type ReportMaxItems = ReportMaxItems.T
+    object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** `place-imported-point-area`: an imported region, polity or people stored with only a point. */
   final private class PointArea(val owner: DataOwner) extends CheckRule:
     val rule: Rule = ruleOf(PlaceImportedPointArea)
-    def report(context: CheckContext, maxItems: Int)(using CheckRun)(using DbCon): LintRuleReport =
+    def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.places.PlacesData.PointArea.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       PointAreaRepo.reportIn(rule, pointAreaOf(context.config).kinds, maxItems)
     override val fix: Option[SafeFix] = Some(
       SafeFix(
@@ -94,3 +105,7 @@ object PlacesData:
           LintFixResult(List(r.line), 0, 0, 0, 0, pointAreasRemoved = r.removed, pointAreasRemaining = r.remaining)
       )
     )
+
+  object PointArea:
+    type ReportMaxItems = ReportMaxItems.T
+    object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

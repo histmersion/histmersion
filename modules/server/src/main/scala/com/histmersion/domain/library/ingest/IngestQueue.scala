@@ -71,7 +71,7 @@ final class IngestQueue(
   private val pool = JobPool(ds(), cfg().converter.parallelism, runJob, pins)
 
   /** Started by the composition root, after construction. Returns the jobs a restart had to fail. */
-  def start(): Int =
+  def start(): com.histmersion.domain.library.ingest.IngestQueue.StartResult =
     val n = pool.start()
     if n > 0 then scribe.warn(s"$n unfinished job(s) marked failed: ${JobState.Interrupted}")
     n
@@ -81,10 +81,10 @@ final class IngestQueue(
   /** Held by a restore: see [[JobPool.pause]]. */
   def pause(): Unit = pool.pause()
   def resume(): Unit = pool.resume()
-  def paused: Boolean = pool.isPaused
+  def paused: com.histmersion.domain.library.ingest.IngestQueue.PausedResult = pool.isPaused
 
   /** Queue the conversion of the stored original `file`; the job as the caller is told of it. */
-  def enqueue(kind: String, citekey: String, sha: String, file: Store.Key, params: Ingest.Params): Ingest.Accepted =
+  def enqueue(kind: com.histmersion.domain.library.ingest.IngestQueue.EnqueueKind, citekey: com.histmersion.domain.library.Citekey, sha: com.histmersion.domain.library.ingest.IngestQueue.EnqueueSha, file: Store.Key, params: Ingest.Params): Ingest.Accepted =
     val job = jobs.create(kind, Some(citekey), Some(sha), params.acquireItem)
     val _ = pending.put(job.id, IngestPending(params, file, sha, kind))
     pool.submit(job.id)
@@ -111,7 +111,7 @@ final class IngestQueue(
   def converterHealth: ConverterState =
     ConverterState.of(probeConverter, inConverter.stream().sorted().findFirst().toScala)
 
-  private def probeConverter: String =
+  private def probeConverter: com.histmersion.domain.library.ingest.IngestQueue.ProbeConverterResult =
     val (at, last) = convHealth.get()
     val c = cfg().converter
     val timedOut = s"degraded: no answer from the converter within ${c.healthTimeoutMs} ms"
@@ -139,7 +139,7 @@ final class IngestQueue(
       acc.flatMap(xs => NewFigure.of(a, cfg().limits.assetBytes).left.map(Api.Error(_)).map(xs :+ _))
     }
 
-  private def runJob(id: String): Unit =
+  private def runJob(id: com.histmersion.domain.library.ingest.IngestQueue.RunJobId): Unit =
     Option(pending.remove(id)) match
       case None =>
         val _ = jobs.transition(
@@ -184,7 +184,7 @@ final class IngestQueue(
                 )
 
   /** [[afterStore]], whose failure is a note on the job, never a failed job. */
-  private def afterStoreSafely(citekey: String): List[String] =
+  private def afterStoreSafely(citekey: com.histmersion.domain.library.Citekey): List[com.histmersion.domain.library.ingest.IngestQueue.AfterStoreSafelyResult] =
     try afterStore(citekey).toList
     catch
       case e: InterruptedException => throw e
@@ -195,11 +195,11 @@ final class IngestQueue(
   /** Write the conversion: body first (patch when the source exists, so enrichment survives), then the figures, then
     * the digest of the original. Returns how many assets were kept.
     */
-  private def store(jobId: String, job: IngestPending, doc: ConvertedDoc): Either[String, Int] =
+  private def store(jobId: com.histmersion.util.jobs.Job.Id, job: IngestPending, doc: ConvertedDoc): Either[com.histmersion.domain.library.ingest.IngestQueue.StoreResultPart1, com.histmersion.domain.library.ingest.IngestQueue.StoreResultPart2] =
     if maintenance.active then Left("a restore is in progress; this job was not written")
     else storeNow(jobId, job, doc)
 
-  private def storeNow(jobId: String, job: IngestPending, doc: ConvertedDoc): Either[String, Int] =
+  private def storeNow(jobId: com.histmersion.util.jobs.Job.Id, job: IngestPending, doc: ConvertedDoc): Either[com.histmersion.domain.library.ingest.IngestQueue.StoreNowResultPart1, com.histmersion.domain.library.ingest.IngestQueue.StoreNowResultPart2] =
     val citekey = job.params.citekey
     // NUL bytes occur in OCR output and Postgres `text` rejects them
     val body = doc.markdown.filterNot(_.toInt == 0)
@@ -231,7 +231,7 @@ final class IngestQueue(
   /** Tick `id` off as fulfilled by `citekey`, and say what happened for the job's progress line. It never fails the
     * job: the source is stored either way. An item deleted or ticked off by hand while the OCR ran is left as it is.
     */
-  private def tickOff(id: Int, citekey: String, jobId: String): String =
+  private def tickOff(id: com.histmersion.domain.library.ingest.IngestQueue.TickOffId, citekey: com.histmersion.domain.library.Citekey, jobId: com.histmersion.util.jobs.Job.Id): com.histmersion.domain.library.ingest.IngestQueue.TickOffResult =
     def warning(message: String): String =
       scribe.warn(s"$citekey is stored, but acquisition item $id could not be ticked off: $message")
       s"acquisition item $id NOT ticked off: $message"
@@ -251,7 +251,7 @@ final class IngestQueue(
     * that only resemble it ([[AcquireMatch.decide]]). One line per item, for the job's progress. Like [[tickOff]] it
     * never fails the job: the source is stored either way.
     */
-  private def matchAcquisitions(citekey: String, jobId: String): List[String] =
+  private def matchAcquisitions(citekey: com.histmersion.domain.library.Citekey, jobId: com.histmersion.util.jobs.Job.Id): List[com.histmersion.domain.library.ingest.IngestQueue.MatchAcquisitionsResult] =
     try
       sources.load(citekey).toList.flatMap { s =>
         val items = queues.list(Queue.Kind.Acquire, QueueScope.Open).toList
@@ -279,7 +279,7 @@ final class IngestQueue(
   /** The minimal source an ingest creates when nothing is there yet: enough to find it, no invented enrichment.
     * Everything else is the agent's job, through `patch_source`.
     */
-  private def skeleton(p: Ingest.Params, body: String): com.histmersion.api.library.Source.Put =
+  private def skeleton(p: Ingest.Params, body: com.histmersion.domain.library.ingest.IngestQueue.SkeletonBody): com.histmersion.api.library.Source.Put =
     com.histmersion.api.library.Source.Put(
       title = com.histmersion.api.library.Title(p.title.map(_.trim).filter(_.nonEmpty).getOrElse(p.citekey)),
       authors = (p.authors.map(_.trim).filter(_.nonEmpty)).map(com.histmersion.api.library.AuthorName.apply),
@@ -289,3 +289,35 @@ final class IngestQueue(
       body = Some(body),
       provenance = Some("ocr")
     )
+
+object IngestQueue:
+  type StartResult = StartResult.T
+  object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PausedResult = PausedResult.T
+  object PausedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnqueueKind = EnqueueKind.T
+  object EnqueueKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnqueueSha = EnqueueSha.T
+  object EnqueueSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProbeConverterResult = ProbeConverterResult.T
+  object ProbeConverterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunJobId = RunJobId.T
+  object RunJobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AfterStoreSafelyResult = AfterStoreSafelyResult.T
+  object AfterStoreSafelyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreResultPart1 = StoreResultPart1.T
+  object StoreResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreResultPart2 = StoreResultPart2.T
+  object StoreResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreNowResultPart1 = StoreNowResultPart1.T
+  object StoreNowResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreNowResultPart2 = StoreNowResultPart2.T
+  object StoreNowResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TickOffResult = TickOffResult.T
+  object TickOffResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TickOffId = TickOffId.T
+  object TickOffId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchAcquisitionsResult = MatchAcquisitionsResult.T
+  object MatchAcquisitionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkeletonBody = SkeletonBody.T
+  object SkeletonBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

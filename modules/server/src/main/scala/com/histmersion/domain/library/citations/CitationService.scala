@@ -19,37 +19,56 @@ import com.histmersion.api.library.Source
   * disagreements — edges that challenge, refute, update or supersede, and the statuses that say so.
   */
 trait CitationService:
-  def neighbors(citekey: String, kinds: List[String]): List[NeighborRow]
+  def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.citations.CitationService.NeighborsKinds]): List[NeighborRow]
 
   /** Breadth-first to `depth` (0–4) both ways; a link is kept only when both ends are nodes. */
-  def graph(citekey: String, depth: Int): com.histmersion.api.library.Source.Graph
+  def graph(citekey: com.histmersion.domain.library.Citekey, depth: com.histmersion.domain.library.citations.CitationService.GraphDepth): com.histmersion.api.library.Source.Graph
 
-  def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult
+  def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.ContradictionsSince]): ContradictionsResult
 
 object CitationService:
 
   /** The edge kinds that disagree. */
-  val Disagreeing: Set[String] = Set("challenges", "refutes", "updates", "superseded_by")
+  type NeighborsKinds = NeighborsKinds.T
+  object NeighborsKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GraphDepth = GraphDepth.T
+  object GraphDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContradictionsSince = ContradictionsSince.T
+  object ContradictionsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Disagreeing = Disagreeing.T
+  object Disagreeing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisagreeingStatuses = DisagreeingStatuses.T
+  object DisagreeingStatuses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val Disagreeing: Set[com.histmersion.domain.library.citations.CitationService.Disagreeing] = Set("challenges", "refutes", "updates", "superseded_by")
 
   /** The statuses that disagree on their own. */
-  val DisagreeingStatuses: Set[String] = Set("contested", "superseded", "debunked", "retracted")
+  val DisagreeingStatuses: Set[com.histmersion.domain.library.citations.CitationService.DisagreeingStatuses] = Set("contested", "superseded", "debunked", "retracted")
 
   def apply(db: Transactor): CitationService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends CitationService:
-    def neighbors(citekey: String, kinds: List[String]): List[NeighborRow] =
+    def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.citations.CitationService.Implementation.NeighborsKinds]): List[NeighborRow] =
       db.read(CitationRepo.neighbors(citekey, kinds)).toList
-    def graph(citekey: String, depth: Int): com.histmersion.api.library.Source.Graph =
+    def graph(citekey: com.histmersion.domain.library.Citekey, depth: com.histmersion.domain.library.citations.CitationService.Implementation.GraphDepth): com.histmersion.api.library.Source.Graph =
       db.read(CitationRepo.graph(citekey, depth))
-    def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult =
+    def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.Implementation.ContradictionsSince]): ContradictionsResult =
       db.read(CitationRepo.contradictions(citekey, since))
+
+  object Implementation:
+    type NeighborsKinds = NeighborsKinds.T
+    object NeighborsKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GraphDepth = GraphDepth.T
+    object GraphDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContradictionsSince = ContradictionsSince.T
+    object ContradictionsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The graph over the sources the library holds in memory, as a database holding only the library's rows answers: no
     * article is stored, so a parked edge's target is unresolved.
     */
   final class InMemory(state: AtomicReference[LibraryState]) extends CitationService:
 
-    def neighbors(citekey: String, kinds: List[String]): List[NeighborRow] =
+    def neighbors(citekey: com.histmersion.domain.library.Citekey, kinds: List[com.histmersion.domain.library.citations.CitationService.InMemory.NeighborsKinds]): List[NeighborRow] =
       val st = state.get
       def wanted(kind: String) = kinds.isEmpty || kinds.contains(kind)
       def source(ck: com.histmersion.api.library.Citekey) = st.sources.get(ck.value).map(_.source)
@@ -64,7 +83,7 @@ object CitationService:
       }
       (out ++ parked ++ in).sortBy(r => (r.direction, r.kind, r.citekey))
 
-    def graph(citekey: String, depth: Int): com.histmersion.api.library.Source.Graph =
+    def graph(citekey: com.histmersion.domain.library.Citekey, depth: com.histmersion.domain.library.citations.CitationService.InMemory.GraphDepth): com.histmersion.api.library.Source.Graph =
       val st = state.get
       val maxDepth = depth.max(0).min(4)
       @tailrec def walk(
@@ -96,7 +115,7 @@ object CitationService:
         links.toList.filter(l => ids(l.source) && ids(l.target)).sortBy(l => (l.source, l.target, l.kind))
       )
 
-    def contradictions(citekey: Option[String], since: Option[Long]): ContradictionsResult =
+    def contradictions(citekey: Option[com.histmersion.domain.library.Citekey], since: Option[com.histmersion.domain.library.citations.CitationService.InMemory.ContradictionsSince]): ContradictionsResult =
       val st = state.get
       def row(ck: String, direction: String, kind: String, other: String): Option[ContradictionRow] =
         for s <- st.sources.get(ck).map(_.source)
@@ -128,3 +147,11 @@ object CitationService:
             .map(s => ContradictionRow(s.citekey.value, s.title.value, s.year.map(_.value.toInt), s.status, None, None, None, None, None, None))
           val all = byEdge ++ byStatus
           ContradictionsResult(all, all.size)
+
+  object InMemory:
+    type NeighborsKinds = NeighborsKinds.T
+    object NeighborsKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GraphDepth = GraphDepth.T
+    object GraphDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContradictionsSince = ContradictionsSince.T
+    object ContradictionsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

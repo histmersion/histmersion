@@ -70,7 +70,7 @@ final class CoreBudget(clock: () => Instant, sleep: Long => Unit = ms => Thread.
     granted.map(waitMs => if waitMs > 0 then sleep(waitMs))
 
   /** What CORE answered a call taken: a 429 and its rate-limit headers (names in lower case) block or pace it. */
-  def observe(limits: CoreQuota.Limits, code: Int, headers: Map[String, String]): Unit =
+  def observe(limits: CoreQuota.Limits, code: com.histmersion.domain.library.acquisition.CoreBudget.ObserveCode, headers: Map[com.histmersion.domain.library.acquisition.CoreBudget.ObserveHeadersPart1, com.histmersion.domain.library.acquisition.CoreBudget.ObserveHeadersPart2]): Unit =
     lock.synchronized {
       val next = CoreQuota.observe(current.get, limits, code, headers, clock())
       current.set(next)
@@ -80,7 +80,7 @@ final class CoreBudget(clock: () => Instant, sleep: Long => Unit = ms => Thread.
   private def save(s: CoreQuota.State): Unit =
     store.get.foreach(st => attempt("write")(st.save(s)))
 
-  private def attempt[A](what: String)(a: => A): Option[A] =
+  private def attempt[A](what: com.histmersion.domain.library.acquisition.CoreBudget.AttemptWhat)(a: => A): Option[A] =
     try Some(a)
     catch
       case NonFatal(e) =>
@@ -89,10 +89,21 @@ final class CoreBudget(clock: () => Instant, sleep: Long => Unit = ms => Thread.
 
 object CoreBudget:
   /** Its row in `upstream_quota`, and the upstream's name plugins ask the host's quota by. */
+  type ObserveCode = ObserveCode.T
+  object ObserveCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ObserveHeadersPart1 = ObserveHeadersPart1.T
+  object ObserveHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ObserveHeadersPart2 = ObserveHeadersPart2.T
+  object ObserveHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptWhat = AttemptWhat.T
+  object AttemptWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuotasResultArg1 = QuotasResultArg1.T
+  object QuotasResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Upstream = "core"
 
   /** The budgets the host lends plugins by upstream name: CORE's, `core` under `limits`; any other is unlimited. */
-  def quotas(core: CoreBudget, limits: CoreQuota.Limits): String => com.histmersion.plugin.UpstreamQuota =
+  def quotas(core: CoreBudget, limits: CoreQuota.Limits): com.histmersion.domain.library.acquisition.CoreBudget.QuotasResultArg1 => com.histmersion.plugin.UpstreamQuota =
     name => if name == Upstream then core.lend(limits) else com.histmersion.plugin.UpstreamQuota.Unlimited
 
   /** The limits `acquire.core.*` set. */

@@ -25,14 +25,14 @@ final case class AgentDef(
     interactive: Option[InteractiveSpec],
     body: AgentDef.Body
 ):
-  def runsOn(r: AgentRuntime): Boolean = runtimes.contains(r)
+  def runsOn(r: AgentRuntime): com.histmersion.domain.automation.agents.AgentDef.RunsOnResult = runtimes.contains(r)
 
   /** The definition as the fingerprint of generated trees reads it: its fields as a case class prints them, each tool
     * by the name the toolbox's enumeration gave it (`GetSource` for `get_source`), its web access as its case was
     * called (`Search`) — the fingerprint installed trees and their manifests were generated under, so a tree generated
     * from the same definitions is not rewritten.
     */
-  def fingerprint: String =
+  def fingerprint: com.histmersion.domain.automation.agents.AgentDef.FingerprintResult =
     productIterator.zipWithIndex
       .map((v, i) =>
         productElementName(i) match
@@ -44,6 +44,13 @@ final case class AgentDef(
 
 object AgentDef:
   /** `get_source` as `GetSource`. */
+  type RunsOnResult = RunsOnResult.T
+  object RunsOnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FingerprintResult = FingerprintResult.T
+  object FingerprintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnumeratedResult = EnumeratedResult.T
+  object EnumeratedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T
@@ -59,9 +66,9 @@ object AgentDef:
   type Body = Body.T
   object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def enumerated(t: ToolName): String = t.value.split('_').map(_.capitalize).mkString
+  def enumerated(t: ToolName): com.histmersion.domain.automation.agents.AgentDef.EnumeratedResult = t.value.split('_').map(_.capitalize).mkString
 
   /** A web access as its enumeration printed it when the fingerprint was first taken (`search` as `Search`). */
-  def enumerated(w: WebAccess): String = w match
+  def enumerated(w: WebAccess): com.histmersion.domain.automation.agents.AgentDef.EnumeratedResult = w match
     case WebAccess.WebSearch => "Search"
     case other               => other.toString

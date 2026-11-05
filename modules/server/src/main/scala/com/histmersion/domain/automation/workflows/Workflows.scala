@@ -14,19 +14,19 @@ final class Workflows private (
     val managerKinds: List[ManagerKindDefinition],
     val objectives: List[ObjectiveProgress]
 ):
-  private val byId: Map[String, WorkflowDefinition] = definitions.map(d => (d.id.value: String) -> d).toMap
+  private val byId: Map[com.histmersion.domain.automation.workflows.Workflows.ByIdPart1, WorkflowDefinition] = definitions.map(d => (d.id.value: String) -> d).toMap
 
   /** The workflow a run names (trimmed, any case), if registered. */
-  def parse(raw: String): Option[WorkflowDefinition] = byId.get(raw.trim.toLowerCase)
+  def parse(raw: com.histmersion.domain.automation.workflows.Workflows.ParseRaw): Option[WorkflowDefinition] = byId.get(raw.trim.toLowerCase)
 
   def definition(id: WorkflowId): Option[WorkflowDefinition] = byId.get(id.value: String)
 
   /** Every goal's linked items that exist, by goal, as the domains count them. */
-  def linked(): Map[String, List[String]] =
+  def linked(): Map[com.histmersion.domain.automation.workflows.Workflows.LinkedResultPart1, List[com.histmersion.domain.automation.workflows.Workflows.LinkedResultPart2]] =
     objectives.flatMap(_.linked().toList).groupMap(_._1)(_._2).view.mapValues(_.flatten).toMap
 
   /** The linked items that count as finished. */
-  def finished(): Set[String] = objectives.flatMap(_.finished()).toSet
+  def finished(): Set[com.histmersion.domain.automation.workflows.Workflows.FinishedResult] = objectives.flatMap(_.finished()).toSet
 
   /** Every contributed tool's name, in the order of registration. */
   def toolNames: List[ToolName] = tools.map(_.name)
@@ -43,7 +43,20 @@ final class Workflows private (
     )
 
 object Workflows:
-  def of(contributions: Contributions): Either[String, Workflows] =
+  type ByIdPart1 = ByIdPart1.T
+  object ByIdPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRaw = ParseRaw.T
+  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedResultPart1 = LinkedResultPart1.T
+  object LinkedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedResultPart2 = LinkedResultPart2.T
+  object LinkedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishedResult = FinishedResult.T
+  object FinishedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResultPart1 = OfResultPart1.T
+  object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(contributions: Contributions): Either[com.histmersion.domain.automation.workflows.Workflows.OfResultPart1, Workflows] =
     val Contributions(definitions, tools, kinds, objectives) = contributions
     val twice = definitions.groupBy(_.id.value).collect { case (id, ds) if ds.size > 1 => id }.toList.sorted
     val twiceTools = tools.groupBy(_.name.value).collect { case (n, ts) if ts.size > 1 => n }.toList.sorted

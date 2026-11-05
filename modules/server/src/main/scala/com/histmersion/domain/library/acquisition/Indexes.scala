@@ -12,10 +12,13 @@ object Indexes:
     * key as the plugins resolved it ([[com.histmersion.util.plugins.Plugins.coreKey]]), else `acquire.core.api-key`;
     * `core` the server's CORE budget.
     */
+  type OfCoreKey = OfCoreKey.T
+  object OfCoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def of(
       cfg: AcquireConfig,
       http: Http,
-      coreKey: Option[String] = None,
+      coreKey: Option[com.histmersion.domain.library.acquisition.Indexes.OfCoreKey] = None,
       core: CoreBudget
   ): (List[ScholarlyIndex], CitationAlerts) =
     val key = coreKey.orElse(cfg.core.key)

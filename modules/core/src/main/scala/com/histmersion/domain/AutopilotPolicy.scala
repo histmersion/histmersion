@@ -22,6 +22,157 @@ object AutopilotPolicy:
   /** What the checks say about one open approval: approve it (why, for the note), reject it (why), or leave it for a
     * person (or for tomorrow, when only a daily cap stood in the way).
     */
+  type ArticlePlanMinSources = ArticlePlanMinSources.T
+  object ArticlePlanMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlePlanApprovedToday = ArticlePlanApprovedToday.T
+  object ArticlePlanApprovedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlePlanCap = ArticlePlanCap.T
+  object ArticlePlanCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlePublishMinSources = ArticlePublishMinSources.T
+  object ArticlePublishMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlePublishApprovedToday = ArticlePublishApprovedToday.T
+  object ArticlePublishApprovedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlePublishCap = ArticlePublishCap.T
+  object ArticlePublishCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanMaxDepth = GoalPlanMaxDepth.T
+  object GoalPlanMaxDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanApprovedToday = GoalPlanApprovedToday.T
+  object GoalPlanApprovedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanCap = GoalPlanCap.T
+  object GoalPlanCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanFocusResult = GoalPlanFocusResult.T
+  object GoalPlanFocusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanFocusGoal = GoalPlanFocusGoal.T
+  object GoalPlanFocusGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanFocusActive = GoalPlanFocusActive.T
+  object GoalPlanFocusActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanFocusOpenSubGoals = GoalPlanFocusOpenSubGoals.T
+  object GoalPlanFocusOpenSubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanFocusProposed = GoalPlanFocusProposed.T
+  object GoalPlanFocusProposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanFocusLimit = GoalPlanFocusLimit.T
+  object GoalPlanFocusLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanSubGoalsResult = GoalPlanSubGoalsResult.T
+  object GoalPlanSubGoalsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanSubGoalsGoal = GoalPlanSubGoalsGoal.T
+  object GoalPlanSubGoalsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanSubGoalsOpenSubGoals = GoalPlanSubGoalsOpenSubGoals.T
+  object GoalPlanSubGoalsOpenSubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanSubGoalsProposed = GoalPlanSubGoalsProposed.T
+  object GoalPlanSubGoalsProposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlanSubGoalsLimit = GoalPlanSubGoalsLimit.T
+  object GoalPlanSubGoalsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfinishedPlannedResult = UnfinishedPlannedResult.T
+  object UnfinishedPlannedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfinishedPlannedGoalsPart1 = UnfinishedPlannedGoalsPart1.T
+  object UnfinishedPlannedGoalsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfinishedPlannedGoalsPart2 = UnfinishedPlannedGoalsPart2.T
+  object UnfinishedPlannedGoalsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfinishedPlannedPlanned = UnfinishedPlannedPlanned.T
+  object UnfinishedPlannedPlanned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlansWaitResult = GoalPlansWaitResult.T
+  object GoalPlansWaitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlansWaitUnfinished = GoalPlansWaitUnfinished.T
+  object GoalPlansWaitUnfinished extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlansWaitLimit = GoalPlansWaitLimit.T
+  object GoalPlansWaitLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScaledCapResult = ScaledCapResult.T
+  object ScaledCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScaledCapBase = ScaledCapBase.T
+  object ScaledCapBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScaledCapBacklog = ScaledCapBacklog.T
+  object ScaledCapBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScaledCapShare = ScaledCapShare.T
+  object ScaledCapShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScaledCapCeiling = ScaledCapCeiling.T
+  object ScaledCapCeiling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapTextResult = CapTextResult.T
+  object CapTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapTextBase = CapTextBase.T
+  object CapTextBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapTextBacklog = CapTextBacklog.T
+  object CapTextBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapTextShare = CapTextShare.T
+  object CapTextShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapTextCeiling = CapTextCeiling.T
+  object CapTextCeiling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlesInProgressResult = ArticlesInProgressResult.T
+  object ArticlesInProgressResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlesInProgressUnreviewed = ArticlesInProgressUnreviewed.T
+  object ArticlesInProgressUnreviewed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlesInProgressCompileOpen = ArticlesInProgressCompileOpen.T
+  object ArticlesInProgressCompileOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextArticleResult = NextArticleResult.T
+  object NextArticleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextArticleCooldownHours = NextArticleCooldownHours.T
+  object NextArticleCooldownHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthTextResult = DepthTextResult.T
+  object DepthTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthTextD = DepthTextD.T
+  object DepthTextD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotePrefix = NotePrefix.T
+  object NotePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteResult = NoteResult.T
+  object NoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthResult = DepthResult.T
+  object DepthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthSlug = DepthSlug.T
+  object DepthSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthParentOfArg1 = DepthParentOfArg1.T
+  object DepthParentOfArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthParentOfResult = DepthParentOfResult.T
+  object DepthParentOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankResult = RankResult.T
+  object RankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankS = RankS.T
+  object RankS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AdvanceResultPart1 = AdvanceResultPart1.T
+  object AdvanceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AdvanceResultPart2 = AdvanceResultPart2.T
+  object AdvanceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishedResult = FinishedResult.T
+  object FinishedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishedStatus = FinishedStatus.T
+  object FinishedStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnsurePausedByAutopilot = EnsurePausedByAutopilot.T
+  object EnsurePausedByAutopilot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPauseResult = ToPauseResult.T
+  object ToPauseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpreadResult = SpreadResult.T
+  object SpreadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpreadKey = SpreadKey.T
+  object SpreadKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaggerResult = StaggerResult.T
+  object StaggerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaggerBase = StaggerBase.T
+  object StaggerBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaggerKey = StaggerKey.T
+  object StaggerKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtendDueResult = ExtendDueResult.T
+  object ExtendDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtendDueNewSources = ExtendDueNewSources.T
+  object ExtendDueNewSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtendDueMin = ExtendDueMin.T
+  object ExtendDueMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtendDueCooldownDays = ExtendDueCooldownDays.T
+  object ExtendDueCooldownDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SharedIngestLeftResult = SharedIngestLeftResult.T
+  object SharedIngestLeftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SharedIngestLeftCap = SharedIngestLeftCap.T
+  object SharedIngestLeftCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SharedIngestLeftIngestedToday = SharedIngestLeftIngestedToday.T
+  object SharedIngestLeftIngestedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DueResult = DueResult.T
+  object DueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DueEveryHours = DueEveryHours.T
+  object DueEveryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EtaDaysResult = EtaDaysResult.T
+  object EtaDaysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EtaDaysOpen = EtaDaysOpen.T
+  object EtaDaysOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EtaDaysDoneLast7 = EtaDaysDoneLast7.T
+  object EtaDaysDoneLast7 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Verdict:
     case Approve(reason: String)
     case Reject(reason: String)
@@ -42,7 +193,7 @@ object AutopilotPolicy:
     * least `minSources`, and the area's planned articles approved today stay within `cap`; a plan larger than the cap
     * is a person's.
     */
-  def articlePlan(articles: List[PlannedFacts], minSources: Int, approvedToday: Int, cap: Int): Verdict =
+  def articlePlan(articles: List[PlannedFacts], minSources: com.histmersion.domain.AutopilotPolicy.ArticlePlanMinSources, approvedToday: com.histmersion.domain.AutopilotPolicy.ArticlePlanApprovedToday, cap: com.histmersion.domain.AutopilotPolicy.ArticlePlanCap): Verdict =
     val n = articles.size
     val bad = articles.flatMap { a =>
       if !a.slugFree then Some(s"${a.slug}: the slug is taken now")
@@ -97,7 +248,7 @@ object AutopilotPolicy:
     * drafts a day. A failed check rejects it (the seeding manager compiles again); a reached cap leaves it for
     * tomorrow.
     */
-  def articlePublish(d: DraftFacts, minSources: Int, approvedToday: Int, cap: Int): Verdict =
+  def articlePublish(d: DraftFacts, minSources: com.histmersion.domain.AutopilotPolicy.ArticlePublishMinSources, approvedToday: com.histmersion.domain.AutopilotPolicy.ArticlePublishApprovedToday, cap: com.histmersion.domain.AutopilotPolicy.ArticlePublishCap): Verdict =
     if !d.filterRecorded then Verdict.Reject("the run records no coverage filter")
     else if d.hits.forall(_ < minSources) then
       Verdict.Reject(
@@ -134,7 +285,7 @@ object AutopilotPolicy:
   /** A `goal-plan`: approved when it proposes something, and sub-goals only for a goal less than `maxDepth` deep —
     * within `cap` plans a day.
     */
-  def goalPlan(p: GoalPlanFacts, maxDepth: Int, approvedToday: Int, cap: Int): Verdict =
+  def goalPlan(p: GoalPlanFacts, maxDepth: com.histmersion.domain.AutopilotPolicy.GoalPlanMaxDepth, approvedToday: com.histmersion.domain.AutopilotPolicy.GoalPlanApprovedToday, cap: com.histmersion.domain.AutopilotPolicy.GoalPlanCap): Verdict =
     if p.subGoals + p.queries + p.works == 0 then Verdict.Reject("the plan proposes nothing")
     else if p.subGoals > 0 && p.depth >= maxDepth then
       Verdict.Reject(
@@ -152,7 +303,7 @@ object AutopilotPolicy:
     * when its goal is one of the active goals and its unfinished sub-goals (`openSubGoals`, every level below it) plus
     * the `proposed` new ones stay within `limit`; else why it waits for a person.
     */
-  def goalPlanFocus(goal: String, active: Boolean, openSubGoals: Int, proposed: Int, limit: Int): Option[String] =
+  def goalPlanFocus(goal: com.histmersion.domain.AutopilotPolicy.GoalPlanFocusGoal, active: com.histmersion.domain.AutopilotPolicy.GoalPlanFocusActive, openSubGoals: com.histmersion.domain.AutopilotPolicy.GoalPlanFocusOpenSubGoals, proposed: com.histmersion.domain.AutopilotPolicy.GoalPlanFocusProposed, limit: com.histmersion.domain.AutopilotPolicy.GoalPlanFocusLimit): Option[com.histmersion.domain.AutopilotPolicy.GoalPlanFocusResult] =
     if !active then Some(s"focus: goal $goal is not one of the active goals; its plan waits for a person or its turn")
     else if proposed > 0 && openSubGoals + proposed > math.max(0, limit) then
       Some(
@@ -166,7 +317,7 @@ object AutopilotPolicy:
     * (`agents.autopilot.max-open-sub-goals`); else why it waits for a person. Queries and works alone are always within
     * it.
     */
-  def goalPlanSubGoals(goal: String, openSubGoals: Int, proposed: Int, limit: Int): Option[String] =
+  def goalPlanSubGoals(goal: com.histmersion.domain.AutopilotPolicy.GoalPlanSubGoalsGoal, openSubGoals: com.histmersion.domain.AutopilotPolicy.GoalPlanSubGoalsOpenSubGoals, proposed: com.histmersion.domain.AutopilotPolicy.GoalPlanSubGoalsProposed, limit: com.histmersion.domain.AutopilotPolicy.GoalPlanSubGoalsLimit): Option[com.histmersion.domain.AutopilotPolicy.GoalPlanSubGoalsResult] =
     Option.when(proposed > 0 && openSubGoals + proposed > math.max(0, limit))(
       s"goal $goal has ${Plural.count(openSubGoals, "unfinished sub-goal")} and the plan adds $proposed; at most " +
         s"$limit are opened by code (the autopilot's limit on open sub-goals)"
@@ -175,14 +326,14 @@ object AutopilotPolicy:
   /** The goals with an approved plan that are not finished yet (neither reviewed nor done): what a new goal plan would
     * add to. `goals` = every goal's slug and status.
     */
-  def unfinishedPlanned(goals: List[(String, String)], planned: Set[String]): Int =
+  def unfinishedPlanned(goals: List[(com.histmersion.domain.AutopilotPolicy.UnfinishedPlannedGoalsPart1, com.histmersion.domain.AutopilotPolicy.UnfinishedPlannedGoalsPart2)], planned: Set[com.histmersion.domain.AutopilotPolicy.UnfinishedPlannedPlanned]): com.histmersion.domain.AutopilotPolicy.UnfinishedPlannedResult =
     goals.count((slug, status) => planned(slug) && !finished(status))
 
   /** Why goal plans are not offered now, if they are not: more goals with an approved plan are unfinished than `limit`
     * (0 = no limit). While so, no plan-goal run starts for an unplanned goal and code decides no open goal plan; a
     * person still may.
     */
-  def goalPlansWait(unfinished: Int, limit: Int): Option[String] =
+  def goalPlansWait(unfinished: com.histmersion.domain.AutopilotPolicy.GoalPlansWaitUnfinished, limit: com.histmersion.domain.AutopilotPolicy.GoalPlansWaitLimit): Option[com.histmersion.domain.AutopilotPolicy.GoalPlansWaitResult] =
     Option.when(limit > 0 && unfinished > limit)(
       s"goal plans wait until the unfinished goals drop to $limit: ${Plural.count(unfinished, "goal")} with an approved " +
         s"plan ${if unfinished == 1 then "is" else "are"} not reviewed yet (the autopilot's limit on unfinished goals)"
@@ -191,7 +342,7 @@ object AutopilotPolicy:
   /** A daily cap scaled to the backlog (#3762 proposal 3): `share` ≤ 0 keeps `base`; else
     * `max(base, ⌈backlog × share⌉)`, never above `ceiling` (when it is above 0) — and never below 0.
     */
-  def scaledCap(base: Int, backlog: Int, share: Double, ceiling: Int): Int =
+  def scaledCap(base: com.histmersion.domain.AutopilotPolicy.ScaledCapBase, backlog: com.histmersion.domain.AutopilotPolicy.ScaledCapBacklog, share: com.histmersion.domain.AutopilotPolicy.ScaledCapShare, ceiling: com.histmersion.domain.AutopilotPolicy.ScaledCapCeiling): com.histmersion.domain.AutopilotPolicy.ScaledCapResult =
     val b = math.max(0, base)
     if share <= 0 then b
     else
@@ -199,7 +350,7 @@ object AutopilotPolicy:
       if ceiling > 0 then math.min(scaled, math.max(b, ceiling)) else scaled
 
   /** The cap as the status shows it: `5 a day`, or `5 a day, 22 today for a backlog of 64 (at most 50)`. */
-  def capText(base: Int, backlog: Int, share: Double, ceiling: Int): String =
+  def capText(base: com.histmersion.domain.AutopilotPolicy.CapTextBase, backlog: com.histmersion.domain.AutopilotPolicy.CapTextBacklog, share: com.histmersion.domain.AutopilotPolicy.CapTextShare, ceiling: com.histmersion.domain.AutopilotPolicy.CapTextCeiling): com.histmersion.domain.AutopilotPolicy.CapTextResult =
     val n = scaledCap(base, backlog, share, ceiling)
     if share <= 0 then s"$base a day"
     else s"$base a day, $n today for a backlog of $backlog" + (if ceiling > 0 then s" (at most $ceiling)" else "")
@@ -240,7 +391,7 @@ object AutopilotPolicy:
   /** Why a goal's articles are still in progress — what keeps a new proposal back (#3763: no new work while the goal
     * still has unfinished articles); None when they are all done (or it has none).
     */
-  def articlesInProgress(unreviewed: Int, compileOpen: Int): Option[String] =
+  def articlesInProgress(unreviewed: com.histmersion.domain.AutopilotPolicy.ArticlesInProgressUnreviewed, compileOpen: com.histmersion.domain.AutopilotPolicy.ArticlesInProgressCompileOpen): Option[com.histmersion.domain.AutopilotPolicy.ArticlesInProgressResult] =
     Option.when(unreviewed > 0 || compileOpen > 0)(
       "its articles in progress come first (" + List(
         Option.when(compileOpen > 0)(s"$compileOpen to compile"),
@@ -254,7 +405,7 @@ object AutopilotPolicy:
     * least `cooldownHours` ago (0 = never). A person's goal status `done` ends it. The proposal then goes through the
     * approvals policy like any other (`article-plan`).
     */
-  def nextArticle(f: NextFacts, now: java.time.Instant, cooldownHours: Int): Option[String] =
+  def nextArticle(f: NextFacts, now: java.time.Instant, cooldownHours: com.histmersion.domain.AutopilotPolicy.NextArticleCooldownHours): Option[com.histmersion.domain.AutopilotPolicy.NextArticleResult] =
     val open = f.proposeStatus.exists(st => ItemStatus.parse(st).exists(!_.isFinal))
     val cooled = f.proposeSettled.forall(t => !t.plusSeconds(math.max(0, cooldownHours).toLong * 3600L).isAfter(now))
     Option.when(
@@ -267,18 +418,18 @@ object AutopilotPolicy:
         "(the plan goes through the article-plan approvals)"
     )
 
-  private def depthText(d: Int): String = if d == 0 then "at the root" else s"$d level(s) below a root"
+  private def depthText(d: com.histmersion.domain.AutopilotPolicy.DepthTextD): com.histmersion.domain.AutopilotPolicy.DepthTextResult = if d == 0 then "at the root" else s"$d level(s) below a root"
 
   /** The note an automatic decision carries — what marks it as the autopilot's (and what the daily caps count).
     */
-  val NotePrefix: String = Approval.DecidedBy.AutopilotNote
-  def note(v: Verdict): Option[String] = v match
+  val NotePrefix: com.histmersion.domain.AutopilotPolicy.NotePrefix = Approval.DecidedBy.AutopilotNote
+  def note(v: Verdict): Option[com.histmersion.domain.AutopilotPolicy.NoteResult] = v match
     case Verdict.Approve(r) => Some(s"$NotePrefix approved — $r")
     case Verdict.Reject(r)  => Some(s"$NotePrefix rejected — $r")
     case Verdict.Leave(_)   => None
 
   /** How deep a goal is: the number of parents above it (a cycle or a missing parent stops the walk). */
-  def depth(slug: String, parentOf: String => Option[String]): Int =
+  def depth(slug: com.histmersion.domain.AutopilotPolicy.DepthSlug, parentOf: com.histmersion.domain.AutopilotPolicy.DepthParentOfArg1 => Option[com.histmersion.domain.AutopilotPolicy.DepthParentOfResult]): com.histmersion.domain.AutopilotPolicy.DepthResult =
     @annotation.tailrec
     def go(s: String, seen: Set[String], n: Int): Int = parentOf(s) match
       case Some(p) if !seen(p) && n < 64 => go(p, seen + p, n + 1)
@@ -318,14 +469,14 @@ object AutopilotPolicy:
     type Children = Children.T
     object Children extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def rank(s: String): Int = Goal.Status.all.indexOf(s)
+  private def rank(s: com.histmersion.domain.AutopilotPolicy.RankS): com.histmersion.domain.AutopilotPolicy.RankResult = Goal.Status.all.indexOf(s)
 
   /** The status the facts support, when it is FURTHER than the goal's own (never back; `done` and an unknown status are
     * a person's): seeding once it is managed; compiled once it has an article (a parent: once its sub-goals are
     * compiled) and nothing is left to compile; reviewed once every article passed its review and every sub-goal is
     * reviewed. With why, for the log.
     */
-  def advance(f: GoalFacts): Option[(String, String)] =
+  def advance(f: GoalFacts): Option[(com.histmersion.domain.AutopilotPolicy.AdvanceResultPart1, com.histmersion.domain.AutopilotPolicy.AdvanceResultPart2)] =
     val cur = rank(f.status)
     if cur < 0 || f.status == Goal.Status.Done then None
     else
@@ -447,7 +598,7 @@ object AutopilotPolicy:
   /** Finished: reviewed or done — such a goal keeps a watcher (new sources, the currency check), no new seeding
     * manager.
     */
-  def finished(status: String): Boolean = status == Goal.Status.Reviewed || status == Goal.Status.Done
+  def finished(status: com.histmersion.domain.AutopilotPolicy.FinishedStatus): com.histmersion.domain.AutopilotPolicy.FinishedResult = status == Goal.Status.Reviewed || status == Goal.Status.Done
 
   /** What must change so every goal has its managers (idempotent: nothing, when they are there). Library-wide: `review`
     * and `enrich` active (`review` with the extend threshold). Every unfinished goal: a seeding manager (a plan-goal
@@ -458,7 +609,7 @@ object AutopilotPolicy:
   def ensure(
       goals: List[GoalRow],
       managers: List[ManagerRow],
-      pausedByAutopilot: Set[String],
+      pausedByAutopilot: Set[com.histmersion.domain.AutopilotPolicy.EnsurePausedByAutopilot],
       s: Settings
   ): List[Step] =
     val byId = managers.map(m => m.id -> m).toMap
@@ -497,7 +648,7 @@ object AutopilotPolicy:
   /** The managers the autopilot pauses when it is turned off: the active seeding managers and watchers (the
     * library-wide ones and a person's paused ones are left as they are).
     */
-  def toPause(managers: List[ManagerRow]): List[String] =
+  def toPause(managers: List[ManagerRow]): List[com.histmersion.domain.AutopilotPolicy.ToPauseResult] =
     managers
       .filter(m =>
         m.state == Manager.State.Active.wire && (m.kind == Manager.Kind.Seed.wire || m.kind == Manager.Kind.Watch.wire)
@@ -507,12 +658,12 @@ object AutopilotPolicy:
   // ── crons spread per goal ──────────────────────────────────────────────────────────────────────
 
   /** A stable non-negative hash of `key` (the same on every machine and every run). */
-  def spread(key: String): Int = key.foldLeft(17)((h, c) => 31 * h + c) & Int.MaxValue
+  def spread(key: com.histmersion.domain.AutopilotPolicy.SpreadKey): com.histmersion.domain.AutopilotPolicy.SpreadResult = key.foldLeft(17)((h, c) => 31 * h + c) & Int.MaxValue
 
   /** `@daily`, `@weekly` and `@monthly` as five fields at a minute, hour (and weekday or day of the month) of `key`'s
     * own, so dozens of managers with the same cron do not fire in the same minute; any other cron is kept as given.
     */
-  def stagger(base: String, key: String): String =
+  def stagger(base: com.histmersion.domain.AutopilotPolicy.StaggerBase, key: com.histmersion.domain.AutopilotPolicy.StaggerKey): com.histmersion.domain.AutopilotPolicy.StaggerResult =
     val h = spread(key)
     val (min, hour, day) = (h % 60, (h / 60) % 24, h / 1440)
     base.trim.toLowerCase match
@@ -527,12 +678,12 @@ object AutopilotPolicy:
     * reason for, and it was not extended in the last `cooldownDays`. `min` 0 = never.
     */
   def extendDue(
-      newSources: Int,
-      min: Int,
+      newSources: com.histmersion.domain.AutopilotPolicy.ExtendDueNewSources,
+      min: com.histmersion.domain.AutopilotPolicy.ExtendDueMin,
       lastExtend: Option[Instant],
-      cooldownDays: Int,
+      cooldownDays: com.histmersion.domain.AutopilotPolicy.ExtendDueCooldownDays,
       now: Instant
-  ): Option[String] =
+  ): Option[com.histmersion.domain.AutopilotPolicy.ExtendDueResult] =
     if min <= 0 || newSources < min then None
     else if lastExtend.exists(t => t.plus(Duration.ofDays(math.max(0, cooldownDays).toLong)).isAfter(now)) then None
     else Some(s"its filter returns ${Plural.count(newSources, "source")} it neither cites nor gives a reason for")
@@ -540,15 +691,15 @@ object AutopilotPolicy:
   // ── caps, housekeeping, throughput ─────────────────────────────────────────────────────────────
 
   /** What is left today of the ingests all watchers share (None: no shared cap). */
-  def sharedIngestLeft(cap: Int, ingestedToday: Int): Option[Int] =
+  def sharedIngestLeft(cap: com.histmersion.domain.AutopilotPolicy.SharedIngestLeftCap, ingestedToday: com.histmersion.domain.AutopilotPolicy.SharedIngestLeftIngestedToday): Option[com.histmersion.domain.AutopilotPolicy.SharedIngestLeftResult] =
     Option.when(cap > 0)(math.max(0, cap - math.max(0, ingestedToday)))
 
   /** Is a housekeeping job due: never run, or `everyHours` passed since (0 = never). */
-  def due(last: Option[Instant], everyHours: Int, now: Instant): Boolean =
+  def due(last: Option[Instant], everyHours: com.histmersion.domain.AutopilotPolicy.DueEveryHours, now: Instant): com.histmersion.domain.AutopilotPolicy.DueResult =
     everyHours > 0 && last.forall(l => !l.plus(Duration.ofHours(everyHours.toLong)).isAfter(now))
 
   /** Days until `open` items are done at the pace of the last week (`doneLast7` items); None when nothing is open or
     * nothing was done.
     */
-  def etaDays(open: Int, doneLast7: Int): Option[Int] =
+  def etaDays(open: com.histmersion.domain.AutopilotPolicy.EtaDaysOpen, doneLast7: com.histmersion.domain.AutopilotPolicy.EtaDaysDoneLast7): Option[com.histmersion.domain.AutopilotPolicy.EtaDaysResult] =
     Option.when(open > 0 && doneLast7 > 0)(math.max(1, math.ceil(open * 7.0 / doneLast7).toInt))

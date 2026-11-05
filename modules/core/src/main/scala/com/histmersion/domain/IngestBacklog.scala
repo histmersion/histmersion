@@ -17,15 +17,64 @@ object IngestBacklog:
   /** How the legal chain says a work has no legal file (`AcquisitionControllers.ingestLegal`): such a work goes to the
     * acquisition list at once; any other failure is tried again later.
     */
+  type IsNoLegalCopyResult = IsNoLegalCopyResult.T
+  object IsNoLegalCopyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsNoLegalCopyMessage = IsNoLegalCopyMessage.T
+  object IsNoLegalCopyMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepAllowanceResult = SweepAllowanceResult.T
+  object SweepAllowanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepAllowanceOwn = SweepAllowanceOwn.T
+  object SweepAllowanceOwn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepAllowanceShared = SweepAllowanceShared.T
+  object SweepAllowanceShared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepAllowanceOwnBacklog = SweepAllowanceOwnBacklog.T
+  object SweepAllowanceOwnBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepAllowanceAllBacklog = SweepAllowanceAllBacklog.T
+  object SweepAllowanceAllBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainOwnLeftPart1 = DrainOwnLeftPart1.T
+  object DrainOwnLeftPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainOwnLeftPart2 = DrainOwnLeftPart2.T
+  object DrainOwnLeftPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainShared = DrainShared.T
+  object DrainShared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainMax = DrainMax.T
+  object DrainMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceInCorpus = PlaceInCorpus.T
+  object PlaceInCorpus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceAcquire = PlaceAcquire.T
+  object PlaceAcquire extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceOpenBacklog = PlaceOpenBacklog.T
+  object PlaceOpenBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceSettledHere = PlaceSettledHere.T
+  object PlaceSettledHere extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnFailureMessage = OnFailureMessage.T
+  object OnFailureMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnFailureFailures = OnFailureFailures.T
+  object OnFailureFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnFailureMaxFailures = OnFailureMaxFailures.T
+  object OnFailureMaxFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnFailureBackoffMinutes = OnFailureBackoffMinutes.T
+  object OnFailureBackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnFailureMaxBackoffMinutes = OnFailureMaxBackoffMinutes.T
+  object OnFailureMaxBackoffMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainResult = DaysToDrainResult.T
+  object DaysToDrainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainSharedPerDay = DaysToDrainSharedPerDay.T
+  object DaysToDrainSharedPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainSharedLeftToday = DaysToDrainSharedLeftToday.T
+  object DaysToDrainSharedLeftToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DaysToDrainHorizon = DaysToDrainHorizon.T
+  object DaysToDrainHorizon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val NoLegalCopy = "no legal open-access copy of"
 
-  def isNoLegalCopy(message: String): Boolean = Option(message).exists(_.trim.startsWith(NoLegalCopy))
+  def isNoLegalCopy(message: com.histmersion.domain.IngestBacklog.IsNoLegalCopyMessage): com.histmersion.domain.IngestBacklog.IsNoLegalCopyResult = Option(message).exists(_.trim.startsWith(NoLegalCopy))
 
   /** What a watcher's next sweep may ingest of its NEW finds: what is left of its own allowance (`own`) and of the
     * shared one (`shared`, the autopilot's; None = no shared cap), each after the backlog that drains under it first —
     * the watcher's own pending items (`ownBacklog`) and every drainable watcher's (`allBacklog`). Never negative.
     */
-  def sweepAllowance(own: Int, shared: Option[Int], ownBacklog: Int, allBacklog: Int): Int =
+  def sweepAllowance(own: com.histmersion.domain.IngestBacklog.SweepAllowanceOwn, shared: Option[com.histmersion.domain.IngestBacklog.SweepAllowanceShared], ownBacklog: com.histmersion.domain.IngestBacklog.SweepAllowanceOwnBacklog, allBacklog: com.histmersion.domain.IngestBacklog.SweepAllowanceAllBacklog): com.histmersion.domain.IngestBacklog.SweepAllowanceResult =
     val mine = own - math.max(0, ownBacklog)
     val all = shared.fold(Int.MaxValue)(_ - math.max(0, allBacklog))
     math.max(0, math.min(mine, all))
@@ -46,7 +95,7 @@ object IngestBacklog:
     * paused, auto-ingest off — drains nothing) and of the shared one (None = no shared cap); at most `max` (one tick's
     * share: an ingest fetches a file, so a tick takes only a few).
     */
-  def drain(entries: List[Entry], ownLeft: Map[String, Int], shared: Option[Int], now: Instant, max: Int): List[Entry] =
+  def drain(entries: List[Entry], ownLeft: Map[com.histmersion.domain.IngestBacklog.DrainOwnLeftPart1, com.histmersion.domain.IngestBacklog.DrainOwnLeftPart2], shared: Option[com.histmersion.domain.IngestBacklog.DrainShared], now: Instant, max: com.histmersion.domain.IngestBacklog.DrainMax): List[Entry] =
     val ordered = entries.filter(_.notBefore.forall(!_.isAfter(now))).sortBy(e => (-e.priority, e.id))
     @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[String, Int], sh: Option[Int]): List[Entry] =
       rest match
@@ -70,10 +119,10 @@ object IngestBacklog:
     case New
 
   def place(
-      inCorpus: Option[String],
-      acquire: Option[Int],
-      openBacklog: Option[Long],
-      settledHere: Option[Long]
+      inCorpus: Option[com.histmersion.domain.IngestBacklog.PlaceInCorpus],
+      acquire: Option[com.histmersion.domain.IngestBacklog.PlaceAcquire],
+      openBacklog: Option[com.histmersion.domain.IngestBacklog.PlaceOpenBacklog],
+      settledHere: Option[com.histmersion.domain.IngestBacklog.PlaceSettledHere]
   ): Placement =
     inCorpus
       .map(Placement.InCorpus(_))
@@ -90,11 +139,11 @@ object IngestBacklog:
     case Retry(notBefore: Instant, failures: Int, why: String)
 
   def onFailure(
-      message: String,
-      failures: Int,
-      maxFailures: Int,
-      backoffMinutes: Int,
-      maxBackoffMinutes: Int,
+      message: com.histmersion.domain.IngestBacklog.OnFailureMessage,
+      failures: com.histmersion.domain.IngestBacklog.OnFailureFailures,
+      maxFailures: com.histmersion.domain.IngestBacklog.OnFailureMaxFailures,
+      backoffMinutes: com.histmersion.domain.IngestBacklog.OnFailureBackoffMinutes,
+      maxBackoffMinutes: com.histmersion.domain.IngestBacklog.OnFailureMaxBackoffMinutes,
       now: Instant
   ): Failure =
     val why = Option(message).map(_.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
@@ -122,10 +171,10 @@ object IngestBacklog:
     */
   def daysToDrain(
       lanes: List[Lane],
-      sharedPerDay: Option[Int],
-      sharedLeftToday: Option[Int],
-      horizon: Int = 3650
-  ): Option[Int] =
+      sharedPerDay: Option[com.histmersion.domain.IngestBacklog.DaysToDrainSharedPerDay],
+      sharedLeftToday: Option[com.histmersion.domain.IngestBacklog.DaysToDrainSharedLeftToday],
+      horizon: com.histmersion.domain.IngestBacklog.DaysToDrainHorizon = 3650
+  ): Option[com.histmersion.domain.IngestBacklog.DaysToDrainResult] =
     @annotation.tailrec
     def go(bs: Vector[Int], day: Int): Option[Int] =
       if bs.forall(_ <= 0) then Some(math.max(0, day - 1))

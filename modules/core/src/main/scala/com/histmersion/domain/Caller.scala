@@ -19,7 +19,11 @@ object Caller:
   enum Role:
     case Reader, Contributor, Researcher, Admin
 
-    def includes(other: Role): Boolean = ordinal >= other.ordinal
+    def includes(other: Role): com.histmersion.domain.Caller.Role.IncludesResult = ordinal >= other.ordinal
+
+  object Role:
+    type IncludesResult = IncludesResult.T
+    object IncludesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The one person a server without accounts runs for: every request is theirs, with every permission. */
   val Local: Caller.Person = Caller.Person(UserId.Local, Role.Admin)

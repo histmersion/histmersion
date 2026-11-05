@@ -37,7 +37,7 @@ final class SchedulerService(
 ):
 
   /** A person's choice of strategy (name, by, at), if any. */
-  def chosen: Option[(String, String, String)] = agents.autopilotRow.strategy()
+  def chosen: Option[(com.histmersion.domain.automation.scheduler.SchedulerService.ChosenResultPart1, com.histmersion.domain.automation.scheduler.SchedulerService.ChosenResultPart2, com.histmersion.domain.automation.scheduler.SchedulerService.ChosenResultPart3)] = agents.autopilotRow.strategy()
 
   /** The settings in effect now. */
   def settings: Settings = SchedulerPolicy.settings(ManagerDefaultsViews.scheduler(cfg.scheduler), chosen.map(_._1))
@@ -70,7 +70,7 @@ final class SchedulerService(
     type InProgress = InProgress.T
     object InProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def goals(): Map[String, GoalInfo] =
+  private def goals(): Map[com.histmersion.domain.automation.scheduler.SchedulerService.GoalsResultPart1, GoalInfo] =
     agents.focus
       .facts()
       .map(f =>
@@ -112,7 +112,7 @@ final class SchedulerService(
       over: List[Agents.ModelOverride],
       now: Instant,
       pipelines: List[Pipeline]
-  ): Either[String, List[PlanQuota.PoolId]] =
+  ): Either[com.histmersion.domain.automation.scheduler.SchedulerService.PoolIdsResultPart1, List[PlanQuota.PoolId]] =
     val roles = pipelines.flatMap(_.roles).distinct
     val picks = roles.map { r =>
       val ref = over.find(o => Role.parse(o.role).contains(r)).map(_.model)
@@ -130,7 +130,7 @@ final class SchedulerService(
         val pools = plans.collect { case Billing.Plan(p) => p }.distinct
         Right(if pools.nonEmpty && plans.forall(_.isInstanceOf[Billing.Plan]) then pools else Nil)
 
-  private def poolCap(p: PlanQuota.PoolId): Int =
+  private def poolCap(p: PlanQuota.PoolId): com.histmersion.domain.automation.scheduler.SchedulerService.PoolCapResult =
     val calls = p match
       case PlanQuota.PoolId.ClaudePlan  => cfg.quota.claudePlan.maxCallsInFlight
       case PlanQuota.PoolId.ChatgptPlan => cfg.quota.chatgptPlan.maxCallsInFlight
@@ -251,7 +251,7 @@ final class SchedulerService(
     * when its run was created), and keep the pass for the explanations.
     */
   def pass(ms: List[ManagerInfo], now: Instant, stop: Option[Block])(
-      start: (ManagerInfo, ManagerItem) => Either[String, Unit]
+      start: (ManagerInfo, ManagerItem) => Either[com.histmersion.domain.automation.scheduler.SchedulerService.PassStartResultPart1, Unit]
   ): Decision =
     val in = inputs(ms, now, stop)
     val s = settings
@@ -264,7 +264,7 @@ final class SchedulerService(
     * last pass left work waiting on a pool, so the next passes decide on current numbers. Nothing while draining. One
     * line per reading taken.
     */
-  def refreshPlans(now: Instant): List[String] =
+  def refreshPlans(now: Instant): List[com.histmersion.domain.automation.scheduler.SchedulerService.RefreshPlansResult] =
     val wanted = if agents.drain.draining then Set.empty[String] else wantedPools()
     val autopilotOn = agents.autopilot.on
     PlanQuota.PoolId.values.toList.flatMap { p =>
@@ -274,13 +274,13 @@ final class SchedulerService(
         .map(r => s"plan refresh ${p.wire} (${PlanQuota.RefreshTrigger.Schedule.wire}): ${r.text}")
     }
 
-  private def wantedPools(): Set[String] =
+  private def wantedPools(): Set[com.histmersion.domain.automation.scheduler.SchedulerService.WantedPoolsResult] =
     last.fold(Set.empty[String])(snap =>
       SchedulerPolicy.poolsWanted(snap.d.waiting.map(_._1.c), chainPools(snap.in, _))
     )
 
   /** The pools every model of `c`'s role chains draws on, whether or not it is usable now. */
-  private def chainPools(in: Inputs, c: Candidate): List[String] =
+  private def chainPools(in: Inputs, c: Candidate): List[com.histmersion.domain.automation.scheduler.SchedulerService.ChainPoolsResult] =
     val over = in.items.get(c.id).flatMap(_._1.config.models).getOrElse(Nil)
     agents.managers
       .pipelineOf(c.kind)
@@ -311,9 +311,9 @@ final class SchedulerService(
 
   /** The status: the last pass (or a dry one), the first `limit` waiting items (default 50). */
   def status(
-      limit: Option[Int] = None,
+      limit: Option[com.histmersion.domain.automation.scheduler.SchedulerService.StatusLimit] = None,
       now: Instant = Instant.now(agents.clock),
-      changes: List[String] = Nil
+      changes: List[com.histmersion.domain.automation.scheduler.SchedulerService.StatusChanges] = Nil
   ): SchedulerStatus =
     val snap = last.getOrElse(dry(now))
     val s = snap.s
@@ -379,7 +379,7 @@ final class SchedulerService(
     )
 
   /** Why one item (its id, or a target among the open items) is where it is. */
-  def why(ref: String, now: Instant = Instant.now(agents.clock)): Either[Api.Error, WhyInfo] =
+  def why(ref: com.histmersion.domain.automation.scheduler.SchedulerService.WhyRef, now: Instant = Instant.now(agents.clock)): Either[Api.Error, WhyInfo] =
     val r = ref.trim
     val item = r
       .stripPrefix("#")
@@ -458,7 +458,7 @@ final class SchedulerService(
     * counts as progress), the one reason it stands still and what unblocks it ([[Stalls.classify]]): waiting for a
     * person, draining, paused, a budget, quota, the scheduler's queue, a block, a failed item, no candidates, idle.
     */
-  def stalls(days: Option[Int] = None, now: Instant = Instant.now(agents.clock)): Stalls.StallReport =
+  def stalls(days: Option[com.histmersion.domain.automation.scheduler.SchedulerService.StallsDays] = None, now: Instant = Instant.now(agents.clock)): Stalls.StallReport =
     val n = math.max(0, days.getOrElse(cfg.autopilot.stallDays))
     val goals = agents.focusStore.goals().filterNot(g => GoalFocus.finished(g.status))
     val progress = agents.managerStore.lastProgress()
@@ -533,3 +533,33 @@ final class SchedulerService(
       agents.managers.nudge()
       status(None, now, List(line))
     }
+
+object SchedulerService:
+  type ChosenResultPart1 = ChosenResultPart1.T
+  object ChosenResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChosenResultPart2 = ChosenResultPart2.T
+  object ChosenResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChosenResultPart3 = ChosenResultPart3.T
+  object ChosenResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalsResultPart1 = GoalsResultPart1.T
+  object GoalsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PoolIdsResultPart1 = PoolIdsResultPart1.T
+  object PoolIdsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PoolCapResult = PoolCapResult.T
+  object PoolCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassStartResultPart1 = PassStartResultPart1.T
+  object PassStartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshPlansResult = RefreshPlansResult.T
+  object RefreshPlansResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WantedPoolsResult = WantedPoolsResult.T
+  object WantedPoolsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainPoolsResult = ChainPoolsResult.T
+  object ChainPoolsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusLimit = StatusLimit.T
+  object StatusLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusChanges = StatusChanges.T
+  object StatusChanges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WhyRef = WhyRef.T
+  object WhyRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StallsDays = StallsDays.T
+  object StallsDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

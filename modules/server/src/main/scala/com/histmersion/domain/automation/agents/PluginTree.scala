@@ -4,7 +4,24 @@ import com.histmersion.util.storage.{Resources, Store, Stores}
 import java.nio.charset.StandardCharsets.UTF_8
 
 object PluginTree:
-  def tree(roster: AgentRoster)(using Stores, Resources): Either[String, Map[String, String]] =
+  type TreeResultPart1 = TreeResultPart1.T
+  object TreeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeResultPart2Part1 = TreeResultPart2Part1.T
+  object TreeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeResultPart2Part2 = TreeResultPart2Part2.T
+  object TreeResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Owned = Owned.T
+  object Owned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteResultPart1 = WriteResultPart1.T
+  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteTreeResultPart1 = WriteTreeResultPart1.T
+  object WriteTreeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteTreeTreePart1 = WriteTreeTreePart1.T
+  object WriteTreeTreePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteTreeTreePart2 = WriteTreeTreePart2.T
+  object WriteTreeTreePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def tree(roster: AgentRoster)(using Stores, Resources): Either[com.histmersion.domain.automation.agents.PluginTree.TreeResultPart1, Map[com.histmersion.domain.automation.agents.PluginTree.TreeResultPart2Part1, com.histmersion.domain.automation.agents.PluginTree.TreeResultPart2Part2]] =
     val defs = AgentDefinitions(Prompts(""), roster)
     for
       as <- defs.agents
@@ -12,12 +29,12 @@ object PluginTree:
       ss <- defs.skills
     yield AgentGenerator.repoPlugin(AgentGenerator.Defs(as, fs, ss))
 
-  val Owned: List[String] = List("plugin/agents", "plugin/skills")
+  val Owned: List[com.histmersion.domain.automation.agents.PluginTree.Owned] = List("plugin/agents", "plugin/skills")
 
-  def write(store: Store, roster: AgentRoster)(using Stores, Resources): Either[String, Unit] =
+  def write(store: Store, roster: AgentRoster)(using Stores, Resources): Either[com.histmersion.domain.automation.agents.PluginTree.WriteResultPart1, Unit] =
     tree(roster).flatMap(t => writeTree(store, t))
 
-  private[agents] def writeTree(store: Store, tree: Map[String, String]): Either[String, Unit] =
+  private[agents] def writeTree(store: Store, tree: Map[com.histmersion.domain.automation.agents.PluginTree.WriteTreeTreePart1, com.histmersion.domain.automation.agents.PluginTree.WriteTreeTreePart2]): Either[com.histmersion.domain.automation.agents.PluginTree.WriteTreeResultPart1, Unit] =
     try
       val entries = tree.toList.map { (name, text) =>
         Store.Key.of(name).fold(error => throw IllegalArgumentException(error), identity) -> text

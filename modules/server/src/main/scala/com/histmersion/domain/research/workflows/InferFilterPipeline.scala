@@ -34,7 +34,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   val pipeline: Pipeline = Pipeline.InferFilter
   import InferFilterPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, String] =
+  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.InferFilterPipeline.RunResultPart2] =
     val slug = ctx.run.target
     for
       loaded <- ctx.code[Loaded]("load")(load(slug))
@@ -58,7 +58,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
 
   // ── steps ──────────────────────────────────────────────────────────────────────────────────────
 
-  private def load(slug: String): Either[String, Loaded] =
+  private def load(slug: com.histmersion.domain.research.workflows.InferFilterPipeline.LoadSlug): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.LoadResultPart1, Loaded] =
     site.articles.get(slug).left.map(_.message).map { v =>
       val a = v.article
       val stored = site.articleStore.load(a.slug)
@@ -91,7 +91,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       )
     }
 
-  private def input(l: Loaded): String =
+  private def input(l: Loaded): com.histmersion.domain.research.workflows.InferFilterPipeline.InputResult =
     val lim = limits(research.inferFilter)
     val cited = if l.citedLines.isEmpty then "none"
     else
@@ -106,7 +106,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
       f"${lim.minCitedShare * 100}%.0f%% of the sources the article cites."
 
   /** An answer's filter, measured against the corpus and the article's citations. */
-  private def check(slug: String, l: Loaded, a: FilterAnswer, last: Boolean): Either[List[String], Inferred] =
+  private def check(slug: com.histmersion.domain.research.workflows.InferFilterPipeline.CheckSlug, l: Loaded, a: FilterAnswer, last: com.histmersion.domain.research.workflows.InferFilterPipeline.CheckLast): Either[List[com.histmersion.domain.research.workflows.InferFilterPipeline.CheckResultPart1], Inferred] =
     FilterInference.filterOf(a) match
       case Left(ps) => if last then Right(Inferred(None, ps)) else Left(ps)
       case Right(f) =>
@@ -117,7 +117,7 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
   /** The proposal, through the write gate: an open approval (manual), or the filter recorded at once with an approval
     * already approved (auto). None passed: nothing is recorded.
     */
-  private def record(ctx: RunCtx, slug: String, inf: Inferred): Either[String, Recorded] =
+  private def record(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.InferFilterPipeline.RecordSlug, inf: Inferred): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.RecordResultPart1, Recorded] =
     inf.proposal match
       case None =>
         Right(Recorded(None, applied = false, s"no filter passed the checks: ${inf.problems.mkString("; ").take(600)}"))
@@ -145,12 +145,41 @@ final class InferFilterPipeline(site: ResearchSite, cfg: => AgentsConfig, resear
                 .map(a => Recorded(Some(a.id), applied = false, s"approval ${a.id} waits for a person: $what"))
             )(Right(Recorded(None, applied = false, s"no approval opened (${AgentsMarkdown.DryRunNote}): $what")))
 
-  private def log(ctx: RunCtx, line: String): Either[String, String] = Pipelines.log(site.workLists, ctx, line)
+  private def log(ctx: RunCtx, line: com.histmersion.domain.research.workflows.InferFilterPipeline.LogLine): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.LogResultPart1, com.histmersion.domain.research.workflows.InferFilterPipeline.LogResultPart2] = Pipelines.log(site.workLists, ctx, line)
 
 object InferFilterPipeline:
   /** How many of the most used topics and tags the model is shown, how many cited sources by title, and how much of the
     * article's text.
     */
+  type RunResultPart2 = RunResultPart2.T
+  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadResultPart1 = LoadResultPart1.T
+  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadSlug = LoadSlug.T
+  object LoadSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputResult = InputResult.T
+  object InputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSlug = CheckSlug.T
+  object CheckSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLast = CheckLast.T
+  object CheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart1 = RecordResultPart1.T
+  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordSlug = RecordSlug.T
+  object RecordSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogResultPart1 = LogResultPart1.T
+  object LogResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogResultPart2 = LogResultPart2.T
+  object LogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLine = LogLine.T
+  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyProposalResultPart1 = ApplyProposalResultPart1.T
+  object ApplyProposalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyProposalResultPart2 = ApplyProposalResultPart2.T
+  object ApplyProposalResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val VocabularySize = 40
   val CitedShown = 40
   val ExcerptChars = 4000
@@ -217,7 +246,7 @@ object InferFilterPipeline:
   /** The proposal a decided `article-filter` approval carries, applied: the article's filter recorded — unless it
     * records one by now (a person set it meanwhile). Left = why it was not applied.
     */
-  def applyProposal(articles: ArticlesControllers, store: ArticleService, p: FilterProposal): Either[String, String] =
+  def applyProposal(articles: ArticlesControllers, store: ArticleService, p: FilterProposal): Either[com.histmersion.domain.research.workflows.InferFilterPipeline.ApplyProposalResultPart1, com.histmersion.domain.research.workflows.InferFilterPipeline.ApplyProposalResultPart2] =
     articles.get(p.slug).left.map(_.message).flatMap { v =>
       val has = store.load(v.article.slug).flatMap(_.filter)
       if has.isDefined then

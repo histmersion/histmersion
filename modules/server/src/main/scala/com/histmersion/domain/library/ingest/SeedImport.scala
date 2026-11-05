@@ -18,7 +18,7 @@ import hearth.kindlings.optics.syntax.*
   */
 final class SeedImport(sources: SourceService, addFigures: (String, List[NewFigure]) => Int):
 
-  def run(folder: SeedFolder, force: Boolean, assetBytes: Long): SeedResult =
+  def run(folder: SeedFolder, force: com.histmersion.domain.library.ingest.SeedImport.RunForce, assetBytes: com.histmersion.domain.library.ingest.SeedImport.RunAssetBytes): SeedResult =
     val stored = if force then Map.empty[String, Long] else sources.updatedAtMillis
     val outcomes = folder.notes.map { name =>
       try
@@ -46,5 +46,18 @@ final class SeedImport(sources: SourceService, addFigures: (String, List[NewFigu
 
 object SeedImport:
   /** True when the stored source is strictly newer than the file — writing the file would lose work. */
-  def isStale(stored: Map[String, Long], citekey: String, fileMillis: Long): Boolean =
+  type RunForce = RunForce.T
+  object RunForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunAssetBytes = RunAssetBytes.T
+  object RunAssetBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsStaleResult = IsStaleResult.T
+  object IsStaleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsStaleStoredPart1 = IsStaleStoredPart1.T
+  object IsStaleStoredPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsStaleStoredPart2 = IsStaleStoredPart2.T
+  object IsStaleStoredPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsStaleFileMillis = IsStaleFileMillis.T
+  object IsStaleFileMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def isStale(stored: Map[com.histmersion.domain.library.ingest.SeedImport.IsStaleStoredPart1, com.histmersion.domain.library.ingest.SeedImport.IsStaleStoredPart2], citekey: com.histmersion.domain.library.Citekey, fileMillis: com.histmersion.domain.library.ingest.SeedImport.IsStaleFileMillis): com.histmersion.domain.library.ingest.SeedImport.IsStaleResult =
     stored.get(citekey).exists(_ > fileMillis)

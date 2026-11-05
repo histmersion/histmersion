@@ -19,6 +19,39 @@ object PlanGoal:
 
   // ── the model's answer ──────────────────────────────────────────────────────────────────────────
 
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart2Part2 = CheckResultPart2Part2.T
+  object CheckResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckGoal = CheckGoal.T
+  object CheckGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckGoalExistsArg1 = CheckGoalExistsArg1.T
+  object CheckGoalExistsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckGoalExistsResult = CheckGoalExistsResult.T
+  object CheckGoalExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckKnownQueries = CheckKnownQueries.T
+  object CheckKnownQueries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLast = CheckLast.T
+  object CheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerifyGoal = VerifyGoal.T
+  object VerifyGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireTextResult = AcquireTextResult.T
+  object AcquireTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireTextGoal = AcquireTextGoal.T
+  object AcquireTextGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineResult = LogLineResult.T
+  object LogLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineGoal = LogLineGoal.T
+  object LogLineGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineApproved = LogLineApproved.T
+  object LogLineApproved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineCreated = LogLineCreated.T
+  object LogLineCreated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineLinked = LogLineLinked.T
+  object LogLineLinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineQueued = LogLineQueued.T
+  object LogLineQueued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class SubGoalAnswer(slug: SubGoalAnswer.Slug, title: SubGoalAnswer.Title, notes: Option[SubGoalAnswer.Notes] = None, tags: List[SubGoalAnswer.Tags] = Nil)
       derives KindlingsCodecAsObject
   object SubGoalAnswer:
@@ -114,12 +147,12 @@ object PlanGoal:
     */
   def check(
       a: PlanAnswer,
-      goal: String,
-      goalExists: String => Boolean,
-      knownQueries: Set[String],
+      goal: com.histmersion.domain.PlanGoal.CheckGoal,
+      goalExists: com.histmersion.domain.PlanGoal.CheckGoalExistsArg1 => com.histmersion.domain.PlanGoal.CheckGoalExistsResult,
+      knownQueries: Set[com.histmersion.domain.PlanGoal.CheckKnownQueries],
       caps: Caps,
-      last: Boolean
-  ): Either[List[String], (Proposed, List[String])] =
+      last: com.histmersion.domain.PlanGoal.CheckLast
+  ): Either[List[com.histmersion.domain.PlanGoal.CheckResultPart1], (Proposed, List[com.histmersion.domain.PlanGoal.CheckResultPart2Part2])] =
     val problems = List.newBuilder[String]
     val dropped = List.newBuilder[String]
 
@@ -217,7 +250,7 @@ object PlanGoal:
   /** A work looked up by its DOI (the library's metadata, lent by the composition). */
   type Lookup = String => Either[String, Work]
 
-  def verify(p: Proposed, goal: String, lookup: Lookup): Plan =
+  def verify(p: Proposed, goal: com.histmersion.domain.PlanGoal.VerifyGoal, lookup: Lookup): Plan =
     val looked = p.works.map(w => (w, lookup(w.doi)))
     val works = looked.collect {
       case (w, Right(r)) if !r.isRetracted =>
@@ -234,7 +267,7 @@ object PlanGoal:
   /** The acquisition item a planned work outside the corpus becomes. The DOI is written as a resolver URL so
     * [[Scheduling.dois]] (and a person) find it again.
     */
-  def acquireText(w: PlannedWork, goal: String): String =
+  def acquireText(w: PlannedWork, goal: com.histmersion.domain.PlanGoal.AcquireTextGoal): com.histmersion.domain.PlanGoal.AcquireTextResult =
     val who = w.authors.headOption.map(a => if w.authors.size > 1 then s"$a et al." else a)
     val head = List(who, w.year.map(y => s"($y)")).flatten.mkString(" ")
     val title = w.title.getOrElse(w.doi)
@@ -243,14 +276,14 @@ object PlanGoal:
 
   /** The log line of an applied (or rejected) plan. */
   def logLine(
-      goal: String,
+      goal: com.histmersion.domain.PlanGoal.LogLineGoal,
       plan: Plan,
-      approved: Boolean,
-      created: Int,
-      linked: Int,
-      queued: Int,
-      runId: String
-  ): String =
+      approved: com.histmersion.domain.PlanGoal.LogLineApproved,
+      created: com.histmersion.domain.PlanGoal.LogLineCreated,
+      linked: com.histmersion.domain.PlanGoal.LogLineLinked,
+      queued: com.histmersion.domain.PlanGoal.LogLineQueued,
+      runId: com.histmersion.domain.automation.Run.Id
+  ): com.histmersion.domain.PlanGoal.LogLineResult =
     if !approved then s"plan-goal $goal: the plan was rejected; nothing was created (agent run ${runId.take(8)})"
     else
       s"plan-goal $goal: approved — $created sub-goal(s), ${plan.queries.size} query link(s), " +

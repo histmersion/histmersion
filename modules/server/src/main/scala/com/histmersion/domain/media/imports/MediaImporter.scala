@@ -15,36 +15,73 @@ import com.histmersion.api.media.MediaImportReport
   */
 trait MediaImporter:
   /** The name `media_checks` records it under (and the report's provider). */
-  def check: String
+  def check: com.histmersion.domain.media.imports.MediaImporter.CheckResult
 
   /** The job's description: "Wikidata pictures", "Met objects". */
-  def title: String
+  def title: com.histmersion.domain.media.imports.MediaImporter.TitleResult
 
   /** What it asks about, for the job's description: "places and events", "places", "events". */
-  def over: String
+  def over: com.histmersion.domain.media.imports.MediaImporter.OverResult
 
   /** Targets per job batch. */
-  def batch: Int
+  def batch: com.histmersion.domain.media.imports.MediaImporter.BatchResult
   def targets(
-      place: Option[String],
-      event: Option[String],
-      limit: Int,
-      refresh: Boolean,
-      since: Option[Long]
-  ): Either[String, List[Target]]
-  def pending(since: Option[Long]): Int
+      place: Option[com.histmersion.domain.media.imports.MediaImporter.TargetsPlace],
+      event: Option[com.histmersion.domain.media.imports.MediaImporter.TargetsEvent],
+      limit: com.histmersion.domain.media.imports.MediaImporter.TargetsLimit,
+      refresh: com.histmersion.domain.media.imports.MediaImporter.TargetsRefresh,
+      since: Option[com.histmersion.domain.media.imports.MediaImporter.TargetsSince]
+  ): Either[com.histmersion.domain.media.imports.MediaImporter.TargetsResultPart1, List[Target]]
+  def pending(since: Option[com.histmersion.domain.media.imports.MediaImporter.PendingSince]): com.histmersion.domain.media.imports.MediaImporter.PendingResult
 
   /** A run: one polite client for its whole length (the pace is per run). */
   def start(): MediaImporter.Run
 
 object MediaImporter:
 
+  type CheckResult = CheckResult.T
+  object CheckResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TitleResult = TitleResult.T
+  object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverResult = OverResult.T
+  object OverResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BatchResult = BatchResult.T
+  object BatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetsResultPart1 = TargetsResultPart1.T
+  object TargetsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetsPlace = TargetsPlace.T
+  object TargetsPlace extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetsEvent = TargetsEvent.T
+  object TargetsEvent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetsLimit = TargetsLimit.T
+  object TargetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetsRefresh = TargetsRefresh.T
+  object TargetsRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetsSince = TargetsSince.T
+  object TargetsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PendingResult = PendingResult.T
+  object PendingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PendingSince = PendingSince.T
+  object PendingSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfName = OfName.T
+  object OfName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTitle = OfTitle.T
+  object OfTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   trait Run:
-    def run(targets: List[Target], dryRun: Boolean, refresh: Boolean): MediaImportReport
-    def requests: Int
+    def run(targets: List[Target], dryRun: com.histmersion.domain.media.imports.MediaImporter.Run.RunDryRun, refresh: com.histmersion.domain.media.imports.MediaImporter.Run.RunRefresh): MediaImportReport
+    def requests: com.histmersion.domain.media.imports.MediaImporter.Run.RequestsResult
+
+  object Run:
+    type RunDryRun = RunDryRun.T
+    object RunDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunRefresh = RunRefresh.T
+    object RunRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RequestsResult = RequestsResult.T
+    object RequestsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a collection that asks about `asks` is said to ask about: "places", "events", "places and events". */
-  def over(asks: Set[MediaTarget]): String =
+  def over(asks: Set[MediaTarget]): com.histmersion.domain.media.imports.MediaImporter.OverResult =
     if asks(MediaTarget.Places) && asks(MediaTarget.Events) then "places and events"
     else if asks(MediaTarget.Events) then "events"
     else "places"
@@ -58,9 +95,9 @@ object MediaImporter:
     * place's name.
     */
   def of(
-      name: String,
+      name: com.histmersion.domain.media.imports.MediaImporter.OfName,
       col: MediaCollection,
-      title: String,
+      title: com.histmersion.domain.media.imports.MediaImporter.OfTitle,
       imports: ImportService,
       store: MediaStore,
       cfg: () => MediaConfig,

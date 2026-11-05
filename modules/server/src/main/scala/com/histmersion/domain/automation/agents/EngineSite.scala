@@ -43,13 +43,13 @@ trait EngineSite:
   def userPaths: com.histmersion.config.UserPaths = AgentTrees.NoEnvironment
 
   /** The AI providers of the pinned plugin generation, by name. */
-  def aiProviders: () => ListMap[String, AiProvider]
+  def aiProviders: () => ListMap[com.histmersion.domain.automation.agents.EngineSite.AiProvidersResultResultPart1, AiProvider]
 
   /** How many sources a goal gathers before its articles are planned (`agents.seed.min-sources`). */
-  def sourcesToPlan: Int = config.libraryAgents.seed.minSources
+  def sourcesToPlan: com.histmersion.domain.automation.agents.EngineSite.SourcesToPlanResult = config.libraryAgents.seed.minSources
 
   /** The most panel rounds a run or a manager may ask a review for (`agents.review.rounds-cap`). */
-  def roundsCap: Int = config.researchAgents.review.roundsCap
+  def roundsCap: com.histmersion.domain.automation.agents.EngineSite.RoundsCapResult = config.researchAgents.review.roundsCap
 
   /** What the definitions are held to: the contributed tools and roles. */
   def roster: AgentRoster
@@ -62,3 +62,11 @@ trait EngineSite:
 
   /** What engine `a` asks of the rest of the server. */
   def host(a: AgentsControllers): AutomationHost
+
+object EngineSite:
+  type AiProvidersResultResultPart1 = AiProvidersResultResultPart1.T
+  object AiProvidersResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourcesToPlanResult = SourcesToPlanResult.T
+  object SourcesToPlanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundsCapResult = RoundsCapResult.T
+  object RoundsCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

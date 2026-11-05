@@ -19,16 +19,38 @@ object PointAreas:
   /** How a place's period reads: `dated` (a known start), `end-only` (an end, the start unknown —
     * [[PlaceDating.EndOnly]]) or `undated` (an open range: the source said nothing).
     */
+  type ReportMaxItems = ReportMaxItems.T
+  object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixedResult = FixedResult.T
+  object FixedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixedRemoved = FixedRemoved.T
+  object FixedRemoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixedRemaining = FixedRemaining.T
+  object FixedRemaining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixedFindings = FixedFindings.T
+  object FixedFindings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixedSources = FixedSources.T
+  object FixedSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Dating:
     case Dated, EndOnly, Undated
 
-    def wire: String = this match
+    def wire: com.histmersion.domain.catalogue.places.PointAreas.Dating.WireResult = this match
       case Dated   => "dated"
       case EndOnly => "end-only"
       case Undated => "undated"
 
   object Dating:
-    def of(startUnknown: Boolean, lowerInf: Boolean, upperInf: Boolean): Dating =
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfStartUnknown = OfStartUnknown.T
+    object OfStartUnknown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLowerInf = OfLowerInf.T
+    object OfLowerInf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfUpperInf = OfUpperInf.T
+    object OfUpperInf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def of(startUnknown: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfStartUnknown, lowerInf: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfLowerInf, upperInf: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfUpperInf): Dating =
       if startUnknown then EndOnly
       else if lowerInf && upperInf then Undated
       else Dated
@@ -59,7 +81,7 @@ object PointAreas:
       alone: Listed.Alone = 0,
       pinned: Listed.Pinned = 0
   ):
-    def detail: String =
+    def detail: com.histmersion.domain.catalogue.places.PointAreas.Listed.DetailResult =
       val what = s"$label ($source $kind, ${dating.wire})"
       val held =
         if findings == 0 then ""
@@ -75,6 +97,9 @@ object PointAreas:
       what + held + kept
 
   object Listed:
+    type DetailResult = DetailResult.T
+    object DetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
@@ -99,7 +124,7 @@ object PointAreas:
       groups: List[Group],
       holders: List[Listed],
       sample: List[Listed],
-      maxItems: Int
+      maxItems: com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems
   ): LintRuleReport =
     val total = groups.map(_.places).sum
     if total == 0 then LintRuleReport(rule.name, rule.description, 0, Nil)
@@ -119,7 +144,7 @@ object PointAreas:
       )
 
   /** One line for `lint --fix`. */
-  def fixed(removed: Int, remaining: Int, findings: Int, sources: Int): String =
+  def fixed(removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, remaining: com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, findings: com.histmersion.domain.catalogue.places.PointAreas.FixedFindings, sources: com.histmersion.domain.catalogue.places.PointAreas.FixedSources): com.histmersion.domain.catalogue.places.PointAreas.FixedResult =
     s"${Lint.PlaceImportedPointArea}: $removed point-only imported area(s) removed" +
       (if findings > 0 then
          s", ${Plural.count(findings.toLong, "finding")} of ${Plural.count(sources.toLong, "source")} matched to places again"

@@ -15,15 +15,24 @@ import scala.annotation.tailrec
 object EnrichComparison extends OutputComparison:
 
   /** A rejected findings answer's quote failures are counted from the verifier's own words. */
+  type IsFindingsName = IsFindingsName.T
+  object IsFindingsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuoteCheckResultPart1 = QuoteCheckResultPart1.T
+  object QuoteCheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuoteCheckResultPart2 = QuoteCheckResultPart2.T
+  object QuoteCheckResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimsResult = ClaimsResult.T
+  object ClaimsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val QuoteFailure = "the quote is not in the text"
 
-  private def isFindings(name: String) = name.startsWith("findings-")
+  private def isFindings(name: com.histmersion.domain.library.workflows.EnrichComparison.IsFindingsName) = name.startsWith("findings-")
 
   /** The quote check over every attempt of every findings step: (checked, passed). A finished attempt says it itself; a
     * rejected one holds the rejected answer, and the verifier's reasons say which quotes failed. An attempt with no
     * readable answer checked nothing.
     */
-  def quoteCheck(steps: List[Step]): (Int, Int) =
+  def quoteCheck(steps: List[Step]): (com.histmersion.domain.library.workflows.EnrichComparison.QuoteCheckResultPart1, com.histmersion.domain.library.workflows.EnrichComparison.QuoteCheckResultPart2) =
     @tailrec def loop(rest: List[Step], checked: Int, passed: Int): (Int, Int) =
       rest match
         case Nil                                                                              => (checked, passed)
@@ -44,7 +53,7 @@ object EnrichComparison extends OutputComparison:
     loop(steps.filter(s => isFindings(s.name)), 0, 0)
 
   /** The claims a run's enrichment ended with: the geocoded findings, else what the findings steps kept. */
-  private def claims(d: Run): List[String] =
+  private def claims(d: Run): List[com.histmersion.domain.library.workflows.EnrichComparison.ClaimsResult] =
     CompareRuns
       .output[Geocoded](d, "geocode")
       .map(_.findings.map(_.claim))

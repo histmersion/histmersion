@@ -16,9 +16,18 @@ object ReviewComparison extends OutputComparison:
   /** Two major findings are the same one when they sit at the same `where` and their problems share at least this much
     * of their words (Jaccard over the normalised words), or quote the same passage.
     */
+  type RoundResult = RoundResult.T
+  object RoundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundName = RoundName.T
+  object RoundName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundPrefix = RoundPrefix.T
+  object RoundPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameMajorResult = SameMajorResult.T
+  object SameMajorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val ProblemSimilarity = 0.5
 
-  private def round(name: String, prefix: String): Option[Int] =
+  private def round(name: com.histmersion.domain.research.workflows.ReviewComparison.RoundName, prefix: com.histmersion.domain.research.workflows.ReviewComparison.RoundPrefix): Option[com.histmersion.domain.research.workflows.ReviewComparison.RoundResult] =
     Option.when(name.startsWith(prefix))(name.stripPrefix(prefix).toIntOption).flatten
 
   private def reviewSide(d: Run): ReviewSide =
@@ -51,7 +60,7 @@ object ReviewComparison extends OutputComparison:
   /** The same major finding, as two runs' reviewers worded it: the same `where` (normalised) and a similar problem, or
     * the same quoted passage.
     */
-  def sameMajor(a: Finding, b: Finding): Boolean =
+  def sameMajor(a: Finding, b: Finding): com.histmersion.domain.research.workflows.ReviewComparison.SameMajorResult =
     val (qa, qb) =
       (ComparedText.normalise(Option(a.quote).getOrElse("")), ComparedText.normalise(Option(b.quote).getOrElse("")))
     val sameWhere =

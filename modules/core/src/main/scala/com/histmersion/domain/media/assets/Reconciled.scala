@@ -10,6 +10,15 @@ import scala.annotation.tailrec
 final case class Reconciled(renames: List[(Reconciled.RenamesPart1, Reconciled.RenamesPart2)], deletes: List[Reconciled.Deletes])
 
 object Reconciled:
+  type OfExistingPart1 = OfExistingPart1.T
+  object OfExistingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfExistingPart2 = OfExistingPart2.T
+  object OfExistingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfIncomingPart1 = OfIncomingPart1.T
+  object OfIncomingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfIncomingPart2 = OfIncomingPart2.T
+  object OfIncomingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RenamesPart1 = RenamesPart1.T
   object RenamesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenamesPart2 = RenamesPart2.T
@@ -17,7 +26,7 @@ object Reconciled:
   type Deletes = Deletes.T
   object Deletes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(existing: List[(String, String)], incoming: List[(String, String)]): Reconciled =
+  def of(existing: List[(com.histmersion.domain.media.assets.Reconciled.OfExistingPart1, com.histmersion.domain.media.assets.Reconciled.OfExistingPart2)], incoming: List[(com.histmersion.domain.media.assets.Reconciled.OfIncomingPart1, com.histmersion.domain.media.assets.Reconciled.OfIncomingPart2)]): Reconciled =
     val incomingNames = incoming.map(_._1).toSet
     val byName = existing.filter((n, _) => incomingNames(n)).map(_._1).toSet
     @tailrec def rename(rest: List[(String, String)], acc: List[(String, String)], used: Set[String]): Reconciled =

@@ -26,7 +26,7 @@ final class EventImportsControllers(
     jobs: CatalogueJobs,
     page: (Option[Int], Int) => Int
 ):
-  private def invalid(m: String) = Api.Error(m, Some(Write.CodeInvalid))
+  private def invalid(m: com.histmersion.domain.catalogue.events.EventImportsControllers.InvalidM) = Api.Error(m, Some(Write.CodeInvalid))
 
   def catalogues: List[CatalogProviderInfo] = imports.catalogues
 
@@ -67,10 +67,10 @@ final class EventImportsControllers(
 
   /** `GET /api/events/corrections`: the corrections of catalogue events, conflicts first. */
   def corrections(
-      status: Option[String],
-      event: Option[String],
-      limit: Option[Int],
-      offset: Option[Int]
+      status: Option[com.histmersion.domain.catalogue.events.EventImportsControllers.CorrectionsStatus],
+      event: Option[com.histmersion.domain.catalogue.events.EventImportsControllers.CorrectionsEvent],
+      limit: Option[com.histmersion.domain.catalogue.events.EventImportsControllers.CorrectionsLimit],
+      offset: Option[com.histmersion.domain.catalogue.events.EventImportsControllers.CorrectionsOffset]
   ): Either[Api.Error, Correction.List] =
     status.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case Some(s) if !Correction.Status.all.contains(s) =>
@@ -87,5 +87,20 @@ final class EventImportsControllers(
         )
 
 object EventImportsControllers:
-  val ImportJobKind: String = com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind.value
-  val RederiveJobKind: String = com.histmersion.api.catalogue.EventsJobKinds.EventsRederive.kind.value
+  type InvalidM = InvalidM.T
+  object InvalidM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorrectionsStatus = CorrectionsStatus.T
+  object CorrectionsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorrectionsEvent = CorrectionsEvent.T
+  object CorrectionsEvent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorrectionsLimit = CorrectionsLimit.T
+  object CorrectionsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CorrectionsOffset = CorrectionsOffset.T
+  object CorrectionsOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportJobKind = ImportJobKind.T
+  object ImportJobKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RederiveJobKind = RederiveJobKind.T
+  object RederiveJobKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val ImportJobKind: com.histmersion.domain.catalogue.events.EventImportsControllers.ImportJobKind = com.histmersion.api.catalogue.EventsJobKinds.EventsImport.kind.value
+  val RederiveJobKind: com.histmersion.domain.catalogue.events.EventImportsControllers.RederiveJobKind = com.histmersion.api.catalogue.EventsJobKinds.EventsRederive.kind.value

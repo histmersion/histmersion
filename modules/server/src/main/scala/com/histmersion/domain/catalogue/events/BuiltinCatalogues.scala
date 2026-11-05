@@ -15,10 +15,44 @@ import scala.collection.immutable.ListMap
 object BuiltinCatalogues:
 
   /** A first-party catalogue: its plugin and the name it registers. */
+  type PluginIds = PluginIds.T
+  object PluginIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AliasesPart1 = AliasesPart1.T
+  object AliasesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AliasesPart2 = AliasesPart2.T
+  object AliasesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reserved = Reserved.T
+  object Reserved extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CanonicalResult = CanonicalResult.T
+  object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CanonicalAsked = CanonicalAsked.T
+  object CanonicalAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderedResult = OrderedResult.T
+  object OrderedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderedRegistered = OrderedRegistered.T
+  object OrderedRegistered extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart2 = ResolveResultPart2.T
+  object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveAsked = ResolveAsked.T
+  object ResolveAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveCataloguesPart1 = ResolveCataloguesPart1.T
+  object ResolveCataloguesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoName = InfoName.T
+  object InfoName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoCataloguesPart1 = InfoCataloguesPart1.T
+  object InfoCataloguesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfosCataloguesPart1 = InfosCataloguesPart1.T
+  object InfosCataloguesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Entry(plugin: Entry.Plugin, name: Entry.Name):
-    def title: String = CatalogProvider.info(name).fold(name)(_.title)
+    def title: com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.TitleResult = CatalogProvider.info(name).fold(name)(_.title)
 
   object Entry:
+    type TitleResult = TitleResult.T
+    object TitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Plugin = Plugin.T
     object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Name = Name.T
@@ -30,10 +64,10 @@ object BuiltinCatalogues:
     Entry("events-wikidata", CatalogProvider.Wikidata)
   )
 
-  val pluginIds: Set[String] = entries.map(_.plugin).toSet
+  val pluginIds: Set[com.histmersion.domain.catalogue.events.BuiltinCatalogues.PluginIds] = entries.map(_.plugin).toSet
 
   /** The other names `events import` takes for a built-in catalogue. */
-  val aliases: Map[String, String] = Map(
+  val aliases: Map[com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart1, com.histmersion.domain.catalogue.events.BuiltinCatalogues.AliasesPart2] = Map(
     "smithsonian" -> CatalogProvider.Gvp,
     "volcano" -> CatalogProvider.Gvp,
     "ncei" -> CatalogProvider.Noaa,
@@ -41,19 +75,19 @@ object BuiltinCatalogues:
   )
 
   /** Names a plugin's catalogue may not take. */
-  val reserved: Set[String] = CatalogProvider.all.toSet ++ aliases.keySet
+  val reserved: Set[com.histmersion.domain.catalogue.events.BuiltinCatalogues.Reserved] = CatalogProvider.all.toSet ++ aliases.keySet
 
   /** Pure: the catalogue an import names — an alias resolved, else as given (lower case). */
-  def canonical(asked: String): String =
+  def canonical(asked: com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalAsked): com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalResult =
     val s = asked.trim.toLowerCase(java.util.Locale.ROOT)
     aliases.getOrElse(s, s)
 
   /** Pure: registered names, the built-ins first in their order, then the plugins' in registration order. */
-  def ordered(registered: List[String]): List[String] =
+  def ordered(registered: List[com.histmersion.domain.catalogue.events.BuiltinCatalogues.OrderedRegistered]): List[com.histmersion.domain.catalogue.events.BuiltinCatalogues.OrderedResult] =
     CatalogProvider.all.filter(registered.contains) ++ registered.filterNot(CatalogProvider.all.contains)
 
   /** The catalogue `asked` names among the registered ones, or why none: unknown, or its plugin off. */
-  def resolve(asked: String, catalogues: ListMap[String, EventCatalogue]): Either[String, String] =
+  def resolve(asked: com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveAsked, catalogues: ListMap[com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveCataloguesPart1, EventCatalogue]): Either[com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveResultPart1, com.histmersion.domain.catalogue.events.BuiltinCatalogues.ResolveResultPart2] =
     val name = canonical(asked)
     if catalogues.contains(name) then Right(name)
     else
@@ -65,11 +99,11 @@ object BuiltinCatalogues:
   /** A catalogue's terms as the card and the list show them: a registered one's, else a first-party one's (records of a
     * catalogue switched off since are still on the map).
     */
-  def info(name: String, catalogues: ListMap[String, EventCatalogue]): Option[CatalogProviderInfo] =
+  def info(name: com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoName, catalogues: ListMap[com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoCataloguesPart1, EventCatalogue]): Option[CatalogProviderInfo] =
     catalogues.get(name) match
       case None    => CatalogProvider.info(name)
       case Some(c) =>
         PluginEvents.safe(CatalogProviderInfo(name, c.title, SpiValues.licenceOf(c.licence), c.citation, c.home))
 
-  def infos(catalogues: ListMap[String, EventCatalogue]): List[CatalogProviderInfo] =
+  def infos(catalogues: ListMap[com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfosCataloguesPart1, EventCatalogue]): List[CatalogProviderInfo] =
     ordered(catalogues.keys.toList).flatMap(info(_, catalogues))

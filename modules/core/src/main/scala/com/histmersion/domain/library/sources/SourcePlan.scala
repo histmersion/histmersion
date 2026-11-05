@@ -46,8 +46,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   private val fatesSeen = mutable.Map.empty[UUID, SourceFate]
   private val sourceLine = mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Source]
 
-  private def leftRev(u: UUID): String = sourcesByUid.get(u).map(s => BundleFormat.stamp(s).rev).getOrElse("")
-  private def rightRev(s: com.histmersion.api.exchange.Bundle.Source): String = BundleFormat.stamp(s).rev
+  private def leftRev(u: UUID): com.histmersion.domain.library.sources.SourcePlan.LeftRevResult = sourcesByUid.get(u).map(s => BundleFormat.stamp(s).rev).getOrElse("")
+  private def rightRev(s: com.histmersion.api.exchange.Bundle.Source): com.histmersion.domain.library.sources.SourcePlan.RightRevResult = BundleFormat.stamp(s).rev
 
   override def sketchesWanted(cfg: MergeSettings): Set[String] =
     val byKey = lefts.flatMap(l => SourceMatcher.blockingKeys(l).map(_ -> l)).groupMap(_._1)(_._2)
@@ -83,7 +83,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       SourcePair(p.right.source, p.left.source, gate, p.evidence.strongKey, basis)
     }
 
-  private def gateOf(p: Pair): String = MergePlanner.issueId(
+  private def gateOf(p: Pair): com.histmersion.domain.library.sources.SourcePlan.GateOfResult = MergePlanner.issueId(
     MergeIssue.Kind.SameWork,
     Bundle.Kind.Source,
     List(p.right.uid),
@@ -135,7 +135,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     }
 
   /** The questions about the fields of a pair; their ids are kept by pair, for the fold. */
-  private def fieldIssues(p: Pair, cond: Option[IssueCondition], sketches: Map[String, MinHash]): List[MergeIssue] =
+  private def fieldIssues(p: Pair, cond: Option[IssueCondition], sketches: Map[com.histmersion.domain.library.sources.SourcePlan.FieldIssuesSketchesPart1, MinHash]): List[MergeIssue] =
     val (r, l) = (p.right.source, p.left.source)
     val (fu, lu) = (List(r.uid), List(l.uid))
     val (rr, ll) = (rightRev(r), leftRev(l.uid))
@@ -237,7 +237,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
   private def collision(
       s: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
-      sketches: Map[String, MinHash],
+      sketches: Map[com.histmersion.domain.library.sources.SourcePlan.CollisionSketchesPart1, MinHash],
       cfg: MergeSettings
   ): Option[MergeIssue] =
     val owner = in.labels.citekeys
@@ -405,6 +405,33 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
 object SourcePlan:
 
   /** The questions of a pair of sources: their decisions are carried out with the pair's fold. */
+  type LeftRevResult = LeftRevResult.T
+  object LeftRevResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RightRevResult = RightRevResult.T
+  object RightRevResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GateOfResult = GateOfResult.T
+  object GateOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldIssuesSketchesPart1 = FieldIssuesSketchesPart1.T
+  object FieldIssuesSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollisionSketchesPart1 = CollisionSketchesPart1.T
+  object CollisionSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrimmedResult = TrimmedResult.T
+  object TrimmedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrimmedO = TrimmedO.T
+  object TrimmedO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiffersA = DiffersA.T
+  object DiffersA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiffersB = DiffersB.T
+  object DiffersB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameSuggestionResult = RenameSuggestionResult.T
+  object RenameSuggestionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RicherAuthorsResult = RicherAuthorsResult.T
+  object RicherAuthorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RicherAuthorsL = RicherAuthorsL.T
+  object RicherAuthorsL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RicherAuthorsR = RicherAuthorsR.T
+  object RicherAuthorsR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val PairKinds: Set[MergeIssue.Kind] = Set(
     MergeIssue.Kind.DoiDiffers,
     MergeIssue.Kind.YearDiffers,
@@ -437,10 +464,10 @@ object SourcePlan:
       .map(s => Side(s, localAliases.getOrElse(s.uid, Nil).toSet))
     (rights, lefts)
 
-  private def trimmed(o: Option[String]): Option[String] = o.map(_.trim).filter(_.nonEmpty)
+  private def trimmed(o: Option[com.histmersion.domain.library.sources.SourcePlan.TrimmedO]): Option[com.histmersion.domain.library.sources.SourcePlan.TrimmedResult] = o.map(_.trim).filter(_.nonEmpty)
 
   /** Both texts present and different (after trimming). */
-  private def differs(a: Option[String], b: Option[String]): Option[Unit] =
+  private def differs(a: Option[com.histmersion.domain.library.sources.SourcePlan.DiffersA], b: Option[com.histmersion.domain.library.sources.SourcePlan.DiffersB]): Option[Unit] =
     trimmed(a).zip(trimmed(b)).filter((x, y) => x != y).map(_ => ())
 
   /** A new citekey for a bundle source whose own is taken: its key plus the next significant title word
@@ -451,7 +478,7 @@ object SourcePlan:
       s: com.histmersion.api.exchange.Bundle.Source,
       in: MergePlanner.Input,
       fes: BundleEntities
-  ): String =
+  ): com.histmersion.domain.library.sources.SourcePlan.RenameSuggestionResult =
     val usedHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey) ++
       fes.aliases.map(_.alias)
     val suffix = s.citekey.dropWhile(_ != '_').drop(1)
@@ -463,7 +490,7 @@ object SourcePlan:
     byWord.getOrElse(Iterator.from(0).map(i => s.citekey + ('b' + i).toChar).find(c => !usedHere(c)).get)
 
   /** The richer author list: as many names, then the longer written-out names (`Hans G.` over `H. G.`). */
-  def richerAuthors(l: List[String], r: List[String]): List[String] =
+  def richerAuthors(l: List[com.histmersion.domain.library.sources.SourcePlan.RicherAuthorsL], r: List[com.histmersion.domain.library.sources.SourcePlan.RicherAuthorsR]): List[com.histmersion.domain.library.sources.SourcePlan.RicherAuthorsResult] =
     def score(as: List[String]) =
       (
         as.size,
@@ -480,7 +507,7 @@ object SourcePlan:
       l: com.histmersion.api.exchange.Bundle.Source,
       r: com.histmersion.api.exchange.Bundle.Source,
       decided: Map[MergeIssue.Kind, MergeDecision],
-      citekey: String
+      citekey: com.histmersion.domain.library.Citekey
   ): com.histmersion.api.exchange.Bundle.Source =
     def pick[A](k: MergeIssue.Kind, auto: => A, left: => A, right: => A): A = decided.get(k).map(_.kind) match
       case Some(MergeDecision.Kind.KeepRight) => right

@@ -9,6 +9,11 @@ final case class Upload(name: Upload.Name, size: Upload.Size, bytes: ByteSource)
 
 object Upload:
   /** The file the HTTP layer streamed a request body into, where it put it. */
+  type InlineName = InlineName.T
+  object InlineName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InlineBytes = InlineBytes.T
+  object InlineBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Size = Size.T
@@ -20,4 +25,4 @@ object Upload:
   def stored(blob: Blob): Upload = Upload(blob.key.name, blob.size.value, blob.asSource)
 
   /** Bytes in memory, under `name`. */
-  def inline(name: String, bytes: Array[Byte]): Upload = Upload(name, bytes.length.toLong, ByteSource.bytes(bytes))
+  def inline(name: com.histmersion.domain.library.ingest.Upload.InlineName, bytes: Array[com.histmersion.domain.library.ingest.Upload.InlineBytes]): Upload = Upload(name, bytes.length.toLong, ByteSource.bytes(bytes))

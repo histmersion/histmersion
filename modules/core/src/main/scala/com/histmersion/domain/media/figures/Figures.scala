@@ -13,16 +13,27 @@ import com.histmersion.domain.media.assets.NewFigure
   */
 object Figures:
 
+  type MdPathOfResult = MdPathOfResult.T
+  object MdPathOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MdPathOfNoteText = MdPathOfNoteText.T
+  object MdPathOfNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFilesPart1 = OfFilesPart1.T
+  object OfFilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFilesPart2 = OfFilesPart2.T
+  object OfFilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfMaxBytes = OfMaxBytes.T
+  object OfMaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val MdPath = """(?m)^md_path:\s*"?([^"\n\r]+)"?\s*$""".r
 
   /** The `md_path:` value of a note's frontmatter, if it has one. */
-  def mdPathOf(noteText: String): Option[String] =
+  def mdPathOf(noteText: com.histmersion.domain.media.figures.Figures.MdPathOfNoteText): Option[com.histmersion.domain.media.figures.Figures.MdPathOfResult] =
     MdPath.findFirstMatchIn(noteText.take(8192)).map(_.group(1).trim).filter(_.nonEmpty)
 
   /** The images among a figures folder's files (by name, in name order), each at most `maxBytes`, with the size read
     * off its header.
     */
-  def of(files: List[(String, Array[Byte])], maxBytes: Long): List[NewFigure] =
+  def of(files: List[(com.histmersion.domain.media.figures.Figures.OfFilesPart1, Array[com.histmersion.domain.media.figures.Figures.OfFilesPart2])], maxBytes: com.histmersion.domain.media.figures.Figures.OfMaxBytes): List[NewFigure] =
     files.sortBy(_._1).flatMap { (file, b) =>
       val name = AssetLinks.safeName(file)
       val mime = AssetLinks.mimeOf(name)

@@ -20,6 +20,57 @@ import com.histmersion.domain.automation.Run
 object ReviewManagerPolicy:
 
   /** A review manager's settings in effect: its saved config over research's defaults (`d`) and the engine's (`m`). */
+  type NoProgressResult = NoProgressResult.T
+  object NoProgressResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoProgressN = NoProgressN.T
+  object NoProgressN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsStalledResult = PairsStalledResult.T
+  object PairsStalledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsStalledN = PairsStalledN.T
+  object PairsStalledN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewSlug = EvaluateReviewSlug.T
+  object EvaluateReviewSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewAttempts = EvaluateReviewAttempts.T
+  object EvaluateReviewAttempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewFailures = EvaluateReviewFailures.T
+  object EvaluateReviewFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewRun = EvaluateReviewRun.T
+  object EvaluateReviewRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewError = EvaluateReviewError.T
+  object EvaluateReviewError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewTaskText = EvaluateReviewTaskText.T
+  object EvaluateReviewTaskText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectMajorsPart1 = SelectMajorsPart1.T
+  object SelectMajorsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectMajorsPart2 = SelectMajorsPart2.T
+  object SelectMajorsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectUnreviewed = SelectUnreviewed.T
+  object SelectUnreviewed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectStalePart1 = SelectStalePart1.T
+  object SelectStalePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectStalePart2 = SelectStalePart2.T
+  object SelectStalePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectBatch = SelectBatch.T
+  object SelectBatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectInferFilter = SelectInferFilter.T
+  object SelectInferFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectHasFilterArg1 = SelectHasFilterArg1.T
+  object SelectHasFilterArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectHasFilterResult = SelectHasFilterResult.T
+  object SelectHasFilterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectInferredBeforeArg1 = SelectInferredBeforeArg1.T
+  object SelectInferredBeforeArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SelectInferredBeforeResult = SelectInferredBeforeResult.T
+  object SelectInferredBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleWhyResult = StaleWhyResult.T
+  object StaleWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleWhyDays = StaleWhyDays.T
+  object StaleWhyDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleWhyHitsThen = StaleWhyHitsThen.T
+  object StaleWhyHitsThen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleWhyHitsNow = StaleWhyHitsNow.T
+  object StaleWhyHitsNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def settings(c: ManagerConfig, d: ReviewManagerDefaults, m: ManagerDefaults): ReviewSettings =
     val maxRuns = math.max(0, c.maxRuns.getOrElse(d.maxRuns))
     ReviewSettings(
@@ -72,6 +123,9 @@ object ReviewManagerPolicy:
 
   object ReviewFacts:
     /** The facts of `l`, with the checklist's open pairs counted by the caller. */
+    type OfOpenPairs = OfOpenPairs.T
+    object OfOpenPairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type OpenMajors = OpenMajors.T
     object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MaxReopened = MaxReopened.T
@@ -83,7 +137,7 @@ object ReviewManagerPolicy:
     type OpenPairs = OpenPairs.T
     object OpenPairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def of(l: Ledger, openPairs: Option[Int] = None): ReviewFacts =
+    def of(l: Ledger, openPairs: Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OfOpenPairs] = None): ReviewFacts =
       val majors = l.openMajors
       ReviewFacts(
         majors.size,
@@ -96,7 +150,7 @@ object ReviewManagerPolicy:
   /** The open MAJORs over the last `n` runs went from `before` (when the window's first run was dispatched) to `after`
     * without going down.
     */
-  def noProgress(history: List[RunMark], n: Int): Boolean =
+  def noProgress(history: List[RunMark], n: com.histmersion.domain.research.workflows.ReviewManagerPolicy.NoProgressN): com.histmersion.domain.research.workflows.ReviewManagerPolicy.NoProgressResult =
     val window = history.takeRight(n)
     window.size >= n && {
       val start = window.head.before.getOrElse(Int.MaxValue)
@@ -107,7 +161,7 @@ object ReviewManagerPolicy:
     * window's first run to `pairsAfter` of its last. Unknown counts (a run evaluated before the checklist existed) are
     * no evidence of a stall.
     */
-  def pairsStalled(history: List[RunMark], n: Int): Boolean =
+  def pairsStalled(history: List[RunMark], n: com.histmersion.domain.research.workflows.ReviewManagerPolicy.PairsStalledN): com.histmersion.domain.research.workflows.ReviewManagerPolicy.PairsStalledResult =
     val window = history.takeRight(n)
     window.size >= n && window.head.pairsBefore.zip(window.last.pairsAfter).exists((start, end) => end >= start)
 
@@ -123,15 +177,15 @@ object ReviewManagerPolicy:
     */
   def evaluateReview(
       s: ReviewSettings,
-      slug: String,
-      attempts: Int,
-      failures: Int,
+      slug: com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewSlug,
+      attempts: com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewAttempts,
+      failures: com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewFailures,
       state: ItemState,
-      run: String,
+      run: com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewRun,
       status: Run.State,
-      error: Option[String],
+      error: Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewError],
       facts: Option[ReviewFacts],
-      taskText: Option[String],
+      taskText: Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewTaskText],
       now: Instant
   ): Next =
     status match
@@ -226,13 +280,13 @@ object ReviewManagerPolicy:
     * one too, at its review's priority: the review waits for it ([[waitsFor]]).
     */
   def select(
-      majors: List[(String, Int)],
-      unreviewed: List[String],
-      stale: List[(String, String)],
-      batch: Int,
-      inferFilter: Boolean,
-      hasFilter: String => Boolean,
-      inferredBefore: String => Boolean
+      majors: List[(com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectMajorsPart1, com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectMajorsPart2)],
+      unreviewed: List[com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectUnreviewed],
+      stale: List[(com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectStalePart1, com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectStalePart2)],
+      batch: com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectBatch,
+      inferFilter: com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectInferFilter,
+      hasFilter: com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectHasFilterArg1 => com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectHasFilterResult,
+      inferredBefore: com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectInferredBeforeArg1 => com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectInferredBeforeResult
   ): List[Pick] =
     val reviews =
       (majors.map((slug, n) => Pick(ArticleReview, slug, MajorsPriority, s"${Plural.count(n, "open MAJOR")}")) ++
@@ -254,10 +308,10 @@ object ReviewManagerPolicy:
   def staleWhy(
       convergedAt: Instant,
       now: Instant,
-      days: Int,
-      hitsThen: Option[Int],
-      hitsNow: Option[Int]
-  ): Option[String] =
+      days: com.histmersion.domain.research.workflows.ReviewManagerPolicy.StaleWhyDays,
+      hitsThen: Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.StaleWhyHitsThen],
+      hitsNow: Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.StaleWhyHitsNow]
+  ): Option[com.histmersion.domain.research.workflows.ReviewManagerPolicy.StaleWhyResult] =
     if days <= 0 then None
     else
       val gained = hitsThen.zip(hitsNow).collect { case (a, b) if b > a => b - a }

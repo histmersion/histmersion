@@ -8,14 +8,29 @@ object CandidateDedupe:
   /** An arXiv preprint without a DOI gets arXiv's DataCite DOI (`10.48550/arxiv.<id>`), so the same preprint from two
     * indexes is one.
     */
-  def keyOf(w: WorkRef): Option[String] =
+  type KeyOfResult = KeyOfResult.T
+  object KeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DedupeResultPart1Part1 = DedupeResultPart1Part1.T
+  object DedupeResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DedupeResultPart1Part3 = DedupeResultPart1Part3.T
+  object DedupeResultPart1Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DedupeResultPart2Part1 = DedupeResultPart2Part1.T
+  object DedupeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DedupeResultPart2Part2 = DedupeResultPart2Part2.T
+  object DedupeResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DedupeFoundPart1 = DedupeFoundPart1.T
+  object DedupeFoundPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DedupeKnown = DedupeKnown.T
+  object DedupeKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def keyOf(w: WorkRef): Option[com.histmersion.domain.library.acquisition.CandidateDedupe.KeyOfResult] =
     w.doi.flatMap(d => Ident.doi(d.value))
       .orElse(w.arxivId.map(a => s"10.48550/arxiv.${a.trim.toLowerCase.replaceAll("v\\d+$", "")}"))
 
   def dedupe(
-      found: List[(String, WorkRef)],
-      known: Set[String]
-  ): (List[(String, WorkRef, List[String])], Map[String, Int]) =
+      found: List[(com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeFoundPart1, WorkRef)],
+      known: Set[com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeKnown]
+  ): (List[(com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeResultPart1Part1, WorkRef, List[com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeResultPart1Part3])], Map[com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeResultPart2Part1, com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeResultPart2Part2]) =
     val kept = scala.collection.mutable.LinkedHashMap.empty[String, (WorkRef, List[String])]
     val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
     found.foreach { (by, w) =>

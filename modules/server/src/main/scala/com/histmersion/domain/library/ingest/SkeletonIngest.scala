@@ -20,7 +20,7 @@ import com.histmersion.api.library.Source
   */
 final class SkeletonIngest(sources: SourceService) extends IngestJobs:
 
-  def enqueue(copy: Option[FetchedCopy], citekey: String, meta: IngestMeta): Either[String, IngestOutcome] =
+  def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[com.histmersion.domain.library.ingest.SkeletonIngest.EnqueueResultPart1, IngestOutcome] =
     val exists = sources.exists(citekey)
     val result =
       if exists then patchExisting(citekey, meta)
@@ -37,7 +37,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       )
     }
 
-  private def create(citekey: String, meta: IngestMeta): Either[String, Unit] =
+  private def create(citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[com.histmersion.domain.library.ingest.SkeletonIngest.CreateResultPart1, Unit] =
     com.histmersion.api.library.Source.Write
       .applyPut(
         com.histmersion.api.library.Citekey(citekey),
@@ -58,7 +58,7 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
         val _ = sources.put(s, Caller.Local)
       }
 
-  private def patchExisting(citekey: String, meta: IngestMeta): Either[String, Unit] =
+  private def patchExisting(citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[com.histmersion.domain.library.ingest.SkeletonIngest.PatchExistingResultPart1, Unit] =
     sources
       .patch(
         citekey,
@@ -79,3 +79,11 @@ final class SkeletonIngest(sources: SourceService) extends IngestJobs:
       .map(_ => ())
       .left
       .map(_.message)
+
+object SkeletonIngest:
+  type EnqueueResultPart1 = EnqueueResultPart1.T
+  object EnqueueResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CreateResultPart1 = CreateResultPart1.T
+  object CreateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PatchExistingResultPart1 = PatchExistingResultPart1.T
+  object PatchExistingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

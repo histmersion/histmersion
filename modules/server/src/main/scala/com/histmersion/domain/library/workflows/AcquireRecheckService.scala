@@ -77,7 +77,7 @@ final class AcquireRecheckService(
   private val jobSlot = BackgroundJob.Slot()
 
   /** Is a re-check job running? The scheduled passes wait, and the drain is not drained until it stops. */
-  def jobRunning: Boolean = jobSlot.isRunning
+  def jobRunning: com.histmersion.domain.library.workflows.AcquireRecheckService.JobRunningResult = jobSlot.isRunning
 
   // ── the facts ──────────────────────────────────────────────────────────────────────────────────
 
@@ -85,18 +85,18 @@ final class AcquireRecheckService(
     */
   final private case class Facts(item: Queue.QueueItem, action: Action, last: Option[AcquireCheckRow])
 
-  private def facts(only: Option[Int]): List[Facts] =
+  private def facts(only: Option[com.histmersion.domain.library.workflows.AcquireRecheckService.FactsOnly]): List[Facts] =
     val items = site.queues.list(Queue.Kind.Acquire, QueueScope.Open).toList.filter(i => only.forall(_ == i.id))
     val dois = items.map(i => i.id -> orderedDois(i.text)).toMap
     val held = checks.heldByDoi(dois.values.flatMap(_.headOption).toList)
     val last = checks.of(items.map(_.id))
     items.map(i => Facts(i, AcquireRecheck.action(dois.getOrElse(i.id, Nil), held.get), last.get(i.id)))
 
-  private def orderedDois(text: String): List[String] =
+  private def orderedDois(text: com.histmersion.domain.library.workflows.AcquireRecheckService.OrderedDoisText): List[com.histmersion.domain.library.workflows.AcquireRecheckService.OrderedDoisResult] =
     val lower = text.toLowerCase
     Scheduling.dois(text).toList.sortBy(d => (lower.indexOf(d) match { case -1 => Int.MaxValue; case i => i }, d))
 
-  private def triedToday(now: Instant): (Int, Int) =
+  private def triedToday(now: Instant): (com.histmersion.domain.library.workflows.AcquireRecheckService.TriedTodayResultPart1, com.histmersion.domain.library.workflows.AcquireRecheckService.TriedTodayResultPart2) =
     val c = checks.countSince(ManagerPolicy.dayStart(now))
     (
       c.getOrElse(Outcome.Fetched.wire, 0) + c.getOrElse(Outcome.NoCopy.wire, 0) + c.getOrElse(Outcome.Failed.wire, 0),
@@ -104,7 +104,7 @@ final class AcquireRecheckService(
     )
 
   /** The shared daily legal ingest allowance as the re-check sees it (None: the autopilot is off or has no cap). */
-  private def shared(now: Instant, fetchedToday: Int): Option[Shared] =
+  private def shared(now: Instant, fetchedToday: com.histmersion.domain.library.workflows.AcquireRecheckService.SharedFetchedToday): Option[Shared] =
     agents.autopilot
       .sharedIngestLeft(now)
       .map(left =>
@@ -118,7 +118,7 @@ final class AcquireRecheckService(
 
   private def candidate(f: Facts): Candidate = Candidate(f.item.id, f.last.map(_.last))
 
-  private def isDue(c: Candidate, generation: String, now: Instant): Boolean =
+  private def isDue(c: Candidate, generation: com.histmersion.domain.library.workflows.AcquireRecheckService.IsDueGeneration, now: Instant): com.histmersion.domain.library.workflows.AcquireRecheckService.IsDueResult =
     val s = settings
     AcquireRecheck.isDue(c.last, generation, s.everyDays, s.retryHours, now)
 
@@ -128,16 +128,16 @@ final class AcquireRecheckService(
     AcquireRecheck.order(fs.filter(_.action.isInstanceOf[Action.Fetch]).map(candidate)).flatMap(c => byId.get(c.item))
 
   /** The items a pass would try, in order: due, the never-checked first, then the oldest check. */
-  private def due(fs: List[Facts], generation: String, now: Instant): List[Facts] =
+  private def due(fs: List[Facts], generation: com.histmersion.domain.library.workflows.AcquireRecheckService.DueGeneration, now: Instant): List[Facts] =
     fetchable(fs).filter(f => isDue(candidate(f), generation, now))
 
   /** The DOI an item is about (the first its text names). */
-  private def doiOf(f: Facts): Option[String] = orderedDois(f.item.text).headOption
+  private def doiOf(f: Facts): Option[com.histmersion.domain.library.workflows.AcquireRecheckService.DoiOfResult] = orderedDois(f.item.text).headOption
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
   /** From the managers' tick: a pass when on, not draining, and `pass-minutes` passed since the last. */
-  def tick(now: Instant): List[String] =
+  def tick(now: Instant): List[com.histmersion.domain.library.workflows.AcquireRecheckService.TickResult] =
     val s = settings
     if jobSlot.isRunning || agents.drain.draining then Nil
     else
@@ -145,7 +145,7 @@ final class AcquireRecheckService(
         case Some(line) => List(line)
         case None       => scheduledPass(s, now)
 
-  private def scheduledPass(s: Settings, now: Instant): List[String] =
+  private def scheduledPass(s: Settings, now: Instant): List[com.histmersion.domain.library.workflows.AcquireRecheckService.ScheduledPassResult] =
     if !s.enabled || !AcquireRecheck.passDue(
         Option(lastPass.get).filter(_ > 0).map(Instant.ofEpochMilli),
         s.passMinutes,
@@ -253,7 +253,7 @@ final class AcquireRecheckService(
   /** From the managers' tick (not draining, no job running): the newest re-check job, when a restart or the drain
     * stopped it, goes on as a new job over what it had not checked yet.
     */
-  private def resumeStopped(): Option[String] =
+  private def resumeStopped(): Option[com.histmersion.domain.library.workflows.AcquireRecheckService.ResumeStoppedResult] =
     latestJob().filter(j => AcquireRecheck.resumable(j.status, j.error)).flatMap { j =>
       j.detail.flatMap(Acquire.Checks.RecheckJob.Detail.of).flatMap(d => planOf(d).map(d -> _)).flatMap { (d, plan) =>
         startJob(plan, d.by, Some(j.id)) match
@@ -267,7 +267,7 @@ final class AcquireRecheckService(
 
   /** Start `plan` as a `jobs` row (`histmersion jobs <id>` follows it); `resumes` = the stopped job it takes up.
     */
-  private def startJob(plan: JobPlan, by: String, resumes: Option[String]): Either[Api.Error, JobInfo] =
+  private def startJob(plan: JobPlan, by: com.histmersion.domain.library.workflows.AcquireRecheckService.StartJobBy, resumes: Option[com.histmersion.domain.library.workflows.AcquireRecheckService.StartJobResumes]): Either[Api.Error, JobInfo] =
     val detail = RecheckJob(plan.all, plan.upTo, plan.since.toString, by, resumes)
     BackgroundJob.start(
       ds,
@@ -285,7 +285,7 @@ final class AcquireRecheckService(
     * come (a rate limit) is a `failed` check and the job goes on. It stops between two items when the autopilot drains
     * (resumable) or a restore starts.
     */
-  private def runJob(jobId: String, plan: JobPlan, by: String, progress: String => Unit): BackgroundJob.Outcome =
+  private def runJob(jobId: com.histmersion.util.jobs.Job.Id, plan: JobPlan, by: com.histmersion.domain.library.workflows.AcquireRecheckService.RunJobBy, progress: com.histmersion.domain.library.workflows.AcquireRecheckService.RunJobProgressArg1 => Unit): BackgroundJob.Outcome =
     passing.lock()
     try
       val up = upstream()
@@ -421,10 +421,10 @@ final class AcquireRecheckService(
   /** The item ticked off as fulfilled by `citekey` (the one write every import makes), and its check. */
   private def close(
       f: Facts,
-      citekey: String,
-      generation: String,
+      citekey: com.histmersion.domain.library.Citekey,
+      generation: com.histmersion.domain.library.workflows.AcquireRecheckService.CloseGeneration,
       now: Instant,
-      job: Option[String] = None
+      job: Option[com.histmersion.domain.library.workflows.AcquireRecheckService.CloseJob] = None
   ): Option[RecheckRow] =
     site.workLists.patch(f.item.id, Queue.fulfil(f.item, citekey, job)) match
       case Left(e) =>
@@ -448,7 +448,7 @@ final class AcquireRecheckService(
     object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One item through the legal chain, recorded. */
-  private def attempt(f: Facts, generation: String, now: Instant): Tried =
+  private def attempt(f: Facts, generation: com.histmersion.domain.library.workflows.AcquireRecheckService.AttemptGeneration, now: Instant): Tried =
     val (doi, into) = f.action match
       case Action.Fetch(d, i) => (d, i)
       case _                  => ("", None)
@@ -464,7 +464,7 @@ final class AcquireRecheckService(
     checks.record(f.item.id, now, generation, outcome, why)
     Tried(RecheckRow(f.item.id, Some(doi), outcome.wire, why, ck), outcome, detail)
 
-  private def summary(r: RecheckResult): String =
+  private def summary(r: RecheckResult): com.histmersion.domain.library.workflows.AcquireRecheckService.SummaryResult =
     def ids(a: String) =
       r.rows.filter(_.action == a).map(row => s"#${row.item}${row.citekey.fold("")(c => s" [[$c]]")}")
     val parts = List(
@@ -531,7 +531,7 @@ final class AcquireRecheckService(
   /** The re-check job as the status line names it: the one running and its progress, or the newest when a restart or
     * the drain stopped it (a tick resumes it).
     */
-  private def jobLine(): Option[String] =
+  private def jobLine(): Option[com.histmersion.domain.library.workflows.AcquireRecheckService.JobLineResult] =
     latestJob().flatMap { j =>
       if !JobState.parse(j.status).exists(_.isTerminal) then
         Some(s"job ${j.id} running: ${j.progress.getOrElse("starting")}")
@@ -548,4 +548,54 @@ final class AcquireRecheckService(
     }
 
   /** What the re-check fetched today: what the shared legal ingest allowance counts besides the watchers'. */
-  def fetchedToday(now: Instant): Int = triedToday(now)._2
+  def fetchedToday(now: Instant): com.histmersion.domain.library.workflows.AcquireRecheckService.FetchedTodayResult = triedToday(now)._2
+
+object AcquireRecheckService:
+  type JobRunningResult = JobRunningResult.T
+  object JobRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FactsOnly = FactsOnly.T
+  object FactsOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderedDoisResult = OrderedDoisResult.T
+  object OrderedDoisResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderedDoisText = OrderedDoisText.T
+  object OrderedDoisText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TriedTodayResultPart1 = TriedTodayResultPart1.T
+  object TriedTodayResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TriedTodayResultPart2 = TriedTodayResultPart2.T
+  object TriedTodayResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SharedFetchedToday = SharedFetchedToday.T
+  object SharedFetchedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDueResult = IsDueResult.T
+  object IsDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDueGeneration = IsDueGeneration.T
+  object IsDueGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DueGeneration = DueGeneration.T
+  object DueGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoiOfResult = DoiOfResult.T
+  object DoiOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TickResult = TickResult.T
+  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScheduledPassResult = ScheduledPassResult.T
+  object ScheduledPassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResumeStoppedResult = ResumeStoppedResult.T
+  object ResumeStoppedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartJobBy = StartJobBy.T
+  object StartJobBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartJobResumes = StartJobResumes.T
+  object StartJobResumes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunJobBy = RunJobBy.T
+  object RunJobBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunJobProgressArg1 = RunJobProgressArg1.T
+  object RunJobProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CloseGeneration = CloseGeneration.T
+  object CloseGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CloseJob = CloseJob.T
+  object CloseJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptGeneration = AttemptGeneration.T
+  object AttemptGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SummaryResult = SummaryResult.T
+  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobLineResult = JobLineResult.T
+  object JobLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchedTodayResult = FetchedTodayResult.T
+  object FetchedTodayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

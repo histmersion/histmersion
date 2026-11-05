@@ -13,16 +13,29 @@ import io.circe.syntax.*
 private[histmersion] object Pipelines:
 
   /** The goal a run works for: its own, else the goal it targets. */
-  def goalOf(run: com.histmersion.api.automation.Agents.RunInfo): Option[String] =
+  type GoalOfResult = GoalOfResult.T
+  object GoalOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryText = EntryText.T
+  object EntryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryTopic = EntryTopic.T
+  object EntryTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogResultPart1 = LogResultPart1.T
+  object LogResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogResultPart2 = LogResultPart2.T
+  object LogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLine = LogLine.T
+  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def goalOf(run: com.histmersion.api.automation.Agents.RunInfo): Option[com.histmersion.domain.automation.workflows.Pipelines.GoalOfResult] =
     run.goal
       .orElse(Option.when(run.targetKind == com.histmersion.domain.automation.TargetKind.Goal.wire)(run.target))
       .filter(_.nonEmpty)
 
   /** A bookkeeping item a run writes: it names the run and the goal the run works for. */
-  def entry(ctx: RunCtx, text: String, topic: Option[String] = None): QueueAdd =
+  def entry(ctx: RunCtx, text: com.histmersion.domain.automation.workflows.Pipelines.EntryText, topic: Option[com.histmersion.domain.automation.workflows.Pipelines.EntryTopic] = None): QueueAdd =
     QueueAdd(text, topic = topic, goal = goalOf(ctx.run), job = Some(ctx.run.id))
 
   /** Add `line` to the worklog; answers the line. */
-  def log(workLists: WorkListControllers, ctx: RunCtx, line: String): Either[String, String] =
+  def log(workLists: WorkListControllers, ctx: RunCtx, line: com.histmersion.domain.automation.workflows.Pipelines.LogLine): Either[com.histmersion.domain.automation.workflows.Pipelines.LogResultPart1, com.histmersion.domain.automation.workflows.Pipelines.LogResultPart2] =
     val entry = Pipelines.entry(ctx, line)
     ctx.write("log line", entry.asJson)(workLists.add("log", entry).left.map(_.message).map(_ => line))(Right(line))

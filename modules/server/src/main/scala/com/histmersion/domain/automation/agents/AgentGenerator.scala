@@ -9,6 +9,117 @@ import io.circe.syntax.*
   * (docs/research-agent-runtimes.md §2.2). Nothing here touches the disk; [[AgentTrees]] writes.
   */
 object AgentGenerator:
+  type CheckResult = CheckResult.T
+  object CheckResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckKnown = CheckKnown.T
+  object CheckKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PrettyResult = PrettyResult.T
+  object PrettyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillFileResult = SkillFileResult.T
+  object SkillFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillFileKeepAllowedTools = SkillFileKeepAllowedTools.T
+  object SkillFileKeepAllowedTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillsResultPart1 = SkillsResultPart1.T
+  object SkillsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillsResultPart2 = SkillsResultPart2.T
+  object SkillsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillsPrefix = SkillsPrefix.T
+  object SkillsPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillsKeepAllowedTools = SkillsKeepAllowedTools.T
+  object SkillsKeepAllowedTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YamlStringResult = YamlStringResult.T
+  object YamlStringResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YamlStringS = YamlStringS.T
+  object YamlStringS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeWebToolsResult = ClaudeWebToolsResult.T
+  object ClaudeWebToolsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeTurnsResult = ClaudeTurnsResult.T
+  object ClaudeTurnsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeTurnsMaxTurns = ClaudeTurnsMaxTurns.T
+  object ClaudeTurnsMaxTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeAgentResult = ClaudeAgentResult.T
+  object ClaudeAgentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeSettingsResult = ClaudeSettingsResult.T
+  object ClaudeSettingsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginJsonResult = PluginJsonResult.T
+  object PluginJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginJsonName = PluginJsonName.T
+  object PluginJsonName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginJsonVersion = PluginJsonVersion.T
+  object PluginJsonVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginJsonDescription = PluginJsonDescription.T
+  object PluginJsonDescription extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarketplaceJsonResult = MarketplaceJsonResult.T
+  object MarketplaceJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarketplaceJsonName = MarketplaceJsonName.T
+  object MarketplaceJsonName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarketplaceJsonSource = MarketplaceJsonSource.T
+  object MarketplaceJsonSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarketplaceJsonVersion = MarketplaceJsonVersion.T
+  object MarketplaceJsonVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type McpJsonResult = McpJsonResult.T
+  object McpJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type McpJsonUrl = McpJsonUrl.T
+  object McpJsonUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InteractiveAgentResult = InteractiveAgentResult.T
+  object InteractiveAgentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InteractivePluginResultPart1 = InteractivePluginResultPart1.T
+  object InteractivePluginResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InteractivePluginResultPart2 = InteractivePluginResultPart2.T
+  object InteractivePluginResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepoPluginResultPart1 = RepoPluginResultPart1.T
+  object RepoPluginResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepoPluginResultPart2 = RepoPluginResultPart2.T
+  object RepoPluginResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModFilesResultPart1 = ModFilesResultPart1.T
+  object ModFilesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModFilesResultPart2 = ModFilesResultPart2.T
+  object ModFilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeCodeResultPart1 = ClaudeCodeResultPart1.T
+  object ClaudeCodeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaudeCodeResultPart2 = ClaudeCodeResultPart2.T
+  object ClaudeCodeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TomlStringResult = TomlStringResult.T
+  object TomlStringResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TomlStringS = TomlStringS.T
+  object TomlStringS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TomlListResult = TomlListResult.T
+  object TomlListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TomlListXs = TomlListXs.T
+  object TomlListXs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CodexBaseResult = CodexBaseResult.T
+  object CodexBaseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CodexProfileResult = CodexProfileResult.T
+  object CodexProfileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CodexAgentResult = CodexAgentResult.T
+  object CodexAgentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CodexBaseInstructionsResult = CodexBaseInstructionsResult.T
+  object CodexBaseInstructionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CodexResultPart1 = CodexResultPart1.T
+  object CodexResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CodexResultPart2 = CodexResultPart2.T
+  object CodexResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpencodePermissionsResultPart1 = OpencodePermissionsResultPart1.T
+  object OpencodePermissionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpencodePermissionsResultPart2 = OpencodePermissionsResultPart2.T
+  object OpencodePermissionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpencodeAgentResult = OpencodeAgentResult.T
+  object OpencodeAgentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpencodeConfigResult = OpencodeConfigResult.T
+  object OpencodeConfigResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpencodeConfigUrl = OpencodeConfigUrl.T
+  object OpencodeConfigUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpencodeConfigHeadless = OpencodeConfigHeadless.T
+  object OpencodeConfigHeadless extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpencodeResultPart1 = OpencodeResultPart1.T
+  object OpencodeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpencodeResultPart2 = OpencodeResultPart2.T
+  object OpencodeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeResultPart1 = TreeResultPart1.T
+  object TreeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeResultPart2 = TreeResultPart2.T
+  object TreeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import AgentDefinitions.render
 
   val PluginVersion = "0.3.0"
@@ -24,10 +135,13 @@ object AgentGenerator:
 
   /** The canonical inputs, loaded and checked. */
   final case class Defs(agents: List[AgentDef], fragments: Map[Defs.FragmentsKey, Defs.FragmentsValue], skills: Map[Defs.SkillsKey, SkillDef]):
-    def system(d: AgentDef, style: ToolStyle): String =
+    def system(d: AgentDef, style: ToolStyle): com.histmersion.domain.automation.agents.AgentGenerator.Defs.SystemResult =
       AgentDefinitions.system(d, fragments, skills, style).fold(m => throw IllegalStateException(m), identity)
 
   object Defs:
+    type SystemResult = SystemResult.T
+    object SystemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type FragmentsKey = FragmentsKey.T
     object FragmentsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FragmentsValue = FragmentsValue.T
@@ -38,7 +152,7 @@ object AgentGenerator:
   /** Problems that would make a generated tree lie: an include or skill that does not exist, a placeholder naming no
     * MCP tool (`known`), a skill whose name or description runtimes reject.
     */
-  def check(d: Defs, known: Set[String]): List[String] =
+  def check(d: Defs, known: Set[com.histmersion.domain.automation.agents.AgentGenerator.CheckKnown]): List[com.histmersion.domain.automation.agents.AgentGenerator.CheckResult] =
     val markerProblems =
       (d.agents.map(a => s"agents/${a.name}.md" -> a.body) ++ d.fragments.toList
         .sortBy(_._1)
@@ -67,24 +181,24 @@ object AgentGenerator:
 
   /** JSON as people write it (`"key": value`, two spaces) — the checked-in files diff cleanly. */
   private val Printer = io.circe.Printer.spaces2.copy(colonLeft = "")
-  def pretty(j: Json): String = Printer.print(j) + "\n"
+  def pretty(j: Json): com.histmersion.domain.automation.agents.AgentGenerator.PrettyResult = Printer.print(j) + "\n"
 
   /** A skill as a runtime reads it: placeholders rendered; `allowed-tools` kept only for the person's own Claude Code
     * (permissions belong to the agent role everywhere else).
     */
-  def skillFile(s: SkillDef, style: ToolStyle, keepAllowedTools: Boolean): String =
+  def skillFile(s: SkillDef, style: ToolStyle, keepAllowedTools: com.histmersion.domain.automation.agents.AgentGenerator.SkillFileKeepAllowedTools): com.histmersion.domain.automation.agents.AgentGenerator.SkillFileResult =
     val header = s.header.filter(l => keepAllowedTools || !l.startsWith("allowed-tools:"))
     render(s"---\n${header.mkString("\n")}\n---\n${s.body}", style)
 
-  private def skills(d: Defs, prefix: String, style: ToolStyle, keepAllowedTools: Boolean): Map[String, String] =
+  private def skills(d: Defs, prefix: com.histmersion.domain.automation.agents.AgentGenerator.SkillsPrefix, style: ToolStyle, keepAllowedTools: com.histmersion.domain.automation.agents.AgentGenerator.SkillsKeepAllowedTools): Map[com.histmersion.domain.automation.agents.AgentGenerator.SkillsResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.SkillsResultPart2] =
     d.skills.values.map(s => s"$prefix/${s.name}/SKILL.md" -> skillFile(s, style, keepAllowedTools)).toMap
 
-  private def yamlString(s: String): String = s.asJson.noSpaces
+  private def yamlString(s: com.histmersion.domain.automation.agents.AgentGenerator.YamlStringS): com.histmersion.domain.automation.agents.AgentGenerator.YamlStringResult = s.asJson.noSpaces
 
   // ── Claude Code ────────────────────────────────────────────────────────────────────────────────
 
   /** The built-in tools a role gets besides Histmersion's MCP tools. */
-  def claudeWebTools(w: WebAccess): List[String] = w match
+  def claudeWebTools(w: WebAccess): List[com.histmersion.domain.automation.agents.AgentGenerator.ClaudeWebToolsResult] = w match
     case WebAccess.WebSearch => List("WebSearch", "WebFetch")
     case WebAccess.Fetch     => List("WebFetch")
     case _                   => Nil
@@ -95,12 +209,12 @@ object AgentGenerator:
   val ClaudeAnswerTool = "StructuredOutput"
 
   /** Claude Code's turns for an agent's `max-turns`: one more for the [[ClaudeAnswerTool]] call. */
-  def claudeTurns(maxTurns: Int): Int = math.max(1, maxTurns) + 1
+  def claudeTurns(maxTurns: com.histmersion.domain.automation.agents.AgentGenerator.ClaudeTurnsMaxTurns): com.histmersion.domain.automation.agents.AgentGenerator.ClaudeTurnsResult = math.max(1, maxTurns) + 1
 
   /** A headless agent: the role's MCP tools and the answer tool, nothing else; the prompt with its includes and skills
     * inlined (a main-thread `--agent` gets no `skills:` preload, §3a).
     */
-  def claudeAgent(d: Defs, a: AgentDef): String =
+  def claudeAgent(d: Defs, a: AgentDef): com.histmersion.domain.automation.agents.AgentGenerator.ClaudeAgentResult =
     val tools = a.tools.map(t => ToolStyle.Claude.tool(t.value)) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     // no stripMargin around the prompt: a Markdown table row starts with `|`
     s"---\nname: ${a.name}\ndescription: ${yamlString(a.description)}\ntools: ${tools.mkString(", ")}\n" +
@@ -109,7 +223,7 @@ object AgentGenerator:
   /** The settings layer of one role's run: deny-by-default permissions. NOT `disableAllHooks` — it also turns the
     * quota-guard mod off (§3a P5); the person's own hooks stay out through `--setting-sources ""` instead.
     */
-  def claudeSettings(a: AgentDef): String =
+  def claudeSettings(a: AgentDef): com.histmersion.domain.automation.agents.AgentGenerator.ClaudeSettingsResult =
     val allow = a.tools.map(t => ToolStyle.Claude.tool(t.value)) ++ claudeWebTools(a.web) :+ ClaudeAnswerTool
     val deny = List("Bash", "Edit", "Write", "NotebookEdit", "Agent") ++
       List("WebFetch", "WebSearch").filterNot(claudeWebTools(a.web).contains)
@@ -120,7 +234,7 @@ object AgentGenerator:
       )
     )
 
-  def pluginJson(name: String, version: String, description: String): String =
+  def pluginJson(name: com.histmersion.domain.automation.agents.AgentGenerator.PluginJsonName, version: com.histmersion.domain.automation.agents.AgentGenerator.PluginJsonVersion, description: com.histmersion.domain.automation.agents.AgentGenerator.PluginJsonDescription): com.histmersion.domain.automation.agents.AgentGenerator.PluginJsonResult =
     pretty(
       Json.obj(
         "name" -> name.asJson,
@@ -136,7 +250,7 @@ object AgentGenerator:
     "Query and enrich the Histmersion research corpus (comparative mythology, folklore, Bronze-Age history, " +
       "Indo-European origins) over MCP and the histmersion CLI, instead of grepping markdown files."
 
-  def marketplaceJson(name: String, source: String, version: String): String =
+  def marketplaceJson(name: com.histmersion.domain.automation.agents.AgentGenerator.MarketplaceJsonName, source: com.histmersion.domain.automation.agents.AgentGenerator.MarketplaceJsonSource, version: com.histmersion.domain.automation.agents.AgentGenerator.MarketplaceJsonVersion): com.histmersion.domain.automation.agents.AgentGenerator.MarketplaceJsonResult =
     pretty(
       Json.obj(
         "name" -> name.asJson,
@@ -156,7 +270,7 @@ object AgentGenerator:
       )
     )
 
-  def mcpJson(url: String): String =
+  def mcpJson(url: com.histmersion.domain.automation.agents.AgentGenerator.McpJsonUrl): com.histmersion.domain.automation.agents.AgentGenerator.McpJsonResult =
     pretty(
       Json.obj(
         "mcpServers" -> Json.obj(AgentDefinitions.McpServer -> Json.obj("type" -> "http".asJson, "url" -> url.asJson))
@@ -167,14 +281,14 @@ object AgentGenerator:
     * built-in tools) and the body as written — it still speaks the `histmersion` CLI the interactive panel runs in
     * Bash.
     */
-  def interactiveAgent(a: AgentDef): Option[String] =
+  def interactiveAgent(a: AgentDef): Option[com.histmersion.domain.automation.agents.AgentGenerator.InteractiveAgentResult] =
     a.interactive.filter(_ => a.runsOn(AgentRuntime.Interactive)).map { i =>
       s"---\nname: ${a.name}\ndescription: ${a.description}\nmodel: ${i.model}\ntools: ${i.tools.mkString(", ")}\n---\n" +
         render(AgentDefinitions.forAudience(a.body, Set(Audience.Interactive)), ToolStyle.Claude)
     }
 
   /** The interactive plugin (the repo's `plugin/`, and `claude-code/histmersion/` under the data dir). */
-  def interactivePlugin(d: Defs, s: GenSettings): Map[String, String] =
+  def interactivePlugin(d: Defs, s: GenSettings): Map[com.histmersion.domain.automation.agents.AgentGenerator.InteractivePluginResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.InteractivePluginResultPart2] =
     Map(".claude-plugin/plugin.json" -> pluginJson(InteractivePlugin, s.version, InteractiveDescription)) ++
       d.agents.flatMap(a => interactiveAgent(a).map(t => s"agents/${a.name}.md" -> t)) ++
       skills(d, "skills", ToolStyle.Claude, keepAllowedTools = true) ++
@@ -182,7 +296,7 @@ object AgentGenerator:
       (if s.interactiveMod then modFiles(QuotaMod.Reporting) else Map.empty)
 
   /** The checked-in tree of the repository: `plugin/` and the root marketplace. */
-  def repoPlugin(d: Defs): Map[String, String] =
+  def repoPlugin(d: Defs): Map[com.histmersion.domain.automation.agents.AgentGenerator.RepoPluginResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.RepoPluginResultPart2] =
     val s = GenSettings("", None, "", claudeMod = false, interactiveMod = false, PluginVersion)
     interactivePlugin(d, s).map((k, v) => s"plugin/$k" -> v) +
       (".claude-plugin/marketplace.json" -> marketplaceJson(InteractivePlugin, "./plugin", PluginVersion))
@@ -190,13 +304,13 @@ object AgentGenerator:
   enum QuotaMod:
     case Guard, Reporting
 
-  private def modFiles(m: QuotaMod): Map[String, String] =
+  private def modFiles(m: QuotaMod): Map[com.histmersion.domain.automation.agents.AgentGenerator.ModFilesResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.ModFilesResultPart2] =
     Map(
       "hooks/hooks.json" -> "{ \"modules\": [\"./quota-guard.ts\"] }\n",
       "hooks/quota-guard.ts" -> QuotaGuard.source(m)
     )
 
-  def claudeCode(d: Defs, s: GenSettings): Map[String, String] =
+  def claudeCode(d: Defs, s: GenSettings): Map[com.histmersion.domain.automation.agents.AgentGenerator.ClaudeCodeResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.ClaudeCodeResultPart2] =
     val headless = d.agents.filter(_.runsOn(AgentRuntime.ClaudeCode))
     val hl = Map(
       "headless/.claude-plugin/plugin.json" -> pluginJson(
@@ -217,7 +331,7 @@ object AgentGenerator:
   // ── Codex ──────────────────────────────────────────────────────────────────────────────────────
 
   /** A TOML basic string: every value we write goes through here, so a prompt can hold any text. */
-  def tomlString(s: String): String =
+  def tomlString(s: com.histmersion.domain.automation.agents.AgentGenerator.TomlStringS): com.histmersion.domain.automation.agents.AgentGenerator.TomlStringResult =
     val b = StringBuilder("\"")
     s.foreach {
       case '"'                        => b.append("\\\"")
@@ -230,7 +344,7 @@ object AgentGenerator:
     }
     b.append('"').toString
 
-  private def tomlList(xs: List[String]): String = xs.map(tomlString).mkString("[", ", ", "]")
+  private def tomlList(xs: List[com.histmersion.domain.automation.agents.AgentGenerator.TomlListXs]): com.histmersion.domain.automation.agents.AgentGenerator.TomlListResult = xs.map(tomlString).mkString("[", ", ", "]")
 
   /** The base of every agent run: everything off but Histmersion's MCP server, which grants nothing until a role's
     * profile names its tools (docs/research-agent-runtimes.md §1.2).
@@ -243,7 +357,7 @@ object AgentGenerator:
     * tool output — a code-mode `exec` batch of MCP calls — puts in the context; the models' catalog default is 10,000
     * tokens, and 211 of 1,012 batches hit it on 2026-10-16.
     */
-  def codexBase(s: GenSettings): String =
+  def codexBase(s: GenSettings): com.histmersion.domain.automation.agents.AgentGenerator.CodexBaseResult =
     val outputLimit =
       if s.codexToolOutputTokens > 0 then s"tool_output_token_limit = ${s.codexToolOutputTokens}\n" else ""
     // relative to CODEX_HOME (checked: a missing file there fails `codex debug prompt-input` naming <home>/<file>)
@@ -289,7 +403,7 @@ object AgentGenerator:
   /** One role's profile (`codex -p <role>`): its prompt as developer instructions — includes and skills inlined, since
     * with the shell off the model cannot open a listed `SKILL.md` — and its tools.
     */
-  def codexProfile(d: Defs, a: AgentDef): String =
+  def codexProfile(d: Defs, a: AgentDef): com.histmersion.domain.automation.agents.AgentGenerator.CodexProfileResult =
     val web = a.web match
       case WebAccess.WebSearch | WebAccess.Fetch => "web_search = \"live\"\n"
       case _                                     => ""
@@ -306,7 +420,7 @@ object AgentGenerator:
       s"developer_instructions = ${tomlString(d.system(a, ToolStyle.Bare))}\n$web\n$mcp"
 
   /** The same role as a Codex custom agent, for interactive multi-agent use in a home that has it. */
-  def codexAgent(d: Defs, a: AgentDef): String =
+  def codexAgent(d: Defs, a: AgentDef): com.histmersion.domain.automation.agents.AgentGenerator.CodexAgentResult =
     s"name = ${tomlString(a.name)}\ndescription = ${tomlString(a.description)}\n" +
       s"developer_instructions = ${tomlString(d.system(a, ToolStyle.Bare))}\n"
 
@@ -324,7 +438,7 @@ object AgentGenerator:
     * limit, each script is asked to declare it as its `// @exec` budget too (the `exec` description's own knob, default
     * 10,000).
     */
-  def codexBaseInstructions(d: Defs, s: GenSettings): String =
+  def codexBaseInstructions(d: Defs, s: GenSettings): com.histmersion.domain.automation.agents.AgentGenerator.CodexBaseInstructionsResult =
     val text = d.fragments.getOrElse(
       CodexBaseFragment,
       throw IllegalStateException(s"agents/_shared/$CodexBaseFragment.md is missing")
@@ -337,7 +451,7 @@ object AgentGenerator:
       val at = base.indexOf("\n\n# Answer")
       (if at < 0 then s"$base\n\n$budget" else base.substring(0, at) + "\n" + budget + base.substring(at)) + "\n"
 
-  def codex(d: Defs, s: GenSettings): Map[String, String] =
+  def codex(d: Defs, s: GenSettings): Map[com.histmersion.domain.automation.agents.AgentGenerator.CodexResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.CodexResultPart2] =
     val roles = d.agents.filter(_.runsOn(AgentRuntime.Codex))
     val home = Map("home/config.toml" -> codexBase(s)) ++
       (if s.codexLeanBase then Map(s"home/$CodexBaseFile" -> codexBaseInstructions(d, s)) else Map.empty) ++
@@ -361,18 +475,18 @@ object AgentGenerator:
   // ── opencode ───────────────────────────────────────────────────────────────────────────────────
 
   /** The permission map of a role: deny everything, allow its tools (last match wins). */
-  def opencodePermissions(a: AgentDef): List[(String, String)] =
+  def opencodePermissions(a: AgentDef): List[(com.histmersion.domain.automation.agents.AgentGenerator.OpencodePermissionsResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.OpencodePermissionsResultPart2)] =
     ("*" -> "deny") :: a.tools.map(t => ToolStyle.Opencode.tool(t.value) -> "allow") ++ (a.web match
       case WebAccess.WebSearch => List("webfetch" -> "allow", "websearch" -> "allow")
       case WebAccess.Fetch     => List("webfetch" -> "allow")
       case _                   => Nil)
 
-  def opencodeAgent(d: Defs, a: AgentDef): String =
+  def opencodeAgent(d: Defs, a: AgentDef): com.histmersion.domain.automation.agents.AgentGenerator.OpencodeAgentResult =
     val perms = opencodePermissions(a).map((k, v) => s"  ${yamlString(k)}: $v").mkString("\n")
     s"---\ndescription: ${yamlString(a.description)}\nmode: primary\nsteps: ${a.maxTurns}\npermission:\n$perms\n---\n" +
       d.system(a, ToolStyle.Opencode) + "\n"
 
-  def opencodeConfig(url: String, headless: Boolean): String =
+  def opencodeConfig(url: com.histmersion.domain.automation.agents.AgentGenerator.OpencodeConfigUrl, headless: com.histmersion.domain.automation.agents.AgentGenerator.OpencodeConfigHeadless): com.histmersion.domain.automation.agents.AgentGenerator.OpencodeConfigResult =
     val server = Json.obj("type" -> "remote".asJson, "url" -> url.asJson, "enabled" -> Json.True) deepMerge
       (if headless then Json.obj("headers" -> Json.obj("Authorization" -> s"Bearer {env:$TokenEnv}".asJson))
        else Json.obj())
@@ -386,7 +500,7 @@ object AgentGenerator:
         (if headless then Json.obj("permission" -> Json.obj("*" -> "deny".asJson)) else Json.obj())
     )
 
-  def opencode(d: Defs, s: GenSettings): Map[String, String] =
+  def opencode(d: Defs, s: GenSettings): Map[com.histmersion.domain.automation.agents.AgentGenerator.OpencodeResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.OpencodeResultPart2] =
     val roles = d.agents.filter(_.runsOn(AgentRuntime.Opencode))
     val runs = Map(
       "xdg/opencode/opencode.json" -> pretty(Json.obj("$schema" -> "https://opencode.ai/config.json".asJson)),
@@ -399,7 +513,7 @@ object AgentGenerator:
     (runs ++ interactive).map((k, v) => s"opencode/$k" -> v)
 
   /** Every tree for `runtimes`. */
-  def tree(d: Defs, s: GenSettings, runtimes: List[AgentRuntime]): Map[String, String] =
+  def tree(d: Defs, s: GenSettings, runtimes: List[AgentRuntime]): Map[com.histmersion.domain.automation.agents.AgentGenerator.TreeResultPart1, com.histmersion.domain.automation.agents.AgentGenerator.TreeResultPart2] =
     runtimes.distinct
       .map {
         case AgentRuntime.ClaudeCode => claudeCode(d, s)
