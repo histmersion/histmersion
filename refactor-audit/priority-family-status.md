@@ -1,5 +1,32 @@
 # Priority-family status
 
+## Feature codec extraction verified
+
+One configured Scalafix batch repairs 29 reviewed production isolation relationships:
+three feature-owned codecs and their five generated consumers move together; the
+unused edge codec and reviewed imports are removed. Full production/test compilation
+passes, nine codec probes pass before and after with unchanged assertions, and all
+89 generic list-codec consumers remain unchanged.
+
+Fresh scans cover 3,156 source files in 28 modules. Original-ID reconciliation records
+126 production / 191 test relationships remaining, zero new/reopened IDs and no
+unexpected removal. Production treatment is now 13 confirmed (three targeted,
+ten manual/design), 109 accepted exact contributions and four unresolved registry
+relationships. Tests remain 59 prior non-violations and 132 unreviewed candidates.
+Seventy-one relationships have ambiguous owners; 182,252 direction-evidence rows
+remain unclassified. These limits remain visible rather than counted as compliant.
+
+Primitive production member candidates remain 30,387; all-scope leaves are 62,221,
+with 46,903 unresolved. Transaction, capability and copy retain their preceding
+assessment checkpoints below, not a claim of fresh execution in this batch.
+Independent precision/recall, live database and native-image behavior remain outside
+this evidence. See `codec-ownership/reconciliation-1` and its README.
+
+Next isolation work is the three-relationship Spool ownership move. The ten confirmed
+design relationships concern the personal unread projection (seven) and media's source
+parse boundary (three); four import-registry relationships still require an ownership
+decision. Keep these and other policy families measured while copy automation stays paused.
+
 ## Remaining isolation treatment reviewed
 
 All eighteen production files in the current 155-relationship observation now have

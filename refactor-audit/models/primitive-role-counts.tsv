@@ -145,7 +145,7 @@ test-position	chimney-iron-tests	26	27
 test-position	cli	349	372
 test-position	config	51	61
 test-position	core	1083	1190
-test-position	db	1626	1852
+test-position	db	1629	1855
 test-position	files	85	98
 test-position	plugin-api	93	114
 test-position	plugin-host	117	152

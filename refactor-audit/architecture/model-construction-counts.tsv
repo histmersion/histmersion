@@ -44,7 +44,7 @@ test	chimney-iron-tests	public	invariant-obligation-review	18
 test	cli	public	invariant-obligation-review	38
 test	config	public	invariant-obligation-review	11
 test	core	public	invariant-obligation-review	96
-test	db	public	invariant-obligation-review	69
+test	db	public	invariant-obligation-review	72
 test	files	public	invariant-obligation-review	10
 test	plugin-api	public	invariant-obligation-review	10
 test	plugin-host	public	invariant-obligation-review	22

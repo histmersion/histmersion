@@ -1,7 +1,6 @@
 package com.histmersion.util.database
 import com.augustnagro.magnum.*
 import io.circe.syntax.*
-import com.histmersion.domain.library.Confidence
 
 /** Magnum DbCodec instances for the domain vocabularies. Each reads/writes the lowercase wire string that Postgres
   * stores. Placed here (db module) because core has no Magnum dependency.

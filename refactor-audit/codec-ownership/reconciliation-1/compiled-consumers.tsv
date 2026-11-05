@@ -1,0 +1,6 @@
+class	old-owner	new-owner	member	descriptor
+com/histmersion/domain/catalogue/places/PlaceDetailRow$$anon$1	com/histmersion/util/database/Codecs$package$	com/histmersion/domain/catalogue/places/PlaceColumns$	given_DbCodec_PlacePrecision	()Lcom/augustnagro/magnum/DbCodec;
+com/histmersion/domain/library/sources/BFindingRow$$anon$1	com/histmersion/util/database/Codecs$package$	com/histmersion/domain/library/findings/FindingColumns$	given_DbCodec_Option	()Lcom/augustnagro/magnum/DbCodec;
+com/histmersion/domain/library/sources/BSourceRow$$anon$1	com/histmersion/util/database/Codecs$package$	com/histmersion/domain/library/sources/SourceColumns$	given_DbCodec_SourceStatus	()Lcom/augustnagro/magnum/DbCodec;
+com/histmersion/domain/library/sources/FindingIdRow$$anon$1	com/histmersion/util/database/Codecs$package$	com/histmersion/domain/library/findings/FindingColumns$	given_DbCodec_Option	()Lcom/augustnagro/magnum/DbCodec;
+com/histmersion/domain/library/sources/FullSourceRow$$anon$1	com/histmersion/util/database/Codecs$package$	com/histmersion/domain/library/sources/SourceColumns$	given_DbCodec_SourceStatus	()Lcom/augustnagro/magnum/DbCodec;
