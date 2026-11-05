@@ -1,6 +1,6 @@
 family	goals	refinement-rounds-used	limit	quality	confirmed-baseline	automatically-fixed	residual
 model-concepts-invariants	1,4,5,6,8	0	2	pending-independent-sample	unestablished	0	unestablished
-layer-boundaries	2,7,12	0	2	pending-independent-sample	unestablished	0	unestablished
+layer-boundaries	2,7,12	0	2	identity-history-and-reviewed-source-treatments;independent-quality-pending	scoped-relationship-ledgers-in-isolation-triage-and-shared-title;not-a-migration-wide-defect-denominator	shared-title:36-production-relationships;feature-codecs:29;spool:3;prior-repairs-retained-separately	10-confirmed-production;109-accepted-exact-contributions;4-unresolved;tests:59-nonviolations-and-132-candidates;see-spool-ownership/reconciliation-1;must-fix-or-explicitly-accept
 type-and-feature-ownership	3,9,10,21,25,26,34,37,38,41	0	2	pending-independent-sample	unestablished	0	unestablished
 repository-visibility	11	0	2	regression-examples-only	unestablished	0	unestablished
 transaction-ownership	13,14	1	2	original-recall-85pct-preserved;round1-28-source-assertions-pass;fresh-independent-acceptance-pending	3-reviewed-owner-problems;22-historical-diagnostics-not-independent-boundaries	3-owner-problems;22-diagnostic-occurrences	0-supported-transaction-diagnostics;2-dynamic-SQL-evidence-cases;unknown-dispatch-and-callbacks-unmeasured

@@ -186,8 +186,7 @@ class DataTreeOracleSuite extends DbSuite:
   private def spoolRun(): Unit =
     val base = AppConfig.loadWithUserFile(env, Some(configFile)).fold(e => fail(e), identity).config
     assert(
-      com.histmersion.util.ocr
-        .Spool(
+      _root_.com.histmersion.domain.library.acquisition.Spool(
           com.histmersion.util.storage.Storage
             .at(com.histmersion.util.storage.Location.Spool, StorageLocations.spool(base.acquire.spoolDir))
         )

@@ -7,7 +7,7 @@ import com.histmersion.domain.library.ingest.{FetchedCopy, IngestJobs, IngestMet
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.util.data.maintenance.WriteGate
 import com.histmersion.util.jobs.Pinning
-import com.histmersion.util.ocr.Spool
+import com.histmersion.domain.library.acquisition.Spool
 
 import com.histmersion.domain.library.Citekey
 

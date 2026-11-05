@@ -1,5 +1,21 @@
 # Priority-family status
 
+## Acquisition spool ownership verified
+
+The existing relocation rule moved Spool and five caller files into library acquisition
+as one configured batch. Full production/test compilation passes on 3,156 files;
+all three traversal/layout tests pass without skips. The definition AST is unchanged.
+Fresh architecture/model scans and original-ID reconciliation verify three production
+relationships repaired, with no unexpected removals and zero new/reopened identities.
+
+Isolation now retains 123 production / 191 test relationships: ten confirmed
+production, 109 accepted contributions, four unresolved; tests remain 59 prior
+non-violations and 132 candidates. There are 70 ambiguous owners and 182,261
+unclassified direction-evidence rows. Model counts are unchanged from the codec
+checkpoint. Other families retain their previous evidence dates and limits.
+See `spool-ownership/README.md`; no independent detector-quality or migration-wide
+percentage claim follows from this relocation.
+
 ## Feature codec extraction verified
 
 One configured Scalafix batch repairs 29 reviewed production isolation relationships:

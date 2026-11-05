@@ -1,0 +1,14 @@
+PASS
+source-files=3156
+raw-forbidden-evidence=552
+package-qualifier-evidence=114
+candidate-relationships=314
+production-candidates=123
+test-candidates=191
+ambiguous-owner-relationships=70
+unclassified-direction-evidence=182261
+reviewed-additional-test-nonviolations=10
+new=0
+reopened=0
+No confirmed violations or verified repairs inferred. Repeated uses share a relationship; occurrence multiplicity is not a gate.
+Missing/local owners remain ambiguous. Build dependencies and permitted crossings are separate evidence, outside this identity gate.
