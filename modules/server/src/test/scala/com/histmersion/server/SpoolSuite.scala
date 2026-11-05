@@ -1,6 +1,6 @@
 package com.histmersion.server
 
-import com.histmersion.util.ocr.Spool
+import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Storage}
 import java.nio.file.{Files, Path}
 

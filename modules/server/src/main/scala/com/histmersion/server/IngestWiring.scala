@@ -4,7 +4,8 @@ import com.histmersion.domain.library.ingest.{IngestControllers, IngestQueue, Qu
 import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.domain.media.assets.AssetService
 import com.histmersion.util.jobs.JobRecords
-import com.histmersion.util.ocr.{ConverterClient, Spool}
+import com.histmersion.util.ocr.ConverterClient
+import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.{Location, Store}
 
 /** The library's ingest over one server's `deps`: the job queue over the converter and the originals' store, the ingest

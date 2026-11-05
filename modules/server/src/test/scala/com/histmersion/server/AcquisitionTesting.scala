@@ -7,7 +7,7 @@ import com.histmersion.domain.library.sources.SourceService
 import com.histmersion.domain.research.articles.ArticleCitedSources
 import com.histmersion.pluginhost.OaFetcher
 import com.histmersion.util.database.Transactor
-import com.histmersion.util.ocr.Spool
+import com.histmersion.domain.library.acquisition.Spool
 import com.histmersion.util.storage.Location
 
 import javax.sql.DataSource
