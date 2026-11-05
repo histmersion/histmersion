@@ -1,5 +1,21 @@
 # Priority-family status
 
+## Integrated isolation gate and expanded repair scope
+
+ProjectAssessment now executes the isolation identity gate. A full assessment of
+3,138 source/test files passed it with zero new/reopened relationships. Capability
+history also passed unchanged at 147 occurrences. No application code changed in
+this integration; the existing compiled SemanticDB remained the source evidence.
+
+Tracing the confirmed source-proposal coupling through Approvals and AgentRepo
+confirmed 22 additional relationships. The current isolation treatment ledger is
+54 confirmed production relationships (one design problem), 21 explicit production
+exceptions, 170 production candidates, 138 test candidates and 51 test non-violations.
+The review reconciler checks exact source hashes and relationship presence. Earlier
+observations and review decisions remain preserved; no fixes are inferred from this
+classification work. `approval-isolation/design.md` records the required contract,
+repository, caller and test scope, including persisted deduplication semantics.
+
 ## Isolation identity and treatment checkpoint
 
 The existing architecture scan now has a separate frozen relationship baseline and

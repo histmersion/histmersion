@@ -150,6 +150,7 @@ class ProjectAssessment(val policy: ProjectAssessment.Policy) extends SyntacticR
       write(current.resolve("status.txt"), List("MEASUREMENT_COMPLETE", s"zero-gate=${remaining.isEmpty}", s"no-regression-gate=${regressions.isEmpty}", "Architectural readiness remains separate; see structure/coverage-matrix.md"))
       require(remaining.isEmpty && regressions.isEmpty, s"Batch gate failed: remaining=$remaining regressions=$regressions")
       run("capability-history", cli ++ List("--config", "tools/refactor/capability-history.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/CapabilityHistory.scala"))
+      run("isolation-history", cli ++ List("--config", "tools/refactor/isolation-history.conf", "--scala-version", "3.10.0", "--files", "tools/refactor/IsolationHistory.scala"))
       println("Assessment complete: " + current.resolve("summary.md"))
     } catch {
       case e: Exception =>

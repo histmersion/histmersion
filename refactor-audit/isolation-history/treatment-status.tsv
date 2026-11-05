@@ -1,0 +1,9 @@
+scope	classification	outstanding-relationships
+production	confirmed	54
+production	candidate	170
+production	accepted-exception	21
+production	non-violation	0
+test	confirmed	0
+test	candidate	138
+test	accepted-exception	0
+test	non-violation	51
