@@ -1,0 +1,11 @@
+-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:6:68 
+-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:6:106 
+-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:8:23 
+-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:8:44 
+-- [E134] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:14:33 
+-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:18:18 
+-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:21:28 
+-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:22:32 
+-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:22:48 
+-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:27:13 
+-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/media/MediaMarkdown.scala:113:46 

@@ -1,0 +1,3 @@
+18 preview files match frozen hashes; production sources unchanged.
+479-source API overlay failed with 11 retained compiler errors. No applied fixes or full-module compile claim.
+rule-sha256=40ccde48086feace0a66f506c609e12ca9f6cdf827c3ed907abc9199785856e0

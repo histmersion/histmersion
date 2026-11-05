@@ -1,5 +1,21 @@
 # Priority-family status
 
+## Optional type propagation and real-code preview
+
+The configurable rewrite now covers optional fields/results and typed forwarding
+between records. Both the new optional fixture and the original regression fixture
+pass compilation, exact-output comparison and runtime/type-separation assertions.
+
+An isolated 18-file preview spans nine pagination result records, Pure wire types
+and constructor callers/tests. All original source hashes remain unchanged. Its full
+479-source API production overlay fails with eleven retained compiler errors in
+pagination arithmetic/comparison/rendering and media count rendering. No production
+fix is claimed. The next pass has concrete compiler evidence, rather than expanding
+the inventory again. See `models/pagination/preview-v1`; its sources and rule are
+sealed. Factory signatures, dependent modules, JS and tests still require validation.
+Confirmed findings remain outstanding; propagated fields remain candidates until
+reviewed. Copy automation remains paused and no detector refinement round was spent.
+
 ## Primitive rewrite fixture checkpoint
 
 ModelTypeRewrite now performs a configurable semantic rewrite of direct Int record

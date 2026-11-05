@@ -1,0 +1,111 @@
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:6:68 [0m[0m
+[31m6 |[0m  [33mdef[0m [36mnext[0m: [32mOption[0m[com.histmersion.api.[32mOffset[0m] = ([33mOption[0m.when(shown > [32m0[0m && offset + shown < total)(offset + shown)).map(com.histmersion.api.[33mOffset[0m.apply)
+[31m[31m  |[0m                                                              ^^^^^^^[0m
+[31m  |[0mvalue > is not a member of com.histmersion.api.RowCount, but could be made available as an extension method.
+[31m  |[0m
+[31m  |[0mOne of the following imports might make progress towards fixing the problem:
+[31m  |[0m
+[31m  |[0m  import cats.implicits.catsSyntaxPartialOrder
+[31m  |[0m  import cats.syntax.all.catsSyntaxPartialOrder
+[31m  |[0m  import io.github.iltotore.iron.autoRefine
+[31m  |[0m  import scala.math.Ordered.orderingToOrdered
+[31m  |[0m  import scala.math.Ordering.Implicits.infixOrderingOps
+[31m  |[0m  import cats.syntax.order.catsSyntaxPartialOrder
+[31m  |[0m  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[31m  |[0m
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:6:106 [0m[0m
+[31m6 |[0m  [33mdef[0m [36mnext[0m: [32mOption[0m[com.histmersion.api.[32mOffset[0m] = ([33mOption[0m.when(shown > [32m0[0m && offset + shown < total)(offset + shown)).map(com.histmersion.api.[33mOffset[0m.apply)
+[31m[31m  |[0m                                                                                                   ^^^^^^^^[0m
+[31m  |[0mvalue + is not a member of com.histmersion.api.Offset, but could be made available as an extension method.
+[31m  |[0m
+[31m  |[0mOne of the following imports might make progress towards fixing the problem:
+[31m  |[0m
+[31m  |[0m  import io.github.iltotore.iron.autoRefine
+[31m  |[0m  import scala.math.Fractional.Implicits.infixFractionalOps
+[31m  |[0m  import scala.math.Integral.Implicits.infixIntegralOps
+[31m  |[0m  import scala.math.Numeric.Implicits.infixNumericOps
+[31m  |[0m
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:8:23 [0m[0m
+[31m8 |[0m  [33mdef[0m [36misAll[0m: [32mBoolean[0m = offset == [32m0[0m && shown >= total
+[31m[31m  |[0m                       ^^^^^^^^^^^[0m
+[31m  |[0mValues of types com.histmersion.api.Offset and Int cannot be compared with == or !=
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:8:44 [0m[0m
+[31m8 |[0m  [33mdef[0m [36misAll[0m: [32mBoolean[0m = offset == [32m0[0m && shown >= total
+[31m[31m  |[0m                                      ^^^^^^^^[0m
+[31m  |[0mvalue >= is not a member of com.histmersion.api.RowCount, but could be made available as an extension method.
+[31m  |[0m
+[31m  |[0mOne of the following imports might make progress towards fixing the problem:
+[31m  |[0m
+[31m  |[0m  import cats.implicits.catsSyntaxPartialOrder
+[31m  |[0m  import cats.syntax.all.catsSyntaxPartialOrder
+[31m  |[0m  import io.github.iltotore.iron.autoRefine
+[31m  |[0m  import scala.math.Ordered.orderingToOrdered
+[31m  |[0m  import scala.math.Ordering.Implicits.infixOrderingOps
+[31m  |[0m  import cats.syntax.order.catsSyntaxPartialOrder
+[31m  |[0m  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[31m  |[0m
+[31m[31m-- [E134] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:14:33 [0m[0m
+[31m14 |[0m    [33mif[0m p.isAll [33mthen[0m [32ms"### [0m${math.max(p.total, p.shown)}[32m [0m$noun[32m"[0m
+[31m[31m   |[0m                            ^^^^^^^^[0m
+[31m   |[0mNone of the overloaded alternatives of [33mmethod[0m [32mmax[0m in [33mpackage[0m [32mscala.math[0m with types
+[31m   |[0m (x: Double, y: Double): Double
+[31m   |[0m (x: Float, y: Float): Float
+[31m   |[0m (x: Long, y: Long): Long
+[31m   |[0m (x: Int, y: Int): Int
+[31m   |[0mmatch arguments ((p.total : com.histmersion.api.RowCount), (p.shown : com.histmersion.api.RowCount))
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:18:18 [0m[0m
+[31m18 |[0m    [33mif[0m p.isAll || p.shown == [32m0[0m [33mthen[0m [32m""[0m
+[31m[31m   |[0m                  ^^^^^^^^^^^^[0m
+[31m   |[0mValues of types com.histmersion.api.RowCount and Int cannot be compared with == or !=
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:21:28 [0m[0m
+[31m21 |[0m      [33mval[0m [36mfull[0m = [33mif[0m p.total <= [33mFullSetMax[0m [33mthen[0m [32ms" — full set: limit=[0m${p.total}[32m"[0m [33melse[0m [32m""[0m
+[31m[31m   |[0m                    ^^^^^^^^^^[0m
+[31m   |[0mvalue <= is not a member of com.histmersion.api.RowCount, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import cats.implicits.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.all.catsSyntaxPartialOrder
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Ordered.orderingToOrdered
+[31m   |[0m  import scala.math.Ordering.Implicits.infixOrderingOps
+[31m   |[0m  import cats.syntax.order.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[31m   |[0m
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:22:32 [0m[0m
+[31m22 |[0m      [32ms"\n\n_showing [0m${p.offset + [32m1[0m}[32m–[0m${p.offset + p.shown}[32m of [0m${p.total}$next${full}[32m_"[0m
+[31m[31m   |[0m                       ^^^^^^^^^^[0m
+[31m   |[0mvalue + is not a member of com.histmersion.api.Offset, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Fractional.Implicits.infixFractionalOps
+[31m   |[0m  import scala.math.Integral.Implicits.infixIntegralOps
+[31m   |[0m  import scala.math.Numeric.Implicits.infixNumericOps
+[31m   |[0m
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:22:48 [0m[0m
+[31m22 |[0m      [32ms"\n\n_showing [0m${p.offset + [32m1[0m}[32m–[0m${p.offset + p.shown}[32m of [0m${p.total}$next${full}[32m_"[0m
+[31m[31m   |[0m                                       ^^^^^^^^^^[0m
+[31m   |[0mvalue + is not a member of com.histmersion.api.Offset, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Fractional.Implicits.infixFractionalOps
+[31m   |[0m  import scala.math.Integral.Implicits.infixIntegralOps
+[31m   |[0m  import scala.math.Numeric.Implicits.infixNumericOps
+[31m   |[0m
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala:27:13 [0m[0m
+[31m27 |[0m        [33mcase[0m [32m0[0m => empty
+[31m[31m   |[0m             ^[0m
+[31m   |[0mValues of types Int and com.histmersion.api.Offset cannot be compared with == or !=
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/pagination-api-compile-v1/modules/api/src/main/scala/com/histmersion/api/media/MediaMarkdown.scala:113:46 [0m[0m
+[31m113 |[0m    [33mOffsetPage[0m.markdown(l.page, [33mPlural[0m.noun(l.total, [32m"picture"[0m), [32m"_No pictures._"[0m, l.items)(mediaItemLine)
+[31m[31m    |[0m                                            ^^^^^^^[0m
+[31m    |[0m                    Found:    (l.total : com.histmersion.api.RowCount)
+[31m    |[0m                    Required: Long
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+11 errors found
+Compilation failed
