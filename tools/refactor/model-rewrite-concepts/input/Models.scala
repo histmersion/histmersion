@@ -19,6 +19,10 @@ object Calls:
   def echo(label: String): String = label
   def echoed: String = echo("echo")
   def unrelated: Unrelated = Unrelated("raw", 3L)
+  def aliases(keys: Set[String] = Set.empty): Set[String] = keys
+  def forwardedAliases(keys: Set[String]): Set[String] = aliases(keys)
+  def aliasContains(keys: Set[String], label: String): Boolean = keys.contains(label)
+  def repeatedAliases: Set[String] = aliases(Set("a", "a", "b"))
 
 object Rendering:
   def below(rs: List[Report], limit: Report): List[Report] = rs.filter(_.bytes < limit.bytes)

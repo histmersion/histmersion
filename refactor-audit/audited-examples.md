@@ -2,6 +2,25 @@
 
 ## Multi-concept model purpose review after aeb46ecb
 
+Citation propagation review: Source.Write.applyPut/applyEdges compare Edge.dst
+with the source citekey, and applyPut additionally checks membership in aliases.
+Typing only the method parameter would leave raw/typed comparisons. The configured
+review therefore adds Edge.src, Edge.dst and Finding.citekey to the same concept;
+the resulting citation-closure/review-1.tsv contains the previous 79 unchanged
+rows plus precisely these three stable IDs. Source.Write.toFinding constructs
+Finding with the same citekey. Finding IDs themselves remain separate.
+
+Set support is verified with membership, duplicate collapse, empty defaults,
+typed forwarding and compile-time raw-set rejection. Preview-7 propagates seven
+Source.Write signatures, including applyPut's alias set, across all matched callers.
+The raw-input parser edgeOf retains its primitive parameters; configured conversion
+occurs at that parse boundary. API compilation replaces the two former helper
+errors with seven further citation uses in CitationLint and Source.Put.of; four
+storage arithmetic diagnostics are unchanged. Eleven diagnostics remain, and
+no fixes are credited. WriteSuite's existing source patch/self-edge/alias cases
+were identified as relevant behavioral tests; they have not yet been run against
+the noncompiling overlay. No detector-refinement round was consumed.
+
 Preview-4 source review groups the additional boundaries by purpose: Acquire's
 browser-download prose, IngestMarkdown's shortened checksum, SourcesMarkdown's
 metadata display, JobKinds.subject's mixed display label, Place.Edits.toInput's
