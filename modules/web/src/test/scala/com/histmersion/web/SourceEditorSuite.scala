@@ -43,7 +43,7 @@ class SourceEditorSuite extends munit.FunSuite:
   test("an unchanged form is no patch at all") {
     assertEquals(SourceEditor.toPatch(orig, d0), Right(None))
     // whitespace alone is not a change
-    assertEquals(SourceEditor.toPatch(orig, d0.modify(_.title).setTo(orig.title + "  ").modify(_.periodStart).setTo("-4500")), Right(None))
+    assertEquals(SourceEditor.toPatch(orig, d0.modify(_.title).setTo(orig.title.value + "  ").modify(_.periodStart).setTo("-4500")), Right(None))
   }
 
   test("only the changed parts are sent, with the loaded updatedAt as the precondition") {
@@ -67,7 +67,7 @@ class SourceEditorSuite extends munit.FunSuite:
     val p = SourceEditor.toPatch(orig, d).toOption.flatten.get
     assertEquals(p.topics, Some(List("pie_origins", "domestication")))
     assertEquals(p.regions, Some(Nil))
-    assertEquals(p.metadata.flatMap(_.doi), Some("10.1515/9781400831104"))
+    assertEquals(p.metadata.flatMap(_.doi), Some(com.histmersion.api.library.Doi("10.1515/9781400831104")))
     assertEquals(p.period, Some(Period.Input(-100, 200)))
   }
 

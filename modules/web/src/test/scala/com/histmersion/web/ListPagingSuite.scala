@@ -47,21 +47,21 @@ class ListPagingSuite extends munit.FunSuite:
 
   test("an older page is appended, a row already shown left out, and the listing is extended"):
     val cur = ListPaging.first(List(job("c"), job("b")), page(5, Some("b")))
-    val more = ListPaging.appended(cur, List(job("b"), job("a")), page(5, None), _.id)
-    assertEquals(more.rows.map(_.id), List("c", "b", "a"))
+    val more = ListPaging.appended(cur, List(job("b"), job("a")), page(5, None), _.id.value)
+    assertEquals(more.rows.map(_.id), List("c", "b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
     assert(more.extended && !more.hasOlder)
     assertEquals(ListPaging.heading(more, "job", None, _.status), "3 jobs") // no counts: the rows count
 
   test("a poll asks for the newest page, or down to the last row shown once older pages are loaded"):
     val cur = ListPaging.first(List(job("c"), job("b")), page(5, Some("b")))
-    assertEquals(ListPaging.pollUpTo(cur, _.id), None)
-    val ext = ListPaging.appended(cur, List(job("a")), page(5, Some("a")), _.id)
-    assertEquals(ListPaging.pollUpTo(ext, _.id), Some("a"))
+    assertEquals(ListPaging.pollUpTo(cur, _.id.value), None)
+    val ext = ListPaging.appended(cur, List(job("a")), page(5, Some("a")), _.id.value)
+    assertEquals(ListPaging.pollUpTo(ext, _.id.value), Some("a"))
     // its answer replaces the rows: a new one on top, every loaded one kept, still extended
     val polled = ListPaging.polled(ext, List(job("d"), job("c"), job("b"), job("a")), page(6, Some("a")))
-    assertEquals(polled.rows.map(_.id), List("d", "c", "b", "a"))
+    assertEquals(polled.rows.map(_.id), List("d", "c", "b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
     assert(polled.extended)
-    assertEquals(ListPaging.pollUpTo(polled, _.id), Some("a"))
+    assertEquals(ListPaging.pollUpTo(polled, _.id.value), Some("a"))
 
   test("a filter button counts the whole list from the server, the rows only when it sent nothing"):
     val l =

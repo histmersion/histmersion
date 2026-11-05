@@ -1,0 +1,64 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[success] elapsed time: 2 s, cache 100%, 31 disk cache hits
+[info] compiling 21 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/sjs1/scala-3.10.0/histmersion-web/test-classes ...
+[info] done compiling
+[success] elapsed time: 10 s, cache 95%, 38 disk cache hits, 2 onsite tasks
+[info] Fast optimizing /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/sjs1/scala-3.10.0/histmersion-web/histmersion-web-test-fastopt
+Test run com.histmersion.web.ListFiltersViewSuite started
+Test run com.histmersion.web.TiledLayersSuite started
+com.histmersion.web.TiledLayersSuite: finished 0.006s
+Test run com.histmersion.web.TiledLayersSuite finished: 0 failed, 0 ignored, 8 total 0.006s
+com.histmersion.web.ListFiltersViewSuite: finished 0.019s
+Test run com.histmersion.web.ListFiltersViewSuite finished: 0 failed, 0 ignored, 8 total 0.019s
+Test run com.histmersion.web.ActivityViewSuite started
+com.histmersion.web.ActivityViewSuite: finished 0.011s
+Test run com.histmersion.web.ActivityViewSuite finished: 0 failed, 0 ignored, 4 total 0.011s
+Test run com.histmersion.web.MapRegionsSuite started
+Test run com.histmersion.web.SourceEditorSuite started
+com.histmersion.web.MapRegionsSuite: finished 0.015s
+Test run com.histmersion.web.MapRegionsSuite finished: 0 failed, 0 ignored, 5 total 0.015s
+Test run com.histmersion.web.EventPlaybackSuite started
+com.histmersion.web.SourceEditorSuite: finished 0.015s
+Test run com.histmersion.web.SourceEditorSuite finished: 0 failed, 0 ignored, 7 total 0.015s
+com.histmersion.web.EventPlaybackSuite: finished 0.013s
+Test run com.histmersion.web.EventPlaybackSuite finished: 0 failed, 0 ignored, 8 total 0.013s
+Test run com.histmersion.web.PolledListSuite started
+Test run com.histmersion.web.ToolsSuite started
+Test run com.histmersion.web.EventMarkersSuite started
+com.histmersion.web.PolledListSuite: finished 0.010s
+Test run com.histmersion.web.PolledListSuite finished: 0 failed, 0 ignored, 11 total 0.010s
+Test run com.histmersion.web.UiStatePreviewSuite started
+Test run com.histmersion.web.ListPagingSuite started
+com.histmersion.web.UiStatePreviewSuite: finished 0.008s
+Test run com.histmersion.web.UiStatePreviewSuite finished: 0 failed, 0 ignored, 6 total 0.008s
+com.histmersion.web.EventMarkersSuite: finished 0.019s
+Test run com.histmersion.web.EventMarkersSuite finished: 0 failed, 0 ignored, 15 total 0.019s
+Test run com.histmersion.web.PreviewSuite started
+com.histmersion.web.ListPagingSuite: finished 0.016s
+Test run com.histmersion.web.ListPagingSuite finished: 0 failed, 0 ignored, 6 total 0.016s
+com.histmersion.web.PreviewSuite: finished 0.007s
+Test run com.histmersion.web.PreviewSuite finished: 0 failed, 0 ignored, 7 total 0.007s
+Test run com.histmersion.web.PointKindsSuite started
+com.histmersion.web.ToolsSuite: finished 0.040s
+Test run com.histmersion.web.ToolsSuite finished: 0 failed, 0 ignored, 42 total 0.040s
+com.histmersion.web.PointKindsSuite: finished 0.012s
+Test run com.histmersion.web.PointKindsSuite finished: 0 failed, 0 ignored, 10 total 0.012s
+Test run com.histmersion.web.RouteSuite started
+com.histmersion.web.RouteSuite: finished 0.010s
+Test run com.histmersion.web.RouteSuite finished: 0 failed, 0 ignored, 12 total 0.010s
+[info] Passed: Total 149, Failed 0, Errors 0, Passed 149
+[success] elapsed time: 9 s, cache 72%, 47 disk cache hits, 18 onsite tasks

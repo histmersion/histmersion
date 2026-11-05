@@ -53,13 +53,8 @@ object DownloadJobs:
             cls := "activity-list download-jobs-list",
             js.map { j =>
               val e = Entry(
-                s"job:${j.id}",
-                "job",
-                j.createdAt,
-                state = j.status,
-                what = j.kind,
-                text = j.progress.getOrElse(""),
-                job = Some(j.id)
+                s"job:${j.id}", "job", j.createdAt, state = j.status, what = j.kind.value,
+                text = j.progress.getOrElse(""), job = Some(j.id.value)
               )
               ActivityView.row(e, () => refresh())
             }

@@ -73,12 +73,12 @@ class TiledLayersSuite extends munit.FunSuite:
     val e = TileDecode.event(f).get
     assertEquals(
       (e.id, e.label, e.kind, e.tier, e.precision),
-      ("ev1", "Fall of Troy", "destruction", "catalogue", "approximate")
+      (com.histmersion.api.catalogue.Event.Id("ev1"), "Fall of Troy", "destruction", "catalogue", "approximate")
     )
     assertEquals(e.timeSpan, TimeSpan(Some(-1190L), None, None, Some(-1180L)))
     assertEquals(
       (e.lat, e.lon, e.placeLabel, e.dating, e.outline),
-      (40.0, 26.2, Some("Troy"), Some("c. 1185 BCE"), None)
+      (com.histmersion.api.catalogue.Latitude(40.0), com.histmersion.api.catalogue.Longitude(26.2), Some("Troy"), Some("c. 1185 BCE"), None)
     )
 
   test("a picture feature is the media layer's hit"):

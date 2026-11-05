@@ -24,8 +24,7 @@ class EventPlaybackSuite extends munit.FunSuite:
     (Some("p")).map(com.histmersion.api.catalogue.Place.Id.apply),
     Some("Kadesh")
   )
-  private val migration = kadesh.modify(
-    _.id).setTo("m").modify(_.label).setTo("Yamnaya expansion").modify(_.kind).setTo("migration").modify(_.scale).setTo(EventScale.Regional).modify(_.timeSpan).setTo(TimeSpan(Some(-3300), None, None, Some(-2200))).modify(_.placeLabel).setTo(None
+  private val migration = kadesh.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("m")).modify(_.label).setTo("Yamnaya expansion").modify(_.kind).setTo("migration").modify(_.scale).setTo(EventScale.Regional).modify(_.timeSpan).setTo(TimeSpan(Some(-3300), None, None, Some(-2200))).modify(_.placeLabel).setTo(None
   )
 
   test("alpha: nothing before the span, full inside it, a linear fade after it, then nothing"):
@@ -68,8 +67,8 @@ class EventPlaybackSuite extends munit.FunSuite:
     assertEquals(EventPlayback.note(migration), s"${Fmt.display("migration")} · ${Fmt.yr(-3300)}–${Fmt.yr(-2200)}")
 
   test("events at one point stack: slots number the SHOWN ones in their order there"):
-    assertEquals(EventPlayback.anchorKey(kadesh), EventPlayback.anchorKey(kadesh.modify(_.id).setTo("other")))
-    assertNotEquals(EventPlayback.anchorKey(kadesh), EventPlayback.anchorKey(kadesh.modify(_.lat).setTo((34.56: _root_.scala.Double))))
+    assertEquals(EventPlayback.anchorKey(kadesh), EventPlayback.anchorKey(kadesh.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("other"))))
+    assertNotEquals(EventPlayback.anchorKey(kadesh), EventPlayback.anchorKey(kadesh.modify(_.lat).setTo(com.histmersion.api.catalogue.Latitude(34.56))))
     val order = List("first", "second", "third")
     assertEquals(EventPlayback.slots(order, _ => true), Map("first" -> 0, "second" -> 1, "third" -> 2))
     // the first gone, the others move up

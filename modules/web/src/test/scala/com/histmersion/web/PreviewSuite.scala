@@ -90,8 +90,7 @@ class PreviewSuite extends munit.FunSuite:
 
   test("a place card: an undated import says so; a site's point is no missing boundary; a seed place names its source"):
     val gn = patones.copy(
-      place = patones.place.modify(
-        _.id).setTo("geonames_1").modify(_.label).setTo("Boğazkale").modify(_.kind).setTo(Place.Kind.Site).modify(_.periodEnd).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.dating).setTo(com.histmersion.api.catalogue.Place.Dating.Unknown).modify(_.importSource).setTo(Some("geonames")
+      place = patones.place.modify(_.id).setTo(com.histmersion.api.catalogue.Place.Id("geonames_1")).modify(_.label).setTo("Boğazkale").modify(_.kind).setTo(Place.Kind.Site).modify(_.periodEnd).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.dating).setTo(com.histmersion.api.catalogue.Place.Dating.Unknown).modify(_.importSource).setTo(Some("geonames")
       ),
       links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("geonames_1"), "geonames", "1", "exact_match")),
       descriptions = Nil
@@ -136,8 +135,7 @@ class PreviewSuite extends munit.FunSuite:
 
   test("a place card: a grid-square point says it is approximate; a people is a group, not a missing boundary"):
     val thessalia = patones.copy(
-      place = patones.place.modify(
-        _.id).setTo("pleiades_1001895").modify(_.label).setTo("Thessalia").modify(_.kind).setTo(Place.Kind.Region).modify(_.importSource).setTo(None).modify(_.dating).setTo(com.histmersion.api.catalogue.Place.Dating.Stated).modify(_.periodEnd).setTo((None: _root_.scala.Option[_root_.scala.Long])
+      place = patones.place.modify(_.id).setTo(com.histmersion.api.catalogue.Place.Id("pleiades_1001895")).modify(_.label).setTo("Thessalia").modify(_.kind).setTo(Place.Kind.Region).modify(_.importSource).setTo(None).modify(_.dating).setTo(com.histmersion.api.catalogue.Place.Dating.Stated).modify(_.periodEnd).setTo((None: _root_.scala.Option[_root_.scala.Long])
       ),
       links = Nil,
       descriptions = Nil,
@@ -147,7 +145,7 @@ class PreviewSuite extends munit.FunSuite:
     assert(t.facts.contains("location: approximate (atlas grid square)"), t.facts.toString)
     assert(t.facts.contains(com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote), t.facts.toString)
     val ubii = thessalia.copy(
-      place = thessalia.place.modify(_.id).setTo("pleiades_109400").modify(_.label).setTo("Ubii").modify(_.kind).setTo(Place.Kind.People),
+      place = thessalia.place.modify(_.id).setTo(com.histmersion.api.catalogue.Place.Id("pleiades_109400")).modify(_.label).setTo("Ubii").modify(_.kind).setTo(Place.Kind.People),
       locationPrecision = Place.Precision.Stated
     )
     val u = Preview.card(ubii)

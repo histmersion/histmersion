@@ -2,6 +2,25 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Web production and test compilation now pass, followed by 149 selected behavioral
+tests with zero failures or ignored tests (applied-web-build-7). Coverage includes
+event playback/markers, map point rendering and tiles, preview cards, routes,
+list filters, pagination/polling, activity controls and source editing. Expected
+values and ordering remain unchanged; expected IDs/coordinates now use their
+corresponding newtypes. All 3167 source hashes stayed stable during verification.
+The existing recipe pipeline applied twenty production key/caller matches, two
+activity ID adaptations, and twenty-eight test matches. Inline optics errors were
+exposed progressively; the final source review included the remaining relevant
+web test optics sites, excluding unrelated primitive model fields. Failed build
+observations 3 through 6 are retained beside the passing build 7.
+
+These are targeted caller adaptations, not new general automation coverage.
+Raw Route/WindowKey/Preview identifiers, list cursor keys, queue fulfilment and
+Activity.Entry fields remain legacy modeling obligations, not accepted exceptions.
+The 87 original cohort identities remain applied-unverified pending downstream
+server/db closure and stable-ID remeasurement. No confirmed findings were removed
+from the ledger and no source rollback occurred.
+
 Web caller closure advanced without reverting the applied cohort. The existing
 AST recipe pipeline applied thirteen reviewed matches for typed job-kind equality
 and display/coordinate boundaries, then four matches carrying JobInfo.Id through

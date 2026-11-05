@@ -363,7 +363,7 @@ object QueueView:
             )(j =>
               span(
                 "Re-check running as ",
-                RouteLink(Route.Job(j.id), s"job ${j.id.take(8)}"),
+                RouteLink(Route.Job(j.id.value), s"job ${j.id.value.take(8)}"),
                 " — it closes what it finds; ",
                 RouteLink(Route.Activity(ActivityTab.Jobs), "follow it in Activity"),
                 "."
@@ -761,7 +761,7 @@ object QueueView:
                   span(cls := "hit-title", h.title.value),
                   h.year.map(y => span(cls := "muted", s" ($y)")),
                   span(cls := "muted hit-key", " · ", code(h.citekey.value)),
-                  onClick --> (_ => { ops.fulfil(item, h.citekey); close() })
+                  onClick --> (_ => { ops.fulfil(item, h.citekey.value); close() })
                 )
               )
             )

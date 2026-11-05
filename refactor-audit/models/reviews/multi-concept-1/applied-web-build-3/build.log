@@ -1,0 +1,33 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 41 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/sjs1/scala-3.10.0/histmersion-web/classes ...
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Pages.scala:240:94 
+[error] 240 |      s"job:${j.id}", "job", j.createdAt, state = j.status, what = j.kind.value, job = Some(j.id)
+[error]     |                                                                                            ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/settings/DownloadJobs.scala:57:62 
+[error] 57 |                text = j.progress.getOrElse(""), job = Some(j.id)
+[error]    |                                                            ^^^^
+[error]    |                  Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]    |                  Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] two errors found
+[error] (web / Compile / compileIncremental) Compilation failed
+[error] elapsed time: 11 s, cache 96%, 29 disk cache hits, 1 onsite task
