@@ -45,14 +45,14 @@ object PassageFinder:
       context: Int,
       maxMatches: Int,
       timeoutMs: Long
-  ): Either[String, PassageResult] =
+  )(using timer: com.histmersion.util.time.Timer): Either[String, PassageResult] =
     val q = Option(query).getOrElse("").trim
     if q.isEmpty then Left("the query is empty — give the words to find")
     else
       compile(q, regex).flatMap { pattern =>
         val text = body(segments)
         val folded = Folded(text)
-        val until = System.nanoTime() + timeoutMs.max(1L) * 1_000_000L
+        val until = timer.after(scala.concurrent.duration.FiniteDuration(timeoutMs.max(1L), scala.concurrent.duration.MILLISECONDS))
         try
           val (spans, capped) = matches(pattern, folded, text, maxMatches.max(1), until)
           val ranges = merge(spans, text, context.max(0))
@@ -146,26 +146,26 @@ object PassageFinder:
   /** A view of the folded body that gives up once `until` (System.nanoTime) has passed: the regex engine reads every
     * character through `charAt`, so a pathological pattern is stopped mid-scan.
     */
-  final private class Bounded(s: CharSequence, until: Long) extends CharSequence:
+  final private class Bounded(s: CharSequence, until: com.histmersion.util.time.Timer.Deadline) extends CharSequence:
     // a counter, so the clock is read once per 64 Ki characters rather than on every one
     private var reads = 0
     def length: Int = s.length
     def charAt(i: Int): Char =
       reads += 1
-      if (reads & 0xffff) == 0 && System.nanoTime() > until then throw new TimedOut
+      if (reads & 0xffff) == 0 && until.exceeded then throw new TimedOut
       s.charAt(i)
     def subSequence(a: Int, b: Int): CharSequence = new Bounded(s.subSequence(a, b), until)
     override def toString: String = s.toString
 
   /** Every non-empty match as `[start, end)` in the ORIGINAL body, in order, up to `max`. */
-  private def matches(p: Pattern, f: Folded, source: String, max: Int, until: Long): (Vector[(Int, Int)], Boolean) =
+  private def matches(p: Pattern, f: Folded, source: String, max: Int, until: com.histmersion.util.time.Timer.Deadline): (Vector[(Int, Int)], Boolean) =
     val m: Matcher = p.matcher(new Bounded(f.text, until))
     val out = Vector.newBuilder[(Int, Int)]
     // the Matcher is itself a cursor, so the loop around it counts with two local vars
     var n = 0
     var capped = false
     while !capped && m.find() do
-      if System.nanoTime() > until then throw new TimedOut
+      if until.exceeded then throw new TimedOut
       if m.end() > m.start() then
         if n == max then capped = true
         else

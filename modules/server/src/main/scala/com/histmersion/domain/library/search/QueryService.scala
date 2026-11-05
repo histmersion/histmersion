@@ -15,10 +15,10 @@ trait QueryService:
   def tables: List[SchemaTable]
 
 object QueryService:
-  def apply(queries: DataSource, schema: DataSource): QueryService =
+  def apply(queries: DataSource, schema: DataSource)(using timer: com.histmersion.util.time.Timer): QueryService =
     Implementation(Transactor(queries), Transactor(schema))
 
-  final private class Implementation(queries: Transactor, schema: Transactor) extends QueryService:
+  final private class Implementation(queries: Transactor, schema: Transactor)(using timer: com.histmersion.util.time.Timer) extends QueryService:
     def run(statement: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int): Either[String, QueryResult] =
       try queries.readOnlyRollback(timeoutMs)(QueryRepo.run(statement, maxRows, maxCellChars))
       catch case error: java.sql.SQLException => Left(QueryRepo.message(error))

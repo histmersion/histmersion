@@ -12,5 +12,5 @@ final case class CheckContext(
     config: AppConfig,
     dataSource: DataSource,
     format: (String => Boolean) => FormatChecker,
-    write: GuardedWrite
+    write: GuardedWrite, timer: com.histmersion.util.time.Timer
 )

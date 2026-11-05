@@ -13,6 +13,8 @@ import com.histmersion.api.catalogue.Place
 
 /** The db suites' reads of the search on a database of their own. */
 object SearchFixtures:
+  private given com.histmersion.util.time.Timer = new com.histmersion.util.time.Timer { def start(): com.histmersion.util.time.Timer.Measure = new com.histmersion.util.time.Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.Duration.Zero } }
+
   def sources(ds: DataSource, filter: Filter, snippetWords: Int, scope: PlaceScope = PlaceScope.empty): SearchResult =
     connect(ds)(SearchRepo.sources(filter, snippetWords, scope))
   def count(ds: DataSource, filter: Filter, scope: PlaceScope = PlaceScope.empty): Int =

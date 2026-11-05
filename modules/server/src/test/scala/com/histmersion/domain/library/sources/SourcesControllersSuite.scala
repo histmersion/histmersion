@@ -64,7 +64,7 @@ class SourcesControllersSuite extends munit.FunSuite:
       () => AppConfig.load(),
       gate,
       Clock.fixed(Instant.parse("2026-11-01T12:00:00Z"), ZoneOffset.UTC)
-    )
+    )(using new com.histmersion.util.time.SystemTimer)
 
   private val put =
     Source.Put(title = "Walls", body = Some("# Walls\n\n## Gate\n\nThe gate of Zqtell.\n"), notes = Some("ok"))

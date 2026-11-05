@@ -31,7 +31,7 @@ object PlacesData:
       cfg.places.pointToleranceKm
     )
 
-  private def geometry(c: CheckContext): PlaceGeometry = PlaceGeometry(Transactor(c.dataSource))
+  private def geometry(c: CheckContext): PlaceGeometry = PlaceGeometry(Transactor(c.dataSource))(using c.timer)
 
   /** `place-kind`: what the record says a place is, where its source filed it otherwise. */
   final private class Kind(val owner: DataOwner) extends CheckRule:

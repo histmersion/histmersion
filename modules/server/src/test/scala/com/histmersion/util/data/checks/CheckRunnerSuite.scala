@@ -37,7 +37,7 @@ class CheckRunnerSuite extends munit.FunSuite:
     Fake("c", 0, fixing("c fixed", 4, FixWhen.WhenNamed, 1))
   )
   private val runner = CheckRunner(registered, order, NoDatabase)
-  private lazy val context = CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true)
+  private lazy val context = CheckContext(AppConfig.load(), null, _ => (_, _, _) => Nil, (_, _, _) => true, new com.histmersion.util.time.SystemTimer)
 
   test("the rules in the stated order, an unordered one last"):
     assertEquals(runner.names, List("a", "b", "c", "z"))

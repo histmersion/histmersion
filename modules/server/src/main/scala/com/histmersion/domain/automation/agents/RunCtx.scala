@@ -391,7 +391,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           progress(s"$name (attempt $attempt, ${client.model.wire})")
           val started = java.time.Instant.now(engine.agents.clock)
           val budget = engine.budgetInterceptor(run.id, billing)
-          val latency = LatencyInterceptor(engine.llmSlots, () => engine.beat(run.id))
+          val latency = LatencyInterceptor(engine.llmSlots, () => engine.beat(run.id))(using engine.agents.timer)
           val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, billing)
           val first = FirstCallProbe()
           // the agent's own `max-turns` (or the step's override): a reviewer that must look up 6–10

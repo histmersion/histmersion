@@ -52,7 +52,7 @@ final class LibraryWiring(
     cfg,
     deps.maintenance,
     deps.clock
-  )
+  )(using deps.timer)
 
   val citations: CitationsControllers =
     CitationsControllers(CitationService(deps.transactor), sourceStore, deps.maintenance)
@@ -65,7 +65,7 @@ final class LibraryWiring(
 
   val search: SearchControllers = SearchControllers(searchStore, filters, places, cfg)
 
-  val query: QueryControllers = QueryControllers(QueryService(deps.queryDs, deps.ds), cfg)
+  val query: QueryControllers = QueryControllers(QueryService(deps.queryDs, deps.ds)(using deps.timer), cfg)
 
 object LibraryWiring:
 

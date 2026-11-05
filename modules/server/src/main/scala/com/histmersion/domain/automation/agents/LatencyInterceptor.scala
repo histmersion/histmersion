@@ -21,7 +21,7 @@ import scala.jdk.CollectionConverters.*
 /** Times each LLM call of a step and holds one of the server-wide `max-llm-calls-in-flight` slots while it runs, so
   * parallel steps and concurrent runs together never exceed the cap.
   */
-final private[automation] class LatencyInterceptor(slots: Semaphore, beat: () => Unit = () => ())
+final private[automation] class LatencyInterceptor(slots: Semaphore, beat: () => Unit = () => ())(using timer: com.histmersion.util.time.Timer)
     extends AgentInterceptor[Identity]:
   /** Per-call latencies, in call order. A `var` local to one step's interceptor instance. */
   @volatile var millis: Vector[Int] = Vector.empty
@@ -29,9 +29,9 @@ final private[automation] class LatencyInterceptor(slots: Semaphore, beat: () =>
     // waiting for a slot behind other runs' calls is not a stall: beat while waiting
     while !slots.tryAcquire(Engine.BeatWhileWaitingSeconds, java.util.concurrent.TimeUnit.SECONDS) do beat()
     beat()
-    val t0 = System.nanoTime()
+    val t0 = timer.start()
     try next
     finally
-      millis = millis :+ ((System.nanoTime() - t0) / 1000000).toInt
+      millis = millis :+ t0.elapsed.toMillis.toInt
       slots.release()
       beat()

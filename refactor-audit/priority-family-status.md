@@ -1,5 +1,20 @@
 # Priority-family status
 
+## Monotonic and polling batch wired
+
+All thirteen remaining reviewed timing occurrences are replaced through supplied
+Timer/Pause capabilities. Full production/test compilation and 24 core timer/passage
+tests pass. The production capability scan covers 2,377 files: 118 → 105 occurrences.
+Identity reconciliation finds the exact reviewed removals, no other additions and
+no changed residual multiplicities. All 42 reviewed clock occurrences are repaired.
+
+Two adapter clock reads and six composition selections remain explicit allowed
+boundary evidence. A new factory restriction rejects direct concrete adapter access
+in domain fixtures. Its prefix-prototype false positive and exact-symbol correction
+are preserved. Capability refinement round 1/2 is consumed; independent acceptance
+remains unestablished. Database/query/backup runtime and the full multi-family history
+gate have not been rerun. See monotonic/README.md and monotonic/reconciliation-1.
+
 ## Wall-clock batch verified
 
 Scalafix repaired all 29 reviewed production wall-clock occurrences (28 anchors)

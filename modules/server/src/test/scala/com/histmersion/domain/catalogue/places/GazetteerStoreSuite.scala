@@ -59,7 +59,7 @@ class GazetteerStoreSuite extends com.histmersion.db.DbSuite:
       sources(name),
       http,
       PlaceService(db),
-      PlaceGeometry(db),
+      PlaceGeometry(db)(using new com.histmersion.util.time.SystemTimer),
       dryRun = false,
       cfg.places.pointToleranceKm
     )

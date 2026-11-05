@@ -185,7 +185,7 @@ class PointAreaRepoSuite extends com.histmersion.db.DbSuite with com.histmersion
     connect(ds)(sql"SELECT 1 FROM places WHERE id = $id".query[Int].run().nonEmpty)
   private val kinds = Gazetteer.DefaultPointAreaKinds
   private val rule = Lint.rule(Lint.PlaceImportedPointArea).get
-  private lazy val geometry = PlaceGeometry(com.histmersion.util.database.Transactor(ds))
+  private lazy val geometry = PlaceGeometry(com.histmersion.util.database.Transactor(ds))(using new com.histmersion.util.time.SystemTimer)
   private def settings(batch: Int, budgetMs: Long) =
     PointAreaRepo.Settings(kinds, batch, budgetMs, cfg.places.pointToleranceKm)
 
