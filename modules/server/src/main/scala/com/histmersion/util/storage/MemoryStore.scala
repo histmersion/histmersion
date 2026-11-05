@@ -147,8 +147,12 @@ object MemoryStore:
   /** The modification times of an in-memory store: one later than the last for each write. */
   private val ticks = java.util.concurrent.atomic.AtomicLong()
 
-  final case class Entry(bytes: Array[Byte], modified: Instant):
+  final case class Entry(bytes: Entry.Bytes, modified: Instant):
     def size: ByteCount = ByteCount.applyUnsafe(bytes.length.toLong)
+
+  object Entry:
+    type Bytes = Bytes.T
+    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Files(files: Map[Store.Key, Entry], directories: Set[Store.Key])
 

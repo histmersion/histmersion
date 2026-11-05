@@ -1,10 +1,13 @@
 package com.histmersion.plugin.testkit
 
 /** A canned answer of [[HttpMode.Stub]]. */
-final case class StubAnswer(status: StubAnswer.Status, body: Array[Byte], headers: Map[StubAnswer.HeadersKey, StubAnswer.HeadersValue] = Map.empty)
+final case class StubAnswer(status: StubAnswer.Status, body: StubAnswer.Body, headers: Map[StubAnswer.HeadersKey, StubAnswer.HeadersValue] = Map.empty)
 
 object StubAnswer:
   /** A 200 with this body. */
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Status = Status.T
   object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeadersKey = HeadersKey.T

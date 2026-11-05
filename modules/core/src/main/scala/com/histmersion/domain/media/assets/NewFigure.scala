@@ -7,7 +7,7 @@ import scala.annotation.tailrec
 /** One figure of a source as the caller supplies it — decoded bytes, not base64 — to be stored with the source's
   * Markdown (plan §1.8): keyed by `(citekey, name)`, which is exactly the `assets/<name>` link the body carries.
   */
-final case class NewFigure(name: NewFigure.Name, mime: NewFigure.Mime, bytes: Array[Byte], width: Option[NewFigure.Width], height: Option[NewFigure.Height]):
+final case class NewFigure(name: NewFigure.Name, mime: NewFigure.Mime, bytes: NewFigure.Bytes, width: Option[NewFigure.Width], height: Option[NewFigure.Height]):
 
   /** The digest the store deduplicates a source's figures by. */
   def sha256: String = NewFigure.sha256(bytes)
@@ -15,6 +15,9 @@ final case class NewFigure(name: NewFigure.Name, mime: NewFigure.Mime, bytes: Ar
 object NewFigure:
 
   /** Decode a wire [[AssetInput]]; `Left` with a readable reason when the payload is unusable. */
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Mime = Mime.T

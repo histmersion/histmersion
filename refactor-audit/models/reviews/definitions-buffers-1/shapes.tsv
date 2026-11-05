@@ -1,0 +1,31 @@
+path	line	before-ast	after-ast
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	406	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.room	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	407	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.poolUsed.Key	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	407	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.poolUsed.Value	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	408	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.mgrUsed.Key	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	408	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.mgrUsed.Value	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	409	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.gathering	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	411	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.started.Part2	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/library/sources/SourceMatcher.scala	230	UNRESOLVED com.histmersion.domain.library.sources.SourceMatcher.Scored.rank	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/library/sources/SourceMatcher.scala	230	UNRESOLVED com.histmersion.domain.library.sources.SourceMatcher.Scored.flags	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/media/assets/NewFigure.scala	10	com.histmersion.domain.media.assets.NewFigure#bytes/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	NewFigure.Bytes
+modules/db/src/main/scala/com/histmersion/domain/media/assets/AssetBytesRow.scala	5	com.histmersion.domain.media.assets.AssetBytesRow#bytes/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	AssetBytesRow.Bytes
+modules/db/src/main/scala/com/histmersion/domain/media/assets/ProviderAsset.scala	12	com.histmersion.domain.media.assets.ProviderAsset#bytes/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	ProviderAsset.Bytes
+modules/db/src/main/scala/com/histmersion/domain/media/assets/ProviderAsset.scala	15	com.histmersion.domain.media.assets.ProviderAsset#thumb/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	ProviderAsset.Thumb
+modules/db/src/main/scala/com/histmersion/util/data/exchange/CarriedOut.scala	4	com.histmersion.util.data.exchange.CarriedOut#payload/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	CarriedOut.Payload
+modules/plugin-api/src/main/scala/com/histmersion/plugin/FetchedFile.scala	20	com.histmersion.plugin.FetchedFile#bytes/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	FetchedFile.Bytes
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Plugin.scala	185	com.histmersion.plugin.Plugin.HttpResponse#body/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	HttpResponse.Body
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/HttpAnswer.scala	8	com.histmersion.pluginhost.HttpAnswer#body/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	HttpAnswer.Body
+modules/plugin-testkit/src/main/scala/com/histmersion/plugin/testkit/StubAnswer.scala	4	com.histmersion.plugin.testkit.StubAnswer#body/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	StubAnswer.Body
+modules/server/src/main/scala/com/histmersion/domain/library/collections/StoredOriginal.scala	6	CORRECTION com.histmersion.domain.library.collections.StoredOriginal#bytes/buffer Type.Apply(\n  Type.Name("Array"),\n  Type.ArgClause(List(\n    Type.Select(Term.Name("StoredOriginal"), Type.Name("Bytes"))\n  ))\n)	StoredOriginal.Bytes
+modules/server/src/main/scala/com/histmersion/util/basemap/GeoTiffGrid.scala	76	com.histmersion.util.basemap.GeoTiffGrid.Entry#inline/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	Entry.Inline
+modules/server/src/main/scala/com/histmersion/util/basemap/Vp8l.scala	16	com.histmersion.util.basemap.Vp8l.Image#pixels/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Int"))))	Image.Pixels
+modules/server/src/main/scala/com/histmersion/util/basemap/Vp8l.scala	207	com.histmersion.util.basemap.Vp8l.Transform#data/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Int"))))	Transform.Data
+modules/server/src/main/scala/com/histmersion/util/ocr/ConverterClient.scala	32	com.histmersion.util.ocr.ConverterClient.Thumb#bytes/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	Thumb.Bytes
+modules/server/src/main/scala/com/histmersion/util/storage/MemoryStore.scala	150	com.histmersion.util.storage.MemoryStore.Entry#bytes/buffer Type.Apply(Type.Name("Array"), Type.ArgClause(List(Type.Name("Byte"))))	Entry.Bytes
+modules/upstreams/src/main/scala/com/histmersion/upstreams/jats/Jats.scala	34	UNRESOLVED com.histmersion.upstreams.jats.Jats.Frame.name	Type.Name("String")
+modules/upstreams/src/main/scala/com/histmersion/upstreams/jats/Jats.scala	34	UNRESOLVED com.histmersion.upstreams.jats.Jats.Frame.attrs.Key	Type.Name("String")
+modules/upstreams/src/main/scala/com/histmersion/upstreams/jats/Jats.scala	34	UNRESOLVED com.histmersion.upstreams.jats.Jats.Frame.attrs.Value	Type.Name("String")
+modules/web/src/main/scala/com/histmersion/web/LabelPlacement.scala	235	UNRESOLVED com.histmersion.web.LabelPlacement.Cell.x	Type.Name("Double")
+modules/web/src/main/scala/com/histmersion/web/LabelPlacement.scala	235	UNRESOLVED com.histmersion.web.LabelPlacement.Cell.y	Type.Name("Double")
+modules/web/src/main/scala/com/histmersion/web/LabelPlacement.scala	235	UNRESOLVED com.histmersion.web.LabelPlacement.Cell.half	Type.Name("Double")

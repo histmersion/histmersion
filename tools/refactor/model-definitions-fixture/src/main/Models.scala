@@ -19,3 +19,10 @@ object Choice:
     case One
 
 final case class Payload(bytes: Array[Byte])
+
+final case class Packet(bytes: Array[Byte], pixels: Option[Array[Int]])
+
+final case class Legacy(bytes: Array[Legacy.Bytes])
+object Legacy:
+  type Bytes = Bytes.T
+  object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]

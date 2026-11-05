@@ -182,11 +182,14 @@ object Plugin:
     * @param body
     *   the answer's bytes
     */
-  final case class HttpResponse(status: HttpResponse.Status, headers: Map[HttpResponse.HeadersKey, HttpResponse.HeadersValue], body: Array[Byte]):
+  final case class HttpResponse(status: HttpResponse.Status, headers: Map[HttpResponse.HeadersKey, HttpResponse.HeadersValue], body: HttpResponse.Body):
     /** A header by name, in any case. */
     def header(name: String): Option[String] = headers.get(name.toLowerCase(Locale.ROOT))
 
   object HttpResponse:
+    type Body = Body.T
+    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type HeadersKey = HeadersKey.T

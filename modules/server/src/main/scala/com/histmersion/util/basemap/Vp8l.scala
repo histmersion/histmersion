@@ -13,9 +13,12 @@ package com.histmersion.util.basemap
 object Vp8l:
 
   /** A decoded image: `pixels` row-major, each `0xAARRGGBB`. */
-  final case class Image(width: Image.Width, height: Image.Height, pixels: Array[Int])
+  final case class Image(width: Image.Width, height: Image.Height, pixels: Image.Pixels)
 
   object Image:
+    type Pixels = Pixels.T
+    object Pixels extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Width = Width.T
     object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Height = Height.T
@@ -204,9 +207,12 @@ object Vp8l:
   /** One group of prefix codes: green (with lengths and the cache), red, blue, alpha, distance. */
   final private class Group(val green: Code, val red: Code, val blue: Code, val alpha: Code, val dist: Code)
 
-  final private case class Transform(kind: Transform.Kind, width: Transform.Width, bits: Transform.Bits, data: Array[Int])
+  final private case class Transform(kind: Transform.Kind, width: Transform.Width, bits: Transform.Bits, data: Transform.Data)
 
   object Transform:
+    type Data = Data.T
+    object Data extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Width = Width.T
