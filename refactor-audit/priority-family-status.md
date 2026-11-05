@@ -2,6 +2,26 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Latest observation: preview-9 retains all 82 reviewed fields and seventeen concepts
+in 217 overlay files. The shared rule now extracts configured scalar and collection
+primitives without leaking Iron refinements into generic sort/sum inference, and
+handles typed method results at explicit renderer calls. Fixtures pass exact
+output, compilation, runtime results, typed forwarding and rejection checks.
+CitationLint's two public citekey sets are typed; its prefix/suggestion routines
+use configured lexical boundaries. Storage.total returns ByteCount and existing
+Long arithmetic is preserved inside its configured implementation boundary.
+
+API compilation has moved past the eleven ordinary diagnostics in preview-7 and
+now reports one later Kindlings macro error in Source.applyPatch: MetadataPatch
+still supplies primitive metadata to typed Source fields. Next is propagation of
+the same concepts into MetadataPatch, including Option[List[AuthorName]], with
+nested-container support and typed normalization. This newly exposed work is not
+an accepted exception. One reported diagnostic does not mean only one remaining
+change: further macro failures may be masked. Full JVM/JS/dependent compilation,
+behavioral tests and stable-ID remeasurement remain outstanding. Originals are
+unchanged and no production repair is credited. See preview-8, preview-9,
+rewrite-extraction.txt and rewrite-results.txt under models/reviews/multi-concept-1.
+
 Latest observation: preview-7 extends the same cohort from 79 to 82 confirmed
 fields by adding Edge.src, Edge.dst and Finding.citekey. The original 79 rows and
 IDs are unchanged (zero-context diff shows only the three additions). With the

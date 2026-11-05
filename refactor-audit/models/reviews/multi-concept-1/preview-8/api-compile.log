@@ -1,0 +1,39 @@
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-8/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:40:57 [0m[0m
+[31m40 |[0m    entries.filter(_.within.isEmpty).flatMap(_.bytes).sum
+[31m[31m   |[0m                                                         ^[0m
+[31m   |[0mNo given instance of type Numeric[B] was found for parameter num of [33mmethod[0m [32msum[0m in [33mtrait[0m [32mIterableOnceOps[0m
+[31m   |[0m
+[31m   |[0mwhere:    B is a type variable with constraint >: com.histmersion.api.ByteCount.T
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-8/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:44:85 [0m[0m
+[31m44 |[0m      .filter(e => e.within.isEmpty && e.volume.contains(volume) && e.bytes.exists(_ > [32m0[0m))
+[31m[31m   |[0m                                                                                   ^^^[0m
+[31m   |[0mvalue > is not a member of com.histmersion.api.ByteCount, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import cats.implicits.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.all.catsSyntaxPartialOrder
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Ordered.orderingToOrdered
+[31m   |[0m  import scala.math.Ordering.Implicits.infixOrderingOps
+[31m   |[0m  import cats.syntax.order.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[31m   |[0m
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-8/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:45:19 [0m[0m
+[31m45 |[0m      .sortBy(e => -e.bytes.getOrElse([32m0L[0m))
+[31m[31m   |[0m                   ^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m   |[0mvalue unary_- is not a member of com.histmersion.api.ByteCount | Long, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Fractional.Implicits.infixFractionalOps
+[31m   |[0m  import scala.math.Integral.Implicits.infixIntegralOps
+[31m   |[0m  import scala.math.Numeric.Implicits.infixNumericOps
+[31m   |[0m
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-8/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:45:42 [0m[0m
+[31m45 |[0m      .sortBy(e => -e.bytes.getOrElse([32m0L[0m))
+[31m[31m   |[0m                                          ^[0m
+[31m   |[0mAmbiguous given instances: both [33mobject[0m [32mShort[0m in [33mobject[0m [32mOrdering[0m and [33mobject[0m [32mChar[0m in [33mobject[0m [32mOrdering[0m match type Ordering[B] of parameter ord of [33mmethod[0m [32msortBy[0m in [33mtrait[0m [32mSeqOps[0m
+4 errors found
+Compilation failed

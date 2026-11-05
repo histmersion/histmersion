@@ -3,6 +3,7 @@ package conceptfixture
 
 final case class Report(label: conceptfixture.Label = conceptfixture.Label(""), title: conceptfixture.Title = conceptfixture.Title(""), bytes: conceptfixture.ByteCount = conceptfixture.ByteCount(0L), lat: conceptfixture.Latitude = conceptfixture.Latitude(0.0), doi: Option[conceptfixture.Doi] = None, authors: List[conceptfixture.AuthorName] = (Nil).map(conceptfixture.AuthorName.apply), year: conceptfixture.Year = conceptfixture.Year(0))
 final case class Unrelated(label: String, bytes: Long)
+final case class Quantities(samples: List[conceptfixture.ByteCount], maybe: Option[conceptfixture.ByteCount])
 
 object Calls:
   var evaluations = 0
@@ -25,6 +26,12 @@ object Calls:
   def repeatedAliases: Set[conceptfixture.Label] = aliases((Set("a", "a", "b")).map(conceptfixture.Label.apply))
 
 object Rendering:
+  def typedTotal(rs: List[Report]): conceptfixture.ByteCount = conceptfixture.ByteCount(rs.map(_.bytes.value.toLong).sum)
+  def digits(n: Long): String = n.toString
+  def totalText(rs: List[Report]): String = digits(typedTotal(rs).value.toLong)
+  def totalRecord(rs: List[Report]): Report = Report(bytes = typedTotal(rs))
+  def titles(rs: List[Report]): List[Report] = rs.sortBy(_.title.value.toString)
+  def quantityTotal(q: Quantities): Long = q.samples.map(_.value.toLong).sum + q.maybe.map(_.value.toLong).toList.sum
   def below(rs: List[Report], limit: Report): List[Report] = rs.filter(_.bytes.value.toLong < limit.bytes.value.toLong)
   def sorted(rs: List[Report]): List[Report] = rs.sortBy(_.bytes.value.toLong)
   def total(rs: List[Report]): Long = rs.map(_.bytes.value.toLong).sum
