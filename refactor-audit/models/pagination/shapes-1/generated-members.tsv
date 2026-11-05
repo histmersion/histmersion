@@ -1,0 +1,6 @@
+scope	kind	signature-status	names	absent-from-use-inventory
+production	apply	resolved-signature	34	34
+production	apply	unresolved-signature	12	12
+production	copy	unresolved-signature	10	10
+test	apply	unresolved-signature	314	314
+test	copy	unresolved-signature	1	1

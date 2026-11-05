@@ -49,3 +49,46 @@ queue limitation, not absence from the full primitive inventory. Keep the missin
 positions visible before spending a detector refinement round. Next: build the
 symbol-use closure for these concepts, establish boundary conversions and freeze
 positive/negative rewrite fixtures before generating a multi-module patch.
+
+## Cross-module impact and AST evidence
+
+Impact.scala checked all 3,140 current source/test hashes and the exact source set.
+The five reviewed record owners have 1,734 reference rows across 129 files, including
+115 direct reviewed-member references and 235 one-hop caller candidates. These are
+impact evidence, not additional confirmed violations or a complete dataflow closure.
+Production and test counts are separated in impact-1/counts.tsv. No denominator was
+shrunk to the initially reviewed library records.
+
+The subsequent Shapes.scala semantic scan covers the same 3,140 files and retains
+2,370 matching names with their real ASTs, symbols and available signatures. Unlike
+the existing uses table it retains symbols without source declarations. In particular,
+Filter.copy and generated argument symbols can have a resolved symbol but no
+SymbolInformation. ModelInventory filters its uses to symbols in its source position
+and type catalogues, excluding generated members even when their signatures resolve.
+The old use inventory's omission of these must not be mistaken
+for zero construction/copy callers. shapes-1/generated-members.tsv quantifies the
+gap. This observation does not alter the original inventory or spend a refinement
+round; the reusable rewrite must handle this compiler shape explicitly.
+
+The concrete batch extends to Goal.List, Attestation.List, EventList, AssetLink.List,
+MediaList and Article.List: their factory methods forward OffsetPage.next into
+Option[Int] fields. Their offsets and factory parameters need the same concept review
+and signature propagation. Merely unwrapping next back to Int at each factory would
+leave those model primitives unfixed and is not the intended migration.
+
+| Observed shape | Required rewrite behavior |
+|---|---|
+| Constructor field and default | Replace the exact approved type leaf; type numeric defaults with the selected Pure wire newtype. |
+| Named and positional constructor arguments | Resolve constructor parameter order/name, transform approved arguments and preserve omitted defaults. |
+| Generated copy arguments | Adjust only explicitly supplied changed fields; omitted fields retain their typed defaults. This is type propagation, not expansion of copy-to-optics automation. |
+| OffsetPage.next forwarded into result records | Propagate Offset through result fields and factory signatures across domains. |
+| Offset plus shown, comparisons and pattern match on zero | Provide typed arithmetic or unwrap at the pagination mechanism; do not erase types throughout callers. |
+| SQL parameters and HTTP/JSON query values | Use owner-local codecs or explicit conversion at the boundary; keep wire JSON numbers unchanged. |
+| PassageHit text offset | Keep separate from row offsets even though both currently use Int. |
+| Filter.limit default sentinel | Design unresolved; preserve existing behavior and report it independently of supported offset/count work. |
+
+The AST evidence includes declarations and imports, so totals cannot be interpreted
+as calls. Enclosing operations can include unrelated arguments. Exact argument
+mapping, compiler synthetics and implicit conversions remain required before claiming
+complete rewrite coverage. Next is a compiled fixture covering these shapes and a
+guarded multi-module preview; do not expand general primitive discovery first.
