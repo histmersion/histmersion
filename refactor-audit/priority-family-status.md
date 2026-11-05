@@ -2,6 +2,19 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Citation and place caller adaptations are applied through the existing AST
+pipeline: caller-server-citations-1 has fifteen matches and
+caller-server-places-1 eighteen, across seven production files together. Citation
+edges retain typed equality and touched-source sets; legacy graph/contradiction
+records receive explicit primitive projections. Place import suppression and
+membership checks account for typed input IDs, including both names and parent
+relations. HeldPlace and the remaining primitive service/wire records are still
+legacy modeling obligations, not accepted exceptions or additional repair credit.
+The combined server build reports 211 diagnostics versus 252 previously
+(applied-server-build-5). Compilation still fails, so no downstream tests ran.
+All 3167 source hashes remained stable during compilation; the cohort's 87 IDs
+remain applied-unverified, with identities, denominators and history retained.
+
 Server callback adaptations are applied through caller-server-callbacks-1:
 twenty-two reviewed AST matches across eight production files. Event-candidate
 comparisons and optics retain typed identifiers, rename callbacks adapt their

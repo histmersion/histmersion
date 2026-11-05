@@ -238,7 +238,7 @@ object LibraryTools:
           sources.put(in.citekey, in.source, in.strict) match
             case Right(sw) =>
               ToolResult.text(
-                Aliases.note(AliasKinds.SourceRecords, in.citekey, sw.source.citekey)(
+                Aliases.note(AliasKinds.SourceRecords, in.citekey, sw.source.citekey.value)(
                   SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
                 )
               )
@@ -266,7 +266,7 @@ object LibraryTools:
           sources.patch(in.citekey, in.patch, in.strict) match
             case Right(sw) =>
               ToolResult.text(
-                Aliases.note(AliasKinds.SourceRecords, in.citekey, sw.source.citekey)(
+                Aliases.note(AliasKinds.SourceRecords, in.citekey, sw.source.citekey.value)(
                   SourcesMarkdown.source(sw.source, sw.findings.toVector, false) + FormatMarkdown.notice(sw.formatting)
                 )
               )

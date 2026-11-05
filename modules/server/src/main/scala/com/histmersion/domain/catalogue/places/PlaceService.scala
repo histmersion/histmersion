@@ -139,15 +139,15 @@ object PlaceService:
       if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil)
       else
         val s0 = state.get
-        val skip = batch.map(_.place.id).filter(id => s0.placeRemovals(id) || s0.placeAliases.contains(id)).toSet
+        val skip = batch.map(_.place.id).filter(id => s0.placeRemovals(id.value) || s0.placeAliases.contains(id.value)).toSet
         val kept = batch.filterNot(in => skip(in.place.id))
         val ids = kept.map(_.place.id).distinct
         val names = kept.flatMap(in => in.names.map(in.place.id -> _))
         @tailrec def rows(rest: List[Place.Input], held: Vector[HeldPlace]): Vector[HeldPlace] = rest match
           case Nil        => held
           case in :: tail =>
-            val i = held.indexWhere(_.id == in.place.id)
-            val o = s0.placeOverrides.find(_.placeId == in.place.id)
+            val i = held.indexWhere(_.id == in.place.id.value)
+            val o = s0.placeOverrides.find(_.placeId == in.place.id.value)
             val shown = o.fold(in.place)(o =>
               in.place
                 .modify(_.kind)
@@ -162,9 +162,9 @@ object PlaceService:
               rows(tail, held.updated(i, HeldPlace(shown, dataset, manual, Vector.empty, before.links)))
         val written = rows(kept, s0.places)
         val withNames = written.map { p =>
-          if !ids.contains(p.id) then p
+          if !ids.contains(com.histmersion.api.catalogue.Place.Id(p.id)) then p
           else
-            val stated = names.collect { case (pid, n) if pid == p.id => HeldPlace.Name.of(n) }
+            val stated = names.collect { case (pid, n) if pid == com.histmersion.api.catalogue.Place.Id(p.id) => HeldPlace.Name.of(n) }
             val merged = stated.foldLeft(p.names)((ns, n) =>
               if ns.exists(m => m.name == n.name && m.lang == n.lang) then
                 ns.map(m => if m.name == n.name && m.lang == n.lang then m.modify(_.period).setTo(n.period) else m)
@@ -175,7 +175,7 @@ object PlaceService:
         val wanted = kept.flatMap(_.relations)
         val (ok, dangling) = wanted.partition(r => withNames.exists(_.id == r.parentId))
         val related = withNames.map { p =>
-          if !ids.contains(p.id) then p
+          if !ids.contains(com.histmersion.api.catalogue.Place.Id(p.id)) then p
           else p.modify(_.parents).setTo(ok.filter(_.childId == p.id).distinctBy(r => (r.parentId, r.kind)).toVector)
         }
         val _ = state.updateAndGet(_.modify(_.places).setTo(related))
@@ -217,18 +217,8 @@ object PlaceService:
           )
           val s = p.summary
           Place.Hit(
-            s.id,
-            s.label,
-            s.kind,
-            s.periodStart,
-            s.periodEnd,
-            s.source,
-            p.namesAt(asOf),
-            matched,
-            0,
-            s.contested,
-            s.dating,
-            s.importSource
+            s.id.value, s.label, s.kind, s.periodStart, s.periodEnd, s.source, p.namesAt(asOf), matched,
+            0, s.contested, s.dating, s.importSource
           )
         }
 
@@ -408,7 +398,7 @@ object PlaceService:
         .toList
 
     def add(in: Place.Input): Either[Api.Error, Place.Summary] =
-      val id = in.place.id
+      val id = in.place.id.value.toString
       val s = state.get
       if find(id).isDefined then
         Left(Api.Error(s"'$id' is already the id of a place — choose another id", Some(Write.CodeInvalid)))

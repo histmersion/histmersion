@@ -62,7 +62,7 @@ final class PlacesControllers(
     places.get(placeId(id), asOf, modernFrom).toRight(Api.Error(s"No place '$id'"))
 
   def children(id: String, asOf: Option[Long]): Either[Api.Error, List[com.histmersion.api.catalogue.Place.Summary]] =
-    get(id, asOf).map(d => places.children(d.place.id, asOf, cfg().places.childrenLimit, modernFrom))
+    get(id, asOf).map(d => places.children(d.place.id.value, asOf, cfg().places.childrenLimit, modernFrom))
 
   /** The subtree under one place, depth-tagged; `depth <= 0` means the configured `places.tree-depth`. */
   def tree(
@@ -73,7 +73,7 @@ final class PlacesControllers(
     get(id, asOf).map(d =>
       places.hierarchy(
         asOf,
-        Some(d.place.id),
+        Some(d.place.id.value),
         depth.filter(_ > 0).getOrElse(cfg().places.treeDepth),
         cfg().places.treeLimit,
         cfg().places.treeDepth,
@@ -85,7 +85,7 @@ final class PlacesControllers(
       id: String,
       asOf: Option[Long]
   ): Either[Api.Error, List[com.histmersion.api.catalogue.Place.Footprint]] =
-    get(id, asOf).map(d => places.footprints(d.place.id, asOf))
+    get(id, asOf).map(d => places.footprints(d.place.id.value, asOf))
 
   def links(id: String): Either[Api.Error, List[com.histmersion.api.catalogue.Place.Link]] =
     val now = placeId(id)

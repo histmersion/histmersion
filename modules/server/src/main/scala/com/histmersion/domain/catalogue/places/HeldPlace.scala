@@ -15,7 +15,7 @@ final case class HeldPlace(
     parents: Vector[Place.Relation] = Vector.empty,
     links: Vector[Place.Link] = Vector.empty
 ):
-  def id: String = place.id
+  def id: String = place.id.value
 
   /** Is this place valid at `asOf` (a timeless place always is)? */
   def validAt(asOf: Option[Long]): Boolean = HeldPlace.covers(place.period, asOf)
