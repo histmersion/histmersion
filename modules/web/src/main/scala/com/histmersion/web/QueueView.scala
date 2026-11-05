@@ -758,9 +758,9 @@ object QueueView:
                   cls := "link-hit",
                   disabled <-- Auth.writable.map(!_),
                   title := s"tick the item off as ingested as ${h.citekey}",
-                  span(cls := "hit-title", h.title),
+                  span(cls := "hit-title", h.title.value),
                   h.year.map(y => span(cls := "muted", s" ($y)")),
-                  span(cls := "muted hit-key", " · ", code(h.citekey)),
+                  span(cls := "muted hit-key", " · ", code(h.citekey.value)),
                   onClick --> (_ => { ops.fulfil(item, h.citekey); close() })
                 )
               )

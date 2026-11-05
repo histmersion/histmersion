@@ -188,7 +188,7 @@ object DataSection:
       }
 
     /** A check (a dry run) is quick: follow it to its end and say what it found. */
-    private def follow(text: String, id: String, n: Int): Unit =
+    private def follow(text: String, id: JobInfo.Id, n: Int): Unit =
       val _ = scala.scalajs.js.timers.setTimeout(1000) {
         ApiClient.job(id).foreach { j =>
           if !j.isTerminal && n < 120 then follow(text, id, n + 1)

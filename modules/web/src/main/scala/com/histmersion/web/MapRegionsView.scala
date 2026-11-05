@@ -71,7 +71,7 @@ object MapRegionsView:
   private def follow(started: Future[JobInfo], dry: Option[Basemap.FetchQuery]): Unit =
     started.onComplete(_.fold(e => error.set(Some(e.getMessage)), j => { job.set(Some(j)); poll(j.id, dry) }))
 
-  private def poll(id: String, dry: Option[Basemap.FetchQuery]): Unit =
+  private def poll(id: JobInfo.Id, dry: Option[Basemap.FetchQuery]): Unit =
     val _ = scala.scalajs.js.timers.setTimeout(jobPollMs.toDouble) {
       if mounted then
         ApiClient

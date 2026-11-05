@@ -73,7 +73,7 @@ object SetupPage:
           before.set(c); choices.set(c); start.set(c.start)
         }
       }
-      ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes).minOption))
+      ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes.value.toLong).minOption))
 
     /** Write the choices (and the mark that the setup is done); then, unless skipping, start the downloads. */
     def finish(download: Boolean): Unit =

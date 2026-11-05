@@ -892,7 +892,7 @@ object Preview:
               r.works.map(w =>
                 li(
                   cls := "cite-tip-item",
-                  w.title.getOrElse(w.doi.getOrElse("untitled")) + w.year.fold("")(y => s" ($y)"),
+                  w.title.map(_.value).getOrElse(w.doi.map(_.value).getOrElse("untitled")) + w.year.fold("")(y => s" ($y)"),
                   w.doi.map(d =>
                     a(
                       cls := "cite-tip-link",

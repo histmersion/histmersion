@@ -220,15 +220,15 @@ object Pages:
   private def jobPage(id: String): HtmlElement =
     val job = Var(Option.empty[Either[String, JobInfo]])
     div(
-      onMountCallback(_ => ApiClient.job(id).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))),
+      onMountCallback(_ => ApiClient.job(com.histmersion.api.jobs.JobInfo.Id(id)).onComplete(r => job.set(Some(r.toEither.left.map(_.getMessage))))),
       child <-- job.signal.map {
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")
-        case Some(Right(j)) if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind.value =>
+        case Some(Right(j)) if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind =>
           Router.go(Route.Run(j.id), push = false)
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>
-          Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind))
+          Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind.value))
           div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(j.id))
       },
       p(RouteLink(Route.Activity(ActivityTab.JobList), "All background jobs"))
