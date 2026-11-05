@@ -5,12 +5,22 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MediaCoversRequest(
-    dryRun: Boolean = true,
-    limit: Option[Int] = None,
-    citekey: Option[String] = None,
-    refresh: Boolean = false,
-    covers: Boolean = true,
-    illustrations: Boolean = true,
-    isbn: Option[String] = None
+    dryRun: com.histmersion.api.media.MediaImportRequest.DryRun = true,
+    limit: Option[MediaCoversRequest.Limit] = None,
+    citekey: Option[com.histmersion.api.library.Citekey] = None,
+    refresh: com.histmersion.api.media.MediaImportRequest.Refresh = false,
+    covers: MediaCoversRequest.Covers = true,
+    illustrations: MediaCoversRequest.Illustrations = true,
+    isbn: Option[MediaCoversRequest.Isbn] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object MediaCoversRequest:
+  type Limit = Limit.T
+  object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Covers = Covers.T
+  object Covers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Illustrations = Illustrations.T
+  object Illustrations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Isbn = Isbn.T
+  object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -5,18 +5,27 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MediaCoversReport(
-    dryRun: Boolean,
-    sources: Int = 0,
-    covers: Int = 0,
-    illustrations: Int = 0,
+    dryRun: com.histmersion.api.media.MediaImportRequest.DryRun,
+    sources: MediaCoversReport.Sources = 0,
+    covers: MediaCoversReport.Covers = 0,
+    illustrations: MediaCoversReport.Illustrations = 0,
     lines: List[MediaSourceLine] = Nil,
     skipped: List[MediaCount] = Nil,
-    failed: List[String] = Nil
+    failed: List[MediaCoversReport.Failed] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object MediaCoversReport:
 
+
+  type Sources = Sources.T
+  object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Covers = Covers.T
+  object Covers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Illustrations = Illustrations.T
+  object Illustrations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Failed = Failed.T
+  object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(

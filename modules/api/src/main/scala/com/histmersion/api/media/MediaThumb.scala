@@ -5,15 +5,15 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MediaThumb(
-    uid: String,
-    role: String,
-    url: String,
-    credit: String,
-    license: Option[String] = None,
-    licenseUrl: Option[String] = None,
-    sourceUrl: Option[String] = None,
-    width: Option[Int] = None,
-    height: Option[Int] = None
+    uid: com.histmersion.api.media.MediaItem.Uid,
+    role: MediaThumb.Role,
+    url: MediaThumb.Url,
+    credit: com.histmersion.api.media.MediaItem.Credit,
+    license: Option[com.histmersion.api.media.MediaItem.License] = None,
+    licenseUrl: Option[com.histmersion.api.media.MediaItem.LicenseUrl] = None,
+    sourceUrl: Option[com.histmersion.api.media.MediaItem.SourceUrl] = None,
+    width: Option[com.histmersion.api.media.AssetInfo.Width] = None,
+    height: Option[com.histmersion.api.media.AssetInfo.Height] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
 
@@ -25,6 +25,11 @@ final case class MediaThumb(
 
 object MediaThumb:
 
+
+  type Role = Role.T
+  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def thumbPath(uid: String): String = s"/media/$uid/thumb"
   def filePath(uid: String): String = s"/media/$uid/file"

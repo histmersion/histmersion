@@ -7,25 +7,38 @@ import com.histmersion.api.OffsetPage
 import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class AssetLink(
-    id: Long,
-    citekey: String,
-    assetName: String,
-    relation: String,
-    targetType: String,
-    targetId: String,
-    xywh: Option[String] = None,
-    notes: Option[String] = None
+    id: AssetLink.Id,
+    citekey: com.histmersion.api.library.Citekey,
+    assetName: com.histmersion.api.media.AssetInfo.Name,
+    relation: AssetLink.Relation,
+    targetType: com.histmersion.api.media.MediaTarget.TargetType,
+    targetId: com.histmersion.api.media.MediaTarget.TargetId,
+    xywh: Option[AssetLink.Xywh] = None,
+    notes: Option[AssetLink.Notes] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object AssetLink:
 
 
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Relation = Relation.T
+  object Relation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Xywh = Xywh.T
+  object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Notes = Notes.T
+  object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Deleted(
-      id: Long,
-      deleted: Boolean
+      id: com.histmersion.api.media.AssetLink.Id,
+      deleted: Deleted.Value
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Deleted:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
@@ -44,12 +57,12 @@ object AssetLink:
       List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Put(
-      citekey: String,
-      assetName: String,
-      relation: String,
-      targetType: String,
-      targetId: String,
-      xywh: Option[String] = None,
-      notes: Option[String] = None
+      citekey: com.histmersion.api.library.Citekey,
+      assetName: com.histmersion.api.media.AssetInfo.Name,
+      relation: com.histmersion.api.media.AssetLink.Relation,
+      targetType: com.histmersion.api.media.MediaTarget.TargetType,
+      targetId: com.histmersion.api.media.MediaTarget.TargetId,
+      xywh: Option[com.histmersion.api.media.AssetLink.Xywh] = None,
+      notes: Option[com.histmersion.api.media.AssetLink.Notes] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
