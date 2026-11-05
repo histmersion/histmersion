@@ -142,7 +142,7 @@ object ApiClient:
   def basemap(): Future[Basemap.Status] = call(BasemapApi.status)(())
   def basemapFetch(q: Basemap.FetchQuery): Future[JobInfo] = call(BasemapApi.fetch)(q)
   def basemapRemove(q: Basemap.RemoveQuery): Future[Basemap.Removed] = call(BasemapApi.remove)(q)
-  def job(id: String): Future[JobInfo] = call(Api.job)(id)
+  def job(id: JobInfo.Id): Future[JobInfo] = call(Api.job)(id.value)
   def uiCounters(): Future[UiNotices.Counters] = call(UiApi.counters)(())
   def markSeen(board: String, at: String): Future[UiNotices.Counters] =
     call(UiApi.markSeen)((board, UiNotices.SeenMark(Some(at))))

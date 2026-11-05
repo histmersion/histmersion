@@ -107,7 +107,7 @@ object JobsView:
   /** Is the job's subject a stored source yet? An ingest creates the source only when its OCR finished; a re-OCR runs
     * on a source that already exists.
     */
-  def subjectStored(j: JobInfo): Boolean = j.succeeded || j.kind == Ingest.KindReocr
+  def subjectStored(j: JobInfo): Boolean = j.succeeded || j.kind == com.histmersion.api.library.IngestJobKinds.Reocr.kind
 
   /** `3 s ago`, `4 min ago`, `2 h ago`, `5 d ago` — `thenMs` and `nowMs` in epoch milliseconds. */
   def ago(thenMs: Double, nowMs: Double): String =
@@ -266,9 +266,9 @@ object JobsView:
           cls := "job-subject",
           j.citekey match
             case Some(ck) if subjectStored(j) => SourceLink(ck)
-            case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck)
+            case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck.value)
             case None                         => what(j).fold(emptyNode)(w => span(cls := "job-what", w)),
-          span(cls := "muted", s" · ${kindLabel(j.kind)}"),
+          span(cls := "muted", s" · ${kindLabel(j.kind.value)}"),
           j.acquireItem.map(i =>
             span(
               cls := "muted job-item",
@@ -298,7 +298,7 @@ object JobsView:
         div(
           cls := "job-meta muted",
           // an agent run is a job: its row leads to the run; any other job, to its own page
-          if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind.value then
+          if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind then
             WinLink(WindowKey.Run(j.id), title := s"agent run ${j.id}", s"run ${j.id.take(8)}")
           else RouteLink(Route.Job(j.id), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.take(8)}"),
           Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")),

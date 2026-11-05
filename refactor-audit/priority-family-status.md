@@ -2,6 +2,20 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Web caller closure advanced without reverting the applied cohort. The existing
+AST recipe pipeline applied thirteen reviewed matches for typed job-kind equality
+and display/coordinate boundaries, then four matches carrying JobInfo.Id through
+both polling helpers and ApiClient.job. Raw route input is wrapped when entering
+the typed client; extraction stays at the existing HTTP endpoint boundary.
+The two actual builds preserve all 3167 source hashes and report 22 then 20 web
+production diagnostics, against the prior 36 (applied-web-build-1 and -2).
+Production compilation still fails, so web test compilation and behavioral tests
+did not execute. Remaining diagnostics concern route/window/preview identifiers,
+heterogeneous list keys, source fulfilment and activity presentation. These are
+targeted caller adaptations, not additional general rewrite coverage or verified
+policy repairs. All 87 cohort IDs remain applied-unverified; denominators,
+exceptions and historical findings are unchanged. No source rollback occurred.
+
 Core production and test compilation now pass, followed by 115 selected behavioral
 tests with zero failures or ignored tests (applied-core-build-2). The run covers
 acquisition candidates, empty answers, gazetteer parsing, event matching, seed

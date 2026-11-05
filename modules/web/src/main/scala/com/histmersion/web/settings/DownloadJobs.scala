@@ -40,7 +40,7 @@ object DownloadJobs:
       }
 
   /** Is a job of `kind` going now? */
-  def busy(kind: JobInfo.Kind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind.value))
+  def busy(kind: JobInfo.Kind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind))
 
   def panel: HtmlElement =
     div(

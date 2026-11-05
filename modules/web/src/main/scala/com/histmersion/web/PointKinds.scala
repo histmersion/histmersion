@@ -126,7 +126,7 @@ object PointKinds:
     def box = (Layout.eventMarkerSize.value, Layout.eventMarkerSize.value)
     override def pane = com.histmersion.api.MapStack.Pane.Events
     def key(e: EventGeo): String = e.id
-    def at(e: EventGeo): (Double, Double) = (e.lat, e.lon)
+    def at(e: EventGeo): (Double, Double) = (e.lat.value, e.lon.value)
     def inner(e: EventGeo): String = Glyphs.badge(CardIcons.event(e.kind))
     override def classes(e: EventGeo): String =
       s"hd-ev hd-ev--${EventMarker.tierClass(e.tier)} hd-ev--${EventTaxonomy.of(e.kind).group}" +
@@ -135,7 +135,7 @@ object PointKinds:
 
     /** Pure: has it no known date (its outer span open on both sides)? */
     def undated(e: EventGeo): Boolean = e.timeSpan.outer.isEmpty
-    override def attrs(e: EventGeo): String = s""" data-id="${Fmt.esc(e.id)}""""
+    override def attrs(e: EventGeo): String = s""" data-id="${Fmt.esc(e.id.value)}""""
     def fill(e: EventGeo, span: (Long, Long)): String = Fmt.color(EventMarker.rampAt(e, span))
     private def mid(e: EventGeo): Option[Double] = e.timeSpan.outer.map((a, b) => (a + b).toDouble / 2)
     def member(e: EventGeo): Member =
