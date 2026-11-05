@@ -27,6 +27,11 @@ unsupported type shapes, enum cases and non-case-class models remain outside thi
 syntactic coverage. Historical finding identities and repair credit are retained.
 Next definition scope: automation and personal API models.
 
+The staged whole-commit whitespace check reports four inherited extra-EOF-blank
+line warnings in the verbatim Place.scala before/preview snapshots. The application
+source diff check passes. Snapshot bytes and hashes are preserved rather than
+normalizing historical evidence. Commit: 2e63d3775.
+
 ## Definition sweep applied: library API
 
 definitions-library-1 converts 612 explicit primitive leaves in 130 production
