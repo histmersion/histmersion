@@ -1,6 +1,68 @@
 # Priority-family status
 
-## Current execution gate: acceptance before further repairs
+## Current bounded acceptance disposition (5 November, a06cb734)
+
+The bounded review has assigned an acceptance disposition to all fourteen policy
+families covering the original 43 goals and twelve slices. **Inventory acceptance
+is not complete.** Small independent samples, missing semantic classifiers and
+unmeasured scopes prevent that claim. No detector refinement was performed in this
+pass. Insufficient scopes are frozen with limits; copy remains at its two-round
+limit and further copy automation is paused.
+
+`migration-rounds.tsv` is the consolidated family ledger. Original CAP, ISO,
+transaction, pagination and repair histories retain their identities and evidence;
+`audited-examples.md` records the independent samples and source adjudications.
+The table below summarizes dispositions, not a second finding register. Counts in
+different units must not be added.
+
+| Family | Confirmed outstanding / candidate and unresolved scope | Acceptance and treatment |
+|---|---|---|
+| Model concepts/invariants | Three original pagination IDs; 30,393 production member primitive candidates, 62,229 all-scope leaves, 46,914 unresolved leaves | Partial, frozen. Two fresh compliant examples, no independent positive. Pagination retains bulk, targeted and design treatments; purpose equivalence remains unresolved. |
+| Layer boundaries | Zero confirmed in the reviewed production direction set; 111 accepted contributions; tests: 85 non-violations, 130 candidates; 75 ambiguous owners and 182,326 unclassified direction rows | Partial, frozen. Reviewed directions do not establish whole-model isolation or unwrap compliance. |
+| Type/feature ownership | ApprovalModes planned operation confirmed; 645 plan rows, 1,392 objects, 5,903 owner rows | Partial, frozen. Targeted owner mapping needed; stale destination names are unresolved, not repair instructions. |
+| Repository visibility | Previously confirmed public GoalRepo remains; eight configured diagnostics are not eight adjudicated defects; 490 role candidates | Partial, frozen. One earlier positive and one fresh negative; consumers and generated roles limit coverage. |
+| Transaction ownership | MediaJobs DataSource ownership confirmed; zero supported repository diagnostics; two dynamic SQL cases unresolved | Partial, frozen. Caller policy has a missed positive; manual/design treatment. Original 85% sampled recall remains recorded. |
+| Capability/plugin access | 17 confirmed anchors / 18 occurrences; 48 candidate anchors / 64 occurrences; 13 unresolved adapter operations; one non-violation. Upstreams dissolution and host AI extraction are two separate design obligations | Partial, frozen. Production scope only; tests unmeasured. Supplied capabilities are compliant only in the inspected expressions. Eight timing-permission occurrences remain separately recorded. |
+| Service implementations/tests | BasemapService is one confirmed aggregate design obligation; 348 obligation rows are not independent defects | Partial, frozen. Structural sample: one TP, one TN; behavioral parity and backend isolation unproven. |
+| Derivation | Zero plain schema bridges; production: 151 Kindlings, 42 DB, 19 other derivation calls, 539 givens; tests: two Kindlings, 31 other calls, 141 givens | Partial, frozen. These are candidates, not confirmed violations. No fresh independent pair; colocation and custom semantics unresolved. |
+| Record updates | 107 confirmed production copies; 58 resolved test matches; unresolved owners: 52 production, 97 test | Production sample accepted with limits (100% sampled precision/recall); test recall 86.9565%, insufficient at 2/2 rounds. Automation paused. |
+| Accumulator algorithms | Visible allocation candidates: 154 production, six test; indirect effects unresolved: 1,348 production, 764 test | Candidate-only, frozen. No independent classifiable pair; no repair eligibility inferred. |
+| Comments/naming | One confirmed MergeFold comment block; 15,960 comment candidates | Candidate-only, frozen. Targeted treatment for that block; no justified-negative sample, no production/test split in the summary. |
+| Build/config isolation | One confirmed Sloth placement obligation; zero configured forbidden edges; 49 config resources / 782 values | Partial, frozen. Targeted placement treatment; test and published-plugin policy unresolved. Evaluated coverage: 30 projects, 1,504 Compile/Runtime entries. |
+| Vocabulary/rendering | MediaMarkdown ownership and DataCredit replacement confirmed; 1,377 string rows, 347 enums, 50 Markdown-signature rows | Candidate-only, frozen. Renderer targeted; Attribution design work. Display semantics and callers unresolved. |
+| Process/enforcement | External compatibility/live-data evidence unresolved; 100 legacy exception rows are not approved exceptions | Frozen awaiting external evidence. No new exceptions or live-data access. |
+
+**Confirmed violations repaired in this acceptance pass: zero.** The preceding
+clock batch repaired eight IDs / nine production occurrences, verified below.
+Historical reporting corrections restore eight pagination fixes and 523 schema
+bridge fixes (521 production, two tests); they are not new repair credit. Their
+original test failures and scope limitations remain in their histories.
+
+**Remaining confirmed violations:** listed by family above and by original identity
+in the ledger's linked evidence. The pass confirms nine existing obligations across
+ownership, transactions, services, comments, build and plugins/models; these have
+different units and are not added to occurrence counts. Discovery is not a newly
+introduced regression. No migration-wide confirmed denominator is established.
+
+**Automation coverage:** no overall percentage established; the 90% target remains.
+Source traversal covers 3,159 files in 28 modules, but traversal is not detector
+acceptance. Independent samples were bounded to 12 model, nine structural and 12
+effects/build files. Several families lack a usable positive/negative pair. No new
+blanket exception was accepted and no unsupported case was marked compliant.
+
+Before further repairs, consolidate existing entry points into one configurable
+pipeline using ProjectAssessment, CompileBatch, BatchTestVerification and existing
+Scalafix rewrite/history tools. That consolidation is **not yet implemented**.
+Use compilation, selected behavioral tests and stable-ID remeasurement as the
+standard contract. New batch-specific runners, verifiers or report frameworks
+require explicit justification and user approval. Select a reusable transformation
+across all eligible confirmed findings; record exclusions before applying it.
+
+## Closed server-clock batch and preserved execution gate
+
+The following is the closeout recorded before the bounded review above. Its pending
+acceptance-pass instruction is historical; the current disposition and remaining
+pipeline gate are stated above.
 
 The active server-clock batch is closed. Existing verification confirms eight
 original finding IDs / nine production occurrences repaired by one configured
@@ -41,7 +103,9 @@ pipeline; additional batch-specific runners/verifiers/report frameworks require
 explicit user approval. Current batch tools below predate this execution correction
 and are not a template for continuing the proliferation.
 
-## Whole-project refresh and capability treatment
+## Historical observations (superseded counts retained)
+
+### Whole-project refresh and capability treatment
 
 The integrated assessment passes on 3,159 source/test files in 28 modules.
 Capability and isolation identity gates have zero new/reopened findings; capability

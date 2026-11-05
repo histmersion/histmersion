@@ -7,7 +7,21 @@ Run commands from the `contracts3-scalafix` worktree root.
 
 The bounded migration goal uses `refactor-audit/migration-rounds.tsv` to retain every original goal while limiting further detector refinement to two rounds per family. Existing fixtures and source regressions are not independent holdouts. Confirmed violations, unresolved candidates, and evidence relationships remain separate; no overall completion percentage is available until the baseline is established. Historical fixes are not added to the new baseline's numerator. Production and test findings remain visible; a production-first batch does not exempt tests.
 
-Record updates are the first batch. The cheap-model source audit selected the frozen `copy-holdout.tsv` without reading detector reports; it has 21 grouped locations, including 21 positive copy occurrences and two legitimate comparison locations. The first run found 19 positives, missed two method-result receivers, and had no false positives. Round one addresses that specific gap. This sample becomes development/regression evidence after refinement; a second independent holdout is required for acceptance. Negative diversity and nonrandom selection limit inference beyond the sampled cases. `Printer.copy` remains unclassified rather than being forced into either label.
+The current execution gate is recorded in `refactor-audit/priority-family-status.md`.
+The bounded acceptance review has assigned dispositions to every family; this does
+not establish inventory acceptance. Insufficient detectors are frozen with explicit
+limits. Copy automation is paused at its two-round limit. Prioritize transaction
+ownership, capability access, module isolation and primitive/newtype modeling.
+Do not start another repair until the existing tools are consolidated into one
+configurable pipeline. Extend the existing entry points rather than creating
+batch-specific runners, verifiers or report frameworks; those require explicit
+justification and user approval. Configuration may select a batch, but the batch
+must cover all eligible confirmed findings for its reusable transformation, with
+exclusions explained before application. Standard verification is compilation,
+relevant behavioral tests and stable-ID remeasurement. An additional check needs a
+concrete risk not covered by that contract.
+
+Historical copy development: the cheap-model source audit selected the frozen `copy-holdout.tsv` without reading detector reports; it has 21 grouped locations, including 21 positive copy occurrences and two legitimate comparison locations. The first run found 19 positives, missed two method-result receivers, and had no false positives. Round one addressed that gap; the sample then became development/regression evidence. Subsequent independent acceptance results, including insufficient test recall, are retained in the consolidated ledger. Negative diversity and nonrandom selection limit inference beyond sampled cases. `Printer.copy` remains unclassified rather than being forced into either label.
 
 `CopyToLens` rewrites resolved, non-generic, single-field case-class updates using token patches, preserving nested edits and argument evaluation. It defers multi-field updates, custom methods, generic type changes, accumulator algorithms, unsupported modules and tests. A source manifest rejects stale class metadata. `CopyVerification` compiles and executes input, expected and rewritten code, checks the expected AST and evaluation order, verifies negative/positive checks, and proves a second application is unchanged. All application edits remain Scalafix-generated.
 
