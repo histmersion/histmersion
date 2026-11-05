@@ -54,10 +54,10 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
       val (s, b) = get(s"$url/api/goals?status=planned&limit=2")
       assertEquals(s, 200, b)
       val l = decode[Goal.List](b)
-      assert(l.total >= 3, b)
-      assertEquals((l.offset, l.next), (0, Some(2)))
-      val last = decode[Goal.List](get(s"$url/api/goals?status=planned&limit=2&offset=${l.total - 1}")._2)
-      assertEquals((last.offset, last.next), (l.total - 1, None))
+      assert((l.total.value: Int) >= 3, b)
+      assertEquals(((l.offset.value: Int), l.next.map(n => (n.value: Int))), (0, Some(2)))
+      val last = decode[Goal.List](get(s"$url/api/goals?status=planned&limit=2&offset=${(l.total.value: Int) - 1}")._2)
+      assertEquals(((last.offset.value: Int), last.next.map(n => (n.value: Int))), ((l.total.value: Int) - 1, None))
       val (_, md) = mcp(url, "goals", """{"status":"planned","limit":2}""")
       assert(md.contains("next: offset=2"), md)
     }
@@ -71,9 +71,9 @@ class PagingHttpSuite extends munit.FunSuite with com.histmersion.db.Bounded:
           |             {"claim":"Third","lat":38.2,"lon":23.2,"periodStart":-1300,"periodEnd":-1250}]}""".stripMargin
       assertEquals(put(s"$url/api/sources/zz_page2021_geo", src)._1, 200)
       val p0 = decode[GeoHitPage](get(s"$url/api/findings/page?tag=zz-page-geo&limit=2")._2)
-      assertEquals((p0.total, p0.hits.map(_.claim), p0.next), (3, List("First", "Second"), Some(2)))
+      assertEquals(((p0.total.value: Int), p0.hits.map(_.claim), p0.next.map(n => (n.value: Int))), (3, List("First", "Second"), Some(2)))
       val p1 = decode[GeoHitPage](get(s"$url/api/findings/page?tag=zz-page-geo&limit=2&offset=2")._2)
-      assertEquals((p1.hits.map(_.claim), p1.offset, p1.next), (List("Third"), 2, None))
+      assertEquals((p1.hits.map(_.claim), (p1.offset.value: Int), p1.next.map(n => (n.value: Int))), (List("Third"), 2, None))
       // the map feed honours the offset too, and stays a plain array
       assert(get(s"$url/api/findings?tag=zz-page-geo&limit=2&offset=2")._2.startsWith("["))
       val (_, md) = mcp(url, "geo_when", """{"tags":["zz-page-geo"],"limit":2}""")

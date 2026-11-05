@@ -140,7 +140,7 @@ abstract class GoalServiceContract extends EngineStoreSuite:
     )
     val first = g(s).page(None, 2, 0)
     assertEquals(
-      (first.total, first.goals.map(_.slug), first.offset, first.next),
+      ((first.total.value: Int), first.goals.map(_.slug), (first.offset.value: Int), first.next.map(n => (n.value: Int))),
       (3, List("zz-a", "zz-b"), 0, Some(2))
     )
     assertEquals(g(s).page(None, 2, 2).goals.map(_.slug), List("zz-c"))

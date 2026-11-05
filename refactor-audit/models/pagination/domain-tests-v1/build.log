@@ -1,0 +1,91 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 6 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-api/test-classes ...
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/ArticlesSuite.scala:181:58 
+[error] 181 |    assertEquals((first.offset, first.next), (0, Some(2)))
+[error]     |                                                          ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  (com.histmersion.api.Offset, Option[com.histmersion.api.Offset])
+[error]     |  Second type: (Int, Some[Int])
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.Offset, Option[com.histmersion.api.Offset]), (Int, Some[Int])]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      (com.histmersion.api.Offset, Option[com.histmersion.api.Offset]),
+[error]     |      (Int, Some[Int])](
+[error]     |      /* missing */
+[error]     |        summon[(com.histmersion.api.Offset, Option[com.histmersion.api.Offset]) <:<
+[error]     |          (Int, Some[Int])]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type (com.histmersion.api.Offset, Option[com.histmersion.api.Offset]) <:< (Int,
+[error]     |  Some[Int]).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/MarkdownSuite.scala:121:62 
+[error] 121 |    assertEquals(SearchResult.of(50, hits, 20).next, Some(23))
+[error]     |                                                              ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Option[com.histmersion.api.Offset]
+[error]     |  Second type: Some[Int]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Option[com.histmersion.api.Offset], Some[Int]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[Option[com.histmersion.api.Offset],
+[error]     |      Some[Int]](
+[error]     |      /* missing */summon[Option[com.histmersion.api.Offset] <:< Some[Int]])
+[error]     |
+[error]     |But no implicit values were found that match type Option[com.histmersion.api.Offset] <:< Some[Int].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/OffsetPageSuite.scala:18:143 
+[error] 18 |    assertEquals(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(50)).next, Some(50))
+[error]    |                                                                                                                                               ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  Option[com.histmersion.api.Offset]
+[error]    |  Second type: Some[Int]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[Option[com.histmersion.api.Offset], Some[Int]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[Option[com.histmersion.api.Offset],
+[error]    |      Some[Int]](
+[error]    |      /* missing */summon[Option[com.histmersion.api.Offset] <:< Some[Int]])
+[error]    |
+[error]    |But no implicit values were found that match type Option[com.histmersion.api.Offset] <:< Some[Int].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/OffsetPageSuite.scala:69:45 
+[error] 69 |    assertEquals(old.map(_.offset), Right(0))
+[error]    |                                             ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  Either[io.circe.Error, com.histmersion.api.Offset.T]
+[error]    |  Second type: Right[Nothing, Int]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[Either[io.circe.Error, com.histmersion.api.Offset.T], Right[Nothing, Int]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      Either[io.circe.Error, com.histmersion.api.Offset.T], Right[Nothing, Int]](
+[error]    |      /* missing */
+[error]    |        summon[Either[io.circe.Error, com.histmersion.api.Offset.T] <:<
+[error]    |          Right[Nothing, Int]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type Either[io.circe.Error, com.histmersion.api.Offset.T] <:< Right[Nothing, Int].
+[error] four errors found
+[error] (api / Test / compileIncremental) Compilation failed
+[error] elapsed time: 5 s, cache 97%, 128 disk cache hits, 3 onsite tasks

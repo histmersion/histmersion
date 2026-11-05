@@ -184,7 +184,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
       )
     )
     assertEquals(n, 2)
-    assertEquals(AssetLinkFixtures.list(ds, Some("zqmd2020_figs"), None, None, None).total, 1, "the link survived")
+    assertEquals((AssetLinkFixtures.list(ds, Some("zqmd2020_figs"), None, None, None).total.value: Int), 1, "the link survived")
     assertEquals(AssetFixtures.list(ds, "zqmd2020_figs").map(_.name), Vector("fig1.png", "fig2.png"))
 
   test("save: a second save of the same key replaces it in place; point and period come from the place"):
@@ -351,7 +351,7 @@ class MediaRepoSuite extends com.histmersion.db.DbSuite with Bounded:
     val l =
       AssetFixtures.list(ds, Api.MediaQuery(provider = Some(P), license = Some(Lic), place = Some("zqmd_site")), 50)
     assertEquals(l.items.map(_.providerKey), List(Some("File:Zqmd listed.jpg")))
-    assertEquals(l.total, 1)
+    assertEquals((l.total.value: Int), 1)
     val figs = AssetFixtures
       .list(ds, Api.MediaQuery(provider = Some("source"), q = Some("fig"), limit = None), 1000)
       .items

@@ -1,5 +1,30 @@
 # Priority-family status
 
+## Pagination definitions and callers compile project-wide
+
+Build-v7 passes both full production and test compilation across 3,143 source files,
+with source hashes unchanged during compilation. The shared domain RowCount now
+flows through article Found/Evidence/evidence(...) and the lead repository/service
+tuple. The reusable ModelTypeRewrite handles reviewed method parameters, declarations,
+defaults and callers; exact-output, runtime and type-separation fixtures pass. An
+invalid reviewed parameter list fails before rewriting. The rejected cross-layer
+conversion preview is preserved and its patch-composition defect is covered by a fixture.
+
+The original API regression set retains all 115 identities: 113 pass, the same two
+ArticlesSuite failures have exactly unchanged failure text, and no tests skip. The
+additional CompileArticleSuite, EmptyAnswerFieldsSuite, VocabularyWireSuite and
+LeadServiceInMemorySuite contribute 31 passing tests, no failures or skips. DB-backed
+runtime and HTTP tests have compiled but have not been run in this checkpoint.
+Seven additional in-memory service/controller suites pass all 28 tests without skips;
+see models/pagination/runtime-checkpoint.md for the exact suite counts and command.
+
+The assertions were adapted through Scalafix, preserving numeric expectations and
+test identities. The new domain/API conversion points preserve the distinction
+between layers. Autopilot DraftFacts.hits, EventLead.List.total, API factory parameters,
+Filter.limit/offset and PassageHit.Offset remain explicit migration work. Compilation
+success does not make them compliant. Project-wide remeasurement is in progress;
+no new detector-quality or whole-migration automation claim is made here.
+
 ## Web count state propagated; server compilation remains open
 
 Eight production files now propagate RowCount through UI signals, private state and

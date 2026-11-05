@@ -249,12 +249,12 @@ class FilterRepoSuite extends com.histmersion.db.DbSuite:
 
   test("total is count(DISTINCT source) and ignores limit/offset"):
     val f = Filter(places = List("Levant", "Pontic", "Oceania"))
-    assertEquals(run(f).total, 3)
+    assertEquals((run(f).total.value: Int), 3)
     val page = SearchFixtures.sources(ds, f.modify(_.limit).setTo(1).modify(_.sort).setTo(Sort.Title), words)
-    assertEquals(page.total, 3)
+    assertEquals((page.total.value: Int), 3)
     assertEquals(page.hits.size, 1)
     val next = SearchFixtures.sources(ds, f.modify(_.limit).setTo(1).modify(_.offset).setTo(1).modify(_.sort).setTo(Sort.Title), words)
-    assertEquals(next.total, 3)
+    assertEquals((next.total.value: Int), 3)
     assertNotEquals(page.hits.head.source.citekey, next.hits.head.source.citekey)
 
   test("sorting: by publication year, newest or oldest first"):

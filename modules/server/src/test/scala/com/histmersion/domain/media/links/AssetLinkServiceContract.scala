@@ -28,7 +28,7 @@ abstract class AssetLinkServiceContract extends MediaStoreSuite:
     assertEquals(l.list(Some(Ck), None, None, None).links.map(_.id), List(1L, 2L))
     assertEquals(l.list(None, Some(" a.png "), None, None).links.map(_.id), List(1L))
     assertEquals(l.list(None, None, Some("event"), Some("zq_e")).links, List(second))
-    assertEquals(l.list(Some(""), None, None, None).total, 2)
+    assertEquals((l.list(Some(""), None, None, None).total.value: Int), 2)
     assert(l.delete(1L))
     assert(!l.delete(1L))
     assertEquals(l.list(None, None, None, None).links.map(_.id), List(2L))

@@ -23,7 +23,7 @@ trait LeadService:
   /** The facts of the leads of the events `selection` selects, the catalogue's and the largest first, one page; and how
     * many it selects.
     */
-  def leads(selection: EventSelection, km: Double, years: Long, limit: Int, offset: Int): (Int, List[LeadRow])
+  def leads(selection: EventSelection, km: Double, years: Long, limit: Int, offset: Int): (com.histmersion.RowCount, List[LeadRow])
 
   /** The facts of one event's lead. */
   def leadOf(id: String, km: Double, years: Long): List[LeadRow]
@@ -47,7 +47,7 @@ object LeadService:
     def attestingSources(id: String): List[EventSourceRef] = db.read(LeadRepo.attestingSources(id))
     def nearFindings(id: String, km: Double, years: Long, limit: Int): List[EventFindingRef] =
       db.read(LeadRepo.nearFindings(id, km, years, limit))
-    def leads(selection: EventSelection, km: Double, years: Long, limit: Int, offset: Int): (Int, List[LeadRow]) =
+    def leads(selection: EventSelection, km: Double, years: Long, limit: Int, offset: Int): (com.histmersion.RowCount, List[LeadRow]) =
       db.read(LeadRepo.leadRows(selection.sql(related), km, years, limit, offset))
     def leadOf(id: String, km: Double, years: Long): List[LeadRow] =
       db.read(LeadRepo.leadRows(Sql.of("e.id = ?", Param.S(id)), km, years, 1, 0))._2
@@ -112,14 +112,14 @@ object LeadService:
         )
       }
 
-    def leads(selection: EventSelection, km: Double, years: Long, limit: Int, offset: Int): (Int, List[LeadRow]) =
+    def leads(selection: EventSelection, km: Double, years: Long, limit: Int, offset: Int): (com.histmersion.RowCount, List[LeadRow]) =
       val s = state.get
       val listed = events.list(selection, Int.MaxValue, 0)
       val rows = listed.events.flatMap(e => factsOf(s, e.id)).sortBy { r =>
         val size = r.vei.fold(0.0)(_.toDouble) + r.magnitude.getOrElse(0.0)
         (r.tier != EventTier.Catalogue, -size, r.notBefore.orElse(r.beginBy).fold((1, 0L))(y => (0, y)), r.id)
       }
-      (listed.total, rows.slice(offset.max(0), offset.max(0) + limit.max(1)))
+      (com.histmersion.RowCount(listed.total.value), rows.slice(offset.max(0), offset.max(0) + limit.max(1)))
 
     def leadOf(id: String, km: Double, years: Long): List[LeadRow] = factsOf(state.get, id).toList
 

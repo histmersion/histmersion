@@ -118,7 +118,7 @@ class MarkdownSuite extends munit.FunSuite:
     val md = SearchMarkdown.searchResults(SearchResult.of(50, hits, 20))
     assert(md.startsWith("### 3 of 50 source(s)"), md)
     assert(md.contains("showing 21–23 of 50 — next: offset=23"), md)
-    assertEquals(SearchResult.of(50, hits, 20).next, Some(23))
+    assertEquals(SearchResult.of(50, hits, 20).next.map(n => (n.value: Int)), Some(23))
     assertEquals(SearchResult.of(23, hits, 20).next, None)
 
   test("searchResults(SearchResult) omits paging footer when everything fits"):

@@ -77,7 +77,7 @@ class EventsControllersSuite extends munit.FunSuite:
       )
     )
     val l = c.list(Api.EventQuery(Filter(limit = 50)))
-    assertEquals((l.total, l.events.size), (3, 2))
+    assertEquals(((l.total.value: Int), l.events.size), (3, 2))
     assertEquals(c.geo(Api.EventQuery(Filter())).events.size, 3)
 
   test("a rename checks the new id against the current one; a held lock refuses every write"):

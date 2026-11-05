@@ -49,7 +49,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     )
     assertEquals(s.leads.nearFindings("zz_attested", 50, 50, 10), Nil)
     val (total, rows) = s.leads.leads(EventSelection(Filter()), 50, 50, 10, 0)
-    assertEquals(total, 3)
+    assertEquals(total.value, 3)
     assertEquals(
       rows.map(r => (r.id, r.tier)),
       List(("gvp_9", EventTier.Catalogue), ("gvp_8", EventTier.Catalogue), ("zz_attested", EventTier.Attested))
@@ -57,7 +57,7 @@ abstract class LeadServiceContract extends CatalogueStoreSuite:
     assertEquals(rows.map(_.findingsNear).distinct, List(0))
     val catalogueOnly =
       s.leads.leads(EventSelection(Filter(), narrow = EventSql.Narrow(tier = Some(EventTier.Catalogue))), 50, 50, 10, 0)
-    assertEquals(catalogueOnly._1, 2)
+    assertEquals(catalogueOnly._1.value, 2)
     assertEquals(s.leads.leadOf("gvp_8", 50, 50).map(r => (r.vei, r.proposed, r.attesting)), List((Some(3), 1, 0)))
     assert(s.eventLinks.setStatus("gvp_8", "zzld2020_own", Event.LinkStatus.Confirmed))
     assertEquals(s.leads.leadOf("gvp_8", 50, 50).map(r => (r.proposed, r.attesting)), List((0, 1)))

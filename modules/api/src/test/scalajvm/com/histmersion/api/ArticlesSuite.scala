@@ -178,7 +178,7 @@ class ArticlesSuite extends munit.FunSuite:
   test("a cut article list carries the offset page fields and says where the next page starts"):
     val row = Article.Summary("sea_peoples", "The Sea Peoples", "concept", None, Nil, Nil, None, None)
     val first = Article.List.of(9, List(row, row), 0)
-    assertEquals((first.offset, first.next), (0, Some(2)))
+    assertEquals(((first.offset.value: Int), first.next.map(n => (n.value: Int))), (0, Some(2)))
     assert(
       ArticleMarkdown.list(first).endsWith("_showing 1–2 of 9 — next: offset=2 — full set: limit=9_"),
       ArticleMarkdown.list(first)

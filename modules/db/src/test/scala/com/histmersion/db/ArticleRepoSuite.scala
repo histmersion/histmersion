@@ -223,12 +223,12 @@ class ArticleRepoSuite extends com.histmersion.db.DbSuite:
     val r =
       ArticleFixtures.list(ds, Filter(title = Some("ZZ TOTAL marker")), PlaceScope.empty, Some("concept"), None, 1, 0)
     assertEquals(r.articles.size, 1)
-    assertEquals(r.total, 2)
+    assertEquals((r.total.value: Int), 2)
     assertEquals(r.kinds, List(Article.KindCount("concept", 2)), "the per-kind counts ignore limit/offset too")
     val myth = onlyMine("# T3\n\nbody", "zz_article_myth").copy(kind = "myth")
     val _ = ArticleFixtures.put(ds, myth)
     val all = ArticleFixtures.list(ds, Filter(title = Some("ZZ TOTAL marker")), PlaceScope.empty, None, None, 1, 0)
-    assertEquals((all.total, all.kinds), (3, List(Article.KindCount("concept", 2), Article.KindCount("myth", 1))))
+    assertEquals(((all.total.value: Int), all.kinds), (3, List(Article.KindCount("concept", 2), Article.KindCount("myth", 1))))
 
   test("delete removes the article and its links"):
     reset()

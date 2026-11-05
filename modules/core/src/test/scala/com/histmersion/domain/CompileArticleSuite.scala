@@ -78,7 +78,7 @@ class CompileArticleSuite extends munit.FunSuite:
   )
   private val ev = evidence(
     "search {topics:[tin]}",
-    3,
+    com.histmersion.RowCount(3),
     facts,
     extracted,
     List(

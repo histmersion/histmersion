@@ -173,7 +173,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     assert(h.library.sources.put("zz_backup_a", fixture("zz_backup_a", "The Kept One")).isRight)
     assert(h.library.sources.put("zz_backup_b", fixture("zz_backup_b", "The Other One")).isRight)
     val before = h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total
-    assertEquals(before, 2)
+    assertEquals((before.value: Int), 2)
 
     supervised {
       val b = Composition.server(cfg, "127.0.0.1", 0).start()
@@ -226,7 +226,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
         // 6. lose a source
         sql("DELETE FROM sources WHERE citekey = 'zz_backup_a'")
         assert(h.library.sources.get("zz_backup_a").isLeft)
-        assertEquals(h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total, 1)
+        assertEquals((h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total.value: Int), 1)
 
         // 7. restore it
         val (fs, fb) = post(s"$url/api/restore", s"""{"file":"$file","force":true}""")
@@ -240,7 +240,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
 
         // 8. …and search finds it again, findings and all
         val after = h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10))
-        assertEquals(after.total, 2)
+        assertEquals((after.total.value: Int), 2)
         assertEquals(after.hits.map(_.source.citekey).sorted, List("zz_backup_a", "zz_backup_b"))
         val got = h.library.sources.get("zz_backup_a").toOption.get
         assertEquals(got.source.title, "The Kept One")
@@ -298,7 +298,7 @@ class BackupRestoreSuite extends com.histmersion.db.DbSuite:
     val h = ServerWiring(Deps(cfg, ds))
     val dump = takeBackup(h)
     sql("TRUNCATE sources CASCADE")
-    assertEquals(h.library.search.sources(Filter(limit = 10)).total, 0)
+    assertEquals((h.library.search.sources(Filter(limit = 10)).total.value: Int), 0)
     val r = h.upkeep.restore(RestoreRequest(dump.file, force = false))
     assert(r.isRight, r.toString)
     assert(r.toOption.get.sourcesAfter > 0, r.toString)

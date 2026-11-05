@@ -66,7 +66,7 @@ private[evidence] object LeadRepo:
   /** The facts of the leads of the events `where` selects (over `events e`, `ep` its place): tier, size, findings near
     * (within `km`, `years`), proposed and confirmed sources. Catalogue events first, the largest first.
     */
-  def leadRows(where: Sql, km: Double, years: Long, limit: Int, offset: Int)(using DbCon): (Int, List[LeadRow]) =
+  def leadRows(where: Sql, km: Double, years: Long, limit: Int, offset: Int)(using DbCon): (com.histmersion.RowCount, List[LeadRow]) =
     val total = (Sql.raw(
       "SELECT count(*)::int FROM events e LEFT JOIN places ep ON ep.id = e.place_id WHERE "
     ) ++ where).frag.query[Int].run().head
@@ -94,7 +94,7 @@ private[evidence] object LeadRepo:
       Sql.of(" LIMIT ? OFFSET ?", Param.I(limit.max(1)), Param.I(offset.max(0))))
     // the three `?` of the findings count come first in the text
     val withParams = Sql(rows.text, List(Param.D(km * 1000.0), Param.L(years), Param.L(years)) ++ rows.params)
-    (total, withParams.frag.query[LeadRow].run().toList)
+    (com.histmersion.RowCount(total), withParams.frag.query[LeadRow].run().toList)
 
   /** Catalogue events an article's period and region hold: those overlapping `period` within `km` of one of `citekeys`'
     * dated findings of that period, and large enough (`minVei`, `minMagnitude`, or a war) — with how many of those

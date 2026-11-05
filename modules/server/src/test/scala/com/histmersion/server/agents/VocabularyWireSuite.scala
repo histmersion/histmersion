@@ -17,7 +17,7 @@ import com.histmersion.api.library.Source
 class VocabularyWireSuite extends munit.FunSuite:
 
   test("a checkpointed record spells a vocabulary as the wire does"):
-    val found = CompileArticlePipeline.Found("f", 1, List(SourceFact("ck", "T", None, Source.Status.Superseded)), Nil)
+    val found = CompileArticlePipeline.Found("f", com.histmersion.RowCount(1), List(SourceFact("ck", "T", None, Source.Status.Superseded)), Nil)
     assert(found.asJson.noSpaces.contains("\"status\":\"superseded\""), found.asJson.noSpaces)
 
   test("a checkpointed snapshot spells its draft mode as the wire does"):

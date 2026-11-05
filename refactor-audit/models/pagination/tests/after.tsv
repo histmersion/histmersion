@@ -1,0 +1,116 @@
+class	test	status	message
+com.histmersion.api.ArticlesSuite	ArticlePut.of round-trips a stored article back into writer form	passed	
+com.histmersion.api.ArticlesSuite	a body with no heading of its own gets one from the title	passed	
+com.histmersion.api.ArticlesSuite	a cut article list carries the offset page fields and says where the next page starts	passed	
+com.histmersion.api.ArticlesSuite	a real summary that merely mentions a stand-in word is kept	passed	
+com.histmersion.api.ArticlesSuite	a stand-in summary is refused on put and on patch, with what to do instead	passed	
+com.histmersion.api.ArticlesSuite	a wiki directory maps to the singular kind it holds	passed	
+com.histmersion.api.ArticlesSuite	an empty patch changes nothing	passed	
+com.histmersion.api.ArticlesSuite	append extends the article instead of re-uploading it	passed	
+com.histmersion.api.ArticlesSuite	appendUnderSection appends at the end when the section is the last heading	passed	
+com.histmersion.api.ArticlesSuite	appendUnderSection inserts text under the matching heading	passed	
+com.histmersion.api.ArticlesSuite	appendUnderSection matches case-insensitively and ignores leading #	passed	
+com.histmersion.api.ArticlesSuite	appendUnderSection returns an error when the heading is not found	passed	
+com.histmersion.api.ArticlesSuite	backlinks and the cited-sources footer render as wikilinks the page can resolve	passed	
+com.histmersion.api.ArticlesSuite	body replaces, and body + append apply in that order	passed	
+com.histmersion.api.ArticlesSuite	ifUpdatedAt: matching passes, stale fails with a message telling you what to do	passed	
+com.histmersion.api.ArticlesSuite	list renders slug, title, meta and the page size against the total	passed	
+com.histmersion.api.ArticlesSuite	no backlinks and no citations means no empty sections	passed	
+com.histmersion.api.ArticlesSuite	patch_article with section targets the append under the right heading	passed	
+com.histmersion.api.ArticlesSuite	period and kind are validated on the way in	passed	
+com.histmersion.api.ArticlesSuite	put needs both period bounds or neither	passed	
+com.histmersion.api.ArticlesSuite	put normalises the slug and derives the summary from the lede when none is given	failure	munit.ComparisonFailException: modules/api/src/test/scalajvm/com/histmersion/api/ArticlesSuite.scala:35\n34:      .get\n35:    assertEquals(a.slug, "sea_peoples")\n36:    assertEquals(a.kind, "concept")\nvalues are not the same\n=> Obtained\n Sea_Peoples \n=> Diff (- expected, + obtained)\n-sea_peoples\n+Sea_Peoples\n\tat munit.FunSuite.assertEquals(FunSuite.scala:12)\n\tat com.histmersion.api.ArticlesSuite.$init$$$anonfun$1(ArticlesSuite.scala:35)\n
+com.histmersion.api.ArticlesSuite	put rejects a slug that is not a filename, an empty title and an inverted period	failure	munit.FailException: modules/api/src/test/scalajvm/com/histmersion/api/ArticlesSuite.scala:41 assertion failed\n40:  test("put rejects a slug that is not a filename, an empty title and an inverted period"):\n41:    assert(Articles.applyPut("Sea Peoples!", Article.Put("T", "concept", "b")).isLeft)\n42:    assert(Articles.applyPut("x", Article.Put("  ", "concept", "b")).isLeft)\n\tat munit.FunSuite.assert(FunSuite.scala:12)\n\tat com.histmersion.api.ArticlesSuite.$init$$$anonfun$2(ArticlesSuite.scala:41)\n
+com.histmersion.api.ArticlesSuite	tags add/remove/replace leave the body and everything else alone	passed	
+com.histmersion.api.ArticlesSuite	the line under an article's title shows readable tag and region links, not raw snake_case	passed	
+com.histmersion.api.ArticlesSuite	the metadata line goes UNDER the article's own title, never above it	passed	
+com.histmersion.api.ArticlesSuite	without a summary, a body that opens with `## Summary` supplies it	passed	
+com.histmersion.api.FilterSuite	AggregateQuery.time asks for the FLAT strip; .tree asks for the nested answer	passed	
+com.histmersion.api.FilterSuite	AggregateQuery.time defaults `by` to time and keeps the filter as given	passed	
+com.histmersion.api.FilterSuite	BBox.contains honours the antimeridian split	passed	
+com.histmersion.api.FilterSuite	BBox.parse reads the CLI spelling	passed	
+com.histmersion.api.FilterSuite	FacetField parses its wire labels	passed	
+com.histmersion.api.FilterSuite	Filter.of builds closed periods from half-open bounds	passed	
+com.histmersion.api.FilterSuite	Filter.of trims, splits comma lists and drops blanks	passed	
+com.histmersion.api.FilterSuite	FilterQuery round-trips a Filter (so the CLI's derived client cannot drift)	passed	
+com.histmersion.api.FilterSuite	FindingsQuery folds the legacy `region` parameter in as one more place	passed	
+com.histmersion.api.FilterSuite	Sort parses the wire labels and round-trips	passed	
+com.histmersion.api.FilterSuite	a `from` past the open-ended upper sentinel does not invert the range	passed	
+com.histmersion.api.FilterSuite	a `to` below the open-ended lower sentinel does not invert it either	passed	
+com.histmersion.api.FilterSuite	a bbox needs all four corners	passed	
+com.histmersion.api.FilterSuite	a hit with no matched findings renders without a matches: list	passed	
+com.histmersion.api.FilterSuite	an empty Filter round-trips to an empty query	passed	
+com.histmersion.api.FilterSuite	both bounds are clamped, and a reversed pair is still ordered	passed	
+com.histmersion.api.FilterSuite	facets render value (count)	passed	
+com.histmersion.api.FilterSuite	half-open ranges survive the round-trip as half-open	passed	
+com.histmersion.api.FilterSuite	limit <= 0 means 'server default'; offset is never negative	passed	
+com.histmersion.api.FilterSuite	lowerGiven/upperGiven report which bound the caller actually gave	passed	
+com.histmersion.api.FilterSuite	ordinary deep time is untouched by the clamp	passed	
+com.histmersion.api.FilterSuite	periodLabel is shared by the renderers and the SQL layer's explanations	passed	
+com.histmersion.api.FilterSuite	searchResults renders a matches: sub-list with claim, place, period and why	passed	
+com.histmersion.api.FilterSuite	searchResults shows the page size against the total when paging	passed	
+com.histmersion.api.FilterSuite	title is a criterion (trimmed; blank is none) but not part of the source set	passed	
+com.histmersion.api.MarkdownSuite	collapseHistogram collapses runs of identical counts when > 12 rows	passed	
+com.histmersion.api.MarkdownSuite	collapseHistogram leaves short histograms unchanged	passed	
+com.histmersion.api.MarkdownSuite	missing year is rendered as n.d.	passed	
+com.histmersion.api.MarkdownSuite	no notes column, no heading	passed	
+com.histmersion.api.MarkdownSuite	notes are rendered under a Notes heading, after the summary and before the findings	passed	
+com.histmersion.api.MarkdownSuite	notes come before the full text, which stays last	passed	
+com.histmersion.api.MarkdownSuite	pagingFooter is empty when everything fits on one page	passed	
+com.histmersion.api.MarkdownSuite	pagingFooter omits next when showing the last page	passed	
+com.histmersion.api.MarkdownSuite	pagingFooter shows next and full set when the page does not cover the whole result	passed	
+com.histmersion.api.MarkdownSuite	searchResults(SearchResult) includes paging footer when total > hits	passed	
+com.histmersion.api.MarkdownSuite	searchResults(SearchResult) omits paging footer when everything fits	passed	
+com.histmersion.api.MarkdownSuite	searchResults(SearchResult) renders the FTS snippet quote line with its heading	passed	
+com.histmersion.api.MarkdownSuite	searchResults: the footer follows the page's own offset — every page, not just the first (#1798)	passed	
+com.histmersion.api.MarkdownSuite	the header still carries the metadata, topics, regions and DOI	passed	
+com.histmersion.api.OffsetPageSuite	every paged list prints its footer: events, goals, attestations, asset links, pictures (#1798)	passed	
+com.histmersion.api.OffsetPageSuite	footer: empty for the whole list; the range and the next offset otherwise	passed	
+com.histmersion.api.OffsetPageSuite	header: the whole list, or how much of it	passed	
+com.histmersion.api.OffsetPageSuite	markdown: the empty text, and past the end says so	passed	
+com.histmersion.api.OffsetPageSuite	next: the offset after this page, none on the last page or past the end	passed	
+com.histmersion.api.OffsetPageSuite	the JSON carries offset and next; a body without them still decodes (older server)	passed	
+com.histmersion.api.WireSnapshotSuite	the moved records' Markdown and JSON are the recorded ones	passed	
+com.histmersion.api.YearsSuite	ISO years are astronomical: parseIso and isoAstronomical	passed	
+com.histmersion.api.YearsSuite	YearFmt: BCE negative, CE positive, 0 as 1 BCE, an unknown year as ?	passed	
+com.histmersion.api.YearsSuite	an event's short and long date lines	passed	
+com.histmersion.api.YearsSuite	astronomical ↔ historical: no year 0 on the historical side	passed	
+com.histmersion.api.YearsSuite	fromJson: numbers, decimal numbers and strings through the given reader	passed	
+com.histmersion.api.YearsSuite	goal periods print in BCE/CE, not as raw signed years (#1798)	passed	
+com.histmersion.api.YearsSuite	openPeriod: both, one, neither	passed	
+com.histmersion.api.YearsSuite	parse '  2026  ' = 2026	passed	
+com.histmersion.api.YearsSuite	parse '+530' = 530	passed	
+com.histmersion.api.YearsSuite	parse '-1300 BCE' = -1300	passed	
+com.histmersion.api.YearsSuite	parse '-1300' = -1300	passed	
+com.histmersion.api.YearsSuite	parse '-3300000' = -3300000	passed	
+com.histmersion.api.YearsSuite	parse '1 BCE' = -1	passed	
+com.histmersion.api.YearsSuite	parse '1 CE' = 1	passed	
+com.histmersion.api.YearsSuite	parse '1,200 BCE' = -1200	passed	
+com.histmersion.api.YearsSuite	parse '1300 B.C.E.' = -1300	passed	
+com.histmersion.api.YearsSuite	parse '1300 BC' = -1300	passed	
+com.histmersion.api.YearsSuite	parse '1300 BCE' = -1300	passed	
+com.histmersion.api.YearsSuite	parse '1300 b.c.' = -1300	passed	
+com.histmersion.api.YearsSuite	parse '1300bce' = -1300	passed	
+com.histmersion.api.YearsSuite	parse '530 AD' = 530	passed	
+com.histmersion.api.YearsSuite	parse '530 CE' = 530	passed	
+com.histmersion.api.YearsSuite	parse '530' = 530	passed	
+com.histmersion.api.YearsSuite	parse '530ce' = 530	passed	
+com.histmersion.api.YearsSuite	parse 'A.D. 530' = 530	passed	
+com.histmersion.api.YearsSuite	parse 'AD 530' = 530	passed	
+com.histmersion.api.YearsSuite	parse 'c. 1200 BCE' = -1200	passed	
+com.histmersion.api.YearsSuite	parse 'ca 1200 BC' = -1200	passed	
+com.histmersion.api.YearsSuite	parse 'circa 3300 BCE' = -3300	passed	
+com.histmersion.api.YearsSuite	parse refuses ''	passed	
+com.histmersion.api.YearsSuite	parse refuses '-530 CE'	passed	
+com.histmersion.api.YearsSuite	parse refuses '0 BCE'	passed	
+com.histmersion.api.YearsSuite	parse refuses '0 CE'	passed	
+com.histmersion.api.YearsSuite	parse refuses '0'	passed	
+com.histmersion.api.YearsSuite	parse refuses '13 00'	passed	
+com.histmersion.api.YearsSuite	parse refuses '1300 BCE CE'	passed	
+com.histmersion.api.YearsSuite	parse refuses '1300 years'	passed	
+com.histmersion.api.YearsSuite	parse refuses 'AD -5'	passed	
+com.histmersion.api.YearsSuite	parse refuses 'BCE'	passed	
+com.histmersion.api.YearsSuite	parse refuses 'hello'	passed	
+com.histmersion.api.YearsSuite	parse: year 0 is refused with the convention, not as garbage	passed	
+com.histmersion.api.YearsSuite	shift crosses the era boundary without a year 0	passed	
+com.histmersion.api.YearsSuite	the places and periods views use the same formatter	passed	

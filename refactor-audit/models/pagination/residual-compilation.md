@@ -1,5 +1,18 @@
 # Applied pagination batch: remaining compilation work
 
+Current checkpoint: build-v7 PASSES full compile and Test/compile over 3,143 source
+files. The earlier compilation blockers below are resolved and retained as history.
+The API baseline comparison retains 115 identities, 113 passes and the exact original
+two failure messages, with no skips. Focused article/lead/wire tests pass (31 tests).
+
+Remaining migration work is independent of compilation: API factory parameter types;
+Filter.limit's default sentinel and Filter.offset; PassageHit's UTF-16 offset;
+AutopilotPolicy.DraftFacts.hits and the wire EventLead.List.total; other primitive
+model candidates and independent detector quality. DB-backed behavior and HTTP tests
+were not executed in this checkpoint. Fresh project-wide measurement is in progress.
+
+Historical checkpoints follow.
+
 Latest checkpoint: build-v3, after the eight-file web state batch, compiles web
 production successfully and reports the same three server errors. Full Test/compile
 remains blocked by server production. The web-specific test runs are tracked separately

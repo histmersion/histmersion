@@ -25,6 +25,7 @@ import com.histmersion.api.library.NeighborTarget
 import com.histmersion.api.Api
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** `compile-article <slug>` (docs/research-embedded-agents.md §4.5, §14): the five phases of the writing guide, run by
   * the server.
@@ -166,9 +167,9 @@ final class CompileArticlePipeline(
     val facts = res.hits.map(x => SourceFact(x.source.citekey, x.source.title, x.source.year, x.source.status))
     // cited, or listed (a hand-written Not used list, or a stored reason): handled already
     val already = AgentVerify.wikilinks(s.body).toSet ++ s.reasons.map(_.citekey)
-    if res.total > facts.size then
-      ctx.warn(s"filter: $line → ${res.total}; only the first ${facts.size} are read (agents.compile.max-sources)")
-    Right(Found(line, res.total, facts, facts.map(_.citekey).filterNot(already)))
+    if res.total.value > facts.size then
+      ctx.warn(s"filter: $line → ${res.total.value}; only the first ${facts.size} are read (agents.compile.max-sources)")
+    Right(Found(line, com.histmersion.RowCount(res.total.value), facts, facts.map(_.citekey).filterNot(already)))
 
   /** A source's record, as an extraction reads it: summary, findings, notes, then the body, cut at
     * `agents.compile.record-chars`.
@@ -375,7 +376,7 @@ object CompileArticlePipeline:
   ) derives KindlingsCodecAsObject
 
   /** The filter's sources, and the ones to extract (when extending: not cited yet). */
-  final case class Found(filter: String, total: Int, sources: List[SourceFact], toExtract: List[String])
+  final case class Found(filter: String, total: com.histmersion.RowCount, sources: List[SourceFact], toExtract: List[String])
       derives KindlingsCodecAsObject
 
   /** What the write did; `previousVersion` holds the text an extension replaced (undo from it). */

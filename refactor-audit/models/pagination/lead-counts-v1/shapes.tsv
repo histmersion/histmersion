@@ -1,0 +1,10 @@
+path	line	source	ast	replacement
+modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadRepo.scala	69	Int	Type.Name("Int")	com.histmersion.RowCount
+modules/db/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadRepo.scala	97	total	Term.Name("total")	com.histmersion.RowCount(total)
+modules/server/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadService.scala	26	Int	Type.Name("Int")	com.histmersion.RowCount
+modules/server/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadService.scala	50	Int	Type.Name("Int")	com.histmersion.RowCount
+modules/server/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadService.scala	115	Int	Type.Name("Int")	com.histmersion.RowCount
+modules/server/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadService.scala	122	listed.total	Term.Select(Term.Name("listed"), Term.Name("total"))	com.histmersion.RowCount(listed.total.value)
+modules/server/src/main/scala/com/histmersion/domain/catalogue/evidence/EventLinksControllers.scala	259	EventLead.List(total, rows.flatMap(leadOf))	Term.Apply(\n  Term.Select(Term.Name("EventLead"), Term.Name("List")),\n  Term.ArgClause(\n    List(\n      Term.Name("total"),\n      Term.Apply(\n        Term.Select(Term.Name("rows"), Term.Name("flatMap")),\n        Term.ArgClause(List(Term.Name("leadOf")), None)\n      )\n    ),\n    None\n  )\n)	EventLead.List(total.value, rows.flatMap(leadOf))
+modules/server/src/test/scala/com/histmersion/domain/catalogue/evidence/LeadServiceContract.scala	52	assertEquals(total, 3)	Term.Apply(\n  Term.Name("assertEquals"),\n  Term.ArgClause(List(Term.Name("total"), Lit.Int(3)), None)\n)	assertEquals(total.value, 3)
+modules/server/src/test/scala/com/histmersion/domain/catalogue/evidence/LeadServiceContract.scala	60	assertEquals(catalogueOnly._1, 2)	Term.Apply(\n  Term.Name("assertEquals"),\n  Term.ArgClause(\n    List(Term.Select(Term.Name("catalogueOnly"), Term.Name("_1")), Lit.Int(2)),\n    None\n  )\n)	assertEquals(catalogueOnly._1.value, 2)
