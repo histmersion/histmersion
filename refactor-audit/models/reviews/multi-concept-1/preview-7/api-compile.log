@@ -1,0 +1,115 @@
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/library/CitationLint.scala:9:42 [0m[0m
+[31m9 |[0m      .filterNot(e => citekeys.contains(e.dst))
+[31m[31m  |[0m                                        ^^^^^[0m
+[31m  |[0m                   Found:    (e.dst : com.histmersion.api.library.Citekey)
+[31m  |[0m                   Required: String
+[31m  |[0m
+[31m  |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/library/CitationLint.scala:10:42 [0m[0m
+[31m10 |[0m      .sortBy(e => ([33mif[0m looksLikeCitekey(e.dst) [33mthen[0m [32m0[0m [33melse[0m [32m1[0m, e.src, e.kind, e.dst))
+[31m[31m   |[0m                                        ^^^^^[0m
+[31m   |[0m                 Found:    (e.dst : com.histmersion.api.library.Citekey)
+[31m   |[0m                 Required: String
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/library/CitationLint.scala:10:84 [0m[0m
+[31m10 |[0m      .sortBy(e => ([33mif[0m looksLikeCitekey(e.dst) [33mthen[0m [32m0[0m [33melse[0m [32m1[0m, e.src, e.kind, e.dst))
+[31m[31m   |[0m                                                                                    ^[0m
+[31m   |[0mNo given instance of type Ordering[(T1, T2, T3, T4)] was found for parameter ord of [33mmethod[0m [32msortBy[0m in [33mtrait[0m [32mSeqOps[0m.
+[31m   |[0mI found:
+[31m   |[0m
+[31m   |[0m    scala.math.Ordering.Tuple4[[32mT1[0m, [32mT2[0m, [32mT3[0m, [32mT4[0m](scala.math.Ordering.Int,
+[31m   |[0m      scala.math.Ordering.comparatorToOrdering[[32mT2[0m](
+[31m   |[0m        /* missing */summon[java.util.Comparator[T2]]),
+[31m   |[0m    ???, ???)
+[31m   |[0m
+[31m   |[0mBut no implicit values were found that match type java.util.Comparator[T2]
+[31m   |[0m
+[31m   |[0mwhere:    [33mT1[0m is a type variable with constraint >: Int
+[31m   |[0m          [33mT2[0m is a type variable with constraint >: com.histmersion.api.library.Citekey.T
+[31m   |[0m          [33mT3[0m is a type variable with constraint >: String
+[31m   |[0m          [33mT4[0m is a type variable with constraint >: com.histmersion.api.library.Citekey.T
+[31m   |[0m.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import cats.implicits.catsKernelOrderingForOrder
+[31m   |[0m  import cats.instances.all.catsKernelOrderingForOrder
+[31m   |[0m  import cats.kernel.Order.catsKernelOrderingForOrder
+[31m   |[0m  import scala.math.Ordering.comparatorToOrdering
+[31m   |[0m  import scala.math.Ordering.ordered
+[31m   |[0m  import cats.instances.order.catsKernelOrderingForOrder
+[31m   |[0m  import cats.kernel.instances.order.catsKernelOrderingForOrder
+[31m   |[0m
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/library/CitationLint.scala:22:42 [0m[0m
+[31m22 |[0m      .filterNot(e => citekeys.contains(e.dst))
+[31m[31m   |[0m                                        ^^^^^[0m
+[31m   |[0m                 Found:    (e.dst : com.histmersion.api.library.Citekey)
+[31m   |[0m                 Required: String
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/library/CitationLint.scala:24:61 [0m[0m
+[31m24 |[0m        [33mval[0m [36mnear[0m = citekeys.filter([36mck[0m => ck.startsWith(e.dst + [32m"_"[0m)).toList.sorted
+[31m[31m   |[0m                                                       ^^^^^^^[0m
+[31m   |[0mvalue + is not a member of com.histmersion.api.library.Citekey, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Fractional.Implicits.infixFractionalOps
+[31m   |[0m  import scala.math.Integral.Implicits.infixIntegralOps
+[31m   |[0m  import scala.math.Numeric.Implicits.infixNumericOps
+[31m   |[0m
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/library/CitationLint.scala:32:26 [0m[0m
+[31m32 |[0m          [33mSome[0m([33mLintItem[0m(e.src, [32ms"[0m${e.kind}[32m → [0m${e.dst}[32m [0m$verdict[32m"[0m))
+[31m[31m   |[0m                        ^^^^^[0m
+[31m   |[0m                 Found:    (e.src : com.histmersion.api.library.Citekey)
+[31m   |[0m                 Required: String
+[31m   |[0m
+[31m   |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:378:107 [0m[0m
+[31m378 |[0m      edges = s.edges.flatMap([36me[0m => com.histmersion.api.library.[33mEdge[0m.[33mKind[0m.fromWire(e.kind).map([33mEdge[0m.[33mInput[0m(e.dst, _)))
+[31m[31m    |[0m                                                                                                         ^^^^^[0m
+[31m    |[0m               Found:    (e.dst : com.histmersion.api.library.Citekey)
+[31m    |[0m               Required: String
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:40:57 [0m[0m
+[31m40 |[0m    entries.filter(_.within.isEmpty).flatMap(_.bytes).sum
+[31m[31m   |[0m                                                         ^[0m
+[31m   |[0mNo given instance of type Numeric[B] was found for parameter num of [33mmethod[0m [32msum[0m in [33mtrait[0m [32mIterableOnceOps[0m
+[31m   |[0m
+[31m   |[0mwhere:    B is a type variable with constraint >: com.histmersion.api.ByteCount.T
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:44:85 [0m[0m
+[31m44 |[0m      .filter(e => e.within.isEmpty && e.volume.contains(volume) && e.bytes.exists(_ > [32m0[0m))
+[31m[31m   |[0m                                                                                   ^^^[0m
+[31m   |[0mvalue > is not a member of com.histmersion.api.ByteCount, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import cats.implicits.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.all.catsSyntaxPartialOrder
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Ordered.orderingToOrdered
+[31m   |[0m  import scala.math.Ordering.Implicits.infixOrderingOps
+[31m   |[0m  import cats.syntax.order.catsSyntaxPartialOrder
+[31m   |[0m  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[31m   |[0m
+[31m[31m-- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:45:19 [0m[0m
+[31m45 |[0m      .sortBy(e => -e.bytes.getOrElse([32m0L[0m))
+[31m[31m   |[0m                   ^^^^^^^^^^^^^^^^^^^^^^[0m
+[31m   |[0mvalue unary_- is not a member of com.histmersion.api.ByteCount | Long, but could be made available as an extension method.
+[31m   |[0m
+[31m   |[0mOne of the following imports might make progress towards fixing the problem:
+[31m   |[0m
+[31m   |[0m  import io.github.iltotore.iron.autoRefine
+[31m   |[0m  import scala.math.Fractional.Implicits.infixFractionalOps
+[31m   |[0m  import scala.math.Integral.Implicits.infixIntegralOps
+[31m   |[0m  import scala.math.Numeric.Implicits.infixNumericOps
+[31m   |[0m
+[31m[31m-- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-7/modules/api/src/main/scala/com/histmersion/api/maintenance/Storage.scala:45:42 [0m[0m
+[31m45 |[0m      .sortBy(e => -e.bytes.getOrElse([32m0L[0m))
+[31m[31m   |[0m                                          ^[0m
+[31m   |[0mAmbiguous given instances: both [33mobject[0m [32mShort[0m in [33mobject[0m [32mOrdering[0m and [33mobject[0m [32mChar[0m in [33mobject[0m [32mOrdering[0m match type Ordering[B] of parameter ord of [33mmethod[0m [32msortBy[0m in [33mtrait[0m [32mSeqOps[0m
+11 errors found
+Compilation failed

@@ -2,6 +2,30 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Latest observation: preview-7 extends the same cohort from 79 to 82 confirmed
+fields by adding Edge.src, Edge.dst and Finding.citekey. The original 79 rows and
+IDs are unchanged (zero-context diff shows only the three additions). With the
+eleven original pagination IDs, the reviewed subset is now 93 original findings,
+eight historically fixed and 85 outstanding. No broader denominator is claimed.
+
+The shared rule now propagates immutable Set elements through configured parameters,
+results, defaults and calls. Its exact-output, compile and behavior fixture proves
+duplicate collapse, membership, defaults, typed forwarding and raw-set rejection.
+Seven Source.Write helper signatures migrate together, including the alias set;
+edgeOf remains the explicit raw-input normalization boundary. This is necessary
+caller adaptation, not additional repair credit for unadjudicated parameters.
+
+Preview-7 rewrites 215 overlay files and compiles all 487 API production sources.
+The two earlier Source.Write errors disappear, but seven newly exposed citation
+uses remain in CitationLint and Source.Put.of, alongside four unchanged storage
+arithmetic diagnostics: eleven total. Compilation fails with exit code 1; all
+original source hashes remain unchanged. Next: carry typed citation identity
+through lint membership and string algorithms, convert deliberately raw input
+records at their boundary, and implement typed storage arithmetic. Then run the
+full dependent-module/test/stable-ID contract. These are preview findings, not
+application repairs. See models/reviews/multi-concept-1/{citation-closure,preview-7,
+rewrite-sets.txt}. Historical checkpoints below retain their original denominators.
+
 The existing configured model-review tool verified 79 distinct confirmed primitive
 leaves across 17 concepts: bibliography (six), place/event identities (two),
 coordinates (two), storage quantities/durations (four), SHA-256 (one) and job

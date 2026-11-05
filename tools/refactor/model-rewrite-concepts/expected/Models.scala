@@ -19,6 +19,10 @@ object Calls:
   def echo(label: conceptfixture.Label): conceptfixture.Label = label
   def echoed: conceptfixture.Label = echo(conceptfixture.Label("echo"))
   def unrelated: Unrelated = Unrelated("raw", 3L)
+  def aliases(keys: Set[conceptfixture.Label] = (Set.empty).map(conceptfixture.Label.apply)): Set[conceptfixture.Label] = keys
+  def forwardedAliases(keys: Set[conceptfixture.Label]): Set[conceptfixture.Label] = aliases(keys)
+  def aliasContains(keys: Set[conceptfixture.Label], label: conceptfixture.Label): Boolean = keys.contains(label)
+  def repeatedAliases: Set[conceptfixture.Label] = aliases((Set("a", "a", "b")).map(conceptfixture.Label.apply))
 
 object Rendering:
   def below(rs: List[Report], limit: Report): List[Report] = rs.filter(_.bytes.value.toLong < limit.bytes.value.toLong)
