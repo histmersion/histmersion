@@ -2,6 +2,25 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+API JVM test compilation now passes, with 109 selected behavioral tests passing
+and none ignored in applied-api-tests-build-3. These cover PlaceEdits, Places,
+Storage, Write, AcquireMarkdown, WireSnapshot and JobKindsRegistry. The existing
+wire snapshots and patch clear/retain/absent semantics pass without expected-value
+changes. caller-api-tests-1 adapts fifteen AST occurrences; caller-api-optics-1
+adapts eight and caller-api-optics-2 the missed lowFreeBytes threshold. These are
+targeted test adaptations through the existing pipeline, with exact applied hash
+verification. Assertion values, predicates, test counts and snapshots are retained.
+Place.Hit's raw ID constructor remains an explicit unresolved modeling boundary.
+
+The first two build observations retain later optics expansion failures, including
+the lowFreeBytes update missed by the initial field-name search. They are not
+independent detector refinement rounds or evidence of general optics coverage.
+After API tests passed, core/Test/compile reached sixteen type mismatches in
+CandidatesSuite, EmptyAnswerFieldsSuite, GazetteerSourcesSuite, EventLinksSuite,
+PlaceSeedKindsSuite and AcquisitionSweepRulesSuite. Core behavior tests remain
+blocked; web and server closure remain unresolved. No new confirmed finding IDs,
+repair credit or overall automation percentage is inferred from test adaptation.
+
 Core production compilation now passes in applied-core-build-1. caller-core-1
 applies sixteen exact AST recipes across seven files using the existing pipeline;
 applied hash verification passes. Acquisition candidates retain typed title,

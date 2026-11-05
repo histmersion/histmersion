@@ -185,5 +185,5 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(ing.contains("CURRENT"))
 
   test("pipes in a title cannot break the table"):
-    val md = AcquireMarkdown.discover(DiscoverResult("q", 1, List(work.modify(_.title).setTo(Some("A | B")))))
+    val md = AcquireMarkdown.discover(DiscoverResult("q", 1, List(work.modify(_.title).setTo(Some(com.histmersion.api.library.Title("A | B"))))))
     assert(md.contains("A \\| B"), md)

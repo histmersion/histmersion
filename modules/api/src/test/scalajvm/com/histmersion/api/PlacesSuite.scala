@@ -35,7 +35,7 @@ class PlacesSuite extends munit.FunSuite:
 
   test("LPF point: id, title, types→kind, when→period, geometry passthrough"):
     val p = one(hattusa)
-    assertEquals(p.place.id, "pleiades_550595")
+    assertEquals(p.place.id, com.histmersion.api.catalogue.Place.Id("pleiades_550595"))
     assertEquals(p.place.label, "Hattusa")
     assertEquals(p.place.kind, Place.Kind.Site, "types[].label 'settlement' maps to site")
     assertEquals(p.place.period, Some(Period(-1650, -1180)))
@@ -81,7 +81,7 @@ class PlacesSuite extends munit.FunSuite:
         |   "period":[-1400,-1180],"parent":"anatolia","source":"AWMC LBA map"},
         |  "geometry":{"type":"Polygon","coordinates":[[[30.0,38.0],[36.0,38.0],[36.0,41.0],[30.0,41.0],[30.0,38.0]]]}}]}""".stripMargin
     val p = one(json, Place.Kind.Site)
-    assertEquals(p.place.id, "hittite_empire", "no @id → a slug of the title")
+    assertEquals(p.place.id, com.histmersion.api.catalogue.Place.Id("hittite_empire"), "no @id → a slug of the title")
     assertEquals(p.place.kind, Place.Kind.Polity)
     assertEquals(p.place.period, Some(Period(-1400, -1180)))
     assertEquals(p.place.source, Some("AWMC LBA map"))
@@ -99,8 +99,8 @@ class PlacesSuite extends munit.FunSuite:
 
   test("a feature list and a single feature parse like a FeatureCollection"):
     val f = """{"@id":"x","type":"Feature","properties":{"title":"X"},"geometry":null}"""
-    assertEquals(Lpf.parse(s"[$f]").map(_.map(_.place.id)), Right(List("x")))
-    assertEquals(Lpf.parse(f).map(_.map(_.place.id)), Right(List("x")))
+    assertEquals(Lpf.parse(s"[$f]").map(_.map(_.place.id)), Right(List(com.histmersion.api.catalogue.Place.Id("x"))))
+    assertEquals(Lpf.parse(f).map(_.map(_.place.id)), Right(List(com.histmersion.api.catalogue.Place.Id("x"))))
 
   test("a malformed document is a Left, never a partial import"):
     assert(Lpf.parse("{").isLeft)
@@ -139,7 +139,7 @@ class PlacesSuite extends munit.FunSuite:
 
   test("plain-GeoJSON dialect: properties.{id,label,kind,period_start,part_of[],names[]}"):
     val p = one(tracedPolity)
-    assertEquals(p.place.id, "hittite_empire_lba")
+    assertEquals(p.place.id, com.histmersion.api.catalogue.Place.Id("hittite_empire_lba"))
     assertEquals(p.place.label, "Hittite Empire")
     assertEquals(p.place.kind, Place.Kind.Polity)
     assertEquals(p.place.period, Some(Period(-1400, -1180)))
@@ -234,9 +234,9 @@ class PlacesSuite extends munit.FunSuite:
     val md = PlacesMarkdown.places(
       Vector(
         com.histmersion.api.catalogue.Place
-          .Hit(turkey.id, turkey.label, turkey.kind, None, None, turkey.source, turkey.names, Some("Türkiye"), 122),
+          .Hit(turkey.id.value, turkey.label, turkey.kind, None, None, turkey.source, turkey.names, Some("Türkiye"), 122),
         com.histmersion.api.catalogue.Place.Hit(
-          hatti.id,
+          hatti.id.value,
           hatti.label,
           hatti.kind,
           hatti.periodStart,
