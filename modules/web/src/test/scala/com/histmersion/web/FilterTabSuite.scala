@@ -56,7 +56,7 @@ class FilterTabSuite extends munit.FunSuite:
   test("TabState: loading keeps the rows shown, a failure ends loading with the error"):
     val s = TabState.first(TabPage(rows, com.histmersion.api.RowCount(412)), 25)
     val l = TabState.loading(s)
-    assert(l.loading && l.rows == rows && l.shown == 25)
+    assert(l.loading && l.rows == rows && l.shown.value == 25)
     val f = TabState.failed(l, "HTTP 500")
     assert(!f.loading && f.error.contains("HTTP 500") && f.rows == rows)
     assertEquals(TabState.loading(f).error, None, "a new request clears the old error")
@@ -64,19 +64,19 @@ class FilterTabSuite extends munit.FunSuite:
   test("TabState: show more reveals the loaded rows first, then asks for the next page past them"):
     val s = TabState.first(TabPage(rows, com.histmersion.api.RowCount(412)), 25)
     assertEquals(s.moreLabel(25), Some("show 25 more (387 left)"))
-    assertEquals(TabState.more(s, 25).map(_.shown), Right(50))
+    assertEquals(TabState.more(s, 25).map((_.shown.value: Int)), Right(50))
     val atEnd = s.copy(shown = com.histmersion.api.RowCount(200))
     assertEquals(TabState.more(atEnd, 25), Left(200), "rows past the first fetch are fetched, no longer unreachable")
     val next = TabState.appended(TabState.loading(atEnd), TabPage((201 to 400).toList, com.histmersion.api.RowCount(412)), 25)
-    assertEquals((next.rows.size, next.shown, next.loading), (400, 225, false))
+    assertEquals((next.rows.size, next.shown.value, next.loading), (400, 225, false))
 
   test("TabState: the last rows; nothing more once every row is shown"):
     val s = TabState.first(TabPage((1 to 10).toList, com.histmersion.api.RowCount(10)), 25)
-    assertEquals(s.shown, 10)
+    assertEquals(s.shown.value, 10)
     assertEquals(s.moreLabel(25), None)
     val few = TabState.first(TabPage((1 to 30).toList, com.histmersion.api.RowCount(30)), 25)
     assertEquals(few.moreLabel(25), Some("show 5 more (5 left)"))
-    assertEquals(TabState.more(few, 25).map(_.shown), Right(30))
+    assertEquals(TabState.more(few, 25).map((_.shown.value: Int)), Right(30))
 
   test("TabState: the count line — loading before the first answer, then the sidebar's one form with the extras"):
     assertEquals(TabState[Int]().countLine("article", "articles"), "loading…")

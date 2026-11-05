@@ -1,0 +1,6 @@
+line	source	ast	replacement
+59	l.shown	Term.Select(Term.Name("l"), Term.Name("shown"))	l.shown.value
+67	_.shown	Term.Select(Term.Placeholder, Term.Name("shown"))	_.shown.value
+71	next.shown	Term.Select(Term.Name("next"), Term.Name("shown"))	next.shown.value
+75	s.shown	Term.Select(Term.Name("s"), Term.Name("shown"))	s.shown.value
+79	_.shown	Term.Select(Term.Placeholder, Term.Name("shown"))	_.shown.value

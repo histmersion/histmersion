@@ -1,0 +1,95 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 3 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/sjs1/scala-3.10.0/histmersion-web/test-classes ...
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/test/scala/com/histmersion/web/FilterTabSuite.scala:67:68 
+[error] 67 |    assertEquals(TabState.more(s, 25).map(_.shown.value), Right(50))
+[error]    |                                                                    ^
+[error]    |   Can't compare these two types:
+[error]    |     First type:  Either[Int,
+[error]    |     io.github.iltotore.iron.IronType[Int,
+[error]    |       io.github.iltotore.iron.constraint.any.Pure]
+[error]    |   ]
+[error]    |     Second type: Right[Nothing, Int]
+[error]    |   Possible ways to fix this error:
+[error]    |     Alternative 1: provide an implicit instance for Compare[Either[Int,
+[error]    |     io.github.iltotore.iron.IronType[Int,
+[error]    |       io.github.iltotore.iron.constraint.any.Pure]
+[error]    |   ], Right[Nothing, Int]]
+[error]    |     Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |   I found:
+[error]    |
+[error]    |       munit.Compare.compareSubtypeWithSupertype[
+[error]    |         
+[error]    |           Either[Int,
+[error]    |             io.github.iltotore.iron.IronType[Int,
+[error]    |               io.github.iltotore.iron.constraint.any.Pure]
+[error]    |           ]
+[error]    |         ,
+[error]    |       Right[Nothing, Int]](
+[error]    |         /* missing */
+[error]    |           summon[
+[error]    |             Either[Int,
+[error]    |               io.github.iltotore.iron.IronType[Int,
+[error]    |                 io.github.iltotore.iron.constraint.any.Pure]
+[error]    |             ]
+[error]    |            <:< Right[Nothing, Int]]
+[error]    |       )
+[error]    |
+[error]    |   But no implicit values were found that match type Either[Int,
+[error]    |     io.github.iltotore.iron.IronType[Int,
+[error]    |       io.github.iltotore.iron.constraint.any.Pure]
+[error]    |   ] <:< Right[Nothing, Int].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/test/scala/com/histmersion/web/FilterTabSuite.scala:79:70 
+[error] 79 |    assertEquals(TabState.more(few, 25).map(_.shown.value), Right(30))
+[error]    |                                                                      ^
+[error]    |   Can't compare these two types:
+[error]    |     First type:  Either[Int,
+[error]    |     io.github.iltotore.iron.IronType[Int,
+[error]    |       io.github.iltotore.iron.constraint.any.Pure]
+[error]    |   ]
+[error]    |     Second type: Right[Nothing, Int]
+[error]    |   Possible ways to fix this error:
+[error]    |     Alternative 1: provide an implicit instance for Compare[Either[Int,
+[error]    |     io.github.iltotore.iron.IronType[Int,
+[error]    |       io.github.iltotore.iron.constraint.any.Pure]
+[error]    |   ], Right[Nothing, Int]]
+[error]    |     Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |   I found:
+[error]    |
+[error]    |       munit.Compare.compareSubtypeWithSupertype[
+[error]    |         
+[error]    |           Either[Int,
+[error]    |             io.github.iltotore.iron.IronType[Int,
+[error]    |               io.github.iltotore.iron.constraint.any.Pure]
+[error]    |           ]
+[error]    |         ,
+[error]    |       Right[Nothing, Int]](
+[error]    |         /* missing */
+[error]    |           summon[
+[error]    |             Either[Int,
+[error]    |               io.github.iltotore.iron.IronType[Int,
+[error]    |                 io.github.iltotore.iron.constraint.any.Pure]
+[error]    |             ]
+[error]    |            <:< Right[Nothing, Int]]
+[error]    |       )
+[error]    |
+[error]    |   But no implicit values were found that match type Either[Int,
+[error]    |     io.github.iltotore.iron.IronType[Int,
+[error]    |       io.github.iltotore.iron.constraint.any.Pure]
+[error]    |   ] <:< Right[Nothing, Int].
+[error] two errors found
+[error] (web / Test / compileIncremental) Compilation failed
+[error] elapsed time: 5 s, cache 97%, 42 disk cache hits, 1 onsite task

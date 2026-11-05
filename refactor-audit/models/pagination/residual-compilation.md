@@ -1,5 +1,19 @@
 # Applied pagination batch: remaining compilation work
 
+Latest checkpoint: build-v3, after the eight-file web state batch, compiles web
+production successfully and reports the same three server errors. Full Test/compile
+remains blocked by server production. The web-specific test runs are tracked separately
+under web-tests-v1/v2/v3; the first two retain five then two assertion type errors.
+The assertion rewrites preserve all expected values and test identities. API factory
+parameters, server contracts, the original 115-test comparison and project-wide
+remeasurement remain outstanding. No overall pagination fix credit is claimed.
+
+Web-tests-v3 compiles web tests and passes all 11 tests in FilterTabSuite/ListPageSuite,
+with no failures or skips. This does not replace the separate 115-test API/core baseline
+or whole-project Test/compile requirement.
+
+The following checkpoints are historical observations.
+
 Latest checkpoint: build-v2, after the six-file web record batch, reports seven web
 errors and the same three server errors. Test/compile is still pending. TabPage,
 TabState and ListPage fields have propagated; their broader signal/state consumers

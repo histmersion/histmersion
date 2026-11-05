@@ -16,8 +16,8 @@ object MyLibrary:
 
   private val shown: Signal[Boolean] = Router.route.map(onList)
 
-  private val everything = Var(Option.empty[Int])
-  private val unread = Var(Option.empty[Int])
+  private val everything = Var(Option.empty[com.histmersion.api.RowCount])
+  private val unread = Var(Option.empty[com.histmersion.api.RowCount])
 
   /** The shelf the address names. */
   val shelf: Signal[Shelf] = Router.search.map(LibraryAddress.shelf).distinct
@@ -26,19 +26,19 @@ object MyLibrary:
     case Route.Library(s) if s.isList => s
     case _                            => LibrarySection.Sources
 
-  private def count(s: Shelf): Signal[Option[Int]] = s match
+  private def count(s: Shelf): Signal[Option[com.histmersion.api.RowCount]] = s match
     case Shelf.Everything => everything.signal
-    case Shelf.Bookmarks  => marks.MyItems.bookmarks.signal.map(bs => Some(bs.size))
-    case Shelf.Notes      => marks.MyItems.notes.signal.map(ns => Some(ns.size))
+    case Shelf.Bookmarks  => marks.MyItems.bookmarks.signal.map(bs => Some(com.histmersion.api.RowCount(bs.size)))
+    case Shelf.Notes      => marks.MyItems.notes.signal.map(ns => Some(com.histmersion.api.RowCount(ns.size)))
     case Shelf.Unread     => unread.signal
-    case Shelf.Recent     => marks.MyItems.marks.signal.map(ms => Some(ms.values.count(_.openedAt.isDefined)))
+    case Shelf.Recent     => marks.MyItems.marks.signal.map(ms => Some(com.histmersion.api.RowCount(ms.values.count(_.openedAt.isDefined))))
 
   private def refresh(): Unit =
     LibraryLists.everything().foreach(n => everything.set(Some(n)))
     ApiClient
       .unread("source", 1, 0)
       .zip(ApiClient.unread("article", 1, 0))
-      .foreach((s, a) => unread.set(Some(s.total + a.total)))
+      .foreach((s, a) => unread.set(Some(com.histmersion.api.RowCount(s.total + a.total))))
 
   /** "My library", for the top of the filter panel. */
   def panelTop: HtmlElement =
@@ -64,7 +64,7 @@ object MyLibrary:
             }
           },
           span(cls := "side-label", s.label),
-          child.maybe <-- count(s).map(_.map(n => span(cls := "side-count", ListPage.grouped(n))))
+          child.maybe <-- count(s).map(_.map(n => span(cls := "side-count", ListPage.grouped(n.value))))
         )
       }
     )

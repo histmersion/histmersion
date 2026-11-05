@@ -1,0 +1,26 @@
+path	line	source	ast	replacement
+modules/web/src/main/scala/com/histmersion/web/ResultsList.scala	27	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/ResultsList.scala	27	0	Lit.Int(0)	com.histmersion.api.RowCount(0)
+modules/web/src/main/scala/com/histmersion/web/ResultsList.scala	34	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/ResultsList.scala	208	pageTotal	Term.Name("pageTotal")	pageTotal.value
+modules/web/src/main/scala/com/histmersion/web/ResultsList.scala	217	pageTotal	Term.Name("pageTotal")	pageTotal.value
+modules/web/src/main/scala/com/histmersion/web/ArticlesTab.scala	39	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/ArticlesTab.scala	39	math.max(s.total, s.rows.size)	Term.Apply(\n  Term.Select(Term.Name("math"), Term.Name("max")),\n  Term.ArgClause(\n    List(\n      Term.Select(Term.Name("s"), Term.Name("total")),\n      Term.Select(\n        Term.Select(Term.Name("s"), Term.Name("rows")),\n        Term.Name("size")\n      )\n    ),\n    None\n  )\n)	com.histmersion.api.RowCount(math.max(s.total.value, s.rows.size))
+modules/web/src/main/scala/com/histmersion/web/EventsTab.scala	35	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/EventsTab.scala	35	math.max(s.total, s.rows.size)	Term.Apply(\n  Term.Select(Term.Name("math"), Term.Name("max")),\n  Term.ArgClause(\n    List(\n      Term.Select(Term.Name("s"), Term.Name("total")),\n      Term.Select(\n        Term.Select(Term.Name("s"), Term.Name("rows")),\n        Term.Name("size")\n      )\n    ),\n    None\n  )\n)	com.histmersion.api.RowCount(math.max(s.total.value, s.rows.size))
+modules/web/src/main/scala/com/histmersion/web/ResultsPanel.scala	50	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/ResultsPanel.scala	54	Some(s.total)	Term.Apply(\n  Term.Name("Some"),\n  Term.ArgClause(List(Term.Select(Term.Name("s"), Term.Name("total"))), None)\n)	Some(com.histmersion.api.RowCount(s.total))
+modules/web/src/main/scala/com/histmersion/web/ResultsPanel.scala	55	Some(s.total)	Term.Apply(\n  Term.Name("Some"),\n  Term.ArgClause(List(Term.Select(Term.Name("s"), Term.Name("total"))), None)\n)	Some(com.histmersion.api.RowCount(s.total))
+modules/web/src/main/scala/com/histmersion/web/library/LibraryLists.scala	78	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/library/LibraryLists.scala	82	s.total + a.total	Term.ApplyInfix(\n  Term.Select(Term.Name("s"), Term.Name("total")),\n  Term.Name("+"),\n  Type.ArgClause(List()),\n  Term.ArgClause(List(Term.Select(Term.Name("a"), Term.Name("total"))), None)\n)	com.histmersion.api.RowCount(s.total.value + a.total.value)
+modules/web/src/main/scala/com/histmersion/web/library/MyLibrary.scala	19	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/library/MyLibrary.scala	20	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/library/MyLibrary.scala	29	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/library/MyLibrary.scala	31	bs.size	Term.Select(Term.Name("bs"), Term.Name("size"))	com.histmersion.api.RowCount(bs.size)
+modules/web/src/main/scala/com/histmersion/web/library/MyLibrary.scala	32	ns.size	Term.Select(Term.Name("ns"), Term.Name("size"))	com.histmersion.api.RowCount(ns.size)
+modules/web/src/main/scala/com/histmersion/web/library/MyLibrary.scala	34	ms.values.count(_.openedAt.isDefined)	Term.Apply(\n  Term.Select(\n    Term.Select(Term.Name("ms"), Term.Name("values")),\n    Term.Name("count")\n  ),\n  Term.ArgClause(\n    List(\n      Term.AnonymousFunction(Term.Select(\n        Term.Select(Term.Placeholder, Term.Name("openedAt")),\n        Term.Name("isDefined")\n      ))\n    ),\n    None\n  )\n)	com.histmersion.api.RowCount(ms.values.count(_.openedAt.isDefined))
+modules/web/src/main/scala/com/histmersion/web/library/MyLibrary.scala	41	s.total + a.total	Term.ApplyInfix(\n  Term.Select(Term.Name("s"), Term.Name("total")),\n  Term.Name("+"),\n  Type.ArgClause(List()),\n  Term.ArgClause(List(Term.Select(Term.Name("a"), Term.Name("total"))), None)\n)	com.histmersion.api.RowCount(s.total + a.total)
+modules/web/src/main/scala/com/histmersion/web/library/MyLibrary.scala	67	ListPage.grouped(n)	Term.Apply(\n  Term.Select(Term.Name("ListPage"), Term.Name("grouped")),\n  Term.ArgClause(List(Term.Name("n")), None)\n)	ListPage.grouped(n.value)
+modules/web/src/main/scala/com/histmersion/web/library/LibraryPage.scala	86	Int	Type.Name("Int")	com.histmersion.api.RowCount
+modules/web/src/main/scala/com/histmersion/web/library/LibraryPage.scala	98	ListPage.grouped(n)	Term.Apply(\n  Term.Select(Term.Name("ListPage"), Term.Name("grouped")),\n  Term.ArgClause(List(Term.Name("n")), None)\n)	ListPage.grouped(n.value)
+modules/web/src/main/scala/com/histmersion/web/App.scala	147	r.total	Term.Select(Term.Name("r"), Term.Name("total"))	r.total.value

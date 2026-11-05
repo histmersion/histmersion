@@ -1,0 +1,53 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Executing in batch mode. For better performance use sbt's shell
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 15 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/sjs1/scala-3.10.0/histmersion-web/classes ...
+[info] compiling 31 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/classes ...
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/catalogue/evidence/LeadService.scala:122:14 
+[error] 122 |      (listed.total, rows.slice(offset.max(0), offset.max(0) + limit.max(1)))
+[error]     |       ^^^^^^^^^^^^
+[error]     |       Found:    (listed.total : com.histmersion.api.RowCount)
+[error]     |       Required: Int
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/research/workflows/CompileArticlePipeline.scala:169:17 
+[error] 169 |    if res.total > facts.size then
+[error]     |       ^^^^^^^^^^^
+[error]     |value > is not a member of com.histmersion.api.RowCount, but could be made available as an extension method.
+[error]     |
+[error]     |One of the following imports might make progress towards fixing the problem:
+[error]     |
+[error]     |  import cats.implicits.catsSyntaxPartialOrder
+[error]     |  import cats.syntax.all.catsSyntaxPartialOrder
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |  import scala.math.Ordered.orderingToOrdered
+[error]     |  import scala.math.Ordering.Implicits.infixOrderingOps
+[error]     |  import cats.syntax.order.catsSyntaxPartialOrder
+[error]     |  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/research/workflows/CompileArticlePipeline.scala:171:26 
+[error] 171 |    Right(Found(line, res.total, facts, facts.map(_.citekey).filterNot(already)))
+[error]     |                      ^^^^^^^^^
+[error]     |                  Found:    (res.total : com.histmersion.api.RowCount)
+[error]     |                  Required: Int
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] three errors found
+[info] done compiling
+[info] compiling 12 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/sjs1/scala-3.10.0/histmersion-web/classes ...
+[info] done compiling
+[error] (server / Compile / compileIncremental) Compilation failed
+[error] elapsed time: 17 s, cache 99%, 400 disk cache hits, 3 onsite tasks
