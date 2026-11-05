@@ -1,5 +1,97 @@
 # Priority-family status
 
+## Measured: newtype overlap candidates and residual treatment proposals
+
+newtype-index-2 indexes the current definitions through the existing AstRecipe
+pipeline: 27782 newtype-shaped definitions, production27767/test15, and 3024
+production overlap candidate groups. Definitions retain lexical owner, base,
+constraint syntax, alias evidence, AST and available rewrite provenance. Group
+identities derive from purpose token and base bucket; membership retains each
+definition identity. These are candidates for review, not confirmed duplicate
+meanings or verified repairs. No application sources changed in this batch.
+
+All 3167 current main/test files and the sixteen-plan source chain validate.
+The explicit primitive count remains 6652, production598/test6054, with zero
+stable-ID removals and zero introductions. The 598 production leaves have the
+following syntactic treatment proposals; none becomes an accepted exception:
+
+| Review category | Leaves | Proposed treatment |
+| --- | ---: | --- |
+| Alias signatures | 35 | Bulk rewrite candidate |
+| Arrays/buffers | 33 | Targeted or design review |
+| Declaration owner/name | 120 | Targeted or design review |
+| Lambda parameters | 51 | Propagate types |
+| Native contracts | 41 | Targeted or design review |
+| Overrides | 245 | Targeted or design review |
+| By-name/repeated/infix wrappers | 73 | Bulk rewrite candidate |
+
+The deterministic sample selects the first finding in up to two modules per
+category: thirteen leaves across seven categories. Source review results:
+
+| Source and declaration | Evidence and treatment |
+| --- | --- |
+| api/checks/Lint.scala: FormatChecker | Callback alias contains raw text and a Boolean; align it with formatItems' typed arguments, retaining callback shape. |
+| core/domain/GoalFocus.scala: Key | Tuple is a sorting key with ranks, counts, timestamp and slug; identify each component's meaning before rewriting the alias. |
+| api/BBox.scala: traverseDouble | Parsed coordinate buffer, not a byte payload; coordinate/whole-buffer representation requires design review. |
+| cli/Cli.scala: run.args | Command argument array; distinguish process entry representation from internal command arguments. |
+| api/BBox.scala: extension xs | Extension receiver is a list of raw coordinate tokens; current owner handling does not cover it. |
+| config/Config.scala: lenient.name | Top-level reader helper uses a diagnostic type name; choose a supporting owner rather than an entity companion. |
+| api/HtmlAtoms.scala: segment.c | Character predicate over an encoded string; standard-library character access needs an explicit boundary decision. |
+| cli/Calibre.scala: mergeIdentifiers.d | DOI comparison lambda should inherit the chosen DOI representation; it is not an external override. |
+| web/map/maplibre/GlMap.scala: on.event | js.native facade declares the external JavaScript signature; keep detecting it pending an explicit boundary decision. |
+| config/AgentProviderConfig.scala: toString | JVM Object contract returns String; redaction behavior must survive repair. |
+| console/util/console/Console.scala: Streams.readTerminalLine | Implements our own already-typed Console method; propagate that contract and consolidate duplicate input/result types. An override is not automatically an external contract. |
+| api/automation/ListFilters.scala: words.groups | Repeated List[String] parameter; reusable traversal must retain repeated argument semantics. |
+| cli/DeleteCmd.scala: calibreCheck.libraryExists | By-name Boolean controls deferred access; rewriting must retain evaluation timing. |
+
+This sample checks classification usefulness; it does not establish semantic
+precision for all 598 leaves or complete inventory acceptance. Primitive aliases,
+inference, named references and shadowing remain limits of the existing detector.
+
+The index records 16017 unresolved candidate declaration-type references. Fully
+qualified and nearest lexical matches are syntax evidence only; imports, alias
+resolution, inheritance, method bodies and inferred uses are not resolved. A
+RefinedType/RefinedSubtype parent name is an Iron-shaped candidate, not a resolved
+semantic symbol. Constraint syntax differences do not prove different constraints
+(for example imported Pure versus its qualified name). Module/layer boundaries
+remain a separate consolidation guard. No name/base-only merge is authorized by
+this index.
+
+Bounded overlap review identifies these next decisions:
+
+* Group a5962d2d590deb0b3d78 includes nine Long seconds definitions. In core,
+  CompareRuns.Seconds, RunSide.Seconds and StepSide.Seconds all represent summed
+  whole-second step durations: both side builders call attempts/steps.map(seconds)
+  and sum. These three are a concrete consolidation candidate. Other group members
+  include API records and display/window values and have not been confirmed
+  equivalent. Int/Double seconds groups remain separate.
+* Group fee1e3a0de0e5dbe1356 includes 310 String slug definitions. GoalFocus.Facts
+  and Pick represent goal identity, with activeSet already typed as Pick.Slug.
+  domain.automation.Goal.Slug is the existing constrained owner. Consolidation
+  must account for construction/parse boundaries; it cannot assume arbitrary
+  Pure strings satisfy that constraint. Article slugs and wire-layer copies
+  must not be merged merely because their names match.
+* Limit (351 definitions), offset (80), title (192), and byte-related groups
+  remain review queues. Pagination limits, resource caps, payloads, byte counts
+  and display text have different purposes. Layer-specific/plugin types remain
+  isolated even when their base and constraint syntax match.
+
+The fixture checks exactly six definitions, excludes an ordinary class, groups
+three Seconds types while retaining two constraint variants, and groups two
+qualified/unqualified Array[Byte] bases. It records an imported name as unresolved
+and a fully qualified use as matched. Scalafix assertions and Scala 3.10.0/Iron
+3.4.1 fixture compilation pass. Application compilation remains deferred and
+broken from the authorized definition-first migration; no behavioral pass or
+overall repair percentage is claimed.
+
+Initial observation newtype-index-1 is preserved. newtype-index-2 corrects nested
+_root_/scala qualification in base buckets (Array[_root_.scala.Byte] and
+Array[Byte]); definition/residual counts are unchanged. Both observations remain
+under the existing models/reviews ledger, with no new report runner. The next
+repair should combine reviewed aliases by reusable type-reference rewriting,
+then use compiler errors to propagate their final types. Do not expand the index
+before acting on useful reviewed groups.
+
 ## Applied: local helper signatures and explicit local bindings
 
 local-members-project-1 converts 1236 additional explicit primitive positions in

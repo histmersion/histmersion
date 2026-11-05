@@ -1,0 +1,2 @@
+27782 newtype-shaped definitions (27767 production, 15 test); 3024 production overlap candidate groups; 16017 unresolved candidate references.
+Grouping is a review queue, not semantic equivalence. Raw syntax constraints, owner meaning and module isolation must be reviewed. Imports, aliases, inherited newtypes and external symbols are not resolved. Reference counts cover measured declaration types only.
