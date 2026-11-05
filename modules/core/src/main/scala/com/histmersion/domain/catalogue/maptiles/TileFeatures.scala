@@ -56,7 +56,7 @@ object TileFeatures:
           P.NotAfter,
           e.timeSpan.notAfter
         ) ++
-        text(P.Anchor, e.anchor) ++ text(P.PlaceId, e.placeId) ++ text(P.PlaceLabel, e.placeLabel) ++ text(
+        text(P.Anchor, e.anchor) ++ text(P.PlaceId, e.placeId.map(_.value.toString)) ++ text(P.PlaceLabel, e.placeLabel) ++ text(
           P.ParentId,
           e.parentId
         ) ++

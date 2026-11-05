@@ -2,6 +2,23 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Core production compilation now passes in applied-core-build-1. caller-core-1
+applies sixteen exact AST recipes across seven files using the existing pipeline;
+applied hash verification passes. Acquisition candidates retain typed title,
+year, author and venue values. Job control consults the typed registry entry.
+DOI parsing, lexical title/author comparison, sorting and tile serialization
+extract only the primitive inputs needed by those operations. Existing raw
+comparison/helper signatures and the candidate's raw DOI remain outstanding
+modeling work; these edits are not an exception or a compliance verdict for them.
+
+The core test gate reaches api/Test/compile, which reports fifteen type mismatches
+in PlaceEditsSuite, PlacesSuite, StorageSuite and WriteSuite. Core behavioral tests
+therefore did not execute. Candidate constructors in downstream server/test code
+also need propagation of the newly typed fields. The applied migration remains
+in place. This is targeted caller repair, not new automatic-repair credit or a
+new independent detector sample. The 87-ID cohort remains unverified. Web's last
+observed 36 diagnostics remain unresolved; db/server closure has not been proved.
+
 CLI now passes production compilation, test compilation and 95 selected behavioral
 tests (zero failed/ignored), recorded in applied-cli-build-3. The selected suites
 cover Calibre, job following, patch assembly, directory sizes and local storage.

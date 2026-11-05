@@ -1,0 +1,256 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 15 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-core/classes ...
+[info] done compiling
+[success] elapsed time: 15 s, cache 97%, 65 disk cache hits, 2 onsite tasks
+[info] compiling 31 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-api/test-classes ...
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scala/com/histmersion/api/PlaceEditsSuite.scala:53:49 
+[error] 53 |    assertEquals(r.place.id, "local_gornji_grad")
+[error]    |                                                 ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.catalogue.Place.Id
+[error]    |  Second type: String
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.catalogue.Place.Id, String]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      com.histmersion.api.catalogue.Place.Id.T, String](
+[error]    |      /* missing */summon[com.histmersion.api.catalogue.Place.Id.T <:< String])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.catalogue.Place.Id.T <:< String.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scala/com/histmersion/api/PlaceEditsSuite.scala:78:88 
+[error] 78 |    assertEquals((r.place.id, r.place.period), ("my.place-1", Some(Period(-700, -700))))
+[error]    |                                                                                        ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (com.histmersion.api.catalogue.Place.Id,
+[error]    |  Option[com.histmersion.api.catalogue.Period])
+[error]    |  Second type: (String, Some[com.histmersion.api.catalogue.Period])
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.catalogue.Place.Id,
+[error]    |  Option[com.histmersion.api.catalogue.Period]), (String, Some[com.histmersion.api.catalogue.Period])]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      
+[error]    |        (com.histmersion.api.catalogue.Place.Id,
+[error]    |          Option[com.histmersion.api.catalogue.Period])
+[error]    |      ,
+[error]    |    (String, Some[com.histmersion.api.catalogue.Period])](
+[error]    |      /* missing */
+[error]    |        summon[(com.histmersion.api.catalogue.Place.Id,
+[error]    |          Option[com.histmersion.api.catalogue.Period]) <:< (String,
+[error]    |          Some[com.histmersion.api.catalogue.Period])]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type (com.histmersion.api.catalogue.Place.Id,
+[error]    |  Option[com.histmersion.api.catalogue.Period]) <:< (String,
+[error]    |  Some[com.histmersion.api.catalogue.Period]).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/PlacesSuite.scala:38:47 
+[error] 38 |    assertEquals(p.place.id, "pleiades_550595")
+[error]    |                                               ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.catalogue.Place.Id
+[error]    |  Second type: String
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.catalogue.Place.Id, String]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      com.histmersion.api.catalogue.Place.Id.T, String](
+[error]    |      /* missing */summon[com.histmersion.api.catalogue.Place.Id.T <:< String])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.catalogue.Place.Id.T <:< String.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/PlacesSuite.scala:84:78 
+[error] 84 |    assertEquals(p.place.id, "hittite_empire", "no @id → a slug of the title")
+[error]    |                                                                              ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.catalogue.Place.Id
+[error]    |  Second type: String
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.catalogue.Place.Id, String]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      com.histmersion.api.catalogue.Place.Id.T, String](
+[error]    |      /* missing */summon[com.histmersion.api.catalogue.Place.Id.T <:< String])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.catalogue.Place.Id.T <:< String.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/PlacesSuite.scala:102:77 
+[error] 102 |    assertEquals(Lpf.parse(s"[$f]").map(_.map(_.place.id)), Right(List("x")))
+[error]     |                                                                             ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Either[String, List[com.histmersion.api.catalogue.Place.Id.T]]
+[error]     |  Second type: Right[Nothing, List[String]]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Either[String, List[com.histmersion.api.catalogue.Place.Id.T]], Right[Nothing, List[String]]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Either[String, List[com.histmersion.api.catalogue.Place.Id.T]],
+[error]     |      Right[Nothing, List[String]]](
+[error]     |      /* missing */
+[error]     |        summon[Either[String, List[com.histmersion.api.catalogue.Place.Id.T]] <:<
+[error]     |          Right[Nothing, List[String]]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Either[String, List[com.histmersion.api.catalogue.Place.Id.T]] <:<
+[error]     |  Right[Nothing, List[String]].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/PlacesSuite.scala:103:71 
+[error] 103 |    assertEquals(Lpf.parse(f).map(_.map(_.place.id)), Right(List("x")))
+[error]     |                                                                       ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Either[String, List[com.histmersion.api.catalogue.Place.Id.T]]
+[error]     |  Second type: Right[Nothing, List[String]]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Either[String, List[com.histmersion.api.catalogue.Place.Id.T]], Right[Nothing, List[String]]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Either[String, List[com.histmersion.api.catalogue.Place.Id.T]],
+[error]     |      Right[Nothing, List[String]]](
+[error]     |      /* missing */
+[error]     |        summon[Either[String, List[com.histmersion.api.catalogue.Place.Id.T]] <:<
+[error]     |          Right[Nothing, List[String]]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Either[String, List[com.histmersion.api.catalogue.Place.Id.T]] <:<
+[error]     |  Right[Nothing, List[String]].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/PlacesSuite.scala:142:50 
+[error] 142 |    assertEquals(p.place.id, "hittite_empire_lba")
+[error]     |                                                  ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  com.histmersion.api.catalogue.Place.Id
+[error]     |  Second type: String
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.catalogue.Place.Id, String]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      com.histmersion.api.catalogue.Place.Id.T, String](
+[error]     |      /* missing */summon[com.histmersion.api.catalogue.Place.Id.T <:< String])
+[error]     |
+[error]     |But no implicit values were found that match type com.histmersion.api.catalogue.Place.Id.T <:< String.
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/PlacesSuite.scala:237:22 
+[error] 237 |          .Hit(turkey.id, turkey.label, turkey.kind, None, None, turkey.source, turkey.names, Some("Türkiye"), 122),
+[error]     |               ^^^^^^^^^
+[error]     |Found:    (PlacesSuite.this.turkey.id : com.histmersion.api.catalogue.Place.Id)
+[error]     |Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/PlacesSuite.scala:239:16 
+[error] 239 |          hatti.id,
+[error]     |          ^^^^^^^^
+[error]     |Found:    (PlacesSuite.this.hatti.id : com.histmersion.api.catalogue.Place.Id)
+[error]     |Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/StorageSuite.scala:46:44 
+[error] 46 |    assertEquals(Storage.total(es), 11 * GB)
+[error]    |                                            ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.ByteCount.T
+[error]    |  Second type: Long
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.ByteCount.T, Long]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.ByteCount.T, Long]
+[error]    |      (/* missing */summon[com.histmersion.api.ByteCount.T <:< Long])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.ByteCount.T <:< Long.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/StorageSuite.scala:50:42 
+[error] 50 |    assertEquals(Storage.total(twice), 5L)
+[error]    |                                          ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.ByteCount.T
+[error]    |  Second type: Long
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.ByteCount.T, Long]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.ByteCount.T, Long]
+[error]    |      (/* missing */summon[com.histmersion.api.ByteCount.T <:< Long])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.ByteCount.T <:< Long.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/WriteSuite.scala:176:38 
+[error] 176 |    assertEquals(out.year, Some(2016))
+[error]     |                                      ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Option[com.histmersion.api.catalogue.Year]
+[error]     |  Second type: Some[Int]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Option[com.histmersion.api.catalogue.Year], Some[Int]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      Option[com.histmersion.api.catalogue.Year], Some[Int]](
+[error]     |      /* missing */summon[Option[com.histmersion.api.catalogue.Year] <:< Some[Int]])
+[error]     |
+[error]     |But no implicit values were found that match type Option[com.histmersion.api.catalogue.Year] <:< Some[Int].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/WriteSuite.scala:204:22 
+[error] 204 |    assert(out.forall(_.src == ck))
+[error]     |                      ^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.library.Citekey and String cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/WriteSuite.scala:364:52 
+[error] 364 |    val existing = put.toOption.get.copy(doi = Some("10.1/x"), venue = Some("V"))
+[error]     |                                                    ^^^^^^^^
+[error]     |                           Found:    ("10.1/x" : String)
+[error]     |                           Required: com.histmersion.api.library.Doi.T
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/test/scalajvm/com/histmersion/api/WriteSuite.scala:368:120 
+[error] 368 |    assertEquals(Source.Write.applyPatch(existing, kept).map(s => (s.doi, s.venue)), Right((Some("10.1/x"), Some("V"))))
+[error]     |                                                                                                                        ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  Either[String, (Option[com.histmersion.api.library.Doi],
+[error]     |  Option[com.histmersion.api.library.Venue])]
+[error]     |  Second type: Right[Nothing, (Some[String], Some[String])]
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[Either[String, (Option[com.histmersion.api.library.Doi],
+[error]     |  Option[com.histmersion.api.library.Venue])], Right[Nothing, (Some[String], Some[String])]]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      
+[error]     |        Either[String, (Option[com.histmersion.api.library.Doi],
+[error]     |          Option[com.histmersion.api.library.Venue])]
+[error]     |      ,
+[error]     |    Right[Nothing, (Some[String], Some[String])]](
+[error]     |      /* missing */
+[error]     |        summon[
+[error]     |          Either[String, (Option[com.histmersion.api.library.Doi],
+[error]     |            Option[com.histmersion.api.library.Venue])]
+[error]     |         <:< Right[Nothing, (Some[String], Some[String])]]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type Either[String, (Option[com.histmersion.api.library.Doi],
+[error]     |  Option[com.histmersion.api.library.Venue])] <:<
+[error]     |  Right[Nothing, (Some[String], Some[String])].
+[error] 15 errors found
+[error] (api / Test / compileIncremental) Compilation failed
+[error] elapsed time: 4 s, cache 96%, 124 disk cache hits, 4 onsite tasks

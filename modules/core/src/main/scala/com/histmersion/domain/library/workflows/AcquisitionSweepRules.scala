@@ -5,6 +5,7 @@ import com.histmersion.domain.library.acquisition.Ident
 import scala.annotation.tailrec
 import com.histmersion.api.library.{Acquire, WorkRef}
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 
@@ -16,14 +17,14 @@ object AcquisitionSweepRules:
 
   /** A candidate a sweep found, as the ranking step sees it. */
   final case class Candidate(
-      doi: String,
-      title: String,
-      year: Option[Int],
-      authors: List[String],
-      venue: Option[String],
-      isOa: Boolean,
-      query: String,
-      abstractText: Option[String]
+    doi: String,
+    title: com.histmersion.api.library.Title,
+    year: Option[com.histmersion.api.catalogue.Year],
+    authors: List[com.histmersion.api.library.AuthorName],
+    venue: Option[com.histmersion.api.library.Venue],
+    isOa: Boolean,
+    query: String,
+    abstractText: Option[String]
   ) derives KindlingsCodecAsObject
 
   /** The works a sweep may consider: with a DOI, not retracted, not in the corpus, not already in the acquisition queue
@@ -34,7 +35,7 @@ object AcquisitionSweepRules:
     val seen = scala.collection.mutable.LinkedHashMap.empty[String, Candidate] // insertion-ordered dedupe
     val skipped = scala.collection.mutable.Map.empty[String, Int].withDefaultValue(0)
     found.foreach { (q, w) =>
-      w.doi.flatMap(Ident.doi) match
+      w.doi.flatMap(d => Ident.doi(d.value)) match
         case None                          => skipped("no DOI") += 1
         case Some(_) if w.isRetracted      => skipped("retracted") += 1
         case Some(_) if w.inDb             => skipped("in the corpus") += 1
@@ -43,7 +44,7 @@ object AcquisitionSweepRules:
         case Some(d)                       =>
           seen(d) = Candidate(
             d,
-            w.title.getOrElse(d),
+            w.title.getOrElse(com.histmersion.api.library.Title(d)),
             w.year,
             w.authors.take(4),
             w.venue,
