@@ -1,0 +1,6 @@
+sbt
+--server
+-batch
+set every scalafmtOnCompile := false
+set ThisBuild / scalacOptions += "-Xsemanticdb"
+web/testOnly *FilterTabSuite *ListPageSuite

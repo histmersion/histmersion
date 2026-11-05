@@ -24,14 +24,14 @@ object ResultsList:
 
   private var last: Option[LastRender] = None
   private var pageHits: List[Hit] = Nil
-  private var pageTotal: Int = 0
+  private var pageTotal: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0)
   private var pageParams: Option[Filter] = None
   private var pageOpts: Option[SourceRenderOpts] = None
 
   private val content = Var[List[HtmlElement]](Nil)
 
   /** How many sources the filter selects (the Sources tab's count), once answered. */
-  val total: Var[Option[Int]] = Var(None)
+  val total: Var[Option[com.histmersion.api.RowCount]] = Var(None)
   private val countText = Var("")
   private val isBusy = Var(false)
   private val isError = Var(false)
@@ -205,7 +205,7 @@ object ResultsList:
       case None                => ""
     ResultsPaging.countLine(
       pageHits.length,
-      pageTotal,
+      pageTotal.value,
       "source",
       extras = List(findings, ResultsPaging.span(UiState.from.now(), UiState.to.now()))
     )
@@ -214,7 +214,7 @@ object ResultsList:
   private def pageSize: Int = pageParams.fold(20)(p => math.max(p.limit, 20))
 
   private def nextLabel(): Option[String] =
-    pageParams.flatMap(_ => ResultsPaging.moreLabel(pageTotal - pageHits.length, pageSize))
+    pageParams.flatMap(_ => ResultsPaging.moreLabel(pageTotal.value - pageHits.length, pageSize))
 
   /** "show more": the next page from the server, appended; a failure says so in the count line. */
   private def more(): Unit =

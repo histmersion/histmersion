@@ -83,7 +83,7 @@ object LibraryPage:
       )
     )
 
-  private def tab(s: LibrarySection, label: String, total: Signal[Int], on: LibrarySection): HtmlElement =
+  private def tab(s: LibrarySection, label: String, total: Signal[com.histmersion.api.RowCount], on: LibrarySection): HtmlElement =
     a(
       cls := "library-tab",
       cls("on") := s == on,
@@ -95,7 +95,7 @@ object LibraryPage:
       },
       aria.current := (if s == on then "page" else "false"),
       label,
-      span(cls := "tab-count", child.text <-- total.map(n => s" · ${ListPage.grouped(n)}"))
+      span(cls := "tab-count", child.text <-- total.map(n => s" · ${ListPage.grouped(n.value)}"))
     )
 
   private def sortSelect: HtmlElement =

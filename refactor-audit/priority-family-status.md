@@ -1,5 +1,25 @@
 # Priority-family status
 
+## Web count state propagated; server compilation remains open
+
+Eight production files now propagate RowCount through UI signals, private state and
+combined source/article counts. The source-hash-guarded Scalafix preview records 25
+AST changes and matches the applied files exactly. Rendering/arithmetic unwraps are
+local; raw map-list and unread-list counts have explicit adapters and remain migration
+candidates. These are targeted rewrites, not evidence of generic dataflow inference.
+
+Build-v3 compiles web production successfully; three server errors remain in LeadService
+and CompileArticlePipeline. The first two web-only test observations retain five then
+two assertion type errors; their follow-up is web-tests-v3. Existing test expected
+values and identities are retained. Web-tests-v3 passes all 11 selected tests (eight
+FilterTabSuite, three ListPageSuite), with zero failures or skips; web test compilation
+also passes. Full production/test verification, factory parameter
+propagation and remeasurement remain required. No migration-wide verified-fix count,
+detector quality result or baseline denominator changes in this checkpoint. Transaction,
+capability, isolation and copy-family statuses below remain unchanged.
+
+Earlier checkpoints below are historical.
+
 ## Web pagination records propagated
 
 A second six-file Scalafix batch is applied and hash-verified: TabPage, TabState and

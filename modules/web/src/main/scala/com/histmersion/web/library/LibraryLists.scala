@@ -75,8 +75,8 @@ object LibraryLists:
     )
 
   /** How many sources and articles the collection holds, whatever the filter: "Everything"'s count. */
-  def everything(): Future[Int] =
+  def everything(): Future[com.histmersion.api.RowCount] =
     ApiClient
       .sources(Filter(limit = 1))
       .zip(ApiClient.articles(Api.ArticleQuery(Filter(limit = 1))))
-      .map((s, a) => s.total + a.total)
+      .map((s, a) => com.histmersion.api.RowCount(s.total.value + a.total.value))

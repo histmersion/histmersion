@@ -47,12 +47,12 @@ object ResultsPanel:
   /** Pure: a tab's label with its count, when known. */
   def tabLabel(label: String, count: Option[Int]): String = count.fold(label)(n => s"$label $n")
 
-  private def counts(t: SidebarTab): Signal[Option[Int]] = t match
+  private def counts(t: SidebarTab): Signal[Option[com.histmersion.api.RowCount]] = t match
     case SidebarTab.Sources  => ResultsList.total.signal
     case SidebarTab.Articles => ArticlesTab.total
     case SidebarTab.Events   => EventsTab.total
-    case SidebarTab.Places   => MapLists.places.signal.map(s => Some(s.total))
-    case SidebarTab.Pictures => MapLists.pictures.signal.map(s => Some(s.total))
+    case SidebarTab.Places   => MapLists.places.signal.map(s => Some(com.histmersion.api.RowCount(s.total)))
+    case SidebarTab.Pictures => MapLists.pictures.signal.map(s => Some(com.histmersion.api.RowCount(s.total)))
 
   private def scope: HtmlElement =
     div(
