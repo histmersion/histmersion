@@ -132,3 +132,33 @@ rewriting it. Do not run it directly on application sources; the next step is ex
 these fixtures for optional offsets and generating a guarded preview of the reviewed
 record family. Production/test module compilation and remeasurement are still required.
 The overall automation target and independent detector-quality requirement remain open.
+
+## Optional propagation and first production-source preview
+
+The subsequent rule extension supports explicitly configured Option[Int] leaves in
+fields and method results. It preserves None defaults, maps raw optional arguments,
+and recognizes configured method results when forwarding between records, avoiding
+double-wrapping. `optional-rewrite-fixture.txt` records compiled exact-output and
+runtime checks. The original direct-field fixture passed again as run v7; its report
+describes that fixture's narrower scope, while the optional suite covers the extension.
+
+Preview.scala generated an isolated 18-file preview across the source tree, using
+Scalafix's output relocation. Nine result records acquire Pure wire Offset/RowCount
+fields; affected constructor callers and tests are rewritten. All original source
+hashes remain unchanged. Filter's sentinel-bearing limit and PassageHit's text offset
+remain outside this preview. Additional propagated record fields are proposals pending
+adjudication, not an expanded confirmed denominator. Factory parameter signatures and
+the full dependent-module caller closure still require work.
+
+PreviewCompile.scala compiled a full 479-source API JVM production overlay using the
+evaluated dependency classpath. It failed with eleven errors, retained in preview-v1:
+ten arithmetic/comparison/rendering errors in OffsetPage and one RowCount-to-Long
+rendering mismatch in MediaMarkdown. The compiler error count is not a violation count.
+The first preview is sealed with source hashes and the exact rule version; no failed
+compile is represented as a verified fix. This overlay compile is also not a substitute
+for the eventual API JVM/JS, dependent-module and test builds.
+
+Next: supply explicit pagination-mechanism arithmetic and rendering conversions,
+propagate typed factory signatures, and recompile the preview. Keep numeric boundary
+operations local; do not scatter unwrapping through domain code or silently weaken
+the newtypes. Preserve this failed preview and compiler evidence when generating v2.

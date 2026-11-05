@@ -4,7 +4,7 @@ import scala.jdk.CollectionConverters._
 
 class RewriteVerification extends SyntacticRule("RewriteVerification") {
   override def afterComplete(): Unit = {
-    val target = Paths.get("target/model-rewrite-fixture-v6")
+    val target = Paths.get("target/model-rewrite-fixture-v7")
     require(!Files.exists(target),"Retain prior run; use a new output directory")
     Files.createDirectories(target)
     val fixture = Paths.get("tools/refactor/model-rewrite-fixture")
@@ -38,7 +38,7 @@ class RewriteVerification extends SyntacticRule("RewriteVerification") {
       "Development fixture only. Option leaves, arithmetic, method arguments, inferred results and cross-file transitive closure remain unsupported; no production application authorized by this check alone.\n")
     println(Files.readString(report))
     val archive = Paths.get("refactor-audit/models/pagination/rewrite-runs")
-    (1 to 6).foreach { version =>
+    (1 to 7).foreach { version =>
       val source = Paths.get("target/model-rewrite-fixture-v" + version)
       val dest = archive.resolve("v" + version)
       Files.createDirectories(dest)
