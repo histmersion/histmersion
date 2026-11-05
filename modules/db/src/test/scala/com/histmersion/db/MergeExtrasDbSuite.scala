@@ -36,7 +36,7 @@ import com.histmersion.api.catalogue.{EventPut, Period, Place}
 import com.histmersion.api.exchange.{MergeApplyResult, MergeJobState, MergePlan, MergeResolution, MergeResolutions}
 import com.histmersion.api.library.{Ingest, Source}
 import com.histmersion.api.research.Article
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.MergeIssue as Issue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.exchange.Bundle
 import com.histmersion.util.database.given

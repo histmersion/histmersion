@@ -17,6 +17,7 @@ import com.histmersion.util.database.given
 import com.augustnagro.magnum.*
 import com.histmersion.api.catalogue.{EventArticleRef, Period}
 import com.histmersion.api.library.Filter
+import com.histmersion.api.library.SourceColumns.given
 import com.histmersion.api.research.{Article, Articles, Backlink, CitedSource}
 import com.histmersion.api.Api
 

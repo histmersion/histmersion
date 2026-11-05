@@ -1,5 +1,26 @@
 # Priority-family status
 
+## Import-registry baseline repaired before ownership changes
+
+Real PostgreSQL import/merge/rename tests exposed ten failures in 39 tests before
+the planned ownership rewrite. Two tests failed in API-status decoding; the other
+eight used mismatched API/domain enum identities in observations or merge-resolution
+selection. Repairing citation decoding exposed another instance in ArticleRepo.
+Two frozen AST batches now share the API-status codec in the DB module and correct
+test enum references without changing expected assertion values. All 39 test
+identities pass, zero skipped; full production/test compilation passes on 3,159
+sources. Failed and intermediate 38/39 observations remain recorded.
+
+This is prerequisite regression repair, with **no isolation or 90% automation
+credit**. The four import-registry relationships remain outstanding, and no detector
+quality/refinement claim is made. See `import-registry/README.md` for the patch chain,
+verification and bounded next-batch checklist. The fresh architecture/model scan
+covers all 3,159 compiled source hashes in 28 modules. Isolation retains 115 production
+and 213 test relationships, zero new or reopened, 77 ambiguous owners and 182,320
+unclassified direction rows. Production member primitive leaves remain 30,393
+(62,229 all scopes); 46,914 unresolved leaves remain. The one-leaf decrease is not
+credited as a model repair. Other family measurements remain historical checkpoints.
+
 ## Unread projection and shared AuthorName verified
 
 Personal now uses the shared kernel AuthorName and its own typed display Status.

@@ -1,0 +1,40 @@
+class	test	status	message
+com.histmersion.db.BundleSuite	#1647: the event-catalogue sets travel, merge by their own rules, and an older bundle still imports	passed	
+com.histmersion.db.BundleSuite	M0: a delete — direct or by cascade — leaves a tombstone of the right kind	passed	
+com.histmersion.db.BundleSuite	M0: every row has a uid and its origin is this instance; a rename keeps the uid	passed	
+com.histmersion.db.BundleSuite	M1: --since carries only what changed after it, plus the deletions	passed	
+com.histmersion.db.BundleSuite	M1: two exports of an unchanged database are byte-identical, and the bundle verifies	passed	
+com.histmersion.db.BundleSuite	M2/M3: records another instance has under the same labels are refused — every one listed, nothing written	passed	
+com.histmersion.db.BundleSuite	M2: a dry run reports and writes nothing	passed	
+com.histmersion.db.BundleSuite	M2: a row deleted here is not brought back, and what needs it is skipped with it	passed	
+com.histmersion.db.BundleSuite	M2: export → import into an empty instance → export is byte-equal (but for who exported)	passed	
+com.histmersion.db.BundleSuite	M2: importing an instance's own bundle changes 0 rows	passed	
+com.histmersion.db.BundleSuite	M2: the ledger fast-forwards what changed there only, keeps what changed here only, and reports both	passed	
+com.histmersion.db.BundleSuite	a bundle carries a provenance it does not know verbatim	passed	
+com.histmersion.db.BundleSuite	an old citekey renamed back here is not brought back as an alias by the next import (#827)	passed	
+com.histmersion.db.BundleSuite	property: random corpora round-trip export → import → export, byte for byte	passed	
+com.histmersion.db.BundleSuite	verify: a changed entity line, a corrupt blob and a truncated file are each reported	passed	
+com.histmersion.db.MergeExtrasDbSuite	a place renamed over there is followed: the new id here, the old one an alias, events and names follow	passed	
+com.histmersion.db.MergeExtrasDbSuite	a place renamed over there onto an id another place has here keeps ours; the bundle's events point at it	passed	
+com.histmersion.db.MergeExtrasDbSuite	goals (#881): the plan, its approval time, the run cap, links and schedules travel; ours are kept on a merge	passed	
+com.histmersion.db.MergeExtrasDbSuite	goals (phase 3): a watcher's sweeps travel as the goal's schedules (cron, budget); its state stays home	passed	
+com.histmersion.db.MergeExtrasDbSuite	label renames keep the old label as an alias: refused when taken, dropped when renamed back	passed	
+com.histmersion.db.MergeExtrasDbSuite	merge apply jobs are rows: running, then done with the report; a restart turns a running one interrupted	passed	
+com.histmersion.db.MergeExtrasDbSuite	old article slugs travel; events under two ids that are one fold; merge list/show/ledger read it back	passed	
+com.histmersion.db.MergeExtrasDbSuite	old event ids, goal slugs and place ids travel in a bundle, are written here, and keep resolving	passed	
+com.histmersion.db.MergeExtrasDbSuite	place renames keep the old id as an alias: refused when taken, dropped when renamed back	passed	
+com.histmersion.db.MergeExtrasDbSuite	places and periods: the collection's own travel and import; the seeds do not; the dataset marks which	passed	
+com.histmersion.db.MergeExtrasDbSuite	places: one id with two geometries asks, and keep-right takes the bundle's; one place under another id folds	passed	
+com.histmersion.db.MergeSuite	a bundle with an open issue can still be imported once it is decided the importable way	passed	
+com.histmersion.db.MergeSuite	merge apply refuses while an issue is open, and never takes the backup	passed	
+com.histmersion.db.MergeSuite	merge apply: the crafted pair, every issue decided — one transaction; re-planned, 0 changes; applied again, a no-op	passed	
+com.histmersion.db.MergeSuite	property: random pairs of collections — applied, every reference holds; planned again, nothing; applied again, a no-op	passed	
+com.histmersion.db.MergeSuite	renames over there are followed: an article slug (its old one kept as an alias), an event id, a goal slug	passed	
+com.histmersion.db.MergeSuite	the crafted pair: work's bundle planned at home gives exactly the expected issues, in one run	passed	
+com.histmersion.db.MergeSuite	the import refuses while issues are open or merges are needed — every one listed, nothing written	passed	
+com.histmersion.db.MergeSuite	uid_aliases: a bundle uid redirected here lands on the surviving row — its label wins, nothing is inserted	passed	
+com.histmersion.db.RenameRepoSuite	V027: every foreign key into sources, findings and assets cascades on update, and keeps its delete action	passed	
+com.histmersion.db.RenameRepoSuite	a rename moves every table, finding id, link and parked edge, and leaves an alias	failure	sbt.internal.worker1.ForkTestMain$ForkError: sbt.internal.worker1.PersistedException: com.augustnagro.magnum.SqlException: Error executing query:\nSELECT l.target AS citekey, s.title, s.year, s.status, s.authors, s.doi\n          FROM article_links l LEFT JOIN sources s ON s.citekey = l.target\n          WHERE l.src_slug = ? AND l.target_kind = 'source'\n          ORDER BY l.target\nWith message:\njava.lang.IllegalArgumentException: current not convertible to Status\n\n\tat com.augustnagro.magnum.util$package$.handleQuery(util.scala:350)\n\tat com.augustnagro.magnum.Query.run(Query.scala:18)\n\tat com.histmersion.domain.research.articles.ArticleRepo$.sourcesCited(ArticleRepo.scala:339)\n\tat com.histmersion.domain.research.articles.ArticleFixtures$.sourcesCited$$anonfun$1(ArticleFixtures.scala:31)\n\tat com.augustnagro.magnum.util$package$.connect$$anonfun$1(util.scala:28)\n\tat scala.util.Using$.resource(Using.scala:316)\n\tat com.augustnagro.magnum.util$package$.connect(util.scala:28)\n\tat com.augustnagro.magnum.util$package$.connect(util.scala:31)\n\tat com.histmersion.domain.research.articles.ArticleFixtures$.sourcesCited(ArticleFixtures.scala:31)\n\tat com.histmersion.db.RenameRepoSuite.$init$$$anonfun$2(RenameRepoSuite.scala:271)\n
+com.histmersion.db.RenameRepoSuite	after a rename the old citekey keeps working as a link target, an edge target and a patch target	passed	
+com.histmersion.db.RenameRepoSuite	refusals leave everything as it was	passed	
+com.histmersion.db.RenameRepoSuite	renaming back leaves a tombstone for the dropped alias; renaming away again clears it (#827)	passed	

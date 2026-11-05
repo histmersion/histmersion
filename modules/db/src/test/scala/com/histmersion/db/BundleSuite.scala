@@ -42,7 +42,7 @@ import com.histmersion.api.exchange.{Bundle, MergeResolution, MergeResolutions}
 import com.histmersion.api.library.{Edge, Finding, Source}
 import com.histmersion.api.media.AssetPatch
 import com.histmersion.api.research.Article
-import com.histmersion.util.data.exchange.Issue
+import com.histmersion.api.exchange.MergeIssue as Issue
 import com.histmersion.api.automation.Goal
 import com.histmersion.api.catalogue.Attestation
 import com.histmersion.api.media.AssetLink
@@ -469,7 +469,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(m.instance.id, instanceId(ds))
     assertEquals(m.files.map(_.path), Bundle.Files.all)
     assertEquals(
-      m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Source.file).map(_.lines),
+      m.files.find(_.path == com.histmersion.api.exchange.Bundle.Kind.Source.file).map(_.lines),
       Some(3)
     )
     // the blobs: two bodies, two figures, one version body, the original
@@ -497,12 +497,12 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val m = manifestOf(inc)
     assertEquals(m.since, Some(asOf))
     assertEquals(
-      m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Source.file).map(_.lines),
+      m.files.find(_.path == com.histmersion.api.exchange.Bundle.Kind.Source.file).map(_.lines),
       Some(1)
     )
-    assert(text(es, com.histmersion.util.data.exchange.Bundle.Kind.Source.file).contains(G1))
+    assert(text(es, com.histmersion.api.exchange.Bundle.Kind.Source.file).contains(G1))
     assertEquals(
-      m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Finding.file).map(_.lines),
+      m.files.find(_.path == com.histmersion.api.exchange.Bundle.Kind.Finding.file).map(_.lines),
       Some(0)
     )
     assert(text(es, Bundle.Files.Tombstones).contains("asset-link"))
@@ -511,7 +511,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assertEquals(m.blobs.count, 1)
     assert(es.exists(_._1.startsWith("blobs/")))
     assertEquals(
-      m.files.find(_.path == com.histmersion.util.data.exchange.Bundle.Kind.Asset.file).map(_.lines),
+      m.files.find(_.path == com.histmersion.api.exchange.Bundle.Kind.Asset.file).map(_.lines),
       Some(0)
     )
 
@@ -597,8 +597,8 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       Bundle.Files.PlaceSiteTypes -> 1
     ).foreach((f, n) => assertEquals(manifestOf(first).files.find(_.path == f).map(_.lines), Some(n), f))
     assert(
-      text(es, com.histmersion.util.data.exchange.Bundle.Kind.Event.file).contains("\"catalogue\":\"gvp\""),
-      text(es, com.histmersion.util.data.exchange.Bundle.Kind.Event.file)
+      text(es, com.histmersion.api.exchange.Bundle.Kind.Event.file).contains("\"catalogue\":\"gvp\""),
+      text(es, com.histmersion.api.exchange.Bundle.Kind.Event.file)
     )
     val r1 = importInto(b, first, sb)
     assert(r1.applied, r1.problems.mkString("\n"))
@@ -679,7 +679,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val r2 = importInto(a, before, sa)
     assertEquals(r2.changed, 0)
     assertEquals(
-      r2.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.keptLocal),
+      r2.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.keptLocal),
       Some(1)
     )
     assertEquals(SourceFixtures.load(a, A1).flatMap(_.summary), Some("newer here"))
@@ -693,7 +693,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = SourceFixtures.patch(a, A1, Source.Patch(summary = Some("work edit")), cfg.limits.chunkChars)
     val r1 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
-      r1.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.updated),
+      r1.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.updated),
       Some(1),
       r1.toString
     )
@@ -702,7 +702,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = SourceFixtures.patch(b, A1, Source.Patch(notes = Some("home edit")), cfg.limits.chunkChars)
     val r2 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
-      r2.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.keptLocal),
+      r2.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.keptLocal),
       Some(1),
       r2.toString
     )
@@ -713,7 +713,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val r3 = importInto(b, third, sb)
     assert(!r3.applied)
     assertEquals(
-      r3.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.conflicts),
+      r3.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.conflicts),
       Some(1),
       r3.toString
     )
@@ -735,7 +735,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val _ = Transactor(a).transact(GoalRepo.deleteIn("zzb_goal_sub"))
     val r4 = importInto(b, exportOf(a, sa), sb)
     assertEquals(
-      r4.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Goal).map(_.deleted),
+      r4.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Goal).map(_.deleted),
       Some(1),
       r4.toString
     )
@@ -776,7 +776,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     val r = importInto(b, bundle, sb)
     assert(r.applied, r.problems.mkString("\n"))
     assertEquals(
-      r.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Asset).map(_.skippedDeleted),
+      r.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Asset).map(_.skippedDeleted),
       Some(1),
       r.toString
     )
@@ -807,7 +807,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     assert(r.dryRun)
     assertEquals(r.problems, Nil)
     assertEquals(
-      r.counts.find(_.kind == com.histmersion.util.data.exchange.Bundle.Kind.Source).map(_.inserted),
+      r.counts.find(_.kind == com.histmersion.api.exchange.Bundle.Kind.Source).map(_.inserted),
       Some(3)
     )
     assert(java.util.Arrays.equals(exportOf(b, sb), empty), "a dry run wrote something")
@@ -825,14 +825,14 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
       out.toByteArray
     def verify(b: Array[Byte]) = BundleReader.verify(java.io.ByteArrayInputStream(b), Some("999"))
     val edited = rebuild { case (p, b) =>
-      if p == com.histmersion.util.data.exchange.Bundle.Kind.Goal.file then
+      if p == com.histmersion.api.exchange.Bundle.Kind.Goal.file then
         p -> String(b, UTF_8).replace("Hittites", "Hattians").getBytes(UTF_8)
       else p -> b
     }
     val v1 = verify(edited)
     assert(!v1.ok)
     assert(
-      v1.problems.exists(_.contains(s"${com.histmersion.util.data.exchange.Bundle.Kind.Goal.file}: sha256")),
+      v1.problems.exists(_.contains(s"${com.histmersion.api.exchange.Bundle.Kind.Goal.file}: sha256")),
       v1.problems.mkString("\n")
     )
     assert(v1.problems.exists(_.contains("does not match its content")), v1.problems.mkString("\n"))

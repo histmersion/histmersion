@@ -14,6 +14,7 @@ import com.histmersion.api.library.{
   NeighborTarget
 }
 import com.histmersion.api.library.Source
+import com.histmersion.api.library.SourceColumns.given
 
 /** The citation graph's reads: a source's typed edges both ways, the graph around it, the disagreements. The edges are
   * written with their source (`sources.SourceRepo`): an edge is stored on the source that makes it.
