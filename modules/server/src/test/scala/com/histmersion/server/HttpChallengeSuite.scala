@@ -54,34 +54,34 @@ class HttpChallengeSuite extends munit.FunSuite:
   test("an Anubis page is no copy, asked once, whether it answers 200 or 403 (#2560)"):
     withServer { (base, seen) =>
       for path <- List("/anubis-200", "/anubis-403") do
-        val r = SttpHttp(cfg, tries = 3).bytes(s"$base$path")
+        val r = SttpHttp(cfg, tries = 3, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(s"$base$path")
         assert(r.left.exists(_.contains("bot-protection challenge")), s"$path: $r")
       assertEquals(seen.size, 2)
     }
 
   test("a 403 challenge page is no copy, asked once"):
     withServer { (base, seen) =>
-      val r = SttpHttp(cfg, tries = 3).bytes(s"$base/challenge-403")
+      val r = SttpHttp(cfg, tries = 3, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(s"$base/challenge-403")
       assert(r.left.exists(_.contains("bot-protection challenge")), r.toString)
       assertEquals(seen.size, 1)
     }
 
   test("a 503 marked cf-mitigated: challenge is not retried either"):
     withServer { (base, seen) =>
-      val r = SttpHttp(cfg, tries = 3).bytes(s"$base/challenge-503")
+      val r = SttpHttp(cfg, tries = 3, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(s"$base/challenge-503")
       assert(r.left.exists(_.contains("bot-protection challenge")), r.toString)
       assertEquals(seen.size, 1)
     }
 
   test("an ordinary 503 is still retried"):
     withServer { (base, seen) =>
-      assert(SttpHttp(cfg, tries = 2).bytes(s"$base/busy").isLeft)
+      assert(SttpHttp(cfg, tries = 2, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())).bytes(s"$base/busy").isLeft)
       assertEquals(seen.size, 2)
     }
 
   test("the product's User-Agent by default, without the contact; a caller's own replaces it"):
     withServer { (base, seen) =>
-      val http = SttpHttp(cfg)
+      val http = SttpHttp(cfg, clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
       assertEquals(http.text(s"$base/default"), Right("ok"))
       assertEquals(http.text(s"$base/public", Map("user-agent" -> cfg.publicUserAgent)), Right("ok"))
       val ua = seen.asScala.toMap

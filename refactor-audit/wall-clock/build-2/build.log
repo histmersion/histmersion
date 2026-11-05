@@ -1,0 +1,55 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Executing in batch mode. For better performance use sbt's shell
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 20 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/classes ...
+[info] done compiling
+[info] compiling 23 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/classes ...
+[info] done compiling
+[success] elapsed time: 23 s, cache 99%, 402 disk cache hits, 2 onsite tasks
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-api/test-classes ...
+[info] done compiling
+[info] Scala.js frontend → /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/resource_managed/main/web/app.bundle.js
+[info] compiling 81 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/test-classes ...
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/ArticleReviewHttpSuite.scala:79:6 
+[info] 79 |      sql"""INSERT INTO jobs (id, kind, status, created_at) VALUES
+[info]    |      ^
+[info]    |Could not find given DbCodec for com.histmersion.api.automation.Agents.JobKind. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 80 |            ($RunA, ${Agents.JobKind}, 'done', '2026-10-01T10:00:00Z'::timestamptz),
+[info] 81 |            ($RunB, ${Agents.JobKind}, 'running', '2026-10-02T10:00:00Z'::timestamptz)""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/ArticleReviewHttpSuite.scala:79:6 
+[info] 79 |      sql"""INSERT INTO jobs (id, kind, status, created_at) VALUES
+[info]    |      ^
+[info]    |Could not find given DbCodec for com.histmersion.api.automation.Agents.JobKind. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 80 |            ($RunA, ${Agents.JobKind}, 'done', '2026-10-01T10:00:00Z'::timestamptz),
+[info] 81 |            ($RunB, ${Agents.JobKind}, 'running', '2026-10-02T10:00:00Z'::timestamptz)""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/ListFiltersHttpSuite.scala:85:8 
+[info] 85 |        sql"""INSERT INTO jobs (id, kind, status, pipeline, target_id, origin)
+[info]    |        ^
+[info]    |Could not find given DbCodec for com.histmersion.api.automation.Agents.JobKind. Using PreparedStatement::setObject instead.
+[info]    |
+[info] 86 |                VALUES ($id, ${Agents.JobKind}, $st, $p, ${s"$tag-target$i"}, 'person')""".update.run()
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/agents/AcquireRecheckDbSuite.scala:70:6 
+[info] 70 |      sql"DELETE FROM jobs WHERE kind = ${RecheckJob.JobKind}".update.run()
+[info]    |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]    |Could not find given DbCodec for com.histmersion.api.library.Acquire.Checks.RecheckJob.JobKind. Using PreparedStatement::setObject instead.
+[info] -- Info: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/agents/AcquireRecheckDbSuite.scala:70:6 
+[info] 70 |      sql"DELETE FROM jobs WHERE kind = ${RecheckJob.JobKind}".update.run()
+[info]    |      ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[info]    |Could not find given DbCodec for com.histmersion.api.library.Acquire.Checks.RecheckJob.JobKind. Using PreparedStatement::setObject instead.
+[info] done compiling
+[success] elapsed time: 21 s, cache 97%, 616 disk cache hits, 14 onsite tasks

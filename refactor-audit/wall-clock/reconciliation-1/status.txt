@@ -1,0 +1,14 @@
+PASS
+production-files=2373
+production-occurrences-before=147
+production-occurrences-after=118
+verified-production-occurrences=29
+verified-production-anchors=28
+confirmed-clock-design-occurrences-outstanding=13
+new-identities=0
+changed-residual-multiplicities=0
+exceptions-added=0
+test-capability-policy=unmeasured
+independent-family-precision-recall=unestablished
+database-backed-workflow-runtime=not-run
+whole-assessment-history-gate=not-run; bounded capability comparison only

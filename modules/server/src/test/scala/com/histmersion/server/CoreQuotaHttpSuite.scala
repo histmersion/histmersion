@@ -36,7 +36,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
     val limits = CoreBudget.limits(cfg.acquire.core)
     val first = CoreBudget(() => now.get, _ => ())
     supervised {
-      val s = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), core = first).start()
+      val s = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), core = Some(first)).start()
       try
         val url = s"http://127.0.0.1:${s.port}"
         assert(!get(s"$url/api/about").contains("\"upstreams\":[{"), "nothing shown before CORE was asked")
@@ -59,7 +59,7 @@ class CoreQuotaHttpSuite extends munit.FunSuite:
     // a restart: a fresh budget, the same database
     val second = CoreBudget(() => now.get, _ => ())
     supervised {
-      val s = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), core = second).start()
+      val s = Composition.server(cfg, "127.0.0.1", 0, OfflineConverter(), core = Some(second)).start()
       try
         assertEquals(second.state.searchTokens, 1)
         assert(second.unavailable(limits, CoreQuota.Purpose.Lookup).exists(_.isInstanceOf[CoreQuota.Refusal.Blocked]))

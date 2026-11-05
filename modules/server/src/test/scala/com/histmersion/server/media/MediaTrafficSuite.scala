@@ -46,7 +46,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
     val sb = StringBuilder()
     val loaded = load("")
     val wire = MediaWire.Wire()
-    val plugins = ServerPlugins.load(loaded, transport = _ => wire)
+    val plugins = ServerPlugins.load(loaded, transport = _ => wire, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     val handlers = MediaWiring(Deps(loaded.config, ds, ds, plugins = plugins), wire, MediaWire.Thumbs())
 
     def report(r: Either[Api.Error, MediaImportReport]): String =
@@ -122,7 +122,7 @@ class MediaTrafficSuite extends com.histmersion.db.DbSuite:
     )
     val offHandlers =
       MediaWiring(
-        Deps(off.config, ds, ds, plugins = ServerPlugins.load(off, transport = _ => wire)),
+        Deps(off.config, ds, ds, plugins = ServerPlugins.load(off, transport = _ => wire, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))),
         wire,
         MediaWire.Thumbs()
       )

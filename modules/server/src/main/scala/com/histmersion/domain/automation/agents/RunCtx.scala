@@ -110,7 +110,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
       engine.checkControl(run.id).flatMap { _ =>
         engine.beat(run.id, Some(seq))
         progress(name)
-        val started = java.time.Instant.now()
+        val started = java.time.Instant.now(engine.agents.clock)
         val out =
           try body
           catch
@@ -179,7 +179,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
     val seq = claimSeq()
     replay[Decided](seq, name).getOrElse {
       engine.checkControl(run.id).flatMap { _ =>
-        val started = java.time.Instant.now()
+        val started = java.time.Instant.now(engine.agents.clock)
         def done(d: Decided): Either[Halt, Decided] =
           engine.agents.runs.record(
             run.id,
@@ -389,7 +389,7 @@ final class RunCtx private[automation] (val run: RunInfo, engine: Engine):
           val last = tries + 1 >= maxAttempts
           val user = if problems.isEmpty then prompt.user else prompt.user + Prompt.retry(problems, previous)
           progress(s"$name (attempt $attempt, ${client.model.wire})")
-          val started = java.time.Instant.now()
+          val started = java.time.Instant.now(engine.agents.clock)
           val budget = engine.budgetInterceptor(run.id, billing)
           val latency = LatencyInterceptor(engine.llmSlots, () => engine.beat(run.id))
           val allowance = AllowanceGuard(picked.headroomTokens, picked.headroomUsd, billing)

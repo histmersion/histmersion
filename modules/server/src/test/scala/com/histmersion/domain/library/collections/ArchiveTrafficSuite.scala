@@ -95,7 +95,7 @@ class ArchiveTrafficSuite extends com.histmersion.db.DbSuite:
       _.db).setTo(loaded.config.db.modify(_.url).setTo(scratch.urlOf("archive_traffic_run_test"))).modify(_.acquire).setTo(loaded.config.acquire.modify(_.spoolDir).setTo(spool.toString)
     )
     val wire = Wire(routes(app.acquire))
-    val g: Generation = ServerPlugins.load(loaded, transport = _ => wire)
+    val g: Generation = ServerPlugins.load(loaded, transport = _ => wire, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
     val surface = ArchiveTrafficSuite.surface(app, ds, g, wire)
     val sb = StringBuilder()
     def step(name: String)(answer: => String): Unit =

@@ -150,7 +150,7 @@ final class OaBacklog(
     (counts.get(managerId).fold(0)(_._1), counts.collect { case (m, (p, _)) if draining(m) => p }.sum)
 
   /** The backlog per watcher and in all, with the days to drain it ([[OaBacklog.Snapshot]]). */
-  def snapshot(now: Instant = Instant.now(), extra: Map[String, Int] = Map.empty): Snapshot =
+  def snapshot(now: Instant = Instant.now(agents.clock), extra: Map[String, Int] = Map.empty): Snapshot =
     val stored = agents.managerStore.backlogCounts()
     // `extra` = pending items a dry run would add, per watcher
     val counts = (stored.keySet ++ extra.keySet)

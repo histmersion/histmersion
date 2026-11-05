@@ -20,7 +20,7 @@ import java.nio.charset.StandardCharsets
   */
 final class AuthHandler(
     apiKey: () => String,
-    tokens: com.histmersion.domain.automation.agents.RunTokens = com.histmersion.domain.automation.agents.RunTokens()
+    tokens: com.histmersion.domain.automation.agents.RunTokens
 ) extends ChannelInboundHandlerAdapter:
   /** The key is read per request (a config reload may set, change or clear it); none = no gate. */
   private def expected: Option[String] = Option(apiKey()).filter(_.nonEmpty).map(k => s"Bearer $k")

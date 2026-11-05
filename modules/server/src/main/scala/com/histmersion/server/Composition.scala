@@ -54,7 +54,7 @@ object Composition:
       configFile: ConfigFileInfo = ConfigFileInfo(),
       plugins: Generation = ServerPlugins.offline,
       source: Option[(LoadedConfig, ConfigSource)] = None,
-      core: CoreBudget = CoreBudget(),
+      core: Option[CoreBudget] = None,
       system: SystemContext = SystemContext.isolated
   )(using Ox): NettySyncServer =
     build(
@@ -109,15 +109,16 @@ object Composition:
       autoInit: Boolean = false,
       onWiring: ServerWiring => Unit = _ => (),
       plugins: Generation = ServerPlugins.offline,
-      core: CoreBudget = CoreBudget(),
+      core: Option[CoreBudget] = None,
       restart: Option[() => Unit] = None,
       system: SystemContext = SystemContext.isolated
   )(using Ox): NettySyncServer =
-    val sg = ServerGraph.start(hc, source, Some(plugins), core).fold(e => throw IllegalStateException(e), identity)
+    val selectedCore = core.getOrElse(CoreBudget(() => system.clock.instant()))
+    val sg = ServerGraph.start(hc, source, Some(plugins), selectedCore).fold(e => throw IllegalStateException(e), identity)
     releaseAfterScope(sg.close())
     // the CORE budget, built before the database (the first plugin generation spends from it), kept in it
     // from here on: a restart does not hand the day's tokens out again
-    core.persistTo(
+    selectedCore.persistTo(
       CoreQuotaStore.of(UpstreamQuotaService(com.histmersion.util.database.Transactor(sg.ds)))
     )
     val deps = sg.deps(WriteGate(), restart, system)
@@ -232,7 +233,7 @@ object Composition:
         deps = List(sg.plugins),
         keys = List("histmersion.acquire", "histmersion.media.max-retry-after-seconds")
       ) { ctx =>
-        Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core))
+        Right(acquireClients(ctx.config.app, ctx(sg.plugins), sg.core)(using deps.clock))
       }
       .fold(e => throw IllegalStateException(e), identity)
     AcquisitionWiring(deps, h.library.sourceStore, h.ingest, clients)
@@ -288,13 +289,13 @@ object Composition:
     * upstream clients built over it, and the chain of the generation's source fetchers (the built-in archive-org,
     * oa-unpaywall, oa-core, oa-openalex, oa-landing, pmc and arxiv unless switched off) in `acquire.chain` order.
     */
-  private def acquireClients(app: AppConfig, plugins: Generation, core: CoreBudget): AcquireClients =
+  private def acquireClients(app: AppConfig, plugins: Generation, core: CoreBudget)(using clock: java.time.Clock): AcquireClients =
     val cfg = app.acquire
     // the one outbound policy's Retry-After cap is the media one (`media.max-retry-after-seconds`)
     // `acquire.tls` (#1568): more roots than the JDK's, only when asked for
     val tls = OutboundTls.configure(cfg.tls)
     tls.foreach((_, line) => scribe.info(line))
-    val http = SttpHttp(cfg, maxRetryAfterSeconds = app.media.maxRetryAfterSeconds, tls = tls.map(_._1))
+    val http = SttpHttp(cfg, maxRetryAfterSeconds = app.media.maxRetryAfterSeconds, tls = tls.map(_._1), clock = () => clock.instant())
     val openalex =
       OpenAlexDiscovery(
         com.histmersion.upstreams.openalex

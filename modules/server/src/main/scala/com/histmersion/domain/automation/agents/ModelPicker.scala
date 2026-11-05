@@ -37,13 +37,13 @@ final class ModelPicker(
       * may name besides the host's providers.
       */
     known: () => Set[String] = () => Set.empty
-):
+)(using wallClock: java.time.Clock):
 
   /** model wire → (skipped until, when its plan reported the limit) */
   private val cooldown = ConcurrentHashMap[String, (Long, Long)]()
 
   /** The model hit its plan's limit: skip it until `until` (else the configured cool-down). */
-  def cool(model: ModelRef, until: Option[Instant], now: Long = System.currentTimeMillis()): Instant =
+  def cool(model: ModelRef, until: Option[Instant], now: Long = wallClock.millis()): Instant =
     val at = until
       .map(_.toEpochMilli)
       .filter(_ > now)
@@ -71,7 +71,7 @@ final class ModelPicker(
   /** The models skipped now because their plan reported its usage limit, with until when — after lifting those a later
     * reading of their pool clears (`agent quota`, `agent quota refresh`).
     */
-  def cooldowns(now: Long = System.currentTimeMillis()): List[(String, Instant)] =
+  def cooldowns(now: Long = wallClock.millis()): List[(String, Instant)] =
     import scala.jdk.CollectionConverters.*
     cooldown.keySet.asScala.toList.sorted.flatMap(w =>
       ModelRef
@@ -258,7 +258,7 @@ final class ModelPicker(
   def pick(
       role: Role,
       overrideRef: Option[String],
-      now: Long = System.currentTimeMillis(),
+      now: Long = wallClock.millis(),
       refresh: Option[PlanQuota.RefreshTrigger] = Some(PlanQuota.RefreshTrigger.Pick),
       onRefresh: String => Unit = _ => ()
   ): Either[PickFailure, Picked] =

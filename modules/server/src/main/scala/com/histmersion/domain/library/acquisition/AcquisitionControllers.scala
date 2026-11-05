@@ -83,7 +83,7 @@ final class AcquisitionControllers(
     indexes: => List[ScholarlyIndex] = Nil,
     alerts: => CitationAlerts = NoAlerts,
     generation: => String = ""
-):
+)(using clock: java.time.Clock):
   private def acq = cfg().acquire
 
   // The restore lock (plan §1.10) covers every acquisition WRITE — `assess --apply` patches a status, `followups` adds
@@ -103,7 +103,7 @@ final class AcquisitionControllers(
   // ── deterministic new-source search (#3761) ──────────────────────────────────────────────────
 
   private val search =
-    CandidateSearch(candidateStore, sources, goals, articles, queues, cfg().acquire.candidates, indexes, alerts)
+    CandidateSearch(candidateStore, sources, goals, articles, queues, cfg().acquire.candidates, indexes, alerts, today = () => java.time.LocalDate.now(clock.withZone(java.time.ZoneOffset.UTC)))
 
   /** A goal's (or every goal's) candidates in one state (`new` by default), with the counts per state. */
   def candidates(

@@ -36,7 +36,7 @@ class FetcherPluginsSuite extends munit.FunSuite:
     * host's settings supplied.
     */
   private def generation(user: String = "", env: Map[String, String] = Map.empty, http: Http = Offline): Generation =
-    ServerPlugins.fetchers(loaded(user, env), () => HttpPlugin(http))
+    ServerPlugins.fetchers(loaded(user, env), () => HttpPlugin(http), core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))
 
   private def migrated(user: String = "", env: Map[String, String] = Map.empty): Generation = generation(user, env)
 

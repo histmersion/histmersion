@@ -61,7 +61,7 @@ final class Engine(
   /** Delete traced messages older than `agents.trace.keep-messages-days`, at most once every `prune-every-minutes` (or
     * now with `force`). Returns how many went. Never fails a run: a failed prune is logged and tried again next time.
     */
-  def pruneTrace(force: Boolean = false, now: Long = System.currentTimeMillis()): Int =
+  def pruneTrace(force: Boolean = false, now: Long = agents.clock.millis()): Int =
     val every = math.max(1, cfg.trace.pruneEveryMinutes).toLong * 60000L
     val last = lastPrune.get()
     if cfg.trace.keepMessagesDays <= 0 || (!force && now - last < every) || !lastPrune.compareAndSet(last, now) then 0
@@ -81,7 +81,7 @@ final class Engine(
   final private class Control(val thread: Thread):
     @volatile var pause: Boolean = false
     @volatile var cancel: Boolean = false
-    @volatile var lastBeat: Long = System.currentTimeMillis()
+    @volatile var lastBeat: Long = agents.clock.millis()
 
     /** When `lastBeat` was last written to `jobs.heartbeat_at` (at most every heartbeat-seconds). */
     @volatile var persisted: Long = 0L
@@ -95,7 +95,7 @@ final class Engine(
   /** A sign of life of run `id` (a step boundary, a model call, a CLI line); `seq` = the step it is in. */
   private[histmersion] def beat(id: String, seq: Option[Int] = None): Unit =
     Option(running.get(id)).foreach { c =>
-      val now = System.currentTimeMillis()
+      val now = agents.clock.millis()
       c.lastBeat = now
       seq.foreach(c.seq = _)
       if now - c.persisted >= math.max(1, cfg.watchdog.heartbeatSeconds).toLong * 1000L then
@@ -119,7 +119,7 @@ final class Engine(
     * `agents.watchdog.stall-minutes` has its processes killed and is interrupted; it settles paused `stalled` (resuming
     * after resume-minutes), or failed on its max-stalls-th stall of one step. Returns the ids.
     */
-  def checkStalls(now: Long = System.currentTimeMillis()): List[String] =
+  def checkStalls(now: Long = agents.clock.millis()): List[String] =
     val limit = cfg.watchdog.stallMinutesFor(cfg.providers).toLong * 60000L
     running.asScala.toList.filter((_, c) => c.stalled.isEmpty && !c.cancel && now - c.lastBeat > limit).map { (id, c) =>
       val mins = (now - c.lastBeat) / 60000L
@@ -188,7 +188,7 @@ final class Engine(
     )
     val queued = queuedAll.filterNot(inQueue)
     // a run nobody is watching goes on by itself after a restart; a person's waits for them
-    val at = java.time.Instant.now().plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L)
+    val at = java.time.Instant.now(agents.clock).plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L)
     paused.foreach { (id, origin) =>
       if origin.flatMap(Origin.parse).exists(_.unattended) then
         val _ = agents.jobRuns.resumeAt(JobKind, id, RunState.Paused.wire, at)
@@ -206,7 +206,7 @@ final class Engine(
         Thread.sleep(every)
         try
           agents.pins.pinned {
-            val now = java.time.Instant.now()
+            val now = java.time.Instant.now(agents.clock)
             val _ = checkStalls(now.toEpochMilli)
             val _ = resumeDue(now)
             val _ = resumeFreed(now)
@@ -352,7 +352,7 @@ final class Engine(
               case e: InterruptedException                          =>
                 // the pool stopping under a run nobody watches: it goes on after the restart by itself
                 val at = Option.when(run.origin.flatMap(Origin.parse).exists(_.unattended))(
-                  java.time.Instant.now().plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L)
+                  java.time.Instant.now(agents.clock).plusSeconds(math.max(0, cfg.watchdog.interruptedResumeMinutes).toLong * 60L)
                 )
                 Left(Halt.Pause(PauseReason.Interrupted, "interrupted", at))
               case e: Exception =>

@@ -1,0 +1,35 @@
+status=VIOLATIONS
+best-effort=false
+unresolved-reference-names=0
+expected-files=0
+missing-files=0
+files=1
+violations=10
+indirect-repository-findings=0
+coverage=direct resolved references plus repository calls through known source method bodies; dynamic dispatch, callbacks, external helper bodies and inferred-type escapes remain unmeasured
+unresolved-reference-names includes unsupported transaction SQL expressions; missing-symbol names are collected only in best-effort mode
+SQL controls: configured JDBC method symbols with a direct string literal and a recognized leading command; dynamic, comment-prefixed and compound SQL require review
+completion=check Scalafix exit status for missing/stale SemanticDB and parse failures; this file alone is not a pass
+console-input=0
+console-factory=0
+domain-console=0
+environment=0
+properties=2
+console=0
+clock=5
+lifecycle=1
+filesystem=1
+http=0
+config-load=0
+process=1
+repo-factory=0
+repo-transaction=0
+permission:plugin-process-monotonic-wait:uses=0
+permission:plugin-generator-exit:uses=0
+permission:console-adapter:uses=0
+permission:cli-console-composition:uses=0
+permission:resolver-console-composition:uses=0
+permission:relink-console-composition:uses=0
+permission:server-console-composition:uses=0
+permission:cli-exit:uses=0
+permission:startup-context:uses=0

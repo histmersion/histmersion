@@ -113,7 +113,7 @@ class CoreBudgetSuite extends munit.FunSuite:
       budget: CoreBudget,
       extra: List[com.histmersion.plugin.Plugin] = Nil
   ): Generation =
-    val http = SttpHttp(cfg.config.acquire, tries = 1)
+    val http = SttpHttp(cfg.config.acquire, tries = 1, clock = () => java.time.Instant.now(java.time.Clock.systemUTC()))
     ServerPlugins.fetchers(cfg, () => HttpPlugin(http), budget, extra)
 
   private val work = WorkKey(doi = Some(Doi("10.1/x")))
@@ -123,7 +123,7 @@ class CoreBudgetSuite extends munit.FunSuite:
   private def coreIndex(loaded: LoadedConfig, g: Generation, budget: CoreBudget): Option[ScholarlyIndex] =
     val cfg = loaded.config.acquire
     Indexes
-      .of(cfg, SttpHttp(cfg, tries = 1), com.histmersion.util.plugins.Plugins.coreKey(g, cfg.core.key), budget)
+      .of(cfg, SttpHttp(cfg, tries = 1, clock = () => java.time.Instant.now(java.time.Clock.systemUTC())), com.histmersion.util.plugins.Plugins.coreKey(g, cfg.core.key), budget)
       ._1
       .find(_.name == "core")
 

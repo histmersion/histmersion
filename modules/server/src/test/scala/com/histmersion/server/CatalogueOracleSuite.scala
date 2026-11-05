@@ -434,7 +434,7 @@ class CatalogueOracleSuite extends DbSuite:
     val _ = step("event delete", send("DELETE", s"$url/api/events/zz_gone", ""))
     // the catalogue import, then a person's edit of an imported event: a correction
     val catalog = com.histmersion.server.CatalogueWiring(
-      Deps(cfgFor(name), ds, ds, plugins = ServerPlugins.load(oracleLoaded)),
+      Deps(cfgFor(name), ds, ds, plugins = ServerPlugins.load(oracleLoaded, core = com.histmersion.domain.library.acquisition.CoreBudget(() => java.time.Instant.now(java.time.Clock.systemUTC())))),
       FakeMediaHttp(gvp),
       () => 2026L
     )
