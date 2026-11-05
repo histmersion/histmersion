@@ -1,5 +1,21 @@
 # Priority-family status
 
+## First primitive purpose decisions
+
+`models/pagination` now freezes eleven confirmed public production primitive leaves:
+seven row-offset positions, two row counts, one requested-page-size sentinel and one
+text offset. Nine are assigned bulk rewrite, one targeted rewrite and one design work;
+none is fixed yet. Stable symbol-plus-leaf identities, source hashes and AST evidence
+are checked against the full inventory. Tests have no new adjudications in this batch.
+
+The pagination discovery queue omitted five reviewed leaves named next, shown or
+total; the complete primitive inventory contains all eleven. PassageHit.offset is
+a text position, not a pagination offset, and Filter.limit cannot directly become
+positive PageSize because zero selects configured defaults. These distinctions are
+retained rather than using spelling as equivalence. No detector refinement round or
+independent quality result is claimed. Next is the complete semantic caller closure
+and conversion plan for the reviewed concept groups, before a reusable AST rewrite.
+
 ## Approval ownership repair completed
 
 The 14-file Scalafix ownership batch and separate one-file codec prerequisite are

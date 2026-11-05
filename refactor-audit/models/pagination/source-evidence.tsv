@@ -1,0 +1,10 @@
+path	sha256
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/main/scala/com/histmersion/api/OffsetPage.scala	ea10fa894ca4dd0c3c024170b641c760e294148e6cf7184bdb15f4ebb0ac8f31
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/main/scala/com/histmersion/api/library/Filter.scala	225925096d61bbeafd2273d9f3d1f54fe9ff9fb349f4077da2585b2eeba730f2
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/main/scala/com/histmersion/api/library/GeoHitPage.scala	6c0b724910a076d1f79856d1cdd15adf1bf5348f0da4ee1dab6a04d5a74869d4
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/main/scala/com/histmersion/api/library/PassageHit.scala	4f29b5b5ae5c811d7d32b9cbe178176d4fe75dbfff29604a010dcfba04ba6045
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/api/src/main/scala/com/histmersion/api/library/SearchResult.scala	8acdd0894c3ce2eb8ff7d35b6ef2ed18b5e2ea26b13b6deac46e49d164918d32
+modules/core/src/main/scala/com/histmersion/domain/PassageFinder.scala	0225c96c822e67e80e77609a5c52d60ecbf347e2df1ae0089bd9694eef756748
+modules/server/src/main/scala/com/histmersion/domain/library/findings/FindingsControllers.scala	b3c2394a51b1b8c7fabcedb0b3fb4e9e6be191a84b13d976fe788f2d8c20aa91
+modules/values/src/main/scala/com/histmersion/Offset.scala	09870b872007d80a0e0665a05184ad522f2a17d7c8a3417c5d71432c638a0d56
+modules/values/src/main/scala/com/histmersion/PageSize.scala	453cefc06aeec830061503e36e8736f9a75862236b802b090b89a6e78811b226
