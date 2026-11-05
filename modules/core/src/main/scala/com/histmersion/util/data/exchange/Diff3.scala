@@ -12,6 +12,9 @@ package com.histmersion.util.data.exchange
 object Diff3:
 
   /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
+  type MatchingResult = MatchingResult.T
+  object MatchingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LinesResult = LinesResult.T
   object LinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinesS = LinesS.T
@@ -124,7 +127,7 @@ object Diff3:
   /** For each line of `o`, the index of the line of `x` it is matched to by a longest common subsequence, or −1. The
     * common prefix and suffix are matched directly, so only the middle (where the edits are) costs the quadratic table.
     */
-  private def matching(o: Vector[com.histmersion.util.data.exchange.Diff3.MatchingO], x: Vector[com.histmersion.util.data.exchange.Diff3.MatchingX]): Array[Int] =
+  private def matching(o: Vector[com.histmersion.util.data.exchange.Diff3.MatchingO], x: Vector[com.histmersion.util.data.exchange.Diff3.MatchingX]): com.histmersion.util.data.exchange.Diff3.MatchingResult =
     val m = Array.fill(o.length)(-1)
     val pre = o.iterator.zip(x.iterator).takeWhile((p, q) => p == q).length
     (0 until pre).foreach(i => m(i) = i)

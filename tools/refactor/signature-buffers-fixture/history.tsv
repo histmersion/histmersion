@@ -1,0 +1,4 @@
+path	line	before-ast	after-ast
+tools/refactor/signature-buffers-fixture/src/main/Models.scala	8	legacy-read Type.Name("Byte")	sigfixture.Legacy.ReadResult
+tools/refactor/signature-buffers-fixture/src/main/Models.scala	11	legacy-mixed Type.Name("Byte")	sigfixture.Legacy.Keep
+tools/refactor/signature-buffers-fixture/src/main/Models.scala	14	legacy-cross Type.Name("Byte")	sigfixture.Legacy.CrossResult

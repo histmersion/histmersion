@@ -40,7 +40,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
       sizeStr: com.histmersion.domain.media.assets.IiifControllers.ImageSizeStr,
       rotationStr: com.histmersion.domain.media.assets.IiifControllers.ImageRotationStr,
       filename: com.histmersion.domain.media.assets.IiifControllers.ImageFilename
-  ): Either[Api.Error, (Array[com.histmersion.domain.media.assets.IiifControllers.ImageResultPart2Part1], com.histmersion.domain.media.assets.IiifControllers.ImageResultPart2Part2)] =
+  ): Either[Api.Error, (com.histmersion.domain.media.assets.IiifControllers.ImageResultPart2Part1, com.histmersion.domain.media.assets.IiifControllers.ImageResultPart2Part2)] =
     // parse the filename as `default.{format}`
     val safeName = AssetLinks.safeName(name)
     for
@@ -72,7 +72,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
       region: Iiif.Region,
       size: Iiif.Size,
       format: com.histmersion.domain.media.assets.IiifControllers.RenderFormat
-  ): Either[Api.Error, (Array[com.histmersion.domain.media.assets.IiifControllers.RenderResultPart2Part1], com.histmersion.domain.media.assets.IiifControllers.RenderResultPart2Part2)] =
+  ): Either[Api.Error, (com.histmersion.domain.media.assets.IiifControllers.RenderResultPart2Part1, com.histmersion.domain.media.assets.IiifControllers.RenderResultPart2Part2)] =
     assets.figure(citekey, name) match
       case None =>
         Left(Api.Error(s"No asset '$name' for '$citekey'", Some(Write.CodeNotFound)))
@@ -84,7 +84,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
             applyRegion(img, region).flatMap(applySize(_, size)).flatMap(encode(_, format))
 
   /** Decode raw bytes into a BufferedImage. Returns None when ImageIO cannot read them. */
-  private def decodeImage(bytes: Array[com.histmersion.domain.media.assets.IiifControllers.DecodeImageBytes]): Option[BufferedImage] =
+  private def decodeImage(bytes: com.histmersion.domain.media.assets.IiifControllers.DecodeImageBytes): Option[BufferedImage] =
     Option(ImageIO.read(new ByteArrayInputStream(bytes)))
 
   /** Crop the image to the requested region. */
@@ -154,7 +154,7 @@ final class IiifControllers(assets: AssetService, baseUrl: () => IiifControllers
     else BufferedImage.TYPE_INT_RGB
 
   /** Encode a BufferedImage to the requested format. */
-  private def encode(img: BufferedImage, format: com.histmersion.domain.media.assets.IiifControllers.EncodeFormat): Either[Api.Error, (Array[com.histmersion.domain.media.assets.IiifControllers.EncodeResultPart2Part1], com.histmersion.domain.media.assets.IiifControllers.EncodeResultPart2Part2)] =
+  private def encode(img: BufferedImage, format: com.histmersion.domain.media.assets.IiifControllers.EncodeFormat): Either[Api.Error, (com.histmersion.domain.media.assets.IiifControllers.EncodeResultPart2Part1, com.histmersion.domain.media.assets.IiifControllers.EncodeResultPart2Part2)] =
     val out = new ByteArrayOutputStream()
     // JPEG cannot encode alpha; convert to RGB if needed
     val toEncode =
@@ -179,7 +179,7 @@ object IiifControllers:
   type InfoName = InfoName.T
   object InfoName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImageResultPart2Part1 = ImageResultPart2Part1.T
-  object ImageResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ImageResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImageResultPart2Part2 = ImageResultPart2Part2.T
   object ImageResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImageName = ImageName.T
@@ -199,7 +199,7 @@ object IiifControllers:
   type ValidateRotationS = ValidateRotationS.T
   object ValidateRotationS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderResultPart2Part1 = RenderResultPart2Part1.T
-  object RenderResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object RenderResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderResultPart2Part2 = RenderResultPart2Part2.T
   object RenderResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderName = RenderName.T
@@ -207,7 +207,7 @@ object IiifControllers:
   type RenderFormat = RenderFormat.T
   object RenderFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeImageBytes = DecodeImageBytes.T
-  object DecodeImageBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DecodeImageBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScaleImageW = ScaleImageW.T
   object ScaleImageW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScaleImageH = ScaleImageH.T
@@ -215,7 +215,7 @@ object IiifControllers:
   type EffectiveTypeResult = EffectiveTypeResult.T
   object EffectiveTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncodeResultPart2Part1 = EncodeResultPart2Part1.T
-  object EncodeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object EncodeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncodeResultPart2Part2 = EncodeResultPart2Part2.T
   object EncodeResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncodeFormat = EncodeFormat.T

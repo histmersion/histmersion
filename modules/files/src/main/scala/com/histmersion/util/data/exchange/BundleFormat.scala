@@ -26,6 +26,23 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundleFormat:
 
+  type Sha256HexBytes = Sha256HexBytes.T
+  object Sha256HexBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HexBytes = HexBytes.T
+  object HexBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManifestBytesResult = ManifestBytesResult.T
+  object ManifestBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseManifestBytes = ParseManifestBytes.T
+  object ParseManifestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NdjsonResult = NdjsonResult.T
+  object NdjsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileInfoPayload = FileInfoPayload.T
+  object FileInfoPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinesPayload = LinesPayload.T
+  object LinesPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitLinesPayload = SplitLinesPayload.T
+  object SplitLinesPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Unrevved = Unrevved.T
   object Unrevved extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Sha256HexResult = Sha256HexResult.T
@@ -74,12 +91,12 @@ object BundleFormat:
   /** Fields a rev does NOT cover. */
   val Unrevved: Set[com.histmersion.util.data.exchange.BundleFormat.Unrevved] = Set("rev", "updatedAt")
 
-  def sha256Hex(bytes: Array[Byte]): com.histmersion.util.data.exchange.BundleFormat.Sha256HexResult =
+  def sha256Hex(bytes: com.histmersion.util.data.exchange.BundleFormat.Sha256HexBytes): com.histmersion.util.data.exchange.BundleFormat.Sha256HexResult =
     hex(MessageDigest.getInstance("SHA-256").digest(bytes))
 
   def sha256Hex(text: com.histmersion.util.data.exchange.BundleFormat.Sha256HexText): com.histmersion.util.data.exchange.BundleFormat.Sha256HexResult = sha256Hex(text.getBytes(UTF_8))
 
-  def hex(bytes: Array[Byte]): com.histmersion.util.data.exchange.BundleFormat.HexResult =
+  def hex(bytes: com.histmersion.util.data.exchange.BundleFormat.HexBytes): com.histmersion.util.data.exchange.BundleFormat.HexResult =
     val sb = StringBuilder(bytes.length * 2)
     bytes.foreach { b =>
       val v = b & 0xff
@@ -145,10 +162,10 @@ object BundleFormat:
 
   // ── the manifest ───────────────────────────────────────────────────────────────────────────
 
-  def manifestBytes(m: Bundle.Manifest): Array[Byte] =
+  def manifestBytes(m: Bundle.Manifest): com.histmersion.util.data.exchange.BundleFormat.ManifestBytesResult =
     (printer.print(Encoder.AsObject[Bundle.Manifest].apply(m)) + "\n").getBytes(UTF_8)
 
-  def parseManifest(bytes: Array[Byte]): Either[com.histmersion.util.data.exchange.BundleFormat.ParseManifestResultPart1, Bundle.Manifest] =
+  def parseManifest(bytes: com.histmersion.util.data.exchange.BundleFormat.ParseManifestBytes): Either[com.histmersion.util.data.exchange.BundleFormat.ParseManifestResultPart1, Bundle.Manifest] =
     parser.decode[Bundle.Manifest](String(bytes, UTF_8)).left.map(e => s"manifest.json: ${e.getMessage}")
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
@@ -188,14 +205,14 @@ object BundleFormat:
     missing ++ unexpected ++ differ
 
   /** The NDJSON payload of a list of lines: one per line, each ending in `\n`. */
-  def ndjson(lines: Seq[com.histmersion.util.data.exchange.BundleFormat.NdjsonLines]): Array[Byte] =
+  def ndjson(lines: Seq[com.histmersion.util.data.exchange.BundleFormat.NdjsonLines]): com.histmersion.util.data.exchange.BundleFormat.NdjsonResult =
     if lines.isEmpty then Array.emptyByteArray
     else lines.mkString("", "\n", "\n").getBytes(UTF_8)
 
-  def fileInfo(path: com.histmersion.util.data.exchange.BundleFormat.FileInfoPath, payload: Array[Byte]): Bundle.FileInfo =
+  def fileInfo(path: com.histmersion.util.data.exchange.BundleFormat.FileInfoPath, payload: com.histmersion.util.data.exchange.BundleFormat.FileInfoPayload): Bundle.FileInfo =
     Bundle.FileInfo(path, lines(payload), payload.length.toLong, sha256Hex(payload))
 
-  def lines(payload: Array[Byte]): com.histmersion.util.data.exchange.BundleFormat.LinesResult = payload.count(_ == '\n'.toByte)
+  def lines(payload: com.histmersion.util.data.exchange.BundleFormat.LinesPayload): com.histmersion.util.data.exchange.BundleFormat.LinesResult = payload.count(_ == '\n'.toByte)
 
-  def splitLines(payload: Array[Byte]): List[com.histmersion.util.data.exchange.BundleFormat.SplitLinesResult] =
+  def splitLines(payload: com.histmersion.util.data.exchange.BundleFormat.SplitLinesPayload): List[com.histmersion.util.data.exchange.BundleFormat.SplitLinesResult] =
     String(payload, UTF_8).split('\n').toList.filter(_.nonEmpty)

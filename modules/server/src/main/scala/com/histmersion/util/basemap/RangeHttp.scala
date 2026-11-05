@@ -10,17 +10,22 @@ trait RangeHttp:
   def text(url: com.histmersion.util.basemap.RangeHttp.TextUrl): Either[com.histmersion.util.basemap.RangeHttp.TextResultPart1, com.histmersion.util.basemap.RangeHttp.TextResultPart2]
 
   /** Bytes `[offset, offset + length)` of `url`, in memory (headers and directories). */
-  def bytes(url: com.histmersion.util.basemap.RangeHttp.BytesUrl, offset: com.histmersion.util.basemap.RangeHttp.BytesOffset, length: com.histmersion.util.basemap.RangeHttp.BytesLength): Either[com.histmersion.util.basemap.RangeHttp.BytesResultPart1, (Array[Byte], RemoteFile)]
+  def bytes(url: com.histmersion.util.basemap.RangeHttp.BytesUrl, offset: com.histmersion.util.basemap.RangeHttp.BytesOffset, length: com.histmersion.util.basemap.RangeHttp.BytesLength): Either[com.histmersion.util.basemap.RangeHttp.BytesResultPart1, (com.histmersion.util.basemap.RangeHttp.BytesResultPart2Part1, RemoteFile)]
 
   /** The same, streamed into `to` (tile data, megabytes at a time); the caller commits it or discards it. */
   def download(url: com.histmersion.util.basemap.RangeHttp.DownloadUrl, offset: com.histmersion.util.basemap.RangeHttp.DownloadOffset, length: com.histmersion.util.basemap.RangeHttp.DownloadLength, to: Reservation): Either[com.histmersion.util.basemap.RangeHttp.DownloadResultPart1, RemoteFile]
 
   /** A whole small file (one map tile): `None` when the server has none (404, or 403 from a bucket). */
-  def file(url: com.histmersion.util.basemap.RangeHttp.FileUrl): Either[com.histmersion.util.basemap.RangeHttp.FileResultPart1, Option[Array[Byte]]] = Left(s"$url: whole files are not read by this client")
+  def file(url: com.histmersion.util.basemap.RangeHttp.FileUrl): Either[com.histmersion.util.basemap.RangeHttp.FileResultPart1, Option[com.histmersion.util.basemap.RangeHttp.FileResultPart2]] = Left(s"$url: whole files are not read by this client")
 
 object RangeHttp:
 
   /** Pure: `Content-Range: bytes 0-99/12345` → `(0, 99, Some(12345))`. */
+  type BytesResultPart2Part1 = BytesResultPart2Part1.T
+  object BytesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileResultPart2 = FileResultPart2.T
+  object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TextResultPart1 = TextResultPart1.T
   object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextResultPart2 = TextResultPart2.T

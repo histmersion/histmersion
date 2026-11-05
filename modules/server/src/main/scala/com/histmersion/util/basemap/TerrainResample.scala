@@ -11,6 +11,13 @@ package com.histmersion.util.basemap
 object TerrainResample:
 
   /** Terrarium's elevation of a pixel `0x??RRGGBB`, in metres. Pure. */
+  type ResampleResult = ResampleResult.T
+  object ResampleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResampleSrc = ResampleSrc.T
+  object ResampleSrc extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeBytes = DecodeBytes.T
+  object DecodeBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MetresResult = MetresResult.T
   object MetresResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MetresP = MetresP.T
@@ -44,7 +51,7 @@ object TerrainResample:
   /** The part of an ancestor tile (`src`, `n` × `n` pixels) that tile `(ox, oy)` of the `2^dz` × `2^dz` under it
     * covers, resampled to `n` × `n` pixels bilinearly in metres; terrarium pixels out. Pure.
     */
-  def resample(src: Array[Int], n: com.histmersion.util.basemap.TerrainResample.ResampleN, dz: com.histmersion.util.basemap.TerrainResample.ResampleDz, ox: com.histmersion.util.basemap.TerrainResample.ResampleOx, oy: com.histmersion.util.basemap.TerrainResample.ResampleOy): Array[Int] =
+  def resample(src: com.histmersion.util.basemap.TerrainResample.ResampleSrc, n: com.histmersion.util.basemap.TerrainResample.ResampleN, dz: com.histmersion.util.basemap.TerrainResample.ResampleDz, ox: com.histmersion.util.basemap.TerrainResample.ResampleOx, oy: com.histmersion.util.basemap.TerrainResample.ResampleOy): com.histmersion.util.basemap.TerrainResample.ResampleResult =
     val s = 1L << dz
     val step = 1.0 / s
     val x0 = (ox % s).toDouble * n / s
@@ -74,5 +81,5 @@ object TerrainResample:
     out
 
   /** A relief tile's pixels: a lossless WebP or a PNG. Pure. */
-  def decode(bytes: Array[Byte]): Either[com.histmersion.util.basemap.TerrainResample.DecodeResultPart1, Vp8l.Image] =
+  def decode(bytes: com.histmersion.util.basemap.TerrainResample.DecodeBytes): Either[com.histmersion.util.basemap.TerrainResample.DecodeResultPart1, Vp8l.Image] =
     if Png.isPng(bytes) then Png.decode(bytes) else Vp8l.decode(bytes)

@@ -81,7 +81,7 @@ final class MapTileService(
       datedItems.map(_.modify(_.undated).setTo(0)) ++ undatedSites.items(c, siteType, shownByFindings)
     else UndatedCells.merge(c.z, datedCounts, undatedCounts)
 
-  private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): Array[com.histmersion.domain.catalogue.maptiles.MapTileService.CutResult] =
+  private def cut(layer: TileLayer, c: TileCoord, q: TilesApi.TileQuery, grid: TileGrid): com.histmersion.domain.catalogue.maptiles.MapTileService.CutResult =
     val points = layer match
       case TileLayer.Sites =>
         // a sites tile with no span is every year's: the time rule needs a window
@@ -133,4 +133,4 @@ object MapTileService:
   type SitesWithUndatedSiteType = SitesWithUndatedSiteType.T
   object SitesWithUndatedSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CutResult = CutResult.T
-  object CutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object CutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]

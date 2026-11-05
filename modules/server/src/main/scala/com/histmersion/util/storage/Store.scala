@@ -46,13 +46,13 @@ trait Store:
   /** `bytes` as the file `key`: written beside it, then moved over it in one step. */
   def put(
       key: com.histmersion.util.storage.Store.Key,
-      bytes: Array[Byte]
+      bytes: com.histmersion.util.storage.Store.PutBytes
   ): Either[com.histmersion.util.storage.Store.Error, Stored]
 
   /** `bytes` written straight into `key`, created or truncated (a file whose readers check its size). */
   def write(
       key: com.histmersion.util.storage.Store.Key,
-      bytes: Array[Byte]
+      bytes: com.histmersion.util.storage.Store.WriteBytes
   ): Either[com.histmersion.util.storage.Store.Error, Stored]
 
   /** A file to write beside `key`; with `throughLink`, beside the file a symbolic link at `key` points to. */
@@ -124,6 +124,11 @@ trait Store:
 object Store:
 
   /** A [[ContentStore]] over a store: `<sha256>.<ext>` at its top. */
+  type PutBytes = PutBytes.T
+  object PutBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteBytes = WriteBytes.T
+  object WriteBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WhereResult = WhereResult.T
   object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExistsResult = ExistsResult.T

@@ -17,7 +17,7 @@ import io.circe.Json
 trait Http:
   def json(url: com.histmersion.domain.library.acquisition.Http.JsonUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.JsonHeadersPart1, com.histmersion.domain.library.acquisition.Http.JsonHeadersPart2] = Map.empty): Either[com.histmersion.domain.library.acquisition.Http.JsonResultPart1, Json]
   def text(url: com.histmersion.domain.library.acquisition.Http.TextUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.TextHeadersPart1, com.histmersion.domain.library.acquisition.Http.TextHeadersPart2] = Map.empty): Either[com.histmersion.domain.library.acquisition.Http.TextResultPart1, com.histmersion.domain.library.acquisition.Http.TextResultPart2]
-  def bytes(url: com.histmersion.domain.library.acquisition.Http.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.BytesHeadersPart1, com.histmersion.domain.library.acquisition.Http.BytesHeadersPart2] = Map.empty): Either[com.histmersion.domain.library.acquisition.Http.BytesResultPart1, Array[com.histmersion.domain.library.acquisition.Http.BytesResultPart2]]
+  def bytes(url: com.histmersion.domain.library.acquisition.Http.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.Http.BytesHeadersPart1, com.histmersion.domain.library.acquisition.Http.BytesHeadersPart2] = Map.empty): Either[com.histmersion.domain.library.acquisition.Http.BytesResultPart1, com.histmersion.domain.library.acquisition.Http.BytesResultPart2]
 
   /** One request, not retried, answered as it came — the status and headers too (CORE's budget reads them). A client
     * that only has bodies (a test's) answers 200 with no headers, or its `Left`.
@@ -50,7 +50,7 @@ object Http:
   type BytesResultPart1 = BytesResultPart1.T
   object BytesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesResultPart2 = BytesResultPart2.T
-  object BytesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BytesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesUrl = BytesUrl.T
   object BytesUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesHeadersPart1 = BytesHeadersPart1.T

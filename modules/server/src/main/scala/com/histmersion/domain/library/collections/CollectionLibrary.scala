@@ -28,8 +28,8 @@ trait CollectionLibrary:
   def gaps(limit: Option[com.histmersion.domain.library.collections.CollectionLibrary.GapsLimit]): CalibreGaps
   def original(citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, StoredOriginal]
   def queueItem(id: com.histmersion.domain.library.collections.CollectionLibrary.QueueItemId): Either[Api.Error, Option[Queue.QueueItem]]
-  def ingest(params: Ingest.Params, bytes: Array[com.histmersion.domain.library.collections.CollectionLibrary.IngestBytes]): Either[Api.Error, Ingest.Accepted]
-  def putCover(params: SourceCoverParams, bytes: Array[com.histmersion.domain.library.collections.CollectionLibrary.PutCoverBytes]): Either[Api.Error, MediaItem]
+  def ingest(params: Ingest.Params, bytes: com.histmersion.domain.library.collections.CollectionLibrary.IngestBytes): Either[Api.Error, Ingest.Accepted]
+  def putCover(params: SourceCoverParams, bytes: com.histmersion.domain.library.collections.CollectionLibrary.PutCoverBytes): Either[Api.Error, MediaItem]
   def openLibraryCover(req: MediaCoversRequest): Either[Api.Error, MediaCoversReport]
   def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report]
 
@@ -39,6 +39,6 @@ object CollectionLibrary:
   type QueueItemId = QueueItemId.T
   object QueueItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IngestBytes = IngestBytes.T
-  object IngestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IngestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PutCoverBytes = PutCoverBytes.T
-  object PutCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PutCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]

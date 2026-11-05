@@ -11,12 +11,17 @@ trait RandomReader extends AutoCloseable:
   def size: ByteCount
 
   /** `length` bytes from `offset`; fails when the file ends before them. */
-  def read(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadLength): Array[Byte]
+  def read(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadLength): com.histmersion.util.storage.RandomReader.ReadResult
 
   /** Up to `length` bytes from `offset`, fewer when the file ends first. */
-  def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadUpToLength): Array[Byte]
+  def readUpTo(offset: ByteOffset, length: com.histmersion.util.storage.RandomReader.ReadUpToLength): com.histmersion.util.storage.RandomReader.ReadUpToResult
 
 object RandomReader:
+  type ReadResult = ReadResult.T
+  object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadUpToResult = ReadUpToResult.T
+  object ReadUpToResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WhereResult = WhereResult.T
   object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadLength = ReadLength.T

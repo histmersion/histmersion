@@ -46,7 +46,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: D
       val _ = store.delete(file(e.getKey, absent = true))
 
   /** `Some(Some(bytes))` a cached tile, `Some(None)` one known to be missing, `None` not cached. */
-  def get(key: com.histmersion.util.basemap.DiskLru.GetKey): Option[Option[Array[Byte]]] = synchronized {
+  def get(key: com.histmersion.util.basemap.DiskLru.GetKey): Option[Option[com.histmersion.util.basemap.DiskLru.GetResult]] = synchronized {
     load()
     if !index.containsKey(key) then None
     else
@@ -63,7 +63,7 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: D
   /** Keep `bytes` (`None`: the provider has no such tile) as `key`, then drop the least recently used until the cache
     * is within its ceiling.
     */
-  def put(key: com.histmersion.util.basemap.DiskLru.PutKey, bytes: Option[Array[Byte]]): Unit = synchronized {
+  def put(key: com.histmersion.util.basemap.DiskLru.PutKey, bytes: Option[com.histmersion.util.basemap.DiskLru.PutBytes]): Unit = synchronized {
     load()
     done(store.put(file(key, bytes.isEmpty), bytes.getOrElse(Array.emptyByteArray)))
     Option(index.put(key, bytes.fold(0L)(_.length.toLong))).foreach(total -= _)
@@ -82,6 +82,11 @@ final class DiskLru(store: Store, maxBytes: () => DiskLru.MaxBytesResult, ext: D
   }
 
 object DiskLru:
+  type GetResult = GetResult.T
+  object GetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PutBytes = PutBytes.T
+  object PutBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MaxBytesResult = MaxBytesResult.T
   object MaxBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Ext = Ext.T

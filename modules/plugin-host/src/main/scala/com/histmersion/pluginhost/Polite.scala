@@ -93,7 +93,7 @@ final class Polite(
     )
 
   /** The bytes of a file and its type (the answer's Content-Type, else `fallbackMime`). */
-  def file(url: com.histmersion.pluginhost.Polite.FileUrl, fallbackMime: com.histmersion.pluginhost.Polite.FileFallbackMime): Either[com.histmersion.pluginhost.Polite.FileResultPart1, (Array[Byte], com.histmersion.pluginhost.Polite.FileResultPart2Part2)] =
+  def file(url: com.histmersion.pluginhost.Polite.FileUrl, fallbackMime: com.histmersion.pluginhost.Polite.FileFallbackMime): Either[com.histmersion.pluginhost.Polite.FileResultPart1, (com.histmersion.pluginhost.Polite.FileResultPart2Part1, com.histmersion.pluginhost.Polite.FileResultPart2Part2)] =
     get(url).map(a =>
       (
         a.body,
@@ -106,6 +106,9 @@ final class Polite(
 
 object Polite:
   /** A host is never asked more than this many times slower than its configured pace. */
+  type FileResultPart2Part1 = FileResultPart2Part1.T
+  object FileResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SleepArg1 = SleepArg1.T
   object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClockResult = ClockResult.T

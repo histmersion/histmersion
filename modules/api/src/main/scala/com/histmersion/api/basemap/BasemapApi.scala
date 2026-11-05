@@ -9,6 +9,9 @@ import com.histmersion.api.Api
 
 object BasemapApi:
 
+  type TilePart3Part1 = TilePart3Part1.T
+  object TilePart3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TilePart1Part1 = TilePart1Part1.T
   object TilePart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TilePart1Part2 = TilePart1Part2.T
@@ -70,7 +73,7 @@ object BasemapApi:
   lazy val tile: PublicEndpoint[
     (com.histmersion.api.basemap.BasemapApi.TilePart1Part1, com.histmersion.api.basemap.BasemapApi.TilePart1Part2, com.histmersion.api.basemap.BasemapApi.TilePart1Part3, com.histmersion.api.basemap.BasemapApi.TilePart1Part4, Option[com.histmersion.api.basemap.BasemapApi.TilePart1Part5], Option[com.histmersion.api.basemap.BasemapApi.TilePart1Part6]),
     Api.Error,
-    (Array[Byte], com.histmersion.api.basemap.BasemapApi.TilePart3Part2, Option[com.histmersion.api.basemap.BasemapApi.TilePart3Part3], com.histmersion.api.basemap.BasemapApi.TilePart3Part4, StatusCode),
+    (com.histmersion.api.basemap.BasemapApi.TilePart3Part1, com.histmersion.api.basemap.BasemapApi.TilePart3Part2, Option[com.histmersion.api.basemap.BasemapApi.TilePart3Part3], com.histmersion.api.basemap.BasemapApi.TilePart3Part4, StatusCode),
     Any
   ] =
     endpoint.get

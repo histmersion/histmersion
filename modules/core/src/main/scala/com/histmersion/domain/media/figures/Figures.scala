@@ -20,7 +20,7 @@ object Figures:
   type OfFilesPart1 = OfFilesPart1.T
   object OfFilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfFilesPart2 = OfFilesPart2.T
-  object OfFilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object OfFilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfMaxBytes = OfMaxBytes.T
   object OfMaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -33,7 +33,7 @@ object Figures:
   /** The images among a figures folder's files (by name, in name order), each at most `maxBytes`, with the size read
     * off its header.
     */
-  def of(files: List[(com.histmersion.domain.media.figures.Figures.OfFilesPart1, Array[com.histmersion.domain.media.figures.Figures.OfFilesPart2])], maxBytes: com.histmersion.domain.media.figures.Figures.OfMaxBytes): List[NewFigure] =
+  def of(files: List[(com.histmersion.domain.media.figures.Figures.OfFilesPart1, com.histmersion.domain.media.figures.Figures.OfFilesPart2)], maxBytes: com.histmersion.domain.media.figures.Figures.OfMaxBytes): List[NewFigure] =
     files.sortBy(_._1).flatMap { (file, b) =>
       val name = AssetLinks.safeName(file)
       val mime = AssetLinks.mimeOf(name)

@@ -17,7 +17,7 @@ trait Reservation extends AutoCloseable:
   def output(): OutputStream
 
   /** Overwrite `bytes` at `offset` in what was written. */
-  def writeAt(offset: ByteOffset, bytes: Array[Byte]): Unit
+  def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.Reservation.WriteAtBytes): Unit
 
   def size: ByteCount
 
@@ -36,6 +36,9 @@ trait Reservation extends AutoCloseable:
   private[util] def onDisk: Either[Store.Error, java.nio.file.Path]
 
 object Reservation:
+  type WriteAtBytes = WriteAtBytes.T
+  object WriteAtBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WhereResult = WhereResult.T
   object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CommitKeepPermissions = CommitKeepPermissions.T

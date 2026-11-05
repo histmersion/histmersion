@@ -2,6 +2,29 @@ package com.histmersion.api.media
 import com.histmersion.api.given
 object ImageSize:
 
+  type OfBytes = OfBytes.T
+  object OfBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type U8B = U8B.T
+  object U8B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Be16B = Be16B.T
+  object Be16B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Le16B = Le16B.T
+  object Le16B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Be32B = Be32B.T
+  object Be32B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PngB = PngB.T
+  object PngB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PngSizeB = PngSizeB.T
+  object PngSizeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GifB = GifB.T
+  object GifB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GifSizeB = GifSizeB.T
+  object GifSizeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JpegB = JpegB.T
+  object JpegB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JpegSizeB = JpegSizeB.T
+  object JpegSizeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OfResultPart1 = OfResultPart1.T
   object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfResultPart2 = OfResultPart2.T
@@ -41,36 +64,36 @@ object ImageSize:
   type JpegSizeResultPart2 = JpegSizeResultPart2.T
   object JpegSizeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(bytes: Array[Byte]): Option[(com.histmersion.api.media.ImageSize.OfResultPart1, com.histmersion.api.media.ImageSize.OfResultPart2)] =
+  def of(bytes: com.histmersion.api.media.ImageSize.OfBytes): Option[(com.histmersion.api.media.ImageSize.OfResultPart1, com.histmersion.api.media.ImageSize.OfResultPart2)] =
     if png(bytes) then pngSize(bytes)
     else if gif(bytes) then gifSize(bytes)
     else if jpeg(bytes) then jpegSize(bytes)
     else None
 
-  private def u8(b: Array[Byte], i: com.histmersion.api.media.ImageSize.U8I): com.histmersion.api.media.ImageSize.U8Result = b(i) & 0xff
-  private def be16(b: Array[Byte], i: com.histmersion.api.media.ImageSize.Be16I): com.histmersion.api.media.ImageSize.Be16Result = (u8(b, i) << 8) | u8(b, i + 1)
-  private def le16(b: Array[Byte], i: com.histmersion.api.media.ImageSize.Le16I): com.histmersion.api.media.ImageSize.Le16Result = (u8(b, i + 1) << 8) | u8(b, i)
-  private def be32(b: Array[Byte], i: com.histmersion.api.media.ImageSize.Be32I): com.histmersion.api.media.ImageSize.Be32Result =
+  private def u8(b: com.histmersion.api.media.ImageSize.U8B, i: com.histmersion.api.media.ImageSize.U8I): com.histmersion.api.media.ImageSize.U8Result = b(i) & 0xff
+  private def be16(b: com.histmersion.api.media.ImageSize.Be16B, i: com.histmersion.api.media.ImageSize.Be16I): com.histmersion.api.media.ImageSize.Be16Result = (u8(b, i) << 8) | u8(b, i + 1)
+  private def le16(b: com.histmersion.api.media.ImageSize.Le16B, i: com.histmersion.api.media.ImageSize.Le16I): com.histmersion.api.media.ImageSize.Le16Result = (u8(b, i + 1) << 8) | u8(b, i)
+  private def be32(b: com.histmersion.api.media.ImageSize.Be32B, i: com.histmersion.api.media.ImageSize.Be32I): com.histmersion.api.media.ImageSize.Be32Result =
     (u8(b, i) << 24) | (u8(b, i + 1) << 16) | (u8(b, i + 2) << 8) | u8(b, i + 3)
 
-  private def png(b: Array[Byte]): com.histmersion.api.media.ImageSize.PngResult =
+  private def png(b: com.histmersion.api.media.ImageSize.PngB): com.histmersion.api.media.ImageSize.PngResult =
     b.length >= 24 && u8(b, 0) == 0x89 && b(1) == 'P' && b(2) == 'N' && b(3) == 'G'
 
   /** IHDR is always the first chunk: 8-byte signature, 4-byte length, "IHDR", width, height. */
-  private def pngSize(b: Array[Byte]): Option[(com.histmersion.api.media.ImageSize.PngSizeResultPart1, com.histmersion.api.media.ImageSize.PngSizeResultPart2)] = Some((be32(b, 16), be32(b, 20)))
+  private def pngSize(b: com.histmersion.api.media.ImageSize.PngSizeB): Option[(com.histmersion.api.media.ImageSize.PngSizeResultPart1, com.histmersion.api.media.ImageSize.PngSizeResultPart2)] = Some((be32(b, 16), be32(b, 20)))
 
-  private def gif(b: Array[Byte]): com.histmersion.api.media.ImageSize.GifResult =
+  private def gif(b: com.histmersion.api.media.ImageSize.GifB): com.histmersion.api.media.ImageSize.GifResult =
     b.length >= 10 && b(0) == 'G' && b(1) == 'I' && b(2) == 'F'
 
-  private def gifSize(b: Array[Byte]): Option[(com.histmersion.api.media.ImageSize.GifSizeResultPart1, com.histmersion.api.media.ImageSize.GifSizeResultPart2)] = Some((le16(b, 6), le16(b, 8)))
+  private def gifSize(b: com.histmersion.api.media.ImageSize.GifSizeB): Option[(com.histmersion.api.media.ImageSize.GifSizeResultPart1, com.histmersion.api.media.ImageSize.GifSizeResultPart2)] = Some((le16(b, 6), le16(b, 8)))
 
-  private def jpeg(b: Array[Byte]): com.histmersion.api.media.ImageSize.JpegResult =
+  private def jpeg(b: com.histmersion.api.media.ImageSize.JpegB): com.histmersion.api.media.ImageSize.JpegResult =
     b.length >= 4 && u8(b, 0) == 0xff && u8(b, 1) == 0xd8
 
   /** Walk the segment chain to the first SOFn frame header (height then width, 16-bit big-endian). SOF4/SOF8/SOF12 are
     * not frame headers (DHT / JPG / DAC) and must be skipped.
     */
-  private def jpegSize(b: Array[Byte]): Option[(com.histmersion.api.media.ImageSize.JpegSizeResultPart1, com.histmersion.api.media.ImageSize.JpegSizeResultPart2)] =
+  private def jpegSize(b: com.histmersion.api.media.ImageSize.JpegSizeB): Option[(com.histmersion.api.media.ImageSize.JpegSizeResultPart1, com.histmersion.api.media.ImageSize.JpegSizeResultPart2)] =
     @annotation.tailrec
     def go(i: Int): Option[(Int, Int)] =
       if i + 9 >= b.length || u8(b, i) != 0xff then None

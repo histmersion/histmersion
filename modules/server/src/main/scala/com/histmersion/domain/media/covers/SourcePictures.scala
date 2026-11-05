@@ -48,7 +48,7 @@ final class SourcePictures(
   private def rules = cfg.illustrations.figureRules
 
   /** The thumbnail of `bytes`, or `None` (logged) when the sidecar makes none. */
-  private def thumbnail(bytes: Array[com.histmersion.domain.media.covers.SourcePictures.ThumbnailBytes], name: com.histmersion.domain.media.covers.SourcePictures.ThumbnailName): Option[ConverterClient.Thumb] =
+  private def thumbnail(bytes: com.histmersion.domain.media.covers.SourcePictures.ThumbnailBytes, name: com.histmersion.domain.media.covers.SourcePictures.ThumbnailName): Option[ConverterClient.Thumb] =
     converter.thumbnail(bytes, name, cfg.thumbPx) match
       case Right(t) if t.bytes.nonEmpty => Some(t)
       case Right(_)                     => None
@@ -153,7 +153,7 @@ final class SourcePictures(
   lazy val openLibraryClient: Polite = Polite(http, cfg.copy(requestIntervalMs = cfg.covers.requestIntervalMs))
 
   /** Pure: an image's type from its first bytes (`None` unless JPEG, PNG, GIF or WebP). */
-  private[covers] def sniff(b: Array[com.histmersion.domain.media.covers.SourcePictures.SniffB]): Option[com.histmersion.domain.media.covers.SourcePictures.SniffResult] =
+  private[covers] def sniff(b: com.histmersion.domain.media.covers.SourcePictures.SniffB): Option[com.histmersion.domain.media.covers.SourcePictures.SniffResult] =
     def at(i: Int) = if b.length > i then b(i) & 0xff else -1
     if at(0) == 0xff && at(1) == 0xd8 then Some("image/jpeg")
     else if at(0) == 0x89 && at(1) == 'P' && at(2) == 'N' && at(3) == 'G' then Some("image/png")
@@ -162,7 +162,7 @@ final class SourcePictures(
     else None
 
   /** Store `bytes` (read from the local Calibre library by the CLI) as the source's cover. */
-  def storeCover(p: SourceCoverParams, bytes: Array[com.histmersion.domain.media.covers.SourcePictures.StoreCoverBytes]): Either[Api.Error, MediaItem] =
+  def storeCover(p: SourceCoverParams, bytes: com.histmersion.domain.media.covers.SourcePictures.StoreCoverBytes): Either[Api.Error, MediaItem] =
     val bad = (m: String) => Left(Api.Error(m, Some(Write.CodeInvalid)))
     if p.provider != MediaProvider.Calibre then
       bad(s"a cover is uploaded from ${MediaProvider.Calibre} only (Open Library's come through `media covers`)")
@@ -280,7 +280,7 @@ final class SourcePictures(
 object SourcePictures:
   /** Pure: a figure row as [[FigurePick]] weighs it, before the text's links to it are counted. */
   type ThumbnailBytes = ThumbnailBytes.T
-  object ThumbnailBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ThumbnailBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThumbnailName = ThumbnailName.T
   object ThumbnailName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IllustrateResultPart1 = IllustrateResultPart1.T
@@ -298,9 +298,9 @@ object SourcePictures:
   type SniffResult = SniffResult.T
   object SniffResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SniffB = SniffB.T
-  object SniffB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SniffB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StoreCoverBytes = StoreCoverBytes.T
-  object StoreCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object StoreCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunProgressArg1 = RunProgressArg1.T
   object RunProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AfterIngestResult = AfterIngestResult.T

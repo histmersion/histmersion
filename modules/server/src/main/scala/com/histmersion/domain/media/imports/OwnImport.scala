@@ -252,7 +252,7 @@ final class OwnImport(name: OwnImport.Name, col: MediaCollection, fetch: Polite,
   private def download(
       item: MediaItem,
       completed: Option[MediaItem]
-  ): Either[com.histmersion.domain.media.imports.OwnImport.DownloadResultPart1, (Array[com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part1], com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part2, Option[(Array[com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part3Part1], com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part3Part2, Option[com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part3Part3], Option[com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part3Part4])])] =
+  ): Either[com.histmersion.domain.media.imports.OwnImport.DownloadResultPart1, (com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part1, com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part2, Option[(com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part3Part1, com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part3Part2, Option[com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part3Part3], Option[com.histmersion.domain.media.imports.OwnImport.DownloadResultPart2Part3Part4])])] =
     val mime = item.rendition.map(_.mime).getOrElse("image/jpeg")
     item.rendition.flatMap(_.bytes).filter(_ > cfg.maxBytes) match
       case Some(size) => Left(s"original of $size bytes is larger than media.max-bytes")
@@ -299,11 +299,11 @@ object OwnImport:
   type DownloadResultPart1 = DownloadResultPart1.T
   object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DownloadResultPart2Part1 = DownloadResultPart2Part1.T
-  object DownloadResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DownloadResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DownloadResultPart2Part2 = DownloadResultPart2Part2.T
   object DownloadResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DownloadResultPart2Part3Part1 = DownloadResultPart2Part3Part1.T
-  object DownloadResultPart2Part3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object DownloadResultPart2Part3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DownloadResultPart2Part3Part2 = DownloadResultPart2Part3Part2.T
   object DownloadResultPart2Part3Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DownloadResultPart2Part3Part3 = DownloadResultPart2Part3Part3.T

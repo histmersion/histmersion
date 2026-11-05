@@ -99,7 +99,7 @@ final class JavaRangeHttp(
       }
     )
 
-  def bytes(url: com.histmersion.util.basemap.JavaRangeHttp.BytesUrl, offset: com.histmersion.util.basemap.JavaRangeHttp.BytesOffset, length: com.histmersion.util.basemap.JavaRangeHttp.BytesLength): Either[com.histmersion.util.basemap.JavaRangeHttp.BytesResultPart1, (Array[Byte], RemoteFile)] =
+  def bytes(url: com.histmersion.util.basemap.JavaRangeHttp.BytesUrl, offset: com.histmersion.util.basemap.JavaRangeHttp.BytesOffset, length: com.histmersion.util.basemap.JavaRangeHttp.BytesLength): Either[com.histmersion.util.basemap.JavaRangeHttp.BytesResultPart1, (com.histmersion.util.basemap.JavaRangeHttp.BytesResultPart2Part1, RemoteFile)] =
     ranged(url, offset, length).flatMap((r, total) =>
       reading(r) { r =>
         val want = math.min(offset + length, total) - offset
@@ -121,6 +121,9 @@ final class JavaRangeHttp(
     )
 
 object JavaRangeHttp:
+  type BytesResultPart2Part1 = BytesResultPart2Part1.T
+  object BytesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TimeoutSeconds = TimeoutSeconds.T
   object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Retries = Retries.T

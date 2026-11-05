@@ -43,6 +43,9 @@ trait DownloadedGazetteer extends GazetteerSource:
 
 object DownloadedGazetteer:
   /** The first usable file of a zip archive, as UTF-8 text. */
+  type UnzipData = UnzipData.T
+  object UnzipData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type UrlResult = UrlResult.T
   object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadResultPart1 = ReadResultPart1.T
@@ -70,7 +73,7 @@ object DownloadedGazetteer:
   type UnzipResultPart2 = UnzipResultPart2.T
   object UnzipResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def unzip(data: Array[Byte]): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart1, com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart2] =
+  def unzip(data: com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipData): Either[com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart1, com.histmersion.plugins.gazetteers.DownloadedGazetteer.UnzipResultPart2] =
     try
       val zis = ZipInputStream(ByteArrayInputStream(data))
       @annotation.tailrec

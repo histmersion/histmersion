@@ -27,6 +27,9 @@ private[assets] object AssetRepo:
     * has is deleted. A bundle then sees "changed" rather than "deleted + new", and a re-OCR no longer throws away
     * hand-made links.
     */
+  type ReadResultPart2 = ReadResultPart2.T
+  object ReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ReplaceResult = ReplaceResult.T
   object ReplaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AddResult = AddResult.T
@@ -111,7 +114,7 @@ private[assets] object AssetRepo:
       .map(r => AssetInfo(r.name, r.mime, r.bytes, com.histmersion.api.Sha256(r.sha256), r.width, r.height))
 
   /** The bytes to stream, with the mime type to serve them as. */
-  def read(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetRepo.ReadName)(using DbCon): Option[(com.histmersion.domain.media.assets.AssetRepo.ReadResultPart1, Array[Byte])] =
+  def read(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetRepo.ReadName)(using DbCon): Option[(com.histmersion.domain.media.assets.AssetRepo.ReadResultPart1, com.histmersion.domain.media.assets.AssetRepo.ReadResultPart2)] =
     sql"SELECT mime, bytes FROM assets WHERE citekey = $citekey AND name = $name"
       .query[AssetBytesRow]
       .run()

@@ -332,6 +332,9 @@ object Article:
 
   object Edits:
 
+    type SqueezeResultPart2 = SqueezeResultPart2.T
+    object SqueezeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseResultPart1 = ParseResultPart1.T
     object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type HeadResult = HeadResult.T
@@ -499,7 +502,7 @@ object Article:
       val one = anchor.trim.replaceAll("\\s+", " ")
       if one.length <= max then one else one.take(max).trim + "…"
 
-    private def squeeze(s: com.histmersion.api.research.Article.Edits.SqueezeS): (com.histmersion.api.research.Article.Edits.SqueezeResultPart1, Array[Int]) =
+    private def squeeze(s: com.histmersion.api.research.Article.Edits.SqueezeS): (com.histmersion.api.research.Article.Edits.SqueezeResultPart1, com.histmersion.api.research.Article.Edits.SqueezeResultPart2) =
       val out = StringBuilder()
       val pos = Array.newBuilder[Int]
       var i = 0

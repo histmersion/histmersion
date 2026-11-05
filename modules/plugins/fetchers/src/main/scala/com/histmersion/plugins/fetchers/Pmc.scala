@@ -79,7 +79,7 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
     def fullText: Option[FetchedFile] =
       record.flatMap(_.xml).flatMap(o => dataset(o, "xml")(b => Jats.isJats(String(b, "UTF-8"))))
 
-    private def dataset(o: PmcObject, ext: com.histmersion.plugins.fetchers.Pmc.PmcLookup.DatasetExt)(ok: Array[Byte] => com.histmersion.plugins.fetchers.Pmc.PmcLookup.DatasetOkResult): Option[FetchedFile] =
+    private def dataset(o: PmcObject, ext: com.histmersion.plugins.fetchers.Pmc.PmcLookup.DatasetExt)(ok: com.histmersion.plugins.fetchers.Pmc.PmcLookup.DatasetOkArg1 => com.histmersion.plugins.fetchers.Pmc.PmcLookup.DatasetOkResult): Option[FetchedFile] =
       val url = s"${cfg.pmcDataset.url}/${o.key}"
       http.get(url, pmcHeaders) match
         case Left(e) =>
@@ -91,6 +91,9 @@ final class Pmc(cfg: UpstreamSettings, client: () => Plugin.Http):
         case Right(b) => Some(FetchedFile("pmc", Some(url), b, ext))
 
   object PmcLookup:
+    type DatasetOkArg1 = DatasetOkArg1.T
+    object DatasetOkArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Doi = Doi.T
     object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

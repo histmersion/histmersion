@@ -290,7 +290,7 @@ final class BasemapService(
       .fold("")(b => cfg.vector.url.replace("{build}", b))
 
   /** A relief tile deeper than the extract (or outside it): a focus region's, else the on-demand one. */
-  private def deeperRelief(z: com.histmersion.util.basemap.BasemapService.DeeperReliefZ, x: com.histmersion.util.basemap.BasemapService.DeeperReliefX, y: com.histmersion.util.basemap.BasemapService.DeeperReliefY, extractMax: com.histmersion.util.basemap.BasemapService.DeeperReliefExtractMax): Either[com.histmersion.util.basemap.BasemapService.DeeperReliefResultPart1, Option[Array[Byte]]] =
+  private def deeperRelief(z: com.histmersion.util.basemap.BasemapService.DeeperReliefZ, x: com.histmersion.util.basemap.BasemapService.DeeperReliefX, y: com.histmersion.util.basemap.BasemapService.DeeperReliefY, extractMax: com.histmersion.util.basemap.BasemapService.DeeperReliefExtractMax): Either[com.histmersion.util.basemap.BasemapService.DeeperReliefResultPart1, Option[com.histmersion.util.basemap.BasemapService.DeeperReliefResultPart2]] =
     val focused = focusFiles.iterator
       .flatMap(f => readerAt(f._2).toOption.flatten)
       .filter(f => z >= f.header.minZoom && z <= f.header.maxZoom)
@@ -304,7 +304,7 @@ final class BasemapService(
     * that exists — a focus region's, else the extract's — cut and resampled in metres ([[TerrainResample]]) as a
     * terrarium PNG; `None` where no ancestor exists (outside every region).
     */
-  private def fromAncestor(z: com.histmersion.util.basemap.BasemapService.FromAncestorZ, x: com.histmersion.util.basemap.BasemapService.FromAncestorX, y: com.histmersion.util.basemap.BasemapService.FromAncestorY, extract: PmTiles.File): Option[Array[Byte]] =
+  private def fromAncestor(z: com.histmersion.util.basemap.BasemapService.FromAncestorZ, x: com.histmersion.util.basemap.BasemapService.FromAncestorX, y: com.histmersion.util.basemap.BasemapService.FromAncestorY, extract: PmTiles.File): Option[com.histmersion.util.basemap.BasemapService.FromAncestorResult] =
     val key = s"${stamp(this.key(Basemap.Layer.Terrain)).getOrElse("")}$focusStamp|$z/$x/$y"
     Option(resampled.get(key)).orElse {
       val focus = focusFiles.flatMap(f => readerAt(f._2).toOption.flatten.map(f._2 -> _))
@@ -375,7 +375,7 @@ final class BasemapService(
       y: com.histmersion.util.basemap.BasemapService.TileY,
       subset: Option[com.histmersion.util.basemap.BasemapService.TileSubset] = None,
       keys: Option[com.histmersion.util.basemap.BasemapService.TileKeys] = None
-  ): Either[Api.Error, (Array[Byte], com.histmersion.util.basemap.BasemapService.TileResultPart2Part2, Option[com.histmersion.util.basemap.BasemapService.TileResultPart2Part3], com.histmersion.util.basemap.BasemapService.TileResultPart2Part4, StatusCode)] =
+  ): Either[Api.Error, (com.histmersion.util.basemap.BasemapService.TileResultPart2Part1, com.histmersion.util.basemap.BasemapService.TileResultPart2Part2, Option[com.histmersion.util.basemap.BasemapService.TileResultPart2Part3], com.histmersion.util.basemap.BasemapService.TileResultPart2Part4, StatusCode)] =
     val cache = s"public, max-age=${cfg.tileCacheSeconds}"
     // the subset at this zoom: a layer asked for only from a deeper zoom is left out here
     val sub = subset.map(_.trim).filter(_.nonEmpty).map(Basemap.subsetAt(_, z))
@@ -972,6 +972,21 @@ object BasemapService:
   /** The sea floor's credit line: the extract's own (GEBCO or ETOPO1), and ETOPO1's as well when the sea outside the
     * extract is read from it on demand and the extract is another's.
     */
+  type DeeperReliefResultPart2 = DeeperReliefResultPart2.T
+  object DeeperReliefResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromAncestorResult = FromAncestorResult.T
+  object FromAncestorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileResultPart2Part1 = TileResultPart2Part1.T
+  object TileResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetResultPart2 = SubsetResultPart2.T
+  object SubsetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetStored = SubsetStored.T
+  object SubsetStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThinResultPart2 = ThinResultPart2.T
+  object ThinResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThinStored = ThinStored.T
+  object ThinStored extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FreeSpaceResult = FreeSpaceResult.T
   object FreeSpaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1313,11 +1328,11 @@ object BasemapService:
     * properties; gzip-compressed; empty when nothing is left. Pure.
     */
   def subset(
-      stored: Array[Byte],
+      stored: com.histmersion.util.basemap.BasemapService.SubsetStored,
       c: PmTiles.Compression,
       rules: Map[com.histmersion.util.basemap.BasemapService.SubsetRulesPart1, Basemap.Read],
       props: Option[Set[com.histmersion.util.basemap.BasemapService.SubsetProps]] = None
-  ): Either[com.histmersion.util.basemap.BasemapService.SubsetResultPart1, Array[Byte]] =
+  ): Either[com.histmersion.util.basemap.BasemapService.SubsetResultPart1, com.histmersion.util.basemap.BasemapService.SubsetResultPart2] =
     val raw = if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored) else Right(stored)
     raw
       .flatMap(Mvt.filter(_, rules.map((l, r) => l -> Mvt.Rule(keep = r.kinds, geoms = r.geoms, props = props))))
@@ -1333,10 +1348,10 @@ object BasemapService:
     * (as the source stores it), or dropped when nothing is left. Pure.
     */
   def thin(
-      stored: Array[Byte],
+      stored: com.histmersion.util.basemap.BasemapService.ThinStored,
       c: PmTiles.Compression,
       rules: Map[com.histmersion.util.basemap.BasemapService.ThinRulesPart1, Mvt.Rule]
-  ): Either[com.histmersion.util.basemap.BasemapService.ThinResultPart1, Option[Array[Byte]]] =
+  ): Either[com.histmersion.util.basemap.BasemapService.ThinResultPart1, Option[com.histmersion.util.basemap.BasemapService.ThinResultPart2]] =
     val raw = if c == PmTiles.Compression.Gzip || PmTiles.isGzip(stored) then PmTiles.gunzip(stored) else Right(stored)
     raw.flatMap(Mvt.filter(_, rules, others = true)).map { t =>
       Option.when(t.nonEmpty)(if c == PmTiles.Compression.Gzip then PmTiles.gzip(t) else t)

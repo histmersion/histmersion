@@ -144,7 +144,7 @@ private[testkit] object RecordedExchange:
 final private[testkit] class Scrubber(secrets: Set[Scrubber.Secrets]):
   private val values = secrets.filter(_.length >= 4).toList.sortBy(-_.length)
   def apply(text: com.histmersion.plugin.testkit.internal.Scrubber.ApplyText): com.histmersion.plugin.testkit.internal.Scrubber.ApplyResult = values.foldLeft(text)((t, v) => t.replace(v, Scrubber.Placeholder))
-  def bytes(body: Array[Byte]): Array[Byte] =
+  def bytes(body: com.histmersion.plugin.testkit.internal.Scrubber.BytesBody): com.histmersion.plugin.testkit.internal.Scrubber.BytesResult =
     if values.isEmpty then body
     else
       val text = new String(body, UTF_8)
@@ -152,6 +152,11 @@ final private[testkit] class Scrubber(secrets: Set[Scrubber.Secrets]):
       if clean == text then body else clean.getBytes(UTF_8)
 
 private[testkit] object Scrubber:
+  type BytesResult = BytesResult.T
+  object BytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BytesBody = BytesBody.T
+  object BytesBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Secrets = Secrets.T
   object Secrets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -12,7 +12,7 @@ object Upload:
   type InlineName = InlineName.T
   object InlineName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InlineBytes = InlineBytes.T
-  object InlineBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object InlineBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -25,4 +25,4 @@ object Upload:
   def stored(blob: Blob): Upload = Upload(blob.key.name, blob.size.value, blob.asSource)
 
   /** Bytes in memory, under `name`. */
-  def inline(name: com.histmersion.domain.library.ingest.Upload.InlineName, bytes: Array[com.histmersion.domain.library.ingest.Upload.InlineBytes]): Upload = Upload(name, bytes.length.toLong, ByteSource.bytes(bytes))
+  def inline(name: com.histmersion.domain.library.ingest.Upload.InlineName, bytes: com.histmersion.domain.library.ingest.Upload.InlineBytes): Upload = Upload(name, bytes.length.toLong, ByteSource.bytes(bytes))

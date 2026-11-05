@@ -183,7 +183,7 @@ object Plugin:
     /** One GET under the host's outbound policy (its User-Agent, `Retry-After`, a slow-down asked again, a bot
       * challenge ending the request): the body of a 2xx answer, or why there is none.
       */
-    def get(url: com.histmersion.plugin.Plugin.Http.GetUrl, headers: Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1, com.histmersion.plugin.Plugin.Http.GetHeadersPart2] = Map.empty): Either[com.histmersion.plugin.Plugin.Http.GetResultPart1, Array[Byte]]
+    def get(url: com.histmersion.plugin.Plugin.Http.GetUrl, headers: Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1, com.histmersion.plugin.Plugin.Http.GetHeadersPart2] = Map.empty): Either[com.histmersion.plugin.Plugin.Http.GetResultPart1, com.histmersion.plugin.Plugin.Http.GetResultPart2]
 
     /** One GET with the host's identity, answered as it came — its status and headers, a slow-down or an error answer
       * included — and never asked again: for an upstream whose own budget decides when to ask again (an
@@ -196,6 +196,9 @@ object Plugin:
       get(url, headers).map(HttpResponse(200, Map.empty, _))
 
   object Http:
+    type GetResultPart2 = GetResultPart2.T
+    object GetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type GetResultPart1 = GetResultPart1.T
     object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GetUrl = GetUrl.T

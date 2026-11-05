@@ -396,7 +396,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def mediaImportJob(req: MediaImportRequest): Either[Cli.Error, JobInfo] = call(Api.mediaImportJob)(req)
   def mediaCovers(req: MediaCoversRequest): Either[Cli.Error, MediaCoversReport] = call(Api.mediaCovers)(req)
   def mediaCoversJob(req: MediaCoversRequest): Either[Cli.Error, JobInfo] = call(Api.mediaCoversJob)(req)
-  def putSourceCover(p: SourceCoverParams, bytes: Array[Byte]): Either[Cli.Error, MediaItem] =
+  def putSourceCover(p: SourceCoverParams, bytes: com.histmersion.cli.Client.PutSourceCoverBytes): Either[Cli.Error, MediaItem] =
     call(Api.putSourceCover)((p, bytes))
   def mediaList(q: Api.MediaQuery): Either[Cli.Error, MediaList] = call(Api.mediaList)(q)
   def mediaShow(uid: com.histmersion.cli.Client.MediaShowUid): Either[Cli.Error, MediaItem] = call(Api.mediaShow)(uid)
@@ -406,6 +406,9 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
 
 object Client:
   /** POST/PUT/PATCH/DELETE change the corpus; anything else (a GET download) only reads it. */
+  type PutSourceCoverBytes = PutSourceCoverBytes.T
+  object PutSourceCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ServerUrl = ServerUrl.T
   object ServerUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Token = Token.T

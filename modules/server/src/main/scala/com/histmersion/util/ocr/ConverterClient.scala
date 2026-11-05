@@ -23,12 +23,15 @@ trait ConverterClient:
   /** A thumbnail of an image, no side longer than `maxPx` (the sidecar's Pillow — the native server has no working
     * image codec of its own). A converter that cannot make one says so; the picture is then shown from its own bytes.
     */
-  def thumbnail(bytes: Array[Byte], filename: com.histmersion.util.ocr.ConverterClient.ThumbnailFilename, maxPx: com.histmersion.util.ocr.ConverterClient.ThumbnailMaxPx): Either[com.histmersion.util.ocr.ConverterClient.ThumbnailResultPart1, ConverterClient.Thumb] =
+  def thumbnail(bytes: com.histmersion.util.ocr.ConverterClient.ThumbnailBytes, filename: com.histmersion.util.ocr.ConverterClient.ThumbnailFilename, maxPx: com.histmersion.util.ocr.ConverterClient.ThumbnailMaxPx): Either[com.histmersion.util.ocr.ConverterClient.ThumbnailResultPart1, ConverterClient.Thumb] =
     Left("this converter makes no thumbnails")
 
 object ConverterClient:
 
   /** A thumbnail the sidecar made. */
+  type ThumbnailBytes = ThumbnailBytes.T
+  object ThumbnailBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ConvertResultPart1 = ConvertResultPart1.T
   object ConvertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConvertFilename = ConvertFilename.T

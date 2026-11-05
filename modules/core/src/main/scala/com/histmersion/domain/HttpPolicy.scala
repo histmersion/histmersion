@@ -61,7 +61,7 @@ object HttpPolicy:
   type TrustOsName = TrustOsName.T
   object TrustOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PemCertificatesResult = PemCertificatesResult.T
-  object PemCertificatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PemCertificatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PemCertificatesText = PemCertificatesText.T
   object PemCertificatesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -164,7 +164,7 @@ object HttpPolicy:
   /** The DER bytes of every certificate in a PEM text, in order; anything else (keys, comments, `security`'s chatter, a
     * block that is not base64) is skipped.
     */
-  def pemCertificates(text: com.histmersion.domain.HttpPolicy.PemCertificatesText): List[Array[com.histmersion.domain.HttpPolicy.PemCertificatesResult]] =
+  def pemCertificates(text: com.histmersion.domain.HttpPolicy.PemCertificatesText): List[com.histmersion.domain.HttpPolicy.PemCertificatesResult] =
     PemCert.findAllMatchIn(Option(text).getOrElse("")).toList.flatMap { m =>
       scala.util
         .Try(java.util.Base64.getMimeDecoder.decode(m.group(1).replaceAll("\\s+", "")))

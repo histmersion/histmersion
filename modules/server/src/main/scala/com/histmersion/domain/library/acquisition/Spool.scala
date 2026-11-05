@@ -15,7 +15,7 @@ final class Spool(store: Store):
   /** `bytes` as the fetched file of `citekey`. The key is built from a caller-supplied string, so it gets BOTH guards:
     * the citekey must parse ([[Citekey]]), and the store's key refuses anything that would leave it.
     */
-  def write(citekey: com.histmersion.domain.library.Citekey, extension: com.histmersion.domain.library.acquisition.Spool.WriteExtension, bytes: Array[com.histmersion.domain.library.acquisition.Spool.WriteBytes]): Either[com.histmersion.domain.library.acquisition.Spool.WriteResultPart1, Store.Key] =
+  def write(citekey: com.histmersion.domain.library.Citekey, extension: com.histmersion.domain.library.acquisition.Spool.WriteExtension, bytes: com.histmersion.domain.library.acquisition.Spool.WriteBytes): Either[com.histmersion.domain.library.acquisition.Spool.WriteResultPart1, Store.Key] =
     Citekey.parse(citekey).flatMap { _ =>
       Store.Key
         .of(citekey, s"paper.${SafeName.of(extension)}")
@@ -35,4 +35,4 @@ object Spool:
   type WriteExtension = WriteExtension.T
   object WriteExtension extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WriteBytes = WriteBytes.T
-  object WriteBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object WriteBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
