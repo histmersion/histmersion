@@ -23,14 +23,14 @@ trait Console:
   def readLine(): com.histmersion.util.console.Console.ReadLineResult
 
 object Console:
-  type ReadTerminalLineResult = ReadTerminalLineResult.T
-  object ReadTerminalLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadTerminalLineResult = _root_.com.histmersion.util.console.Console.ReadLineResult
+  val ReadTerminalLineResult: _root_.com.histmersion.util.console.Console.ReadLineResult.type = _root_.com.histmersion.util.console.Console.ReadLineResult
   type ReadTerminalLinePrompt = ReadTerminalLinePrompt.T
   object ReadTerminalLinePrompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadLineResult = ReadLineResult.T
   object ReadLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StreamsInputResult = StreamsInputResult.T
-  object StreamsInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StreamsInputResult = _root_.com.histmersion.util.console.Console.ReadLineResult
+  val StreamsInputResult: _root_.com.histmersion.util.console.Console.ReadLineResult.type = _root_.com.histmersion.util.console.Console.ReadLineResult
 
   trait Output:
     def print(value: => Any): Unit
@@ -71,12 +71,12 @@ object Console:
     def readLine(): com.histmersion.util.console.Console.Streams.ReadLineResult = input()
 
   object Streams:
-    type InputResult = InputResult.T
-    object InputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InputResult = _root_.com.histmersion.util.console.Console.ReadLineResult
+    val InputResult: _root_.com.histmersion.util.console.Console.ReadLineResult.type = _root_.com.histmersion.util.console.Console.ReadLineResult
     type TerminalArg1 = TerminalArg1.T
     object TerminalArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TerminalResult = TerminalResult.T
-    object TerminalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TerminalResult = _root_.com.histmersion.util.console.Console.ReadLineResult
+    val TerminalResult: _root_.com.histmersion.util.console.Console.ReadLineResult.type = _root_.com.histmersion.util.console.Console.ReadLineResult
 
-    type ReadLineResult = ReadLineResult.T
-    object ReadLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadLineResult = _root_.com.histmersion.util.console.Console.ReadLineResult
+    val ReadLineResult: _root_.com.histmersion.util.console.Console.ReadLineResult.type = _root_.com.histmersion.util.console.Console.ReadLineResult
