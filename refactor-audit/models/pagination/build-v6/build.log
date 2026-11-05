@@ -1,0 +1,380 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Executing in batch mode. For better performance use sbt's shell
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[success] elapsed time: 3 s, cache 100%, 404 disk cache hits
+[info] compiling 19 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-db/test-classes ...
+[info] Scala.js frontend → /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/resource_managed/main/web/app.bundle.js
+[info] done compiling
+[info] compiling 18 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/test-classes ...
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/automation/goals/GoalServiceContract.scala:145:5 
+[error] 145 |    )
+[error]     |     ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  (com.histmersion.api.RowCount, List[String], com.histmersion.api.Offset,
+[error]     |  Option[com.histmersion.api.Offset])
+[error]     |  Second type: (Int, List[String], Int, Some[Int])
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.RowCount, List[String], com.histmersion.api.Offset,
+[error]     |  Option[com.histmersion.api.Offset]), (Int, List[String], Int, Some[Int])]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      
+[error]     |        (com.histmersion.api.RowCount, List[String], com.histmersion.api.Offset,
+[error]     |          Option[com.histmersion.api.Offset])
+[error]     |      ,
+[error]     |    (Int, List[String], Int, Some[Int])](
+[error]     |      /* missing */
+[error]     |        summon[(com.histmersion.api.RowCount, List[String],
+[error]     |          com.histmersion.api.Offset, Option[com.histmersion.api.Offset]) <:< (Int,
+[error]     |          List[String], Int, Some[Int])]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type (com.histmersion.api.RowCount, List[String], com.histmersion.api.Offset,
+[error]     |  Option[com.histmersion.api.Offset]) <:< (Int, List[String], Int, Some[Int]).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/catalogue/events/EventServiceContract.scala:77:44 
+[error] 77 |    assertEquals(e.list(all, 1, 1).total, 3)
+[error]    |                                            ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.RowCount
+[error]    |  Second type: Int
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]    |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/catalogue/events/EventsControllersSuite.scala:80:50 
+[error] 80 |    assertEquals((l.total, l.events.size), (3, 2))
+[error]    |                                                  ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (com.histmersion.api.RowCount, Int)
+[error]    |  Second type: (Int, Int)
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.RowCount, Int), (Int, Int)]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[(com.histmersion.api.RowCount, Int),
+[error]    |      (Int, Int)](
+[error]    |      /* missing */summon[(com.histmersion.api.RowCount, Int) <:< (Int, Int)])
+[error]    |
+[error]    |But no implicit values were found that match type (com.histmersion.api.RowCount, Int) <:< (Int, Int).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/catalogue/evidence/AttestationServiceContract.scala:44:99 
+[error] 44 |    assertEquals((all.total, all.attestations.map(_.id)), (3, List(first.id, second.id, third.id)))
+[error]    |                                                                                                   ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (com.histmersion.api.RowCount, List[Long])
+[error]    |  Second type: (Int, List[Long])
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.RowCount, List[Long]), (Int, List[Long])]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      (com.histmersion.api.RowCount, List[Long]), (Int, List[Long])](
+[error]    |      /* missing */
+[error]    |        summon[(com.histmersion.api.RowCount, List[Long]) <:< (Int, List[Long])]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type (com.histmersion.api.RowCount, List[Long]) <:< (Int, List[Long]).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/catalogue/evidence/AttestationServiceContract.scala:47:67 
+[error] 47 |    assertEquals(a.list(Some(" "), Some(""), None, 10, 0).total, 3)
+[error]    |                                                                   ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.RowCount
+[error]    |  Second type: Int
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]    |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/catalogue/evidence/AttestationServiceContract.scala:49:97 
+[error] 49 |    assertEquals((page.total, page.attestations.map(_.id), page.offset), (3, List(second.id), 1))
+[error]    |                                                                                                 ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (com.histmersion.api.RowCount, List[Long], com.histmersion.api.Offset)
+[error]    |  Second type: (Int, List[Long], Int)
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.RowCount, List[Long], com.histmersion.api.Offset), (Int, List[Long], Int)]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      (com.histmersion.api.RowCount, List[Long], com.histmersion.api.Offset),
+[error]    |      (Int, List[Long], Int)](
+[error]    |      /* missing */
+[error]    |        summon[(com.histmersion.api.RowCount, List[Long], com.histmersion.api.Offset
+[error]    |          ) <:< (Int, List[Long], Int)]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type (com.histmersion.api.RowCount, List[Long], com.histmersion.api.Offset) <:< (
+[error]    |  Int, List[Long], Int).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/catalogue/evidence/EventLinksControllersSuite.scala:75:90 
+[error] 75 |    assertEquals(attestations.list(None, Some("event"), Some("zz_siege"), 10, 0).total, 1)
+[error]    |                                                                                          ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.RowCount
+[error]    |  Second type: Int
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]    |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/media/assets/AssetServiceContract.scala:163:77 
+[error] 163 |    assertEquals((all.total, all.items.size, all.items.head.uid), (3, 2, p1))
+[error]     |                                                                             ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  (com.histmersion.api.RowCount, Int, String)
+[error]     |  Second type: (Int, Int, String)
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.RowCount, Int, String), (Int, Int, String)]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[
+[error]     |      (com.histmersion.api.RowCount, Int, String), (Int, Int, String)](
+[error]     |      /* missing */
+[error]     |        summon[(com.histmersion.api.RowCount, Int, String) <:< (Int, Int, String)]
+[error]     |    )
+[error]     |
+[error]     |But no implicit values were found that match type (com.histmersion.api.RowCount, Int, String) <:< (Int, Int, String).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/domain/media/links/AssetLinkServiceContract.scala:31:61 
+[error] 31 |    assertEquals(l.list(Some(""), None, None, None).total, 2)
+[error]    |                                                             ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  com.histmersion.api.RowCount
+[error]    |  Second type: Int
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]    |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]    |
+[error]    |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/AliasRuleHttpSuite.scala:124:7 
+[error] 124 |      )
+[error]     |       ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  com.histmersion.api.RowCount
+[error]     |  Second type: Int
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]     |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]     |
+[error]     |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/AliasRuleHttpSuite.scala:200:80 
+[error] 200 |      assertEquals(byNew.total, 1, "the finding is placed at the renamed place")
+[error]     |                                                                                ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  com.histmersion.api.RowCount
+[error]     |  Second type: Int
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]     |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]     |
+[error]     |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/BackupRestoreSuite.scala:176:27 
+[error] 176 |    assertEquals(before, 2)
+[error]     |                           ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  com.histmersion.api.RowCount
+[error]     |  Second type: Int
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]     |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]     |
+[error]     |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/BackupRestoreSuite.scala:229:106 
+[error] 229 |        assertEquals(h.library.search.sources(Filter(tags = List("zz-backup-test"), limit = 10)).total, 1)
+[error]     |                                                                                                          ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  com.histmersion.api.RowCount
+[error]     |  Second type: Int
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]     |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]     |
+[error]     |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/BackupRestoreSuite.scala:243:36 
+[error] 243 |        assertEquals(after.total, 2)
+[error]     |                                    ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  com.histmersion.api.RowCount
+[error]     |  Second type: Int
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]     |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]     |
+[error]     |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/BackupRestoreSuite.scala:301:71 
+[error] 301 |    assertEquals(h.library.search.sources(Filter(limit = 10)).total, 0)
+[error]     |                                                                       ^
+[error]     |Can't compare these two types:
+[error]     |  First type:  com.histmersion.api.RowCount
+[error]     |  Second type: Int
+[error]     |Possible ways to fix this error:
+[error]     |  Alternative 1: provide an implicit instance for Compare[com.histmersion.api.RowCount, Int]
+[error]     |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]     |I found:
+[error]     |
+[error]     |    munit.Compare.compareSubtypeWithSupertype[com.histmersion.api.RowCount.T, Int](
+[error]     |      /* missing */summon[com.histmersion.api.RowCount.T <:< Int])
+[error]     |
+[error]     |But no implicit values were found that match type com.histmersion.api.RowCount.T <:< Int.
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/PagingHttpSuite.scala:57:21 
+[error] 57 |      assert(l.total >= 3, b)
+[error]    |             ^^^^^^^^^^
+[error]    |value >= is not a member of com.histmersion.api.RowCount, but could be made available as an extension method.
+[error]    |
+[error]    |One of the following imports might make progress towards fixing the problem:
+[error]    |
+[error]    |  import cats.implicits.catsSyntaxPartialOrder
+[error]    |  import cats.syntax.all.catsSyntaxPartialOrder
+[error]    |  import io.github.iltotore.iron.autoRefine
+[error]    |  import scala.math.Ordered.orderingToOrdered
+[error]    |  import scala.math.Ordering.Implicits.infixOrderingOps
+[error]    |  import cats.syntax.order.catsSyntaxPartialOrder
+[error]    |  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[error]    |
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/PagingHttpSuite.scala:58:52 
+[error] 58 |      assertEquals((l.offset, l.next), (0, Some(2)))
+[error]    |                                                    ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (com.histmersion.api.Offset, Option[com.histmersion.api.Offset])
+[error]    |  Second type: (Int, Some[Int])
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.Offset, Option[com.histmersion.api.Offset]), (Int, Some[Int])]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      (com.histmersion.api.Offset, Option[com.histmersion.api.Offset]),
+[error]    |      (Int, Some[Int])](
+[error]    |      /* missing */
+[error]    |        summon[(com.histmersion.api.Offset, Option[com.histmersion.api.Offset]) <:<
+[error]    |          (Int, Some[Int])]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type (com.histmersion.api.Offset, Option[com.histmersion.api.Offset]) <:< (Int,
+[error]    |  Some[Int]).
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/PagingHttpSuite.scala:59:96 
+[error] 59 |      val last = decode[Goal.List](get(s"$url/api/goals?status=planned&limit=2&offset=${l.total - 1}")._2)
+[error]    |                                                                                        ^^^^^^^^^
+[error]    |value - is not a member of com.histmersion.api.RowCount, but could be made available as an extension method.
+[error]    |
+[error]    |One of the following imports might make progress towards fixing the problem:
+[error]    |
+[error]    |  import io.github.iltotore.iron.autoRefine
+[error]    |  import scala.math.Fractional.Implicits.infixFractionalOps
+[error]    |  import scala.math.Integral.Implicits.infixIntegralOps
+[error]    |  import scala.math.Numeric.Implicits.infixNumericOps
+[error]    |
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/PagingHttpSuite.scala:60:54 
+[error] 60 |      assertEquals((last.offset, last.next), (l.total - 1, None))
+[error]    |                                              ^^^^^^^^^
+[error]    |value - is not a member of com.histmersion.api.RowCount, but could be made available as an extension method.
+[error]    |
+[error]    |One of the following imports might make progress towards fixing the problem:
+[error]    |
+[error]    |  import io.github.iltotore.iron.autoRefine
+[error]    |  import scala.math.Fractional.Implicits.infixFractionalOps
+[error]    |  import scala.math.Integral.Implicits.infixIntegralOps
+[error]    |  import scala.math.Numeric.Implicits.infixNumericOps
+[error]    |
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/PagingHttpSuite.scala:74:100 
+[error] 74 |      assertEquals((p0.total, p0.hits.map(_.claim), p0.next), (3, List("First", "Second"), Some(2)))
+[error]    |                                                                                                    ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (com.histmersion.api.RowCount, List[String], Option[com.histmersion.api.Offset])
+[error]    |  Second type: (Int, List[String], Some[Int])
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(com.histmersion.api.RowCount, List[String], Option[com.histmersion.api.Offset]), (Int, List[String], Some[Int])]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      
+[error]    |        (com.histmersion.api.RowCount, List[String],
+[error]    |          Option[com.histmersion.api.Offset])
+[error]    |      ,
+[error]    |    (Int, List[String], Some[Int])](
+[error]    |      /* missing */
+[error]    |        summon[(com.histmersion.api.RowCount, List[String],
+[error]    |          Option[com.histmersion.api.Offset]) <:< (Int, List[String], Some[Int])]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type (com.histmersion.api.RowCount, List[String], Option[com.histmersion.api.Offset])
+[error]    |   <:< (Int, List[String], Some[Int]).
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/test/scala/com/histmersion/server/PagingHttpSuite.scala:76:88 
+[error] 76 |      assertEquals((p1.hits.map(_.claim), p1.offset, p1.next), (List("Third"), 2, None))
+[error]    |                                                                                        ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (List[String], com.histmersion.api.Offset, Option[com.histmersion.api.Offset])
+[error]    |  Second type: (List[String], Int, None.type)
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(List[String], com.histmersion.api.Offset, Option[com.histmersion.api.Offset]), (List[String], Int, None.type)]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      (List[String], com.histmersion.api.Offset, Option[com.histmersion.api.Offset])
+[error]    |        ,
+[error]    |    (List[String], Int, None.type)](
+[error]    |      /* missing */
+[error]    |        summon[(List[String], com.histmersion.api.Offset,
+[error]    |          Option[com.histmersion.api.Offset]) <:< (List[String], Int, None.type)]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type (List[String], com.histmersion.api.Offset, Option[com.histmersion.api.Offset])
+[error]    |  <:< (List[String], Int, None.type).
+[error] 21 errors found
+[error] (server / Test / compileIncremental) Compilation failed
+[error] elapsed time: 16 s, cache 99%, 623 disk cache hits, 6 onsite tasks

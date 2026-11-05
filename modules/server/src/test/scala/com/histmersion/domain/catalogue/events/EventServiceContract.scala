@@ -74,7 +74,7 @@ abstract class EventServiceContract extends CatalogueStoreSuite:
       e.list(sel, limit, offset).events.map(_.id)
     val all = EventSelection(Filter())
     assertEquals(ids(all), List("zz_early", "zz_mid", "zz_late"))
-    assertEquals(e.list(all, 1, 1).total, 3)
+    assertEquals((e.list(all, 1, 1).total.value: Int), 3)
     assertEquals(ids(all, 1, 1), List("zz_mid"))
     assertEquals(ids(all.modify(_.text).setTo(Some("ASH"))), List("zz_mid"), "the description, any case")
     assertEquals(ids(all.modify(_.text).setTo(Some("battle"))), List("zz_early"))

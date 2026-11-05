@@ -72,7 +72,7 @@ class EventLinksControllersSuite extends munit.FunSuite:
     )
     assertEquals(r.refused.size, 2)
     assert(r.refused.exists(_.startsWith("zzgone: no such source")))
-    assertEquals(attestations.list(None, Some("event"), Some("zz_siege"), 10, 0).total, 1)
+    assertEquals((attestations.list(None, Some("event"), Some("zz_siege"), 10, 0).total.value: Int), 1)
     assertEquals(links.candidates("zz_siege").map(c => (c.citekey, c.status)), List("zzln2020_names" -> "confirmed"))
     val again = c.applyLinks(Caller.Local, "zz_siege", EventLinksRequest(confirm = List("zzln2020_names"))).toOption.get
     assertEquals(again.refused, List("zzln2020_names: already attests it"))

@@ -160,7 +160,7 @@ abstract class AssetServiceContract extends MediaStoreSuite:
     assertEquals(a.list(Api.MediaQuery(license = Some("none")), 50).items.map(_.name), List("f1.jpg"))
     assertEquals(a.list(Api.MediaQuery(q = Some("F2")), 50).items.map(_.name), List("f2.jpg"))
     val all = a.list(Api.MediaQuery(), 2)
-    assertEquals((all.total, all.items.size, all.items.head.uid), (3, 2, p1))
+    assertEquals(((all.total.value: Int), all.items.size, all.items.head.uid), (3, 2, p1))
     assertEquals(a.facets.providers.map(c => (c.key, c.n)), List((MediaProvider.Source, 2), ("zq-provider", 1)))
     assertEquals(a.facets.licences.map(c => (c.key, c.n)), List(("CC-BY-4.0", 1), ("CC0-1.0", 1), ("none", 1)))
     assertEquals(

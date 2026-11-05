@@ -119,7 +119,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
       )
       assertEquals(a.targetId, "zz_alias_e2")
       assertEquals(
-        decode[Attestation.List](ok(get(s"$url/api/attestations?targetType=event&targetId=zz_alias_e1"))).total,
+        (decode[Attestation.List](ok(get(s"$url/api/attestations?targetType=event&targetId=zz_alias_e1"))).total.value: Int),
         1
       )
       assertEquals(decode[EventDeleted](ok(delete(s"$url/api/events/zz_alias_e1"))).id, "zz_alias_e2")
@@ -197,7 +197,7 @@ class AliasRuleHttpSuite extends com.histmersion.db.DbSuite with com.histmersion
       ok(post(s"$url/api/places/zz_alias_p1/rename", """{"to":"zz_alias_p2"}"""))
       val byNew = decode[SearchResult](ok(get(s"$url/api/sources?place=zz_alias_p2&tag=zz-alias-place")))
       val byOld = decode[SearchResult](ok(get(s"$url/api/sources?place=zz_alias_p1&tag=zz-alias-place")))
-      assertEquals(byNew.total, 1, "the finding is placed at the renamed place")
+      assertEquals((byNew.total.value: Int), 1, "the finding is placed at the renamed place")
       assertEquals(byOld.hits.map(_.source.citekey), byNew.hits.map(_.source.citekey))
       // a write by the old id names the place it went to
       val n = ok(post(s"$url/api/places/zz_alias_p1/names", """{"name":"Zzalias Höyük"}"""))

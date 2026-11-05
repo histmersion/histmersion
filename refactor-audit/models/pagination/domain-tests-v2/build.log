@@ -1,0 +1,43 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+Test run com.histmersion.domain.CompileArticleSuite started
+com.histmersion.domain.CompileArticleSuite: finished 0.066s
+Test run com.histmersion.domain.CompileArticleSuite finished: 0 failed, 0 ignored, 12 total 0.073s
+Test run com.histmersion.api.EmptyAnswerFieldsSuite started
+com.histmersion.api.EmptyAnswerFieldsSuite: finished 0.147s
+Test run com.histmersion.api.EmptyAnswerFieldsSuite finished: 0 failed, 0 ignored, 15 total 0.151s
+[info] Passed: Total 27, Failed 0, Errors 0, Passed 27
+[success] elapsed time: 3 s, cache 97%, 144 disk cache hits, 4 onsite tasks
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-lib/histmersion-plugin-hello-lib_3-0.1.0.pom
+[info] Wrote /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-deps/histmersion-plugin-hello-deps_3-0.1.0.pom
+[info] Scala.js frontend → /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-server/resource_managed/main/web/app.bundle.js
+[warn] multiple main classes detected: run 'show discoveredMainClasses' to see the list
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/3.10.0/scala-library-3.10.0.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scala.runtime.LazyVals$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/org/scala-lang/scala-library/3.10.0/scala-library-3.10.0.jar)
+WARNING: Please consider reporting this to the maintainers of class scala.runtime.LazyVals$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+Test run com.histmersion.server.agents.VocabularyWireSuite started
+com.histmersion.server.agents.VocabularyWireSuite: finished 0.128s
+Test run com.histmersion.server.agents.VocabularyWireSuite finished: 0 failed, 0 ignored, 3 total 0.138s
+Test run com.histmersion.domain.catalogue.evidence.LeadServiceInMemorySuite started
+com.histmersion.domain.catalogue.evidence.LeadServiceInMemorySuite: finished 0.177s
+Test run com.histmersion.domain.catalogue.evidence.LeadServiceInMemorySuite finished: 0 failed, 0 ignored, 1 total 0.187s
+[info] Passed: Total 4, Failed 0, Errors 0, Passed 4
+[success] elapsed time: 12 s, cache 98%, 493 disk cache hits, 7 onsite tasks

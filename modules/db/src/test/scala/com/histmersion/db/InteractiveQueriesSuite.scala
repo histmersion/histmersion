@@ -268,7 +268,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       val got = ArticleFixtures.list(ds, f, sc, None, None, 500, 0)
       assertEquals(got.articles.map(_.slug).toSet, wantArticles, f.toString)
-      assertEquals(got.total, wantArticles.size, f.toString)
+      assertEquals((got.total.value: Int), wantArticles.size, f.toString)
       val eventKeys = citekeys(FilterSql.sourceKeys(f.sourceSet.copy(period = None), sc)).toList
       val wantEvents = connect(ds)(
         sql"""SELECT e.id FROM events e WHERE e.citekey = ANY($eventKeys::text[])
@@ -282,7 +282,7 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
       )
       val evs = EventFixtures.list(ds, f, sc, None, None, None, None, 500, 0)
       assertEquals(evs.events.map(_.id).toSet, wantEvents, f.toString)
-      assertEquals(evs.total, wantEvents.size, f.toString)
+      assertEquals((evs.total.value: Int), wantEvents.size, f.toString)
     }
 
   test("the hover card's four counts in one statement equal the four list totals"):
@@ -294,8 +294,8 @@ class InteractiveQueriesSuite extends com.histmersion.db.DbSuite with Bounded:
         Place.Counts(
           sources = SearchFixtures.count(ds, f, sc),
           findings = FindingFixtures.findingsCount(ds, f, sc),
-          articles = ArticleFixtures.list(ds, f, sc, None, None, 1, 0).total,
-          events = EventFixtures.list(ds, f, sc, None, None, None, None, 1, 0).total
+          articles = ArticleFixtures.list(ds, f, sc, None, None, 1, 0).total.value,
+          events = EventFixtures.list(ds, f, sc, None, None, None, None, 1, 0).total.value
         ),
         id
       )

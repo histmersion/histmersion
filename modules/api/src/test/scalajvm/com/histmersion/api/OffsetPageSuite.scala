@@ -15,7 +15,7 @@ import com.histmersion.api.media.AssetLink
 class OffsetPageSuite extends munit.FunSuite:
 
   test("next: the offset after this page, none on the last page or past the end"):
-    assertEquals(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(50)).next, Some(50))
+    assertEquals(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(50)).next.map(n => (n.value: Int)), Some(50))
     assertEquals(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(400), com.histmersion.api.RowCount(12)).next, None)
     assertEquals(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(500), com.histmersion.api.RowCount(0)).next, None)
     assertEquals(OffsetPage(com.histmersion.api.RowCount(0), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(0)).next, None)
@@ -66,4 +66,4 @@ class OffsetPageSuite extends munit.FunSuite:
     assertEquals(j.hcursor.get[Int]("offset"), Right(50))
     assertEquals(j.hcursor.get[Option[Int]]("next"), Right(Some(51)))
     val old = io.circe.parser.decode[Goal.List]("""{"total":1,"goals":[]}""")
-    assertEquals(old.map(_.offset), Right(0))
+    assertEquals(old.map(x => (x.offset.value: Int)), Right(0))

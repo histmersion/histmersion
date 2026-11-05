@@ -180,7 +180,7 @@ final class SeedManagerKind(site: ResearchSite, lib: => LibraryAgentsConfig) ext
                 d.slug,
                 d.mode == DraftMode.Create,
                 snap.exists(_.filter.isDefined),
-                found.map(_.total),
+                found.map(_.total.value),
                 d.problems,
                 d.cited.distinct.size,
                 !c.slugExists(d.slug)

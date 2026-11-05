@@ -109,7 +109,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
   private val facts = List(SourceFact("a2019_tin", "Tin", Some(2019), Source.Status.Current))
   private val ev = evidence(
     "f",
-    1,
+    com.histmersion.RowCount(1),
     facts,
     List(Extracted("a2019_tin", List(Claim("a2019_tin", "c", "q", None, None, Confidence.High, 1.0)), None)),
     Nil

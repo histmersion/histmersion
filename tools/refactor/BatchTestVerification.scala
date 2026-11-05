@@ -6,7 +6,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
 
 object BatchTestVerification {
-  case class Policy(phase: String = "baseline", module: String = "server", artifact: String = "", suites: List[String] = Nil, report: String = "refactor-audit/agent-storage/tests", knownFailure: String = "", knownSkips: Map[String, String] = Map.empty, environment: Map[String, String] = Map.empty)
+  case class Policy(phase: String = "baseline", module: String = "server", artifact: String = "", suites: List[String] = Nil, report: String = "refactor-audit/agent-storage/tests", knownFailure: String = "", knownSkips: Map[String, String] = Map.empty, environment: Map[String, String] = Map.empty, exactBaselineFailures: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -17,10 +17,11 @@ class BatchTestVerification(val policy: BatchTestVerification.Policy) extends Sy
   override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("BatchTestVerification")(BatchTestVerification.Policy()).map(new BatchTestVerification(_))
   override def afterComplete(): Unit = {
     require(Set("baseline", "after")(policy.phase) && policy.suites.nonEmpty)
+    require(policy.exactBaselineFailures.isEmpty || policy.phase == "after", "Exact failures require an existing baseline")
     require(policy.knownSkips.values.forall(_.trim.nonEmpty), "Known skips require explicit reasons")
     val out = Paths.get(policy.report); Files.createDirectories(out)
     val snapshot = out.resolve(policy.phase + ".tsv")
-    require(policy.phase != "baseline" || !Files.exists(snapshot), "Never overwrite the test baseline")
+    require(!Files.exists(snapshot), "Never overwrite a test observation")
     val log = Paths.get("target/batch-test-verification", out.getParent.getFileName.toString + "-" + out.getFileName.toString, policy.phase + ".log")
     Files.createDirectories(log.getParent)
     val start = System.currentTimeMillis()
@@ -69,13 +70,15 @@ class BatchTestVerification(val policy: BatchTestVerification.Policy) extends Sy
         if(row(2) == "skipped") {
           require(policy.knownSkips.contains(row.take(2).mkString("::")), "Unreviewed skip")
           require(row(3) == before(row.take(2))(3), "Known skip evidence changed")
+        } else if(policy.exactBaselineFailures.contains(row.take(2).mkString("::"))) {
+          require(row(3) == before(row.take(2))(3), "Existing failure evidence changed")
         } else {
           require(row.take(2).mkString("::") == policy.knownFailure, "Unreviewed failure")
           require(failureEvidence(row(3)) == failureEvidence(before(row.take(2))(3)), "Existing failure evidence changed")
         }
       }
     }
-    require(rows.forall(r => r(2) == "passed" || r(2) == "failure" && r.take(2).mkString("::") == policy.knownFailure ||
+    require(rows.forall(r => r(2) == "passed" || r(2) == "failure" && (r.take(2).mkString("::") == policy.knownFailure || policy.exactBaselineFailures.contains(r.take(2).mkString("::"))) ||
       r(2) == "skipped" && policy.knownSkips.contains(r.take(2).mkString("::"))), "Unexpected failure or skip")
     require(exit == (if(rows.exists(r => Set("failure", "error")(r(2)))) 1 else 0), "Unexpected test process exit")
     Files.write(out.resolve(policy.phase + "-known-skips.tsv"), ("test\treason" :: policy.knownSkips.toList.sorted.map { case (id, reason) => id + "\t" + reason }).asJava)

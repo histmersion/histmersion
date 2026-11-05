@@ -256,7 +256,7 @@ final class EventLinksControllers(
     )
     val (total, rows) =
       leadFacts.leads(selection, ec.leads.km, ec.leads.years, settings().limits.page(Some(f.limit), 50), f.offset)
-    EventLead.List(total, rows.flatMap(leadOf))
+    EventLead.List(total.value, rows.flatMap(leadOf))
 
   // ── an event's card ─────────────────────────────────────────────────────────────────────────
 

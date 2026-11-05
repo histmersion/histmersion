@@ -19,7 +19,7 @@ object EvidenceFixtures:
   def attestingSources(ds: DataSource, id: String): List[EventSourceRef] = connect(ds)(LeadRepo.attestingSources(id))
   def nearFindings(ds: DataSource, id: String, km: Double, years: Long, limit: Int): List[EventFindingRef] =
     connect(ds)(LeadRepo.nearFindings(id, km, years, limit))
-  def leadRows(ds: DataSource, where: Sql, km: Double, years: Long, limit: Int, offset: Int): (Int, List[LeadRow]) =
+  def leadRows(ds: DataSource, where: Sql, km: Double, years: Long, limit: Int, offset: Int): (com.histmersion.RowCount, List[LeadRow]) =
     connect(ds)(LeadRepo.leadRows(where, km, years, limit, offset))
   def articleCandidates(
       ds: DataSource,

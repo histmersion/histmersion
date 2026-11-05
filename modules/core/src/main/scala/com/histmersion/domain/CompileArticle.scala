@@ -15,6 +15,7 @@ import com.histmersion.api.research.DraftMode
 import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code
@@ -139,7 +140,7 @@ object CompileArticle:
 
   final case class Evidence(
       filter: String,
-      total: Int,
+      total: com.histmersion.RowCount,
       sources: List[SourceFact],
       claims: Map[String, Int],
       edges: List[EdgeFact],
@@ -161,7 +162,7 @@ object CompileArticle:
 
   def evidence(
       filter: String,
-      total: Int,
+      total: com.histmersion.RowCount,
       facts: List[SourceFact],
       extracted: List[Extracted],
       edges: List[EdgeFact]
