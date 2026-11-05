@@ -2,6 +2,25 @@
 
 ## Multi-concept model purpose review after aeb46ecb
 
+Preview-8/9 source review: CitationLint.danglingEdges and unresolvedShortCitekeys
+operate lexically (prefixes, suggestions, sorting) and return textual diagnostics.
+Their public citekey sets now use Citekey; the configured lexical routines extract
+strings internally. Source.Put.of passes an Edge identifier into the deliberately
+raw Edge.Input parser record at a configured call boundary. Preview-8 leaves only
+four storage diagnostics. Primitive extraction now supports same-base widening
+inside containers and configured String types; fixture samples check lexical
+ordering, numeric List/Option sums and unchanged empty-container behavior.
+
+Preview-9 types Storage.total's result as ByteCount, keeps the original Long sum,
+filter and negated sort arithmetic, and extracts the result at Backup.humanBytes.
+New result fixtures prove typed constructor forwarding and renderer extraction.
+The 487-source API compile reaches a previously masked Kindlings macro error:
+Source.applyPatch combines typed Source metadata with primitive MetadataPatch.
+Source inspection confirms title/authors/year/venue/doi need propagation, including
+the nested Option[List[String]] shape. These five positions have not yet been added
+to the confirmed review denominator; the next review must preserve existing IDs.
+No source repairs or detector-refinement rounds are credited by these previews.
+
 Citation propagation review: Source.Write.applyPut/applyEdges compare Edge.dst
 with the source citekey, and applyPut additionally checks membership in aliases.
 Typing only the method parameter would leave raw/typed comparisons. The configured

@@ -3,6 +3,7 @@ package conceptfixture
 
 final case class Report(label: String = "", title: String = "", bytes: Long = 0L, lat: Double = 0.0, doi: Option[String] = None, authors: List[String] = Nil, year: Int = 0)
 final case class Unrelated(label: String, bytes: Long)
+final case class Quantities(samples: List[Long], maybe: Option[Long])
 
 object Calls:
   var evaluations = 0
@@ -25,6 +26,12 @@ object Calls:
   def repeatedAliases: Set[String] = aliases(Set("a", "a", "b"))
 
 object Rendering:
+  def typedTotal(rs: List[Report]): Long = rs.map(_.bytes).sum
+  def digits(n: Long): String = n.toString
+  def totalText(rs: List[Report]): String = digits(typedTotal(rs))
+  def totalRecord(rs: List[Report]): Report = Report(bytes = typedTotal(rs))
+  def titles(rs: List[Report]): List[Report] = rs.sortBy(_.title)
+  def quantityTotal(q: Quantities): Long = q.samples.sum + q.maybe.toList.sum
   def below(rs: List[Report], limit: Report): List[Report] = rs.filter(_.bytes < limit.bytes)
   def sorted(rs: List[Report]): List[Report] = rs.sortBy(_.bytes)
   def total(rs: List[Report]): Long = rs.map(_.bytes).sum
