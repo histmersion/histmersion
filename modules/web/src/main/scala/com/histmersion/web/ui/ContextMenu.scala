@@ -13,23 +13,41 @@ object ContextMenu:
 
   /** One action. `disabled`: shown, with why it cannot run now (`hint`). */
   final case class Entry(
-      label: String,
+      label: Entry.Label,
       run: () => Unit,
-      disabled: Boolean = false,
-      hint: Option[String] = None,
-      pressed: Option[Boolean] = None
+      disabled: Entry.Disabled = false,
+      hint: Option[Entry.Hint] = None,
+      pressed: Option[Entry.Pressed] = None
   )
+
+  object Entry:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Disabled = Disabled.T
+    object Disabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hint = Hint.T
+    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pressed = Pressed.T
+    object Pressed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A line between groups of actions. */
   val Separator: Entry = Entry("", () => ())
 
   final private case class Open(
-      title: String,
+      title: Open.Title,
       entries: List[Entry],
-      x: Double,
-      y: Double,
+      x: Open.X,
+      y: Open.Y,
       back: Option[dom.HTMLElement]
   )
+
+  object Open:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Y = Y.T
+    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val open = Var(Option.empty[Open])
 

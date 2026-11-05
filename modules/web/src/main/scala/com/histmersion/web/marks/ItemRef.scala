@@ -9,7 +9,7 @@ import com.histmersion.web.LibrarySection
 /** An item the person can bookmark, leave a note on or mark read, as the page knows it: what it points at and what it
   * is called. Pure.
   */
-final case class ItemRef(target: Target, title: String):
+final case class ItemRef(target: Target, title: ItemRef.Title):
   def identity: Option[String] = target.identity
   def kind: ItemKind = target.kind
 
@@ -17,6 +17,9 @@ final case class ItemRef(target: Target, title: String):
   def readable: Boolean = ItemKind.Readable.contains(kind)
 
 object ItemRef:
+
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def source(ck: String, title: String): ItemRef = ItemRef(Target.item(ItemKind.Source, ck), title)
   def article(slug: String, title: String): ItemRef = ItemRef(Target.item(ItemKind.Article, slug), title)

@@ -9,15 +9,15 @@ import com.histmersion.api.catalogue.Place
 
 /** A site from the places feed (`/api/places/geo?kind=site`). */
 final case class SitePoint(
-    id: Option[String],
-    label: String,
-    kind: String,
-    siteType: Option[String],
-    basis: Option[String],
-    lat: Double,
-    lon: Double,
-    period: Option[(Double, Double)],
-    undated: Boolean = false
+    id: Option[SitePoint.Id],
+    label: SitePoint.Label,
+    kind: SitePoint.Kind,
+    siteType: Option[SitePoint.SiteType],
+    basis: Option[SitePoint.Basis],
+    lat: SitePoint.Lat,
+    lon: SitePoint.Lon,
+    period: Option[(SitePoint.PeriodPart1, SitePoint.PeriodPart2)],
+    undated: SitePoint.Undated = false
 ):
   def name: String = if label.nonEmpty then label else id.getOrElse("site")
   def mid: Option[Double] = period.map((a, b) => (a + b) / 2)
@@ -26,6 +26,27 @@ final case class SitePoint(
   def known: Option[SiteTypes.SiteType] = siteType.flatMap(SiteTypes.get)
 
 object SitePoint:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteType = SiteType.T
+  object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Basis = Basis.T
+  object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Lat = Lat.T
+  object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Lon = Lon.T
+  object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodPart1 = PeriodPart1.T
+  object PeriodPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodPart2 = PeriodPart2.T
+  object PeriodPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Undated = Undated.T
+  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private def str(v: js.Dynamic): Option[String] = if js.isUndefined(v) || v == null then None else Some(v.toString)
 
   /** A GeoJSON point feature of the places feed. */

@@ -33,7 +33,17 @@ object ClusterMotion:
     target.size > ks.size && ks.forall(target.contains)
 
   /** A marker's move from one screen point to another. */
-  final case class Slide(marker: DomMarker, from: (Double, Double), to: (Double, Double))
+  final case class Slide(marker: DomMarker, from: (Slide.FromPart1, Slide.FromPart2), to: (Slide.ToPart1, Slide.ToPart2))
+
+  object Slide:
+    type FromPart1 = FromPart1.T
+    object FromPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromPart2 = FromPart2.T
+    object FromPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToPart1 = ToPart1.T
+    object ToPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToPart2 = ToPart2.T
+    object ToPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: does a zoom from `drawnBefore` markers to `drawnAfter` animate — at most `max` on either side? What an
     * animation costs is the markers drawn and moved on screen, not the points the layer holds: a wide window's view

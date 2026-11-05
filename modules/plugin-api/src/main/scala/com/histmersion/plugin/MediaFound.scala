@@ -22,8 +22,20 @@ final case class MediaFound(
     uses: List[MediaUse],
     asked: List[MediaTarget.Id],
     unanswered: Set[MediaTarget.Id] = Set.empty,
-    read: Int = 0,
-    failed: List[String] = Nil,
-    notTaken: List[String] = Nil,
-    categories: List[(String, String)] = Nil
+    read: MediaFound.Read = 0,
+    failed: List[MediaFound.Failed] = Nil,
+    notTaken: List[MediaFound.NotTaken] = Nil,
+    categories: List[(MediaFound.CategoriesPart1, MediaFound.CategoriesPart2)] = Nil
 )
+
+object MediaFound:
+  type Read = Read.T
+  object Read extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Failed = Failed.T
+  object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotTaken = NotTaken.T
+  object NotTaken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CategoriesPart1 = CategoriesPart1.T
+  object CategoriesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CategoriesPart2 = CategoriesPart2.T
+  object CategoriesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

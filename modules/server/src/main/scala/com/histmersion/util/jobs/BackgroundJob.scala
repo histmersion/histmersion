@@ -28,10 +28,15 @@ import com.histmersion.api.Api
 object BackgroundJob:
 
   /** How a job ended: its summary (the finished job's progress line) and, when it failed, why. */
-  final case class Outcome(summary: Option[String], error: Option[String] = None):
+  final case class Outcome(summary: Option[Outcome.Summary], error: Option[Outcome.Error] = None):
     def failed: Boolean = error.isDefined
 
   object Outcome:
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def done(summary: String): Outcome = Outcome(Some(summary))
     def failed(why: String): Outcome = Outcome(None, Some(why))
 

@@ -18,7 +18,7 @@ final case class GeoTiffGrid(
     width: PixelCount,
     height: PixelCount,
     rowOffsets: Vector[ByteOffset],
-    noData: Option[Short]
+    noData: Option[GeoTiffGrid.NoData]
 ):
 
   def rowBytes: Long = width.value * 2L
@@ -58,6 +58,9 @@ final case class GeoTiffGrid(
 object GeoTiffGrid:
 
   // TIFF and GeoTIFF tag numbers (TIFF 6.0; OGC GeoTIFF 1.1; GDAL's no-data tag)
+  type NoData = NoData.T
+  object NoData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Short, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val ImageWidth = 256; private val ImageLength = 257; private val BitsPerSample = 258
   private val Compression = 259; private val StripOffsets = 273; private val SamplesPerPixel = 277
   private val RowsPerStrip = 278; private val PlanarConfiguration = 284; private val TileWidth = 322
@@ -70,7 +73,17 @@ object GeoTiffGrid:
   private val TypeSize =
     Map(1 -> 1, 2 -> 1, 3 -> 2, 4 -> 4, 5 -> 8, 6 -> 1, 7 -> 1, 8 -> 2, 9 -> 4, 10 -> 8, 11 -> 4, 12 -> 8)
 
-  final private case class Entry(tag: Int, kind: Int, count: Long, at: Long, inline: Array[Byte])
+  final private case class Entry(tag: Entry.Tag, kind: Entry.Kind, count: Entry.Count, at: Entry.At, inline: Array[Byte])
+
+  object Entry:
+    type Tag = Tag.T
+    object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Count = Count.T
+    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type At = At.T
+    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def le(b: Array[Byte]) = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
 

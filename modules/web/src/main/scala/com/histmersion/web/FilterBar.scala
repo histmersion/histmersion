@@ -23,7 +23,17 @@ object FilterBar:
   /** One chip filter: the UiState field it edits (no fallback — an unknown key is not a field) and the facet dimension
     * its suggestions come from.
     */
-  final private case class ChipField(state: Field[List[String]], facet: String, label: String, placeholder: String)
+  final private case class ChipField(state: Field[List[ChipField.State]], facet: ChipField.Facet, label: ChipField.Label, placeholder: ChipField.Placeholder)
+
+  object ChipField:
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Facet = Facet.T
+    object Facet extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Placeholder = Placeholder.T
+    object Placeholder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val topicField = ChipField(UiState.topics, "topics", "Topic", "e.g. bronze age collapse")
 

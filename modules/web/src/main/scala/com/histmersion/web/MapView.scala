@@ -134,7 +134,15 @@ object MapView:
   /** A playback state as drawn: its outline (kept here: the names' placement drops the feature's), its years, its look
     * and the place it is.
     */
-  final private case class PlayArea(feature: js.Dynamic, geometry: js.Any, start: Double, end: Double, dashed: Boolean)
+  final private case class PlayArea(feature: js.Dynamic, geometry: js.Any, start: PlayArea.Start, end: PlayArea.End, dashed: PlayArea.Dashed)
+
+  object PlayArea:
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Dashed = Dashed.T
+    object Dashed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val playAreas = scala.collection.mutable.LinkedHashMap.empty[String, PlayArea]
   // `var`s: how far ahead of the playhead the states are fetched, and how long one fades (years); the playhead
   private var playLead: Long = 0L

@@ -15,11 +15,21 @@ object SettingsForm:
 
   /** One setting of the form: its key, and the name and help shown instead of reference.conf's words. */
   final case class Item(
-      key: String,
-      name: Option[String] = None,
-      help: Option[String] = None,
-      fallback: Option[String] = None
+      key: Item.Key,
+      name: Option[Item.Name] = None,
+      help: Option[Item.Help] = None,
+      fallback: Option[Item.Fallback] = None
   )
+
+  object Item:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Help = Help.T
+    object Help extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fallback = Fallback.T
+    object Fallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(title: String, intro: Option[String], items: List[Item], extra: Modifier[HtmlElement]*): HtmlElement =
     val draft = Draft()

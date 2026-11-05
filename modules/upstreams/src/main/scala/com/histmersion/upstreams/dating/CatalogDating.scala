@@ -2,15 +2,31 @@ package com.histmersion.upstreams.dating
 object CatalogDating:
 
   /** The years a start or an end may be, `lo ≤ hi`. */
-  final case class Bound(lo: Long, hi: Long)
+  final case class Bound(lo: Bound.Lo, hi: Bound.Hi)
+
+  object Bound:
+    type Lo = Lo.T
+    object Lo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hi = Hi.T
+    object Hi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A four-point span: the start lies in `[notBefore, beginBy]`, the end in `[endFrom, notAfter]`. */
   final case class Span(
-      notBefore: Option[Long] = None,
-      beginBy: Option[Long] = None,
-      endFrom: Option[Long] = None,
-      notAfter: Option[Long] = None
+      notBefore: Option[Span.NotBefore] = None,
+      beginBy: Option[Span.BeginBy] = None,
+      endFrom: Option[Span.EndFrom] = None,
+      notAfter: Option[Span.NotAfter] = None
   )
+
+  object Span:
+    type NotBefore = NotBefore.T
+    object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BeginBy = BeginBy.T
+    object BeginBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EndFrom = EndFrom.T
+    object EndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotAfter = NotAfter.T
+    object NotAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: a year with a ± uncertainty in years (negative or absent = none). */
   def year(y: Long, plusMinus: Option[Long] = None): Bound =
@@ -33,7 +49,13 @@ object CatalogDating:
     * estimate, never a statement that the event may lie in the future) and, where the catalogue cannot precede it, none
     * before `floor` (the GVP's list is of HOLOCENE eruptions: `events.gvp.floor-year`, −9700).
     */
-  final case class Limits(present: Long, floor: Option[Long] = None)
+  final case class Limits(present: Limits.Present, floor: Option[Limits.Floor] = None)
+
+  object Limits:
+    type Present = Present.T
+    object Present extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Floor = Floor.T
+    object Floor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: each of the four points held inside `l` — monotone, so the order of the points is kept. */
   def clamp(ts: Span, l: Limits): Span =

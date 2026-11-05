@@ -227,7 +227,13 @@ object UiState:
   // ── the hovered suggestion (never a chip, never in the URL) ────────────────────────────────────
 
   /** A hovered filter suggestion, applied to every query but never to the chips or the URL. */
-  case class Preview(key: String, value: String)
+  case class Preview(key: Preview.Key, value: Preview.Value)
+
+  object Preview:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   val preview: Var[Option[Preview]] = Var(None)
 
   def setPreview(p: Option[Preview]): Unit =
@@ -364,7 +370,17 @@ object UiState:
     writeHash(push = false)
     bump()
 
-  case class ActiveChip(key: String, label: String, value: String, shown: Option[String] = None)
+  case class ActiveChip(key: ActiveChip.Key, label: ActiveChip.Label, value: ActiveChip.Value, shown: Option[ActiveChip.Shown] = None)
+
+  object ActiveChip:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Shown = Shown.T
+    object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def activeChips(): List[ActiveChip] =
     fields

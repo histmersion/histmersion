@@ -10,18 +10,31 @@ import com.histmersion.web.marks.Ago
   * Pure.
   */
 final case class ShelfRow(
-    key: String,
+    key: ShelfRow.Key,
     target: Target,
-    name: String,
-    kind: String,
-    line: String,
-    when: String,
-    unread: Boolean,
+    name: ShelfRow.Name,
+    kind: ShelfRow.Kind,
+    line: ShelfRow.Line,
+    when: ShelfRow.When,
+    unread: ShelfRow.Unread,
     bookmark: Option[Bookmark] = None,
     note: Option[Note] = None
 )
 
 object ShelfRow:
+
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Line = Line.T
+  object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type When = When.T
+  object When extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Unread = Unread.T
+  object Unread extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def readable(t: Target, isRead: String => Boolean): Boolean =
     ItemKind.Readable.contains(t.kind) && t.identity.exists(i => !isRead(i))

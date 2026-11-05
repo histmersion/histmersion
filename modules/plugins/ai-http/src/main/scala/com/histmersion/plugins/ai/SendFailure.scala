@@ -4,7 +4,7 @@ package com.histmersion.plugins.ai
   * providers have always described it: a connection, timeout or read failure as `<kind>: Exception when sending
   * request: <method> <url>`, anything else (a URL the client refuses) as it came.
   */
-final case class SendFailure(reported: String):
+final case class SendFailure(reported: SendFailure.Reported):
 
   /** The exception the host's client named. */
   def exception: String = reported.takeWhile(_ != ':').trim
@@ -14,6 +14,9 @@ final case class SendFailure(reported: String):
     SendFailure.kind(exception).fold(reported)(k => s"$k: Exception when sending request: $method $url")
 
 object SendFailure:
+
+  type Reported = Reported.T
+  object Reported extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Connect = Set(
     "ConnectException",

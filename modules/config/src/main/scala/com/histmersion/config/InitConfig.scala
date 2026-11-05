@@ -7,5 +7,13 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * the same on demand, and `--fetch` adds the network sources in `fetchSources` (comma-separated: gazetteer importers,
   * `land`, `periodo`).
   */
-final case class InitConfig(auto: Boolean, dataDir: String, fetchSources: String) derives ConfigReader:
+final case class InitConfig(auto: InitConfig.Auto, dataDir: InitConfig.DataDir, fetchSources: InitConfig.FetchSources) derives ConfigReader:
   def sources: List[String] = PeriodsConfig.split(fetchSources)
+
+object InitConfig:
+  type Auto = Auto.T
+  object Auto extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DataDir = DataDir.T
+  object DataDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchSources = FetchSources.T
+  object FetchSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

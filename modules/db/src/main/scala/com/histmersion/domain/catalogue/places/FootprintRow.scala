@@ -6,14 +6,14 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 
 final private[places] case class FootprintRow(
-    id: Int,
-    placeId: String,
-    role: String,
-    periodStart: Option[Long],
-    periodEnd: Option[Long],
-    certainty: Option[String],
-    accuracyM: Option[Float],
-    citekey: Option[String]
+    id: FootprintRow.Id,
+    placeId: com.histmersion.domain.catalogue.Place.Id,
+    role: FootprintRow.Role,
+    periodStart: Option[com.histmersion.Year],
+    periodEnd: Option[com.histmersion.Year],
+    certainty: Option[FootprintRow.Certainty],
+    accuracyM: Option[FootprintRow.AccuracyM],
+    citekey: Option[com.histmersion.domain.library.Citekey]
 ) derives DbCodec:
   def toDto: Place.Footprint =
     Place.Footprint(
@@ -25,3 +25,13 @@ final private[places] case class FootprintRow(
       accuracyM,
       citekey
     )
+
+object FootprintRow:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Role = Role.T
+  object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Certainty = Certainty.T
+  object Certainty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AccuracyM = AccuracyM.T
+  object AccuracyM extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Float, _root_.io.github.iltotore.iron.constraint.any.Pure]

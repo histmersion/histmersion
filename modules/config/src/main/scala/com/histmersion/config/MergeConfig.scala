@@ -8,26 +8,44 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final case class MergeConfig(
     /** A score at or above this, with no hard flag, merges without asking. */
-    autoMerge: Double,
+    autoMerge: MergeConfig.AutoMerge,
     /** A score at or below this is not the same work. */
-    newAtMost: Double,
+    newAtMost: MergeConfig.NewAtMost,
     /** MinHash functions per OCR body. */
-    minhashSize: Int,
+    minhashSize: MergeConfig.MinhashSize,
     /** Two findings of a merged pair are near-duplicates at this claim-word Jaccard (with overlapping periods): kept
       * apart by default, listed so the user can say `merge`.
       */
-    findingNearAtLeast: Double,
+    findingNearAtLeast: MergeConfig.FindingNearAtLeast,
     /** Two findings of a merged pair are at the same place within this many km (§5.4). */
-    findingWithinKm: Double,
+    findingWithinKm: MergeConfig.FindingWithinKm,
     weights: MergeWeights,
     /** A place of the bundle with no id here is the same as a place here with its label and kind when the two points
       * are this close (km)…
       */
-    placeWithinKm: Double = 5.0,
+    placeWithinKm: MergeConfig.PlaceWithinKm = 5.0,
     /** …or the two shapes overlap this much (intersection over union). */
-    placeOverlapAtLeast: Double = 0.8,
+    placeOverlapAtLeast: MergeConfig.PlaceOverlapAtLeast = 0.8,
     /** How long `POST /api/merge/apply` waits for the apply (its backup first) before it answers `running` with the job
       * to follow (`GET /api/merge/apply/{job}`).
       */
-    applyWaitSeconds: Int = 20
+    applyWaitSeconds: MergeConfig.ApplyWaitSeconds = 20
 ) derives ConfigReader
+
+object MergeConfig:
+  type AutoMerge = AutoMerge.T
+  object AutoMerge extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewAtMost = NewAtMost.T
+  object NewAtMost extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinhashSize = MinhashSize.T
+  object MinhashSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingNearAtLeast = FindingNearAtLeast.T
+  object FindingNearAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingWithinKm = FindingWithinKm.T
+  object FindingWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceWithinKm = PlaceWithinKm.T
+  object PlaceWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceOverlapAtLeast = PlaceOverlapAtLeast.T
+  object PlaceOverlapAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyWaitSeconds = ApplyWaitSeconds.T
+  object ApplyWaitSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

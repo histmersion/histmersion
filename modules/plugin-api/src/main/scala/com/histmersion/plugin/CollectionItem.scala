@@ -30,15 +30,37 @@ package com.histmersion.plugin
   */
 final case class CollectionItem(
     id: CollectionId,
-    title: Option[String] = None,
-    authors: List[String] = Nil,
+    title: Option[CollectionItem.Title] = None,
+    authors: List[CollectionItem.Authors] = Nil,
     year: Option[Year] = None,
-    published: Option[String] = None,
-    publisher: Option[String] = None,
-    description: Option[String] = None,
-    tags: List[String] = Nil,
-    identifiers: Map[String, String] = Map.empty,
+    published: Option[CollectionItem.Published] = None,
+    publisher: Option[CollectionItem.Publisher] = None,
+    description: Option[CollectionItem.Description] = None,
+    tags: List[CollectionItem.Tags] = Nil,
+    identifiers: Map[CollectionItem.IdentifiersKey, CollectionItem.IdentifiersValue] = Map.empty,
     files: List[CollectionFile] = Nil,
-    cover: Option[String] = None,
-    restricted: Boolean = false
+    cover: Option[CollectionItem.Cover] = None,
+    restricted: CollectionItem.Restricted = false
 )
+
+object CollectionItem:
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Authors = Authors.T
+  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Published = Published.T
+  object Published extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Publisher = Publisher.T
+  object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tags = Tags.T
+  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdentifiersKey = IdentifiersKey.T
+  object IdentifiersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdentifiersValue = IdentifiersValue.T
+  object IdentifiersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Cover = Cover.T
+  object Cover extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Restricted = Restricted.T
+  object Restricted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

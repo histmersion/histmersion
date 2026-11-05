@@ -24,16 +24,34 @@ object UploadView:
     * succeeds.
     */
   final case class Draft(
-      fileName: Option[String] = None,
-      citekey: String = "",
-      title: String = "",
-      authors: List[String] = Nil,
-      year: String = "",
-      doi: String = "",
-      quality: Boolean = false,
-      force: Boolean = false,
+      fileName: Option[Draft.FileName] = None,
+      citekey: Draft.Citekey = "",
+      title: Draft.Title = "",
+      authors: List[Draft.Authors] = Nil,
+      year: Draft.Year = "",
+      doi: Draft.Doi = "",
+      quality: Draft.Quality = false,
+      force: Draft.Force = false,
       forItem: Option[Queue.QueueItem] = None
   )
+
+  object Draft:
+    type FileName = FileName.T
+    object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = Year.T
+    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quality = Quality.T
+    object Quality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Force = Force.T
+    object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A form field a message belongs next to. */
   enum Field:

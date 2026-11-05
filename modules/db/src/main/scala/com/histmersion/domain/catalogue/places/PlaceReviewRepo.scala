@@ -20,22 +20,48 @@ import com.histmersion.api.catalogue.Geocode
 private[places] object PlaceReviewRepo:
 
   final private case class Row(
-      id: String,
-      label: String,
-      kind: String,
-      types: Option[String],
-      periods: Option[String],
-      start: Option[Long],
-      end: Option[Long]
+      id: Row.Id,
+      label: Row.Label,
+      kind: Row.Kind,
+      types: Option[Row.Types],
+      periods: Option[Row.Periods],
+      start: Option[Row.Start],
+      end: Option[Row.End]
   ) derives DbCodec
 
+  object Row:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Types = Types.T
+    object Types extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Periods = Periods.T
+    object Periods extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private case class ItemRow(
-      placeId: String,
-      ref: String,
-      itemClass: Option[String],
-      from: Option[Long],
-      to: Option[Long]
+      placeId: com.histmersion.domain.catalogue.Place.Id,
+      ref: ItemRow.Ref,
+      itemClass: Option[ItemRow.ItemClass],
+      from: Option[ItemRow.From],
+      to: Option[ItemRow.To]
   ) derives DbCodec
+
+  object ItemRow:
+    type Ref = Ref.T
+    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemClass = ItemClass.T
+    object ItemClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private given DbCodec[Candidate] = DbCodec.derived
 
@@ -167,13 +193,13 @@ private[places] object PlaceReviewRepo:
 
   /** A grid-cell place and the better point one of its linked records gives. */
   final case class Relocation(
-      id: String,
-      label: String,
-      fromLon: Double,
-      fromLat: Double,
-      ref: String,
-      lon: Double,
-      lat: Double
+      id: Relocation.Id,
+      label: Relocation.Label,
+      fromLon: Relocation.FromLon,
+      fromLat: Relocation.FromLat,
+      ref: Relocation.Ref,
+      lon: com.histmersion.Longitude,
+      lat: com.histmersion.Latitude
   ) derives DbCodec:
     def km: Double = Geocode.distanceKm(fromLon, fromLat, lon, lat)
 
@@ -193,6 +219,18 @@ private[places] object PlaceReviewRepo:
         lon,
         km
       )
+
+  object Relocation:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromLon = FromLon.T
+    object FromLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromLat = FromLat.T
+    object FromLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ref = Ref.T
+    object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Every grid-cell place a linked record (Wikidata's P625) puts somewhere that is no grid centre itself; one per
     * place, the nearest such point. A place whose point a person set (`places set --point`, V081) is decided: never

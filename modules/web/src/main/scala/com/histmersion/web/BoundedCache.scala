@@ -89,6 +89,16 @@ final class BoundedCache[K, V](
 
 object BoundedCache:
   /** The figures a diagnostics read reports for one cache. */
-  final case class Stats(entries: Int, maxEntries: Int, weight: Long, maxWeight: Long)
+  final case class Stats(entries: Stats.Entries, maxEntries: Stats.MaxEntries, weight: Stats.Weight, maxWeight: Stats.MaxWeight)
+
+  object Stats:
+    type Entries = Entries.T
+    object Entries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxEntries = MaxEntries.T
+    object MaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Weight = Weight.T
+    object Weight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxWeight = MaxWeight.T
+    object MaxWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def stats(c: BoundedCache[?, ?]): Stats = Stats(c.size, c.maxEntries, c.weight, c.maxWeight)

@@ -15,11 +15,11 @@ import scala.scalajs.js
   * `basemap.labels.language` — contours on, the depth on in Physical and off in Readable).
   */
 final case class MapPrefs(
-    names: Option[Boolean] = None,
-    language: Option[String] = None,
-    contours: Option[Boolean] = None,
-    depthPhysical: Option[Boolean] = None,
-    depthReadable: Option[Boolean] = None
+    names: Option[MapPrefs.Names] = None,
+    language: Option[MapPrefs.Language] = None,
+    contours: Option[MapPrefs.Contours] = None,
+    depthPhysical: Option[MapPrefs.DepthPhysical] = None,
+    depthReadable: Option[MapPrefs.DepthReadable] = None
 ) derives hearth.kindlings.circederivation.KindlingsCodecAsObject:
 
   /** Is the sea drawn by its depth in `style`: the viewer's choice, else the style's default. Pure. */
@@ -38,6 +38,17 @@ object MapPrefs:
   /** Physical is the map of the land's form, its sea coloured by depth; Readable keeps OSM Carto's flat water unless
     * the viewer asks for the depth.
     */
+  type Names = Names.T
+  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Language = Language.T
+  object Language extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Contours = Contours.T
+  object Contours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthPhysical = DepthPhysical.T
+  object DepthPhysical extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DepthReadable = DepthReadable.T
+  object DepthReadable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def depthByDefault(style: VectorStyle): Boolean = style == VectorStyle.Physical
 
   /** Kept as one JSON value; anything unreadable is no options at all. */

@@ -18,8 +18,16 @@ object RangeLabels:
   def width(text: String): Double = text.length * 5.0
 
   /** One label: its left edge `x` and width `w` (drawn with `text-anchor: start` at `x`). */
-  final case class Label(text: String, x: Double, w: Double):
+  final case class Label(text: Label.Text, x: Label.X, w: Label.W):
     def end: Double = x + w
+
+  object Label:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type W = W.T
+    object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Placement:
     case Inside(from: Label, to: Label)

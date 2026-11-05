@@ -8,17 +8,30 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * Anything but `auto` is manual.
   */
 final case class AgentApprovalsConfig(
-    statusChange: String,
-    edges: String,
-    articlePublish: String,
-    articleFilter: String = "manual",
-    articlePlan: String = "manual",
-    goalPlan: String = "manual",
+    statusChange: AgentApprovalsConfig.StatusChange,
+    edges: AgentApprovalsConfig.Edges,
+    articlePublish: AgentApprovalsConfig.ArticlePublish,
+    articleFilter: AgentApprovalsConfig.ArticleFilter = "manual",
+    articlePlan: AgentApprovalsConfig.ArticlePlan = "manual",
+    goalPlan: AgentApprovalsConfig.GoalPlan = "manual",
     auto: AutoApprovalsConfig = AutoApprovalsConfig()
 ) derives ConfigReader
 
 object AgentApprovalsConfig:
   /** `auto` or `checked`, in any case. */
+  type StatusChange = StatusChange.T
+  object StatusChange extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Edges = Edges.T
+  object Edges extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlePublish = ArticlePublish.T
+  object ArticlePublish extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleFilter = ArticleFilter.T
+  object ArticleFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticlePlan = ArticlePlan.T
+  object ArticlePlan extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalPlan = GoalPlan.T
+  object GoalPlan extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def isChecked(raw: String): Boolean =
     val v = Option(raw).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT)
     v == "auto" || v == "checked"

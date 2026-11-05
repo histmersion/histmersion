@@ -28,26 +28,46 @@ private[places] object TreeRepo:
       case _                  => None
 
   final private[histmersion] case class RegionNodeRow(
-      id: String,
-      label: String,
-      kind: String,
-      periodStart: Option[Long],
-      periodEnd: Option[Long],
-      contested: Boolean,
-      withdrawn: Boolean
+      id: RegionNodeRow.Id,
+      label: RegionNodeRow.Label,
+      kind: RegionNodeRow.Kind,
+      periodStart: Option[com.histmersion.Year],
+      periodEnd: Option[com.histmersion.Year],
+      contested: RegionNodeRow.Contested,
+      withdrawn: RegionNodeRow.Withdrawn
   ) derives DbCodec:
     def toNode: RegionNode =
       RegionNode(id, label, kind, periodOf(periodStart, periodEnd), contested, withdrawn)
 
+  object RegionNodeRow:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Contested = Contested.T
+    object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Withdrawn = Withdrawn.T
+    object Withdrawn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private[histmersion] case class RelationRow(
-      childId: String,
-      parentId: String,
-      kind: String,
-      periodStart: Option[Long],
-      periodEnd: Option[Long]
+      childId: RelationRow.ChildId,
+      parentId: RelationRow.ParentId,
+      kind: RelationRow.Kind,
+      periodStart: Option[com.histmersion.Year],
+      periodEnd: Option[com.histmersion.Year]
   ) derives DbCodec:
     def toRelation: Place.Relation =
       Place.Relation(childId, parentId, kind, periodOf(periodStart, periodEnd))
+
+  object RelationRow:
+    type ChildId = ChildId.T
+    object ChildId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentId = ParentId.T
+    object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── the gazetteer the rows hang off ──────────────────────────────────────────────────────────
 

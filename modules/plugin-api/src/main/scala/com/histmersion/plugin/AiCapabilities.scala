@@ -12,15 +12,24 @@ package com.histmersion.plugin
   *   off, it adds them
   */
 final case class AiCapabilities(
-    tools: Boolean = true,
-    structuredOutput: Boolean = false,
-    iterationMarkers: Boolean = false,
-    verbatimFailures: Boolean = false
+    tools: AiCapabilities.Tools = true,
+    structuredOutput: AiCapabilities.StructuredOutput = false,
+    iterationMarkers: AiCapabilities.IterationMarkers = false,
+    verbatimFailures: AiCapabilities.VerbatimFailures = false
 ):
   /** The constructor of a provider compiled before the loop's notes and verbatim failures existed. */
   def this(tools: Boolean, structuredOutput: Boolean) = this(tools, structuredOutput, false, false)
 
 object AiCapabilities:
   /** The capabilities as a provider compiled before the loop's notes and verbatim failures wrote them. */
+  type Tools = Tools.T
+  object Tools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StructuredOutput = StructuredOutput.T
+  object StructuredOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IterationMarkers = IterationMarkers.T
+  object IterationMarkers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerbatimFailures = VerbatimFailures.T
+  object VerbatimFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(tools: Boolean, structuredOutput: Boolean): AiCapabilities =
     new AiCapabilities(tools, structuredOutput, false, false)

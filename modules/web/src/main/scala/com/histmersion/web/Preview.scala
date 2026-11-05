@@ -48,44 +48,92 @@ object Preview:
 
   /** The preview card of a source, as data — pure, so what it shows is a unit test. */
   final case class Card(
-      title: String,
-      byline: String,
-      identifier: String,
+      title: Card.Title,
+      byline: Card.Byline,
+      identifier: Card.Identifier,
       status: Option[com.histmersion.api.library.Source.Status],
-      chips: List[(String, String)],
-      where: String,
-      summary: Option[String],
+      chips: List[(Card.ChipsPart1, Card.ChipsPart2)],
+      where: Card.Where,
+      summary: Option[Card.Summary],
       /** Short facts, one per line (a place's parents and its counts). */
-      facts: List[String] = Nil,
+      facts: List[Card.Facts] = Nil,
       /** Pages elsewhere, as (text, href): a place's Wikidata, GeoNames or Pleiades page. */
-      links: List[(String, String)] = Nil,
+      links: List[(Card.LinksPart1, Card.LinksPart2)] = Nil,
       /** The picture a place or event card shows, with its credit and licence (#1446). */
       media: Option[MediaThumb] = None,
       /** What the card is about before anything is read — an icon of [[Glyphs]] chosen by [[CardIcons]] (an event's
         * kind, a site's type, a region, a source's type…) — and an event's TIER (`attested` | `catalogue`, #1449).
         */
-      icon: Option[String] = None,
-      tier: Option[String] = None,
+      icon: Option[Card.Icon] = None,
+      tier: Option[Card.Tier] = None,
       /** An event's sections (#1449): the sources attesting it, the articles citing them, the findings near it, the
         * sources that may discuss it (unconfirmed), its catalogues, its leads.
         */
       sections: List[Preview.Section] = Nil
   )
 
+  object Card:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Byline = Byline.T
+    object Byline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Identifier = Identifier.T
+    object Identifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChipsPart1 = ChipsPart1.T
+    object ChipsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChipsPart2 = ChipsPart2.T
+    object ChipsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Where = Where.T
+    object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Facts = Facts.T
+    object Facts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinksPart1 = LinksPart1.T
+    object LinksPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinksPart2 = LinksPart2.T
+    object LinksPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Icon = Icon.T
+    object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tier = Tier.T
+    object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** One titled list on a card. */
-  final case class Section(title: String, items: List[Item], note: Option[String] = None, kind: String = "")
+  final case class Section(title: Section.Title, items: List[Item], note: Option[Section.Note] = None, kind: Section.Kind = "")
+
+  object Section:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One line: text, optionally a source (`citekey` → a source link with its own card), an article (`slug`), a page
     * elsewhere (`href`), a command to copy, a literature query to run.
     */
   final case class Item(
-      text: String,
-      citekey: Option[String] = None,
-      slug: Option[String] = None,
-      href: Option[String] = None,
-      command: Option[String] = None,
-      query: Option[String] = None
+      text: Item.Text,
+      citekey: Option[Item.Citekey] = None,
+      slug: Option[Item.Slug] = None,
+      href: Option[Item.Href] = None,
+      command: Option[Item.Command] = None,
+      query: Option[Item.Query] = None
   )
+
+  object Item:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Href = Href.T
+    object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Command = Command.T
+    object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val SummaryChars = 300
 
@@ -590,7 +638,15 @@ object Preview:
     if natural > fit.maxH + 1 then box.classList.add("is-clipped") else box.classList.remove("is-clipped")
 
   /** Where a card goes: its top-left corner, and the most height it may take there. */
-  final case class Fit(x: Double, y: Double, maxH: Double)
+  final case class Fit(x: Fit.X, y: Fit.Y, maxH: Fit.MaxH)
+
+  object Fit:
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Y = Y.T
+    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxH = MaxH.T
+    object MaxH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The margin a card keeps from every viewport edge, and the least room worth placing it in beside its anchor; with
     * less on both sides it uses the whole height and covers the anchor instead.

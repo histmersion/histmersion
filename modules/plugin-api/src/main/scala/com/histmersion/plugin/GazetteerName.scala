@@ -12,8 +12,14 @@ package com.histmersion.plugin
   *   the end of [[period]] the dataset does not know, if one
   */
 final case class GazetteerName(
-    name: String,
-    lang: String = "",
+    name: GazetteerName.Name,
+    lang: GazetteerName.Lang = "",
     period: Option[Period] = None,
     open: Option[GazetteerOpenSide] = None
 )
+
+object GazetteerName:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Lang = Lang.T
+  object Lang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

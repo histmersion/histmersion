@@ -16,13 +16,29 @@ import scala.concurrent.duration.*
   * or a full path; `""` = none) tells which keys are connected, so only those are tried.
   */
 final case class KeePassXcConfig(
-    cli: String,
-    database: String,
-    keyFile: String,
+    cli: KeePassXcConfig.Cli,
+    database: KeePassXcConfig.Database,
+    keyFile: KeePassXcConfig.KeyFile,
     password: Option[Secret],
-    attribute: String,
-    timeoutSeconds: Int,
+    attribute: KeePassXcConfig.Attribute,
+    timeoutSeconds: KeePassXcConfig.TimeoutSeconds,
     yubikey: Option[YubiKey.Setting],
-    yubikeyTimeoutSeconds: Int,
-    ykman: String
+    yubikeyTimeoutSeconds: KeePassXcConfig.YubikeyTimeoutSeconds,
+    ykman: KeePassXcConfig.Ykman
 ) derives ConfigReader
+
+object KeePassXcConfig:
+  type Cli = Cli.T
+  object Cli extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Database = Database.T
+  object Database extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyFile = KeyFile.T
+  object KeyFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Attribute = Attribute.T
+  object Attribute extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YubikeyTimeoutSeconds = YubikeyTimeoutSeconds.T
+  object YubikeyTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ykman = Ykman.T
+  object Ykman extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

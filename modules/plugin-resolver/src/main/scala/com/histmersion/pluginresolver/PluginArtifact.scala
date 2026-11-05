@@ -8,5 +8,9 @@ import java.nio.file.Path
 /** A plugin jar to resolve the dependencies of, with the text of the POM that lists them when it was published with
   * one. Without a POM it has no dependencies of its own.
   */
-final case class PluginArtifact(jar: Path, pom: Option[String]):
+final case class PluginArtifact(jar: Path, pom: Option[PluginArtifact.Pom]):
   def fileName: String = jar.getFileName.toString
+
+object PluginArtifact:
+  type Pom = Pom.T
+  object Pom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

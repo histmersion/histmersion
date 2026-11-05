@@ -10,9 +10,15 @@ import org.ekrich.config.{ConfigValue, ConfigValueType}
 object YubiKey:
 
   /** One `<slot>[:<serial>]`: the challenge-response slot (1 or 2) and, optionally, which key. */
-  final case class Slot(slot: Int, serial: Option[Long]):
+  final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
     def shown: String = serial.fold(slot.toString)(s => s"$slot:$s")
+
+  object Slot:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Serial = Serial.T
+    object Serial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: `"2"` or `"2:12345678"`. */
   def parse(text: String): Either[String, Slot] =
@@ -105,9 +111,12 @@ object YubiKey:
   /** The `yubikey` setting: one `"<slot>[:<serial>]"` string (commas or spaces may separate several), or a list of
     * them, tried in that order.
     */
-  final case class Setting(entries: List[String])
+  final case class Setting(entries: List[Setting.Entries])
 
   object Setting:
+    type Entries = Entries.T
+    object Entries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given ConfigReader[Setting] = new ConfigReader[Setting]:
       def from(v: ConfigValue) =
         if v.valueType == ConfigValueType.LIST then summon[ConfigReader[List[String]]].from(v).map(Setting(_))

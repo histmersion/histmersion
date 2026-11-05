@@ -14,7 +14,15 @@ package com.histmersion.plugin
   */
 final case class MediaRights(
     licence: Licence,
-    licenceUrl: Option[String] = None,
-    author: Option[String] = None,
-    credit: String = ""
+    licenceUrl: Option[MediaRights.LicenceUrl] = None,
+    author: Option[MediaRights.Author] = None,
+    credit: MediaRights.Credit = ""
 )
+
+object MediaRights:
+  type LicenceUrl = LicenceUrl.T
+  object LicenceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Author = Author.T
+  object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Credit = Credit.T
+  object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

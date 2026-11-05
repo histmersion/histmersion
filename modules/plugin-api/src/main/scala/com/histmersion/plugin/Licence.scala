@@ -23,9 +23,16 @@ object Licence extends RefinedType[String, Pure]:
     * @param needsAttribution
     *   whether the licence requires the author to be named (every CC BY variant and the GFDL)
     */
-  final case class Read(id: String, family: String, needsAttribution: Boolean = false)
+  final case class Read(id: Read.Id, family: Read.Family, needsAttribution: Read.NeedsAttribution = false)
 
   object Read:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Family = Family.T
+    object Family extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NeedsAttribution = NeedsAttribution.T
+    object NeedsAttribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Cc0 = "cc0"
     val PublicDomain = "public-domain"
     val AllRights = "all-rights-reserved"

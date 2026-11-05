@@ -7,9 +7,9 @@ final case class ListPage[Row](
     rows: List[Row] = Nil,
     offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
     total: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
-    loaded: Boolean = false,
-    loading: Boolean = false,
-    error: Option[String] = None
+    loaded: ListPage.Loaded = false,
+    loading: ListPage.Loading = false,
+    error: Option[ListPage.Error] = None
 ):
 
   def hasPrevious: Boolean = offset.value > 0
@@ -22,6 +22,13 @@ final case class ListPage[Row](
 object ListPage:
 
   /** Pure: a whole number with its thousands grouped by commas (`1,026`), whatever the browser's locale. */
+  type Loaded = Loaded.T
+  object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Loading = Loading.T
+  object Loading extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Error = Error.T
+  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def grouped(n: Int): String =
     val digits = math.abs(n.toLong).toString
     val head = digits.length % 3

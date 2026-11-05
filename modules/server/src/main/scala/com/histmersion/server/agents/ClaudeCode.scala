@@ -188,16 +188,34 @@ object ClaudeCode:
 
   /** The final `result` line. `usage` follows sttp-ai's convention (input counts cached tokens too). */
   final case class Result(
-      subtype: String,
-      isError: Boolean,
-      text: String,
+      subtype: Result.Subtype,
+      isError: Result.IsError,
+      text: Result.Text,
       structured: Option[Json],
-      turns: Int,
-      costUsd: Option[Double],
-      denials: List[String],
-      errors: List[String],
-      terminalReason: Option[String] = None
+      turns: Result.Turns,
+      costUsd: Option[Result.CostUsd],
+      denials: List[Result.Denials],
+      errors: List[Result.Errors],
+      terminalReason: Option[Result.TerminalReason] = None
   )
+
+  object Result:
+    type Subtype = Subtype.T
+    object Subtype extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsError = IsError.T
+    object IsError extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Turns = Turns.T
+    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostUsd = CostUsd.T
+    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Denials = Denials.T
+    object Denials extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Errors = Errors.T
+    object Errors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TerminalReason = TerminalReason.T
+    object TerminalReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What one `claude -p` run printed: the conversation (assistant text, tool calls and their results, in order), the
     * result line, the usage and the model that served it — the result's `modelUsage` entry with the most output tokens
@@ -209,12 +227,22 @@ object ClaudeCode:
       toolCalls: Vector[ToolCallRecord],
       result: Option[Result],
       usage: TokenUsage,
-      modelId: Option[String],
-      mcpProblem: Option[String],
+      modelId: Option[Outcome.ModelId],
+      mcpProblem: Option[Outcome.McpProblem],
       readings: List[com.histmersion.api.automation.PlanQuota.Reading] = Nil,
-      served: List[(String, TokenUsage)] = Nil,
-      firstCall: Option[Long] = None
+      served: List[(Outcome.ServedPart1, TokenUsage)] = Nil,
+      firstCall: Option[Outcome.FirstCall] = None
   )
+
+  object Outcome:
+    type ModelId = ModelId.T
+    object ModelId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type McpProblem = McpProblem.T
+    object McpProblem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ServedPart1 = ServedPart1.T
+    object ServedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstCall = FirstCall.T
+    object FirstCall extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def tokens(j: Json, keys: String*): Long =
     keys.iterator.flatMap(k => j.hcursor.downField(k).as[Long].toOption).nextOption().getOrElse(0L)
@@ -354,7 +382,11 @@ object ClaudeCode:
   /** The plan's usage limit, as the CLI reports it: `… usage limit reached|<epoch seconds>` (older releases) or a
     * sentence about the limit (newer) — the reset time when the text carries one.
     */
-  final case class Limit(message: String, until: Option[java.time.Instant])
+  final case class Limit(message: Limit.Message, until: Option[java.time.Instant])
+
+  object Limit:
+    type Message = Message.T
+    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def usageLimit(r: Result): Option[Limit] =
     val all = (r.text :: r.errors).mkString(" ")

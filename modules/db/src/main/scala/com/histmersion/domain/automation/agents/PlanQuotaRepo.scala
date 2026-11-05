@@ -40,12 +40,24 @@ object PlanQuotaRepo:
 
   /** What a person set on a pool and what the provider refused. */
   final case class Pool(
-      held: Boolean,
-      floors: Option[String],
-      refusal: Option[String],
-      refusalUntil: Option[Long],
-      planType: Option[String]
+      held: Pool.Held,
+      floors: Option[Pool.Floors],
+      refusal: Option[Pool.Refusal],
+      refusalUntil: Option[Pool.RefusalUntil],
+      planType: Option[Pool.PlanType]
   )
+
+  object Pool:
+    type Held = Held.T
+    object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Floors = Floors.T
+    object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refusal = Refusal.T
+    object Refusal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefusalUntil = RefusalUntil.T
+    object RefusalUntil extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlanType = PlanType.T
+    object PlanType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val NoPool: Pool = Pool(false, None, None, None, None)
 

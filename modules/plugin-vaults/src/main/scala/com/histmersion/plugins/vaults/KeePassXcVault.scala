@@ -69,7 +69,11 @@ final class KeePassXcVault(
   private def argv(attr: String, entry: String, yk: Option[YubiKey.Slot]): List[String] =
     List(exe, "show", "-q", "-a", attr) ++ unlocking(yk) ++ List(db, entry)
 
-  final private case class Opened(session: Subprocess.Session, prompt: String)
+  final private case class Opened(session: Subprocess.Session, prompt: Opened.Prompt)
+
+  object Opened:
+    type Prompt = Prompt.T
+    object Prompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Start `keepassxc-cli open` and wait for its prompt: `Right(Right)` = open, `Right(Left)` = it exited (its answer),
     * `Left` = it could not start or did not answer within `wait` (killed). The password line is written alone, before

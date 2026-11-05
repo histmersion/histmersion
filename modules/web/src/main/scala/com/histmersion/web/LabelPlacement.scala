@@ -26,13 +26,19 @@ import scala.collection.mutable
 object LabelPlacement:
 
   /** A point in the zoom-0 Mercator plane. */
-  final case class Pt(x: Double, y: Double)
+  final case class Pt(x: Pt.X, y: Pt.Y)
+
+  object Pt:
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Y = Y.T
+    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A polygon: its outer ring then its holes, each a closed or open list of points. */
   type Poly = Vector[Vector[Pt]]
 
   /** An axis-aligned rectangle (a bounding box, a viewport), `min ≤ max` on both axes when non-empty. */
-  final case class Rect(minX: Double, minY: Double, maxX: Double, maxY: Double):
+  final case class Rect(minX: Rect.MinX, minY: Rect.MinY, maxX: Rect.MaxX, maxY: Rect.MaxY):
     def w: Double = maxX - minX
     def h: Double = maxY - minY
     def isEmpty: Boolean = minX > maxX || minY > maxY
@@ -48,6 +54,15 @@ object LabelPlacement:
 
   object Rect:
     /** Pure: the bounding box of some points (empty for none). */
+    type MinX = MinX.T
+    object MinX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinY = MinY.T
+    object MinY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxX = MaxX.T
+    object MaxX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxY = MaxY.T
+    object MaxY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def of(pts: Iterable[Pt]): Rect =
       var x0 = Double.PositiveInfinity
       var y0 = Double.PositiveInfinity
@@ -125,16 +140,26 @@ object LabelPlacement:
     *   - `archipelago`: no part holds [[DominantShare]] of the land, so the hull stands for the shape.
     */
   final case class Shape(
-      lat: Double,
-      lon: Double,
+      lat: Shape.Lat,
+      lon: Shape.Lon,
       home: Pt,
-      size0: Double,
+      size0: Shape.Size0,
       bbox0: Rect,
       parts: Vector[Part],
-      archipelago: Boolean
+      archipelago: Shape.Archipelago
   ):
     /** The shape's larger side at zoom 0. */
     def extent0: Double = math.max(bbox0.w, bbox0.h)
+
+  object Shape:
+    type Lat = Lat.T
+    object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lon = Lon.T
+    object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Size0 = Size0.T
+    object Size0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Archipelago = Archipelago.T
+    object Archipelago extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A part that holds at least this share of a shape's land names it; below that the shape is an archipelago and is
     * named, and sized, by the hull of all its parts.
@@ -482,7 +507,21 @@ object LabelPlacement:
   /** A label as the culling sees it: its key, its centre in screen (or layer) pixels, its size, and its rank — higher
     * wins a collision.
     */
-  final case class Box(key: String, cx: Double, cy: Double, w: Double, h: Double, rank: Double)
+  final case class Box(key: Box.Key, cx: Box.Cx, cy: Box.Cy, w: Box.W, h: Box.H, rank: Box.Rank)
+
+  object Box:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cx = Cx.T
+    object Cx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cy = Cy.T
+    object Cy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type W = W.T
+    object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type H = H.T
+    object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rank = Rank.T
+    object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Room kept between two names, px. */
   val PadPx = 3.0

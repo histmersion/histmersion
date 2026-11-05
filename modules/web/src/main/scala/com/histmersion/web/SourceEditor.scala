@@ -20,21 +20,44 @@ object SourceEditor:
 
   /** The form as typed. Years are text so `1300 BCE` can be typed and shown as such. */
   final case class Draft(
-      title: String,
-      authors: List[String],
-      year: String,
-      venue: String,
-      doi: String,
+      title: Draft.Title,
+      authors: List[Draft.Authors],
+      year: Draft.Year,
+      venue: Draft.Venue,
+      doi: Draft.Doi,
       status: Source.Status,
-      topics: List[String],
-      regions: List[String],
-      tags: List[String],
-      periodStart: String,
-      periodEnd: String,
-      summary: String
+      topics: List[Draft.Topics],
+      regions: List[Draft.Regions],
+      tags: List[Draft.Tags],
+      periodStart: Draft.PeriodStart,
+      periodEnd: Draft.PeriodEnd,
+      summary: Draft.Summary
   )
 
   object Draft:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = Year.T
+    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Venue = Venue.T
+    object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regions = Regions.T
+    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodStart = PeriodStart.T
+    object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodEnd = PeriodEnd.T
+    object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def of(s: com.histmersion.api.library.Source.Detail): Draft = Draft(
       title = s.title.value,
       authors = s.authors.map(_.value),

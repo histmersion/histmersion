@@ -15,7 +15,19 @@ object Mvt:
   /** A protobuf field: its number, wire type and raw bytes (the whole field, tag included), and for a length-delimited
     * field its payload's range in `src`.
     */
-  final private case class Field(number: Int, wireType: Int, start: Int, end: Int, payloadStart: Int)
+  final private case class Field(number: Field.Number, wireType: Field.WireType, start: Field.Start, end: Field.End, payloadStart: Field.PayloadStart)
+
+  object Field:
+    type Number = Number.T
+    object Number extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireType = WireType.T
+    object WireType extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PayloadStart = PayloadStart.T
+    object PayloadStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final private class Reader(val b: Array[Byte], from: Int, until: Int):
     var pos: Int = from // the next unread byte
@@ -80,16 +92,28 @@ object Mvt:
     * when `None`) — a page's cut drops the names in a hundred languages it does not show.
     */
   final case class Rule(
-      keep: Set[String] = Set.empty,
-      drop: Set[String] = Set.empty,
-      none: Boolean = false,
-      geoms: Set[Int] = Set.empty,
-      props: Option[Set[String]] = None
+      keep: Set[Rule.Keep] = Set.empty,
+      drop: Set[Rule.Drop] = Set.empty,
+      none: Rule.None = false,
+      geoms: Set[Rule.Geoms] = Set.empty,
+      props: Option[Set[Rule.Props]] = None
   ):
     def keeps(kind: Option[String]): Boolean = kind match
       case None    => keep.isEmpty
       case Some(k) => (keep.isEmpty || keep(k)) && !drop(k)
     def all: Boolean = keep.isEmpty && drop.isEmpty && !none && geoms.isEmpty && props.isEmpty
+
+  object Rule:
+    type Keep = Keep.T
+    object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Drop = Drop.T
+    object Drop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type None = None.T
+    object None extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Geoms = Geoms.T
+    object Geoms extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Props = Props.T
+    object Props extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The tile with the layers `rules` names thinned by their [[Rule]] (a `none` rule drops the layer) and the others
     * kept when `others`, dropped otherwise. A layer left with no feature is dropped too.

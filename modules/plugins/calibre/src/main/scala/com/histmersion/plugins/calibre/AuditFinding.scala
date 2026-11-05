@@ -4,8 +4,8 @@ package com.histmersion.plugins.calibre
   * chapter and its volume is fine when it matches either).
   */
 final case class AuditFinding(
-    calibreId: Int,
-    citekeys: List[String],
+    calibreId: AuditFinding.CalibreId,
+    citekeys: List[AuditFinding.Citekeys],
     issues: List[AuditIssue],
     calibre: Option[Calibre.Book],
     record: AuditRecord
@@ -14,3 +14,9 @@ final case class AuditFinding(
     * not the printing on the shelf (the user's decision of 2026-10-03).
     */
   def fixable: Boolean = !issues.contains(AuditIssue.Missing)
+
+object AuditFinding:
+  type CalibreId = CalibreId.T
+  object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Citekeys = Citekeys.T
+  object Citekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

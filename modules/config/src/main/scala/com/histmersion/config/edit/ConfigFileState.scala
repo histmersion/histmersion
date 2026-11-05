@@ -7,7 +7,7 @@ import org.ekrich.config.{Config, ConfigOrigin}
   * includes).
   */
 final case class ConfigFileState(
-    text: Option[String],
+    text: Option[ConfigFileState.Text],
     version: FileVersion,
     parsed: Config,
     own: ConfigOrigin => Boolean
@@ -20,3 +20,7 @@ final case class ConfigFileState(
     ConfigTextEdit.written(parsed, key, here) match
       case Written.Here(v) => SettingValue.fromConfig(v)
       case _               => None
+
+object ConfigFileState:
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

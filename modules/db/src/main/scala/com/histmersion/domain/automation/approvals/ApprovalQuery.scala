@@ -9,8 +9,8 @@ import com.histmersion.api.automation.ListFilters
 final case class ApprovalQuery(
     state: Option[ApprovalState] = None,
     kinds: List[ApprovalKind] = Nil,
-    subject: Option[String] = None,
-    goal: Option[String] = None,
+    subject: Option[ApprovalQuery.Subject] = None,
+    goal: Option[ApprovalQuery.Goal] = None,
     decidedBy: List[ListFilters.DecidedBy] = Nil
 )
 
@@ -19,6 +19,11 @@ object ApprovalQuery:
     * constants (no quote, `%` or `_` in them — `ListFiltersSuite` holds that), so they are written in, not bound: the
     * expression is used both to filter and to count.
     */
+  type Subject = Subject.T
+  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Goal = Goal.T
+  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val decidedByExpr: String =
     import ListFilters.DecidedBy
     s"""(CASE WHEN state = '${ApprovalState.Open.wire}' THEN NULL

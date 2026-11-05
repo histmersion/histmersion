@@ -12,7 +12,7 @@ import com.augustnagro.magnum.Frag
   * [[AggregateRepo]] all build and splice these, which is what lets `Filter.q` be an FTS predicate instead of an
   * `ILIKE`.
   */
-final case class Sql(text: String, params: List[Param] = Nil):
+final case class Sql(text: Sql.Text, params: List[Param] = Nil):
   def ++(that: Sql): Sql = Sql(text + that.text, params ++ that.params)
   def ++(raw: String): Sql = Sql(text + raw, params)
   def wrap(pre: String, post: String): Sql = Sql(pre + text + post, params)
@@ -35,6 +35,9 @@ final case class Sql(text: String, params: List[Param] = Nil):
     Frag(text, ps.map(Sql.value), (stmt: java.sql.PreparedStatement, pos: Int) => Sql.bind(stmt, pos, ps))
 
 object Sql:
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val empty: Sql = Sql("", Nil)
   def raw(text: String): Sql = Sql(text, Nil)
   def of(text: String, ps: Param*): Sql = Sql(text, ps.toList)

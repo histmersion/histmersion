@@ -11,16 +11,29 @@ import com.histmersion.api.research.Article
   * it, so the pane shows it at once and fills in the rest when the item is read. Pure.
   */
 final case class ReadingHead(
-    what: String,
-    title: String,
-    authors: String,
+    what: ReadingHead.What,
+    title: ReadingHead.Title,
+    authors: ReadingHead.Authors,
     status: Option[Source.Status],
-    period: String,
-    regions: String,
-    summary: Option[String]
+    period: ReadingHead.Period,
+    regions: ReadingHead.Regions,
+    summary: Option[ReadingHead.Summary]
 )
 
 object ReadingHead:
+
+  type What = What.T
+  object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Authors = Authors.T
+  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Period = Period.T
+  object Period extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Regions = Regions.T
+  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def line(parts: Option[String]*): String = parts.flatten.map(_.trim).filter(_.nonEmpty).mkString(" · ")
   private def regions(rs: List[String]): String = rs.map(Label.display).mkString(" · ")

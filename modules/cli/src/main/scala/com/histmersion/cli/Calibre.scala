@@ -647,7 +647,11 @@ object Calibre:
   /** One source the server lists as not in Calibre, with where its original is and whether it COUNTS as a gap — the
     * `calibre gaps --quiet` reminder and `calibre sync` count only these.
     */
-  final case class GapEntry(gap: CalibreGap, original: GapOriginal, counted: Boolean)
+  final case class GapEntry(gap: CalibreGap, original: GapOriginal, counted: GapEntry.Counted)
+
+  object GapEntry:
+    type Counted = Counted.T
+    object Counted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: a gap counts when there is an original to push (on this host, or stored on the server) and the source is not
     * already canonical in Calibre (provenance `calibre`, or a Calibre id — the server leaves both out; an older or
@@ -830,19 +834,19 @@ object Calibre:
     * `sqlite3 -readonly` fallback normalise to this same record).
     */
   final case class Book(
-      id: Int,
-      title: String,
-      authors: List[String],
-      pubdate: Option[String],
-      publisher: Option[String],
-      tags: List[String],
-      comments: Option[String],
-      identifiers: Map[String, String],
-      formats: List[String],
+      id: Book.Id,
+      title: Book.Title,
+      authors: List[Book.Authors],
+      pubdate: Option[Book.Pubdate],
+      publisher: Option[Book.Publisher],
+      tags: List[Book.Tags],
+      comments: Option[Book.Comments],
+      identifiers: Map[Book.IdentifiersKey, Book.IdentifiersValue],
+      formats: List[Book.Formats],
       /** The cover Calibre keeps beside the book (`<book dir>/cover.jpg`), absolute — `None` when the entry has none.
         * Read-only: `media covers` uploads a copy, the file stays as it is.
         */
-      cover: Option[String] = None
+      cover: Option[Book.Cover] = None
   ):
     /** Calibre writes `0101-01-01` for "no date"; a year below [[Acquire.MinCitekeyYear]] is that placeholder, not a
       * publication year (#714).
@@ -862,8 +866,38 @@ object Calibre:
         f
       }
 
+  object Book:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pubdate = Pubdate.T
+    object Pubdate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Publisher = Publisher.T
+    object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Comments = Comments.T
+    object Comments extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IdentifiersKey = IdentifiersKey.T
+    object IdentifiersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IdentifiersValue = IdentifiersValue.T
+    object IdentifiersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Formats = Formats.T
+    object Formats extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cover = Cover.T
+    object Cover extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** One field `calibre update` changes: what Calibre has now and what it writes. */
-  final case class Change(field: Field, from: String, to: String)
+  final case class Change(field: Field, from: Change.From, to: Change.To)
+
+  object Change:
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
   enum Field(val name: String):
@@ -883,41 +917,93 @@ object Calibre:
 
     /** `calibre search --json`: one entry. */
     final case class Book(
-        id: Int,
-        title: String,
-        authors: List[String],
-        year: Option[Int],
-        publisher: Option[String],
-        tags: List[String],
-        identifiers: Map[String, String],
-        formats: List[String]
+        id: Book.Id,
+        title: Book.Title,
+        authors: List[Book.Authors],
+        year: Option[Book.Year],
+        publisher: Option[Book.Publisher],
+        tags: List[Book.Tags],
+        identifiers: Map[Book.IdentifiersKey, Book.IdentifiersValue],
+        formats: List[Book.Formats]
     ) derives KindlingsCodecAsObject
     object Book:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Title = Title.T
+      object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Authors = Authors.T
+      object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Year = Year.T
+      object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Publisher = Publisher.T
+      object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Tags = Tags.T
+      object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type IdentifiersKey = IdentifiersKey.T
+      object IdentifiersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type IdentifiersValue = IdentifiersValue.T
+      object IdentifiersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Formats = Formats.T
+      object Formats extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       def of(b: Calibre.Book): Book =
         Book(b.id, b.title, b.authors, b.year, b.publisher, b.tags, b.identifiers, b.formats)
       def of(e: CollectionEntry): Book =
         Book(e.id.toIntOption.getOrElse(0), e.title, e.authors, e.year, e.publisher, e.tags, e.identifiers, e.formats)
 
     /** `calibre link --json`, `calibre push --json`. */
-    final case class Linked(citekey: com.histmersion.api.library.Citekey, calibreId: Int) derives KindlingsCodecAsObject
+    final case class Linked(citekey: com.histmersion.api.library.Citekey, calibreId: Linked.CalibreId) derives KindlingsCodecAsObject
+
+    object Linked:
+      type CalibreId = CalibreId.T
+      object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     /** `calibre push --replace --json`: `replaced` is the format swapped in. */
-    final case class Replaced(citekey: com.histmersion.api.library.Citekey, calibreId: Int, replaced: String) derives KindlingsCodecAsObject
+    final case class Replaced(citekey: com.histmersion.api.library.Citekey, calibreId: Replaced.CalibreId, replaced: Replaced.Value) derives KindlingsCodecAsObject
+
+    object Replaced:
+      type CalibreId = CalibreId.T
+      object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Value = Value.T
+      object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     /** `calibre update <citekey> --json`: the fields written. */
-    final case class Updated(citekey: com.histmersion.api.library.Citekey, calibreId: Int, changed: List[String]) derives KindlingsCodecAsObject
+    final case class Updated(citekey: com.histmersion.api.library.Citekey, calibreId: Updated.CalibreId, changed: List[Updated.Changed]) derives KindlingsCodecAsObject
 
-    final case class Change(field: String, from: String, to: String) derives KindlingsCodecAsObject
+    object Updated:
+      type CalibreId = CalibreId.T
+      object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Changed = Changed.T
+      object Changed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    final case class Change(field: Change.Field, from: Change.From, to: Change.To) derives KindlingsCodecAsObject
+
+    object Change:
+      type Field = Field.T
+      object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type From = From.T
+      object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type To = To.T
+      object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     /** `calibre update --all --json`: one entry's outcome. */
     final case class UpdateRow(
-        calibreId: Int,
-        citekeys: List[String],
-        state: String,
+        calibreId: UpdateRow.CalibreId,
+        citekeys: List[UpdateRow.Citekeys],
+        state: UpdateRow.State,
         changes: List[Change],
-        reason: Option[String]
+        reason: Option[UpdateRow.Reason]
     ) derives KindlingsCodecAsObject
     object UpdateRow:
+      type CalibreId = CalibreId.T
+      object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Citekeys = Citekeys.T
+      object Citekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type State = State.T
+      object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       def of(e: UpdateEntry): UpdateRow =
         val (state, changes) = e.outcome match
           case UpdateOutcome.Change(cs)    => ("would-change", cs)
@@ -944,9 +1030,18 @@ object Calibre:
     /** `calibre audit --json`: one entry that disagrees with its record; `fix` = the citekey whose record
       * `calibre update` would write over it, absent when the entry is missing.
       */
-    final case class AuditRow(calibreId: Int, citekeys: List[String], issues: List[String], fix: Option[String])
+    final case class AuditRow(calibreId: AuditRow.CalibreId, citekeys: List[AuditRow.Citekeys], issues: List[AuditRow.Issues], fix: Option[AuditRow.Fix])
         derives KindlingsCodecAsObject
     object AuditRow:
+      type CalibreId = CalibreId.T
+      object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Citekeys = Citekeys.T
+      object Citekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Issues = Issues.T
+      object Issues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Fix = Fix.T
+      object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       def of(f: AuditFinding): AuditRow =
         AuditRow(f.calibreId, f.citekeys, f.issues.map(_.toString), Option.when(f.fixable)(f.record.citekey))
       def of(r: CollectionAudit.Row): AuditRow = AuditRow(r.id.toIntOption.getOrElse(0), r.citekeys, r.codes, r.fix)
@@ -957,22 +1052,51 @@ object Calibre:
       * script reading `gaps[].citekey` is unchanged.
       */
     final case class GapRow(
-        citekey: String,
-        title: String,
-        authors: List[String],
-        doi: Option[String],
-        year: Option[Int],
-        venue: Option[String],
-        summary: Option[String],
-        topics: List[String],
-        provenance: Option[String],
-        calibreId: Option[String],
-        isbn: Option[String],
-        storedOriginal: Option[Boolean],
-        original: String,
-        counted: Boolean
+        citekey: GapRow.Citekey,
+        title: GapRow.Title,
+        authors: List[GapRow.Authors],
+        doi: Option[GapRow.Doi],
+        year: Option[GapRow.Year],
+        venue: Option[GapRow.Venue],
+        summary: Option[GapRow.Summary],
+        topics: List[GapRow.Topics],
+        provenance: Option[GapRow.Provenance],
+        calibreId: Option[GapRow.CalibreId],
+        isbn: Option[GapRow.Isbn],
+        storedOriginal: Option[GapRow.StoredOriginal],
+        original: GapRow.Original,
+        counted: GapRow.Counted
     ) derives KindlingsCodecAsObject
     object GapRow:
+      type Citekey = Citekey.T
+      object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Title = Title.T
+      object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Authors = Authors.T
+      object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Doi = Doi.T
+      object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Year = Year.T
+      object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Venue = Venue.T
+      object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Summary = Summary.T
+      object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Topics = Topics.T
+      object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Provenance = Provenance.T
+      object Provenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type CalibreId = CalibreId.T
+      object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Isbn = Isbn.T
+      object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type StoredOriginal = StoredOriginal.T
+      object StoredOriginal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Original = Original.T
+      object Original extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Counted = Counted.T
+      object Counted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       def of(e: Calibre.GapEntry): GapRow =
         val g = e.gap
         GapRow(
@@ -1009,8 +1133,15 @@ object Calibre:
           r.counted
         )
 
-    final case class Gaps(count: Int, uncounted: Int, total: Int, gaps: List[GapRow]) derives KindlingsCodecAsObject
+    final case class Gaps(count: Gaps.Count, uncounted: Gaps.Uncounted, total: Gaps.Total, gaps: List[GapRow]) derives KindlingsCodecAsObject
     object Gaps:
+      type Count = Count.T
+      object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Uncounted = Uncounted.T
+      object Uncounted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Total = Total.T
+      object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       def of(entries: List[Calibre.GapEntry]): Gaps =
         val n = entries.count(_.counted)
         Gaps(n, entries.size - n, entries.size, entries.map(GapRow.of))
@@ -1018,12 +1149,30 @@ object Calibre:
 
   /** What `calibre push` sends into Calibre for one source. */
   final case class Push(
-      title: String,
-      authors: List[String],
-      doi: Option[String] = None,
-      isbn: Option[String] = None,
-      year: Option[Int] = None,
-      publisher: Option[String] = None,
-      summary: Option[String] = None,
-      tags: List[String] = Nil
+      title: Push.Title,
+      authors: List[Push.Authors],
+      doi: Option[Push.Doi] = None,
+      isbn: Option[Push.Isbn] = None,
+      year: Option[Push.Year] = None,
+      publisher: Option[Push.Publisher] = None,
+      summary: Option[Push.Summary] = None,
+      tags: List[Push.Tags] = Nil
   )
+
+  object Push:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Isbn = Isbn.T
+    object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = Year.T
+    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Publisher = Publisher.T
+    object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Summary = Summary.T
+    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

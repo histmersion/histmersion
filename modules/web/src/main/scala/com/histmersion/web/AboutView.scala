@@ -21,14 +21,30 @@ object AboutView:
     * it (the Storage section); `href` makes the value a link.
     */
   final case class Row(
-      label: String,
-      value: String,
+      label: Row.Label,
+      value: Row.Value,
       state: Option[ServiceState] = None,
-      detail: Option[String] = None,
-      depth: Int = 0,
-      href: Option[String] = None
+      detail: Option[Row.Detail] = None,
+      depth: Row.Depth = 0,
+      href: Option[Row.Href] = None
   )
-  final case class Section(title: String, rows: List[Row])
+
+  object Row:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Href = Href.T
+    object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Section(title: Section.Title, rows: List[Row])
+
+  object Section:
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
   private[web] def check(label: String, text: Option[String]): Row =

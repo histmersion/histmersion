@@ -8,4 +8,12 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * buffers, 4 MB per sort — are sized for a machine with no RAM to spare; this one holds a 15 GB gazetteer it searches
   * as you type.
   */
-final case class PgTuning(sharedBuffers: String, effectiveCacheSize: String, workMem: String) derives ConfigReader
+final case class PgTuning(sharedBuffers: PgTuning.SharedBuffers, effectiveCacheSize: PgTuning.EffectiveCacheSize, workMem: PgTuning.WorkMem) derives ConfigReader
+
+object PgTuning:
+  type SharedBuffers = SharedBuffers.T
+  object SharedBuffers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EffectiveCacheSize = EffectiveCacheSize.T
+  object EffectiveCacheSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorkMem = WorkMem.T
+  object WorkMem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

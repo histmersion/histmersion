@@ -106,17 +106,37 @@ object GraphPanel:
     )
 
   final private case class SimNode(
-      id: String,
-      title: String,
-      year: Option[Int],
+      id: SimNode.Id,
+      title: SimNode.Title,
+      year: Option[SimNode.Year],
       status: Option[Source.Status],
-      depth: Int,
-      var x: Double,
-      var y: Double,
-      var vx: Double,
-      var vy: Double,
-      var pinned: Boolean
+      depth: SimNode.Depth,
+      var x: SimNode.X,
+      var y: SimNode.Y,
+      var vx: SimNode.Vx,
+      var vy: SimNode.Vy,
+      var pinned: SimNode.Pinned
   )
+
+  object SimNode:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = Year.T
+    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Y = Y.T
+    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Vx = Vx.T
+    object Vx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Vy = Vy.T
+    object Vy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pinned = Pinned.T
+    object Pinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The canvas and its simulation. Everything mutable lives inside this one mount. */
   private def stage(g: com.histmersion.api.library.Source.Graph, hovered: Var[Option[GraphNode]]): HtmlElement =

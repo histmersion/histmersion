@@ -49,12 +49,23 @@ object BundlePlan:
   val DeletedRev = "deleted"
 
   /** The ledger's memory of a uid: the foreign rev merged and the local rev it left. */
-  final case class Ledger(foreignRev: String, localRevAfter: Option[String])
+  final case class Ledger(foreignRev: Ledger.ForeignRev, localRevAfter: Option[Ledger.LocalRevAfter])
+
+  object Ledger:
+    type ForeignRev = ForeignRev.T
+    object ForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LocalRevAfter = LocalRevAfter.T
+    object LocalRevAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A uid as this instance knows it: the live row's rev, whether it is tombstoned, the ledger. */
-  final case class Local(rev: Option[String], tombstoned: Boolean, ledger: Option[Ledger])
+  final case class Local(rev: Option[Local.Rev], tombstoned: Local.Tombstoned, ledger: Option[Ledger])
 
   object Local:
+    type Rev = Rev.T
+    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tombstoned = Tombstoned.T
+    object Tombstoned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val absent: Local = Local(None, tombstoned = false, None)
 
   def entity(foreignRev: String, local: Local, ownBundle: Boolean): Decision =

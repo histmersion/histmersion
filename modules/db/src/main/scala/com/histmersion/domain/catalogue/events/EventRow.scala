@@ -8,26 +8,26 @@ import com.augustnagro.magnum.DbCodec
   * and its tier.
   */
 final private[events] case class EventRow(
-    id: String,
-    label: String,
-    kind: String,
-    notBefore: Option[Long],
-    beginBy: Option[Long],
-    endFrom: Option[Long],
-    notAfter: Option[Long],
-    historicity: String,
-    placeId: Option[String],
-    parentId: Option[String],
-    description: Option[String],
-    citekey: Option[String],
-    scale: Option[String],
-    placeKind: Option[String],
-    geometryType: Option[String],
-    tier: String,
-    central: Option[Long],
-    plusMinus: Option[Long],
-    datingMethod: Option[String],
-    uncertainty: Option[Long]
+    id: EventRow.Id,
+    label: EventRow.Label,
+    kind: EventRow.Kind,
+    notBefore: Option[EventRow.NotBefore],
+    beginBy: Option[EventRow.BeginBy],
+    endFrom: Option[EventRow.EndFrom],
+    notAfter: Option[EventRow.NotAfter],
+    historicity: EventRow.Historicity,
+    placeId: Option[com.histmersion.domain.catalogue.Place.Id],
+    parentId: Option[EventRow.ParentId],
+    description: Option[EventRow.Description],
+    citekey: Option[com.histmersion.domain.library.Citekey],
+    scale: Option[EventRow.Scale],
+    placeKind: Option[EventRow.PlaceKind],
+    geometryType: Option[EventRow.GeometryType],
+    tier: EventRow.Tier,
+    central: Option[EventRow.Central],
+    plusMinus: Option[EventRow.PlusMinus],
+    datingMethod: Option[EventRow.DatingMethod],
+    uncertainty: Option[EventRow.Uncertainty]
 ) derives DbCodec:
   def toSummary: EventSummary =
     EventSummary(
@@ -48,3 +48,41 @@ final private[events] case class EventRow(
       plusMinus,
       datingMethod
     )
+
+object EventRow:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotBefore = NotBefore.T
+  object NotBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BeginBy = BeginBy.T
+  object BeginBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EndFrom = EndFrom.T
+  object EndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotAfter = NotAfter.T
+  object NotAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Historicity = Historicity.T
+  object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParentId = ParentId.T
+  object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Scale = Scale.T
+  object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceKind = PlaceKind.T
+  object PlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeometryType = GeometryType.T
+  object GeometryType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tier = Tier.T
+  object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Central = Central.T
+  object Central extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlusMinus = PlusMinus.T
+  object PlusMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatingMethod = DatingMethod.T
+  object DatingMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Uncertainty = Uncertainty.T
+  object Uncertainty extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -1,11 +1,27 @@
 package com.histmersion.upstreams.archiveorg
 final case class ArchiveItem(
-    identifier: String,
-    title: Option[String] = None,
-    creator: List[String] = Nil,
-    year: Option[Int] = None,
-    publisher: Option[String] = None,
-    description: Option[String] = None,
-    lendingOnly: Boolean = false,
+    identifier: ArchiveItem.Identifier,
+    title: Option[ArchiveItem.Title] = None,
+    creator: List[ArchiveItem.Creator] = Nil,
+    year: Option[ArchiveItem.Year] = None,
+    publisher: Option[ArchiveItem.Publisher] = None,
+    description: Option[ArchiveItem.Description] = None,
+    lendingOnly: ArchiveItem.LendingOnly = false,
     files: List[ArchiveFile] = Nil
 )
+
+object ArchiveItem:
+  type Identifier = Identifier.T
+  object Identifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Creator = Creator.T
+  object Creator extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Year = Year.T
+  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Publisher = Publisher.T
+  object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LendingOnly = LendingOnly.T
+  object LendingOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

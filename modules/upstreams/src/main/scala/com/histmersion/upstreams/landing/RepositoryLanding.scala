@@ -27,25 +27,41 @@ object RepositoryLanding:
     * is an open-access publisher's — [[oaPublisherPage]]); `open` = the index says the location is open access
     * (OpenAlex `is_oa`; every Unpaywall `oa_location` is).
     */
-  final case class Candidate(url: String, repository: Boolean, publisher: Boolean = false, open: Boolean = false)
+  final case class Candidate(url: Candidate.Url, repository: Candidate.Repository, publisher: Candidate.Publisher = false, open: Candidate.Open = false)
+
+  object Candidate:
+    type Url = Url.T
+    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Repository = Repository.T
+    object Repository extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Publisher = Publisher.T
+    object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Open = Open.T
+    object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** OpenAlex `source.type`s that are a publisher's, not a repository's. */
   val PublisherSourceTypes: Set[String] = Set("journal", "conference", "ebook platform", "book series")
 
   /** One file of a Zenodo record: where to download it and its MD5, when the record states one. */
-  final case class ZenodoFile(url: String, md5: Option[String])
+  final case class ZenodoFile(url: ZenodoFile.Url, md5: Option[ZenodoFile.Md5])
+
+  object ZenodoFile:
+    type Url = Url.T
+    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Md5 = Md5.T
+    object Md5 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The hosts and platforms the decision reads (`acquire.landing.*`, comma-separated in config). A host entry matches
     * the host itself or any subdomain of it.
     */
   final case class Rules(
-      allowHosts: List[String],
-      denyHosts: List[String],
-      academicHostWords: List[String],
-      generators: List[String],
-      denyGenerators: List[String] = Nil,
-      denyHostWords: List[String] = Nil,
-      oaPublisherHosts: List[String] = Nil
+      allowHosts: List[Rules.AllowHosts],
+      denyHosts: List[Rules.DenyHosts],
+      academicHostWords: List[Rules.AcademicHostWords],
+      generators: List[Rules.Generators],
+      denyGenerators: List[Rules.DenyGenerators] = Nil,
+      denyHostWords: List[Rules.DenyHostWords] = Nil,
+      oaPublisherHosts: List[Rules.OaPublisherHosts] = Nil
   ):
     def allowed(host: String): Boolean = allowHosts.exists(d => matchesHost(host, d))
 
@@ -76,6 +92,22 @@ object RepositoryLanding:
     /** A journal platform's page (`Open Journal Systems`): a publisher's, whatever its host. */
     def journalGenerator(gs: List[String]): Boolean =
       gs.map(_.toLowerCase).exists(g => denyGenerators.exists(d => d.nonEmpty && g.contains(d)))
+
+  object Rules:
+    type AllowHosts = AllowHosts.T
+    object AllowHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DenyHosts = DenyHosts.T
+    object DenyHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AcademicHostWords = AcademicHostWords.T
+    object AcademicHostWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Generators = Generators.T
+    object Generators extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DenyGenerators = DenyGenerators.T
+    object DenyGenerators extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DenyHostWords = DenyHostWords.T
+    object DenyHostWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OaPublisherHosts = OaPublisherHosts.T
+    object OaPublisherHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: is the host label `label` the word `w` — the word itself, the word then a digit or a hyphen (`opus4`,
     * `pure-portal`), or, for a word ending in `-`, any label it starts (`uni-` → `uni-koeln`)? Never a longer word

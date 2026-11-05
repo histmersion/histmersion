@@ -14,11 +14,27 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 /** `sourceUrl`: the repository the About window and `histmersion about` link as this program's source. */
 final case class ServerConfig(
-    host: String,
-    port: Int,
-    publicUrl: String,
-    requestTimeoutSeconds: Int,
-    shutdownGraceSeconds: Int,
-    sourceUrl: String,
-    restartExitCode: Int = 75
+    host: ServerConfig.Host,
+    port: ServerConfig.Port,
+    publicUrl: ServerConfig.PublicUrl,
+    requestTimeoutSeconds: ServerConfig.RequestTimeoutSeconds,
+    shutdownGraceSeconds: ServerConfig.ShutdownGraceSeconds,
+    sourceUrl: ServerConfig.SourceUrl,
+    restartExitCode: ServerConfig.RestartExitCode = 75
 ) derives ConfigReader
+
+object ServerConfig:
+  type Host = Host.T
+  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Port = Port.T
+  object Port extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PublicUrl = PublicUrl.T
+  object PublicUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestTimeoutSeconds = RequestTimeoutSeconds.T
+  object RequestTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShutdownGraceSeconds = ShutdownGraceSeconds.T
+  object ShutdownGraceSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceUrl = SourceUrl.T
+  object SourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestartExitCode = RestartExitCode.T
+  object RestartExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

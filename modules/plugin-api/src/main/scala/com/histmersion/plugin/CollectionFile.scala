@@ -9,4 +9,12 @@ package com.histmersion.plugin
   * @param megabytes
   *   its size, when the collection says
   */
-final case class CollectionFile(name: String, format: Option[String] = None, megabytes: Option[Double] = None)
+final case class CollectionFile(name: CollectionFile.Name, format: Option[CollectionFile.Format] = None, megabytes: Option[CollectionFile.Megabytes] = None)
+
+object CollectionFile:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Format = Format.T
+  object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Megabytes = Megabytes.T
+  object Megabytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

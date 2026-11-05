@@ -218,14 +218,27 @@ object Store:
     */
   final case class Measure(
       bytes: ByteCount,
-      files: Long,
-      exists: Boolean,
-      partial: Boolean = false,
-      unreadable: Int = 0
+      files: Measure.Files,
+      exists: Measure.Exists,
+      partial: Measure.Partial = false,
+      unreadable: Measure.Unreadable = 0
   )
 
   object Measure:
+    type Files = Files.T
+    object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Exists = Exists.T
+    object Exists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Partial = Partial.T
+    object Partial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unreadable = Unreadable.T
+    object Unreadable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val absent: Measure = Measure(ByteCount.zero, 0L, exists = false)
 
   /** The disk a store is (or would be) on: its name, its size and the space this process may still use. */
-  final case class Volume(id: String, total: ByteCount, usable: ByteCount)
+  final case class Volume(id: Volume.Id, total: ByteCount, usable: ByteCount)
+
+  object Volume:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

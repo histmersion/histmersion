@@ -8,5 +8,15 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * of the watchers' ingest backlog one managers' tick ingests at most (`drainPerTick`: each fetches a file, so a tick
   * takes only a few; the daily caps bound the day).
   */
-final case class WatchManagerConfig(maxRuns: Int, cron: String, autoIngestPerDay: Int, drainPerTick: Int = 3)
+final case class WatchManagerConfig(maxRuns: WatchManagerConfig.MaxRuns, cron: WatchManagerConfig.Cron, autoIngestPerDay: WatchManagerConfig.AutoIngestPerDay, drainPerTick: WatchManagerConfig.DrainPerTick = 3)
     derives ConfigReader
+
+object WatchManagerConfig:
+  type MaxRuns = MaxRuns.T
+  object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Cron = Cron.T
+  object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AutoIngestPerDay = AutoIngestPerDay.T
+  object AutoIngestPerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainPerTick = DrainPerTick.T
+  object DrainPerTick extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

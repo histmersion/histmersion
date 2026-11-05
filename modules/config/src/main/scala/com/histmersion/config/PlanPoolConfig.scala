@@ -7,7 +7,13 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * has queued work for it.
   */
 final case class PlanPoolConfig(
-    floors: String,
-    maxCallsInFlight: Int,
+    floors: PlanPoolConfig.Floors,
+    maxCallsInFlight: PlanPoolConfig.MaxCallsInFlight,
     refreshEveryMinutes: ScheduledRefresh = ScheduledRefresh.Off
 ) derives ConfigReader
+
+object PlanPoolConfig:
+  type Floors = Floors.T
+  object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxCallsInFlight = MaxCallsInFlight.T
+  object MaxCallsInFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

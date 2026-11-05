@@ -53,11 +53,11 @@ object QueueView:
   final case class Spec(
       kind: Queue.Kind,
       icon: Icon,
-      empty: String,
-      untitled: String,
-      openNoun: String,
-      showDone: Option[Field[Boolean]],
-      tick: (String, String)
+      empty: Spec.Empty,
+      untitled: Spec.Untitled,
+      openNoun: Spec.OpenNoun,
+      showDone: Option[Field[Spec.ShowDone]],
+      tick: (Spec.TickPart1, Spec.TickPart2)
   ):
     /** Whether items carry a checkbox; the worklog's do not. */
     def checkable: Boolean = kind.checkboxes
@@ -70,6 +70,20 @@ object QueueView:
 
     /** Whether an item is fulfilled by a source — uploaded, or linked to one in the corpus. */
     def fulfils: Boolean = kind == Queue.Kind.Acquire
+
+  object Spec:
+    type Empty = Empty.T
+    object Empty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Untitled = Untitled.T
+    object Untitled extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenNoun = OpenNoun.T
+    object OpenNoun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ShowDone = ShowDone.T
+    object ShowDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TickPart1 = TickPart1.T
+    object TickPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TickPart2 = TickPart2.T
+    object TickPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def spec(kind: Queue.Kind): Spec = kind match
     case Queue.Kind.Acquire =>
@@ -181,7 +195,15 @@ object QueueView:
     item.id -> Queue.fulfil(item, citekey)
 
   /** The add form, as typed. */
-  final case class AddDraft(text: String = "", topic: String = "", reason: String = "")
+  final case class AddDraft(text: AddDraft.Text = "", topic: AddDraft.Topic = "", reason: AddDraft.Reason = "")
+
+  object AddDraft:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topic = Topic.T
+    object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val EmptyText = "Write the item's text first."
 

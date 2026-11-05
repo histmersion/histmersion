@@ -21,8 +21,14 @@ object ResearchOverview:
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** A goal's progress: its managers' work items done, of all of them (done and still open). */
-  final case class Progress(done: Int, total: Int):
+  final case class Progress(done: Progress.Done, total: Progress.Total):
     def pct: Int = if total <= 0 then 0 else (done * 100 / total).max(0).min(100)
+
+  object Progress:
+    type Done = Done.T
+    object Done extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Total = Total.T
+    object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def progressOf(goal: String, managers: List[Managers.ManagerInfo]): Progress =
     val mine = managers.filter(_.goal.contains(goal))

@@ -7,7 +7,15 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * anything the plugin says — so a plugin cannot widen it; the user can, per collection (`per-collection.<id>`, which
   * replaces `licences` for that one). The built-in collections keep their own `media.<provider>.licences`.
   */
-final case class MediaPluginCollectionsConfig(licences: String, perCollection: Map[String, String])
+final case class MediaPluginCollectionsConfig(licences: MediaPluginCollectionsConfig.Licences, perCollection: Map[MediaPluginCollectionsConfig.PerCollectionKey, MediaPluginCollectionsConfig.PerCollectionValue])
     derives ConfigReader:
   /** The allowlist as written for `collection` (what a report quotes). */
   def licencesFor(collection: String): String = perCollection.getOrElse(collection, licences)
+
+object MediaPluginCollectionsConfig:
+  type Licences = Licences.T
+  object Licences extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerCollectionKey = PerCollectionKey.T
+  object PerCollectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerCollectionValue = PerCollectionValue.T
+  object PerCollectionValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

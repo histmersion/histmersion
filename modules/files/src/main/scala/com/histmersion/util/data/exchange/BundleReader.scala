@@ -21,10 +21,18 @@ object BundleReader:
       manifest: Option[com.histmersion.api.exchange.Bundle.Manifest],
       entities: BundleEntities,
       /** sha256 → size of every blob entry found. */
-      blobs: Map[String, Long],
-      problems: List[String]
+      blobs: Map[Loaded.BlobsKey, Loaded.BlobsValue],
+      problems: List[Loaded.Problems]
   ):
     def ok: Boolean = manifest.isDefined && problems.isEmpty
+
+  object Loaded:
+    type BlobsKey = BlobsKey.T
+    object BlobsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BlobsValue = BlobsValue.T
+    object BlobsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problems = Problems.T
+    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def read(in: InputStream, hashBlobs: Boolean): Loaded =
     val tar = BundleTar.Reader(in)

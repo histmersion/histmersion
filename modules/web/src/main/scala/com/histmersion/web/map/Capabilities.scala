@@ -8,10 +8,19 @@ import scala.scalajs.js
   * then breaks the interaction budgets (docs/research-map-styles.md §3.2) and the app draws its cheapest map.
   * `renderer` is the string it was told.
   */
-final case class Capabilities(webgl: Boolean, software: Boolean, renderer: String, webgl2: Boolean = true)
+final case class Capabilities(webgl: Capabilities.Webgl, software: Capabilities.Software, renderer: Capabilities.Renderer, webgl2: Capabilities.Webgl2 = true)
 
 object Capabilities:
   /** Pure: why an engine that needs WebGL 2 cannot draw in a browser with `c`, or None when it can. */
+  type Webgl = Webgl.T
+  object Webgl extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Software = Software.T
+  object Software extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Renderer = Renderer.T
+  object Renderer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Webgl2 = Webgl2.T
+  object Webgl2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def withoutWebgl2(c: Capabilities): Option[String] =
     if !c.webgl then Some("this browser draws no WebGL (it is turned off, or its graphics driver is blocked)")
     else if !c.webgl2 then Some("this browser draws WebGL 1 only, not WebGL 2")

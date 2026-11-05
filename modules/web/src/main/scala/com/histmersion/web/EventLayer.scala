@@ -20,7 +20,15 @@ import com.histmersion.api.instance.EventsUiConfig
 object EventLayer:
 
   // `var`s: a shown event's visibility and stacking slot change frame by frame, in place
-  final private case class Shown(marker: DomMarker, outline: Boolean, var alpha: Double, var slot: Int)
+  final private case class Shown(marker: DomMarker, outline: Shown.Outline, var alpha: Shown.Alpha, var slot: Shown.Slot)
+
+  object Shown:
+    type Outline = Outline.T
+    object Outline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Alpha = Alpha.T
+    object Alpha extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slot = Slot.T
+    object Slot extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The pane the labels go in: above the finding markers, so a bubble never hides an event. */
   private def pane = TheMap.pane(MapStack.Pane.Events)

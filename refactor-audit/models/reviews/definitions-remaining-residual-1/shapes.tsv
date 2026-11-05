@@ -1,0 +1,30 @@
+path	line	before-ast	after-ast
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	406	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.room	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	407	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.poolUsed.Key	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	407	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.poolUsed.Value	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	408	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.mgrUsed.Key	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	408	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.mgrUsed.Value	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	409	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.gathering	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/SchedulerPolicy.scala	411	UNRESOLVED com.histmersion.domain.SchedulerPolicy.Acc.started.Part2	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/library/sources/SourceMatcher.scala	230	UNRESOLVED com.histmersion.domain.library.sources.SourceMatcher.Scored.rank	Type.Name("Int")
+modules/core/src/main/scala/com/histmersion/domain/library/sources/SourceMatcher.scala	230	UNRESOLVED com.histmersion.domain.library.sources.SourceMatcher.Scored.flags	Type.Name("String")
+modules/core/src/main/scala/com/histmersion/domain/media/assets/NewFigure.scala	10	UNRESOLVED com.histmersion.domain.media.assets.NewFigure.bytes	Type.Name("Byte") deferred: Decoded binary payload needs a whole-payload type; per-byte wrapping changes representation
+modules/db/src/main/scala/com/histmersion/domain/media/assets/AssetBytesRow.scala	5	UNRESOLVED com.histmersion.domain.media.assets.AssetBytesRow.bytes	Type.Name("Byte") deferred: Binary payload requires whole-payload modeling
+modules/db/src/main/scala/com/histmersion/domain/media/assets/ProviderAsset.scala	12	UNRESOLVED com.histmersion.domain.media.assets.ProviderAsset.bytes	Type.Name("Byte") deferred: Binary payload requires whole-payload modeling
+modules/db/src/main/scala/com/histmersion/domain/media/assets/ProviderAsset.scala	15	UNRESOLVED com.histmersion.domain.media.assets.ProviderAsset.thumb	Type.Name("Byte") deferred: Binary payload requires whole-payload modeling
+modules/db/src/main/scala/com/histmersion/util/data/exchange/CarriedOut.scala	4	UNRESOLVED com.histmersion.util.data.exchange.CarriedOut.payload	Type.Name("Byte") deferred: Binary payload requires whole-payload modeling
+modules/plugin-api/src/main/scala/com/histmersion/plugin/FetchedFile.scala	20	UNRESOLVED com.histmersion.plugin.FetchedFile.bytes	Type.Name("Byte") deferred: Binary payload requires whole-payload modeling
+modules/plugin-api/src/main/scala/com/histmersion/plugin/Plugin.scala	185	UNRESOLVED com.histmersion.plugin.Plugin.HttpResponse.body	Type.Name("Byte") deferred: Binary HTTP body requires whole-payload modeling
+modules/plugin-host/src/main/scala/com/histmersion/pluginhost/HttpAnswer.scala	8	UNRESOLVED com.histmersion.pluginhost.HttpAnswer.body	Type.Name("Byte") deferred: Binary HTTP body requires whole-payload modeling
+modules/plugin-testkit/src/main/scala/com/histmersion/plugin/testkit/StubAnswer.scala	4	UNRESOLVED com.histmersion.plugin.testkit.StubAnswer.body	Type.Name("Byte") deferred: Binary HTTP body requires whole-payload modeling
+modules/server/src/main/scala/com/histmersion/util/basemap/GeoTiffGrid.scala	76	UNRESOLVED com.histmersion.util.basemap.GeoTiffGrid.Entry.inline	Type.Name("Byte") deferred: Packed TIFF data must retain byte representation
+modules/server/src/main/scala/com/histmersion/util/basemap/Vp8l.scala	16	UNRESOLVED com.histmersion.util.basemap.Vp8l.Image.pixels	Type.Name("Int") deferred: Packed ARGB image needs whole-buffer modeling
+modules/server/src/main/scala/com/histmersion/util/basemap/Vp8l.scala	207	UNRESOLVED com.histmersion.util.basemap.Vp8l.Transform.data	Type.Name("Int") deferred: Packed decoder buffer needs whole-buffer modeling
+modules/server/src/main/scala/com/histmersion/util/ocr/ConverterClient.scala	32	UNRESOLVED com.histmersion.util.ocr.ConverterClient.Thumb.bytes	Type.Name("Byte") deferred: Binary image requires whole-payload modeling
+modules/server/src/main/scala/com/histmersion/util/storage/MemoryStore.scala	150	UNRESOLVED com.histmersion.util.storage.MemoryStore.Entry.bytes	Type.Name("Byte") deferred: Binary payload requires whole-payload modeling
+modules/upstreams/src/main/scala/com/histmersion/upstreams/jats/Jats.scala	34	UNRESOLVED com.histmersion.upstreams.jats.Jats.Frame.name	Type.Name("String")
+modules/upstreams/src/main/scala/com/histmersion/upstreams/jats/Jats.scala	34	UNRESOLVED com.histmersion.upstreams.jats.Jats.Frame.attrs.Key	Type.Name("String")
+modules/upstreams/src/main/scala/com/histmersion/upstreams/jats/Jats.scala	34	UNRESOLVED com.histmersion.upstreams.jats.Jats.Frame.attrs.Value	Type.Name("String")
+modules/web/src/main/scala/com/histmersion/web/LabelPlacement.scala	235	UNRESOLVED com.histmersion.web.LabelPlacement.Cell.x	Type.Name("Double")
+modules/web/src/main/scala/com/histmersion/web/LabelPlacement.scala	235	UNRESOLVED com.histmersion.web.LabelPlacement.Cell.y	Type.Name("Double")
+modules/web/src/main/scala/com/histmersion/web/LabelPlacement.scala	235	UNRESOLVED com.histmersion.web.LabelPlacement.Cell.half	Type.Name("Double")

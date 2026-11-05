@@ -7,12 +7,22 @@ import com.histmersion.util.storage.Store
   * it.
   */
 final case class StorageSpot(
-    key: String,
-    label: String,
-    group: String,
+    key: StorageSpot.Key,
+    label: StorageSpot.Label,
+    group: StorageSpot.Group,
     stores: List[Store],
     shown: Option[Store],
-    detail: Option[String] = None
+    detail: Option[StorageSpot.Detail] = None
 ):
   /** Where the entry is, as About shows it. */
   def path: Option[String] = shown.map(_.where())
+
+object StorageSpot:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Group = Group.T
+  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Detail = Detail.T
+  object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

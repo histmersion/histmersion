@@ -24,18 +24,39 @@ object EventCardTools:
   import com.histmersion.util.mcp.ToolInputs.given
 
   final case class EventsInput(
-      query: Option[String] = None,
-      id: Option[String] = None,
-      kind: Option[String] = None,
-      historicity: Option[String] = None,
-      placeId: Option[String] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      title: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      query: Option[EventsInput.Query] = None,
+      id: Option[EventsInput.Id] = None,
+      kind: Option[EventsInput.Kind] = None,
+      historicity: Option[EventsInput.Historicity] = None,
+      placeId: Option[EventsInput.PlaceId] = None,
+      from: Option[EventsInput.From] = None,
+      to: Option[EventsInput.To] = None,
+      title: Option[EventsInput.Title] = None,
+      limit: Option[EventsInput.Limit] = None,
+      offset: Option[EventsInput.Offset] = None
   ) derives KindlingsCodecAsObject
   object EventsInput:
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = Historicity.T
+    object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceId = PlaceId.T
+    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[EventsInput] = KindlingsSchema
       .derived[EventsInput]
       .schema
@@ -53,21 +74,48 @@ object EventCardTools:
       .modify(_.title)(_.description("Case-insensitive substring of the event's label"))
 
   final case class PatchEventInput(
-      id: String,
-      label: Option[String] = None,
-      kind: Option[String] = None,
-      historicity: Option[String] = None,
-      scale: Option[String] = None,
-      placeId: Option[String] = None,
-      geometry: Option[String] = None,
-      lat: Option[Double] = None,
-      lon: Option[Double] = None,
-      parentId: Option[String] = None,
-      description: Option[String] = None,
-      citekey: Option[String] = None,
-      wikidata: Option[String] = None
+      id: PatchEventInput.Id,
+      label: Option[PatchEventInput.Label] = None,
+      kind: Option[PatchEventInput.Kind] = None,
+      historicity: Option[PatchEventInput.Historicity] = None,
+      scale: Option[PatchEventInput.Scale] = None,
+      placeId: Option[PatchEventInput.PlaceId] = None,
+      geometry: Option[PatchEventInput.Geometry] = None,
+      lat: Option[PatchEventInput.Lat] = None,
+      lon: Option[PatchEventInput.Lon] = None,
+      parentId: Option[PatchEventInput.ParentId] = None,
+      description: Option[PatchEventInput.Description] = None,
+      citekey: Option[PatchEventInput.Citekey] = None,
+      wikidata: Option[PatchEventInput.Wikidata] = None
   )
   object PatchEventInput:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = Historicity.T
+    object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Scale = Scale.T
+    object Scale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceId = PlaceId.T
+    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Geometry = Geometry.T
+    object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lat = Lat.T
+    object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lon = Lon.T
+    object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentId = ParentId.T
+    object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Description = Description.T
+    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wikidata = Wikidata.T
+    object Wikidata extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Schema[PatchEventInput] = KindlingsSchema
       .derived[PatchEventInput]
       .schema

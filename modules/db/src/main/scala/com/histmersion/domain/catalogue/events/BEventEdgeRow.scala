@@ -8,8 +8,14 @@ import java.util.UUID
 final private[events] case class BEventEdgeRow(
     eventUid: UUID,
     dstUid: UUID,
-    kind: String,
-    citekey: String,
+    kind: BEventEdgeRow.Kind,
+    citekey: com.histmersion.domain.library.Citekey,
     sourceUid: Option[UUID],
-    note: Option[String]
+    note: Option[BEventEdgeRow.Note]
 ) derives DbCodec
+
+object BEventEdgeRow:
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

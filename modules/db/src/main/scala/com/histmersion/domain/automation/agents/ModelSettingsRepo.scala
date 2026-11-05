@@ -25,7 +25,15 @@ private[agents] object ModelSettingsRepo:
   /** A saved allowance: target, limits, reserve %. Limits that no longer decode are a `Left` the caller reports and
     * treats as BLOCKING — never silently as unlimited.
     */
-  final case class Saved(target: String, limits: Either[String, List[LimitSpec]], reservePct: Int)
+  final case class Saved(target: Saved.Target, limits: Either[Saved.LimitsPart1, List[LimitSpec]], reservePct: Saved.ReservePct)
+
+  object Saved:
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LimitsPart1 = LimitsPart1.T
+    object LimitsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReservePct = ReservePct.T
+    object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def allowances(using DbCon): List[Saved] =
     sql"SELECT target, limits::text, reserve_pct FROM agent_allowances ORDER BY target"

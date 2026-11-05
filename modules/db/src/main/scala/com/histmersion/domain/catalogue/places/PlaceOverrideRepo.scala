@@ -23,14 +23,26 @@ import com.histmersion.api.catalogue.Place
 private[places] object PlaceOverrideRepo:
 
   final private case class Row(
-      label: String,
-      kind: String,
-      start: Option[Long],
-      end: Option[Long],
-      lat: Option[Double],
-      lon: Option[Double],
-      hasShape: Boolean
+      label: Row.Label,
+      kind: Row.Kind,
+      start: Option[Row.Start],
+      end: Option[Row.End],
+      lat: Option[com.histmersion.Latitude],
+      lon: Option[com.histmersion.Longitude],
+      hasShape: Row.HasShape
   ) derives DbCodec
+
+  object Row:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HasShape = HasShape.T
+    object HasShape extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private given DbCodec[Place.Override] = DbCodec.derived
 
   /** The place's label, kind, STATED period (an unknown start reads as none) and point (when it is a point; `hasShape`

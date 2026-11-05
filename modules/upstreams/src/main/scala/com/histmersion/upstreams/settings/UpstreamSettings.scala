@@ -9,14 +9,14 @@ import com.histmersion.domain.library.acquisition.{CoreEndpoint, Endpoint, Landi
   * The contact e-mail goes ONLY into the `mailto`/`email` parameters Crossref, OpenAlex and Unpaywall define for it.
   */
 final case class UpstreamSettings(
-    contactEmail: String,
+    contactEmail: UpstreamSettings.ContactEmail,
     openalex: Endpoint,
     crossref: Endpoint,
     unpaywall: Endpoint,
     core: CoreEndpoint,
     europepmc: Endpoint,
     pmcDataset: Endpoint,
-    publicUserAgent: String,
+    publicUserAgent: UpstreamSettings.PublicUserAgent,
     zenodo: Endpoint,
     datacite: Endpoint,
     doiHandles: Endpoint,
@@ -31,3 +31,9 @@ final case class UpstreamSettings(
 
   /** The `mailto` value; empty without a contact, and [[Url]] drops an empty parameter. */
   def mailto: String = contact.getOrElse("")
+
+object UpstreamSettings:
+  type ContactEmail = ContactEmail.T
+  object ContactEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PublicUserAgent = PublicUserAgent.T
+  object PublicUserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

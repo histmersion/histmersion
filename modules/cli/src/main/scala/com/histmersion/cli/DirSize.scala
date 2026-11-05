@@ -28,7 +28,19 @@ object DirSize:
     * @param unreadable
     *   directories or files that could not be read
     */
-  final case class Result(bytes: Long, files: Long, exists: Boolean, partial: Boolean = false, unreadable: Int = 0)
+  final case class Result(bytes: Result.Bytes, files: Result.Files, exists: Result.Exists, partial: Result.Partial = false, unreadable: Result.Unreadable = 0)
+
+  object Result:
+    type Bytes = Bytes.T
+    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Files = Files.T
+    object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Exists = Exists.T
+    object Exists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Partial = Partial.T
+    object Partial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unreadable = Unreadable.T
+    object Unreadable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The caps of one measurement: at most `maxEntries` visited entries over all its walks, and no walk past
     * `deadlineNanos` (on `clock`'s scale). Thread-safe; one per measurement.

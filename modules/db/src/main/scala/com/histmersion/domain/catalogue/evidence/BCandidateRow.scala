@@ -8,11 +8,25 @@ import java.util.UUID
 final private[evidence] case class BCandidateRow(
     eventUid: UUID,
     sourceUid: UUID,
-    citekey: String,
-    score: Double,
-    status: String,
-    findings: List[String],
-    passages: String,
-    reasons: List[String],
-    computedAt: String
+    citekey: com.histmersion.domain.library.Citekey,
+    score: BCandidateRow.Score,
+    status: BCandidateRow.Status,
+    findings: List[BCandidateRow.Findings],
+    passages: BCandidateRow.Passages,
+    reasons: List[BCandidateRow.Reasons],
+    computedAt: BCandidateRow.ComputedAt
 ) derives DbCodec
+
+object BCandidateRow:
+  type Score = Score.T
+  object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Findings = Findings.T
+  object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Passages = Passages.T
+  object Passages extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Reasons = Reasons.T
+  object Reasons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ComputedAt = ComputedAt.T
+  object ComputedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

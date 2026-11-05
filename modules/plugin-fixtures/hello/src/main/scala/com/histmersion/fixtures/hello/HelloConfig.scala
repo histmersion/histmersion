@@ -12,4 +12,12 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * lookup works in a relinked binary only because this jar carries its own
   * `META-INF/native-image/com.histmersion/plugin-hello/reachability-metadata.json`.
   */
-final case class HelloConfig(greeting: String, greeter: String, mirrors: List[String]) derives ConfigReader
+final case class HelloConfig(greeting: HelloConfig.Greeting, greeter: HelloConfig.Greeter, mirrors: List[HelloConfig.Mirrors]) derives ConfigReader
+
+object HelloConfig:
+  type Greeting = Greeting.T
+  object Greeting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Greeter = Greeter.T
+  object Greeter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mirrors = Mirrors.T
+  object Mirrors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

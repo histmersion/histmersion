@@ -7,7 +7,7 @@ import com.histmersion.api.text.WikiLinks
   * gives the citekey each wikilink target names now, as the library resolves `[[x]]` (an unambiguous short form
   * included).
   */
-final case class SourceKeys(citekey: String, keys: List[String], resolve: List[String] => Map[String, String]):
+final case class SourceKeys(citekey: com.histmersion.domain.library.Citekey, keys: List[SourceKeys.Keys], resolve: List[String] => Map[String, String]):
 
   /** The prefix of its finding ids (`<citekey>#`). */
   def findingPrefix: String = citekey + "#"
@@ -21,3 +21,7 @@ final case class SourceKeys(citekey: String, keys: List[String], resolve: List[S
   /** Whether one of the texts links the source as the library resolves its links. */
   def citedIn(texts: List[String]): Boolean =
     resolve(texts.flatMap(WikiLinks.targets).distinct).values.exists(_ == citekey)
+
+object SourceKeys:
+  type Keys = Keys.T
+  object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -9,15 +9,35 @@ import com.histmersion.api.library.{Acquire, RetractionNotice}
   */
 private[acquisition] object AssessmentRepo:
 
-  final private case class RwRow(nature: Option[String], reason: Option[String], date: Option[String]) derives DbCodec
+  final private case class RwRow(nature: Option[RwRow.Nature], reason: Option[RwRow.Reason], date: Option[RwRow.Date]) derives DbCodec
+
+  object RwRow:
+    type Nature = Nature.T
+    object Nature extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Date = Date.T
+    object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   final private case class AssessmentRow(
-      citekey: String,
-      checkedAt: String,
-      retracted: Boolean,
-      citedBy: Option[Int],
-      influential: Option[Int],
-      verdict: String
+      citekey: com.histmersion.domain.library.Citekey,
+      checkedAt: AssessmentRow.CheckedAt,
+      retracted: AssessmentRow.Retracted,
+      citedBy: Option[AssessmentRow.CitedBy],
+      influential: Option[AssessmentRow.Influential],
+      verdict: AssessmentRow.Verdict
   ) derives DbCodec
+
+  object AssessmentRow:
+    type CheckedAt = CheckedAt.T
+    object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Retracted = Retracted.T
+    object Retracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CitedBy = CitedBy.T
+    object CitedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Influential = Influential.T
+    object Influential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Verdict = Verdict.T
+    object Verdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Replace the whole mirror: the CSV is a full export, so a partial refresh would leave a mixture of two vintages.
     * Batched — 60 000 single inserts take minutes.

@@ -15,7 +15,15 @@ object FreeTextDates:
   private enum Unit:
     case Year, Century, Millennium
 
-  final private case class Bound(n: Long, unit: Option[Unit], ordinal: Boolean, bce: Option[Boolean])
+  final private case class Bound(n: Bound.N, unit: Option[Unit], ordinal: Bound.Ordinal, bce: Option[Bound.Bce])
+
+  object Bound:
+    type N = N.T
+    object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ordinal = Ordinal.T
+    object Ordinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bce = Bce.T
+    object Bce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def bound(raw: String): Option[Bound] =
     raw.trim match

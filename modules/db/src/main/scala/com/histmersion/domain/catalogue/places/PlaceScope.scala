@@ -12,7 +12,7 @@ import com.augustnagro.magnum.*
   * no value named a known place and every one of them falls back to the wave-1 name ILIKE, exactly as before the
   * gazetteer existed.
   */
-final case class PlaceScope(byValue: Map[String, List[String]], labels: Map[String, String] = Map.empty):
+final case class PlaceScope(byValue: Map[PlaceScope.ByValueKey, List[PlaceScope.ByValueValue]], labels: Map[PlaceScope.LabelsKey, PlaceScope.LabelsValue] = Map.empty):
   /** The place ids one filter value stands for — itself plus its descendants as of the filter's period. `None` when the
     * value is not a place id.
     */
@@ -26,4 +26,13 @@ final case class PlaceScope(byValue: Map[String, List[String]], labels: Map[Stri
   def nonEmpty: Boolean = !isEmpty
 
 object PlaceScope:
+  type ByValueKey = ByValueKey.T
+  object ByValueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByValueValue = ByValueValue.T
+  object ByValueValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelsKey = LabelsKey.T
+  object LabelsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelsValue = LabelsValue.T
+  object LabelsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val empty: PlaceScope = PlaceScope(Map.empty)

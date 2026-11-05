@@ -49,7 +49,13 @@ object BundleTar:
       put(148, f"$sum%06o\u0000 ")
       Right(h)
 
-  final case class Entry(name: String, size: Long)
+  final case class Entry(name: Entry.Name, size: Entry.Size)
+
+  object Entry:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Size = Size.T
+    object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Parse a header block. `Right(None)` is the end-of-archive (an all-zero block). Pure. */
   def parseHeader(h: Array[Byte]): Either[String, Option[Entry]] =

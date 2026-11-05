@@ -27,15 +27,37 @@ object BasemapLabels:
     * `minZoom` (to `maxZoom`), with its names by language (`name`, `name:en`, …).
     */
   final case class Label(
-      kind: String,
-      names: List[(String, String)],
-      lon: Double,
-      lat: Double,
-      minZoom: Int,
-      maxZoom: Option[Int] = None,
-      line: Vector[Vector[(Double, Double)]] = Vector.empty,
-      elevation: Option[Long] = None
+      kind: Label.Kind,
+      names: List[(Label.NamesPart1, Label.NamesPart2)],
+      lon: Label.Lon,
+      lat: Label.Lat,
+      minZoom: Label.MinZoom,
+      maxZoom: Option[Label.MaxZoom] = None,
+      line: Vector[Vector[(Label.LinePart1, Label.LinePart2)]] = Vector.empty,
+      elevation: Option[Label.Elevation] = None
   )
+
+  object Label:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamesPart1 = NamesPart1.T
+    object NamesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamesPart2 = NamesPart2.T
+    object NamesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lon = Lon.T
+    object Lon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Lat = Lat.T
+    object Lat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinZoom = MinZoom.T
+    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = MaxZoom.T
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinePart1 = LinePart1.T
+    object LinePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinePart2 = LinePart2.T
+    object LinePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Elevation = Elevation.T
+    object Elevation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Natural Earth's feature classes, lower-cased → the `kind` a style selects; `None` = not kept. */
   def kindOf(featureClass: String): Option[String] = featureClass.trim.toLowerCase(java.util.Locale.ROOT) match

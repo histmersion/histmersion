@@ -1,7 +1,7 @@
 package com.histmersion.util.text
 
 /** A MinHash signature (Broder 1997): the minimum of each of `k` hash functions over a text's word shingles. */
-final case class MinHash(mins: Vector[Int]):
+final case class MinHash(mins: Vector[MinHash.Mins]):
 
   /** The estimated Jaccard similarity of the two shingle sets. */
   def similarity(o: MinHash): Double =
@@ -13,6 +13,9 @@ object MinHash:
   /** Signature of a text: folded word 5-shingles, `k` seeded MurmurHash3 functions. A text shorter than one shingle is
     * hashed as one. Pure and deterministic.
     */
+  type Mins = Mins.T
+  object Mins extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def of(text: String, k: Int = 64, shingle: Int = 5): MinHash =
     val ws = Fingerprint.tokens(text)
     val shingles: Iterator[String] =

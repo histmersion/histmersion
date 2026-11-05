@@ -7,10 +7,10 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * what the extract is made from: those tiles (ETOPO1), or the GEBCO grid (`gebco`).
   */
 final case class BasemapBathymetryConfig(
-    url: String,
-    maxZoom: Int,
-    requestGapMs: Int,
-    attribution: String,
+    url: BasemapBathymetryConfig.Url,
+    maxZoom: BasemapBathymetryConfig.MaxZoom,
+    requestGapMs: BasemapBathymetryConfig.RequestGapMs,
+    attribution: BasemapBathymetryConfig.Attribution,
     onDemand: BasemapOnDemandConfig,
     source: SeaFloorSource,
     gebco: BasemapGebcoConfig
@@ -18,3 +18,13 @@ final case class BasemapBathymetryConfig(
   def extractMaxZoom: Int = source match
     case SeaFloorSource.Etopo1 => maxZoom
     case SeaFloorSource.Gebco  => gebco.maxZoom
+
+object BasemapBathymetryConfig:
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxZoom = MaxZoom.T
+  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestGapMs = RequestGapMs.T
+  object RequestGapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Attribution = Attribution.T
+  object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

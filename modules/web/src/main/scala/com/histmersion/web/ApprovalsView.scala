@@ -492,7 +492,11 @@ object ApprovalsView:
     )
 
   /** A row's tick box for a bulk decision: whether it is ticked, and what a click does. */
-  final private[web] case class Pick(on: Signal[Boolean], set: Boolean => Unit)
+  final private[web] case class Pick(on: Signal[Pick.On], set: Boolean => Unit)
+
+  object Pick:
+    type On = On.T
+    object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One approval: what it would change, the evidence, and approve / reject. Shared with the goal window, which shows
     * the open plan of its goal.

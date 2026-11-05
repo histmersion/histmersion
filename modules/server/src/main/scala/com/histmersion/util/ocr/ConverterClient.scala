@@ -29,10 +29,24 @@ trait ConverterClient:
 object ConverterClient:
 
   /** A thumbnail the sidecar made. */
-  final case class Thumb(bytes: Array[Byte], mime: String, width: Int, height: Int)
+  final case class Thumb(bytes: Array[Byte], mime: Thumb.Mime, width: Thumb.Width, height: Thumb.Height)
+
+  object Thumb:
+    type Mime = Mime.T
+    object Mime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Width = Width.T
+    object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Height = Height.T
+    object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What `/inspect` reports: all pages, and how many of them have no text layer. */
-  final case class PageCount(pages: Int, scanned: Int = 0)
+  final case class PageCount(pages: PageCount.Pages, scanned: PageCount.Scanned = 0)
+
+  object PageCount:
+    type Pages = Pages.T
+    object Pages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Scanned = Scanned.T
+    object Scanned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** How long one conversion may run: the configured timeout, or the pages' budget when the document is long enough for
     * that to be more — a scanned page at the scanned rate (the quality path OCRs everything at its own rate). Unknown

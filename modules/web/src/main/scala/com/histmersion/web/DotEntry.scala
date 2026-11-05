@@ -10,9 +10,21 @@ import scala.scalajs.js
   */
 final case class DotEntry(
     kind: DotKind,
-    id: String,
-    label: String,
-    icon: String,
-    mid: Option[Double],
-    note: String = ""
+    id: DotEntry.Id,
+    label: DotEntry.Label,
+    icon: DotEntry.Icon,
+    mid: Option[DotEntry.Mid],
+    note: DotEntry.Note = ""
 )
+
+object DotEntry:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Icon = Icon.T
+  object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Mid = Mid.T
+  object Mid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -164,11 +164,23 @@ final case class BundleEntities(
 
 object BundleEntities:
 
-  final case class Rev(kind: Bundle.Kind, rev: String, label: String)
+  final case class Rev(kind: Bundle.Kind, rev: Rev.Value, label: Rev.Label)
+
+  object Rev:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One uid a line refers to, the uid the referring line is written under, and which line (for the message).
     */
-  final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: String, required: Boolean)
+  final case class Reference(kind: Bundle.Kind, uid: UUID, owner: UUID, from: Reference.From, required: Reference.Required)
+
+  object Reference:
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Required = Required.T
+    object Required extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a blob is for. */
   enum BlobUse:

@@ -23,7 +23,15 @@ import com.histmersion.util.console.Console
   */
 object RenameCmd:
 
-  final case class Args(oldCitekey: String, newCitekey: String, json: Boolean)
+  final case class Args(oldCitekey: Args.OldCitekey, newCitekey: Args.NewCitekey, json: Args.Json)
+
+  object Args:
+    type OldCitekey = OldCitekey.T
+    object OldCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NewCitekey = NewCitekey.T
+    object NewCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Json = Json.T
+    object Json extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val args: Opts[Args] =
     (Opts.argument[String]("old"), Opts.argument[String]("new"), Output.jsonFlag).mapN(Args.apply).map(a => a.modify(_.oldCitekey).setTo(a.oldCitekey.trim).modify(_.newCitekey).setTo(a.newCitekey.trim))

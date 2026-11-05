@@ -28,7 +28,15 @@ import com.histmersion.api.catalogue.Place
 object PlacesInput:
 
   /** Cached label/kind/contested for gazetteer ids. */
-  private case class KnownPlace(label: String, kind: String, contested: Boolean)
+  private case class KnownPlace(label: KnownPlace.Label, kind: KnownPlace.Kind, contested: KnownPlace.Contested)
+
+  object KnownPlace:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Contested = Contested.T
+    object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val known = BoundedCache[String, KnownPlace](com.histmersion.web.ui.Layout.placeLabelCacheSize)
 
   /** The labels' figures, for [[Diagnostics]]. */
@@ -44,15 +52,33 @@ object PlacesInput:
 
   /** Suggestion items: either a gazetteer place or the "text:" fallback row. */
   private case class SuggestItem(
-      id: String,
-      label: String,
-      kind: String,
-      findings: Option[Int],
-      contested: Boolean,
-      textFallback: Boolean,
-      periodStart: Option[Long] = None,
-      periodEnd: Option[Long] = None
+      id: SuggestItem.Id,
+      label: SuggestItem.Label,
+      kind: SuggestItem.Kind,
+      findings: Option[SuggestItem.Findings],
+      contested: SuggestItem.Contested,
+      textFallback: SuggestItem.TextFallback,
+      periodStart: Option[SuggestItem.PeriodStart] = None,
+      periodEnd: Option[SuggestItem.PeriodEnd] = None
   )
+
+  object SuggestItem:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Findings = Findings.T
+    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Contested = Contested.T
+    object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TextFallback = TextFallback.T
+    object TextFallback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodStart = PeriodStart.T
+    object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodEnd = PeriodEnd.T
+    object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private var items: List[SuggestItem] = Nil
   private var activeIdx: Int = -1

@@ -38,7 +38,13 @@ object EventSql:
   /** What only the catalogue work narrows events by: the tier, the catalogue context of the map's layer, and the area
     * the anchor lies in.
     */
-  final case class Narrow(tier: Option[String] = None, context: Boolean = false, area: Option[BBox] = None)
+  final case class Narrow(tier: Option[Narrow.Tier] = None, context: Narrow.Context = false, area: Option[BBox] = None)
+
+  object Narrow:
+    type Tier = Tier.T
+    object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Context = Context.T
+    object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The WHERE of the event list over `events e` with its place `ep` (the area reads the anchor): the events related to
     * the filter's sources ([[EventSourceFilter]]), narrowed by the event's own `text` (label/description substring),

@@ -7,7 +7,15 @@ import com.histmersion.web.ui.CssClass
   */
 object FadingLayer:
 
-  final case class Plan(entering: Set[String], staying: Set[String], exiting: Set[String])
+  final case class Plan(entering: Set[Plan.Entering], staying: Set[Plan.Staying], exiting: Set[Plan.Exiting])
+
+  object Plan:
+    type Entering = Entering.T
+    object Entering extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Staying = Staying.T
+    object Staying extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Exiting = Exiting.T
+    object Exiting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: what enters, stays and leaves going from `before` to `after`. */
   private[web] def plan(before: Set[String], after: Set[String]): Plan =

@@ -7,5 +7,17 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * is keg-only).
   */
 /** @param keep how many archives a finished dump leaves in `dir` (the newest); `0` keeps them all. */
-final case class BackupsConfig(dir: String, pgBinDir: String, timeoutSeconds: Int, requestWaitSeconds: Int, keep: Int)
+final case class BackupsConfig(dir: BackupsConfig.Dir, pgBinDir: BackupsConfig.PgBinDir, timeoutSeconds: BackupsConfig.TimeoutSeconds, requestWaitSeconds: BackupsConfig.RequestWaitSeconds, keep: BackupsConfig.Keep)
     derives ConfigReader
+
+object BackupsConfig:
+  type Dir = Dir.T
+  object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgBinDir = PgBinDir.T
+  object PgBinDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestWaitSeconds = RequestWaitSeconds.T
+  object RequestWaitSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Keep = Keep.T
+  object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

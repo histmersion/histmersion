@@ -4,8 +4,14 @@ package com.histmersion.util.basemap
   * that read that part.
   */
 import com.histmersion.util.storage.Store
-final case class GebcoPart(name: String, url: String, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
+final case class GebcoPart(name: GebcoPart.Name, url: GebcoPart.Url, grid: GeoTiffGrid, window: GridWindow, runs: List[RowRun]):
   def bytes: Long = runs.map(_.length).sum
 
   /** The file `run` is kept in, in the fetch's work store. */
   def key(run: RowRun): Store.Key = Store.Key.applyUnsafe(s"gebco-$name-${run.firstRow}.bin")
+
+object GebcoPart:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

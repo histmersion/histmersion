@@ -21,7 +21,7 @@ import scala.util.Try
   *   the host paths it reads; a `histmersion.plugins.<id>` path reads another first-party plugin's setting as that
   *   plugin's effective block has it
   */
-final case class FirstPartySettings(plugin: String, paths: List[String]):
+final case class FirstPartySettings(plugin: FirstPartySettings.Plugin, paths: List[FirstPartySettings.Paths]):
 
   /** Whether a change of the host key `changed` (not this plugin's own block) concerns this plugin. */
   def readsHostKey(changed: String): Boolean = paths.exists(HotPlan.keyMatches(changed, _))
@@ -36,6 +36,11 @@ final case class FirstPartySettings(plugin: String, paths: List[String]):
     }
 
 object FirstPartySettings:
+  type Plugin = Plugin.T
+  object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Paths = Paths.T
+  object Paths extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Root = "histmersion"
 
   /** The keys that shape the acquisition client every plugin of a generation is lent (its User-Agent, timeouts and TLS

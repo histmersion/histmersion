@@ -24,7 +24,11 @@ final case class ResolveRequest(
     lib: Path,
     histmersionRepo: Option[Path],
     repositories: List[RepositoryUrl],
-    check: Boolean,
+    check: ResolveRequest.Check,
     jars: List[Path],
     cache: Option[Path] = None
 )
+
+object ResolveRequest:
+  type Check = Check.T
+  object Check extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

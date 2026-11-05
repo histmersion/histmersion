@@ -86,14 +86,24 @@ object PluginKit:
     *   `changed`: in both, with another SHA-256)
     */
   final case class SetStatus(
-      dirDigest: String,
+      dirDigest: SetStatus.DirDigest,
       installed: Option[PluginSet],
       running: Option[PluginSet],
-      added: List[String],
-      removed: List[String],
-      changed: List[String],
+      added: List[SetStatus.Added],
+      removed: List[SetStatus.Removed],
+      changed: List[SetStatus.Changed],
       verdict: Verdict
   )
+
+  object SetStatus:
+    type DirDigest = DirDigest.T
+    object DirDigest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Added = Added.T
+    object Added extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Removed = Removed.T
+    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Changed = Changed.T
+    object Changed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: compare the directory with the installed binary's set, and that with the running one's. A running server
     * that reports no set runs a first-party-only binary (the empty set). `dependencies` = the directory's POMs and
@@ -147,11 +157,19 @@ object PluginKit:
   // ── where the plugin comes from ───────────────────────────────────────────────────────────────
 
   /** Maven coordinates. `g::a:v` is the Scala 3 artifact `a_3`. */
-  final case class Coordinates(group: String, artifact: String, version: String):
+  final case class Coordinates(group: Coordinates.Group, artifact: Coordinates.Artifact, version: Coordinates.Version):
     def path: String = s"${group.replace('.', '/')}/$artifact/$version/$artifact-$version"
     def jarUrl(repo: String): String = s"${repo.stripSuffix("/")}/$path.jar"
     def pomUrl(repo: String): String = s"${repo.stripSuffix("/")}/$path.pom"
     override def toString: String = s"$group:$artifact:$version"
+
+  object Coordinates:
+    type Group = Group.T
+    object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Artifact = Artifact.T
+    object Artifact extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Version = Version.T
+    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Part = "[A-Za-z0-9_.\\-+]+"
 
@@ -204,13 +222,25 @@ object PluginKit:
     * of the plugin set.
     */
   final case class Installed(
-      file: String,
-      sha256: String,
-      source: String,
-      addedAt: String,
+      file: Installed.File,
+      sha256: Installed.Sha256,
+      source: Installed.Source,
+      addedAt: Installed.AddedAt,
       plugins: List[PluginDescription] = Nil,
-      signer: Option[String] = None
+      signer: Option[Installed.Signer] = None
   ) derives KindlingsCodecAsObject
+
+  object Installed:
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sha256 = Sha256.T
+    object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddedAt = AddedAt.T
+    object AddedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Signer = Signer.T
+    object Signer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Index(jars: List[Installed] = Nil) derives KindlingsCodecAsObject:
     def put(i: Installed): Index = Index((jars.filterNot(_.file == i.file) :+ i).sortBy(_.file))
@@ -268,21 +298,41 @@ object PluginKit:
 
   // ── the relink kit's manifest ─────────────────────────────────────────────────────────────────
 
-  final case class KitFile(file: String, sha256: String) derives KindlingsCodecAsObject
+  final case class KitFile(file: KitFile.File, sha256: KitFile.Sha256) derives KindlingsCodecAsObject
+
+  object KitFile:
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sha256 = Sha256.T
+    object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `kit/kit.json`: what the kit is (version, commit, the GraalVM it must be linked with, the SPI it speaks, the main
     * class) and the SHA-256 of every file in it (paths relative to `kit/`).
     */
   final case class KitManifest(
-      format: Int,
-      version: String,
-      commit: Option[String],
-      graalvm: String,
-      spiVersion: Int,
-      mainClass: String,
+      format: KitManifest.Format,
+      version: KitManifest.Version,
+      commit: Option[KitManifest.Commit],
+      graalvm: KitManifest.Graalvm,
+      spiVersion: KitManifest.SpiVersion,
+      mainClass: KitManifest.MainClass,
       files: List[KitFile]
   ) derives KindlingsCodecAsObject:
     def label: String = version + commit.fold("")(c => s" ($c)")
+
+  object KitManifest:
+    type Format = Format.T
+    object Format extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Version = Version.T
+    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Commit = Commit.T
+    object Commit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Graalvm = Graalvm.T
+    object Graalvm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpiVersion = SpiVersion.T
+    object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MainClass = MainClass.T
+    object MainClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val KitFormat = 1
 

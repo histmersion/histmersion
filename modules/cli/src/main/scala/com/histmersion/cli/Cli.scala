@@ -690,4 +690,10 @@ object Cli:
           case Left(e)                                 => Cli.err.println(s"error: ${e.message}"); sys.exit(e.exitCode)
 
   /** A user-facing failure: message + process exit code (1 = usage, 2 = server said no, 3 = unreachable). */
-  final case class Error(message: String, exitCode: Int = ExitCode.Unreachable)
+  final case class Error(message: Error.Message, exitCode: Error.ExitCode = ExitCode.Unreachable)
+
+  object Error:
+    type Message = Message.T
+    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExitCode = ExitCode.T
+    object ExitCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

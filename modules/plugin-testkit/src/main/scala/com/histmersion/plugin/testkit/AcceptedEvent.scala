@@ -7,9 +7,13 @@ import com.histmersion.plugin.*
   */
 final case class AcceptedEvent(
     event: CatalogueEvent,
-    kind: String,
+    kind: AcceptedEvent.Kind,
     notBefore: Option[Year],
     beginBy: Option[Year],
     endFrom: Option[Year],
     notAfter: Option[Year]
 )
+
+object AcceptedEvent:
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

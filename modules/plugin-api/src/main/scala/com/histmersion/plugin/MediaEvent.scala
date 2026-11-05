@@ -12,8 +12,14 @@ package com.histmersion.plugin
   *   its span, when it is dated
   */
 final case class MediaEvent(
-    id: String,
-    label: String,
+    id: MediaEvent.Id,
+    label: MediaEvent.Label,
     wikidata: Option[WikidataId] = None,
     period: Option[Period] = None
 )
+
+object MediaEvent:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

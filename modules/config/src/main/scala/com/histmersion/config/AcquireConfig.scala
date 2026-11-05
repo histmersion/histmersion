@@ -15,7 +15,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *   directory.
   */
 final case class AcquireConfig(
-    contactEmail: String,
+    contactEmail: AcquireConfig.ContactEmail,
     openalex: ServiceConfig,
     crossref: ServiceConfig,
     unpaywall: ServiceConfig,
@@ -23,7 +23,7 @@ final case class AcquireConfig(
     semanticScholar: KeyedServiceConfig,
     europepmc: ServiceConfig,
     pmcDataset: ServiceConfig,
-    publicUserAgent: String,
+    publicUserAgent: AcquireConfig.PublicUserAgent,
     zenodo: ServiceConfig,
     datacite: ServiceConfig,
     doiHandles: ServiceConfig,
@@ -33,10 +33,10 @@ final case class AcquireConfig(
     wikipedia: ServiceConfig,
     retractionWatch: RetractionWatchConfig,
     chain: CommaList,
-    allowUnauthorised: Boolean,
-    userAgent: String,
-    timeoutSeconds: Int,
-    spoolDir: String,
+    allowUnauthorised: AcquireConfig.AllowUnauthorised,
+    userAgent: AcquireConfig.UserAgent,
+    timeoutSeconds: AcquireConfig.TimeoutSeconds,
+    spoolDir: AcquireConfig.SpoolDir,
     defaults: AcquireDefaults,
     tls: TlsConfig,
     candidates: CandidatesConfig,
@@ -55,3 +55,17 @@ final case class AcquireConfig(
     * run after these, in plugin registration order.
     */
   def chainIds: List[String] = chain.entries
+
+object AcquireConfig:
+  type ContactEmail = ContactEmail.T
+  object ContactEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PublicUserAgent = PublicUserAgent.T
+  object PublicUserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowUnauthorised = AllowUnauthorised.T
+  object AllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UserAgent = UserAgent.T
+  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpoolDir = SpoolDir.T
+  object SpoolDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

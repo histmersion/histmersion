@@ -8,7 +8,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * signal; `denyHostsExtra` is added to it, so a user's config can deny more hosts without restating the shipped list.
   */
 final case class LandingConfig(
-    enabled: Boolean,
+    enabled: LandingConfig.Enabled,
     maxPages: ItemCount,
     allowHosts: CommaList,
     denyHosts: CommaList,
@@ -25,3 +25,7 @@ final case class LandingConfig(
     browserDownloadHosts: CommaList = CommaList("")
 ) derives ConfigReader:
   def refusingHosts: List[String] = browserDownloadHosts.entries
+
+object LandingConfig:
+  type Enabled = Enabled.T
+  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

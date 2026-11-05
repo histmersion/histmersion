@@ -10,5 +10,17 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 /** `user`/`password` are the DEDICATED read-only login (`histmersion_query`, created by migration V011), not the
   * application role — see the three layers documented on [[Query]].
   */
-final case class QueryConfig(user: String, password: String, timeoutMs: Int, maxRows: Int, maxCellChars: Int)
+final case class QueryConfig(user: QueryConfig.User, password: QueryConfig.Password, timeoutMs: QueryConfig.TimeoutMs, maxRows: QueryConfig.MaxRows, maxCellChars: QueryConfig.MaxCellChars)
     derives ConfigReader
+
+object QueryConfig:
+  type User = User.T
+  object User extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Password = Password.T
+  object Password extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutMs = TimeoutMs.T
+  object TimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxRows = MaxRows.T
+  object MaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxCellChars = MaxCellChars.T
+  object MaxCellChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

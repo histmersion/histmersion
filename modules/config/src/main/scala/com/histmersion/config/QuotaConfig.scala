@@ -7,11 +7,23 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * `fallthrough` names the roles whose chain may fall from a plan below its floor to a paid key (the others pause).
   */
 final case class QuotaConfig(
-    staleMinutes: Int,
-    defaultFloor: Int,
-    margin: Int,
-    pollSeconds: Int,
+    staleMinutes: QuotaConfig.StaleMinutes,
+    defaultFloor: QuotaConfig.DefaultFloor,
+    margin: QuotaConfig.Margin,
+    pollSeconds: QuotaConfig.PollSeconds,
     claudePlan: ClaudePlanConfig,
     chatgptPlan: PlanPoolConfig,
-    fallthrough: String
+    fallthrough: QuotaConfig.Fallthrough
 ) derives ConfigReader
+
+object QuotaConfig:
+  type StaleMinutes = StaleMinutes.T
+  object StaleMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultFloor = DefaultFloor.T
+  object DefaultFloor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Margin = Margin.T
+  object Margin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PollSeconds = PollSeconds.T
+  object PollSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Fallthrough = Fallthrough.T
+  object Fallthrough extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

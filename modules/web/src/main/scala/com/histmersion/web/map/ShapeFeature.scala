@@ -8,9 +8,19 @@ import scala.scalajs.js
   * (0…1).
   */
 final case class ShapeFeature(
-    id: String,
+    id: ShapeFeature.Id,
     geometry: js.Any,
-    colour: String = "",
-    dashed: Boolean = false,
-    alpha: Double = 1.0
+    colour: ShapeFeature.Colour = "",
+    dashed: ShapeFeature.Dashed = false,
+    alpha: ShapeFeature.Alpha = 1.0
 )
+
+object ShapeFeature:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Colour = Colour.T
+  object Colour extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Dashed = Dashed.T
+  object Dashed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Alpha = Alpha.T
+  object Alpha extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

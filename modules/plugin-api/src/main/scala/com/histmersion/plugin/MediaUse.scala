@@ -21,9 +21,19 @@ package com.histmersion.plugin
 final case class MediaUse(
     target: MediaTarget.Id,
     item: MediaItem,
-    rank: Int,
-    statement: Option[String] = None,
+    rank: MediaUse.Rank,
+    statement: Option[MediaUse.Statement] = None,
     wikidata: Option[WikidataId] = None,
-    basis: Option[String] = None,
-    note: Option[String] = None
+    basis: Option[MediaUse.Basis] = None,
+    note: Option[MediaUse.Note] = None
 )
+
+object MediaUse:
+  type Rank = Rank.T
+  object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Statement = Statement.T
+  object Statement extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Basis = Basis.T
+  object Basis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

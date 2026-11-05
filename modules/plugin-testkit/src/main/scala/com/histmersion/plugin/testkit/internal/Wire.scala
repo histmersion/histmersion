@@ -13,15 +13,30 @@ import scala.jdk.CollectionConverters.*
   * body is in — or the error the request ended with.
   */
 final private[testkit] case class RecordedExchange(
-    method: String,
-    url: String,
-    status: Option[Int],
-    headers: List[(String, String)],
-    body: Option[String],
-    error: Option[String]
+    method: RecordedExchange.Method,
+    url: RecordedExchange.Url,
+    status: Option[RecordedExchange.Status],
+    headers: List[(RecordedExchange.HeadersPart1, RecordedExchange.HeadersPart2)],
+    body: Option[RecordedExchange.Body],
+    error: Option[RecordedExchange.Error]
 )
 
 private[testkit] object RecordedExchange:
+  type Method = Method.T
+  object Method extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadersPart1 = HeadersPart1.T
+  object HeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadersPart2 = HeadersPart2.T
+  object HeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Error = Error.T
+  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Suffix = ".http"
 
   /** The answer headers worth keeping: what a plugin or the host's policy reads. Everything else — and so every cookie

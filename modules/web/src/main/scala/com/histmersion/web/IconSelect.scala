@@ -18,12 +18,24 @@ object IconSelect:
     * means (its tooltip), when the label alone does not say.
     */
   final case class Opt(
-      value: String,
-      label: String,
-      icon: String,
-      group: Option[String] = None,
-      hint: Option[String] = None
+      value: Opt.Value,
+      label: Opt.Label,
+      icon: Opt.Icon,
+      group: Option[Opt.Group] = None,
+      hint: Option[Opt.Hint] = None
   )
+
+  object Opt:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Icon = Icon.T
+    object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Group = Group.T
+    object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hint = Hint.T
+    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: the option a typed prefix names — the first after `from` (wrapping) whose label starts with it. */
   def typeAhead(opts: List[Opt], from: Int, prefix: String): Option[Int] =

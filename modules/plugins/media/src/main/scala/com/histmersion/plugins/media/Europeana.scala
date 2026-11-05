@@ -28,8 +28,15 @@ object Europeana:
     * `types` (letters compared, any case: `Preserved Specimen` = `PreservedSpecimen`). The aggregators and types are
     * excluded in the search as well; a type is read again from the Record API, since a search item does not carry it.
     */
-  final case class Exclusions(providers: List[String], dataProviders: List[String], types: List[String])
+  final case class Exclusions(providers: List[Exclusions.Providers], dataProviders: List[Exclusions.DataProviders], types: List[Exclusions.Types])
   object Exclusions:
+    type Providers = Providers.T
+    object Providers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DataProviders = DataProviders.T
+    object DataProviders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Types = Types.T
+    object Types extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val none: Exclusions = Exclusions(Nil, Nil, Nil)
 
   private def phrase(s: String) = "\"" + s.replace("\"", " ").trim + "\""

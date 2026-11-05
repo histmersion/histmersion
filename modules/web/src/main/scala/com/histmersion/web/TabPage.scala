@@ -6,4 +6,8 @@ import org.scalajs.dom
 /** One page of a tab's answer: its rows, the server's total, and the count line's extras for it (`200 concepts`, the
   * filter's time window, …).
   */
-final case class TabPage[Row](rows: List[Row], total: com.histmersion.api.RowCount, extras: List[String] = Nil)
+final case class TabPage[Row](rows: List[Row], total: com.histmersion.api.RowCount, extras: List[TabPage.Extras] = Nil)
+
+object TabPage:
+  type Extras = Extras.T
+  object Extras extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

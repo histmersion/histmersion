@@ -16,21 +16,45 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *     PR, skills and plugin guidance, re-sent on every request); `builtin` keeps Codex's.
   */
 final case class CodexConfig(
-    command: String,
-    home: String,
-    useApiKey: Boolean,
-    timeoutSeconds: Int,
-    appServer: Boolean,
-    toolOutputTokens: Int = 0,
-    baseInstructions: String = "lean",
+    command: CodexConfig.Command,
+    home: CodexConfig.Home,
+    useApiKey: CodexConfig.UseApiKey,
+    timeoutSeconds: CodexConfig.TimeoutSeconds,
+    appServer: CodexConfig.AppServer,
+    toolOutputTokens: CodexConfig.ToolOutputTokens = 0,
+    baseInstructions: CodexConfig.BaseInstructions = "lean",
     /** Run transcripts older than this many days are deleted from the home (#2582); 0 keeps all. */
-    keepSessionsDays: Int = 14,
+    keepSessionsDays: CodexConfig.KeepSessionsDays = 14,
     /** Vacuum the home's SQLite files (with [[sqlite]]) in the same pass. */
-    vacuum: Boolean = true,
+    vacuum: CodexConfig.Vacuum = true,
     /** At most one pass this often, after a step, while no run uses the home; 0 = never by itself. */
-    retentionEveryHours: Int = 24,
+    retentionEveryHours: CodexConfig.RetentionEveryHours = 24,
     /** The `sqlite3` executable the vacuum runs. */
-    sqlite: String = "sqlite3"
+    sqlite: CodexConfig.Sqlite = "sqlite3"
 ) derives ConfigReader:
   /** `builtin` (any case) keeps Codex's own base prompt; anything else is `lean`. */
   def leanBase: Boolean = !baseInstructions.trim.equalsIgnoreCase("builtin")
+
+object CodexConfig:
+  type Command = Command.T
+  object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Home = Home.T
+  object Home extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UseApiKey = UseApiKey.T
+  object UseApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AppServer = AppServer.T
+  object AppServer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToolOutputTokens = ToolOutputTokens.T
+  object ToolOutputTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BaseInstructions = BaseInstructions.T
+  object BaseInstructions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeepSessionsDays = KeepSessionsDays.T
+  object KeepSessionsDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Vacuum = Vacuum.T
+  object Vacuum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetentionEveryHours = RetentionEveryHours.T
+  object RetentionEveryHours extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sqlite = Sqlite.T
+  object Sqlite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

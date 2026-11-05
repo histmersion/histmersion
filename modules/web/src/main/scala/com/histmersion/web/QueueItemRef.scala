@@ -17,7 +17,17 @@ import com.histmersion.api.automation.Queue
   */
 object QueueItemRef:
 
-  final case class Ref(authors: List[String], title: Option[String], year: Option[Int], doi: Option[String])
+  final case class Ref(authors: List[Ref.Authors], title: Option[Ref.Title], year: Option[Ref.Year], doi: Option[Ref.Doi])
+
+  object Ref:
+    type Authors = Authors.T
+    object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = Year.T
+    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val AuthorYear = """^(.+?)\s+((?:1[5-9]|20)\d\d)[a-z]?\.\s+['‘"“](.+?)['’"”][,.]\s*(.*)$""".r
   private val Paren = """\(([^()]*)\)""".r

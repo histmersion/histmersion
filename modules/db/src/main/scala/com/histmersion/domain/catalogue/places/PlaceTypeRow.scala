@@ -6,11 +6,15 @@ import com.histmersion.api.catalogue.Period
 import com.histmersion.api.catalogue.Place
 
 final private[places] case class PlaceTypeRow(
-    placeId: String,
-    typeLabel: String,
-    periodStart: Option[Long],
-    periodEnd: Option[Long],
-    citekey: Option[String]
+    placeId: com.histmersion.domain.catalogue.Place.Id,
+    typeLabel: PlaceTypeRow.TypeLabel,
+    periodStart: Option[com.histmersion.Year],
+    periodEnd: Option[com.histmersion.Year],
+    citekey: Option[com.histmersion.domain.library.Citekey]
 ) derives DbCodec:
   def toDto: Place.Type =
     Place.Type(com.histmersion.api.catalogue.Place.Id(placeId), typeLabel, for s <- periodStart; e <- periodEnd yield Period(s, e), citekey)
+
+object PlaceTypeRow:
+  type TypeLabel = TypeLabel.T
+  object TypeLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

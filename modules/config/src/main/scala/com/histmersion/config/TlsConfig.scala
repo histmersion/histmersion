@@ -11,7 +11,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * @param extraCaFile
   *   a PEM file of further roots (`~` expanded); "" = none
   */
-final case class TlsConfig(systemTrust: Boolean, extraCaFile: String) derives ConfigReader:
+final case class TlsConfig(systemTrust: TlsConfig.SystemTrust, extraCaFile: TlsConfig.ExtraCaFile) derives ConfigReader:
   def extraCa: Option[String] =
     Option(extraCaFile)
       .map(_.trim)
@@ -20,3 +20,9 @@ final case class TlsConfig(systemTrust: Boolean, extraCaFile: String) derives Co
 
   /** Anything beyond the JDK's roots asked for? */
   def custom: Boolean = systemTrust || extraCa.isDefined
+
+object TlsConfig:
+  type SystemTrust = SystemTrust.T
+  object SystemTrust extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtraCaFile = ExtraCaFile.T
+  object ExtraCaFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

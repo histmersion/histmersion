@@ -11,7 +11,7 @@ import com.histmersion.plugin.AiTool
   * the input), or the failure — an error status's body as it came, an error in a success answer by its message, an
   * answer that is neither by why it cannot be read as an error.
   */
-final case class AnthropicAnswer(status: Int, body: String):
+final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: AnthropicAnswer.Body):
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[String, AiTurn] =
@@ -25,6 +25,11 @@ final case class AnthropicAnswer(status: Int, body: String):
             case Left(e)        => Left(e.getMessage)
 
 object AnthropicAnswer:
+
+  type Status = Status.T
+  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def objectAt(c: HCursor): Either[DecodingFailure, Unit] =
     if c.value.isObject then Right(()) else Left(DecodingFailure(WrongTypeExpectation("object", c.value), c.history))

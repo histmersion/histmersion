@@ -8,10 +8,22 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * platform's per-user data directory).
   */
 final case class RuntimeConfig(
-    enabled: Boolean,
-    home: String,
-    dataDir: String,
-    pgPort: Int,
-    converterPort: Int,
+    enabled: RuntimeConfig.Enabled,
+    home: RuntimeConfig.Home,
+    dataDir: RuntimeConfig.DataDir,
+    pgPort: RuntimeConfig.PgPort,
+    converterPort: RuntimeConfig.ConverterPort,
     postgres: PgTuning
 ) derives ConfigReader
+
+object RuntimeConfig:
+  type Enabled = Enabled.T
+  object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Home = Home.T
+  object Home extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DataDir = DataDir.T
+  object DataDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PgPort = PgPort.T
+  object PgPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConverterPort = ConverterPort.T
+  object ConverterPort extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

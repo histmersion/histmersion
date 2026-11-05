@@ -95,13 +95,22 @@ object FetchChain:
   val NoCopy = "no legal open-access PDF found"
 
   /** One registered fetcher under its id. */
-  final case class Step(id: String, fetcher: SourceFetcher)
+  final case class Step(id: Step.Id, fetcher: SourceFetcher)
+
+  object Step:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What one fetcher that ran answered, when it had no copy. */
-  final case class Answer(fetcher: String, kind: Answer.Kind, why: String):
+  final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Answer.Why):
     /** As the ingest report shows it: `oapen: no copy — no record of this work`. */
     def line: String = s"$fetcher: ${kind.label} — $why"
   object Answer:
+    type Fetcher = Fetcher.T
+    object Fetcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     enum Kind(val label: String):
       case Miss extends Kind("no copy")
       case Refused extends Kind("refused")
@@ -109,7 +118,13 @@ object FetchChain:
   /** A fetch of one work: the copy, or the message every failed fetch gives; and, when there is no copy, the answer of
     * each fetcher that ran, in chain order; the fetcher that found the copy.
     */
-  final case class Outcome(file: Either[String, FetchedFile], answers: List[Answer], foundBy: Option[String] = None)
+  final case class Outcome(file: Either[Outcome.FilePart1, FetchedFile], answers: List[Answer], foundBy: Option[Outcome.FoundBy] = None)
+
+  object Outcome:
+    type FilePart1 = FilePart1.T
+    object FilePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FoundBy = FoundBy.T
+    object FoundBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A chain over these fetchers, in this order. `registered` answers [[Fetch.Context.registered]]: the plugins of the
     * generation the fetch runs in.

@@ -182,9 +182,17 @@ object Plugin:
     * @param body
     *   the answer's bytes
     */
-  final case class HttpResponse(status: Int, headers: Map[String, String], body: Array[Byte]):
+  final case class HttpResponse(status: HttpResponse.Status, headers: Map[HttpResponse.HeadersKey, HttpResponse.HeadersValue], body: Array[Byte]):
     /** A header by name, in any case. */
     def header(name: String): Option[String] = headers.get(name.toLowerCase(Locale.ROOT))
+
+  object HttpResponse:
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeadersKey = HeadersKey.T
+    object HeadersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeadersValue = HeadersValue.T
+    object HeadersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** @param id
     *   the config key (`histmersion.plugins.<id>`) and the name in logs and reports; kebab-case, `[a-z0-9][a-z0-9-]*`
@@ -193,7 +201,15 @@ object Plugin:
     * @param spiVersion
     *   the SPI generation the plugin was compiled against ([[Spi.Version]]); the host refuses any other
     */
-  final case class Info(id: String, version: String, spiVersion: Int)
+  final case class Info(id: Info.Id, version: Info.Version, spiVersion: Info.SpiVersion)
+
+  object Info:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Version = Version.T
+    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpiVersion = SpiVersion.T
+    object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The host's log, with the plugin's id on every line. */
   trait Log:

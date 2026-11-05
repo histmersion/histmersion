@@ -8,9 +8,21 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * written.
   */
 final case class AgentCompileConfig(
-    maxSources: Int,
-    recordChars: Int,
-    maxClaims: Int,
-    draftMaxTokens: Int,
-    review: Boolean
+    maxSources: AgentCompileConfig.MaxSources,
+    recordChars: AgentCompileConfig.RecordChars,
+    maxClaims: AgentCompileConfig.MaxClaims,
+    draftMaxTokens: AgentCompileConfig.DraftMaxTokens,
+    review: AgentCompileConfig.Review
 ) derives ConfigReader
+
+object AgentCompileConfig:
+  type MaxSources = MaxSources.T
+  object MaxSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordChars = RecordChars.T
+  object RecordChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxClaims = MaxClaims.T
+  object MaxClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DraftMaxTokens = DraftMaxTokens.T
+  object DraftMaxTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Review = Review.T
+  object Review extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

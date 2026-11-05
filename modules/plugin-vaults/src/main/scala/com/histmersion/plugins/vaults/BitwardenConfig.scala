@@ -13,5 +13,13 @@ import scala.concurrent.duration.*
   * `BW_SESSION`: `session` (a Secret, e.g. `env:BW_SESSION`) is passed to the `bw` process only; without it the vault
   * reports locked.
   */
-final case class BitwardenConfig(cli: String, session: Option[Secret], field: String, timeoutSeconds: Int)
+final case class BitwardenConfig(cli: BitwardenConfig.Cli, session: Option[Secret], field: BitwardenConfig.Field, timeoutSeconds: BitwardenConfig.TimeoutSeconds)
     derives ConfigReader
+
+object BitwardenConfig:
+  type Cli = Cli.T
+  object Cli extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Field = Field.T
+  object Field extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeoutSeconds = TimeoutSeconds.T
+  object TimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

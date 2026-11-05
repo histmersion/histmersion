@@ -13,16 +13,36 @@ object Lightbox:
 
   /** What a full-size view shows: the picture and what its licence asks to be said beside it. */
   final case class Item(
-      src: String,
-      alt: String,
-      title: Option[String] = None,
-      credit: Option[String] = None,
-      author: Option[String] = None,
-      license: Option[String] = None,
-      licenseUrl: Option[String] = None,
-      sourceUrl: Option[String] = None,
-      provider: Option[String] = None
+      src: Item.Src,
+      alt: Item.Alt,
+      title: Option[Item.Title] = None,
+      credit: Option[Item.Credit] = None,
+      author: Option[Item.Author] = None,
+      license: Option[Item.License] = None,
+      licenseUrl: Option[Item.LicenseUrl] = None,
+      sourceUrl: Option[Item.SourceUrl] = None,
+      provider: Option[Item.Provider] = None
   )
+
+  object Item:
+    type Src = Src.T
+    object Src extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Alt = Alt.T
+    object Alt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Credit = Credit.T
+    object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Author = Author.T
+    object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type License = License.T
+    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LicenseUrl = LicenseUrl.T
+    object LicenseUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SourceUrl = SourceUrl.T
+    object SourceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provider = Provider.T
+    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // the data attributes an `<img>` names its full-size view in
   private val Full = "data-full"

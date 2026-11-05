@@ -15,8 +15,12 @@ object PluginTemplate:
       kind: PluginKind,
       pkg: ScalaPackage,
       repository: TemplateRepository,
-      agentNotes: Boolean
+      agentNotes: Request.AgentNotes
   )
+
+  object Request:
+    type AgentNotes = AgentNotes.T
+    object AgentNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The version a new plugin is published under, as its `Plugin.Info` states it too. */
   val FirstVersion = "0.1.0"

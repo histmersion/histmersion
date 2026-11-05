@@ -8,4 +8,8 @@ import com.histmersion.plugin.*
   * @param turn
   *   `None` when the check said no
   */
-final case class AiReport(check: Either[String, Unit], turn: Option[Either[AiFailure, AiTurn]], log: List[LogLine])
+final case class AiReport(check: Either[AiReport.CheckPart1, Unit], turn: Option[Either[AiFailure, AiTurn]], log: List[LogLine])
+
+object AiReport:
+  type CheckPart1 = CheckPart1.T
+  object CheckPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

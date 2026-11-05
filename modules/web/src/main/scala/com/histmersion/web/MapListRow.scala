@@ -8,12 +8,26 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   * opens it.
   */
 final case class MapListRow(
-    key: String,
-    label: String,
-    note: String,
-    icon: String,
-    href: String,
+    key: MapListRow.Key,
+    label: MapListRow.Label,
+    note: MapListRow.Note,
+    icon: MapListRow.Icon,
+    href: MapListRow.Href,
     open: () => Unit,
-    undated: Boolean = false,
+    undated: MapListRow.Undated = false,
     kind: com.histmersion.api.ItemKind = com.histmersion.api.ItemKind.Place
 )
+
+object MapListRow:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Icon = Icon.T
+  object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Href = Href.T
+  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Undated = Undated.T
+  object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
