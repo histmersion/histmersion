@@ -12,8 +12,8 @@ object JobControlRules:
     * says why it cannot be done. `resumable`: this server holds the paused job's way to go on (a restart loses it).
     */
   def decide(job: JobInfo, action: JobAction, resumable: Boolean): Either[String, JobControlStep] =
-    if com.histmersion.api.RegisteredJobKinds.all.ownControl(job.kind) then Right(JobControlStep.Run(action))
-    else if !stoppable(job.kind) then
+    if com.histmersion.api.RegisteredJobKinds.all.get(job.kind).exists(_.ownControl) then Right(JobControlStep.Run(action))
+    else if !com.histmersion.api.RegisteredJobKinds.all.get(job.kind).exists(_.stoppable) then
       Left(s"a ${job.kind} job cannot be paused or cancelled: it runs as one piece and ends by itself")
     else
       (action, JobState.parse(job.status)) match

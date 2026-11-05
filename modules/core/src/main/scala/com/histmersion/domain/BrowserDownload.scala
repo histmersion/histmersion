@@ -55,7 +55,7 @@ object BrowserDownload:
       (work.oaLocations ++ work.oaUrl.toList).distinct.flatMap(url => refusingHost(url).map(url -> _))
     for
       status <- work.oaStatus.flatMap(s => OaStatus.option(s.trim.toLowerCase(java.util.Locale.ROOT)))
-      doi <- work.doi.flatMap(d => Doi.option(d.trim.toLowerCase(java.util.Locale.ROOT)))
+      doi <- work.doi.flatMap(d => Doi.option(d.value.trim.toLowerCase(java.util.Locale.ROOT)))
       (url, host) <- onRefusingHost.headOption
       landing <- LandingUrl.option(url)
       publisher <- PublisherHost.option(host)
@@ -74,5 +74,5 @@ object BrowserDownload:
   def citationOf(work: WorkRef, doi: Doi): String =
     val who = work.authors.headOption.map(a => if work.authors.size > 1 then s"$a et al." else a)
     val head = List(who, work.year.map(y => s"($y)")).flatten.mkString(" ")
-    val title = work.title.map(_.trim).filter(_.nonEmpty).getOrElse(doi.value)
+    val title = work.title.map(_.value.trim).filter(_.nonEmpty).getOrElse(doi.value)
     s"${if head.isEmpty then "" else s"$head. "}$title."

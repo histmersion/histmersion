@@ -9,8 +9,7 @@ object CandidateDedupe:
     * indexes is one.
     */
   def keyOf(w: WorkRef): Option[String] =
-    w.doi
-      .flatMap(Ident.doi)
+    w.doi.flatMap(d => Ident.doi(d.value))
       .orElse(w.arxivId.map(a => s"10.48550/arxiv.${a.trim.toLowerCase.replaceAll("v\\d+$", "")}"))
 
   def dedupe(

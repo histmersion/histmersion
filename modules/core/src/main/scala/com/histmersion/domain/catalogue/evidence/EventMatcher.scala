@@ -88,7 +88,7 @@ object EventMatcher:
           EventLinkCandidate(com.histmersion.api.catalogue.Event.Id(eventId), com.histmersion.api.library.Citekey(ck), score, Event.LinkStatus.Proposed, titles.get(ck), fs.map(_.id), ps, reasons)
         )
       }
-      .sortBy(c => (-c.score, c.citekey))
+      .sortBy(c => (-c.score, c.citekey.value.toString))
       .take(w.maxCandidates.max(1))
 
   /** Pure: the passage an attestation is written from — the longest name matched, the first place it occurs. `None`

@@ -569,16 +569,16 @@ object EnrichSource:
       val s = if t.contains(",") then t.takeWhile(_ != ',') else t.split("\\s+").lastOption.getOrElse(t)
       AgentVerify.normalise(s)
     val titleDiff = upstream.title
-      .filter(t => !AgentVerify.sameTitle(t, title))
+      .filter(t => !AgentVerify.sameTitle(t.value, title))
       .map(t => s"title differs from the upstream record: \"$t\"")
-    val yearDiff = for u <- upstream.year; y <- year if u != y yield s"year $y differs from the upstream record's $u"
+    val yearDiff = for u <- upstream.year; y <- year if u != com.histmersion.api.catalogue.Year(y) yield s"year $y differs from the upstream record's $u"
     val yearMissing =
       Option.when(year.isEmpty)(upstream.year.map(u => s"no year recorded; the upstream record says $u")).flatten
     val authorDiff = upstream.authors.headOption
-      .filter(a => authors.nonEmpty && !authors.map(surname).contains(surname(a)))
-      .map(a => s"the upstream first author ${a.trim} is not among the recorded authors")
+      .filter(a => authors.nonEmpty && !authors.map(surname).contains(surname(a.value)))
+      .map(a => s"the upstream first author ${a.value.trim} is not among the recorded authors")
     val keyYear = Lint
-      .yearCitekeyMismatch(List(citekey -> upstream.year.orElse(year)))
+      .yearCitekeyMismatch(List(citekey -> upstream.year.map(_.value.toInt).orElse(year)))
       .map(i => s"citekey year: ${i.detail} — rename the source by hand if the record is right")
     (titleDiff ++ yearDiff ++ yearMissing ++ authorDiff).toList ++ keyYear
 
