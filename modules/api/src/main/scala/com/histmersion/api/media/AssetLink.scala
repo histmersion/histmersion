@@ -4,6 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 import com.histmersion.api.OffsetPage
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class AssetLink(
     id: Long,
@@ -29,18 +30,18 @@ object AssetLink:
 
 
   final case class List(
-      total: Int,
+      total: com.histmersion.api.RowCount,
       links: scala.List[AssetLink],
-      offset: Int = 0,
-      next: Option[Int] = None
+      offset: com.histmersion.api.Offset = com.histmersion.api.Offset(0),
+      next: Option[com.histmersion.api.Offset] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def page: OffsetPage = OffsetPage(total, offset, links.size)
+    def page: OffsetPage = OffsetPage(total, offset, com.histmersion.api.RowCount(links.size))
 
   object List:
 
     def of(total: Int, rows: scala.List[AssetLink], offset: Int): List =
-      List(total, rows, offset, OffsetPage(total, offset, rows.size).next)
+      List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Put(
       citekey: String,

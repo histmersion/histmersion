@@ -7,8 +7,8 @@ class Preview extends SyntacticRule("Preview") {
   private implicit val dialect: Dialect = dialects.Scala3
   override def afterComplete(): Unit = {
     val root = Paths.get("").toAbsolutePath.normalize
-    val target = root.resolve("target/pagination-preview-v1")
-    val report = root.resolve("refactor-audit/models/pagination/preview-v1")
+    val target = root.resolve("target/pagination-preview-v3")
+    val report = root.resolve("refactor-audit/models/pagination/preview-v3")
     require(!Files.exists(target) && !Files.exists(report),"Preserve existing preview")
     Files.createDirectories(target); Files.createDirectories(report)
     def rows(p: java.nio.file.Path) = Files.readAllLines(p).asScala.drop(1).map(_.split("\t",-1).toList).toList
@@ -34,7 +34,9 @@ class Preview extends SyntacticRule("Preview") {
       "{ owner = " + quote(owner) + ", parameters = [" + params.map(quote).mkString(", ") + "], fields = {" + mapping + "}, optionalFields = [" + fields.filter(_ == "next").map(quote).mkString + "] }"
     }
     val config = "rules = [\"file:tools/refactor/ModelTypeRewrite.scala\"]\nModelTypeRewrite {\nrecords = [\n" + configs.mkString(",\n") +
-      "\n]\nresults = { \"com/histmersion/api/OffsetPage#next().\" = \"com.histmersion.api.Offset\" }\noptionalResults = [\"com/histmersion/api/OffsetPage#next().\"]\n}\n"
+      "\n]\nresults = { \"com/histmersion/api/OffsetPage#next().\" = \"com.histmersion.api.Offset\" }\noptionalResults = [\"com/histmersion/api/OffsetPage#next().\"]\n" +
+      "scalarBoundaryOwners = [\"com/histmersion/api/OffsetPage#next().\", \"com/histmersion/api/OffsetPage#isAll().\", \"com/histmersion/api/OffsetPage.header().\", \"com/histmersion/api/OffsetPage.footer().\", \"com/histmersion/api/OffsetPage.markdown().\"]\n" +
+      "scalarBoundaryCalls = { \"com/histmersion/api/Plural.noun().\" = [0] }\ncodecImport = \"com.histmersion.api.json.NewtypeCodecs.given\"\n}\n"
     Files.writeString(report.resolve("rule.conf"),config)
     List("Offset","RowCount").foreach { name =>
       val source = "package com.histmersion.api\n\nimport io.github.iltotore.iron.*\nimport io.github.iltotore.iron.constraint.any.Pure\n\ntype " + name + " = " + name + ".T\nobject " + name + " extends RefinedType[Int, Pure]\n"

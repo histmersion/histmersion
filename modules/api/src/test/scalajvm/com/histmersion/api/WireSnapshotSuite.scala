@@ -76,13 +76,13 @@ class WireSnapshotSuite extends munit.FunSuite:
     matchedHeading = Some("Zq heading")
   )
   private val result = SearchResult(
-    3,
+    com.histmersion.api.RowCount(3),
     List(
       Hit(hit, Nil, List("tag zq")),
       Hit(hit.modify(_.citekey).setTo("zq_beta_1999").modify(_.year).setTo(None), Nil, Nil)
     ),
-    offset = 0,
-    next = Some(2)
+    offset = com.histmersion.api.Offset(0),
+    next = (Some(2)).map(com.histmersion.api.Offset.apply)
   )
   private val finding = Finding.Row(
     "Zq claim one.",
@@ -227,7 +227,7 @@ class WireSnapshotSuite extends munit.FunSuite:
   private def rendered: String =
     val parts: List[(String, String)] = List(
       "briefResults" -> SearchMarkdown.briefResults(result),
-      "briefResults empty" -> SearchMarkdown.briefResults(SearchResult(0, Nil)),
+      "briefResults empty" -> SearchMarkdown.briefResults(SearchResult(com.histmersion.api.RowCount(0), Nil)),
       "sourceFindingsOnly" -> SourcesMarkdown.sourceFindingsOnly(
         Vector(finding, finding.modify(_.claim).setTo("Zq claim two."))
       ),
@@ -236,7 +236,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       "contradictions" -> SourcesMarkdown.contradictions(contradictions, Some("zq_alpha_2001")),
       "contradictions all" -> SourcesMarkdown.contradictions(contradictions, None),
       "geoPage" -> SearchMarkdown.geoPage(
-        GeoHitPage(2, List(geo, geo.modify(_.lat).setTo(None).modify(_.lon).setTo(None)), next = None)
+        GeoHitPage(com.histmersion.api.RowCount(2), List(geo, geo.modify(_.lat).setTo(None).modify(_.lon).setTo(None)), next = None)
       ),
       "geoResults empty" -> SearchMarkdown.geoResults(Vector.empty),
       "bodySlice" -> Markdown.bodySlice("Zq body text.", 10, 40),
@@ -291,7 +291,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       ),
       "mediaThumbLine" -> thumb.markdownLine,
       "mediaList" -> MediaMarkdown.mediaList(
-        MediaList(2, List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)), next = Some(2))
+        MediaList(com.histmersion.api.RowCount(2), List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)), next = (Some(2)).map(com.histmersion.api.Offset.apply))
       ),
       "mediaFacets" -> MediaMarkdown.mediaFacets(
         MediaFacets(List(MediaCount("zq-provider", 3)), List(MediaCount("CC0-1.0", 2), MediaCount("zq", 1, false)))

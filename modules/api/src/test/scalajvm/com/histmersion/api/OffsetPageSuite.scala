@@ -15,33 +15,33 @@ import com.histmersion.api.media.AssetLink
 class OffsetPageSuite extends munit.FunSuite:
 
   test("next: the offset after this page, none on the last page or past the end"):
-    assertEquals(OffsetPage(412, 0, 50).next, Some(50))
-    assertEquals(OffsetPage(412, 400, 12).next, None)
-    assertEquals(OffsetPage(412, 500, 0).next, None)
-    assertEquals(OffsetPage(0, 0, 0).next, None)
+    assertEquals(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(50)).next, Some(50))
+    assertEquals(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(400), com.histmersion.api.RowCount(12)).next, None)
+    assertEquals(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(500), com.histmersion.api.RowCount(0)).next, None)
+    assertEquals(OffsetPage(com.histmersion.api.RowCount(0), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(0)).next, None)
 
   test("header: the whole list, or how much of it"):
-    assertEquals(OffsetPage.header(OffsetPage(7, 0, 7), "event(s)"), "### 7 event(s)")
-    assertEquals(OffsetPage.header(OffsetPage(412, 0, 50), "event(s)"), "### 50 of 412 event(s)")
-    assertEquals(OffsetPage.header(OffsetPage(412, 400, 12), "event(s)"), "### 12 of 412 event(s)")
+    assertEquals(OffsetPage.header(OffsetPage(com.histmersion.api.RowCount(7), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(7)), "event(s)"), "### 7 event(s)")
+    assertEquals(OffsetPage.header(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(50)), "event(s)"), "### 50 of 412 event(s)")
+    assertEquals(OffsetPage.header(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(400), com.histmersion.api.RowCount(12)), "event(s)"), "### 12 of 412 event(s)")
 
   test("footer: empty for the whole list; the range and the next offset otherwise"):
-    assertEquals(OffsetPage.footer(OffsetPage(7, 0, 7)), "")
+    assertEquals(OffsetPage.footer(OffsetPage(com.histmersion.api.RowCount(7), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(7))), "")
     assertEquals(
-      OffsetPage.footer(OffsetPage(412, 50, 50)),
+      OffsetPage.footer(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(50), com.histmersion.api.RowCount(50))),
       "\n\n_showing 51–100 of 412 — next: offset=100 — full set: limit=412_"
     )
-    assertEquals(OffsetPage.footer(OffsetPage(412, 400, 12)), "\n\n_showing 401–412 of 412 — full set: limit=412_")
-    assert(!OffsetPage.footer(OffsetPage(9000, 0, 50)).contains("full set"))
+    assertEquals(OffsetPage.footer(OffsetPage(com.histmersion.api.RowCount(412), com.histmersion.api.Offset(400), com.histmersion.api.RowCount(12))), "\n\n_showing 401–412 of 412 — full set: limit=412_")
+    assert(!OffsetPage.footer(OffsetPage(com.histmersion.api.RowCount(9000), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(50))).contains("full set"))
 
   test("markdown: the empty text, and past the end says so"):
     assertEquals(
-      OffsetPage.markdown(OffsetPage(0, 0, 0), "goal(s)", "_No goals._", Nil)((_: Int).toString),
+      OffsetPage.markdown(OffsetPage(com.histmersion.api.RowCount(0), com.histmersion.api.Offset(0), com.histmersion.api.RowCount(0)), "goal(s)", "_No goals._", Nil)((_: Int).toString),
       "_No goals._"
     )
     assert(
       OffsetPage
-        .markdown(OffsetPage(3, 10, 0), "goal(s)", "_No goals._", Nil)((_: Int).toString)
+        .markdown(OffsetPage(com.histmersion.api.RowCount(3), com.histmersion.api.Offset(10), com.histmersion.api.RowCount(0)), "goal(s)", "_No goals._", Nil)((_: Int).toString)
         .contains("past the end")
     )
 

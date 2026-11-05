@@ -4,9 +4,9 @@ import scala.jdk.CollectionConverters._
 
 class PreviewCompile extends SyntacticRule("PreviewCompile") {
   override def afterComplete(): Unit = {
-    val target = Paths.get("target/pagination-api-compile-v1")
-    val preview = Paths.get("target/pagination-preview-v1")
-    val report = Paths.get("refactor-audit/models/pagination/preview-v1")
+    val target = Paths.get("target/pagination-api-compile-v3")
+    val preview = Paths.get("target/pagination-preview-v3")
+    val report = Paths.get("refactor-audit/models/pagination/preview-v3")
     require(!Files.exists(target),"Retain previous compile overlay")
     val sourceRows = Files.readAllLines(Paths.get("refactor-audit/models/sources.tsv")).asScala.drop(1).map(_.split("\t",-1).toList).toList
     def hash(s: String) = java.security.MessageDigest.getInstance("SHA-256").digest(s.getBytes(java.nio.charset.StandardCharsets.UTF_8)).map(b => f"${b & 255}%02x").mkString

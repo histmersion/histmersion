@@ -1,0 +1,34 @@
+# Applied pagination batch: remaining compilation work
+
+Build-v1 compiled API JVM and Scala.js, then failed in web/server. It did not reach
+Test/compile. Fourteen errors are compiler observations, not fourteen new violations.
+All nineteen applied sources match preview-v3. No production fix is credited yet.
+
+- Web TabPage.total and ListPage.offset/total still use primitives. Propagate wire
+  RowCount/Offset through these records and their factories/callers. ListPage is
+  generic: cover explicit type applications and omitted defaults in rewrite fixtures.
+- ResultsList.pageTotal and its Var[Option[Int]] total signal need consistent count
+  typing. Inspect consumers before changing nested type leaves. SourceRenderOpts.total
+  is a separate candidate that must be checked for the same purpose.
+- LibraryLists combines source/article totals and constructs ListPage. Keep typed
+  counts in state; perform arithmetic through a deliberate count operation or local
+  mechanism conversion rather than erasing API types at each assignment.
+- App's Plural.count call is a rendering boundary analogous to Plural.noun. Configure
+  the exact argument conversion; do not use a blanket web-module exemption.
+- LeadService.InMemory.leads returns a primitive total in a tuple. Compare the service
+  contract, DB implementation and callers before choosing a domain count type or
+  an explicit layer conversion. Do not fix one implementation in isolation.
+- CompileArticlePipeline.filter compares the returned count and passes it to Found.
+  Review Found and its consumers for typed propagation; isolate comparison/logging
+  conversion from model storage.
+- Factory `of` parameters still contain primitives even where their result records
+  are now typed. This remains migration work whether or not compilation diagnoses it.
+- Compile tests after production succeeds, retain all 115 selected identities, and
+  compare with the two original ArticlesSuite failures. The generic test verifier's
+  single historical plugin-failure exception does not authorize ignoring these.
+- Rerun project-wide assessment only once actual source/compiled evidence agree.
+  Keep all previous inventories, failed previews and original test evidence intact.
+
+Filter.limit/default semantics, Filter.offset and PassageHit's distinct text offset
+remain outside the applied batch. Broader model candidates and independent detector
+quality are still open. Copy-to-optics automation remains paused.

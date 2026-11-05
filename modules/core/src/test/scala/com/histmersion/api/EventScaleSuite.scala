@@ -161,7 +161,7 @@ class EventScaleSuite extends munit.FunSuite:
       scale = "local",
       scaleStated = false
     )
-    assert(EventsMarkdown.eventList(EventList(1, List(e))).contains("_(battle · local · attested ·"))
+    assert(EventsMarkdown.eventList(EventList(com.histmersion.api.RowCount(1), List(e))).contains("_(battle · local · attested ·"))
     assert(EventsMarkdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))
     assert(
       EventsMarkdown

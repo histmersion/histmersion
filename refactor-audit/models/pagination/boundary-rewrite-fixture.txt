@@ -1,0 +1,2 @@
+PASS: real Iron Pure newtypes; arithmetic, zero pattern matching and configured rendering argument unwrap only at selected boundaries. Typed forwarding and unrelated text offsets remain unchanged. Baseline/expected/after compile; exact output and behavior pass.
+Development fixture, not independent quality evidence.

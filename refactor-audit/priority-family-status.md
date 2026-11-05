@@ -1,5 +1,26 @@
 # Priority-family status
 
+## Applied pagination types: dependent compilation in progress
+
+The frozen nineteen-file Scalafix batch is applied and hash-verified. The generic
+rule now handles configured arithmetic/rendering boundaries and imports the existing
+newtype codecs for deriving records. A real-Iron boundary fixture passes exact-output,
+compilation and runtime checks. Preview v3's 479-source API overlay compiles; the
+actual build also compiled API JVM/JS and reached dependent modules.
+
+Actual compile currently fails with fourteen errors: eleven in web pagination state
+and three in server result handling. Test/compile did not execute. The next required
+step is typed propagation into web ListPage/TabPage and result state, with explicit
+rendering/mechanism conversions; no new fixes are credited yet. Factory parameter
+typing remains outstanding independently of these compiler errors. See
+`models/pagination/build-v1/build.log` and the residual checklist.
+
+The pre-application six-suite baseline retains all 115 test identities: 113 passed,
+two ArticlesSuite tests failed on client slug normalization/validation, no skips.
+Those failures are preserved, not attributed to this rewrite or silently waived.
+Production/test verification and fresh project-wide measurement remain required;
+the preceding inventory is historical while the batch is incomplete.
+
 ## Optional type propagation and real-code preview
 
 The configurable rewrite now covers optional fields/results and typed forwarding

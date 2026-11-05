@@ -110,7 +110,7 @@ object MediaMarkdown:
     s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets"
 
   def mediaList(l: MediaList): String =
-    OffsetPage.markdown(l.page, Plural.noun(l.total, "picture"), "_No pictures._", l.items)(mediaItemLine)
+    OffsetPage.markdown(l.page, Plural.noun(l.total.value, "picture"), "_No pictures._", l.items)(mediaItemLine)
 
   def mediaItem(m: MediaItem): String =
     val origin = m.citekey
