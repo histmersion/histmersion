@@ -1,5 +1,21 @@
 # Priority-family status
 
+## Primitive rewrite fixture checkpoint
+
+ModelTypeRewrite now performs a configurable semantic rewrite of direct Int record
+fields, explicit method results, defaults and positional/named constructor/copy
+arguments. The compiled fixture verifies exact output, real opaque separation across
+files, unchanged look-alikes and forwarded typed fields, preserved runtime values,
+and rejection of constructor-order drift. Failed development runs remain preserved.
+
+No production primitive fixes are claimed. Optional leaves, arithmetic, inferred
+results and transitive propagation still need support before the pagination preview.
+The eleven confirmed leaves and all other candidates/unresolved evidence remain
+outstanding. This is rewrite development, not an independent detector quality sample
+or a new detector refinement round. The preceding full-project assessment belongs
+to the earlier tool fingerprint; this fixture does not replace a future batch's
+production/test compilation and project-wide remeasurement.
+
 ## First primitive purpose decisions
 
 `models/pagination` now freezes eleven confirmed public production primitive leaves:
