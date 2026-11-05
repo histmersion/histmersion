@@ -10,6 +10,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import io.circe.Json
 import com.histmersion.api.catalogue.{Gazetteer, GazGeometry, GazRecord}
 import com.histmersion.api.library.ExternalId
@@ -129,7 +130,7 @@ private[places] object GazetteerRepo:
       own: Option[Stored]
   ): (Placement, Option[String]) =
     Gazetteer.canonical(byOwn ++ byId.map(_.toMatch).toList ++ own.map(_.toMatch).toList, byLinks) match
-      case None                               => (Placement.Create(r.placeId), None)
+      case None                               => (Placement.Create(r.placeId.value), None)
       case Some(id) if own.exists(_.id == id) => (Placement.Own(id), None)
       case Some(id)                           => (Placement.Join(id), own.map(_.id).filter(_ != id))
 
@@ -240,7 +241,7 @@ private[places] object GazetteerRepo:
             r,
             r.own.toList.flatMap(at),
             r.links.flatMap(l => at(l.id)),
-            byId.get(r.placeId).filterNot(s => doomed.contains(s.id)),
+            byId.get(r.placeId.value).filterNot(s => doomed.contains(s.id)),
             own.get(r.ref).filterNot(s => doomed.contains(s.id))
           )
           if pl.isInstanceOf[Placement.Create] && Gazetteer.dropsPointArea(source, r, pointAreaKinds) then

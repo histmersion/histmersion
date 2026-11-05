@@ -12,6 +12,7 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 
 import com.augustnagro.magnum.*
+import com.histmersion.util.database.NewtypeColumns.given
 import com.histmersion.util.database.Param
 import com.histmersion.util.database.Sql
 import com.histmersion.api.catalogue.{Geocode, GeoTime, ManualPlaceName, Period, SiteTypes}
@@ -111,7 +112,7 @@ private[places] object PlaceRepo:
   private def upsertIn(all: List[com.histmersion.api.catalogue.Place.Input], dataset: Dataset)(using
       DbCon
   ): com.histmersion.api.catalogue.Place.ImportResult =
-    val skip = suppressed(all.map(_.place.id).distinct)
+    val skip = suppressed(all.map(_.place.id.value).distinct).map(com.histmersion.api.catalogue.Place.Id.apply)
     val batch = if skip.isEmpty then all else all.filterNot(in => skip.contains(in.place.id))
     val ids = batch.map(_.place.id).distinct
     val _ = batchUpdate(batch) { in =>
@@ -129,7 +130,7 @@ private[places] object PlaceRepo:
     }
 
     val idList = ids.toList
-    val _ = GazetteerRepo.linkSeedIds(idList)
+    val _ = GazetteerRepo.linkSeedIds(idList.map(_.value))
     // only the seed's own names (source ''): what GeoNames, Wikidata or an LPF dataset gave a seed
     // place (V071) is theirs to replace, at their next import
     val _ =

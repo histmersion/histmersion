@@ -25,3 +25,16 @@ object NewtypeColumns:
           )
     def writeSingle(entity: T, ps: PreparedStatement, pos: Int): Unit =
       base.writeSingle(entity.asInstanceOf[m.BaseType], ps, pos)
+
+  given listColumn: [T] => (m: RefinedType.Mirror[T]) => (base: DbCodec[List[m.BaseType]]) => DbCodec[List[T]] = new DbCodec[List[T]]:
+    val cols: IArray[Int] = base.cols
+    def queryRepr: String = base.queryRepr
+    def readSingle(rs: ResultSet, pos: Int): List[T] =
+      base.readSingle(rs, pos).map { raw =>
+        m.ops.either(raw).fold(
+          e => throw SQLException(s"column ${rs.getMetaData.getColumnLabel(pos)}: '$raw' is not valid: $e"),
+          _.asInstanceOf[T]
+        )
+      }
+    def writeSingle(entity: List[T], ps: PreparedStatement, pos: Int): Unit =
+      base.writeSingle(entity.map(_.asInstanceOf[m.BaseType]), ps, pos)

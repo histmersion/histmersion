@@ -2,6 +2,31 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Database production compilation now passes. caller-db-1 adapts thirteen ASTs
+across five files, including both database and in-memory source-alias tuple
+callbacks. caller-db-codecs-1 adds existing generic scalar codecs at seven
+repository boundaries and a shared List[newtype] codec over the base list codec.
+caller-db-codec-tests-1 supplies the remaining candidate codec import, replaces
+five raw/refined job-kind SQL constants with typed registry values and adds array
+round-trip/constraint tests. The last database compile reports no codec fallback
+diagnostics. Raw repository parameter models remain legacy obligations.
+
+The scoped database codec check passes ten tests with none ignored, including
+four NewtypeColumns tests on the existing disposable PostgreSQL at port 55573
+(applied-db-codec-check-2). Array tests preserve order and duplicates, empty/null
+base semantics and constrained-element validation. Its six-source test selection
+is explicit in arguments.txt: this is NOT full database test compilation. The
+full db test compile remains failed with 135 diagnostics (applied-db-build-2).
+Server compilation reached 284 diagnostics after db production compiled
+(applied-server-build-3); server tests have not run. Earlier failed observations,
+including the sandbox boot-lock failure and missing scoped ColumnProbe dependency,
+are retained. These diagnostics are not deduplicated policy findings.
+
+All 87 cohort IDs remain applied-unverified pending full caller closure and
+stable-ID remeasurement. No repair credit, denominator change or new accepted
+exception is recorded. The existing uncommitted ModelTypeRewrite type-site draft
+was not used for these adaptations.
+
 Web production and test compilation now pass, followed by 149 selected behavioral
 tests with zero failures or ignored tests (applied-web-build-7). Coverage includes
 event playback/markers, map point rendering and tiles, preview cards, routes,
