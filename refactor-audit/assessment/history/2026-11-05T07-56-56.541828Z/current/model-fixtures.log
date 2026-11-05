@@ -1,0 +1,9 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scalafix.internal.reflect.ClasspathOps$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/ch/epfl/scala/scalafix-reflect_2.13.18/0.14.9/scalafix-reflect_2.13.18-0.14.9.jar)
+WARNING: Please consider reporting this to the maintainers of class scalafix.internal.reflect.ClasspathOps$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+Model inventory verification: compile
+Model inventory verification: positive
+Model inventory verification: negative
+Model inventory verification: absent-boundary
+Model inventory verification: coverage-rejection

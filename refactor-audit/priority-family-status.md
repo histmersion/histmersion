@@ -1,5 +1,33 @@
 # Priority-family status
 
+## Whole-project refresh and capability treatment
+
+The integrated assessment passes on 3,159 source/test files in 28 modules.
+Capability and isolation identity gates have zero new/reopened findings; capability
+multiplicities are unchanged. A stale SourceRepo source-example line was corrected
+only after verifying the method's complete AST unchanged; failed and corrected
+observations remain preserved. No assertion count or original baseline changed.
+
+Capability production retains all 87 anchors / 105 occurrences. The bounded current
+review records 25 confirmed outstanding anchors / 27 occurrences, 48 candidate anchors
+/ 64 occurrences, 13 unresolved recording-adapter operations and one known pure
+separator non-violation. No repairs, new exceptions or independent precision/recall
+acceptance are claimed. Tests remain outside capability policy measurement.
+See `capability-treatment/review-3/README.md` for the grouped repair queue and evidence.
+
+Isolation remains 111 production / 215 test relationships: the preceding reviewed
+treatment is unchanged (111 accepted production contributions; 85 test non-violations,
+130 test candidates), with 75 ambiguous owners and 182,318 unclassified direction rows.
+Transaction detection reports zero repository ownership matches, with two previously
+unresolved dynamic SQL expressions still outstanding. Primitive measurement remains
+30,393 production member leaves, 62,229 all-scope leaves and 46,914 unresolved leaves.
+Copy detection remains 108 production / 58 test resolved occurrences plus 52 / 97
+unresolved owners; copy automation is paused. These units must not be summed.
+
+The 90% migration-wide automation target and independent detector-quality acceptance
+remain unestablished. The aggregate baseline is policy-incomparable; the separate
+identity gates, source decisions and verified repair histories retain their meaning.
+
 ## Import registry ownership repaired
 
 The library contribution now captures SourceReferrers and supplies it to its own

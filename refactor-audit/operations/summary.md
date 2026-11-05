@@ -1,6 +1,6 @@
 # Semantic operation inventory
 
-3149 files; 4746 source occurrences. Definitions and call-site ASTs remain available in occurrences.tsv.
+3159 files; 4749 source occurrences. Definitions and call-site ASTs remain available in occurrences.tsv.
 
 These are operation inventories, not blanket violations. Case-class copy owners are resolved against project declarations; unrelated copy methods remain separate. Fold allocations are syntactically visible constructors/tuples or resolved case-class calls, not a proof about evaluation semantics or indirect effects. Iron accessors and unresolved inline expansions remain separate. Every value access still needs an approved boundary decision. Customized derivations/givens require behavioral review.
 
@@ -21,11 +21,11 @@ These are operation inventories, not blanket violations. Case-class copy owners 
 | fold | no-visible-allocation; indirect-effects-unresolved | test | 764 |
 | fold | visible-allocation-review | production | 154 |
 | fold | visible-allocation-review | test | 6 |
-| given-instance | instance-body-review | production | 540 |
+| given-instance | instance-body-review | production | 539 |
 | given-instance | instance-body-review | test | 141 |
 | unwrap | accessor-or-inline-expansion-review | production | 41 |
 | unwrap | accessor-or-inline-expansion-review | test | 12 |
-| unwrap | iron-accessor | production | 691 |
-| unwrap | iron-accessor | test | 316 |
+| unwrap | iron-accessor | production | 694 |
+| unwrap | iron-accessor | test | 317 |
 | unwrap | project-value-member-review | production | 105 |
 | unwrap | project-value-member-review | test | 65 |

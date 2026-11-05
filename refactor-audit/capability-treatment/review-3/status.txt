@@ -1,0 +1,12 @@
+observation=refactor-audit/capability-history/observations/2026-11-05T08-04-32.540877Z
+sources=504e7ca4181db1efc7713fc35523020443e3f6dea529d8199d94fe5c65176f80
+observation-sha256=70e4e27cf12c27b46170a477468d6f8702a2e79d2007dec3a1597c8b27e8beee
+decisions-sha256=045538e9e5ff0aecbee2ff4ab4f525ec1af9c1f5adf9d9a4c02660474d1f16b3
+verified-fixes=0
+test-policy=unmeasured
+independent-precision-recall=unestablished
+detector-refinement-rounds-consumed=0
+production-candidate-anchors=48;occurrences=64
+production-confirmed-anchors=25;occurrences=27
+production-non-violation-anchors=1;occurrences=1
+production-unresolved-anchors=13;occurrences=13

@@ -1,0 +1,17 @@
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::objectFieldOffset has been called by scalafix.internal.reflect.ClasspathOps$ (file:/Users/dev/Library/Caches/Coursier/v1/https/repo1.maven.org/maven2/ch/epfl/scala/scalafix-reflect_2.13.18/0.14.9/scalafix-reflect_2.13.18-0.14.9.jar)
+WARNING: Please consider reporting this to the maintainers of class scalafix.internal.reflect.ClasspathOps$
+WARNING: sun.misc.Unsafe::objectFieldOffset will be removed in a future release
+tools/refactor/capability-source-examples.conf: modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceRepo.scala:58; snippet=(using DbCon); matching-lines=38,46,50,57,86,90,158,173,182,186,247,250,261,270,276,280,299,328,332,345,347,351,355,359,386,439,482,492,514,520,538,547,556,559,562,567,578,588,592,597,603,628,641,647,650,665,683
+Exception in thread "main" java.lang.IllegalArgumentException: requirement failed: Stale source example coordinates; review before starting the full scan
+	at scala.Predef$.require(Predef.scala:337)
+	at SourceExamplePreflight.afterComplete(/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/tools/refactor/SourceExamplePreflight.scala:23)
+	at scalafix.internal.v1.MainOps$.$anonfun$run$4(MainOps.scala:438)
+	at scalafix.internal.v1.MainOps$.$anonfun$run$4$adapted(MainOps.scala:438)
+	at scala.collection.immutable.List.foreach(List.scala:323)
+	at scalafix.internal.v1.MainOps$.run(MainOps.scala:438)
+	at scalafix.internal.v1.MainOps$.run(MainOps.scala:82)
+	at scalafix.v1.Main$.run(Main.scala:34)
+	at scalafix.v1.Main$.main(Main.scala:25)
+	at scalafix.cli.Cli$.main(Cli.scala:9)
+	at scalafix.cli.Cli.main(Cli.scala)

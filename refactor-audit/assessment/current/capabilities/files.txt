@@ -834,6 +834,7 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/core/src/main/scala/com/histmersion/util/text/MinHash.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/core/src/main/scala/com/histmersion/util/time/Pause.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/core/src/main/scala/com/histmersion/util/time/Timer.scala
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/api/library/SourceColumns.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/automation/AutomationExchange.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentRepo.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/automation/agents/AgentStateRepo.scala
@@ -925,6 +926,7 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/LandRepo.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceAliasTable.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceBundleRepo.scala
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceColumns.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceDetailRow.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceMergeRules.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/catalogue/places/PlaceOverrideRepo.scala
@@ -948,6 +950,7 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/acquisition/CandidateRepo.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/acquisition/UpstreamQuotaRepo.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/citations/CitationRepo.scala
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/findings/FindingColumns.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/findings/FindingRepo.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/findings/GeoFeedRow.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/labels/LabelRepo.scala
@@ -971,6 +974,7 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceAliasTable.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceBundleRepo.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceCheckRepo.scala
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceColumns.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceDeletePlan.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceDeleteRepo.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/db/src/main/scala/com/histmersion/domain/library/sources/SourceMergeRules.scala
@@ -1611,6 +1615,7 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/acquisition/RetractionWatchClient.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/acquisition/ScholarlyIndex.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/acquisition/SemanticScholar.scala
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/acquisition/Spool.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/acquisition/SttpHttp.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/acquisition/UpstreamQuotaService.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/domain/library/acquisition/UpstreamRecords.scala
@@ -1970,7 +1975,6 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/util/ocr/JatsConverter.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/util/ocr/Pixels.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/util/ocr/Seconds.scala
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/util/ocr/Spool.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/util/plugins/HostProvided.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/util/plugins/LegacyPlugins.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/server/src/main/scala/com/histmersion/util/plugins/PluginSetResource.scala
@@ -2057,7 +2061,9 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/UserId.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/WireEnumValues.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/Year.scala
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/AuthorName.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/Licence.scala
+/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/Title.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/automation/AgentRole.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/automation/Approval.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/automation/Goal.scala
@@ -2076,7 +2082,6 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/catalogue/places/Wikidata.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/ArchiveId.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/ArxivId.scala
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/AuthorName.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/Citekey.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/Confidence.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/Doi.scala
@@ -2088,7 +2093,6 @@
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/Pmcid.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/Pmid.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/Source.scala
-/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/library/Title.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/media/Asset.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/media/MediaRole.scala
 /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/values/src/main/scala/com/histmersion/domain/research/Article.scala
