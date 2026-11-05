@@ -1,5 +1,32 @@
 # Priority-family status
 
+## Definition sweep applied: catalogue API
+
+definitions-catalogue-2 applies the unchanged reusable rule to 572 explicit
+primitive leaves in 100 production models across 51 catalogue API files.
+Cumulative definition conversion is 1561 leaves in 297 models across 180
+production files. These counts do not establish verified behavioral repairs,
+project-wide detection completeness or an overall migration percentage.
+
+Reviewed reuse includes event/place identifiers, source citekeys, finding IDs,
+article identifiers/titles, coordinates and years, event properties shared by
+put/patch/summary records and attestation properties shared by put/patch records.
+Period.start/end and Period.Input.start/end now reuse Year. Three explicit
+type-name choices preserve existing Place.Kind, Correction.Status and
+EventLinkCandidate.Status namespace objects. Their construction/validation logic
+remains for the later repair phase. The initial preview's one blocked collision
+is retained as historical evidence; the applied preview has no blocked leaves.
+
+The frozen applicator checked and applied all 51 files. The post-application
+definitions-catalogue-remaining-1 run validates the four-scope source hash chain
+and finds zero further supported primitive leaves or blocked matches in catalogue.
+Source whitespace checks pass. Rule implementation and previously passing
+fixtures are unchanged, so fixture checks were not repeated. Application compile
+and behavioral tests remain deferred as requested. Alias/import resolution,
+unsupported type shapes, enum cases and non-case-class models remain outside this
+syntactic coverage. Historical finding identities and repair credit are retained.
+Next definition scope: automation and personal API models.
+
 ## Definition sweep applied: library API
 
 definitions-library-1 converts 612 explicit primitive leaves in 130 production

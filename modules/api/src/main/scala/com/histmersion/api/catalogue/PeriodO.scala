@@ -215,15 +215,33 @@ object PeriodO:
     rows.foreach(r => visit(r, Set(r.id)))
     out.values.toList
 
-  final case class Authority(id: String, title: String, year: Option[Int], periods: List[Definition]):
+  final case class Authority(id: Authority.Id, title: Authority.Title, year: Option[Authority.Year], periods: List[Definition]):
     /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
     def cite(periodId: String): String =
       s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}"
 
+  object Authority:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Year = Year.T
+    object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Definition(
-      id: String,
-      label: String,
+      id: Definition.Id,
+      label: Definition.Label,
       period: Period,
-      region: Option[String],
-      broader: Option[String]
+      region: Option[Definition.Region],
+      broader: Option[Definition.Broader]
   )
+
+  object Definition:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Broader = Broader.T
+    object Broader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

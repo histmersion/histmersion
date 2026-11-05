@@ -6,17 +6,30 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 
 final case class ArticleEventLead(
-    eventId: String,
-    label: String,
-    kind: String,
-    years: String,
-    size: Option[String],
-    findingsNear: Int,
-    provider: String
+    eventId: com.histmersion.api.catalogue.Event.Id,
+    label: ArticleEventLead.Label,
+    kind: ArticleEventLead.Kind,
+    years: ArticleEventLead.Years,
+    size: Option[ArticleEventLead.Size],
+    findingsNear: ArticleEventLead.FindingsNear,
+    provider: ArticleEventLead.Provider
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object ArticleEventLead:
 
+
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kind = Kind.T
+  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Years = Years.T
+  object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Size = Size.T
+  object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingsNear = FindingsNear.T
+  object FindingsNear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provider = Provider.T
+  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def mentioned(body: String, names: List[String]): Boolean =
     val b = body.toLowerCase(java.util.Locale.ROOT)

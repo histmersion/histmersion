@@ -8,12 +8,24 @@ import com.histmersion.api.given
   * heading the timeline lists it under.
   */
 final case class HistoricalPeriod(
-    id: String,
-    label: String,
-    authority: Option[String] = None,
+    id: HistoricalPeriod.Id,
+    label: HistoricalPeriod.Label,
+    authority: Option[HistoricalPeriod.Authority] = None,
     period: Period,
-    region: Option[String] = None,
-    parentId: Option[String] = None,
+    region: Option[HistoricalPeriod.Region] = None,
+    parentId: Option[HistoricalPeriod.ParentId] = None,
     preset: Option[PresetRegion] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object HistoricalPeriod:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Authority = Authority.T
+  object Authority extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Region = Region.T
+  object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParentId = ParentId.T
+  object ParentId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

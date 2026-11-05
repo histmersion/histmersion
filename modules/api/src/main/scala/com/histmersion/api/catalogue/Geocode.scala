@@ -73,8 +73,14 @@ object Geocode:
       case Rough(n)      => s"a placeholder point shared by $n places"
       case GridSquare    => "the centre of an atlas grid square"
 
-  final case class Attempt(name: String, within: Option[String] = None, approx: Option[Approximation] = None):
+  final case class Attempt(name: Attempt.Name, within: Option[Attempt.Within] = None, approx: Option[Approximation] = None):
     def key: String = Geocode.key(name)
+
+  object Attempt:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Within = Within.T
+    object Within extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val QualifierWords: Set[String] = Set(
     "north",
@@ -164,19 +170,19 @@ object Geocode:
       all.distinctBy(a => (a.key, a.within.map(key)))
 
   final case class Candidate(
-      id: String,
-      label: String,
-      kind: String,
-      byLabel: Boolean,
-      from: Option[Long],
-      to: Option[Long],
-      dimension: Int,
-      area: Double,
-      shared: Int,
-      lon: Double,
-      lat: Double,
-      tier: Int = 0,
-      gridCell: Boolean = false
+      id: Candidate.Id,
+      label: Candidate.Label,
+      kind: Candidate.Kind,
+      byLabel: Candidate.ByLabel,
+      from: Option[Candidate.From],
+      to: Option[Candidate.To],
+      dimension: Candidate.Dimension,
+      area: Candidate.Area,
+      shared: Candidate.Shared,
+      lon: com.histmersion.api.catalogue.Longitude,
+      lat: com.histmersion.api.catalogue.Latitude,
+      tier: Candidate.Tier = 0,
+      gridCell: Candidate.GridCell = false
   ):
     def undated: Boolean = from.isEmpty && to.isEmpty
 
@@ -186,6 +192,30 @@ object Geocode:
     def gap(p: Period): Long =
       if overlaps(p) then 0L
       else to.filter(_ < p.start).map(p.start - _).orElse(from.filter(_ > p.end).map(_ - p.end)).getOrElse(0L)
+
+  object Candidate:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ByLabel = ByLabel.T
+    object ByLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Dimension = Dimension.T
+    object Dimension extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Area = Area.T
+    object Area extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Shared = Shared.T
+    object Shared extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tier = Tier.T
+    object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GridCell = GridCell.T
+    object GridCell extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def broad(kind: String) =
     kind == com.histmersion.api.catalogue.Place.Kind.Region || kind == com.histmersion.api.catalogue.Place.Kind.Polity
@@ -229,11 +259,11 @@ object Geocode:
     }
 
   final case class Resolution(
-      asked: String,
-      placeId: String,
-      label: String,
-      lon: Double,
-      lat: Double,
+      asked: Resolution.Asked,
+      placeId: com.histmersion.api.catalogue.Place.Id,
+      label: Resolution.Label,
+      lon: com.histmersion.api.catalogue.Longitude,
+      lat: com.histmersion.api.catalogue.Latitude,
       approximate: List[Approximation] = Nil
   ):
     def isApproximate: Boolean = approximate.nonEmpty
@@ -241,6 +271,12 @@ object Geocode:
     def describe: String =
       val approx = if approximate.isEmpty then "" else s" (approximate: ${approximate.map(_.describe).mkString("; ")})"
       s"'$asked' → $label [$placeId]$approx"
+
+  object Resolution:
+    type Asked = Asked.T
+    object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def choose(asked: String, attempt: Attempt, ranked: List[Candidate], placeholderMin: Int): Option[Resolution] =
     ranked.headOption.map { c =>
@@ -258,12 +294,12 @@ object Geocode:
     2 * r * math.asin(math.min(1.0, math.sqrt(a)))
 
   final case class Move(
-      findingId: String,
-      citekey: String,
-      asked: String,
-      region: Option[String],
-      fromLon: Double,
-      fromLat: Double,
+      findingId: com.histmersion.api.library.Finding.Id,
+      citekey: com.histmersion.api.library.Citekey,
+      asked: Move.Asked,
+      region: Option[Move.Region],
+      fromLon: Move.FromLon,
+      fromLat: Move.FromLat,
       to: Resolution
   ):
     def km: Double = distanceKm(fromLon, fromLat, to.lon, to.lat)
@@ -285,9 +321,19 @@ object Geocode:
         if to.isApproximate then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
       )
 
+  object Move:
+    type Asked = Asked.T
+    object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromLon = FromLon.T
+    object FromLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromLat = FromLat.T
+    object FromLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def worthMoving(m: Move, minKm: Double): Boolean = m.km > minKm
 
-  final case class Placement(findingId: String, citekey: String, region: String, to: Resolution):
+  final case class Placement(findingId: com.histmersion.api.library.Finding.Id, citekey: com.histmersion.api.library.Citekey, region: Placement.Region, to: Resolution):
     def describe: String =
       String.format(
         java.util.Locale.ROOT,
@@ -299,6 +345,10 @@ object Geocode:
         to.lon,
         if to.isApproximate then s" (approximate: ${to.approximate.map(_.describe).mkString("; ")})" else ""
       )
+
+  object Placement:
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def periodOf(from: Option[Long], to: Option[Long]): Option[Period] = (from, to) match
     case (Some(a), Some(b)) => Some(Period(math.min(a, b), math.max(a, b)))

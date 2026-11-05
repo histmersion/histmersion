@@ -6,7 +6,17 @@ object EventTaxonomy:
   val Human = "human"
   val groups: List[String] = List(Natural, Human)
 
-  final case class Kind(kind: String, group: String, label: String, icon: String)
+  final case class Kind(kind: Kind.Value, group: Kind.Group, label: Kind.Label, icon: Kind.Icon)
+
+  object Kind:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Group = Group.T
+    object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Icon = Icon.T
+    object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Eruption = "eruption"
   val Earthquake = "earthquake"
@@ -116,7 +126,13 @@ object EventTaxonomy:
     val f = filter.trim.toLowerCase(java.util.Locale.ROOT)
     f.isEmpty || f == group(kind) || canonical(f) == canonical(kind)
 
-  final case class KindCondition(kinds: List[String], negate: Boolean)
+  final case class KindCondition(kinds: List[KindCondition.Kinds], negate: KindCondition.Negate)
+
+  object KindCondition:
+    type Kinds = Kinds.T
+    object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Negate = Negate.T
+    object Negate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def condition(filter: Option[String]): Option[KindCondition] =
     filter.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>

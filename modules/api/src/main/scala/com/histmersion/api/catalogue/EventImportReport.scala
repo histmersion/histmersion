@@ -5,23 +5,23 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class EventImportReport(
-    provider: String,
-    dryRun: Boolean,
-    records: Int = 0,
-    kept: Int = 0,
-    created: Int = 0,
-    merged: Int = 0,
-    matched: Int = 0,
-    updated: Int = 0,
+    provider: EventImportReport.Provider,
+    dryRun: EventImportReport.DryRun,
+    records: EventImportReport.Records = 0,
+    kept: EventImportReport.Kept = 0,
+    created: EventImportReport.Created = 0,
+    merged: EventImportReport.Merged = 0,
+    matched: EventImportReport.Matched = 0,
+    updated: EventImportReport.Updated = 0,
     byKind: List[EventCount] = Nil,
     skipped: List[EventCount] = Nil,
-    matchedEvents: List[String] = Nil,
-    parts: Int = 0,
-    pending: Int = 0,
-    requests: Int = 0,
-    failed: List[String] = Nil,
-    licence: String = "",
-    citation: String = "",
+    matchedEvents: List[EventImportReport.MatchedEvents] = Nil,
+    parts: EventImportReport.Parts = 0,
+    pending: EventImportReport.Pending = 0,
+    requests: EventImportReport.Requests = 0,
+    failed: List[EventImportReport.Failed] = Nil,
+    licence: EventImportReport.Licence = "",
+    citation: EventImportReport.Citation = "",
     corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -29,6 +29,37 @@ object EventImportReport:
 
 
   /** An events import job's report, in its detail. */
+  type Provider = Provider.T
+  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DryRun = DryRun.T
+  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Records = Records.T
+  object Records extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Kept = Kept.T
+  object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Created = Created.T
+  object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Merged = Merged.T
+  object Merged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Matched = Matched.T
+  object Matched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Updated = Updated.T
+  object Updated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchedEvents = MatchedEvents.T
+  object MatchedEvents extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Parts = Parts.T
+  object Parts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pending = Pending.T
+  object Pending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Requests = Requests.T
+  object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Failed = Failed.T
+  object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Licence = Licence.T
+  object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Citation = Citation.T
+  object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventImportReport]] =
     com.histmersion.api.jobs.JobDetail.Field("eventImport", None)
 

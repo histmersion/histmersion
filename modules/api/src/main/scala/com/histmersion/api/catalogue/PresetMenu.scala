@@ -4,7 +4,11 @@ import com.histmersion.api.BBox
 import com.histmersion.api.given
 object PresetMenu:
 
-  final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Boolean)
+  final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Group.InView)
+
+  object Group:
+    type InView = InView.T
+    object InView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val MinShare: Double = 0.5
 

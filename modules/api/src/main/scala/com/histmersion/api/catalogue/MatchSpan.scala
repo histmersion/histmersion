@@ -4,4 +4,10 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class MatchSpan(start: Int, end: Int) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class MatchSpan(start: MatchSpan.Start, end: MatchSpan.End) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+object MatchSpan:
+  type Start = Start.T
+  object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type End = End.T
+  object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
