@@ -1,0 +1,4 @@
+GROUPED_NOT_ADJUDICATED
+observation=refactor-audit/isolation-history/observations/2026-11-05T04-09-21.771592Z
+relationships=346
+All original identities preserved. Counts group existing evidence, not newly confirmed violations or detector-quality samples.

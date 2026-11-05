@@ -1,5 +1,24 @@
 # Priority-family status
 
+## Remaining isolation treatment reviewed
+
+All eighteen production files in the current 155-relationship observation now have
+bounded source decisions: 42 confirmed outstanding (29 bulk rewrite, three targeted,
+ten manual/design), 109 explicitly accepted contribution-interface relationships,
+and four unresolved import-registry cases. The accepted set includes the prior 21
+AttestationSourceReferrer decisions; no detector findings were removed or suppressed.
+Tests retain 59 earlier exact non-violations and 132 unreviewed candidates. All 346
+original IDs and their identity-confidence labels remain in the review evidence.
+
+The next codec batch has a 3,149-file source/synthetic consumer scan. It observes
+generic array-codec consumers but none for the four domain codecs. A bounded scan
+of 9,889 JVM class files then found five generated consumers of three domain codecs,
+proving that the source/synthetic scan alone cannot justify their removal. Extract
+those definitions with their five derivation sites; the edge codec has no observed
+external compiled use and needs a guarded removal probe. No repair or independent
+detector-quality credit is claimed by this review. See
+`isolation-triage/review-2/README.md` and `codec-ownership/README.md`.
+
 ## Shared Title ownership repaired
 
 One configured semantic relocation batch moved the existing domain Title to the
