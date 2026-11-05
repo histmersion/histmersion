@@ -2,6 +2,32 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Latest checkpoint: preview-13 retains 87 reviewed fields / seventeen concepts in
+233 overlay files. build-preview-5 passes API JVM, API JS and files compilation;
+CLI reports one diagnostic (Calibre JSON's raw citekey), core 22 and web 51.
+The nine job-polling CLI diagnostics are absent after propagating JobInfo.Id
+through Client.job, IngestCmd.pollJob and JobFollow.job's unary fetch callback.
+That comparison is compiler evidence, not nine newly repaired policy findings.
+The API request unwrap is scoped to Client.job; callback, recursive polling and
+caller values stay typed. Two additional reviewed rendering boundaries cover
+tile event serialization and article citation text. No new domain-wide unwrap
+permissions were added.
+
+The existing rule now handles a single ordinary parameter clause with leading
+or trailing `using` clauses and configured unary callback inputs. Exact-output,
+compilation and behavioral fixtures pass in rewrite-leading-context.txt and
+rewrite-callback.txt. Explicit/implicit contexts, named calls, typed forwarding,
+callback invocation and raw-value rejection are covered; prior checks remain.
+Ordinary multiple value clauses, non-unary callbacks and arbitrary explicitly
+typed lambda adaptation remain unsupported. Callback bodies are not implicitly
+converted to primitives. This does not establish whole-project caller closure.
+The 87 confirmed cohort findings remain outstanding and uncredited. Application
+sources were unchanged; baseline-restore-3 passes compile and Test/compile for
+all 3,159 original source files, restoring the pre-rewrite compiler state.
+Remaining work includes typed collection state/factory arguments, model/helper
+propagation and the Calibre output record. Tests and stable-ID remeasurement
+still gate applying this batch. All other family statuses and denominators persist.
+
 Current checkpoint: preview-12 retains all 87 reviewed fields / seventeen concepts
 in 228 overlay files. build-preview-4 passes API JVM, API JS and files compilation;
 CLI reports ten diagnostics, core 24 and web 51. The prior web count was 99;

@@ -3,7 +3,7 @@ import scala.meta._
 import metaconfig.{ConfDecoder, Configured, generic}
 
 object ModelTypeRewrite {
-  case class Record(owner: String, parameters: List[String], fields: Map[String,String], optionalFields: List[String] = Nil, listFields: List[String] = Nil, setFields: List[String] = Nil, nestedFields: Map[String,List[String]] = Map.empty)
+  case class Record(owner: String, parameters: List[String], fields: Map[String,String], optionalFields: List[String] = Nil, listFields: List[String] = Nil, setFields: List[String] = Nil, nestedFields: Map[String,List[String]] = Map.empty, callbackFields: List[String] = Nil)
   object Record {
     implicit val surface: generic.Surface[Record] = generic.deriveSurface[Record]
     implicit val decoder: ConfDecoder[Record] = generic.deriveDecoder(Record("",Nil,Map.empty)).noTypos
@@ -35,6 +35,9 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     require(p.optionalResults.toSet.subsetOf(p.results.keySet))
     require(p.optionalKnownValues.toSet.subsetOf(p.knownValues.keySet))
     (p.records ++ p.methods).foreach { r =>
+      require(r.callbackFields.toSet.subsetOf(r.fields.keySet) &&
+        r.callbackFields.toSet.intersect((r.optionalFields ++ r.listFields ++ r.setFields ++ r.nestedFields.keys).toSet).isEmpty)
+      require(r.callbackFields.isEmpty || p.methods.contains(r), "Callback input rewrites require a method parameter")
       require(r.listFields.toSet.subsetOf(r.fields.keySet) && r.listFields.toSet.intersect(r.optionalFields.toSet).isEmpty)
       require(r.setFields.toSet.subsetOf(r.fields.keySet) && r.setFields.toSet.intersect((r.optionalFields ++ r.listFields).toSet).isEmpty)
       require(r.nestedFields.keySet.subsetOf(r.fields.keySet) && r.nestedFields.keySet.intersect((r.optionalFields ++ r.listFields ++ r.setFields).toSet).isEmpty)
@@ -52,8 +55,9 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
   }
   override def fix(implicit doc: SemanticDocument): Patch = {
     def checkMethod(name: Term.Name, clauses: List[Term.ParamClause]): Unit = policy.methods.find(_.owner == name.symbol.value).foreach { r =>
-      require(clauses.nonEmpty && clauses.head.mod.isEmpty && clauses.head.values.map(_.name.value) == r.parameters &&
-        clauses.tail.forall(_.mod.exists(_.is[Mod.Using])),
+      val ordinary = clauses.filter(_.mod.isEmpty)
+      require(ordinary.size == 1 && ordinary.head.values.map(_.name.value) == r.parameters &&
+        clauses.filter(_.mod.nonEmpty).forall(_.mod.exists(_.is[Mod.Using])),
         "Reviewed method parameter order changed: " + r.owner)
     }
     doc.tree.collect {
@@ -66,8 +70,9 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
           "Reviewed constructor parameter order changed: " + r.owner)
       }
     }
+    val callbacks = policy.methods.flatMap(r => r.callbackFields.map(n => (r.owner + "(" + n + ")") -> r.fields(n))).toMap
     val declaredFields = (policy.records.flatMap(r => r.fields.map { case(n,t) => (r.owner + n + ".") -> t }) ++
-      policy.methods.flatMap(r => r.fields.map { case(n,t) => (r.owner + "(" + n + ")") -> t })).toMap
+      policy.methods.flatMap(r => r.fields.filterNot { case(n,_) => r.callbackFields.contains(n) }.map { case(n,t) => (r.owner + "(" + n + ")") -> t })).toMap
     require(declaredFields.keySet.intersect(policy.knownValues.keySet).isEmpty,"A known typed value must not also be a primitive rewrite target")
     val fields = policy.knownValues ++ declaredFields
     val optionalSymbols = policy.records.flatMap(r => r.optionalFields.map(r.owner + _ + ".")).toSet ++
@@ -83,7 +88,7 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
       if(r.optionalFields.contains(name)) "option" else if(r.listFields.contains(name)) "list" else if(r.setFields.contains(name)) "set" else "")
     def mapped(shape: String, leafFunction: String): String =
       ".map(" + shape.split("/").drop(1).foldRight(leafFunction)((_,inner) => "_.map(" + inner + ")") + ")"
-    def callTarget(target: String): Option[Record] = policy.methods.find(_.owner == target).orElse(policy.records.find(r =>
+    def callTarget(target: String): Option[Record] = callbacks.get(target).map(t => Record(target,List("argument"),Map("argument" -> t))).orElse(policy.methods.find(_.owner == target)).orElse(policy.records.find(r =>
       target == r.owner.stripSuffix("#") + "." || target == r.owner.stripSuffix("#") + ".apply()." || target == r.owner + "copy()."))
     def ancestors(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: ancestors(p))
     def scalarBoundary(t: Term): Boolean = {
@@ -92,7 +97,7 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
       val owners = if(container(symbol).isEmpty) policy.scalarBoundaryOwners else policy.containerBoundaryOwners
       val calls = if(container(symbol).isEmpty) policy.scalarBoundaryCalls else policy.containerBoundaryCalls
       val forwarded = parents.exists {
-        case a: Term.Apply =>
+        case a: Term.Apply if a.argClause.mod.isEmpty =>
           val target = resultSymbol(a.fun)
           callTarget(target).exists { r =>
             a.argClause.values.zipWithIndex.exists { case(arg,i) =>
@@ -145,6 +150,12 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
       else Patch.addLeft(t,replacement + "(") + Patch.addRight(t,")")
     }
     val declarations = doc.tree.collect {
+      case p: Term.Param if callbacks.contains(p.name.symbol.value) =>
+        p.decltpe match {
+          case Some(f: Type.Function) if f.paramClause.values.size == 1 =>
+            change(f.paramClause.values.head,callbacks(p.name.symbol.value),"")
+          case _ => sys.error("Expected explicit unary callback type: " + p.structure)
+        }
       case p: Term.Param if declaredFields.contains(p.name.symbol.value) =>
         change(p.decltpe.getOrElse(sys.error("Missing explicit model field type")),fields(p.name.symbol.value),container(p.name.symbol.value)) +
           p.default.map(wrap(_,fields(p.name.symbol.value),container(p.name.symbol.value))).getOrElse(Patch.empty)
@@ -152,7 +163,12 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
         change(d.decltpe.getOrElse(sys.error("Missing explicit result type")),policy.results(d.name.symbol.value),container(d.name.symbol.value)) +
           wrap(d.body,policy.results(d.name.symbol.value),container(d.name.symbol.value))
     }
-    val calls = doc.tree.collect { case a: Term.Apply if !a.fun.is[Term.Apply] =>
+    def onlyContextApplications(t: Term): Boolean = t match {
+      case a: Term.Apply => a.argClause.mod.exists(_.is[Mod.Using]) && onlyContextApplications(a.fun)
+      case a: Term.ApplyType => onlyContextApplications(a.fun)
+      case _ => true
+    }
+    val calls = doc.tree.collect { case a: Term.Apply if a.argClause.mod.isEmpty && onlyContextApplications(a.fun) =>
       val target = resultSymbol(a.fun)
       val record = callTarget(target)
       record.map { r =>
@@ -163,7 +179,8 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
             case v => (r.parameters(index),v)
           }
           require(r.parameters.contains(name),"Unknown named argument for reviewed record: " + name)
-          r.fields.get(name).map(wrap(value,_,fieldShape(r,name))).getOrElse(Patch.empty)
+          if(r.callbackFields.contains(name)) Patch.empty
+          else r.fields.get(name).map(wrap(value,_,fieldShape(r,name))).getOrElse(Patch.empty)
         }.asPatch
       }.getOrElse(Patch.empty)
     }
