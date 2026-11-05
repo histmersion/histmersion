@@ -2,6 +2,36 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Current checkpoint: preview-12 retains all 87 reviewed fields / seventeen concepts
+in 228 overlay files. build-preview-4 passes API JVM, API JS and files compilation;
+CLI reports ten diagnostics, core 24 and web 51. The prior web count was 99;
+the newly reached core/CLI failures prevent interpreting that reduction as overall
+caller closure. Test compilation and downstream branches remain unverified.
+Original application sources were unchanged throughout. baseline-restore-2 passes
+compile and Test/compile for all 3,159 original source files.
+
+The existing ModelTypeRewrite now supports a reviewed ordinary parameter clause
+followed by `using` clauses. It rewrites the value arguments once, preserves
+explicit context arguments, and rejects ordinary additional parameter clauses.
+rewrite-context.txt records exact-output, baseline/expected/rewritten compilation,
+runtime, raw-value rejection and unchanged-source rejection checks. The fixture
+adds implicit/explicit contexts, named arguments and typed forwarding without
+weakening prior assertions. This is shared rewrite capability, not repair credit.
+
+Next caller-closure work is grouped by transformation: typed helper parameters
+and callback signatures (including leading `using` clauses); typed collection
+state and factory type arguments; and reviewed rendering/serialization boundaries.
+JobFollow's callback signature and leading context clause remain unsupported,
+so IngestCmd.pollJob is not yet configured alone. EventLayer's coordinate anchor
+keys must remain distinct from its Event.Id values and identity-indexed maps.
+Domain model comparisons/normalization are not blanket primitive boundaries.
+These exclusions are outstanding work, not accepted policy exceptions. The same
+87-ID cohort must pass compile, relevant behavior tests and stable-ID remeasurement
+before it receives repair credit. No production or test repairs are credited here;
+the reviewed denominator and all other family statuses remain unchanged.
+
+Earlier checkpoints follow; their failed observations are retained.
+
 Preview-11 passes the 487-source API production overlay compile. It contains 87
 reviewed fields across seventeen concepts and changes 220 overlay files. Nested
 Option/List/Set field paths and configured optional normalization now have exact

@@ -52,7 +52,8 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
   }
   override def fix(implicit doc: SemanticDocument): Patch = {
     def checkMethod(name: Term.Name, clauses: List[Term.ParamClause]): Unit = policy.methods.find(_.owner == name.symbol.value).foreach { r =>
-      require(clauses.size == 1 && clauses.head.values.map(_.name.value) == r.parameters,
+      require(clauses.nonEmpty && clauses.head.mod.isEmpty && clauses.head.values.map(_.name.value) == r.parameters &&
+        clauses.tail.forall(_.mod.exists(_.is[Mod.Using])),
         "Reviewed method parameter order changed: " + r.owner)
     }
     doc.tree.collect {
@@ -151,7 +152,7 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
         change(d.decltpe.getOrElse(sys.error("Missing explicit result type")),policy.results(d.name.symbol.value),container(d.name.symbol.value)) +
           wrap(d.body,policy.results(d.name.symbol.value),container(d.name.symbol.value))
     }
-    val calls = doc.tree.collect { case a: Term.Apply =>
+    val calls = doc.tree.collect { case a: Term.Apply if !a.fun.is[Term.Apply] =>
       val target = resultSymbol(a.fun)
       val record = callTarget(target)
       record.map { r =>
