@@ -15,7 +15,7 @@ fold	no-visible-allocation; indirect-effects-unresolved	test	764
 fold	visible-allocation-review	production	154
 fold	visible-allocation-review	test	6
 given-instance	instance-body-review	production	540
-given-instance	instance-body-review	test	139
+given-instance	instance-body-review	test	141
 unwrap	accessor-or-inline-expansion-review	production	41
 unwrap	accessor-or-inline-expansion-review	test	12
 unwrap	iron-accessor	production	691

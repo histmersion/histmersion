@@ -1,5 +1,32 @@
 # Priority-family status
 
+## Full assessment after clock repairs
+
+The assessment completed on 3,149 source/test files in 28 modules after full
+production/test compilation. All fixture and inventory-coverage checks passed;
+source, policy and resource fingerprints remained stable during the run. The
+original aggregate baseline remains unchanged and policy-incomparable. The default
+`no-regression-gate=true` status is not an enabled aggregate comparison; the two
+explicit identity gates below provide the bounded regression evidence.
+
+| Family | Fresh measurement | Repair history and limits |
+|---|---|---|
+| Transaction ownership | Zero supported repository ownership/factory diagnostics; two unresolved SQL expressions | TX-0001–TX-0004 repair evidence retained; no new DB/runtime proof or independent recall result |
+| Capability access | 2,377/2,377 production files; 105 occurrences in 87 anchors; 31 ambiguous occurrences; zero new/reopened anchors or multiplicity changes | Confirms the 147 → 105 reduction reconciled by the two clock batches; 42 reviewed occurrences fixed. Tests, callbacks and dynamic dispatch remain outside this gate |
+| Module isolation | 191 production / 199 test candidate relationships; 106 ambiguous owners; zero new/reopened identities | Previous 54 production repairs and explicit classifications retained. Unclassified-direction evidence is now 182,152 rows, previously 181,915; no reduction or compliance claim |
+| Primitive models | 30,387 production member primitive candidate leaves; 62,218 across all scopes; 46,893 unresolved leaves | Production count unchanged; all-scope primitives increased by seven and unresolved leaves by twenty. Pagination's eight fixed / three outstanding remains a preceding verified checkpoint, not a newly executed eleven-ID repair check |
+| Copy updates | 108 production / 58 test resolved occurrences; unresolved owner evidence retained | No copy rewrite or detector refinement; automation remains paused |
+
+Capability and isolation observations are retained at
+`capability-history/observations/2026-11-05T03-56-34.487304Z` and
+`isolation-history/observations/2026-11-05T03-56-36.979728Z`.
+The preceding assessment is archived at
+`assessment/history/2026-11-05T03-48-36.887295Z`.
+No denominator reset, new exception, detector-quality acceptance or migration-wide
+automation percentage is claimed. The next bounded ownership proposal is in
+`shared-title-next-batch.md`: review the existing shared Title concept, then relocate
+its definition and callers together through a tested semantic rule.
+
 ## Monotonic and polling batch wired
 
 All thirteen remaining reviewed timing occurrences are replaced through supplied
