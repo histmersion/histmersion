@@ -2,6 +2,35 @@
 
 ## Multi-concept model purpose review after aeb46ecb
 
+Preview-4 source review groups the additional boundaries by purpose: Acquire's
+browser-download prose, IngestMarkdown's shortened checksum, SourcesMarkdown's
+metadata display, JobKinds.subject's mixed display label, Place.Edits.toInput's
+input normalization, Write.blankToNone's normalization and Storage's textual
+renderers. These use the existing configured transformation, not site-specific
+rules. The corrected media.AssetLinks symbol matches its imported owner.
+All 79 seeds and 17 concepts remain; 207 overlay files are produced. The API
+compiler reports seven diagnostics: two Source.Write helper parameter mismatches
+and five Storage arithmetic/ordering errors. The preview compiler wrapper now
+also exits nonzero on failure, verified by the preview-4 command's exit code 1.
+
+One numeric boundary gap is now fixture-tested: Iron `.value` still has a refined
+type, so generic sum/sort inference needs explicit primitive widening. The initial
+base-type ascription passed the sum/sort fixture, but preview-5 caught its changed
+placeholder grouping inside `filter(_.freeBytes < threshold)`: seven diagnostics
+remained, including that new rule defect. This failed observation is retained.
+The fixture now also checks that comparison shape. The rule's opt-in
+widenNumericBoundaries uses same-base `.value.toLong`/`.toInt`/`.toDouble` only at
+configured scalar boundaries, preserving placeholder grouping and numeric width.
+The two new numeric expected outputs were corrected from ascriptions to same-base
+extraction; assertions were extended, not weakened. Numeric containers and typed
+arithmetic results still require support. No detector assertion or confirmed
+denominator changed, and no application repair credit is assigned.
+The corrected preview-6 reports six API diagnostics: two citation helper
+parameter mismatches and four Storage.total/onVolume arithmetic diagnostics.
+Its 207-file overlay retains all seventeen concepts and 79 fields; originals
+remain unchanged. Full downstream compilation and behavioral verification remain
+outstanding, and no overall repair percentage is established.
+
 Preview follow-up: the existing configurable Preview/PreviewCompile tools generated
 the entire 79-field cohort together, retaining all confirmed identities. Preview-1
 stopped on synthetic Scala 3 package ownership while locating existing Latitude;

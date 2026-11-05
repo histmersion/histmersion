@@ -54,5 +54,6 @@ class PreviewCompile(val policy: PreviewCompile.Policy) extends SyntacticRule("P
     sourceRows.foreach(r => require(hash(Files.readString(Paths.get(r.head))) == r(1),"Application changed during preview compilation"))
     Files.writeString(report.resolve("api-compile-status.txt"),(if(code == 0) "PASS" else "COMPILE_FAILED") + "\nexit=" + code + "\nAPI production overlay sources=" + (originals.size + additions.size) + "\nDependency classpath from evaluated " + (if(policy.evaluatedClasspath) "API" else "server") + " build; not a substitute for actual API JVM/JS and dependent-module builds.\nAll original source hashes unchanged.\n")
     println(Files.readString(report.resolve("api-compile-status.txt")))
+    require(code == 0,"API preview compilation failed; inspect retained api-compile.log")
   }
 }

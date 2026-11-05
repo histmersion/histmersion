@@ -53,6 +53,19 @@ Scala.js or dependent modules. PreviewCompile records compiler failure but its
 current wrapper exits zero; it is diagnostic evidence, not a pipeline success gate.
 Nested containers remain unsupported. See models/reviews/multi-concept-1/
 {rewrite-boundaries.txt,preview-2,preview-3} and the versioned configurations.
+Subsequent boundary review and configuration reduced diagnostics to seven in
+preview-4. Numeric widening initially exposed a placeholder-grouping defect in
+preview-5; the new comparison fixture reproduces that shape and the corrected
+same-base extraction passes exact-output, compile and behavior checks.
+Preview-6 now reports six diagnostics across Source.Write's citation helpers and
+Storage.total/onVolume's arithmetic. It retains all 79 fields / 17 concepts in
+207 overlay files; all original hashes remain unchanged. This supersedes the
+next-action list above: remaining work starts with typed helper propagation and
+typed arithmetic, followed by the full downstream compile/test/identity contract.
+PreviewCompile now propagates failures as exit code 1 (verified in previews 4–6),
+correcting the historical wrapper limitation recorded above. See
+models/reviews/multi-concept-1/{preview-4,preview-5,preview-6,
+rewrite-numeric-placeholders.txt}. No application repairs are credited.
 Application fixes in this purpose-review step: zero. Detector refinement rounds
 consumed: zero. Uncertain concepts and all other policy families remain tracked.
 

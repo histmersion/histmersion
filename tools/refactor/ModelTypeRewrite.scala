@@ -13,7 +13,8 @@ object ModelTypeRewrite {
     knownValues: Map[String,String] = Map.empty, optionalKnownValues: List[String] = Nil,
     methods: List[Record] = Nil, primitiveTypes: Map[String,String] = Map.empty,
     listResults: List[String] = Nil, listKnownValues: List[String] = Nil,
-    containerBoundaryOwners: List[String] = Nil, containerBoundaryCalls: Map[String,List[Int]] = Map.empty)
+    containerBoundaryOwners: List[String] = Nil, containerBoundaryCalls: Map[String,List[Int]] = Map.empty,
+    widenNumericBoundaries: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -148,6 +149,12 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
         }.asPatch
       }.getOrElse(Patch.empty)
     }
+    def unwrapScalar(t: Term): Patch = {
+      val base = policy.primitiveTypes.getOrElse(fields(t.symbol.value),"scala/Int#")
+      if(policy.widenNumericBoundaries && Set("scala/Int#","scala/Long#","scala/Double#")(base))
+        Patch.addRight(t,".value.to" + base.stripPrefix("scala/").stripSuffix("#"))
+      else Patch.addRight(t,".value")
+    }
     val boundaries = doc.tree.collect {
       case t: Term.Select if fields.contains(t.symbol.value) && container(t.symbol.value).nonEmpty && scalarBoundary(t) => Patch.addRight(t,".map(_.value)")
       case n: Term.Name if fields.contains(n.symbol.value) && container(n.symbol.value).nonEmpty && scalarBoundary(n) && !n.parent.exists {
@@ -155,12 +162,12 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
         case p: Term.Param => p.name eq n
         case _ => false
       } => Patch.addRight(n,".map(_.value)")
-      case t: Term.Select if fields.contains(t.symbol.value) && container(t.symbol.value).isEmpty && scalarBoundary(t) && !wrappedScalars((t.pos.start,t.pos.end)) => Patch.addRight(t,".value")
+      case t: Term.Select if fields.contains(t.symbol.value) && container(t.symbol.value).isEmpty && scalarBoundary(t) && !wrappedScalars((t.pos.start,t.pos.end)) => unwrapScalar(t)
       case n: Term.Name if fields.contains(n.symbol.value) && container(n.symbol.value).isEmpty && scalarBoundary(n) && !wrappedScalars((n.pos.start,n.pos.end)) && !n.parent.exists {
         case s: Term.Select => s.name eq n
         case p: Term.Param => p.name eq n
         case _ => false
-      } => Patch.addRight(n,".value")
+      } => unwrapScalar(n)
     }
     val codec = policy.codecImport.filter(_ => doc.tree.collect {
       case c: Defn.Class if policy.records.exists(_.owner == c.name.symbol.value) && c.templ.derives.nonEmpty => c

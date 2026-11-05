@@ -7,7 +7,8 @@ import metaconfig.{ConfDecoder, Configured, generic}
 object Preview {
   case class Policy(review: String = "", target: String = "target/pagination-preview-v3", report: String = "refactor-audit/models/pagination/preview-v3",
     scalarBoundaryOwners: List[String] = Nil, scalarBoundaryCalls: Map[String,List[Int]] = Map.empty,
-    containerBoundaryOwners: List[String] = Nil, containerBoundaryCalls: Map[String,List[Int]] = Map.empty)
+    containerBoundaryOwners: List[String] = Nil, containerBoundaryCalls: Map[String,List[Int]] = Map.empty,
+    widenNumericBoundaries: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -70,7 +71,7 @@ class Preview(val policy: Preview.Policy) extends SyntacticRule("Preview") {
       "\n]\nprimitiveTypes={" + bases.toList.sorted.map { case(n,b) => quote(n) + "=" + quote(b) }.mkString(",") +
       "}\n" + owners("scalarBoundaryOwners",policy.scalarBoundaryOwners) + calls("scalarBoundaryCalls",policy.scalarBoundaryCalls) +
       owners("containerBoundaryOwners",policy.containerBoundaryOwners) + calls("containerBoundaryCalls",policy.containerBoundaryCalls) +
-      "codecImport=\"com.histmersion.api.json.NewtypeCodecs.given\"\n}\n"
+      "widenNumericBoundaries=" + policy.widenNumericBoundaries + "\ncodecImport=\"com.histmersion.api.json.NewtypeCodecs.given\"\n}\n"
     Files.writeString(report.resolve("rule.conf"),config)
     val args = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--",
       "--config",report.resolve("rule.conf").toString,"--scala-version","3.10.0","--sourceroot",root.toString,"--auto-classpath","--auto-classpath-roots","target/out","--files","modules",
