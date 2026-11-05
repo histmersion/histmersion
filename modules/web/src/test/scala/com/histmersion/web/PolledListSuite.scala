@@ -25,9 +25,8 @@ class PolledListSuite extends munit.FunSuite:
     val asked = mutable.ListBuffer.empty[(Option[String], Option[String], Promise[(List[JobInfo], Paging.Page)])]
     val timers = mutable.ListBuffer.empty[(Int, () => Unit)]
     val list = PolledList[JobInfo](
-      fetch =
-        (upTo, before) => { val p = Promise[(List[JobInfo], Paging.Page)](); asked += ((upTo, before, p)); p.future },
-      id = _.id,
+      fetch = (upTo, before) => { val p = Promise[(List[JobInfo], Paging.Page)](); asked += ((upTo, before, p)); p.future },
+      id = _.id.value,
       live = (_, _) => liveRows,
       later = (ms, f) => { timers += ((ms, f)); timers.size },
       cancel = _ => ()
@@ -40,7 +39,7 @@ class PolledListSuite extends munit.FunSuite:
     f.list.open()
     assertEquals(f.asked.map(a => (a._1, a._2)).toList, List((None, None)))
     f.answer(0, List(job("b"), job("a")), page(2, None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("b", "a"))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
     assert(f.list.loaded.now())
     assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs))
 
@@ -57,11 +56,11 @@ class PolledListSuite extends munit.FunSuite:
     f.list.showOlder()
     assertEquals((f.asked(1)._1, f.asked(1)._2), (None, Some("b")))
     f.answer(1, List(job("a")), page(4, None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("c", "b", "a"))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("c", "b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
     f.list.refresh()
     assertEquals(f.asked(2)._1, Some("a"), "the poll reaches the last row shown")
     f.answer(2, List(job("d"), job("c"), job("b"), job("a")), page(4, None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("d", "c", "b", "a"))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("d", "c", "b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
 
   test("the last row shown is gone: the poll starts over from the newest page"):
     val f = Fixture(liveRows = true)
@@ -90,7 +89,7 @@ class PolledListSuite extends munit.FunSuite:
     f.list.restart()
     f.answer(2, List(job("new")), page(1, None))
     f.answer(1, List(job("old")), page(1, None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("new"))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("new").map(com.histmersion.api.jobs.JobInfo.Id.apply))
 
   /** One polled item (the agent run's window), on the same fake server and clock. */
   final private class Single:

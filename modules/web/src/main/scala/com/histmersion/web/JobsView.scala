@@ -144,7 +144,7 @@ object JobsView:
 
   private val list = PolledList[JobInfo](
     fetch = (upTo, before) => ApiClient.jobs(currentFilter(), Some(Limit), upTo = upTo, before = before),
-    id = _.id,
+    id = _.id.value,
     live = live,
     after = (cur, rows) => if ticksOff(cur.rows, rows) then QueueView.changed.emit(Queue.Kind.Acquire)
   )
@@ -265,7 +265,7 @@ object JobsView:
         div(
           cls := "job-subject",
           j.citekey match
-            case Some(ck) if subjectStored(j) => SourceLink(ck)
+            case Some(ck) if subjectStored(j) => SourceLink(ck.value)
             case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck.value)
             case None                         => what(j).fold(emptyNode)(w => span(cls := "job-what", w)),
           span(cls := "muted", s" · ${kindLabel(j.kind.value)}"),
@@ -299,8 +299,8 @@ object JobsView:
           cls := "job-meta muted",
           // an agent run is a job: its row leads to the run; any other job, to its own page
           if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind then
-            WinLink(WindowKey.Run(j.id), title := s"agent run ${j.id}", s"run ${j.id.take(8)}")
-          else RouteLink(Route.Job(j.id), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.take(8)}"),
+            WinLink(WindowKey.Run(j.id.value), title := s"agent run ${j.id}", s"run ${j.id.value.take(8)}")
+          else RouteLink(Route.Job(j.id.value), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.value.take(8)}"),
           Option(j.createdAt).filter(_.nonEmpty).map(c => span(title := c, s" · started ${agoOf(c)}")),
           Option(j.updatedAt)
             .filter(u => u.nonEmpty && u != j.createdAt)

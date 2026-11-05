@@ -225,11 +225,11 @@ object Pages:
         case None          => p(cls := "muted", "Loading…")
         case Some(Left(m)) => p(cls := "form-error", role := "alert", s"Could not read job $id: $m")
         case Some(Right(j)) if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind =>
-          Router.go(Route.Run(j.id), push = false)
+          Router.go(Route.Run(j.id.value), push = false)
           p(cls := "muted", "Loading…")
         case Some(Right(j)) =>
           Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind.value))
-          div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(j.id))
+          div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(j.id.value))
       },
       p(RouteLink(Route.Activity(ActivityTab.JobList), "All background jobs"))
     )
@@ -237,17 +237,12 @@ object Pages:
   /** Pause, resume and cancel of a long background job, on its page. */
   private def jobControls(j: JobInfo): HtmlElement =
     val e = com.histmersion.api.automation.Activity.Entry(
-      s"job:${j.id}",
-      "job",
-      j.createdAt,
-      state = j.status,
-      what = j.kind,
-      job = Some(j.id)
+      s"job:${j.id}", "job", j.createdAt, state = j.status, what = j.kind.value, job = Some(j.id.value)
     )
     ActivityView.actions(e) match
       case Nil => div()
       case _   =>
-        ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(j.id), push = false)))
+        ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(j.id.value), push = false)))
 
   // ── Settings ────────────────────────────────────────────────────────────────────────────────────
 

@@ -241,15 +241,14 @@ class EventMarkersSuite extends munit.FunSuite:
 
   // ── how precisely an event is dated (the data-source assessment's P0) ─────────────────────────
 
-  private val hekla = eruption.modify(
-    _.id).setTo("gvp_12724").modify(_.label).setTo("Eruption of Hekla").modify(_.timeSpan).setTo(TimeSpan(Some(-2251), None, None, Some(2026))).modify(_.precision).setTo(EventPrecision.Imprecise).modify(_.dating).setTo(Some("250 CE ± 2500 (tephrochronology)")
+  private val hekla = eruption.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("gvp_12724")).modify(_.label).setTo("Eruption of Hekla").modify(_.timeSpan).setTo(TimeSpan(Some(-2251), None, None, Some(2026))).modify(_.precision).setTo(EventPrecision.Imprecise).modify(_.dating).setTo(Some("250 CE ± 2500 (tephrochronology)")
   )
-  private val approx = eruption.modify(_.id).setTo("zz_a").modify(_.precision).setTo(EventPrecision.Approximate)
+  private val approx = eruption.modify(_.id).setTo(com.histmersion.api.catalogue.Event.Id("zz_a")).modify(_.precision).setTo(EventPrecision.Approximate)
 
   test("an imprecisely dated event is not drawn at a year — neither as a marker nor in playback"):
     assert(!PointKinds.Events.keep(hekla))
     assert(PointKinds.Events.keep(eruption) && PointKinds.Events.keep(approx))
-    assertEquals(EventPlayback.playable(List(hekla, eruption, approx)).map(_._1.id), Vector("zz_e", "zz_a"))
+    assertEquals(EventPlayback.playable(List(hekla, eruption, approx)).map(_._1.id), Vector("zz_e", "zz_a").map(com.histmersion.api.catalogue.Event.Id.apply))
 
   test("an approximately dated event is drawn faded: its marker and its playback label carry the class"):
     assert(EventMarker.html(approx, "rgb(1,2,3)").contains("hd-ev--approximate"))

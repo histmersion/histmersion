@@ -132,7 +132,7 @@ class ToolsSuite extends munit.FunSuite:
   test("the state filter and its counts") {
     val js = List(job("a", JobState.Running), job("b", JobState.Failed), job("c", JobState.Failed))
     assertEquals(JobsView.visible(js, None), js)
-    assertEquals(JobsView.visible(js, Some(JobState.Failed)).map(_.id), List("b", "c"))
+    assertEquals(JobsView.visible(js, Some(JobState.Failed)).map(_.id), List("b", "c").map(com.histmersion.api.jobs.JobInfo.Id.apply))
     assertEquals(JobsView.counts(js), Map(JobState.Running -> 1, JobState.Failed -> 2))
   }
 

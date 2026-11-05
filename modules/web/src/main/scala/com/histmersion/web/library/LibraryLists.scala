@@ -39,7 +39,7 @@ object LibraryLists:
   /** The table's rows of `section`, as keys. */
   def keys(section: LibrarySection): List[String] =
     if section == LibrarySection.Articles then articles.now().rows.map(_.slug)
-    else sources.now().rows.map(_.source.citekey)
+    else sources.now().rows.map(_.source.citekey.value)
 
   /** Read both lists' first pages, unless they are already read for this filter and order. */
   def refresh(): Unit =

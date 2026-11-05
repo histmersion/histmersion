@@ -125,7 +125,7 @@ object PointKinds:
     val meaning = "an event"
     def box = (Layout.eventMarkerSize.value, Layout.eventMarkerSize.value)
     override def pane = com.histmersion.api.MapStack.Pane.Events
-    def key(e: EventGeo): String = e.id
+    def key(e: EventGeo): String = e.id.value
     def at(e: EventGeo): (Double, Double) = (e.lat.value, e.lon.value)
     def inner(e: EventGeo): String = Glyphs.badge(CardIcons.event(e.kind))
     override def classes(e: EventGeo): String =
@@ -145,11 +145,11 @@ object PointKinds:
         mid(e).toList,
         Certainty.NoSay,
         undated = if undated(e) then 1 else 0,
-        entry = Some(DotEntry(DotKind.Event, e.id, e.label, CardIcons.event(e.kind), mid(e), EventPlayback.note(e)))
+        entry = Some(DotEntry(DotKind.Event, e.id.value, e.label, CardIcons.event(e.kind), mid(e), EventPlayback.note(e)))
       )
     def label(e: EventGeo): String = EventMarker.describe(e)
     def action(e: EventGeo): String = "pin its card"
-    def target(e: EventGeo, asOf: Option[Long]): Option[Preview.Target] = Some(Preview.Target.Event(e.id))
+    def target(e: EventGeo, asOf: Option[Long]): Option[Preview.Target] = Some(Preview.Target.Event(e.id.value))
 
     /** Drawn at a year only when dated well enough — the feed already leaves the imprecise out
       * ([[EventPrecision.mapped]], decided in core); this keeps a stray one off the map too.
@@ -161,7 +161,7 @@ object PointKinds:
     def activate(e: EventGeo, how: Activation): Unit =
       val el = how.element
       Preview.pin(
-        Preview.Target.Event(e.id),
+        Preview.Target.Event(e.id.value),
         () =>
           el.filter(_.isConnected).map { x =>
             val r = x.getBoundingClientRect()
@@ -170,7 +170,7 @@ object PointKinds:
         owner = el.filter(_ => how.keyboard),
         keyboard = how.keyboard
       )
-    def open(key: String, e: EventGeo, row: dom.Element): Unit = DotCluster.pinUnder(Preview.Target.Event(e.id), row)
+    def open(key: String, e: EventGeo, row: dom.Element): Unit = DotCluster.pinUnder(Preview.Target.Event(e.id.value), row)
 
   /** A picture: a landscape PHOTO PRINT with the picture icon, in its date's colour (an undated one in its kind's); a
     * source's figure previews its source; a click opens its popup.
