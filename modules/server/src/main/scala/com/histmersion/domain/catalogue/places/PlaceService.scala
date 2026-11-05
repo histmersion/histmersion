@@ -19,108 +19,271 @@ import com.histmersion.api.catalogue.Place
   * place is the library's; what these answer about findings counts the places' matches (`finding_places`).
   */
 trait PlaceService:
-  def count(): Int
+  def count(): com.histmersion.domain.catalogue.places.PlaceService.CountResult
 
   /** A batch upserted in one transaction: rows, then names, then the edges whose parent exists by then. */
   def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult
 
   /** The places a name search finds, valid at `asOf`: exact labels first, then prefixes. */
-  def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long = DefaultModernFrom): List[Place.Hit]
+  def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.SearchAsOf], limit: com.histmersion.domain.catalogue.places.PlaceService.SearchLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceService.SearchModernFrom = DefaultModernFrom): List[Place.Hit]
 
   /** One place with the hierarchy around it at `asOf`. */
-  def get(id: String, asOf: Option[Long] = None, modernFrom: Long = DefaultModernFrom): Option[Place.Entry]
+  def get(id: com.histmersion.domain.catalogue.places.PlaceService.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.GetAsOf] = None, modernFrom: com.histmersion.domain.catalogue.places.PlaceService.GetModernFrom = DefaultModernFrom): Option[Place.Entry]
 
-  def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long = DefaultModernFrom): List[Place.Summary]
+  def children(id: com.histmersion.domain.catalogue.places.PlaceService.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.ChildrenAsOf], limit: com.histmersion.domain.catalogue.places.PlaceService.ChildrenLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceService.ChildrenModernFrom = DefaultModernFrom): List[Place.Summary]
 
   /** The hierarchy at `asOf` as a depth-tagged pre-order walk, from `root` or from every place that heads it. */
   def hierarchy(
-      asOf: Option[Long],
-      root: Option[String],
-      maxDepth: Int,
-      limit: Int,
-      depthCap: Int = Int.MaxValue,
-      modernFrom: Long = DefaultModernFrom
+      asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.HierarchyAsOf],
+      root: Option[com.histmersion.domain.catalogue.places.PlaceService.HierarchyRoot],
+      maxDepth: com.histmersion.domain.catalogue.places.PlaceService.HierarchyMaxDepth,
+      limit: com.histmersion.domain.catalogue.places.PlaceService.HierarchyLimit,
+      depthCap: com.histmersion.domain.catalogue.places.PlaceService.HierarchyDepthCap = Int.MaxValue,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceService.HierarchyModernFrom = DefaultModernFrom
   ): List[Place.TreeRow]
 
-  def footprints(id: String, asOf: Option[Long]): List[Place.Footprint]
-  def links(id: String): List[Place.Link]
+  def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.FootprintsAsOf]): List[Place.Footprint]
+  def links(id: com.histmersion.domain.catalogue.places.PlaceService.LinksId): List[Place.Link]
 
   /** Which of a filter's `places` values are places, and what each stands for: itself and its descendants. */
-  def scopeFor(values: List[String], period: Option[Period]): PlaceScope
+  def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.ScopeForValues], period: Option[Period]): PlaceScope
 
   /** The places `placeIds` and all their ancestors, with the edges between them. */
-  def gazetteer(placeIds: List[String]): (List[RegionNode], List[Place.Relation])
+  def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation])
 
   /** A new id; the old one stays an alias of it. */
-  def rename(from: String, to: String): Either[Api.Error, Unit]
+  def rename(from: com.histmersion.domain.catalogue.places.PlaceService.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.RenameTo): Either[Api.Error, Unit]
 
-  def addName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged]
+  def addName(id: com.histmersion.domain.catalogue.places.PlaceService.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.AddNameName, lang: com.histmersion.domain.catalogue.places.PlaceService.AddNameLang): Either[Api.Error, Place.NameChanged]
 
   /** Only a name a person added; an imported one is refused. */
-  def removeName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged]
+  def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameName, lang: com.histmersion.domain.catalogue.places.PlaceService.RemoveNameLang): Either[Api.Error, Place.NameChanged]
 
-  def manualNames(id: Option[String]): List[ManualPlaceName]
+  def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.ManualNamesId]): List[ManualPlaceName]
 
   /** A person's own point place (`local`); refused when its id is taken, removed or an old id. */
   def add(in: Place.Input): Either[Api.Error, Place.Summary]
 
-  def overrides(id: Option[String]): List[Place.Override]
+  def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.OverridesId]): List[Place.Override]
 
   /** A person's kind, period or point set over the source's (or reset), and the place's findings matched again. */
-  def setOverride(id: String, edit: Place.OverrideEdit, toleranceKm: Double): Either[Api.Error, Place.OverrideChanged]
+  def setOverride(id: com.histmersion.domain.catalogue.places.PlaceService.SetOverrideId, edit: Place.OverrideEdit, toleranceKm: com.histmersion.domain.catalogue.places.PlaceService.SetOverrideToleranceKm): Either[Api.Error, Place.OverrideChanged]
 
   /** `from` merged into `into`: what refers to it moves, its id resolves there. */
-  def merge(from: String, into: String, toleranceKm: Double): Either[Api.Error, Place.Gone]
+  def merge(from: com.histmersion.domain.catalogue.places.PlaceService.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.MergeInto, toleranceKm: com.histmersion.domain.catalogue.places.PlaceService.MergeToleranceKm): Either[Api.Error, Place.Gone]
 
   /** A place nothing refers to, removed for good. */
-  def remove(id: String, reason: Option[String]): Either[Api.Error, Place.Gone]
+  def remove(id: com.histmersion.domain.catalogue.places.PlaceService.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.RemoveReason]): Either[Api.Error, Place.Gone]
 
 object PlaceService:
+  type CountResult = CountResult.T
+  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchQ = SearchQ.T
+  object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchAsOf = SearchAsOf.T
+  object SearchAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchModernFrom = SearchModernFrom.T
+  object SearchModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetId = GetId.T
+  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetAsOf = GetAsOf.T
+  object GetAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetModernFrom = GetModernFrom.T
+  object GetModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenId = ChildrenId.T
+  object ChildrenId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenAsOf = ChildrenAsOf.T
+  object ChildrenAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenLimit = ChildrenLimit.T
+  object ChildrenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenModernFrom = ChildrenModernFrom.T
+  object ChildrenModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyAsOf = HierarchyAsOf.T
+  object HierarchyAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyRoot = HierarchyRoot.T
+  object HierarchyRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyMaxDepth = HierarchyMaxDepth.T
+  object HierarchyMaxDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyLimit = HierarchyLimit.T
+  object HierarchyLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyDepthCap = HierarchyDepthCap.T
+  object HierarchyDepthCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyModernFrom = HierarchyModernFrom.T
+  object HierarchyModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FootprintsId = FootprintsId.T
+  object FootprintsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FootprintsAsOf = FootprintsAsOf.T
+  object FootprintsAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinksId = LinksId.T
+  object LinksId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScopeForValues = ScopeForValues.T
+  object ScopeForValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GazetteerPlaceIds = GazetteerPlaceIds.T
+  object GazetteerPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameFrom = RenameFrom.T
+  object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameTo = RenameTo.T
+  object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddNameId = AddNameId.T
+  object AddNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddNameName = AddNameName.T
+  object AddNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddNameLang = AddNameLang.T
+  object AddNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveNameId = RemoveNameId.T
+  object RemoveNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveNameName = RemoveNameName.T
+  object RemoveNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveNameLang = RemoveNameLang.T
+  object RemoveNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManualNamesId = ManualNamesId.T
+  object ManualNamesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverridesId = OverridesId.T
+  object OverridesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetOverrideId = SetOverrideId.T
+  object SetOverrideId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetOverrideToleranceKm = SetOverrideToleranceKm.T
+  object SetOverrideToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeFrom = MergeFrom.T
+  object MergeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeInto = MergeInto.T
+  object MergeInto extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeToleranceKm = MergeToleranceKm.T
+  object MergeToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveId = RemoveId.T
+  object RemoveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveReason = RemoveReason.T
+  object RemoveReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(db: Transactor): PlaceService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends PlaceService:
-    def count(): Int = db.read(PlaceRepo.count())
+    def count(): com.histmersion.domain.catalogue.places.PlaceService.Implementation.CountResult = db.read(PlaceRepo.count())
     def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult =
       if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil) else db.transact(PlaceRepo.upsertPlaces(batch, dataset))
-    def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long): List[Place.Hit] =
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchAsOf], limit: com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceService.Implementation.SearchModernFrom): List[Place.Hit] =
       db.read(PlaceRepo.search(q, asOf, limit, modernFrom)).toList
-    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[Place.Entry] =
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetAsOf], modernFrom: com.histmersion.domain.catalogue.places.PlaceService.Implementation.GetModernFrom): Option[Place.Entry] =
       db.read(PlaceRepo.get(id, asOf, modernFrom))
-    def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long): List[Place.Summary] =
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenAsOf], limit: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceService.Implementation.ChildrenModernFrom): List[Place.Summary] =
       db.read(PlaceRepo.children(id, asOf, limit, modernFrom)).toList
     def hierarchy(
-        asOf: Option[Long],
-        root: Option[String],
-        maxDepth: Int,
-        limit: Int,
-        depthCap: Int,
-        modernFrom: Long
+        asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyAsOf],
+        root: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyRoot],
+        maxDepth: com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyMaxDepth,
+        limit: com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyLimit,
+        depthCap: com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyDepthCap,
+        modernFrom: com.histmersion.domain.catalogue.places.PlaceService.Implementation.HierarchyModernFrom
     ): List[Place.TreeRow] =
       db.read(PlaceRepo.hierarchy(asOf, root, maxDepth, limit, depthCap, modernFrom)).toList
-    def footprints(id: String, asOf: Option[Long]): List[Place.Footprint] =
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.FootprintsAsOf]): List[Place.Footprint] =
       db.read(PlaceRepo.footprints(id, asOf)).toList
-    def links(id: String): List[Place.Link] = db.read(PlaceRepo.links(id)).toList
-    def scopeFor(values: List[String], period: Option[Period]): PlaceScope = db.read(PlaceRepo.scopeFor(values, period))
-    def gazetteer(placeIds: List[String]): (List[RegionNode], List[Place.Relation]) =
+    def links(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.LinksId): List[Place.Link] = db.read(PlaceRepo.links(id)).toList
+    def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ScopeForValues], period: Option[Period]): PlaceScope = db.read(PlaceRepo.scopeFor(values, period))
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.Implementation.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation]) =
       db.read(TreeRepo.gazetteer(placeIds))
-    def rename(from: String, to: String): Either[Api.Error, Unit] = db.transact(PlaceRepo.rename(from, to))
-    def addName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RenameTo): Either[Api.Error, Unit] = db.transact(PlaceRepo.rename(from, to))
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameName, lang: com.histmersion.domain.catalogue.places.PlaceService.Implementation.AddNameLang): Either[Api.Error, Place.NameChanged] =
       db.transact(PlaceRepo.addName(id, name, lang))
-    def removeName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameName, lang: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveNameLang): Either[Api.Error, Place.NameChanged] =
       db.transact(PlaceRepo.removeName(id, name, lang))
-    def manualNames(id: Option[String]): List[ManualPlaceName] = db.read(PlaceRepo.manualNames(id))
+    def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.ManualNamesId]): List[ManualPlaceName] = db.read(PlaceRepo.manualNames(id))
     def add(in: Place.Input): Either[Api.Error, Place.Summary] = db.transact(PlaceRepo.addPlace(in))
-    def overrides(id: Option[String]): List[Place.Override] = db.read(PlaceOverrideRepo.list(id))
+    def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.OverridesId]): List[Place.Override] = db.read(PlaceOverrideRepo.list(id))
     def setOverride(
-        id: String,
+        id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.SetOverrideId,
         edit: Place.OverrideEdit,
-        toleranceKm: Double
+        toleranceKm: com.histmersion.domain.catalogue.places.PlaceService.Implementation.SetOverrideToleranceKm
     ): Either[Api.Error, Place.OverrideChanged] =
       db.transact(PlaceOverrideRepo.set(id, edit, toleranceKm))
-    def merge(from: String, into: String, toleranceKm: Double): Either[Api.Error, Place.Gone] =
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeInto, toleranceKm: com.histmersion.domain.catalogue.places.PlaceService.Implementation.MergeToleranceKm): Either[Api.Error, Place.Gone] =
       db.transact(PlaceOverrideRepo.merge(from, into, toleranceKm))
-    def remove(id: String, reason: Option[String]): Either[Api.Error, Place.Gone] =
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.Implementation.RemoveReason]): Either[Api.Error, Place.Gone] =
       db.transact(PlaceOverrideRepo.remove(id, reason))
+
+  object Implementation:
+    type CountResult = CountResult.T
+    object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchQ = SearchQ.T
+    object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchAsOf = SearchAsOf.T
+    object SearchAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchLimit = SearchLimit.T
+    object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchModernFrom = SearchModernFrom.T
+    object SearchModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetId = GetId.T
+    object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetAsOf = GetAsOf.T
+    object GetAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetModernFrom = GetModernFrom.T
+    object GetModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildrenId = ChildrenId.T
+    object ChildrenId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildrenAsOf = ChildrenAsOf.T
+    object ChildrenAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildrenLimit = ChildrenLimit.T
+    object ChildrenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildrenModernFrom = ChildrenModernFrom.T
+    object ChildrenModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyAsOf = HierarchyAsOf.T
+    object HierarchyAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyRoot = HierarchyRoot.T
+    object HierarchyRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyMaxDepth = HierarchyMaxDepth.T
+    object HierarchyMaxDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyLimit = HierarchyLimit.T
+    object HierarchyLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyDepthCap = HierarchyDepthCap.T
+    object HierarchyDepthCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyModernFrom = HierarchyModernFrom.T
+    object HierarchyModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FootprintsId = FootprintsId.T
+    object FootprintsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FootprintsAsOf = FootprintsAsOf.T
+    object FootprintsAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinksId = LinksId.T
+    object LinksId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ScopeForValues = ScopeForValues.T
+    object ScopeForValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GazetteerPlaceIds = GazetteerPlaceIds.T
+    object GazetteerPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenameFrom = RenameFrom.T
+    object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenameTo = RenameTo.T
+    object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddNameId = AddNameId.T
+    object AddNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddNameName = AddNameName.T
+    object AddNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddNameLang = AddNameLang.T
+    object AddNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveNameId = RemoveNameId.T
+    object RemoveNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveNameName = RemoveNameName.T
+    object RemoveNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveNameLang = RemoveNameLang.T
+    object RemoveNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManualNamesId = ManualNamesId.T
+    object ManualNamesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OverridesId = OverridesId.T
+    object OverridesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetOverrideId = SetOverrideId.T
+    object SetOverrideId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetOverrideToleranceKm = SetOverrideToleranceKm.T
+    object SetOverrideToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeFrom = MergeFrom.T
+    object MergeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeInto = MergeInto.T
+    object MergeInto extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeToleranceKm = MergeToleranceKm.T
+    object MergeToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveId = RemoveId.T
+    object RemoveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveReason = RemoveReason.T
+    object RemoveReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The places as a database holding only the catalogue's rows answers: no finding is stored, so none is matched to a
     * place (every count of findings is 0), and a geometry is kept as it was given; a place is valid at a year its
@@ -130,10 +293,10 @@ object PlaceService:
     import HeldPlace.lower
 
     private def places: Vector[HeldPlace] = state.get.places
-    private def find(id: String): Option[HeldPlace] = places.find(_.id == id)
-    private def notFound(id: String): Api.Error = Api.Error(s"No place '$id'", Some(Write.CodeNotFound))
+    private def find(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.FindId): Option[HeldPlace] = places.find(_.id == id)
+    private def notFound(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.NotFoundId): Api.Error = Api.Error(s"No place '$id'", Some(Write.CodeNotFound))
 
-    def count(): Int = places.size
+    def count(): com.histmersion.domain.catalogue.places.PlaceService.InMemory.CountResult = places.size
 
     def importPlaces(batch: List[Place.Input], dataset: Dataset): Place.ImportResult =
       if batch.isEmpty then Place.ImportResult(0, 0, 0, Nil)
@@ -186,7 +349,7 @@ object PlaceService:
           failed = dangling.map(r => s"${r.childId}: no such parent '${r.parentId}'").distinct.take(20)
         )
 
-    def search(q: Option[String], asOf: Option[Long], limit: Int, modernFrom: Long): List[Place.Hit] =
+    def search(q: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchQ], asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchAsOf], limit: com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceService.InMemory.SearchModernFrom): List[Place.Hit] =
       val text = q.map(_.trim).filter(_.nonEmpty)
       val t = text.map(lower)
       def named(p: HeldPlace) = p.names.filter(n => HeldPlace.covers(n.period, asOf))
@@ -222,7 +385,7 @@ object PlaceService:
           )
         }
 
-    private def parentsOf(p: HeldPlace, asOf: Option[Long]): List[Place.Summary] =
+    private def parentsOf(p: HeldPlace, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ParentsOfAsOf]): List[Place.Summary] =
       p.parents
         .filter(r => HeldPlace.covers(r.period, asOf))
         .flatMap(r => find(r.parentId))
@@ -232,12 +395,12 @@ object PlaceService:
         .toList
         .map(_.summary)
 
-    private def kidsOf(id: String, asOf: Option[Long]): Vector[HeldPlace] =
+    private def kidsOf(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.KidsOfId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.KidsOfAsOf]): Vector[HeldPlace] =
       places
         .filter(c => c.parents.exists(r => r.parentId == id && HeldPlace.covers(r.period, asOf)) && c.validAt(asOf))
         .sortBy(c => (c.place.label, c.id))
 
-    def get(id: String, asOf: Option[Long], modernFrom: Long): Option[Place.Entry] =
+    def get(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.GetId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GetAsOf], modernFrom: com.histmersion.domain.catalogue.places.PlaceService.InMemory.GetModernFrom): Option[Place.Entry] =
       find(id).map { p =>
         Place.Entry(
           p.summary,
@@ -251,16 +414,16 @@ object PlaceService:
         )
       }
 
-    def children(id: String, asOf: Option[Long], limit: Int, modernFrom: Long): List[Place.Summary] =
+    def children(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.ChildrenId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ChildrenAsOf], limit: com.histmersion.domain.catalogue.places.PlaceService.InMemory.ChildrenLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceService.InMemory.ChildrenModernFrom): List[Place.Summary] =
       kidsOf(id, asOf).take(limit.max(1)).toList.map(_.summary)
 
     def hierarchy(
-        asOf: Option[Long],
-        root: Option[String],
-        maxDepth: Int,
-        limit: Int,
-        depthCap: Int,
-        modernFrom: Long
+        asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyAsOf],
+        root: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyRoot],
+        maxDepth: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyMaxDepth,
+        limit: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyLimit,
+        depthCap: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyDepthCap,
+        modernFrom: com.histmersion.domain.catalogue.places.PlaceService.InMemory.HierarchyModernFrom
     ): List[Place.TreeRow] =
       val depth = math.max(0, math.min(maxDepth, depthCap))
       val heads = root match
@@ -282,10 +445,10 @@ object PlaceService:
         .flatMap(h => walk(h, 0, Set(h.id)))
         .take(limit.max(1))
 
-    def footprints(id: String, asOf: Option[Long]): List[Place.Footprint] = Nil
-    def links(id: String): List[Place.Link] = find(id).toList.flatMap(_.links).sortBy(l => (l.scheme, l.externalId))
+    def footprints(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.FootprintsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.FootprintsAsOf]): List[Place.Footprint] = Nil
+    def links(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.LinksId): List[Place.Link] = find(id).toList.flatMap(_.links).sortBy(l => (l.scheme, l.externalId))
 
-    def scopeFor(values: List[String], period: Option[Period]): PlaceScope =
+    def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ScopeForValues], period: Option[Period]): PlaceScope =
       val s = state.get
       val wanted = values.map(_.trim).filter(_.nonEmpty).distinct
       val target = wanted.map(v => v -> s.placeAliases.getOrElse(v, v)).toMap
@@ -305,7 +468,7 @@ object PlaceService:
           known.map(v => v -> find(target(v)).fold(v)(_.place.label)).toMap
         )
 
-    def gazetteer(placeIds: List[String]): (List[RegionNode], List[Place.Relation]) =
+    def gazetteer(placeIds: List[com.histmersion.domain.catalogue.places.PlaceService.InMemory.GazetteerPlaceIds]): (List[RegionNode], List[Place.Relation]) =
       @tailrec def up(frontier: List[String], seen: Vector[String]): Vector[String] = frontier match
         case Nil       => seen
         case id :: are =>
@@ -320,7 +483,7 @@ object PlaceService:
       val edges = ids.flatMap(find).flatMap(_.parents).filter(r => ids.contains(r.parentId)).toList
       (nodes, edges)
 
-    def rename(from: String, to: String): Either[Api.Error, Unit] =
+    def rename(from: com.histmersion.domain.catalogue.places.PlaceService.InMemory.RenameFrom, to: com.histmersion.domain.catalogue.places.PlaceService.InMemory.RenameTo): Either[Api.Error, Unit] =
       val (o, n) = (from.trim, to.trim)
       val aliasOf = state.get.placeAliases.get(n)
       if find(o).isEmpty then Left(notFound(o))
@@ -347,7 +510,7 @@ object PlaceService:
         )
         Right(())
 
-    def addName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
+    def addName(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceService.InMemory.AddNameName, lang: com.histmersion.domain.catalogue.places.PlaceService.InMemory.AddNameLang): Either[Api.Error, Place.NameChanged] =
       find(id).toRight(notFound(id)).map { p =>
         val before = p.names.find(n => n.name == name && n.lang == lang).map(_.manual)
         if !before.contains(true) then
@@ -361,7 +524,7 @@ object PlaceService:
         Place.NameChanged(id, p.place.label, name, lang, true, !before.contains(true), before.contains(false))
       }
 
-    def removeName(id: String, name: String, lang: String): Either[Api.Error, Place.NameChanged] =
+    def removeName(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveNameName, lang: com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveNameLang): Either[Api.Error, Place.NameChanged] =
       find(id).toRight(notFound(id)).flatMap { p =>
         val same = p.names.filter(n => n.name == name && n.lang == lang)
         if same.isEmpty then
@@ -390,7 +553,7 @@ object PlaceService:
           Right(Place.NameChanged(id, p.place.label, name, lang, added = false, changed = true))
       }
 
-    def manualNames(id: Option[String]): List[ManualPlaceName] =
+    def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.ManualNamesId]): List[ManualPlaceName] =
       places
         .filter(p => id.forall(_ == p.id))
         .flatMap(p => p.names.filter(_.manual).map(n => ManualPlaceName(p.id, p.place.label, n.name, n.lang)))
@@ -415,7 +578,7 @@ object PlaceService:
         val _ = importPlaces(List(in), Dataset.Local)
         find(id).map(_.summary).toRight(Api.Error(s"place '$id' was not stored"))
 
-    def overrides(id: Option[String]): List[Place.Override] =
+    def overrides(id: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.OverridesId]): List[Place.Override] =
       state.get.placeOverrides
         .filter(o => id.forall(_ == o.placeId))
         .sortBy(_.placeId)
@@ -440,9 +603,9 @@ object PlaceService:
         )
 
     def setOverride(
-        id: String,
+        id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.SetOverrideId,
         edit: Place.OverrideEdit,
-        toleranceKm: Double
+        toleranceKm: com.histmersion.domain.catalogue.places.PlaceService.InMemory.SetOverrideToleranceKm
     ): Either[Api.Error, Place.OverrideChanged] =
       find(id).toRight(notFound(id)).flatMap { before =>
         val s = state.get
@@ -520,7 +683,7 @@ object PlaceService:
         }
       }
 
-    def merge(from: String, into: String, toleranceKm: Double): Either[Api.Error, Place.Gone] =
+    def merge(from: com.histmersion.domain.catalogue.places.PlaceService.InMemory.MergeFrom, into: com.histmersion.domain.catalogue.places.PlaceService.InMemory.MergeInto, toleranceKm: com.histmersion.domain.catalogue.places.PlaceService.InMemory.MergeToleranceKm): Either[Api.Error, Place.Gone] =
       (find(from), find(into)) match
         case (None, _)          => Left(notFound(from))
         case (_, None)          => Left(notFound(into))
@@ -541,7 +704,7 @@ object PlaceService:
           )
           Right(Place.Gone(from, f.place.label, Some(into), Some(i.place.label), 0, 0, 0))
 
-    def remove(id: String, reason: Option[String]): Either[Api.Error, Place.Gone] =
+    def remove(id: com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveId, reason: Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.RemoveReason]): Either[Api.Error, Place.Gone] =
       find(id).toRight(notFound(id)).flatMap { p =>
         val s = state.get
         val refs = List(
@@ -567,15 +730,118 @@ object PlaceService:
 
   object InMemory:
     /** The kinds that may head the hierarchy. */
-    val RootKinds: Set[String] = Set("region", "polity", "continent")
+    type FindId = FindId.T
+    object FindId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotFoundId = NotFoundId.T
+    object NotFoundId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CountResult = CountResult.T
+    object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchQ = SearchQ.T
+    object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchAsOf = SearchAsOf.T
+    object SearchAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchLimit = SearchLimit.T
+    object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchModernFrom = SearchModernFrom.T
+    object SearchModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParentsOfAsOf = ParentsOfAsOf.T
+    object ParentsOfAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type KidsOfId = KidsOfId.T
+    object KidsOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type KidsOfAsOf = KidsOfAsOf.T
+    object KidsOfAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetId = GetId.T
+    object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetAsOf = GetAsOf.T
+    object GetAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GetModernFrom = GetModernFrom.T
+    object GetModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildrenId = ChildrenId.T
+    object ChildrenId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildrenAsOf = ChildrenAsOf.T
+    object ChildrenAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildrenLimit = ChildrenLimit.T
+    object ChildrenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildrenModernFrom = ChildrenModernFrom.T
+    object ChildrenModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyAsOf = HierarchyAsOf.T
+    object HierarchyAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyRoot = HierarchyRoot.T
+    object HierarchyRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyMaxDepth = HierarchyMaxDepth.T
+    object HierarchyMaxDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyLimit = HierarchyLimit.T
+    object HierarchyLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyDepthCap = HierarchyDepthCap.T
+    object HierarchyDepthCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HierarchyModernFrom = HierarchyModernFrom.T
+    object HierarchyModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FootprintsId = FootprintsId.T
+    object FootprintsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FootprintsAsOf = FootprintsAsOf.T
+    object FootprintsAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinksId = LinksId.T
+    object LinksId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ScopeForValues = ScopeForValues.T
+    object ScopeForValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GazetteerPlaceIds = GazetteerPlaceIds.T
+    object GazetteerPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenameFrom = RenameFrom.T
+    object RenameFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenameTo = RenameTo.T
+    object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddNameId = AddNameId.T
+    object AddNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddNameName = AddNameName.T
+    object AddNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddNameLang = AddNameLang.T
+    object AddNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveNameId = RemoveNameId.T
+    object RemoveNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveNameName = RemoveNameName.T
+    object RemoveNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveNameLang = RemoveNameLang.T
+    object RemoveNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ManualNamesId = ManualNamesId.T
+    object ManualNamesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OverridesId = OverridesId.T
+    object OverridesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetOverrideId = SetOverrideId.T
+    object SetOverrideId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetOverrideToleranceKm = SetOverrideToleranceKm.T
+    object SetOverrideToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeFrom = MergeFrom.T
+    object MergeFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeInto = MergeInto.T
+    object MergeInto extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeToleranceKm = MergeToleranceKm.T
+    object MergeToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveId = RemoveId.T
+    object RemoveId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RemoveReason = RemoveReason.T
+    object RemoveReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RootKinds = RootKinds.T
+    object RootKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodOfSidesPart1 = PeriodOfSidesPart1.T
+    object PeriodOfSidesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeriodOfSidesPart2 = PeriodOfSidesPart2.T
+    object PeriodOfSidesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsPointResult = IsPointResult.T
+    object IsPointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsPointGeojson = IsPointGeojson.T
+    object IsPointGeojson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TimestampResult = TimestampResult.T
+    object TimestampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    val RootKinds: Set[com.histmersion.domain.catalogue.places.PlaceService.InMemory.RootKinds] = Set("region", "polity", "continent")
 
     /** An override's sides as a closed period (an open side reads as the widest year). */
-    def periodOf(sides: (Option[Long], Option[Long])): Option[Period] =
+    def periodOf(sides: (Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.PeriodOfSidesPart1], Option[com.histmersion.domain.catalogue.places.PlaceService.InMemory.PeriodOfSidesPart2])): Option[Period] =
       sides match
         case (None, None) => None
         case (lo, hi)     => Some(Period(lo.getOrElse(Long.MinValue), hi.getOrElse(Long.MaxValue)))
 
-    def isPoint(geojson: String): Boolean =
+    def isPoint(geojson: com.histmersion.domain.catalogue.places.PlaceService.InMemory.IsPointGeojson): com.histmersion.domain.catalogue.places.PlaceService.InMemory.IsPointResult =
       io.circe.parser.parse(geojson).toOption.flatMap(_.hcursor.downField("type").as[String].toOption).contains("Point")
 
-    def timestamp(at: Instant): String = at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString
+    def timestamp(at: Instant): com.histmersion.domain.catalogue.places.PlaceService.InMemory.TimestampResult = at.truncatedTo(java.time.temporal.ChronoUnit.SECONDS).toString

@@ -19,7 +19,7 @@ trait QueueService:
   def byIds(ids: List[QueueItemId]): List[QueueItem]
 
   /** The items of `list` (any status) whose text names `doi`, by id. */
-  def naming(list: Kind, doi: String): List[QueueItem]
+  def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem]
 
   /** A new item of `list`, as stored (its status checked by the caller). */
   def add(list: Kind, item: QueueAdd): QueueItem
@@ -47,7 +47,7 @@ object QueueService:
 
     def get(id: QueueItemId): Option[QueueItem] = db.read(QueueRepo.get(id.value))
     def byIds(ids: List[QueueItemId]): List[QueueItem] = db.read(QueueRepo.byIds(ids.map(_.value))).toList
-    def naming(list: Kind, doi: String): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
+    def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem] = db.read(QueueRepo.naming(list, doi)).toList
     def add(list: Kind, item: QueueAdd): QueueItem = db.transact(QueueRepo.insert(list, item))
 
     def patch(id: QueueItemId, p: QueuePatch): Either[QueueError, QueueItem] = db.transact:
@@ -80,7 +80,7 @@ object QueueService:
       val wanted: Set[Int] = ids.map(i => i.value: Int).toSet
       state.get.items.filter(i => wanted(i.id)).toList
 
-    def naming(list: Kind, doi: String): List[QueueItem] = state.get.naming(list, doi).toList
+    def naming(list: Kind, doi: com.histmersion.domain.library.Doi): List[QueueItem] = state.get.naming(list, doi).toList
     def add(list: Kind, item: QueueAdd): QueueItem = state.updateAndGet(_.added(list, item, now)).items.last
 
     def patch(id: QueueItemId, p: QueuePatch): Either[QueueError, QueueItem] =

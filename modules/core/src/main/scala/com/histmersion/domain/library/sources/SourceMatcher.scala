@@ -29,11 +29,43 @@ import com.histmersion.api.exchange.Bundle
 object SourceMatcher:
 
   /** A source with the old citekeys (aliases) that still name it. */
+  type FixedResult = FixedResult.T
+  object FixedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixedX = FixedX.T
+  object FixedX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixedPlaces = FixedPlaces.T
+  object FixedPlaces extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedResult = SignedResult.T
+  object SignedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedW = SignedW.T
+  object SignedW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyStemResult = CitekeyStemResult.T
+  object CitekeyStemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyStemCk = CitekeyStemCk.T
+  object CitekeyStemCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockingKeysResult = BlockingKeysResult.T
+  object BlockingKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShaResult = ShaResult.T
+  object ShaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsbnsResult = IsbnsResult.T
+  object IsbnsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearsResult = YearsResult.T
+  object YearsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReprintHintResult = ReprintHintResult.T
+  object ReprintHintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceSketchesPart1 = EvidenceSketchesPart1.T
+  object EvidenceSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssignSketchesPart1 = AssignSketchesPart1.T
+  object AssignSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Side(source: Bundle.Source, aliases: Set[Side.Aliases]):
     def uid: UUID = source.uid
-    def labels: Set[String] = aliases + source.citekey
+    def labels: Set[com.histmersion.domain.library.sources.SourceMatcher.Side.LabelsResult] = aliases + source.citekey
 
   object Side:
+    type LabelsResult = LabelsResult.T
+    object LabelsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Aliases = Aliases.T
     object Aliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -46,12 +78,19 @@ object SourceMatcher:
       authors: AuthorAgreement,
       parts: List[(Evidence.PartsPart1, Evidence.PartsPart2)]
   ):
-    def score: Double = parts.map(_._2).sum
-    def strongKey: Boolean = strong.nonEmpty
-    def why: List[String] =
+    def score: com.histmersion.domain.library.sources.SourceMatcher.Evidence.ScoreResult = parts.map(_._2).sum
+    def strongKey: com.histmersion.domain.library.sources.SourceMatcher.Evidence.StrongKeyResult = strong.nonEmpty
+    def why: List[com.histmersion.domain.library.sources.SourceMatcher.Evidence.WhyResult] =
       strong.map(k => s"$k equal (strong key)") ++ parts.map((l, w) => s"$l (${signed(w)})")
 
   object Evidence:
+    type ScoreResult = ScoreResult.T
+    object ScoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StrongKeyResult = StrongKeyResult.T
+    object StrongKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WhyResult = WhyResult.T
+    object WhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Strong = Strong.T
     object Strong extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DoiConflict = DoiConflict.T
@@ -66,9 +105,9 @@ object SourceMatcher:
     object PartsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `x` with `places` decimals, a dot whatever the JVM's locale. */
-  def fixed(x: Double, places: Int): String = s"%.${places}f".formatLocal(java.util.Locale.ROOT, x)
+  def fixed(x: com.histmersion.domain.library.sources.SourceMatcher.FixedX, places: com.histmersion.domain.library.sources.SourceMatcher.FixedPlaces): com.histmersion.domain.library.sources.SourceMatcher.FixedResult = s"%.${places}f".formatLocal(java.util.Locale.ROOT, x)
 
-  def signed(w: Double): String =
+  def signed(w: com.histmersion.domain.library.sources.SourceMatcher.SignedW): com.histmersion.domain.library.sources.SourceMatcher.SignedResult =
     val s = if w == math.rint(w) then w.toLong.toString else fixed(w, 1)
     if w >= 0 then s"+$s" else s
 
@@ -77,10 +116,10 @@ object SourceMatcher:
   private val Year = "(1[0-9]{3}|20[0-9]{2})".r
 
   /** The letters of a citekey before its year (`guterbock1997_perspectives` → `guterbock`). */
-  def citekeyStem(ck: String): String = ck.takeWhile(c => !c.isDigit).filter(_.isLetter)
+  def citekeyStem(ck: com.histmersion.domain.library.sources.SourceMatcher.CitekeyStemCk): com.histmersion.domain.library.sources.SourceMatcher.CitekeyStemResult = ck.takeWhile(c => !c.isDigit).filter(_.isLetter)
 
   /** The keys a pair must share one of to be compared. */
-  def blockingKeys(s: Side): Set[String] =
+  def blockingKeys(s: Side): Set[com.histmersion.domain.library.sources.SourceMatcher.BlockingKeysResult] =
     val src = s.source
     Set("t:" + MergeText.titleKey(src.title)).filter(_.length > 2) ++
       src.authors.headOption.toSet.flatMap(a => MergeText.surnameKeys(a).map("a:" + _)) ++
@@ -88,22 +127,22 @@ object SourceMatcher:
       s.labels.map("k:" + _) ++
       doi(src).map("d:" + _) ++ sha(src).map("h:" + _) ++ isbns(src).map("i:" + _)
 
-  private def doi(s: Bundle.Source): Option[String] = s.doi.flatMap(MergeText.doiKey)
-  private def sha(s: Bundle.Source): Option[String] = s.originalSha256.map(_.trim.toLowerCase).filter(_.nonEmpty)
-  private def isbns(s: Bundle.Source): Set[String] = s.isbns.getOrElse(Nil).flatMap(MergeText.isbn13).toSet
+  private def doi(s: Bundle.Source): Option[com.histmersion.domain.library.Doi] = s.doi.flatMap(MergeText.doiKey)
+  private def sha(s: Bundle.Source): Option[com.histmersion.domain.library.sources.SourceMatcher.ShaResult] = s.originalSha256.map(_.trim.toLowerCase).filter(_.nonEmpty)
+  private def isbns(s: Bundle.Source): Set[com.histmersion.domain.library.sources.SourceMatcher.IsbnsResult] = s.isbns.getOrElse(Nil).flatMap(MergeText.isbn13).toSet
 
   // ── stage B + D ─────────────────────────────────────────────────────────────────────────────
 
   /** Words that say a source is a reprint, an edition or a translation of an earlier work. */
   private val reprintWords = List("reprint", "edition", "transl", "neuauflage", "nachdruck", "facsimile")
 
-  private def years(s: Side): Set[Int] =
+  private def years(s: Side): Set[com.histmersion.domain.library.sources.SourceMatcher.YearsResult] =
     s.labels.flatMap(l => Year.findAllIn(l).map(_.toInt))
 
   /** One side says the other year: its citekey or an alias carries it, or the title/notes/venue speak of a reprint, an
     * edition or a translation.
     */
-  private def reprintHint(a: Side, b: Side): Boolean =
+  private def reprintHint(a: Side, b: Side): com.histmersion.domain.library.sources.SourceMatcher.ReprintHintResult =
     def says(s: Side) =
       val text = MergeText.fold(List(Some(s.source.title), s.source.venue, s.source.notes).flatten.mkString(" "))
       reprintWords.exists(text.contains)
@@ -112,7 +151,7 @@ object SourceMatcher:
   /** The evidence about `right` (the bundle's) and `left` (this collection's). `sketches` are the MinHash signatures of
     * OCR bodies by their sha256, when they were computed.
     */
-  def evidence(right: Side, left: Side, sketches: Map[String, MinHash], w: MatchWeights): Evidence =
+  def evidence(right: Side, left: Side, sketches: Map[com.histmersion.domain.library.sources.SourceMatcher.EvidenceSketchesPart1, MinHash], w: MatchWeights): Evidence =
     val (r, l) = (right.source, left.source)
     val strong =
       (if doi(r).isDefined && doi(r) == doi(l) then List("DOI") else Nil) ++
@@ -221,7 +260,7 @@ object SourceMatcher:
   def assign(
       rights: List[Side],
       lefts: List[Side],
-      sketches: Map[String, MinHash],
+      sketches: Map[com.histmersion.domain.library.sources.SourceMatcher.AssignSketchesPart1, MinHash],
       cfg: MergeSettings,
       editions: Option[EditionsPolicy]
   ): Matching =

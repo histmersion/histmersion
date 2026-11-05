@@ -82,6 +82,39 @@ import com.histmersion.api.exchange.Bundle
 object MergePlanner:
 
   /** One row of `merge_ledger`: the foreign rev merged, the local uid it maps to, the local rev left. */
+  type MapJsonMPart1 = MapJsonMPart1.T
+  object MapJsonMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapJsonMPart2 = MapJsonMPart2.T
+  object MapJsonMPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalizeLocalLabelPart2 = LocalizeLocalLabelPart2.T
+  object LocalizeLocalLabelPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LetterResult = LetterResult.T
+  object LetterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssueIdResult = IssueIdResult.T
+  object IssueIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssueIdRightRev = IssueIdRightRev.T
+  object IssueIdRightRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssueIdLeftRev = IssueIdLeftRev.T
+  object IssueIdLeftRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssueIdExtra = IssueIdExtra.T
+  object IssueIdExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleTextBase = ArticleTextBase.T
+  object ArticleTextBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleTextLeft = ArticleTextLeft.T
+  object ArticleTextLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleTextRight = ArticleTextRight.T
+  object ArticleTextRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SketchesWantedResult = SketchesWantedResult.T
+  object SketchesWantedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodiesWantedResult = BodiesWantedResult.T
+  object BodiesWantedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodiesWantedSketchesPart1 = BodiesWantedSketchesPart1.T
+  object BodiesWantedSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanSketchesPart1 = PlanSketchesPart1.T
+  object PlanSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplacedKeepResult = ReplacedKeepResult.T
+  object ReplacedKeepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class LedgerEntry(foreignRev: LedgerEntry.ForeignRev, localUid: UUID, localRevAfter: Option[LedgerEntry.LocalRevAfter])
 
   object LedgerEntry:
@@ -185,13 +218,18 @@ object MergePlanner:
       /** Likewise for a named period: the same label and an overlapping span. */
       periodMatches: Map[UUID, Input.PeriodMatchesValue] = Map.empty
   ):
-    def ownBundle: Boolean = manifest.instance.id == here.id
+    def ownBundle: com.histmersion.domain.MergePlanner.Input.OwnBundleResult = manifest.instance.id == here.id
 
     /** How the other collection is named in what the merge writes ("work"). */
-    def fromLabel: String =
+    def fromLabel: com.histmersion.domain.MergePlanner.Input.FromLabelResult =
       manifest.instance.label.map(_.trim).filter(_.nonEmpty).getOrElse(manifest.instance.id.toString.take(8))
 
   object Input:
+    type OwnBundleResult = OwnBundleResult.T
+    object OwnBundleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromLabelResult = FromLabelResult.T
+    object FromLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Compat = Compat.T
     object Compat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ReadProblems = ReadProblems.T
@@ -352,7 +390,7 @@ object MergePlanner:
 
   // ── localization ────────────────────────────────────────────────────────────────────────────
 
-  private def mapJson(m: Map[String, String])(j: Json): Json =
+  private def mapJson(m: Map[com.histmersion.domain.MergePlanner.MapJsonMPart1, com.histmersion.domain.MergePlanner.MapJsonMPart2])(j: Json): Json =
     j.fold(
       j,
       _ => j,
@@ -366,7 +404,7 @@ object MergePlanner:
     * replaced by the local one, and a mapped row's label by its local label — after a merge the local citekey (slug,
     * id) wins. Lines with no mapping are left as they are.
     */
-  def localize(es: BundleEntities, mapped: Map[UUID, UUID], localLabel: Map[UUID, String]): BundleEntities =
+  def localize(es: BundleEntities, mapped: Map[UUID, UUID], localLabel: Map[UUID, com.histmersion.domain.MergePlanner.LocalizeLocalLabelPart2]): BundleEntities =
     if mapped.isEmpty then es
     else
       val m = mapped.map((f, l) => f.toString -> l.toString)
@@ -413,7 +451,7 @@ object MergePlanner:
   // ── issue ids ───────────────────────────────────────────────────────────────────────────────
 
   /** The letter of an issue id: the entity it is about (O for an OCR body, L for an alias). */
-  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): String = kind match
+  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): com.histmersion.domain.MergePlanner.LetterResult = kind match
     case MergeIssue.Kind.BodyDiffers   => "O"
     case MergeIssue.Kind.AliasConflict => "L"
     case _                             => entity.issueLetter
@@ -427,10 +465,10 @@ object MergePlanner:
       entity: Bundle.Kind,
       right: List[UUID],
       left: List[UUID],
-      rightRev: String,
-      leftRev: String,
-      extra: String = ""
-  ): String =
+      rightRev: com.histmersion.domain.MergePlanner.IssueIdRightRev,
+      leftRev: com.histmersion.domain.MergePlanner.IssueIdLeftRev,
+      extra: com.histmersion.domain.MergePlanner.IssueIdExtra = ""
+  ): com.histmersion.domain.MergePlanner.IssueIdResult =
     val text = List(
       MergeIssue.Kind.wireOf(kind),
       right.map(_.toString).sorted.mkString(","),
@@ -444,7 +482,7 @@ object MergePlanner:
   /** Two versions of an article, with the three-way merge's regions over their common version (or the whole text as one
     * region when there is none).
     */
-  private[domain] def articleText(base: Option[String], left: String, right: String): IssueText =
+  private[domain] def articleText(base: Option[com.histmersion.domain.MergePlanner.ArticleTextBase], left: com.histmersion.domain.MergePlanner.ArticleTextLeft, right: com.histmersion.domain.MergePlanner.ArticleTextRight): IssueText =
     val hunks = base match
       case Some(b) =>
         Diff3.merge(b, left, right).hunks.map {
@@ -475,7 +513,7 @@ object MergePlanner:
   /** The OCR bodies (by sha256) whose MinHash could decide whether two sources are one, as the kinds' rules say: the
     * database computes them before [[plan]].
     */
-  def sketchesWanted(in: Input, cfg: MergeSettings, rules: List[PlanRules]): Set[String] =
+  def sketchesWanted(in: Input, cfg: MergeSettings, rules: List[PlanRules]): Set[com.histmersion.domain.MergePlanner.SketchesWantedResult] =
     PlanRuns(rules.map(_.start(in))).sketchesWanted(cfg)
 
   /** The OCR bodies (by sha256) the plan must read for the kinds' rules (re-anchoring attestations): of the matched
@@ -483,11 +521,11 @@ object MergePlanner:
     */
   def bodiesWanted(
       in: Input,
-      sketches: Map[String, MinHash],
+      sketches: Map[com.histmersion.domain.MergePlanner.BodiesWantedSketchesPart1, MinHash],
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       rules: List[PlanRules]
-  ): Set[String] =
+  ): Set[com.histmersion.domain.MergePlanner.BodiesWantedResult] =
     val run = PlanRuns(rules.map(_.start(in)))
     val pairs = run.matchSources(sketches, cfg, resolutions.policy.editions)
     run.bodiesWanted(pairs.map(p => (p.right, p.left)))
@@ -518,7 +556,7 @@ object MergePlanner:
 
   def plan(
       in: Input,
-      sketches: Map[String, MinHash],
+      sketches: Map[com.histmersion.domain.MergePlanner.PlanSketchesPart1, MinHash],
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       rules: List[PlanRules]
@@ -1733,7 +1771,7 @@ object MergePlanner:
       uid: A => UUID,
       repl: scala.collection.Map[UUID, BundleEntities => A],
       es0: BundleEntities,
-      keep: A => Boolean
+      keep: A => com.histmersion.domain.MergePlanner.ReplacedKeepResult
   ): List[A] =
     val base = as.filter(keep).map(a => repl.get(uid(a)).fold(a)(_(es0)))
     val extra = repl.keySet.diff(as.map(uid).toSet).toList.sortBy(_.toString).map(u => repl(u)(es0))

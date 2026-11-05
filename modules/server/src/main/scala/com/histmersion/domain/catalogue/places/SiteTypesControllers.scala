@@ -25,7 +25,7 @@ final class SiteTypesControllers(
   private def ec = settings().events
 
   /** A polite client at `intervalMs` between requests to one host; the media politeness otherwise. */
-  private def polite(intervalMs: Int): Polite = PluginEvents.polite(http, settings().media, intervalMs)
+  private def polite(intervalMs: com.histmersion.domain.catalogue.places.SiteTypesControllers.PoliteIntervalMs): Polite = PluginEvents.polite(http, settings().media, intervalMs)
 
   def refineSiteTypes(caller: Caller, req: SiteTypes.Request): Either[Api.Error, JobInfo] =
     jobs.start(
@@ -36,7 +36,7 @@ final class SiteTypesControllers(
       Right(SiteTypes.Report.summary(runSiteTypes(req, progress)))
     }
 
-  def runSiteTypes(req: SiteTypes.Request, progress: String => Unit): SiteTypes.Report =
+  def runSiteTypes(req: SiteTypes.Request, progress: com.histmersion.domain.catalogue.places.SiteTypesControllers.RunSiteTypesProgressArg1 => Unit): SiteTypes.Report =
     val started = clock.millis()
     if req.dryRun then SiteTypes.Report(dryRun = true, pending = sites.countSitesToType(req.refresh, None))
     else
@@ -97,4 +97,11 @@ final class SiteTypesControllers(
       report.copy(pending = sites.countSitesToType(req.refresh, Some(started)), requests = c.requests)
 
 object SiteTypesControllers:
-  val SiteTypesJobKind: String = com.histmersion.api.catalogue.PlacesJobKinds.SiteTypes.kind.value
+  type PoliteIntervalMs = PoliteIntervalMs.T
+  object PoliteIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunSiteTypesProgressArg1 = RunSiteTypesProgressArg1.T
+  object RunSiteTypesProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteTypesJobKind = SiteTypesJobKind.T
+  object SiteTypesJobKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val SiteTypesJobKind: com.histmersion.domain.catalogue.places.SiteTypesControllers.SiteTypesJobKind = com.histmersion.api.catalogue.PlacesJobKinds.SiteTypes.kind.value

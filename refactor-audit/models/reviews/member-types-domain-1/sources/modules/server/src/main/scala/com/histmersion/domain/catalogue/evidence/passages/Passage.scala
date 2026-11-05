@@ -1,0 +1,37 @@
+package com.histmersion.domain.catalogue.evidence.passages
+
+import com.histmersion.api.catalogue.MatchSpan
+
+/** A passage of a source's text a search found: where it starts in the body, its text, and where in it the matches are.
+  */
+final case class Passage(offset: Passage.Offset, text: Passage.Text, matches: List[MatchSpan])
+
+object Passage:
+
+  /** The sources whose text attests a data point, as the catalogue's evidence reads them: which source a citekey names
+    * now (an old citekey resolves to it), and the passages of its text. The library implements it.
+    */
+  type Offset = Offset.T
+  object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  trait Source:
+    /** The citekey the source named `citekey` has now; `None` when no source has it. */
+    def canonical(citekey: com.histmersion.domain.library.Citekey): Option[com.histmersion.domain.catalogue.evidence.passages.Passage.Source.CanonicalResult]
+
+    /** The sources whose text names `name` as a phrase, those naming it most often first, at most `limit`. */
+    def naming(name: com.histmersion.domain.catalogue.evidence.passages.Passage.Source.NamingName, limit: com.histmersion.domain.catalogue.evidence.passages.Passage.Source.NamingLimit): List[com.histmersion.domain.catalogue.evidence.passages.Passage.Source.NamingResult]
+
+    /** A reader of one source's text, read once however many searches are made in it. */
+    def reader(citekey: com.histmersion.domain.library.Citekey): PassageReader
+
+  object Source:
+    type CanonicalResult = CanonicalResult.T
+    object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamingResult = NamingResult.T
+    object NamingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamingName = NamingName.T
+    object NamingName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamingLimit = NamingLimit.T
+    object NamingLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

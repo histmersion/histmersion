@@ -10,9 +10,14 @@ import com.histmersion.domain.Licence
 final case class LicencePolicy(allowed: Set[Licence.Family]):
 
   /** Whether a picture under `l` may be stored. */
-  def allows(l: Licence): Boolean = Licence.allowed(l, allowed)
+  def allows(l: Licence): com.histmersion.domain.media.imports.LicencePolicy.AllowsResult = Licence.allowed(l, allowed)
 
 object LicencePolicy:
 
   /** The policy a settings value names (`"cc0,public-domain,cc-by,cc-by-sa"`). */
-  def of(csv: String): LicencePolicy = LicencePolicy(Licence.allowList(csv))
+  type AllowsResult = AllowsResult.T
+  object AllowsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfCsv = OfCsv.T
+  object OfCsv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(csv: com.histmersion.domain.media.imports.LicencePolicy.OfCsv): LicencePolicy = LicencePolicy(Licence.allowList(csv))

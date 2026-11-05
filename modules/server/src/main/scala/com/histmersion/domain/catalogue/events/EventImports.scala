@@ -36,32 +36,32 @@ final class EventImports(
   private def ec = cfg().events
 
   /** The configured Wikidata classes' kinds, the most specific first. */
-  private def classOrder: List[String] = ec.wikidata.classList.map(_._2)
+  private def classOrder: List[com.histmersion.domain.catalogue.events.EventImports.ClassOrderResult] = ec.wikidata.classList.map(_._2)
 
   /** A polite client at `intervalMs` between requests to one host; the media politeness otherwise (User-Agent, retries)
     * — and up to two minutes' Retry-After, which the query service asks for.
     */
-  private def polite(intervalMs: Int): Polite =
+  private def polite(intervalMs: com.histmersion.domain.catalogue.events.EventImports.PoliteIntervalMs): Polite =
     PluginEvents.polite(http, cfg().media, intervalMs)
 
   /** The limits of `provider`'s dating, the ONE rule of the import and of rederive: the present for every catalogue,
     * and the catalogue's own floor (the GVP's Holocene one) while it is registered.
     */
-  private def limitsOf(provider: String, present: Long): com.histmersion.upstreams.dating.CatalogDating.Limits =
+  private def limitsOf(provider: com.histmersion.domain.catalogue.events.EventImports.LimitsOfProvider, present: com.histmersion.domain.catalogue.events.EventImports.LimitsOfPresent): com.histmersion.upstreams.dating.CatalogDating.Limits =
     PluginEvents.limits(registered().get(provider), present)
 
   /** A catalogue's terms: a registered one's, else a built-in's (its records outlive its plugin). */
-  def infoOf(provider: String): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered())
+  def infoOf(provider: com.histmersion.domain.catalogue.events.EventImports.InfoOfProvider): Option[CatalogProviderInfo] = BuiltinCatalogues.info(provider, registered())
 
   def catalogues: List[CatalogProviderInfo] = BuiltinCatalogues.infos(registered())
 
   /** The catalogue an import names among the registered ones, or why none. */
-  def resolve(asked: String): Either[String, String] = BuiltinCatalogues.resolve(asked, registered())
+  def resolve(asked: com.histmersion.domain.catalogue.events.EventImports.ResolveAsked): Either[com.histmersion.domain.catalogue.events.EventImports.ResolveResultPart1, com.histmersion.domain.catalogue.events.EventImports.ResolveResultPart2] = BuiltinCatalogues.resolve(asked, registered())
 
   /** The catalogue a re-derivation names: a built-in one even while it is switched off (its records are still there),
     * else a registered one.
     */
-  def resolveStored(asked: String): Either[String, String] =
+  def resolveStored(asked: com.histmersion.domain.catalogue.events.EventImports.ResolveStoredAsked): Either[com.histmersion.domain.catalogue.events.EventImports.ResolveStoredResultPart1, com.histmersion.domain.catalogue.events.EventImports.ResolveStoredResultPart2] =
     val n = BuiltinCatalogues.canonical(asked)
     if CatalogProvider.all.contains(n) then Right(n) else resolve(asked)
 
@@ -73,10 +73,10 @@ final class EventImports(
     * run) write the part and record it as read.
     */
   def runImport(
-      provider: String,
+      provider: com.histmersion.domain.catalogue.events.EventImports.RunImportProvider,
       req: EventImportRequest,
       area: Option[BBox],
-      progress: String => Unit
+      progress: com.histmersion.domain.catalogue.events.EventImports.RunImportProgressArg1 => Unit
   ): EventImportReport =
     val info = infoOf(provider)
     val catalogue = registered().get(provider)
@@ -250,9 +250,9 @@ final class EventImports(
     * `rederive-batch` records a transaction.
     */
   def runRederive(
-      provider: Option[String],
-      dryRun: Boolean,
-      progress: String => Unit
+      provider: Option[com.histmersion.domain.catalogue.events.EventImports.RunRederiveProvider],
+      dryRun: com.histmersion.domain.catalogue.events.EventImports.RunRederiveDryRun,
+      progress: com.histmersion.domain.catalogue.events.EventImports.RunRederiveProgressArg1 => Unit
   ): EventRederiveReport =
     val (rows, undecodable) = store.records(provider)
     val present = presentYear()
@@ -308,7 +308,7 @@ final class EventImports(
     scribe.info(s"events rederive: ${EventRederiveReport.summary(out)}")
     out
 
-  extension (l: List[String]) private def ifEmpty(d: => List[String]): List[String] = if l.isEmpty then d else l
+  extension (l: List[String]) private def ifEmpty(d: => List[String]): List[com.histmersion.domain.catalogue.events.EventImports.IfEmptyResult] = if l.isEmpty then d else l
 
   /** The labels and aliases of the Wikidata items among `recs`, in the configured languages. */
   private def withNames(recs: List[CatalogRecord], report: EventImportReport): List[CatalogRecord] =
@@ -331,3 +331,39 @@ final class EventImports(
           .flatMap(names.get)
           .fold(r)(ns => r.modify(_.names).setTo((r.names ++ ns).filterNot(_ == r.label).distinct))
       )
+
+object EventImports:
+  type ClassOrderResult = ClassOrderResult.T
+  object ClassOrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PoliteIntervalMs = PoliteIntervalMs.T
+  object PoliteIntervalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitsOfProvider = LimitsOfProvider.T
+  object LimitsOfProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitsOfPresent = LimitsOfPresent.T
+  object LimitsOfPresent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoOfProvider = InfoOfProvider.T
+  object InfoOfProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart2 = ResolveResultPart2.T
+  object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveAsked = ResolveAsked.T
+  object ResolveAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveStoredResultPart1 = ResolveStoredResultPart1.T
+  object ResolveStoredResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveStoredResultPart2 = ResolveStoredResultPart2.T
+  object ResolveStoredResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveStoredAsked = ResolveStoredAsked.T
+  object ResolveStoredAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunImportProvider = RunImportProvider.T
+  object RunImportProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunImportProgressArg1 = RunImportProgressArg1.T
+  object RunImportProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunRederiveProvider = RunRederiveProvider.T
+  object RunRederiveProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunRederiveDryRun = RunRederiveDryRun.T
+  object RunRederiveDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunRederiveProgressArg1 = RunRederiveProgressArg1.T
+  object RunRederiveProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IfEmptyResult = IfEmptyResult.T
+  object IfEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

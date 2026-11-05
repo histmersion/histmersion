@@ -27,6 +27,15 @@ import scala.util.Try
 object CoreQuota:
 
   /** What a call to CORE is for: the share of the daily budget it spends. */
+  type ObserveCode = ObserveCode.T
+  object ObserveCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ObserveHeadersPart1 = ObserveHeadersPart1.T
+  object ObserveHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ObserveHeadersPart2 = ObserveHeadersPart2.T
+  object ObserveHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetryAtV = RetryAtV.T
+  object RetryAtV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Purpose(val wire: String, val label: String):
     /** The acquisition chain's `core` step: a work's download URLs by its DOI. */
     case Lookup extends Purpose("lookup", "PDF lookups")
@@ -44,11 +53,14 @@ object CoreQuota:
       exhaustedPauseSeconds: Limits.ExhaustedPauseSeconds,
       maxWaitSeconds: Limits.MaxWaitSeconds
   ):
-    def cost(p: Purpose): Int = p match
+    def cost(p: Purpose): com.histmersion.domain.CoreQuota.Limits.CostResult = p match
       case Purpose.Lookup => lookupCost.max(0)
       case Purpose.Search => searchCost.max(0)
 
   object Limits:
+    type CostResult = CostResult.T
+    object CostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type PerMinute = PerMinute.T
     object PerMinute extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DailyTokens = DailyTokens.T
@@ -92,12 +104,17 @@ object CoreQuota:
       window: Option[Window],
       recent: Vector[Instant] = Vector.empty
   ):
-    def spent: Int = lookupTokens + searchTokens
-    def spentOn(p: Purpose): Int = p match
+    def spent: com.histmersion.domain.CoreQuota.State.SpentResult = lookupTokens + searchTokens
+    def spentOn(p: Purpose): com.histmersion.domain.CoreQuota.State.SpentOnResult = p match
       case Purpose.Lookup => lookupTokens
       case Purpose.Search => searchTokens
 
   object State:
+    type SpentResult = SpentResult.T
+    object SpentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpentOnResult = SpentOnResult.T
+    object SpentOnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type LookupTokens = LookupTokens.T
     object LookupTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SearchTokens = SearchTokens.T
@@ -111,7 +128,7 @@ object CoreQuota:
     case OverBudget(purpose: Purpose, spent: Int, cap: Int)
     case Paced(waitMs: Long)
 
-    def describe: String = this match
+    def describe: com.histmersion.domain.CoreQuota.Refusal.DescribeResult = this match
       case Blocked(until, why)       => s"CORE asked to wait until $until ($why)"
       case OverBudget(p, spent, cap) =>
         s"CORE's daily budget for ${p.label} is spent ($spent of $cap tokens today, UTC; acquire.core." +
@@ -119,6 +136,10 @@ object CoreQuota:
       case Paced(waitMs) =>
         s"CORE's next free slot is ${(waitMs + 999) / 1000} s away (acquire.core.per-minute), longer than " +
           "acquire.core.max-wait-seconds"
+
+  object Refusal:
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A call may go out after `waitMs`; `state` already counts it. */
   final case class Grant(state: State, waitMs: Grant.WaitMs)
@@ -173,7 +194,7 @@ object CoreQuota:
     * and a block after a 429 or when `Remaining` reached 0 — until the time CORE gave, else `exhaustedPauseSeconds`
     * from now. A block is only ever lengthened by an answer.
     */
-  def observe(s: State, limits: Limits, code: Int, headers: Map[String, String], now: Instant): State =
+  def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.ObserveCode, headers: Map[com.histmersion.domain.CoreQuota.ObserveHeadersPart1, com.histmersion.domain.CoreQuota.ObserveHeadersPart2], now: Instant): State =
     def int(name: String) = headers.get(name).flatMap(_.trim.toIntOption)
     val window = Window(int("x-ratelimit-limit"), int("x-ratelimit-remaining"), now)
     val retry = retryAt(headers.get("x-ratelimit-retry-after"), now).orElse(retryAt(headers.get("retry-after"), now))
@@ -195,7 +216,7 @@ object CoreQuota:
   /** A retry time as CORE gives it (`2026-10-26T18:52:11+0000`), an ISO-8601 instant or offset time, delay seconds, or
     * an HTTP date.
     */
-  def retryAt(v: Option[String], now: Instant): Option[Instant] =
+  def retryAt(v: Option[com.histmersion.domain.CoreQuota.RetryAtV], now: Instant): Option[Instant] =
     v.map(_.trim).filter(_.nonEmpty).flatMap { s =>
       Try(OffsetDateTime.parse(s, CoreTime).toInstant).toOption
         .orElse(Try(OffsetDateTime.parse(s).toInstant).toOption)

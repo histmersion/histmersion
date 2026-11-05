@@ -13,11 +13,26 @@ import java.time.Instant
   */
 private[activity] object ActivityRepo:
 
+  type IsoCol = IsoCol.T
+  object IsoCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Merged = Merged.T
+  object Merged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Projection = Projection.T
+  object Projection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowSqlResult = ShowSqlResult.T
+  object ShowSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuotedResult = QuotedResult.T
+  object QuotedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuotedStates = QuotedStates.T
+  object QuotedStates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageResultPart2 = PageResultPart2.T
+  object PageResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Iso = """'YYYY-MM-DD"T"HH24:MI:SS.US"Z"'"""
-  private def iso(col: String) = s"to_char($col AT TIME ZONE 'UTC', $Iso)"
+  private def iso(col: com.histmersion.domain.activity.ActivityRepo.IsoCol) = s"to_char($col AT TIME ZONE 'UTC', $Iso)"
 
   /** Every entry, with its time as a timestamp (`t`) to filter and order by, and its key in byte order. */
-  private val Merged: String =
+  private val Merged: com.histmersion.domain.activity.ActivityRepo.Merged =
     s"""(SELECT CASE WHEN j.kind = 'agent' THEN 'run' ELSE 'job' END AS kind, j.id AS rid, j.created_at AS t,
                 j.status AS state, coalesce(j.pipeline, j.kind) AS what, coalesce(j.progress, '') AS text, j.error,
                 CASE WHEN j.status IN ('running', 'queued', 'waiting', 'paused') THEN NULL ELSE j.updated_at END AS ended,
@@ -45,13 +60,13 @@ private[activity] object ActivityRepo:
            FROM (SELECT * FROM approvals WHERE decided_at IS NOT NULL AND ${com.histmersion.domain.automation.approvals.ApprovalQuery.decidedByExpr} = 'person') a
            LEFT JOIN jobs rj ON rj.id = a.job_id) m"""
 
-  private val Projection: String =
+  private val Projection: com.histmersion.domain.activity.ActivityRepo.Projection =
     s"""SELECT kind || ':' || rid AS key, kind, ${iso("t")}, state, what, text, error, ${iso(
         "ended"
       )}, goal, job, writer,
               citekey, article, queue_item, queue_list, approval, target, target_kind"""
 
-  private def showSql(show: Show): String = show match
+  private def showSql(show: Show): com.histmersion.domain.activity.ActivityRepo.ShowSqlResult = show match
     case Show.Everything => "true"
     case Show.Running    => s"kind IN ('run', 'job') AND state IN (${quoted(ActivityRules.RunningStates)})"
     case Show.Agents     => "(kind = 'run' OR (kind = 'log' AND writer = 'agent'))"
@@ -60,7 +75,7 @@ private[activity] object ActivityRepo:
     case Show.Problems   => s"kind IN ('run', 'job') AND state IN (${quoted(ActivityRules.ProblemStates)})"
 
   // the rules' own constants, never a client's text
-  private def quoted(states: Set[String]): String = states.toList.sorted.map(s => s"'$s'").mkString(", ")
+  private def quoted(states: Set[com.histmersion.domain.activity.ActivityRepo.QuotedStates]): com.histmersion.domain.activity.ActivityRepo.QuotedResult = states.toList.sorted.map(s => s"'$s'").mkString(", ")
 
   private def where(q: ActivityQuery): Sql =
     Sql.raw(s" WHERE ${showSql(q.show)}") ++
@@ -76,7 +91,7 @@ private[activity] object ActivityRepo:
       )
 
   /** One page of `q`, with the next page's cursor. */
-  def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[String]) =
+  def page(q: ActivityQuery)(using DbCon): (List[Entry], Option[com.histmersion.domain.activity.ActivityRepo.PageResultPart2]) =
     val sql = Sql.raw(s"$Projection FROM $Merged") ++ where(q) ++
       Sql.of(""" ORDER BY t DESC, (kind || ':' || rid) COLLATE "C" DESC LIMIT ?""", Param.I(q.limit + 1))
     val rows = sql.frag.query[ActivityRow].run().toList.map(_.entry)

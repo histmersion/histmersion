@@ -92,10 +92,15 @@ enum MarkTarget:
 object MarkTarget:
 
   /** The deepest zoom the map has; a target's zoom is between 0 and this. */
+  type ZoomCheckedResultPart1 = ZoomCheckedResultPart1.T
+  object ZoomCheckedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfColumnsKind = OfColumnsKind.T
+  object OfColumnsKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val MaxZoom = 24.0
 
   /** The target, when its zoom (if any) is one the map has. */
-  def zoomChecked(t: Target): Either[String, Target] =
+  def zoomChecked(t: Target): Either[com.histmersion.domain.personal.MarkTarget.ZoomCheckedResultPart1, Target] =
     t.zoom.map(_.value).filterNot(z => z >= 0.0 && z <= MaxZoom) match
       case Some(z) => Left(s"zoom $z: between 0 and ${MaxZoom.toInt}")
       case None    => Right(t)
@@ -125,7 +130,7 @@ object MarkTarget:
 
   /** A stored row's target; none when the row does not make one (a kind this version does not know). */
   def ofColumns(
-      kind: String,
+      kind: com.histmersion.domain.personal.MarkTarget.OfColumnsKind,
       key: Option[ItemKey],
       uid: Option[ItemUid],
       lat: Option[Latitude],

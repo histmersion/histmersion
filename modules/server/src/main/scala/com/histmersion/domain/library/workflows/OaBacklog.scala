@@ -56,7 +56,7 @@ final class OaBacklog(
     * goal added), or a new entry of `managerId` — nothing when the corpus has it or this watcher settled an entry for
     * it before (a person skipped it).
     */
-  def add(managerId: String, goal: String, w: OaWork): Placement =
+  def add(managerId: com.histmersion.domain.library.workflows.OaBacklog.AddManagerId, goal: com.histmersion.domain.library.workflows.OaBacklog.AddGoal, w: OaWork): Placement =
     val doi = w.doi
     val open = agents.managerStore.backlogOpenFor(doi)
     val settled = agents.managerStore
@@ -126,7 +126,7 @@ final class OaBacklog(
   // ── what is left, what waits ───────────────────────────────────────────────────────────────────
 
   /** The watchers whose backlog drains (active, auto-ingest on) → what is left of their own allowance today. */
-  private def ownLeft(now: Instant): Map[String, Int] =
+  private def ownLeft(now: Instant): Map[com.histmersion.domain.library.workflows.OaBacklog.OwnLeftResultPart1, com.histmersion.domain.library.workflows.OaBacklog.OwnLeftResultPart2] =
     val today = agents.managerStore.countEventsBy(Feed.Ingested, ManagerPolicy.dayStart(now))
     agents.managerStore
       .light()
@@ -137,7 +137,7 @@ final class OaBacklog(
   /** What a sweep of watcher `managerId` reserves for the backlog: its own pending backlog items, and every pending
     * backlog item of a watcher that drains (the shared cap's).
     */
-  def reserved(managerId: String): (Int, Int) =
+  def reserved(managerId: com.histmersion.domain.library.workflows.OaBacklog.ReservedManagerId): (com.histmersion.domain.library.workflows.OaBacklog.ReservedResultPart1, com.histmersion.domain.library.workflows.OaBacklog.ReservedResultPart2) =
     val counts = agents.managerStore.backlogCounts()
     val draining = agents.managerStore
       .light()
@@ -150,7 +150,7 @@ final class OaBacklog(
     (counts.get(managerId).fold(0)(_._1), counts.collect { case (m, (p, _)) if draining(m) => p }.sum)
 
   /** The backlog per watcher and in all, with the days to drain it ([[OaBacklog.Snapshot]]). */
-  def snapshot(now: Instant = Instant.now(agents.clock), extra: Map[String, Int] = Map.empty): Snapshot =
+  def snapshot(now: Instant = Instant.now(agents.clock), extra: Map[com.histmersion.domain.library.workflows.OaBacklog.SnapshotExtraPart1, com.histmersion.domain.library.workflows.OaBacklog.SnapshotExtraPart2] = Map.empty): Snapshot =
     val stored = agents.managerStore.backlogCounts()
     // `extra` = pending items a dry run would add, per watcher
     val counts = (stored.keySet ++ extra.keySet)
@@ -193,7 +193,7 @@ final class OaBacklog(
     * tried again after the backoff (the acquisition list after `max-failures`). One worklog line per tick that did
     * something.
     */
-  def drain(now: Instant): List[String] =
+  def drain(now: Instant): List[com.histmersion.domain.library.workflows.OaBacklog.DrainResult] =
     val pending = agents.managerStore.backlogPending()
     if pending.isEmpty then Nil
     else
@@ -232,7 +232,7 @@ final class OaBacklog(
     case Retried
     case Lost
 
-  private def one(i: ManagerItem, holderGoal: Option[String], now: Instant): Drained =
+  private def one(i: ManagerItem, holderGoal: Option[com.histmersion.domain.library.workflows.OaBacklog.OneHolderGoal], now: Instant): Drained =
     val doi = i.target
     val w = i.state.oa.getOrElse(OaWork(doi))
     val goals = (w.goals ++ holderGoal.toList).distinct
@@ -314,14 +314,14 @@ final class OaBacklog(
                     )
                   case None => Drained.Lost
 
-  private def settingsOf(managerId: String): ManagerPolicy.ReviewSettings =
+  private def settingsOf(managerId: com.histmersion.domain.library.workflows.OaBacklog.SettingsOfManagerId): ManagerPolicy.ReviewSettings =
     val c = agents.managerStore.get(managerId).map(_.config).getOrElse(ManagerConfig())
     ManagerPolicy.ReviewSettings.forKind(com.histmersion.domain.automation.Manager.Kind.Watch, c, managerDefaults)
 
   /** The acquisition item for `doi` (an existing one that names it, else a new one in the sweep's wording), linked to
     * every goal. None when the list refused it.
     */
-  private def acquireOnce(goals: List[String], doi: String, w: OaWork): Option[Int] =
+  private def acquireOnce(goals: List[com.histmersion.domain.library.workflows.OaBacklog.AcquireOnceGoals], doi: com.histmersion.domain.library.Doi, w: OaWork): Option[com.histmersion.domain.library.workflows.OaBacklog.AcquireOnceResult] =
     val existing = site.queues.naming(Queue.Kind.Acquire, doi).headOption.map(_.id)
     val id = existing.orElse {
       val goal = goals.headOption.getOrElse("")
@@ -470,7 +470,7 @@ final class OaBacklog(
   /** A moved work's backlog entry: an existing open one of any watcher, else a new one of `managerId`; None when
     * `managerId` settled one for it before (a person's skip is not undone).
     */
-  private def addMoved(managerId: String, w: OaWork): Option[Long] =
+  private def addMoved(managerId: com.histmersion.domain.library.workflows.OaBacklog.AddMovedManagerId, w: OaWork): Option[com.histmersion.domain.library.workflows.OaBacklog.AddMovedResult] =
     agents.managerStore.backlogOpenFor(w.doi).map(_.id).orElse {
       val (id, isNew) = agents.managerStore.upsert(
         managerId,
@@ -485,7 +485,7 @@ final class OaBacklog(
       Option.when(isNew)(id)
     }
 
-  private def joinGoal(itemId: Long, goal: String): Unit =
+  private def joinGoal(itemId: com.histmersion.domain.library.workflows.OaBacklog.JoinGoalItemId, goal: com.histmersion.domain.library.workflows.OaBacklog.JoinGoalGoal): Unit =
     agents.managerStore.item(itemId).foreach { i =>
       val st = i.state.oa.getOrElse(OaWork(i.target))
       if !st.goals.contains(goal) then
@@ -496,7 +496,7 @@ final class OaBacklog(
         )
     }
 
-  private def removeAcquire(item: Int, goals: List[String]): Unit =
+  private def removeAcquire(item: com.histmersion.domain.library.workflows.OaBacklog.RemoveAcquireItem, goals: List[com.histmersion.domain.library.workflows.OaBacklog.RemoveAcquireGoals]): Unit =
     val _ = site.workLists.delete(item)
     goals.foreach(g => agents.goals.unlink(g, com.histmersion.domain.automation.Goal.LinkKind.QueueItem, item.toString))
 
@@ -504,6 +504,47 @@ object OaBacklog:
   /** The backlog per watcher (pending + held, and the days its pending items take to drain at the current allowance),
     * and in all.
     */
+  type AddManagerId = AddManagerId.T
+  object AddManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddGoal = AddGoal.T
+  object AddGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnLeftResultPart1 = OwnLeftResultPart1.T
+  object OwnLeftResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnLeftResultPart2 = OwnLeftResultPart2.T
+  object OwnLeftResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReservedResultPart1 = ReservedResultPart1.T
+  object ReservedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReservedResultPart2 = ReservedResultPart2.T
+  object ReservedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReservedManagerId = ReservedManagerId.T
+  object ReservedManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotExtraPart1 = SnapshotExtraPart1.T
+  object SnapshotExtraPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotExtraPart2 = SnapshotExtraPart2.T
+  object SnapshotExtraPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainResult = DrainResult.T
+  object DrainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OneHolderGoal = OneHolderGoal.T
+  object OneHolderGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsOfManagerId = SettingsOfManagerId.T
+  object SettingsOfManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireOnceResult = AcquireOnceResult.T
+  object AcquireOnceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireOnceGoals = AcquireOnceGoals.T
+  object AcquireOnceGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddMovedResult = AddMovedResult.T
+  object AddMovedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddMovedManagerId = AddMovedManagerId.T
+  object AddMovedManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JoinGoalItemId = JoinGoalItemId.T
+  object JoinGoalItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JoinGoalGoal = JoinGoalGoal.T
+  object JoinGoalGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveAcquireItem = RemoveAcquireItem.T
+  object RemoveAcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveAcquireGoals = RemoveAcquireGoals.T
+  object RemoveAcquireGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Snapshot(perManager: Map[Snapshot.PerManagerKey, (Snapshot.PerManagerValuePart1, Option[Snapshot.PerManagerValuePart2])], total: Snapshot.Total, totalDays: Option[Snapshot.TotalDays])
 
   object Snapshot:

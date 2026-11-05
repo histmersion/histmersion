@@ -18,7 +18,32 @@ object MediaImporters:
   /** Pure: the registered collection `asked` names (an alias resolved), or why none: unknown, or its plugin switched
     * off.
     */
-  def lookup(asked: String, collections: ListMap[String, MediaCollection]): Either[String, (String, MediaCollection)] =
+  type LookupResultPart1 = LookupResultPart1.T
+  object LookupResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LookupResultPart2Part1 = LookupResultPart2Part1.T
+  object LookupResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LookupAsked = LookupAsked.T
+  object LookupAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LookupCollectionsPart1 = LookupCollectionsPart1.T
+  object LookupCollectionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveAsked = ResolveAsked.T
+  object ResolveAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveCollectionsPart1 = ResolveCollectionsPart1.T
+  object ResolveCollectionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfosCollectionsPart1 = InfosCollectionsPart1.T
+  object InfosCollectionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfosPluginOfArg1 = InfosPluginOfArg1.T
+  object InfosPluginOfArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfosPluginOfResult = InfosPluginOfResult.T
+  object InfosPluginOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfosAllowForArg1 = InfosAllowForArg1.T
+  object InfosAllowForArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfosAllowForResult = InfosAllowForResult.T
+  object InfosAllowForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def lookup(asked: com.histmersion.domain.media.imports.MediaImporters.LookupAsked, collections: ListMap[com.histmersion.domain.media.imports.MediaImporters.LookupCollectionsPart1, MediaCollection]): Either[com.histmersion.domain.media.imports.MediaImporters.LookupResultPart1, (com.histmersion.domain.media.imports.MediaImporters.LookupResultPart2Part1, MediaCollection)] =
     val name = BuiltinMedia.canonical(asked)
     collections
       .get(name)
@@ -37,14 +62,14 @@ object MediaImporters:
     * the allowlist the host keeps for it ([[BuiltinMedia.licencesFor]]).
     */
   def resolve(
-      asked: String,
-      collections: ListMap[String, MediaCollection],
+      asked: com.histmersion.domain.media.imports.MediaImporters.ResolveAsked,
+      collections: ListMap[com.histmersion.domain.media.imports.MediaImporters.ResolveCollectionsPart1, MediaCollection],
       imports: ImportService,
       store: MediaStore,
       cfg: () => MediaConfig,
       http: HttpTransport,
       converter: ConverterClient
-  ): Either[String, MediaImporter] =
+  ): Either[com.histmersion.domain.media.imports.MediaImporters.ResolveResultPart1, MediaImporter] =
     lookup(asked, collections).flatMap { (name, c) =>
       PluginMedia
         .guard(c.check)
@@ -66,9 +91,9 @@ object MediaImporters:
     * registered a collection; `allowFor` the allowlist a third party's is judged by.
     */
   def infos(
-      collections: ListMap[String, MediaCollection],
-      pluginOf: String => String,
-      allowFor: String => String
+      collections: ListMap[com.histmersion.domain.media.imports.MediaImporters.InfosCollectionsPart1, MediaCollection],
+      pluginOf: com.histmersion.domain.media.imports.MediaImporters.InfosPluginOfArg1 => com.histmersion.domain.media.imports.MediaImporters.InfosPluginOfResult,
+      allowFor: com.histmersion.domain.media.imports.MediaImporters.InfosAllowForArg1 => com.histmersion.domain.media.imports.MediaImporters.InfosAllowForResult
   ): List[MediaProvider.Info] =
     BuiltinMedia.ordered(collections.keys.toList).flatMap(n => collections.get(n).map(n -> _)).map { (n, c) =>
       // a reserved name is registered by its first-party plugin alone

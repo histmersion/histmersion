@@ -30,7 +30,26 @@ import com.histmersion.api.VocabularyCodecs.given
 object StrictJsonSchema:
 
   /** The keywords strict mode supports (OpenAI "Structured Outputs — supported schemas"). */
-  val Keywords: Set[String] = Set(
+  type Keywords = Keywords.T
+  object Keywords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StringFormats = StringFormats.T
+  object StringFormats extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TypesResult = TypesResult.T
+  object TypesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsObjectSchemaResult = IsObjectSchemaResult.T
+  object IsObjectSchemaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsNullableResult = IsNullableResult.T
+  object IsNullableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConvertDefsPart1 = ConvertDefsPart1.T
+  object ConvertDefsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConvertSeen = ConvertSeen.T
+  object ConvertSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConvertObjectDefsPart1 = ConvertObjectDefsPart1.T
+  object ConvertObjectDefsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConvertObjectSeen = ConvertObjectSeen.T
+  object ConvertObjectSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val Keywords: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.Keywords] = Set(
     "type",
     "description",
     "title",
@@ -56,7 +75,7 @@ object StrictJsonSchema:
   ) // arrays
 
   /** The string `format`s strict mode supports. */
-  val StringFormats: Set[String] =
+  val StringFormats: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.StringFormats] =
     Set("date-time", "time", "date", "duration", "email", "hostname", "ipv4", "ipv6", "uuid")
 
   /** `schema` (a root object schema) in strict form. */
@@ -73,21 +92,21 @@ object StrictJsonSchema:
       .toMap
     convert(schema, defs, Set.empty)
 
-  private def types(o: JsonObject): List[String] =
+  private def types(o: JsonObject): List[com.histmersion.domain.automation.agents.StrictJsonSchema.TypesResult] =
     o("type").toList.flatMap(t => t.asString.toList ++ t.asArray.toList.flatMap(_.flatMap(_.asString)))
 
-  private def isObjectSchema(o: JsonObject): Boolean = types(o).contains("object") || o.contains("properties")
+  private def isObjectSchema(o: JsonObject): com.histmersion.domain.automation.agents.StrictJsonSchema.IsObjectSchemaResult = types(o).contains("object") || o.contains("properties")
 
-  private def isNullable(o: JsonObject): Boolean =
+  private def isNullable(o: JsonObject): com.histmersion.domain.automation.agents.StrictJsonSchema.IsNullableResult =
     types(o).contains("null") ||
       o("anyOf").flatMap(_.asArray).exists(_.exists(_.asObject.exists(isNullable))) ||
       o("enum").flatMap(_.asArray).exists(_.exists(_.isNull))
 
   /** `seen`: the `$ref`s being inlined on this path (a self-referencing definition is inlined once). */
-  private def convert(node: Json, defs: Map[String, Json], seen: Set[String]): Json =
+  private def convert(node: Json, defs: Map[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1, Json], seen: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertSeen]): Json =
     node.asObject.fold(node)(o => Json.fromJsonObject(convertObject(o, defs, seen)))
 
-  private def convertObject(o: JsonObject, defs: Map[String, Json], seen: Set[String]): JsonObject =
+  private def convertObject(o: JsonObject, defs: Map[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectDefsPart1, Json], seen: Set[com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen]): JsonObject =
     val ref = o("$ref").flatMap(_.asString)
     ref.filter(r => o.size > 1 && !seen(r)).flatMap(r => defs.get(r).flatMap(_.asObject).map(r -> _)) match
       case Some((r, d)) =>

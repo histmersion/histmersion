@@ -140,7 +140,7 @@ final class ReviewArticlePipeline(
 
   private val Reviewers = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic)
 
-  def run(ctx: RunCtx): Either[Halt, String] =
+  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.ReviewArticlePipeline.RunResultPart2] =
     val slug = ctx.run.target
     val fix = ctx.run.params.fixes
     val rounds = ReviewArticle.rounds(ctx.run.params.rounds, cfg.review.maxRounds, cfg.review.roundsCap, fix)
@@ -156,10 +156,10 @@ final class ReviewArticlePipeline(
     */
   private def loop(
       ctx: RunCtx,
-      slug: String,
-      r: Int,
-      rounds: Int,
-      fix: Boolean,
+      slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoopSlug,
+      r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoopR,
+      rounds: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoopRounds,
+      fix: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoopFix,
       st: State,
       start: Snapshot
   ): Either[Halt, End] =
@@ -193,7 +193,7 @@ final class ReviewArticlePipeline(
     * asks for one (by default: only when no MAJOR is open). A run whose last pass was a full one (no fix, or a fix lost
     * to a concurrent writer) has nothing to confirm.
     */
-  private def finish(ctx: RunCtx, slug: String, r: Int, st: State, start: Snapshot): Either[Halt, End] =
+  private def finish(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FinishSlug, r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FinishR, st: State, start: Snapshot): Either[Halt, End] =
     val confirm = st.targeted && (cfg.review.finalPanelMode match
       case FinalPanel.Always => true
       case FinalPanel.Clear  => st.merged.majors.isEmpty
@@ -211,11 +211,11 @@ final class ReviewArticlePipeline(
     */
   private def full(
       ctx: RunCtx,
-      slug: String,
-      r: Int,
+      slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullSlug,
+      r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullR,
       carry: Carry,
-      unwritten: Option[String],
-      fixable: Boolean,
+      unwritten: Option[com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullUnwritten],
+      fixable: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FullFixable,
       confirming: Option[Snapshot] = None
   ): Either[Halt, State] =
     for
@@ -264,11 +264,11 @@ final class ReviewArticlePipeline(
     */
   private def targeted(
       ctx: RunCtx,
-      slug: String,
-      r: Int,
+      slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.TargetedSlug,
+      r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.TargetedR,
       prev: Snapshot,
       carry: Carry,
-      unwritten: Option[String]
+      unwritten: Option[com.histmersion.domain.research.workflows.ReviewArticlePipeline.TargetedUnwritten]
   ): Either[Halt, State] =
     for
       snap <- ctx.code[Snapshot](s"snapshot-$r")(snapshot(ctx, slug, unwritten, carry.reasons))
@@ -283,7 +283,7 @@ final class ReviewArticlePipeline(
 
   // ── the ledger ─────────────────────────────────────────────────────────────────────────────────
 
-  private def load(slug: String): Either[String, Ledger] =
+  private def load(slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoadSlug): Either[com.histmersion.domain.research.workflows.ReviewArticlePipeline.LoadResultPart1, Ledger] =
     ledgers.get(slug).map(_.getOrElse(Ledger(slug)))
 
   /** Write the ledger through the run's gate (a dry run keeps it in memory only). */
@@ -302,7 +302,7 @@ final class ReviewArticlePipeline(
   private def absorbFull(
       ctx: RunCtx,
       l: Ledger,
-      r: Int,
+      r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.AbsorbFullR,
       mech: List[Finding],
       reports: List[Report],
       s: Snapshot
@@ -324,7 +324,7 @@ final class ReviewArticlePipeline(
   private def absorbTargeted(
       ctx: RunCtx,
       l: Ledger,
-      r: Int,
+      r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.AbsorbTargetedR,
       mech: List[Finding],
       checks: List[Recheck],
       s: Snapshot
@@ -344,7 +344,7 @@ final class ReviewArticlePipeline(
     * reviewer reads the database — told the ledger does not replace that (a sonnet rules reviewer given a ledger
     * answered from it alone, with no tool call, #1840); the cold reader is not.
     */
-  private def ledgerText(l: Ledger, lookups: Boolean, only: Option[Reviewer] = None): String =
+  private def ledgerText(l: Ledger, lookups: com.histmersion.domain.research.workflows.ReviewArticlePipeline.LedgerTextLookups, only: Option[Reviewer] = None): com.histmersion.domain.research.workflows.ReviewArticlePipeline.LedgerTextResult =
     val t = ReviewLedger.promptText(l, ReviewLedger.OpenStyle.Full, cfg.review.ledgerClosedLines, only)
     val full = if lookups then "every check of your instructions, the database look-ups included"
     else "every check of your instructions"
@@ -358,7 +358,7 @@ final class ReviewArticlePipeline(
   // ── the critique checklist (docs/research-review-convergence.md §6.8) ─────────────────────────────
 
   /** Who stored a reason, as the checklist shows it. */
-  private def by(ctx: RunCtx, role: String): String = s"$role (agent run ${ctx.run.id.take(8)})"
+  private def by(ctx: RunCtx, role: com.histmersion.domain.research.workflows.ReviewArticlePipeline.ByRole): com.histmersion.domain.research.workflows.ReviewArticlePipeline.ByResult = s"$role (agent run ${ctx.run.id.take(8)})"
 
   /** The skeptic's verified not-material rulings, as reasons to store. */
   private def notMaterial(ctx: RunCtx, reports: List[Report]): List[CritiqueReason] =
@@ -376,7 +376,7 @@ final class ReviewArticlePipeline(
   /** Store reasons through the run's gate (a dry run records them; its snapshots count them from the carry). A refusal
     * — the edge went meanwhile — is a warning, never a failed run.
     */
-  private def storeReasons(ctx: RunCtx, slug: String, rs: List[CritiqueReason]): Unit =
+  private def storeReasons(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.StoreReasonsSlug, rs: List[CritiqueReason]): Unit =
     if rs.nonEmpty then
       val p = Article.Patch(critiqueReasons = rs)
       ctx.write(s"critique reasons of [[$slug]]: ${rs.map(_.ref.wire).mkString(", ")}", p.asJson)(
@@ -388,7 +388,7 @@ final class ReviewArticlePipeline(
   /** The skeptic's part of the brief: the checklist (§6.8), the open pairs it rules on shown in full — in the
     * confirming panel only to verify (§6.9).
     */
-  private def checklistText(s: Snapshot, confirming: Boolean): (String, List[CritiquePair]) =
+  private def checklistText(s: Snapshot, confirming: com.histmersion.domain.research.workflows.ReviewArticlePipeline.ChecklistTextConfirming): (com.histmersion.domain.research.workflows.ReviewArticlePipeline.ChecklistTextResultPart1, List[CritiquePair]) =
     val (t, shown) = Critiques.promptText(s.critiques, cfg.review.critiquePairs, cfg.review.critiqueReasoned)
     val task =
       if confirming then
@@ -405,7 +405,7 @@ final class ReviewArticlePipeline(
       )
 
   /** The rules reviewer's part: the stored critique reasons, so a wrong one can be challenged. */
-  private def reasonsText(s: Snapshot): String =
+  private def reasonsText(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReasonsTextResult =
     val reasoned = s.critiques.filter(_.state == CritiqueState.Reasoned).take(cfg.review.critiqueReasoned)
     if reasoned.isEmpty then ""
     else
@@ -417,10 +417,10 @@ final class ReviewArticlePipeline(
 
   private def snapshot(
       ctx: RunCtx,
-      slug: String,
-      unwritten: Option[String],
+      slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.SnapshotSlug,
+      unwritten: Option[com.histmersion.domain.research.workflows.ReviewArticlePipeline.SnapshotUnwritten],
       reasons: List[CritiqueReason]
-  ): Either[String, Snapshot] =
+  ): Either[com.histmersion.domain.research.workflows.ReviewArticlePipeline.SnapshotResultPart1, Snapshot] =
     site.articles.get(slug).left.map(_.message).flatMap { v =>
       val a = v.article
       val body = unwritten.getOrElse(a.body)
@@ -441,7 +441,7 @@ final class ReviewArticlePipeline(
     * run says so once. After a fix (`before`: the body the fixer revised) also the formatting errors `check_edits`
     * finds in the new body and not in the old one — what the edits broke.
     */
-  private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: Int, before: Option[String]): List[Finding] =
+  private def mechanicalOf(ctx: RunCtx, s: Snapshot, r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.MechanicalOfR, before: Option[com.histmersion.domain.research.workflows.ReviewArticlePipeline.MechanicalOfBefore]): List[Finding] =
     val body = mechanical(s.slug, s.kind, s.body, isTarget(s.body), generated = s.coverage.isDefined)
     if s.coverage.isEmpty && r == 1 && !s.kind.trim.equalsIgnoreCase("index") then
       ctx.warn(
@@ -473,15 +473,15 @@ final class ReviewArticlePipeline(
   /** Does `[[t]]` resolve — a citekey (or its unique short form) or an article slug? Resolved once per body, in three
     * queries, as the page renderer does.
     */
-  private def isTarget(body: String): String => Boolean =
+  private def isTarget(body: com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetBody): com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetResultArg1 => com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsTargetResultResult =
     val resolve = site.articles.pageLinks(AgentVerify.wikilinks(body))
     t => resolve(t).isDefined
 
-  private def isCitekey(ck: String): Boolean = site.sources.get(ck, body = false).isRight
+  private def isCitekey(ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsCitekeyCk): com.histmersion.domain.research.workflows.ReviewArticlePipeline.IsCitekeyResult = site.sources.get(ck, body = false).isRight
 
   /** What a quote may be checked against: a source's summary, findings, notes and body — what `get_source` shows.
     */
-  private def recordText(ck: String): Option[String] =
+  private def recordText(ck: com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordTextCk): Option[com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordTextResult] =
     site.sources.get(ck, body = true).toOption.map { s =>
       (s.source.summary.toList ++ s.findings.map(_.claim) ++ s.source.notes.toList ++ s.source.ocrMarkdown.toList)
         .mkString("\n\n")
@@ -489,11 +489,11 @@ final class ReviewArticlePipeline(
 
   /** [[recordText]] read once per source for one answer's checks (a reviewer cites a few records many times over).
     */
-  private def records(): String => Option[String] =
+  private def records(): com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordsResultArg1 => Option[com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordsResultResult] =
     val seen = java.util.concurrent.ConcurrentHashMap[String, Option[String]]()
     ck => seen.computeIfAbsent(ck, recordText)
 
-  private def reviewInput(s: Snapshot): String =
+  private def reviewInput(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.ReviewInputResult =
     val cut = if s.truncated then s"\n(The body is cut at ${cfg.review.articleChars} characters.)" else ""
     s"Review the article [[${s.slug}]] — \"${s.title}\", kind ${s.kind}.$cut\n\n${Prompt.data("article", s.body)}" +
       generatedText(s)
@@ -507,7 +507,7 @@ final class ReviewArticlePipeline(
   /** The sources the article cites with each one's recorded status — what check 2 of the rules reviewer would otherwise
     * query for (the cold reader, who reads the article alone, never gets it).
     */
-  private def citedText(s: Snapshot): String =
+  private def citedText(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.CitedTextResult =
     if s.cited.isEmpty then ""
     else
       "\n\nThe sources the article cites, each with the status the database records for it (code read them):\n\n" +
@@ -516,7 +516,7 @@ final class ReviewArticlePipeline(
   /** The sections code generates from the article's filter (#958), shown after the body as the page shows them — data,
     * like the article, and not part of the body an edit can change.
     */
-  private def generatedText(s: Snapshot): String =
+  private def generatedText(s: Snapshot): com.histmersion.domain.research.workflows.ReviewArticlePipeline.GeneratedTextResult =
     s.generated.fold("")(g =>
       "\n\nAfter the body the page shows these sections, which CODE generates from the article's filter and its " +
         "stored reasons (the filter's sources it does not cite, each with its reason; the counts; the statuses; the " +
@@ -529,10 +529,10 @@ final class ReviewArticlePipeline(
   private def panel(
       ctx: RunCtx,
       s: Snapshot,
-      r: Int,
+      r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelR,
       l: Ledger,
-      fixable: Boolean,
-      confirming: Boolean
+      fixable: com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelFixable,
+      confirming: com.histmersion.domain.research.workflows.ReviewArticlePipeline.PanelConfirming
   ): Either[Halt, List[Report]] =
     val user = reviewInput(s) + (if confirming then FinalNote else "")
     def ledger(lookups: Boolean, only: Option[Reviewer] = None) = ledgerText(l, lookups, only)
@@ -615,7 +615,7 @@ final class ReviewArticlePipeline(
   private def recheck(
       ctx: RunCtx,
       s: Snapshot,
-      r: Int,
+      r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecheckR,
       l: Ledger,
       edited: ReviewLedger.Edited
   ): Either[Halt, List[Recheck]] =
@@ -654,7 +654,7 @@ final class ReviewArticlePipeline(
       l: Ledger,
       asked: List[ReviewLedger.Entry],
       edited: ReviewLedger.Edited
-  ): String =
+  ): com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecheckInputResult =
     val ids = asked.map(_.id).mkString(", ")
     val toCheck = findingsText(ReviewLedger.merged(l.modify(_.entries).setTo(asked), 0), ReviewLedger.notes(l))
     val rest = ReviewLedger.promptText(
@@ -672,7 +672,7 @@ final class ReviewArticlePipeline(
       Prompt.data("article", s.body) + (if rv == Reviewer.ColdReader then "" else generatedText(s) + citedText(s))
 
   /** The skeptic's verified corrections, routed through the approval gate. */
-  private def propose(ctx: RunCtx, m: Merged): List[String] =
+  private def propose(ctx: RunCtx, m: Merged): List[com.histmersion.domain.research.workflows.ReviewArticlePipeline.ProposeResult] =
     m.proposals.map { p =>
       val o = approvals.propose(ctx, p)
       o match
@@ -692,7 +692,7 @@ final class ReviewArticlePipeline(
       s: Snapshot,
       m: Merged,
       l: Ledger,
-      r: Int,
+      r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.FixerR,
       reasons: List[CritiqueReason]
   ): Either[Halt, Fix] =
     val explain = m.explainBack.fold("")(e => s"\n\nThe cold reader's explain-back: $e")
@@ -761,7 +761,7 @@ final class ReviewArticlePipeline(
     * not cite where code cannot tell which work the name means. Code appends a citekey itself where the name is
     * unambiguous, after the fix.
     */
-  private def critiqueWork(s: Snapshot, m: Merged, l: Ledger): String =
+  private def critiqueWork(s: Snapshot, m: Merged, l: Ledger): com.histmersion.domain.research.workflows.ReviewArticlePipeline.CritiqueWorkResult =
     val (hits, resolve) = site.articles.pairing(s.body)
     val units = Critiques.units(s.body)
     def near(f: Finding) =
@@ -802,7 +802,7 @@ final class ReviewArticlePipeline(
   /** The one write of a round: the revised body, guarded by the snapshot's token. A 412 (someone else wrote the article
     * meanwhile) drops this fix — the next round reviews their text — and never overwrites it.
     */
-  private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: Int, after: Ledger): Either[String, ReviewArticle.Patched] =
+  private def write(ctx: RunCtx, s: Snapshot, f: Fix, r: com.histmersion.domain.research.workflows.ReviewArticlePipeline.WriteR, after: Ledger): Either[com.histmersion.domain.research.workflows.ReviewArticlePipeline.WriteResultPart1, ReviewArticle.Patched] =
     val bodyChanged = f.body.trim != s.body.trim
     if !bodyChanged && f.reasons.isEmpty && f.setAside.isEmpty && f.pairsAside.isEmpty then
       persist(ctx, after)
@@ -840,7 +840,7 @@ final class ReviewArticlePipeline(
     * lost track of is rewritten rather than duplicated; the per-finding items earlier runs left for it, and any second
     * item, are closed as superseded.
     */
-  private def record(ctx: RunCtx, slug: String, end: End): Either[String, String] =
+  private def record(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordSlug, end: End): Either[com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordResultPart1, com.histmersion.domain.research.workflows.ReviewArticlePipeline.RecordResultPart2] =
     val st = end.state
     val c = st.carry
     val last = st.merged
@@ -859,7 +859,7 @@ final class ReviewArticlePipeline(
       (if pairs.isEmpty then "" else s"; critiques ${Critiques.summary(pairs)}")
     Pipelines.log(site.workLists, ctx, line)
 
-  private def backlog(ctx: RunCtx, slug: String, l: Ledger): Ledger =
+  private def backlog(ctx: RunCtx, slug: com.histmersion.domain.research.workflows.ReviewArticlePipeline.BacklogSlug, l: Ledger): Ledger =
     val tasks = Queue.Kind.Tasks.label
     val open = site.queues.list(Queue.Kind.Tasks, QueueScope.Open)
     // the ledger's item, else the article's collapsed item it lost track of (#934: never a second one)
@@ -907,3 +907,119 @@ final class ReviewArticlePipeline(
           ctx.write(s"tasks item #${item.id} done", p.asJson)(site.workLists.patch(item.id, p).map(_ => ()))(Right(()))
       }
     l.modify(_.task).setTo(kept)
+
+object ReviewArticlePipeline:
+  type RunResultPart2 = RunResultPart2.T
+  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoopSlug = LoopSlug.T
+  object LoopSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoopR = LoopR.T
+  object LoopR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoopRounds = LoopRounds.T
+  object LoopRounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoopFix = LoopFix.T
+  object LoopFix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishSlug = FinishSlug.T
+  object FinishSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishR = FinishR.T
+  object FinishR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FullSlug = FullSlug.T
+  object FullSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FullR = FullR.T
+  object FullR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FullUnwritten = FullUnwritten.T
+  object FullUnwritten extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FullFixable = FullFixable.T
+  object FullFixable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetedSlug = TargetedSlug.T
+  object TargetedSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetedR = TargetedR.T
+  object TargetedR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetedUnwritten = TargetedUnwritten.T
+  object TargetedUnwritten extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadResultPart1 = LoadResultPart1.T
+  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadSlug = LoadSlug.T
+  object LoadSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AbsorbFullR = AbsorbFullR.T
+  object AbsorbFullR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AbsorbTargetedR = AbsorbTargetedR.T
+  object AbsorbTargetedR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgerTextResult = LedgerTextResult.T
+  object LedgerTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgerTextLookups = LedgerTextLookups.T
+  object LedgerTextLookups extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByResult = ByResult.T
+  object ByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByRole = ByRole.T
+  object ByRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoreReasonsSlug = StoreReasonsSlug.T
+  object StoreReasonsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChecklistTextResultPart1 = ChecklistTextResultPart1.T
+  object ChecklistTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChecklistTextConfirming = ChecklistTextConfirming.T
+  object ChecklistTextConfirming extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReasonsTextResult = ReasonsTextResult.T
+  object ReasonsTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotResultPart1 = SnapshotResultPart1.T
+  object SnapshotResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotSlug = SnapshotSlug.T
+  object SnapshotSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotUnwritten = SnapshotUnwritten.T
+  object SnapshotUnwritten extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalOfR = MechanicalOfR.T
+  object MechanicalOfR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalOfBefore = MechanicalOfBefore.T
+  object MechanicalOfBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsTargetResultArg1 = IsTargetResultArg1.T
+  object IsTargetResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsTargetResultResult = IsTargetResultResult.T
+  object IsTargetResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsTargetBody = IsTargetBody.T
+  object IsTargetBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCitekeyResult = IsCitekeyResult.T
+  object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCitekeyCk = IsCitekeyCk.T
+  object IsCitekeyCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordTextResult = RecordTextResult.T
+  object RecordTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordTextCk = RecordTextCk.T
+  object RecordTextCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultArg1 = RecordsResultArg1.T
+  object RecordsResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultResult = RecordsResultResult.T
+  object RecordsResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReviewInputResult = ReviewInputResult.T
+  object ReviewInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedTextResult = CitedTextResult.T
+  object CitedTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeneratedTextResult = GeneratedTextResult.T
+  object GeneratedTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PanelR = PanelR.T
+  object PanelR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PanelFixable = PanelFixable.T
+  object PanelFixable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PanelConfirming = PanelConfirming.T
+  object PanelConfirming extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecheckR = RecheckR.T
+  object RecheckR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecheckInputResult = RecheckInputResult.T
+  object RecheckInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProposeResult = ProposeResult.T
+  object ProposeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerR = FixerR.T
+  object FixerR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CritiqueWorkResult = CritiqueWorkResult.T
+  object CritiqueWorkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteResultPart1 = WriteResultPart1.T
+  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteR = WriteR.T
+  object WriteR extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart1 = RecordResultPart1.T
+  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart2 = RecordResultPart2.T
+  object RecordResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordSlug = RecordSlug.T
+  object RecordSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BacklogSlug = BacklogSlug.T
+  object BacklogSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

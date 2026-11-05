@@ -20,6 +20,19 @@ import com.histmersion.api.research.Article
   * is a person's decision, made with `histmersion article delete`.
   */
 object ArticleTools:
+  type ArticleCoverageDoc = ArticleCoverageDoc.T
+  object ArticleCoverageDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleCoverageMarkdownResult = ArticleCoverageMarkdownResult.T
+  object ArticleCoverageMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleReviewDoc = ArticleReviewDoc.T
+  object ArticleReviewDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleReviewMarkdownResult = ArticleReviewMarkdownResult.T
+  object ArticleReviewMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckEditsDoc = CheckEditsDoc.T
+  object CheckEditsDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckEditsResult = CheckEditsResult.T
+  object CheckEditsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import com.histmersion.util.mcp.ToolInputs.given
 
   def apply(articles: ArticlesControllers) =
@@ -262,7 +275,7 @@ object ArticleTools:
       )
 
   /** `article_coverage` as `/mcp` and an agent step both describe it. */
-  val ArticleCoverageDoc: String =
+  val ArticleCoverageDoc: com.histmersion.domain.research.articles.ArticleTools.ArticleCoverageDoc =
     "The coverage of one article, computed by code from the filter it records: how many sources the filter " +
       "returns, which of them the body cites, every other one with its stored reason (or 'not yet assessed'), " +
       "the status breakdown, the disagreement edges (challenges, refutes, updates, superseded_by) touching the " +
@@ -273,11 +286,11 @@ object ArticleTools:
       "that records no filter has none (set it with patch_article `filter`)."
 
   /** `article_coverage`: the one handler, rendered. */
-  def articleCoverageMarkdown(articles: ArticlesControllers, in: ArticleCoverageInput): String =
+  def articleCoverageMarkdown(articles: ArticlesControllers, in: ArticleCoverageInput): com.histmersion.domain.research.articles.ArticleTools.ArticleCoverageMarkdownResult =
     articles.coverage(in.slug).fold(McpOut.refusal, Article.Coverage.markdown)
 
   /** `article_review` as `/mcp` describes it. */
-  val ArticleReviewDoc: String =
+  val ArticleReviewDoc: com.histmersion.domain.research.articles.ArticleTools.ArticleReviewDoc =
     "Where one article stands with the review panel (rules reviewer, cold reader, skeptic, mechanical checks): " +
       "its state (unreviewed, queued, in-review with the round, passed, majors-open, stopped) with what it means, " +
       "the review manager's last outcome, the research goals that link the article with their stage, the approvals " +
@@ -286,7 +299,7 @@ object ArticleTools:
       "won't fix, still open). CLI: histmersion article review."
 
   /** `article_review`: the one handler, rendered. */
-  def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): String =
+  def articleReviewMarkdown(articles: ArticlesControllers, in: ArticleReviewInput): com.histmersion.domain.research.articles.ArticleTools.ArticleReviewMarkdownResult =
     articles.review(in.slug).fold(McpOut.refusal, Article.ReviewView.markdown)
 
   final case class ArticleReviewInput(slug: ArticleReviewInput.Slug) derives KindlingsCodecAsObject
@@ -310,7 +323,7 @@ object ArticleTools:
       .modify(_.slug)(_.description("The article's slug"))
 
   /** `check_edits` as `/mcp` and an agent step both describe it. */
-  val CheckEditsDoc: String =
+  val CheckEditsDoc: com.histmersion.domain.research.articles.ArticleTools.CheckEditsDoc =
     "Dry-run a change to an article and see what the review checks would say — nothing is written. `edits` " +
       "are applied in order to the CURRENT stored body: each is {op: replace|insertAfter|insertBefore|delete, " +
       "anchor: text copied exactly from the body (it must occur once; whitespace is normalised), text}. Or pass " +
@@ -320,7 +333,7 @@ object ArticleTools:
       "checks code runs on a review fixer's answer."
 
   /** `check_edits`: the one handler, rendered. */
-  def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): String =
+  def checkEdits(articles: ArticlesControllers, in: CheckEditsInput): com.histmersion.domain.research.articles.ArticleTools.CheckEditsResult =
     articles
       .check(in.slug, Article.Edits.ArticleCheckRequest(in.edits, in.body, in.kind))
       .fold(McpOut.refusal, Article.Edits.markdown)

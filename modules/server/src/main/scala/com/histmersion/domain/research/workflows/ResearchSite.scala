@@ -26,4 +26,8 @@ trait ResearchSite:
   def labels: LabelsControllers
 
   /** A goal by its slug, a renamed goal's old slug answering as the goal it was renamed to. */
-  def goal(slug: String): Either[Api.Error, Goal]
+  def goal(slug: com.histmersion.domain.research.workflows.ResearchSite.GoalSlug): Either[Api.Error, Goal]
+
+object ResearchSite:
+  type GoalSlug = GoalSlug.T
+  object GoalSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

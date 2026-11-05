@@ -16,7 +16,7 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
   // `var`: this connection is between a refused request's head and its last chunk
   private var discarding = false
 
-  private def refuse(ctx: ChannelHandlerContext, req: HttpRequest, status: HttpResponseStatus, msg: String): Unit =
+  private def refuse(ctx: ChannelHandlerContext, req: HttpRequest, status: HttpResponseStatus, msg: com.histmersion.domain.automation.agents.RunTokenGate.RefuseMsg): Unit =
     discarding = !req.isInstanceOf[LastHttpContent]
     val keepAlive = HttpUtil.isKeepAlive(req)
     val _ = ReferenceCountUtil.release(req)
@@ -50,3 +50,7 @@ final class RunTokenGate(tokens: RunTokens) extends ChannelInboundHandlerAdapter
         if c.isInstanceOf[LastHttpContent] then discarding = false
         val _ = ReferenceCountUtil.release(c)
       case _ => super.channelRead(ctx, msg)
+
+object RunTokenGate:
+  type RefuseMsg = RefuseMsg.T
+  object RefuseMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

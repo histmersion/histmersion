@@ -28,6 +28,89 @@ object CompileArticle:
 
   // ── phase 1: extraction ─────────────────────────────────────────────────────────────────────────
 
+  type CheckExtractResultPart1 = CheckExtractResultPart1.T
+  object CheckExtractResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckExtractResultPart2Part2 = CheckExtractResultPart2Part2.T
+  object CheckExtractResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckExtractRecord = CheckExtractRecord.T
+  object CheckExtractRecord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckExtractMinRatio = CheckExtractMinRatio.T
+  object CheckExtractMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckExtractMaxClaims = CheckExtractMaxClaims.T
+  object CheckExtractMaxClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckExtractLast = CheckExtractLast.T
+  object CheckExtractLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisagreementKinds = DisagreementKinds.T
+  object DisagreementKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceFilter = EvidenceFilter.T
+  object EvidenceFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceTextResult = EvidenceTextResult.T
+  object EvidenceTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksResult = BlocksResult.T
+  object BlocksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksBody = BlocksBody.T
+  object BlocksBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusesSilentResult = StatusesSilentResult.T
+  object StatusesSilentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusesSilentBody = StatusesSilentBody.T
+  object StatusesSilentBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusesSilentStatusOfArg1 = StatusesSilentStatusOfArg1.T
+  object StatusesSilentStatusOfArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedResult = CitedResult.T
+  object CitedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedText = CitedText.T
+  object CitedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedIsCitekeyArg1 = CitedIsCitekeyArg1.T
+  object CitedIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedIsCitekeyResult = CitedIsCitekeyResult.T
+  object CitedIsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithoutNotUsedResult = WithoutNotUsedResult.T
+  object WithoutNotUsedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithoutNotUsedText = WithoutNotUsedText.T
+  object WithoutNotUsedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CombinedResultPart1 = CombinedResultPart1.T
+  object CombinedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CombinedResultPart2 = CombinedResultPart2.T
+  object CombinedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CombinedCurrent = CombinedCurrent.T
+  object CombinedCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CombinedText = CombinedText.T
+  object CombinedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CombinedSection = CombinedSection.T
+  object CombinedSection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftResultPart1 = CheckDraftResultPart1.T
+  object CheckDraftResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftResultPart2Part2 = CheckDraftResultPart2Part2.T
+  object CheckDraftResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftSlug = CheckDraftSlug.T
+  object CheckDraftSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftKind = CheckDraftKind.T
+  object CheckDraftKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftCurrentTitle = CheckDraftCurrentTitle.T
+  object CheckDraftCurrentTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftCurrent = CheckDraftCurrent.T
+  object CheckDraftCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftFilter = CheckDraftFilter.T
+  object CheckDraftFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftLast = CheckDraftLast.T
+  object CheckDraftLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunFilterQuery = RunFilterQuery.T
+  object RunFilterQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunFilterTopics = RunFilterTopics.T
+  object RunFilterTopics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunFilterTags = RunFilterTags.T
+  object RunFilterTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunFilterExistingTitle = RunFilterExistingTitle.T
+  object RunFilterExistingTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineResult = LogLineResult.T
+  object LogLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineWritten = LogLineWritten.T
+  object LogLineWritten extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineWhy = LogLineWhy.T
+  object LogLineWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineReview = LogLineReview.T
+  object LogLineReview extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class ClaimAnswer(
       claim: ClaimAnswer.Claim,
       quote: ClaimAnswer.Quote,
@@ -112,12 +195,12 @@ object CompileArticle:
     */
   def checkExtract(
       a: ExtractAnswer,
-      citekey: String,
-      record: String,
-      minRatio: Double,
-      maxClaims: Int,
-      last: Boolean
-  ): Either[List[String], (Extracted, List[String])] =
+      citekey: com.histmersion.domain.library.Citekey,
+      record: com.histmersion.domain.CompileArticle.CheckExtractRecord,
+      minRatio: com.histmersion.domain.CompileArticle.CheckExtractMinRatio,
+      maxClaims: com.histmersion.domain.CompileArticle.CheckExtractMaxClaims,
+      last: com.histmersion.domain.CompileArticle.CheckExtractLast
+  ): Either[List[com.histmersion.domain.CompileArticle.CheckExtractResultPart1], (Extracted, List[com.histmersion.domain.CompileArticle.CheckExtractResultPart2Part2])] =
     val checked = a.claims.zipWithIndex.map { (c, i) =>
       val label = s"claim ${i + 1} (${Option(c.claim).getOrElse("").take(50)})"
       if Option(c.claim).forall(_.trim.isEmpty) then Left(s"$label: no claim")
@@ -187,9 +270,12 @@ object CompileArticle:
       disputed: List[Evidence.Disputed],
       notUsed: List[NotUsed]
   ) derives KindlingsCodecAsObject:
-    def used: List[String] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, 0) > 0)
+    def used: List[com.histmersion.domain.CompileArticle.Evidence.UsedResult] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, 0) > 0)
 
   object Evidence:
+    type UsedResult = UsedResult.T
+    object UsedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Filter = Filter.T
     object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ClaimsKey = ClaimsKey.T
@@ -208,10 +294,10 @@ object CompileArticle:
     Source.Status.Unassessed
   )
 
-  val DisagreementKinds: Set[String] = Article.Coverage.DisagreementKinds.toSet
+  val DisagreementKinds: Set[com.histmersion.domain.CompileArticle.DisagreementKinds] = Article.Coverage.DisagreementKinds.toSet
 
   def evidence(
-      filter: String,
+      filter: com.histmersion.domain.CompileArticle.EvidenceFilter,
       total: com.histmersion.RowCount,
       facts: List[SourceFact],
       extracted: List[Extracted],
@@ -233,7 +319,7 @@ object CompileArticle:
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
 
   /** The claim table and evidence model as the writer reads them (data, not instructions). */
-  def evidenceText(ev: Evidence, extracted: List[Extracted]): String =
+  def evidenceText(ev: Evidence, extracted: List[Extracted]): com.histmersion.domain.CompileArticle.EvidenceTextResult =
     val bySource = extracted.map(e => e.citekey -> e).toMap
     val sources = ev.sources.filter(s => ev.claims.getOrElse(s.citekey, 0) > 0).map { s =>
       val claims = bySource.get(s.citekey).toList.flatMap(_.claims).map { c =>
@@ -300,13 +386,13 @@ object CompileArticle:
 
   // ── phase 4: the self-check (code) ──────────────────────────────────────────────────────────────
 
-  private def blocks(body: String): List[String] =
+  private def blocks(body: com.histmersion.domain.CompileArticle.BlocksBody): List[com.histmersion.domain.CompileArticle.BlocksResult] =
     body.split("\\n\\s*\\n").toList.map(_.trim).filter(_.nonEmpty)
 
   /** Writing guide rule 2: the FIRST block citing a source whose status is not current or foundational must state that
     * status (the word itself, e.g. "contested").
     */
-  def statusesSilent(body: String, statusOf: String => Option[Source.Status]): List[String] =
+  def statusesSilent(body: com.histmersion.domain.CompileArticle.StatusesSilentBody, statusOf: com.histmersion.domain.CompileArticle.StatusesSilentStatusOfArg1 => Option[Source.Status]): List[com.histmersion.domain.CompileArticle.StatusesSilentResult] =
     val bs = blocks(body)
     AgentVerify.wikilinks(body).flatMap { ck =>
       statusOf(ck).filter(StatedStatuses.contains).flatMap { st =>
@@ -319,16 +405,16 @@ object CompileArticle:
   /** The citekeys a text cites as EVIDENCE (links that are sources), leaving out its Not used section — the sources
     * listed there are named, not cited.
     */
-  def cited(text: String, isCitekey: String => Boolean): List[String] =
+  def cited(text: com.histmersion.domain.CompileArticle.CitedText, isCitekey: com.histmersion.domain.CompileArticle.CitedIsCitekeyArg1 => com.histmersion.domain.CompileArticle.CitedIsCitekeyResult): List[com.histmersion.domain.CompileArticle.CitedResult] =
     AgentVerify.wikilinks(withoutNotUsed(text)).filter(isCitekey)
 
   /** `text` without its "Not used" section (heading to the next heading of the same or higher level). */
-  def withoutNotUsed(text: String): String = Article.Coverage.withoutNotUsed(text)
+  def withoutNotUsed(text: com.histmersion.domain.CompileArticle.WithoutNotUsedText): com.histmersion.domain.CompileArticle.WithoutNotUsedResult = Article.Coverage.withoutNotUsed(text)
 
   /** What the article would read after the draft is applied: the whole body (create), or the current body with the text
     * appended (under `section`, else at the end).
     */
-  def combined(mode: DraftMode, current: String, text: String, section: Option[String]): Either[String, String] =
+  def combined(mode: DraftMode, current: com.histmersion.domain.CompileArticle.CombinedCurrent, text: com.histmersion.domain.CompileArticle.CombinedText, section: Option[com.histmersion.domain.CompileArticle.CombinedSection]): Either[com.histmersion.domain.CompileArticle.CombinedResultPart1, com.histmersion.domain.CompileArticle.CombinedResultPart2] =
     mode match
       case DraftMode.Create => Right(text)
       case DraftMode.Extend =>
@@ -338,10 +424,22 @@ object CompileArticle:
 
   /** The inputs of the self-check that come from the corpus. */
   final case class Corpus(
-      isCitekey: String => Boolean,
-      isTarget: String => Boolean,
-      statusOf: String => Option[Source.Status]
+      isCitekey: Corpus.IsCitekeyArg1 => Corpus.IsCitekeyResult,
+      isTarget: Corpus.IsTargetArg1 => Corpus.IsTargetResult,
+      statusOf: Corpus.StatusOfArg1 => Option[Source.Status]
   )
+
+  object Corpus:
+    type IsCitekeyArg1 = IsCitekeyArg1.T
+    object IsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsCitekeyResult = IsCitekeyResult.T
+    object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsTargetArg1 = IsTargetArg1.T
+    object IsTargetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsTargetResult = IsTargetResult.T
+    object IsTargetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StatusOfArg1 = StatusOfArg1.T
+    object StatusOfArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Check a draft. FATAL problems (an empty text, a link to nothing, escaped brackets, a Sources cited heading, an
     * extend under a heading the article does not have) always send it back; the others (an uncited paragraph, a
@@ -354,16 +452,16 @@ object CompileArticle:
     */
   def checkDraft(
       a: DraftAnswer,
-      slug: String,
+      slug: com.histmersion.domain.CompileArticle.CheckDraftSlug,
       mode: DraftMode,
-      kind: String,
-      currentTitle: Option[String],
-      current: String,
+      kind: com.histmersion.domain.CompileArticle.CheckDraftKind,
+      currentTitle: Option[com.histmersion.domain.CompileArticle.CheckDraftCurrentTitle],
+      current: com.histmersion.domain.CompileArticle.CheckDraftCurrent,
       evidence: Evidence,
-      filter: String,
+      filter: com.histmersion.domain.CompileArticle.CheckDraftFilter,
       corpus: Corpus,
-      last: Boolean
-  ): Either[List[String], (ArticleDraft, List[String])] =
+      last: com.histmersion.domain.CompileArticle.CheckDraftLast
+  ): Either[List[com.histmersion.domain.CompileArticle.CheckDraftResultPart1], (ArticleDraft, List[com.histmersion.domain.CompileArticle.CheckDraftResultPart2Part2])] =
     val text = Option(a.body).map(_.trim).getOrElse("")
     val section = a.section.map(_.trim).filter(_.nonEmpty).filter(_ => mode == DraftMode.Extend)
     val title = currentTitle.orElse(Option(a.title).map(_.trim).filter(_.nonEmpty)).getOrElse(slug)
@@ -473,11 +571,11 @@ object CompileArticle:
     * `None` only when nothing at all selects a source.
     */
   def runFilter(
-      query: Option[String],
-      topics: List[String],
-      tags: List[String],
+      query: Option[com.histmersion.domain.CompileArticle.RunFilterQuery],
+      topics: List[com.histmersion.domain.CompileArticle.RunFilterTopics],
+      tags: List[com.histmersion.domain.CompileArticle.RunFilterTags],
       stored: Option[Article.Filter],
-      existingTitle: Option[String]
+      existingTitle: Option[com.histmersion.domain.CompileArticle.RunFilterExistingTitle]
   ): Option[Article.Filter] =
     val stated = Article.Filter(query = query, topics = topics, tags = tags)
     Article.Filter
@@ -488,7 +586,7 @@ object CompileArticle:
       .orElse(existingTitle.flatMap(t => Article.Filter.normalise(Article.Filter(query = Some(t))).toOption.flatten))
 
   /** The log line of a compile run. */
-  def logLine(d: ArticleDraft, written: Boolean, why: String, review: Option[String], runId: String): String =
+  def logLine(d: ArticleDraft, written: com.histmersion.domain.CompileArticle.LogLineWritten, why: com.histmersion.domain.CompileArticle.LogLineWhy, review: Option[com.histmersion.domain.CompileArticle.LogLineReview], runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.CompileArticle.LogLineResult =
     val what = d.mode match
       case DraftMode.Create => s"compiled a new article from ${d.cited.size} source(s)"
       case DraftMode.Extend =>

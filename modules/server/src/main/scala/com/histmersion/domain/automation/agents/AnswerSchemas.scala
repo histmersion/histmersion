@@ -12,12 +12,15 @@ import sttp.ai.core.agent.ResponseSchema
   * a `ResponseSchema.derived` appears anywhere else.
   */
 object AnswerSchemas:
+  type AllPart1 = AllPart1.T
+  object AllPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val probe: ResponseSchema[ProbeAnswer] = ResponseSchema.derived[ProbeAnswer]()
   val plan: ResponseSchema[PlanGoal.PlanAnswer] = ResponseSchema.derived[PlanGoal.PlanAnswer]()
   val hintEffect: ResponseSchema[HintProposals.HintAnswer] = ResponseSchema.derived[HintProposals.HintAnswer]()
 
   /** The engine's step schemas, by name. */
-  val all: List[(String, ResponseSchema[?])] = List(
+  val all: List[(com.histmersion.domain.automation.agents.AnswerSchemas.AllPart1, ResponseSchema[?])] = List(
     "probe" -> probe,
     "plan" -> plan,
     "hint-effect" -> hintEffect

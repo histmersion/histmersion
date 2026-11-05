@@ -32,6 +32,15 @@ final case class AutomationState(
 )
 
 object AutomationState:
+  type InsertApprovalResult = InsertApprovalResult.T
+  object InsertApprovalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertApprovalConflictsResult = InsertApprovalConflictsResult.T
+  object InsertApprovalConflictsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertApprovalMakeArg1 = InsertApprovalMakeArg1.T
+  object InsertApprovalMakeArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResult = TextResult.T
+  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type GoalsKey = GoalsKey.T
   object GoalsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FocusKey = FocusKey.T
@@ -51,7 +60,7 @@ object AutomationState:
 
   import hearth.kindlings.optics.syntax.*
 
-  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => Boolean)(make: Long => ApprovalRecord): Option[Long] =
+  def insertApproval(state: java.util.concurrent.atomic.AtomicReference[AutomationState])(conflicts: ApprovalRecord => com.histmersion.domain.automation.AutomationState.InsertApprovalConflictsResult)(make: com.histmersion.domain.automation.AutomationState.InsertApprovalMakeArg1 => ApprovalRecord): Option[com.histmersion.domain.automation.AutomationState.InsertApprovalResult] =
     var made: Option[Long] = None
     val _ = state.updateAndGet { s =>
       if s.approvals.exists(conflicts) then { made = None; s }
@@ -81,4 +90,4 @@ object AutomationState:
     )
 
   /** An instant as the repositories read one back (`to_char` to the second, UTC). */
-  def text(at: Instant): String = at.truncatedTo(ChronoUnit.SECONDS).toString
+  def text(at: Instant): com.histmersion.domain.automation.AutomationState.TextResult = at.truncatedTo(ChronoUnit.SECONDS).toString

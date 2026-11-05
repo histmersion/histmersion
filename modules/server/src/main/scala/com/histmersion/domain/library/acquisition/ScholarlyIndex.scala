@@ -10,10 +10,22 @@ import com.histmersion.api.library.WorkRef
   * `since` (published, or deposited where the index says so), newest first. A small trait so a test hands fakes.
   */
 trait ScholarlyIndex:
-  def name: String
-  def search(query: String, since: LocalDate, limit: Int): Either[String, List[WorkRef]]
+  def name: com.histmersion.domain.library.acquisition.ScholarlyIndex.NameResult
+  def search(query: com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchLimit): Either[com.histmersion.domain.library.acquisition.ScholarlyIndex.SearchResultPart1, List[WorkRef]]
 
   /** Why the index would not be asked now (CORE's budget spent, CORE asked to wait), if it would not: a sweep then
     * leaves its watches unread, keeping their watermarks, and says so.
     */
-  def unavailable: Option[String] = None
+  def unavailable: Option[com.histmersion.domain.library.acquisition.ScholarlyIndex.UnavailableResult] = None
+
+object ScholarlyIndex:
+  type NameResult = NameResult.T
+  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart1 = SearchResultPart1.T
+  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchQuery = SearchQuery.T
+  object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnavailableResult = UnavailableResult.T
+  object UnavailableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

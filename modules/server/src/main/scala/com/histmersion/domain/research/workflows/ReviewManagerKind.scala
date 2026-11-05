@@ -45,7 +45,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   override def settings(c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
     ReviewManagerPolicy.settings(c, reviewDefaults, m)
 
-  def pipelineOf(itemKind: String): Pipeline = itemKind match
+  def pipelineOf(itemKind: com.histmersion.domain.research.workflows.ReviewManagerKind.PipelineOfItemKind): Pipeline = itemKind match
     case InferFilter   => Pipeline.InferFilter
     case ArticleExtend => Pipeline.CompileArticle
     case _             => Pipeline.ReviewArticle
@@ -56,7 +56,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** When each review manager last looked for articles to extend (epoch ms); in memory. */
   private val lastExtend = java.util.concurrent.ConcurrentHashMap[String, java.lang.Long]()
 
-  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[String] = List("selection refilled")
+  def fire(c: ManagerContext, m: ManagerInfo, now: Instant): List[com.histmersion.domain.research.workflows.ReviewManagerKind.FireResult] = List("selection refilled")
 
   // ── evaluate ───────────────────────────────────────────────────────────────────────────────────
 
@@ -79,9 +79,9 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       s: ReviewSettings,
       item: ManagerItem,
       st: RunState,
-      error: Option[String],
+      error: Option[com.histmersion.domain.research.workflows.ReviewManagerKind.EvaluateReviewError],
       now: Instant,
-      out: Builder[String, List[String]]
+      out: Builder[com.histmersion.domain.research.workflows.ReviewManagerKind.EvaluateReviewOutPart1, List[com.histmersion.domain.research.workflows.ReviewManagerKind.EvaluateReviewOutPart2]]
   ): Unit =
     val run = item.runId.get
     val ledger = ledgers.get(item.target).toOption.flatten
@@ -128,7 +128,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
   /** The stop's backlog item: the article's own review task (the ledger's, while it is open) is rewritten with the
     * reason, else a new one is added. Returns its id.
     */
-  private def fileTask(slug: String, ledger: Option[ReviewLedger.Ledger], text: String): Option[Int] =
+  private def fileTask(slug: com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskSlug, ledger: Option[ReviewLedger.Ledger], text: com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskText): Option[com.histmersion.domain.research.workflows.ReviewManagerKind.FileTaskResult] =
     val open = ledger
       .flatMap(_.task)
       .flatMap(i => site.queues.get(QueueItemId(i)))
@@ -146,7 +146,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       case None       =>
         site.workLists.add(Queue.Kind.Tasks.label, QueueAdd(text, topic = Some("agent review"))).toOption.map(_.id)
 
-  def facts(c: ManagerContext, item: ManagerItem, run: String): StepFacts =
+  def facts(c: ManagerContext, item: ManagerItem, run: com.histmersion.domain.research.workflows.ReviewManagerKind.FactsRun): StepFacts =
     lazy val progress = c.progress(run)
     item.kind match
       case InferFilter =>
@@ -235,7 +235,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
     * extended in `extend-cooldown-days` — gets an `article-extend` item; the extension's review follows as a chained
     * item. `extendMinNew` 0 = never.
     */
-  private def extensions(c: ManagerContext, m: ManagerInfo, now: Instant, out: Builder[String, List[String]]): Unit =
+  private def extensions(c: ManagerContext, m: ManagerInfo, now: Instant, out: Builder[com.histmersion.domain.research.workflows.ReviewManagerKind.ExtensionsOutPart1, List[com.histmersion.domain.research.workflows.ReviewManagerKind.ExtensionsOutPart2]]): Unit =
     val mcfg = cfg.managers
     val min = m.config.extendMinNew.getOrElse(mcfg.review.extendMinNew)
     val last = Option(lastExtend.get(m.id)).map(_.longValue)
@@ -274,11 +274,11 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       c: ManagerContext,
       m: ManagerInfo,
       s: ReviewSettings,
-      tags: List[String],
-      goal: Option[String],
-      room: Int,
+      tags: List[com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesTags],
+      goal: Option[com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesGoal],
+      room: com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesRoom,
       now: Instant
-  ): List[(String, String, Option[Long])] =
+  ): List[(com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesResultPart1, com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesResultPart2, Option[com.histmersion.domain.research.workflows.ReviewManagerKind.StaleArticlesResultPart3])] =
     val last = Option(lastStale.get(m.id)).map(_.longValue).getOrElse(Long.MinValue)
     val every = math.max(1, cfg.managers.review.staleScanMinutes).toLong * 60000L
     if s.staleAfterDays <= 0 || (last != Long.MinValue && now.toEpochMilli - last < every) then Nil
@@ -297,7 +297,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
         .take(room)
 
   /** A target's priority under the standing prioritise hints that match it. */
-  private def boosted(c: ManagerContext, slug: String, base: Int, hints: List[ManagerHint]): Int =
+  private def boosted(c: ManagerContext, slug: com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedSlug, base: com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedBase, hints: List[ManagerHint]): com.histmersion.domain.research.workflows.ReviewManagerKind.BoostedResult =
     if hints.isEmpty then base
     else
       val (tags, goals) = c.articleFacets(slug)
@@ -309,7 +309,7 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
 
   // ── what a person adds ─────────────────────────────────────────────────────────────────────────
 
-  def target(m: ManagerInfo, itemKind: String, raw: String): Either[Api.Error, String] =
+  def target(m: ManagerInfo, itemKind: com.histmersion.domain.research.workflows.ReviewManagerKind.TargetItemKind, raw: com.histmersion.domain.research.workflows.ReviewManagerKind.TargetRaw): Either[Api.Error, com.histmersion.domain.research.workflows.ReviewManagerKind.TargetResultPart2] =
     itemKind match
       case ArticleReview | InferFilter | ArticleExtend => site.articles.get(raw.trim).map(_.article.slug)
       case other                                       => Left(Api.Error(s"unknown item kind '$other'"))
@@ -339,8 +339,8 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
       s: ReviewSettings,
       item: ManagerItem,
       now: Instant,
-      out: Builder[String, List[String]]
-  ): Option[String] =
+      out: Builder[com.histmersion.domain.research.workflows.ReviewManagerKind.DispatchOutPart1, List[com.histmersion.domain.research.workflows.ReviewManagerKind.DispatchOutPart2]]
+  ): Option[com.histmersion.domain.research.workflows.ReviewManagerKind.DispatchResult] =
     item.kind match
       case ArticleReview =>
         if ManagerPolicy.waitsFor(item.kind, item.target, c.openKeys(m.id)) then None
@@ -401,4 +401,57 @@ final class ReviewManagerKind(site: ResearchSite, ledgers: => ReviewLedgerServic
 object ReviewManagerKind:
 
   /** A review manager's defaults as research's policy reads them; the scan timings stay with the kind. */
+  type PipelineOfItemKind = PipelineOfItemKind.T
+  object PipelineOfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FireResult = FireResult.T
+  object FireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewError = EvaluateReviewError.T
+  object EvaluateReviewError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewOutPart1 = EvaluateReviewOutPart1.T
+  object EvaluateReviewOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateReviewOutPart2 = EvaluateReviewOutPart2.T
+  object EvaluateReviewOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileTaskResult = FileTaskResult.T
+  object FileTaskResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileTaskSlug = FileTaskSlug.T
+  object FileTaskSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileTaskText = FileTaskText.T
+  object FileTaskText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FactsRun = FactsRun.T
+  object FactsRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtensionsOutPart1 = ExtensionsOutPart1.T
+  object ExtensionsOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtensionsOutPart2 = ExtensionsOutPart2.T
+  object ExtensionsOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleArticlesResultPart1 = StaleArticlesResultPart1.T
+  object StaleArticlesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleArticlesResultPart2 = StaleArticlesResultPart2.T
+  object StaleArticlesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleArticlesResultPart3 = StaleArticlesResultPart3.T
+  object StaleArticlesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleArticlesTags = StaleArticlesTags.T
+  object StaleArticlesTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleArticlesGoal = StaleArticlesGoal.T
+  object StaleArticlesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleArticlesRoom = StaleArticlesRoom.T
+  object StaleArticlesRoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoostedResult = BoostedResult.T
+  object BoostedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoostedSlug = BoostedSlug.T
+  object BoostedSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoostedBase = BoostedBase.T
+  object BoostedBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetResultPart2 = TargetResultPart2.T
+  object TargetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetItemKind = TargetItemKind.T
+  object TargetItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetRaw = TargetRaw.T
+  object TargetRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DispatchResult = DispatchResult.T
+  object DispatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DispatchOutPart1 = DispatchOutPart1.T
+  object DispatchOutPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DispatchOutPart2 = DispatchOutPart2.T
+  object DispatchOutPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def defaultsOf(c: ReviewManagerConfig): ReviewManagerDefaults = c.transformInto[ReviewManagerDefaults]

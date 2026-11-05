@@ -15,4 +15,7 @@ import sttp.shared.Identity
   * what it can do.
   */
 private[automation] object PluginModel extends AIModel with Capability.All:
-  def value: String = "plugin"
+  type ValueResult = ValueResult.T
+  object ValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def value: com.histmersion.domain.automation.agents.PluginModel.ValueResult = "plugin"

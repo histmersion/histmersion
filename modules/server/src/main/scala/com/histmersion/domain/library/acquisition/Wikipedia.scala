@@ -8,7 +8,7 @@ import com.histmersion.domain.*
 import com.histmersion.api.library.WikirefsResult
 
 final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
-  def refs(articleUrl: String): Either[String, WikirefsResult] =
+  def refs(articleUrl: com.histmersion.domain.library.acquisition.Wikipedia.RefsArticleUrl): Either[com.histmersion.domain.library.acquisition.Wikipedia.RefsResultPart1, WikirefsResult] =
     AcquireParse
       .wikiPageTitle(articleUrl)
       .toRight(s"'$articleUrl' is not a Wikipedia article URL")
@@ -32,3 +32,9 @@ final class Wikipedia(cfg: AcquireConfig, http: Http) extends WikiClient:
             }
           }
       }
+
+object Wikipedia:
+  type RefsResultPart1 = RefsResultPart1.T
+  object RefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefsArticleUrl = RefsArticleUrl.T
+  object RefsArticleUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

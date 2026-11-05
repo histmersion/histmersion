@@ -69,28 +69,71 @@ import com.histmersion.api.Api
   */
 trait CollectionsService:
   def collections(): List[CollectionInfo]
-  def collection(name: String): Either[Api.Error, CollectionInfo]
+  def collection(name: com.histmersion.domain.library.collections.CollectionsService.CollectionName): Either[Api.Error, CollectionInfo]
   def search(
-      name: String,
-      q: Option[String],
-      limit: Option[Int],
-      unlinked: Boolean
+      name: com.histmersion.domain.library.collections.CollectionsService.SearchName,
+      q: Option[com.histmersion.domain.library.collections.CollectionsService.SearchQ],
+      limit: Option[com.histmersion.domain.library.collections.CollectionsService.SearchLimit],
+      unlinked: com.histmersion.domain.library.collections.CollectionsService.SearchUnlinked
   ): Either[Api.Error, CollectionSearch]
-  def importItem(caller: Caller, name: String, req: CollectionImportRequest): Either[Api.Error, CollectionImported]
-  def link(caller: Caller, name: String, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked]
-  def push(caller: Caller, name: String, req: CollectionPushRequest): Either[Api.Error, CollectionPushed]
-  def updateOne(caller: Caller, name: String, citekey: String): Either[Api.Error, CollectionUpdatedOne]
-  def updateAll(caller: Caller, name: String, apply: Boolean): Either[Api.Error, CollectionUpdateAll]
-  def set(caller: Caller, name: String, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone]
-  def audit(name: String): Either[Api.Error, CollectionAudit]
-  def gaps(name: String, limit: Option[Int]): Either[Api.Error, CollectionGaps]
-  def sync(caller: Caller, name: String, req: CollectionSync.Request): Either[Api.Error, CollectionSync]
-  def archiveSearch(q: String, rows: Option[Int]): Either[Api.Error, ArchiveSearchResult]
-  def archiveInfo(id: String): Either[Api.Error, ArchiveItem]
+  def importItem(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.ImportItemName, req: CollectionImportRequest): Either[Api.Error, CollectionImported]
+  def link(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.LinkName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked]
+  def push(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.PushName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed]
+  def updateOne(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.UpdateOneName, citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CollectionUpdatedOne]
+  def updateAll(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.UpdateAllName, apply: com.histmersion.domain.library.collections.CollectionsService.UpdateAllApply): Either[Api.Error, CollectionUpdateAll]
+  def set(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.SetName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone]
+  def audit(name: com.histmersion.domain.library.collections.CollectionsService.AuditName): Either[Api.Error, CollectionAudit]
+  def gaps(name: com.histmersion.domain.library.collections.CollectionsService.GapsName, limit: Option[com.histmersion.domain.library.collections.CollectionsService.GapsLimit]): Either[Api.Error, CollectionGaps]
+  def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.SyncName, req: CollectionSync.Request): Either[Api.Error, CollectionSync]
+  def archiveSearch(q: com.histmersion.domain.library.collections.CollectionsService.ArchiveSearchQ, rows: Option[com.histmersion.domain.library.collections.CollectionsService.ArchiveSearchRows]): Either[Api.Error, ArchiveSearchResult]
+  def archiveInfo(id: com.histmersion.domain.library.collections.CollectionsService.ArchiveInfoId): Either[Api.Error, ArchiveItem]
   def archiveImport(caller: Caller, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report]
 
 object CollectionsService:
   /** The collection the library links its sources to (`sources.calibre_id`). */
+  type CollectionName = CollectionName.T
+  object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchName = SearchName.T
+  object SearchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchQ = SearchQ.T
+  object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUnlinked = SearchUnlinked.T
+  object SearchUnlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportItemName = ImportItemName.T
+  object ImportItemName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkName = LinkName.T
+  object LinkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PushName = PushName.T
+  object PushName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdateOneName = UpdateOneName.T
+  object UpdateOneName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdateAllName = UpdateAllName.T
+  object UpdateAllName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdateAllApply = UpdateAllApply.T
+  object UpdateAllApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetName = SetName.T
+  object SetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuditName = AuditName.T
+  object AuditName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GapsName = GapsName.T
+  object GapsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GapsLimit = GapsLimit.T
+  object GapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SyncName = SyncName.T
+  object SyncName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArchiveSearchQ = ArchiveSearchQ.T
+  object ArchiveSearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArchiveSearchRows = ArchiveSearchRows.T
+  object ArchiveSearchRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArchiveInfoId = ArchiveInfoId.T
+  object ArchiveInfoId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyRegistryResultPart1 = ApplyRegistryResultPart1.T
+  object ApplyRegistryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyArchiveRows = ApplyArchiveRows.T
+  object ApplyArchiveRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Calibre = "calibre"
 
   /** archive.org's texts. */
@@ -100,8 +143,8 @@ object CollectionsService:
   def apply(
       transactor: Transactor,
       library: CollectionLibrary,
-      registry: () => ListMap[String, SourceCollection],
-      archiveRows: Int
+      registry: () => ListMap[com.histmersion.domain.library.collections.CollectionsService.ApplyRegistryResultPart1, SourceCollection],
+      archiveRows: com.histmersion.domain.library.collections.CollectionsService.ApplyArchiveRows
   ): CollectionsService =
     Implementation(() => transactor.read(CollectionLinksRepo.linked()), library, registry, archiveRows)
 
@@ -125,10 +168,10 @@ object CollectionsService:
       archiveRows: Int
   ) extends CollectionsService:
 
-    private def fail(message: String): Api.Error = Api.Error(message)
-    private def usage(message: String): Api.Error = Api.Error(message, Some(CollectionsApi.Usage))
+    private def fail(message: com.histmersion.domain.library.collections.CollectionsService.Implementation.FailMessage): Api.Error = Api.Error(message)
+    private def usage(message: com.histmersion.domain.library.collections.CollectionsService.Implementation.UsageMessage): Api.Error = Api.Error(message, Some(CollectionsApi.Usage))
 
-    private def lookup(name: String): Either[Api.Error, HostCollection] =
+    private def lookup(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.LookupName): Either[Api.Error, HostCollection] =
       registry()
         .get(name)
         .map(HostCollection(name, _))
@@ -140,7 +183,7 @@ object CollectionsService:
         )
 
     /** The collections the library links sources to: Calibre alone (`sources.calibre_id`). */
-    private def linking(name: String): Either[Api.Error, HostCollection] =
+    private def linking(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.LinkingName): Either[Api.Error, HostCollection] =
       if name == Calibre then lookup(name)
       else Left(fail(s"the library links sources to Calibre only, not to '$name'"))
 
@@ -157,7 +200,7 @@ object CollectionsService:
 
     def collections(): List[CollectionInfo] = registry().toList.map((n, c) => info(HostCollection(n, c)))
 
-    def collection(name: String): Either[Api.Error, CollectionInfo] = lookup(name).map(info)
+    def collection(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.CollectionName): Either[Api.Error, CollectionInfo] = lookup(name).map(info)
 
     private def entry(i: CollectionItem): CollectionEntry =
       CollectionEntry(
@@ -171,13 +214,13 @@ object CollectionsService:
         i.files.map(_.name)
       )
 
-    private def linkedIds(): Set[String] = linked().flatMap(_.id.trim.toIntOption).map(_.toString).toSet
+    private def linkedIds(): Set[com.histmersion.domain.library.collections.CollectionsService.Implementation.LinkedIdsResult] = linked().flatMap(_.id.trim.toIntOption).map(_.toString).toSet
 
     def search(
-        name: String,
-        q: Option[String],
-        limit: Option[Int],
-        unlinked: Boolean
+        name: com.histmersion.domain.library.collections.CollectionsService.Implementation.SearchName,
+        q: Option[com.histmersion.domain.library.collections.CollectionsService.Implementation.SearchQ],
+        limit: Option[com.histmersion.domain.library.collections.CollectionsService.Implementation.SearchLimit],
+        unlinked: com.histmersion.domain.library.collections.CollectionsService.Implementation.SearchUnlinked
     ): Either[Api.Error, CollectionSearch] =
       val max = limit.getOrElse(SearchLimit)
       if q.isEmpty && !unlinked then Left(usage("give a query, or --unlinked"))
@@ -204,7 +247,7 @@ object CollectionsService:
 
     // ── import ────────────────────────────────────────────────────────────────────────────────
 
-    def importItem(caller: Caller, name: String, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
+    def importItem(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.ImportItemName, req: CollectionImportRequest): Either[Api.Error, CollectionImported] =
       for
         c <- linking(name)
         _ <- req.acquireItem.fold(Right(()))(i =>
@@ -243,12 +286,12 @@ object CollectionsService:
           conversion.flatMap(_.left.toOption.flatMap(_.code))
         )
 
-    private def stripHtml(s: String): String = s.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim
+    private def stripHtml(s: com.histmersion.domain.library.collections.CollectionsService.Implementation.StripHtmlS): com.histmersion.domain.library.collections.CollectionsService.Implementation.StripHtmlResult = s.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim
 
     /** Create the source, or enrich it if the citekey exists — a re-import never wipes the findings and notes an agent
       * compiled; either way the record ends up linked to this entry.
       */
-    private def upsert(ck: String, item: CollectionItem, target: ImportTarget): Either[Api.Error, Source.WithFindings] =
+    private def upsert(ck: com.histmersion.domain.library.collections.CollectionsService.Implementation.UpsertCk, item: CollectionItem, target: ImportTarget): Either[Api.Error, Source.WithFindings] =
       val summary = item.description.map(stripHtml).filter(_.nonEmpty).map(_.take(500))
       val doi = item.identifiers.get("doi")
       target match
@@ -295,7 +338,7 @@ object CollectionsService:
     /** The imported book's cover, best-effort: the collection's own, else Open Library's by its ISBN; a missing cover
       * never fails the import.
       */
-    private def coverOf(c: HostCollection, ck: String, item: CollectionItem): CollectionCover =
+    private def coverOf(c: HostCollection, ck: com.histmersion.domain.library.collections.CollectionsService.Implementation.CoverOfCk, item: CollectionItem): CollectionCover =
       c.cover(item) match
         case Left(why)       => CollectionCover(s"$ck: $why", warning = true)
         case Right(Some(fc)) =>
@@ -318,8 +361,8 @@ object CollectionsService:
         c: HostCollection,
         item: CollectionItem,
         file: CollectionFile,
-        ck: String,
-        acquireItem: Option[Int]
+        ck: com.histmersion.domain.library.collections.CollectionsService.Implementation.ConvertCk,
+        acquireItem: Option[com.histmersion.domain.library.collections.CollectionsService.Implementation.ConvertAcquireItem]
     ): Either[Api.Error, Ingest.Accepted] =
       val fileName = file.name.reverse.takeWhile(_ != '/').reverse
       c.original(item, file) match
@@ -332,7 +375,7 @@ object CollectionsService:
 
     // ── link, push, update, set ───────────────────────────────────────────────────────────────
 
-    def link(caller: Caller, name: String, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
+    def link(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.LinkName, req: CollectionLinkRequest): Either[Api.Error, CollectionLinked] =
       for
         c <- linking(name)
         item <- c
@@ -343,7 +386,7 @@ object CollectionsService:
         sw <- library.patch(req.citekey, Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(req.id)))))
       yield CollectionLinked(sw.source.citekey, req.id, item.title.getOrElse(""))
 
-    private def metadata(ck: String, s: CalibreGap): CollectionMetadata =
+    private def metadata(ck: com.histmersion.domain.library.collections.CollectionsService.Implementation.MetadataCk, s: CalibreGap): CollectionMetadata =
       CollectionMetadata(
         ck,
         s.title,
@@ -358,7 +401,7 @@ object CollectionsService:
 
     /** The stored original of `ck` as a file to hand a collection; `hint` is added to the refusal when there is none.
       */
-    private def original(ck: String, hint: String): Either[Api.Error, FetchedFile] =
+    private def original(ck: com.histmersion.domain.library.collections.CollectionsService.Implementation.OriginalCk, hint: com.histmersion.domain.library.collections.CollectionsService.Implementation.OriginalHint): Either[Api.Error, FetchedFile] =
       for
         o <- library.original(ck).left.map(e => if hint.isEmpty then e else e.modify(_.message).setTo(e.message + hint))
         ext <- Ingest.dispositionExtension(o.disposition).toRight(fail(s"the server did not say what format '$ck' is"))
@@ -367,7 +410,7 @@ object CollectionsService:
     /** One push: the source's metadata, its stored original into the collection as a new item, and the new id recorded
       * so it stops counting as a gap.
       */
-    private def pushOne(c: HostCollection, ck: String): Either[Api.Error, (String, String)] =
+    private def pushOne(c: HostCollection, ck: com.histmersion.domain.library.collections.CollectionsService.Implementation.PushOneCk): Either[Api.Error, (com.histmersion.domain.library.collections.CollectionsService.Implementation.PushOneResultPart2Part1, com.histmersion.domain.library.collections.CollectionsService.Implementation.PushOneResultPart2Part2)] =
       for
         s <- library.pushMeta(ck)
         file <- original(ck, StoredOriginalHint)
@@ -375,7 +418,7 @@ object CollectionsService:
         _ <- library.pushed(CalibrePushRequest(ck, id.value))
       yield (id.value, s.title)
 
-    def push(caller: Caller, name: String, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
+    def push(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.PushName, req: CollectionPushRequest): Either[Api.Error, CollectionPushed] =
       val ck = req.citekey
       linking(name).flatMap { c =>
         if !req.replace then pushOne(c, ck).map((id, title) => CollectionPushed(ck, id, title))
@@ -395,7 +438,7 @@ object CollectionsService:
           yield CollectionPushed(ck, id.toString, s.title, Some(fmt))
       }
 
-    def updateOne(caller: Caller, name: String, citekey: String): Either[Api.Error, CollectionUpdatedOne] =
+    def updateOne(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.UpdateOneName, citekey: com.histmersion.domain.library.Citekey): Either[Api.Error, CollectionUpdatedOne] =
       for
         c <- linking(name)
         s <- library.pushMeta(citekey)
@@ -405,7 +448,7 @@ object CollectionsService:
         changes <- c.update(CollectionId(id.toString), metadata(citekey, s)).left.map(fail)
       yield CollectionUpdatedOne(citekey, id.toString, changes.map(_.field), s.title)
 
-    def updateAll(caller: Caller, name: String, apply: Boolean): Either[Api.Error, CollectionUpdateAll] =
+    def updateAll(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.UpdateAllName, apply: com.histmersion.domain.library.collections.CollectionsService.Implementation.UpdateAllApply): Either[Api.Error, CollectionUpdateAll] =
       @tailrec def links(rest: List[LinkedSource], acc: List[CollectionLink]): Either[Api.Error, List[CollectionLink]] =
         rest match
           case Nil       => Right(acc.reverse)
@@ -432,7 +475,7 @@ object CollectionsService:
         case CollectionUpdateOutcome.Refused(reason)    => ("refused", Nil, Some(reason))
       CollectionUpdateRow(e.id.value, e.keys, state, cs, reason)
 
-    def set(caller: Caller, name: String, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
+    def set(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.SetName, req: CollectionSetRequest): Either[Api.Error, CollectionSetDone] =
       linking(name).flatMap(
         _.set(CollectionId(req.id), req.fields.map(f => f.name -> f.value)).left
           .map(fail)
@@ -441,7 +484,7 @@ object CollectionsService:
 
     // ── audit, gaps, sync ─────────────────────────────────────────────────────────────────────
 
-    def audit(name: String): Either[Api.Error, CollectionAudit] =
+    def audit(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.AuditName): Either[Api.Error, CollectionAudit] =
       val recs = linked()
       val records =
         recs.map(r => CollectionRecord(r.citekey, CollectionId(r.id), r.title, r.authors, r.year.map(Year(_))))
@@ -463,14 +506,14 @@ object CollectionsService:
         recs.flatMap(_.id.trim.toIntOption).distinct.size
       )
 
-    def gaps(name: String, limit: Option[Int]): Either[Api.Error, CollectionGaps] =
+    def gaps(name: com.histmersion.domain.library.collections.CollectionsService.Implementation.GapsName, limit: Option[com.histmersion.domain.library.collections.CollectionsService.Implementation.GapsLimit]): Either[Api.Error, CollectionGaps] =
       linking(name).map { _ =>
         val rows = library.gaps(limit).gaps.map(GapOriginal.row)
         val n = rows.count(_.counted)
         CollectionGaps(n, rows.size - n, rows.size, rows)
       }
 
-    def sync(caller: Caller, name: String, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
+    def sync(caller: Caller, name: com.histmersion.domain.library.collections.CollectionsService.Implementation.SyncName, req: CollectionSync.Request): Either[Api.Error, CollectionSync] =
       for
         g <- gaps(name, req.limit)
         c <- linking(name)
@@ -500,7 +543,7 @@ object CollectionsService:
         i.files.map(f => ArchiveFile(f.name, f.format, f.megabytes.getOrElse(0.0)))
       )
 
-    def archiveSearch(q: String, rows: Option[Int]): Either[Api.Error, ArchiveSearchResult] =
+    def archiveSearch(q: com.histmersion.domain.library.collections.CollectionsService.Implementation.ArchiveSearchQ, rows: Option[com.histmersion.domain.library.collections.CollectionsService.Implementation.ArchiveSearchRows]): Either[Api.Error, ArchiveSearchResult] =
       val query = q.trim
       if query.isEmpty then Left(fail("give a search query"))
       else
@@ -512,10 +555,10 @@ object CollectionsService:
             .map(fail)
         yield ArchiveSearchResult(query, items.size, items.map(archiveItem))
 
-    private def archiveFound(c: HostCollection, id: String): Either[Api.Error, CollectionItem] =
+    private def archiveFound(c: HostCollection, id: com.histmersion.domain.library.collections.CollectionsService.Implementation.ArchiveFoundId): Either[Api.Error, CollectionItem] =
       c.item(CollectionId(id)).left.map(fail).flatMap(_.toRight(fail(s"no archive.org item '$id'")))
 
-    def archiveInfo(id: String): Either[Api.Error, ArchiveItem] =
+    def archiveInfo(id: com.histmersion.domain.library.collections.CollectionsService.Implementation.ArchiveInfoId): Either[Api.Error, ArchiveItem] =
       lookup(ArchiveOrg).flatMap(archiveFound(_, id)).map(archiveItem)
 
     /** Import a PUBLIC archive.org item. A lending-only scan is refused, not worked around: it must be borrowed on
@@ -541,5 +584,81 @@ object CollectionsService:
         )
       yield report
 
+  object Implementation:
+    type FailMessage = FailMessage.T
+    object FailMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UsageMessage = UsageMessage.T
+    object UsageMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LookupName = LookupName.T
+    object LookupName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinkingName = LinkingName.T
+    object LinkingName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CollectionName = CollectionName.T
+    object CollectionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinkedIdsResult = LinkedIdsResult.T
+    object LinkedIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchName = SearchName.T
+    object SearchName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchQ = SearchQ.T
+    object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchLimit = SearchLimit.T
+    object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchUnlinked = SearchUnlinked.T
+    object SearchUnlinked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportItemName = ImportItemName.T
+    object ImportItemName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StripHtmlResult = StripHtmlResult.T
+    object StripHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StripHtmlS = StripHtmlS.T
+    object StripHtmlS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpsertCk = UpsertCk.T
+    object UpsertCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CoverOfCk = CoverOfCk.T
+    object CoverOfCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ConvertCk = ConvertCk.T
+    object ConvertCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ConvertAcquireItem = ConvertAcquireItem.T
+    object ConvertAcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinkName = LinkName.T
+    object LinkName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MetadataCk = MetadataCk.T
+    object MetadataCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OriginalCk = OriginalCk.T
+    object OriginalCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OriginalHint = OriginalHint.T
+    object OriginalHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PushOneResultPart2Part1 = PushOneResultPart2Part1.T
+    object PushOneResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PushOneResultPart2Part2 = PushOneResultPart2Part2.T
+    object PushOneResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PushOneCk = PushOneCk.T
+    object PushOneCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PushName = PushName.T
+    object PushName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdateOneName = UpdateOneName.T
+    object UpdateOneName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdateAllName = UpdateAllName.T
+    object UpdateAllName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdateAllApply = UpdateAllApply.T
+    object UpdateAllApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetName = SetName.T
+    object SetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AuditName = AuditName.T
+    object AuditName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GapsName = GapsName.T
+    object GapsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GapsLimit = GapsLimit.T
+    object GapsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SyncName = SyncName.T
+    object SyncName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArchiveSearchQ = ArchiveSearchQ.T
+    object ArchiveSearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArchiveSearchRows = ArchiveSearchRows.T
+    object ArchiveSearchRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArchiveFoundId = ArchiveFoundId.T
+    object ArchiveFoundId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ArchiveInfoId = ArchiveInfoId.T
+    object ArchiveInfoId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** The most entries a search shows when not told. */
-  val SearchLimit: Int = 20
+  val SearchLimit: com.histmersion.domain.library.collections.CollectionsService.SearchLimit = 20

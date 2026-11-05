@@ -12,7 +12,16 @@ import com.augustnagro.magnum.*
 /** The `bookmarks` table. Takes the connection it runs on; a removed bookmark stays as its tombstone. */
 private[bookmarks] object BookmarkRepo:
 
-  private def iso(col: String): String = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
+  type IsoResult = IsoResult.T
+  object IsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsoCol = IsoCol.T
+  object IsoCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RelabelResult = RelabelResult.T
+  object RelabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TombstoneResult = TombstoneResult.T
+  object TombstoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def iso(col: com.histmersion.domain.personal.bookmarks.BookmarkRepo.IsoCol): com.histmersion.domain.personal.bookmarks.BookmarkRepo.IsoResult = s"""to_char($col AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS.US"Z"')"""
 
   private val Projection =
     s"""SELECT b.id::text, b.target_kind, b.target_id, b.target_uid, b.lat, b.lon, b.zoom, b.period_start, b.period_end,
@@ -65,12 +74,12 @@ private[bookmarks] object BookmarkRepo:
       id: com.histmersion.api.personal.Bookmark.Id,
       label: Option[com.histmersion.api.personal.Bookmark.Label],
       at: MarkTime
-  )(using DbCon): Int =
+  )(using DbCon): com.histmersion.domain.personal.bookmarks.BookmarkRepo.RelabelResult =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET label = $label, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()
 
-  def tombstone(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using DbCon): Int =
+  def tombstone(user: UserId, id: com.histmersion.api.personal.Bookmark.Id, at: MarkTime)(using DbCon): com.histmersion.domain.personal.bookmarks.BookmarkRepo.TombstoneResult =
     val stamp = at.iso
     sql"""UPDATE bookmarks SET deleted_at = $stamp::timestamptz, updated_at = $stamp::timestamptz
           WHERE user_id = ${user.value} AND id = ${id.value}::uuid AND deleted_at IS NULL""".update.run()

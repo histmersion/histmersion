@@ -13,6 +13,35 @@ object CatalogMerge:
   /** How close two records of the same kind must be to be one event: their outer spans overlap once each is widened by
     * `years`, and their points are within `km`.
     */
+  type OuterResultPart1 = OuterResultPart1.T
+  object OuterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OuterResultPart2 = OuterResultPart2.T
+  object OuterResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsResult = OverlapsResult.T
+  object OverlapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsYears = OverlapsYears.T
+  object OverlapsYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearResult = NearResult.T
+  object NearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearAPart1 = NearAPart1.T
+  object NearAPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearAPart2 = NearAPart2.T
+  object NearAPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearBPart1 = NearBPart1.T
+  object NearBPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearBPart2 = NearBPart2.T
+  object NearBPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NearKm = NearKm.T
+  object NearKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameKindResult = SameKindResult.T
+  object SameKindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameKindA = SameKindA.T
+  object SameKindA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameKindB = SameKindB.T
+  object SameKindB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FitId = FitId.T
+  object FitId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Tolerance(km: Tolerance.Km, years: Tolerance.Years)
 
   object Tolerance:
@@ -27,19 +56,19 @@ object CatalogMerge:
   enum Placement:
     case Existing(eventId: String, why: String)
     case New(eventId: String, why: String)
-    def eventId: String
+    def eventId: com.histmersion.domain.catalogue.Event.Id
 
-  private def outer(ts: TimeSpan): Option[(Long, Long)] = ts.outer
+  private def outer(ts: TimeSpan): Option[(com.histmersion.domain.catalogue.events.CatalogMerge.OuterResultPart1, com.histmersion.domain.catalogue.events.CatalogMerge.OuterResultPart2)] = ts.outer
 
   /** Pure: do two spans overlap once widened by `years`? An undated one overlaps nothing. */
-  def overlaps(a: TimeSpan, b: TimeSpan, years: Long): Boolean =
+  def overlaps(a: TimeSpan, b: TimeSpan, years: com.histmersion.domain.catalogue.events.CatalogMerge.OverlapsYears): com.histmersion.domain.catalogue.events.CatalogMerge.OverlapsResult =
     (outer(a), outer(b)) match
       case (Some((a0, a1)), Some((b0, b1))) =>
         Years.shift(a0, -years) <= Years.shift(b1, years) && Years.shift(b0, -years) <= Years.shift(a1, years)
       case _ => false
 
   /** Pure: are two points within `km`? An unplaced one is near nothing. */
-  def near(a: (Option[Double], Option[Double]), b: (Option[Double], Option[Double]), km: Double): Boolean =
+  def near(a: (Option[com.histmersion.domain.catalogue.events.CatalogMerge.NearAPart1], Option[com.histmersion.domain.catalogue.events.CatalogMerge.NearAPart2]), b: (Option[com.histmersion.domain.catalogue.events.CatalogMerge.NearBPart1], Option[com.histmersion.domain.catalogue.events.CatalogMerge.NearBPart2]), km: com.histmersion.domain.catalogue.events.CatalogMerge.NearKm): com.histmersion.domain.catalogue.events.CatalogMerge.NearResult =
     (a, b) match
       case ((Some(la), Some(lo)), (Some(lb), Some(ob))) => Geocode.distanceKm(lo, la, ob, lb) <= km
       case _                                            => false
@@ -47,7 +76,7 @@ object CatalogMerge:
   /** Two kinds are the same thing when their canonical kinds are equal (a siege is no battle here: Wikidata lists both
     * for one fight only when it says so through the item).
     */
-  private def sameKind(a: String, b: String): Boolean = EventTaxonomy.canonical(a) == EventTaxonomy.canonical(b)
+  private def sameKind(a: com.histmersion.domain.catalogue.events.CatalogMerge.SameKindA, b: com.histmersion.domain.catalogue.events.CatalogMerge.SameKindB): com.histmersion.domain.catalogue.events.CatalogMerge.SameKindResult = EventTaxonomy.canonical(a) == EventTaxonomy.canonical(b)
 
   /** Pure: how well a candidate's span and point fit a record's — the TIE-BREAK when several qualify, compared in this
     * order: the larger `score` (the overlap of the two outer spans over their union, 0…1: the one whose dating agrees
@@ -68,7 +97,7 @@ object CatalogMerge:
     given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score, f.years, f.km, f.id))
 
   /** Pure: the [[Fit]] of a candidate (`ts`, `lat`/`lon`, `id`) to a record. */
-  def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[Double], lon: Option[Double], id: String): Fit =
+  def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[com.histmersion.Latitude], lon: Option[com.histmersion.Longitude], id: com.histmersion.domain.catalogue.events.CatalogMerge.FitId): Fit =
     val (score, years) = (outer(r.timeSpan), outer(ts)) match
       case (Some((a0, a1)), Some((b0, b1))) =>
         val inter = (a1.min(b1) - a0.max(b0) + 1).max(0).toDouble

@@ -7,13 +7,24 @@ import com.histmersion.domain.library.Citekey
 
 /** Citekey shape for a rename. */
 object Citekeys:
+  type ValidResult = ValidResult.T
+  object ValidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidCk = ValidCk.T
+  object ValidCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameToResultPart1 = RenameToResultPart1.T
+  object RenameToResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameToOldCk = RenameToOldCk.T
+  object RenameToOldCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameToNewRaw = RenameToNewRaw.T
+  object RenameToNewRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Shape = "^[a-z][a-z0-9_]*$".r
-  def valid(ck: String): Boolean = Shape.matches(ck)
+  def valid(ck: com.histmersion.domain.library.sources.Citekeys.ValidCk): com.histmersion.domain.library.sources.Citekeys.ValidResult = Shape.matches(ck)
 
   /** A source's new citekey, or why it cannot be one: an invalid key, the key it has, or a valid key that is not
     * link-shaped (`[[key]]` would resolve to an article, not the source).
     */
-  def renameTo(oldCk: String, newRaw: String): Either[String, Citekey] =
+  def renameTo(oldCk: com.histmersion.domain.library.sources.Citekeys.RenameToOldCk, newRaw: com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw): Either[com.histmersion.domain.library.sources.Citekeys.RenameToResultPart1, Citekey] =
     Citekey.parse(newRaw).flatMap { ck =>
       if ck.value == oldCk.trim then Left(s"'$ck' is already the citekey of that source")
       else if !WikiLinks.isCitekeyShaped(ck.value) then

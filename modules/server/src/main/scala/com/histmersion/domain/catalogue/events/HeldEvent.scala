@@ -38,14 +38,14 @@ final case class HeldEvent(
     participants: List[EventParticipant] = Nil
 ):
   /** The GeoJSON type of its own geometry, as PostGIS names it (`POINT`, `POLYGON`, …). */
-  def geometryType: Option[String] = geometry.flatMap(HeldEvent.typeOf)
+  def geometryType: Option[com.histmersion.domain.catalogue.events.HeldEvent.GeometryTypeResult] = geometry.flatMap(HeldEvent.typeOf)
 
   /** Its outer span: the earliest and the latest year it may cover. */
-  def outer: Option[(Long, Long)] = timeSpan.outer
+  def outer: Option[(com.histmersion.domain.catalogue.events.HeldEvent.OuterResultPart1, com.histmersion.domain.catalogue.events.HeldEvent.OuterResultPart2)] = timeSpan.outer
 
-  def uncertainty: Option[Long] = EventPrecision.uncertainty(timeSpan, plusMinus)
+  def uncertainty: Option[com.histmersion.domain.catalogue.events.HeldEvent.UncertaintyResult] = EventPrecision.uncertainty(timeSpan, plusMinus)
 
-  def summary(attested: Boolean): EventSummary =
+  def summary(attested: com.histmersion.domain.catalogue.events.HeldEvent.SummaryAttested): EventSummary =
     EventSummary(
       id,
       label,
@@ -67,6 +67,27 @@ final case class HeldEvent(
 
 object HeldEvent:
   /** The `type` of a GeoJSON geometry, upper case. */
+  type GeometryTypeResult = GeometryTypeResult.T
+  object GeometryTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OuterResultPart1 = OuterResultPart1.T
+  object OuterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OuterResultPart2 = OuterResultPart2.T
+  object OuterResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertaintyResult = UncertaintyResult.T
+  object UncertaintyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SummaryAttested = SummaryAttested.T
+  object SummaryAttested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TypeOfResult = TypeOfResult.T
+  object TypeOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TypeOfGeojson = TypeOfGeojson.T
+  object TypeOfGeojson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointOfResultPart1 = PointOfResultPart1.T
+  object PointOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointOfResultPart2 = PointOfResultPart2.T
+  object PointOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointOfGeojson = PointOfGeojson.T
+  object PointOfGeojson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
@@ -96,11 +117,11 @@ object HeldEvent:
   type DatingMethod = DatingMethod.T
   object DatingMethod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def typeOf(geojson: String): Option[String] =
+  def typeOf(geojson: com.histmersion.domain.catalogue.events.HeldEvent.TypeOfGeojson): Option[com.histmersion.domain.catalogue.events.HeldEvent.TypeOfResult] =
     io.circe.parser.parse(geojson).toOption.flatMap(_.hcursor.get[String]("type").toOption).map(_.toUpperCase)
 
   /** The point of a GeoJSON `Point`: (lat, lon). */
-  def pointOf(geojson: String): Option[(Double, Double)] =
+  def pointOf(geojson: com.histmersion.domain.catalogue.events.HeldEvent.PointOfGeojson): Option[(com.histmersion.domain.catalogue.events.HeldEvent.PointOfResultPart1, com.histmersion.domain.catalogue.events.HeldEvent.PointOfResultPart2)] =
     io.circe.parser.parse(geojson).toOption.flatMap { j =>
       val c = j.hcursor
       if !c.get[String]("type").toOption.contains("Point") then None

@@ -52,7 +52,7 @@ final class CandidateSearch(
     q ++ citing
 
   /** Sweep `goal` now; a dry run reads, but stores neither candidates nor watermarks. */
-  def sweep(goal: String, dryRun: Boolean): Either[Api.Error, CandidateSweep] =
+  def sweep(goal: com.histmersion.domain.library.acquisition.CandidateSearch.SweepGoal, dryRun: com.histmersion.domain.library.acquisition.CandidateSearch.SweepDryRun): Either[Api.Error, CandidateSweep] =
     goals.get(goal).toRight(Api.Error(s"no goal '$goal'", Some(Write.CodeNotFound))).map { g =>
       val c = cfg
       val now = today()
@@ -150,3 +150,9 @@ final class CandidateSearch(
       }
       CandidateSweep(g.slug, watches, found.size, added, again, skipped, unseen, dryRun, notes)
     }
+
+object CandidateSearch:
+  type SweepGoal = SweepGoal.T
+  object SweepGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SweepDryRun = SweepDryRun.T
+  object SweepDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

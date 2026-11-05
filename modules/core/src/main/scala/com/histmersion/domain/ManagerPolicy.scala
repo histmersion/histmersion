@@ -21,6 +21,115 @@ object ManagerPolicy:
     * the enrich and seeding managers their run limits, failures and backoff (their items run once each: no rounds, no
     * refill).
     */
+  type CheckCronResultPart1 = CheckCronResultPart1.T
+  object CheckCronResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckCronText = CheckCronText.T
+  object CheckCronText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckCronMinIntervalMinutes = CheckCronMinIntervalMinutes.T
+  object CheckCronMinIntervalMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DailyCapResult = DailyCapResult.T
+  object DailyCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DailyBlockResult = DailyBlockResult.T
+  object DailyBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DailyBlockCap = DailyBlockCap.T
+  object DailyBlockCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackoffBaseMinutes = BackoffBaseMinutes.T
+  object BackoffBaseMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackoffMaxMinutes = BackoffMaxMinutes.T
+  object BackoffMaxMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackoffFailures = BackoffFailures.T
+  object BackoffFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateStepLabel = EvaluateStepLabel.T
+  object EvaluateStepLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateStepTarget = EvaluateStepTarget.T
+  object EvaluateStepTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateStepFailures = EvaluateStepFailures.T
+  object EvaluateStepFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateStepRun = EvaluateStepRun.T
+  object EvaluateStepRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvaluateStepError = EvaluateStepError.T
+  object EvaluateStepError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecidedResult = DecidedResult.T
+  object DecidedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecidedState = DecidedState.T
+  object DecidedState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitsForResult = WaitsForResult.T
+  object WaitsForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitsForKind = WaitsForKind.T
+  object WaitsForKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitsForTarget = WaitsForTarget.T
+  object WaitsForTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitsForOpenPart1 = WaitsForOpenPart1.T
+  object WaitsForOpenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitsForOpenPart2 = WaitsForOpenPart2.T
+  object WaitsForOpenPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalKinds = GoalKinds.T
+  object GoalKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksResult = BlocksResult.T
+  object BlocksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksKind = BlocksKind.T
+  object BlocksKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksPipeline = BlocksPipeline.T
+  object BlocksPipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksUnsettled = BlocksUnsettled.T
+  object BlocksUnsettled extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DueResult = DueResult.T
+  object DueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapacityResult = CapacityResult.T
+  object CapacityResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapacityMaxConcurrent = CapacityMaxConcurrent.T
+  object CapacityMaxConcurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapacityActiveAll = CapacityActiveAll.T
+  object CapacityActiveAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapacityMaxRuns = CapacityMaxRuns.T
+  object CapacityMaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapacityMineRunning = CapacityMineRunning.T
+  object CapacityMineRunning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapacityMaxOpen = CapacityMaxOpen.T
+  object CapacityMaxOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapacityMineOpen = CapacityMineOpen.T
+  object CapacityMineOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapacityPoolCap = CapacityPoolCap.T
+  object CapacityPoolCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundRobinQueuesPart2 = RoundRobinQueuesPart2.T
+  object RoundRobinQueuesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundRobinRoom = RoundRobinRoom.T
+  object RoundRobinRoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReleasedResult = ReleasedResult.T
+  object ReleasedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReleasedSourceExistsArg1 = ReleasedSourceExistsArg1.T
+  object ReleasedSourceExistsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReleasedSourceExistsResult = ReleasedSourceExistsResult.T
+  object ReleasedSourceExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseInstantS = ParseInstantS.T
+  object ParseInstantS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusNoteResult = StatusNoteResult.T
+  object StatusNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusNoteStarved = StatusNoteStarved.T
+  object StatusNoteStarved extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusNoteCapacity = StatusNoteCapacity.T
+  object StatusNoteCapacity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusNotePending = StatusNotePending.T
+  object StatusNotePending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusNoteDue = StatusNoteDue.T
+  object StatusNoteDue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusNoteInFlight = StatusNoteInFlight.T
+  object StatusNoteInFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusNoteBudget = StatusNoteBudget.T
+  object StatusNoteBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesResult = MatchesResult.T
+  object MatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesTarget = MatchesTarget.T
+  object MatchesTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesTags = MatchesTags.T
+  object MatchesTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesTopics = MatchesTopics.T
+  object MatchesTopics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchesGoals = MatchesGoals.T
+  object MatchesGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotesForItemId = NotesForItemId.T
+  object NotesForItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class ReviewSettings(
       maxRuns: ReviewSettings.MaxRuns,
       maxOpen: ReviewSettings.MaxOpen,
@@ -130,7 +239,7 @@ object ManagerPolicy:
   /** A cron a person sets: it parses, and it fires no more often than every `minIntervalMinutes`
     * (`agents.scheduler.min-interval-minutes`).
     */
-  def checkCron(text: String, now: Instant, minIntervalMinutes: Int): Either[String, Cron] =
+  def checkCron(text: com.histmersion.domain.ManagerPolicy.CheckCronText, now: Instant, minIntervalMinutes: com.histmersion.domain.ManagerPolicy.CheckCronMinIntervalMinutes): Either[com.histmersion.domain.ManagerPolicy.CheckCronResultPart1, Cron] =
     Cron.parse(text).flatMap { c =>
       c.shortestGapMinutes(now).filter(_ < minIntervalMinutes) match
         case Some(gap) =>
@@ -142,13 +251,13 @@ object ManagerPolicy:
     }
 
   /** A manager's own daily cap in effect: its `dailyUsd`, else `agents.managers.daily-usd`; 0 = none. */
-  def dailyCap(c: ManagerConfig, m: ManagerDefaults): Option[Double] =
+  def dailyCap(c: ManagerConfig, m: ManagerDefaults): Option[com.histmersion.domain.ManagerPolicy.DailyCapResult] =
     c.dailyUsd.orElse(Option(m.dailyUsd)).filter(_ > 0)
 
   /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached its daily
     * cap. Plan-billed calls cost 0 USD, so this caps metered spend only.
     */
-  def dailyBlock(cap: Option[Double], spentToday: BigDecimal): Option[String] =
+  def dailyBlock(cap: Option[com.histmersion.domain.ManagerPolicy.DailyBlockCap], spentToday: BigDecimal): Option[com.histmersion.domain.ManagerPolicy.DailyBlockResult] =
     cap
       .filter(c => spentToday >= BigDecimal(c))
       .map(c =>
@@ -179,7 +288,7 @@ object ManagerPolicy:
     case Wait(approval: Long, note: String)
 
   /** `base · 2^(failures-1)` minutes, at most `max`. */
-  def backoff(baseMinutes: Int, maxMinutes: Int, failures: Int): Duration =
+  def backoff(baseMinutes: com.histmersion.domain.ManagerPolicy.BackoffBaseMinutes, maxMinutes: com.histmersion.domain.ManagerPolicy.BackoffMaxMinutes, failures: com.histmersion.domain.ManagerPolicy.BackoffFailures): Duration =
     val exp = math.min(30, math.max(0, failures - 1))
     val mins = math.min(maxMinutes.toLong, baseMinutes.toLong * (1L << exp))
     Duration.ofMinutes(math.max(1L, mins))
@@ -206,13 +315,13 @@ object ManagerPolicy:
     */
   def evaluateStep(
       s: ReviewSettings,
-      label: String,
-      target: String,
-      failures: Int,
+      label: com.histmersion.domain.ManagerPolicy.EvaluateStepLabel,
+      target: com.histmersion.domain.ManagerPolicy.EvaluateStepTarget,
+      failures: com.histmersion.domain.ManagerPolicy.EvaluateStepFailures,
       state: ItemState,
-      run: String,
+      run: com.histmersion.domain.ManagerPolicy.EvaluateStepRun,
       status: Run.State,
-      error: Option[String],
+      error: Option[com.histmersion.domain.ManagerPolicy.EvaluateStepError],
       facts: => StepFacts,
       now: Instant
   ): Next =
@@ -259,7 +368,7 @@ object ManagerPolicy:
           )
 
   /** How an approval a held item waits for was decided, as its outcome (None: still open). */
-  def decided(state: String, result: Option[String]): Option[String] =
+  def decided(state: com.histmersion.domain.ManagerPolicy.DecidedState, result: Option[com.histmersion.domain.ManagerPolicy.DecidedResult]): Option[com.histmersion.domain.ManagerPolicy.DecidedResult] =
     Approval.State.parse(state).filter(_ != Approval.State.Open).map { st =>
       st.wire + result.filter(_.nonEmpty).fold("")(r => s": ${r.take(300)}")
     }
@@ -268,12 +377,12 @@ object ManagerPolicy:
     * still open (pending, held or active), a goal's article proposal while its plan-goal item is? `open` = the
     * manager's open items (kind, target).
     */
-  def waitsFor(kind: String, target: String, open: List[(String, String)]): Boolean =
+  def waitsFor(kind: com.histmersion.domain.ManagerPolicy.WaitsForKind, target: com.histmersion.domain.ManagerPolicy.WaitsForTarget, open: List[(com.histmersion.domain.ManagerPolicy.WaitsForOpenPart1, com.histmersion.domain.ManagerPolicy.WaitsForOpenPart2)]): com.histmersion.domain.ManagerPolicy.WaitsForResult =
     (kind == ArticleReview && open.contains((InferFilter, target))) ||
       (kind == ProposeArticles && open.contains((PlanGoalItem, target)))
 
   /** The item kinds whose target is a goal. */
-  val GoalKinds: Set[String] = Set(PlanGoalItem, ProposeArticles, AcquisitionSweep, CurrencyCheck)
+  val GoalKinds: Set[com.histmersion.domain.ManagerPolicy.GoalKinds] = Set(PlanGoalItem, ProposeArticles, AcquisitionSweep, CurrencyCheck)
 
   /** Must an item of `kind` (whose pipeline is `pipeline`) wait for the unsettled runs on its target (their pipelines)?
     * On an article or a source: any of them (one writer at a time). On a goal — its plan, its article proposal, its
@@ -281,7 +390,7 @@ object ManagerPolicy:
     * and acquisition items), so a plan waiting days for a person does not stop its watcher, nor a sweep the proposal
     * (which waits for the plan through [[waitsFor]]).
     */
-  def blocks(kind: String, pipeline: String, unsettled: Seq[String]): Boolean =
+  def blocks(kind: com.histmersion.domain.ManagerPolicy.BlocksKind, pipeline: com.histmersion.domain.ManagerPolicy.BlocksPipeline, unsettled: Seq[com.histmersion.domain.ManagerPolicy.BlocksUnsettled]): com.histmersion.domain.ManagerPolicy.BlocksResult =
     if GoalKinds(kind) then unsettled.contains(pipeline) else unsettled.nonEmpty
 
   // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
@@ -298,7 +407,7 @@ object ManagerPolicy:
     object Priority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** May it start now? */
-  def due(c: Candidate, now: Instant): Boolean = c.notBefore.forall(!_.isAfter(now))
+  def due(c: Candidate, now: Instant): com.histmersion.domain.ManagerPolicy.DueResult = c.notBefore.forall(!_.isAfter(now))
 
   /** The dispatch order within one manager: priority (highest first), then the earliest `notBefore` (none first), then
     * the oldest.
@@ -311,14 +420,14 @@ object ManagerPolicy:
     * waiting included), and its pools' (`poolCap`, the calls its models' plan pools take at once). Never negative.
     */
   def capacity(
-      maxConcurrent: Int,
-      activeAll: Int,
-      maxRuns: Int,
-      mineRunning: Int,
-      maxOpen: Int,
-      mineOpen: Int,
-      poolCap: Option[Int]
-  ): Int =
+      maxConcurrent: com.histmersion.domain.ManagerPolicy.CapacityMaxConcurrent,
+      activeAll: com.histmersion.domain.ManagerPolicy.CapacityActiveAll,
+      maxRuns: com.histmersion.domain.ManagerPolicy.CapacityMaxRuns,
+      mineRunning: com.histmersion.domain.ManagerPolicy.CapacityMineRunning,
+      maxOpen: com.histmersion.domain.ManagerPolicy.CapacityMaxOpen,
+      mineOpen: com.histmersion.domain.ManagerPolicy.CapacityMineOpen,
+      poolCap: Option[com.histmersion.domain.ManagerPolicy.CapacityPoolCap]
+  ): com.histmersion.domain.ManagerPolicy.CapacityResult =
     List(
       maxConcurrent - activeAll,
       maxRuns - mineRunning,
@@ -329,7 +438,7 @@ object ManagerPolicy:
   /** Several managers sharing the global room: one item from each in turn (in the order given), each within its own
     * `cap`, until `room` is used or nothing is left.
     */
-  def roundRobin[M, A](queues: List[(M, Int, List[A])], room: Int): List[(M, A)] =
+  def roundRobin[M, A](queues: List[(M, com.histmersion.domain.ManagerPolicy.RoundRobinQueuesPart2, List[A])], room: com.histmersion.domain.ManagerPolicy.RoundRobinRoom): List[(M, A)] =
     @annotation.tailrec
     def go(qs: List[(M, Int, List[A])], left: Int, acc: Vector[(M, A)]): Vector[(M, A)] =
       val live = qs.filter((_, cap, as) => cap > 0 && as.nonEmpty)
@@ -346,13 +455,13 @@ object ManagerPolicy:
   /** Is a hold over: its date passed, or the source it waits for exists. A hold with neither waits for a person's
     * release.
     */
-  def released(h: Hold, now: Instant, sourceExists: String => Boolean): Boolean =
+  def released(h: Hold, now: Instant, sourceExists: com.histmersion.domain.ManagerPolicy.ReleasedSourceExistsArg1 => com.histmersion.domain.ManagerPolicy.ReleasedSourceExistsResult): com.histmersion.domain.ManagerPolicy.ReleasedResult =
     h.until
       .flatMap(parseInstant)
       .exists(!_.isAfter(now)) || h.untilSource.map(_.trim).filter(_.nonEmpty).exists(sourceExists)
 
   /** `2026-11-01` (UTC midnight) or an ISO instant. */
-  def parseInstant(s: String): Option[Instant] =
+  def parseInstant(s: com.histmersion.domain.ManagerPolicy.ParseInstantS): Option[Instant] =
     val t = s.trim
     scala.util
       .Try(Instant.parse(t))
@@ -362,13 +471,13 @@ object ManagerPolicy:
   /** The status line a manager shows. */
   def statusNote(
       state: Manager.State,
-      starved: Option[String],
-      capacity: Int,
-      pending: Int,
-      due: Int,
-      inFlight: Int,
-      budget: Option[String]
-  ): String =
+      starved: Option[com.histmersion.domain.ManagerPolicy.StatusNoteStarved],
+      capacity: com.histmersion.domain.ManagerPolicy.StatusNoteCapacity,
+      pending: com.histmersion.domain.ManagerPolicy.StatusNotePending,
+      due: com.histmersion.domain.ManagerPolicy.StatusNoteDue,
+      inFlight: com.histmersion.domain.ManagerPolicy.StatusNoteInFlight,
+      budget: Option[com.histmersion.domain.ManagerPolicy.StatusNoteBudget]
+  ): com.histmersion.domain.ManagerPolicy.StatusNoteResult =
     if state == Manager.State.Stopped then "stopped"
     else if state == Manager.State.Paused then
       (if inFlight > 0 then s"paused (${Plural.count(inFlight, "run")} in flight)" else "paused"
@@ -386,7 +495,7 @@ object ManagerPolicy:
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   /** Does a structured hint effect name this target (by slug, or by one of its tags/topics/goals)? */
-  def matches(e: HintEffect, target: String, tags: List[String], topics: List[String], goals: List[String]): Boolean =
+  def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.MatchesTarget, tags: List[com.histmersion.domain.ManagerPolicy.MatchesTags], topics: List[com.histmersion.domain.ManagerPolicy.MatchesTopics], goals: List[com.histmersion.domain.ManagerPolicy.MatchesGoals]): com.histmersion.domain.ManagerPolicy.MatchesResult =
     def eq(a: String, b: String) = a.trim.equalsIgnoreCase(b.trim)
     e.targets.exists(eq(_, target)) || e.tag.exists(t => tags.exists(eq(_, t))) ||
     e.topic.exists(t => topics.exists(eq(_, t))) || e.goal.exists(g => goals.exists(eq(_, g)))
@@ -394,5 +503,5 @@ object ManagerPolicy:
   /** The notes a run is given: the manager's live standing hints and unconsumed once-hints, manager-wide or about this
     * item, oldest first.
     */
-  def notesFor(hints: List[ManagerHint], itemId: Long): List[ManagerHint] =
+  def notesFor(hints: List[ManagerHint], itemId: com.histmersion.domain.ManagerPolicy.NotesForItemId): List[ManagerHint] =
     hints.filter(h => h.retiredAt.isEmpty && h.itemId.forall(_ == itemId) && h.text.trim.nonEmpty).sortBy(_.id)

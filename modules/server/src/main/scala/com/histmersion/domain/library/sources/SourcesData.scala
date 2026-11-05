@@ -16,6 +16,11 @@ import com.augustnagro.magnum.DbCon
   */
 object SourcesData:
 
+  type FixedName = FixedName.T
+  object FixedName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixedRank = FixedRank.T
+  object FixedRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def figures(using DbCon): List[DataCount] =
     val (sources, findings) = SourceRepo.counts()
     List(DataCount("sources", sources), DataCount("findings", findings))
@@ -37,16 +42,20 @@ object SourcesData:
   final private class Check(val owner: DataOwner, name: String, override val fix: Option[SafeFix]) extends CheckRule:
     val rule: Rule = Lint.rule(name).getOrElse(Rule(name, name))
 
-    def report(context: CheckContext, maxItems: Int)(using CheckRun)(using DbCon): LintRuleReport =
+    def report(context: CheckContext, maxItems: com.histmersion.domain.library.sources.SourcesData.Check.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       SourceCheckRepo.report(
         rule,
         SourceCheckRepo.Context.of(context.config, context.format(SourceCheckRepo.storedCitekey)),
         maxItems
       )
 
+  object Check:
+    type ReportMaxItems = ReportMaxItems.T
+    object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private def listed(owner: DataOwner, names: String*): List[CheckRule] = names.toList.map(Check(owner, _, None))
 
-  private def fixed(owner: DataOwner, name: String, when: FixWhen, rank: Int)(
+  private def fixed(owner: DataOwner, name: com.histmersion.domain.library.sources.SourcesData.FixedName, when: FixWhen, rank: com.histmersion.domain.library.sources.SourcesData.FixedRank)(
       run: CheckContext => LintFixResult
   ): CheckRule =
     Check(owner, name, Some(SafeFix(when, FixRank(rank), run)))

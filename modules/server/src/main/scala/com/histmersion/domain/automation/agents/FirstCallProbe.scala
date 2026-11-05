@@ -18,9 +18,9 @@ final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identit
   // set once per step attempt: by the first response, or by a CLI client's report (which wins)
   private val state = java.util.concurrent.atomic.AtomicReference[Option[Option[Long]]](None)
 
-  def tokens: Option[Long] = state.get().flatten
+  def tokens: Option[com.histmersion.domain.automation.agents.FirstCallProbe.TokensResult] = state.get().flatten
 
-  def report(tokens: Option[Long]): Unit = state.set(Some(tokens))
+  def report(tokens: Option[com.histmersion.domain.automation.agents.FirstCallProbe.ReportTokens]): Unit = state.set(Some(tokens))
 
   override def aroundLlmCall(ctx: LlmCallContext)(next: => Identity[AgentResponse]): Identity[AgentResponse] =
     val r = next
@@ -29,5 +29,10 @@ final private[histmersion] class FirstCallProbe extends AgentInterceptor[Identit
 
 private[histmersion] object FirstCallProbe:
   /** A command-line client's reading of its first model call, to every probe among `interceptors`. */
-  def report(interceptors: List[AgentInterceptor[Identity]], tokens: Option[Long]): Unit =
+  type TokensResult = TokensResult.T
+  object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportTokens = ReportTokens.T
+  object ReportTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def report(interceptors: List[AgentInterceptor[Identity]], tokens: Option[com.histmersion.domain.automation.agents.FirstCallProbe.ReportTokens]): Unit =
     interceptors.foreach { case p: FirstCallProbe => p.report(tokens); case _ => () }

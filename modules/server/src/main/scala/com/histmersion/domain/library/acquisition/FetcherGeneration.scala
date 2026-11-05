@@ -12,12 +12,29 @@ import com.histmersion.pluginhost.Registries
   */
 object FetcherGeneration:
 
+  type PartsResult = PartsResult.T
+  object PartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsPlanPart1 = PartsPlanPart1.T
+  object PartsPlanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsContact = PartsContact.T
+  object PartsContact extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsCoreKey = PartsCoreKey.T
+  object PartsCoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResult = OfResult.T
+  object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPlanPart1 = OfPlanPart1.T
+  object OfPlanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfContact = OfContact.T
+  object OfContact extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfCoreKey = OfCoreKey.T
+  object OfCoreKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def parts(
-      plan: List[(String, Access)],
+      plan: List[(com.histmersion.domain.library.acquisition.FetcherGeneration.PartsPlanPart1, Access)],
       plugins: List[PluginStatus],
-      contact: Boolean,
-      coreKey: Boolean
-  ): List[String] =
+      contact: com.histmersion.domain.library.acquisition.FetcherGeneration.PartsContact,
+      coreKey: com.histmersion.domain.library.acquisition.FetcherGeneration.PartsCoreKey
+  ): List[com.histmersion.domain.library.acquisition.FetcherGeneration.PartsResult] =
     val legal = plan.filter(_._2 != Access.Unauthorised)
     val provided = legal.map((id, _) => s"${Registries.SourceFetcher}:$id").toSet
     val owners = plugins.filter(_.provides.exists(provided)).sortBy(_.id).map { p =>
@@ -29,5 +46,5 @@ object FetcherGeneration:
     legal.map((id, access) => s"$id:${access.toString.toLowerCase(java.util.Locale.ROOT)}") ++ owners ++
       List(s"contact=$contact", s"core-key=$coreKey")
 
-  def of(plan: List[(String, Access)], plugins: List[PluginStatus], contact: Boolean, coreKey: Boolean): String =
+  def of(plan: List[(com.histmersion.domain.library.acquisition.FetcherGeneration.OfPlanPart1, Access)], plugins: List[PluginStatus], contact: com.histmersion.domain.library.acquisition.FetcherGeneration.OfContact, coreKey: com.histmersion.domain.library.acquisition.FetcherGeneration.OfCoreKey): com.histmersion.domain.library.acquisition.FetcherGeneration.OfResult =
     AcquireRecheck.generation(parts(plan, plugins, contact, coreKey))

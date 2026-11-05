@@ -41,6 +41,309 @@ object ReviewArticle:
   // ── vocabularies ───────────────────────────────────────────────────────────────────────────────
 
   /** Who raised a finding. The prefix is the finding id's letter (`R3`, `C1`, `S2`, `M1`). */
+  type ExplainSlots = ExplainSlots.T
+  object ExplainSlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChecksDescriptionResult = ChecksDescriptionResult.T
+  object ChecksDescriptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedLinesResult = CitedLinesResult.T
+  object CitedLinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingsResult = HeadingsResult.T
+  object HeadingsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingsBody = HeadingsBody.T
+  object HeadingsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormResult = NormResult.T
+  object NormResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormH = NormH.T
+  object NormH extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequiredSectionsResult = RequiredSectionsResult.T
+  object RequiredSectionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequiredSectionsKind = RequiredSectionsKind.T
+  object RequiredSectionsKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequiredSectionsGenerated = RequiredSectionsGenerated.T
+  object RequiredSectionsGenerated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalSlug = MechanicalSlug.T
+  object MechanicalSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalKind = MechanicalKind.T
+  object MechanicalKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalBody = MechanicalBody.T
+  object MechanicalBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalIsTargetArg1 = MechanicalIsTargetArg1.T
+  object MechanicalIsTargetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalIsTargetResult = MechanicalIsTargetResult.T
+  object MechanicalIsTargetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MechanicalGenerated = MechanicalGenerated.T
+  object MechanicalGenerated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoverageDriftFrom = CoverageDriftFrom.T
+  object CoverageDriftFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceCheckIsCitekeyArg1 = EvidenceCheckIsCitekeyArg1.T
+  object EvidenceCheckIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceCheckIsCitekeyResult = EvidenceCheckIsCitekeyResult.T
+  object EvidenceCheckIsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceCheckTextArg1 = EvidenceCheckTextArg1.T
+  object EvidenceCheckTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceCheckTextResult = EvidenceCheckTextResult.T
+  object EvidenceCheckTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceCheckMinRatio = EvidenceCheckMinRatio.T
+  object EvidenceCheckMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFindingsResultPart2 = CheckFindingsResultPart2.T
+  object CheckFindingsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFindingsResultPart3 = CheckFindingsResultPart3.T
+  object CheckFindingsResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictOfResultPart1 = VerdictOfResultPart1.T
+  object VerdictOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictOfStated = VerdictOfStated.T
+  object VerdictOfStated extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictOfLast = VerdictOfLast.T
+  object VerdictOfLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettleResultPart1 = SettleResultPart1.T
+  object SettleResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettleResultPart2Part2 = SettleResultPart2Part2.T
+  object SettleResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettleVerdictPart1 = SettleVerdictPart1.T
+  object SettleVerdictPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettleProblems = SettleProblems.T
+  object SettleProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettleDropped = SettleDropped.T
+  object SettleDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettleLast = SettleLast.T
+  object SettleLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRulesResultPart1 = CheckRulesResultPart1.T
+  object CheckRulesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRulesResultPart2Part2 = CheckRulesResultPart2Part2.T
+  object CheckRulesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRulesLast = CheckRulesLast.T
+  object CheckRulesLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpotCheckTools = SpotCheckTools.T
+  object SpotCheckTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpotVerdicts = SpotVerdicts.T
+  object SpotVerdicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpotChecksRequiredResult = SpotChecksRequiredResult.T
+  object SpotChecksRequiredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpotChecksRequiredMin = SpotChecksRequiredMin.T
+  object SpotChecksRequiredMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpotChecksRequiredCitedInCorpus = SpotChecksRequiredCitedInCorpus.T
+  object SpotChecksRequiredCitedInCorpus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadsResult = ReadsResult.T
+  object ReadsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadsCk = ReadsCk.T
+  object ReadsCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSpotChecksResultPart2 = CheckSpotChecksResultPart2.T
+  object CheckSpotChecksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSpotChecksResultPart3 = CheckSpotChecksResultPart3.T
+  object CheckSpotChecksResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSpotChecksLast = CheckSpotChecksLast.T
+  object CheckSpotChecksLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EmptySlotsOfResultPart1 = EmptySlotsOfResultPart1.T
+  object EmptySlotsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EmptySlotsOfResultPart2 = EmptySlotsOfResultPart2.T
+  object EmptySlotsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EmptySlotsOfRaw = EmptySlotsOfRaw.T
+  object EmptySlotsOfRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckColdReaderResultPart1 = CheckColdReaderResultPart1.T
+  object CheckColdReaderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckColdReaderResultPart2Part2 = CheckColdReaderResultPart2Part2.T
+  object CheckColdReaderResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckColdReaderLast = CheckColdReaderLast.T
+  object CheckColdReaderLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticResultPart1 = CheckSkepticResultPart1.T
+  object CheckSkepticResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticResultPart2Part2 = CheckSkepticResultPart2Part2.T
+  object CheckSkepticResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticLast = CheckSkepticLast.T
+  object CheckSkepticLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticIsCitekeyArg1 = CheckSkepticIsCitekeyArg1.T
+  object CheckSkepticIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticIsCitekeyResult = CheckSkepticIsCitekeyResult.T
+  object CheckSkepticIsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticTextArg1 = CheckSkepticTextArg1.T
+  object CheckSkepticTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticTextResult = CheckSkepticTextResult.T
+  object CheckSkepticTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSkepticMinRatio = CheckSkepticMinRatio.T
+  object CheckSkepticMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsMissingCritiqueResult = IsMissingCritiqueResult.T
+  object IsMissingCritiqueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordedMinorWhy = RecordedMinorWhy.T
+  object RecordedMinorWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SentencesResult = SentencesResult.T
+  object SentencesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SentencesP = SentencesP.T
+  object SentencesP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimSentenceResult = ClaimSentenceResult.T
+  object ClaimSentenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimSentenceBody = ClaimSentenceBody.T
+  object ClaimSentenceBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimSentenceQuote = ClaimSentenceQuote.T
+  object ClaimSentenceQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimSentenceMinRatio = ClaimSentenceMinRatio.T
+  object ClaimSentenceMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifiedResult = QualifiedResult.T
+  object QualifiedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifiedText = QualifiedText.T
+  object QualifiedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimWindowResult = ClaimWindowResult.T
+  object ClaimWindowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimWindowSentence = ClaimWindowSentence.T
+  object ClaimWindowSentence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClaimWindowQuote = ClaimWindowQuote.T
+  object ClaimWindowQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelledResult = LabelledResult.T
+  object LabelledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelledSentence = LabelledSentence.T
+  object LabelledSentence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelledCriticised = LabelledCriticised.T
+  object LabelledCriticised extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifiedClaimResult = QualifiedClaimResult.T
+  object QualifiedClaimResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifiedClaimSentence = QualifiedClaimSentence.T
+  object QualifiedClaimSentence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifiedClaimQuote = QualifiedClaimQuote.T
+  object QualifiedClaimQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifiedClaimCriticised = QualifiedClaimCriticised.T
+  object QualifiedClaimCriticised extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckCritiquesResultPart2 = CheckCritiquesResultPart2.T
+  object CheckCritiquesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckCritiquesResultPart3 = CheckCritiquesResultPart3.T
+  object CheckCritiquesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckCritiquesLast = CheckCritiquesLast.T
+  object CheckCritiquesLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnePerPairResultPart2 = OnePerPairResultPart2.T
+  object OnePerPairResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckNotMaterialResultPart2 = CheckNotMaterialResultPart2.T
+  object CheckNotMaterialResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckNotMaterialResultPart3 = CheckNotMaterialResultPart3.T
+  object CheckNotMaterialResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckNotMaterialLast = CheckNotMaterialLast.T
+  object CheckNotMaterialLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChecksOfResultPart2 = ChecksOfResultPart2.T
+  object ChecksOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChecksOfResultPart3 = ChecksOfResultPart3.T
+  object ChecksOfResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChecksOfLast = ChecksOfLast.T
+  object ChecksOfLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckChecksResultPart2 = CheckChecksResultPart2.T
+  object CheckChecksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckChecksResultPart3 = CheckChecksResultPart3.T
+  object CheckChecksResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckChecksLast = CheckChecksLast.T
+  object CheckChecksLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HoldPairChecksResultPart2 = HoldPairChecksResultPart2.T
+  object HoldPairChecksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinalRegressionResult = FinalRegressionResult.T
+  object FinalRegressionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinalRegressionEdited = FinalRegressionEdited.T
+  object FinalRegressionEdited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinalRegressionMinRatio = FinalRegressionMinRatio.T
+  object FinalRegressionMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FactualKinds = FactualKinds.T
+  object FactualKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScopeResultPart2 = ScopeResultPart2.T
+  object ScopeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScopeEdited = ScopeEdited.T
+  object ScopeEdited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScopeMinRatio = ScopeMinRatio.T
+  object ScopeMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRecheckResultPart1 = CheckRecheckResultPart1.T
+  object CheckRecheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRecheckResultPart2Part2 = CheckRecheckResultPart2Part2.T
+  object CheckRecheckResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRecheckEdited = CheckRecheckEdited.T
+  object CheckRecheckEdited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckRecheckLast = CheckRecheckLast.T
+  object CheckRecheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyResultPart1 = KeyResultPart1.T
+  object KeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyResultPart2 = KeyResultPart2.T
+  object KeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameFindingResult = SameFindingResult.T
+  object SameFindingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeRound = MergeRound.T
+  object MergeRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoneResult = DoneResult.T
+  object DoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoneRound = DoneRound.T
+  object DoneRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoneRounds = DoneRounds.T
+  object DoneRounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoneFix = DoneFix.T
+  object DoneFix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundsResult = RoundsResult.T
+  object RoundsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundsRequested = RoundsRequested.T
+  object RoundsRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundsDefault = RoundsDefault.T
+  object RoundsDefault extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundsCap = RoundsCap.T
+  object RoundsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundsFix = RoundsFix.T
+  object RoundsFix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WordsResult = WordsResult.T
+  object WordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WordsS = WordsS.T
+  object WordsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerTurnsResult = FixerTurnsResult.T
+  object FixerTurnsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerTurnsBase = FixerTurnsBase.T
+  object FixerTurnsBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerTurnsPerFinding = FixerTurnsPerFinding.T
+  object FixerTurnsPerFinding extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixerTurnsCap = FixerTurnsCap.T
+  object FixerTurnsCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckBodySlug = CheckBodySlug.T
+  object CheckBodySlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckBodyBefore = CheckBodyBefore.T
+  object CheckBodyBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckBodyKind = CheckBodyKind.T
+  object CheckBodyKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixResultPart1 = CheckFixResultPart1.T
+  object CheckFixResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixResultPart2Part2 = CheckFixResultPart2Part2.T
+  object CheckFixResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixSlug = CheckFixSlug.T
+  object CheckFixSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixBefore = CheckFixBefore.T
+  object CheckFixBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixKind = CheckFixKind.T
+  object CheckFixKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixIsCitekeyArg1 = CheckFixIsCitekeyArg1.T
+  object CheckFixIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixIsCitekeyResult = CheckFixIsCitekeyResult.T
+  object CheckFixIsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixTextArg1 = CheckFixTextArg1.T
+  object CheckFixTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixTextResult = CheckFixTextResult.T
+  object CheckFixTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixMinRatio = CheckFixMinRatio.T
+  object CheckFixMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFixLast = CheckFixLast.T
+  object CheckFixLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSetAsideResultPart3 = CheckSetAsideResultPart3.T
+  object CheckSetAsideResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSetAsideByIdPart1 = CheckSetAsideByIdPart1.T
+  object CheckSetAsideByIdPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeedsFilterResult = NeedsFilterResult.T
+  object NeedsFilterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckReasonsResultPart2 = CheckReasonsResultPart2.T
+  object CheckReasonsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckReasonsBody = CheckReasonsBody.T
+  object CheckReasonsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckReasonsIsCitekeyArg1 = CheckReasonsIsCitekeyArg1.T
+  object CheckReasonsIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckReasonsIsCitekeyResult = CheckReasonsIsCitekeyResult.T
+  object CheckReasonsIsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckReasonsApplied = CheckReasonsApplied.T
+  object CheckReasonsApplied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceLineResult = EvidenceLineResult.T
+  object EvidenceLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingsTextResult = FindingsTextResult.T
+  object FindingsTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingsTextNotesPart1 = FindingsTextNotesPart1.T
+  object FindingsTextNotesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingsTextNotesPart2 = FindingsTextNotesPart2.T
+  object FindingsTextNotesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineResult = LogLineResult.T
+  object LogLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Reviewer(val wire: String, val prefix: String):
     case Mechanical extends Reviewer("mechanical", "M")
     case Rules extends Reviewer("rules", "R")
@@ -48,11 +351,18 @@ object ReviewArticle:
     case Skeptic extends Reviewer("skeptic", "S")
 
   object Reviewer:
-    def parse(s: String): Option[Reviewer] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.ReviewArticle.Reviewer.ParseS): Option[Reviewer] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[Reviewer]:
       def all: Array[Reviewer] = Reviewer.values
-      def wire(e: Reviewer): String = e.wire
-      def fromWire(s: String): Option[Reviewer] = parse(s)
+      def wire(e: Reviewer): com.histmersion.domain.ReviewArticle.Reviewer.WireResult = e.wire
+      def fromWire(s: com.histmersion.domain.ReviewArticle.Reviewer.FromWireS): Option[Reviewer] = parse(s)
     given Encoder[Reviewer] = WireEnum.encoder
     given Decoder[Reviewer] = WireEnum.decoder
     given Schema[Reviewer] = WireEnum.schema
@@ -62,11 +372,18 @@ object ReviewArticle:
     case Minor extends Severity("minor")
 
   object Severity:
-    def parse(s: String): Option[Severity] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.ReviewArticle.Severity.ParseS): Option[Severity] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): String = e.wire
-      def fromWire(s: String): Option[Severity] = parse(s)
+      def wire(e: Severity): com.histmersion.domain.ReviewArticle.Severity.WireResult = e.wire
+      def fromWire(s: com.histmersion.domain.ReviewArticle.Severity.FromWireS): Option[Severity] = parse(s)
     given Encoder[Severity] = WireEnum.encoder
     given Decoder[Severity] = WireEnum.decoder
     given Schema[Severity] = WireEnum.schema
@@ -78,7 +395,14 @@ object ReviewArticle:
     case Major extends Verdict("MAJOR", 2)
 
   object Verdict:
-    def parse(s: String): Option[Verdict] = values.find(_.wire == s.trim.toUpperCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.ReviewArticle.Verdict.ParseS): Option[Verdict] = values.find(_.wire == s.trim.toUpperCase)
     def worst(vs: Iterable[Verdict]): Verdict = vs.foldLeft(Pass)((a, b) => if b.rank > a.rank then b else a)
 
     /** What a list of findings amounts to on its own. */
@@ -86,14 +410,14 @@ object ReviewArticle:
       if fs.exists(_.severity == Severity.Major) then Major else if fs.nonEmpty then Minor else Pass
     given WireEnumValues[Verdict]:
       def all: Array[Verdict] = Verdict.values
-      def wire(e: Verdict): String = e.wire
-      def fromWire(s: String): Option[Verdict] = parse(s)
+      def wire(e: Verdict): com.histmersion.domain.ReviewArticle.Verdict.WireResult = e.wire
+      def fromWire(s: com.histmersion.domain.ReviewArticle.Verdict.FromWireS): Option[Verdict] = parse(s)
     given Encoder[Verdict] = WireEnum.encoder
     given Decoder[Verdict] = WireEnum.decoder
     given Schema[Verdict] = WireEnum.schema
 
   /** The four slots of the cold reader's explain-back (question, answer, disagreement, open). */
-  val ExplainSlots: List[String] = List("question", "answer", "disagreement", "open")
+  val ExplainSlots: List[com.histmersion.domain.ReviewArticle.ExplainSlots] = List("question", "answer", "disagreement", "open")
 
   // ── LLM answers (their JSON schemas are what each step is asked to fill) ────────────────────────
 
@@ -123,7 +447,7 @@ object ReviewArticle:
   /** At most this many records per finding (more are dropped unread). */
   val MaxEvidence = 3
 
-  private def ChecksDescription: String =
+  private def ChecksDescription: com.histmersion.domain.ReviewArticle.ChecksDescriptionResult =
     "One check per earlier finding of yours that the review ledger lists as open (empty when it lists none)"
 
   final case class FindingAnswer(
@@ -544,14 +868,19 @@ object ReviewArticle:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
-    def major: Boolean = severity == Severity.Major
+    def major: com.histmersion.domain.ReviewArticle.Finding.MajorResult = severity == Severity.Major
 
     /** One line for a person or a queue item. */
-    def line: String =
+    def line: com.histmersion.domain.ReviewArticle.Finding.LineResult =
       val at = Option(where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" ($w)")
       s"$id ${severity.wire}$at: ${problem.trim}"
 
   object Finding:
+    type MajorResult = MajorResult.T
+    object MajorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LineResult = LineResult.T
+    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
@@ -668,9 +997,12 @@ object ReviewArticle:
       critiques: List[CritiquePair] = Nil
   ) derives KindlingsCodecAsObject:
     /** The sections code generates from the filter (#958), as the page shows them after the body. */
-    def generated: Option[String] = coverage.map(Article.Coverage.sections)
+    def generated: Option[com.histmersion.domain.ReviewArticle.Snapshot.GeneratedResult] = coverage.map(Article.Coverage.sections)
 
   object Snapshot:
+    type GeneratedResult = GeneratedResult.T
+    object GeneratedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Slug = Slug.T
     object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Title = Title.T
@@ -688,7 +1020,7 @@ object ReviewArticle:
     * status from the brief instead of querying for it (a Codex rules step selected the whole `sources` table for it,
     * 2026-10-16). Empty when it cites none.
     */
-  def citedLines(cited: List[CitedSource]): String =
+  def citedLines(cited: List[CitedSource]): com.histmersion.domain.ReviewArticle.CitedLinesResult =
     cited
       .map { c =>
         val status = c.status.fold("not in the corpus")(_.wire)
@@ -711,9 +1043,12 @@ object ReviewArticle:
   ) derives KindlingsCodecAsObject:
     def majors: List[Finding] = findings.filter(f => f.major && !deferred.contains(f.id))
     def escalated: List[Finding] = findings.filter(_.escalated)
-    def count(r: Reviewer): Int = findings.count(_.reviewer == r)
+    def count(r: Reviewer): com.histmersion.domain.ReviewArticle.Merged.CountResult = findings.count(_.reviewer == r)
 
   object Merged:
+    type CountResult = CountResult.T
+    object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Round = Round.T
     object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ExplainBack = ExplainBack.T
@@ -850,16 +1185,16 @@ object ReviewArticle:
   private val HeadingLine = "^#{1,6}\\s+(.+?)\\s*#*\\s*$".r
 
   /** The headings of a body, in order, as written. */
-  def headings(body: String): List[String] =
+  def headings(body: com.histmersion.domain.ReviewArticle.HeadingsBody): List[com.histmersion.domain.ReviewArticle.HeadingsResult] =
     body.linesIterator.collect { case HeadingLine(h) => h.trim }.toList
 
-  private def norm(h: String): String = h.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z ]", "").trim
+  private def norm(h: com.histmersion.domain.ReviewArticle.NormH): com.histmersion.domain.ReviewArticle.NormResult = h.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z ]", "").trim
 
   /** The sections the guide (rule 4) makes compulsory, as alternatives of heading words. An `index` article (a map of
     * content) has none. `generated`: the article records a filter, so its Not used list is generated (#958) and the
     * body must not have one.
     */
-  def requiredSections(kind: String, generated: Boolean = false): List[List[String]] =
+  def requiredSections(kind: com.histmersion.domain.ReviewArticle.RequiredSectionsKind, generated: com.histmersion.domain.ReviewArticle.RequiredSectionsGenerated = false): List[List[com.histmersion.domain.ReviewArticle.RequiredSectionsResult]] =
     if kind.trim.equalsIgnoreCase("index") then Nil
     else
       List(List("disagreements"), List("unresolved", "open questions")) ++
@@ -874,11 +1209,11 @@ object ReviewArticle:
     * used section or `_Method_` note is one too: code generates both, so a written one duplicates them and goes stale.
     */
   def mechanical(
-      slug: String,
-      kind: String,
-      body: String,
-      isTarget: String => Boolean,
-      generated: Boolean = false
+      slug: com.histmersion.domain.ReviewArticle.MechanicalSlug,
+      kind: com.histmersion.domain.ReviewArticle.MechanicalKind,
+      body: com.histmersion.domain.ReviewArticle.MechanicalBody,
+      isTarget: com.histmersion.domain.ReviewArticle.MechanicalIsTargetArg1 => com.histmersion.domain.ReviewArticle.MechanicalIsTargetResult,
+      generated: com.histmersion.domain.ReviewArticle.MechanicalGenerated = false
   ): List[Finding] =
     val hs = headings(body)
     def f(sev: Severity, kind: String, where: String, quote: String, problem: String, fix: String) =
@@ -1001,7 +1336,7 @@ object ReviewArticle:
     * Sources cited or Not used, with a reason); a reason for a source the body now cites, or one the filter no longer
     * returns, is minor (it is not shown).
     */
-  def coverageDrift(c: Coverage, from: Int): List[Finding] =
+  def coverageDrift(c: Coverage, from: com.histmersion.domain.ReviewArticle.CoverageDriftFrom): List[Finding] =
     def keys(cks: List[String]) =
       val shown = cks.take(40).map(ck => s"[[$ck]]").mkString(", ")
       if cks.size > 40 then s"$shown (+${cks.size - 40} more)" else shown
@@ -1050,7 +1385,7 @@ object ReviewArticle:
   /** The check every reviewer's evidence passes: a real citekey, and a quote that IS in its record (the OCR-tolerant
     * matcher the fixer's rejections use). `text` is the record as get_source shows it (summary, findings, notes, body).
     */
-  def evidenceCheck(isCitekey: String => Boolean, text: String => Option[String], minRatio: Double): EvidenceCheck =
+  def evidenceCheck(isCitekey: com.histmersion.domain.ReviewArticle.EvidenceCheckIsCitekeyArg1 => com.histmersion.domain.ReviewArticle.EvidenceCheckIsCitekeyResult, text: com.histmersion.domain.ReviewArticle.EvidenceCheckTextArg1 => Option[com.histmersion.domain.ReviewArticle.EvidenceCheckTextResult], minRatio: com.histmersion.domain.ReviewArticle.EvidenceCheckMinRatio): EvidenceCheck =
     e =>
       val ck = Option(e.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim).getOrElse("")
       val q = Option(e.quote).map(_.trim).getOrElse("")
@@ -1070,7 +1405,7 @@ object ReviewArticle:
       r: Reviewer,
       as: List[FindingAnswer],
       ev: EvidenceCheck = NoEvidence
-  ): (List[Finding], List[String], List[String]) =
+  ): (List[Finding], List[com.histmersion.domain.ReviewArticle.CheckFindingsResultPart2], List[com.histmersion.domain.ReviewArticle.CheckFindingsResultPart3]) =
     val checked = as.zipWithIndex.map { (a, i) =>
       val label = s"finding ${i + 1} (${Option(a.problem).getOrElse("").take(60)})"
       Severity.parse(Option(a.severity).getOrElse("")) match
@@ -1102,7 +1437,7 @@ object ReviewArticle:
   /** The stated verdict must not be worse than the findings show (a MAJOR with no major finding is a finding left out);
     * a milder one is simply corrected. On the last attempt the findings decide.
     */
-  private def verdictOf(stated: String, fs: List[Finding], last: Boolean): Either[String, Verdict] =
+  private def verdictOf(stated: com.histmersion.domain.ReviewArticle.VerdictOfStated, fs: List[Finding], last: com.histmersion.domain.ReviewArticle.VerdictOfLast): Either[com.histmersion.domain.ReviewArticle.VerdictOfResultPart1, Verdict] =
     val derived = Verdict.of(fs)
     Verdict.parse(Option(stated).getOrElse("")) match
       case None if !last && Option(stated).forall(_.trim.isEmpty) => Left("no verdict given — PASS, MINOR or MAJOR")
@@ -1113,12 +1448,12 @@ object ReviewArticle:
 
   private def settle(
       r: Reviewer,
-      verdict: Either[String, Verdict],
+      verdict: Either[com.histmersion.domain.ReviewArticle.SettleVerdictPart1, Verdict],
       fs: List[Finding],
-      problems: List[String],
-      dropped: List[String],
-      last: Boolean
-  )(build: Verdict => Report): Either[List[String], (Report, List[String])] =
+      problems: List[com.histmersion.domain.ReviewArticle.SettleProblems],
+      dropped: List[com.histmersion.domain.ReviewArticle.SettleDropped],
+      last: com.histmersion.domain.ReviewArticle.SettleLast
+  )(build: Verdict => Report): Either[List[com.histmersion.domain.ReviewArticle.SettleResultPart1], (Report, List[com.histmersion.domain.ReviewArticle.SettleResultPart2Part2])] =
     val all = problems ++ verdict.left.toOption.toList
     if all.nonEmpty && !last then Left(all)
     else Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — $p") ++ dropped))
@@ -1128,12 +1463,12 @@ object ReviewArticle:
     */
   def checkRules(
       a: RulesAnswer,
-      last: Boolean,
+      last: com.histmersion.domain.ReviewArticle.CheckRulesLast,
       ev: EvidenceCheck = NoEvidence,
       prior: Option[Prior] = None,
       spots: Option[SpotRule] = None,
       critique: Option[CritiqueRule] = None
-  ): Either[List[String], (Report, List[String])] =
+  ): Either[List[com.histmersion.domain.ReviewArticle.CheckRulesResultPart1], (Report, List[com.histmersion.domain.ReviewArticle.CheckRulesResultPart2Part2])] =
     val (stated, ps, ds) = checkFindings(Reviewer.Rules, a.findings, ev)
     val (fs, _, kws) = critique.fold((stated, Nil, Nil))(c =>
       checkCritiques(Reviewer.Rules, stated, c.copy(shown = Nil, full = false), Nil, last)
@@ -1148,9 +1483,9 @@ object ReviewArticle:
   // ── spot-checks: the rules reviewer's lookups, verified (#1840) ────────────────────────────────
 
   /** The tools whose result shows a source's record: a spot-check rests on one of them. */
-  val SpotCheckTools: Set[String] = Set("get_source", "passages")
+  val SpotCheckTools: Set[com.histmersion.domain.ReviewArticle.SpotCheckTools] = Set("get_source", "passages")
 
-  val SpotVerdicts: List[String] = List("attributable", "extrapolatory", "contradictory")
+  val SpotVerdicts: List[com.histmersion.domain.ReviewArticle.SpotVerdicts] = List("attributable", "extrapolatory", "contradictory")
 
   /** What a full pass's spot-checks are held to: `required` of them verified on different sources; each claim in
     * `body`, each citekey one the article cites (`cited`), each read by one of `calls` — the tool calls of the step so
@@ -1177,10 +1512,10 @@ object ReviewArticle:
   /** How many spot-checks a full pass needs: `min` of them, or one per source the article cites in the corpus when it
     * cites fewer.
     */
-  def spotChecksRequired(min: Int, citedInCorpus: Int): Int = math.max(0, math.min(min, citedInCorpus))
+  def spotChecksRequired(min: com.histmersion.domain.ReviewArticle.SpotChecksRequiredMin, citedInCorpus: com.histmersion.domain.ReviewArticle.SpotChecksRequiredCitedInCorpus): com.histmersion.domain.ReviewArticle.SpotChecksRequiredResult = math.max(0, math.min(min, citedInCorpus))
 
   /** Does tool call `u` read the record of `ck`? A get_source or passages call whose input names it. */
-  def reads(u: AgentVerify.ToolUse, ck: String): Boolean =
+  def reads(u: AgentVerify.ToolUse, ck: com.histmersion.domain.ReviewArticle.ReadsCk): com.histmersion.domain.ReviewArticle.ReadsResult =
     SpotCheckTools(u.tool.trim) && ck.nonEmpty &&
       Option(u.input).exists(_.toLowerCase(java.util.Locale.ROOT).contains(ck.toLowerCase(java.util.Locale.ROOT)))
 
@@ -1195,8 +1530,8 @@ object ReviewArticle:
       as: List[SpotCheckAnswer],
       rule: SpotRule,
       ev: EvidenceCheck,
-      last: Boolean
-  ): (List[SpotCheck], List[String], List[String]) =
+      last: com.histmersion.domain.ReviewArticle.CheckSpotChecksLast
+  ): (List[SpotCheck], List[com.histmersion.domain.ReviewArticle.CheckSpotChecksResultPart2], List[com.histmersion.domain.ReviewArticle.CheckSpotChecksResultPart3]) =
     val results = as.zipWithIndex.map { (a, i) =>
       val ck = Option(a.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim).getOrElse("")
       val claim = Option(a.claim).map(_.trim).getOrElse("")
@@ -1242,14 +1577,21 @@ object ReviewArticle:
     * entry of the ledger ([[ReviewLedger.absorb]] matches it across counts and replaces an earlier MAJOR one).
     */
   object TermCount:
+    type ProblemResult = ProblemResult.T
+    object ProblemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ProblemN = ProblemN.T
+    object ProblemN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsResult = IsResult.T
+    object IsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Kind = "term-count"
     val Where = "explain-back"
-    def problem(n: Int): String = s"$n terms undefined (count only; the individual findings carry the severity)"
+    def problem(n: com.histmersion.domain.ReviewArticle.TermCount.ProblemN): com.histmersion.domain.ReviewArticle.TermCount.ProblemResult = s"$n terms undefined (count only; the individual findings carry the severity)"
     val Fix = "define each on first use, and add a Glossary"
 
     /** The count finding — this one, or the MAJOR "N terms are undefined (more than 8)" earlier runs stored. */
     private val Problem = """^\d+ terms (are )?undefined\b.*""".r
-    def is(f: Finding): Boolean =
+    def is(f: Finding): com.histmersion.domain.ReviewArticle.TermCount.IsResult =
       f.reviewer == Reviewer.ColdReader && Option(f.quote).forall(_.trim.isEmpty) &&
         AgentVerify.normalise(Option(f.where).getOrElse("")) == AgentVerify.normalise(Where) &&
         (f.kind == Kind || (f.kind == "term" && Problem.matches(Option(f.problem).getOrElse("").trim)))
@@ -1261,7 +1603,7 @@ object ReviewArticle:
     * singular or plural ("open questions", "Disagreements:") is that slot. Returns the slots and the entries that are
     * neither.
     */
-  def emptySlotsOf(raw: List[String]): (List[String], List[String]) =
+  def emptySlotsOf(raw: List[com.histmersion.domain.ReviewArticle.EmptySlotsOfRaw]): (List[com.histmersion.domain.ReviewArticle.EmptySlotsOfResultPart1], List[com.histmersion.domain.ReviewArticle.EmptySlotsOfResultPart2]) =
     val entries = raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).filterNot(NoSlot.matches)
     val read = entries.map { e =>
       val first = e.takeWhile(_.isLetter)
@@ -1279,9 +1621,9 @@ object ReviewArticle:
     */
   def checkColdReader(
       a: ColdReaderAnswer,
-      last: Boolean,
+      last: com.histmersion.domain.ReviewArticle.CheckColdReaderLast,
       prior: Option[Prior] = None
-  ): Either[List[String], (Report, List[String])] =
+  ): Either[List[com.histmersion.domain.ReviewArticle.CheckColdReaderResultPart1], (Report, List[com.histmersion.domain.ReviewArticle.CheckColdReaderResultPart2Part2])] =
     val (stated, ps, _) = checkFindings(Reviewer.ColdReader, a.findings.map(_.asFinding))
     val (slots, odd) = emptySlotsOf(a.emptySlots)
     val unknown = odd.map(s => s"empty slot '$s' is not one of ${ExplainSlots.mkString(", ")}")
@@ -1318,13 +1660,13 @@ object ReviewArticle:
     */
   def checkSkeptic(
       a: SkepticAnswer,
-      last: Boolean,
-      isCitekey: String => Boolean,
-      text: String => Option[String],
-      minRatio: Double,
+      last: com.histmersion.domain.ReviewArticle.CheckSkepticLast,
+      isCitekey: com.histmersion.domain.ReviewArticle.CheckSkepticIsCitekeyArg1 => com.histmersion.domain.ReviewArticle.CheckSkepticIsCitekeyResult,
+      text: com.histmersion.domain.ReviewArticle.CheckSkepticTextArg1 => Option[com.histmersion.domain.ReviewArticle.CheckSkepticTextResult],
+      minRatio: com.histmersion.domain.ReviewArticle.CheckSkepticMinRatio,
       prior: Option[Prior] = None,
       critique: Option[CritiqueRule] = None
-  ): Either[List[String], (Report, List[String])] =
+  ): Either[List[com.histmersion.domain.ReviewArticle.CheckSkepticResultPart1], (Report, List[com.histmersion.domain.ReviewArticle.CheckSkepticResultPart2Part2])] =
     val (stated, ps, ds) = checkFindings(Reviewer.Skeptic, a.findings, evidenceCheck(isCitekey, text, minRatio))
     val props = a.proposals.map(AgentProposals.check(_, isCitekey, text, minRatio))
     val verified = props.collect { case Right(p) => p }
@@ -1344,7 +1686,7 @@ object ReviewArticle:
   /** The finding kind of an omitted critique. */
   val MissingCritique = "missing-critique"
 
-  def isMissingCritique(f: Finding): Boolean = f.kind.trim.toLowerCase(java.util.Locale.ROOT) == MissingCritique
+  def isMissingCritique(f: Finding): com.histmersion.domain.ReviewArticle.IsMissingCritiqueResult = f.kind.trim.toLowerCase(java.util.Locale.ROOT) == MissingCritique
 
   /** What a missing-critique finding is held to in one pass: the article's checklist (`pairs`), the open pairs the
     * skeptic was shown in full and must rule on (`shown`; empty for a re-check, the confirming panel and the rules
@@ -1367,7 +1709,7 @@ object ReviewArticle:
     type MinRatio = MinRatio.T
     object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def recordedMinor(f: Finding, why: String): Finding =
+  private def recordedMinor(f: Finding, why: com.histmersion.domain.ReviewArticle.RecordedMinorWhy): Finding =
     f.modify(_.severity).setTo(Severity.Minor).modify(_.problem).setTo(s"${f.problem.trim} (recorded minor: $why)")
 
   /** GRADE hedges and contest words: a sentence carrying one already qualifies its claim. */
@@ -1414,7 +1756,7 @@ object ReviewArticle:
   /** A paragraph's sentences: split after `.`, `!` or `?` before a capital, a quote, a bracket or an emphasis mark —
     * never after an abbreviation or an initial (`M. L. West`).
     */
-  def sentences(p: String): List[String] =
+  def sentences(p: com.histmersion.domain.ReviewArticle.SentencesP): List[com.histmersion.domain.ReviewArticle.SentencesResult] =
     val cuts = SentenceEnd
       .findAllMatchIn(p)
       .filter { m =>
@@ -1436,7 +1778,7 @@ object ReviewArticle:
   /** The sentence of `body` that holds `quote` — the fewest consecutive sentences (at most four) when it spans more
     * than one, else its paragraph; None when the quote is not in the body.
     */
-  def claimSentence(body: String, quote: String, minRatio: Double): Option[String] =
+  def claimSentence(body: com.histmersion.domain.ReviewArticle.ClaimSentenceBody, quote: com.histmersion.domain.ReviewArticle.ClaimSentenceQuote, minRatio: com.histmersion.domain.ReviewArticle.ClaimSentenceMinRatio): Option[com.histmersion.domain.ReviewArticle.ClaimSentenceResult] =
     val q = Option(quote).map(_.trim).getOrElse("")
     def has(t: String) = AgentVerify.findQuote(q, t, minRatio).accepted
     if q.isEmpty then None
@@ -1447,7 +1789,7 @@ object ReviewArticle:
       }
 
   /** Does the text carry a hedge or a contest word (outside its links)? */
-  def qualified(text: String): Boolean =
+  def qualified(text: com.histmersion.domain.ReviewArticle.QualifiedText): com.histmersion.domain.ReviewArticle.QualifiedResult =
     Hedge.findFirstIn("""\[\[[^\]]*\]\]""".r.replaceAllIn(text, " ")).isDefined
 
   private val ClauseEnd = "(;|,\\s+(?:and|but|while|whereas)\\s|\\s(?:but|whereas)\\s)".r
@@ -1457,7 +1799,7 @@ object ReviewArticle:
     * (2003) dated the split… [[gray2003_language]], and Bouckaert et al. (2012, contested)…") does not qualify it. The
     * whole sentence when the quote's end is not found.
     */
-  def claimWindow(sentence: String, quote: String): String =
+  def claimWindow(sentence: com.histmersion.domain.ReviewArticle.ClaimWindowSentence, quote: com.histmersion.domain.ReviewArticle.ClaimWindowQuote): com.histmersion.domain.ReviewArticle.ClaimWindowResult =
     val ws = quote.split("[^\\p{L}\\p{N}]+").filter(_.nonEmpty).takeRight(3)
     if ws.isEmpty then sentence
     else
@@ -1474,7 +1816,7 @@ object ReviewArticle:
     * (`([[smith1998_death]], contested — challenged by …)`, `[[x]] (contested`)? A short form of the citekey
     * (`[[knapp2016]]` for `knapp2016_seven`) counts.
     */
-  def labelled(sentence: String, criticised: String): Boolean =
+  def labelled(sentence: com.histmersion.domain.ReviewArticle.LabelledSentence, criticised: com.histmersion.domain.ReviewArticle.LabelledCriticised): com.histmersion.domain.ReviewArticle.LabelledResult =
     val ck = criticised.trim.toLowerCase(java.util.Locale.ROOT)
     val forms = (ck :: Option.when(ck.contains("_"))(ck.takeWhile(_ != '_')).toList).map(java.util.regex.Pattern.quote)
     ("(?i)\\[\\[(" + forms.mkString("|") + ")\\]\\][\\s,;(—–-]{0,6}" + StatusLabel).r.findFirstIn(sentence).isDefined
@@ -1482,7 +1824,7 @@ object ReviewArticle:
   /** Is the claim `quote` states already qualified in `sentence`: a hedge or contest word in its own clause
     * ([[claimWindow]]), or a status label on the criticised work ([[labelled]])?
     */
-  def qualifiedClaim(sentence: String, quote: String, criticised: String): Boolean =
+  def qualifiedClaim(sentence: com.histmersion.domain.ReviewArticle.QualifiedClaimSentence, quote: com.histmersion.domain.ReviewArticle.QualifiedClaimQuote, criticised: com.histmersion.domain.ReviewArticle.QualifiedClaimCriticised): com.histmersion.domain.ReviewArticle.QualifiedClaimResult =
     qualified(claimWindow(sentence, quote)) || labelled(sentence, criticised)
 
   /** SEVERITY CALIBRATION (§6.9). A missing-critique MAJOR stands only when the critique is a recorded edge the article
@@ -1506,8 +1848,8 @@ object ReviewArticle:
       fs: List[Finding],
       rule: CritiqueRule,
       proposals: List[Proposal],
-      last: Boolean
-  ): (List[Finding], List[String], List[String]) =
+      last: com.histmersion.domain.ReviewArticle.CheckCritiquesLast
+  ): (List[Finding], List[com.histmersion.domain.ReviewArticle.CheckCritiquesResultPart2], List[com.histmersion.domain.ReviewArticle.CheckCritiquesResultPart3]) =
     val results = fs.map { f =>
       if !isMissingCritique(f) || !f.major then Right((f, None))
       else
@@ -1565,7 +1907,7 @@ object ReviewArticle:
     * one whose pair an open skeptic entry of the ledger already holds (the cold reader repeating a ledger finding it
     * read; the rules reviewer the skeptic's). Returns the findings kept and a warning per one dropped.
     */
-  def onePerPair(fs: List[Finding], heldBySkeptic: List[CritiqueRef]): (List[Finding], List[String]) =
+  def onePerPair(fs: List[Finding], heldBySkeptic: List[CritiqueRef]): (List[Finding], List[com.histmersion.domain.ReviewArticle.OnePerPairResultPart2]) =
     val withPair = fs.filter(f => isMissingCritique(f) && f.pair.isDefined)
     val keep = fs.filter { f =>
       if !isMissingCritique(f) || f.pair.isEmpty then true
@@ -1594,8 +1936,8 @@ object ReviewArticle:
       as: List[NotMaterialAnswer],
       fs: List[Finding],
       rule: CritiqueRule,
-      last: Boolean
-  ): (List[CritiqueReason], List[String], List[String]) =
+      last: com.histmersion.domain.ReviewArticle.CheckNotMaterialLast
+  ): (List[CritiqueReason], List[com.histmersion.domain.ReviewArticle.CheckNotMaterialResultPart2], List[com.histmersion.domain.ReviewArticle.CheckNotMaterialResultPart3]) =
     val named = fs.filter(f => f.major && isMissingCritique(f)).flatMap(_.pair)
     val results = as.map { a =>
       val reason = Option(a.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
@@ -1644,8 +1986,8 @@ object ReviewArticle:
       r: Reviewer,
       prior: Option[Prior],
       as: List[CheckAnswer],
-      last: Boolean
-  ): (List[Check], List[String], List[String]) =
+      last: com.histmersion.domain.ReviewArticle.ChecksOfLast
+  ): (List[Check], List[com.histmersion.domain.ReviewArticle.ChecksOfResultPart2], List[com.histmersion.domain.ReviewArticle.ChecksOfResultPart3]) =
     prior.filter(_.asked.nonEmpty).fold((Nil, Nil, Nil))(p => checkChecks(r, p, as, last))
 
   /** Verify a reviewer's checks of its earlier findings: one per finding asked about (a missing one leaves it open),
@@ -1658,8 +2000,8 @@ object ReviewArticle:
       r: Reviewer,
       prior: Prior,
       as: List[CheckAnswer],
-      last: Boolean
-  ): (List[Check], List[String], List[String]) =
+      last: com.histmersion.domain.ReviewArticle.CheckChecksLast
+  ): (List[Check], List[com.histmersion.domain.ReviewArticle.CheckChecksResultPart2], List[com.histmersion.domain.ReviewArticle.CheckChecksResultPart3]) =
     val byId = prior.asked.map(f => f.id -> f).toMap
     def gone(f: Finding) = f.quote.trim.isEmpty || !AgentVerify.findQuote(f.quote, prior.body, prior.minRatio).accepted
     val results = Option(as).getOrElse(Nil).map { c =>
@@ -1706,7 +2048,7 @@ object ReviewArticle:
       checks: List[Check],
       asked: List[Finding],
       pairs: List[CritiquePair]
-  ): (List[Check], List[String]) =
+  ): (List[Check], List[com.histmersion.domain.ReviewArticle.HoldPairChecksResultPart2]) =
     val held = checks.map { c =>
       asked.find(_.id == c.id).flatMap(_.pair).flatMap(Critiques.find(pairs, _)) match
         case Some(p) if c.fixed && p.bearing =>
@@ -1732,9 +2074,9 @@ object ReviewArticle:
       f: Finding,
       start: List[CritiquePair],
       now: List[CritiquePair],
-      edited: String,
-      minRatio: Double
-  ): Boolean =
+      edited: com.histmersion.domain.ReviewArticle.FinalRegressionEdited,
+      minRatio: com.histmersion.domain.ReviewArticle.FinalRegressionMinRatio
+  ): com.histmersion.domain.ReviewArticle.FinalRegressionResult =
     val pairBack = isMissingCritique(f) && f.pair.exists(ref =>
       Critiques.find(start, ref).exists(!_.open) && Critiques.find(now, ref).forall(_.open)
     )
@@ -1746,7 +2088,7 @@ object ReviewArticle:
   /** The kinds of finding that are factual errors: the only MAJORs a verification pass may raise outside the edited
     * passages, and only with evidence code verified.
     */
-  val FactualKinds: Set[String] =
+  val FactualKinds: Set[com.histmersion.domain.ReviewArticle.FactualKinds] =
     Set("contradictory", "extrapolatory", "decorative", "recall", "date", "status", "settled-but-contested", "number")
 
   /** At most this many lessons per answer, each at most this long. */
@@ -1756,7 +2098,7 @@ object ReviewArticle:
   /** A verification pass's finding, scoped to the edited passages: inside them anything stands; outside them a MAJOR
     * stands only as a factual error with evidence, else it is recorded as minor (with the warning saying so).
     */
-  def scope(f: Finding, edited: String, minRatio: Double): (Finding, Option[String]) =
+  def scope(f: Finding, edited: com.histmersion.domain.ReviewArticle.ScopeEdited, minRatio: com.histmersion.domain.ReviewArticle.ScopeMinRatio): (Finding, Option[com.histmersion.domain.ReviewArticle.ScopeResultPart2]) =
     val inside = f.quote.trim.nonEmpty && AgentVerify.findQuote(f.quote, edited, minRatio).accepted
     if !f.major || inside || (FactualKinds(f.kind.trim.toLowerCase(java.util.Locale.ROOT)) && f.evidence.nonEmpty) then
       (f, None)
@@ -1775,11 +2117,11 @@ object ReviewArticle:
       r: Reviewer,
       a: RecheckAnswer,
       prior: Prior,
-      edited: String,
+      edited: com.histmersion.domain.ReviewArticle.CheckRecheckEdited,
       ev: EvidenceCheck,
-      last: Boolean,
+      last: com.histmersion.domain.ReviewArticle.CheckRecheckLast,
       critiques: List[CritiquePair] = Nil
-  ): Either[List[String], (Recheck, List[String])] =
+  ): Either[List[com.histmersion.domain.ReviewArticle.CheckRecheckResultPart1], (Recheck, List[com.histmersion.domain.ReviewArticle.CheckRecheckResultPart2Part2])] =
     val (cs, cps, cws) = checkChecks(r, prior, a.checks, last)
     val (raw, ps, ds0) = checkFindings(r, Option(a.findings).getOrElse(Nil), ev)
     // a re-check is shown no checklist: a missing-critique MAJOR on no open pair is recorded minor
@@ -1806,12 +2148,12 @@ object ReviewArticle:
 
   // ── merge and gate (§4.3 steps 4–5) ─────────────────────────────────────────────────────────────
 
-  private def key(f: Finding): (String, String) = (AgentVerify.normalise(f.where), AgentVerify.normalise(f.problem))
+  private def key(f: Finding): (com.histmersion.domain.ReviewArticle.KeyResultPart1, com.histmersion.domain.ReviewArticle.KeyResultPart2) = (AgentVerify.normalise(f.where), AgentVerify.normalise(f.problem))
 
   /** Did a reviewer raise `f` before? Same reviewer, and the same quoted passage — or the same `where` + `problem` when
     * there is no quote (a model rewords its problem, rarely its quote).
     */
-  def sameFinding(a: Finding, b: Finding): Boolean =
+  def sameFinding(a: Finding, b: Finding): com.histmersion.domain.ReviewArticle.SameFindingResult =
     a.reviewer == b.reviewer && {
       val (qa, qb) = (AgentVerify.normalise(a.quote), AgentVerify.normalise(b.quote))
       if qa.nonEmpty && qb.nonEmpty then qa == qb else key(a) == key(b)
@@ -1824,7 +2166,7 @@ object ReviewArticle:
     * report and every kept finding.
     */
   def merge(
-      round: Int,
+      round: com.histmersion.domain.ReviewArticle.MergeRound,
       mechanicalFindings: List[Finding],
       reports: List[Report],
       rejectedBefore: List[Finding]
@@ -1862,25 +2204,25 @@ object ReviewArticle:
 
   /** After a round: stop when nothing major is open, when no fixing was asked for, or when the rounds are used up.
     */
-  def done(m: Merged, round: Int, rounds: Int, fix: Boolean): Boolean =
+  def done(m: Merged, round: com.histmersion.domain.ReviewArticle.DoneRound, rounds: com.histmersion.domain.ReviewArticle.DoneRounds, fix: com.histmersion.domain.ReviewArticle.DoneFix): com.histmersion.domain.ReviewArticle.DoneResult =
     m.majors.isEmpty || !fix || round >= rounds
 
   /** The panel rounds a run gets: what it asked for, else the configured default, never more than the cap. The fixer
     * works BETWEEN rounds, so a run that fixes gets at least two (one to find, one to check the fix).
     */
-  def rounds(requested: Option[Int], default: Int, cap: Int, fix: Boolean): Int =
+  def rounds(requested: Option[com.histmersion.domain.ReviewArticle.RoundsRequested], default: com.histmersion.domain.ReviewArticle.RoundsDefault, cap: com.histmersion.domain.ReviewArticle.RoundsCap, fix: com.histmersion.domain.ReviewArticle.RoundsFix): com.histmersion.domain.ReviewArticle.RoundsResult =
     val floor = if fix then 2 else 1
     math.max(floor, math.min(math.max(floor, cap), requested.getOrElse(default)))
 
   // ── the fixer (§4.3 step 6) ─────────────────────────────────────────────────────────────────────
 
-  def words(s: String): Int = s.split("\\s+").count(_.nonEmpty)
+  def words(s: com.histmersion.domain.ReviewArticle.WordsS): com.histmersion.domain.ReviewArticle.WordsResult = s.split("\\s+").count(_.nonEmpty)
 
   /** The fixer's turns: its agent's `max-turns`, plus `perFinding` for every finding that may need a lookup — each
     * MAJOR, and each minor of the rules reviewer or the skeptic (a factual one) — never more than `cap` (and never
     * fewer than `base`). Eighteen findings in twelve turns ran out.
     */
-  def fixerTurns(base: Int, m: Merged, perFinding: Int, cap: Int): Int =
+  def fixerTurns(base: com.histmersion.domain.ReviewArticle.FixerTurnsBase, m: Merged, perFinding: com.histmersion.domain.ReviewArticle.FixerTurnsPerFinding, cap: com.histmersion.domain.ReviewArticle.FixerTurnsCap): com.histmersion.domain.ReviewArticle.FixerTurnsResult =
     val b = math.max(1, base)
     val n = m.findings.count(f => f.major || f.reviewer == Reviewer.Rules || f.reviewer == Reviewer.Skeptic)
     math.max(b, math.min(cap, b + math.max(0, perFinding) * n))
@@ -1890,13 +2232,26 @@ object ReviewArticle:
     * compare).
     */
   final case class BodyCorpus(
-      isCitekey: String => Boolean,
-      isTarget: String => Boolean,
-      formatErrors: String => List[String],
+      isCitekey: BodyCorpus.IsCitekeyArg1 => BodyCorpus.IsCitekeyResult,
+      isTarget: BodyCorpus.IsTargetArg1 => BodyCorpus.IsTargetResult,
+      formatErrors: BodyCorpus.FormatErrorsArg1 => List[BodyCorpus.FormatErrorsResult],
       generated: BodyCorpus.Generated = false
   )
 
   object BodyCorpus:
+    type IsCitekeyArg1 = IsCitekeyArg1.T
+    object IsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsCitekeyResult = IsCitekeyResult.T
+    object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsTargetArg1 = IsTargetArg1.T
+    object IsTargetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsTargetResult = IsTargetResult.T
+    object IsTargetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FormatErrorsArg1 = FormatErrorsArg1.T
+    object FormatErrorsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FormatErrorsResult = FormatErrorsResult.T
+    object FormatErrorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Generated = Generated.T
     object Generated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1908,9 +2263,9 @@ object ReviewArticle:
     * draft's). FATAL (never written, even on a last attempt): an empty body, or a link problem `before` did not have.
     */
   def checkBody(
-      slug: String,
-      before: String,
-      kind: String,
+      slug: com.histmersion.domain.ReviewArticle.CheckBodySlug,
+      before: com.histmersion.domain.ReviewArticle.CheckBodyBefore,
+      kind: com.histmersion.domain.ReviewArticle.CheckBodyKind,
       draft: Article.Edits.Draft,
       corpus: BodyCorpus
   ): Article.Edits.ArticleCheck =
@@ -1955,10 +2310,22 @@ object ReviewArticle:
     * ([[ReviewLedger.guard]]); `repair` — the mechanical pairing repair of a body ([[CritiquePairing.repair]]).
     */
   final case class FixGuards(
-      pairsOf: String => List[CritiquePair],
-      regressions: (String, String) => List[ReviewLedger.Regression],
-      repair: String => (String, List[CritiquePairing.Hit])
+      pairsOf: FixGuards.PairsOfArg1 => List[CritiquePair],
+      regressions: (FixGuards.RegressionsArg1, FixGuards.RegressionsArg2) => List[ReviewLedger.Regression],
+      repair: FixGuards.RepairArg1 => (FixGuards.RepairResultPart1, List[CritiquePairing.Hit])
   )
+
+  object FixGuards:
+    type PairsOfArg1 = PairsOfArg1.T
+    object PairsOfArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RegressionsArg1 = RegressionsArg1.T
+    object RegressionsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RegressionsArg2 = RegressionsArg2.T
+    object RegressionsArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RepairArg1 = RepairArg1.T
+    object RepairArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RepairResultPart1 = RepairResultPart1.T
+    object RepairResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One evaluation of a list of edits: the checked body, then the pairing repair of it, the checklist of the result
     * and the closed findings it would reopen.
@@ -1992,18 +2359,18 @@ object ReviewArticle:
   def checkFix(
       a: FixerAnswer,
       m: Merged,
-      slug: String,
-      before: String,
-      kind: String,
+      slug: com.histmersion.domain.ReviewArticle.CheckFixSlug,
+      before: com.histmersion.domain.ReviewArticle.CheckFixBefore,
+      kind: com.histmersion.domain.ReviewArticle.CheckFixKind,
       corpus: BodyCorpus,
-      isCitekey: String => Boolean,
-      text: String => Option[String],
-      minRatio: Double,
-      last: Boolean,
+      isCitekey: com.histmersion.domain.ReviewArticle.CheckFixIsCitekeyArg1 => com.histmersion.domain.ReviewArticle.CheckFixIsCitekeyResult,
+      text: com.histmersion.domain.ReviewArticle.CheckFixTextArg1 => Option[com.histmersion.domain.ReviewArticle.CheckFixTextResult],
+      minRatio: com.histmersion.domain.ReviewArticle.CheckFixMinRatio,
+      last: com.histmersion.domain.ReviewArticle.CheckFixLast,
       coverage: Option[Coverage] = None,
       critiques: List[CritiquePair] = Nil,
       guards: Option[FixGuards] = None
-  ): Either[List[String], (Fix, List[String])] =
+  ): Either[List[com.histmersion.domain.ReviewArticle.CheckFixResultPart1], (Fix, List[com.histmersion.domain.ReviewArticle.CheckFixResultPart2Part2])] =
     val ids = m.findings.map(_.id).toSet
     val byId = m.findings.map(f => f.id -> f).toMap
     val applied0 = a.applied.map(_.trim).filter(_.nonEmpty).distinct
@@ -2166,9 +2533,9 @@ object ReviewArticle:
     */
   def checkSetAside(
       as: List[SetAsideAnswer],
-      byId: Map[String, Finding],
+      byId: Map[com.histmersion.domain.ReviewArticle.CheckSetAsideByIdPart1, Finding],
       critiques: List[CritiquePair]
-  ): (List[SetAside], List[CritiqueReason], List[String]) =
+  ): (List[SetAside], List[CritiqueReason], List[com.histmersion.domain.ReviewArticle.CheckSetAsideResultPart3]) =
     def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
     def held(label: String, r: CritiqueRef, reason: String): Either[String, CritiquePair] =
       Critiques.find(critiques, r) match
@@ -2215,7 +2582,7 @@ object ReviewArticle:
     * open in the ledger for a person. Before this a Codex fixer left such findings out (sent back) and then listed them
     * as applied without an edit (2026-10-16).
     */
-  def needsFilter(f: Finding, coverage: Option[Coverage]): Boolean =
+  def needsFilter(f: Finding, coverage: Option[Coverage]): com.histmersion.domain.ReviewArticle.NeedsFilterResult =
     f.major && coverage.isEmpty && f.kind.trim.equalsIgnoreCase("coverage")
 
   /** The fixer's coverage reasons (#958) against the coverage the round reviewed: each names a source the filter
@@ -2226,11 +2593,11 @@ object ReviewArticle:
   def checkReasons(
       stated: List[Coverage.Reason],
       coverage: Option[Coverage],
-      body: String,
-      isCitekey: String => Boolean,
+      body: com.histmersion.domain.ReviewArticle.CheckReasonsBody,
+      isCitekey: com.histmersion.domain.ReviewArticle.CheckReasonsIsCitekeyArg1 => com.histmersion.domain.ReviewArticle.CheckReasonsIsCitekeyResult,
       m: Merged,
-      applied: Set[String]
-  ): (List[Coverage.Reason], List[String]) =
+      applied: Set[com.histmersion.domain.ReviewArticle.CheckReasonsApplied]
+  ): (List[Coverage.Reason], List[com.histmersion.domain.ReviewArticle.CheckReasonsResultPart2]) =
     coverage match
       case None =>
         (
@@ -2279,12 +2646,12 @@ object ReviewArticle:
   // ── what the reviewers and the fixer are sent ───────────────────────────────────────────────────
 
   /** One evidence record, as the fixer reads it. */
-  def evidenceLine(e: Evidence): String =
+  def evidenceLine(e: Evidence): com.histmersion.domain.ReviewArticle.EvidenceLineResult =
     val at = e.offset.fold("")(o => s" @$o")
     s"[[${e.citekey}]]$at: \"${e.quote.replace("\n", " ").take(400)}\""
 
   /** The findings, as the fixer reads them — each with the records the reviewer found, verified. */
-  def findingsText(m: Merged, notes: Map[String, String] = Map.empty): String =
+  def findingsText(m: Merged, notes: Map[com.histmersion.domain.ReviewArticle.FindingsTextNotesPart1, com.histmersion.domain.ReviewArticle.FindingsTextNotesPart2] = Map.empty): com.histmersion.domain.ReviewArticle.FindingsTextResult =
     m.findings
       .map { f =>
         val esc = if f.escalated then " [raised again after a rejection]" else ""
@@ -2299,7 +2666,7 @@ object ReviewArticle:
   // ── bookkeeping (§4.3 step 8) ──────────────────────────────────────────────────────────────────
 
   /** The worklog line, in the form the review-article skill writes. */
-  def logLine(o: Outcome, last: Merged, runId: String): String =
+  def logLine(o: Outcome, last: Merged, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.ReviewArticle.LogLineResult =
     val counts = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic, Reviewer.Mechanical)
       .map(r => s"${r.prefix}:${last.count(r)}")
       .mkString(" ")

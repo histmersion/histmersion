@@ -16,7 +16,7 @@ trait Referable:
   def kinds: Set[ItemKind]
 
   /** The record `key` names now — an alias of a renamed key followed — or why there is none. */
-  def resolve(kind: ItemKind, key: ItemKey): Either[String, ItemRef]
+  def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.domain.Referable.ResolveResultPart1, ItemRef]
 
   /** How each record shows wherever it is referenced; a reference to a record this domain never held is left out. One
     * call per kind on a page, batched.
@@ -28,6 +28,9 @@ object Referable:
   /** The records of one kind held in memory (tests), resolved and described by the rules the tables keep: a uid that
     * survives a rename, an alias for the old key, a merge's uid redirect, a deletion's tombstone.
     */
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final class InMemory(kind: ItemKind, records: AtomicReference[Records] = AtomicReference(Records()))
       extends Referable:
     val kinds: Set[ItemKind] = Set(kind)
@@ -55,7 +58,7 @@ object Referable:
         r.live.get(key).fold(r)(rec => r.copy(live = r.live - key, tombstones = r.tombstones ++ rec.uid.map(_ -> at)))
       }: Unit
 
-    def resolve(kind: ItemKind, key: ItemKey): Either[String, ItemRef] =
+    def resolve(kind: ItemKind, key: ItemKey): Either[com.histmersion.domain.Referable.InMemory.ResolveResultPart1, ItemRef] =
       val r = records.get
       r.live
         .get(key)
@@ -66,6 +69,10 @@ object Referable:
     def describe(refs: Set[ItemRef]): Map[ItemRef, Described] =
       val r = records.get
       refs.flatMap(ref => r.describe(ref).map(ref -> _)).toMap
+
+  object InMemory:
+    type ResolveResultPart1 = ResolveResultPart1.T
+    object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One record: its uid (where its kind has uids) and its title. */
   final case class Record(uid: Option[ItemUid], title: Title)
@@ -79,7 +86,7 @@ object Referable:
     private def byUid(uid: ItemUid): Option[(ItemKey, Record)] = live.find(_._2.uid.contains(uid))
 
     /** Where the merges since sent `uid`: the last uid of its redirects, if it has any. */
-    private def redirected(uid: ItemUid, hops: Int): Option[ItemUid] =
+    private def redirected(uid: ItemUid, hops: com.histmersion.domain.Referable.Records.RedirectedHops): Option[ItemUid] =
       @scala.annotation.tailrec
       def last(at: ItemUid, hops: Int): ItemUid = redirects.get(at) match
         case Some(next) if hops < Records.MaxHops => last(next, hops + 1)
@@ -113,4 +120,7 @@ object Referable:
 
   object Records:
     /** How many merges in a row are followed: a chain longer than this is a loop the merge never writes. */
+    type RedirectedHops = RedirectedHops.T
+    object RedirectedHops extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val MaxHops = 16

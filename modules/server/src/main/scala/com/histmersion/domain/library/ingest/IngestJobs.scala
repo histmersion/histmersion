@@ -11,4 +11,8 @@ trait IngestJobs:
     *   the acquired file in the acquisition spool, or `None` when no PDF was found (the source is still created from
     *   metadata, so it can be enriched and queued)
     */
-  def enqueue(copy: Option[FetchedCopy], citekey: String, meta: IngestMeta): Either[String, IngestOutcome]
+  def enqueue(copy: Option[FetchedCopy], citekey: com.histmersion.domain.library.Citekey, meta: IngestMeta): Either[com.histmersion.domain.library.ingest.IngestJobs.EnqueueResultPart1, IngestOutcome]
+
+object IngestJobs:
+  type EnqueueResultPart1 = EnqueueResultPart1.T
+  object EnqueueResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

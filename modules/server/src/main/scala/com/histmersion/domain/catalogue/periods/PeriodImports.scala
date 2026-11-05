@@ -18,10 +18,10 @@ final class PeriodImports(
 ):
 
   /** The bundled seed, parsed. */
-  private def bundled: Either[String, PeriodODataset] = seed().flatMap(PeriodO.parse)
+  private def bundled: Either[com.histmersion.domain.catalogue.periods.PeriodImports.BundledResultPart1, PeriodODataset] = seed().flatMap(PeriodO.parse)
 
   /** Apply the bundled seed — with `replace`, the seed rows it no longer has are deleted as well. */
-  def applySeed(replace: Boolean): Either[String, Period.ImportResult] =
+  def applySeed(replace: com.histmersion.domain.catalogue.periods.PeriodImports.ApplySeedReplace): Either[com.histmersion.domain.catalogue.periods.PeriodImports.ApplySeedResultPart1, Period.ImportResult] =
     bundled.map { d =>
       val r = write(d, Dataset.Seed)
       val ids = d.authorities.flatMap(_.periods.map(_.id))
@@ -32,13 +32,13 @@ final class PeriodImports(
     }
 
   /** Is the bundled seed newer than the one last applied here? */
-  def seedOutdated: Boolean =
+  def seedOutdated: com.histmersion.domain.catalogue.periods.PeriodImports.SeedOutdatedResult =
     bundled.toOption
       .flatMap(_.version)
       .exists(v => periods.seedVersion(PeriodImports.SeedName).forall(_ < v))
 
   /** The live PeriodO dump, the named collections only (the configured ones when none is named). */
-  def fetch(collections: List[String]): Either[String, Period.ImportResult] =
+  def fetch(collections: List[com.histmersion.domain.catalogue.periods.PeriodImports.FetchCollections]): Either[com.histmersion.domain.catalogue.periods.PeriodImports.FetchResultPart1, Period.ImportResult] =
     val s = sources()
     val wanted = collections.map(_.trim).filter(_.nonEmpty) match
       case Nil => s.collections
@@ -70,6 +70,19 @@ final class PeriodImports(
 
 object PeriodImports:
   /** The `seed_versions` name of the bundled period seed. */
+  type BundledResultPart1 = BundledResultPart1.T
+  object BundledResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplySeedResultPart1 = ApplySeedResultPart1.T
+  object ApplySeedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplySeedReplace = ApplySeedReplace.T
+  object ApplySeedReplace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SeedOutdatedResult = SeedOutdatedResult.T
+  object SeedOutdatedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchResultPart1 = FetchResultPart1.T
+  object FetchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchCollections = FetchCollections.T
+  object FetchCollections extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val SeedName = "periods"
 
   /** How many skipped period definitions an import result or a job names one by one (all are counted). */

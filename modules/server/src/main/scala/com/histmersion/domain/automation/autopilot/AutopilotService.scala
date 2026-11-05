@@ -53,27 +53,27 @@ final class AutopilotService(
   private def acfg = cfg.autopilot
 
   /** Whether it is on (one row read). */
-  def on: Boolean = agents.autopilotRow.row().enabled
+  def on: com.histmersion.domain.automation.autopilot.AutopilotService.OnResult = agents.autopilotRow.row().enabled
 
   /** Today's shared ingest cap: `ingest-per-day` (0 = none), scaled to the watchers' ingest backlog when
     * `ingest-backlog-share` is above 0 (at most `ingest-ceiling`).
     */
-  def ingestCap: Int =
+  def ingestCap: com.histmersion.domain.automation.autopilot.AutopilotService.IngestCapResult =
     if acfg.ingestPerDay <= 0 then 0
     else AutopilotPolicy.scaledCap(acfg.ingestPerDay, backlogPending, acfg.ingestBacklogShare, acfg.ingestCeiling)
 
-  private def backlogPending: Int =
+  private def backlogPending: com.histmersion.domain.automation.autopilot.AutopilotService.BacklogPendingResult =
     if acfg.ingestBacklogShare <= 0 then 0 else agents.managerStore.backlogCounts().values.map(_._1).sum
 
   /** What is left today of the legal open-access ingests all watchers share — the acquisition list's re-check's finds
     * counted too (None: off, or no shared cap).
     */
-  def sharedIngestLeft(now: Instant): Option[Int] =
+  def sharedIngestLeft(now: Instant): Option[com.histmersion.domain.automation.autopilot.AutopilotService.SharedIngestLeftResult] =
     if !on then None
     else AutopilotPolicy.sharedIngestLeft(ingestCap, ingestedToday(now))
 
   /** The legal open-access ingests today: every watcher's, and the acquisition list's re-check's. */
-  def ingestedToday(now: Instant): Int =
+  def ingestedToday(now: Instant): com.histmersion.domain.automation.autopilot.AutopilotService.IngestedTodayResult =
     agents.managerStore.countEventsAll(Feed.Ingested, ManagerPolicy.dayStart(now)) +
       agents.workflows.managerKinds.map(_.ingestedToday(now)).sum
 
@@ -120,7 +120,7 @@ final class AutopilotService(
   /** One pass, from the managers' tick: nothing while off; on, ensure and advance when due, and the housekeeping when
     * due.
     */
-  def tick(now: Instant): List[String] =
+  def tick(now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.TickResult] =
     val row = agents.autopilotRow.row()
     if !row.enabled then Nil
     else
@@ -149,7 +149,7 @@ final class AutopilotService(
   )
 
   /** Every goal's managers ([[AutopilotPolicy.ensure]]), applied; one line per change. */
-  def ensureNow(now: Instant): List[String] =
+  def ensureNow(now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.EnsureNowResult] =
     val goals = agents.goals.all()
     val planned = agents.goals.planned()
     val links = agents.goals.linkCounts()
@@ -166,11 +166,11 @@ final class AutopilotService(
     if out.nonEmpty then agents.managers.nudge()
     out
 
-  private def next(cron: String, now: Instant): Option[Instant] = Cron.parse(cron).toOption.flatMap(_.next(now))
+  private def next(cron: com.histmersion.domain.automation.autopilot.AutopilotService.NextCron, now: Instant): Option[Instant] = Cron.parse(cron).toOption.flatMap(_.next(now))
 
-  private def event(id: String, text: String): Unit = agents.managerStore.event(id, None, None, Feed.Autopilot, text)
+  private def event(id: com.histmersion.domain.automation.autopilot.AutopilotService.EventId, text: com.histmersion.domain.automation.autopilot.AutopilotService.EventText): Unit = agents.managerStore.event(id, None, None, Feed.Autopilot, text)
 
-  private def applyStep(s: Step, now: Instant): Option[String] =
+  private def applyStep(s: Step, now: Instant): Option[com.histmersion.domain.automation.autopilot.AutopilotService.ApplyStepResult] =
     s match
       case Step.CreateSeed(goal, cron, planFirst) =>
         val id = seedId(goal)
@@ -265,7 +265,7 @@ final class AutopilotService(
   /** Every goal's status moved on from the facts ([[AutopilotPolicy.advance]]), the deepest goals first so a parent
     * sees its sub-goals' new status in the same pass; one line per goal moved.
     */
-  def advance(now: Instant): List[String] =
+  def advance(now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.AdvanceResult] =
     val goals = agents.goals.all()
     val parentOf = goals.map(g => g.slug -> g.parentSlug).toMap
     val managers = agents.managerStore.light()
@@ -308,7 +308,7 @@ final class AutopilotService(
     * ([[AutopilotPolicy.nextArticle]]): its seeding manager's propose-articles item re-opened (the scheduler starts it;
     * the plan goes through the article-plan approvals). One line per goal.
     */
-  def nextArticles(now: Instant): List[String] =
+  def nextArticles(now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.NextArticlesResult] =
     if acfg.nextArticleHours <= 0 then Nil
     else
       val seeds = agents.managerStore.light().filter(_.kind == Kind.Seed.wire).flatMap(m => m.goal.map(_ -> m)).toMap
@@ -340,7 +340,7 @@ final class AutopilotService(
     * minutes), one at a time. Recorded as started, so a failure is not retried every tick (the next try is a period
     * later); the outcome is a worklog line.
     */
-  private def housekeeping(row: AutopilotRepo.Row, now: Instant): List[String] =
+  private def housekeeping(row: AutopilotRepo.Row, now: Instant): List[com.histmersion.domain.automation.autopilot.AutopilotService.HousekeepingResult] =
     val backupDue = AutopilotPolicy.due(row.lastBackupAt.flatMap(ManagerPolicy.parseInstant), acfg.backupHours, now)
     val lintDue = AutopilotPolicy.due(row.lastLintAt.flatMap(ManagerPolicy.parseInstant), acfg.lintHours, now)
     if !(backupDue || lintDue) then Nil
@@ -388,7 +388,7 @@ final class AutopilotService(
           (if r.remaining > 0 then s", ${r.remaining} left for the next run" else "")
     log(line)
 
-  private def log(line: String): Unit =
+  private def log(line: com.histmersion.domain.automation.autopilot.AutopilotService.LogLine): Unit =
     val _ = agents.workLists.add("log", QueueAdd(line.take(1000)))
     scribe.info(line)
 
@@ -478,3 +478,35 @@ final class AutopilotService(
     )
     // the domains' parts: the ingest backlog
     agents.workflows.managerKinds.foldLeft(st)((s, k) => k.status(s, now))
+
+object AutopilotService:
+  type OnResult = OnResult.T
+  object OnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestCapResult = IngestCapResult.T
+  object IngestCapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BacklogPendingResult = BacklogPendingResult.T
+  object BacklogPendingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SharedIngestLeftResult = SharedIngestLeftResult.T
+  object SharedIngestLeftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestedTodayResult = IngestedTodayResult.T
+  object IngestedTodayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TickResult = TickResult.T
+  object TickResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnsureNowResult = EnsureNowResult.T
+  object EnsureNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextCron = NextCron.T
+  object NextCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventId = EventId.T
+  object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventText = EventText.T
+  object EventText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyStepResult = ApplyStepResult.T
+  object ApplyStepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AdvanceResult = AdvanceResult.T
+  object AdvanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextArticlesResult = NextArticlesResult.T
+  object NextArticlesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HousekeepingResult = HousekeepingResult.T
+  object HousekeepingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLine = LogLine.T
+  object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

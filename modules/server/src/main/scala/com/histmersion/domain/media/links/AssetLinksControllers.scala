@@ -20,14 +20,14 @@ final class AssetLinksControllers(
 ):
 
   /** The identifier a target of `targetType` answers to now. */
-  private def refId(targetType: String, id: String): String =
+  private def refId(targetType: com.histmersion.domain.media.links.AssetLinksControllers.RefIdTargetType, id: com.histmersion.domain.media.links.AssetLinksControllers.RefIdId): com.histmersion.domain.media.links.AssetLinksControllers.RefIdResult =
     AliasKinds.ofTarget(targetType).fold(id)(current(_, id))
 
   def list(
-      citekey: Option[String],
-      asset: Option[String],
-      targetType: Option[String],
-      targetId: Option[String]
+      citekey: Option[com.histmersion.domain.library.Citekey],
+      asset: Option[com.histmersion.domain.media.links.AssetLinksControllers.ListAsset],
+      targetType: Option[com.histmersion.domain.media.links.AssetLinksControllers.ListTargetType],
+      targetId: Option[com.histmersion.domain.media.links.AssetLinksControllers.ListTargetId]
   ): AssetLink.List =
     val target = for t <- targetType; i <- targetId yield refId(t, i)
     links.list(citekey.map(current(AliasKinds.SourceRecords, _)), asset, targetType, target.orElse(targetId))
@@ -42,7 +42,23 @@ final class AssetLinksControllers(
       )
     )
 
-  def delete(id: Long): Either[Api.Error, AssetLink.Deleted] =
+  def delete(id: com.histmersion.domain.media.links.AssetLinksControllers.DeleteId): Either[Api.Error, AssetLink.Deleted] =
     maintenance.guard("delete_asset_link"):
       if links.delete(id) then Right(AssetLink.Deleted(id, true))
       else Left(Api.Error(s"No asset link #$id", Some(Write.CodeNotFound)))
+
+object AssetLinksControllers:
+  type RefIdResult = RefIdResult.T
+  object RefIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefIdTargetType = RefIdTargetType.T
+  object RefIdTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefIdId = RefIdId.T
+  object RefIdId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListAsset = ListAsset.T
+  object ListAsset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListTargetType = ListTargetType.T
+  object ListTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListTargetId = ListTargetId.T
+  object ListTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteId = DeleteId.T
+  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

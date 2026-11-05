@@ -28,12 +28,25 @@ final class PluginAiClient(val model: ModelRef, provider: AiProvider, http: AiHt
 object PluginAiClient:
 
   /** The sttp backend the loop is handed: the provider sends through [[AiHttp]], so it is never used. */
+  type ClientResultPart1 = ClientResultPart1.T
+  object ClientResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClientLoopback = ClientLoopback.T
+  object ClientLoopback extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerbatimResult = VerbatimResult.T
+  object VerbatimResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MessagesMarkers = MessagesMarkers.T
+  object MessagesMarkers extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchemaJsonResult = SchemaJsonResult.T
+  object SchemaJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderedSchemaResult = RenderedSchemaResult.T
+  object RenderedSchemaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private[automation] val NoHttp: Backend[Identity] = sttp.client4.testing.SyncBackendStub
 
   /** The client for `ref`, or why it cannot be used here: a provider that spends the person's own plan beyond loopback,
     * or one whose own check says no (no key, no URL).
     */
-  def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: Boolean): Either[String, LlmClient] =
+  def client(ref: ModelRef, provider: AiProvider, http: AiHttp, loopback: com.histmersion.domain.automation.agents.PluginAiClient.ClientLoopback): Either[com.histmersion.domain.automation.agents.PluginAiClient.ClientResultPart1, LlmClient] =
     if provider.spendsPersonalPlan && !loopback then
       Left(
         s"${ref.provider.wire} is refused while the server listens beyond loopback: it spends your own plan, " +
@@ -49,14 +62,14 @@ object PluginAiClient:
   /** Whether the provider's failures are whole descriptions ([[AiCapabilities.verbatimFailures]]); a provider whose
     * capabilities throw is taken as not.
     */
-  private def verbatim(provider: AiProvider): Boolean =
+  private def verbatim(provider: AiProvider): com.histmersion.domain.automation.agents.PluginAiClient.VerbatimResult =
     try Option(provider.capabilities).exists(_.verbatimFailures)
     catch case scala.util.control.NonFatal(_) => false
 
   /** Pure: the conversation sttp-ai keeps → the provider's messages; the loop's iteration notes kept as user messages
     * (`[Iteration 2 of 6]`, as sttp-ai's own providers send them) when `markers`, else dropped.
     */
-  def messages(h: ConversationHistory, markers: Boolean = false): List[AiMessage] =
+  def messages(h: ConversationHistory, markers: com.histmersion.domain.automation.agents.PluginAiClient.MessagesMarkers = false): List[AiMessage] =
     h.entries.toList.collect {
       case ConversationEntry.IterationMarker(n, of) if markers => AiMessage.User(s"[Iteration $n of $of]")
       case ConversationEntry.UserPrompt(t)                     => AiMessage.User(t)
@@ -70,13 +83,13 @@ object PluginAiClient:
     AiTool(t.name, t.description, t.rawJsonSchema.noSpaces)
 
   /** Pure: the answer's JSON Schema (text), the `$schema` marker dropped. */
-  def schemaJson(s: ResponseSchema[?]): String =
+  def schemaJson(s: ResponseSchema[?]): com.histmersion.domain.automation.agents.PluginAiClient.SchemaJsonResult =
     s.schema.asJson.deepDropNullValues.mapObject(_.remove("$schema")).noSpaces
 
   /** Pure: the answer's JSON Schema (text) as sttp-ai's own providers render it, nulls dropped, the `$schema` marker
     * kept.
     */
-  def renderedSchema(s: ResponseSchema[?]): String = s.schema.asJson.deepDropNullValues.noSpaces
+  def renderedSchema(s: ResponseSchema[?]): com.histmersion.domain.automation.agents.PluginAiClient.RenderedSchemaResult = s.schema.asJson.deepDropNullValues.noSpaces
 
   /** Pure: the provider's answer → sttp-ai's. */
   def response(t: AiTurn, model: ModelRef): AgentResponse =
@@ -114,12 +127,12 @@ object PluginAiClient:
       conf: AgentConfig[Identity]
   ) extends AgentBackend[Identity]:
     def tools: Seq[AgentTool[Identity, ?]] = conf.userTools
-    def systemPrompt: Option[String] = conf.systemPrompt
+    def systemPrompt: Option[com.histmersion.domain.automation.agents.PluginAiClient.Turns.SystemPromptResult] = conf.systemPrompt
 
     def sendRequest(
         history: ConversationHistory,
         backend: Backend[Identity],
-        includeTools: Boolean,
+        includeTools: com.histmersion.domain.automation.agents.PluginAiClient.Turns.SendRequestIncludeTools,
         iterationInfo: IterationInfo
     ): Identity[AgentResponse] =
       val caps = provider.capabilities
@@ -142,3 +155,9 @@ object PluginAiClient:
           throw ModelLimitReached(model, until.map(java.time.Instant.ofEpochMilli), s"${model.wire}: $m".take(300))
         case Left(AiFailure.Error(m)) if caps.verbatimFailures => throw VerbatimFailure(m)
         case Left(AiFailure.Error(m)) => throw java.io.IOException(s"${model.wire}: $m".take(600))
+
+  object Turns:
+    type SystemPromptResult = SystemPromptResult.T
+    object SystemPromptResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SendRequestIncludeTools = SendRequestIncludeTools.T
+    object SendRequestIncludeTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

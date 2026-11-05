@@ -9,11 +9,22 @@ import com.histmersion.api.library.{Facet, Filter}
   * no in-memory twin.
   */
 trait LabelService:
-  def facets(field: Facet.Field, prefix: Option[String], filter: Filter, limit: Int, scope: PlaceScope): List[Facet]
+  def facets(field: Facet.Field, prefix: Option[com.histmersion.domain.library.labels.LabelService.FacetsPrefix], filter: Filter, limit: com.histmersion.domain.library.labels.LabelService.FacetsLimit, scope: PlaceScope): List[Facet]
 
 object LabelService:
+  type FacetsPrefix = FacetsPrefix.T
+  object FacetsPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetsLimit = FacetsLimit.T
+  object FacetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(db: Transactor): LabelService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends LabelService:
-    def facets(field: Facet.Field, prefix: Option[String], filter: Filter, limit: Int, scope: PlaceScope): List[Facet] =
+    def facets(field: Facet.Field, prefix: Option[com.histmersion.domain.library.labels.LabelService.Implementation.FacetsPrefix], filter: Filter, limit: com.histmersion.domain.library.labels.LabelService.Implementation.FacetsLimit, scope: PlaceScope): List[Facet] =
       db.read(LabelRepo.facets(field, prefix, filter, limit, scope)).toList
+
+  object Implementation:
+    type FacetsPrefix = FacetsPrefix.T
+    object FacetsPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FacetsLimit = FacetsLimit.T
+    object FacetsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -17,12 +17,21 @@ object CurrencyCheckRules:
     * merely cites). `supersedes` becomes `superseded_by` from the older source to the newer, the direction the corpus
     * records. Evidence is the citation context: code never invents a quote.
     */
+  type CurrencyActionTarget = CurrencyActionTarget.T
+  object CurrencyActionTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireTextResult = AcquireTextResult.T
+  object AcquireTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireTextTarget = AcquireTextTarget.T
+  object AcquireTextTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireTextGoal = AcquireTextGoal.T
+  object AcquireTextGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum CurrencyAction:
     case Propose(p: Proposal)
     case Fetch(row: FollowupRow)
     case Ignore
 
-  def currencyAction(target: String, row: FollowupRow): CurrencyAction =
+  def currencyAction(target: com.histmersion.domain.library.workflows.CurrencyCheckRules.CurrencyActionTarget, row: FollowupRow): CurrencyAction =
     val kind = row.proposedKind.trim.toLowerCase
     val disagreement = kind == Acquire.EdgeKinds.Refutes || kind == Acquire.EdgeKinds.Challenges ||
       kind == Acquire.EdgeKinds.Supersedes
@@ -44,7 +53,7 @@ object CurrencyCheckRules:
           )
 
   /** The acquisition item a disagreeing paper outside the corpus becomes. */
-  def acquireText(row: FollowupRow, target: String, goal: String): String =
+  def acquireText(row: FollowupRow, target: com.histmersion.domain.library.workflows.CurrencyCheckRules.AcquireTextTarget, goal: com.histmersion.domain.library.workflows.CurrencyCheckRules.AcquireTextGoal): com.histmersion.domain.library.workflows.CurrencyCheckRules.AcquireTextResult =
     val year = row.year.fold("")(y => s" ($y)")
     s"${row.title.getOrElse("untitled")}$year. https://doi.org/${row.doi.getOrElse("")} — " +
       s"${row.proposedKind} [[$target]] (currency check, goal $goal)"

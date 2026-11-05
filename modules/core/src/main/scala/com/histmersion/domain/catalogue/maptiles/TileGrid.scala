@@ -6,10 +6,21 @@ package com.histmersion.domain.catalogue.maptiles
   */
 final case class TileGrid private (maxZoom: TileGrid.MaxZoom, maxPoints: TileGrid.MaxPoints, cellUnits: TileGrid.CellUnits):
   /** The most items `c` keeps as features of their own before it groups them by cell. */
-  def pointsAt(c: TileCoord): Int = if c.z >= maxZoom then Int.MaxValue else maxPoints
+  def pointsAt(c: TileCoord): com.histmersion.domain.catalogue.maptiles.TileGrid.PointsAtResult = if c.z >= maxZoom then Int.MaxValue else maxPoints
 
 object TileGrid:
   /** A tile is 512 CSS pixels a side where MapLibre draws it at its own zoom. */
+  type PointsAtResult = PointsAtResult.T
+  object PointsAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePx = TilePx.T
+  object TilePx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfMaxZoom = OfMaxZoom.T
+  object OfMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfMaxPoints = OfMaxPoints.T
+  object OfMaxPoints extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfCellPx = OfCellPx.T
+  object OfCellPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MaxZoom = MaxZoom.T
   object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxPoints = MaxPoints.T
@@ -17,11 +28,11 @@ object TileGrid:
   type CellUnits = CellUnits.T
   object CellUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val TilePx: Int = 512
+  val TilePx: com.histmersion.domain.catalogue.maptiles.TileGrid.TilePx = 512
 
   /** The grid of `ui.map-tiles`: tiles to `maxZoom`, groups above `maxPoints` items, cells of `cellPx` pixels (each
     * held to at least 1 and at most a tile).
     */
-  def of(maxZoom: Int, maxPoints: Int, cellPx: Int): TileGrid =
+  def of(maxZoom: com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxZoom, maxPoints: com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxPoints, cellPx: com.histmersion.domain.catalogue.maptiles.TileGrid.OfCellPx): TileGrid =
     val px = cellPx.max(1).min(TilePx)
     new TileGrid(maxZoom.max(0).min(22), maxPoints.max(1), TileCoord.Extent * px / TilePx)

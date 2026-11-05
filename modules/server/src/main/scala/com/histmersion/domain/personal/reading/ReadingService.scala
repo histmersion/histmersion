@@ -21,7 +21,7 @@ trait ReadingService:
       user: UserId,
       kind: ItemKind,
       key: ItemKey,
-      read: Boolean,
+      read: com.histmersion.domain.personal.reading.ReadingService.SetReadRead,
       title: Option[TargetLabel],
       at: MarkTime
   ): ReadMark
@@ -31,6 +31,9 @@ trait ReadingService:
   def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems
 
 object ReadingService:
+
+  type SetReadRead = SetReadRead.T
+  object SetReadRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(db: Transactor, items: Referables, readables: List[Readable]): ReadingService =
     Implementation(db, items, readables)
@@ -62,7 +65,7 @@ object ReadingService:
         user: UserId,
         kind: ItemKind,
         key: ItemKey,
-        read: Boolean,
+        read: com.histmersion.domain.personal.reading.ReadingService.Implementation.SetReadRead,
         title: Option[TargetLabel],
         at: MarkTime
     ): ReadMark =
@@ -81,6 +84,10 @@ object ReadingService:
 
     def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems =
       unreadOf(readables, kind)(db.read(ReadingRepo.read(user, kind)).toSet, size, from)
+
+  object Implementation:
+    type SetReadRead = SetReadRead.T
+    object SetReadRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The read marks held in `state`, beside the bookmarks and notes of the same person, by the rules the table keeps.
     */
@@ -121,7 +128,7 @@ object ReadingService:
         user: UserId,
         kind: ItemKind,
         key: ItemKey,
-        read: Boolean,
+        read: com.histmersion.domain.personal.reading.ReadingService.InMemory.SetReadRead,
         title: Option[TargetLabel],
         at: MarkTime
     ): ReadMark =
@@ -135,3 +142,7 @@ object ReadingService:
     def unread(user: UserId, kind: ItemKind, size: PageSize, from: Offset): UnreadItems =
       val read = mine(state.get, user).filter(m => m.ref.kind == kind && m.readAt.isDefined).map(_.ref).toSet
       unreadOf(readables, kind)(read, size, from)
+
+  object InMemory:
+    type SetReadRead = SetReadRead.T
+    object SetReadRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

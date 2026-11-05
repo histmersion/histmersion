@@ -9,10 +9,13 @@ import scala.jdk.CollectionConverters.*
   * stays the author's) and its body.
   */
 final case class SkillDef(name: SkillDef.Name, header: List[SkillDef.Header], body: SkillDef.Body):
-  def description: String =
+  def description: com.histmersion.domain.automation.agents.SkillDef.DescriptionResult =
     header.find(_.startsWith("description:")).map(_.stripPrefix("description:").trim).getOrElse("")
 
 object SkillDef:
+  type DescriptionResult = DescriptionResult.T
+  object DescriptionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Header = Header.T

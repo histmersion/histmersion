@@ -38,6 +38,13 @@ import com.histmersion.api.automation.Goal
   * tool: a thin wrapper over [[AgentsControllers]], Markdown out.
   */
 object AgentsTools:
+  type ApplyRepairAcquireArg1 = ApplyRepairAcquireArg1.T
+  object ApplyRepairAcquireArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyRepairAcquireResultPart2 = ApplyRepairAcquireResultPart2.T
+  object ApplyRepairAcquireResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAutopilotPageResult = ApplyAutopilotPageResult.T
+  object ApplyAutopilotPageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import com.histmersion.util.mcp.ToolInputs.given
 
   /** `repairAcquire`: the acquisition list's one-shot repair (dry run or not), as Markdown — the library's, bound by
@@ -45,8 +52,8 @@ object AgentsTools:
     */
   def apply(
       a: AgentsControllers,
-      repairAcquire: Boolean => Either[Api.Error, String],
-      autopilotPage: Autopilot.EngineStatus => String
+      repairAcquire: com.histmersion.domain.automation.agents.AgentsTools.ApplyRepairAcquireArg1 => Either[Api.Error, com.histmersion.domain.automation.agents.AgentsTools.ApplyRepairAcquireResultPart2],
+      autopilotPage: Autopilot.EngineStatus => com.histmersion.domain.automation.agents.AgentsTools.ApplyAutopilotPageResult
   ) =
     val start =
       tool("start_run")

@@ -37,7 +37,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
       folds.fold(f, o, Bundle.Kind.Place)
       placeLine(o) = es => foldPlace(localPlace(o), placeIn(es, o))
       folds.count(_.modify(_.placesMerged).using(_ + 1))
-    def info(label: String, bundleLabel: String): String =
+    def info(label: com.histmersion.domain.catalogue.places.PlacePlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.places.PlacePlan.InfoBundleLabel): com.histmersion.domain.catalogue.places.PlacePlan.InfoResult =
       s"place $label: the bundle's $bundleLabel is the same place — one place, names unioned"
 
   // a place the bundle renamed (its uid is here under another id, #888): the import follows the rename — unless the
@@ -130,7 +130,24 @@ object PlacePlan:
   /** Events and places point at places by id: a bundle place matched to one here under another id is pointed at under
     * that id. Pure.
     */
-  def repoint(es: BundleEntities, places: Map[String, String]): BundleEntities =
+  type InfoResult = InfoResult.T
+  object InfoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoLabel = InfoLabel.T
+  object InfoLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoBundleLabel = InfoBundleLabel.T
+  object InfoBundleLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepointPlacesPart1 = RepointPlacesPart1.T
+  object RepointPlacesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepointPlacesPart2 = RepointPlacesPart2.T
+  object RepointPlacesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenamedPlacesResultPart2 = RenamedPlacesResultPart2.T
+  object RenamedPlacesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenamedPlacesResultPart3 = RenamedPlacesResultPart3.T
+  object RenamedPlacesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SamePlaceResult = SamePlaceResult.T
+  object SamePlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def repoint(es: BundleEntities, places: Map[com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart1, com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart2]): BundleEntities =
     if places.isEmpty then es
     else
       es.modify(_.events)
@@ -150,7 +167,7 @@ object PlacePlan:
       bundle: List[com.histmersion.api.exchange.Bundle.Place],
       here: List[com.histmersion.api.exchange.Bundle.Place],
       mapped: Set[UUID]
-  ): List[(com.histmersion.api.exchange.Bundle.Place, String, Boolean)] =
+  ): List[(com.histmersion.api.exchange.Bundle.Place, com.histmersion.domain.catalogue.places.PlacePlan.RenamedPlacesResultPart2, com.histmersion.domain.catalogue.places.PlacePlan.RenamedPlacesResultPart3)] =
     val ourId = here.map(p => p.uid -> p.id).toMap
     val owner = here.map(p => p.id -> p.uid).toMap
     bundle
@@ -162,7 +179,7 @@ object PlacePlan:
       )
 
   /** What decides whether two records of one place id are the same place: where and when. */
-  def samePlace(l: com.histmersion.api.exchange.Bundle.Place, r: com.histmersion.api.exchange.Bundle.Place): Boolean =
+  def samePlace(l: com.histmersion.api.exchange.Bundle.Place, r: com.histmersion.api.exchange.Bundle.Place): com.histmersion.domain.catalogue.places.PlacePlan.SamePlaceResult =
     l.geom == r.geom && l.period == r.period
 
   /** One place out of two that are the same place: ours, with the bundle's names, parents, external ids and types that

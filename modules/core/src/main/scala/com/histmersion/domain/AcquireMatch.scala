@@ -22,6 +22,51 @@ import com.histmersion.api.given
 object AcquireMatch:
 
   /** What the job does about one item. */
+  type DoiKeyResult = DoiKeyResult.T
+  object DoiKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoiKeyRaw = DoiKeyRaw.T
+  object DoiKeyRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrimResult = TrimResult.T
+  object TrimResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrimD = TrimD.T
+  object TrimD extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoisInResult = DoisInResult.T
+  object DoisInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoisInText = DoisInText.T
+  object DoisInText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TokensResult = TokensResult.T
+  object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TokensText = TokensText.T
+  object TokensText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SurnameResult = SurnameResult.T
+  object SurnameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SurnameAuthors = SurnameAuthors.T
+  object SurnameAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScoreResult = ScoreResult.T
+  object ScoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScoreItemText = ScoreItemText.T
+  object ScoreItemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScoreTitle = ScoreTitle.T
+  object ScoreTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScoreAuthors = ScoreAuthors.T
+  object ScoreAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideTitle = DecideTitle.T
+  object DecideTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideAuthors = DecideAuthors.T
+  object DecideAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideProposeAt = DecideProposeAt.T
+  object DecideProposeAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeClosedArg1 = DescribeClosedArg1.T
+  object DescribeClosedArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeClosedResultPart1 = DescribeClosedResultPart1.T
+  object DescribeClosedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecimalResult = DecimalResult.T
+  object DecimalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecimalX = DecimalX.T
+  object DecimalX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Decision:
     /** The item names the source's DOI: it is closed. */
     case Close(item: Queue.QueueItem)
@@ -41,7 +86,7 @@ object AcquireMatch:
   /** A DOI as a key: lower case, no resolver prefix or `doi:` scheme, no trailing punctuation, and a closing
     * parenthesis kept only when the DOI opened one (`10.1002/(SICI)1097-…` keeps its pair).
     */
-  def doiKey(raw: String): Option[String] =
+  def doiKey(raw: com.histmersion.domain.AcquireMatch.DoiKeyRaw): Option[com.histmersion.domain.AcquireMatch.DoiKeyResult] =
     val s = Option(raw)
       .getOrElse("")
       .trim
@@ -50,7 +95,7 @@ object AcquireMatch:
     DoiIn.findFirstIn(s).map(trim).map(_.toLowerCase).filter(_.contains('/'))
 
   @annotation.tailrec
-  private def trim(d: String): String =
+  private def trim(d: com.histmersion.domain.AcquireMatch.TrimD): com.histmersion.domain.AcquireMatch.TrimResult =
     if d.isEmpty then d
     else
       val last = d.last
@@ -59,7 +104,7 @@ object AcquireMatch:
       else d
 
   /** Every DOI written anywhere in `text`, as keys. */
-  def doisIn(text: String): Set[String] =
+  def doisIn(text: com.histmersion.domain.AcquireMatch.DoisInText): Set[com.histmersion.domain.AcquireMatch.DoisInResult] =
     DoiIn.findAllIn(Option(text).getOrElse("")).flatMap(doiKey).toSet
 
   /** Words too common to say anything about which work a title names. */
@@ -106,7 +151,7 @@ object AcquireMatch:
   /** The distinctive words of a title or item text: accents folded, lower case, three letters or more (or a number,
     * like a year or a volume), stop words dropped.
     */
-  def tokens(text: String): Set[String] =
+  def tokens(text: com.histmersion.domain.AcquireMatch.TokensText): Set[com.histmersion.domain.AcquireMatch.TokensResult] =
     LatinFold
       .fold(Option(text).getOrElse(""))
       .toLowerCase
@@ -116,7 +161,7 @@ object AcquireMatch:
       .toSet
 
   /** The first author's surname, folded: the part before the comma of `Last, First`, else the last word. */
-  def surname(authors: List[String]): Option[String] =
+  def surname(authors: List[com.histmersion.domain.AcquireMatch.SurnameAuthors]): Option[com.histmersion.domain.AcquireMatch.SurnameResult] =
     authors
       .map(_.trim)
       .find(_.nonEmpty)
@@ -130,7 +175,7 @@ object AcquireMatch:
     * distinctive words the item contains (three quarters of the weight), and whether it names the first author's
     * surname (the rest). Without authors the title words are the whole score. Two decimals, so a listing is stable.
     */
-  def score(itemText: String, title: String, authors: List[String]): Double =
+  def score(itemText: com.histmersion.domain.AcquireMatch.ScoreItemText, title: com.histmersion.domain.AcquireMatch.ScoreTitle, authors: List[com.histmersion.domain.AcquireMatch.ScoreAuthors]): com.histmersion.domain.AcquireMatch.ScoreResult =
     val want = tokens(title)
     if want.isEmpty then 0.0
     else
@@ -147,10 +192,10 @@ object AcquireMatch:
     */
   def decide(
       items: List[Queue.QueueItem],
-      doi: Option[String],
-      title: String,
-      authors: List[String],
-      proposeAt: Double
+      doi: Option[com.histmersion.domain.library.Doi],
+      title: com.histmersion.domain.AcquireMatch.DecideTitle,
+      authors: List[com.histmersion.domain.AcquireMatch.DecideAuthors],
+      proposeAt: com.histmersion.domain.AcquireMatch.DecideProposeAt
   ): List[Decision] =
     val key = doi.flatMap(doiKey)
     val open = items.filter(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
@@ -169,7 +214,7 @@ object AcquireMatch:
   /** One line per decision, for a job's progress and an import's output. `closed` maps an item to the outcome of the
     * write that closed it (`Left(reason)` when it could not be).
     */
-  def describe(d: Decision, closed: Int => Either[String, Unit] = _ => Right(())): String = d match
+  def describe(d: Decision, closed: com.histmersion.domain.AcquireMatch.DescribeClosedArg1 => Either[com.histmersion.domain.AcquireMatch.DescribeClosedResultPart1, Unit] = _ => Right(())): com.histmersion.domain.AcquireMatch.DescribeResult = d match
     case Decision.Close(i) =>
       closed(i.id).fold(
         e => s"acquisition item #${i.id} matches by DOI but was NOT ticked off: $e",
@@ -183,7 +228,7 @@ object AcquireMatch:
         s"`histmersion queue done ${i.id}` if it is this work"
 
   /** `0.83`, with a dot whatever the default locale (`f"%.2f"` writes `0,83` under en_PL). */
-  def decimal(x: Double): String =
+  def decimal(x: com.histmersion.domain.AcquireMatch.DecimalX): com.histmersion.domain.AcquireMatch.DecimalResult =
     val cents = math.round(x * 100)
     f"${cents / 100}.${cents % 100}%02d"
 end AcquireMatch

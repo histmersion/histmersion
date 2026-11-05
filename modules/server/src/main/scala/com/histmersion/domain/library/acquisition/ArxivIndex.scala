@@ -13,7 +13,7 @@ import com.histmersion.api.library.Candidates
   */
 final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
   val name = "arxiv"
-  def search(query: String, since: LocalDate, limit: Int) =
+  def search(query: com.histmersion.domain.library.acquisition.ArxivIndex.SearchQuery, since: LocalDate, limit: com.histmersion.domain.library.acquisition.ArxivIndex.SearchLimit) =
     http
       .text(
         Url(
@@ -26,3 +26,9 @@ final class ArxivIndex(cfg: AcquireConfig, http: Http) extends ScholarlyIndex:
         )
       )
       .map(Candidates.arxivWorks(_).filter(_.year.forall(_ >= since.getYear)))
+
+object ArxivIndex:
+  type SearchQuery = SearchQuery.T
+  object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

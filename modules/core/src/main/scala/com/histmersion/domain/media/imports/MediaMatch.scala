@@ -24,6 +24,55 @@ import java.util.Locale
 object MediaMatch:
 
   /** A place the import asks about: its id and label, the keys of every name it goes by, its period. */
+  type UncertainResult = UncertainResult.T
+  object UncertainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertainV = UncertainV.T
+  object UncertainV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyOfResult = KeyOfResult.T
+  object KeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyOfV = KeyOfV.T
+  object KeyOfV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsResult = OverlapsResult.T
+  object OverlapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearsResult = YearsResult.T
+  object YearsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YearV = YearV.T
+  object YearV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeographyResultPart1 = GeographyResultPart1.T
+  object GeographyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeographyResultPart2 = GeographyResultPart2.T
+  object GeographyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeographySpecific = GeographySpecific.T
+  object GeographySpecific extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MuseumResultPart1 = MuseumResultPart1.T
+  object MuseumResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MuseumResultPart2 = MuseumResultPart2.T
+  object MuseumResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MuseumLatest = MuseumLatest.T
+  object MuseumLatest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedResultPart1 = DatedResultPart1.T
+  object DatedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedResultPart2 = DatedResultPart2.T
+  object DatedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedBasis = DatedBasis.T
+  object DatedBasis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedLatest = DatedLatest.T
+  object DatedLatest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithIdsResultPart1 = WithIdsResultPart1.T
+  object WithIdsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithIdsResultPart2 = WithIdsResultPart2.T
+  object WithIdsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithIdsDeeper = WithIdsDeeper.T
+  object WithIdsDeeper extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithIdsLatest = WithIdsLatest.T
+  object WithIdsLatest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapResultPart1 = MapResultPart1.T
+  object MapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapResultPart2 = MapResultPart2.T
+  object MapResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapMaxYear = MapMaxYear.T
+  object MapMaxYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class PlaceInfo(id: PlaceInfo.Id, label: PlaceInfo.Label, keys: Set[PlaceInfo.Keys], period: Option[Period])
 
   object PlaceInfo:
@@ -38,25 +87,25 @@ object MediaMatch:
     List("?", "probably", "possibly", "perhaps", "said to be", "attributed", "likely", "uncertain")
 
   /** Pure: is a place value marked as uncertain? */
-  def uncertain(v: String): Boolean =
+  def uncertain(v: com.histmersion.domain.media.imports.MediaMatch.UncertainV): com.histmersion.domain.media.imports.MediaMatch.UncertainResult =
     val s = v.toLowerCase(Locale.ROOT)
     Uncertain.exists(s.contains)
 
   /** Pure: the name key of a value (empty when it is uncertain or blank). */
-  def keyOf(v: String): String = if uncertain(v) then "" else Geocode.key(v)
+  def keyOf(v: com.histmersion.domain.media.imports.MediaMatch.KeyOfV): com.histmersion.domain.media.imports.MediaMatch.KeyOfResult = if uncertain(v) then "" else Geocode.key(v)
 
   /** Pure: do two periods overlap? */
-  def overlaps(a: Period, b: Period): Boolean = a.start.value <= b.end.value && b.start.value <= a.end.value
+  def overlaps(a: Period, b: Period): com.histmersion.domain.media.imports.MediaMatch.OverlapsResult = a.start.value <= b.end.value && b.start.value <= a.end.value
 
   /** Pure: a period as a person reads it (`1400–1200 BCE`, `200 BCE–100 CE`). */
-  def years(p: Period): String =
+  def years(p: Period): com.histmersion.domain.media.imports.MediaMatch.YearsResult =
     val (start, end) = (p.start.value, p.end.value)
     if start < 0 && end < 0 then s"${-start}–${-end} BCE"
     else if start >= 0 && end >= 0 then s"$start–$end CE"
     else s"${year(start)}–${year(end)}"
 
   /** Pure: one signed year as a person reads it (`1500 CE`, `1200 BCE`). */
-  def year(v: Int): String = if v < 0 then s"${-v} BCE" else s"$v CE"
+  def year(v: com.histmersion.domain.media.imports.MediaMatch.YearV): com.histmersion.Year = if v < 0 then s"${-v} BCE" else s"$v CE"
 
   /** What a value names on the map: the ids of the map places with that name key, equivalents of one site counted once
     * — the caller's lookup.
@@ -67,7 +116,7 @@ object MediaMatch:
     * `specific` = museum rule (the most specific naming field decides); otherwise the map rule (any field naming the
     * target alone).
     */
-  def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: Boolean): Either[String, String] =
+  def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: com.histmersion.domain.media.imports.MediaMatch.GeographySpecific): Either[com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1, com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart2] =
     val named = rec.geography.flatMap((f, v) => Option(keyOf(v)).filter(_.nonEmpty).map(k => (f, v.trim, k)))
     if named.isEmpty then Left("no place on the record")
     else if specific then
@@ -87,8 +136,8 @@ object MediaMatch:
       rec: MediaRecord,
       target: PlaceInfo,
       resolve: Resolve,
-      latest: Option[Int] = None
-  ): Either[String, String] =
+      latest: Option[com.histmersion.domain.media.imports.MediaMatch.MuseumLatest] = None
+  ): Either[com.histmersion.domain.media.imports.MediaMatch.MuseumResultPart1, com.histmersion.domain.media.imports.MediaMatch.MuseumResultPart2] =
     geography(rec, target, resolve, specific = true).flatMap(dated(_, rec, target, latest))
 
   /** Pure: the dates half of a match, after the place half (`basis`): the record must be dated; with a `latest` year (a
@@ -96,7 +145,7 @@ object MediaMatch:
     * whatever place it names, so a 19th-century specimen or print is not filed under a place whose gazetteer span runs
     * to the present — and its dates must overlap the place's period, read up to `latest`.
     */
-  def dated(basis: String, rec: MediaRecord, target: PlaceInfo, latest: Option[Int]): Either[String, String] =
+  def dated(basis: com.histmersion.domain.media.imports.MediaMatch.DatedBasis, rec: MediaRecord, target: PlaceInfo, latest: Option[com.histmersion.domain.media.imports.MediaMatch.DatedLatest]): Either[com.histmersion.domain.media.imports.MediaMatch.DatedResultPart1, com.histmersion.domain.media.imports.MediaMatch.DatedResultPart2] =
     (rec.period, target.period) match
       case (None, _)                                      => Left("no dates on the record")
       case (Some(r), _) if latest.exists(r.end.value > _) => Left(s"made after ${year(latest.get)}")
@@ -131,9 +180,9 @@ object MediaMatch:
       target: PlaceInfo,
       resolveId: ResolveId,
       resolve: Resolve,
-      deeper: Set[String],
-      latest: Option[Int] = None
-  ): Either[String, String] =
+      deeper: Set[com.histmersion.domain.media.imports.MediaMatch.WithIdsDeeper],
+      latest: Option[com.histmersion.domain.media.imports.MediaMatch.WithIdsLatest] = None
+  ): Either[com.histmersion.domain.media.imports.MediaMatch.WithIdsResultPart1, com.histmersion.domain.media.imports.MediaMatch.WithIdsResultPart2] =
     val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty)
     val idAlone = byId.find(_._2 == Set(target.id)).map((id, _) => s"${ExternalIds.show(id)} (the record's place id)")
     val finer = rec.geography
@@ -153,7 +202,7 @@ object MediaMatch:
     geo.flatMap(dated(_, rec, target, latest))
 
   /** Pure: the map rule — a location naming the target, a map made by `maxYear` (public domain). */
-  def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: Int): Either[String, String] =
+  def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: com.histmersion.domain.media.imports.MediaMatch.MapMaxYear): Either[com.histmersion.domain.media.imports.MediaMatch.MapResultPart1, com.histmersion.domain.media.imports.MediaMatch.MapResultPart2] =
     rec.period match
       case None                             => Left("no date on the map")
       case Some(p) if p.end.value > maxYear => Left(s"made after $maxYear")

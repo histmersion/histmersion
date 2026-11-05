@@ -13,13 +13,28 @@ enum Ident:
 object Ident:
 
 
+  type DoiRaw = DoiRaw.T
+  object DoiRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivResult = ArxivResult.T
+  object ArxivResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivRaw = ArxivRaw.T
+  object ArxivRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRaw = ParseRaw.T
+  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCitekeyResult = IsCitekeyResult.T
+  object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCitekeyS = IsCitekeyS.T
+  object IsCitekeyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val ArxivNew = """^(?:arxiv:)?(\d{4}\.\d{4,5})(?:v\d+)?$""".r
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r
 
   /** DOIs are case-insensitive, so they are stored lower-case ([[DoiValue.normalize]]). */
-  def doi(raw: String): Option[String] = DoiValue.normalize(raw)
+  def doi(raw: com.histmersion.domain.library.acquisition.Ident.DoiRaw): Option[com.histmersion.domain.library.Doi] = DoiValue.normalize(raw)
 
-  def arxiv(raw: String): Option[String] =
+  def arxiv(raw: com.histmersion.domain.library.acquisition.Ident.ArxivRaw): Option[com.histmersion.domain.library.acquisition.Ident.ArxivResult] =
     Option(raw).map(_.trim).filter(_.nonEmpty).flatMap { s =>
       s.toLowerCase match
         case ArxivNew(id) => Some(id)
@@ -29,7 +44,7 @@ object Ident:
             case _            => None
     }
 
-  def parse(raw: String): Either[String, Ident] =
+  def parse(raw: com.histmersion.domain.library.acquisition.Ident.ParseRaw): Either[com.histmersion.domain.library.acquisition.Ident.ParseResultPart1, Ident] =
     val s = Option(raw).getOrElse("").trim
     if s.isEmpty then Left("empty identifier — give a DOI, arxiv:<id>, or a citekey")
     else
@@ -42,5 +57,5 @@ object Ident:
   /** Deliberately permissive: the corpus holds hand-written keys and keys of older conventions that the generator would
     * not produce, so the store, not a regular expression, decides whether a citekey exists.
     */
-  def isCitekey(s: String): Boolean =
+  def isCitekey(s: com.histmersion.domain.library.acquisition.Ident.IsCitekeyS): com.histmersion.domain.library.acquisition.Ident.IsCitekeyResult =
     s.nonEmpty && s.head.isLetter && !s.exists(_.isWhitespace) && !s.contains("/")

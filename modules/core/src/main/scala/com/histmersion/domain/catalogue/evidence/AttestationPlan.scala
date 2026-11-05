@@ -38,7 +38,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
 
   /** The bundle's attestations that have no uid here yet, by their source. */
   private def foreignAttsOf(
-      here: UUID => Boolean,
+      here: UUID => com.histmersion.domain.catalogue.evidence.AttestationPlan.ForeignAttsOfHereResult,
       toLocal: UUID => UUID
   ): Map[UUID, List[com.histmersion.api.exchange.Bundle.Attestation]] =
     in.foreign.attestations.filterNot(t => here(toLocal(t.uid))).groupBy(_.sourceUid)
@@ -202,7 +202,12 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
 object AttestationPlan:
 
   /** An attestation that points into the text (a quote, or offsets): it must move with a body. */
-  def anchored(t: com.histmersion.api.exchange.Bundle.Attestation): Boolean =
+  type ForeignAttsOfHereResult = ForeignAttsOfHereResult.T
+  object ForeignAttsOfHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnchoredResult = AnchoredResult.T
+  object AnchoredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def anchored(t: com.histmersion.api.exchange.Bundle.Attestation): com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchoredResult =
     t.quote.exists(_.nonEmpty) || t.charStart.isDefined
 
   /** An attestation of a pair tried against the body one alternative keeps. */

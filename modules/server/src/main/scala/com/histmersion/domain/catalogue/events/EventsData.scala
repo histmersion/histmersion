@@ -20,5 +20,9 @@ object EventsData:
   final private class Conflicts(val owner: DataOwner) extends CheckRule:
     val rule: Rule =
       Lint.rule(EventCorrectionConflict).getOrElse(Rule(EventCorrectionConflict, EventCorrectionConflict))
-    def report(context: CheckContext, maxItems: Int)(using CheckRun)(using DbCon): LintRuleReport =
+    def report(context: CheckContext, maxItems: com.histmersion.domain.catalogue.events.EventsData.Conflicts.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport =
       Lint.report(rule, CorrectionRepo.conflictsIn().map((id, detail) => LintItem(id, detail)), maxItems)
+
+  object Conflicts:
+    type ReportMaxItems = ReportMaxItems.T
+    object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

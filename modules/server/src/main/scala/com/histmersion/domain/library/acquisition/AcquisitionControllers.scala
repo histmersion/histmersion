@@ -98,7 +98,7 @@ final class AcquisitionControllers(
   private val rwRunning = java.util.concurrent.atomic.AtomicBoolean(false)
   private val rwError = java.util.concurrent.atomic.AtomicReference[Option[String]](None)
 
-  private def err(msg: String): Api.Error = Api.Error(msg)
+  private def err(msg: com.histmersion.domain.library.acquisition.AcquisitionControllers.ErrMsg): Api.Error = Api.Error(msg)
 
   // ── deterministic new-source search (#3761) ──────────────────────────────────────────────────
 
@@ -107,10 +107,10 @@ final class AcquisitionControllers(
 
   /** A goal's (or every goal's) candidates in one state (`new` by default), with the counts per state. */
   def candidates(
-      goal: Option[String],
-      state: Option[String],
-      limit: Option[Int],
-      offset: Option[Int]
+      goal: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.CandidatesGoal],
+      state: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.CandidatesState],
+      limit: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.CandidatesLimit],
+      offset: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.CandidatesOffset]
   ): Either[Api.Error, CandidateList] =
     val st = state.map(_.trim).filter(_.nonEmpty).getOrElse(Candidates.State.New.wire)
     Candidates.State
@@ -150,11 +150,11 @@ final class AcquisitionControllers(
 
   /** OpenAlex search, with each hit marked `inDb` so a queue-builder can skip what we already have. */
   def discover(
-      q: String,
-      since: Option[Int],
-      sort: Option[String],
-      limit: Option[Int],
-      notInDb: Boolean
+      q: com.histmersion.domain.library.acquisition.AcquisitionControllers.DiscoverQ,
+      since: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.DiscoverSince],
+      sort: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.DiscoverSort],
+      limit: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.DiscoverLimit],
+      notInDb: com.histmersion.domain.library.acquisition.AcquisitionControllers.DiscoverNotInDb
   ): Either[Api.Error, DiscoverResult] =
     val query = q.trim
     if query.isEmpty then Left(err("give a search query"))
@@ -172,7 +172,7 @@ final class AcquisitionControllers(
           DiscoverResult(query, kept.size, kept)
         }
 
-  def meta(id: String): Either[Api.Error, WorkRef] =
+  def meta(id: com.histmersion.domain.library.acquisition.AcquisitionControllers.MetaId): Either[Api.Error, WorkRef] =
     Ident.parse(id).left.map(err).flatMap {
       case Ident.Doi(doi) => discovery.meta(doi).left.map(err).map(mark(_, sources.doiIndex))
       case Ident.Arxiv(a) =>
@@ -186,7 +186,7 @@ final class AcquisitionControllers(
         }
     }
 
-  def wikirefs(url: String): Either[Api.Error, WikirefsResult] =
+  def wikirefs(url: com.histmersion.domain.library.acquisition.AcquisitionControllers.WikirefsUrl): Either[Api.Error, WikirefsResult] =
     wiki.refs(url).left.map(err).map { r =>
       val index = sources.doiIndex
       r.modify(_.known).setTo(r.dois.filter(index.contains))
@@ -195,7 +195,7 @@ final class AcquisitionControllers(
   /** Fill in `inDb` and keep the citekey the corpus would use. `index` is passed IN so a caller marking a whole page
     * reads the DOI index once.
     */
-  private def mark(w: WorkRef, index: Map[String, String]): WorkRef =
+  private def mark(w: WorkRef, index: Map[com.histmersion.domain.library.acquisition.AcquisitionControllers.MarkIndexPart1, com.histmersion.domain.library.acquisition.AcquisitionControllers.MarkIndexPart2]): WorkRef =
     val byDoi = w.doi.flatMap(index.get)
     // the generated key, or the pre-#878 key a record with an accented author may still carry
     val keys = w.citekey.toList ++
@@ -207,7 +207,7 @@ final class AcquisitionControllers(
   /** The generated key `generated`, unless no record has it and one has the pre-#878 key of the same metadata — then
     * that one, so a re-import lands on the existing record, not a duplicate.
     */
-  private def stored(generated: String, authors: List[String], year: Option[Int], title: Option[String]): String =
+  private def stored(generated: com.histmersion.domain.library.acquisition.AcquisitionControllers.StoredGenerated, authors: List[com.histmersion.domain.library.acquisition.AcquisitionControllers.StoredAuthors], year: Option[com.histmersion.Year], title: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.StoredTitle]): com.histmersion.domain.library.acquisition.AcquisitionControllers.StoredResult =
     val legacy = Acquire.legacyCitekey(authors, year, title)
     if legacy != generated && !sources.exists(generated) && sources.exists(legacy) then legacy
     else generated
@@ -262,7 +262,7 @@ final class AcquisitionControllers(
   // ── assess ──────────────────────────────────────────────────────────────────────────────────
 
   /** `store = false` (an agent's dry run, #992): the verdict is computed but not recorded. */
-  private def assessNow(req: AssessRequest, store: Boolean = true): Either[Api.Error, Assessment] =
+  private def assessNow(req: AssessRequest, store: com.histmersion.domain.library.acquisition.AcquisitionControllers.AssessNowStore = true): Either[Api.Error, Assessment] =
     target(req.id).flatMap { t =>
       t.doi.toRight(err(s"no DOI for '${req.id}' — an assessment needs one")).map { doi =>
         val rw = assessments.retractionsFor(doi)
@@ -330,7 +330,7 @@ final class AcquisitionControllers(
 
   /** The notices, verbatim, so a later reader sees WHY a verdict was reached without asking Crossref again.
     */
-  private def noticesJson(rw: List[RetractionNotice], up: List[UpdateNotice]): String =
+  private def noticesJson(rw: List[RetractionNotice], up: List[UpdateNotice]): com.histmersion.domain.library.acquisition.AcquisitionControllers.NoticesJsonResult =
     Json.obj("retractionWatch" -> rw.asJson, "crossrefUpdates" -> up.asJson).noSpaces
 
   /** Refresh the local Retraction Watch mirror — our ground truth, so an assessment never depends on a third party
@@ -463,7 +463,7 @@ final class AcquisitionControllers(
     }
 
   /** The acquisition item that names `doi`, else a new browser download with `text`; and whether it is new. */
-  private def acquireOnce(doi: String, text: String): (Int, Boolean) =
+  private def acquireOnce(doi: com.histmersion.domain.library.Doi, text: com.histmersion.domain.library.acquisition.AcquisitionControllers.AcquireOnceText): (com.histmersion.domain.library.acquisition.AcquisitionControllers.AcquireOnceResultPart1, com.histmersion.domain.library.acquisition.AcquisitionControllers.AcquireOnceResultPart2) =
     queues.naming(Queue.Kind.Acquire, doi).headOption match
       case Some(existing) => (existing.id, false)
       case None           =>
@@ -474,12 +474,12 @@ final class AcquisitionControllers(
 
   /** The rest of an ingest, once we know what the source will be CALLED. */
   private def ingestWith(
-      doi: Option[String],
-      arxiv: Option[String],
+      doi: Option[com.histmersion.domain.library.Doi],
+      arxiv: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.IngestWithArxiv],
       work: Option[WorkRef],
-      citekey: String,
+      citekey: com.histmersion.domain.library.Citekey,
       steps: scala.collection.mutable.Builder[Ingest.Step, List[Ingest.Step]],
-      refetch: Boolean,
+      refetch: com.histmersion.domain.library.acquisition.AcquisitionControllers.IngestWithRefetch,
       path: IngestPath
   ): Either[Api.Error, Ingest.Report] = {
     // an existing source WITH its original keeps it (and its body) unless asked to refetch; one
@@ -647,10 +647,10 @@ final class AcquisitionControllers(
     * alone does not fulfil it.
     */
   private def acquireSteps(
-      doi: Option[String],
-      title: String,
-      authors: List[String],
-      jobId: Option[String]
+      doi: Option[com.histmersion.domain.library.Doi],
+      title: com.histmersion.domain.library.acquisition.AcquisitionControllers.AcquireStepsTitle,
+      authors: List[com.histmersion.domain.library.acquisition.AcquisitionControllers.AcquireStepsAuthors],
+      jobId: Option[com.histmersion.util.jobs.Job.Id]
   ): List[Ingest.Step] =
     val items = queues.list(Queue.Kind.Acquire, QueueScope.Open).toList
     AcquireMatch.decide(items, doi, title, authors, acq.defaults.titleMatchAt.value).map {
@@ -666,7 +666,7 @@ final class AcquisitionControllers(
     }
 
   /** arXiv mints a DataCite DOI for every submission, which is how OpenAlex indexes preprints. */
-  private def arxivDoi(id: String): String = s"10.48550/arxiv.$id"
+  private def arxivDoi(id: com.histmersion.domain.library.acquisition.AcquisitionControllers.ArxivDoiId): com.histmersion.domain.library.acquisition.AcquisitionControllers.ArxivDoiResult = s"10.48550/arxiv.$id"
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
@@ -741,7 +741,7 @@ final class AcquisitionControllers(
 
   /** The fetched copy in the acquisition spool; a failure to write it is a step of the report. */
   private def spoolCopy(
-      citekey: String,
+      citekey: com.histmersion.domain.library.Citekey,
       f: com.histmersion.plugin.FetchedFile,
       steps: scala.collection.mutable.Builder[Ingest.Step, List[Ingest.Step]]
   ): Option[FetchedCopy] =
@@ -752,9 +752,9 @@ final class AcquisitionControllers(
 
   /** Patch just the `status` of a source (what `assess --apply` does), without disturbing anything else. */
   private def setStatus(
-      citekey: String,
+      citekey: com.histmersion.domain.library.Citekey,
       status: com.histmersion.domain.library.Source.Status
-  ): Either[Api.Error, String] =
+  ): Either[Api.Error, com.histmersion.domain.library.acquisition.AcquisitionControllers.SetStatusResultPart2] =
     sources.patch(
       citekey,
       Source.Patch(metadata =
@@ -769,7 +769,7 @@ final class AcquisitionControllers(
     maintenance.guard("assess")(assessNow(req))
 
   /** The verdict alone: nothing applied, nothing recorded (what an agent's dry run reads). */
-  def assessReadOnly(id: String): Either[Api.Error, Assessment] =
+  def assessReadOnly(id: com.histmersion.domain.library.acquisition.AcquisitionControllers.AssessReadOnlyId): Either[Api.Error, Assessment] =
     maintenance.guard("assess")(assessNow(AssessRequest(id), store = false))
 
   def followups(req: FollowupsRequest): Either[Api.Error, FollowupsResult] =
@@ -796,7 +796,7 @@ final class AcquisitionControllers(
   /** The legal chain's generation now ([[FetcherGeneration]]): it changes when a legal fetcher or a fetcher plugin's
     * settings or key change, which makes the acquisition list's items due for a re-check again.
     */
-  def fetcherGeneration: String = generation
+  def fetcherGeneration: com.histmersion.domain.library.acquisition.AcquisitionControllers.FetcherGenerationResult = generation
 
   def archiveImport(item: ArchiveItem, file: ArchiveFile, req: ArchiveImportRequest): Either[Api.Error, Ingest.Report] =
     maintenance.guard("archive/import")(archiveImportNow(item, file, req))
@@ -811,7 +811,7 @@ final class AcquisitionControllers(
   /** Resolve `<doi|arxiv:id|citekey>` to both a DOI (for the upstreams) and a stored citekey (for the writes),
     * whichever of the two the caller happened to give us.
     */
-  private def target(id: String): Either[Api.Error, Target] =
+  private def target(id: com.histmersion.domain.library.acquisition.AcquisitionControllers.TargetId): Either[Api.Error, Target] =
     Ident.parse(id).left.map(err).map {
       case Ident.Doi(doi) =>
         Target(Some(doi), sources.doiIndex.get(doi))
@@ -827,7 +827,82 @@ object AcquisitionControllers:
   /** The host a file was fetched from (`www.ebi.ac.uk`, `pmc-oa-opendata.s3.amazonaws.com`), for the fetch step: the
     * provenance names the channel, this names where the copy actually came from.
     */
-  def hostOf(url: Option[String]): Option[String] =
+  type ErrMsg = ErrMsg.T
+  object ErrMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesGoal = CandidatesGoal.T
+  object CandidatesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesState = CandidatesState.T
+  object CandidatesState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesLimit = CandidatesLimit.T
+  object CandidatesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesOffset = CandidatesOffset.T
+  object CandidatesOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverQ = DiscoverQ.T
+  object DiscoverQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverSince = DiscoverSince.T
+  object DiscoverSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverSort = DiscoverSort.T
+  object DiscoverSort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverLimit = DiscoverLimit.T
+  object DiscoverLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverNotInDb = DiscoverNotInDb.T
+  object DiscoverNotInDb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaId = MetaId.T
+  object MetaId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikirefsUrl = WikirefsUrl.T
+  object WikirefsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkIndexPart1 = MarkIndexPart1.T
+  object MarkIndexPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkIndexPart2 = MarkIndexPart2.T
+  object MarkIndexPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredResult = StoredResult.T
+  object StoredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredGenerated = StoredGenerated.T
+  object StoredGenerated extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredAuthors = StoredAuthors.T
+  object StoredAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredTitle = StoredTitle.T
+  object StoredTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssessNowStore = AssessNowStore.T
+  object AssessNowStore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticesJsonResult = NoticesJsonResult.T
+  object NoticesJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireOnceResultPart1 = AcquireOnceResultPart1.T
+  object AcquireOnceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireOnceResultPart2 = AcquireOnceResultPart2.T
+  object AcquireOnceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireOnceText = AcquireOnceText.T
+  object AcquireOnceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestWithArxiv = IngestWithArxiv.T
+  object IngestWithArxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestWithRefetch = IngestWithRefetch.T
+  object IngestWithRefetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireStepsTitle = AcquireStepsTitle.T
+  object AcquireStepsTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquireStepsAuthors = AcquireStepsAuthors.T
+  object AcquireStepsAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivDoiResult = ArxivDoiResult.T
+  object ArxivDoiResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivDoiId = ArxivDoiId.T
+  object ArxivDoiId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetStatusResultPart2 = SetStatusResultPart2.T
+  object SetStatusResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssessReadOnlyId = AssessReadOnlyId.T
+  object AssessReadOnlyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetcherGenerationResult = FetcherGenerationResult.T
+  object FetcherGenerationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TargetId = TargetId.T
+  object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostOfResult = HostOfResult.T
+  object HostOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostOfUrl = HostOfUrl.T
+  object HostOfUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginalOfResult = OriginalOfResult.T
+  object OriginalOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OriginalOfBody = OriginalOfBody.T
+  object OriginalOfBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def hostOf(url: Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.HostOfUrl]): Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.HostOfResult] =
     url
       .flatMap(u => scala.util.Try(java.net.URI.create(u).getHost).toOption)
       .flatMap(Option(_))
@@ -836,7 +911,7 @@ object AcquisitionControllers:
   /** What original an existing source already has, in words — a converted body, else a stored file (`sources.sha256`) —
     * or None for a metadata-only source (or no source at all). `body` is None when the source does not exist.
     */
-  def originalOf(body: Option[Option[String]], sha256: Option[String]): Option[String] =
+  def originalOf(body: Option[Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.OriginalOfBody]], sha256: Option[com.histmersion.Sha256]): Option[com.histmersion.domain.library.acquisition.AcquisitionControllers.OriginalOfResult] =
     body.flatMap { b =>
       if b.exists(_.trim.nonEmpty) then Some("a converted body")
       else sha256.map(sha => s"a stored original (sha256 ${sha.take(12)}…)")

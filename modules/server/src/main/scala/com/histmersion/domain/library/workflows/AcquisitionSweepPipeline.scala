@@ -52,7 +52,7 @@ final class AcquisitionSweepPipeline(
   protected def goals: com.histmersion.domain.automation.goals.GoalService = agents.goals
   import AcquisitionSweepPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, String] =
+  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.RunResultPart2] =
     val goal = ctx.run.target
     for
       found <- ctx.code[Found]("discover")(discover(ctx, goal))
@@ -92,11 +92,11 @@ final class AcquisitionSweepPipeline(
     */
   private def withoutBacklog(
       ctx: RunCtx,
-      goal: String,
+      goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithoutBacklogGoal,
       found: Found,
       picks: List[Picked],
-      allowed: Int
-  ): Either[Halt, String] =
+      allowed: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithoutBacklogAllowed
+  ): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithoutBacklogResultPart2] =
     for
       took <-
         if allowed > 0 then ctx.code[List[Ingested]]("ingest")(Right(ingest(ctx, goal, picks, allowed)))
@@ -123,11 +123,11 @@ final class AcquisitionSweepPipeline(
     */
   private def withBacklog(
       ctx: RunCtx,
-      goal: String,
+      goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithBacklogGoal,
       found: Found,
       picks: List[Picked],
-      allowed: Int
-  ): Either[Halt, String] =
+      allowed: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithBacklogAllowed
+  ): Either[Halt, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.WithBacklogResultPart2] =
     for
       tried <-
         if allowed > 0 then ctx.code[Tried]("ingest")(Right(ingestOa(ctx, goal, picks, allowed))) else Right(Tried())
@@ -152,13 +152,13 @@ final class AcquisitionSweepPipeline(
       )
     yield line
 
-  private def skippedText(m: Map[String, Int]): String =
+  private def skippedText(m: Map[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.SkippedTextMPart1, com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.SkippedTextMPart2]): com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.SkippedTextResult =
     if m.isEmpty then "none left out" else m.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ")
 
   /** The DOIs in a watcher's ingest backlog that this goal found already (a pick another goal found joins that entry,
     * so it is offered to this goal's ranking too).
     */
-  private def backlogged(goal: String): Set[String] =
+  private def backlogged(goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.BackloggedGoal): Set[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.BackloggedResult] =
     agents.managerStore
       .backlogOpen()
       .filter(i => i.state.oa.exists(_.goals.contains(goal)) || i.managerId == Managers.watchId(goal))
@@ -168,7 +168,7 @@ final class AcquisitionSweepPipeline(
   /** The candidates the deterministic search stored for the goal (#3761): its watches read now from their watermarks
     * (no model), then the unseen ones; the live search below only when that search is not connected (a fixture).
     */
-  private def discover(ctx: RunCtx, goal: String): Either[String, Found] =
+  private def discover(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.DiscoverGoal): Either[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.DiscoverResultPart1, Found] =
     upstream().sweepCandidates(goal, ctx.dryRun) match
       case Left(_)   => liveDiscover(ctx, goal)
       case Right(sw) =>
@@ -206,7 +206,7 @@ final class AcquisitionSweepPipeline(
           )
 
   /** The stored candidates shown to the ranking: the picks marked queued, the rest seen. */
-  private def markSeen(ctx: RunCtx, found: Found, picks: List[Picked]): Int =
+  private def markSeen(ctx: RunCtx, found: Found, picks: List[Picked]): com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.MarkSeenResult =
     val picked = picks.map(_.candidate.doi).toSet
     val (q, s) = found.stored.toList.partition((doi, _) => picked.contains(doi))
     ctx.write(
@@ -218,7 +218,7 @@ final class AcquisitionSweepPipeline(
     )(q.size + s.size)
 
   /** OpenAlex searched live with the goal's queries (the sweep as it was before the candidate search). */
-  private def liveDiscover(ctx: RunCtx, goal: String): Either[String, Found] =
+  private def liveDiscover(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.LiveDiscoverGoal): Either[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.LiveDiscoverResultPart1, Found] =
     agents.host.goal(goal).left.map(_.message).map { g =>
       val queries = Some(goals.refs(goal, com.histmersion.domain.automation.Goal.LinkKind.Query)).filter(_.nonEmpty).getOrElse(List(g.title))
       val found = queries.flatMap { q =>
@@ -231,7 +231,7 @@ final class AcquisitionSweepPipeline(
       Found(g.title, g.notes, queries, cands, skipped)
     }
 
-  private def rankInput(goal: String, f: Found): String =
+  private def rankInput(goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.RankInputGoal, f: Found): com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.RankInputResult =
     val list = f.candidates
       .map { c =>
         val who = c.authors.headOption.fold("")(a => s"$a${if c.authors.size > 1 then " et al." else ""}, ")
@@ -247,7 +247,7 @@ final class AcquisitionSweepPipeline(
     * through the LEGAL chain only. One that has no legal file (or fails) is left for the queue step, and the next
     * open-access pick is tried.
     */
-  private def ingest(ctx: RunCtx, goal: String, picks: List[Picked], allowed: Int): List[Ingested] =
+  private def ingest(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.IngestGoal, picks: List[Picked], allowed: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.IngestAllowed): List[Ingested] =
     AcquisitionSweepRules
       .ingestPicks(picks, (p: Picked) => p.candidate.isOa, allowed) { p =>
         ingestOne(ctx, goal, p) match
@@ -261,7 +261,7 @@ final class AcquisitionSweepPipeline(
   /** One open-access pick through the legal chain: linked to the goal and recorded as an `ingested` event of the
     * watcher (what its daily cap counts). Left = why not.
     */
-  private def ingestOne(ctx: RunCtx, goal: String, p: Picked): Either[String, Ingested] =
+  private def ingestOne(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.IngestOneGoal, p: Picked): Either[com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.IngestOneResultPart1, Ingested] =
     val doi = p.candidate.doi
     ctx.write(
       s"ingest $doi (legal open access only) for goal $goal",
@@ -286,7 +286,7 @@ final class AcquisitionSweepPipeline(
   /** [[ingest]] for a watcher with a backlog: what failed is kept too (a missing legal file → the acquisition list;
     * anything else → the backlog, tried again on a later day).
     */
-  private def ingestOa(ctx: RunCtx, goal: String, picks: List[Picked], allowed: Int): Tried =
+  private def ingestOa(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.IngestOaGoal, picks: List[Picked], allowed: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.IngestOaAllowed): Tried =
     val (ok, ko) =
       AcquisitionSweepRules.ingestOa(picks, (p: Picked) => p.candidate.isOa, allowed)(ingestOne(ctx, goal, _))
     ko.foreach((p, why) => ctx.warn(s"ingest: ${p.candidate.doi} not ingested — $why"))
@@ -295,7 +295,7 @@ final class AcquisitionSweepPipeline(
   /** The open-access picks not ingested now, into the watcher's ingest backlog (deduplicated against the corpus, the
     * acquisition list and every watcher's backlog).
     */
-  private def park(ctx: RunCtx, goal: String, picks: List[Picked]): Parked =
+  private def park(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.ParkGoal, picks: List[Picked]): Parked =
     val mid = ctx.run.managerId.getOrElse(Managers.watchId(goal))
     val placed = picks.map { p =>
       val c = p.candidate
@@ -316,7 +316,7 @@ final class AcquisitionSweepPipeline(
       }
     )
 
-  private def queue(ctx: RunCtx, goal: String, picks: List[Picked]): Int =
+  private def queue(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.QueueGoal, picks: List[Picked]): com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.QueueResult =
     val queued = queuedDois()
     picks.count { p =>
       queueOnce(ctx, goal, p.candidate.doi, AcquisitionSweepRules.acquireText(p.candidate, goal, p.why), queued) match
@@ -327,7 +327,66 @@ final class AcquisitionSweepPipeline(
 object AcquisitionSweepPipeline:
 
   /** What an acquisition sweep picked (its `rank` step's checked answer). */
-  def picked(c: com.histmersion.domain.automation.managers.ManagerContext, run: String): List[Picked] =
+  type RunResultPart2 = RunResultPart2.T
+  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithoutBacklogResultPart2 = WithoutBacklogResultPart2.T
+  object WithoutBacklogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithoutBacklogGoal = WithoutBacklogGoal.T
+  object WithoutBacklogGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithoutBacklogAllowed = WithoutBacklogAllowed.T
+  object WithoutBacklogAllowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithBacklogResultPart2 = WithBacklogResultPart2.T
+  object WithBacklogResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithBacklogGoal = WithBacklogGoal.T
+  object WithBacklogGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithBacklogAllowed = WithBacklogAllowed.T
+  object WithBacklogAllowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkippedTextResult = SkippedTextResult.T
+  object SkippedTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkippedTextMPart1 = SkippedTextMPart1.T
+  object SkippedTextMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkippedTextMPart2 = SkippedTextMPart2.T
+  object SkippedTextMPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackloggedResult = BackloggedResult.T
+  object BackloggedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackloggedGoal = BackloggedGoal.T
+  object BackloggedGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverResultPart1 = DiscoverResultPart1.T
+  object DiscoverResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DiscoverGoal = DiscoverGoal.T
+  object DiscoverGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkSeenResult = MarkSeenResult.T
+  object MarkSeenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiveDiscoverResultPart1 = LiveDiscoverResultPart1.T
+  object LiveDiscoverResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiveDiscoverGoal = LiveDiscoverGoal.T
+  object LiveDiscoverGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankInputResult = RankInputResult.T
+  object RankInputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankInputGoal = RankInputGoal.T
+  object RankInputGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestGoal = IngestGoal.T
+  object IngestGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestAllowed = IngestAllowed.T
+  object IngestAllowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOneResultPart1 = IngestOneResultPart1.T
+  object IngestOneResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOneGoal = IngestOneGoal.T
+  object IngestOneGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOaGoal = IngestOaGoal.T
+  object IngestOaGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestOaAllowed = IngestOaAllowed.T
+  object IngestOaAllowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParkGoal = ParkGoal.T
+  object ParkGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueResult = QueueResult.T
+  object QueueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueGoal = QueueGoal.T
+  object QueueGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickedRun = PickedRun.T
+  object PickedRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def picked(c: com.histmersion.domain.automation.managers.ManagerContext, run: com.histmersion.domain.library.workflows.AcquisitionSweepPipeline.PickedRun): List[Picked] =
     c.stepOutput(run, "rank").flatMap(o => io.circe.parser.decode[List[Picked]](o).toOption).getOrElse(Nil)
 
   /** `stored`: the candidates' ids in the store (#3761), by DOI — none when the live search found them. */

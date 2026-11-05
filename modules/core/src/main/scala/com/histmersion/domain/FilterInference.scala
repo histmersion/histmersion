@@ -19,6 +19,31 @@ import com.histmersion.api.research.Article
   */
 object FilterInference:
 
+  type FilterOfResultPart1 = FilterOfResultPart1.T
+  object FilterOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgeResultPart1 = JudgeResultPart1.T
+  object JudgeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgeSlug = JudgeSlug.T
+  object JudgeSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgeRationale = JudgeRationale.T
+  object JudgeRationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgeTotal = JudgeTotal.T
+  object JudgeTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgeCited = JudgeCited.T
+  object JudgeCited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgeCitedIn = JudgeCitedIn.T
+  object JudgeCitedIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgeSample = JudgeSample.T
+  object JudgeSample extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgeLast = JudgeLast.T
+  object JudgeLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineResult = LogLineResult.T
+  object LogLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineSlug = LogLineSlug.T
+  object LogLineSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LogLineOutcome = LogLineOutcome.T
+  object LogLineOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class FilterAnswer(
       rationale: FilterAnswer.Rationale,
       query: Option[FilterAnswer.Query] = None,
@@ -71,7 +96,7 @@ object FilterInference:
     object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The answer as a filter: tidied ([[ArticleFilter.normalise]]); Left = what is wrong with its shape. */
-  def filterOf(a: FilterAnswer): Either[List[String], Article.Filter] =
+  def filterOf(a: FilterAnswer): Either[List[com.histmersion.domain.FilterInference.FilterOfResultPart1], Article.Filter] =
     val raw = Article.Filter(query = a.query, topics = a.topics, tags = a.tags, extraQueries = a.extraQueries)
     Article.Filter.normalise(raw) match
       case Left(m)        => Left(List(m))
@@ -85,16 +110,16 @@ object FilterInference:
     * on the `last` attempt a failing filter becomes `Inferred(None, problems)` — nothing is proposed.
     */
   def judge(
-      slug: String,
+      slug: com.histmersion.domain.FilterInference.JudgeSlug,
       f: Article.Filter,
-      rationale: String,
-      total: Int,
-      cited: List[String],
-      citedIn: Set[String],
-      sample: List[String],
+      rationale: com.histmersion.domain.FilterInference.JudgeRationale,
+      total: com.histmersion.domain.FilterInference.JudgeTotal,
+      cited: List[com.histmersion.domain.FilterInference.JudgeCited],
+      citedIn: Set[com.histmersion.domain.FilterInference.JudgeCitedIn],
+      sample: List[com.histmersion.domain.FilterInference.JudgeSample],
       limits: Limits,
-      last: Boolean
-  ): Either[List[String], Inferred] =
+      last: com.histmersion.domain.FilterInference.JudgeLast
+  ): Either[List[com.histmersion.domain.FilterInference.JudgeResultPart1], Inferred] =
     val missed = cited.filterNot(citedIn)
     val share = if cited.isEmpty then 1.0 else (cited.size - missed.size).toDouble / cited.size
     val problems = List(
@@ -122,5 +147,5 @@ object FilterInference:
     else Left(problems)
 
   /** The worklog line of a run. */
-  def logLine(slug: String, outcome: String, runId: String): String =
+  def logLine(slug: com.histmersion.domain.FilterInference.LogLineSlug, outcome: com.histmersion.domain.FilterInference.LogLineOutcome, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.FilterInference.LogLineResult =
     s"infer-filter [[$slug]]: $outcome (agent run ${runId.take(8)})"

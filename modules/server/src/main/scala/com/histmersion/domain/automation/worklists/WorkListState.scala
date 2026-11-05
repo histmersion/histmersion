@@ -34,7 +34,7 @@ final case class WorkListState(items: Vector[QueueItem], lastId: WorkListState.L
   def get(id: QueueItemId): Option[QueueItem] = items.find(_.id == id.value)
 
   /** The items of `kind` whose text names `doi`, as the database's `strpos` and the DOI rule find them. */
-  def naming(kind: Kind, doi: String): Vector[QueueItem] =
+  def naming(kind: Kind, doi: com.histmersion.domain.library.Doi): Vector[QueueItem] =
     val d = doi.trim.toLowerCase
     if d.isEmpty then Vector.empty
     else
@@ -66,6 +66,11 @@ final case class WorkListState(items: Vector[QueueItem], lastId: WorkListState.L
   def emptied(kind: Kind): WorkListState = this.modify(_.items).using(_.filterNot(_.list == kind.label))
 
 object WorkListState:
+  type StampResult = StampResult.T
+  object StampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemId = ItemId.T
+  object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LastId = LastId.T
   object LastId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -74,10 +79,10 @@ object WorkListState:
   private val Stamp = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS'Z'").withZone(ZoneOffset.UTC)
 
   /** An instant as the store reads it back: UTC, to the microsecond. */
-  def stamp(at: Instant): String = Stamp.format(at.truncatedTo(ChronoUnit.MICROS))
+  def stamp(at: Instant): com.histmersion.domain.automation.worklists.WorkListState.StampResult = Stamp.format(at.truncatedTo(ChronoUnit.MICROS))
 
   /** Item `id` of `kind` made from `in` at `now`: open unless it says otherwise, done at once when it is done. */
-  def item(kind: Kind, in: QueueAdd, id: Int, now: Instant): QueueItem =
+  def item(kind: Kind, in: QueueAdd, id: com.histmersion.domain.automation.worklists.WorkListState.ItemId, now: Instant): QueueItem =
     val status = in.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(Queue.Open)
     QueueItem(
       id,

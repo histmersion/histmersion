@@ -50,7 +50,7 @@ final class ProposeArticlesPipeline(
   val pipeline: Pipeline = Pipeline.ProposeArticles
   import ProposeArticlesPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, String] =
+  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.research.workflows.ProposeArticlesPipeline.RunResultPart2] =
     val goal = ctx.run.target
     for
       loaded <- ctx.code[Loaded]("load")(load(goal))
@@ -79,7 +79,7 @@ final class ProposeArticlesPipeline(
   /** The goals above `slug` and below it: an area's articles overlap its parent's and its sub-areas' as much as its own
     * (the autopilot seeds them all).
     */
-  private def family(slug: String): List[String] =
+  private def family(slug: com.histmersion.domain.research.workflows.ProposeArticlesPipeline.FamilySlug): List[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.FamilyResult] =
     val up = Iterator
       .iterate(goals.get(slug).flatMap(_.parentSlug))(
         _.flatMap(p => goals.get(p).flatMap(_.parentSlug))
@@ -92,7 +92,7 @@ final class ProposeArticlesPipeline(
       if depth > 16 then Nil else goals.children(s).flatMap(c => c.slug :: down(c.slug, depth + 1))
     (up ++ down(slug, 0)).distinct.filterNot(_ == slug)
 
-  private def load(slug: String): Either[String, Loaded] =
+  private def load(slug: com.histmersion.domain.research.workflows.ProposeArticlesPipeline.LoadSlug): Either[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.LoadResultPart1, Loaded] =
     site.goal(slug).left.map(_.message).map { g =>
       val links = goals.links(g.slug)
       val area = g.slug :: family(g.slug)
@@ -136,7 +136,7 @@ final class ProposeArticlesPipeline(
       )
     }
 
-  private def input(ctx: RunCtx, l: Loaded): String =
+  private def input(ctx: RunCtx, l: Loaded): com.histmersion.domain.research.workflows.ProposeArticlesPipeline.InputResult =
     val lim = limits(ctx)
     val period = (l.periodStart, l.periodEnd) match
       case (Some(a), Some(b)) => s"$a to $b (signed years, BCE negative)"
@@ -157,10 +157,10 @@ final class ProposeArticlesPipeline(
       f"${lim.maxOverlap * 100}%.0f%% of them may belong to an article the area already has." + ctx.notes
 
   /** The source set of an existing article: its filter's sources and the ones it cites. */
-  private def sourcesOf(e: Existing): Set[String] =
+  private def sourcesOf(e: Existing): Set[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.SourcesOfResult] =
     e.filter.fold(Set.empty[String])(f => site.articles.filterReach(f, Nil, OverlapCap)._3.toSet) ++ e.cited
 
-  private def check(ctx: RunCtx, l: Loaded, a: ArticlesAnswer, last: Boolean): Either[List[String], ArticlePlan] =
+  private def check(ctx: RunCtx, l: Loaded, a: ArticlesAnswer, last: com.histmersion.domain.research.workflows.ProposeArticlesPipeline.CheckLast): Either[List[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.CheckResultPart1], ArticlePlan] =
     val lim = limits(ctx)
     PlanArticles.check(a, lim.maxArticles, last).flatMap { (cs, dropped) =>
       val taken = l.articles.map(_.slug).toSet
@@ -183,7 +183,7 @@ final class ProposeArticlesPipeline(
   /** The plan as an `article-plan` approval (a person's, or the supervisor's checks — [[AutoApprovals]]), through the
     * write gate.
     */
-  private def record(ctx: RunCtx, goal: String, plan: ArticlePlan): Either[String, Recorded] =
+  private def record(ctx: RunCtx, goal: com.histmersion.domain.research.workflows.ProposeArticlesPipeline.RecordGoal, plan: ArticlePlan): Either[com.histmersion.domain.research.workflows.ProposeArticlesPipeline.RecordResultPart1, Recorded] =
     if plan.isEmpty then Right(Recorded(None, s"nothing survived the checks; no approval was opened"))
     else
       ctx.write(
@@ -198,6 +198,29 @@ object ProposeArticlesPipeline:
   /** How many of the most used topics and tags the planner is shown; how many sources of a filter an overlap is
     * measured on.
     */
+  type RunResultPart2 = RunResultPart2.T
+  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FamilyResult = FamilyResult.T
+  object FamilyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FamilySlug = FamilySlug.T
+  object FamilySlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadResultPart1 = LoadResultPart1.T
+  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadSlug = LoadSlug.T
+  object LoadSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputResult = InputResult.T
+  object InputResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourcesOfResult = SourcesOfResult.T
+  object SourcesOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLast = CheckLast.T
+  object CheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart1 = RecordResultPart1.T
+  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordGoal = RecordGoal.T
+  object RecordGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val VocabularySize = 40
   val OverlapCap = 1000
 

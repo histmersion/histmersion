@@ -24,29 +24,88 @@ trait EventImportService:
   /** The stored records of `provider` (every catalogue's when `None`) with the event each is of and its kind, in key
     * order; and how many no longer decode.
     */
-  def records(provider: Option[String]): (List[(String, String, CatalogRecord)], Int)
+  def records(provider: Option[com.histmersion.domain.catalogue.events.EventImportService.RecordsProvider]): (List[(com.histmersion.domain.catalogue.events.EventImportService.RecordsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportService.RecordsResultPart1Part2, CatalogRecord)], com.histmersion.domain.catalogue.events.EventImportService.RecordsResultPart2)
 
   /** The kind each stored record of `provider` has, by key. */
-  def storedKinds(provider: String): Map[(String, String), String]
+  def storedKinds(provider: com.histmersion.domain.catalogue.events.EventImportService.StoredKindsProvider): Map[(com.histmersion.domain.catalogue.events.EventImportService.StoredKindsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportService.StoredKindsResultPart1Part2), com.histmersion.domain.catalogue.events.EventImportService.StoredKindsResultPart2]
 
-  def partsDone(provider: String): Set[String]
-  def markPart(provider: String, part: String, records: Int): Unit
-  def clearParts(provider: String): Unit
+  def partsDone(provider: com.histmersion.domain.catalogue.events.EventImportService.PartsDoneProvider): Set[com.histmersion.domain.catalogue.events.EventImportService.PartsDoneResult]
+  def markPart(provider: com.histmersion.domain.catalogue.events.EventImportService.MarkPartProvider, part: com.histmersion.domain.catalogue.events.EventImportService.MarkPartPart, records: com.histmersion.domain.catalogue.events.EventImportService.MarkPartRecords): Unit
+  def clearParts(provider: com.histmersion.domain.catalogue.events.EventImportService.ClearPartsProvider): Unit
 
 object EventImportService:
+  type RecordsResultPart1Part1 = RecordsResultPart1Part1.T
+  object RecordsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart1Part2 = RecordsResultPart1Part2.T
+  object RecordsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart2 = RecordsResultPart2.T
+  object RecordsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsProvider = RecordsProvider.T
+  object RecordsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKindsResultPart1Part1 = StoredKindsResultPart1Part1.T
+  object StoredKindsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKindsResultPart1Part2 = StoredKindsResultPart1Part2.T
+  object StoredKindsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKindsResultPart2 = StoredKindsResultPart2.T
+  object StoredKindsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredKindsProvider = StoredKindsProvider.T
+  object StoredKindsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsDoneResult = PartsDoneResult.T
+  object PartsDoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PartsDoneProvider = PartsDoneProvider.T
+  object PartsDoneProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkPartProvider = MarkPartProvider.T
+  object MarkPartProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkPartPart = MarkPartPart.T
+  object MarkPartPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkPartRecords = MarkPartRecords.T
+  object MarkPartRecords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClearPartsProvider = ClearPartsProvider.T
+  object ClearPartsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(db: Transactor): EventImportService = Implementation(db)
 
   final private class Implementation(db: Transactor) extends EventImportService:
     def stored(): List[StoredEvent] = db.read(EventImportRepo.stored)
     def save(placed: List[(CatalogRecord, CatalogMerge.Placement)]): EventSaved =
       db.transact(EventImportRepo.save(placed))
-    def records(provider: Option[String]): (List[(String, String, CatalogRecord)], Int) =
+    def records(provider: Option[com.histmersion.domain.catalogue.events.EventImportService.Implementation.RecordsProvider]): (List[(com.histmersion.domain.catalogue.events.EventImportService.Implementation.RecordsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportService.Implementation.RecordsResultPart1Part2, CatalogRecord)], com.histmersion.domain.catalogue.events.EventImportService.Implementation.RecordsResultPart2) =
       db.read(EventImportRepo.records(provider))
-    def storedKinds(provider: String): Map[(String, String), String] = db.read(EventImportRepo.storedKinds(provider))
-    def partsDone(provider: String): Set[String] = db.read(EventImportRepo.partsDone(provider))
-    def markPart(provider: String, part: String, records: Int): Unit =
+    def storedKinds(provider: com.histmersion.domain.catalogue.events.EventImportService.Implementation.StoredKindsProvider): Map[(com.histmersion.domain.catalogue.events.EventImportService.Implementation.StoredKindsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportService.Implementation.StoredKindsResultPart1Part2), com.histmersion.domain.catalogue.events.EventImportService.Implementation.StoredKindsResultPart2] = db.read(EventImportRepo.storedKinds(provider))
+    def partsDone(provider: com.histmersion.domain.catalogue.events.EventImportService.Implementation.PartsDoneProvider): Set[com.histmersion.domain.catalogue.events.EventImportService.Implementation.PartsDoneResult] = db.read(EventImportRepo.partsDone(provider))
+    def markPart(provider: com.histmersion.domain.catalogue.events.EventImportService.Implementation.MarkPartProvider, part: com.histmersion.domain.catalogue.events.EventImportService.Implementation.MarkPartPart, records: com.histmersion.domain.catalogue.events.EventImportService.Implementation.MarkPartRecords): Unit =
       db.transact(EventImportRepo.markPart(provider, part, records))
-    def clearParts(provider: String): Unit = db.transact(EventImportRepo.clearParts(provider))
+    def clearParts(provider: com.histmersion.domain.catalogue.events.EventImportService.Implementation.ClearPartsProvider): Unit = db.transact(EventImportRepo.clearParts(provider))
+
+  object Implementation:
+    type RecordsResultPart1Part1 = RecordsResultPart1Part1.T
+    object RecordsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordsResultPart1Part2 = RecordsResultPart1Part2.T
+    object RecordsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordsResultPart2 = RecordsResultPart2.T
+    object RecordsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordsProvider = RecordsProvider.T
+    object RecordsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKindsResultPart1Part1 = StoredKindsResultPart1Part1.T
+    object StoredKindsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKindsResultPart1Part2 = StoredKindsResultPart1Part2.T
+    object StoredKindsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKindsResultPart2 = StoredKindsResultPart2.T
+    object StoredKindsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKindsProvider = StoredKindsProvider.T
+    object StoredKindsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PartsDoneResult = PartsDoneResult.T
+    object PartsDoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PartsDoneProvider = PartsDoneProvider.T
+    object PartsDoneProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkPartProvider = MarkPartProvider.T
+    object MarkPartProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkPartPart = MarkPartPart.T
+    object MarkPartPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkPartRecords = MarkPartRecords.T
+    object MarkPartRecords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClearPartsProvider = ClearPartsProvider.T
+    object ClearPartsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The same rules over the shared in-memory state (no place is stored: an event's anchor is its own point). */
   final class InMemory(state: AtomicReference[CatalogueState]) extends EventImportService:
@@ -71,9 +130,9 @@ object EventImportService:
           )
         }
 
-    private def merged(names: List[String], more: List[String]): List[String] = (names ++ more).distinct.sorted
+    private def merged(names: List[com.histmersion.domain.catalogue.events.EventImportService.InMemory.MergedNames], more: List[com.histmersion.domain.catalogue.events.EventImportService.InMemory.MergedMore]): List[com.histmersion.domain.catalogue.events.EventImportService.InMemory.MergedResult] = (names ++ more).distinct.sorted
 
-    private def fill(s: CatalogueState, id: String, names: List[String], wd: Option[String]): CatalogueState =
+    private def fill(s: CatalogueState, id: com.histmersion.domain.catalogue.events.EventImportService.InMemory.FillId, names: List[com.histmersion.domain.catalogue.events.EventImportService.InMemory.FillNames], wd: Option[com.histmersion.domain.catalogue.events.EventImportService.InMemory.FillWd]): CatalogueState =
       s.modify(_.events)
         .using(
           _.map(e =>
@@ -84,10 +143,10 @@ object EventImportService:
 
     private def refresh(
         s: CatalogueState,
-        id: String,
+        id: com.histmersion.domain.catalogue.events.EventImportService.InMemory.RefreshId,
         r: CatalogRecord,
-        names: List[String],
-        wd: Option[String]
+        names: List[com.histmersion.domain.catalogue.events.EventImportService.InMemory.RefreshNames],
+        wd: Option[com.histmersion.domain.catalogue.events.EventImportService.InMemory.RefreshWd]
     ): (CatalogueState, Correction.Counts) =
       val now = EventFields.upstream(r)
       val applied = s.corrections.filter(c =>
@@ -143,7 +202,7 @@ object EventImportService:
         })
       (refreshed, Corrections.counts(outcomes.map(_._2)))
 
-    private def inserted(s: CatalogueState, id: String, r: CatalogRecord, names: List[String], wd: Option[String]) =
+    private def inserted(s: CatalogueState, id: com.histmersion.domain.catalogue.events.EventImportService.InMemory.InsertedId, r: CatalogRecord, names: List[com.histmersion.domain.catalogue.events.EventImportService.InMemory.InsertedNames], wd: Option[com.histmersion.domain.catalogue.events.EventImportService.InMemory.InsertedWd]) =
       val e = HeldEvent(
         id,
         r.label,
@@ -165,7 +224,7 @@ object EventImportService:
       )
       s.modify(_.events).using(_ :+ e)
 
-    private def upsertRecord(s: CatalogueState, eventId: String, r: CatalogRecord): CatalogueState =
+    private def upsertRecord(s: CatalogueState, eventId: com.histmersion.domain.catalogue.Event.Id, r: CatalogRecord): CatalogueState =
       s.modify(_.catalogueRecords).using(rs => rs.filterNot(_._2.key == r.key) :+ (eventId -> r))
 
     /** One event's placed records written: the state after, whether the event was created, and what became of its
@@ -173,9 +232,9 @@ object EventImportService:
       */
     private def saveOne(
         s: CatalogueState,
-        eventId: String,
+        eventId: com.histmersion.domain.catalogue.Event.Id,
         group: List[(CatalogRecord, CatalogMerge.Placement)]
-    ): (CatalogueState, Boolean, Option[Correction.Counts]) =
+    ): (CatalogueState, com.histmersion.domain.catalogue.events.EventImportService.InMemory.SaveOneResultPart2, Option[Correction.Counts]) =
       val recs = group.map(_._1).sortBy(_.key)
       val names = recs.flatMap(r => r.label :: r.names).map(_.trim).filter(_.nonEmpty).distinct
       val wd = recs.flatMap(_.wikidata).headOption
@@ -230,7 +289,7 @@ object EventImportService:
       }
       answer.get
 
-    def records(provider: Option[String]): (List[(String, String, CatalogRecord)], Int) =
+    def records(provider: Option[com.histmersion.domain.catalogue.events.EventImportService.InMemory.RecordsProvider]): (List[(com.histmersion.domain.catalogue.events.EventImportService.InMemory.RecordsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportService.InMemory.RecordsResultPart1Part2, CatalogRecord)], com.histmersion.domain.catalogue.events.EventImportService.InMemory.RecordsResultPart2) =
       val s = state.get
       val rows = s.catalogueRecords
         .filter((_, r) => provider.forall(_ == r.provider))
@@ -239,17 +298,73 @@ object EventImportService:
         .flatMap((id, r) => s.events.find(_.id == id).map(e => (id, e.kind, r)))
       (rows, 0)
 
-    def storedKinds(provider: String): Map[(String, String), String] =
+    def storedKinds(provider: com.histmersion.domain.catalogue.events.EventImportService.InMemory.StoredKindsProvider): Map[(com.histmersion.domain.catalogue.events.EventImportService.InMemory.StoredKindsResultPart1Part1, com.histmersion.domain.catalogue.events.EventImportService.InMemory.StoredKindsResultPart1Part2), com.histmersion.domain.catalogue.events.EventImportService.InMemory.StoredKindsResultPart2] =
       state.get.catalogueRecords.collect {
         case (_, r) if r.provider == provider => r.key -> EventTaxonomy.canonical(r.kind)
       }.toMap
 
-    def partsDone(provider: String): Set[String] = state.get.importParts.getOrElse(provider, Map.empty).keySet
+    def partsDone(provider: com.histmersion.domain.catalogue.events.EventImportService.InMemory.PartsDoneProvider): Set[com.histmersion.domain.catalogue.events.EventImportService.InMemory.PartsDoneResult] = state.get.importParts.getOrElse(provider, Map.empty).keySet
 
-    def markPart(provider: String, part: String, records: Int): Unit =
+    def markPart(provider: com.histmersion.domain.catalogue.events.EventImportService.InMemory.MarkPartProvider, part: com.histmersion.domain.catalogue.events.EventImportService.InMemory.MarkPartPart, records: com.histmersion.domain.catalogue.events.EventImportService.InMemory.MarkPartRecords): Unit =
       val _ = state.updateAndGet(
         _.modify(_.importParts).using(ps => ps + (provider -> (ps.getOrElse(provider, Map.empty) + (part -> records))))
       )
 
-    def clearParts(provider: String): Unit =
+    def clearParts(provider: com.histmersion.domain.catalogue.events.EventImportService.InMemory.ClearPartsProvider): Unit =
       val _ = state.updateAndGet(_.modify(_.importParts).using(_ - provider))
+
+  object InMemory:
+    type MergedResult = MergedResult.T
+    object MergedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergedNames = MergedNames.T
+    object MergedNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergedMore = MergedMore.T
+    object MergedMore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FillId = FillId.T
+    object FillId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FillNames = FillNames.T
+    object FillNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FillWd = FillWd.T
+    object FillWd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefreshId = RefreshId.T
+    object RefreshId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefreshNames = RefreshNames.T
+    object RefreshNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefreshWd = RefreshWd.T
+    object RefreshWd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InsertedId = InsertedId.T
+    object InsertedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InsertedNames = InsertedNames.T
+    object InsertedNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InsertedWd = InsertedWd.T
+    object InsertedWd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SaveOneResultPart2 = SaveOneResultPart2.T
+    object SaveOneResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordsResultPart1Part1 = RecordsResultPart1Part1.T
+    object RecordsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordsResultPart1Part2 = RecordsResultPart1Part2.T
+    object RecordsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordsResultPart2 = RecordsResultPart2.T
+    object RecordsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordsProvider = RecordsProvider.T
+    object RecordsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKindsResultPart1Part1 = StoredKindsResultPart1Part1.T
+    object StoredKindsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKindsResultPart1Part2 = StoredKindsResultPart1Part2.T
+    object StoredKindsResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKindsResultPart2 = StoredKindsResultPart2.T
+    object StoredKindsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoredKindsProvider = StoredKindsProvider.T
+    object StoredKindsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PartsDoneResult = PartsDoneResult.T
+    object PartsDoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PartsDoneProvider = PartsDoneProvider.T
+    object PartsDoneProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkPartProvider = MarkPartProvider.T
+    object MarkPartProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkPartPart = MarkPartPart.T
+    object MarkPartPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkPartRecords = MarkPartRecords.T
+    object MarkPartRecords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClearPartsProvider = ClearPartsProvider.T
+    object ClearPartsProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

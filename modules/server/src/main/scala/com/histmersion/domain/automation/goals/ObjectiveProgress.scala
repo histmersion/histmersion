@@ -6,7 +6,15 @@ package com.histmersion.domain.automation.goals
   */
 trait ObjectiveProgress:
   /** Every goal's linked items that exist, by goal slug, each list in order. */
-  def linked(): Map[String, List[String]]
+  def linked(): Map[com.histmersion.domain.automation.goals.ObjectiveProgress.LinkedResultPart1, List[com.histmersion.domain.automation.goals.ObjectiveProgress.LinkedResultPart2]]
 
   /** The linked items that count as finished. */
-  def finished(): Set[String]
+  def finished(): Set[com.histmersion.domain.automation.goals.ObjectiveProgress.FinishedResult]
+
+object ObjectiveProgress:
+  type LinkedResultPart1 = LinkedResultPart1.T
+  object LinkedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedResultPart2 = LinkedResultPart2.T
+  object LinkedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishedResult = FinishedResult.T
+  object FinishedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

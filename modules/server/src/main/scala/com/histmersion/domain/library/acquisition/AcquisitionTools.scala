@@ -34,7 +34,7 @@ final class AcquisitionTools(
 ):
   import AcquisitionTools.*
 
-  private def render[A](r: Either[Api.Error, A])(f: A => String) =
+  private def render[A](r: Either[Api.Error, A])(f: A => com.histmersion.domain.library.acquisition.AcquisitionTools.RenderFResult) =
     ToolResult.text(r.fold(McpOut.refusal, f))
 
   private val discover =
@@ -185,6 +185,9 @@ object AcquisitionTools:
   /** Honour Scala defaults when decoding tool arguments, as `McpTools` does — otherwise every optional field would be
     * required in the JSON.
     */
+  type RenderFResult = RenderFResult.T
+  object RenderFResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given hearth.kindlings.circederivation.Configuration =
     hearth.kindlings.circederivation.Configuration.default.withDefaults.withStrictDecoding
 

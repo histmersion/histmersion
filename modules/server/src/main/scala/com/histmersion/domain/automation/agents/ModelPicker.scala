@@ -43,7 +43,7 @@ final class ModelPicker(
   private val cooldown = ConcurrentHashMap[String, (Long, Long)]()
 
   /** The model hit its plan's limit: skip it until `until` (else the configured cool-down). */
-  def cool(model: ModelRef, until: Option[Instant], now: Long = wallClock.millis()): Instant =
+  def cool(model: ModelRef, until: Option[Instant], now: com.histmersion.domain.automation.agents.ModelPicker.CoolNow = wallClock.millis()): Instant =
     val at = until
       .map(_.toEpochMilli)
       .filter(_ > now)
@@ -54,7 +54,7 @@ final class ModelPicker(
   /** Until when `model` is skipped, if it is: a cool-down whose time has passed, or that a later reading of its plan
     * pool lifts ([[ModelPicker.lifts]]), is dropped here.
     */
-  private def cooling(model: ModelRef, now: Long): Option[Long] =
+  private def cooling(model: ModelRef, now: com.histmersion.domain.automation.agents.ModelPicker.CoolingNow): Option[com.histmersion.domain.automation.agents.ModelPicker.CoolingResult] =
     Option(cooldown.get(model.wire)).flatMap { (until, since) =>
       val lifted = until > now && pools.poolOf(model).exists { p =>
         ModelPicker.lifts(since, pools.lastObserved(p), pools.verdict(p, Some(model.model), now)._1.usable)
@@ -71,7 +71,7 @@ final class ModelPicker(
   /** The models skipped now because their plan reported its usage limit, with until when — after lifting those a later
     * reading of their pool clears (`agent quota`, `agent quota refresh`).
     */
-  def cooldowns(now: Long = wallClock.millis()): List[(String, Instant)] =
+  def cooldowns(now: com.histmersion.domain.automation.agents.ModelPicker.CooldownsNow = wallClock.millis()): List[(com.histmersion.domain.automation.agents.ModelPicker.CooldownsResultPart1, Instant)] =
     import scala.jdk.CollectionConverters.*
     cooldown.keySet.asScala.toList.sorted.flatMap(w =>
       ModelRef
@@ -84,7 +84,7 @@ final class ModelPicker(
   // ── what is in effect ──────────────────────────────────────────────────────────────────────────
 
   /** A role's chain and where it comes from: saved, else `agents.roles.<role>`. */
-  def chain(role: Role): Either[String, (List[ModelRef], SettingSource)] =
+  def chain(role: Role): Either[com.histmersion.domain.automation.agents.ModelPicker.ChainResultPart1, (List[ModelRef], SettingSource)] =
     Transactor(ds).read(ModelSettingsRepo.chains).get(role.wire) match
       case Some(ms) =>
         parseModels(ms, known()).map(_ -> SettingSource.Saved).left.map(m => s"the saved chain of ${role.wire}: $m")
@@ -95,7 +95,7 @@ final class ModelPicker(
           .map(m => s"agents.roles.${role.wire}: $m")
 
   /** The chain a call uses: the run's own model (`--model`) when it names one, else the role's. */
-  def chainFor(role: Role, overrideRef: Option[String]): Either[String, List[ModelRef]] =
+  def chainFor(role: Role, overrideRef: Option[com.histmersion.domain.automation.agents.ModelPicker.ChainForOverrideRef]): Either[com.histmersion.domain.automation.agents.ModelPicker.ChainForResultPart1, List[ModelRef]] =
     overrideRef.map(_.trim).filter(_.nonEmpty) match
       case Some(ref) => parseChain(ref, known())
       case None      =>
@@ -112,7 +112,7 @@ final class ModelPicker(
   /** Whether `role`'s chain may fall from a plan pool below its floor to a PAID key: saved, else
     * `agents.quota.fallthrough`. Off, the run pauses until the plan's reset instead.
     */
-  def fallthrough(role: Role): Boolean =
+  def fallthrough(role: Role): com.histmersion.domain.automation.agents.ModelPicker.FallthroughResult =
     Transactor(ds)
       .read(PlanQuotaRepo.fallthrough)
       .getOrElse(
@@ -134,7 +134,7 @@ final class ModelPicker(
   /** Config's allowances with the saved ones over them (a saved target replaces config's). A config string that does
     * not parse is one problem, and caps nothing it could not read.
     */
-  def allowances: (List[Effective], List[String]) =
+  def allowances: (List[Effective], List[com.histmersion.domain.automation.agents.ModelPicker.AllowancesResultPart2]) =
     val (fromConfig, problem) = parseAllowances(cfg.allowances, known()) match
       case Right(as) => (as.map(a => Effective(a.target.wire, Right(a), SettingSource.Config)), Nil)
       case Left(m)   => (Nil, List(s"agents.allowances: $m"))
@@ -158,8 +158,8 @@ final class ModelPicker(
   private def covering(
       m: ModelRef,
       effective: List[Effective],
-      now: Long
-  ): List[(Effective, Either[String, List[LimitState]])] =
+      now: com.histmersion.domain.automation.agents.ModelPicker.CoveringNow
+  ): List[(Effective, Either[com.histmersion.domain.automation.agents.ModelPicker.CoveringResultPart2Part1, List[LimitState]])] =
     effective
       .filter(e => e.allowance.fold(_ => Target.parse(e.target, known()).exists(_.covers(m)), _.target.covers(m)))
       .map(e => e -> e.allowance.map(a => states(a, spendsOf(a), now)))
@@ -214,7 +214,7 @@ final class ModelPicker(
   def state(
       m: ModelRef,
       effective: List[Effective],
-      now: Long,
+      now: com.histmersion.domain.automation.agents.ModelPicker.StateNow,
       refresh: Option[PlanQuota.RefreshTrigger] = None
   ): ModelState =
     val cov = covering(m, effective, now)
@@ -269,7 +269,7 @@ final class ModelPicker(
       ModelState(false, Some(s"below its allowance: ${which.mkString(", ")}"), frees, ht, hu, refreshed = refreshed)
     else ModelState(true, None, None, ht, hu, refreshed = refreshed)
 
-  private def fmt(v: BigDecimal, m: Measure): String = m match
+  private def fmt(v: BigDecimal, m: Measure): com.histmersion.domain.automation.agents.ModelPicker.FmtResult = m match
     case Measure.Tokens => Limit.compact(v.setScale(0, BigDecimal.RoundingMode.HALF_UP))
     case Measure.Usd    =>
       s"${v.setScale(4, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString} USD"
@@ -281,10 +281,10 @@ final class ModelPicker(
     */
   def pick(
       role: Role,
-      overrideRef: Option[String],
-      now: Long = wallClock.millis(),
+      overrideRef: Option[com.histmersion.domain.automation.agents.ModelPicker.PickOverrideRef],
+      now: com.histmersion.domain.automation.agents.ModelPicker.PickNow = wallClock.millis(),
       refresh: Option[PlanQuota.RefreshTrigger] = Some(PlanQuota.RefreshTrigger.Pick),
-      onRefresh: String => Unit = _ => ()
+      onRefresh: com.histmersion.domain.automation.agents.ModelPicker.PickOnRefreshArg1 => Unit = _ => ()
   ): Either[PickFailure, Picked] =
     chainFor(role, overrideRef).left.map(PickFailure.Unavailable(_)).flatMap { chain =>
       val (effective, _) = allowances
@@ -350,9 +350,9 @@ final class ModelPicker(
 
   // ── the picture (`agent models`) ───────────────────────────────────────────────────────────────
 
-  private def iso(ms: Long): String = Instant.ofEpochMilli(ms).toString
+  private def iso(ms: com.histmersion.domain.automation.agents.ModelPicker.IsoMs): com.histmersion.domain.automation.agents.ModelPicker.IsoResult = Instant.ofEpochMilli(ms).toString
 
-  def roleChains(now: Long): List[RoleChain] =
+  def roleChains(now: com.histmersion.domain.automation.agents.ModelPicker.RoleChainsNow): List[RoleChain] =
     val (effective, _) = allowances
     Role.values.toList.map { r =>
       chain(r) match
@@ -384,7 +384,7 @@ final class ModelPicker(
           )
     }
 
-  def allowanceStatuses(now: Long): List[AllowanceStatus] =
+  def allowanceStatuses(now: com.histmersion.domain.automation.agents.ModelPicker.AllowanceStatusesNow): List[AllowanceStatus] =
     allowances._1.map {
       case Effective(t, Left(why), src) =>
         AllowanceStatus(
@@ -431,13 +431,72 @@ object ModelPicker:
   /** Why a model is skipped after its plan reported its usage limit — the words `agent models` and `agent quota` show,
     * so a stuck cool-down can be told from an allowance.
     */
+  type CoolNow = CoolNow.T
+  object CoolNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoolingResult = CoolingResult.T
+  object CoolingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoolingNow = CoolingNow.T
+  object CoolingNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CooldownsResultPart1 = CooldownsResultPart1.T
+  object CooldownsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CooldownsNow = CooldownsNow.T
+  object CooldownsNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainResultPart1 = ChainResultPart1.T
+  object ChainResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainForResultPart1 = ChainForResultPart1.T
+  object ChainForResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainForOverrideRef = ChainForOverrideRef.T
+  object ChainForOverrideRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FallthroughResult = FallthroughResult.T
+  object FallthroughResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowancesResultPart2 = AllowancesResultPart2.T
+  object AllowancesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoveringResultPart2Part1 = CoveringResultPart2Part1.T
+  object CoveringResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoveringNow = CoveringNow.T
+  object CoveringNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StateNow = StateNow.T
+  object StateNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FmtResult = FmtResult.T
+  object FmtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickOverrideRef = PickOverrideRef.T
+  object PickOverrideRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickNow = PickNow.T
+  object PickNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickOnRefreshArg1 = PickOnRefreshArg1.T
+  object PickOnRefreshArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsoResult = IsoResult.T
+  object IsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsoMs = IsoMs.T
+  object IsoMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoleChainsNow = RoleChainsNow.T
+  object RoleChainsNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllowanceStatusesNow = AllowanceStatusesNow.T
+  object AllowanceStatusesNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiftsResult = LiftsResult.T
+  object LiftsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiftsSince = LiftsSince.T
+  object LiftsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiftsObserved = LiftsObserved.T
+  object LiftsObserved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LiftsUsable = LiftsUsable.T
+  object LiftsUsable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WhenFreesResultPart1 = WhenFreesResultPart1.T
+  object WhenFreesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WhenFreesResultPart2 = WhenFreesResultPart2.T
+  object WhenFreesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WhenFreesModelsPart2 = WhenFreesModelsPart2.T
+  object WhenFreesModelsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PausedRoleError = PausedRoleError.T
+  object PausedRoleError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val CoolingWhy = "its plan reported its usage limit"
 
   /** Pure: does a reading of the model's plan pool lift a cool-down set at `since`? Only one OBSERVED after the limit
     * was reported (`observed`, the pool's newest reading) — the reading the limit came with, or an older one, says
     * nothing about a reset — and only when that pool's verdict for the model is usable (#1827).
     */
-  def lifts(since: Long, observed: Option[Long], usable: Boolean): Boolean =
+  def lifts(since: com.histmersion.domain.automation.agents.ModelPicker.LiftsSince, observed: Option[com.histmersion.domain.automation.agents.ModelPicker.LiftsObserved], usable: com.histmersion.domain.automation.agents.ModelPicker.LiftsUsable): com.histmersion.domain.automation.agents.ModelPicker.LiftsResult =
     usable && observed.exists(_ > since)
 
   /** When a chain whose every model is out of headroom gets one back by itself, and the clause the pause message says
@@ -445,7 +504,7 @@ object ModelPicker:
     * large as its limit) does not keep the others' resets from counting — plus the pools a person holds, which free
     * only when released. None = nothing frees by itself.
     */
-  def whenFrees(models: List[(ModelRef, Option[Long], Option[PlanQuota.PoolId])]): (Option[Long], String) =
+  def whenFrees(models: List[(ModelRef, Option[com.histmersion.domain.automation.agents.ModelPicker.WhenFreesModelsPart2], Option[PlanQuota.PoolId])]): (Option[com.histmersion.domain.automation.agents.ModelPicker.WhenFreesResultPart1], com.histmersion.domain.automation.agents.ModelPicker.WhenFreesResultPart2) =
     val held = models.flatMap(_._3).distinct
     val heldText =
       held.map(p => s"the ${p.title} is held (release it with `histmersion agent quota release ${p.wire}`)")
@@ -461,5 +520,5 @@ object ModelPicker:
   /** The role a `plan-quota`/`allowance` pause names (the [[PickFailure.Exhausted]] message says "all models for role
     * <role> are …"), so a paused run can be asked about just that role again.
     */
-  def pausedRole(error: String): Option[Role] =
+  def pausedRole(error: com.histmersion.domain.automation.agents.ModelPicker.PausedRoleError): Option[Role] =
     "for role ([a-z-]+) are".r.findFirstMatchIn(error).flatMap(m => Role.parse(m.group(1)))

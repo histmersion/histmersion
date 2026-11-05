@@ -39,7 +39,7 @@ final class CurrencyCheckPipeline(
   val pipeline: Pipeline = Pipeline.CurrencyCheck
   import CurrencyCheckPipeline.*
 
-  def run(ctx: RunCtx): Either[Halt, String] =
+  def run(ctx: RunCtx): Either[Halt, com.histmersion.domain.library.workflows.CurrencyCheckPipeline.RunResultPart2] =
     val goal = ctx.run.target
     for
       targets <- ctx.code[List[Target]]("load")(Right(load(goal)))
@@ -57,7 +57,7 @@ final class CurrencyCheckPipeline(
       )
     yield line
 
-  private def load(goal: String): List[Target] =
+  private def load(goal: com.histmersion.domain.library.workflows.CurrencyCheckPipeline.LoadGoal): List[Target] =
     goalSources(goal, cfg.scheduler.currencySources)
       .flatMap(ck => site.sources.get(ck, body = false).toOption)
       .map(s => Target(s.source.citekey, s.source.doi.filter(_.trim.nonEmpty)))
@@ -73,7 +73,7 @@ final class CurrencyCheckPipeline(
     }
     Assessed(results.flatten.size, results.flatten.collect { case (ck, true) => ck })
 
-  private def followups(ctx: RunCtx, goal: String, ts: List[Target]): Followed =
+  private def followups(ctx: RunCtx, goal: com.histmersion.domain.library.workflows.CurrencyCheckPipeline.FollowupsGoal, ts: List[Target]): Followed =
     val queued = queuedDois()
     val counts = ts.filter(_.doi.isDefined).map { t =>
       upstream().followups(t.citekey, None, Some(cfg.scheduler.followupsPerSource)) match
@@ -104,6 +104,13 @@ final class CurrencyCheckPipeline(
     Followed(counts.map(_._1).sum, counts.map(_._2).sum, counts.map(_._3).sum)
 
 object CurrencyCheckPipeline:
+  type RunResultPart2 = RunResultPart2.T
+  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadGoal = LoadGoal.T
+  object LoadGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FollowupsGoal = FollowupsGoal.T
+  object FollowupsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Target(citekey: com.histmersion.domain.library.Citekey, doi: Option[com.histmersion.domain.library.Doi]) derives KindlingsCodecAsObject
   final case class Assessed(checked: Assessed.Checked, retracted: List[Assessed.Retracted]) derives KindlingsCodecAsObject
 

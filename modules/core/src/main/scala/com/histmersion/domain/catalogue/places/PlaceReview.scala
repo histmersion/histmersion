@@ -32,26 +32,51 @@ import com.histmersion.domain.catalogue.Place
 object PlaceReview:
 
   /** Pleiades types that make a place an administrative unit. */
-  val PolityTypes: Set[String] = Set("province", "province-2", "satrapy", "regio-augusti", "state", "diocese")
+  type PolityTypes = PolityTypes.T
+  object PolityTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeopleTypes = PeopleTypes.T
+  object PeopleTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteTypes = SiteTypes.T
+  object SiteTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtantYear = ExtantYear.T
+  object ExtantYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataClassesPart1 = WikidataClassesPart1.T
+  object WikidataClassesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataClassesPart2 = WikidataClassesPart2.T
+  object WikidataClassesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataPolity = WikidataPolity.T
+  object WikidataPolity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicateOfResult = DuplicateOfResult.T
+  object DuplicateOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicateOfLabel = DuplicateOfLabel.T
+  object DuplicateOfLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicateKeysResult = DuplicateKeysResult.T
+  object DuplicateKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicateKeysName = DuplicateKeysName.T
+  object DuplicateKeysName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceOfResult = EvidenceOfResult.T
+  object EvidenceOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val PolityTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.PolityTypes] = Set("province", "province-2", "satrapy", "regio-augusti", "state", "diocese")
 
   /** Pleiades types that make a place a people. */
-  val PeopleTypes: Set[String] = Set("people")
+  val PeopleTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.PeopleTypes] = Set("people")
 
   /** Pleiades types that make a "region" a settlement. */
-  val SiteTypes: Set[String] = Set("settlement", "settlement-modern", "deme-attic")
+  val SiteTypes: Set[com.histmersion.domain.catalogue.places.PlaceReview.SiteTypes] = Set("settlement", "settlement-modern", "deme-attic")
 
   /** Pleiades' "still extant" upper bound (`maxDate = 2100`). */
-  val ExtantYear: Long = 2100L
+  val ExtantYear: com.histmersion.domain.catalogue.places.PlaceReview.ExtantYear = 2100L
 
   /** The Wikidata classes the extract selects places by (`db/gazetteer`), in words. */
-  val WikidataClasses: Map[String, String] = Map(
+  val WikidataClasses: Map[com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart1, com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart2] = Map(
     "Q3024240" -> "historical country",
     "Q1620908" -> "historical region",
     "Q486972" -> "human settlement",
     "Q15661340" -> "ancient city",
     "Q839954" -> "archaeological site"
   )
-  val WikidataPolity: String = "Q3024240"
+  val WikidataPolity: com.histmersion.domain.catalogue.places.PlaceReview.WikidataPolity = "Q3024240"
 
   private val Withdrawn = "(?i)^withdrawn\\b.*".r
 
@@ -131,13 +156,13 @@ object PlaceReview:
     /** Nothing automatic: a person decides. */
     case Review(id: String, label: String, reason: String, evidence: List[String])
 
-    def id: String
+    def id: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.IdResult
 
     /** One line: id, label, current → proposed kind, why, and the evidence. */
-    def describe: String = s"$id $detail"
+    def describe: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DescribeResult = s"$id $detail"
 
     /** The line without the id — a lint item, which carries the id beside it. */
-    def detail: String =
+    def detail: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DetailResult =
       def ev(e: List[String]) = if e.isEmpty then "" else e.mkString(" [", "; ", "]")
       this match
         case Reclassify(_, label, from, to, period, reason, evidence) =>
@@ -150,23 +175,33 @@ object PlaceReview:
           s"$label: review — $reason${ev(evidence)}"
 
     /** Does `--fix` act on it? */
-    def fixable: Boolean = this match
+    def fixable: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.FixableResult = this match
       case _: Review => false
       case _         => true
 
+  object Proposal:
+    type IdResult = IdResult.T
+    object IdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DetailResult = DetailResult.T
+    object DetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FixableResult = FixableResult.T
+    object FixableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** The duplicate's name, when the title says "Withdrawn (duplicate): X". */
-  def duplicateOf(label: String): Option[String] = label.trim match
+  def duplicateOf(label: com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfLabel): Option[com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfResult] = label.trim match
     case WithdrawnDuplicate(x) => Some(x.trim).filter(_.nonEmpty)
     case _                     => None
 
   /** The name keys a withdrawn duplicate's replacement may carry: the whole name's, and each of the alternatives a
     * Pleiades title joins with '/' ("Peiros/Piros (river)" → "Peiros (river)").
     */
-  def duplicateKeys(name: String): List[String] =
+  def duplicateKeys(name: com.histmersion.domain.catalogue.places.PlaceReview.DuplicateKeysName): List[com.histmersion.domain.catalogue.places.PlaceReview.DuplicateKeysResult] =
     (Geocode.key(name) :: name.split("/").toList.map(Geocode.key)).filter(_.nonEmpty).distinct
 
   /** The evidence lines every proposal carries. */
-  def evidenceOf(e: Evidence): List[String] =
+  def evidenceOf(e: Evidence): List[com.histmersion.domain.catalogue.places.PlaceReview.EvidenceOfResult] =
     val types = Option.when(e.featureTypes.nonEmpty)(s"Pleiades types: ${e.featureTypes.mkString(", ")}")
     val tps = Option.when(e.timePeriods.nonEmpty)(s"Pleiades periods: ${e.timePeriods.mkString(", ")}")
     val items = e.items.flatMap(i =>

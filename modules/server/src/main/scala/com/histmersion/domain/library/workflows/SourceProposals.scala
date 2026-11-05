@@ -24,7 +24,7 @@ final class SourceProposals(
     status: String => Option[Source.Status],
     apply: Proposal => Either[String, String]
 ):
-  def proposedBefore(p: Proposal): Boolean = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]], p.target)
+  def proposedBefore(p: Proposal): com.histmersion.domain.library.workflows.SourceProposals.ProposedBeforeResult = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]], p.target)
 
   import SourceProposals.Outcome
 
@@ -37,11 +37,11 @@ final class SourceProposals(
     )
 
   private def record(
-      runId: Option[String],
+      runId: Option[com.histmersion.domain.automation.Run.Id],
       p: Proposal,
       now: Option[Source.Status],
       state: ApprovalState,
-      result: Option[String]
+      result: Option[com.histmersion.domain.library.workflows.SourceProposals.RecordResult]
   ) =
     approvals.record(
       runId,
@@ -57,7 +57,7 @@ final class SourceProposals(
     )
 
   /** Route one verified proposal: apply it now (and record it, already approved), or record it open. */
-  def propose(runId: Option[String], p: Proposal): Outcome =
+  def propose(runId: Option[com.histmersion.domain.automation.Run.Id], p: Proposal): Outcome =
     // the status it had matters to a status change only (an edge leaves the status alone)
     val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
     AgentProposals.route(p, now.transformInto[Option[com.histmersion.api.library.Source.Status]], cfg.approvals.statusMode.transformInto[com.histmersion.api.automation.Approval.Mode], cfg.approvals.edgeMode.transformInto[com.histmersion.api.automation.Approval.Mode]) match
@@ -75,6 +75,11 @@ final class SourceProposals(
 
 object SourceProposals:
   /** What became of one proposal, for the run's log and warnings. */
+  type ProposedBeforeResult = ProposedBeforeResult.T
+  object ProposedBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResult = RecordResult.T
+  object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Outcome:
     case Applied(what: String)
     case Recorded(id: Long, what: String)
@@ -85,10 +90,14 @@ object SourceProposals:
     /** A dry run's proposal: neither recorded nor applied (#992). */
     case NotProposed(what: String)
 
-    def line: String = this match
+    def line: com.histmersion.domain.library.workflows.SourceProposals.Outcome.LineResult = this match
       case Applied(w)     => s"applied: $w"
       case Recorded(i, w) => s"approval $i waits for a person: $w"
       case AlreadyOpen(w) => s"already waiting for a person: $w"
       case Skipped(w)     => s"nothing to do: $w"
       case Failed(w)      => s"not applied: $w"
       case NotProposed(w) => s"${com.histmersion.api.automation.AgentsMarkdown.DryRunNote}: $w"
+
+  object Outcome:
+    type LineResult = LineResult.T
+    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

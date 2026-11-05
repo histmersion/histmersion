@@ -22,11 +22,16 @@ final case class WatchManagerDefaults(maxRuns: WatchManagerDefaults.MaxRuns, aut
   /** How many legal open-access works a watcher's next acquisition sweep may ingest: none unless it opted in
     * (`autoIngest`, default off), else what is left of its daily cap after the ones it ingested today.
     */
-  def ingestAllowance(c: ManagerConfig, ingestedToday: Int): Int =
+  def ingestAllowance(c: ManagerConfig, ingestedToday: com.histmersion.domain.WatchManagerDefaults.IngestAllowanceIngestedToday): com.histmersion.domain.WatchManagerDefaults.IngestAllowanceResult =
     if !c.autoIngest.contains(true) then 0
     else math.max(0, c.autoIngestPerDay.getOrElse(autoIngestPerDay) - math.max(0, ingestedToday))
 
 object WatchManagerDefaults:
+  type IngestAllowanceResult = IngestAllowanceResult.T
+  object IngestAllowanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IngestAllowanceIngestedToday = IngestAllowanceIngestedToday.T
+  object IngestAllowanceIngestedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MaxRuns = MaxRuns.T
   object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AutoIngestPerDay = AutoIngestPerDay.T

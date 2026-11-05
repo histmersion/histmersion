@@ -17,7 +17,7 @@ import com.histmersion.domain.library.Citekey
 final class StoredOriginals(originals: () => Store, spool: () => Store) extends SourceOriginals:
 
   /** The files that exist now, each named where it is. A key that is not a valid citekey names nothing. */
-  def find(plan: SourceDeletePlan): List[String] =
+  def find(plan: SourceDeletePlan): List[com.histmersion.domain.library.ingest.StoredOriginals.FindResult] =
     val o = originals()
     val s = spool()
     val stored = plan.sha256
@@ -36,7 +36,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
   /** Remove `files` (files first, then the directories they were in, when empty). Best effort: every failure is logged
     * and returned as `path: reason`, and never undoes the delete it follows.
     */
-  def remove(files: List[String]): List[String] =
+  def remove(files: List[com.histmersion.domain.library.ingest.StoredOriginals.RemoveFiles]): List[com.histmersion.domain.library.ingest.StoredOriginals.RemoveResult] =
     val o = originals()
     val s = spool()
     val named = files.map(f => f -> keyIn(o, f).map(o -> _).orElse(keyIn(s, f).map(s -> _)))
@@ -53,7 +53,7 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
     }
 
   /** The key of `where` in `store`, when it is one of its files. */
-  private def keyIn(store: Store, where: String): Option[Store.Key] =
+  private def keyIn(store: Store, where: com.histmersion.domain.library.ingest.StoredOriginals.KeyInWhere): Option[Store.Key] =
     val root = store.where(Store.Key.Root).stripSuffix("/") + "/"
     Option
       .when(where.startsWith(root))(where.drop(root.length))
@@ -63,10 +63,22 @@ final class StoredOriginals(originals: () => Store, spool: () => Store) extends 
   /** Every content hash the originals' store holds a file for (`<sha>.<ext>`, one listing) — what the Calibre gaps
     * listing marks as downloadable. Empty when the store cannot be read.
     */
-  def hashes: Set[String] =
+  def hashes: Set[com.histmersion.domain.library.ingest.StoredOriginals.HashesResult] =
     originals()
       .names()
       .filter(_.contains('.'))
       .map(n => n.substring(0, n.indexOf('.')))
       .filter(_.nonEmpty)
       .toSet
+
+object StoredOriginals:
+  type FindResult = FindResult.T
+  object FindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveResult = RemoveResult.T
+  object RemoveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveFiles = RemoveFiles.T
+  object RemoveFiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyInWhere = KeyInWhere.T
+  object KeyInWhere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HashesResult = HashesResult.T
+  object HashesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

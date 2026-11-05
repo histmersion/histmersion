@@ -7,10 +7,15 @@ object PlanReadSchedule:
     * wants the pool, and neither its newest reading (whoever took it) nor the last attempt to take one is younger than
     * the interval.
     */
+  type ScheduledReadAutopilotOn = ScheduledReadAutopilotOn.T
+  object ScheduledReadAutopilotOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScheduledReadWanted = ScheduledReadWanted.T
+  object ScheduledReadWanted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def scheduledRead(
       schedule: ReadSchedule,
-      autopilotOn: Boolean,
-      wanted: Boolean,
+      autopilotOn: com.histmersion.domain.PlanReadSchedule.ScheduledReadAutopilotOn,
+      wanted: com.histmersion.domain.PlanReadSchedule.ScheduledReadWanted,
       newestReading: Option[Instant],
       lastAttempt: Option[Instant],
       now: Instant

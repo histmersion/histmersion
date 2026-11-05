@@ -21,8 +21,8 @@ final class CatalogueJobs(
   private val slot = BackgroundJob.Slot()
 
   /** Start `body` as a job of `kind`; `body` answers the summary, or why the run failed. */
-  def start(kind: String, describe: String, write: Boolean)(
-      body: (JobInfo, String => Unit) => Either[String, String]
+  def start(kind: com.histmersion.domain.catalogue.CatalogueJobs.StartKind, describe: com.histmersion.domain.catalogue.CatalogueJobs.StartDescribe, write: com.histmersion.domain.catalogue.CatalogueJobs.StartWrite)(
+      body: (JobInfo, com.histmersion.domain.catalogue.CatalogueJobs.StartBodyArg2Arg1 => Unit) => Either[com.histmersion.domain.catalogue.CatalogueJobs.StartBodyResultPart1, com.histmersion.domain.catalogue.CatalogueJobs.StartBodyResultPart2]
   ): Either[Api.Error, JobInfo] =
     def go: Either[Api.Error, JobInfo] =
       BackgroundJob.start(
@@ -37,7 +37,25 @@ final class CatalogueJobs(
     if write then maintenance.guard(kind)(go) else go
 
   /** Change the detail of the job `id` records. */
-  def amend(id: String)(change: JobDetail => JobDetail): Unit = BackgroundJob.amendDetail(ds, id)(change)
+  def amend(id: com.histmersion.domain.catalogue.CatalogueJobs.AmendId)(change: JobDetail => JobDetail): Unit = BackgroundJob.amendDetail(ds, id)(change)
 
   /** Whether a maintenance run holds the lock: a long run stops between its parts. */
-  def held: Boolean = maintenance.active
+  def held: com.histmersion.domain.catalogue.CatalogueJobs.HeldResult = maintenance.active
+
+object CatalogueJobs:
+  type StartKind = StartKind.T
+  object StartKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartDescribe = StartDescribe.T
+  object StartDescribe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartWrite = StartWrite.T
+  object StartWrite extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartBodyArg2Arg1 = StartBodyArg2Arg1.T
+  object StartBodyArg2Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartBodyResultPart1 = StartBodyResultPart1.T
+  object StartBodyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartBodyResultPart2 = StartBodyResultPart2.T
+  object StartBodyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AmendId = AmendId.T
+  object AmendId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeldResult = HeldResult.T
+  object HeldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

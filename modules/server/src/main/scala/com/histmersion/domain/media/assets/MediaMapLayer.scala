@@ -10,10 +10,10 @@ import com.histmersion.domain.catalogue.maptiles.layers.MapLayer
   * in the span when one is asked for.
   */
 final class MediaMapLayer(assets: AssetService) extends MapLayer:
-  def candidates(q: TilesApi.TileQuery, window: Option[(Long, Long)], envelope: Sql): Sql =
+  def candidates(q: TilesApi.TileQuery, window: Option[(com.histmersion.domain.media.assets.MediaMapLayer.CandidatesWindowPart1, com.histmersion.domain.media.assets.MediaMapLayer.CandidatesWindowPart2)], envelope: Sql): Sql =
     MediaRepo.tileCandidates(q.kind, q.provider, q.license, window, envelope)
 
-  def features(keys: List[String]): Map[String, TileCell => TilePoint] =
+  def features(keys: List[com.histmersion.domain.media.assets.MediaMapLayer.FeaturesKeys]): Map[com.histmersion.domain.media.assets.MediaMapLayer.FeaturesResultPart1, TileCell => TilePoint] =
     assets.geoOf(keys).view.mapValues(feature).toMap
 
   private[assets] def feature(h: MediaGeoHit)(c: TileCell): TilePoint =
@@ -33,3 +33,13 @@ final class MediaMapLayer(assets: AssetService) extends MapLayer:
         // its full size is this server's own `/media/{uid}/file`, which the map makes from the uid (not sent per picture)
         F.text(P.SourceUrl, h.sourceUrl) ++ F.text(P.LicenseUrl, h.licenseUrl) ++ F.text(P.Author, h.author)
     )
+
+object MediaMapLayer:
+  type CandidatesWindowPart1 = CandidatesWindowPart1.T
+  object CandidatesWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesWindowPart2 = CandidatesWindowPart2.T
+  object CandidatesWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FeaturesResultPart1 = FeaturesResultPart1.T
+  object FeaturesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FeaturesKeys = FeaturesKeys.T
+  object FeaturesKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
