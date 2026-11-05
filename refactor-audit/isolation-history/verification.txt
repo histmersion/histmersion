@@ -1,0 +1,4 @@
+PASS: actual Scalafix CLI unchanged/equal-count substitution/reopened scenarios
+logs=target/isolation-history-verification/2026-11-05T00-47-42.136395Z
+No application sources or original history were mutated.
+Detector precision/recall and automatic project-assessment integration remain unestablished.
