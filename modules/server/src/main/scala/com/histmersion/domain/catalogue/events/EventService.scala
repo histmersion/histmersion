@@ -200,7 +200,7 @@ object EventService:
           e.geometry,
           e.parentId.flatMap(p => s.events.find(_.id == p)).map(summaryOf(s, _)),
           ordered(s.events.filter(_.parentId.contains(id))).toList.map(summaryOf(s, _)),
-          e.datings.sortBy(_.citekey),
+          e.datings.sortBy(_.citekey.value.toString),
           s.events
             .flatMap(_.edges)
             .filter(g => g.srcId == id || g.dstId == id)
@@ -402,9 +402,9 @@ object EventService:
                 .modify(_.edges)
                 .using(_.map(g => g.modify(_.srcId).using(ren).modify(_.dstId).using(ren)))
                 .modify(_.datings)
-                .using(_.map(d => d.modify(_.eventId).using(ren)))
+                .using(_.map(d => d.modify(_.eventId).using(id => com.histmersion.api.catalogue.Event.Id(ren(id.value)))))
                 .modify(_.participants)
-                .using(_.map(p => p.modify(_.eventId).using(ren)))
+                .using(_.map(p => p.modify(_.eventId).using(id => com.histmersion.api.catalogue.Event.Id(ren(id.value)))))
             })
             .modify(_.attestations)
             .using(

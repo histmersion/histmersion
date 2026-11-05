@@ -2,6 +2,18 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Server callback adaptations are applied through caller-server-callbacks-1:
+twenty-two reviewed AST matches across eight production files. Event-candidate
+comparisons and optics retain typed identifiers, rename callbacks adapt their
+input/output types, acquisition forwarding no longer double-wraps typed titles
+and authors, and legacy callback boundaries extract explicitly. These are
+targeted adaptations, not a newly proven general rewrite. The server compiler
+reports 252 diagnostics versus the prior 284 (applied-server-build-4), with none
+reported in the eight changed files. Compilation still fails; later db/server
+test commands did not execute. Counts are compiler diagnostics, not repaired
+policy findings, and do not prove all failures in those files are exhausted.
+The original 87 cohort IDs remain applied-unverified with no repair credit.
+
 Database production compilation now passes. caller-db-1 adapts thirteen ASTs
 across five files, including both database and in-memory source-alias tuple
 callbacks. caller-db-codecs-1 adds existing generic scalar codecs at seven

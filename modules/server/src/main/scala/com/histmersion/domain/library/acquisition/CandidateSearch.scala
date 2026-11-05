@@ -47,7 +47,7 @@ final class CandidateSearch(
     yield CandidateWatch(goal.slug, Candidates.WatchKind.Query.wire, query, i.name)
     val cited = (refs(LinkKind.Source) ++ refs(LinkKind.Article).flatMap(articles.cited)).distinct
       .take(math.max(0, c.sources.value))
-    val withDoi = cited.flatMap(ck => sources.load(ck).flatMap(_.doi).flatMap(Ident.doi).map(ck -> _))
+    val withDoi = cited.flatMap(ck => sources.load(ck).flatMap(_.doi).flatMap(doi => Ident.doi(doi.value)).map(ck -> _))
     val citing = withDoi.map((ck, doi) => CandidateWatch(goal.slug, Candidates.WatchKind.Citing.wire, doi, "openalex"))
     q ++ citing
 
@@ -120,9 +120,9 @@ final class CandidateSearch(
                 0,
                 g.slug,
                 com.histmersion.api.library.Doi(k),
-                com.histmersion.api.library.Title(w.title.getOrElse(k)),
+                w.title.getOrElse(com.histmersion.api.library.Title(k)),
                 w.year,
-                (w.authors.take(8)).map(com.histmersion.api.library.AuthorName.apply),
+                w.authors.take(8),
                 w.venue,
                 w.abstractText.map(_.take(2000)),
                 w.isOa,

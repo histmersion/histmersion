@@ -8,7 +8,7 @@ extension (w: com.histmersion.domain.library.acquisition.WorkRef)
   /** The work as the wire shows it, keyed by the citekey the corpus gives a work (not in the corpus yet). */
   def wire: api.library.WorkRef =
     w.into[api.library.WorkRef]
-      .withFieldComputed(_.citekey, w => Some(api.library.Acquire.citekey(w.authors, w.year, w.title)))
+      .withFieldComputed(_.citekey, w => Some(api.library.Citekey(api.library.Acquire.citekey(w.authors, w.year, w.title))))
       .withFieldConst(_.inDb, false)
       .transform
 

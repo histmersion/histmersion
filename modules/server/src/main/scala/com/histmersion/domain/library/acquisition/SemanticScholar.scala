@@ -24,7 +24,7 @@ final class SemanticScholar(cfg: AcquireConfig, http: Http) extends CitationsCli
   def citing(work: WorkRef, since: Option[Int], limit: Int): Either[String, (String, List[FollowupRow])] =
     work.doi match
       case Some(doi) =>
-        s2(doi, since, limit) match
+        s2(doi.value, since, limit) match
           case Right(rows) if rows.nonEmpty => Right(("semantic-scholar", rows))
           case Right(_)                     => openalexCiting(work, since, limit).map(("openalex", _))
           case Left(err)                    =>
