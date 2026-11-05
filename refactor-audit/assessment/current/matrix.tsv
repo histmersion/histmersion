@@ -1,5 +1,5 @@
 rule	module	scope	current	baseline	delta
-capability/clock	ALL	production; configured symbol/owner policy	48	unknown	incomparable
+capability/clock	ALL	production; configured symbol/owner policy	46	unknown	incomparable
 capability/clock	api	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	chimney-iron	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	chimney-iron-tests	production; configured symbol/owner policy	0	unknown	incomparable
@@ -24,7 +24,7 @@ capability/clock	plugins/events	production; configured symbol/owner policy	0	unk
 capability/clock	plugins/fetchers	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugins/gazetteers	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	plugins/media	production; configured symbol/owner policy	0	unknown	incomparable
-capability/clock	server	production; configured symbol/owner policy	43	unknown	incomparable
+capability/clock	server	production; configured symbol/owner policy	41	unknown	incomparable
 capability/clock	upstreams	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	values	production; configured symbol/owner policy	0	unknown	incomparable
 capability/clock	web	production; configured symbol/owner policy	0	unknown	incomparable

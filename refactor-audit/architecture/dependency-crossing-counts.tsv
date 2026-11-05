@@ -175,8 +175,8 @@ production	server	com.histmersion.domain.research	com.histmersion.domain.persona
 production	server	com.histmersion.domain.research	com.histmersion.domain.research	same-region; feature-contract-review	295
 production	server	com.histmersion.domain.research	com.histmersion.util	allowed-direction; contract-review	290
 production	server	com.histmersion.util		unclassified-direction	3968
-production	server	com.histmersion.util		unresolved-reference	228
-production	server	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	1955
+production	server	com.histmersion.util		unresolved-reference	227
+production	server	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	1956
 production	upstreams			unclassified-direction	273
 production	upstreams			unresolved-reference	31
 production	upstreams		com.histmersion.domain.library	unclassified-direction	168

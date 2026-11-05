@@ -72,7 +72,7 @@ object BasemapExtractTool:
     */
   private def relief(bbox: String, z0: Int, z1: Int, out: Option[Path]): Unit =
     val cfg = AppConfig.load().basemap
-    val http = BasemapWiring.http(cfg)
+    val http = BasemapWiring.http(cfg)(using java.time.Clock.systemUTC())
     val src = BasemapFetch.Source(cfg.terrain.url, cfg.terrain.url)
     val pace = BasemapFetch.Pace(cfg.requestGapMs.toLong, cfg.maxRequestMb.toLong << 20, cfg.overfetch)
     val note = (s: String) => scribe.info(s)
@@ -103,7 +103,7 @@ object BasemapExtractTool:
 
   private def extract(build: String, bbox: String, z: Int, out: Path, keepAll: Boolean): Unit =
     val cfg = AppConfig.load().basemap
-    val http = BasemapWiring.http(cfg)
+    val http = BasemapWiring.http(cfg)(using java.time.Clock.systemUTC())
     val key = if build == "latest" then
       http.text(cfg.vector.buildsUrl).flatMap(BasemapService.builds).toOption.get.last._1
     else build

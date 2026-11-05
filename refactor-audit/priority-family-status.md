@@ -1,6 +1,31 @@
 # Priority-family status
 
+## Latest verified repair: method-body clock propagation
+
+The configurable ProjectAssessment pipeline completed its first repair. One
+configured transformation changed five production and two test files, propagating
+the clock through thirteen callers and removing two confirmed production capability
+IDs (DiskLru and JavaRangeHttp). All 3,159 source/test files compile; the same 47
+selected tests pass before and after with no skips. Exact reconciliation permits
+only those two removals. Capability/isolation histories report zero new/reopened
+findings. See server-clock/README.md and body-pipeline-1 for original IDs and evidence.
+
+Current capability measurement: 77 anchors / 94 occurrences. Confirmed outstanding:
+15 anchors / 16 occurrences. Candidates: 48 anchors / 64 occurrences. Unresolved:
+13 adapter operations. Non-violation: one. Two plugin-design obligations and eight
+timing-permission occurrences remain separate; test policy remains unmeasured.
+No exception was added, no denominator was reduced, and no detector refinement
+round was consumed. Inventory acceptance and overall automation coverage remain
+unestablished. Copy automation stays paused.
+
+Next: bounded, purpose-based primitive/newtype mappings and a reusable extension
+of ModelTypeRewrite, which currently supports Int/Option[Int], before any String
+rewrite. Candidate totals are not a ready batch or a confirmed denominator.
+
 ## Current bounded acceptance disposition (5 November, a06cb734)
+
+This acceptance snapshot predates the two verified repairs above; its limits and
+sample results remain applicable. migration-rounds.tsv carries current residuals.
 
 The bounded review has assigned an acceptance disposition to all fourteen policy
 families covering the original 43 goals and twelve slices. **Inventory acceptance
@@ -55,7 +80,7 @@ Scalafix rewrite/history tools through one configurable pipeline. Configuration-
 validation and rejection of reused observations pass; CompileBatch now propagates
 failed sbt exits, verified with a deliberately invalid task and unchanged hashes for
 all 3,159 application sources. The first complete fresh repair through the pipeline
-is **not yet verified**. No additional application repair is credited for this work.
+is now verified above. The pipeline tooling itself receives no repair credit.
 Use compilation, selected behavioral tests and stable-ID remeasurement as the
 standard contract. New batch-specific runners, verifiers or report frameworks
 require explicit justification and user approval. Select a reusable transformation

@@ -6,7 +6,7 @@ import java.util.concurrent.ConcurrentLinkedQueue
 import scala.jdk.CollectionConverters._
 
 object ClockAccessPreview {
-  case class Owner(path: String = "", clock: String = "", reads: Int = 0, contextualClass: String = "")
+  case class Owner(path: String = "", clock: String = "", reads: Int = 0, contextualClass: String = "", contextualMethod: String = "", bodyOnly: Boolean = false)
   object Owner {
     implicit val surface: generic.Surface[Owner] = generic.deriveSurface[Owner]
     implicit val decoder: ConfDecoder[Owner] = generic.deriveDecoder(Owner()).noTypos
@@ -49,9 +49,14 @@ class ClockAccessPreview(val policy: ClockAccessPreview.Policy) extends Semantic
       shapes.add(List(path, (t.pos.startLine + 1).toString, symbol, t.syntax, t.structure, value))
     }
     val applications = doc.tree.collect { case a: Term.Apply => a }
+    def inDefault(t: Tree): Boolean = t.parent.exists {
+      case p: Term.Param if p.default.nonEmpty => true
+      case parent => inDefault(parent)
+    }
     policy.owners.find(_.path == path).foreach { owner =>
       val reads = applications.filter(a => a.argClause.values.isEmpty &&
-        Set("java/time/Instant#now().", "java/lang/System#currentTimeMillis().")(a.fun.symbol.value))
+        Set("java/time/Instant#now().", "java/lang/System#currentTimeMillis().")(a.fun.symbol.value) &&
+        (!owner.bodyOnly || !inDefault(a)))
       require(reads.size == owner.reads, "Unexpected global clock reads: " + path + " " + reads.size)
       reads.foreach { a =>
         val replacement = if(a.fun.symbol.value == "java/time/Instant#now().") a.fun.syntax + "(" + owner.clock + ")"
@@ -64,6 +69,14 @@ class ClockAccessPreview(val policy: ClockAccessPreview.Policy) extends Semantic
         val cls = classes.head
         require(!cls.ctor.paramClauses.flatMap(_.values).exists(_.name.value == owner.clock))
         edit(cls.ctor, cls.ctor.pos.end, cls.ctor.pos.end, "(using " + owner.clock + ": java.time.Clock)", cls.name.symbol.value)
+      }
+      if(owner.contextualMethod.nonEmpty) {
+        val methods = doc.tree.collect { case d: Defn.Def if d.name.symbol.value == owner.contextualMethod => d }
+        require(methods.size == 1, "Expected exact clock-forwarding method: " + owner.contextualMethod)
+        val method = methods.head
+        val clauses = method.paramClauseGroups.flatMap(_.paramClauses)
+        require(clauses.nonEmpty && !clauses.flatMap(_.values).exists(_.name.value == owner.clock))
+        edit(method, clauses.last.pos.end, clauses.last.pos.end, "(using " + owner.clock + ": java.time.Clock)", method.name.symbol.value)
       }
     }
     val configuredSymbols = policy.callers.map(_.symbol).toSet

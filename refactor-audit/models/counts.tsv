@@ -80,7 +80,7 @@ plugins/media	production/member	533	382	220
 plugins/media	test/local	138	57	71
 plugins/media	test/member	38	34	25
 server	production/local	9421	5149	4105
-server	production/member	16280	8951	7652
+server	production/member	16284	8951	7652
 server	test/local	10935	5158	2928
 server	test/member	6386	4371	2265
 upstreams	production/local	333	225	192

@@ -19,7 +19,7 @@ final class JavaRangeHttp(
     userAgent: String,
     policy: RetryPolicy,
     sleep: Long => Unit = ms => Thread.sleep(ms)
-) extends RangeHttp:
+)(using clock: java.time.Clock) extends RangeHttp:
 
   private def request(url: String, range: Option[(Long, Long)]): HttpRequest =
     val b = HttpRequest
@@ -48,7 +48,7 @@ final class JavaRangeHttp(
             n,
             retries,
             300,
-            Instant.now()
+            Instant.now(clock)
           ) match
             case Some(RetryWait(ms, why)) =>
               resp.body.close()

@@ -28,7 +28,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
 
   test("the cache keeps tiles to its ceiling, dropping the least recently used first; the order survives a restart"):
     val root = Files.createTempDirectory("lru")
-    val lru = DiskLru(BasemapFixtures.store(root), () => 30)
+    val lru = DiskLru(BasemapFixtures.store(root), () => 30)(using java.time.Clock.systemUTC())
     lru.put("1/0/0", Some(Array.fill(10)(1)))
     Thread.sleep(5)
     lru.put("1/0/1", Some(Array.fill(10)(2)))
@@ -44,7 +44,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
     assertEquals(lru.get("1/1/0"), Some(None))
     assertEquals(lru.bytes, 25L)
     // a restart: the index is read from the disk, in the order of use
-    val again = DiskLru(BasemapFixtures.store(root), () => 20)
+    val again = DiskLru(BasemapFixtures.store(root), () => 20)(using java.time.Clock.systemUTC())
     assertEquals(again.entries, 1L, "over the new ceiling at once: the eldest dropped (the missing 1/1/0, then 1/0/0)")
     assert(again.get("1/1/1").isDefined)
     assertEquals(again.clear(), 15L)
@@ -71,7 +71,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
       () => p,
       () => clock.get.toLong,
       ms => { slept.addAndGet(ms.toInt); () }
-    )
+    )(using java.time.Clock.systemUTC())
     (od, p, dir, clock, slept)
 
   test("a tile is read once from the provider and then from the cache — also by a new instance (offline)"):
@@ -90,7 +90,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
         () => cfg(),
         OnDemandTiles.Source.Planet(() => "fake://planet"),
         () => p
-      )
+      )(using java.time.Clock.systemUTC())
     assertEquals(
       restarted.tile(5, 18, 12).map(_.map(String(_))),
       Right(Some("RIFF5/18/12")),
@@ -194,7 +194,7 @@ class OnDemandTilesSuite extends munit.FunSuite:
       () => http,
       ext = "png",
       transform = b => Right(Some(("T:" + String(b)).getBytes))
-    )
+    )(using java.time.Clock.systemUTC())
     assertEquals(od.tile(2, 1, 3).map(_.map(String(_))), Right(Some("T:fake://sea/2/1/3.png")))
     assertEquals(od.tile(2, 1, 3).map(_.map(String(_))), Right(Some("T:fake://sea/2/1/3.png")))
     assertEquals(od.tile(1, 0, 0), Right(None))

@@ -35,13 +35,13 @@ final class OnDemandTiles(
     sleep: Long => Unit = ms => Thread.sleep(ms),
     ext: String = "webp",
     transform: Array[Byte] => Either[String, Option[Array[Byte]]] = b => Right(Some(b))
-):
+)(using clock: java.time.Clock):
 
   private def url(): String = source match
     case OnDemandTiles.Source.Planet(u)   => u()
     case OnDemandTiles.Source.Template(u) => u()
 
-  val cache: DiskLru = DiskLru(store.sub(OnDemandTiles.Tiles), () => (cfg().cacheGb * 1e9).toLong, ext)
+  val cache: DiskLru = DiskLru(store.sub(OnDemandTiles.Tiles), () => (cfg().cacheGb * 1e9).toLong, ext)(using clock)
   private val remoteFiles = store.sub(OnDemandTiles.Remote)
 
   private def done(written: Either[Store.Error, ?]): Unit = written.left.foreach(e => throw IOException(e.message))

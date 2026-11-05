@@ -12,8 +12,8 @@ The bounded acceptance review has assigned dispositions to every family; this do
 not establish inventory acceptance. Insufficient detectors are frozen with explicit
 limits. Copy automation is paused at its two-round limit. Prioritize transaction
 ownership, capability access, module isolation and primitive/newtype modeling.
-Use the configurable pipeline in ProjectAssessment for the next repair; its first
-complete repair execution is still outstanding. Extend the existing entry points rather than creating
+Use the configurable pipeline in ProjectAssessment; its first complete repair
+execution passed for the method-body clock batch. Extend existing entry points rather than creating
 batch-specific runners, verifiers or report frameworks; those require explicit
 justification and user approval. Configuration may select a batch, but the batch
 must cover all eligible confirmed findings for its reusable transformation, with
@@ -40,7 +40,10 @@ A fresh batch supplies a scopeReview path documenting all eligible confirmed IDs
 and exclusions, prepare/rewrites invocations (config, files, semantic), paired
 baselineTests/afterTests configurations for BatchTestVerification, a compileConfig
 for CompileBatch, and original-ID identityChecks using existing reconciliation
-rules. The pipeline requires full `compile` and `Test/compile`, matching test scopes
+rules, or capabilityFixes listing exact original CAP IDs. capabilityFixes compares
+the complete before/after identity tables, allowing only those removals and no
+other row or multiplicity changes. It does not infer confirmation from a detector
+match; the scope review must establish that. The pipeline requires full `compile` and `Test/compile`, matching test scopes
 and environments, and fresh build/test/output observations. Identity-check selection
 still requires review: a configured check must cover the batch's original IDs;
 the runner cannot infer that from a filename.
@@ -59,8 +62,10 @@ tools; introducing another batch-specific verifier still requires approval.
 Validation so far: both changed Scala rules compile; the example plan succeeds;
 apply rejects existing test observations before executing stages; a deliberately
 failed sbt task propagates a nonzero Scalafix exit through CompileBatch while all
-3,159 application source hashes remain stable. A complete fresh repair through this
-entry point has not yet run. These are tooling checks, not migration progress counts.
+3,159 application source hashes remain stable. The method-body clock batch then
+completed the full pipeline: two exact IDs repaired, all 3,159 sources compiled,
+47 unchanged test identities passed before/after with no skips, and no capability
+or isolation regressions. Tooling checks receive no repair credit.
 
 Historical copy development: the cheap-model source audit selected the frozen `copy-holdout.tsv` without reading detector reports; it has 21 grouped locations, including 21 positive copy occurrences and two legitimate comparison locations. The first run found 19 positives, missed two method-result receivers, and had no false positives. Round one addressed that gap; the sample then became development/regression evidence. Subsequent independent acceptance results, including insufficient test recall, are retained in the consolidated ledger. Negative diversity and nonrandom selection limit inference beyond sampled cases. `Printer.copy` remains unclassified rather than being forced into either label.
 

@@ -13,7 +13,7 @@ Counts are matches within each rule's stated scope, not proof of all 43 architec
 | capability/environment | 8 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/properties | 11 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/console | 0 | unknown | incomparable | production; configured symbol/owner policy |
-| capability/clock | 48 | unknown | incomparable | production; configured symbol/owner policy |
+| capability/clock | 46 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/lifecycle | 10 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/filesystem | 18 | unknown | incomparable | production; configured symbol/owner policy |
 | capability/http | 1 | unknown | incomparable | production; configured symbol/owner policy |
