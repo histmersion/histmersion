@@ -305,9 +305,17 @@ object PluginKit:
       case other => Left(s"'$other' is not group:artifact:version (or group::artifact:version for a Scala 3 artifact)")
 
   enum Origin:
-    case File(path: String)
-    case Url(url: String)
+    case File(path: Origin.File.Path)
+    case Url(url: Origin.Url.Value)
     case Maven(coordinates: Coordinates)
+
+  object Origin:
+    object File:
+      type Path = Path.T
+      object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Url:
+      type Value = Value.T
+      object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: what `plugin add <arg>` names. An `http(s)://` URL is downloaded; anything that exists as a file, ends with
     * `.jar` or holds a `/` is a path; else Maven coordinates.

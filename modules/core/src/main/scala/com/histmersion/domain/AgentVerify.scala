@@ -102,8 +102,8 @@ object AgentVerify:
     */
   enum QuoteMatch:
     case Verbatim
-    case Fuzzy(matched: Double)
-    case Missing(best: Double)
+    case Fuzzy(matched: QuoteMatch.Fuzzy.Matched)
+    case Missing(best: QuoteMatch.Missing.Best)
 
     def ratio: com.histmersion.domain.AgentVerify.QuoteMatch.RatioResult = this match
       case Verbatim   => 1.0
@@ -115,6 +115,14 @@ object AgentVerify:
       case _          => true
 
   object QuoteMatch:
+    object Fuzzy:
+      type Matched = Matched.T
+      object Matched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Missing:
+      type Best = Best.T
+      object Best extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type RatioResult = RatioResult.T
     object RatioResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AcceptedResult = AcceptedResult.T

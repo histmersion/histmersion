@@ -810,8 +810,16 @@ object BaseMaps:
     * bottom `bottom` px from the window's bottom.
     */
   enum PanelSide:
-    case Below(top: Double)
-    case Above(bottom: Double)
+    case Below(top: PanelSide.Below.Top)
+    case Above(bottom: PanelSide.Above.Bottom)
+
+  object PanelSide:
+    object Below:
+      type Top = Top.T
+      object Top extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Above:
+      type Bottom = Bottom.T
+      object Bottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: under the button, unless less than `minBelow` px is left under it and more is above — the button low in a
     * tablet's map & tools drawer, where the panel would be squeezed into a strip.

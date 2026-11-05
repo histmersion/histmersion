@@ -204,14 +204,30 @@ object Store:
     * failed, as the file system said.
     */
   enum Error(val message: Error.Message):
-    case NotFound(where: String) extends Error(s"$where: no such file")
-    case NotAFile(where: String) extends Error(s"$where is not a file")
-    case Failed(reason: String) extends Error(reason)
+    case NotFound(where: Error.NotFound.Where) extends Error(s"$where: no such file")
+    case NotAFile(where: Error.NotAFile.Where) extends Error(s"$where is not a file")
+    case Failed(reason: Error.Failed.Reason) extends Error(reason)
 
     /** An in-memory store has no file to hand to another program. */
-    case NotOnDisk(where: String) extends Error(s"$where is not on disk")
+    case NotOnDisk(where: Error.NotOnDisk.Where) extends Error(s"$where is not on disk")
 
   object Error:
+    object NotFound:
+      type Where = Where.T
+      object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object NotAFile:
+      type Where = Where.T
+      object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Failed:
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object NotOnDisk:
+      type Where = Where.T
+      object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Message = Message.T
     object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

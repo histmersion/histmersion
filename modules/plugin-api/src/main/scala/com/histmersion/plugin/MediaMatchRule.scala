@@ -16,7 +16,7 @@ enum MediaMatchRule:
   /** A record that may carry gazetteer ids ([[MediaItem.ids]]): an id naming this place alone ties it (unless one of
     * its fields in `deeper` names another place on the map), else the museum rule; the dates must overlap either way.
     */
-  case PlaceIds(deeper: Set[String] = Set.empty)
+  case PlaceIds(deeper: Set[MediaMatchRule.PlaceIds.Deeper] = Set.empty)
 
   /** The target's own pictures: the collection finds them FOR the place or event it is asked about (a Wikidata item's
     * image statements, the files a gazetteer record links), so no name is matched — the host ties each to the target
@@ -25,3 +25,8 @@ enum MediaMatchRule:
     * ([[MediaCollection.completeAll]]).
     */
   case Own
+
+object MediaMatchRule:
+  object PlaceIds:
+    type Deeper = Deeper.T
+    object Deeper extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

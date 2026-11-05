@@ -35,13 +35,13 @@ object Secret:
     */
   enum Ref:
     /** `value:<literal>` — the value itself, in the config file. Allowed, discouraged: the host warns. */
-    case Value(literal: String)
+    case Value(literal: Ref.Value.Literal)
 
     /** `env:<NAME>` — a variable of the server's environment. */
-    case Env(name: String)
+    case Env(name: Ref.Env.Name)
 
     /** `<vault>:<ref>` — resolved by the [[Secret.Vault]] registered under `vault`. */
-    case Vault(vault: String, ref: String)
+    case Vault(vault: Ref.Vault.Value, ref: Ref.Vault.Ref)
 
     /** The reference as it may be shown: a literal is masked, everything else is shown as written. */
     def shown: com.histmersion.plugin.Secret.Ref.ShownResult = this match
@@ -50,6 +50,20 @@ object Secret:
       case Vault(v, r) => s"$v:$r"
 
   object Ref:
+    object Value:
+      type Literal = Literal.T
+      object Literal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Env:
+      type Name = Name.T
+      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Vault:
+      type Value = Value.T
+      object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Ref = Ref.T
+      object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ShownResult = ShownResult.T
     object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseResultPart1 = ParseResultPart1.T

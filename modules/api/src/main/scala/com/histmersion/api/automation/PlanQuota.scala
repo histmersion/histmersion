@@ -224,13 +224,23 @@ object PlanQuota:
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Verdict:
-    case Usable(note: Option[String])
+    case Usable(note: Option[Verdict.Usable.Note])
 
-    case Blocked(reason: String, until: Option[Long])
+    case Blocked(reason: Verdict.Blocked.Reason, until: Option[Verdict.Blocked.Until])
 
     def usable: com.histmersion.api.automation.PlanQuota.Verdict.UsableResult = this.isInstanceOf[Usable]
 
   object Verdict:
+    object Usable:
+      type Note = Note.T
+      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Blocked:
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Until = Until.T
+      object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type UsableResult = UsableResult.T
     object UsableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -297,9 +307,20 @@ object PlanQuota:
     def parse(s: com.histmersion.api.automation.PlanQuota.RefreshMode.ParseS): Option[RefreshMode] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
   enum Login:
-    case Present(detail: String)
-    case Missing(why: String)
-    case Unknown(why: String)
+    case Present(detail: Login.Present.Detail)
+    case Missing(why: Login.Missing.Why)
+    case Unknown(why: Login.Unknown.Why)
+
+  object Login:
+    object Present:
+      type Detail = Detail.T
+      object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Missing:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Unknown:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum RefreshNeed(val text: RefreshNeed.Text):
     case StaleOnly extends RefreshNeed("the reading is stale")

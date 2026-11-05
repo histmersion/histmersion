@@ -1,5 +1,33 @@
 # Priority-family status
 
+## Applied: enum case payloads
+
+enum-payloads-project-2 converts 336 explicit primitive payload positions across
+87 production files. The existing constructor transformation now traverses enum
+cases, placing property types under the case's companion inside the enum's
+companion (for example Payload.Named.Name). It preserves case names, matching
+structure and bodies. Constructor calls and implementations remain for later
+repair. Empty companions, buffers, local owners and conflicts stay unresolved.
+
+The fixture covers multiple payload cases with an absent enum companion, a
+payload-free case, and combined header/payload additions to an existing companion.
+Generated output matches expected source exactly, and expected code compiles with
+Scala 3.10.0/Iron 3.4.1. Four fixture positions convert. The initial preview is
+preserved; the applied preview explicitly qualifies references through the enum.
+The frozen applicator checks all 87 files. Application/source/config/docs
+whitespace checks pass. No application compilation or behavioral pass is claimed.
+
+type-positions-after-enum-payloads-1 validates all 3167 current source files and
+the fifteen-plan chain. Stable-ID comparison reports exactly 336 raw leaves
+removed and zero introduced. The global count changes from 8224 to 7888:
+production1834/test6054. Tests are unchanged. The scoped rerun has zero further
+supported edits and 1584 blocked positions. Remaining local signatures, boundary/
+override contracts, qualified/unsupported type forms and inference/alias gaps
+remain candidates or unresolved evidence. No accepted exceptions, verified repair
+credit or overall migration percentage are added. Next address local helper
+signatures as a reusable family, then review residual external contracts before
+the requested overlap index and compilation repair.
+
 ## Applied: whole-buffer signatures and earlier element-wrapper corrections
 
 signature-buffers-project-2 converts 197 raw byte/int array signature positions

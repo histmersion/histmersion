@@ -7,5 +7,10 @@ import java.util.UUID
   */
 enum BundleScope:
   case All
-  case Since(at: String)
+  case Since(at: BundleScope.Since.At)
   case Uids(uids: List[UUID])
+
+object BundleScope:
+  object Since:
+    type At = At.T
+    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

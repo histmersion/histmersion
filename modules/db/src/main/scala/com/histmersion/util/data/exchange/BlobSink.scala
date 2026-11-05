@@ -8,4 +8,9 @@ enum BlobSink:
   case Held(write: Array[Byte] => Unit)
 
   /** Into a file store, streamed; it checks the digest itself. The answer is what went wrong, when anything did. */
-  case Streamed(store: InputStream => Option[String])
+  case Streamed(store: InputStream => Option[BlobSink.Streamed.StoreResult])
+
+object BlobSink:
+  object Streamed:
+    type StoreResult = StoreResult.T
+    object StoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

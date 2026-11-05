@@ -10,7 +10,12 @@ import scala.annotation.tailrec
 enum Written:
   case Nowhere
   case Here(value: ConfigValue)
-  case Elsewhere(file: String)
+  case Elsewhere(file: Written.Elsewhere.File)
 
   /** Behind a `${…}` substitution, `+=`, or an object merged with one. */
   case Substituted(at: SettingKey)
+
+object Written:
+  object Elsewhere:
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

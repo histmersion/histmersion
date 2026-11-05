@@ -88,7 +88,12 @@ object AgentProposals:
     case Ask
 
     /** Nothing to do (the source already has that status). */
-    case Skip(reason: String)
+    case Skip(reason: Route.Skip.Reason)
+
+  object Route:
+    object Skip:
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A status is APPLIED without a person only when it fills an `unassessed` source with `current` or `foundational` —
     * the rule `enrich-source` has followed since P1 — or when status changes are configured `auto`. Every edge follows

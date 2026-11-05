@@ -239,11 +239,16 @@ object FindingPlan:
     case Near(
         right: com.histmersion.api.exchange.Bundle.Finding,
         left: com.histmersion.api.exchange.Bundle.Finding,
-        jaccard: Double
+        jaccard: Match.Near.Jaccard
     )
 
     /** Nothing here like it: a new finding of the survivor. */
     case Unmatched(right: com.histmersion.api.exchange.Bundle.Finding)
+
+  object Match:
+    object Near:
+      type Jaccard = Jaccard.T
+      object Jaccard extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def text(o: Option[com.histmersion.domain.library.findings.FindingPlan.TextO]): Option[com.histmersion.domain.library.findings.FindingPlan.TextResult] = o.map(_.trim).filter(_.nonEmpty)
 

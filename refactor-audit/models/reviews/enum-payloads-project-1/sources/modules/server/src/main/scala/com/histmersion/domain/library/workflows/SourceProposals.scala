@@ -1,0 +1,136 @@
+package com.histmersion.domain.library.workflows
+
+import io.scalaland.chimney.dsl.*
+
+import com.histmersion.api.automation.Agents.ApprovalState
+import com.histmersion.api.automation.ListFilters
+import com.histmersion.config.AgentsConfig
+import com.histmersion.domain.AgentProposals
+import com.histmersion.domain.AgentProposals.Proposal
+import com.histmersion.domain.AgentProposals.Route
+import com.histmersion.domain.automation.agents.*
+
+import io.circe.syntax.*
+import com.histmersion.api.automation.Approval
+import com.histmersion.api.library.Source
+
+/** What a run proposes about a source — a status, a disagreement edge — routed by the library's rules
+  * ([[AgentProposals.route]]): applied by code (and recorded, already approved), recorded open for a person, or
+  * skipped. `status` reads a source's status now; `apply` applies a proposal as a person's patch would.
+  */
+final class SourceProposals(
+    approvals: SourceApprovalService,
+    cfg: => AgentsConfig,
+    status: SourceProposals.StatusArg1 => Option[Source.Status],
+    apply: Proposal => Either[SourceProposals.ApplyResultPart1, SourceProposals.ApplyResultPart2]
+):
+  def proposedBefore(p: Proposal): com.histmersion.domain.library.workflows.SourceProposals.ProposedBeforeResult = approvals.proposedBefore(p.kind, p.citekey, p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]], p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]], p.target)
+
+  import SourceProposals.Outcome
+
+  /** [[propose]] inside a run, through its write gate: a dry run records the proposal on the step and neither applies
+    * nor records it.
+    */
+  def propose(ctx: RunCtx, p: Proposal): Outcome =
+    ctx.write(s"${p.kind.wire} proposal: ${p.describe}", p.asJson)(propose(Some(ctx.run.id), p))(
+      Outcome.NotProposed(p.describe)
+    )
+
+  private def record(
+      runId: Option[com.histmersion.domain.automation.Run.Id],
+      p: Proposal,
+      now: Option[Source.Status],
+      state: ApprovalState,
+      result: Option[com.histmersion.domain.library.workflows.SourceProposals.RecordResult]
+  ) =
+    approvals.record(
+      runId,
+      p.kind,
+      p.citekey,
+      p.status.transformInto[Option[com.histmersion.domain.library.Source.Status]],
+      now.transformInto[Option[com.histmersion.domain.library.Source.Status]],
+      p.edgeKind.transformInto[Option[com.histmersion.domain.library.Edge.Kind]],
+      p.target,
+      com.histmersion.util.database.Jsonb.write(p),
+      state,
+      result
+    )
+
+  /** Route one verified proposal: apply it now (and record it, already approved), or record it open. */
+  def propose(runId: Option[com.histmersion.domain.automation.Run.Id], p: Proposal): Outcome =
+    // the status it had matters to a status change only (an edge leaves the status alone)
+    val now = if p.kind == Approval.Kind.StatusChange then status(p.citekey) else None
+    AgentProposals.route(p, now.transformInto[Option[com.histmersion.api.library.Source.Status]], cfg.approvals.statusMode.transformInto[com.histmersion.api.automation.Approval.Mode], cfg.approvals.edgeMode.transformInto[com.histmersion.api.automation.Approval.Mode]) match
+      case Route.Skip(why) => Outcome.Skipped(s"${p.describe} ($why)")
+      case Route.Apply     =>
+        apply(p) match
+          case Left(m)  => Outcome.Failed(s"${p.describe}: $m")
+          case Right(w) =>
+            val _ = record(runId, p, now, ApprovalState.Approved, Some(s"${ListFilters.DecidedBy.AutoResult}: $w"))
+            Outcome.Applied(w)
+      case Route.Ask =>
+        record(runId, p, now, ApprovalState.Open, None) match
+          case Some(a) => Outcome.Recorded(a.id, p.describe)
+          case None    => Outcome.AlreadyOpen(p.describe)
+
+object SourceProposals:
+  /** What became of one proposal, for the run's log and warnings. */
+  type StatusArg1 = StatusArg1.T
+  object StatusArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResultPart1 = ApplyResultPart1.T
+  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyResultPart2 = ApplyResultPart2.T
+  object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  type ProposedBeforeResult = ProposedBeforeResult.T
+  object ProposedBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResult = RecordResult.T
+  object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  enum Outcome:
+    case Applied(what: Applied.What)
+    case Recorded(id: Recorded.Id, what: Recorded.What)
+    case AlreadyOpen(what: AlreadyOpen.What)
+    case Skipped(why: Skipped.Why)
+    case Failed(why: Failed.Why)
+
+    /** A dry run's proposal: neither recorded nor applied (#992). */
+    case NotProposed(what: NotProposed.What)
+
+    def line: com.histmersion.domain.library.workflows.SourceProposals.Outcome.LineResult = this match
+      case Applied(w)     => s"applied: $w"
+      case Recorded(i, w) => s"approval $i waits for a person: $w"
+      case AlreadyOpen(w) => s"already waiting for a person: $w"
+      case Skipped(w)     => s"nothing to do: $w"
+      case Failed(w)      => s"not applied: $w"
+      case NotProposed(w) => s"${com.histmersion.api.automation.AgentsMarkdown.DryRunNote}: $w"
+
+  object Outcome:
+    object Applied:
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Recorded:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object AlreadyOpen:
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Skipped:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Failed:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object NotProposed:
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    type LineResult = LineResult.T
+    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

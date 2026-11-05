@@ -354,9 +354,20 @@ object Queue:
       "# 📓 LOG — project worklog\n\nWhat was done and when, newest first.\n\n---"
 
   private enum Block:
-    case Heading(line: String)
-    case Item(lines: String)
-    case Note(lines: String)
+    case Heading(line: Block.Heading.Line)
+    case Item(lines: Block.Item.Lines)
+    case Note(lines: Block.Note.Lines)
+
+  object Block:
+    object Heading:
+      type Line = Line.T
+      object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Item:
+      type Lines = Lines.T
+      object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Note:
+      type Lines = Lines.T
+      object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def render(kind: Kind, items: List[QueueItem]): com.histmersion.api.automation.Queue.RenderResult =
     val (preamble, rest) = items.partition(_.topic.isEmpty)

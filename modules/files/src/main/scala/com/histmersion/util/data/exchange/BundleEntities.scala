@@ -201,7 +201,7 @@ object BundleEntities:
   /** What a blob is for. */
   enum BlobUse:
     case Body(sourceUid: UUID)
-    case Original(sourceUid: UUID, ext: String)
+    case Original(sourceUid: UUID, ext: BlobUse.Original.Ext)
     case VersionBody(versionUid: UUID)
     case AssetBytes(assetUid: UUID)
 
@@ -211,6 +211,11 @@ object BundleEntities:
       case Original(u, _) => u
       case VersionBody(u) => u
       case AssetBytes(u)  => u
+
+  object BlobUse:
+    object Original:
+      type Ext = Ext.T
+      object Ext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
     * missing file is an empty one.

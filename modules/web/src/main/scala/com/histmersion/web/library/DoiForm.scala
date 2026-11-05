@@ -14,8 +14,13 @@ object DoiForm:
   private enum State:
     case Idle
     case Adding
-    case Failed(message: String)
+    case Failed(message: State.Failed.Message)
     case Added(report: Ingest.Report)
+
+  object State:
+    object Failed:
+      type Message = Message.T
+      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def pane: HtmlElement =
     val typed = Var("")

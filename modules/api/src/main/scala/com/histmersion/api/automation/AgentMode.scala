@@ -48,8 +48,16 @@ object AgentMode:
     if !autopilotOn then Paused else if draining then Finishing else Working
 
   enum Step:
-    case Autopilot(on: Boolean)
-    case Drain(on: Boolean)
+    case Autopilot(on: Step.Autopilot.On)
+    case Drain(on: Step.Drain.On)
+
+  object Step:
+    object Autopilot:
+      type On = On.T
+      object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Drain:
+      type On = On.T
+      object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def steps(autopilotOn: com.histmersion.api.automation.AgentMode.StepsAutopilotOn, draining: com.histmersion.api.automation.AgentMode.StepsDraining, to: AgentMode): List[Step] = to match
     case Working   => Option.when(draining)(Step.Drain(false)).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))

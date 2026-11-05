@@ -324,5 +324,13 @@ object OnDemandTiles:
     * tile; a 404 is "none").
     */
   enum Source:
-    case Planet(url: () => String)
-    case Template(url: () => String)
+    case Planet(url: () => Source.Planet.UrlResult)
+    case Template(url: () => Source.Template.UrlResult)
+
+  object Source:
+    object Planet:
+      type UrlResult = UrlResult.T
+      object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Template:
+      type UrlResult = UrlResult.T
+      object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -111,19 +111,42 @@ object QueueView:
   object EditFormTopicsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Seg:
-    case Text(s: String)
-    case Bold(s: String)
-    case Italic(s: String)
+    case Text(s: Seg.Text.S)
+    case Bold(s: Seg.Bold.S)
+    case Italic(s: Seg.Italic.S)
 
     /** A DOI, linked to its resolver. */
-    case Doi(doi: String)
-    case Url(url: String)
+    case Doi(doi: Seg.Doi.Value)
+    case Url(url: Seg.Url.Value)
 
     /** A `[[citekey]]` — a source in the corpus. */
-    case Cite(citekey: String)
+    case Cite(citekey: Seg.Cite.Citekey)
 
     /** A bare snake_case identifier — maybe a citekey or an article slug ([[IdentLink]] decides). */
-    case Ident(id: String)
+    case Ident(id: Seg.Ident.Id)
+
+  object Seg:
+    object Text:
+      type S = S.T
+      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Bold:
+      type S = S.T
+      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Italic:
+      type S = S.T
+      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Doi:
+      type Value = Value.T
+      object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Url:
+      type Value = Value.T
+      object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Cite:
+      type Citekey = Citekey.T
+      object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Ident:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What differs between the three windows; everything else is shared.
     *

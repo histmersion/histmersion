@@ -271,21 +271,44 @@ object ManagerPolicy:
   /** What the next step of an item is, once its run settled. */
   enum Next:
     /** Run it again (not before `notBefore`). */
-    case Again(notBefore: Option[Instant], state: ItemState, note: String)
+    case Again(notBefore: Option[Instant], state: ItemState, note: Next.Again.Note)
 
     /** It reached its end. */
-    case Done(outcome: String, state: ItemState)
+    case Done(outcome: Next.Done.Outcome, state: ItemState)
 
     /** It stops here; `task` is the backlog line a person acts on (None: nothing to act on). */
-    case Stop(outcome: String, task: Option[String], state: ItemState)
+    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
 
     /** Its run failed: try again after the backoff (`failures` counted). */
-    case Retry(notBefore: Instant, failures: Int, note: String)
+    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: Next.Retry.Note)
 
     /** Its run left a proposal for a person (approval `approval`): the item is held until it is decided, then settled
       * with the decision — never run again for it.
       */
-    case Wait(approval: Long, note: String)
+    case Wait(approval: Next.Wait.Approval, note: Next.Wait.Note)
+
+  object Next:
+    object Again:
+      type Note = Note.T
+      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Done:
+      type Outcome = Outcome.T
+      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Stop:
+      type Outcome = Outcome.T
+      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Task = Task.T
+      object Task extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Retry:
+      type Failures = Failures.T
+      object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Note = Note.T
+      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wait:
+      type Approval = Approval.T
+      object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Note = Note.T
+      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `base · 2^(failures-1)` minutes, at most `max`. */
   def backoff(baseMinutes: com.histmersion.domain.ManagerPolicy.BackoffBaseMinutes, maxMinutes: com.histmersion.domain.ManagerPolicy.BackoffMaxMinutes, failures: com.histmersion.domain.ManagerPolicy.BackoffFailures): Duration =
@@ -300,14 +323,32 @@ object ManagerPolicy:
     * look at, if anything).
     */
   enum StepFacts:
-    case Finished(outcome: String)
-    case Waiting(approval: Long, what: String)
-    case NotDone(outcome: String, task: Option[String])
+    case Finished(outcome: StepFacts.Finished.Outcome)
+    case Waiting(approval: StepFacts.Waiting.Approval, what: StepFacts.Waiting.What)
+    case NotDone(outcome: StepFacts.NotDone.Outcome, task: Option[StepFacts.NotDone.Task])
 
     /** Its work was refused by a check that a new run may pass (a draft the autopilot's checks rejected): run it again
       * after the backoff, counted as a failure, stopped with a task after `maxFailures`.
       */
-    case Redo(outcome: String)
+    case Redo(outcome: StepFacts.Redo.Outcome)
+
+  object StepFacts:
+    object Finished:
+      type Outcome = Outcome.T
+      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Waiting:
+      type Approval = Approval.T
+      object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object NotDone:
+      type Outcome = Outcome.T
+      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Task = Task.T
+      object Task extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Redo:
+      type Outcome = Outcome.T
+      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Evaluate a one-run item (`label` = its kind, for the texts) after its run settled `status`: done → finished, held
     * for an approval, or stopped; failed → retried after the backoff, stopped with a task after `maxFailures`;

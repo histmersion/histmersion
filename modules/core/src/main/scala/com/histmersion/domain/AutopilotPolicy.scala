@@ -174,9 +174,20 @@ object AutopilotPolicy:
   object EtaDaysDoneLast7 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Verdict:
-    case Approve(reason: String)
-    case Reject(reason: String)
-    case Leave(why: String)
+    case Approve(reason: Verdict.Approve.Reason)
+    case Reject(reason: Verdict.Reject.Reason)
+    case Leave(why: Verdict.Leave.Why)
+
+  object Verdict:
+    object Approve:
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Reject:
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Leave:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One article of an `article-plan`, as it stands NOW: its slug still free, its filter's hits. */
   final case class PlannedFacts(slug: PlannedFacts.Slug, slugFree: PlannedFacts.SlugFree, hits: PlannedFacts.Hits)
@@ -575,25 +586,64 @@ object AutopilotPolicy:
     /** Create the goal's seeding manager, active, with its cron (and a plan-goal item before its first proposal when
       * the goal has no plan).
       */
-    case CreateSeed(goal: String, cron: String, planFirst: Boolean)
+    case CreateSeed(goal: Step.CreateSeed.Goal, cron: Step.CreateSeed.Cron, planFirst: Step.CreateSeed.PlanFirst)
 
     /** Create the goal's watcher, active, auto-ingest on (at most `perDay` a day), with its cron. */
-    case CreateWatch(goal: String, cron: String, perDay: Int)
+    case CreateWatch(goal: Step.CreateWatch.Goal, cron: Step.CreateWatch.Cron, perDay: Step.CreateWatch.PerDay)
 
     /** Resume a library-wide manager, or one the autopilot paused when it was turned off. */
-    case Resume(id: String)
+    case Resume(id: Step.Resume.Id)
 
     /** Give a manager with no cron its spread cron. */
-    case SetCron(id: String, cron: String)
+    case SetCron(id: Step.SetCron.Id, cron: Step.SetCron.Cron)
 
     /** Turn a watcher's auto-ingest on (it never said either way). */
-    case AutoIngestOn(id: String, perDay: Int)
+    case AutoIngestOn(id: Step.AutoIngestOn.Id, perDay: Step.AutoIngestOn.PerDay)
 
     /** A plan-goal item first, for a goal that still needs a plan. */
-    case AddPlanItem(id: String, goal: String)
+    case AddPlanItem(id: Step.AddPlanItem.Id, goal: Step.AddPlanItem.Goal)
 
     /** The review manager's extend threshold (it sets none). */
-    case ExtendMinNew(id: String, n: Int)
+    case ExtendMinNew(id: Step.ExtendMinNew.Id, n: Step.ExtendMinNew.N)
+
+  object Step:
+    object CreateSeed:
+      type Goal = Goal.T
+      object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Cron = Cron.T
+      object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type PlanFirst = PlanFirst.T
+      object PlanFirst extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CreateWatch:
+      type Goal = Goal.T
+      object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Cron = Cron.T
+      object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type PerDay = PerDay.T
+      object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Resume:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SetCron:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Cron = Cron.T
+      object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AutoIngestOn:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type PerDay = PerDay.T
+      object PerDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object AddPlanItem:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Goal = Goal.T
+      object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ExtendMinNew:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type N = N.T
+      object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Finished: reviewed or done — such a goal keeps a watcher (new sources, the currency check), no new seeding
     * manager.

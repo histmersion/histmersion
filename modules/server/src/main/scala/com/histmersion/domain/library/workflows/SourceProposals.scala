@@ -88,14 +88,14 @@ object SourceProposals:
   object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Outcome:
-    case Applied(what: String)
-    case Recorded(id: Long, what: String)
-    case AlreadyOpen(what: String)
-    case Skipped(why: String)
-    case Failed(why: String)
+    case Applied(what: Outcome.Applied.What)
+    case Recorded(id: Outcome.Recorded.Id, what: Outcome.Recorded.What)
+    case AlreadyOpen(what: Outcome.AlreadyOpen.What)
+    case Skipped(why: Outcome.Skipped.Why)
+    case Failed(why: Outcome.Failed.Why)
 
     /** A dry run's proposal: neither recorded nor applied (#992). */
-    case NotProposed(what: String)
+    case NotProposed(what: Outcome.NotProposed.What)
 
     def line: com.histmersion.domain.library.workflows.SourceProposals.Outcome.LineResult = this match
       case Applied(w)     => s"applied: $w"
@@ -106,5 +106,31 @@ object SourceProposals:
       case NotProposed(w) => s"${com.histmersion.api.automation.AgentsMarkdown.DryRunNote}: $w"
 
   object Outcome:
+    object Applied:
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Recorded:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object AlreadyOpen:
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Skipped:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Failed:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object NotProposed:
+      type What = What.T
+      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type LineResult = LineResult.T
     object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

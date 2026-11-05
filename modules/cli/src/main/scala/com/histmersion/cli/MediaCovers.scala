@@ -78,9 +78,22 @@ object MediaCovers:
     */
   enum Outcome:
     case Uploaded(line: MediaSourceLine)
-    case AskOpenLibrary(citekey: String, isbn: String)
-    case Skipped(reason: String)
-    case Failed(message: String)
+    case AskOpenLibrary(citekey: Outcome.AskOpenLibrary.Citekey, isbn: Outcome.AskOpenLibrary.Isbn)
+    case Skipped(reason: Outcome.Skipped.Reason)
+    case Failed(message: Outcome.Failed.Message)
+
+  object Outcome:
+    object AskOpenLibrary:
+      type Citekey = Citekey.T
+      object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Isbn = Isbn.T
+      object Isbn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Skipped:
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Failed:
+      type Message = Message.T
+      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def one(c: Client, ck: com.histmersion.cli.MediaCovers.OneCk, book: Calibre.Book, dryRun: com.histmersion.cli.MediaCovers.OneDryRun): Outcome =
     CoverChoice.choose(

@@ -144,13 +144,13 @@ private[places] object GazetteerRepo:
   /** Where one record's names go. */
   enum Placement:
     /** A new place, the record's own. */
-    case Create(placeId: String)
+    case Create(placeId: com.histmersion.domain.catalogue.Place.Id)
 
     /** The record's own place, from an earlier import of this source. */
-    case Own(placeId: String)
+    case Own(placeId: com.histmersion.domain.catalogue.Place.Id)
 
     /** A place another record or source brought in, that one of the record's ids names. */
-    case Join(placeId: String)
+    case Join(placeId: com.histmersion.domain.catalogue.Place.Id)
 
     def placeId: com.histmersion.domain.catalogue.Place.Id
 

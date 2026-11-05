@@ -74,7 +74,14 @@ object AcquireMatch:
     /** The item's text resembles the source: listed, never closed. `otherDoi` = the item names a DOI, and it is not the
       * source's (a preprint vs its published version, say).
       */
-    case Propose(item: Queue.QueueItem, score: Double, otherDoi: Option[String])
+    case Propose(item: Queue.QueueItem, score: Decision.Propose.Score, otherDoi: Option[Decision.Propose.OtherDoi])
+
+  object Decision:
+    object Propose:
+      type Score = Score.T
+      object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type OtherDoi = OtherDoi.T
+      object OtherDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val DoiIn = """(?i)10\.\d{4,9}/\S+""".r
 

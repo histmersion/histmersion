@@ -57,8 +57,13 @@ object GraphPanel:
 
   private enum Load:
     case Loading
-    case Failed(message: String)
+    case Failed(message: Load.Failed.Message)
     case Loaded(g: com.histmersion.api.library.Source.Graph)
+
+  object Load:
+    object Failed:
+      type Message = Message.T
+      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def element(citekey: com.histmersion.web.GraphPanel.ElementCitekey): HtmlElement =
     val state = Var[Load](Load.Loading)

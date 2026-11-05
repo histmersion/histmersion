@@ -7,13 +7,13 @@ package com.histmersion.util.data.mirror
   */
 enum MirrorPlacement:
   /** `<dir>/<directory>/<id>.md`: one directory of their own. */
-  case InDirectory(name: String)
+  case InDirectory(name: MirrorPlacement.InDirectory.Name)
 
   /** `<dir>/<type>/<id>.md`: a directory per the `type:` each note's frontmatter names. */
   case ByType
 
   /** `<dir>/<directory>/<file>`: one named file each. */
-  case Named(name: String)
+  case Named(name: MirrorPlacement.Named.Name)
 
   /** The directory the notes go in, under the export's directory; `None` when each note's type decides it. */
   def directory: Option[com.histmersion.util.data.mirror.MirrorPlacement.DirectoryResult] = this match
@@ -22,6 +22,14 @@ enum MirrorPlacement:
     case ByType         => None
 
 object MirrorPlacement:
+  object InDirectory:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Named:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DirectoryResult = DirectoryResult.T
   object DirectoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NoteFileResult = NoteFileResult.T

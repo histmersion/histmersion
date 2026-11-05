@@ -6,16 +6,24 @@ enum Fetch:
   case Found(file: FetchedFile)
 
   /** No copy here (no identifier this fetcher reads, nothing found, the upstream did not answer). */
-  case Miss(why: String)
+  case Miss(why: Fetch.Miss.Why)
 
   /** A copy exists but may not be taken (a lending-only item, a bot challenge, no entitlement). The host logs it and
     * moves on; it never asks the same fetcher again for this work.
     */
-  case Refused(why: String)
+  case Refused(why: Fetch.Refused.Why)
 
 object Fetch:
 
   /** What the host lends a fetcher for ONE fetch of one work. */
+  object Miss:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Refused:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   trait Context:
     /** A value computed at most once per fetch of this work and shared by every fetcher of the chain — an index record
       * two steps both read. `compute` runs on the first call for `key`; later calls return that value. Name keys

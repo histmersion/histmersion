@@ -4,15 +4,15 @@ package com.histmersion.config.edit
   * is the answer.
   */
 enum SettingError:
-  case BadKey(why: String)
+  case BadKey(why: SettingError.BadKey.Why)
   case UnknownKey(key: SettingKey, closest: List[SettingKey])
   case NotAValue(key: SettingKey)
-  case BadValue(key: SettingKey, why: String)
+  case BadValue(key: SettingKey, why: SettingError.BadValue.Why)
   case WrongKind(key: SettingKey, want: SettingKind, got: SettingKind)
 
   /** The credential itself would go into the file: its environment variable is the place. */
-  case CredentialInFile(key: SettingKey, envVar: Option[String])
-  case NotAReference(key: SettingKey, why: String)
+  case CredentialInFile(key: SettingKey, envVar: Option[SettingError.CredentialInFile.EnvVar])
+  case NotAReference(key: SettingKey, why: SettingError.NotAReference.Why)
 
   /** `value:` was asked for without the person saying they mean it. */
   case LiteralNeedsConsent(key: SettingKey)
@@ -23,18 +23,18 @@ enum SettingError:
   case Substitution(key: SettingKey)
 
   /** The setting's value comes from a file the config file includes. */
-  case FromInclude(key: SettingKey, file: String)
+  case FromInclude(key: SettingKey, file: SettingError.FromInclude.File)
 
   /** The file as it stands does not read: it is not rewritten until it is fixed by hand. */
-  case Unreadable(why: String)
+  case Unreadable(why: SettingError.Unreadable.Why)
 
   /** The new file would not load. */
-  case Invalid(why: String)
+  case Invalid(why: SettingError.Invalid.Why)
 
   /** The file changed after it was read (an editor, another window). */
   case Changed
-  case NoFile(why: String)
-  case Io(why: String)
+  case NoFile(why: SettingError.NoFile.Why)
+  case Io(why: SettingError.Io.Why)
 
   def message: com.histmersion.config.edit.SettingError.MessageResult = this match
     case BadKey(why)            => why
@@ -65,5 +65,41 @@ enum SettingError:
     case Io(why)      => s"The settings file could not be written: $why"
 
 object SettingError:
+  object BadKey:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object BadValue:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object CredentialInFile:
+    type EnvVar = EnvVar.T
+    object EnvVar extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object NotAReference:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object FromInclude:
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Unreadable:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Invalid:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object NoFile:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Io:
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MessageResult = MessageResult.T
   object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -226,11 +226,16 @@ final class OaBacklog(
         List(line)
 
   private enum Drained:
-    case Ingested(citekey: String)
-    case Queued(item: Int)
+    case Ingested(citekey: com.histmersion.domain.library.Citekey)
+    case Queued(item: Drained.Queued.Item)
     case Known
     case Retried
     case Lost
+
+  object Drained:
+    object Queued:
+      type Item = Item.T
+      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def one(i: ManagerItem, holderGoal: Option[com.histmersion.domain.library.workflows.OaBacklog.OneHolderGoal], now: Instant): Drained =
     val doi = i.target

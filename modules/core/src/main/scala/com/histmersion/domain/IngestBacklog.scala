@@ -112,11 +112,22 @@ object IngestBacklog:
     * skipped it; an ingested one is in the corpus) — else a new entry.
     */
   enum Placement:
-    case InCorpus(citekey: String)
-    case JoinAcquire(item: Int)
-    case JoinBacklog(item: Long)
-    case SettledBefore(item: Long)
+    case InCorpus(citekey: com.histmersion.domain.library.Citekey)
+    case JoinAcquire(item: Placement.JoinAcquire.Item)
+    case JoinBacklog(item: Placement.JoinBacklog.Item)
+    case SettledBefore(item: Placement.SettledBefore.Item)
     case New
+
+  object Placement:
+    object JoinAcquire:
+      type Item = Item.T
+      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object JoinBacklog:
+      type Item = Item.T
+      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SettledBefore:
+      type Item = Item.T
+      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def place(
       inCorpus: Option[com.histmersion.domain.IngestBacklog.PlaceInCorpus],
@@ -135,8 +146,18 @@ object IngestBacklog:
     * failed `maxFailures` times), or another try after the backoff.
     */
   enum Failure:
-    case ToAcquire(why: String)
-    case Retry(notBefore: Instant, failures: Int, why: String)
+    case ToAcquire(why: Failure.ToAcquire.Why)
+    case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Failure.Retry.Why)
+
+  object Failure:
+    object ToAcquire:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Retry:
+      type Failures = Failures.T
+      object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def onFailure(
       message: com.histmersion.domain.IngestBacklog.OnFailureMessage,
@@ -231,10 +252,15 @@ object IngestBacklog:
     case Move
 
     /** In the corpus already: the acquisition item leaves the list. */
-    case Remove(citekey: String)
+    case Remove(citekey: com.histmersion.domain.library.Citekey)
 
     /** It stays on the list, with why. */
-    case Keep(why: String)
+    case Keep(why: RepairAction.Keep.Why)
+
+  object RepairAction:
+    object Keep:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def repairAction(f: RepairFacts): RepairAction =
     if !f.isOa then RepairAction.Keep("no legal open-access copy known: it stays on the acquisition list")

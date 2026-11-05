@@ -548,11 +548,16 @@ object MergePlanner:
     case ArticleTheirs
 
     /** Both changed since a common version, merged three-way without a conflict. */
-    case ArticleMerged(body: String)
+    case ArticleMerged(body: Merges.ArticleMerged.Body)
     case GoalFold, QueueFold
 
     /** A record a kind's rules found to be one with a record here. */
     case Contributed(how: PlanMerge)
+
+  object Merges:
+    object ArticleMerged:
+      type Body = Body.T
+      object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def plan(
       in: Input,

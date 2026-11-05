@@ -67,8 +67,18 @@ object HttpPolicy:
 
   enum Step:
     case Accept
-    case Wait(ms: Long, why: String)
-    case GiveUp(why: String)
+    case Wait(ms: Step.Wait.Ms, why: Step.Wait.Why)
+    case GiveUp(why: Step.GiveUp.Why)
+
+  object Step:
+    object Wait:
+      type Ms = Ms.T
+      object Ms extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object GiveUp:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The answers that mean "try again later". */
   val Throttled: Set[com.histmersion.domain.HttpPolicy.Throttled] = Set(429, 502, 503, 504)
@@ -134,13 +144,24 @@ object HttpPolicy:
     /** macOS keychains, exported as PEM by `security find-certificate -a -p <keychain>` (the JDK's `KeychainStore-ROOT`
       * reads the same roots, but through a JNI library the native image lacks).
       */
-    case Keychains(paths: List[String])
+    case Keychains(paths: List[Trust.Keychains.Paths])
 
     /** The first of these PEM bundles that exists — a Linux distribution's CA bundle. */
-    case Bundle(paths: List[String])
+    case Bundle(paths: List[Trust.Bundle.Paths])
 
     /** A PEM file the user named. */
-    case PemFile(path: String)
+    case PemFile(path: Trust.PemFile.Path)
+
+  object Trust:
+    object Keychains:
+      type Paths = Paths.T
+      object Paths extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Bundle:
+      type Paths = Paths.T
+      object Paths extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PemFile:
+      type Path = Path.T
+      object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The macOS keychains that hold the system's roots: Apple's, and those an administrator added. */
   val MacKeychains: List[com.histmersion.domain.HttpPolicy.MacKeychains] =

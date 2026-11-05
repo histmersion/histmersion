@@ -250,7 +250,14 @@ object GoalFocus:
   enum Fit:
     case Finished
     case Candidate(stage: Stage)
-    case Waits(code: String, why: String)
+    case Waits(code: Fit.Waits.Code, why: Fit.Waits.Why)
+
+  object Fit:
+    object Waits:
+      type Code = Code.T
+      object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The codes of [[Fit.Waits]]. */
   object Code:

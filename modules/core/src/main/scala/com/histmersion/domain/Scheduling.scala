@@ -41,8 +41,16 @@ object Scheduling:
 
   enum Decision:
     case Start
-    case Skip(reason: String)
-    case Defer(reason: String)
+    case Skip(reason: Decision.Skip.Reason)
+    case Defer(reason: Decision.Defer.Reason)
+
+  object Decision:
+    object Skip:
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Defer:
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A run that has not settled: a schedule does not start another beside it. */
   def unsettled(s: Run.State): com.histmersion.domain.Scheduling.UnsettledResult = !s.isTerminal
