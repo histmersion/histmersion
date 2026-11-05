@@ -23,9 +23,10 @@ class ApplyFrozenPreview(val policy: ApplyFrozenPreview.Policy) extends Syntacti
     require(parsed.nonEmpty && parsed.forall(_.size == 3) && parsed.map(_.head).distinct.size == parsed.size)
     parsed.foreach { r =>
       val path = Paths.get(r.head)
-      require(r.head.startsWith("modules/") && path.normalize.toString == r.head && !path.isAbsolute)
+      require((r.head.startsWith("modules/") || r.head == "build.sbt") && path.normalize.toString == r.head && !path.isAbsolute)
       val next = Files.readString(Paths.get(policy.preview).resolve(path))
-      next.parse[Source].get
+      if(r.head == "build.sbt") { implicit val dialect: Dialect = dialects.Scala3.withAllowToplevelTerms(true); next.parse[Source].get }
+      else next.parse[Source].get
       require(hash(next) == r(2), "Changed preview: " + path)
       if(policy.mode == "apply") require(if(r(1) == "new") !Files.exists(path) else Files.exists(path) && hash(Files.readString(path)) == r(1), "Stale plan: " + path)
       else require(Files.exists(path) && hash(Files.readString(path)) == r(2), "Applied content differs: " + path)
@@ -38,7 +39,7 @@ class ApplyFrozenPreview(val policy: ApplyFrozenPreview.Policy) extends Syntacti
     if(policy.mode != "apply") return Patch.empty
     val file = doc.input match { case Input.File(p, _) => p.toNIO; case Input.VirtualFile(p, _) => Paths.get(p) }
     val path = root.relativize(file.toAbsolutePath.normalize).toString
-    planned.find(r => r.head == path && r(1) != "new").map { r =>
+    planned.find(r => r.head == path && r(1) != "new" && path != "build.sbt").map { r =>
       require(hash(doc.input.text) == r(1), "Source changed during apply: " + path)
       require(seen.add(path), "Duplicate source traversal")
       Patch.replaceTree(doc.tree, Files.readString(Paths.get(policy.preview, path)))
@@ -46,7 +47,12 @@ class ApplyFrozenPreview(val policy: ApplyFrozenPreview.Policy) extends Syntacti
   }
   override def afterComplete(): Unit = {
     if(policy.mode == "apply") {
-      require(seen.asScala.toSet == rows.filter(_(1) != "new").map(_.head).toSet, "Incomplete plan traversal")
+      require(seen.asScala.toSet == rows.filter(r => r(1) != "new" && r.head != "build.sbt").map(_.head).toSet, "Incomplete plan traversal")
+      rows.filter(_.head == "build.sbt").foreach { r =>
+        val path = Paths.get(r.head)
+        require(hash(Files.readString(path)) == r(1),"Build changed during application")
+        Files.writeString(path,Files.readString(Paths.get(policy.preview,r.head)))
+      }
       rows.filter(_(1) == "new").foreach { r =>
         val path = Paths.get(r.head); require(!Files.exists(path))
         Files.createDirectories(path.getParent)

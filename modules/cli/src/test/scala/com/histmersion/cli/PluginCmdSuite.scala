@@ -30,7 +30,7 @@ class PluginCmdSuite extends munit.FunSuite:
     def errorLine(value: => String): Unit = stderr(value)
     def errorLine(): Unit = stderr("")
     def errorFlush(): Unit = ()
-    def readLine(): String = throw new UnsupportedOperationException("input not used")
+    def readLine(): _root_.com.histmersion.util.console.Console.ReadLineResult = throw new UnsupportedOperationException("input not used")
   }
 
   private given console: com.histmersion.util.console.Console = com.histmersion.util.console.Console.standard

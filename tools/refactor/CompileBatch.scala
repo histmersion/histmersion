@@ -21,7 +21,8 @@ class CompileBatch(val policy: CompileBatch.Policy) extends SyntacticRule("Compi
     def sources(): Map[String,String] = {
       val stream = Files.walk(Paths.get("modules"))
       try stream.iterator.asScala.filter(p => Files.isRegularFile(p) && p.toString.endsWith(".scala") &&
-        (p.toString.contains("/src/main/") || p.toString.contains("/src/test/"))).map(p => p.toString -> hash(Files.readString(p))).toMap finally stream.close()
+        (p.toString.contains("/src/main/") || p.toString.contains("/src/test/"))).map(p => p.toString -> hash(Files.readString(p))).toMap +
+        ("build.sbt" -> hash(Files.readString(Paths.get("build.sbt")))) finally stream.close()
     }
     val before = sources()
     val root = Paths.get("").toAbsolutePath.normalize

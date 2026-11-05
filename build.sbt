@@ -469,6 +469,7 @@ lazy val pluginHelloLib = project
     publish / skip := true
   )
   .settings(commonDeps)
+  .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
 
 val fixturesRepo = taskKey[File]("Write the test Maven repository with hello-lib and hello-deps")
 
@@ -510,6 +511,7 @@ lazy val console = project
   .in(file("modules/console"))
   .settings(commonDeps)
   .settings(name := "histmersion-console", publish / skip := true)
+  .settings(libraryDependencies += "io.github.iltotore" %% "iron" % V.iron)
 
 lazy val pluginResolver = project
   .in(file("modules/plugin-resolver"))
