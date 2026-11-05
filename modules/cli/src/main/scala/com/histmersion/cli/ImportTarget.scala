@@ -10,4 +10,9 @@ enum ImportTarget:
   /** The record exists; enrich it and link it to the imported entry. `previous` is the Calibre id it was linked to
     * before, when that was a different one.
     */
-  case Update(previous: Option[String])
+  case Update(previous: Option[ImportTarget.Update.Previous])
+
+object ImportTarget:
+  object Update:
+    type Previous = Previous.T
+    object Previous extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

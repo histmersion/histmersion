@@ -440,12 +440,34 @@ object Article:
 
     enum Edit:
       def anchor: com.histmersion.api.research.Article.Edits.Edit.AnchorResult
-      case Replace(anchor: String, text: String)
-      case InsertAfter(anchor: String, text: String)
-      case InsertBefore(anchor: String, text: String)
-      case Delete(anchor: String)
+      case Replace(anchor: Edit.Replace.Anchor, text: Edit.Replace.Text)
+      case InsertAfter(anchor: Edit.InsertAfter.Anchor, text: Edit.InsertAfter.Text)
+      case InsertBefore(anchor: Edit.InsertBefore.Anchor, text: Edit.InsertBefore.Text)
+      case Delete(anchor: Edit.Delete.Anchor)
 
     object Edit:
+      object Replace:
+        type Anchor = Anchor.T
+        object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+        type Text = Text.T
+        object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+      object InsertAfter:
+        type Anchor = Anchor.T
+        object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+        type Text = Text.T
+        object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+      object InsertBefore:
+        type Anchor = Anchor.T
+        object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+        type Text = Text.T
+        object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+      object Delete:
+        type Anchor = Anchor.T
+        object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       type AnchorResult = AnchorResult.T
       object AnchorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -577,7 +599,12 @@ object Article:
 
     enum Draft:
       case Edits(edits: scala.List[EditAnswer])
-      case Body(text: String)
+      case Body(text: Draft.Body.Text)
+
+    object Draft:
+      object Body:
+        type Text = Text.T
+        object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     final case class ArticleCheckRequest(
         edits: scala.List[EditAnswer] = Nil,

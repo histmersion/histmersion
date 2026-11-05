@@ -10,8 +10,8 @@ enum ConverterState:
   case Ok
 
   /** A conversion is in flight and the probe got no answer: the single worker is busy, not down. */
-  case Busy(jobId: String)
-  case Down(reason: String)
+  case Busy(jobId: ConverterState.Busy.JobId)
+  case Down(reason: ConverterState.Down.Reason)
 
   /** The `converter` line of [[Health]]. */
   def render: com.histmersion.util.ocr.ConverterState.RenderResult = this match
@@ -26,6 +26,14 @@ enum ConverterState:
 
 object ConverterState:
   /** From the raw probe answer (`"ok"` or why not) and the job the converter is working on, if any. */
+  object Busy:
+    type JobId = JobId.T
+    object JobId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Down:
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RenderResult = RenderResult.T
   object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HealthyResult = HealthyResult.T

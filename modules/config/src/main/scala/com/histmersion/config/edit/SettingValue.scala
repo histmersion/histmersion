@@ -14,9 +14,9 @@ import scala.jdk.CollectionConverters.*
 
 /** One value to write into the config file. */
 enum SettingValue:
-  case Text(text: String)
+  case Text(text: SettingValue.Text.Value)
   case Number(number: BigDecimal)
-  case Flag(flag: Boolean)
+  case Flag(flag: SettingValue.Flag.Value)
   case Items(items: List[SettingValue])
 
   /** As HOCON holds it. */
@@ -38,6 +38,14 @@ enum SettingValue:
     case Items(_)  => SettingKind.Items
 
 object SettingValue:
+
+  object Text:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Flag:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type HoconResult = HoconResult.T
   object HoconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

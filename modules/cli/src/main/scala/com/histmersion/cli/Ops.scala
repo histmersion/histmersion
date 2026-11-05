@@ -56,18 +56,62 @@ object Ops:
   object RunJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum QueueCmd:
-    case Show(list: String, all: Boolean)
-    case Add(list: String, text: String, topic: Option[String], reason: Option[String])
-    case Done(id: Int)
-    case Edit(id: Int, text: String)
-    case Rm(id: Int)
-    case Export(dir: String)
-    case Import(dir: String)
+    case Show(list: QueueCmd.Show.List, all: QueueCmd.Show.All)
+    case Add(list: QueueCmd.Add.List, text: QueueCmd.Add.Text, topic: Option[QueueCmd.Add.Topic], reason: Option[QueueCmd.Add.Reason])
+    case Done(id: QueueCmd.Done.Id)
+    case Edit(id: QueueCmd.Edit.Id, text: QueueCmd.Edit.Text)
+    case Rm(id: QueueCmd.Rm.Id)
+    case Export(dir: QueueCmd.Export.Dir)
+    case Import(dir: QueueCmd.Import.Dir)
 
     /** `queue acquire recheck`: the acquisition list's legal re-check now — of every open item (`all`) or the due ones
       * the caps allow; a pass of more than one item is a server job, followed unless `noWait`.
       */
-    case Recheck(dryRun: Boolean, limit: Option[Int], id: Option[Int], all: Boolean = false, noWait: Boolean = false)
+    case Recheck(dryRun: QueueCmd.Recheck.DryRun, limit: Option[QueueCmd.Recheck.Limit], id: Option[QueueCmd.Recheck.Id], all: QueueCmd.Recheck.All = false, noWait: QueueCmd.Recheck.NoWait = false)
+
+  object QueueCmd:
+    object Show:
+      type List = List.T
+      object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type All = All.T
+      object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Add:
+      type List = List.T
+      object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Text = Text.T
+      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Topic = Topic.T
+      object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Done:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Edit:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Text = Text.T
+      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rm:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Export:
+      type Dir = Dir.T
+      object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Import:
+      type Dir = Dir.T
+      object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Recheck:
+      type DryRun = DryRun.T
+      object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Limit = Limit.T
+      object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type All = All.T
+      object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type NoWait = NoWait.T
+      object NoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object QueueArgs:
     type Usage = Usage.T

@@ -63,9 +63,14 @@ object AnthropicAnswer:
     * type is not a message.
     */
   private enum Block:
-    case Text(text: String)
+    case Text(text: Block.Text.Value)
     case ToolUse(call: AiTool.Call)
     case Other
+
+  object Block:
+    object Text:
+      type Value = Value.T
+      object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Known = Set("image", "tool_result", "document", "web_search_tool_result")
 

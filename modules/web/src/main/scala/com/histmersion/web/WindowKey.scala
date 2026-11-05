@@ -8,16 +8,16 @@ import com.histmersion.api.automation.Queue
   */
 enum WindowKey:
   /** The server-rendered page of a source. */
-  case Source(citekey: String)
+  case Source(citekey: WindowKey.Source.Citekey)
 
   /** The server-rendered page of a compiled article. */
-  case Article(slug: String)
+  case Article(slug: WindowKey.Article.Slug)
 
   /** The citation graph around a source. */
-  case Graph(citekey: String)
+  case Graph(citekey: WindowKey.Graph.Citekey)
 
   /** The metadata editor of a source. */
-  case EditSource(citekey: String)
+  case EditSource(citekey: WindowKey.EditSource.Citekey)
 
   /** The background (OCR) jobs. */
   case Jobs
@@ -44,7 +44,7 @@ enum WindowKey:
   case Runs
 
   /** One agent run: its steps, tokens, cost, trace and controls. */
-  case Run(id: String)
+  case Run(id: WindowKey.Run.Id)
 
   /** The agents' model chains and allowances, and the provider check. */
   case Models
@@ -56,7 +56,7 @@ enum WindowKey:
   case Goals
 
   /** One goal: its links, schedules, plan and runs. */
-  case Goal(slug: String)
+  case Goal(slug: WindowKey.Goal.Slug)
 
   /** The merge review screen: another collection's bundle, its plan, and the decisions. */
   case Merge
@@ -65,7 +65,7 @@ enum WindowKey:
   case Managers
 
   /** One manager: its state, items in flight, items, hints, events and settings. */
-  case Manager(id: String)
+  case Manager(id: WindowKey.Manager.Id)
 
   def wire: com.histmersion.web.WindowKey.WireResult = this match
     case Source(ck)     => s"source:$ck"
@@ -129,6 +129,34 @@ enum WindowKey:
 
 object WindowKey:
   /** The window of each bookkeeping list, and back. */
+  object Source:
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Article:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Graph:
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object EditSource:
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Run:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Goal:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Manager:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WireResult = WireResult.T
   object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SubjectResult = SubjectResult.T

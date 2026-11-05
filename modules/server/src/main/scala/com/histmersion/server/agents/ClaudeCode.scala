@@ -104,8 +104,20 @@ object ClaudeCode:
     * tree — as a system prompt file.
     */
   enum Launch:
-    case Agent(pluginDir: String, name: String, settings: String)
-    case SystemPrompt(file: String)
+    case Agent(pluginDir: Launch.Agent.PluginDir, name: Launch.Agent.Name, settings: Launch.Agent.Settings)
+    case SystemPrompt(file: Launch.SystemPrompt.File)
+
+  object Launch:
+    object Agent:
+      type PluginDir = PluginDir.T
+      object PluginDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Name = Name.T
+      object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Settings = Settings.T
+      object Settings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SystemPrompt:
+      type File = File.T
+      object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `claude -p …`, in a fixed order. `offered` are the step's tools (MCP names, unprefixed); `all` every agent tool,
     * so the ones not offered are removed from the model's context outright; `web` the built-in web tools a web role

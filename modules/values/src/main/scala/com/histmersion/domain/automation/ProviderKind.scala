@@ -14,13 +14,17 @@ enum ProviderKind(val wire: ProviderKind.Wire):
   /** A provider a PLUGIN registered under this name (docs/research-plugins.md §22): metered, served through the host's
     * tool loop. Parsed only while such a provider is registered (`known`).
     */
-  case Plugin(name: String) extends ProviderKind(name)
+  case Plugin(name: ProviderKind.Plugin.Name) extends ProviderKind(name)
 
   /** Runs a local command-line agent (one process per step attempt) rather than an HTTP API. */
   def isCli: com.histmersion.domain.automation.ProviderKind.IsCliResult = this == ClaudeCode || this == Codex || this == Opencode
 
 object ProviderKind:
   /** The host's own providers, in their order. */
+  object Plugin:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

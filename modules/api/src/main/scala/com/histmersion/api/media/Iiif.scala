@@ -37,9 +37,19 @@ object Iiif:
 
   enum Region:
     case Full
-    case Pixels(x: Int, y: Int, w: Int, h: Int)
+    case Pixels(x: Region.Pixels.X, y: Region.Pixels.Y, w: Region.Pixels.W, h: Region.Pixels.H)
 
   object Region:
+    object Pixels:
+      type X = X.T
+      object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Y = Y.T
+      object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type W = W.T
+      object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type H = H.T
+      object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseResultPart1 = ParseResultPart1.T
     object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T
@@ -62,12 +72,32 @@ object Iiif:
   enum Size:
     case Max
     case ScaleUp // ^max
-    case Width(w: Int) // w,
-    case Height(h: Int) // ,h
-    case Exact(w: Int, h: Int) // w,h
-    case BestFit(w: Int, h: Int) // !w,h
+    case Width(w: Size.Width.W) // w,
+    case Height(h: Size.Height.H) // ,h
+    case Exact(w: Size.Exact.W, h: Size.Exact.H) // w,h
+    case BestFit(w: Size.BestFit.W, h: Size.BestFit.H) // !w,h
 
   object Size:
+    object Width:
+      type W = W.T
+      object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Height:
+      type H = H.T
+      object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Exact:
+      type W = W.T
+      object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type H = H.T
+      object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object BestFit:
+      type W = W.T
+      object W extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type H = H.T
+      object H extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ParseResultPart1 = ParseResultPart1.T
     object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T

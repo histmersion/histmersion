@@ -37,8 +37,20 @@ object Diff3:
   object MatchingX extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Hunk:
-    case Agreed(lines: Vector[String])
-    case Conflict(base: Vector[String], left: Vector[String], right: Vector[String])
+    case Agreed(lines: Vector[Hunk.Agreed.Lines])
+    case Conflict(base: Vector[Hunk.Conflict.Base], left: Vector[Hunk.Conflict.Left], right: Vector[Hunk.Conflict.Right])
+
+  object Hunk:
+    object Agreed:
+      type Lines = Lines.T
+      object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Conflict:
+      type Base = Base.T
+      object Base extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Left = Left.T
+      object Left extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Right = Right.T
+      object Right extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Result(hunks: List[Hunk]):
     def conflicts: com.histmersion.util.data.exchange.Diff3.Result.ConflictsResult = hunks.count(_.isInstanceOf[Hunk.Conflict])

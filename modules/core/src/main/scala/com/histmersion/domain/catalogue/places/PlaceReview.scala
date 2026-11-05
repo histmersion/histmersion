@@ -141,20 +141,20 @@ object PlaceReview:
   enum Proposal:
     /** Change the kind (and, for a polity, the period). */
     case Reclassify(
-        id: String,
-        label: String,
-        from: String,
-        to: String,
+        id: Proposal.Reclassify.Id,
+        label: Proposal.Reclassify.Label,
+        from: Proposal.Reclassify.From,
+        to: Proposal.Reclassify.To,
         period: Option[Period],
-        reason: String,
-        evidence: List[String]
+        reason: Proposal.Reclassify.Reason,
+        evidence: List[Proposal.Reclassify.Evidence]
     )
 
     /** Move the place's findings, links and children to `into`, delete it, keep its id as an alias. */
-    case Merge(id: String, label: String, into: String, intoLabel: String, reason: String, evidence: List[String])
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: List[Proposal.Merge.Evidence])
 
     /** Nothing automatic: a person decides. */
-    case Review(id: String, label: String, reason: String, evidence: List[String])
+    case Review(id: Proposal.Review.Id, label: Proposal.Review.Label, reason: Proposal.Review.Reason, evidence: List[Proposal.Review.Evidence])
 
     def id: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.IdResult
 
@@ -180,6 +180,44 @@ object PlaceReview:
       case _         => true
 
   object Proposal:
+    object Reclassify:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Label = Label.T
+      object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type From = From.T
+      object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type To = To.T
+      object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Evidence = Evidence.T
+      object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Merge:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Label = Label.T
+      object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Into = Into.T
+      object Into extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type IntoLabel = IntoLabel.T
+      object IntoLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Evidence = Evidence.T
+      object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Review:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Label = Label.T
+      object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Evidence = Evidence.T
+      object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type IdResult = IdResult.T
     object IdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DescribeResult = DescribeResult.T

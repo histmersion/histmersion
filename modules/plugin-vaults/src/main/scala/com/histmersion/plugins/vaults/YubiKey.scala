@@ -84,10 +84,18 @@ object YubiKey:
   /** What one failed attempt means. */
   enum Failure:
     /** This key is not there or did not answer: the next one may. */
-    case Next(why: String)
+    case Next(why: Failure.Next.Why)
 
     /** No other key would change it (wrong credentials, no such entry, nobody touched the key). */
-    case Stop(why: String)
+    case Stop(why: Failure.Stop.Why)
+
+  object Failure:
+    object Next:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Stop:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: KeePassXC's message for a failed attempt (lower-cased stderr) → next or stop. Wrong credentials stop at
     * once: another key cannot fix a wrong password, and with the same secret programmed into every listed key a wrong

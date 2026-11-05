@@ -187,14 +187,30 @@ object Preview:
   object SizeOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Target:
-    case Source(citekey: String)
-    case Article(slug: String)
+    case Source(citekey: Target.Source.Citekey)
+    case Article(slug: Target.Article.Slug)
 
     /** A gazetteer place on the map, with its hierarchy read as of `asOf` (the map's year). */
-    case Place(id: String, asOf: Option[Long])
+    case Place(id: Target.Place.Id, asOf: Option[Target.Place.AsOf])
 
     /** A historical event (its row in the events list). */
-    case Event(id: String)
+    case Event(id: Target.Event.Id)
+
+  object Target:
+    object Source:
+      type Citekey = Citekey.T
+      object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Article:
+      type Slug = Slug.T
+      object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Place:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type AsOf = AsOf.T
+      object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Event:
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: which preview the attributes ask for. A source wins when both are present. */
   def targetOf(ck: Option[com.histmersion.web.Preview.TargetOfCk], slug: Option[com.histmersion.web.Preview.TargetOfSlug]): Option[Target] =
@@ -876,10 +892,26 @@ object Preview:
   /** Where a pinned card is anchored, as the viewport sees it now. */
   enum Anchor:
     /** Beside a point — a place on the map, where its hover card was. */
-    case At(x: Double, y: Double)
+    case At(x: Anchor.At.X, y: Anchor.At.Y)
 
     /** Under an element — a place chip — flipped above it when there is no room. */
-    case Under(left: Double, top: Double, bottom: Double, width: Double)
+    case Under(left: Anchor.Under.Left, top: Anchor.Under.Top, bottom: Anchor.Under.Bottom, width: Anchor.Under.Width)
+
+  object Anchor:
+    object At:
+      type X = X.T
+      object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Y = Y.T
+      object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Under:
+      type Left = Left.T
+      object Left extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Top = Top.T
+      object Top extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Bottom = Bottom.T
+      object Bottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Width = Width.T
+      object Width extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The pinned card: what it shows, its element, where it is anchored (`None` while the anchor is out of view: the
     * card waits, hidden), what pinned it (a click there is not "outside"), and where the focus goes back to when it

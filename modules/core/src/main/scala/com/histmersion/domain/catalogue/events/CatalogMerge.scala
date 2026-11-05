@@ -54,9 +54,17 @@ object CatalogMerge:
     * share it). `why` says what matched.
     */
   enum Placement:
-    case Existing(eventId: String, why: String)
-    case New(eventId: String, why: String)
+    case Existing(eventId: com.histmersion.domain.catalogue.Event.Id, why: Placement.Existing.Why)
+    case New(eventId: com.histmersion.domain.catalogue.Event.Id, why: Placement.New.Why)
     def eventId: com.histmersion.domain.catalogue.Event.Id
+
+  object Placement:
+    object Existing:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object New:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def outer(ts: TimeSpan): Option[(com.histmersion.domain.catalogue.events.CatalogMerge.OuterResultPart1, com.histmersion.domain.catalogue.events.CatalogMerge.OuterResultPart2)] = ts.outer
 

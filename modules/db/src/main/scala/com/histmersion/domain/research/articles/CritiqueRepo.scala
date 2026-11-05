@@ -36,8 +36,24 @@ private[articles] object CritiqueRepo:
 
   /** One checked change: set `reason` on the edge's direction, or remove the pair's reason. */
   private enum Change:
-    case Set(src: String, dst: String, reason: String, by: String)
-    case Remove(a: String, b: String)
+    case Set(src: Change.Set.Src, dst: Change.Set.Dst, reason: Change.Set.Reason, by: Change.Set.By)
+    case Remove(a: Change.Remove.A, b: Change.Remove.B)
+
+  object Change:
+    object Set:
+      type Src = Src.T
+      object Src extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Dst = Dst.T
+      object Dst extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type By = By.T
+      object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Remove:
+      type A = A.T
+      object A extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type B = B.T
+      object B extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Check the reasons of a patch, inside the caller's transaction, writing nothing. Each pair's citekeys resolve as
     * links do (an old citekey names its source); a reason is kept under the direction of the disagreement edge between

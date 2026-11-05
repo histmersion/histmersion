@@ -17,8 +17,18 @@ object CoverChoice:
   object ChooseOclc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Pick:
-    case Calibre(path: String)
-    case OpenLibrary(kind: String, id: String)
+    case Calibre(path: Pick.Calibre.Path)
+    case OpenLibrary(kind: Pick.OpenLibrary.Kind, id: Pick.OpenLibrary.Id)
+
+  object Pick:
+    object Calibre:
+      type Path = Path.T
+      object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object OpenLibrary:
+      type Kind = Kind.T
+      object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Id = Id.T
+      object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def choose(
       calibreCover: Option[com.histmersion.domain.media.covers.CoverChoice.ChooseCalibreCover],

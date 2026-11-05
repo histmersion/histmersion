@@ -19,5 +19,10 @@ object MediaSources:
   object Key extends io.github.iltotore.iron.RefinedType[String, io.github.iltotore.iron.Pure]
 
   enum Error:
-    case Invalid(message: String)
+    case Invalid(message: Error.Invalid.Message)
     case NotFound
+
+  object Error:
+    object Invalid:
+      type Message = Message.T
+      object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

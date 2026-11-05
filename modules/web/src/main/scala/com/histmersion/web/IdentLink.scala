@@ -18,7 +18,14 @@ object IdentLink:
 
   enum Resolved:
     case Source(ref: com.histmersion.api.library.Source.Ref)
-    case Article(slug: String, title: String)
+    case Article(slug: Resolved.Article.Slug, title: Resolved.Article.Title)
+
+  object Resolved:
+    object Article:
+      type Slug = Slug.T
+      object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Title = Title.T
+      object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val cache =
     BoundedCache[String, scala.concurrent.Future[Option[Resolved]]](com.histmersion.web.ui.Layout.identCacheSize)

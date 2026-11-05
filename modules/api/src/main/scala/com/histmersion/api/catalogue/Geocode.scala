@@ -149,11 +149,11 @@ object Geocode:
     if spaced.startsWith("the ") then spaced.drop(4) else spaced
 
   enum Approximation:
-    case Qualifier(dropped: String)
+    case Qualifier(dropped: Approximation.Qualifier.Dropped)
 
-    case OnlyWithin(missing: String)
+    case OnlyWithin(missing: Approximation.OnlyWithin.Missing)
 
-    case Rough(places: Int)
+    case Rough(places: Approximation.Rough.Places)
 
     case GridSquare
 
@@ -164,6 +164,18 @@ object Geocode:
       case GridSquare    => "the centre of an atlas grid square"
 
   object Approximation:
+    object Qualifier:
+      type Dropped = Dropped.T
+      object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object OnlyWithin:
+      type Missing = Missing.T
+      object Missing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Rough:
+      type Places = Places.T
+      object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type DescribeResult = DescribeResult.T
     object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

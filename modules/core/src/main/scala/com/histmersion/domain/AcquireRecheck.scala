@@ -147,10 +147,15 @@ object AcquireRecheck:
     case NoDoi
 
     /** The corpus has the work with its original: the item is done. */
-    case Close(citekey: String)
+    case Close(citekey: com.histmersion.domain.library.Citekey)
 
     /** Try the legal chain — into the metadata-only source `into` when there is one (its enrichment stays). */
-    case Fetch(doi: String, into: Option[String])
+    case Fetch(doi: com.histmersion.domain.library.Doi, into: Option[Action.Fetch.Into])
+
+  object Action:
+    object Fetch:
+      type Into = Into.T
+      object Into extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The first DOI an item names decides (an item is one work). */
   def action(dois: List[com.histmersion.domain.AcquireRecheck.ActionDois], held: com.histmersion.domain.AcquireRecheck.ActionHeldArg1 => Option[Held]): Action =

@@ -130,9 +130,9 @@ object CoreQuota:
 
   /** Why a call is not made. */
   enum Refusal:
-    case Blocked(until: Instant, why: String)
-    case OverBudget(purpose: Purpose, spent: Int, cap: Int)
-    case Paced(waitMs: Long)
+    case Blocked(until: Instant, why: Refusal.Blocked.Why)
+    case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
+    case Paced(waitMs: Refusal.Paced.WaitMs)
 
     def describe: com.histmersion.domain.CoreQuota.Refusal.DescribeResult = this match
       case Blocked(until, why)       => s"CORE asked to wait until $until ($why)"
@@ -144,6 +144,20 @@ object CoreQuota:
           "acquire.core.max-wait-seconds"
 
   object Refusal:
+    object Blocked:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object OverBudget:
+      type Spent = Spent.T
+      object Spent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Cap = Cap.T
+      object Cap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    object Paced:
+      type WaitMs = WaitMs.T
+      object WaitMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type DescribeResult = DescribeResult.T
     object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

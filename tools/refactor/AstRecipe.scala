@@ -71,7 +71,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
         (records ++ members ++ corrections).groupBy(p => (p._1,p._2)).toList.flatMap { case((a,b),ps) =>
           if(a == b) {
             val snippets = ps.map(_._3)
-            val combined = if(snippets.size > 1 && snippets.forall(_.trim.startsWith("object "))) {
+            val combined = if(snippets.size > 1 && snippets.forall(s => s.startsWith("\n\n") && s.trim.startsWith("object "))) {
               val headers = snippets.map(s => s.take(s.indexOf(":\n") + 2))
               require(headers.distinct.size == 1,"Conflicting generated companions")
               headers.head + snippets.map(s => s.drop(s.indexOf(":\n") + 2)).mkString("\n")
@@ -412,6 +412,7 @@ object ModelDefinitions {
     tree.collect {
       case c: Defn.Class if c.mods.exists(_.is[Mod.Case]) || otherConstructors => (c: Tree,c.name,c.ctor)
       case e: Defn.Enum if otherConstructors => (e: Tree,e.name,e.ctor)
+      case e: Defn.EnumCase if otherConstructors => (e: Tree,e.name,e.ctor)
     }.foreach { case(c,className,ctor) =>
       val ancestry = parents(c)
       val owner = (ancestry.reverse.collect {
@@ -421,7 +422,11 @@ object ModelDefinitions {
         case d: Defn.Trait => d.name.value
         case d: Defn.Enum => d.name.value
       } :+ className.value).mkString(".")
-      val companion = c.parent.toList.flatMap(_.children).collectFirst { case o: Defn.Object if o.name.value == className.value => o }
+      val enclosingEnum = if(c.is[Defn.EnumCase]) ancestry.collectFirst { case e: Defn.Enum => e } else None
+      val referenceOwner = enclosingEnum.map(_.name.value + ".").getOrElse("") + className.value
+      val enumCompanion = enclosingEnum.flatMap(e => e.parent.toList.flatMap(_.children).collectFirst { case o: Defn.Object if o.name.value == e.name.value => o })
+      val siblings = if(enclosingEnum.nonEmpty) enumCompanion.toList.flatMap(_.templ.stats) else c.parent.toList.flatMap(_.children)
+      val companion = siblings.collectFirst { case o: Defn.Object if o.name.value == className.value => o }
       val declarations = scala.collection.mutable.LinkedHashMap.empty[String,String]
       val occupied = companion.toList.flatMap(_.templ.stats).flatMap {
         case d: Defn.Type => List(d.name.value)
@@ -478,11 +483,11 @@ object ModelDefinitions {
             case a: Type.Apply => Set("Array","scala.Array","_root_.scala.Array","js.Array")(a.tpe.syntax)
             case _ => false
           }
-          val blocked = reason.nonEmpty || packed || !name.matches("[A-Z][A-Za-z0-9_]*") || (ancestry.exists(_.is[Defn.Def]) && !localModels.contains(owner)) || shadowed ||
+          val blocked = reason.nonEmpty || packed || enumCompanion.exists(_.templ.stats.isEmpty) || !name.matches("[A-Z][A-Za-z0-9_]*") || (ancestry.exists(_.is[Defn.Def]) && !localModels.contains(owner)) || shadowed ||
             (target.isEmpty && (occupied(name) || companion.exists(_.templ.stats.isEmpty) || declarations.get(name).exists(_ != qualified(b))))
           if(blocked) evidence += List(path,(t.pos.startLine + 1).toString,"UNRESOLVED " + key,t.structure + reason.map(" deferred: " + _).getOrElse(""))
           else {
-            val replacement = target.getOrElse(className.value + "." + name)
+            val replacement = target.getOrElse(referenceOwner + "." + name)
             if(target.isEmpty) declarations(name) = qualified(b)
             result += ((t.pos.start,t.pos.end,replacement))
             evidence += List(path,(t.pos.startLine + 1).toString,owner + "#" + p.name.value + "/" + suffix + " " + t.structure,replacement)
@@ -490,13 +495,26 @@ object ModelDefinitions {
         }
       }
       if(declarations.nonEmpty) {
-        val pad = companion.map(o => indent(o.templ.stats.head)).getOrElse(indent(c) + "  ")
+        val pad = companion.map(o => indent(o.templ.stats.head)).getOrElse {
+          if(enclosingEnum.nonEmpty) enumCompanion.map(o => indent(o.templ.stats.head) + "  ").getOrElse(indent(enclosingEnum.get) + "    ")
+          else indent(c) + "  "
+        }
         val definitions = declarations.toList.flatMap { case(n,b) => List(
           "type " + n + " = " + n + ".T",
           "object " + n + " extends _root_.io.github.iltotore.iron.RefinedType[" + b +
             ", _root_.io.github.iltotore.iron.constraint.any.Pure]") }.mkString("\n" + pad)
         companion match {
           case Some(o) => val start = o.templ.stats.head.pos.start; result += ((start,start,definitions + "\n\n" + pad))
+          case None if enclosingEnum.nonEmpty =>
+            enumCompanion match {
+              case Some(o) =>
+                val at = o.templ.stats.head.pos.start
+                val outerPad = indent(o.templ.stats.head)
+                result += ((at,at,"object " + className.value + ":\n" + pad + definitions + "\n\n" + outerPad))
+              case None =>
+                val e = enclosingEnum.get
+                result += ((e.pos.end,e.pos.end,"\n\n" + indent(e) + "object " + e.name.value + ":\n" + indent(e) + "  object " + className.value + ":\n" + pad + definitions))
+            }
           case None => result += ((c.pos.end,c.pos.end,"\n\n" + indent(c) + "object " + className.value + ":\n" + pad + definitions))
         }
       }

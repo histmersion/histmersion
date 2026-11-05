@@ -20,19 +20,52 @@ object NoteMarkdown:
   object InlinesS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Inline:
-    case Text(s: String)
-    case Strong(s: String)
-    case Em(s: String)
-    case Code(s: String)
-    case Link(text: String, href: String)
-    case Cite(citekey: String)
+    case Text(s: Inline.Text.S)
+    case Strong(s: Inline.Strong.S)
+    case Em(s: Inline.Em.S)
+    case Code(s: Inline.Code.S)
+    case Link(text: Inline.Link.Text, href: Inline.Link.Href)
+    case Cite(citekey: Inline.Cite.Citekey)
+
+  object Inline:
+    object Text:
+      type S = S.T
+      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Strong:
+      type S = S.T
+      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Em:
+      type S = S.T
+      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Code:
+      type S = S.T
+      object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Link:
+      type Text = Text.T
+      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Href = Href.T
+      object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Cite:
+      type Citekey = Citekey.T
+      object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Block:
-    case Heading(level: Int, text: List[Inline])
+    case Heading(level: Block.Heading.Level, text: List[Inline])
     case Para(text: List[Inline])
-    case Items(ordered: Boolean, items: List[List[Inline]])
+    case Items(ordered: Block.Items.Ordered, items: List[List[Inline]])
     case Quote(text: List[Inline])
-    case CodeBlock(text: String)
+    case CodeBlock(text: Block.CodeBlock.Text)
+
+  object Block:
+    object Heading:
+      type Level = Level.T
+      object Level extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Items:
+      type Ordered = Ordered.T
+      object Ordered extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object CodeBlock:
+      type Text = Text.T
+      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Heading = """^(#{1,6})\s+(.*)$""".r
   private val Bullet = """^\s*[-*+]\s+(.*)$""".r

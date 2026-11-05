@@ -4,14 +4,26 @@ import com.histmersion.domain.library.Doi as DoiValue
 
 /** An identifier a person gives for a work: a DOI, an arXiv id, or the citekey of a source in the corpus. */
 enum Ident:
-  case Doi(value: String)
+  case Doi(value: Ident.Doi.Value)
 
-  case Arxiv(value: String)
+  case Arxiv(value: Ident.Arxiv.Value)
 
-  case Citekey(value: String)
+  case Citekey(value: Ident.Citekey.Value)
 
 object Ident:
 
+
+  object Doi:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Arxiv:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Citekey:
+    type Value = Value.T
+    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type DoiRaw = DoiRaw.T
   object DoiRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

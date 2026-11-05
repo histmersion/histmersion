@@ -830,11 +830,22 @@ object Place:
     case Reset
 
     case Put(
-        kind: Option[String],
-        period: Option[(Option[Long], Option[Long])],
-        reason: Option[String],
+        kind: Option[OverrideEdit.Put.Kind],
+        period: Option[(Option[OverrideEdit.Put.PeriodPart1], Option[OverrideEdit.Put.PeriodPart2])],
+        reason: Option[OverrideEdit.Put.Reason],
         point: Option[GeoPoint] = None
     )
+
+  object OverrideEdit:
+    object Put:
+      type Kind = Kind.T
+      object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type PeriodPart1 = PeriodPart1.T
+      object PeriodPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type PeriodPart2 = PeriodPart2.T
+      object PeriodPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Reason = Reason.T
+      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class OverrideSet(
       kind: Option[OverrideSet.Kind] = None,

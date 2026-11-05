@@ -9,4 +9,9 @@ enum TempName:
   case Unique
 
   /** `<name><suffix>`: one writer at a time, named as the readers of the directory expect (`.part`). */
-  case Suffixed(suffix: String)
+  case Suffixed(suffix: TempName.Suffixed.Suffix)
+
+object TempName:
+  object Suffixed:
+    type Suffix = Suffix.T
+    object Suffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

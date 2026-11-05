@@ -14,18 +14,18 @@ enum Route:
   case Library(section: LibrarySection)
   case Research(section: ResearchSection)
   case Activity(tab: ActivityTab)
-  case Goal(slug: String)
+  case Goal(slug: Route.Goal.Slug)
   case Settings(section: SettingsSection)
 
   /** The first-run setup, run again from Settings. */
   case Setup
-  case Source(citekey: String)
-  case Article(slug: String)
-  case Place(id: String)
-  case Event(id: String)
-  case Run(id: String)
-  case Manager(id: String)
-  case Job(id: String)
+  case Source(citekey: Route.Source.Citekey)
+  case Article(slug: Route.Article.Slug)
+  case Place(id: Route.Place.Id)
+  case Event(id: Route.Event.Id)
+  case Run(id: Route.Run.Id)
+  case Manager(id: Route.Manager.Id)
+  case Job(id: Route.Job.Id)
 
   /** The address of the page — without the hash, which carries the filters and the open windows. */
   def path: com.histmersion.web.Route.PathResult = this match
@@ -69,6 +69,38 @@ enum Route:
 object Route:
 
   /** The front page of each place. */
+  object Goal:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Source:
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Article:
+    type Slug = Slug.T
+    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Place:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Event:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Run:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Manager:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  object Job:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PathResult = PathResult.T
   object PathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SubResult = SubResult.T

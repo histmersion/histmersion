@@ -217,13 +217,25 @@ object MergeFold:
     case Theirs
 
     /** Both changed since a common base, and the three-way merge is clean. */
-    case Merged(body: String, baseSha: String)
+    case Merged(body: ArticleOutcome.Merged.Body, baseSha: ArticleOutcome.Merged.BaseSha)
 
     /** Both changed since a common base, and `conflicts` regions changed differently on each side. */
-    case Conflict(conflicts: Int, baseSha: String)
+    case Conflict(conflicts: ArticleOutcome.Conflict.Conflicts, baseSha: ArticleOutcome.Conflict.BaseSha)
 
     /** Nothing in the two histories is shared: no base to merge from. */
     case NoBase
+
+  object ArticleOutcome:
+    object Merged:
+      type Body = Body.T
+      object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type BaseSha = BaseSha.T
+      object BaseSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Conflict:
+      type Conflicts = Conflicts.T
+      object Conflicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type BaseSha = BaseSha.T
+      object BaseSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `localHistory` is this collection's recorded versions of the article (sha256 of the body, the body), newest first;
     * `foreignHistory` the sha256s of the bundle's. The common base is the newest of ours the bundle's history also has.

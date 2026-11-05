@@ -12,5 +12,13 @@ import java.time.Instant
   * before chains existed.
   */
 enum PickFailure:
-  case Unavailable(message: String)
-  case Exhausted(message: String, freesAt: Option[Instant], reason: PauseReason = PauseReason.Allowance)
+  case Unavailable(message: PickFailure.Unavailable.Message)
+  case Exhausted(message: PickFailure.Exhausted.Message, freesAt: Option[Instant], reason: PauseReason = PauseReason.Allowance)
+
+object PickFailure:
+  object Unavailable:
+    type Message = Message.T
+    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Exhausted:
+    type Message = Message.T
+    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

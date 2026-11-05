@@ -34,7 +34,7 @@ enum HttpMode:
   case Replay(dir: Path)
 
   /** No network: canned answers by exact URL, for unit tests; any other URL answers HTTP 404. */
-  case Stub(answers: Map[String, StubAnswer])
+  case Stub(answers: Map[HttpMode.Stub.AnswersKey, StubAnswer])
 
   /** Whether requests reach the real network. */
   def live: com.histmersion.plugin.testkit.HttpMode.LiveResult = this match
@@ -43,6 +43,10 @@ enum HttpMode:
 
 object HttpMode:
   /** `live`, `record` or `replay`: the mode [[fromEnv]] picks. */
+  object Stub:
+    type AnswersKey = AnswersKey.T
+    object AnswersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type LiveResult = LiveResult.T
   object LiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromEnvResultPart1 = FromEnvResultPart1.T

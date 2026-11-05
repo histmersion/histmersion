@@ -50,7 +50,12 @@ object AutoEnrich:
 
   enum Skip:
     case Off
-    case Enriched(why: String)
+    case Enriched(why: Skip.Enriched.Why)
+
+  object Skip:
+    object Enriched:
+      type Why = Why.T
+      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One earlier `enrich-source` run of the source: its id and state. */
   final case class PriorRun(id: PriorRun.Id, state: Run.State)
