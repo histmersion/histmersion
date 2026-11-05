@@ -5,6 +5,9 @@ final case class StubAnswer(status: StubAnswer.Status, body: StubAnswer.Body, he
 
 object StubAnswer:
   /** A 200 with this body. */
+  type OkBody = OkBody.T
+  object OkBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type OkContentType = OkContentType.T
   object OkContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextBody = TextBody.T
@@ -22,7 +25,7 @@ object StubAnswer:
   type HeadersValue = HeadersValue.T
   object HeadersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def ok(body: Array[Byte], contentType: com.histmersion.plugin.testkit.StubAnswer.OkContentType = "application/octet-stream"): StubAnswer =
+  def ok(body: com.histmersion.plugin.testkit.StubAnswer.OkBody, contentType: com.histmersion.plugin.testkit.StubAnswer.OkContentType = "application/octet-stream"): StubAnswer =
     StubAnswer(200, body, Map("content-type" -> contentType))
 
   /** A 200 with this text, UTF-8. */

@@ -19,6 +19,11 @@ import java.util.zip.{GZIPInputStream, GZIPOutputStream}
   */
 object BundleTar:
 
+  type HeaderResultPart2 = HeaderResultPart2.T
+  object HeaderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHeaderH = ParseHeaderH.T
+  object ParseHeaderH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MaxSize = MaxSize.T
   object MaxSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeaderResultPart1 = HeaderResultPart1.T
@@ -41,7 +46,7 @@ object BundleTar:
   val MaxSize: com.histmersion.util.data.exchange.BundleTar.MaxSize = (1L << 33) - 1
 
   /** One ustar header for a regular file. Pure. */
-  def header(name: com.histmersion.util.data.exchange.BundleTar.HeaderName, size: com.histmersion.util.data.exchange.BundleTar.HeaderSize): Either[com.histmersion.util.data.exchange.BundleTar.HeaderResultPart1, Array[Byte]] =
+  def header(name: com.histmersion.util.data.exchange.BundleTar.HeaderName, size: com.histmersion.util.data.exchange.BundleTar.HeaderSize): Either[com.histmersion.util.data.exchange.BundleTar.HeaderResultPart1, com.histmersion.util.data.exchange.BundleTar.HeaderResultPart2] =
     val nameBytes = name.getBytes(UTF_8)
     if nameBytes.length > MaxName then Left(s"$name: name longer than $MaxName bytes")
     else if size < 0 || size > MaxSize then Left(s"$name: size $size is outside 0..$MaxSize")
@@ -73,7 +78,7 @@ object BundleTar:
     object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Parse a header block. `Right(None)` is the end-of-archive (an all-zero block). Pure. */
-  def parseHeader(h: Array[Byte]): Either[com.histmersion.util.data.exchange.BundleTar.ParseHeaderResultPart1, Option[Entry]] =
+  def parseHeader(h: com.histmersion.util.data.exchange.BundleTar.ParseHeaderH): Either[com.histmersion.util.data.exchange.BundleTar.ParseHeaderResultPart1, Option[Entry]] =
     if h.length != Block then Left(s"short header (${h.length} bytes)")
     else if h.forall(_ == 0) then Right(None)
     else
@@ -112,7 +117,7 @@ object BundleTar:
           Right(())
       }
 
-    def bytes(name: com.histmersion.util.data.exchange.BundleTar.Writer.BytesName, data: Array[Byte]): Either[com.histmersion.util.data.exchange.BundleTar.Writer.BytesResultPart1, Unit] =
+    def bytes(name: com.histmersion.util.data.exchange.BundleTar.Writer.BytesName, data: com.histmersion.util.data.exchange.BundleTar.Writer.BytesData): Either[com.histmersion.util.data.exchange.BundleTar.Writer.BytesResultPart1, Unit] =
       entry(name, data.length.toLong)(_.write(data))
 
     /** Two zero blocks end the archive; then the gzip trailer. Does not close `out`. */
@@ -122,6 +127,9 @@ object BundleTar:
       gz.flush()
 
   object Writer:
+    type BytesData = BytesData.T
+    object BytesData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type EntryResultPart1 = EntryResultPart1.T
     object EntryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type EntryName = EntryName.T
@@ -199,9 +207,9 @@ object BundleTar:
       override def available(): Int = 0
       override def close(): Unit = ()
 
-    def readAll(): Array[Byte] = stream.readAllBytes()
+    def readAll(): com.histmersion.util.data.exchange.BundleTar.Reader.ReadAllResult = stream.readAllBytes()
 
-    private def readBlock(): Option[Array[Byte]] =
+    private def readBlock(): Option[com.histmersion.util.data.exchange.BundleTar.Reader.ReadBlockResult] =
       val h = new Array[Byte](Block)
       val n = gz.readNBytes(h, 0, Block)
       if n == 0 then None
@@ -218,6 +226,11 @@ object BundleTar:
         else left -= k
 
   object Reader:
+    type ReadAllResult = ReadAllResult.T
+    object ReadAllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadBlockResult = ReadBlockResult.T
+    object ReadBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Remaining = Remaining.T
     object Remaining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Pad = Pad.T

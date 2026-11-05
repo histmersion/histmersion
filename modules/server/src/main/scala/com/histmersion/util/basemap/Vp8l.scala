@@ -13,6 +13,23 @@ package com.histmersion.util.basemap
 object Vp8l:
 
   /** A decoded image: `pixels` row-major, each `0xAARRGGBB`. */
+  type DecodeBytes = DecodeBytes.T
+  object DecodeBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Vp8lChunkB = Vp8lChunkB.T
+  object Vp8lChunkB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildLengths = BuildLengths.T
+  object BuildLengths extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceMap = DistanceMap.T
+  object DistanceMap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PredictPx = PredictPx.T
+  object PredictPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ColourPx = ColourPx.T
+  object ColourPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnindexResult = UnindexResult.T
+  object UnindexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnindexPx = UnindexPx.T
+  object UnindexPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DecodeResultPart1 = DecodeResultPart1.T
   object DecodeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FailMsg = FailMsg.T
@@ -118,7 +135,7 @@ object Vp8l:
     object Height extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A WebP file (`RIFF … WEBP VP8L …`) or a bare `VP8L` bitstream, decoded. */
-  def decode(bytes: Array[Byte]): Either[com.histmersion.util.basemap.Vp8l.DecodeResultPart1, Image] =
+  def decode(bytes: com.histmersion.util.basemap.Vp8l.DecodeBytes): Either[com.histmersion.util.basemap.Vp8l.DecodeResultPart1, Image] =
     vp8lChunk(bytes).flatMap { (off, len) =>
       try Right(Decoder(bytes, off, off + len).image())
       catch
@@ -137,7 +154,7 @@ object Vp8l:
   /** Where the `VP8L` payload is: inside a RIFF container (its chunk, after any `VP8X`), or the whole input when it
     * starts with the VP8L signature. Pure.
     */
-  private[basemap] def vp8lChunk(b: Array[Byte]): Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart1, (com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart2Part1, com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart2Part2)] =
+  private[basemap] def vp8lChunk(b: com.histmersion.util.basemap.Vp8l.Vp8lChunkB): Either[com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart1, (com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart2Part1, com.histmersion.util.basemap.Vp8l.Vp8lChunkResultPart2Part2)] =
     def le32(i: Int) = (b(i) & 0xff) | (b(i + 1) & 0xff) << 8 | (b(i + 2) & 0xff) << 16 | (b(i + 3) & 0xff) << 24
     def tag(i: Int) = new String(b, i, 4, "US-ASCII")
     if b.length >= 5 && (b(0) & 0xff) == 0x2f then Right((0, b.length))
@@ -259,7 +276,7 @@ object Vp8l:
     r
 
   /** The canonical code of `lengths` (0: the symbol is not used). Pure. */
-  private[basemap] def build(lengths: Array[Int]): Either[com.histmersion.util.basemap.Vp8l.BuildResultPart1, Code] =
+  private[basemap] def build(lengths: com.histmersion.util.basemap.Vp8l.BuildLengths): Either[com.histmersion.util.basemap.Vp8l.BuildResultPart1, Code] =
     val used = lengths.indices.filter(lengths(_) > 0)
     if used.isEmpty then Right(Code(Array.empty, Array.empty, Array.empty, single = 0))
     else if used.size == 1 then Right(Code(Array.empty, Array.empty, Array.empty, single = used.head))
@@ -318,7 +335,7 @@ object Vp8l:
   private val CodeLengthOrder = Array(17, 18, 0, 1, 2, 3, 4, 5, 16, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15)
 
   /** The distance codes 1–120: (dx, dy) of the pixel referred to, nearest first (RFC 9649 §4.2.2). */
-  private val DistanceMap: Array[Int] = Array(0, 1, 1, 0, 1, 1, -1, 1, 0, 2, 2, 0, 1, 2, -1, 2, 2, 1, -2, 1, 2, 2, -2,
+  private val DistanceMap: com.histmersion.util.basemap.Vp8l.DistanceMap = Array(0, 1, 1, 0, 1, 1, -1, 1, 0, 2, 2, 0, 1, 2, -1, 2, 2, 1, -2, 1, 2, 2, -2,
     2, 0, 3, 3, 0, 1, 3, -1, 3, 3, 1, -3, 1, 2, 3, -2, 3, 3, 2, -3, 2, 0, 4, 4, 0, 1, 4, -1, 4, 4, 1, -4, 1, 3, 3, -3,
     3, 2, 4, -2, 4, 4, 2, -4, 2, 0, 5, 3, 4, -3, 4, 4, 3, -4, 3, 5, 0, 1, 5, -1, 5, 5, 1, -5, 1, 2, 5, -2, 5, 5, 2, -5,
     2, 4, 4, -4, 4, 3, 5, -3, 5, 5, 3, -5, 3, 0, 6, 6, 0, 1, 6, -1, 6, 6, 1, -6, 1, 2, 6, -2, 6, 6, 2, -6, 2, 4, 5, -4,
@@ -391,7 +408,7 @@ object Vp8l:
 
     /** An entropy-coded image: the main one (`top`: it may have meta prefix codes) or a transform's or prefix image's.
       */
-    private def entropyImage(w: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageW, h: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageH, top: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageTop): Array[Int] =
+    private def entropyImage(w: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageW, h: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageH, top: com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageTop): com.histmersion.util.basemap.Vp8l.Decoder.EntropyImageResult =
       val cacheBits = if r.read(1) == 1 then
         val c = r.read(4)
         if c < 1 || c > 11 then fail("a colour cache of an invalid size")
@@ -473,9 +490,9 @@ object Vp8l:
         h: com.histmersion.util.basemap.Vp8l.Decoder.PixelsH,
         groups: Array[Group],
         metaBits: com.histmersion.util.basemap.Vp8l.Decoder.PixelsMetaBits,
-        meta: Array[Int],
+        meta: com.histmersion.util.basemap.Vp8l.Decoder.PixelsMeta,
         cacheBits: com.histmersion.util.basemap.Vp8l.Decoder.PixelsCacheBits
-    ): Array[Int] =
+    ): com.histmersion.util.basemap.Vp8l.Decoder.PixelsResult =
       val out = new Array[Int](w * h)
       val cache = if cacheBits > 0 then new Array[Int](1 << cacheBits) else null
       val cacheShift = 32 - cacheBits
@@ -523,7 +540,7 @@ object Vp8l:
       out
 
     /** Undo one transform over pixels `h` rows high. */
-    private def undo(t: Transform, px: Array[Int], h: com.histmersion.util.basemap.Vp8l.Decoder.UndoH): Array[Int] = t.kind match
+    private def undo(t: Transform, px: com.histmersion.util.basemap.Vp8l.Decoder.UndoPx, h: com.histmersion.util.basemap.Vp8l.Decoder.UndoH): com.histmersion.util.basemap.Vp8l.Decoder.UndoResult = t.kind match
       case 0 => predict(t, px, h); px
       case 1 => colour(t, px, h); px
       case 2 =>
@@ -539,6 +556,17 @@ object Vp8l:
       case _ => unindex(t, px, h)
 
   object Decoder:
+    type EntropyImageResult = EntropyImageResult.T
+    object EntropyImageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PixelsResult = PixelsResult.T
+    object PixelsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PixelsMeta = PixelsMeta.T
+    object PixelsMeta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UndoResult = UndoResult.T
+    object UndoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UndoPx = UndoPx.T
+    object UndoPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Until = Until.T
@@ -631,7 +659,7 @@ object Vp8l:
     case 13 => clampHalf(average2(l, t), tl)
     case _  => 0xff000000 // modes 14 and 15 are not used; as 0
 
-  private def predict(t: Transform, px: Array[Int], h: com.histmersion.util.basemap.Vp8l.PredictH): Unit =
+  private def predict(t: Transform, px: com.histmersion.util.basemap.Vp8l.PredictPx, h: com.histmersion.util.basemap.Vp8l.PredictH): Unit =
     val w = t.width
     val bw = (w + (1 << t.bits) - 1) >> t.bits
     // the first row: the first pixel from black, the rest from the left
@@ -655,7 +683,7 @@ object Vp8l:
 
   private def delta(t: com.histmersion.util.basemap.Vp8l.DeltaT, c: com.histmersion.util.basemap.Vp8l.DeltaC): com.histmersion.util.basemap.Vp8l.DeltaResult = (t.toByte * c.toByte) >> 5
 
-  private def colour(t: Transform, px: Array[Int], h: com.histmersion.util.basemap.Vp8l.ColourH): Unit =
+  private def colour(t: Transform, px: com.histmersion.util.basemap.Vp8l.ColourPx, h: com.histmersion.util.basemap.Vp8l.ColourH): Unit =
     val w = t.width
     val bw = (w + (1 << t.bits) - 1) >> t.bits
     var y = 0
@@ -675,7 +703,7 @@ object Vp8l:
         x += 1
       y += 1
 
-  private def unindex(t: Transform, px: Array[Int], h: com.histmersion.util.basemap.Vp8l.UnindexH): Array[Int] =
+  private def unindex(t: Transform, px: com.histmersion.util.basemap.Vp8l.UnindexPx, h: com.histmersion.util.basemap.Vp8l.UnindexH): com.histmersion.util.basemap.Vp8l.UnindexResult =
     val w = t.width
     val packed = (w + (1 << t.bits) - 1) >> t.bits
     val out = new Array[Int](w * h)

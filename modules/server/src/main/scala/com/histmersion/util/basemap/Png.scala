@@ -6,6 +6,17 @@ import java.util.zip.{CRC32, Deflater, Inflater}
 /** PNG, as much as the relief needs: encoding RGB tiles, decoding 8-bit RGB(A) non-interlaced ones. Pure. */
 object Png:
 
+  type IsPngB = IsPngB.T
+  object IsPngB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EncodeRgbResult = EncodeRgbResult.T
+  object EncodeRgbResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EncodeRgbPx = EncodeRgbPx.T
+  object EncodeRgbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChunkData = ChunkData.T
+  object ChunkData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeB = DecodeB.T
+  object DecodeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsPngResult = IsPngResult.T
   object IsPngResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncodeRgbW = EncodeRgbW.T
@@ -21,10 +32,10 @@ object Png:
 
   private val Signature = Array[Byte](0x89.toByte, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a)
 
-  def isPng(b: Array[Byte]): com.histmersion.util.basemap.Png.IsPngResult = b.length >= 8 && b.take(8).sameElements(Signature)
+  def isPng(b: com.histmersion.util.basemap.Png.IsPngB): com.histmersion.util.basemap.Png.IsPngResult = b.length >= 8 && b.take(8).sameElements(Signature)
 
   /** An RGB PNG of `px` (`0x??RRGGBB`, row-major, `w` × `h`), each row filtered by its left neighbour. */
-  def encodeRgb(w: com.histmersion.util.basemap.Png.EncodeRgbW, h: com.histmersion.util.basemap.Png.EncodeRgbH, px: Array[Int], level: com.histmersion.util.basemap.Png.EncodeRgbLevel = 4): Array[Byte] =
+  def encodeRgb(w: com.histmersion.util.basemap.Png.EncodeRgbW, h: com.histmersion.util.basemap.Png.EncodeRgbH, px: com.histmersion.util.basemap.Png.EncodeRgbPx, level: com.histmersion.util.basemap.Png.EncodeRgbLevel = 4): com.histmersion.util.basemap.Png.EncodeRgbResult =
     val raw = new Array[Byte](h * (1 + 3 * w))
     var y = 0
     while y < h do
@@ -70,7 +81,7 @@ object Png:
     chunk(out, "IEND", Array.emptyByteArray)
     out.toByteArray
 
-  private def chunk(out: ByteArrayOutputStream, kind: com.histmersion.util.basemap.Png.ChunkKind, data: Array[Byte]): Unit =
+  private def chunk(out: ByteArrayOutputStream, kind: com.histmersion.util.basemap.Png.ChunkKind, data: com.histmersion.util.basemap.Png.ChunkData): Unit =
     val t = kind.getBytes("US-ASCII")
     out.write(java.nio.ByteBuffer.allocate(4).putInt(data.length).array())
     out.write(t)
@@ -81,7 +92,7 @@ object Png:
     out.write(java.nio.ByteBuffer.allocate(4).putInt(c.getValue.toInt).array())
 
   /** An 8-bit RGB or RGBA, non-interlaced PNG's pixels (`0xAARRGGBB`). */
-  def decode(b: Array[Byte]): Either[com.histmersion.util.basemap.Png.DecodeResultPart1, Vp8l.Image] =
+  def decode(b: com.histmersion.util.basemap.Png.DecodeB): Either[com.histmersion.util.basemap.Png.DecodeResultPart1, Vp8l.Image] =
     if !isPng(b) then Left("not a PNG")
     else
       def be32(i: Int) = (b(i) & 0xff) << 24 | (b(i + 1) & 0xff) << 16 | (b(i + 2) & 0xff) << 8 | (b(i + 3) & 0xff)

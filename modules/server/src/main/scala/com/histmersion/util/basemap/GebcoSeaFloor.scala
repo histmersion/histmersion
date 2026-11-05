@@ -84,7 +84,7 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
     }
 
   /** Every tile of the plan from the rows in `work`, in tile-id order, handed to `add`. */
-  def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1, Array[Byte]) => Unit, note: com.histmersion.util.basemap.GebcoSeaFloor.BuildNoteArg1 => Unit): Either[com.histmersion.util.basemap.GebcoSeaFloor.BuildResultPart1, com.histmersion.util.basemap.GebcoSeaFloor.BuildResultPart2] =
+  def build(p: GebcoPlan, work: Store, add: (com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg1, com.histmersion.util.basemap.GebcoSeaFloor.BuildAddArg2) => Unit, note: com.histmersion.util.basemap.GebcoSeaFloor.BuildNoteArg1 => Unit): Either[com.histmersion.util.basemap.GebcoSeaFloor.BuildResultPart1, com.histmersion.util.basemap.GebcoSeaFloor.BuildResultPart2] =
     val samplers = p.parts.map(part => GebcoSeaFloor.Rows(part, part.runs.map(r => r -> map(work, part.key(r)))))
     var etopoFailures = 0 // ETOPO1 tiles that could not be read: their outside stays at sea level
     p.tiles.zipWithIndex.foreach { case ((id, (z, x, y)), i) =>
@@ -115,6 +115,9 @@ final class GebcoSeaFloor(cfg: BasemapGebcoConfig, etopoUrl: GebcoSeaFloor.Etopo
 object GebcoSeaFloor:
 
   /** A GeoTIFF's URL in the grid's tiling: `{north}`, `{south}`, `{west}`, `{east}` as GEBCO writes them (`90.0`). */
+  type BuildAddArg2 = BuildAddArg2.T
+  object BuildAddArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type EtopoUrl = EtopoUrl.T
   object EtopoUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxRequestBytes = MaxRequestBytes.T
@@ -229,7 +232,7 @@ object GebcoSeaFloor:
 
   /** The rows of one part that were read, each run mapped from its file. */
   final case class Rows(part: GebcoPart, runs: List[(RowRun, ByteBuffer)]):
-    private val byRow: Array[Int] =
+    private val byRow: com.histmersion.util.basemap.GebcoSeaFloor.Rows.ByRow =
       val a = Array.fill(part.grid.height.value)(-1)
       runs.zipWithIndex.foreach { case ((r, _), i) => for row <- r.firstRow until r.firstRow + r.rows do a(row) = i }
       a
@@ -244,6 +247,9 @@ object GebcoSeaFloor:
         Option.when(!part.grid.noData.contains(v))(v)
 
   object Rows:
+    type ByRow = ByRow.T
+    object ByRow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type AtResult = AtResult.T
     object AtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Short, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AtCol = AtCol.T

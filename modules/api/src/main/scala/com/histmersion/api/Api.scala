@@ -105,6 +105,17 @@ import sttp.tapir.Schema
 object Api:
 
   /** `region` is still sent by older links and clients; it is one more place name. */
+  type AssetPart3Part1 = AssetPart3Part1.T
+  object AssetPart3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PutSourceCoverPart1Part2 = PutSourceCoverPart1Part2.T
+  object PutSourceCoverPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaThumbPart3Part1 = MediaThumbPart3Part1.T
+  object MediaThumbPart3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaFilePart3Part1 = MediaFilePart3Part1.T
+  object MediaFilePart3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IiifImagePart3Part1 = IiifImagePart3Part1.T
+  object IiifImagePart3Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type QAnonymousPart1 = QAnonymousPart1.T
   object QAnonymousPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchPart1Part1 = SearchPart1Part1.T
@@ -1708,7 +1719,7 @@ object Api:
       .errorOut(ingestErrors)
       .out(jsonBody[AssetsStored])
 
-  lazy val asset: PublicEndpoint[(com.histmersion.api.Api.AssetPart1Part1, com.histmersion.api.Api.AssetPart1Part2), com.histmersion.api.Api.Error, (Array[Byte], com.histmersion.api.Api.AssetPart3Part2), Any] =
+  lazy val asset: PublicEndpoint[(com.histmersion.api.Api.AssetPart1Part1, com.histmersion.api.Api.AssetPart1Part2), com.histmersion.api.Api.Error, (com.histmersion.api.Api.AssetPart3Part1, com.histmersion.api.Api.AssetPart3Part2), Any] =
     endpoint.get
       .in("source" / path[String]("citekey") / "assets" / path[String]("name"))
       .errorOut(statusCode(StatusCode.NotFound))
@@ -1839,7 +1850,7 @@ object Api:
       .out(jsonBody[JobInfo])
 
   lazy val putSourceCover
-      : PublicEndpoint[(SourceCoverParams, Array[Byte]), com.histmersion.api.Api.Error, MediaItem, Any] =
+      : PublicEndpoint[(SourceCoverParams, com.histmersion.api.Api.PutSourceCoverPart1Part2), com.histmersion.api.Api.Error, MediaItem, Any] =
     writeBase.put
       .in("media" / "sources" / path[String]("citekey") / "cover")
       .in(query[String]("provider").default(MediaProvider.Calibre))
@@ -1855,7 +1866,7 @@ object Api:
       .in(query[Boolean]("apply").default(false))
       .out(jsonBody[FigureLicenceFill])
 
-  lazy val mediaThumb: PublicEndpoint[com.histmersion.api.Api.MediaThumbPart1, com.histmersion.api.Api.Error, (Array[Byte], com.histmersion.api.Api.MediaThumbPart3Part2), Any] =
+  lazy val mediaThumb: PublicEndpoint[com.histmersion.api.Api.MediaThumbPart1, com.histmersion.api.Api.Error, (com.histmersion.api.Api.MediaThumbPart3Part1, com.histmersion.api.Api.MediaThumbPart3Part2), Any] =
     endpoint.get
       .in("media" / path[String]("uid") / "thumb")
       .errorOut(statusCode(StatusCode.NotFound))
@@ -1864,7 +1875,7 @@ object Api:
       .out(header[String](sttp.model.HeaderNames.ContentType))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, Ingest.MediaCacheControl)))
 
-  lazy val mediaFile: PublicEndpoint[com.histmersion.api.Api.MediaFilePart1, com.histmersion.api.Api.Error, (Array[Byte], com.histmersion.api.Api.MediaFilePart3Part2), Any] =
+  lazy val mediaFile: PublicEndpoint[com.histmersion.api.Api.MediaFilePart1, com.histmersion.api.Api.Error, (com.histmersion.api.Api.MediaFilePart3Part1, com.histmersion.api.Api.MediaFilePart3Part2), Any] =
     endpoint.get
       .in("media" / path[String]("uid") / "file")
       .errorOut(statusCode(StatusCode.NotFound))
@@ -1908,7 +1919,7 @@ object Api:
   lazy val iiifImage: PublicEndpoint[
     (com.histmersion.api.Api.IiifImagePart1Part1, com.histmersion.api.Api.IiifImagePart1Part2, com.histmersion.api.Api.IiifImagePart1Part3, com.histmersion.api.Api.IiifImagePart1Part4, com.histmersion.api.Api.IiifImagePart1Part5, com.histmersion.api.Api.IiifImagePart1Part6),
     com.histmersion.api.Api.Error,
-    (Array[Byte], com.histmersion.api.Api.IiifImagePart3Part2),
+    (com.histmersion.api.Api.IiifImagePart3Part1, com.histmersion.api.Api.IiifImagePart3Part2),
     Any
   ] =
     endpoint.get

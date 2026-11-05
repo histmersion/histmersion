@@ -94,6 +94,9 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
 
 object CalibreCollection:
   /** The most books a search answers when the host does not say. */
+  type ReadResultPart2 = ReadResultPart2.T
+  object ReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WriteBack = WriteBack.T
   object WriteBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -205,7 +208,7 @@ object CalibreCollection:
 
   def extension(name: com.histmersion.plugins.calibre.CalibreCollection.ExtensionName): com.histmersion.plugins.calibre.CalibreCollection.ExtensionResult = name.reverse.takeWhile(_ != '.').reverse.toLowerCase(java.util.Locale.ROOT)
 
-  def read(path: com.histmersion.plugins.calibre.CalibreCollection.ReadPath)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart1, Array[Byte]] =
+  def read(path: com.histmersion.plugins.calibre.CalibreCollection.ReadPath)(using files: com.histmersion.plugin.LocalFiles): Either[com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart1, com.histmersion.plugins.calibre.CalibreCollection.ReadResultPart2] =
     Try(files.read(Path.of(path))).toEither.left.map(e => s"cannot read $path (${e.getMessage})")
 
   /** `file` written as `<a temporary directory>/<name>.<extension>` (the extension is what tells Calibre the format),

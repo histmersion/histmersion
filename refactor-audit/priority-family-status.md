@@ -1,5 +1,41 @@
 # Priority-family status
 
+## Applied: whole-buffer signatures and earlier element-wrapper corrections
+
+signature-buffers-project-2 converts 197 raw byte/int array signature positions
+to whole-array Pure newtypes and corrects 44 earlier per-byte wrapper uses across
+75 production files. The earlier aliases now have Array[Byte] as their base and
+the signatures reference them directly instead of Array[Alias]. Corrections are
+separate from raw-leaf removal; neither is credited as verified behavioral repair.
+Caller/implementation compilation and overlap indexing remain deferred.
+
+The existing member transformation now handles whole Array[Byte]/Array[Int] units,
+preserving surrounding Option/tuple/container shapes. The correction pass reads
+the previous rewrite's shapes.tsv as provenance, checks the expected generated
+RefinedType[Byte,Pure] definition, and checks that its fully qualified type
+references are solely array elements in the owning source. Fully qualified
+cross-file references block correction. Imported/renamed references are not
+semantically resolved; this remains an explicit limit. No list of individual
+caller expressions or new runner/report framework was introduced.
+
+The fixture covers raw and optional array signatures, a previous element wrapper,
+mixed scalar/array uses and a cross-file reference. Mixed and cross-file cases
+stay unchanged. Output exactly matches expected source; expected code and the
+external reference file compile with Scala 3.10.0/Iron 3.4.1. The fixture reports
+two new conversions, one correction and two blocked cases. Previous scalar/array
+newtype representation tests remain applicable; no application behavioral pass is
+asserted. Application/source/config/docs whitespace checks pass.
+
+The frozen applicator checks all 75 files. signature-buffers-project-residual-1
+finds zero further conversions/corrections and 1583 blocked positions. The global
+measurement validates all 3167 current source files and the fourteen-plan chain;
+stable-ID comparison reports exactly 197 raw leaves removed and zero introduced.
+The count changes from 8421 to 8224: production2170/test6054. The 44 historical
+corrections do not inflate that decrease. Initial preview 1 is retained; preview 2
+adds cross-file-reference checks with unchanged production counts. Residual
+declaration shapes, aliases/inference and external-contract classification remain
+outstanding before the requested overlap/consolidation review.
+
 ## Applied: ordinary-class and enum header constructor types
 
 constructor-types-project-1 converts 566 additional explicit primitive constructor

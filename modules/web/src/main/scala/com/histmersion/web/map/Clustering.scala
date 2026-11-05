@@ -9,6 +9,9 @@ import scala.scalajs.js
 object Clustering:
 
   /** World pixels of a point at zoom `z` on the 256-pixel grid (Web Mercator). Pure. */
+  type GroupResult = GroupResult.T
+  object GroupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type WorldResultPart1 = WorldResultPart1.T
   object WorldResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WorldResultPart2 = WorldResultPart2.T
@@ -58,7 +61,7 @@ object Clustering:
     * point is within `radius` px, else starts one. Answers each point's group number (0, 1, … in the order the groups
     * were started). Pure; one pass with a grid of `radius` cells.
     */
-  def group(xs: Array[Double], ys: Array[Double], radius: com.histmersion.web.map.Clustering.GroupRadius): Array[Int] =
+  def group(xs: Array[Double], ys: Array[Double], radius: com.histmersion.web.map.Clustering.GroupRadius): com.histmersion.web.map.Clustering.GroupResult =
     val n = xs.length
     val out = new Array[Int](n)
     if radius <= 0 then

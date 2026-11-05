@@ -58,6 +58,13 @@ final case class GeoTiffGrid(
 object GeoTiffGrid:
 
   // TIFF and GeoTIFF tag numbers (TIFF 6.0; OGC GeoTIFF 1.1; GDAL's no-data tag)
+  type LeB = LeB.T
+  object LeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseHead = ParseHead.T
+  object ParseHead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseReadResultPart2 = ParseReadResultPart2.T
+  object ParseReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RowBytesResult = RowBytesResult.T
   object RowBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EastResult = EastResult.T
@@ -129,12 +136,12 @@ object GeoTiffGrid:
     type At = At.T
     object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def le(b: Array[Byte]) = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
+  private def le(b: com.histmersion.util.basemap.GeoTiffGrid.LeB) = ByteBuffer.wrap(b).order(ByteOrder.LITTLE_ENDIAN)
 
   /** One image file directory: its entries, and their values read from the file as asked. */
   final private class Directory(entries: Map[Directory.EntriesKey, Entry], bytesAt: (Directory.BytesAtArg1, Directory.BytesAtArg2) => Either[Directory.BytesAtResultPart1, Array[Byte]]):
     def has(tag: com.histmersion.util.basemap.GeoTiffGrid.Directory.HasTag): com.histmersion.util.basemap.GeoTiffGrid.Directory.HasResult = entries.contains(tag)
-    private def raw(tag: com.histmersion.util.basemap.GeoTiffGrid.Directory.RawTag): Either[com.histmersion.util.basemap.GeoTiffGrid.Directory.RawResultPart1, Option[(Entry, Array[Byte])]] = entries.get(tag) match
+    private def raw(tag: com.histmersion.util.basemap.GeoTiffGrid.Directory.RawTag): Either[com.histmersion.util.basemap.GeoTiffGrid.Directory.RawResultPart1, Option[(Entry, com.histmersion.util.basemap.GeoTiffGrid.Directory.RawResultPart2Part2)]] = entries.get(tag) match
       case None    => Right(None)
       case Some(e) =>
         val size = TypeSize.getOrElse(e.kind, 1) * e.count
@@ -153,6 +160,9 @@ object GeoTiffGrid:
       ints(tag).flatMap(_.flatMap(_.headOption).orElse(default).toRight(s"no tag $tag"))
 
   object Directory:
+    type RawResultPart2Part2 = RawResultPart2Part2.T
+    object RawResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type EntriesKey = EntriesKey.T
     object EntriesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type BytesAtArg1 = BytesAtArg1.T
@@ -201,7 +211,7 @@ object GeoTiffGrid:
     * strip offsets of a large grid). A little-endian classic TIFF holding one band of uncompressed signed 16-bit
     * samples in strips — GEBCO's GeoTIFFs — and nothing else: anything else is refused with what it is.
     */
-  def parse(head: Array[Byte], read: (com.histmersion.util.basemap.GeoTiffGrid.ParseReadArg1, com.histmersion.util.basemap.GeoTiffGrid.ParseReadArg2) => Either[com.histmersion.util.basemap.GeoTiffGrid.ParseReadResultPart1, Array[Byte]]): Either[com.histmersion.util.basemap.GeoTiffGrid.ParseResultPart1, GeoTiffGrid] =
+  def parse(head: com.histmersion.util.basemap.GeoTiffGrid.ParseHead, read: (com.histmersion.util.basemap.GeoTiffGrid.ParseReadArg1, com.histmersion.util.basemap.GeoTiffGrid.ParseReadArg2) => Either[com.histmersion.util.basemap.GeoTiffGrid.ParseReadResultPart1, com.histmersion.util.basemap.GeoTiffGrid.ParseReadResultPart2]): Either[com.histmersion.util.basemap.GeoTiffGrid.ParseResultPart1, GeoTiffGrid] =
     def bytesAt(offset: Long, length: Int): Either[String, Array[Byte]] =
       if offset + length <= head.length then
         Right(java.util.Arrays.copyOfRange(head, offset.toInt, offset.toInt + length))

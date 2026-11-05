@@ -17,6 +17,9 @@ trait ByteSource:
     finally in.close()
 
 object ByteSource:
+  type BytesData = BytesData.T
+  object BytesData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SizeResult = SizeResult.T
   object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -24,6 +27,6 @@ object ByteSource:
     def size: Long = Files.size(path)
     def open(): InputStream = Files.newInputStream(path)
 
-  def bytes(data: Array[Byte]): ByteSource = new ByteSource:
+  def bytes(data: com.histmersion.util.storage.ByteSource.BytesData): ByteSource = new ByteSource:
     def size: Long = data.length.toLong
     def open(): InputStream = ByteArrayInputStream(data)

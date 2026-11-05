@@ -12,7 +12,8 @@ object AstRecipe {
   }
   case class Policy(manifest: String = "", report: String = "", edits: List[Edit] = Nil, creates: Map[String,String] = Map.empty, appendStats: Map[String,String] = Map.empty, relocatedPreview: String = "", appliedPlans: List[String] = Nil,
     definitionRoots: List[String] = Nil, reuse: Map[String,String] = Map.empty, names: Map[String,String] = Map.empty, defer: Map[String,String] = Map.empty, buffers: Map[String,String] = Map.empty, localModels: List[String] = Nil,
-    measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil, memberTypes: Boolean = false, previousTypes: String = "", otherConstructors: Boolean = false)
+    measureTypes: Boolean = false, confirmedTypes: List[String] = Nil, expectedTypeSelectors: List[String] = Nil, memberTypes: Boolean = false, previousTypes: String = "", otherConstructors: Boolean = false,
+    signatureBuffers: Boolean = false, bufferHistory: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -51,14 +52,23 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
     val selected = policy.edits.groupBy(_.path) ++ definitionPaths.filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
+    val bufferTargets = policy.bufferHistory.flatMap(p => rows(p).filter(r => r.length == 4 && r(2).contains("Type.Name(\"Byte\")")).map(r => r(0) -> r(3))).groupBy(_._1).map { case(p,rs) => p -> rs.map(_._2).distinct }
+    val targetPaths = bufferTargets.toList.flatMap { case(p,ts) => ts.map(_ -> p) }.toMap
+    val externalBufferRefs = if(targetPaths.isEmpty) Map.empty[String,List[String]] else frozen.keys.toList.flatMap { p =>
+      val s = read(p)
+      if(!targetPaths.keys.exists(s.contains)) Nil else s.parse[Source].get.collect {
+        case t: Type.Select if targetPaths.get(t.syntax).exists(_ != p) => t.syntax -> p
+      }
+    }.groupBy(_._1).map { case(t,rs) => t -> rs.map(_._2).distinct.sorted }
     val changed = selected.toList.sortBy(_._1).flatMap { case(path, recipes) =>
       require(frozen.contains(path))
       val source = read(path)
       val tree = source.parse[Source].get
       val definitionPatches = if(definitionPaths(path)) {
         val records = ModelDefinitions.patches(tree, source, path, policy.reuse, policy.names, policy.defer, policy.buffers, policy.localModels, policy.otherConstructors, evidence)
-        val members = if(policy.memberTypes) MemberDefinitions.patches(tree,source,path,policy.reuse,policy.names,evidence) else Nil
-        (records ++ members).groupBy(p => (p._1,p._2)).toList.flatMap { case((a,b),ps) =>
+        val members = if(policy.memberTypes) MemberDefinitions.patches(tree,source,path,policy.reuse,policy.names,policy.signatureBuffers,evidence) else Nil
+        val corrections = BufferSignatureRepair.patches(tree,path,bufferTargets.getOrElse(path,Nil),externalBufferRefs,evidence)
+        (records ++ members ++ corrections).groupBy(p => (p._1,p._2)).toList.flatMap { case((a,b),ps) =>
           if(a == b) {
             val snippets = ps.map(_._3)
             val combined = if(snippets.size > 1 && snippets.forall(_.trim.startsWith("object "))) {
@@ -236,8 +246,47 @@ object TypeMeasurement {
   }
 }
 
+object BufferSignatureRepair {
+  def patches(tree: Source, path: String, targets: List[String], external: Map[String,List[String]], evidence: scala.collection.mutable.ListBuffer[List[String]]): List[(Int,Int,String)] = {
+    def parents(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: parents(p))
+    def qualified(o: Defn.Object): String = (parents(o).reverse :+ o).collect {
+      case p: Pkg => p.ref.syntax
+      case o: Defn.Object => o.name.value
+      case c: Defn.Class => c.name.value
+      case c: Defn.Trait => c.name.value
+      case c: Defn.Enum => c.name.value
+    }.mkString(".")
+    targets.flatMap { target =>
+      val candidates = tree.collect { case o: Defn.Object if qualified(o) == target => o }
+      require(candidates.size == 1,"Historical buffer newtype owner changed: " + target)
+      val o = candidates.head
+      require(o.templ.inits.size == 1 && o.templ.stats.isEmpty,"Historical buffer newtype changed: " + target)
+      val parent = o.templ.inits.head.tpe.asInstanceOf[Type.Apply]
+      require(parent.tpe.syntax.endsWith("RefinedType") && parent.argClause.values.size == 2 && parent.argClause.values(1).syntax.endsWith(".Pure"))
+      val base = parent.argClause.values.head
+      if(base.syntax == "_root_.scala.Array[_root_.scala.Byte]") Nil
+      else {
+        require(base.syntax == "_root_.scala.Byte","Historical buffer base differs: " + target)
+        val refs = tree.collect { case t: Type.Select if t.syntax == target => t }
+        val arrays = tree.collect { case a: Type.Apply if Set("Array","scala.Array","_root_.scala.Array")(a.tpe.syntax) &&
+          a.argClause.values.size == 1 && a.argClause.values.head.syntax == target => a }
+        if(refs.nonEmpty && refs.size == arrays.size && !external.contains(target)) {
+          val edits = arrays.map { a =>
+            evidence += List(path,(a.pos.startLine + 1).toString,"CORRECTION " + target + " " + a.structure,target)
+            (a.pos.start,a.pos.end,target)
+          }
+          edits :+ ((base.pos.start,base.pos.end,"_root_.scala.Array[_root_.scala.Byte]"))
+        } else {
+          evidence += List(path,(o.pos.startLine + 1).toString,"UNRESOLVED buffer correction " + target,"Non-array, mixed, absent or cross-file references; primitive newtype preserved. " + external.getOrElse(target,Nil).mkString(","))
+          Nil
+        }
+      }
+    }.distinct
+  }
+}
+
 object MemberDefinitions {
-  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String],
+  def patches(tree: Source, source: String, path: String, reuse: Map[String,String], names: Map[String,String], wholeBuffers: Boolean,
       evidence: scala.collection.mutable.ListBuffer[List[String]]): List[(Int,Int,String)] = {
     val result = scala.collection.mutable.ListBuffer.empty[(Int,Int,String)]
     val additions = scala.collection.mutable.LinkedHashMap.empty[Tree,scala.collection.mutable.LinkedHashMap[String,String]]
@@ -257,6 +306,8 @@ object MemberDefinitions {
     }
     def leaves(t: Type,suffix: String = ""): List[(Type,String,String)] = t match {
       case Type.Name(n) if Set("String","Int","Long","Double","Boolean","Float","Short","Byte","Char")(n) => List((t,n,suffix))
+      case a: Type.Apply if wholeBuffers && Set("Array","scala.Array","_root_.scala.Array")(a.tpe.syntax) &&
+        a.argClause.values.size == 1 && Set("Byte","Int")(a.argClause.values.head.syntax) => List((a,"Array[" + a.argClause.values.head.syntax + "]",suffix))
       case a: Type.Apply => a.argClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + (if(a.argClause.values.size == 1) "" else "Part" + (i + 1))) }
       case f: Type.Function => f.paramClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "Arg" + (i + 1)) } ++ leaves(f.res,suffix + "Result")
       case f: Type.ContextFunction => f.paramClause.values.zipWithIndex.flatMap { case(v,i) => leaves(v,suffix + "ContextArg" + (i + 1)) } ++ leaves(f.res,suffix + "Result")
@@ -290,7 +341,7 @@ object MemberDefinitions {
           val declared = additions.getOrElseUpdate(targetOwner,scala.collection.mutable.LinkedHashMap.empty[String,String])
           val shadowed = tree.collect { case d: Defn.Type if d.name.value == base => d }.nonEmpty
           val local = context.exists(_.is[Defn.Def])
-          val packed = (leaf :: parents(leaf).takeWhile(x => x.pos.start >= t.pos.start && x.pos.end <= t.pos.end)).exists {
+          val packed = !base.startsWith("Array[") && (leaf :: parents(leaf).takeWhile(x => x.pos.start >= t.pos.start && x.pos.end <= t.pos.end)).exists {
             case a: Type.Apply => Set("Array","scala.Array","_root_.scala.Array","js.Array")(a.tpe.syntax)
             case _ => false
           }
@@ -323,7 +374,7 @@ object MemberDefinitions {
       val own = ownerName(target).split('.').last
       val pad = target match { case o: Defn.Object if o.templ.stats.nonEmpty => indent(o.templ.stats.head); case _ => indent(target) + "  " }
       val definitions = declared.toList.flatMap { case(n,b) => List("type " + n + " = " + n + ".T",
-        "object " + n + " extends _root_.io.github.iltotore.iron.RefinedType[" + (if(b == "String") "_root_.java.lang.String" else "_root_.scala." + b) + ", _root_.io.github.iltotore.iron.constraint.any.Pure]") }.mkString("\n" + pad)
+        "object " + n + " extends _root_.io.github.iltotore.iron.RefinedType[" + (if(b == "String") "_root_.java.lang.String" else if(b.startsWith("Array[")) "_root_.scala.Array[_root_.scala." + b.stripPrefix("Array[") else "_root_.scala." + b) + ", _root_.io.github.iltotore.iron.constraint.any.Pure]") }.mkString("\n" + pad)
       target match {
         case o: Defn.Object if o.templ.stats.nonEmpty => val at = o.templ.stats.head.pos.start; result += ((at,at,definitions + "\n\n" + pad))
         case _: Defn.Object => sys.error("Empty companion requires explicit treatment: " + own)

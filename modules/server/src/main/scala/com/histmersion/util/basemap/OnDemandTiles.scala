@@ -185,14 +185,14 @@ final class OnDemandTiles(
         case Some(e)               => leaf(r, e).flatMap(walk(_, depth + 1))
     if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
-  private def read(z: com.histmersion.util.basemap.OnDemandTiles.ReadZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadX, y: com.histmersion.util.basemap.OnDemandTiles.ReadY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadResultPart1, Option[Array[Byte]]] =
+  private def read(z: com.histmersion.util.basemap.OnDemandTiles.ReadZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadX, y: com.histmersion.util.basemap.OnDemandTiles.ReadY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.ReadResultPart2]] =
     val raw = source match
       case OnDemandTiles.Source.Planet(_)   => readPlanet(z, x, y)
       case OnDemandTiles.Source.Template(u) =>
         request(http().file(u().replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)))
     raw.flatMap(_.fold(Right(None))(transform))
 
-  private def readPlanet(z: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetX, y: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetResultPart1, Option[Array[Byte]]] =
+  private def readPlanet(z: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetX, y: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetResultPart2]] =
     def once(): Either[String, Option[Array[Byte]]] =
       for
         r <- described()
@@ -210,7 +210,7 @@ final class OnDemandTiles(
   /** The tile `z/x/y`: from the cache, else from the provider (then cached). `Right(None)`: there is none (outside the
     * configured zooms, or the provider has none); `Left`: it could not be read now.
     */
-  def tile(z: com.histmersion.util.basemap.OnDemandTiles.TileZ, x: com.histmersion.util.basemap.OnDemandTiles.TileX, y: com.histmersion.util.basemap.OnDemandTiles.TileY): Either[com.histmersion.util.basemap.OnDemandTiles.TileResultPart1, Option[Array[Byte]]] =
+  def tile(z: com.histmersion.util.basemap.OnDemandTiles.TileZ, x: com.histmersion.util.basemap.OnDemandTiles.TileX, y: com.histmersion.util.basemap.OnDemandTiles.TileY): Either[com.histmersion.util.basemap.OnDemandTiles.TileResultPart1, Option[com.histmersion.util.basemap.OnDemandTiles.TileResultPart2]] =
     val c = cfg()
     if !c.enabled || z > c.maxZoom || x < 0 || y < 0 || x >= (1L << z) || y >= (1L << z) then Right(None)
     else
@@ -245,6 +245,13 @@ final class OnDemandTiles(
               finally { val _ = inflight.remove(key, mine) }
 
 object OnDemandTiles:
+  type ReadResultPart2 = ReadResultPart2.T
+  object ReadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPlanetResultPart2 = ReadPlanetResultPart2.T
+  object ReadPlanetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileResultPart2 = TileResultPart2.T
+  object TileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NowResult = NowResult.T
   object NowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SleepArg1 = SleepArg1.T

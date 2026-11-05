@@ -19,6 +19,11 @@ final class Downloads(http: Plugin.Http):
 object Downloads:
   /** A PDF that is really a PDF: the magic bytes within the first KiB and a plausible size (the host checks the same).
     */
+  type LooksLikePdfB = LooksLikePdfB.T
+  object LooksLikePdfB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Md5B = Md5B.T
+  object Md5B extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PdfSource = PdfSource.T
   object PdfSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PdfUrl = PdfUrl.T
@@ -32,11 +37,11 @@ object Downloads:
   type Md5Result = Md5Result.T
   object Md5Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def looksLikePdf(b: Array[Byte]): com.histmersion.plugins.fetchers.Downloads.LooksLikePdfResult =
+  def looksLikePdf(b: com.histmersion.plugins.fetchers.Downloads.LooksLikePdfB): com.histmersion.plugins.fetchers.Downloads.LooksLikePdfResult =
     b.length > 1024 && String(b.take(1024), "ISO-8859-1").contains("%PDF")
 
   /** Hex MD5 of a download, to compare with the one a record states; `None` when the runtime offers no MD5 (the check
     * is then skipped, never failed).
     */
-  def md5(b: Array[Byte]): Option[com.histmersion.plugins.fetchers.Downloads.Md5Result] =
+  def md5(b: com.histmersion.plugins.fetchers.Downloads.Md5B): Option[com.histmersion.plugins.fetchers.Downloads.Md5Result] =
     scala.util.Try(java.security.MessageDigest.getInstance("MD5").digest(b).map("%02x".format(_)).mkString).toOption

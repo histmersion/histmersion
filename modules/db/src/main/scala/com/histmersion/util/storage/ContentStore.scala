@@ -16,6 +16,9 @@ trait ContentStore:
 
 object ContentStore:
   /** A server that stores no originals. */
+  type HexDigest = HexDigest.T
+  object HexDigest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type FindResultPart2 = FindResultPart2.T
   object FindResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FindSha256 = FindSha256.T
@@ -44,4 +47,4 @@ object ContentStore:
     if e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit) then e else "bin"
 
   /** The lower-case hex of a digest. Pure. */
-  def hex(digest: Array[Byte]): com.histmersion.util.storage.ContentStore.HexResult = java.util.HexFormat.of().formatHex(digest)
+  def hex(digest: com.histmersion.util.storage.ContentStore.HexDigest): com.histmersion.util.storage.ContentStore.HexResult = java.util.HexFormat.of().formatHex(digest)

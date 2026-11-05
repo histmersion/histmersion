@@ -10,15 +10,22 @@ trait LocalFiles:
   def isDirectory(path: Path): com.histmersion.plugin.LocalFiles.IsDirectoryResult
   def exists(path: Path): com.histmersion.plugin.LocalFiles.ExistsResult
   def isExecutable(path: Path): com.histmersion.plugin.LocalFiles.IsExecutableResult
-  def read(path: Path): Array[Byte]
-  def readPrefix(path: Path, length: com.histmersion.plugin.LocalFiles.ReadPrefixLength): Array[Byte]
+  def read(path: Path): com.histmersion.plugin.LocalFiles.ReadResult
+  def readPrefix(path: Path, length: com.histmersion.plugin.LocalFiles.ReadPrefixLength): com.histmersion.plugin.LocalFiles.ReadPrefixResult
 
   /** The named file exists only while use runs. Cleanup also runs when use returns Left or throws.
     * name must be a single filename, never a path. The supplied path must not escape the callback.
     */
-  def staged[A](name: com.histmersion.plugin.LocalFiles.StagedName, bytes: Array[Byte])(use: Path => Either[com.histmersion.plugin.LocalFiles.StagedUseResultPart1, A]): Either[com.histmersion.plugin.LocalFiles.StagedResultPart1, A]
+  def staged[A](name: com.histmersion.plugin.LocalFiles.StagedName, bytes: com.histmersion.plugin.LocalFiles.StagedBytes)(use: Path => Either[com.histmersion.plugin.LocalFiles.StagedUseResultPart1, A]): Either[com.histmersion.plugin.LocalFiles.StagedResultPart1, A]
 
 object LocalFiles:
+  type ReadResult = ReadResult.T
+  object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPrefixResult = ReadPrefixResult.T
+  object ReadPrefixResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StagedBytes = StagedBytes.T
+  object StagedBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsFileResult = IsFileResult.T
   object IsFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsDirectoryResult = IsDirectoryResult.T
@@ -37,6 +44,13 @@ object LocalFiles:
   object StagedUseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Unavailable extends LocalFiles:
+    type ReadResult = ReadResult.T
+    object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadPrefixResult = ReadPrefixResult.T
+    object ReadPrefixResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StagedBytes = StagedBytes.T
+    object StagedBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type IsFileResult = IsFileResult.T
     object IsFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsDirectoryResult = IsDirectoryResult.T
@@ -59,7 +73,7 @@ object LocalFiles:
     def isDirectory(path: Path): com.histmersion.plugin.LocalFiles.Unavailable.IsDirectoryResult = unavailable
     def exists(path: Path): com.histmersion.plugin.LocalFiles.Unavailable.ExistsResult = unavailable
     def isExecutable(path: Path): com.histmersion.plugin.LocalFiles.Unavailable.IsExecutableResult = unavailable
-    def read(path: Path): Array[Byte] = unavailable
-    def readPrefix(path: Path, length: com.histmersion.plugin.LocalFiles.Unavailable.ReadPrefixLength): Array[Byte] = unavailable
-    def staged[A](name: com.histmersion.plugin.LocalFiles.Unavailable.StagedName, bytes: Array[Byte])(use: Path => Either[com.histmersion.plugin.LocalFiles.Unavailable.StagedUseResultPart1, A]): Either[com.histmersion.plugin.LocalFiles.Unavailable.StagedResultPart1, A] =
+    def read(path: Path): com.histmersion.plugin.LocalFiles.Unavailable.ReadResult = unavailable
+    def readPrefix(path: Path, length: com.histmersion.plugin.LocalFiles.Unavailable.ReadPrefixLength): com.histmersion.plugin.LocalFiles.Unavailable.ReadPrefixResult = unavailable
+    def staged[A](name: com.histmersion.plugin.LocalFiles.Unavailable.StagedName, bytes: com.histmersion.plugin.LocalFiles.Unavailable.StagedBytes)(use: Path => Either[com.histmersion.plugin.LocalFiles.Unavailable.StagedUseResultPart1, A]): Either[com.histmersion.plugin.LocalFiles.Unavailable.StagedResultPart1, A] =
       Left("this host supplies no local files")

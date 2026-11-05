@@ -9,7 +9,7 @@ import io.circe.Json
   * a request) as the three verbs the acquisition clients read.
   */
 final class SttpHttp(policy: PolicyHttp) extends Http:
-  def bytes(url: com.histmersion.domain.library.acquisition.SttpHttp.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart1, com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart2]): Either[com.histmersion.domain.library.acquisition.SttpHttp.BytesResultPart1, Array[com.histmersion.domain.library.acquisition.SttpHttp.BytesResultPart2]] = policy.bytes(url, headers)
+  def bytes(url: com.histmersion.domain.library.acquisition.SttpHttp.BytesUrl, headers: Map[com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart1, com.histmersion.domain.library.acquisition.SttpHttp.BytesHeadersPart2]): Either[com.histmersion.domain.library.acquisition.SttpHttp.BytesResultPart1, com.histmersion.domain.library.acquisition.SttpHttp.BytesResultPart2] = policy.bytes(url, headers)
 
   override def once(url: String, headers: Map[String, String]): Either[String, HttpAnswer] = policy.once(url, headers)
 
@@ -28,7 +28,7 @@ object SttpHttp:
   type BytesResultPart1 = BytesResultPart1.T
   object BytesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesResultPart2 = BytesResultPart2.T
-  object BytesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object BytesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesUrl = BytesUrl.T
   object BytesUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BytesHeadersPart1 = BytesHeadersPart1.T

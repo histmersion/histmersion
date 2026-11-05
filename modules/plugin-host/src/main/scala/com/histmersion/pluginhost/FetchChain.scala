@@ -92,6 +92,9 @@ final class FetchChain(
 object FetchChain:
 
   /** What every failed fetch says (the ingest step and the acquisition list read it). */
+  type LooksLikePdfB = LooksLikePdfB.T
+  object LooksLikePdfB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type AllowUnauthorised = AllowUnauthorised.T
   object AllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegisteredArg1 = RegisteredArg1.T
@@ -240,7 +243,7 @@ object FetchChain:
   /** Pure: a PDF that is really a PDF. Without a PDF library this is the cheap structural check: the magic bytes within
     * the first KiB and a plausible size. A publisher's "you do not have access" interstitial is HTML and fails it.
     */
-  def looksLikePdf(b: Array[Byte]): com.histmersion.pluginhost.FetchChain.LooksLikePdfResult =
+  def looksLikePdf(b: com.histmersion.pluginhost.FetchChain.LooksLikePdfB): com.histmersion.pluginhost.FetchChain.LooksLikePdfResult =
     b.length > 1024 && new String(b.take(1024), "ISO-8859-1").contains("%PDF")
 
   /** Pure: the work as a log line names it. */

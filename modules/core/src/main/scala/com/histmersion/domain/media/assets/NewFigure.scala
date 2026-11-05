@@ -20,7 +20,7 @@ object NewFigure:
   type OfMaxBytes = OfMaxBytes.T
   object OfMaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Sha256Bytes = Sha256Bytes.T
-  object Sha256Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Sha256Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Bytes = Bytes.T
   object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -51,7 +51,7 @@ object NewFigure:
           Right(NewFigure(name, in.mime, raw, in.width.orElse(size.map(_._1)), in.height.orElse(size.map(_._2))))
       }
 
-  def sha256(bytes: Array[com.histmersion.domain.media.assets.NewFigure.Sha256Bytes]): com.histmersion.Sha256 =
+  def sha256(bytes: com.histmersion.domain.media.assets.NewFigure.Sha256Bytes): com.histmersion.Sha256 =
     java.security.MessageDigest
       .getInstance("SHA-256")
       .digest(bytes)

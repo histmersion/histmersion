@@ -18,6 +18,9 @@ import com.histmersion.api.plugins.{PluginDescription, PluginFile, PluginJar, Pl
 object PluginKit:
 
   /** JSON as these files are written: two-space indented, absent options left out. */
+  type Sha256HexBytes = Sha256HexBytes.T
+  object Sha256HexBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Sha256HexResult = Sha256HexResult.T
   object Sha256HexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DigestResult = DigestResult.T
@@ -131,7 +134,7 @@ object PluginKit:
 
   // ── digests ───────────────────────────────────────────────────────────────────────────────────
 
-  def sha256Hex(bytes: Array[Byte]): com.histmersion.util.plugins.PluginKit.Sha256HexResult =
+  def sha256Hex(bytes: com.histmersion.util.plugins.PluginKit.Sha256HexBytes): com.histmersion.util.plugins.PluginKit.Sha256HexResult =
     MessageDigest.getInstance("SHA-256").digest(bytes).map(b => f"$b%02x").mkString
 
   /** One digest of a plugin set — `(jar file name, its SHA-256)` pairs, order-independent: SHA-256 over the sorted

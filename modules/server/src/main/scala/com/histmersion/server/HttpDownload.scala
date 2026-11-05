@@ -48,6 +48,11 @@ final class HttpDownload(userAgent: HttpDownload.UserAgent):
     catch case e: Exception => Left(s"download of $url failed: ${e.getMessage}")
 
 object HttpDownload:
+  type ReadAllResult = ReadAllResult.T
+  object ReadAllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnzipData = UnzipData.T
+  object UnzipData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type UserAgent = UserAgent.T
   object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -70,7 +75,7 @@ object HttpDownload:
     HttpPolicy.userAgent(s"Histmersion/${Version.version} (gazetteer import)")
   )
 
-  private def readAll(is: InputStream): Array[Byte] =
+  private def readAll(is: InputStream): com.histmersion.server.HttpDownload.ReadAllResult =
     val buf = new ByteArrayOutputStream(1024 * 1024)
     val tmp = new Array[Byte](8192)
     @tailrec def next(): Unit =
@@ -81,7 +86,7 @@ object HttpDownload:
     next()
     buf.toByteArray
 
-  private def unzip(data: Array[Byte]): Either[com.histmersion.server.HttpDownload.UnzipResultPart1, com.histmersion.server.HttpDownload.UnzipResultPart2] =
+  private def unzip(data: com.histmersion.server.HttpDownload.UnzipData): Either[com.histmersion.server.HttpDownload.UnzipResultPart1, com.histmersion.server.HttpDownload.UnzipResultPart2] =
     try
       val zis = new ZipInputStream(new java.io.ByteArrayInputStream(data))
       @tailrec def usable(e: java.util.zip.ZipEntry): Option[java.util.zip.ZipEntry] =

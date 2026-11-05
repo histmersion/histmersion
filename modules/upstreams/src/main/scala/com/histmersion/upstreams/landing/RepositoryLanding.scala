@@ -27,6 +27,9 @@ object RepositoryLanding:
     * is an open-access publisher's — [[oaPublisherPage]]); `open` = the index says the location is open access
     * (OpenAlex `is_oa`; every Unpaywall `oa_location` is).
     */
+  type LooksLikeHtmlB = LooksLikeHtmlB.T
+  object LooksLikeHtmlB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PublisherSourceTypes = PublisherSourceTypes.T
   object PublisherSourceTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WordLabelResult = WordLabelResult.T
@@ -473,6 +476,6 @@ object RepositoryLanding:
   def ojsDownload(url: com.histmersion.upstreams.landing.RepositoryLanding.OjsDownloadUrl): com.histmersion.upstreams.landing.RepositoryLanding.OjsDownloadResult = OjsView.replaceFirstIn(url, "/article/download/$1/$2")
 
   /** Pure: does a non-PDF answer look like an HTML page (worth reading for its tags)? */
-  def looksLikeHtml(b: Array[Byte]): com.histmersion.upstreams.landing.RepositoryLanding.LooksLikeHtmlResult =
+  def looksLikeHtml(b: com.histmersion.upstreams.landing.RepositoryLanding.LooksLikeHtmlB): com.histmersion.upstreams.landing.RepositoryLanding.LooksLikeHtmlResult =
     val head = new String(b.take(2048), "ISO-8859-1").toLowerCase
     head.contains("<html") || head.contains("<!doctype html") || head.contains("<head") || head.contains("<meta")

@@ -75,13 +75,13 @@ final class MemoryStore private (
       .collect { case (k, e) if k.within(p) => Stored(local(k), Stored.Kind.File, e.size, e.modified) }
       .sortBy(_.key.value)
 
-  private def store(key: Store.Key, bytes: Array[Byte]): Stored =
+  private def store(key: Store.Key, bytes: com.histmersion.util.storage.MemoryStore.StoreBytes): Stored =
     val e = Entry(bytes.clone(), now)
     state.updateAndGet(_.modify(_.files).using(_.updated(full(key), e)))
     Stored(key, Stored.Kind.File, e.size, e.modified)
 
-  def put(key: Store.Key, bytes: Array[Byte]): Either[Store.Error, Stored] = Right(store(key, bytes))
-  def write(key: Store.Key, bytes: Array[Byte]): Either[Store.Error, Stored] = Right(store(key, bytes))
+  def put(key: Store.Key, bytes: com.histmersion.util.storage.MemoryStore.PutBytes): Either[Store.Error, Stored] = Right(store(key, bytes))
+  def write(key: Store.Key, bytes: com.histmersion.util.storage.MemoryStore.WriteBytes): Either[Store.Error, Stored] = Right(store(key, bytes))
 
   def reserve(key: Store.Key, temp: TempName, throughLink: com.histmersion.util.storage.MemoryStore.ReserveThroughLink): Either[Store.Error, Reservation] =
     Right(MemoryStore.MemoryReservation(key, where(key), (k, b) => store(k, b)))
@@ -145,6 +145,13 @@ final class MemoryStore private (
 
 object MemoryStore:
   /** The modification times of an in-memory store: one later than the last for each write. */
+  type StoreBytes = StoreBytes.T
+  object StoreBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PutBytes = PutBytes.T
+  object PutBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteBytes = WriteBytes.T
+  object WriteBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Name = Name.T
   object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -184,11 +191,11 @@ object MemoryStore:
     def size: ByteCount = entry.size
     def modified: Instant = entry.modified
     def open(): InputStream = ByteArrayInputStream(entry.bytes)
-    def bytes(): Array[Byte] = entry.bytes.clone()
+    def bytes(): com.histmersion.util.storage.MemoryStore.MemoryBlob.BytesResult = entry.bytes.clone()
     def text(): com.histmersion.util.storage.MemoryStore.MemoryBlob.TextResult = String(entry.bytes, UTF_8)
     def sha256(): Sha256 =
       Sha256.applyUnsafe(MessageDigest.getInstance("SHA-256").digest(entry.bytes).map(b => f"${b & 0xff}%02x").mkString)
-    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtLength): Array[Byte] = reader().read(offset, length)
+    def readAt(offset: ByteOffset, length: com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtLength): com.histmersion.util.storage.MemoryStore.MemoryBlob.ReadAtResult = reader().read(offset, length)
     def mapped(): ByteBuffer = ByteBuffer.wrap(entry.bytes).asReadOnlyBuffer()
     def reader(): RandomReader = new RandomReader:
       def where: String = MemoryBlob.this.where
@@ -203,6 +210,11 @@ object MemoryStore:
       def close(): Unit = ()
 
   object MemoryBlob:
+    type BytesResult = BytesResult.T
+    object BytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ReadAtResult = ReadAtResult.T
+    object ReadAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Where = Where.T
     object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -221,7 +233,7 @@ object MemoryStore:
         super.close()
         written.set(toByteArray)
 
-    def writeAt(offset: ByteOffset, bytes: Array[Byte]): Unit =
+    def writeAt(offset: ByteOffset, bytes: com.histmersion.util.storage.MemoryStore.MemoryReservation.WriteAtBytes): Unit =
       val _ = written.updateAndGet { now =>
         val out = java.util.Arrays.copyOf(now, math.max(now.length, offset.value.toInt + bytes.length))
         System.arraycopy(bytes, 0, out, offset.value.toInt, bytes.length)
@@ -239,6 +251,9 @@ object MemoryStore:
     private[util] def onDisk: Either[Store.Error, java.nio.file.Path] = Left(Store.Error.NotOnDisk(where))
 
   object MemoryReservation:
+    type WriteAtBytes = WriteAtBytes.T
+    object WriteAtBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Where = Where.T
     object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

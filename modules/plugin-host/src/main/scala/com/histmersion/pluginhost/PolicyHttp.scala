@@ -31,7 +31,7 @@ final class PolicyHttp(
   /** One GET: the body of a 2xx answer, or why there is none. A caller's own `User-Agent` replaces the configured one;
     * either goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail.
     */
-  def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.BytesResultPart1, Array[Byte]] =
+  def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.BytesResultPart1, com.histmersion.pluginhost.PolicyHttp.BytesResultPart2] =
     val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
     val sent = headers.filterNot(_._1.equalsIgnoreCase(PolicyHttp.UserAgent)) +
       (PolicyHttp.UserAgent -> HttpPolicy.userAgent(ua.getOrElse(userAgent)))
@@ -76,6 +76,9 @@ final class PolicyHttp(
       once(url, headers).map(a => Plugin.HttpResponse(a.code, a.headers, a.body))
 
 object PolicyHttp:
+  type BytesResultPart2 = BytesResultPart2.T
+  object BytesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type UserAgent = UserAgent.T
   object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Tries = Tries.T

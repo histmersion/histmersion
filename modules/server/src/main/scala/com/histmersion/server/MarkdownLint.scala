@@ -361,7 +361,7 @@ object MarkdownLint:
     val findings = mutable.ListBuffer.empty[Finding]
 
     // offsets → (line, column), both 1-based
-    private val lineStarts: Array[Int] =
+    private val lineStarts: com.histmersion.server.MarkdownLint.Scan.LineStarts =
       (0 +: text.indices.filter(text.charAt(_) == '\n').map(_ + 1)).toArray
     private def lineOf(off: com.histmersion.server.MarkdownLint.Scan.LineOfOff): com.histmersion.server.MarkdownLint.Scan.LineOfResult =
       val i = java.util.Arrays.binarySearch(lineStarts, off)
@@ -1402,6 +1402,9 @@ object MarkdownLint:
         }
 
   object Scan:
+    type LineStarts = LineStarts.T
+    object LineStarts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

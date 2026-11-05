@@ -46,7 +46,7 @@ final case class BundleEntities(
   /** Every file's NDJSON payload, in [[BundleFiles.all]] order — empty files included, so a bundle always has the same
     * set of entries.
     */
-  def payloads: List[(com.histmersion.util.data.exchange.BundleEntities.PayloadsResultPart1, Array[Byte])] =
+  def payloads: List[(com.histmersion.util.data.exchange.BundleEntities.PayloadsResultPart1, com.histmersion.util.data.exchange.BundleEntities.PayloadsResultPart2)] =
     def stamped[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))
     def plain[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
     List(
@@ -164,6 +164,11 @@ final case class BundleEntities(
 
 object BundleEntities:
 
+  type PayloadsResultPart2 = PayloadsResultPart2.T
+  object PayloadsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodePayloadsPart2 = DecodePayloadsPart2.T
+  object DecodePayloadsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PayloadsResultPart1 = PayloadsResultPart1.T
   object PayloadsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BlobRefsResultPart1 = BlobRefsResultPart1.T
@@ -210,7 +215,7 @@ object BundleEntities:
   /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
     * missing file is an empty one.
     */
-  def decode(payloads: Map[com.histmersion.util.data.exchange.BundleEntities.DecodePayloadsPart1, Array[Byte]]): (BundleEntities, List[com.histmersion.util.data.exchange.BundleEntities.DecodeResultPart2]) =
+  def decode(payloads: Map[com.histmersion.util.data.exchange.BundleEntities.DecodePayloadsPart1, com.histmersion.util.data.exchange.BundleEntities.DecodePayloadsPart2]): (BundleEntities, List[com.histmersion.util.data.exchange.BundleEntities.DecodeResultPart2]) =
     val problems = List.newBuilder[String]
     def read[A: Decoder](path: String, stamped: Boolean): List[A] =
       payloads.get(path).toList.flatMap(BundleFormat.splitLines).zipWithIndex.flatMap { (l, i) =>

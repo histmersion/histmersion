@@ -9,6 +9,25 @@ import java.util.zip.{CRC32, Deflater, Inflater}
   */
 object TerrariumPng:
 
+  type EncodeResult = EncodeResult.T
+  object EncodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodePng = DecodePng.T
+  object DecodePng extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfilterResultPart2 = UnfilterResultPart2.T
+  object UnfilterResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnfilterRaw = UnfilterRaw.T
+  object UnfilterRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChunkData = ChunkData.T
+  object ChunkData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeflateResult = DeflateResult.T
+  object DeflateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeflateRaw = DeflateRaw.T
+  object DeflateRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InflateResultPart2 = InflateResultPart2.T
+  object InflateResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InflateZ = InflateZ.T
+  object InflateZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type EncodeSize = EncodeSize.T
   object EncodeSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeResultPart1 = DecodeResultPart1.T
@@ -44,7 +63,7 @@ object TerrariumPng:
   private val SubFilter = 1
 
   /** A square tile of `size` × `size` elevations (row by row, metres) as a Terrarium PNG. */
-  def encode(metres: Array[Float], size: com.histmersion.util.basemap.TerrariumPng.EncodeSize): Array[Byte] =
+  def encode(metres: Array[Float], size: com.histmersion.util.basemap.TerrariumPng.EncodeSize): com.histmersion.util.basemap.TerrariumPng.EncodeResult =
     val rowLength = 1 + size * 3
     val raw = new Array[Byte](rowLength * size)
     for y <- 0 until size do
@@ -81,7 +100,7 @@ object TerrariumPng:
     out.toByteArray
 
   /** A Terrarium PNG's elevations (metres, row by row) and its width: 8-bit RGB or RGBA, not interlaced. */
-  def decode(png: Array[Byte]): Either[com.histmersion.util.basemap.TerrariumPng.DecodeResultPart1, (Array[Float], com.histmersion.util.basemap.TerrariumPng.DecodeResultPart2Part2)] =
+  def decode(png: com.histmersion.util.basemap.TerrariumPng.DecodePng): Either[com.histmersion.util.basemap.TerrariumPng.DecodeResultPart1, (Array[Float], com.histmersion.util.basemap.TerrariumPng.DecodeResultPart2Part2)] =
     if png.length < 33 || !java.util.Arrays.equals(png.take(8), Signature) then Left("not a PNG")
     else
       val b = ByteBuffer.wrap(png)
@@ -110,7 +129,7 @@ object TerrariumPng:
           }
         }
 
-  private def unfilter(raw: Array[Byte], width: com.histmersion.util.basemap.TerrariumPng.UnfilterWidth, height: com.histmersion.util.basemap.TerrariumPng.UnfilterHeight, bpp: com.histmersion.util.basemap.TerrariumPng.UnfilterBpp): Either[com.histmersion.util.basemap.TerrariumPng.UnfilterResultPart1, Array[Byte]] =
+  private def unfilter(raw: com.histmersion.util.basemap.TerrariumPng.UnfilterRaw, width: com.histmersion.util.basemap.TerrariumPng.UnfilterWidth, height: com.histmersion.util.basemap.TerrariumPng.UnfilterHeight, bpp: com.histmersion.util.basemap.TerrariumPng.UnfilterBpp): Either[com.histmersion.util.basemap.TerrariumPng.UnfilterResultPart1, com.histmersion.util.basemap.TerrariumPng.UnfilterResultPart2] =
     val stride = width * bpp
     val out = new Array[Byte](stride * height)
     (0 until height)
@@ -143,14 +162,14 @@ object TerrariumPng:
     val (pa, pb, pc) = (math.abs(p - a), math.abs(p - b), math.abs(p - c))
     if pa <= pb && pa <= pc then a else if pb <= pc then b else c
 
-  private def chunk(out: ByteArrayOutputStream, kind: com.histmersion.util.basemap.TerrariumPng.ChunkKind, data: Array[Byte]): Unit =
+  private def chunk(out: ByteArrayOutputStream, kind: com.histmersion.util.basemap.TerrariumPng.ChunkKind, data: com.histmersion.util.basemap.TerrariumPng.ChunkData): Unit =
     val k = kind.getBytes("US-ASCII")
     val crc = CRC32(); crc.update(k); crc.update(data)
     out.write(ByteBuffer.allocate(4).putInt(data.length).array())
     out.write(k); out.write(data)
     out.write(ByteBuffer.allocate(4).putInt(crc.getValue.toInt).array())
 
-  private def deflate(raw: Array[Byte]): Array[Byte] =
+  private def deflate(raw: com.histmersion.util.basemap.TerrariumPng.DeflateRaw): com.histmersion.util.basemap.TerrariumPng.DeflateResult =
     val d = Deflater(Deflater.DEFAULT_COMPRESSION)
     try
       d.setInput(raw); d.finish()
@@ -159,7 +178,7 @@ object TerrariumPng:
       out.toByteArray
     finally d.end()
 
-  private def inflate(z: Array[Byte], expected: com.histmersion.util.basemap.TerrariumPng.InflateExpected): Either[com.histmersion.util.basemap.TerrariumPng.InflateResultPart1, Array[Byte]] =
+  private def inflate(z: com.histmersion.util.basemap.TerrariumPng.InflateZ, expected: com.histmersion.util.basemap.TerrariumPng.InflateExpected): Either[com.histmersion.util.basemap.TerrariumPng.InflateResultPart1, com.histmersion.util.basemap.TerrariumPng.InflateResultPart2] =
     val inf = Inflater()
     try
       inf.setInput(z)

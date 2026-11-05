@@ -37,7 +37,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
     }
 
   /** A cover the CLI read from the local Calibre library. */
-  def putCover(p: SourceCoverParams, bytes: Array[com.histmersion.domain.media.covers.CoversControllers.PutCoverBytes]): Either[Api.Error, MediaItem] =
+  def putCover(p: SourceCoverParams, bytes: com.histmersion.domain.media.covers.CoversControllers.PutCoverBytes): Either[Api.Error, MediaItem] =
     jobs.guarded("media_cover")(pictures.storeCover(p, bytes))
 
   /** After a conversion stored a source's figures (the OCR job's hook). */
@@ -45,7 +45,7 @@ final class CoversControllers(pictures: SourcePictures, jobs: MediaJobs):
 
 object CoversControllers:
   type PutCoverBytes = PutCoverBytes.T
-  object PutCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object PutCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AfterIngestResult = AfterIngestResult.T
   object AfterIngestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CoversJobKind = CoversJobKind.T

@@ -36,7 +36,7 @@ trait AssetService:
   def figures(citekey: com.histmersion.domain.library.Citekey): List[AssetInfo]
 
   /** A figure's mime type and bytes. */
-  def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.assets.AssetService.FigureResultPart1, Array[com.histmersion.domain.media.assets.AssetService.FigureResultPart2])]
+  def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.FigureName): Option[(com.histmersion.domain.media.assets.AssetService.FigureResultPart1, com.histmersion.domain.media.assets.AssetService.FigureResultPart2)]
 
   def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.FigureCountResult
 
@@ -65,7 +65,7 @@ trait AssetService:
 
   def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.RefreshRightsUid, r: Rights): Unit
 
-  def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: Array[com.histmersion.domain.media.assets.AssetService.SetThumbBytes], mime: com.histmersion.domain.media.assets.AssetService.SetThumbMime, width: Option[com.histmersion.domain.media.assets.AssetService.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.SetThumbHeight]): Unit
+  def setThumb(uid: com.histmersion.domain.media.assets.AssetService.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.SetThumbBytes, mime: com.histmersion.domain.media.assets.AssetService.SetThumbMime, width: Option[com.histmersion.domain.media.assets.AssetService.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.SetThumbHeight]): Unit
 
   /** A picture shown on a place or event in a role; whether the link is new. */
   def link(
@@ -91,9 +91,9 @@ trait AssetService:
   def show(uid: com.histmersion.domain.media.assets.AssetService.ShowUid): Option[MediaItem]
 
   /** The thumbnail's type and bytes — a source's figure (or a cover) without one is its own thumbnail. */
-  def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, Array[com.histmersion.domain.media.assets.AssetService.ThumbResultPart2])]
+  def thumb(uid: com.histmersion.domain.media.assets.AssetService.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.ThumbResultPart1, com.histmersion.domain.media.assets.AssetService.ThumbResultPart2)]
 
-  def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, Array[com.histmersion.domain.media.assets.AssetService.FileResultPart2])]
+  def file(uid: com.histmersion.domain.media.assets.AssetService.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.FileResultPart1, com.histmersion.domain.media.assets.AssetService.FileResultPart2)]
   def facets: MediaFacets
   def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.GeoLimit): List[MediaGeoHit]
   def geoOf(uids: List[com.histmersion.domain.media.assets.AssetService.GeoOfUids]): Map[com.histmersion.domain.media.assets.AssetService.GeoOfResultPart1, MediaGeoHit]
@@ -110,7 +110,7 @@ object AssetService:
   type FigureResultPart1 = FigureResultPart1.T
   object FigureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FigureResultPart2 = FigureResultPart2.T
-  object FigureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FigureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FigureName = FigureName.T
   object FigureName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FigureCountResult = FigureCountResult.T
@@ -142,7 +142,7 @@ object AssetService:
   type SetThumbUid = SetThumbUid.T
   object SetThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetThumbBytes = SetThumbBytes.T
-  object SetThumbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object SetThumbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetThumbMime = SetThumbMime.T
   object SetThumbMime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetThumbWidth = SetThumbWidth.T
@@ -186,13 +186,13 @@ object AssetService:
   type ThumbResultPart1 = ThumbResultPart1.T
   object ThumbResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThumbResultPart2 = ThumbResultPart2.T
-  object ThumbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ThumbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThumbUid = ThumbUid.T
   object ThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileResultPart1 = FileResultPart1.T
   object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileResultPart2 = FileResultPart2.T
-  object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileUid = FileUid.T
   object FileUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeoLimit = GeoLimit.T
@@ -216,7 +216,7 @@ object AssetService:
 
   final private class Implementation(db: Transactor) extends AssetService:
     def figures(citekey: com.histmersion.domain.library.Citekey): List[AssetInfo] = db.read(AssetRepo.list(citekey)).toList
-    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FigureResultPart1, Array[com.histmersion.domain.media.assets.AssetService.Implementation.FigureResultPart2])] = db.read(AssetRepo.read(citekey, name))
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.Implementation.FigureName): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FigureResultPart1, com.histmersion.domain.media.assets.AssetService.Implementation.FigureResultPart2)] = db.read(AssetRepo.read(citekey, name))
     def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.Implementation.FigureCountResult = db.read(AssetRepo.count(citekey))
     def addFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.Implementation.AddFiguresResult = db.transact(AssetRepo.add(citekey, figures))
     def replaceFigures(citekey: com.histmersion.domain.library.Citekey, figures: List[NewFigure]): com.histmersion.domain.media.assets.AssetService.Implementation.ReplaceFiguresResult =
@@ -230,7 +230,7 @@ object AssetService:
     def save(a: ProviderAsset, firstTarget: (com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart1, com.histmersion.domain.media.assets.AssetService.Implementation.SaveFirstTargetPart2)): (com.histmersion.domain.media.assets.AssetService.Implementation.SaveResultPart1, com.histmersion.domain.media.assets.AssetService.Implementation.SaveResultPart2) =
       db.transact(MediaRepo.save(a, firstTarget))
     def refreshRights(uid: com.histmersion.domain.media.assets.AssetService.Implementation.RefreshRightsUid, r: Rights): Unit = db.transact(MediaRepo.refreshRights(uid, r))
-    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: Array[com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbBytes], mime: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbMime, width: Option[com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbHeight]): Unit =
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbBytes, mime: com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbMime, width: Option[com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.Implementation.SetThumbHeight]): Unit =
       db.transact(MediaRepo.setThumb(uid, bytes, mime, width, height))
     def link(
         uid: com.histmersion.domain.media.assets.AssetService.Implementation.LinkUid,
@@ -248,8 +248,8 @@ object AssetService:
       db.read(MediaRepo.sourcePicture(citekey, role))
     def list(q: Api.MediaQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.ListLimit): MediaList = db.read(MediaRepo.list(q, limit))
     def show(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ShowUid): Option[MediaItem] = db.read(MediaRepo.show(uid))
-    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbResultPart1, Array[com.histmersion.domain.media.assets.AssetService.Implementation.ThumbResultPart2])] = db.read(MediaRepo.thumb(uid))
-    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResultPart1, Array[com.histmersion.domain.media.assets.AssetService.Implementation.FileResultPart2])] = db.read(MediaRepo.file(uid))
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.Implementation.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.ThumbResultPart1, com.histmersion.domain.media.assets.AssetService.Implementation.ThumbResultPart2)] = db.read(MediaRepo.thumb(uid))
+    def file(uid: com.histmersion.domain.media.assets.AssetService.Implementation.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.Implementation.FileResultPart1, com.histmersion.domain.media.assets.AssetService.Implementation.FileResultPart2)] = db.read(MediaRepo.file(uid))
     def facets: MediaFacets = db.read(MediaRepo.facets)
     def geo(q: Api.MediaGeoQuery, limit: com.histmersion.domain.media.assets.AssetService.Implementation.GeoLimit): List[MediaGeoHit] = db.read(MediaRepo.geo(q, limit))
     // no connection for a tile with no pictures
@@ -264,7 +264,7 @@ object AssetService:
     type FigureResultPart1 = FigureResultPart1.T
     object FigureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FigureResultPart2 = FigureResultPart2.T
-    object FigureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FigureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FigureName = FigureName.T
     object FigureName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FigureCountResult = FigureCountResult.T
@@ -296,7 +296,7 @@ object AssetService:
     type SetThumbUid = SetThumbUid.T
     object SetThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SetThumbBytes = SetThumbBytes.T
-    object SetThumbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SetThumbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SetThumbMime = SetThumbMime.T
     object SetThumbMime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SetThumbWidth = SetThumbWidth.T
@@ -340,13 +340,13 @@ object AssetService:
     type ThumbResultPart1 = ThumbResultPart1.T
     object ThumbResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ThumbResultPart2 = ThumbResultPart2.T
-    object ThumbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ThumbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ThumbUid = ThumbUid.T
     object ThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FileResultPart1 = FileResultPart1.T
     object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FileResultPart2 = FileResultPart2.T
-    object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FileUid = FileUid.T
     object FileUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GeoLimit = GeoLimit.T
@@ -392,7 +392,7 @@ object AssetService:
         .toList
         .map(a => AssetInfo(a.name, a.mime, a.bytes.length, com.histmersion.api.Sha256(a.sha256), a.width, a.height))
 
-    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.InMemory.FigureName): Option[(com.histmersion.domain.media.assets.AssetService.InMemory.FigureResultPart1, Array[com.histmersion.domain.media.assets.AssetService.InMemory.FigureResultPart2])] =
+    def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetService.InMemory.FigureName): Option[(com.histmersion.domain.media.assets.AssetService.InMemory.FigureResultPart1, com.histmersion.domain.media.assets.AssetService.InMemory.FigureResultPart2)] =
       named(citekey, name).map(a => (a.mime, a.bytes))
 
     def figureCount(citekey: com.histmersion.domain.library.Citekey): com.histmersion.domain.media.assets.AssetService.InMemory.FigureCountResult = ofSource(citekey).size
@@ -605,7 +605,7 @@ object AssetService:
           .setTo(Some(t))
       )
 
-    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbUid, bytes: Array[com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbBytes], mime: com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbMime, width: Option[com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbHeight]): Unit =
+    def setThumb(uid: com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbUid, bytes: com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbBytes, mime: com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbMime, width: Option[com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.AssetService.InMemory.SetThumbHeight]): Unit =
       change(uid)(
         _.modify(_.thumb)
           .setTo(Some(bytes))
@@ -731,7 +731,7 @@ object AssetService:
 
     def show(uid: com.histmersion.domain.media.assets.AssetService.InMemory.ShowUid): Option[MediaItem] = byUid(uid).map(item)
 
-    def thumb(uid: com.histmersion.domain.media.assets.AssetService.InMemory.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.InMemory.ThumbResultPart1, Array[com.histmersion.domain.media.assets.AssetService.InMemory.ThumbResultPart2])] =
+    def thumb(uid: com.histmersion.domain.media.assets.AssetService.InMemory.ThumbUid): Option[(com.histmersion.domain.media.assets.AssetService.InMemory.ThumbResultPart1, com.histmersion.domain.media.assets.AssetService.InMemory.ThumbResultPart2)] =
       byUid(uid).flatMap { a =>
         a.thumb match
           case Some(t) => Some((a.thumbMime.getOrElse(a.mime), t))
@@ -742,7 +742,7 @@ object AssetService:
           case None => None
       }
 
-    def file(uid: com.histmersion.domain.media.assets.AssetService.InMemory.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.InMemory.FileResultPart1, Array[com.histmersion.domain.media.assets.AssetService.InMemory.FileResultPart2])] = byUid(uid).map(a => (a.mime, a.bytes))
+    def file(uid: com.histmersion.domain.media.assets.AssetService.InMemory.FileUid): Option[(com.histmersion.domain.media.assets.AssetService.InMemory.FileResultPart1, com.histmersion.domain.media.assets.AssetService.InMemory.FileResultPart2)] = byUid(uid).map(a => (a.mime, a.bytes))
 
     def facets: MediaFacets =
       def counted(keys: Vector[String]): List[MediaCount] =
@@ -837,7 +837,7 @@ object AssetService:
     type FigureResultPart1 = FigureResultPart1.T
     object FigureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FigureResultPart2 = FigureResultPart2.T
-    object FigureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FigureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FigureName = FigureName.T
     object FigureName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FigureCountResult = FigureCountResult.T
@@ -869,7 +869,7 @@ object AssetService:
     type SetThumbUid = SetThumbUid.T
     object SetThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SetThumbBytes = SetThumbBytes.T
-    object SetThumbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object SetThumbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SetThumbMime = SetThumbMime.T
     object SetThumbMime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SetThumbWidth = SetThumbWidth.T
@@ -929,13 +929,13 @@ object AssetService:
     type ThumbResultPart1 = ThumbResultPart1.T
     object ThumbResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ThumbResultPart2 = ThumbResultPart2.T
-    object ThumbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ThumbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ThumbUid = ThumbUid.T
     object ThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FileResultPart1 = FileResultPart1.T
     object FileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FileResultPart2 = FileResultPart2.T
-    object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FileUid = FileUid.T
     object FileUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type HitPPart1 = HitPPart1.T

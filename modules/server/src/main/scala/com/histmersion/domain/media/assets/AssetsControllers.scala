@@ -41,7 +41,7 @@ final class AssetsControllers(
 
   def figures(citekey: com.histmersion.domain.library.Citekey): List[AssetInfo] = assets.figures(canonical(citekey))
 
-  def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetsControllers.FigureName): Either[Api.Error, (Array[com.histmersion.domain.media.assets.AssetsControllers.FigureResultPart2Part1], com.histmersion.domain.media.assets.AssetsControllers.FigureResultPart2Part2)] =
+  def figure(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.assets.AssetsControllers.FigureName): Either[Api.Error, (com.histmersion.domain.media.assets.AssetsControllers.FigureResultPart2Part1, com.histmersion.domain.media.assets.AssetsControllers.FigureResultPart2Part2)] =
     assets
       .figure(canonical(citekey), AssetLinks.safeName(name))
       .map((mime, bytes) => (bytes, mime))
@@ -80,10 +80,10 @@ final class AssetsControllers(
 
   def show(uid: com.histmersion.domain.media.assets.AssetsControllers.ShowUid): Either[Api.Error, MediaItem] = uuid(uid).flatMap(assets.show).toRight(notFound(uid))
 
-  def thumb(uid: com.histmersion.domain.media.assets.AssetsControllers.ThumbUid): Either[Api.Error, (Array[com.histmersion.domain.media.assets.AssetsControllers.ThumbResultPart2Part1], com.histmersion.domain.media.assets.AssetsControllers.ThumbResultPart2Part2)] =
+  def thumb(uid: com.histmersion.domain.media.assets.AssetsControllers.ThumbUid): Either[Api.Error, (com.histmersion.domain.media.assets.AssetsControllers.ThumbResultPart2Part1, com.histmersion.domain.media.assets.AssetsControllers.ThumbResultPart2Part2)] =
     uuid(uid).flatMap(assets.thumb).map((m, b) => (b, m)).toRight(notFound(uid))
 
-  def file(uid: com.histmersion.domain.media.assets.AssetsControllers.FileUid): Either[Api.Error, (Array[com.histmersion.domain.media.assets.AssetsControllers.FileResultPart2Part1], com.histmersion.domain.media.assets.AssetsControllers.FileResultPart2Part2)] =
+  def file(uid: com.histmersion.domain.media.assets.AssetsControllers.FileUid): Either[Api.Error, (com.histmersion.domain.media.assets.AssetsControllers.FileResultPart2Part1, com.histmersion.domain.media.assets.AssetsControllers.FileResultPart2Part2)] =
     uuid(uid).flatMap(assets.file).map((m, b) => (b, m)).toRight(notFound(uid))
 
   // ── the cards' pictures ──
@@ -111,7 +111,7 @@ object AssetsControllers:
   type UuidUid = UuidUid.T
   object UuidUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FigureResultPart2Part1 = FigureResultPart2Part1.T
-  object FigureResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FigureResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FigureResultPart2Part2 = FigureResultPart2Part2.T
   object FigureResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FigureName = FigureName.T
@@ -123,13 +123,13 @@ object AssetsControllers:
   type ShowUid = ShowUid.T
   object ShowUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThumbResultPart2Part1 = ThumbResultPart2Part1.T
-  object ThumbResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ThumbResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThumbResultPart2Part2 = ThumbResultPart2Part2.T
   object ThumbResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThumbUid = ThumbUid.T
   object ThumbUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileResultPart2Part1 = FileResultPart2Part1.T
-  object FileResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object FileResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileResultPart2Part2 = FileResultPart2Part2.T
   object FileResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileUid = FileUid.T

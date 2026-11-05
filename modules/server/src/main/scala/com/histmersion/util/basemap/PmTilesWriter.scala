@@ -32,7 +32,7 @@ final class PmTilesWriter(out: Reservation):
   def tileCount: com.histmersion.util.basemap.PmTilesWriter.TileCountResult = addressed
 
   /** Add tile `id` (strictly greater than the last one added) with its stored bytes. */
-  def add(id: com.histmersion.util.basemap.PmTilesWriter.AddId, bytes: Array[Byte]): Unit =
+  def add(id: com.histmersion.util.basemap.PmTilesWriter.AddId, bytes: com.histmersion.util.basemap.PmTilesWriter.AddBytes): Unit =
     require(id > lastId, s"tiles must be added in ascending id order ($id after $lastId)")
     lastId = id
     addressed += 1
@@ -77,6 +77,13 @@ final class PmTilesWriter(out: Reservation):
 object PmTilesWriter:
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
+  type AddBytes = AddBytes.T
+  object AddBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DirectoriesResultPart1 = DirectoriesResultPart1.T
+  object DirectoriesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DirectoriesResultPart2 = DirectoriesResultPart2.T
+  object DirectoriesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type TileCountResult = TileCountResult.T
   object TileCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AddId = AddId.T
@@ -90,7 +97,7 @@ object PmTilesWriter:
   /** The root directory and the leaf section for `entries`: one root when it fits in the first 16 KiB, else leaves of 4
     * 096 entries (doubled until their index fits). Pure.
     */
-  def directories(entries: Vector[PmTiles.Entry], c: PmTiles.Compression): (Array[Byte], Array[Byte]) =
+  def directories(entries: Vector[PmTiles.Entry], c: PmTiles.Compression): (com.histmersion.util.basemap.PmTilesWriter.DirectoriesResultPart1, com.histmersion.util.basemap.PmTilesWriter.DirectoriesResultPart2) =
     val whole = PmTiles.compress(PmTiles.encodeDirectory(entries), c)
     if whole.length <= PmTiles.RootBytes - PmTiles.HeaderBytes then (whole, Array.emptyByteArray)
     else

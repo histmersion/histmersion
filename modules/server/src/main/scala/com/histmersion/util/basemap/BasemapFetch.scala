@@ -38,6 +38,13 @@ object BasemapFetch:
   /** What a fetch of one layer reads: `url`, the build it names (for the record), and the size the provider publishes
     * for it, when it does.
     */
+  type ResolveGetResultPart2Part1 = ResolveGetResultPart2Part1.T
+  object ResolveGetResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleTransformArg1 = AssembleTransformArg1.T
+  object AssembleTransformArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleTransformResultPart2 = AssembleTransformResultPart2.T
+  object AssembleTransformResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type PerZoomResultPart1 = PerZoomResultPart1.T
   object PerZoomResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PerZoomResultPart2 = PerZoomResultPart2.T
@@ -337,7 +344,7 @@ object BasemapFetch:
       ids: Array[Long],
       h: PmTiles.Header,
       pace: Pace,
-      get: (com.histmersion.util.basemap.BasemapFetch.ResolveGetArg1, com.histmersion.util.basemap.BasemapFetch.ResolveGetArg2) => Either[com.histmersion.util.basemap.BasemapFetch.ResolveGetResultPart1, (Array[Byte], RemoteFile)],
+      get: (com.histmersion.util.basemap.BasemapFetch.ResolveGetArg1, com.histmersion.util.basemap.BasemapFetch.ResolveGetArg2) => Either[com.histmersion.util.basemap.BasemapFetch.ResolveGetResultPart1, (com.histmersion.util.basemap.BasemapFetch.ResolveGetResultPart2Part1, RemoteFile)],
       depth: com.histmersion.util.basemap.BasemapFetch.ResolveDepth
   ): Either[com.histmersion.util.basemap.BasemapFetch.ResolveResultPart1, Vector[Wanted]] =
     val found = Vector.newBuilder[Wanted]
@@ -433,7 +440,7 @@ object BasemapFetch:
       work: Store,
       out: Store,
       key: Store.Key,
-      transform: Array[Byte] => Either[com.histmersion.util.basemap.BasemapFetch.AssembleTransformResultPart1, Option[Array[Byte]]],
+      transform: com.histmersion.util.basemap.BasemapFetch.AssembleTransformArg1 => Either[com.histmersion.util.basemap.BasemapFetch.AssembleTransformResultPart1, Option[com.histmersion.util.basemap.BasemapFetch.AssembleTransformResultPart2]],
       header: PmTiles.Header,
       metadata: Json,
       note: com.histmersion.util.basemap.BasemapFetch.AssembleNoteArg1 => Unit

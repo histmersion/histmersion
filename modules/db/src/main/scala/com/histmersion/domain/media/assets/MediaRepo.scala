@@ -29,6 +29,13 @@ private[assets] object MediaRepo:
   // ── writes ───────────────────────────────────────────────────────────────────────────────────
 
   /** The pictures of `provider` already stored under these keys. */
+  type SetThumbBytes = SetThumbBytes.T
+  object SetThumbBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbResultPart2 = ThumbResultPart2.T
+  object ThumbResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileResultPart2 = FileResultPart2.T
+  object FileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KnownResultPart1 = KnownResultPart1.T
   object KnownResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KnownProvider = KnownProvider.T
@@ -222,7 +229,7 @@ private[assets] object MediaRepo:
           RETURNING (xmax = 0)""".query[Boolean].run().head
 
   /** Store a thumbnail for a stored picture (a figure chosen to illustrate its source). */
-  def setThumb(uid: com.histmersion.domain.media.assets.MediaRepo.SetThumbUid, bytes: Array[Byte], mime: com.histmersion.domain.media.assets.MediaRepo.SetThumbMime, width: Option[com.histmersion.domain.media.assets.MediaRepo.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.MediaRepo.SetThumbHeight])(using
+  def setThumb(uid: com.histmersion.domain.media.assets.MediaRepo.SetThumbUid, bytes: com.histmersion.domain.media.assets.MediaRepo.SetThumbBytes, mime: com.histmersion.domain.media.assets.MediaRepo.SetThumbMime, width: Option[com.histmersion.domain.media.assets.MediaRepo.SetThumbWidth], height: Option[com.histmersion.domain.media.assets.MediaRepo.SetThumbHeight])(using
       DbCon
   ): Unit =
     val _ = sql"""UPDATE assets SET thumb = $bytes, thumb_mime = $mime, thumb_width = $width, thumb_height = $height
@@ -408,7 +415,7 @@ private[assets] object MediaRepo:
       .map(r => item(r, targetsOf(List(r.uid)).getOrElse(r.uid, Nil)))
 
   /** The thumbnail's bytes and type — a source's figure without one is its own thumbnail. */
-  def thumb(uid: com.histmersion.domain.media.assets.MediaRepo.ThumbUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart1, Array[Byte])] =
+  def thumb(uid: com.histmersion.domain.media.assets.MediaRepo.ThumbUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart1, com.histmersion.domain.media.assets.MediaRepo.ThumbResultPart2)] =
     sql"""SELECT CASE WHEN thumb IS NOT NULL THEN coalesce(thumb_mime, mime) ELSE mime END, coalesce(thumb, bytes)
           FROM assets WHERE uid = $uid::uuid
             AND (thumb IS NOT NULL OR provider IS NULL OR provider IN (${MediaProvider.Calibre}, ${MediaProvider.OpenLibrary}))"""
@@ -417,7 +424,7 @@ private[assets] object MediaRepo:
       .headOption
 
   /** The stored rendition's (or figure's) bytes and type. */
-  def file(uid: com.histmersion.domain.media.assets.MediaRepo.FileUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.FileResultPart1, Array[Byte])] =
+  def file(uid: com.histmersion.domain.media.assets.MediaRepo.FileUid)(using DbCon): Option[(com.histmersion.domain.media.assets.MediaRepo.FileResultPart1, com.histmersion.domain.media.assets.MediaRepo.FileResultPart2)] =
     sql"SELECT mime, bytes FROM assets WHERE uid = $uid::uuid".query[(String, Array[Byte])].run().headOption
 
   def facets(using DbCon): MediaFacets =

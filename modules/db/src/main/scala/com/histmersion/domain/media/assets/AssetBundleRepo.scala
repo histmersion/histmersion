@@ -18,6 +18,9 @@ private[assets] object AssetBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
+  type WriteBytes = WriteBytes.T
+  object WriteBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type NamesHereResultPart1Part2 = NamesHereResultPart1Part2.T
   object NamesHereResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -64,7 +67,7 @@ private[assets] object AssetBundleRepo:
     w.es.assets.filter(a => w.writes(a.uid) && localSha.get(a.uid).contains(a.sha256)).foreach(write(w, _, None))
 
   /** One asset written: with its bytes when they came in the bundle, else its metadata over the row here. */
-  def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[Array[Byte]]): Unit =
+  def write(w: BundleImport.Writer, a: Bundle.Asset, bytes: Option[com.histmersion.domain.media.assets.AssetBundleRepo.WriteBytes]): Unit =
     given DbCon = w.transaction
     w.touchSource(a.sourceUid)
     val ck = w.citekeyOf(a.sourceUid)

@@ -9,14 +9,14 @@ final class DiskLocalFiles extends LocalFiles:
   def isDirectory(path: Path): com.histmersion.pluginhost.DiskLocalFiles.IsDirectoryResult = Files.isDirectory(path)
   def exists(path: Path): com.histmersion.pluginhost.DiskLocalFiles.ExistsResult = Files.exists(path)
   def isExecutable(path: Path): com.histmersion.pluginhost.DiskLocalFiles.IsExecutableResult = Files.isExecutable(path)
-  def read(path: Path): Array[Byte] = Files.readAllBytes(path)
-  def readPrefix(path: Path, length: com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixLength): Array[Byte] =
+  def read(path: Path): com.histmersion.pluginhost.DiskLocalFiles.ReadResult = Files.readAllBytes(path)
+  def readPrefix(path: Path, length: com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixLength): com.histmersion.pluginhost.DiskLocalFiles.ReadPrefixResult =
     require(length >= 0)
     val in = Files.newInputStream(path)
     try in.readNBytes(length)
     finally in.close()
 
-  def staged[A](name: com.histmersion.pluginhost.DiskLocalFiles.StagedName, bytes: Array[Byte])(use: Path => Either[com.histmersion.pluginhost.DiskLocalFiles.StagedUseResultPart1, A]): Either[com.histmersion.pluginhost.DiskLocalFiles.StagedResultPart1, A] =
+  def staged[A](name: com.histmersion.pluginhost.DiskLocalFiles.StagedName, bytes: com.histmersion.pluginhost.DiskLocalFiles.StagedBytes)(use: Path => Either[com.histmersion.pluginhost.DiskLocalFiles.StagedUseResultPart1, A]): Either[com.histmersion.pluginhost.DiskLocalFiles.StagedResultPart1, A] =
     if name.isEmpty || name == "." || name == ".." || name.contains('/') || name.contains('\\') || name.contains('\u0000') then
       Left("cannot stage the file: expected a single filename")
     else
@@ -34,6 +34,13 @@ final class DiskLocalFiles extends LocalFiles:
         }
 
 object DiskLocalFiles:
+  type ReadResult = ReadResult.T
+  object ReadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPrefixResult = ReadPrefixResult.T
+  object ReadPrefixResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StagedBytes = StagedBytes.T
+  object StagedBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type IsFileResult = IsFileResult.T
   object IsFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsDirectoryResult = IsDirectoryResult.T

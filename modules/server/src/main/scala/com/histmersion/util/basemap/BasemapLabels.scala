@@ -26,6 +26,9 @@ object BasemapLabels:
   /** One name to place: a point (`line` empty) or a river's line (`line` its parts, lon/lat), shown from map zoom
     * `minZoom` (to `maxZoom`), with its names by language (`name`, `name:en`, …).
     */
+  type TilesResultPart2 = TilesResultPart2.T
+  object TilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type KindOfResult = KindOfResult.T
   object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KindOfFeatureClass = KindOfFeatureClass.T
@@ -436,7 +439,7 @@ object BasemapLabels:
   /** The archive's tiles, by tile id: points in the tile they fall in, rivers clipped to each tile they cross
     * (simplified to about a pixel of the zoom), zooms 0…`maxZoom`, gzip-compressed MVT. Pure.
     */
-  def tiles(labels: List[Label], maxZoom: com.histmersion.util.basemap.BasemapLabels.TilesMaxZoom): Vector[(com.histmersion.util.basemap.BasemapLabels.TilesResultPart1, Array[Byte])] =
+  def tiles(labels: List[Label], maxZoom: com.histmersion.util.basemap.BasemapLabels.TilesMaxZoom): Vector[(com.histmersion.util.basemap.BasemapLabels.TilesResultPart1, com.histmersion.util.basemap.BasemapLabels.TilesResultPart2)] =
     type Features = mutable.ListBuffer[(Int, Vector[Int], List[(String, String | Long)])]
     // per tile id, its points and its lines, filled zoom by zoom
     val out = mutable.TreeMap.empty[Long, (Features, Features)]
