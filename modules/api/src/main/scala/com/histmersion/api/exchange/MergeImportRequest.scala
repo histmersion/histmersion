@@ -5,8 +5,14 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MergeImportRequest(
-    bundle: String,
+    bundle: MergeImportRequest.Bundle,
     resolutions: MergeResolutions = MergeResolutions(),
-    dryRun: Boolean = false
+    dryRun: MergeImportRequest.DryRun = false
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object MergeImportRequest:
+  type Bundle = Bundle.T
+  object Bundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DryRun = DryRun.T
+  object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -7,8 +7,12 @@ import com.histmersion.api.research.ResolvedArticle
 import com.histmersion.api.given
 
 final case class ResolvedId(
-    id: String,
+    id: ResolvedId.Id,
     source: Option[ResolvedSource] = None,
     article: Option[ResolvedArticle] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object ResolvedId:
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

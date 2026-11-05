@@ -1,0 +1,49 @@
+package com.histmersion.api
+
+import com.histmersion.api.library.Confidence
+
+object ConfidenceStyle:
+
+  def saturation(c: Confidence): Double = c match
+    case Confidence.High      => 1.0
+    case Confidence.Medium    => 0.7
+    case Confidence.Low       => 0.4
+    case Confidence.Contested => 0.3
+
+  def rank(c: Confidence): Int = c match
+    case Confidence.Contested => 0
+    case Confidence.Low       => 1
+    case Confidence.Medium    => 2
+    case Confidence.High      => 3
+
+  def desaturate(rgb: String, c: Confidence): String =
+    val s = saturation(c)
+    "\\d+".r.findAllIn(rgb).take(3).map(_.toInt).toList match
+      case r :: g :: b :: Nil if s < 1.0 =>
+        val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
+        def mix(v: Int) = (grey + (v - grey) * s).round.toInt
+        s"rgb(${mix(r)},${mix(g)},${mix(b)})"
+      case _ => rgb
+
+  final case class IconPart(d: String, filled: Boolean)
+
+  private val Ring = IconPart("M5 1a4 4 0 1 1 0 8a4 4 0 1 1 0-8z", filled = false)
+
+  def iconParts(c: Confidence): List[IconPart] = c match
+    case Confidence.High      => List(IconPart("M5 0.5a4.5 4.5 0 1 1 0 9a4.5 4.5 0 1 1 0-9z", filled = true))
+    case Confidence.Medium    => List(Ring, IconPart("M5 5V1A4 4 0 1 1 1 5Z", filled = true))
+    case Confidence.Low       => List(Ring, IconPart("M5 1A4 4 0 0 1 5 9Z", filled = true))
+    case Confidence.Contested => List(Ring)
+
+  val IconViewBox = "0 0 10 10"
+
+  def icon(c: Confidence): String =
+    val parts = iconParts(c)
+      .map(p =>
+        if p.filled then s"""<path d="${p.d}" fill="currentColor"/>"""
+        else s"""<path d="${p.d}" fill="none" stroke="currentColor"/>"""
+      )
+      .mkString
+    s"""<svg class="conf-icon" width="10" height="10" viewBox="$IconViewBox" aria-hidden="true">$parts</svg>"""
+
+  def label(c: Confidence): String = s"${c.toString.toLowerCase} confidence"

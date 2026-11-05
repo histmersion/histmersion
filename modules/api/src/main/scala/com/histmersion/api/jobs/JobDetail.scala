@@ -12,7 +12,7 @@ import sttp.tapir.{FieldName, Schema}
   * ([[JobDetailField]]), kept as JSON. The wire shows every field the kinds' registry lists, in its order, each job's
   * value or the field's default; a detail holds only the values that differ from their default.
   */
-final case class JobDetail private (values: Map[String, Json]):
+final case class JobDetail private (values: Map[JobDetail.ValuesKey, Json]):
   def json(name: String): Option[Json] = values.get(name)
 
   /** The detail with `field` set to `a`. */
@@ -24,6 +24,9 @@ final case class JobDetail private (values: Map[String, Json]):
     set(field, f(field.of(this)))
 
 object JobDetail:
+  type ValuesKey = ValuesKey.T
+  object ValuesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val empty: JobDetail = JobDetail(Map.empty)
 
   /** What a job is about, in a person's words (a places or base-map job's). */

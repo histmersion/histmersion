@@ -5,10 +5,16 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class PluginsReport(
-    spiVersion: Int = 0,
+    spiVersion: PluginsReport.SpiVersion = 0,
     plugins: List[PluginStatus] = Nil,
-    warnings: List[String] = Nil,
+    warnings: List[PluginsReport.Warnings] = Nil,
     set: Option[PluginSet] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def ok: Boolean = plugins.forall(p => p.state != PluginState.Failed.wire && p.state != PluginState.Refused.wire)
+
+object PluginsReport:
+  type SpiVersion = SpiVersion.T
+  object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Warnings = Warnings.T
+  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

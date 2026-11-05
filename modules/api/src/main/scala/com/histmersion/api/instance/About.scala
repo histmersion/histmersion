@@ -14,14 +14,14 @@ import com.histmersion.api.library.Acquire
 import com.histmersion.api.maintenance.Storage
 
 final case class About(
-    name: String,
+    name: About.Name,
     build: BuildStamp,
     health: Health,
     jobs: JobCounts,
     counts: Option[CorpusCounts],
     lastBackup: Option[Backup.Info],
-    lastBackupAgeSeconds: Option[Long],
-    problems: List[String] = Nil,
+    lastBackupAgeSeconds: Option[About.LastBackupAgeSeconds],
+    problems: List[About.Problems] = Nil,
     configFile: ConfigFileInfo = ConfigFileInfo(),
     agentLease: Option[AgentLeaseInfo] = None,
     plugins: PluginsReport = PluginsReport(),
@@ -33,3 +33,11 @@ final case class About(
     acquireRecheck: Option[Acquire.Checks.RecheckStatus] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object About:
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastBackupAgeSeconds = LastBackupAgeSeconds.T
+  object LastBackupAgeSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problems = Problems.T
+  object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

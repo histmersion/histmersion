@@ -126,26 +126,50 @@ object Storage:
       case _                           => None
 
   final case class Entry(
-      key: String,
-      label: String,
-      group: String,
-      path: Option[String] = None,
+      key: Entry.Key,
+      label: Entry.Label,
+      group: Entry.Group,
+      path: Option[Entry.Path] = None,
       bytes: Option[com.histmersion.api.ByteCount] = None,
       files: Option[com.histmersion.api.maintenance.Storage.FileCount] = None,
-      exists: Boolean = true,
-      partial: Boolean = false,
-      within: Option[String] = None,
-      detail: Option[String] = None,
-      shrink: Option[String] = None,
-      volume: Option[String] = None,
-      host: String = "server"
+      exists: Entry.Exists = true,
+      partial: Entry.Partial = false,
+      within: Option[Entry.Within] = None,
+      detail: Option[Entry.Detail] = None,
+      shrink: Option[Entry.Shrink] = None,
+      volume: Option[Entry.Volume] = None,
+      host: Entry.Host = "server"
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
+  object Entry:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Group = Group.T
+    object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Path = Path.T
+    object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Exists = Exists.T
+    object Exists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Partial = Partial.T
+    object Partial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Within = Within.T
+    object Within extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Shrink = Shrink.T
+    object Shrink extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Volume = Volume.T
+    object Volume extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Host = Host.T
+    object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Report(
-      measuring: Boolean = false,
-      measuredAt: Option[String] = None,
+      measuring: Report.Measuring = false,
+      measuredAt: Option[Report.MeasuredAt] = None,
       tookMillis: Option[com.histmersion.api.maintenance.Storage.Report.DurationMillis] = None,
       ageSeconds: Option[com.histmersion.api.maintenance.Storage.Report.AgeSeconds] = None,
       entries: List[Entry] = Nil,
@@ -153,21 +177,34 @@ object Storage:
       volumes: List[Volume] = Nil,
       backups: Option[BackupsUsage] = None,
       lowFreeBytes: com.histmersion.api.ByteCount = com.histmersion.api.ByteCount(Storage.DefaultLowFreeBytes),
-      hints: List[String] = Nil,
-      problems: List[String] = Nil
+      hints: List[Report.Hints] = Nil,
+      problems: List[Report.Problems] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
-  final case class Volume(id: String, totalBytes: com.histmersion.api.ByteCount, freeBytes: com.histmersion.api.ByteCount)
+  final case class Volume(id: Volume.Id, totalBytes: com.histmersion.api.ByteCount, freeBytes: com.histmersion.api.ByteCount)
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
+
+  object Volume:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type FileCount = FileCount.T
   object FileCount extends io.github.iltotore.iron.RefinedType[Long, io.github.iltotore.iron.constraint.any.Pure]
 
   object Report:
+    type Measuring = Measuring.T
+    object Measuring extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MeasuredAt = MeasuredAt.T
+    object MeasuredAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hints = Hints.T
+    object Hints extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problems = Problems.T
+    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type AgeSeconds = AgeSeconds.T
     object AgeSeconds extends io.github.iltotore.iron.RefinedType[Long, io.github.iltotore.iron.constraint.any.Pure]
 

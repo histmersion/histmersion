@@ -6,12 +6,12 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class JobCounts(
-    queued: Int = 0,
-    running: Int = 0,
-    done: Int = 0,
-    failed: Int = 0,
-    paused: Int = 0,
-    cancelled: Int = 0
+    queued: JobCounts.Queued = 0,
+    running: JobCounts.Running = 0,
+    done: JobCounts.Done = 0,
+    failed: JobCounts.Failed = 0,
+    paused: JobCounts.Paused = 0,
+    cancelled: JobCounts.Cancelled = 0
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def of(s: JobState): Int = s match
@@ -23,6 +23,19 @@ final case class JobCounts(
     case JobState.Cancelled => cancelled
 object JobCounts:
 
+
+  type Queued = Queued.T
+  object Queued extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Running = Running.T
+  object Running extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Done = Done.T
+  object Done extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Failed = Failed.T
+  object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Paused = Paused.T
+  object Paused extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Cancelled = Cancelled.T
+  object Cancelled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(rows: List[(String, Int)]): JobCounts =
     @tailrec def loop(

@@ -4,6 +4,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class TimeConfig(min: Long, max: Long, defaultFrom: Long, defaultTo: Long)
+final case class TimeConfig(min: com.histmersion.api.catalogue.Year, max: com.histmersion.api.catalogue.Year, defaultFrom: com.histmersion.api.catalogue.Year, defaultTo: com.histmersion.api.catalogue.Year)
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

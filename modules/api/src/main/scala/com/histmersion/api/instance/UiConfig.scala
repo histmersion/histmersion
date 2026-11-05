@@ -7,32 +7,76 @@ import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.api.given
 
 final case class UiConfig(
-    tiles: String,
-    tilesMaxZoom: Int,
-    markerRadius: Int,
-    viewportDebounceMs: Int,
-    pageSize: Int,
-    facetSuggestions: Int,
-    treeDepth: Int,
-    treeSamples: Int,
-    maxBuckets: Int,
+    tiles: UiConfig.Tiles,
+    tilesMaxZoom: UiConfig.TilesMaxZoom,
+    markerRadius: UiConfig.MarkerRadius,
+    viewportDebounceMs: UiConfig.ViewportDebounceMs,
+    pageSize: UiConfig.PageSize,
+    facetSuggestions: UiConfig.FacetSuggestions,
+    treeDepth: UiConfig.TreeDepth,
+    treeSamples: UiConfig.TreeSamples,
+    maxBuckets: UiConfig.MaxBuckets,
     debounce: DebounceConfig,
     time: TimeConfig,
-    narrowMaxWidthPx: Int,
-    narrowMaxHeightPx: Int,
-    tabletMaxWidthPx: Int,
+    narrowMaxWidthPx: UiConfig.NarrowMaxWidthPx,
+    narrowMaxHeightPx: UiConfig.NarrowMaxHeightPx,
+    tabletMaxWidthPx: UiConfig.TabletMaxWidthPx,
     events: EventsUiConfig,
     mapTiles: MapTilesUiConfig = MapTilesUiConfig(),
-    countersPollSeconds: Int = 30,
-    jobPollMs: Int = 1000,
-    writeKeyRequired: Boolean = false,
-    agentsEnabled: Boolean = false,
-    tilesTone: String = "light",
+    countersPollSeconds: UiConfig.CountersPollSeconds = 30,
+    jobPollMs: UiConfig.JobPollMs = 1000,
+    writeKeyRequired: UiConfig.WriteKeyRequired = false,
+    agentsEnabled: UiConfig.AgentsEnabled = false,
+    tilesTone: UiConfig.TilesTone = "light",
     plugins: PluginsReport = PluginsReport(),
-    docsUrl: String = "",
-    baseMapSource: String = "auto",
-    mapLanguage: String = "en",
+    docsUrl: UiConfig.DocsUrl = "",
+    baseMapSource: UiConfig.BaseMapSource = "auto",
+    mapLanguage: UiConfig.MapLanguage = "en",
     mapStart: MapStartConfig = MapStartConfig(),
-    setupDue: Boolean = false
+    setupDue: UiConfig.SetupDue = false
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object UiConfig:
+  type Tiles = Tiles.T
+  object Tiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilesMaxZoom = TilesMaxZoom.T
+  object TilesMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkerRadius = MarkerRadius.T
+  object MarkerRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ViewportDebounceMs = ViewportDebounceMs.T
+  object ViewportDebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageSize = PageSize.T
+  object PageSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetSuggestions = FacetSuggestions.T
+  object FacetSuggestions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeDepth = TreeDepth.T
+  object TreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeSamples = TreeSamples.T
+  object TreeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxBuckets = MaxBuckets.T
+  object MaxBuckets extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NarrowMaxWidthPx = NarrowMaxWidthPx.T
+  object NarrowMaxWidthPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NarrowMaxHeightPx = NarrowMaxHeightPx.T
+  object NarrowMaxHeightPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TabletMaxWidthPx = TabletMaxWidthPx.T
+  object TabletMaxWidthPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountersPollSeconds = CountersPollSeconds.T
+  object CountersPollSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobPollMs = JobPollMs.T
+  object JobPollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteKeyRequired = WriteKeyRequired.T
+  object WriteKeyRequired extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgentsEnabled = AgentsEnabled.T
+  object AgentsEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilesTone = TilesTone.T
+  object TilesTone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DocsUrl = DocsUrl.T
+  object DocsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BaseMapSource = BaseMapSource.T
+  object BaseMapSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MapLanguage = MapLanguage.T
+  object MapLanguage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetupDue = SetupDue.T
+  object SetupDue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

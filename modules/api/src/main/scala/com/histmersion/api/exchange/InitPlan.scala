@@ -5,10 +5,10 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class InitPlan(
-    gazetteer: Boolean = false,
-    periodPresets: Boolean = false,
-    fetch: List[String] = Nil,
-    check: Boolean = false
+    gazetteer: InitPlan.Gazetteer = false,
+    periodPresets: InitPlan.PeriodPresets = false,
+    fetch: List[InitPlan.Fetch] = Nil,
+    check: InitPlan.Check = false
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def isEmpty: Boolean = !gazetteer && !periodPresets && fetch.isEmpty
@@ -17,6 +17,15 @@ object InitPlan:
 
 
   /** What an init job imports, in its detail. */
+  type Gazetteer = Gazetteer.T
+  object Gazetteer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodPresets = PeriodPresets.T
+  object PeriodPresets extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Fetch = Fetch.T
+  object Fetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Check = Check.T
+  object Check extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[InitPlan]] =
     com.histmersion.api.jobs.JobDetail.Field("init", None)
 

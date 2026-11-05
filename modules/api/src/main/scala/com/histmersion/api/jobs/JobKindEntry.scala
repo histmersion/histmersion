@@ -8,13 +8,18 @@ final case class JobKindEntry(
     kind: JobInfo.Kind,
     name: JobKindName,
     meaning: JobKindMeaning,
-    stoppable: Boolean = false,
+    stoppable: JobKindEntry.Stoppable = false,
     subject: JobDetail => Option[String] = _ => None,
-    ownControl: Boolean = false
+    ownControl: JobKindEntry.OwnControl = false
 )
 
 object JobKindEntry:
   /** An entry from its owner's words. */
+  type Stoppable = Stoppable.T
+  object Stoppable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OwnControl = OwnControl.T
+  object OwnControl extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def of(
       kind: JobInfo.Kind,
       name: String,

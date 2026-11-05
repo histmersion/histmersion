@@ -105,11 +105,14 @@ import sttp.tapir.Schema
 object Api:
 
   /** `region` is still sent by older links and clients; it is one more place name. */
-  final case class FindingsQuery(filter: Filter, region: Option[String]):
+  final case class FindingsQuery(filter: Filter, region: Option[FindingsQuery.Region]):
     def toFilter: Filter =
       region.map(_.trim).filter(_.nonEmpty).fold(filter)(r => filter.copy(places = filter.places :+ r))
 
   object FindingsQuery:
+    type Region = Region.T
+    object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def of(filter: Filter): FindingsQuery = FindingsQuery(filter, None)
 
   private lazy val base = endpoint.in("api").errorOut(jsonBody[com.histmersion.api.Api.Error])
@@ -180,13 +183,25 @@ object Api:
       .errorOut(statusCode(StatusCode.NotFound))
 
   final case class SourceViewQuery(
-      citekey: String,
-      fullText: Boolean = false,
-      section: Option[String] = None,
-      heading: Option[String] = None,
-      offset: Option[Int] = None,
-      chars: Option[Int] = None
+      citekey: com.histmersion.api.library.Citekey,
+      fullText: SourceViewQuery.FullText = false,
+      section: Option[SourceViewQuery.Section] = None,
+      heading: Option[SourceViewQuery.Heading] = None,
+      offset: Option[SourceViewQuery.Offset] = None,
+      chars: Option[SourceViewQuery.Chars] = None
   )
+
+  object SourceViewQuery:
+    type FullText = FullText.T
+    object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Section = Section.T
+    object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Heading = Heading.T
+    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Chars = Chars.T
+    object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val sourceView: PublicEndpoint[SourceViewQuery, com.histmersion.api.Api.Error, String, Any] =
     endpoint.get
@@ -202,12 +217,22 @@ object Api:
       .out(stringBody)
 
   final case class PassagesQuery(
-      citekey: String,
-      q: String,
-      regex: Boolean = false,
-      limit: Option[Int] = None,
-      context: Option[Int] = None
+      citekey: com.histmersion.api.library.Citekey,
+      q: PassagesQuery.Q,
+      regex: PassagesQuery.Regex = false,
+      limit: Option[PassagesQuery.Limit] = None,
+      context: Option[PassagesQuery.Context] = None
   )
+
+  object PassagesQuery:
+    type Q = Q.T
+    object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Regex = Regex.T
+    object Regex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Context = Context.T
+    object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val passages: PublicEndpoint[PassagesQuery, com.histmersion.api.Api.Error, PassageResult, Any] =
     endpoint.get
@@ -241,16 +266,29 @@ object Api:
       .out(jsonBody[GeoHitPage])
 
   final case class AggregateQuery(
-      by: Option[String],
-      unit: Option[String],
+      by: Option[AggregateQuery.By],
+      unit: Option[AggregateQuery.Unit],
       filter: Filter,
-      depth: Option[Int] = None,
-      asOf: Option[Long] = None,
-      samples: Option[Int] = None,
-      size: Option[Long] = None
+      depth: Option[AggregateQuery.Depth] = None,
+      asOf: Option[AggregateQuery.AsOf] = None,
+      samples: Option[AggregateQuery.Samples] = None,
+      size: Option[AggregateQuery.Size] = None
   )
 
   object AggregateQuery:
+    type By = By.T
+    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Unit = Unit.T
+    object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Depth = Depth.T
+    object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AsOf = AsOf.T
+    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Samples = Samples.T
+    object Samples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Size = Size.T
+    object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def time(filter: Filter, unit: Option[String] = None): AggregateQuery =
       AggregateQuery(Some("time"), unit, filter)
 
@@ -492,9 +530,15 @@ object Api:
 
   final case class ArticleQuery(
       filter: Filter = Filter(),
-      kind: Option[String] = None,
-      text: Option[String] = None
+      kind: Option[ArticleQuery.Kind] = None,
+      text: Option[ArticleQuery.Text] = None
   )
+
+  object ArticleQuery:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val articles: PublicEndpoint[ArticleQuery, com.histmersion.api.Api.Error, Article.List, Any] =
     base.get
@@ -778,13 +822,27 @@ object Api:
       .out(jsonBody[List[Place.Hit]])
 
   final case class PlacesGeoQuery(
-      kind: Option[String] = None,
-      asOf: Option[Long] = None,
-      limit: Option[Int] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      pick: Option[String] = None
+      kind: Option[PlacesGeoQuery.Kind] = None,
+      asOf: Option[PlacesGeoQuery.AsOf] = None,
+      limit: Option[PlacesGeoQuery.Limit] = None,
+      from: Option[PlacesGeoQuery.From] = None,
+      to: Option[PlacesGeoQuery.To] = None,
+      pick: Option[PlacesGeoQuery.Pick] = None
   )
+
+  object PlacesGeoQuery:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AsOf = AsOf.T
+    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pick = Pick.T
+    object Pick extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, com.histmersion.api.Api.Error, String, Any] =
     base.get
@@ -970,14 +1028,30 @@ object Api:
 
   final case class EventQuery(
       filter: Filter = Filter(),
-      text: Option[String] = None,
-      kind: Option[String] = None,
-      historicity: Option[String] = None,
-      placeId: Option[String] = None,
-      tier: Option[String] = None,
-      context: Option[Boolean] = None,
-      area: Option[String] = None
+      text: Option[EventQuery.Text] = None,
+      kind: Option[EventQuery.Kind] = None,
+      historicity: Option[EventQuery.Historicity] = None,
+      placeId: Option[EventQuery.PlaceId] = None,
+      tier: Option[EventQuery.Tier] = None,
+      context: Option[EventQuery.Context] = None,
+      area: Option[EventQuery.Area] = None
   )
+
+  object EventQuery:
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = Historicity.T
+    object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceId = PlaceId.T
+    object PlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tier = Tier.T
+    object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Context = Context.T
+    object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Area = Area.T
+    object Area extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val events: PublicEndpoint[EventQuery, com.histmersion.api.Api.Error, EventList, Any] =
     base.get
@@ -1037,12 +1111,22 @@ object Api:
       .out(jsonBody[EventDeleted])
 
   final case class AttestationQuery(
-      citekey: Option[String] = None,
-      targetType: Option[String] = None,
-      targetId: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      citekey: Option[com.histmersion.api.library.Citekey] = None,
+      targetType: Option[AttestationQuery.TargetType] = None,
+      targetId: Option[AttestationQuery.TargetId] = None,
+      limit: Option[AttestationQuery.Limit] = None,
+      offset: Option[AttestationQuery.Offset] = None
   )
+
+  object AttestationQuery:
+    type TargetType = TargetType.T
+    object TargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetId = TargetId.T
+    object TargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val attestations: PublicEndpoint[AttestationQuery, com.histmersion.api.Api.Error, Attestation.List, Any] =
     base.get
@@ -1083,10 +1167,18 @@ object Api:
       .out(jsonBody[Attestation.Deleted])
 
   final case class GoalQuery(
-      status: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      status: Option[GoalQuery.Status] = None,
+      limit: Option[GoalQuery.Limit] = None,
+      offset: Option[GoalQuery.Offset] = None
   )
+
+  object GoalQuery:
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val goals: PublicEndpoint[GoalQuery, com.histmersion.api.Api.Error, Goal.List, Any] =
     base.get
@@ -1295,13 +1387,27 @@ object Api:
       .out(jsonBody[AssetDetail])
 
   final case class MediaGeoQuery(
-      kind: Option[String] = None,
-      from: Option[Long] = None,
-      to: Option[Long] = None,
-      limit: Option[Int] = None,
-      provider: Option[String] = None,
-      license: Option[String] = None
+      kind: Option[MediaGeoQuery.Kind] = None,
+      from: Option[MediaGeoQuery.From] = None,
+      to: Option[MediaGeoQuery.To] = None,
+      limit: Option[MediaGeoQuery.Limit] = None,
+      provider: Option[MediaGeoQuery.Provider] = None,
+      license: Option[MediaGeoQuery.License] = None
   )
+
+  object MediaGeoQuery:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type From = From.T
+    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type To = To.T
+    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provider = Provider.T
+    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type License = License.T
+    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val mediaGeo: PublicEndpoint[MediaGeoQuery, com.histmersion.api.Api.Error, List[MediaGeoHit], Any] =
     base.get
@@ -1318,14 +1424,30 @@ object Api:
       .out(jsonBody[List[MediaGeoHit]])
 
   final case class MediaQuery(
-      provider: Option[String] = None,
-      license: Option[String] = None,
-      place: Option[String] = None,
-      event: Option[String] = None,
-      q: Option[String] = None,
-      limit: Option[Int] = None,
-      offset: Option[Int] = None
+      provider: Option[MediaQuery.Provider] = None,
+      license: Option[MediaQuery.License] = None,
+      place: Option[MediaQuery.Place] = None,
+      event: Option[MediaQuery.Event] = None,
+      q: Option[MediaQuery.Q] = None,
+      limit: Option[MediaQuery.Limit] = None,
+      offset: Option[MediaQuery.Offset] = None
   )
+
+  object MediaQuery:
+    type Provider = Provider.T
+    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type License = License.T
+    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Place = Place.T
+    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Event = Event.T
+    object Event extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Q = Q.T
+    object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val mediaList: PublicEndpoint[MediaQuery, com.histmersion.api.Api.Error, MediaList, Any] =
     base.get
@@ -1460,13 +1582,18 @@ object Api:
       .out(header(sttp.model.Header(sttp.model.HeaderNames.AccessControlAllowOrigin, "*")))
       .out(header(sttp.model.Header(sttp.model.HeaderNames.CacheControl, "public, max-age=31536000, immutable")))
 
-  final case class Error(message: String, code: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Error(message: Error.Message, code: Option[Error.Code] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
   object Error:
 
 
     /** Tapir hands the matcher an `Any`, and under `-source:future` a constructor pattern on `Any` warns (it is not
       * `Matchable`), so the value is checked with a type test.
       */
+    type Message = Message.T
+    object Message extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def hasCode(code: String): PartialFunction[Any, Boolean] =
       case e if e.isInstanceOf[Error] && e.asInstanceOf[Error].code.contains(code) => true
 

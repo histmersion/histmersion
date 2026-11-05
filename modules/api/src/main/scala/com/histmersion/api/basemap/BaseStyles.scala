@@ -1,7 +1,15 @@
 package com.histmersion.api.basemap
 import com.histmersion.api.given
 object BaseStyles:
-  final case class Style(id: String, name: String, needs: List[String])
+  final case class Style(id: Style.Id, name: Style.Name, needs: List[Style.Needs])
+
+  object Style:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Needs = Needs.T
+    object Needs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Readable: Style =
     Style("readable", "Readable", List("boundaries", "earth", "landcover", "landuse", "places", "roads", "water"))

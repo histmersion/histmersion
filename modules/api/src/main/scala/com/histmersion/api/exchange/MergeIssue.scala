@@ -10,14 +10,14 @@ import com.histmersion.api.automation.Goal
 import io.circe.Json
 
 final case class MergeIssue(
-    id: String,
+    id: MergeIssue.Id,
     kind: MergeIssue.Kind,
     severity: MergeIssue.Severity,
     entity: com.histmersion.api.exchange.Bundle.Kind,
-    title: String,
+    title: MergeIssue.Title,
     left: Option[IssueSide] = None,
     right: Option[IssueSide] = None,
-    why: List[String] = Nil,
+    why: List[MergeIssue.Why] = Nil,
     options: List[MergeDecision.Kind] = Nil,
     suggested: Option[MergeDecision] = None,
     condition: Option[IssueCondition] = None,
@@ -30,6 +30,13 @@ final case class MergeIssue(
 object MergeIssue:
 
   /** What an issue is about. The wire name is part of the issue id, so it never changes. */
+  type Id = Id.T
+  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = Title.T
+  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Why = Why.T
+  object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Kind:
     /** Two sources may be one work (a score between the thresholds, or a hard flag such as two different DOIs or years
       * far apart): merge them (`map:<citekey>`) or keep both.

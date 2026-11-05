@@ -9,12 +9,26 @@ import com.histmersion.api.given
 final case class MergeInfo(
     id: UUID,
     bundleId: UUID,
-    bundleSha256: String,
+    bundleSha256: MergeInfo.BundleSha256,
     from: Bundle.Instance,
-    appliedAt: String,
-    planHash: Option[String] = None,
-    backup: Option[String] = None,
-    ledgerRows: Int = 0,
-    redirects: Int = 0
+    appliedAt: MergeInfo.AppliedAt,
+    planHash: Option[MergeInfo.PlanHash] = None,
+    backup: Option[MergeInfo.Backup] = None,
+    ledgerRows: MergeInfo.LedgerRows = 0,
+    redirects: MergeInfo.Redirects = 0
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
+
+object MergeInfo:
+  type BundleSha256 = BundleSha256.T
+  object BundleSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AppliedAt = AppliedAt.T
+  object AppliedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanHash = PlanHash.T
+  object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Backup = Backup.T
+  object Backup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgerRows = LedgerRows.T
+  object LedgerRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Redirects = Redirects.T
+  object Redirects extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -10,17 +10,28 @@ import com.histmersion.api.given
   */
 
 final case class MergeApplyJob(
-    job: String,
+    job: MergeApplyJob.Job,
     state: MergeJobState,
-    bundle: String,
-    planHash: String,
-    elapsedMs: Long,
+    bundle: MergeApplyJob.Bundle,
+    planHash: MergeApplyJob.PlanHash,
+    elapsedMs: MergeApplyJob.ElapsedMs,
     result: Option[MergeApplyResult] = None,
-    error: Option[String] = None
+    error: Option[MergeApplyJob.Error] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object MergeApplyJob:
 
+
+  type Job = Job.T
+  object Job extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Bundle = Bundle.T
+  object Bundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanHash = PlanHash.T
+  object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElapsedMs = ElapsedMs.T
+  object ElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Error = Error.T
+  object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind.value
 
