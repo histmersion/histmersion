@@ -20,10 +20,18 @@ object PlanQuota:
 
   /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
   final case class Logins(
-      claudeCodeApiKey: Boolean = false,
-      codexApiKey: Boolean = false,
-      opencodeChatgpt: Boolean = false
+      claudeCodeApiKey: Logins.ClaudeCodeApiKey = false,
+      codexApiKey: Logins.CodexApiKey = false,
+      opencodeChatgpt: Logins.OpencodeChatgpt = false
   )
+
+  object Logins:
+    type ClaudeCodeApiKey = ClaudeCodeApiKey.T
+    object ClaudeCodeApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CodexApiKey = CodexApiKey.T
+    object CodexApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpencodeChatgpt = OpencodeChatgpt.T
+    object OpencodeChatgpt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
     case ProviderKind.ClaudeCode if !logins.claudeCodeApiKey                              => Some(PoolId.ClaudePlan)
@@ -52,22 +60,43 @@ object PlanQuota:
 
   /** Codex names its windows by length (`300m`/`10080m`): its `primary` is not always the 5-hour window. */
   final case class Reading(
-      limit: String,
-      kind: String,
-      usedPct: Double,
-      resetsAt: Option[Long],
-      rejected: Boolean,
-      observedAt: Long,
+      limit: Reading.Limit,
+      kind: Reading.Kind,
+      usedPct: Reading.UsedPct,
+      resetsAt: Option[Reading.ResetsAt],
+      rejected: Reading.Rejected,
+      observedAt: Reading.ObservedAt,
       source: Source,
-      model: Option[String] = None
+      model: Option[Reading.Model] = None
   )
 
-  final case class Floors(byKind: Map[String, Int]):
+  object Reading:
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UsedPct = UsedPct.T
+    object UsedPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResetsAt = ResetsAt.T
+    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rejected = Rejected.T
+    object Rejected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ObservedAt = ObservedAt.T
+    object ObservedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
     def text: String = byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", ")
     def of(limit: String, kind: String, default: Int): Int =
       byKind.get(s"$limit/$kind").orElse(byKind.get(kind)).getOrElse(default)
 
   object Floors:
+    type ByKindKey = ByKindKey.T
+    object ByKindKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ByKindValue = ByKindValue.T
+    object ByKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Empty: Floors = Floors(Map.empty)
     def parse(s: String): Either[String, Floors] =
       val items = s.split(',').toList.map(_.trim).filter(_.nonEmpty)
@@ -85,16 +114,36 @@ object PlanQuota:
         case Nil  => Right(Floors(parsed.collect { case Right(kv) => kv }.toMap))
         case errs => Left(errs.mkString("; "))
 
-  final case class Rules(floors: Floors, defaultFloor: Int, staleMs: Long, marginPct: Int)
+  final case class Rules(floors: Floors, defaultFloor: Rules.DefaultFloor, staleMs: Rules.StaleMs, marginPct: Rules.MarginPct)
+
+  object Rules:
+    type DefaultFloor = DefaultFloor.T
+    object DefaultFloor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StaleMs = StaleMs.T
+    object StaleMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarginPct = MarginPct.T
+    object MarginPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class WindowState(
       reading: Reading,
-      floor: Int,
-      leftPct: Double,
-      stale: Boolean,
-      usable: Boolean,
-      why: Option[String]
+      floor: WindowState.Floor,
+      leftPct: WindowState.LeftPct,
+      stale: WindowState.Stale,
+      usable: WindowState.Usable,
+      why: Option[WindowState.Why]
   )
+
+  object WindowState:
+    type Floor = Floor.T
+    object Floor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftPct = LeftPct.T
+    object LeftPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Stale = Stale.T
+    object Stale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Usable = Usable.T
+    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Verdict:
     case Usable(note: Option[String])
@@ -218,98 +267,232 @@ object PlanQuota:
       case _ => Right(need)
 
   final case class WindowStatus(
-      limit: String,
-      kind: String,
-      usedPct: Double,
-      leftPct: Double,
-      floor: Int,
-      usable: Boolean,
-      stale: Boolean,
-      resetsAt: Option[String],
-      observedAt: String,
-      ageSeconds: Long,
-      source: String,
-      why: Option[String] = None
+      limit: WindowStatus.Limit,
+      kind: WindowStatus.Kind,
+      usedPct: WindowStatus.UsedPct,
+      leftPct: WindowStatus.LeftPct,
+      floor: WindowStatus.Floor,
+      usable: WindowStatus.Usable,
+      stale: WindowStatus.Stale,
+      resetsAt: Option[WindowStatus.ResetsAt],
+      observedAt: WindowStatus.ObservedAt,
+      ageSeconds: WindowStatus.AgeSeconds,
+      source: WindowStatus.Source,
+      why: Option[WindowStatus.Why] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object WindowStatus:
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UsedPct = UsedPct.T
+    object UsedPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LeftPct = LeftPct.T
+    object LeftPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Floor = Floor.T
+    object Floor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Usable = Usable.T
+    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Stale = Stale.T
+    object Stale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResetsAt = ResetsAt.T
+    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ObservedAt = ObservedAt.T
+    object ObservedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AgeSeconds = AgeSeconds.T
+    object AgeSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class PoolStatus(
-      pool: String,
-      title: String,
-      kind: String,
-      covers: List[String],
-      floors: String,
-      floorsSource: String,
-      held: Boolean,
-      usable: Boolean,
-      reason: Option[String],
-      until: Option[String],
-      maxCallsInFlight: Int,
+      pool: PoolStatus.Pool,
+      title: PoolStatus.Title,
+      kind: PoolStatus.Kind,
+      covers: List[PoolStatus.Covers],
+      floors: PoolStatus.Floors,
+      floorsSource: PoolStatus.FloorsSource,
+      held: PoolStatus.Held,
+      usable: PoolStatus.Usable,
+      reason: Option[PoolStatus.Reason],
+      until: Option[PoolStatus.Until],
+      maxCallsInFlight: PoolStatus.MaxCallsInFlight,
       windows: List[WindowStatus],
-      planType: Option[String] = None,
-      note: Option[String] = None,
-      available: Boolean = true,
-      login: Option[String] = None,
-      refresh: Option[String] = None,
-      refreshesToday: Int = 0,
+      planType: Option[PoolStatus.PlanType] = None,
+      note: Option[PoolStatus.Note] = None,
+      available: PoolStatus.Available = true,
+      login: Option[PoolStatus.Login] = None,
+      refresh: Option[PoolStatus.Refresh] = None,
+      refreshesToday: PoolStatus.RefreshesToday = 0,
       lastRefresh: Option[RefreshInfo] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object PoolStatus:
+    type Pool = Pool.T
+    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Covers = Covers.T
+    object Covers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Floors = Floors.T
+    object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FloorsSource = FloorsSource.T
+    object FloorsSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Held = Held.T
+    object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Usable = Usable.T
+    object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxCallsInFlight = MaxCallsInFlight.T
+    object MaxCallsInFlight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlanType = PlanType.T
+    object PlanType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Available = Available.T
+    object Available extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Login = Login.T
+    object Login extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refresh = Refresh.T
+    object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefreshesToday = RefreshesToday.T
+    object RefreshesToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class RefreshInfo(at: String, mode: String, trigger: String, ok: Boolean, detail: String)
+
+  final case class RefreshInfo(at: RefreshInfo.At, mode: RefreshInfo.Mode, trigger: RefreshInfo.Trigger, ok: RefreshInfo.Ok, detail: RefreshInfo.Detail)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object RefreshInfo:
+    type At = At.T
+    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Mode = Mode.T
+    object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Trigger = Trigger.T
+    object Trigger extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ok = Ok.T
+    object Ok extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class QuotaRefresh(pool: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class QuotaRefresh(pool: Option[QuotaRefresh.Pool] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object QuotaRefresh:
+    type Pool = Pool.T
+    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class PoolRefreshed(pool: String, refreshed: Boolean, detail: String, status: PoolStatus)
+  final case class PoolRefreshed(pool: PoolRefreshed.Pool, refreshed: PoolRefreshed.Refreshed, detail: PoolRefreshed.Detail, status: PoolStatus)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object PoolRefreshed:
+    type Pool = Pool.T
+    object Pool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refreshed = Refreshed.T
+    object Refreshed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[String] = Nil)
+
+  final case class QuotaRefreshed(pools: List[PoolRefreshed], lifted: List[QuotaRefreshed.Lifted] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object QuotaRefreshed:
+    type Lifted = Lifted.T
+    object Lifted extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class QuotaInfo(
       plans: List[PoolStatus],
       metered: List[ModelChains.AllowanceStatus],
-      fallthrough: List[String],
-      now: String,
+      fallthrough: List[QuotaInfo.Fallthrough],
+      now: QuotaInfo.Now,
       cooldowns: List[Cooldown] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object QuotaInfo:
+    type Fallthrough = Fallthrough.T
+    object Fallthrough extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Now = Now.T
+    object Now extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Cooldown(model: String, until: String, reason: String)
+
+  final case class Cooldown(model: Cooldown.Model, until: Cooldown.Until, reason: Cooldown.Reason)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object Cooldown:
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class PoolSet(hold: Option[Boolean] = None, floors: Option[String] = None)
+
+  final case class PoolSet(hold: Option[PoolSet.Hold] = None, floors: Option[PoolSet.Floors] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object PoolSet:
+    type Hold = Hold.T
+    object Hold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Floors = Floors.T
+    object Floors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class FallthroughSet(fallthrough: Boolean) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class FallthroughSet(fallthrough: FallthroughSet.Fallthrough) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object FallthroughSet:
+    type Fallthrough = Fallthrough.T
+    object Fallthrough extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   /** A Claude Code mod's report: `$.session.usage().rateLimits` (`{kind, percentUsed, resetsAt}`). */
-  final case class ModWindow(kind: String, percentUsed: Double, resetsAt: Option[String] = None)
+  final case class ModWindow(kind: ModWindow.Kind, percentUsed: ModWindow.PercentUsed, resetsAt: Option[ModWindow.ResetsAt] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ModWindow:
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PercentUsed = PercentUsed.T
+    object PercentUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResetsAt = ResetsAt.T
+    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class ModReport(source: String, rateLimits: List[ModWindow])
+
+  final case class ModReport(source: ModReport.Source, rateLimits: List[ModWindow])
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ModReport:
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class GuardAnswer(allow: Boolean, reason: Option[String] = None, resetsAt: Option[String] = None)
+
+  final case class GuardAnswer(allow: GuardAnswer.Allow, reason: Option[GuardAnswer.Reason] = None, resetsAt: Option[GuardAnswer.ResetsAt] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object GuardAnswer:
+    type Allow = Allow.T
+    object Allow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResetsAt = ResetsAt.T
+    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

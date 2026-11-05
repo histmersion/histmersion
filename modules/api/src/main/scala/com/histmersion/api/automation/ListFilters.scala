@@ -27,11 +27,11 @@ object ListFilters:
   export com.histmersion.api.automation.Approval.DecidedBy as DecidedBy
 
   final case class ApprovalFilter(
-      state: Option[String] = None,
-      kind: List[String] = Nil,
-      subject: Option[String] = None,
-      goal: Option[String] = None,
-      decidedBy: List[String] = Nil
+      state: Option[ApprovalFilter.State] = None,
+      kind: List[ApprovalFilter.Kind] = Nil,
+      subject: Option[ApprovalFilter.Subject] = None,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      decidedBy: List[ApprovalFilter.DecidedBy] = Nil
   ):
     def normalized: ApprovalFilter =
       ApprovalFilter(
@@ -54,17 +54,27 @@ object ListFilters:
       ) ++
         n.decidedBy.map(d => "decided-by" -> Some(d))
 
+  object ApprovalFilter:
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DecidedBy = DecidedBy.T
+    object DecidedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class RunFilter(
-      status: List[String] = Nil,
-      pipeline: List[String] = Nil,
-      manager: List[String] = Nil,
-      goal: Option[String] = None,
-      model: List[String] = Nil,
-      provider: List[String] = Nil,
-      origin: List[String] = Nil,
-      since: Option[String] = None,
-      until: Option[String] = None,
-      subject: Option[String] = None
+      status: List[RunFilter.Status] = Nil,
+      pipeline: List[RunFilter.Pipeline] = Nil,
+      manager: List[RunFilter.Manager] = Nil,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      model: List[RunFilter.Model] = Nil,
+      provider: List[RunFilter.Provider] = Nil,
+      origin: List[RunFilter.Origin] = Nil,
+      since: Option[RunFilter.Since] = None,
+      until: Option[RunFilter.Until] = None,
+      subject: Option[RunFilter.Subject] = None
   ):
     def qualifier: Option[String] = { val n = normalized; words(n.status, n.pipeline) }
     def normalized: RunFilter =
@@ -88,12 +98,32 @@ object ListFilters:
         List("goal" -> n.goal) ++ n.model.map("model" -> Some(_)) ++ n.provider.map("provider" -> Some(_)) ++
         n.origin.map("origin" -> Some(_)) ++ List("since" -> n.since, "until" -> n.until, "subject" -> n.subject)
 
+  object RunFilter:
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pipeline = Pipeline.T
+    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Manager = Manager.T
+    object Manager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provider = Provider.T
+    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Origin = Origin.T
+    object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class JobFilter(
-      status: List[String] = Nil,
-      kind: List[String] = Nil,
-      since: Option[String] = None,
-      until: Option[String] = None,
-      subject: Option[String] = None
+      status: List[JobFilter.Status] = Nil,
+      kind: List[JobFilter.Kind] = Nil,
+      since: Option[JobFilter.Since] = None,
+      until: Option[JobFilter.Until] = None,
+      subject: Option[JobFilter.Subject] = None
   ):
     def qualifier: Option[String] = { val n = normalized; words(n.status, n.kind) }
     def normalized: JobFilter =
@@ -111,6 +141,18 @@ object ListFilters:
         "until" -> n.until,
         "subject" -> n.subject
       )
+
+  object JobFilter:
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Since = Since.T
+    object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Until = Until.T
+    object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val approvalQuery: EndpointInput[ApprovalFilter] =
     query[Option[String]]("state")

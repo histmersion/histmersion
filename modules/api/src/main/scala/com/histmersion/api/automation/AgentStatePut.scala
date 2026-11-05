@@ -7,10 +7,13 @@ import com.histmersion.api.StrictJson
 import com.histmersion.api.given
 
 final case class AgentStatePut(
-    value: String
+    value: AgentStatePut.Value
 ) derives KindlingsSchema, com.histmersion.api.json.Schema
 
 object AgentStatePut:
 
+
+  type Value = Value.T
+  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   given Codec.AsObject[AgentStatePut] = StrictJson.codec(KindlingsCodecAsObject.derived[AgentStatePut])

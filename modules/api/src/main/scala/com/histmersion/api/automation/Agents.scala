@@ -21,10 +21,13 @@ object Agents:
   /** The model id may itself contain colons (`local:qwen2.5-coder:32b`), so only the first colon separates the
     * provider.
     */
-  final case class ModelRef(provider: ProviderKind, model: String):
+  final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
     def wire: String = s"${provider.wire}:$model"
 
   object ModelRef:
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     def parse(s: String, known: Set[String] = Set.empty): Either[String, ModelRef] =
       val t = s.trim
       t.indexOf(':') match
@@ -39,7 +42,7 @@ object Agents:
   /** `input` counts all prompt tokens, cached ones included (the provider-normalised convention sttp-ai uses);
     * `cacheRead`/`cacheWrite` are subsets of it.
     */
-  final case class Usage(input: Long = 0, output: Long = 0, cacheRead: Long = 0, cacheWrite: Long = 0)
+  final case class Usage(input: Usage.Input = 0, output: Usage.Output = 0, cacheRead: Usage.CacheRead = 0, cacheWrite: Usage.CacheWrite = 0)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Usage): Usage =
@@ -50,6 +53,15 @@ object Agents:
       math.max(0L, input - cacheRead) + output + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
 
   object Usage:
+    type Input = Input.T
+    object Input extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Output = Output.T
+    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CacheRead = CacheRead.T
+    object CacheRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CacheWrite = CacheWrite.T
+    object CacheWrite extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Zero: Usage = Usage()
 
 
@@ -160,12 +172,16 @@ object Agents:
   object Origin:
     def parse(s: String): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)
 
-  final case class ProbeRequest(citekey: String, model: Option[String] = None)
+  final case class ProbeRequest(citekey: com.histmersion.api.library.Citekey, model: Option[ProbeRequest.Model] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ProbeRequest:
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class ProbeAnswer(citekey: String, title: String, year: Option[Int])
+
+  final case class ProbeAnswer(citekey: com.histmersion.api.library.Citekey, title: com.histmersion.api.library.Title, year: Option[com.histmersion.api.catalogue.Year])
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
@@ -181,48 +197,103 @@ object Agents:
 
 
   final case class ProbeResult(
-      model: String,
+      model: ProbeResult.Model,
       answer: Option[ProbeAnswer],
-      rawAnswer: String,
-      matchesRecord: Boolean,
-      toolCalls: List[String],
-      iterations: Int,
-      finish: String,
+      rawAnswer: ProbeResult.RawAnswer,
+      matchesRecord: ProbeResult.MatchesRecord,
+      toolCalls: List[ProbeResult.ToolCalls],
+      iterations: ProbeResult.Iterations,
+      finish: ProbeResult.Finish,
       usage: Usage,
-      costUsd: Option[Double],
-      millis: Long,
-      problems: List[String] = Nil,
-      attempts: Int = 1
+      costUsd: Option[ProbeResult.CostUsd],
+      millis: ProbeResult.Millis,
+      problems: List[ProbeResult.Problems] = Nil,
+      attempts: ProbeResult.Attempts = 1
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ProbeResult:
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RawAnswer = RawAnswer.T
+    object RawAnswer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MatchesRecord = MatchesRecord.T
+    object MatchesRecord extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToolCalls = ToolCalls.T
+    object ToolCalls extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Iterations = Iterations.T
+    object Iterations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Finish = Finish.T
+    object Finish extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostUsd = CostUsd.T
+    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Millis = Millis.T
+    object Millis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problems = Problems.T
+    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempts = Attempts.T
+    object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class RunRequest(
-      pipeline: String,
-      target: String,
-      model: Option[String] = None,
-      budgetUsd: Option[Double] = None,
-      budgetTokens: Option[Long] = None,
-      fix: Option[Boolean] = None,
-      rounds: Option[Int] = None,
-      acquireItem: Option[Int] = None,
-      title: Option[String] = None,
-      kind: Option[String] = None,
-      query: Option[String] = None,
-      topics: List[String] = Nil,
-      tags: List[String] = Nil,
+      pipeline: RunRequest.Pipeline,
+      target: RunRequest.Target,
+      model: Option[RunRequest.Model] = None,
+      budgetUsd: Option[RunRequest.BudgetUsd] = None,
+      budgetTokens: Option[RunRequest.BudgetTokens] = None,
+      fix: Option[RunRequest.Fix] = None,
+      rounds: Option[RunRequest.Rounds] = None,
+      acquireItem: Option[com.histmersion.api.automation.Queue.QueueItem.Id] = None,
+      title: Option[RunRequest.Title] = None,
+      kind: Option[RunRequest.Kind] = None,
+      query: Option[RunRequest.Query] = None,
+      topics: List[RunRequest.Topics] = Nil,
+      tags: List[RunRequest.Tags] = Nil,
       /** Every field is optional: a run stored before an option existed must still decode. */
-      goal: Option[String] = None,
-      dryRun: Option[Boolean] = None,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      dryRun: Option[RunRequest.DryRun] = None,
       modelFor: List[ModelOverride] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object RunRequest:
+    type Pipeline = Pipeline.T
+    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetUsd = BudgetUsd.T
+    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetTokens = BudgetTokens.T
+    object BudgetTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Fix = Fix.T
+    object Fix extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rounds = Rounds.T
+    object Rounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Query = Query.T
+    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topics = Topics.T
+    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tags = Tags.T
+    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class ModelOverride(role: String, model: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
+
+  final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
     def text: String = s"$role=$model"
   object ModelOverride:
 
+
+    type Role = Role.T
+    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: String): Either[String, ModelOverride] =
       s.indexOf('=') match
@@ -234,55 +305,73 @@ object Agents:
           else Right(ModelOverride(r, m))
 
   final case class RunParams(
-      fix: Option[Boolean] = None,
-      rounds: Option[Int] = None,
-      title: Option[String] = None,
-      kind: Option[String] = None,
-      query: Option[String] = None,
-      topics: Option[List[String]] = None,
-      tags: Option[List[String]] = None,
+      fix: Option[com.histmersion.api.automation.Agents.RunRequest.Fix] = None,
+      rounds: Option[com.histmersion.api.automation.Agents.RunRequest.Rounds] = None,
+      title: Option[com.histmersion.api.automation.Agents.RunRequest.Title] = None,
+      kind: Option[com.histmersion.api.automation.Agents.RunRequest.Kind] = None,
+      query: Option[com.histmersion.api.automation.Agents.RunRequest.Query] = None,
+      topics: Option[List[com.histmersion.api.automation.Agents.RunRequest.Topics]] = None,
+      tags: Option[List[com.histmersion.api.automation.Agents.RunRequest.Tags]] = None,
       modelFor: Option[List[ModelOverride]] = None,
-      notes: Option[List[String]] = None,
-      chainReview: Option[Boolean] = None,
-      minSources: Option[Int] = None,
-      maxArticles: Option[Int] = None,
-      autoIngest: Option[Int] = None,
-      hint: Option[Long] = None,
-      subGoals: Option[Int] = None,
-      oaBacklog: Option[Boolean] = None
+      notes: Option[List[RunParams.Notes]] = None,
+      chainReview: Option[RunParams.ChainReview] = None,
+      minSources: Option[RunParams.MinSources] = None,
+      maxArticles: Option[RunParams.MaxArticles] = None,
+      autoIngest: Option[RunParams.AutoIngest] = None,
+      hint: Option[RunParams.Hint] = None,
+      subGoals: Option[RunParams.SubGoals] = None,
+      oaBacklog: Option[RunParams.OaBacklog] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def fixes: Boolean = fix.contains(true)
     def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
 
+  object RunParams:
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChainReview = ChainReview.T
+    object ChainReview extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinSources = MinSources.T
+    object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxArticles = MaxArticles.T
+    object MaxArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AutoIngest = AutoIngest.T
+    object AutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Hint = Hint.T
+    object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SubGoals = SubGoals.T
+    object SubGoals extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OaBacklog = OaBacklog.T
+    object OaBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class RunInfo(
-      id: String,
-      pipeline: String,
-      target: String,
-      status: String,
-      progress: Option[String] = None,
-      error: Option[String] = None,
-      model: Option[String] = None,
+      id: RunInfo.Id,
+      pipeline: RunInfo.Pipeline,
+      target: RunInfo.Target,
+      status: RunInfo.Status,
+      progress: Option[RunInfo.Progress] = None,
+      error: Option[RunInfo.Error] = None,
+      model: Option[RunInfo.Model] = None,
       usage: Usage = Usage.Zero,
-      costUsd: Double = 0,
-      budgetUsd: Double = 0,
-      budgetTokens: Long = 0,
-      warnings: List[String] = Nil,
-      createdAt: String = "",
-      updatedAt: String = "",
-      targetKind: String = "",
+      costUsd: RunInfo.CostUsd = 0,
+      budgetUsd: RunInfo.BudgetUsd = 0,
+      budgetTokens: RunInfo.BudgetTokens = 0,
+      warnings: List[RunInfo.Warnings] = Nil,
+      createdAt: RunInfo.CreatedAt = "",
+      updatedAt: RunInfo.UpdatedAt = "",
+      targetKind: RunInfo.TargetKind = "",
       params: RunParams = RunParams(),
-      acquireItem: Option[Int] = None,
-      goal: Option[String] = None,
-      parent: Option[String] = None,
-      origin: Option[String] = None,
-      resumeAt: Option[String] = None,
-      dryRun: Boolean = false,
-      managerId: Option[String] = None,
-      managerItem: Option[Long] = None,
-      heartbeatAt: Option[String] = None
+      acquireItem: Option[com.histmersion.api.automation.Queue.QueueItem.Id] = None,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      parent: Option[com.histmersion.api.automation.Agents.RunInfo.Id] = None,
+      origin: Option[RunInfo.Origin] = None,
+      resumeAt: Option[RunInfo.ResumeAt] = None,
+      dryRun: RunInfo.DryRun = false,
+      managerId: Option[com.histmersion.api.automation.Managers.ManagerInfo.Id] = None,
+      managerItem: Option[com.histmersion.api.automation.Managers.ManagerItem.Id] = None,
+      heartbeatAt: Option[RunInfo.HeartbeatAt] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def isWaiting: Boolean = status == com.histmersion.api.automation.Run.State.WaitingApproval.wire
@@ -290,28 +379,72 @@ object Agents:
     def modelFor(role: Role): Option[String] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
 
+  object RunInfo:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pipeline = Pipeline.T
+    object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Progress = Progress.T
+    object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostUsd = CostUsd.T
+    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetUsd = BudgetUsd.T
+    object BudgetUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetTokens = BudgetTokens.T
+    object BudgetTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Warnings = Warnings.T
+    object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpdatedAt = UpdatedAt.T
+    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetKind = TargetKind.T
+    object TargetKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Origin = Origin.T
+    object Origin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResumeAt = ResumeAt.T
+    object ResumeAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HeartbeatAt = HeartbeatAt.T
+    object HeartbeatAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class WouldWrite(what: String, payload: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class WouldWrite(what: WouldWrite.What, payload: WouldWrite.Payload) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object WouldWrite:
+    type What = What.T
+    object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Payload = Payload.T
+    object Payload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class StepInfo(
-      seq: Int,
-      name: String,
-      kind: String,
-      attempt: Int,
-      status: String,
-      model: Option[String] = None,
-      promptHash: Option[String] = None,
+      seq: StepInfo.Seq,
+      name: StepInfo.Name,
+      kind: StepInfo.Kind,
+      attempt: StepInfo.Attempt,
+      status: StepInfo.Status,
+      model: Option[StepInfo.Model] = None,
+      promptHash: Option[StepInfo.PromptHash] = None,
       usage: Usage = Usage.Zero,
-      costUsd: Double = 0,
-      error: Option[String] = None,
-      output: Option[String] = None,
-      startedAt: String = "",
-      finishedAt: String = "",
-      actualModel: Option[String] = None,
+      costUsd: StepInfo.CostUsd = 0,
+      error: Option[StepInfo.Error] = None,
+      output: Option[StepInfo.Output] = None,
+      startedAt: StepInfo.StartedAt = "",
+      finishedAt: StepInfo.FinishedAt = "",
+      actualModel: Option[StepInfo.ActualModel] = None,
       wouldWrite: List[WouldWrite] = Nil,
-      firstCallTokens: Option[Long] = None,
-      turns: Option[Int] = None
+      firstCallTokens: Option[StepInfo.FirstCallTokens] = None,
+      turns: Option[StepInfo.Turns] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def modelText: String = (model, actualModel) match
@@ -320,18 +453,68 @@ object Agents:
       case (None, Some(a))                                       => a
       case (None, None)                                          => ""
 
+  object StepInfo:
+    type Seq = Seq.T
+    object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attempt = Attempt.T
+    object Attempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PromptHash = PromptHash.T
+    object PromptHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostUsd = CostUsd.T
+    object CostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Error = Error.T
+    object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Output = Output.T
+    object Output extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartedAt = StartedAt.T
+    object StartedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FinishedAt = FinishedAt.T
+    object FinishedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ActualModel = ActualModel.T
+    object ActualModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstCallTokens = FirstCallTokens.T
+    object FirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Turns = Turns.T
+    object Turns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class MessageInfo(
-      seq: Int,
-      n: Int,
-      role: String,
-      content: Option[String] = None,
-      toolName: Option[String] = None,
-      toolInput: Option[String] = None,
-      toolResult: Option[String] = None,
-      latencyMs: Option[Int] = None
+      seq: MessageInfo.Seq,
+      n: MessageInfo.N,
+      role: MessageInfo.Role,
+      content: Option[MessageInfo.Content] = None,
+      toolName: Option[MessageInfo.ToolName] = None,
+      toolInput: Option[MessageInfo.ToolInput] = None,
+      toolResult: Option[MessageInfo.ToolResult] = None,
+      latencyMs: Option[MessageInfo.LatencyMs] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object MessageInfo:
+    type Seq = Seq.T
+    object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type N = N.T
+    object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Role = Role.T
+    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Content = Content.T
+    object Content extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToolName = ToolName.T
+    object ToolName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToolInput = ToolInput.T
+    object ToolInput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToolResult = ToolResult.T
+    object ToolResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LatencyMs = LatencyMs.T
+    object LatencyMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class RunDetail(run: RunInfo, steps: List[StepInfo], messages: List[MessageInfo])
@@ -339,22 +522,44 @@ object Agents:
         KindlingsSchema, com.histmersion.api.json.Schema
 
 
-  final case class RoleModel(role: String, model: Option[String], ready: Boolean, problem: Option[String])
+  final case class RoleModel(role: RoleModel.Role, model: Option[RoleModel.Model], ready: RoleModel.Ready, problem: Option[RoleModel.Problem])
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object RoleModel:
+    type Role = Role.T
+    object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Model = Model.T
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ready = Ready.T
+    object Ready extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class ModelsInfo(
-      enabled: Boolean,
+      enabled: ModelsInfo.Enabled,
       roles: List[RoleModel],
-      pipelines: List[String],
-      maxConcurrentRuns: Int,
-      problems: List[String],
+      pipelines: List[ModelsInfo.Pipelines],
+      maxConcurrentRuns: ModelsInfo.MaxConcurrentRuns,
+      problems: List[ModelsInfo.Problems],
       chains: List[ModelChains.RoleChain] = Nil,
       allowances: List[ModelChains.AllowanceStatus] = Nil,
-      now: String = ""
+      now: ModelsInfo.Now = ""
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object ModelsInfo:
+    type Enabled = Enabled.T
+    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pipelines = Pipelines.T
+    object Pipelines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxConcurrentRuns = MaxConcurrentRuns.T
+    object MaxConcurrentRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Problems = Problems.T
+    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Now = Now.T
+    object Now extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum CheckLevel(val wire: String):
@@ -372,17 +577,23 @@ object Agents:
     given io.circe.Decoder[CheckLevel] = WireEnum.decoder
     given Schema[CheckLevel] = WireEnum.schema
 
-  final case class DoctorCheck(name: String, level: CheckLevel, detail: String)
+  final case class DoctorCheck(name: DoctorCheck.Name, level: CheckLevel, detail: DoctorCheck.Detail)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object DoctorCheck:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Detail = Detail.T
+    object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class ProviderDoctor(
-      provider: String,
-      used: Boolean,
-      models: List[String],
+      provider: ProviderDoctor.Provider,
+      used: ProviderDoctor.Used,
+      models: List[ProviderDoctor.Models],
       checks: List[DoctorCheck],
-      upstreamModels: List[String] = Nil
+      upstreamModels: List[ProviderDoctor.UpstreamModels] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def level: CheckLevel =
@@ -390,30 +601,66 @@ object Agents:
       else if checks.exists(_.level == CheckLevel.Warn) then CheckLevel.Warn
       else CheckLevel.Ok
 
+  object ProviderDoctor:
+    type Provider = Provider.T
+    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Used = Used.T
+    object Used extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Models = Models.T
+    object Models extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpstreamModels = UpstreamModels.T
+    object UpstreamModels extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class DoctorReport(
-      enabled: Boolean,
-      online: Boolean,
+      enabled: DoctorReport.Enabled,
+      online: DoctorReport.Online,
       providers: List[ProviderDoctor],
       checks: List[DoctorCheck]
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object DoctorReport:
+    type Enabled = Enabled.T
+    object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Online = Online.T
+    object Online extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class GenerateRequest(runtimes: List[String] = Nil, out: Option[String] = None)
+
+  final case class GenerateRequest(runtimes: List[GenerateRequest.Runtimes] = Nil, out: Option[GenerateRequest.Out] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object GenerateRequest:
+    type Runtimes = Runtimes.T
+    object Runtimes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Out = Out.T
+    object Out extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
 
   final case class GenerateResult(
-      dir: String,
-      runtimes: List[String],
-      files: Int,
-      written: Int,
-      removed: Int,
-      definitions: String
+      dir: GenerateResult.Dir,
+      runtimes: List[GenerateResult.Runtimes],
+      files: GenerateResult.Files,
+      written: GenerateResult.Written,
+      removed: GenerateResult.Removed,
+      definitions: GenerateResult.Definitions
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object GenerateResult:
+    type Dir = Dir.T
+    object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Runtimes = Runtimes.T
+    object Runtimes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Files = Files.T
+    object Files extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Written = Written.T
+    object Written extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Removed = Removed.T
+    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Definitions = Definitions.T
+    object Definitions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum Decision(val wire: String):
@@ -424,22 +671,22 @@ object Agents:
     def parse(s: String): Option[Decision] = values.find(_.wire == s.trim.toLowerCase)
 
   final case class ApprovalInfo(
-      id: Long,
-      runId: Option[String],
-      kind: String,
-      citekey: String,
-      status: Option[String] = None,
-      current: Option[String] = None,
-      edgeKind: Option[String] = None,
-      target: Option[String] = None,
-      evidence: String = "",
-      quote: Option[String] = None,
-      state: String = Approval.State.Open.wire,
-      note: Option[String] = None,
-      result: Option[String] = None,
-      createdAt: String = "",
-      decidedAt: Option[String] = None,
-      subject: Option[String] = None,
+      id: ApprovalInfo.Id,
+      runId: Option[com.histmersion.api.automation.Agents.RunInfo.Id],
+      kind: ApprovalInfo.Kind,
+      citekey: com.histmersion.api.library.Citekey,
+      status: Option[ApprovalInfo.Status] = None,
+      current: Option[ApprovalInfo.Current] = None,
+      edgeKind: Option[ApprovalInfo.EdgeKind] = None,
+      target: Option[ApprovalInfo.Target] = None,
+      evidence: ApprovalInfo.Evidence = "",
+      quote: Option[ApprovalInfo.Quote] = None,
+      state: ApprovalInfo.State = Approval.State.Open.wire,
+      note: Option[ApprovalInfo.Note] = None,
+      result: Option[ApprovalInfo.Result] = None,
+      createdAt: ApprovalInfo.CreatedAt = "",
+      decidedAt: Option[ApprovalInfo.DecidedAt] = None,
+      subject: Option[ApprovalInfo.Subject] = None,
       plan: Option[Goal.Plans.Plan] = None,
       article: Option[Goal.Plans.ArticleDraft] = None,
       filter: Option[Article.Plans.FilterProposal] = None,
@@ -461,5 +708,39 @@ object Agents:
         Some(this.modify(_.articles).setTo(p).modify(_.evidence).setTo(p.map(_.rationale).getOrElse("")))
       else None
 
+  object ApprovalInfo:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Current = Current.T
+    object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EdgeKind = EdgeKind.T
+    object EdgeKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Target = Target.T
+    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Evidence = Evidence.T
+    object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = Quote.T
+    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type State = State.T
+    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Result = Result.T
+    object Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DecidedAt = DecidedAt.T
+    object DecidedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Subject = Subject.T
+    object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class DecisionRequest(note: Option[String] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class DecisionRequest(note: Option[DecisionRequest.Note] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object DecisionRequest:
+    type Note = Note.T
+    object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

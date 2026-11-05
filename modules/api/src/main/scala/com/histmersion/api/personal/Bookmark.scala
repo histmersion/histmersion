@@ -12,16 +12,21 @@ import io.github.iltotore.iron.constraint.string.Match
 final case class Bookmark(
     id: com.histmersion.api.personal.Bookmark.Id,
     target: Target,
-    title: String,
+    title: com.histmersion.api.personal.ReadMark.Title,
     label: Option[com.histmersion.api.personal.Bookmark.Label] = None,
-    createdAt: String = "",
-    updatedAt: String = ""
+    createdAt: Bookmark.CreatedAt = "",
+    updatedAt: Bookmark.UpdatedAt = ""
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def name: String = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
 
 object Bookmark:
 
+
+  type CreatedAt = CreatedAt.T
+  object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpdatedAt = UpdatedAt.T
+  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Edit(label: Option[Label] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -48,6 +53,6 @@ object Bookmark:
     given Decoder[Label] = Decoder.decodeString.map(Label(_))
     given Schema[Label] = Schema.string[Label]
 
-  final case class New(target: Target, label: Option[Label] = None, title: Option[String] = None)
+  final case class New(target: Target, label: Option[Label] = None, title: Option[com.histmersion.api.personal.ReadMark.Title] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema

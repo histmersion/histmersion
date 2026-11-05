@@ -11,60 +11,102 @@ import com.histmersion.api.given
 object Queue:
 
   final case class QueueItem(
-      id: Int,
-      list: String,
-      text: String,
-      topic: Option[String],
-      status: String,
-      reason: Option[String] = None,
-      createdAt: Option[String] = None,
-      doneAt: Option[String] = None,
-      goal: Option[String] = None,
-      createdBy: Option[String] = None,
-      closedBy: Option[String] = None
+      id: QueueItem.Id,
+      list: QueueItem.List,
+      text: QueueItem.Text,
+      topic: Option[QueueItem.Topic],
+      status: QueueItem.Status,
+      reason: Option[QueueItem.Reason] = None,
+      createdAt: Option[QueueItem.CreatedAt] = None,
+      doneAt: Option[QueueItem.DoneAt] = None,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      createdBy: Option[QueueItem.CreatedBy] = None,
+      closedBy: Option[QueueItem.ClosedBy] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object QueueItem:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type List = List.T
+    object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Topic = Topic.T
+    object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Reason = Reason.T
+    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DoneAt = DoneAt.T
+    object DoneAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreatedBy = CreatedBy.T
+    object CreatedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClosedBy = ClosedBy.T
+    object ClosedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class ItemGoals(item: Int, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class ItemGoals(item: com.histmersion.api.automation.Queue.QueueItem.Id, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
-  final case class GoalRef(slug: String, title: String) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class GoalRef(slug: com.histmersion.api.automation.Goal.Slug, title: com.histmersion.api.automation.Goal.Title) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 
   final case class QueueAdd(
-      text: String,
-      topic: Option[String] = None,
-      status: Option[String] = None,
-      reason: Option[String] = None,
-      createdAt: Option[String] = None,
-      goal: Option[String] = None,
-      job: Option[String] = None
+      text: com.histmersion.api.automation.Queue.QueueItem.Text,
+      topic: Option[com.histmersion.api.automation.Queue.QueueItem.Topic] = None,
+      status: Option[com.histmersion.api.automation.Queue.QueueItem.Status] = None,
+      reason: Option[com.histmersion.api.automation.Queue.QueueItem.Reason] = None,
+      createdAt: Option[QueueAdd.CreatedAt] = None,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      job: Option[com.histmersion.api.jobs.JobInfo.Id] = None
   ) derives KindlingsSchema, com.histmersion.api.json.Schema
   object QueueAdd:
 
 
+    type CreatedAt = CreatedAt.T
+    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Codec.AsObject[QueueAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[QueueAdd])
 
   final case class QueuePatch(
-      status: Option[String] = None,
-      text: Option[String] = None,
-      topic: Option[String] = None,
-      reason: Option[String] = None,
-      goal: Option[String] = None,
-      closedBy: Option[String] = None
+      status: Option[com.histmersion.api.automation.Queue.QueueItem.Status] = None,
+      text: Option[com.histmersion.api.automation.Queue.QueueItem.Text] = None,
+      topic: Option[com.histmersion.api.automation.Queue.QueueItem.Topic] = None,
+      reason: Option[com.histmersion.api.automation.Queue.QueueItem.Reason] = None,
+      goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
+      closedBy: Option[QueuePatch.ClosedBy] = None
   ) derives KindlingsSchema, com.histmersion.api.json.Schema
   object QueuePatch:
 
 
+    type ClosedBy = ClosedBy.T
+    object ClosedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
 
-  final case class QueueImport(text: String, replace: Boolean = true) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class QueueImport(text: com.histmersion.api.automation.Queue.QueueItem.Text, replace: QueueImport.Replace = true) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+
+  object QueueImport:
+    type Replace = Replace.T
+    object Replace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class QueueImported(list: String, items: Int, notes: Int, replaced: Int)
+  final case class QueueImported(list: QueueImported.List, items: QueueImported.Items, notes: QueueImported.Notes, replaced: QueueImported.Replaced)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object QueueImported:
+    type List = List.T
+    object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Items = Items.T
+    object Items extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Notes = Notes.T
+    object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Replaced = Replaced.T
+    object Replaced extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum Kind(val label: String, val file: String, val checkboxes: Boolean):

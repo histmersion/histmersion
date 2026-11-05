@@ -6,6 +6,6 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
 
-final case class ReadOpened(kind: ItemKind, id: ItemKey, title: Option[String] = None)
+final case class ReadOpened(kind: ItemKind, id: ItemKey, title: Option[com.histmersion.api.personal.ReadMark.Title] = None)
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
