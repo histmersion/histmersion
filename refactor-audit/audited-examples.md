@@ -1,5 +1,51 @@
 # Audited examples and detector checklist
 
+## Multi-concept model purpose review after aeb46ecb
+
+Three requested cheap-model source audits reviewed library/research, catalogue/media
+and automation/jobs/storage concepts concurrently. This was purpose adjudication,
+not a new detector-quality holdout or refinement round. The library audit inspected
+six API files plus existing domain types; catalogue inspected ten API files plus
+existing value types. The automation auditor reported seventeen API files rather
+than the requested ten-file cap; that overrun is recorded, not described as meeting
+the cap. No second search round was started.
+
+Parent review checked the selected record declarations and existing wire types.
+Corrections: Place.Footprint is directly in Place, not Place.Entry; the first review
+run rejected the wrong exact owner before writing a ledger. The selector was
+corrected from the source and existing inventory without dropping the field or
+weakening exact-leaf assertions. Catalogue IDs use Place.Id/Event.Id companion
+ownership, not new prefixed PlaceId/EventId names. Existing api.catalogue.Year,
+Latitude and Longitude, and JobInfo.Id/Kind, are reuse targets. Wire request fields
+are not exempt solely because they carry input: Pure wrappers preserve permissive
+wire representation. Long historical bounds are not narrowed to Int Year.
+
+The existing model Review rule now accepts configuration and retains its legacy
+pagination default. model-concepts-review.conf freezes 79 distinct confirmed public
+production API primitive leaves across 17 concepts, with source hashes, exact ASTs
+and unchanged position/route identity construction. The event lives in
+models/reviews/multi-concept-1/review-1.tsv; it is additional evidence for the
+existing model family ledger, not another migration tracking system. The eleven
+original pagination IDs and all their repair history remain unchanged.
+
+Shared concepts: source citekeys, bibliographic titles, DOI, author-name elements,
+publication year and venue; catalogue place and event IDs; latitude and longitude;
+byte and file counts; storage measurement duration and freshness age; SHA-256;
+background job ID and kind. Optionality/collection shape does not create another
+concept. API types are Pure. No concrete cross-entity misuse justifies adding a
+phantom parameter to these mappings.
+
+Explicit limits: this review covers selected wire declarations, not every use of
+these concepts or every module's definitions. The subsequent rewrite must discover
+the whole definition/caller closure across modules. Raw parser strings, arbitrary
+id/name/value fields, article-title equivalence, mixed external identifiers, Long
+historical bounds, Int-to-Long asset-size widening, pixel-dimension ownership,
+manager/run/item identity equivalence and unrelated count semantics remain
+unresolved or outside this review. They are not compliant or accepted exceptions.
+The 79 bulk-rewrite treatments describe the intended transformation, not current
+rule support: ModelTypeRewrite still lacks general String/Long/Double/List support.
+No newtypes or application fixes are claimed by this review.
+
 ## Bounded acceptance review at a06cb734 (5 November)
 
 This is the current acceptance-pass evidence for migration-rounds.tsv, not a second
