@@ -54,7 +54,7 @@ final class FilterTab[Q, Row](
       child.maybe <-- state.signal.map(s =>
         Option.when(s.loaded && !s.loading && s.error.isEmpty && s.rows.isEmpty)(p(cls := "muted", empty))
       ),
-      ul(cls := s"$name-list", children <-- state.signal.map(s => s.rows.take(s.shown).map(render))),
+      ul(cls := s"$name-list", children <-- state.signal.map(s => s.rows.take(s.shown.value).map(render))),
       ResultsPaging.moreButton(state.signal.map(_.moreLabel(page)), state.signal.map(_.loading), () => more())
     )
 

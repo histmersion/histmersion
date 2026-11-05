@@ -8,8 +8,8 @@ import org.scalajs.dom
   */
 final case class TabState[Row](
     rows: List[Row] = Nil,
-    total: Int = 0,
-    shown: Int = 0,
+    total: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
+    shown: com.histmersion.api.RowCount = com.histmersion.api.RowCount(0),
     loading: Boolean = false,
     error: Option[String] = None,
     loaded: Boolean = false,
@@ -17,7 +17,7 @@ final case class TabState[Row](
 ):
 
   /** Rows the list does not show yet — loaded or still on the server. */
-  def left: Int = math.max(0, math.max(total, rows.size) - shown)
+  def left: Int = math.max(0, math.max(total.value, rows.size) - shown.value)
 
   /** The "show more" label ([[ResultsPaging.moreLabel]]); `None` when every row is shown. */
   def moreLabel(page: Int): Option[String] = ResultsPaging.moreLabel(left, page)
@@ -25,7 +25,7 @@ final case class TabState[Row](
   /** The count line ([[ResultsPaging.countLine]]); `loading…` before the first answer. */
   def countLine(singular: String, plural: String): String =
     if !loaded then "loading…"
-    else ResultsPaging.countLine(shown, math.max(total, rows.size), singular, plural, extras)
+    else ResultsPaging.countLine(shown.value, math.max(total.value, rows.size), singular, plural, extras)
 
 object TabState:
   /** A new query was sent: what is shown stays until the answer comes; any old error is gone. */
@@ -33,7 +33,7 @@ object TabState:
 
   /** The first page of a query's answer. */
   def first[Row](p: TabPage[Row], page: Int): TabState[Row] =
-    TabState(p.rows, p.total, math.min(page, p.rows.size), loaded = true, extras = p.extras)
+    TabState(p.rows, p.total, com.histmersion.api.RowCount(math.min(page, p.rows.size)), loaded = true, extras = p.extras)
 
   /** A further page from the server, appended (what "show more" asked for once the loaded rows ran out). */
   def appended[Row](s: TabState[Row], p: TabPage[Row], page: Int): TabState[Row] =
@@ -41,7 +41,7 @@ object TabState:
     s.copy(
       rows = rows,
       total = p.total,
-      shown = math.min(s.shown + page, rows.size),
+      shown = com.histmersion.api.RowCount(math.min(s.shown.value + page, rows.size)),
       loading = false,
       error = None,
       extras = p.extras
@@ -55,6 +55,6 @@ object TabState:
     * `Left(offset)`, the next page to ask the server for (rows past the first fetch used to be unreachable).
     */
   def more[Row](s: TabState[Row], page: Int): Either[Int, TabState[Row]] =
-    if s.shown + page <= s.rows.size || s.rows.size >= s.total then
-      Right(s.copy(shown = math.min(s.shown + page, s.rows.size)))
+    if s.shown.value + page <= s.rows.size || s.rows.size >= s.total.value then
+      Right(s.copy(shown = com.histmersion.api.RowCount(math.min(s.shown.value + page, s.rows.size))))
     else Left(s.rows.size)

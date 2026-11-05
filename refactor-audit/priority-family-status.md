@@ -1,5 +1,22 @@
 # Priority-family status
 
+## Web pagination records propagated
+
+A second six-file Scalafix batch is applied and hash-verified: TabPage, TabState and
+ListPage now carry RowCount/Offset through their records, defaults and constructors,
+with FilterTab's collection-size boundary and affected test constructors adjusted.
+Explicit generic applications and already-typed external values are supported. A
+two-stage compiled fixture verifies forwarding without stale-source bypass, including
+forwarding inside a configured arithmetic boundary. The first faulty preview is
+retained unapplied; its patch-order interaction was fixed without weakening expected
+output.
+
+Actual build-v2 still fails: seven reported web errors and the same three server
+errors. Test compilation has not run; subsequent compiler phases may reveal more.
+Remaining work includes signal/private-variable count types, presentation adapters,
+combined counts, and server tuple/Found contracts. No verified-fix count or new
+project-wide measurement is claimed while compilation is incomplete.
+
 ## Applied pagination types: dependent compilation in progress
 
 The frozen nineteen-file Scalafix batch is applied and hash-verified. The generic
