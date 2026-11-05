@@ -1,0 +1,129 @@
+Defn.Def(
+  List(),
+  Term.Name("leadingKeyword"),
+  List(
+    Member.ParamClauseGroup(
+      Type.ParamClause(List()),
+      List(
+        Term.ParamClause(
+          List(
+            Term.Param(
+              List(),
+              Term.Name("statement"),
+              Some(Type.Name("String")),
+              None
+            )
+          ),
+          None
+        )
+      )
+    )
+  ),
+  Some(Type.Name("String")),
+  Term.Block(List(
+    Defn.Var(
+      List(),
+      List(Pat.Var(Term.Name("s"))),
+      None,
+      Term.Select(Term.Name("statement"), Term.Name("trim"))
+    ),
+    Defn.Var(List(), List(Pat.Var(Term.Name("go"))), None, Lit.Boolean(true)),
+    Term.While(
+      Term.Name("go"),
+      Term.If(
+        Term.Apply(
+          Term.Select(Term.Name("s"), Term.Name("startsWith")),
+          Term.ArgClause(List(Lit.String("--")), None)
+        ),
+        Term.Assign(
+          Term.Name("s"),
+          Term.Select(
+            Term.Apply(
+              Term.Select(Term.Name("s"), Term.Name("dropWhile")),
+              Term.ArgClause(
+                List(
+                  Term.AnonymousFunction(Term.ApplyInfix(
+                    Term.Placeholder,
+                    Term.Name("!="),
+                    Type.ArgClause(List()),
+                    Term.ArgClause(List(Lit.Char( )), None)
+                  ))
+                ),
+                None
+              )
+            ),
+            Term.Name("trim")
+          )
+        ),
+        Term.If(
+          Term.Apply(
+            Term.Select(Term.Name("s"), Term.Name("startsWith")),
+            Term.ArgClause(List(Lit.String("/*")), None)
+          ),
+          Term.Block(List(
+            Defn.Val(
+              List(),
+              List(Pat.Var(Term.Name("end"))),
+              None,
+              Term.Apply(
+                Term.Select(Term.Name("s"), Term.Name("indexOf")),
+                Term.ArgClause(List(Lit.String("*/")), None)
+              )
+            ),
+            Term.Assign(
+              Term.Name("s"),
+              Term.Select(
+                Term.If(
+                  Term.ApplyInfix(
+                    Term.Name("end"),
+                    Term.Name("<"),
+                    Type.ArgClause(List()),
+                    Term.ArgClause(List(Lit.Int(0)), None)
+                  ),
+                  Lit.String(""),
+                  Term.Apply(
+                    Term.Select(Term.Name("s"), Term.Name("substring")),
+                    Term.ArgClause(
+                      List(
+                        Term.ApplyInfix(
+                          Term.Name("end"),
+                          Term.Name("+"),
+                          Type.ArgClause(List()),
+                          Term.ArgClause(List(Lit.Int(2)), None)
+                        )
+                      ),
+                      None
+                    )
+                  ),
+                  List()
+                ),
+                Term.Name("trim")
+              )
+            )
+          )),
+          Term.Assign(Term.Name("go"), Lit.Boolean(false)),
+          List()
+        ),
+        List()
+      )
+    ),
+    Term.Select(
+      Term.Apply(
+        Term.Select(Term.Name("s"), Term.Name("takeWhile")),
+        Term.ArgClause(
+          List(
+            Term.Function(
+              Term.ParamClause(
+                List(Term.Param(List(), Term.Name("c"), None, None)),
+                None
+              ),
+              Term.Select(Term.Name("c"), Term.Name("isLetter"))
+            )
+          ),
+          None
+        )
+      ),
+      Term.Name("toUpperCase")
+    )
+  ))
+)

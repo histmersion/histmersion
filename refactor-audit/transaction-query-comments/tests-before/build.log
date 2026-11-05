@@ -1,0 +1,59 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-api/test-classes ...
+[info] done compiling
+Test run com.histmersion.api.QuerySuite started
+==> X com.histmersion.api.QuerySuite.nested leading comments cannot hide transaction or session control 0.007s munit.FailException: modules/api/src/test/scalajvm/com/histmersion/api/QuerySuite.scala:170 control statement accepted: /* outer /* inner */ outer */ COMMIT
+169:        val sql = prefix + command
+170:        assert(Query.check(sql).isLeft, s"control statement accepted: $sql")
+171:      }
+    at munit.FunSuite.assert(FunSuite.scala:12)
+    at com.histmersion.api.QuerySuite.$init$$$anonfun$27$$anonfun$1$$anonfun$1(QuerySuite.scala:170)
+    at scala.collection.immutable.List.foreach(List.scala:331)
+    at com.histmersion.api.QuerySuite.$init$$$anonfun$27$$anonfun$1(QuerySuite.scala:168)
+    at scala.collection.immutable.List.foreach(List.scala:331)
+    at com.histmersion.api.QuerySuite.$init$$$anonfun$27(QuerySuite.scala:167)
+==> X com.histmersion.api.QuerySuite.nested leading comments preserve allowed queries and their keyword 0.003s munit.ComparisonFailException: modules/api/src/test/scalajvm/com/histmersion/api/QuerySuite.scala:176
+175:    val sql = "/* outer /* inner */ outer */ select '/* literal */'"
+176:    assertEquals(Query.leadingKeyword(sql), "SELECT")
+177:    assertEquals(Query.check(sql), Right(sql))
+values are not the same
+=> Obtained
+OUTER
+=> Diff (- expected, + obtained)
+-SELECT
++OUTER
+    at munit.FunSuite.assertEquals(FunSuite.scala:12)
+    at com.histmersion.api.QuerySuite.$init$$$anonfun$28(QuerySuite.scala:176)
+==> X com.histmersion.api.QuerySuite.unclosed leading comments contain no executable keyword 0.001s munit.ComparisonFailException: modules/api/src/test/scalajvm/com/histmersion/api/QuerySuite.scala:181
+180:  test("unclosed leading comments contain no executable keyword"):
+181:    assertEquals(Query.leadingKeyword("/* outer /* inner */ COMMIT"), "")
+182:    assertEquals(Query.leadingKeyword("/*"), "")
+values are not the same
+=> Obtained
+COMMIT
+=> Diff (- expected, + obtained)
+-
++COMMIT
+    at munit.FunSuite.assertEquals(FunSuite.scala:12)
+    at com.histmersion.api.QuerySuite.$init$$$anonfun$29(QuerySuite.scala:181)
+com.histmersion.api.QuerySuite: finished 0.046s
+Test run com.histmersion.api.QuerySuite finished: 3 failed, 0 ignored, 29 total 0.053s
+[error] Failed: Total 29, Failed 3, Errors 0, Passed 26
+[error] Failed tests:
+[error] 	com.histmersion.api.QuerySuite
+[error] (api / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] elapsed time: 7 s, cache 78%, 25 disk cache hits, 7 onsite tasks
