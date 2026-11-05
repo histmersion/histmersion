@@ -4,8 +4,15 @@ package conceptfixture
 final case class Report(label: conceptfixture.Label = conceptfixture.Label(""), title: conceptfixture.Title = conceptfixture.Title(""), bytes: conceptfixture.ByteCount = conceptfixture.ByteCount(0L), lat: conceptfixture.Latitude = conceptfixture.Latitude(0.0), doi: Option[conceptfixture.Doi] = None, authors: List[conceptfixture.AuthorName] = (Nil).map(conceptfixture.AuthorName.apply), year: conceptfixture.Year = conceptfixture.Year(0))
 final case class Unrelated(label: String, bytes: Long)
 final case class Quantities(samples: List[conceptfixture.ByteCount], maybe: Option[conceptfixture.ByteCount])
+final case class Nested(authors: Option[List[conceptfixture.AuthorName]] = None)
 
 object Calls:
+  def blankToNone(s: Option[String]): Option[String] = s.map(_.trim).filter(_.nonEmpty)
+  def normalizedDoi(p: Report, existing: Report) =
+    p.doi.fold(existing.doi)(v => blankToNone(Some(v.value)).map(conceptfixture.Doi.apply))
+  def nested: Nested = Nested((Some(List("a", "b"))).map(_.map(conceptfixture.AuthorName.apply)))
+  def forwardNested(n: Nested): Nested = Nested(n.authors)
+  def emptyNested: Nested = Nested((Some(Nil)).map(_.map(conceptfixture.AuthorName.apply)))
   var evaluations = 0
   def rawAuthors(): List[String] =
     evaluations += 1

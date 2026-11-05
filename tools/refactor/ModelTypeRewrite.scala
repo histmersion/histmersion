@@ -3,7 +3,7 @@ import scala.meta._
 import metaconfig.{ConfDecoder, Configured, generic}
 
 object ModelTypeRewrite {
-  case class Record(owner: String, parameters: List[String], fields: Map[String,String], optionalFields: List[String] = Nil, listFields: List[String] = Nil, setFields: List[String] = Nil)
+  case class Record(owner: String, parameters: List[String], fields: Map[String,String], optionalFields: List[String] = Nil, listFields: List[String] = Nil, setFields: List[String] = Nil, nestedFields: Map[String,List[String]] = Map.empty)
   object Record {
     implicit val surface: generic.Surface[Record] = generic.deriveSurface[Record]
     implicit val decoder: ConfDecoder[Record] = generic.deriveDecoder(Record("",Nil,Map.empty)).noTypos
@@ -15,7 +15,7 @@ object ModelTypeRewrite {
     listResults: List[String] = Nil, listKnownValues: List[String] = Nil,
     containerBoundaryOwners: List[String] = Nil, containerBoundaryCalls: Map[String,List[Int]] = Map.empty,
     widenNumericBoundaries: Boolean = false, setResults: List[String] = Nil, setKnownValues: List[String] = Nil,
-    widenStringTypes: List[String] = Nil)
+    widenStringTypes: List[String] = Nil, optionalNormalizers: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -37,6 +37,8 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     (p.records ++ p.methods).foreach { r =>
       require(r.listFields.toSet.subsetOf(r.fields.keySet) && r.listFields.toSet.intersect(r.optionalFields.toSet).isEmpty)
       require(r.setFields.toSet.subsetOf(r.fields.keySet) && r.setFields.toSet.intersect((r.optionalFields ++ r.listFields).toSet).isEmpty)
+      require(r.nestedFields.keySet.subsetOf(r.fields.keySet) && r.nestedFields.keySet.intersect((r.optionalFields ++ r.listFields ++ r.setFields).toSet).isEmpty)
+      require(r.nestedFields.values.forall(s => s.size >= 2 && s.forall(Set("option","list","set"))), "Unsupported nested container path")
     }
     require(p.listResults.toSet.subsetOf(p.results.keySet) && p.listResults.toSet.intersect(p.optionalResults.toSet).isEmpty)
     require(p.listKnownValues.toSet.subsetOf(p.knownValues.keySet) && p.listKnownValues.toSet.intersect(p.optionalKnownValues.toSet).isEmpty)
@@ -73,7 +75,13 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
       policy.methods.flatMap(r => r.listFields.map(n => r.owner + "(" + n + ")")) ++ policy.listResults ++ policy.listKnownValues
     val setSymbols = policy.records.flatMap(r => r.setFields.map(r.owner + _ + ".")).toSet ++
       policy.methods.flatMap(r => r.setFields.map(n => r.owner + "(" + n + ")")) ++ policy.setResults ++ policy.setKnownValues
-    def container(symbol: String): String = if(optionalSymbols(symbol)) "option" else if(listSymbols(symbol)) "list" else if(setSymbols(symbol)) "set" else ""
+    val nestedSymbols = (policy.records.flatMap(r => r.nestedFields.map { case(n,s) => (r.owner + n + ".") -> s.mkString("/") }) ++
+      policy.methods.flatMap(r => r.nestedFields.map { case(n,s) => (r.owner + "(" + n + ")") -> s.mkString("/") })).toMap
+    def container(symbol: String): String = nestedSymbols.getOrElse(symbol,if(optionalSymbols(symbol)) "option" else if(listSymbols(symbol)) "list" else if(setSymbols(symbol)) "set" else "")
+    def fieldShape(r: Record, name: String): String = r.nestedFields.get(name).map(_.mkString("/")).getOrElse(
+      if(r.optionalFields.contains(name)) "option" else if(r.listFields.contains(name)) "list" else if(r.setFields.contains(name)) "set" else "")
+    def mapped(shape: String, leafFunction: String): String =
+      ".map(" + shape.split("/").drop(1).foldRight(leafFunction)((_,inner) => "_.map(" + inner + ")") + ")"
     def callTarget(target: String): Option[Record] = policy.methods.find(_.owner == target).orElse(policy.records.find(r =>
       target == r.owner.stripSuffix("#") + "." || target == r.owner.stripSuffix("#") + ".apply()." || target == r.owner + "copy()."))
     def ancestors(t: Tree): List[Tree] = t.parent.toList.flatMap(p => p :: ancestors(p))
@@ -104,16 +112,16 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
         })
     }
     def change(t: Type, replacement: String, shape: String): Patch = {
-      val accepted = shape match {
+      def accepted(kind: String): Set[String] = kind match {
         case "option" => Set("scala/Option#")
         case "list" => Set("scala/package.List#", "scala/collection/immutable/List#")
         case "set" => Set("scala/Predef.Set#", "scala/collection/immutable/Set#")
         case "" => Set.empty[String]
       }
-      val leaf = if(shape.nonEmpty) t match {
-        case a: Type.Apply if accepted(a.tpe.symbol.value) && a.argClause.values.size == 1 => a.argClause.values.head
+      val leaf = (if(shape.isEmpty) Nil else shape.split("/").toList).foldLeft(t) { (current,kind) => current match {
+        case a: Type.Apply if accepted(kind)(a.tpe.symbol.value) && a.argClause.values.size == 1 => a.argClause.values.head
         case _ => sys.error("Expected explicit reviewed " + shape + " container: " + t.structure)
-      } else t
+      }}
       val actual = if(leaf.symbol.value == "scala/Predef.String#") "java/lang/String#" else leaf.symbol.value
       require(actual == policy.primitiveTypes.getOrElse(replacement,"scala/Int#"),"Unexpected primitive base for reviewed symbol: " + t.structure)
       Patch.replaceTree(leaf,replacement)
@@ -127,8 +135,8 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     def wrap(t: Term, replacement: String, shape: String): Patch = {
       val symbol = resultSymbol(t)
       if((fields.get(symbol).contains(replacement) || policy.results.get(symbol).contains(replacement)) && container(symbol) == shape && !scalarBoundary(t)) Patch.empty
-      else if(shape == "option" && t.symbol.value == "scala/None.") Patch.empty
-      else if(shape.nonEmpty) Patch.addLeft(t,"(") + Patch.addRight(t,").map(" + replacement + ".apply)")
+      else if(shape.split("/").headOption.contains("option") && t.symbol.value == "scala/None.") Patch.empty
+      else if(shape.nonEmpty) Patch.addLeft(t,"(") + Patch.addRight(t,")" + mapped(shape,replacement + ".apply"))
       else if(fields.contains(symbol) && scalarBoundary(t)) {
         wrappedScalars += ((t.pos.start,t.pos.end))
         Patch.addLeft(t,replacement + "(") + Patch.addRight(t,".value)")
@@ -154,7 +162,7 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
             case v => (r.parameters(index),v)
           }
           require(r.parameters.contains(name),"Unknown named argument for reviewed record: " + name)
-          r.fields.get(name).map(wrap(value,_,if(r.optionalFields.contains(name)) "option" else if(r.listFields.contains(name)) "list" else if(r.setFields.contains(name)) "set" else "")).getOrElse(Patch.empty)
+          r.fields.get(name).map(wrap(value,_,fieldShape(r,name))).getOrElse(Patch.empty)
         }.asPatch
       }.getOrElse(Patch.empty)
     }
@@ -167,7 +175,7 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
       else ".value"
     }
     def unwrapScalar(t: Term): Patch = Patch.addRight(t,extraction(t.symbol.value))
-    def unwrapContainer(t: Term): Patch = Patch.addRight(t,".map(_" + extraction(t.symbol.value) + ")")
+    def unwrapContainer(t: Term): Patch = Patch.addRight(t,mapped(container(t.symbol.value),"_" + extraction(t.symbol.value)))
     val boundaries = doc.tree.collect {
       case a: Term.Apply if policy.results.contains(resultSymbol(a)) && scalarBoundary(a) && !a.parent.exists {
         case p: Term.Apply => p.fun eq a
@@ -191,6 +199,29 @@ class ModelTypeRewrite(val policy: ModelTypeRewrite.Policy) extends SemanticRule
     val codec = policy.codecImport.filter(_ => doc.tree.collect {
       case c: Defn.Class if policy.records.exists(_.owner == c.name.symbol.value) && c.templ.derives.nonEmpty => c
     }.nonEmpty).map(i => Patch.addGlobalImport(i.parse[Importer].get)).getOrElse(Patch.empty)
-    ((declarations ++ calls ++ boundaries).asPatch + codec).atomic
+    val normalization = doc.tree.collect { case outer: Term.Apply =>
+      (outer.fun,outer.argClause.values) match {
+        case (first: Term.Apply,List(fn: Term.Function)) => first.fun match {
+          case select: Term.Select if select.name.symbol.value == "scala/Option#fold()." &&
+            fields.contains(select.qual.symbol.value) && container(select.qual.symbol.value) == "option" && fn.paramClause.values.size == 1 =>
+            val target = fields(select.qual.symbol.value)
+            fn.body match {
+              case call: Term.Apply if policy.optionalNormalizers.contains(resultSymbol(call.fun)) && policy.primitiveTypes.get(target).contains("java/lang/String#") =>
+                call.argClause.values match {
+                  case List(some: Term.Apply) if Set("scala/Some.","scala/Some.apply().")(resultSymbol(some.fun)) => some.argClause.values match {
+                    case List(value: Term.Name) if value.symbol == fn.paramClause.values.head.name.symbol =>
+                      Patch.addRight(value,".value") + Patch.addRight(call,".map(" + target + ".apply)")
+                    case _ => Patch.empty
+                  }
+                  case _ => Patch.empty
+                }
+              case _ => Patch.empty
+            }
+          case _ => Patch.empty
+        }
+        case _ => Patch.empty
+      }
+    }
+    ((declarations ++ calls ++ boundaries ++ normalization).asPatch + codec).atomic
   }
 }

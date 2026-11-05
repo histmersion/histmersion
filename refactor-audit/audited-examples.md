@@ -2,6 +2,33 @@
 
 ## Multi-concept model purpose review after aeb46ecb
 
+Metadata closure: the five patch fields are assigned to the same Source concepts.
+The zero-context diff from citation-closure to metadata-closure-2 contains only
+five added rows; all previous stable IDs remain. The initial metadata-closure
+snapshot used venue instead of publication-venue, erroneously counting eighteen
+concept labels for seventeen target types. The correction is retained as a new
+event, and Review now rejects this mismatch. No detector denominator was reduced.
+
+Nested container support checks every configured Option/List/Set type constructor
+and primitive leaf against SemanticDB before editing. The fixture covers
+Option[List[AuthorName]], absent versus explicitly empty values, order, typed
+forwarding and raw-value rejection. Preview-10 then exposed two normalization
+calls in Source.applyPatch. One generic matcher handles configured
+Option.fold callbacks of the shape x => normalizer(Some(x)); it extracts the
+typed string for the configured normalizer and maps the result back to the same
+target type. Neither Doi nor Venue is hardcoded. Other callback shapes remain
+unsupported. Fixture checks cover trim, blank clearing and omitted-value retention.
+Preview-11 passes compilation of all 487 API production overlay sources; original
+source hashes remain unchanged. Full application behavior remains unverified.
+The actual sbt overlay build subsequently compiled both API matrix rows, then
+reported two files-module and 99 web-module diagnostics. It did not complete
+dependent-module or Test/compile verification. The original source universe and
+all overlay hashes remained unchanged. Two earlier build attempts failed during
+settings setup (Global scope cycles); the successful setup explicitly scopes
+source overlays to the thirty evaluated projects. No new batch runner was added:
+CompileBatch gained a configurable source overlay. Its compiled products require
+a baseline rebuild before the next rewrite against original-source SemanticDB.
+
 Preview-8/9 source review: CitationLint.danglingEdges and unresolvedShortCitekeys
 operate lexically (prefixes, suggestions, sorting) and return textual diagnostics.
 Their public citekey sets now use Citekey; the configured lexical routines extract

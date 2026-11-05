@@ -1,0 +1,16 @@
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-10/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:519:69 [0m[0m
+[31m519 |[0m          [33melse[0m meta.venue.fold(existing.venue)(v => blankToNone([33mSome[0m(v)))).modify(_.doi).setTo([33mif[0m cleared([33mMetadataField[0m.[33mDoi[0m) [33mthen[0m [33mNone[0m
+[31m[31m    |[0m                                                                     ^[0m
+[31m    |[0m                     Found:    (v : com.histmersion.api.library.Venue)
+[31m    |[0m                     Required: String
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+[31m[31m-- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-api-compile-10/modules/api/src/main/scala/com/histmersion/api/library/Source.scala:520:65 [0m[0m
+[31m520 |[0m          [33melse[0m meta.doi.fold(existing.doi)(d => blankToNone([33mSome[0m(d)))).modify(_.status).setTo(newStatus).modify(_.summary).setTo(patch.summary.orElse(existing.summary)).modify(_.ocrMarkdown).setTo(patch.body.orElse(existing.ocrMarkdown)).modify(_.notes).setTo(patch.notes.orElse(existing.notes)).modify(_.topics).setTo(patch.topics.getOrElse(existing.topics)).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(applyList(existing.tags, _))).modify(_.period).setTo(period).modify(_.findings).setTo(fs).modify(_.edges).setTo(newEdges).modify(_.provenance).setTo([33mif[0m cleared([33mMetadataField[0m.[33mProvenance[0m) [33mthen[0m [33mNone[0m
+[31m[31m    |[0m                                                                 ^[0m
+[31m    |[0m                       Found:    (d : com.histmersion.api.library.Doi)
+[31m    |[0m                       Required: String
+[31m    |[0m
+[31m    |[0m longer explanation available when compiling with `-explain`
+2 errors found
+Compilation failed

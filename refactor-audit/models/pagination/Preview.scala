@@ -14,7 +14,7 @@ object Preview {
     scalarBoundaryOwners: List[String] = Nil, scalarBoundaryCalls: Map[String,List[Int]] = Map.empty,
     containerBoundaryOwners: List[String] = Nil, containerBoundaryCalls: Map[String,List[Int]] = Map.empty,
     widenNumericBoundaries: Boolean = false, methods: List[Method] = Nil, widenStringTypes: List[String] = Nil,
-    results: Map[String,String] = Map.empty)
+    results: Map[String,String] = Map.empty, optionalNormalizers: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -58,17 +58,19 @@ class Preview(val policy: Preview.Policy) extends SyntacticRule("Preview") {
       val params = definitions.head.ctor.paramClauses.head.values
       val fields = rs.map(r => positions(r(1))(8) -> r(6)).toMap
       require(fields.size == rs.size && fields.keySet.subsetOf(params.map(_.name.value).toSet))
-      def shape(p: Term.Param): String = p.decltpe.get match {
-        case a: Type.Apply if a.tpe.syntax == "Option" && a.argClause.values.size == 1 => "option"
-        case a: Type.Apply if a.tpe.syntax == "List" && a.argClause.values.size == 1 => "list"
-        case _: Type.Name => "scalar"
+      def shapes(tpe: Type): List[String] = tpe match {
+        case a: Type.Apply if Set("Option","List","Set")(a.tpe.syntax) && a.argClause.values.size == 1 => a.tpe.syntax.toLowerCase :: shapes(a.argClause.values.head)
+        case _: Type.Name => Nil
         case t => sys.error("Unsupported reviewed field shape: " + t.structure)
       }
+      def shape(p: Term.Param): String = shapes(p.decltpe.get).mkString("/")
       val selected = params.filter(p => fields.contains(p.name.value))
       "{owner=" + quote(owner) + ",parameters=[" + params.map(p => quote(p.name.value)).mkString(",") +
         "],fields={" + fields.toList.sorted.map { case(n,t) => quote(n) + "=" + quote(t) }.mkString(",") +
         "},optionalFields=[" + selected.filter(shape(_) == "option").map(p => quote(p.name.value)).mkString(",") +
-        "],listFields=[" + selected.filter(shape(_) == "list").map(p => quote(p.name.value)).mkString(",") + "]}"
+        "],listFields=[" + selected.filter(shape(_) == "list").map(p => quote(p.name.value)).mkString(",") +
+        "],setFields=[" + selected.filter(shape(_) == "set").map(p => quote(p.name.value)).mkString(",") +
+        "],nestedFields={" + selected.filter(p => shapes(p.decltpe.get).size > 1).map(p => quote(p.name.value) + "=[" + shapes(p.decltpe.get).map(quote).mkString(",") + "]").mkString(",") + "}}"
     }
     Files.createDirectories(target); Files.createDirectories(report)
     def owners(name: String, values: List[String]) = name + "=[" + values.map(quote).mkString(",") + "]\n"
@@ -85,7 +87,7 @@ class Preview(val policy: Preview.Policy) extends SyntacticRule("Preview") {
       "\n]\nprimitiveTypes={" + bases.toList.sorted.map { case(n,b) => quote(n) + "=" + quote(b) }.mkString(",") +
       "}\n" + owners("scalarBoundaryOwners",policy.scalarBoundaryOwners) + calls("scalarBoundaryCalls",policy.scalarBoundaryCalls) +
       owners("containerBoundaryOwners",policy.containerBoundaryOwners) + calls("containerBoundaryCalls",policy.containerBoundaryCalls) +
-      methods + results + "widenNumericBoundaries=" + policy.widenNumericBoundaries + "\n" + owners("widenStringTypes",policy.widenStringTypes) + "codecImport=\"com.histmersion.api.json.NewtypeCodecs.given\"\n}\n"
+      methods + results + owners("optionalNormalizers",policy.optionalNormalizers) + "widenNumericBoundaries=" + policy.widenNumericBoundaries + "\n" + owners("widenStringTypes",policy.widenStringTypes) + "codecImport=\"com.histmersion.api.json.NewtypeCodecs.given\"\n}\n"
     Files.writeString(report.resolve("rule.conf"),config)
     val args = List("scala-cli","run","--server=false","-q","-S","2.13.18","--dep","ch.epfl.scala:scalafix-cli_2.13.18:0.14.9","--main-class","scalafix.cli.Cli","--",
       "--config",report.resolve("rule.conf").toString,"--scala-version","3.10.0","--sourceroot",root.toString,"--auto-classpath","--auto-classpath-roots","target/out","--files","modules",

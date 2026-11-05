@@ -1,0 +1,804 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Executing in batch mode. For better performance use sbt's shell
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Compile / unmanagedSourceDirectories, Compile / unmanagedSources and 417 others.
+[info] The new values will be used by Compile / bspBuildTargetSourcesItem, Compile / scalafmt and 717 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 116 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-api/classes ...
+[info] compiling 116 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/sjs1/scala-3.10.0/histmersion-api/classes ...
+[info] done compiling
+[info] done compiling
+[info] compiling 1 Scala source to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-files/classes ...
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/files/src/main/scala/com/histmersion/domain/library/sources/SourceNote.scala:40:29 
+[error] 40 |        "year" -> s.year.map(Int.box).orNull,
+[error]    |                             ^^^^^^^
+[error]    |                 Found:    Int => Integer
+[error]    |                 Required: com.histmersion.api.catalogue.Year => Integer
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/files/src/main/scala/com/histmersion/domain/library/sources/SourceNote.scala:93:35 
+[error] 93 |        _.edges).setTo(edgesOf(src.citekey, m, text)).modify(_.notes).setTo(bodyOf(text)).modify(_.topics).setTo(withLinkedTopics(src.topics, src.citekey, text)
+[error]    |                               ^^^^^^^^^^^
+[error]    |           Found:    (src.citekey : com.histmersion.api.library.Citekey)
+[error]    |           Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] two errors found
+[info] compiling 43 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/sjs1/scala-3.10.0/histmersion-web/classes ...
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/CardIcons.scala:49:22 
+[error] 49 |    Source.Kinds.of(s.doi, s.venue, s.provenance, s.tags, s.topics, hasCover)
+[error]    |                    ^^^^^
+[error]    |             Found:    (s.doi : Option[com.histmersion.api.library.Doi])
+[error]    |             Required: Option[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/CardIcons.scala:49:29 
+[error] 49 |    Source.Kinds.of(s.doi, s.venue, s.provenance, s.tags, s.topics, hasCover)
+[error]    |                           ^^^^^^^
+[error]    |         Found:    (s.venue : Option[com.histmersion.api.library.Venue])
+[error]    |         Required: Option[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:65:99 
+[error] 65 |        anchors = items.sortBy(_._2._1).groupMap((e, _) => EventPlayback.anchorKey(e))((e, _) => e.id)
+[error]    |                                                                                                 ^^^^
+[error]    |               Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]    |               Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:80:20 
+[error] 80 |        shown.get(e.id) match
+[error]    |                  ^^^^
+[error]    |               Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]    |               Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:83:20 
+[error] 83 |            shown(e.id) = s
+[error]    |                  ^^^^
+[error]    |               Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]    |               Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:87:21 
+[error] 87 |            remove(e.id, s)
+[error]    |                   ^^^^
+[error]    |               Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]    |               Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:87:25 
+[error] 87 |            remove(e.id, s)
+[error]    |                         ^
+[error]    |                         Not found: s
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:88:27 
+[error] 88 |            shown.remove(e.id)
+[error]    |                         ^^^^
+[error]    |               Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]    |               Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:89:15 
+[error] 89 |            if s.outline then outlinesChanged = true
+[error]    |               ^
+[error]    |               Not found: s
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:91:26 
+[error] 91 |          case Some(s) if s.alpha != a =>
+[error]    |                          ^
+[error]    |                          Not found: s
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:92:12 
+[error] 92 |            s.alpha = a
+[error]    |            ^
+[error]    |            Not found: s
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:93:23 
+[error] 93 |            setAlpha(e.id, s, a)
+[error]    |                     ^^^^
+[error]    |               Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]    |               Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E006] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:93:27 
+[error] 93 |            setAlpha(e.id, s, a)
+[error]    |                           ^
+[error]    |                           Not found: s
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:134:21 
+[error] 134 |          outlined(e.id) = geom
+[error]     |                   ^^^^
+[error]     |             Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:140:29 
+[error] 140 |    val marker = DomMarker(e.lat, e.lon, el)
+[error]     |                           ^^^^^
+[error]     |            Found:    (e.lat : com.histmersion.api.catalogue.Latitude)
+[error]     |            Required: Double
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:140:36 
+[error] 140 |    val marker = DomMarker(e.lat, e.lon, el)
+[error]     |                                  ^^^^^
+[error]     |           Found:    (e.lon : com.histmersion.api.catalogue.Longitude)
+[error]     |           Required: Double
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/EventLayer.scala:145:27 
+[error] 145 |    MapLabels.trackEvent(e.id, marker, EventPlayback.rank(e, start), () => nameOf(s))
+[error]     |                         ^^^^
+[error]     |             Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/IdentLink.scala:41:67 
+[error] 41 |        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey, r.doi, Some(r.shortCite))
+[error]    |                                                                 ^^^^^^^^^
+[error]    |             Found:    (r.citekey : com.histmersion.api.library.Citekey)
+[error]    |             Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/IdentLink.scala:41:78 
+[error] 41 |        case Some(Some(Resolved.Source(r)))        => SourceLink(r.citekey, r.doi, Some(r.shortCite))
+[error]    |                                                                            ^^^^^
+[error]    |             Found:    (r.doi : Option[com.histmersion.api.library.Doi])
+[error]    |             Required: Option[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:110:58 
+[error] 110 |  def subjectStored(j: JobInfo): Boolean = j.succeeded || j.kind == Ingest.KindReocr
+[error]     |                                                          ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.jobs.JobInfo.Kind and io.github.iltotore.iron.IronType[String,
+[error]     |  io.github.iltotore.iron.constraint.any.Pure] cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:147:11 
+[error] 147 |    id = _.id,
+[error]     |         ^^^^
+[error]     |         Found:    (_$15.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |         Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:268:60 
+[error] 268 |            case Some(ck) if subjectStored(j) => SourceLink(ck)
+[error]     |                                                            ^^
+[error]     |                Found:    (ck : com.histmersion.api.library.Citekey.T)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:269:98 
+[error] 269 |            case Some(ck)                     => code(cls := "job-ck", title := "not stored yet", ck)
+[error]     |                                                                                                  ^^
+[error]     |Found:    (ck : com.histmersion.api.library.Citekey.T)
+[error]     |Required: com.raquo.laminar.modifiers.Modifier[
+[error]     |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLElement]]
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:271:50 
+[error] 271 |          span(cls := "muted", s" · ${kindLabel(j.kind)}"),
+[error]     |                                                ^^^^^^
+[error]     |            Found:    (j.kind : com.histmersion.api.jobs.JobInfo.Kind)
+[error]     |            Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:301:13 
+[error] 301 |          if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind.value then
+[error]     |             ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.jobs.JobInfo.Kind and io.github.iltotore.iron.IronType[String,
+[error]     |  io.github.iltotore.iron.constraint.any.Pure] cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:302:36 
+[error] 302 |            WinLink(WindowKey.Run(j.id), title := s"agent run ${j.id}", s"run ${j.id.take(8)}")
+[error]     |                                  ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:302:85 
+[error] 302 |            WinLink(WindowKey.Run(j.id), title := s"agent run ${j.id}", s"run ${j.id.take(8)}")
+[error]     |                                                                                ^^^^^^^^^
+[error]     |value take is not a member of com.histmersion.api.jobs.JobInfo.Id, but could be made available as an extension method.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:303:37 
+[error] 303 |          else RouteLink(Route.Job(j.id), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.take(8)}"),
+[error]     |                                   ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/JobsView.scala:303:99 
+[error] 303 |          else RouteLink(Route.Job(j.id), cls := "link-btn", title := s"job ${j.id}", s"job ${j.id.take(8)}"),
+[error]     |                                                                                              ^^^^^^^^^
+[error]     |value take is not a member of com.histmersion.api.jobs.JobInfo.Id, but could be made available as an extension method.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/MapRegionsView.scala:72:98 
+[error] 72 |    started.onComplete(_.fold(e => error.set(Some(e.getMessage)), j => { job.set(Some(j)); poll(j.id, dry) }))
+[error]    |                                                                                                ^^^^
+[error]    |                  Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]    |                  Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Pages.scala:227:31 
+[error] 227 |        case Some(Right(j)) if j.kind == com.histmersion.api.automation.AgentJobKinds.Agent.kind.value =>
+[error]     |                               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.jobs.JobInfo.Kind and io.github.iltotore.iron.IronType[String,
+[error]     |  io.github.iltotore.iron.constraint.any.Pure] cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Pages.scala:228:32 
+[error] 228 |          Router.go(Route.Run(j.id), push = false)
+[error]     |                              ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Pages.scala:231:60 
+[error] 231 |          Router.retitle(Route.Job(id), Wording.jobKindOf(j.kind))
+[error]     |                                                          ^^^^^^
+[error]     |            Found:    (j.kind : com.histmersion.api.jobs.JobInfo.Kind)
+[error]     |            Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Pages.scala:232:102 
+[error] 232 |          div(ul(cls := "job-list", JobsView.row(j, mine = false)), jobControls(j), QueueView.ofJob(j.id))
+[error]     |                                                                                                    ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Pages.scala:244:15 
+[error] 244 |      what = j.kind,
+[error]     |             ^^^^^^
+[error]     |            Found:    (j.kind : com.histmersion.api.jobs.JobInfo.Kind)
+[error]     |            Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Pages.scala:250:96 
+[error] 250 |        ul(cls := "activity-list job-controls", ActivityView.row(e, () => Router.go(Route.Job(j.id), push = false)))
+[error]     |                                                                                              ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/PointKinds.scala:128:37 
+[error] 128 |    def key(e: EventGeo): String = e.id
+[error]     |                                   ^^^^
+[error]     |             Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/PointKinds.scala:129:47 
+[error] 129 |    def at(e: EventGeo): (Double, Double) = (e.lat, e.lon)
+[error]     |                                             ^^^^^
+[error]     |            Found:    (e.lat : com.histmersion.api.catalogue.Latitude)
+[error]     |            Required: Double
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/PointKinds.scala:129:54 
+[error] 129 |    def at(e: EventGeo): (Double, Double) = (e.lat, e.lon)
+[error]     |                                                    ^^^^^
+[error]     |           Found:    (e.lon : com.histmersion.api.catalogue.Longitude)
+[error]     |           Required: Double
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/PointKinds.scala:138:72 
+[error] 138 |    override def attrs(e: EventGeo): String = s""" data-id="${Fmt.esc(e.id)}""""
+[error]     |                                                                      ^^^^
+[error]     |             Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/PointKinds.scala:148:47 
+[error] 148 |        entry = Some(DotEntry(DotKind.Event, e.id, e.label, CardIcons.event(e.kind), mid(e), EventPlayback.note(e)))
+[error]     |                                             ^^^^
+[error]     |             Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/PointKinds.scala:152:102 
+[error] 152 |    def target(e: EventGeo, asOf: Option[Long]): Option[Preview.Target] = Some(Preview.Target.Event(e.id))
+[error]     |                                                                                                    ^^^^
+[error]     |             Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/PointKinds.scala:164:31 
+[error] 164 |        Preview.Target.Event(e.id),
+[error]     |                             ^^^^
+[error]     |             Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/PointKinds.scala:173:108 
+[error] 173 |    def open(key: String, e: EventGeo, row: dom.Element): Unit = DotCluster.pinUnder(Preview.Target.Event(e.id), row)
+[error]     |                                                                                                          ^^^^
+[error]     |             Found:    (e.id : com.histmersion.api.catalogue.Event.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Preview.scala:95:16 
+[error] 95 |      title = s.title,
+[error]    |              ^^^^^^^
+[error]    |              Found:    (s.title : com.histmersion.api.library.Title)
+[error]    |              Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Preview.scala:97:18 
+[error] 97 |        .filter(_.trim.nonEmpty)
+[error]    |                ^^^^^^
+[error]    |value trim is not a member of String | com.histmersion.api.library.Venue, but could be made available as an extension method.
+[error]    |
+[error]    |The following import might make progress towards fixing the problem:
+[error]    |
+[error]    |  import io.github.iltotore.iron.autoRefine
+[error]    |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Preview.scala:171:21 
+[error] 171 |      identifier = p.id,
+[error]     |                   ^^^^
+[error]     |             Found:    (p.id : com.histmersion.api.catalogue.Place.Id)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Preview.scala:265:41 
+[error] 265 |            c.title.getOrElse(c.citekey) + (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"),
+[error]     |            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |value + is not a member of String | com.histmersion.api.library.Citekey, but could be made available as an extension method.
+[error]     |
+[error]     |One of the following imports might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |  import scala.math.Fractional.Implicits.infixFractionalOps
+[error]     |  import scala.math.Integral.Implicits.infixIntegralOps
+[error]     |  import scala.math.Numeric.Implicits.infixNumericOps
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Preview.scala:266:29 
+[error] 266 |            citekey = Some(c.citekey)
+[error]     |                           ^^^^^^^^^
+[error]     |           Found:    (c.citekey : com.histmersion.api.library.Citekey)
+[error]     |           Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/Preview.scala:895:65 
+[error] 895 |                  w.title.getOrElse(w.doi.getOrElse("untitled")) + w.year.fold("")(y => s" ($y)"),
+[error]     |                  ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |value + is not a member of com.histmersion.api.library.Title | com.histmersion.api.library.Doi | String, but could be made available as an extension method.
+[error]     |
+[error]     |One of the following imports might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |  import scala.math.Fractional.Implicits.infixFractionalOps
+[error]     |  import scala.math.Integral.Implicits.infixIntegralOps
+[error]     |  import scala.math.Numeric.Implicits.infixNumericOps
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/QueueView.scala:366:38 
+[error] 366 |                RouteLink(Route.Job(j.id), s"job ${j.id.take(8)}"),
+[error]     |                                    ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/QueueView.scala:366:56 
+[error] 366 |                RouteLink(Route.Job(j.id), s"job ${j.id.take(8)}"),
+[error]     |                                                   ^^^^^^^^^
+[error]     |value take is not a member of com.histmersion.api.jobs.JobInfo.Id, but could be made available as an extension method.
+[error]     |
+[error]     |The following import might make progress towards fixing the problem:
+[error]     |
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/QueueView.scala:761:45 
+[error] 761 |                  span(cls := "hit-title", h.title),
+[error]     |                                           ^^^^^^^
+[error]     |Found:    (h.title : com.histmersion.api.library.Title)
+[error]     |Required: com.raquo.laminar.modifiers.Modifier[
+[error]     |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLSpanElement]]
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/QueueView.scala:763:61 
+[error] 763 |                  span(cls := "muted hit-key", " · ", code(h.citekey)),
+[error]     |                                                           ^^^^^^^^^
+[error]     |Found:    (h.citekey : com.histmersion.api.library.Citekey)
+[error]     |Required: com.raquo.laminar.modifiers.Modifier[
+[error]     |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLElement]]
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/QueueView.scala:764:57 
+[error] 764 |                  onClick --> (_ => { ops.fulfil(item, h.citekey); close() })
+[error]     |                                                       ^^^^^^^^^
+[error]     |           Found:    (h.citekey : com.histmersion.api.library.Citekey)
+[error]     |           Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:257:38 
+[error] 257 |      div(cls := "ck", SourceLink(src.citekey, src.doi)),
+[error]     |                                  ^^^^^^^^^^^
+[error]     |         Found:    (src.citekey : com.histmersion.api.library.Citekey)
+[error]     |         Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:257:51 
+[error] 257 |      div(cls := "ck", SourceLink(src.citekey, src.doi)),
+[error]     |                                               ^^^^^^^
+[error]     |         Found:    (src.doi : Option[com.histmersion.api.library.Doi])
+[error]     |         Required: Option[String]
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:260:36 
+[error] 260 |        href := SourceLink.href(src.citekey),
+[error]     |                                ^^^^^^^^^^^
+[error]     |         Found:    (src.citekey : com.histmersion.api.library.Citekey)
+[error]     |         Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:261:12 
+[error] 261 |        src.title,
+[error]     |        ^^^^^^^^^
+[error]     |Found:    (src.title : com.histmersion.api.library.Title)
+[error]     |Required: com.raquo.laminar.modifiers.Modifier[
+[error]     |  com.raquo.laminar.nodes.ReactiveHtmlElement[org.scalajs.dom.HTMLAnchorElement]
+[error]     |  ]
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:262:91 
+[error] 262 |        onClick --> { ev => if Router.plain(ev) then { ev.preventDefault(); openSource(src.citekey, inPanel) } }
+[error]     |                                                                                       ^^^^^^^^^^^
+[error]     |         Found:    (src.citekey : com.histmersion.api.library.Citekey)
+[error]     |         Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:293:33 
+[error] 293 |        marks.ItemRef.source(src.citekey, src.title),
+[error]     |                             ^^^^^^^^^^^
+[error]     |         Found:    (src.citekey : com.histmersion.api.library.Citekey)
+[error]     |         Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:293:46 
+[error] 293 |        marks.ItemRef.source(src.citekey, src.title),
+[error]     |                                          ^^^^^^^^^
+[error]     |             Found:    (src.title : com.histmersion.api.library.Title)
+[error]     |             Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:294:28 
+[error] 294 |        SourceLink.href(src.citekey),
+[error]     |                        ^^^^^^^^^^^
+[error]     |         Found:    (src.citekey : com.histmersion.api.library.Citekey)
+[error]     |         Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:299:39 
+[error] 299 |        if !inLink then openSource(src.citekey, inPanel)
+[error]     |                                   ^^^^^^^^^^^
+[error]     |         Found:    (src.citekey : com.histmersion.api.library.Citekey)
+[error]     |         Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/ResultsList.scala:304:25 
+[error] 304 |          openSource(src.citekey, inPanel)
+[error]     |                     ^^^^^^^^^^^
+[error]     |         Found:    (src.citekey : com.histmersion.api.library.Citekey)
+[error]     |         Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/LibraryLists.scala:42:41 
+[error] 42 |    else sources.now().rows.map(_.source.citekey)
+[error]    |                                ^^^^^^^^^^^^^^^^
+[error]    |    Found:    (_$2.source.citekey : com.histmersion.api.library.Citekey)
+[error]    |    Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingHead.scala:37:8 
+[error] 37 |      h.title,
+[error]    |      ^^^^^^^
+[error]    |      Found:    (h.title : com.histmersion.api.library.Title)
+[error]    |      Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingHead.scala:48:8 
+[error] 48 |      s.doi,
+[error]    |      ^^^^^
+[error]    |      Found:    (s.doi : Option[com.histmersion.api.library.Doi])
+[error]    |      Required: Option[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingHead.scala:49:8 
+[error] 49 |      s.venue,
+[error]    |      ^^^^^^^
+[error]    |      Found:    (s.venue : Option[com.histmersion.api.library.Venue])
+[error]    |      Required: Option[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingHead.scala:56:29 
+[error] 56 |      line(kindWord(kind), s.venue, s.year.map(_.toString)),
+[error]    |                           ^^^^^^^
+[error]    |         Found:    (s.venue : Option[com.histmersion.api.library.Venue])
+[error]    |         Required: Option[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingHead.scala:57:8 
+[error] 57 |      s.title,
+[error]    |      ^^^^^^^
+[error]    |      Found:    (s.title : com.histmersion.api.library.Title)
+[error]    |      Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingPane.scala:136:51 
+[error] 136 |    val row = LibraryLists.sources.now().rows.find(_.source.citekey == ck).map(_.source)
+[error]     |                                                   ^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.api.library.Citekey and String cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingPane.scala:147:66 
+[error] 147 |    val ref0 = marks.ItemRef.source(ck, row.map(_.title).getOrElse(ck))
+[error]     |                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |                Found:    com.histmersion.api.library.Title.T | String
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingPane.scala:150:90 
+[error] 150 |      .map(_.flatMap(_.toOption).fold(ref0)(r => marks.ItemRef.source(ck, r.source.source.title)))
+[error]     |                                                                          ^^^^^^^^^^^^^^^^^^^^^
+[error]     |Found:    (r.source.source².title : com.histmersion.api.library.Title)
+[error]     |Required: String
+[error]     |
+[error]     |where:    source  is a value in class SourceReading
+[error]     |          source² is a value in class WithFindings
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingPane.scala:153:30 
+[error] 153 |      List(TableRow.authors(h.authors), h.year.fold("")(_.toString)).filter(_.nonEmpty).mkString(", ")
+[error]     |                            ^^^^^^^^^
+[error]     |  Found:    (h.authors : List[com.histmersion.api.library.AuthorName])
+[error]     |  Required: List[String]
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/ReadingPane.scala:299:95 
+[error] 299 |      .fold(ref0)(r => marks.ItemRef.source(ref0.target.itemKey.getOrElse(""), r.source.source.title))
+[error]     |                                                                               ^^^^^^^^^^^^^^^^^^^^^
+[error]     |Found:    (r.source.source².title : com.histmersion.api.library.Title)
+[error]     |Required: String
+[error]     |
+[error]     |where:    source  is a value in class SourceReading
+[error]     |          source² is a value in class WithFindings
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/TableRow.scala:34:8 
+[error] 34 |      s.citekey,
+[error]    |      ^^^^^^^^^
+[error]    |      Found:    (s.citekey : com.histmersion.api.library.Citekey)
+[error]    |      Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/TableRow.scala:35:8 
+[error] 35 |      s.title,
+[error]    |      ^^^^^^^
+[error]    |      Found:    (s.title : com.histmersion.api.library.Title)
+[error]    |      Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/TableRow.scala:36:16 
+[error] 36 |      authors(s.authors),
+[error]    |              ^^^^^^^^^
+[error]    |    Found:    (s.authors : List[com.histmersion.api.library.AuthorName])
+[error]    |    Required: List[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/TableRow.scala:37:8 
+[error] 37 |      s.year,
+[error]    |      ^^^^^^
+[error]    |      Found:    (s.year : Option[com.histmersion.api.catalogue.Year])
+[error]    |      Required: Option[Int]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/library/TableRow.scala:41:24 
+[error] 41 |      SourceLink.href(s.citekey)
+[error]    |                      ^^^^^^^^^
+[error]    |             Found:    (s.citekey : com.histmersion.api.library.Citekey)
+[error]    |             Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/settings/DataSection.scala:184:27 
+[error] 184 |            follow(text, j.id, 0)
+[error]     |                         ^^^^
+[error]     |                Found:    (j.id : com.histmersion.api.jobs.JobInfo.Id)
+[error]     |                Required: String
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/settings/DataSection.scala:265:51 
+[error] 265 |    val free = r.volumes.map(_.freeBytes).minOption.getOrElse(0L)
+[error]     |                                                   ^
+[error]     |No given instance of type Ordering[B] was found for parameter ord of method minOption in trait IterableOnceOps.
+[error]     |I found:
+[error]     |
+[error]     |    scala.math.Ordering.comparatorToOrdering[B](
+[error]     |      /* missing */summon[java.util.Comparator[B]])
+[error]     |
+[error]     |But no implicit values were found that match type java.util.Comparator[B]
+[error]     |
+[error]     |where:    B is a type variable with constraint >: com.histmersion.api.ByteCount.T
+[error]     |.
+[error]     |
+[error]     |One of the following imports might make progress towards fixing the problem:
+[error]     |
+[error]     |  import cats.implicits.catsKernelOrderingForOrder
+[error]     |  import cats.instances.all.catsKernelOrderingForOrder
+[error]     |  import cats.kernel.Order.catsKernelOrderingForOrder
+[error]     |  import scala.math.Ordering.comparatorToOrdering
+[error]     |  import scala.math.Ordering.ordered
+[error]     |  import cats.instances.order.catsKernelOrderingForOrder
+[error]     |  import cats.kernel.instances.order.catsKernelOrderingForOrder
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/settings/DataSection.scala:266:20 
+[error] 266 |    val pct = share(used, free)
+[error]     |                    ^^^^
+[error]     |                    Found:    (used : com.histmersion.api.ByteCount)
+[error]     |                    Required: Long
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/settings/DataSection.scala:272:114 
+[error] 272 |        strong(if r.entries.isEmpty then (if r.measuring then "measuring…" else "unknown") else Backup.humanBytes(used))
+[error]     |                                                                                                                  ^^^^
+[error]     |                      Found:    (used : com.histmersion.api.ByteCount)
+[error]     |                      Required: Long
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/settings/DownloadJobs.scala:43:75 
+[error] 43 |  def busy(kind: JobInfo.Kind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind.value))
+[error]    |                                                                           ^^^^^^^^^^^^^^^^^^^^
+[error]    |Values of types com.histmersion.api.jobs.JobInfo.Kind and io.github.iltotore.iron.IronType[String,
+[error]    |  io.github.iltotore.iron.constraint.any.Pure] cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/settings/DownloadJobs.scala:60:25 
+[error] 60 |                what = j.kind,
+[error]    |                       ^^^^^^
+[error]    |              Found:    (j.kind : com.histmersion.api.jobs.JobInfo.Kind)
+[error]    |              Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/web/src/main/scala/com/histmersion/web/setup/SetupPage.scala:76:90 
+[error] 76 |      ApiClient.about().foreach(a => free.set(a.storage.volumes.map(_.freeBytes).minOption))
+[error]    |                                                                                          ^
+[error]    |No given instance of type Ordering[B] was found for parameter ord of method minOption in trait IterableOnceOps.
+[error]    |I found:
+[error]    |
+[error]    |    scala.math.Ordering.comparatorToOrdering[B](
+[error]    |      /* missing */summon[java.util.Comparator[B]])
+[error]    |
+[error]    |But no implicit values were found that match type java.util.Comparator[B]
+[error]    |
+[error]    |where:    B is a type variable with constraint >: com.histmersion.api.ByteCount.T
+[error]    |.
+[error]    |
+[error]    |One of the following imports might make progress towards fixing the problem:
+[error]    |
+[error]    |  import cats.implicits.catsKernelOrderingForOrder
+[error]    |  import cats.instances.all.catsKernelOrderingForOrder
+[error]    |  import cats.kernel.Order.catsKernelOrderingForOrder
+[error]    |  import scala.math.Ordering.comparatorToOrdering
+[error]    |  import scala.math.Ordering.ordered
+[error]    |  import cats.instances.order.catsKernelOrderingForOrder
+[error]    |  import cats.kernel.instances.order.catsKernelOrderingForOrder
+[error]    |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/AboutView.scala:113:71 
+[error] 113 |      val when = (r.ageSeconds.map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
+[error]     |                                                                       ^
+[error]     |Found:    (s : com.histmersion.api.maintenance.Storage.Report.AgeSeconds)
+[error]     |Required: Long
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/AboutView.scala:129:30 
+[error] 129 |        val low = v.freeBytes < r.lowFreeBytes
+[error]     |                  ^^^^^^^^^^^^^
+[error]     |value < is not a member of com.histmersion.api.ByteCount, but could be made available as an extension method.
+[error]     |
+[error]     |One of the following imports might make progress towards fixing the problem:
+[error]     |
+[error]     |  import cats.implicits.catsSyntaxPartialOrder
+[error]     |  import cats.syntax.all.catsSyntaxPartialOrder
+[error]     |  import io.github.iltotore.iron.autoRefine
+[error]     |  import scala.math.Ordered.orderingToOrdered
+[error]     |  import scala.math.Ordering.Implicits.infixOrderingOps
+[error]     |  import cats.syntax.order.catsSyntaxPartialOrder
+[error]     |  import cats.syntax.partialOrder.catsSyntaxPartialOrder
+[error]     |
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:39:16 
+[error] 39 |      title = s.title,
+[error]    |              ^^^^^^^
+[error]    |              Found:    (s.title : com.histmersion.api.library.Title)
+[error]    |              Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:40:18 
+[error] 40 |      authors = s.authors,
+[error]    |                ^^^^^^^^^
+[error]    |    Found:    (s.authors : List[com.histmersion.api.library.AuthorName])
+[error]    |    Required: List[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:42:31 
+[error] 42 |      venue = s.venue.getOrElse(""),
+[error]    |              ^^^^^^^^^^^^^^^^^^^^^
+[error]    |              Found:    com.histmersion.api.library.Venue | String
+[error]    |              Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:43:27 
+[error] 43 |      doi = s.doi.getOrElse(""),
+[error]    |            ^^^^^^^^^^^^^^^^^^^
+[error]    |            Found:    com.histmersion.api.library.Doi | String
+[error]    |            Required: String
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:84:23 
+[error] 84 |      else Option.when(d.title.trim != orig.title)(d.title.trim)
+[error]    |                       ^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |Values of types String and com.histmersion.api.library.Title cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:94:35 
+[error] 94 |    val venue = text(d.venue, orig.venue, Field.Venue, "the venue")
+[error]    |                              ^^^^^^^^^^
+[error]    |      Found:    (orig.venue : Option[com.histmersion.api.library.Venue])
+[error]    |      Required: Option[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:95:31 
+[error] 95 |    val doi = text(d.doi, orig.doi, Field.Doi, "the DOI")
+[error]    |                          ^^^^^^^^
+[error]    |          Found:    (orig.doi : Option[com.histmersion.api.library.Doi])
+[error]    |          Required: Option[String]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:119:30 
+[error] 119 |      val meta = MetadataPatch(title = (title).map(com.histmersion.api.library.Title.apply), authors = (authors).map(_.map(com.histmersion.api.library.AuthorName.apply)), year = (yr).map(com.histmersion.api.catalogue.Year.apply), venue = (venue).map(com.histmersion.api.library.Venue.apply), doi = (doi).map(com.histmersion.api.library.Doi.apply), status = status)
+[error]     |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |missing argument for parameter provenance of method apply in object MetadataPatch: (title: Option[com.histmersion.api.library.Title],
+[error]     |  authors: Option[List[com.histmersion.api.library.AuthorName]],
+[error]     |  year: Option[com.histmersion.api.catalogue.Year],
+[error]     |  venue: Option[com.histmersion.api.library.Venue],
+[error]     |  doi: Option[com.histmersion.api.library.Doi],
+[error]     |  status: Option[com.histmersion.api.library.Source.Status],
+[error]     |  provenance: Option[String], calibreId: Option[String], clear:
+[error]     |  List[com.histmersion.api.library.MetadataField]):
+[error]     |  com.histmersion.api.library.MetadataPatch
+[error] -- [E171] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/model-concepts-preview-11/modules/web/src/main/scala/com/histmersion/web/SourceEditor.scala:120:58 
+[error] 120 |      val patch = com.histmersion.api.library.Source.Patch(
+[error]     |                  ^
+[error]     |missing argument for parameter body of method apply in object Patch: (metadata: Option[com.histmersion.api.library.MetadataPatch],
+[error]     |  summary: Option[String], body: Option[String], notes: Option[String],
+[error]     |  topics: Option[List[String]], regions: Option[List[String]],
+[error]     |  period: Option[com.histmersion.api.catalogue.Period.Input],
+[error]     |  tags: Option[com.histmersion.api.ListPatch],
+[error]     |  findings: Option[com.histmersion.api.library.FindingsPatch],
+[error]     |  edges: Option[com.histmersion.api.library.EdgesPatch], ifUpdatedAt:
+[error]     |  Option[String]): com.histmersion.api.library.Source.Patch
+[error]     |
+[error] 121 |        metadata = Option.when(meta != MetadataPatch())(meta),
+[error] 122 |...
+[error] 127 |      )
+[error] 99 errors found
+[error] (files / Compile / compileIncremental) Compilation failed
+[error] (web / Compile / compileIncremental) Compilation failed
+[error] elapsed time: 56 s, cache 96%, 358 disk cache hits, 12 onsite tasks

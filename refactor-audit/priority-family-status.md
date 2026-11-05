@@ -2,6 +2,40 @@
 
 ## Current model batch: seventeen concepts reviewed together
 
+Preview-11 passes the 487-source API production overlay compile. It contains 87
+reviewed fields across seventeen concepts and changes 220 overlay files. Nested
+Option/List/Set field paths and configured optional normalization now have exact
+output, compilation and behavioral fixtures. Tests distinguish None from Some(Nil),
+preserve author order, reject raw nested values, and preserve trim/blank/omitted
+patch behavior. This is not a whole-project pass or production repair credit.
+
+The metadata review adds five IDs to the prior 82 without changing those rows:
+MetadataPatch title, authors, year, venue and DOI. metadata-closure-2 is current;
+metadata-closure retains an erroneous duplicate concept label (venue versus the
+existing publication-venue), corrected without changing field identities. Review
+now rejects conflicting concept labels/base types for one proposed type.
+The reviewed model subset is 98 original findings including the eleven pagination
+IDs: eight historical fixes and 90 outstanding. The broader denominator remains
+unestablished; test findings remain separate and unadjudicated.
+
+The existing CompileBatch verifier now accepts an immutable source overlay and
+runs the actual sbt tasks. Attempts build-preview-1 and -2 failed in settings
+setup, before source compilation, due to Global scope cycles. build-preview-3
+uses explicit project scopes from the evaluated 30-project inventory. Its status
+and build.log are authoritative for the downstream build; API overlay success
+does not imply JVM/JS, dependent-module or Test/compile success. Behavioral tests
+and stable-ID remeasurement remain required before applying/crediting this batch.
+build-preview-3 completed: both API JVM and JS compilations passed, then files
+reported two diagnostics and web reported 99. Dependent build stages and
+Test/compile did not pass. These are compiler diagnostics, including cascades,
+not 101 additional confirmed policy violations. Baseline compilation is restored
+through the same verifier without an overlay before further semantic rewrites;
+baseline-restore-1 records that result. Next repairs must address rendering,
+string-based editor state and typed helper propagation across these consumers.
+baseline-restore-1 passes compile and Test/compile for the unchanged 3,159-source
+universe, restoring the pre-rewrite compiler state. This is baseline verification,
+not a pass for the preview. No build process remains running at this checkpoint.
+
 Latest observation: preview-9 retains all 82 reviewed fields and seventeen concepts
 in 217 overlay files. The shared rule now extracts configured scalar and collection
 primitives without leaking Iron refinements into generic sort/sum inference, and
