@@ -9,4 +9,4 @@ object Shout:
   type ApplyText = ApplyText.T
   object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def apply(text: com.histmersion.fixtures.hellolib.Shout.ApplyText): com.histmersion.fixtures.hellolib.Shout.ApplyResult = text.toUpperCase(java.util.Locale.ROOT) + "!"
+  def apply(text: com.histmersion.fixtures.hellolib.Shout.ApplyText): com.histmersion.fixtures.hellolib.Shout.ApplyResult = _root_.com.histmersion.fixtures.hellolib.Shout.ApplyResult((text).value.toUpperCase(java.util.Locale.ROOT) + "!")

@@ -1,0 +1,4 @@
+path	sha256
+tools/refactor/compiler-repairs-fixture/input/Newtypes.scala	4743de1330e6b638d78372d1a422208fa76ed9700de3dd13684f79059db2c881
+tools/refactor/compiler-repairs-fixture/input/Positive.scala	3fb1db0e7c3c0c38ce9eb6ce38fe7e69dc0660984c2bab24849024eb2e148778
+tools/refactor/compiler-repairs-fixture/input/Negative.scala	c6275e68f2580c3a44e2d055571a82150a4dd66955d23c477d8b9837e029ec06

@@ -1,5 +1,83 @@
 # Priority-family status
 
+## Verified locally: console and fixture-library compilation repair
+
+The existing AstRecipe/ApplyFrozenPreview/CompileBatch pipeline now supports
+owner-contract signature propagation and compiler-driven Pure boundary repairs.
+Application and test changes, including the two build dependency additions, were
+applied by Scalafix. No new batch runner or verification framework was added.
+Configuration selects interface owners and boundary roots, not individual
+expression replacements or a list of newtype conversion pairs.
+
+The applied cohort spans two production sources, three test sources and build.sbt:
+
+* Console.Streams and all three direct anonymous Console test doubles now use
+  Console's typed signatures. The prompt callback's duplicate opaque type aliases
+  Console.ReadTerminalLinePrompt. Unrelated methods/overloads stay unchanged.
+* console and pluginHelloLib now declare Iron. These were the two independent
+  build roots with generated newtypes but no dependency path to Iron; other
+  affected modules already have a path. Iron 3.4.1 is already in THIRD-PARTY.md
+  and the consuming binaries' dependency graphs; no new artifact/version is added.
+* Six compiler-driven expression repairs across Console and Shout construct Pure
+  results and unwrap at primitive operations. Both files are repaired together
+  per supported pass. No constrained construction, assume, autoRefine import,
+  different-meaning nominal conversion or per-expression recipe is introduced.
+
+CompileBatch captures all 3167 Scala source hashes plus build.sbt. Observations
+signature-build-1 and -2 preserve four and then two diagnostics; signature-build-3
+passes `all console/compile pluginHelloLib/compile` with stable hashes and formatting
+disabled. A runtime contract over the actual application sources passes output,
+error output, input, prompt handling, EOF/null preservation, standard input and
+Shout's uppercase result. The final two source files exactly match their frozen
+preview. The complete twenty-plan chain validates all current source/build hashes.
+This also supplies module-local compilation/behavior evidence for the five Console
+input aliases applied in type-consolidation-1 and the new prompt alias. The prior
+17 core and four API consolidations remain application-unverified.
+
+Signature fixtures match expected output and compile, covering local and fully
+qualified anonymous implementations plus an incompatible overload left unresolved.
+Compiler fixtures match expected output and compile/execute: seven positive patches
+cover construction, unwrapping, String members, a JDK primitive overload, complete
+compound-expression spans and nullable Option construction. Three negative cases
+remain explicit unresolved evidence: stricter constraints, different nominal
+meanings over the same base, and a wrong primitive base. Original positive
+expectations were retained; compound/nullable cases were added when compilation
+exposed those shapes. The first diagnostic preview used the wrong column origin
+and was never applied; compiler-repairs-2 corrects the zero-based Scala 3 columns.
+Preview 3 is preserved; applied preview 4 retains original expression source bytes
+inside the constructor patch rather than reprinting nested code.
+
+The repair reads positioned compiler diagnostics, checks the displayed source and
+highlight against the frozen AST, and verifies referenced newtype definitions and
+aliases in current source. The prior index is a locator, not stale semantic proof.
+E007 construction/access requires an exact underlying type and a qualified Pure
+RefinedType. E008 String access requires an explicitly typed, unshadowed receiver
+and an existing Java String member. Explicitly typed JDK receiver/argument pairs
+also support primitive overload access, verified by reflection. Inferred receivers,
+transitive/unresolved interface inheritance, generic/unsupported type shapes,
+multiline or interleaved diagnostic bodies, other diagnostic codes and conflicting
+patches remain outside the supported subset. Innermost overlapping fixes require
+recompilation before another pass. Unsupported cases never become compliance.
+
+type-positions-after-compiler-repairs-1 retains all 3167 main/test Scala files;
+build.sbt is additional compilation provenance and is excluded from model counts.
+Stable-ID changes remove exactly five raw declaration leaves and introduce none:
+production596/test6051 (6647 total). Two production signature positions have local
+compilation/runtime evidence. The three test declarations are applied but their
+CLI/server/resolver suites have not compiled/run in this batch. Newtype identity
+history records one removed prompt definition and no introductions; current
+definitions are production27740/test15, with 3023 overlap candidate groups and
+16039 unresolved candidate references. These are local facts, not an overall
+repair percentage or a new denominator for the original migration target.
+
+The broader application build, native images, test suites and other policy-family
+regression checks remain outstanding. No fresh whole-project SemanticDB or zero
+unwrap/capability/layer regressions are claimed. No accepted exception or baseline
+replacement is added. Next use the same compiler-observation/AST-repair pipeline
+on the next independent consumers and dependency roots, applying every supported
+finding in each selected scope together; retain unresolved diagnostics for design
+work rather than expanding this batch's detector indefinitely.
+
 ## Applied: canonical type aliases for reviewed projections and console input
 
 type-consolidation-1 consolidates 26 duplicate opaque definitions in three
