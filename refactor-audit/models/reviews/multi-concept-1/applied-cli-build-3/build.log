@@ -1,0 +1,45 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[success] elapsed time: 1 s, cache 100%, 93 disk cache hits
+[info] compiling 8 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-cli/test-classes ...
+[info] done compiling
+[success] elapsed time: 5 s, cache 98%, 100 disk cache hits, 2 onsite tasks
+Test run com.histmersion.cli.JobFollowSuite started
+com.histmersion.cli.JobFollowSuite: finished 0.039s
+Test run com.histmersion.cli.CalibreAuditSuite started
+com.histmersion.cli.CalibreAuditSuite: finished 0.041s
+Test run com.histmersion.cli.CalibreAuditSuite finished: 0 failed, 0 ignored, 5 total 0.047s
+Test run com.histmersion.cli.JobFollowSuite finished: 0 failed, 0 ignored, 6 total 0.047s
+Test run com.histmersion.cli.DirSizeSuite started
+com.histmersion.cli.DirSizeSuite: finished 0.085s
+Test run com.histmersion.cli.DirSizeSuite finished: 0 failed, 0 ignored, 10 total 0.09s
+Test run com.histmersion.cli.PatchesSuite started
+com.histmersion.cli.PatchesSuite: finished 0.12s
+Test run com.histmersion.cli.PatchesSuite finished: 0 failed, 0 ignored, 14 total 0.125s
+Test run com.histmersion.cli.ArticlePatchesSuite started
+com.histmersion.cli.ArticlePatchesSuite: finished 0.131s
+Test run com.histmersion.cli.ArticlePatchesSuite finished: 0 failed, 0 ignored, 11 total 0.136s
+Test run com.histmersion.cli.CalibreSuite started
+com.histmersion.cli.CalibreSuite: finished 0.257s
+Test run com.histmersion.cli.CalibreSuite finished: 0 failed, 0 ignored, 36 total 0.263s
+Test run com.histmersion.cli.LocalStorageSuite started
+com.histmersion.cli.LocalStorageSuite: finished 0.324s
+Test run com.histmersion.cli.LocalStorageSuite finished: 0 failed, 0 ignored, 2 total 0.329s
+Test run com.histmersion.cli.CalibrePushSuite started
+com.histmersion.cli.CalibrePushSuite: finished 0.4s
+Test run com.histmersion.cli.CalibrePushSuite finished: 0 failed, 0 ignored, 11 total 0.405s
+[info] Passed: Total 95, Failed 0, Errors 0, Passed 95
+[success] elapsed time: 1 s, cache 89%, 107 disk cache hits, 13 onsite tasks

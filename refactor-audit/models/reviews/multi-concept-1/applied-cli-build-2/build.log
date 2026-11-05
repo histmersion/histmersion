@@ -1,0 +1,57 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35871 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 19 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-cli/classes ...
+[info] done compiling
+[info] compiling 12 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-cli/classes ...
+[info] done compiling
+[success] elapsed time: 12 s, cache 97%, 91 disk cache hits, 2 onsite tasks
+[info] compiling 8 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-cli/test-classes ...
+[error] -- [E008] Not Found Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/cli/src/test/scala/com/histmersion/cli/DirSizeSuite.scala:93:38 
+[error] 93 |    assert(v.forall(x => x.totalBytes > 0 && x.freeBytes >= 0 && x.freeBytes <= x.totalBytes), v)
+[error]    |                         ^^^^^^^^^^^^^^
+[error]    |value > is not a member of com.histmersion.api.ByteCount, but could be made available as an extension method.
+[error]    |
+[error]    |One of the following imports might make progress towards fixing the problem:
+[error]    |
+[error]    |  import cats.implicits.catsSyntaxPartialOrder
+[error]    |  import io.github.iltotore.iron.autoRefine
+[error]    |  import scala.math.Ordered.orderingToOrdered
+[error]    |  import scala.math.Ordering.Implicits.infixOrderingOps
+[error]    |
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/cli/src/test/scala/com/histmersion/cli/LocalStorageSuite.scala:56:117 
+[error] 56 |    assertEquals(local.map(e => (e.key, e.bytes)), List("calibre-originals" -> Some(1234L), "install" -> Some(100L)))
+[error]    |                                                                                                                     ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  List[(String, Option[com.histmersion.api.ByteCount])]
+[error]    |  Second type: List[(String, Some[Long])]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[List[(String, Option[com.histmersion.api.ByteCount])], List[(String, Some[Long])]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      List[(String, Option[com.histmersion.api.ByteCount])],
+[error]    |      List[(String, Some[Long])]](
+[error]    |      /* missing */
+[error]    |        summon[List[(String, Option[com.histmersion.api.ByteCount])] <:<
+[error]    |          List[(String, Some[Long])]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type List[(String, Option[com.histmersion.api.ByteCount])] <:<
+[error]    |  List[(String, Some[Long])].
+[error] two errors found
+[error] (cli / Test / compileIncremental) Compilation failed
+[error] elapsed time: 2 s, cache 96%, 97 disk cache hits, 4 onsite tasks
