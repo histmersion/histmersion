@@ -4,8 +4,15 @@ package conceptfixture
 final case class Report(label: String = "", title: String = "", bytes: Long = 0L, lat: Double = 0.0, doi: Option[String] = None, authors: List[String] = Nil, year: Int = 0)
 final case class Unrelated(label: String, bytes: Long)
 final case class Quantities(samples: List[Long], maybe: Option[Long])
+final case class Nested(authors: Option[List[String]] = None)
 
 object Calls:
+  def blankToNone(s: Option[String]): Option[String] = s.map(_.trim).filter(_.nonEmpty)
+  def normalizedDoi(p: Report, existing: Report) =
+    p.doi.fold(existing.doi)(v => blankToNone(Some(v)))
+  def nested: Nested = Nested(Some(List("a", "b")))
+  def forwardNested(n: Nested): Nested = Nested(n.authors)
+  def emptyNested: Nested = Nested(Some(Nil))
   var evaluations = 0
   def rawAuthors(): List[String] =
     evaluations += 1

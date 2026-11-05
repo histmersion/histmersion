@@ -53,6 +53,10 @@ class Review(val policy: Review.Policy) extends SyntacticRule("Review") {
       }
     }
     require(decisions.nonEmpty && decisions.map(d => d.position -> d.route).distinct.size == decisions.size)
+    decisions.groupBy(_.proposed).foreach { case(target,ds) =>
+      require(ds.map(_.concept).distinct.size == 1 && ds.map(_.primitive).distinct.size == 1,
+        "One proposed type must have one reviewed concept and primitive base: " + target)
+    }
     if (policy.mappings.isEmpty) require(decisions.size == 11)
     val output = decisions.map { d =>
       val p = positions.getOrElse(d.position,sys.error("Missing reviewed position: " + d.position))
