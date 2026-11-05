@@ -511,7 +511,7 @@ object PluginHarness:
     val sleep: Long => Unit = if mode.live then ms => Thread.sleep(ms) else _ => ()
     val acquisition =
       PolicyHttp.acquisition(host, wire.transport(PolicyHttp.acquisitionTransport(host)), sleep, lines.host)
-    val services = HostServices(() => acquisition.plugin, env, lines.plugin)
+    val services = HostServices(() => acquisition.plugin, env, lines.plugin, files = new com.histmersion.pluginhost.DiskLocalFiles, processes = new com.histmersion.pluginhost.SystemProcesses)
     // a first-party plugin is supplied the server's own settings it reads, as the server supplies them
     val supplied = FirstPartySettings.hostView(loaded.merged, user, env, List(plugin))
     val generation = PluginHost.build(

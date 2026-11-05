@@ -12,7 +12,9 @@ final case class HostServices(
     http: () => Plugin.Http,
     env: Config,
     log: (String, Boolean, String) => Unit, // (plugin id, is a warning, message)
-    quota: String => UpstreamQuota = _ => UpstreamQuota.Unlimited
+    quota: String => UpstreamQuota = _ => UpstreamQuota.Unlimited,
+    files: LocalFiles = LocalFiles.Unavailable,
+    processes: Processes = Processes.Unavailable
 )
 
 object HostServices:

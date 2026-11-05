@@ -12,6 +12,8 @@ final class KeePassXcPlugin extends Plugin:
   val info = Plugin.Info("keepassxc", Vaults.Version, Spi.Version)
 
   def register(c: KeePassXcConfig, ctx: Plugin.Context): Either[String, Unit] =
+    given files: com.histmersion.plugin.LocalFiles = ctx.files
+    given processes: com.histmersion.plugin.Processes = ctx.processes
     val home = ctx.env("HOME")
     for
       db <- Option(c.database)
@@ -19,9 +21,9 @@ final class KeePassXcPlugin extends Plugin:
         .filter(_.nonEmpty)
         .map(Vaults.expand(_, home))
         .toRight("set database = \"<path to the .kdbx file>\"")
-      _ <- Either.cond(Files.isRegularFile(Path.of(db)), (), s"database $db does not exist")
+      _ <- Either.cond(files.isFile(Path.of(db)), (), s"database $db does not exist")
       key = Option(c.keyFile).map(_.trim).filter(_.nonEmpty).map(Vaults.expand(_, home))
-      _ <- key.fold(Right(()))(k => Either.cond(Files.isRegularFile(Path.of(k)), (), s"key-file $k does not exist"))
+      _ <- key.fold(Right(()))(k => Either.cond(files.isFile(Path.of(k)), (), s"key-file $k does not exist"))
       exe <- Subprocess.locate(c.cli, ctx.env("PATH"))
       yks <- YubiKey.parseAll(c.yubikey.fold(Nil)(_.entries))
       det <- if yks.isEmpty then Right(None) else detector(c.ykman, ctx)
@@ -48,6 +50,7 @@ final class KeePassXcPlugin extends Plugin:
     * that was given and is wrong is an error.
     */
   private def detector(ykman: String, ctx: Plugin.Context): Either[String, Option[String]] =
+    given files: com.histmersion.plugin.LocalFiles = ctx.files
     val t = Option(ykman).map(_.trim).getOrElse("")
     if t.isEmpty then
       ctx.log.info("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order")

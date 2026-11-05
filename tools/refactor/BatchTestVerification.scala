@@ -6,7 +6,7 @@ import javax.xml.parsers.DocumentBuilderFactory
 import org.w3c.dom.Element
 
 object BatchTestVerification {
-  case class Policy(phase: String = "baseline", module: String = "server", artifact: String = "", suites: List[String] = Nil, report: String = "refactor-audit/agent-storage/tests", knownFailure: String = "")
+  case class Policy(phase: String = "baseline", module: String = "server", artifact: String = "", suites: List[String] = Nil, report: String = "refactor-audit/agent-storage/tests", knownFailure: String = "", knownSkips: Map[String, String] = Map.empty)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -17,6 +17,7 @@ class BatchTestVerification(val policy: BatchTestVerification.Policy) extends Sy
   override def withConfiguration(c: Configuration): Configured[Rule] = c.conf.getOrElse("BatchTestVerification")(BatchTestVerification.Policy()).map(new BatchTestVerification(_))
   override def afterComplete(): Unit = {
     require(Set("baseline", "after")(policy.phase) && policy.suites.nonEmpty)
+    require(policy.knownSkips.values.forall(_.trim.nonEmpty), "Known skips require explicit reasons")
     val out = Paths.get(policy.report); Files.createDirectories(out)
     val snapshot = out.resolve(policy.phase + ".tsv")
     require(policy.phase != "baseline" || !Files.exists(snapshot), "Never overwrite the test baseline")
@@ -63,12 +64,19 @@ class BatchTestVerification(val policy: BatchTestVerification.Policy) extends Sy
         message.substring(at).split("\\\\n").takeWhile(line => !line.startsWith("\\t") && !line.trim.startsWith("at ")).mkString("\n").trim
       }
       rows.filter(_(2) != "passed").foreach { row =>
-        require(row.take(2).mkString("::") == policy.knownFailure, "Unreviewed failure")
-        require(failureEvidence(row(3)) == failureEvidence(before(row.take(2))(3)), "Existing failure evidence changed")
+        if(row(2) == "skipped") {
+          require(policy.knownSkips.contains(row.take(2).mkString("::")), "Unreviewed skip")
+          require(row(3) == before(row.take(2))(3), "Known skip evidence changed")
+        } else {
+          require(row.take(2).mkString("::") == policy.knownFailure, "Unreviewed failure")
+          require(failureEvidence(row(3)) == failureEvidence(before(row.take(2))(3)), "Existing failure evidence changed")
+        }
       }
     }
-    require(rows.forall(r => r(2) == "passed" || r(2) == "failure" && r.take(2).mkString("::") == policy.knownFailure), "Unexpected failure or skip")
-    require(exit == (if(rows.forall(_(2) == "passed")) 0 else 1), "Unexpected test process exit")
-    println(if(exit == 0) "ALL_SELECTED_TESTS_PASS" else "RETAINED_KNOWN_FAILURE; not an all-green test run")
+    require(rows.forall(r => r(2) == "passed" || r(2) == "failure" && r.take(2).mkString("::") == policy.knownFailure ||
+      r(2) == "skipped" && policy.knownSkips.contains(r.take(2).mkString("::"))), "Unexpected failure or skip")
+    require(exit == (if(rows.exists(r => Set("failure", "error")(r(2)))) 1 else 0), "Unexpected test process exit")
+    Files.write(out.resolve(policy.phase + "-known-skips.tsv"), ("test\treason" :: policy.knownSkips.toList.sorted.map { case (id, reason) => id + "\t" + reason }).asJava)
+    println(if(rows.forall(_(2) == "passed")) "ALL_SELECTED_TESTS_PASS" else if(exit == 0) "KNOWN_SKIPS_RETAINED; not full test coverage" else "RETAINED_KNOWN_FAILURE; not an all-green test run")
   }
 }

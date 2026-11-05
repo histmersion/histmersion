@@ -94,7 +94,7 @@ production	files	com.histmersion.domain.research	com.histmersion.util	allowed-di
 production	files	com.histmersion.util		unclassified-direction	1025
 production	files	com.histmersion.util		unresolved-reference	15
 production	files	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	20
-production	plugin-api			unclassified-direction	70
+production	plugin-api			unclassified-direction	72
 production	plugin-api			unresolved-reference	8
 production	plugin-fixtures/hello			unclassified-direction	94
 production	plugin-fixtures/hello			unresolved-reference	1
@@ -103,8 +103,8 @@ production	plugin-fixtures/hello-ai			unresolved-reference	3
 production	plugin-fixtures/hello-deps			unclassified-direction	58
 production	plugin-fixtures/hello-deps			unresolved-reference	1
 production	plugin-fixtures/hello-lib			unclassified-direction	2
-production	plugin-host			unclassified-direction	1591
-production	plugin-host			unresolved-reference	53
+production	plugin-host			unclassified-direction	1631
+production	plugin-host			unresolved-reference	55
 production	plugin-host		com.histmersion.domain.catalogue	unclassified-direction	28
 production	plugin-host		com.histmersion.domain.library	unclassified-direction	31
 production	plugin-host		com.histmersion.domain.media	unclassified-direction	30
@@ -112,15 +112,15 @@ production	plugin-host		com.histmersion.util	unclassified-direction	4
 production	plugin-resolver			unclassified-direction	18
 production	plugin-resolver			unresolved-reference	9
 production	plugin-resolver		com.histmersion.util	unclassified-direction	26
-production	plugin-testkit			unclassified-direction	605
+production	plugin-testkit			unclassified-direction	611
 production	plugin-testkit			unresolved-reference	9
 production	plugin-testkit		com.histmersion.domain.library	unclassified-direction	8
 production	plugin-testkit		com.histmersion.domain.media	unclassified-direction	14
-production	plugin-vaults			unclassified-direction	174
-production	plugin-vaults			unresolved-reference	9
+production	plugin-vaults			unclassified-direction	308
+production	plugin-vaults			unresolved-reference	7
 production	plugins/ai-http			unclassified-direction	257
 production	plugins/ai-http			unresolved-reference	24
-production	plugins/calibre			unclassified-direction	297
+production	plugins/calibre			unclassified-direction	350
 production	plugins/calibre			unresolved-reference	16
 production	plugins/events			unclassified-direction	369
 production	plugins/events			unresolved-reference	10
@@ -131,7 +131,7 @@ production	plugins/gazetteers			unclassified-direction	148
 production	plugins/gazetteers			unresolved-reference	1
 production	plugins/media			unclassified-direction	876
 production	plugins/media			unresolved-reference	22
-production	server			unclassified-direction	6235
+production	server			unclassified-direction	6241
 production	server			unresolved-reference	228
 production	server		com.histmersion.domain.automation	unclassified-direction	789
 production	server		com.histmersion.domain.catalogue	unclassified-direction	321
@@ -176,7 +176,7 @@ production	server	com.histmersion.domain.research	com.histmersion.domain.library
 production	server	com.histmersion.domain.research	com.histmersion.domain.personal	forbidden-direction	13
 production	server	com.histmersion.domain.research	com.histmersion.domain.research	same-region; feature-contract-review	295
 production	server	com.histmersion.domain.research	com.histmersion.util	allowed-direction; contract-review	289
-production	server	com.histmersion.util		unclassified-direction	3927
+production	server	com.histmersion.util		unclassified-direction	3939
 production	server	com.histmersion.util		unresolved-reference	228
 production	server	com.histmersion.util	com.histmersion.domain.library	forbidden-direction	48
 production	server	com.histmersion.util	com.histmersion.util	same-region; feature-contract-review	1979
@@ -314,11 +314,11 @@ test	plugin-resolver			unresolved-reference	4
 test	plugin-resolver		com.histmersion.util	unclassified-direction	4
 test	plugin-testkit			unclassified-direction	284
 test	plugin-testkit			unresolved-reference	12
-test	plugin-vaults			unclassified-direction	154
+test	plugin-vaults			unclassified-direction	178
 test	plugin-vaults			unresolved-reference	10
 test	plugins/ai-http			unclassified-direction	157
 test	plugins/ai-http			unresolved-reference	6
-test	plugins/calibre			unclassified-direction	168
+test	plugins/calibre			unclassified-direction	236
 test	plugins/calibre			unresolved-reference	15
 test	plugins/events			unclassified-direction	260
 test	plugins/events			unresolved-reference	1

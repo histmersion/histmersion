@@ -1,0 +1,4 @@
+PASS: plugin capability batch reconciled
+25 confirmed occurrences / 23 anchors repaired; 3 clock occurrences explicitly accepted at one exact host-adapter method.
+152 raw findings / 130 anchors remain; no new/reopened identities or multiplicity changes.
+This completes this batch, not the overall migration or independent detector-quality validation.

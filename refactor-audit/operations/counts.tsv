@@ -10,12 +10,12 @@ derivation-call	kindlings-derived	production	151
 derivation-call	kindlings-derived	test	2
 derivation-call	other-derived-review	production	19
 derivation-call	other-derived-review	test	31
-fold	no-visible-allocation; indirect-effects-unresolved	production	1349
+fold	no-visible-allocation; indirect-effects-unresolved	production	1348
 fold	no-visible-allocation; indirect-effects-unresolved	test	764
 fold	visible-allocation-review	production	154
 fold	visible-allocation-review	test	6
-given-instance	instance-body-review	production	530
-given-instance	instance-body-review	test	124
+given-instance	instance-body-review	production	539
+given-instance	instance-body-review	test	138
 unwrap	accessor-or-inline-expansion-review	production	41
 unwrap	accessor-or-inline-expansion-review	test	12
 unwrap	iron-accessor	production	635

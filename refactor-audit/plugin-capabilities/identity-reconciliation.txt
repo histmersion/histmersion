@@ -1,0 +1,7 @@
+PASS: exact pre-policy identity delta
+23 reviewed anchors / 25 confirmed occurrences removed; all other identities/multiplicities unchanged except the explicit clock relocation.
+clock-prior=CAP-0bf5328a3a7bc0e268c496b338d77706b1a2e416da8ac015fa785ab12673748d
+clock-current=CAP-6b311385bbd89f6c7625e3c5102964eab94b39bd8b7450766a94ba8a73713f55
+clock-occurrences=3
+Clock relocation remains a candidate requiring explicit host-adapter boundary adjudication; this is not a passing regression gate.
+Original history and policy remain unchanged; final source assertions and integrated assessment remain outstanding.

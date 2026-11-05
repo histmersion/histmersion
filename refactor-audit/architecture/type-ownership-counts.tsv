@@ -15,8 +15,8 @@ production	db	nested-owner-review	60
 production	db	top-level-owner-review	271
 production	files	nested-owner-review	19
 production	files	top-level-owner-review	16
-production	plugin-api	nested-owner-review	17
-production	plugin-api	top-level-owner-review	87
+production	plugin-api	nested-owner-review	21
+production	plugin-api	top-level-owner-review	91
 production	plugin-fixtures/hello	nested-owner-review	2
 production	plugin-fixtures/hello	top-level-owner-review	7
 production	plugin-fixtures/hello-ai	nested-owner-review	1
@@ -24,8 +24,8 @@ production	plugin-fixtures/hello-ai	top-level-owner-review	4
 production	plugin-fixtures/hello-deps	nested-owner-review	1
 production	plugin-fixtures/hello-deps	top-level-owner-review	3
 production	plugin-fixtures/hello-lib	top-level-owner-review	1
-production	plugin-host	nested-owner-review	14
-production	plugin-host	top-level-owner-review	37
+production	plugin-host	nested-owner-review	16
+production	plugin-host	top-level-owner-review	39
 production	plugin-resolver	nested-owner-review	1
 production	plugin-resolver	top-level-owner-review	25
 production	plugin-testkit	nested-owner-review	1
@@ -34,7 +34,7 @@ production	plugin-vaults	nested-owner-review	11
 production	plugin-vaults	top-level-owner-review	13
 production	plugins/ai-http	nested-owner-review	2
 production	plugins/ai-http	top-level-owner-review	27
-production	plugins/calibre	nested-owner-review	11
+production	plugins/calibre	nested-owner-review	10
 production	plugins/calibre	top-level-owner-review	14
 production	plugins/events	nested-owner-review	3
 production	plugins/events	top-level-owner-review	25

@@ -5,6 +5,8 @@ package com.histmersion.plugins.calibre
   */
 class CalibreAuditSuite extends munit.FunSuite:
 
+  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
+  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
   private def book(id: Int, title: String, authors: List[String], pubdate: Option[String] = None) =
     Calibre.Book(id, title, authors, pubdate, None, Nil, None, Map.empty, Nil)
   private def rec(ck: String, id: Int, title: String, authors: List[String], year: Option[Int] = None) =

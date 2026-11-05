@@ -14,6 +14,8 @@ import scala.jdk.CollectionConverters.*
   * user's own library: [[CalibreFixture.refuseRealLibrary]] fails every suite that would be pointed at it.
   */
 final case class CalibreFixture(dir: Path):
+  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
+  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
   def calibredb: Path = dir.resolve("bin/calibredb")
   def sqlite3: Path = dir.resolve("bin/sqlite3")
 
@@ -48,6 +50,8 @@ final case class CalibreFixture(dir: Path):
 object CalibreFixture:
 
   /** One book of the fixture, in `calibredb list --for-machine`'s terms (`authors` joined by ` & `). */
+  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
+  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
   final case class Book(
       id: Int,
       title: String,

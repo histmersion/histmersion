@@ -1,5 +1,5 @@
 scope	status	count
 production	multiple-logical-groups; review-tightly-coupled-helpers	1
-production	single-logical-group	2342
+production	single-logical-group	2346
 test	multiple-logical-groups; review-tightly-coupled-helpers	51
 test	single-logical-group	717

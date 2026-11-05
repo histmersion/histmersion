@@ -13,6 +13,8 @@ import java.nio.file.{Files, Path}
   */
 class CalibreCollectionSuite extends munit.FunSuite:
 
+  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
+  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
   private def scratch(): Path =
     Files.createTempDirectory(Files.createDirectories(Path.of("target/calibre-plugin").toAbsolutePath), "lib-")
 
@@ -21,7 +23,7 @@ class CalibreCollectionSuite extends munit.FunSuite:
 
   private def collection(f: CalibreFixture, writeBack: Boolean = true) =
     CalibreFixture.refuseRealLibrary(f.dir)
-    HostCollection("calibre", CalibreCollection(library(f), writeBack, Shell.System))
+    HostCollection("calibre", CalibreCollection(library(f), writeBack, Shell.system))
 
   private lazy val master = CalibreFixture.create(scratch().resolve("master"))
 
@@ -148,6 +150,8 @@ class CalibreCollectionSuite extends munit.FunSuite:
     assert(h.log.forall(!_.toString.contains("unknown")), h.log)
     val added = List.newBuilder[(String, SourceCollection)]
     val ctx = new Plugin.Context:
+      override def files: com.histmersion.plugin.LocalFiles = summon[com.histmersion.plugin.LocalFiles]
+      override def processes: com.histmersion.plugin.Processes = summon[com.histmersion.plugin.Processes]
       def http = new Plugin.Http { def get(u: String, hs: Map[String, String]) = Left("offline") }
       def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
       def env(name: String) = Option.when(name == "HOME")("/home/someone")

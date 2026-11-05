@@ -334,7 +334,7 @@ lazy val pluginTestkit = project
 
 lazy val pluginVaults = project
   .in(file("modules/plugin-vaults"))
-  .dependsOn(pluginApi)
+  .dependsOn(pluginApi, pluginHost % Test)
   .settings(
     name := "histmersion-plugin-vaults",
     description := "The built-in secret vaults (KeePassXC, 1Password, Bitwarden), disabled by default"

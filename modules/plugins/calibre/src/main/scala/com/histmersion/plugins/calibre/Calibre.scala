@@ -17,14 +17,14 @@ import java.text.Normalizer
   * library; the only writes are the explicit `calibredb add` / `set_metadata` / `add_format` of a push, an update or a
   * set, which additionally refuse to run while the GUI is open.
   */
-final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell: Shell):
+final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell: Shell)(using files: com.histmersion.plugin.LocalFiles):
 
   private def libArgs = List("--with-library", cfg.library)
 
   /** The Calibre GUI holds an exclusive lock on the library for writes. */
   def guiRunning: Boolean = shell.isRunning(cfg.guiProcess)
 
-  def libraryExists: Boolean = Files.isRegularFile(Path.of(cfg.library, "metadata.db"))
+  def libraryExists: Boolean = files.isFile(Path.of(cfg.library, "metadata.db"))
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
@@ -85,7 +85,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
         (),
         "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
       )
-      _ <- Either.cond(Files.isRegularFile(file), (), s"no such file: $file")
+      _ <- Either.cond(files.isFile(file), (), s"no such file: $file")
       out <- shell.run(addCmd(file, meta))
       id <- Calibre.parseAddedId(out).toRight(s"calibredb add did not report a new id: ${out.trim.take(200)}")
       _ <- setMetadata(id, meta)
@@ -157,7 +157,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
         (),
         "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
       )
-      _ <- Either.cond(Files.isRegularFile(file), (), s"no such file: $file")
+      _ <- Either.cond(files.isFile(file), (), s"no such file: $file")
       _ <- byId(id).flatMap(_.toRight(s"there is no Calibre entry $id"))
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
     yield fmt
@@ -663,10 +663,13 @@ object Calibre:
     /** The settings as the library is reached, `~` read against `home`, a bare `calibredb` found on `searchPath` or in
       * Calibre's install directories (kept bare when it is in none, so the failure names it as configured).
       */
+    def library(home: Option[String], searchPath: Option[String] = None)(using files: com.histmersion.plugin.LocalFiles): Library =
+      library(home, searchPath, files.isExecutable)
+
     def library(
         home: Option[String],
-        searchPath: Option[String] = None,
-        executable: Path => Boolean = Files.isExecutable(_)
+        searchPath: Option[String],
+        executable: Path => Boolean
     ): Library =
       val path = libraryPath.trim match
         case "~"                                       => home.getOrElse("~")

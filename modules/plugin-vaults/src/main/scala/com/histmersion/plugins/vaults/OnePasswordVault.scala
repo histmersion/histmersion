@@ -12,7 +12,7 @@ final class OnePasswordVault(
     account: Option[String],
     token: Option[String],
     timeout: FiniteDuration
-) extends Secret.Vault:
+)(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
   def resolve(ref: String): Either[String, String] =
     val r = ref.trim
     for

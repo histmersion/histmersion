@@ -11,6 +11,8 @@ final class OnePasswordPlugin extends Plugin:
   val info = Plugin.Info("1password", Vaults.Version, Spi.Version)
 
   def register(c: OnePasswordConfig, ctx: Plugin.Context): Either[String, Unit] =
+    given files: com.histmersion.plugin.LocalFiles = ctx.files
+    given processes: com.histmersion.plugin.Processes = ctx.processes
     for
       exe <- Subprocess.locate(c.cli, ctx.env("PATH"))
       token <- Vaults.optional(c.serviceAccountToken, ctx)

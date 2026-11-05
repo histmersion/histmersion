@@ -19,7 +19,7 @@ final class KeePassXcVault(
     ykman: Option[String],
     yubikeyTimeout: FiniteDuration,
     log: Plugin.Log
-) extends Secret.Vault:
+)(using processes: com.histmersion.plugin.Processes) extends Secret.Vault:
 
   /** The YubiKey that opened the database last, tried first next time (a resolve may run on any thread). */
   private val lastOpened = new java.util.concurrent.atomic.AtomicReference[Option[YubiKey.Slot]](None)

@@ -1,0 +1,46 @@
+class	test	status	message
+com.histmersion.plugins.calibre.CalibreAuditSuite	a bracketed role or life span is not a surname	passed	
+com.histmersion.plugins.calibre.CalibreAuditSuite	a different work, a missing entry, and a year-only difference are told apart	passed	
+com.histmersion.plugins.calibre.CalibreAuditSuite	a shared entry is judged against the record it matches — the volume, not the chapter	passed	
+com.histmersion.plugins.calibre.CalibreAuditSuite	scraped junk and an 'Unknown' author are reported as fixable junk	passed	
+com.histmersion.plugins.calibre.CalibreAuditSuite	subtitles, punctuation, accents and name order are not disagreements	passed	
+com.histmersion.plugins.calibre.CalibreCollectionSuite	audit and update-all read the library once	passed	
+com.histmersion.plugins.calibre.CalibreCollectionSuite	search, one item, its file and cover: the books as the library holds them	passed	
+com.histmersion.plugins.calibre.CalibreCollectionSuite	the GUI holds the library: reading falls back to sqlite3, read-only	passed	
+com.histmersion.plugins.calibre.CalibreCollectionSuite	the doctor check: a missing library, and one the server may not read	passed	
+com.histmersion.plugins.calibre.CalibreCollectionSuite	the guard refuses the user's own library, however it is spelled	passed	
+com.histmersion.plugins.calibre.CalibreCollectionSuite	the plugin loads with its defaults — on, writing back — and registers the calibre collection	failure	java.lang.UnsupportedOperationException: this host supplies no local files\n\tat com.histmersion.plugin.LocalFiles$Unavailable$.unavailable(LocalFiles.scala:23)\n\tat com.histmersion.plugin.LocalFiles$Unavailable$.isExecutable(LocalFiles.scala:27)\n\tat com.histmersion.plugins.calibre.Calibre$.com$histmersion$plugins$calibre$Calibre$Settings$$_$library$$anonfun$1(Calibre.scala:667)\n\tat scala.collection.IterableOnceOps.find(IterableOnce.scala:704)\n\tat scala.collection.IterableOnceOps.find$(IterableOnce.scala:352)\n\tat scala.collection.AbstractIterator.find(Iterator.scala:1386)\n\tat com.histmersion.plugins.calibre.Calibre$Settings$.locate(Calibre.scala:702)\n\tat com.histmersion.plugins.calibre.Calibre$Settings.library(Calibre.scala:678)\n\tat com.histmersion.plugins.calibre.Calibre$Settings.library(Calibre.scala:667)\n\tat com.histmersion.plugins.calibre.CalibrePlugin.register(CalibrePlugin.scala:17)\n\tat com.histmersion.plugins.calibre.CalibreCollectionSuite.$init$$$anonfun$8(CalibreCollectionSuite.scala:161)\n
+com.histmersion.plugins.calibre.CalibreCollectionSuite	write-back off: the collection is read-only and every write is refused, naming the switch	passed	
+com.histmersion.plugins.calibre.CalibreCollectionSuite	writes: add, replace, update, set — the commands run on a copy of the library	passed	
+com.histmersion.plugins.calibre.CalibreSettingsSuite	a bare name not on the search path is found in the macOS app	passed	
+com.histmersion.plugins.calibre.CalibreSettingsSuite	a bare name on the search path wins over the install directories	passed	
+com.histmersion.plugins.calibre.CalibreSettingsSuite	a configured path is used as it is	passed	
+com.histmersion.plugins.calibre.CalibreSettingsSuite	found nowhere, the name stays as configured	passed	
+com.histmersion.plugins.calibre.CalibreSettingsSuite	the user's own Applications folder is read against the home directory	passed	
+com.histmersion.plugins.calibre.CalibreSuite	Calibre's 0101 'no date' is no year at all	passed	
+com.histmersion.plugins.calibre.CalibreSuite	SQL literals are escaped, so a quote in a search term cannot break the query	passed	
+com.histmersion.plugins.calibre.CalibreSuite	`calibredb add` reports the new id	passed	
+com.histmersion.plugins.calibre.CalibreSuite	a book's cover file — calibredb's `cover` field, the sqlite fallback's `has_cover`	passed	
+com.histmersion.plugins.calibre.CalibreSuite	a search with no match is an empty list, not 'unparseable JSON' — on both readers	passed	
+com.histmersion.plugins.calibre.CalibreSuite	authors: First Last, without role words, brackets or library life dates	passed	
+com.histmersion.plugins.calibre.CalibreSuite	blankness is case- and whitespace-insensitive	passed	
+com.histmersion.plugins.calibre.CalibreSuite	calibredb --for-machine JSON → CalibreBook	passed	
+com.histmersion.plugins.calibre.CalibreSuite	format choice: requested, else pdf, else epub	passed	
+com.histmersion.plugins.calibre.CalibreSuite	push refuses junk metadata and never reaches calibredb	passed	
+com.histmersion.plugins.calibre.CalibreSuite	push refuses while the Calibre GUI holds the library	passed	
+com.histmersion.plugins.calibre.CalibreSuite	reading falls back to sqlite3 when calibredb refuses (the GUI case)	passed	
+com.histmersion.plugins.calibre.CalibreSuite	replace refuses a running GUI, a missing entry, and a non-pdf/epub file before writing	passed	
+com.histmersion.plugins.calibre.CalibreSuite	replace swaps the format on the linked entry with add_format — never a new entry	passed	
+com.histmersion.plugins.calibre.CalibreSuite	set writes only the named, settable fields, and refuses junk before running anything	passed	
+com.histmersion.plugins.calibre.CalibreSuite	the metadata guard refuses empty and Unknown title/author	passed	
+com.histmersion.plugins.calibre.CalibreSuite	the sqlite3 fallback yields the SAME book (it is the path used while the GUI is open)	passed	
+com.histmersion.plugins.calibre.CalibreSuite	unparseable output is an error, not an exception	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update --all --apply writes only the entries that change, and refuses while the GUI runs	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update --all is a dry run by default: it lists the changes, leaves shared and missing entries alone, writes nothing	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update MERGES identifiers: the record's DOI is set, Calibre's ISBN and every other scheme are kept	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update compares titles trimmed and DOIs case-insensitively, and writes a title trimmed	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update of an entry that already agrees writes nothing	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update of an id Calibre does not have is an error, and nothing is written	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update refuses junk metadata and a running GUI before running anything	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update writes the record's year over the edition's, but never its publisher or a store description	passed	
+com.histmersion.plugins.calibre.CalibreSuite	update writes title, First-Last authors, the record's year, merged identifiers and the topics as tags, and fills publisher and description where Calibre has none	passed	

@@ -1,5 +1,5 @@
 rule	module	count
-capability/clock	ALL	102
+capability/clock	ALL	99
 capability/clock	api	0
 capability/clock	chimney-iron	0
 capability/clock	chimney-iron-tests	0
@@ -17,7 +17,7 @@ capability/clock	plugin-fixtures/hello-lib	0
 capability/clock	plugin-host	2
 capability/clock	plugin-resolver	0
 capability/clock	plugin-testkit	0
-capability/clock	plugin-vaults	3
+capability/clock	plugin-vaults	0
 capability/clock	plugins/ai-http	0
 capability/clock	plugins/calibre	0
 capability/clock	plugins/events	0
@@ -202,7 +202,7 @@ capability/environment	server	0
 capability/environment	upstreams	0
 capability/environment	values	0
 capability/environment	web	0
-capability/filesystem	ALL	41
+capability/filesystem	ALL	23
 capability/filesystem	api	0
 capability/filesystem	chimney-iron	0
 capability/filesystem	chimney-iron-tests	0
@@ -220,9 +220,9 @@ capability/filesystem	plugin-fixtures/hello-lib	0
 capability/filesystem	plugin-host	0
 capability/filesystem	plugin-resolver	0
 capability/filesystem	plugin-testkit	17
-capability/filesystem	plugin-vaults	5
+capability/filesystem	plugin-vaults	1
 capability/filesystem	plugins/ai-http	0
-capability/filesystem	plugins/calibre	14
+capability/filesystem	plugins/calibre	0
 capability/filesystem	plugins/events	0
 capability/filesystem	plugins/fetchers	0
 capability/filesystem	plugins/gazetteers	0
@@ -289,7 +289,7 @@ capability/lifecycle	server	9
 capability/lifecycle	upstreams	0
 capability/lifecycle	values	0
 capability/lifecycle	web	0
-capability/process	ALL	7
+capability/process	ALL	0
 capability/process	api	0
 capability/process	chimney-iron	0
 capability/process	chimney-iron-tests	0
@@ -307,9 +307,9 @@ capability/process	plugin-fixtures/hello-lib	0
 capability/process	plugin-host	0
 capability/process	plugin-resolver	0
 capability/process	plugin-testkit	0
-capability/process	plugin-vaults	6
+capability/process	plugin-vaults	0
 capability/process	plugins/ai-http	0
-capability/process	plugins/calibre	1
+capability/process	plugins/calibre	0
 capability/process	plugins/events	0
 capability/process	plugins/fetchers	0
 capability/process	plugins/gazetteers	0

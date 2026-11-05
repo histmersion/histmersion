@@ -13,6 +13,8 @@ import scala.jdk.CollectionConverters.*
   */
 class VaultsSuite extends munit.FunSuite:
 
+  private given com.histmersion.plugin.LocalFiles = new com.histmersion.pluginhost.DiskLocalFiles
+  private given com.histmersion.plugin.Processes = new com.histmersion.pluginhost.SystemProcesses
   private def bin(): Path = Files.createTempDirectory("histmersion-fake-bin")
 
   private def script(dir: Path, name: String, body: String): Path =
@@ -24,6 +26,8 @@ class VaultsSuite extends munit.FunSuite:
   /** A context with an environment of its own (PATH = the fake tools), secrets from `secrets`. */
   final private class Ctx(envVars: Map[String, String], secrets: Map[Secret.Ref, String] = Map.empty)
       extends Plugin.Context:
+    override def files: com.histmersion.plugin.LocalFiles = summon[com.histmersion.plugin.LocalFiles]
+    override def processes: com.histmersion.plugin.Processes = summon[com.histmersion.plugin.Processes]
     var vaults: List[(String, Secret.Vault)] = Nil // what the plugin registered (test-local)
     var infos: List[String] = Nil // what it logged at info (test-local)
     def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("no network in tests") }

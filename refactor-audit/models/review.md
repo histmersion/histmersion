@@ -12,7 +12,7 @@ Review pagination-review.tsv together with parameterization.tsv. A page number, 
 | citekey | java/lang/String# | 515 | 513 | api, cli, core, db, files, plugins/calibre, server, web |
 | kind | java/lang/String# | 406 | 404 | api, cli, config, core, db, files, plugin-api, plugin-host, plugin-testkit, plugins/ai-http, plugins/events, server, upstreams, web |
 | s | java/lang/String# | 378 | 373 | api, cli, config, core, db, files, plugin-host, plugin-vaults, plugins/calibre, plugins/events, plugins/media, server, upstreams, values, web |
-| name | java/lang/String# | 367 | 365 | api, chimney-iron, cli, config, core, db, files, plugin-api, plugin-fixtures/hello-ai, plugin-host, plugin-resolver, plugin-testkit, plugin-vaults, plugins/ai-http, plugins/calibre, plugins/gazetteers, plugins/media, server, upstreams, values, web |
+| name | java/lang/String# | 370 | 368 | api, chimney-iron, cli, config, core, db, files, plugin-api, plugin-fixtures/hello-ai, plugin-host, plugin-resolver, plugin-testkit, plugin-vaults, plugins/ai-http, plugins/calibre, plugins/gazetteers, plugins/media, server, upstreams, values, web |
 | limit | scala/Int# | 362 | 360 | api, cli, config, core, db, plugin-api, plugins/calibre, plugins/media, server, upstreams, web |
 | slug | java/lang/String# | 326 | 324 | api, cli, core, db, server, web |
 | text | java/lang/String# | 326 | 303 | api, cli, config, core, db, files, plugin-api, plugin-fixtures/hello-ai, plugin-fixtures/hello-lib, plugin-host, plugin-resolver, plugin-testkit, plugin-vaults, plugins/ai-http, plugins/gazetteers, plugins/media, server, upstreams, web |
@@ -28,21 +28,21 @@ Review pagination-review.tsv together with parameterization.tsv. A page number, 
 | note | java/lang/String# | 114 | 110 | api, core, db, files, plugin-api, server, values, web |
 | target | java/lang/String# | 113 | 112 | api, cli, core, db, server, web |
 | why | java/lang/String# | 113 | 98 | api, cli, config, core, db, plugin-api, plugin-host, plugin-testkit, plugin-vaults, server, upstreams, web |
-| run | java/lang/String# | 108 | 95 | api, cli, core, db, plugin-host, plugin-testkit, plugin-vaults, plugins/calibre, server |
+| run | java/lang/String# | 111 | 98 | api, cli, core, db, plugin-api, plugin-host, plugin-testkit, plugin-vaults, plugins/calibre, server |
 | headers | java/lang/String# | 108 | 53 | core, plugin-api, plugin-host, plugin-testkit, plugins/ai-http, plugins/fetchers, plugins/media, server |
 | raw | java/lang/String# | 99 | 99 | api, cli, config, core, db, files, plugin-api, plugin-resolver, plugins/calibre, plugins/media, server, upstreams, values, web |
 | ids | java/lang/String# | 98 | 84 | api, cli, core, db, files, plugin-api, plugin-host, plugins/calibre, plugins/media, server, upstreams, web |
 | id | scala/Long# | 98 | 98 | api, cli, core, db, plugins/media, server, web |
 | provider | java/lang/String# | 93 | 93 | api, db, plugin-host, plugin-testkit, plugins/media, server, web |
+| env | java/lang/String# | 90 | 46 | cli, config, plugin-api, plugin-host, plugin-testkit, plugin-vaults, server |
 | offset | scala/Int# | 88 | 88 | api, core, db, server, web |
 | authors | java/lang/String# | 87 | 84 | api, cli, core, db, plugin-api, plugins/calibre, server, upstreams, web |
 | tags | java/lang/String# | 86 | 86 | api, cli, core, db, plugin-api, plugins/calibre, server, web |
-| out | java/lang/String# | 82 | 48 | api, cli, plugin-vaults, plugins/calibre, server |
+| out | java/lang/String# | 83 | 49 | api, cli, plugin-api, plugin-host, plugin-vaults, plugins/calibre, server |
 | asOf | scala/Long# | 80 | 80 | api, cli, db, server, web |
 | managerId | java/lang/String# | 79 | 79 | api, core, db, server |
 | ck | java/lang/String# | 79 | 79 | api, cli, core, db, server, web |
 | file | java/lang/String# | 77 | 74 | api, cli, config, db, files, plugin-api, plugin-host, plugin-vaults, plugins/calibre, plugins/fetchers, plugins/media, server, upstreams, values |
-| env | java/lang/String# | 76 | 39 | cli, config, plugin-api, plugin-host, plugin-testkit, plugin-vaults, server |
 | span | scala/Long# | 75 | 38 | api, plugins/media, web |
 | dryRun | scala/Boolean# | 72 | 72 | api, cli, core, db, server, web |
 | year | scala/Int# | 71 | 71 | api, cli, core, db, plugins/calibre, server, upstreams, web |
@@ -67,12 +67,12 @@ Review pagination-review.tsv together with parameterization.tsv. A page number, 
 | sha256 | java/lang/String# | 60 | 60 | api, cli, core, db, files, plugin-resolver, server |
 | notes | java/lang/String# | 60 | 56 | api, config, core, db, server, web |
 | what | java/lang/String# | 60 | 57 | api, cli, config, core, db, plugin-host, plugin-vaults, server, web |
+| bytes | scala/Byte# | 60 | 60 | api, cli, core, db, files, plugin-api, plugin-host, plugin-testkit, server |
+| line | java/lang/String# | 59 | 59 | api, core, db, files, plugin-api, plugin-host, plugin-testkit, server, web |
 | updatedAt | java/lang/String# | 58 | 58 | api, core, db, server |
-| line | java/lang/String# | 58 | 58 | api, core, db, files, plugin-host, plugin-testkit, plugin-vaults, server, web |
 | search | java/lang/String# | 57 | 43 | api, cli, plugin-api, plugin-host, plugins/calibre, plugins/fetchers, plugins/media, server, upstreams, web |
 | periodEnd | scala/Long# | 57 | 57 | api, core, db, server, web |
 | periodStart | scala/Long# | 57 | 57 | api, core, db, server, web |
-| bytes | scala/Byte# | 57 | 57 | api, cli, core, db, files, plugin-api, plugin-host, plugin-testkit, server |
 | error | java/lang/String# | 56 | 56 | api, core, db, plugin-testkit, plugins/ai-http, server, web |
 | count | scala/Int# | 55 | 55 | api, cli, config, core, db, plugin-host, server, web |
 | model | java/lang/String# | 55 | 54 | api, core, db, plugin-api, plugin-fixtures/hello-ai, plugin-host, plugins/ai-http, server, web |

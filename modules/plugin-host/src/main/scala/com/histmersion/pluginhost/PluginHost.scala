@@ -427,6 +427,8 @@ object PluginHost:
       gazetteers: Staged[GazetteerSource],
       collections: Staged[SourceCollection]
   ) extends Plugin.Context:
+    override def files: LocalFiles = services.files
+    override def processes: Processes = services.processes
     lazy val http: Plugin.Http = services.http()
     val log: Plugin.Log = new Plugin.Log:
       def info(message: String) = services.log(id, false, message)
