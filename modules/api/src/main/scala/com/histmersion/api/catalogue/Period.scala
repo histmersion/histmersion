@@ -8,7 +8,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
-final case class Period(start: Long, end: Long):
+final case class Period(start: com.histmersion.api.catalogue.Year, end: com.histmersion.api.catalogue.Year):
   def isPoint: Boolean = start == end
 
 object Period:
@@ -22,23 +22,35 @@ object Period:
 
 
   final case class ImportResult(
-      periods: Int,
-      roots: Int = 0,
-      presets: Int = 0,
+      periods: ImportResult.Periods,
+      roots: ImportResult.Roots = 0,
+      presets: ImportResult.Presets = 0,
       skipped: List[SkippedPeriod] = Nil,
-      skippedCount: Int = 0,
-      removed: Int = 0
+      skippedCount: ImportResult.SkippedCount = 0,
+      removed: ImportResult.Removed = 0
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object ImportResult:
+    type Periods = Periods.T
+    object Periods extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Roots = Roots.T
+    object Roots extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Presets = Presets.T
+    object Presets extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SkippedCount = SkippedCount.T
+    object SkippedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Removed = Removed.T
+    object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Input(start: Long, end: Long) derives KindlingsSchema, com.histmersion.api.json.Schema
+
+  final case class Input(start: com.histmersion.api.catalogue.Year, end: com.histmersion.api.catalogue.Year) derives KindlingsSchema, com.histmersion.api.json.Schema
   object Input:
 
 
     given Codec.AsObject[Input] = StrictJson.codec(KindlingsCodecAsObject.derived[Input])
 
-  final case class Row(periodStart: Option[Long], periodEnd: Option[Long])
+  final case class Row(periodStart: Option[com.histmersion.api.catalogue.Year], periodEnd: Option[com.histmersion.api.catalogue.Year])
 
   enum Skip:
     case NoSpan

@@ -9,32 +9,72 @@ import com.histmersion.api.given
 object TilesApi:
 
   final case class TileQuery(
-      layer: String,
-      z: Int,
-      x: Long,
-      y: Long,
+      layer: TileQuery.Layer,
+      z: TileQuery.Z,
+      x: TileQuery.X,
+      y: TileQuery.Y,
       filter: Filter = Filter(),
-      kind: Option[String] = None,
-      tier: Option[String] = None,
-      historicity: Option[String] = None,
-      context: Option[Boolean] = None,
-      text: Option[String] = None,
-      placeId: Option[String] = None,
-      siteType: Option[String] = None,
-      provider: Option[String] = None,
-      license: Option[String] = None,
-      undated: Option[Boolean] = None,
-      ifNoneMatch: Option[String] = None
+      kind: Option[TileQuery.Kind] = None,
+      tier: Option[TileQuery.Tier] = None,
+      historicity: Option[TileQuery.Historicity] = None,
+      context: Option[TileQuery.Context] = None,
+      text: Option[TileQuery.Text] = None,
+      placeId: Option[com.histmersion.api.catalogue.Place.Id] = None,
+      siteType: Option[TileQuery.SiteType] = None,
+      provider: Option[TileQuery.Provider] = None,
+      license: Option[TileQuery.License] = None,
+      undated: Option[TileQuery.Undated] = None,
+      ifNoneMatch: Option[TileQuery.IfNoneMatch] = None
   ):
     def withUndated: Boolean = undated.contains(true)
 
+  object TileQuery:
+    type Layer = Layer.T
+    object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Z = Z.T
+    object Z extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type X = X.T
+    object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Y = Y.T
+    object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tier = Tier.T
+    object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = Historicity.T
+    object Historicity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Context = Context.T
+    object Context extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = Text.T
+    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SiteType = SiteType.T
+    object SiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provider = Provider.T
+    object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type License = License.T
+    object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Undated = Undated.T
+    object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IfNoneMatch = IfNoneMatch.T
+    object IfNoneMatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class TileAnswer(
-      bytes: Array[Byte],
-      contentType: String,
-      etag: String,
-      cacheControl: String,
+      bytes: Array[TileAnswer.Bytes],
+      contentType: TileAnswer.ContentType,
+      etag: TileAnswer.Etag,
+      cacheControl: TileAnswer.CacheControl,
       status: StatusCode
   )
+
+  object TileAnswer:
+    type Bytes = Bytes.T
+    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ContentType = ContentType.T
+    object ContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Etag = Etag.T
+    object Etag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CacheControl = CacheControl.T
+    object CacheControl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val ContentType = "application/vnd.mapbox-vector-tile"
 

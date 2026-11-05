@@ -20,15 +20,15 @@ import com.histmersion.api.catalogue.{
   */
 final case class EventEntry(
     event: EventSummary,
-    geometry: Option[String] = None,
+    geometry: Option[EventEntry.Geometry] = None,
     parent: Option[EventSummary] = None,
     children: List[EventSummary] = Nil,
     datings: List[EventDating] = Nil,
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil,
-    wikidata: Option[String] = None,
-    tier: String = EventTier.Attested,
-    names: List[String] = Nil,
+    wikidata: Option[EventEntry.Wikidata] = None,
+    tier: EventEntry.Tier = EventTier.Attested,
+    names: List[EventEntry.Names] = Nil,
     catalogue: List[EventCatalogueRef] = Nil,
     sources: List[EventSourceRef] = Nil,
     findings: List[EventFindingRef] = Nil,
@@ -37,3 +37,13 @@ final case class EventEntry(
     leads: List[EventLead] = Nil,
     corrections: List[Correction] = Nil
 ) extends EventCard
+
+object EventEntry:
+  type Geometry = Geometry.T
+  object Geometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wikidata = Wikidata.T
+  object Wikidata extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tier = Tier.T
+  object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Names = Names.T
+  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

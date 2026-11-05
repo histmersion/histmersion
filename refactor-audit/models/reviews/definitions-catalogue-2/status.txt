@@ -1,0 +1,4 @@
+PREVIEW_ONLY
+files=51
+AST transformations scoped to frozen source hashes; definition conversion is not compilation or behavioral repair proof.
+Converted primitive leaves: 572; models: 100; blocked primitive leaves: 0

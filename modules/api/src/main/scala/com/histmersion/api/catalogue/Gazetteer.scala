@@ -294,20 +294,44 @@ object Gazetteer:
   def tsvCells(line: String): List[String] = line.split("\t", -1).toList
 
   final case class Extract(
-      name: String,
-      file: String,
-      sha256: String,
-      bytes: Long,
-      features: Long,
-      version: String,
-      title: String,
-      licence: String,
-      attribution: Option[String] = None,
-      url: Option[String] = None,
-      built: Option[String] = None
+      name: Extract.Name,
+      file: Extract.File,
+      sha256: Extract.Sha256,
+      bytes: Extract.Bytes,
+      features: Extract.Features,
+      version: Extract.Version,
+      title: Extract.Title,
+      licence: Extract.Licence,
+      attribution: Option[Extract.Attribution] = None,
+      url: Option[Extract.Url] = None,
+      built: Option[Extract.Built] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
+
+  object Extract:
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sha256 = Sha256.T
+    object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bytes = Bytes.T
+    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Features = Features.T
+    object Features extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Version = Version.T
+    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Licence = Licence.T
+    object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Attribution = Attribution.T
+    object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Url = Url.T
+    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Built = Built.T
+    object Built extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `Tgn`: the Getty Thesaurus of Geographic Names. */
   enum Kind:
@@ -329,24 +353,24 @@ object Gazetteer:
     given Schema[Kind] = WireEnum.schema
 
   final case class LoadCounts(
-      source: String,
-      version: String,
-      records: Long = 0,
-      created: Long = 0,
-      joined: Long = 0,
-      placesChanged: Long = 0,
-      namesAdded: Long = 0,
-      namesRemoved: Long = 0,
-      namesChanged: Long = 0,
-      linksAdded: Long = 0,
-      linksRemoved: Long = 0,
-      placesRemoved: Long = 0,
-      skipped: List[String] = Nil,
-      descriptionsAdded: Long = 0,
-      descriptionsRemoved: Long = 0,
-      descriptionsChanged: Long = 0,
-      linksChanged: Long = 0,
-      pointAreasSkipped: Long = 0
+      source: LoadCounts.Source,
+      version: LoadCounts.Version,
+      records: LoadCounts.Records = 0,
+      created: LoadCounts.Created = 0,
+      joined: LoadCounts.Joined = 0,
+      placesChanged: LoadCounts.PlacesChanged = 0,
+      namesAdded: LoadCounts.NamesAdded = 0,
+      namesRemoved: LoadCounts.NamesRemoved = 0,
+      namesChanged: LoadCounts.NamesChanged = 0,
+      linksAdded: LoadCounts.LinksAdded = 0,
+      linksRemoved: LoadCounts.LinksRemoved = 0,
+      placesRemoved: LoadCounts.PlacesRemoved = 0,
+      skipped: List[LoadCounts.Skipped] = Nil,
+      descriptionsAdded: LoadCounts.DescriptionsAdded = 0,
+      descriptionsRemoved: LoadCounts.DescriptionsRemoved = 0,
+      descriptionsChanged: LoadCounts.DescriptionsChanged = 0,
+      linksChanged: LoadCounts.LinksChanged = 0,
+      pointAreasSkipped: LoadCounts.PointAreasSkipped = 0
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema:
@@ -372,27 +396,91 @@ object Gazetteer:
          else "") +
         (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
 
+  object LoadCounts:
+    type Source = Source.T
+    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Version = Version.T
+    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Records = Records.T
+    object Records extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Created = Created.T
+    object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Joined = Joined.T
+    object Joined extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlacesChanged = PlacesChanged.T
+    object PlacesChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamesAdded = NamesAdded.T
+    object NamesAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamesRemoved = NamesRemoved.T
+    object NamesRemoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NamesChanged = NamesChanged.T
+    object NamesChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinksAdded = LinksAdded.T
+    object LinksAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinksRemoved = LinksRemoved.T
+    object LinksRemoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlacesRemoved = PlacesRemoved.T
+    object PlacesRemoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Skipped = Skipped.T
+    object Skipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DescriptionsAdded = DescriptionsAdded.T
+    object DescriptionsAdded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DescriptionsRemoved = DescriptionsRemoved.T
+    object DescriptionsRemoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DescriptionsChanged = DescriptionsChanged.T
+    object DescriptionsChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinksChanged = LinksChanged.T
+    object LinksChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointAreasSkipped = PointAreasSkipped.T
+    object PointAreasSkipped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Manifest(extracts: List[Extract])
       derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
 
   final case class SourceInfo(
-      key: String,
+      key: SourceInfo.Key,
       kind: Kind,
-      title: String,
-      file: Option[String],
-      present: Boolean,
-      pinnedVersion: Option[String],
-      importedVersion: Option[String] = None,
-      importedAt: Option[String] = None,
-      places: Option[Int] = None,
-      names: Option[Int] = None,
-      links: Option[Int] = None,
-      licence: Option[String] = None,
-      citation: Option[String] = None,
-      periodStart: Option[Long] = None,
-      periodEnd: Option[Long] = None
+      title: SourceInfo.Title,
+      file: Option[SourceInfo.File],
+      present: SourceInfo.Present,
+      pinnedVersion: Option[SourceInfo.PinnedVersion],
+      importedVersion: Option[SourceInfo.ImportedVersion] = None,
+      importedAt: Option[SourceInfo.ImportedAt] = None,
+      places: Option[SourceInfo.Places] = None,
+      names: Option[SourceInfo.Names] = None,
+      links: Option[SourceInfo.Links] = None,
+      licence: Option[SourceInfo.Licence] = None,
+      citation: Option[SourceInfo.Citation] = None,
+      periodStart: Option[com.histmersion.api.catalogue.Year] = None,
+      periodEnd: Option[com.histmersion.api.catalogue.Year] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
         com.histmersion.api.json.Schema
+
+  object SourceInfo:
+    type Key = Key.T
+    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Present = Present.T
+    object Present extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PinnedVersion = PinnedVersion.T
+    object PinnedVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportedVersion = ImportedVersion.T
+    object ImportedVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportedAt = ImportedAt.T
+    object ImportedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Places = Places.T
+    object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Names = Names.T
+    object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Links = Links.T
+    object Links extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Licence = Licence.T
+    object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Citation = Citation.T
+    object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

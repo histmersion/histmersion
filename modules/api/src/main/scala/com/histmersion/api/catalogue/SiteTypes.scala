@@ -8,7 +8,15 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
   */
 object SiteTypes:
 
-  final case class SiteType(id: String, label: String, icon: String)
+  final case class SiteType(id: SiteType.Id, label: SiteType.Label, icon: SiteType.Icon)
+
+  object SiteType:
+    type Id = Id.T
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Icon = Icon.T
+    object Icon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Settlement = "settlement"
   val Villa = "villa"
@@ -339,16 +347,29 @@ object SiteTypes:
         .orElse(wikidataClass.flatMap(c => wikidataClasses.get(c.trim)))
 
   final case class Report(
-      dryRun: Boolean,
-      pending: Int = 0,
-      asked: Int = 0,
+      dryRun: Report.DryRun,
+      pending: Report.Pending = 0,
+      asked: Report.Asked = 0,
       typed: List[EventCount] = Nil,
-      untyped: Int = 0,
-      requests: Int = 0,
-      failed: List[String] = Nil
+      untyped: Report.Untyped = 0,
+      requests: Report.Requests = 0,
+      failed: List[Report.Failed] = Nil
   ) derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
   object Report:
+
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pending = Pending.T
+    object Pending extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Asked = Asked.T
+    object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Untyped = Untyped.T
+    object Untyped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Requests = Requests.T
+    object Requests extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Failed = Failed.T
+    object Failed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def summary(r: Report): String =
       if r.dryRun then s"${r.pending} Wikidata site(s) on the map would be asked about"
@@ -363,6 +384,14 @@ object SiteTypes:
           Option.when(r.failed.nonEmpty)(s"${r.failed.size} failed: ${r.failed.take(3).mkString("; ")}"))
           .mkString(" · ")
 
-  final case class Request(dryRun: Boolean = false, limit: Option[Int] = None, refresh: Boolean = false)
+  final case class Request(dryRun: Request.DryRun = false, limit: Option[Request.Limit] = None, refresh: Request.Refresh = false)
       derives hearth.kindlings.circederivation.KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
+
+  object Request:
+    type DryRun = DryRun.T
+    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Limit = Limit.T
+    object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Refresh = Refresh.T
+    object Refresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
