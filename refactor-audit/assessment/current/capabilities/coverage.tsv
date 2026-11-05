@@ -5,7 +5,7 @@ cli	74	74	0
 config	152	152	0
 console	1	1	0
 core	128	128	0
-db	256	256	0
+db	260	260	0
 files	15	15	0
 plugin-api	65	65	0
 plugin-fixtures/hello	7	7	0

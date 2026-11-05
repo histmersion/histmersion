@@ -1,0 +1,6 @@
+SOURCE_COORDINATE_CORRECTION
+SourceRepo.putIn moved from line 58 to 57 after API status codec extraction. Its full method AST, expected zero and snippet are unchanged.
+No detector semantics, assertion count or original finding denominator changed.
+before-examples-sha256=80efe69a661e5285538679459f46c23abb639b19fceaf003cfe92e13f5ccb847
+after-examples-sha256=2314d67ea0780f353079642c0f197634bd7418630a7971c8cc67d2fcd00b036b
+baseline-sha256=9c0b8f7e202c07586fd891fcf0016b8d559945009186940195c55456b4cd575e
