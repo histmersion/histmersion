@@ -1,5 +1,27 @@
 # Priority-family status
 
+## Current model batch: seventeen concepts reviewed together
+
+The existing configured model-review tool verified 79 distinct confirmed primitive
+leaves across 17 concepts: bibliography (six), place/event identities (two),
+coordinates (two), storage quantities/durations (four), SHA-256 (one) and job
+identity/kind (two). Five target types already exist; twelve require definitions.
+The source/AST/identity evidence is models/reviews/multi-concept-1/review-1.tsv;
+audited-examples.md records parent corrections and detection limits.
+
+These are one multi-concept batch's reviewed seeds, not seventeen separate repair
+jobs and not the complete eligible call-site closure. The original eleven
+pagination findings are disjoint and retained: this reviewed model subset now
+contains ninety original findings, eight historically fixed and eighty-two
+outstanding. There is still no migration-wide denominator or percentage.
+
+Next implementation work is shared: extend ModelTypeRewrite's supported primitive
+and collection shapes, generate all required definitions using Scalafix, discover
+all callers of the reviewed declarations, then run one coordinated batch through
+the existing pipeline. General String/Long/Double/List rewrites are not yet ready.
+Application fixes in this purpose-review step: zero. Detector refinement rounds
+consumed: zero. Uncertain concepts and all other policy families remain tracked.
+
 ## Latest verified repair: method-body clock propagation
 
 The configurable ProjectAssessment pipeline completed its first repair. One
