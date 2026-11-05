@@ -9,6 +9,12 @@ import scala.compiletime.testing.typeChecks
   assert(!typeChecks("conceptfixture.Report(authors = List(\"raw\"))"))
   assert(!typeChecks("conceptfixture.Report(doi = Some(\"raw\"))"))
   val r = Calls.positional
+  assert(Calls.contextImplicit(using "!") == "implicit!")
+  assert(Calls.contextExplicit == "explicit!")
+  assert(Calls.contextNamed == "named?")
+  assert(Calls.contextForwarded(r) == "k!")
+  assert(Calls.unrelatedCurried("raw")("!") == "raw!")
+  assert(!typeChecks("conceptfixture.Calls.contextual(\"raw\")(using \"!\")"))
   assert(r.label.value == "k" && r.title.value == "t")
   assert(r.bytes.value == 5L && r.lat.value == 1.5 && r.year.value == 1999)
   assert(r.doi.map(_.value).contains("d"))

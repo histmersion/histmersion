@@ -7,6 +7,12 @@ final case class Quantities(samples: List[conceptfixture.ByteCount], maybe: Opti
 final case class Nested(authors: Option[List[conceptfixture.AuthorName]] = None)
 
 object Calls:
+  def contextual(label: conceptfixture.Label)(using suffix: String): String = label.value + suffix
+  def contextImplicit(using suffix: String): String = contextual(conceptfixture.Label("implicit"))
+  def contextExplicit: String = contextual(conceptfixture.Label("explicit"))(using "!")
+  def contextNamed: String = contextual(label = conceptfixture.Label("named"))(using "?")
+  def contextForwarded(r: Report): String = contextual(r.label)(using "!")
+  def unrelatedCurried(label: String)(suffix: String): String = label + suffix
   def blankToNone(s: Option[String]): Option[String] = s.map(_.trim).filter(_.nonEmpty)
   def normalizedDoi(p: Report, existing: Report) =
     p.doi.fold(existing.doi)(v => blankToNone(Some(v.value)).map(conceptfixture.Doi.apply))

@@ -7,6 +7,12 @@ final case class Quantities(samples: List[Long], maybe: Option[Long])
 final case class Nested(authors: Option[List[String]] = None)
 
 object Calls:
+  def contextual(label: String)(using suffix: String): String = label + suffix
+  def contextImplicit(using suffix: String): String = contextual("implicit")
+  def contextExplicit: String = contextual("explicit")(using "!")
+  def contextNamed: String = contextual(label = "named")(using "?")
+  def contextForwarded(r: Report): String = contextual(r.label)(using "!")
+  def unrelatedCurried(label: String)(suffix: String): String = label + suffix
   def blankToNone(s: Option[String]): Option[String] = s.map(_.trim).filter(_.nonEmpty)
   def normalizedDoi(p: Report, existing: Report) =
     p.doi.fold(existing.doi)(v => blankToNone(Some(v)))
