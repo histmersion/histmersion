@@ -27,7 +27,10 @@ object EventLinkCandidate:
   object Reasons extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Status:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Proposed = "proposed"
     val Confirmed = "confirmed"
     val Rejected = "rejected"
-    val all: List[String] = List(Proposed, Confirmed, Rejected)
+    val all: List[com.histmersion.api.catalogue.EventLinkCandidate.Status.All] = List(Proposed, Confirmed, Rejected)

@@ -11,14 +11,104 @@ import com.histmersion.api.given
   */
 object Geocode:
 
+  type Separators = Separators.T
+  object Separators extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Apostrophes = Apostrophes.T
+  object Apostrophes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyResult = KeyResult.T
+  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyS = KeyS.T
+  object KeyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QualifierWords = QualifierWords.T
+  object QualifierWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Joiners = Joiners.T
+  object Joiners extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripQualifierResultPart1 = StripQualifierResultPart1.T
+  object StripQualifierResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripQualifierResultPart2 = StripQualifierResultPart2.T
+  object StripQualifierResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripQualifierName = StripQualifierName.T
+  object StripQualifierName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassBoxResultPart1 = CompassBoxResultPart1.T
+  object CompassBoxResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassBoxResultPart2 = CompassBoxResultPart2.T
+  object CompassBoxResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassBoxResultPart3 = CompassBoxResultPart3.T
+  object CompassBoxResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassBoxResultPart4 = CompassBoxResultPart4.T
+  object CompassBoxResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassBoxDropped = CompassBoxDropped.T
+  object CompassBoxDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassPart1 = CompassPart1.T
+  object CompassPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassPart2Part1 = CompassPart2Part1.T
+  object CompassPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassPart2Part2 = CompassPart2Part2.T
+  object CompassPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassPart2Part3 = CompassPart2Part3.T
+  object CompassPart2Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompassPart2Part4 = CompassPart2Part4.T
+  object CompassPart2Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AttemptsName = AttemptsName.T
+  object AttemptsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BroadKind = BroadKind.T
+  object BroadKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierOfResult = TierOfResult.T
+  object TierOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierOfImportSource = TierOfImportSource.T
+  object TierOfImportSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsPlaceholderResult = IsPlaceholderResult.T
+  object IsPlaceholderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsPlaceholderPlaceholderMin = IsPlaceholderPlaceholderMin.T
+  object IsPlaceholderPlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindRankResult = KindRankResult.T
+  object KindRankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindRankKind = KindRankKind.T
+  object KindRankKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeRankResultPart1 = TimeRankResultPart1.T
+  object TimeRankResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeRankResultPart2 = TimeRankResultPart2.T
+  object TimeRankResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankPlaceholderMin = RankPlaceholderMin.T
+  object RankPlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChooseAsked = ChooseAsked.T
+  object ChooseAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChoosePlaceholderMin = ChoosePlaceholderMin.T
+  object ChoosePlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceKmResult = DistanceKmResult.T
+  object DistanceKmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceKmLon1 = DistanceKmLon1.T
+  object DistanceKmLon1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceKmLat1 = DistanceKmLat1.T
+  object DistanceKmLat1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceKmLon2 = DistanceKmLon2.T
+  object DistanceKmLon2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DistanceKmLat2 = DistanceKmLat2.T
+  object DistanceKmLat2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorthMovingResult = WorthMovingResult.T
+  object WorthMovingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorthMovingMinKm = WorthMovingMinKm.T
+  object WorthMovingMinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodOfFrom = PeriodOfFrom.T
+  object PeriodOfFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodOfTo = PeriodOfTo.T
+  object PeriodOfTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum KindHint:
     case Site, Region, Polity, Water, Unknown
 
-    def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
+    def wire: com.histmersion.api.catalogue.Geocode.KindHint.WireResult = toString.toLowerCase(java.util.Locale.ROOT)
 
   object KindHint:
     /** Lenient: it parses a model's free answer, and an unrecognised word is no hint. */
-    def parse(s: String): KindHint =
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.catalogue.Geocode.KindHint.ParseS): KindHint =
       val t = s.trim.toLowerCase(java.util.Locale.ROOT)
       values
         .find(_.wire == t)
@@ -31,24 +121,24 @@ object Geocode:
 
     given WireEnumValues[KindHint]:
       def all: Array[KindHint] = KindHint.values
-      def wire(e: KindHint): String = e.wire
-      def fromWire(s: String): Option[KindHint] =
+      def wire(e: KindHint): com.histmersion.api.catalogue.Geocode.KindHint.WireResult = e.wire
+      def fromWire(s: com.histmersion.api.catalogue.Geocode.KindHint.FromWireS): Option[KindHint] =
         KindHint.values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
     given Encoder[KindHint] = WireEnum.encoder
     given Decoder[KindHint] = WireEnum.decoder
     given Schema[KindHint] = WireEnum.schema
 
   /** Must equal the separator list of the SQL function `histmersion_place_key`. */
-  val Separators: Set[Char] =
+  val Separators: Set[com.histmersion.api.catalogue.Geocode.Separators] =
     (" \u00a0\t\n\r!\"#$%&()*+,-./:;<=>?@[\\]^_{|}~" +
       "\u2010\u2011\u2012\u2013\u2014\u2015\u201c\u201d\u201e\u00ab\u00bb\u00b7\u2026").toSet
 
   /** Apostrophe-likes, dropped ("Rus'" = "Rus"). Must equal the SQL function `histmersion_place_key`'s. */
-  val Apostrophes: Set[Char] = "'`\u00b4\u2018\u2019\u02bc\u02b9".toSet
+  val Apostrophes: Set[com.histmersion.api.catalogue.Geocode.Apostrophes] = "'`\u00b4\u2018\u2019\u02bc\u02b9".toSet
 
   private val Aside = "\\([^)]*\\)".r
 
-  def key(s: String): String =
+  def key(s: com.histmersion.api.catalogue.Geocode.KeyS): com.histmersion.api.catalogue.Geocode.KeyResult =
     val b = new StringBuilder(s.length)
     Aside.replaceAllIn(s, " ").foreach { c =>
       if Apostrophes.contains(c) then ()
@@ -67,22 +157,29 @@ object Geocode:
 
     case GridSquare
 
-    def describe: String = this match
+    def describe: com.histmersion.api.catalogue.Geocode.Approximation.DescribeResult = this match
       case Qualifier(d)  => s"'$d' dropped"
       case OnlyWithin(m) => s"'$m' not found there; the enclosing place's point"
       case Rough(n)      => s"a placeholder point shared by $n places"
       case GridSquare    => "the centre of an atlas grid square"
 
+  object Approximation:
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Attempt(name: Attempt.Name, within: Option[Attempt.Within] = None, approx: Option[Approximation] = None):
-    def key: String = Geocode.key(name)
+    def key: com.histmersion.api.catalogue.Geocode.Attempt.KeyResult = Geocode.key(name)
 
   object Attempt:
+    type KeyResult = KeyResult.T
+    object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Within = Within.T
     object Within extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private val QualifierWords: Set[String] = Set(
+  private val QualifierWords: Set[com.histmersion.api.catalogue.Geocode.QualifierWords] = Set(
     "north",
     "south",
     "east",
@@ -113,9 +210,9 @@ object Geocode:
     "lowland"
   )
 
-  private val Joiners: Set[String] = Set("and", "or")
+  private val Joiners: Set[com.histmersion.api.catalogue.Geocode.Joiners] = Set("and", "or")
 
-  def stripQualifier(name: String): Option[(String, String)] =
+  def stripQualifier(name: com.histmersion.api.catalogue.Geocode.StripQualifierName): Option[(com.histmersion.api.catalogue.Geocode.StripQualifierResultPart1, com.histmersion.api.catalogue.Geocode.StripQualifierResultPart2)] =
     val words = name.trim.split("[\\s\\-]+").toList.filter(_.nonEmpty)
     def isQ(w: String) = QualifierWords.contains(key(w))
     @annotation.tailrec
@@ -128,14 +225,14 @@ object Geocode:
       (dropped.mkString(" "), rest.mkString(" "))
     )
 
-  def compassBox(dropped: String): Option[(Double, Double, Double, Double)] =
+  def compassBox(dropped: com.histmersion.api.catalogue.Geocode.CompassBoxDropped): Option[(com.histmersion.api.catalogue.Geocode.CompassBoxResultPart1, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart2, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart3, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart4)] =
     val words = dropped.split("[\\s\\-]+").map(key).filter(_.nonEmpty).toList
     val dirs = words.flatMap(w => Compass.get(w.stripSuffix("ern")).orElse(Compass.get(w)))
     dirs match
       case List(box) => Some(box)
       case _         => None
 
-  private val Compass: Map[String, (Double, Double, Double, Double)] = Map(
+  private val Compass: Map[com.histmersion.api.catalogue.Geocode.CompassPart1, (com.histmersion.api.catalogue.Geocode.CompassPart2Part1, com.histmersion.api.catalogue.Geocode.CompassPart2Part2, com.histmersion.api.catalogue.Geocode.CompassPart2Part3, com.histmersion.api.catalogue.Geocode.CompassPart2Part4)] = Map(
     "north" -> (0.0, 0.5, 1.0, 1.0),
     "south" -> (0.0, 0.0, 1.0, 0.5),
     "east" -> (0.5, 0.0, 1.0, 1.0),
@@ -151,7 +248,7 @@ object Geocode:
 
   private val Asides = "\\(([^)]*)\\)".r
 
-  def attempts(name: String): List[Attempt] =
+  def attempts(name: com.histmersion.api.catalogue.Geocode.AttemptsName): List[Attempt] =
     val n = name.trim
     if key(n).isEmpty then Nil
     else
@@ -184,16 +281,25 @@ object Geocode:
       tier: Candidate.Tier = 0,
       gridCell: Candidate.GridCell = false
   ):
-    def undated: Boolean = from.isEmpty && to.isEmpty
+    def undated: com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult = from.isEmpty && to.isEmpty
 
-    def span: Long = (for a <- from; b <- to yield b - a).getOrElse(Long.MaxValue / 4)
-    def overlaps(p: Period): Boolean = from.forall(_ <= p.end) && to.forall(_ >= p.start)
+    def span: com.histmersion.api.catalogue.Geocode.Candidate.SpanResult = (for a <- from; b <- to yield b - a).getOrElse(Long.MaxValue / 4)
+    def overlaps(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.OverlapsResult = from.forall(_ <= p.end) && to.forall(_ >= p.start)
 
-    def gap(p: Period): Long =
+    def gap(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.GapResult =
       if overlaps(p) then 0L
       else to.filter(_ < p.start).map(p.start - _).orElse(from.filter(_ > p.end).map(_ - p.end)).getOrElse(0L)
 
   object Candidate:
+    type UndatedResult = UndatedResult.T
+    object UndatedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpanResult = SpanResult.T
+    object SpanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OverlapsResult = OverlapsResult.T
+    object OverlapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GapResult = GapResult.T
+    object GapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
@@ -217,14 +323,14 @@ object Geocode:
     type GridCell = GridCell.T
     object GridCell extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def broad(kind: String) =
+  private def broad(kind: com.histmersion.api.catalogue.Geocode.BroadKind) =
     kind == com.histmersion.api.catalogue.Place.Kind.Region || kind == com.histmersion.api.catalogue.Place.Kind.Polity
 
-  def tierOf(importSource: Option[String]): Int = Gazetteer.rank(Place.Match("", importSource))
+  def tierOf(importSource: Option[com.histmersion.api.catalogue.Geocode.TierOfImportSource]): com.histmersion.api.catalogue.Geocode.TierOfResult = Gazetteer.rank(Place.Match("", importSource))
 
-  def isPlaceholder(c: Candidate, placeholderMin: Int): Boolean = c.dimension == 0 && c.shared >= placeholderMin
+  def isPlaceholder(c: Candidate, placeholderMin: com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin): com.histmersion.api.catalogue.Geocode.IsPlaceholderResult = c.dimension == 0 && c.shared >= placeholderMin
 
-  private def kindRank(kind: String, hint: KindHint): Int = hint match
+  private def kindRank(kind: com.histmersion.api.catalogue.Geocode.KindRankKind, hint: KindHint): com.histmersion.api.catalogue.Geocode.KindRankResult = hint match
     case KindHint.Site =>
       if kind == com.histmersion.api.catalogue.Place.Kind.Site then 0
       else if kind == com.histmersion.api.catalogue.Place.Kind.Feature then 1
@@ -235,14 +341,14 @@ object Geocode:
       else 2
     case _ => if broad(kind) then 0 else if kind == com.histmersion.api.catalogue.Place.Kind.Feature then 1 else 2
 
-  private def timeRank(c: Candidate, at: Option[Period]): (Int, Long) = at match
+  private def timeRank(c: Candidate, at: Option[Period]): (com.histmersion.api.catalogue.Geocode.TimeRankResultPart1, com.histmersion.api.catalogue.Geocode.TimeRankResultPart2) = at match
     case None    => if c.undated then (0, 0L) else (1, -c.span)
     case Some(p) =>
       if c.undated then (1, 0L)
       else if c.overlaps(p) then (0, 0L)
       else (2, c.gap(p))
 
-  def rank(cs: List[Candidate], hint: KindHint, at: Option[Period], placeholderMin: Int): List[Candidate] =
+  def rank(cs: List[Candidate], hint: KindHint, at: Option[Period], placeholderMin: com.histmersion.api.catalogue.Geocode.RankPlaceholderMin): List[Candidate] =
     cs.sortBy { c =>
       val (t, gap) = timeRank(c, at)
       (
@@ -266,26 +372,31 @@ object Geocode:
       lat: com.histmersion.api.catalogue.Latitude,
       approximate: List[Approximation] = Nil
   ):
-    def isApproximate: Boolean = approximate.nonEmpty
+    def isApproximate: com.histmersion.api.catalogue.Geocode.Resolution.IsApproximateResult = approximate.nonEmpty
 
-    def describe: String =
+    def describe: com.histmersion.api.catalogue.Geocode.Resolution.DescribeResult =
       val approx = if approximate.isEmpty then "" else s" (approximate: ${approximate.map(_.describe).mkString("; ")})"
       s"'$asked' → $label [$placeId]$approx"
 
   object Resolution:
+    type IsApproximateResult = IsApproximateResult.T
+    object IsApproximateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Asked = Asked.T
     object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def choose(asked: String, attempt: Attempt, ranked: List[Candidate], placeholderMin: Int): Option[Resolution] =
+  def choose(asked: com.histmersion.api.catalogue.Geocode.ChooseAsked, attempt: Attempt, ranked: List[Candidate], placeholderMin: com.histmersion.api.catalogue.Geocode.ChoosePlaceholderMin): Option[Resolution] =
     ranked.headOption.map { c =>
       val rough = Option.when(isPlaceholder(c, placeholderMin))(Approximation.Rough(c.shared))
       val grid = Option.when(c.gridCell && rough.isEmpty)(Approximation.GridSquare)
       Resolution(asked, c.id, c.label, c.lon, c.lat, attempt.approx.toList ++ rough.toList ++ grid.toList)
     }
 
-  def distanceKm(lon1: Double, lat1: Double, lon2: Double, lat2: Double): Double =
+  def distanceKm(lon1: com.histmersion.api.catalogue.Geocode.DistanceKmLon1, lat1: com.histmersion.api.catalogue.Geocode.DistanceKmLat1, lon2: com.histmersion.api.catalogue.Geocode.DistanceKmLon2, lat2: com.histmersion.api.catalogue.Geocode.DistanceKmLat2): com.histmersion.api.catalogue.Geocode.DistanceKmResult =
     val r = 6371.0
     val dLat = math.toRadians(lat2 - lat1)
     val dLon = math.toRadians(lon2 - lon1)
@@ -302,9 +413,9 @@ object Geocode:
       fromLat: Move.FromLat,
       to: Resolution
   ):
-    def km: Double = distanceKm(fromLon, fromLat, to.lon, to.lat)
+    def km: com.histmersion.api.catalogue.Geocode.Move.KmResult = distanceKm(fromLon, fromLat, to.lon, to.lat)
 
-    def describe: String =
+    def describe: com.histmersion.api.catalogue.Geocode.Move.DescribeResult =
       val from = region.filter(_ != asked).fold("")(r => s" (stored as '$r')")
       String.format(
         java.util.Locale.ROOT,
@@ -322,6 +433,11 @@ object Geocode:
       )
 
   object Move:
+    type KmResult = KmResult.T
+    object KmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Asked = Asked.T
     object Asked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Region = Region.T
@@ -331,10 +447,10 @@ object Geocode:
     type FromLat = FromLat.T
     object FromLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def worthMoving(m: Move, minKm: Double): Boolean = m.km > minKm
+  def worthMoving(m: Move, minKm: com.histmersion.api.catalogue.Geocode.WorthMovingMinKm): com.histmersion.api.catalogue.Geocode.WorthMovingResult = m.km > minKm
 
   final case class Placement(findingId: com.histmersion.api.library.Finding.Id, citekey: com.histmersion.api.library.Citekey, region: Placement.Region, to: Resolution):
-    def describe: String =
+    def describe: com.histmersion.api.catalogue.Geocode.Placement.DescribeResult =
       String.format(
         java.util.Locale.ROOT,
         "%s: '%s' → %s at %.2f N %.2f E%s",
@@ -347,10 +463,13 @@ object Geocode:
       )
 
   object Placement:
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Region = Region.T
     object Region extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def periodOf(from: Option[Long], to: Option[Long]): Option[Period] = (from, to) match
+  def periodOf(from: Option[com.histmersion.api.catalogue.Geocode.PeriodOfFrom], to: Option[com.histmersion.api.catalogue.Geocode.PeriodOfTo]): Option[Period] = (from, to) match
     case (Some(a), Some(b)) => Some(Period(math.min(a, b), math.max(a, b)))
     case (Some(a), None)    => Some(Period(a, a))
     case (None, Some(b))    => Some(Period(b, b))

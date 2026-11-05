@@ -16,6 +16,15 @@ object PluginAuthoring:
   /** The install's Maven repository, when it has one (an install older than plugin dependencies has `plugin-api/`
     * instead).
     */
+  type MavenLocalEnvArg1 = MavenLocalEnvArg1.T
+  object MavenLocalEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MavenLocalEnvResult = MavenLocalEnvResult.T
+  object MavenLocalEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RepositoryNamed = RepositoryNamed.T
+  object RepositoryNamed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NextStepsResult = NextStepsResult.T
+  object NextStepsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def localRepository(install: Either[Cli.Error, LocalInstall]): Either[Cli.Error, LocalInstall] =
     install.flatMap { i =>
       Either.cond(
@@ -32,7 +41,7 @@ object PluginAuthoring:
   /** The local Maven repository, `$HOME/.m2/repository`: where Maven, Gradle, sbt (`Resolver.mavenLocal`) and scala-cli
     * (`m2Local`) look for artifacts installed on this machine.
     */
-  def mavenLocal(env: String => Option[String]): Either[Cli.Error, Path] =
+  def mavenLocal(env: com.histmersion.cli.PluginAuthoring.MavenLocalEnvArg1 => Option[com.histmersion.cli.PluginAuthoring.MavenLocalEnvResult]): Either[Cli.Error, Path] =
     env("HOME")
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -72,7 +81,7 @@ object PluginAuthoring:
     * copied).
     */
   def repository(
-      named: Option[String],
+      named: Option[com.histmersion.cli.PluginAuthoring.RepositoryNamed],
       install: => Either[Cli.Error, LocalInstall],
       m2: => Either[Cli.Error, Path]
   ): Either[Cli.Error, (TemplateRepository, List[Path])] =
@@ -106,7 +115,7 @@ object PluginAuthoring:
       })
 
   /** What to do next, for the person who ran `plugin new`. */
-  def nextSteps(dir: Path, id: PluginId, pkg: ScalaPackage, written: List[Path]): List[String] =
+  def nextSteps(dir: Path, id: PluginId, pkg: ScalaPackage, written: List[Path]): List[com.histmersion.cli.PluginAuthoring.NextStepsResult] =
     val publishDir = PluginTemplate.PublishDir
     (s"wrote a scala-cli project in $dir:" :: written.map(p => s"  ${dir.relativize(p)}")) ++ List(
       "",

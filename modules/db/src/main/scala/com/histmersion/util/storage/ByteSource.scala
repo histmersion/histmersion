@@ -7,7 +7,7 @@ import java.nio.file.{Files, Path}
   * keeps, an upload. The bundle code reads one through this, never a path.
   */
 trait ByteSource:
-  def size: Long
+  def size: com.histmersion.util.storage.ByteSource.SizeResult
   def open(): InputStream
 
   /** `use` over the bytes, opened and buffered for it and closed after. */
@@ -17,6 +17,9 @@ trait ByteSource:
     finally in.close()
 
 object ByteSource:
+  type SizeResult = SizeResult.T
+  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def file(path: Path): ByteSource = new ByteSource:
     def size: Long = Files.size(path)
     def open(): InputStream = Files.newInputStream(path)

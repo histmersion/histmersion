@@ -4,7 +4,24 @@ import com.histmersion.api.backup.Backup
 import com.histmersion.api.given
 object BasemapMarkdown:
 
-  def status(s: Basemap.Status): String =
+  type StatusResult = StatusResult.T
+  object StatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnDemandResult = OnDemandResult.T
+  object OnDemandResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutsideResult = OutsideResult.T
+  object OutsideResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutsideWhat = OutsideWhat.T
+  object OutsideWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutsideKey = OutsideKey.T
+  object OutsideKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlainResult = PlainResult.T
+  object PlainResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlainHtml = PlainHtml.T
+  object PlainHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemovedResult = RemovedResult.T
+  object RemovedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def status(s: Basemap.Status): com.histmersion.api.basemap.BasemapMarkdown.StatusResult =
     val head =
       if s.available then "The local base map is downloaded."
       else s"The local base map is not downloaded — run `${s.fetchCommand}`."
@@ -53,22 +70,22 @@ object BasemapMarkdown:
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
-  def onDemand(o: Basemap.OnDemand): String =
+  def onDemand(o: Basemap.OnDemand): com.histmersion.api.basemap.BasemapMarkdown.OnDemandResult =
     if !o.enabled then "Relief deeper than the extract: off (basemap.terrain.on-demand.enabled)."
     else
       s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  def outside(what: String, key: String, o: Basemap.OnDemand): String =
+  def outside(what: com.histmersion.api.basemap.BasemapMarkdown.OutsideWhat, key: com.histmersion.api.basemap.BasemapMarkdown.OutsideKey, o: Basemap.OnDemand): com.histmersion.api.basemap.BasemapMarkdown.OutsideResult =
     if !o.enabled then s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled)."
     else
       s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  def plain(html: String): String = html.replaceAll("<[^>]+>", "")
+  def plain(html: com.histmersion.api.basemap.BasemapMarkdown.PlainHtml): com.histmersion.api.basemap.BasemapMarkdown.PlainResult = html.replaceAll("<[^>]+>", "")
 
-  def removed(r: Basemap.Removed): String =
+  def removed(r: Basemap.Removed): com.histmersion.api.basemap.BasemapMarkdown.RemovedResult =
     if r.removed.isEmpty then "Nothing to remove: no base-map file is downloaded."
     else s"Removed ${Backup.humanBytes(r.bytes)}:\n" + r.removed.map(f => s"- `$f`").mkString("\n")

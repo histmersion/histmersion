@@ -11,4 +11,8 @@ trait RenderedFeature extends js.Object:
   val id: js.UndefOr[js.Any] = js.native
   val properties: js.Dictionary[js.Any] = js.native
   val layer: js.Dynamic = js.native
-  val source: String = js.native
+  val source: com.histmersion.web.map.maplibre.RenderedFeature.Source = js.native
+
+object RenderedFeature:
+  type Source = Source.T
+  object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -36,9 +36,9 @@ final class PointSet[D](
   private val singles = mutable.HashMap.empty[String, (DomMarker, MarkerPane)]
   private val bubbles = mutable.HashMap.empty[String, (DomMarker, Seq[String])]
   // the groups at `level`: each one's points, and its place
-  private var groups: Vector[(Vector[String], LatLon)] = Vector.empty
-  private var groupOf: collection.Map[String, Int] = Map.empty
-  private var level: Int = Int.MinValue
+  private var groups: Vector[(Vector[com.histmersion.web.map.PointSet.GroupsPart1], LatLon)] = Vector.empty
+  private var groupOf: collection.Map[com.histmersion.web.map.PointSet.GroupOfPart1, com.histmersion.web.map.PointSet.GroupOfPart2] = Map.empty
+  private var level: com.histmersion.web.map.PointSet.Level = Int.MinValue
   private var queued = false
   // the newest drawing: an older one's slices still queued stop
   private var drawGeneration = 0
@@ -50,14 +50,14 @@ final class PointSet[D](
   private val OnScreenMargin = 40.0
   private var installed = false
   // the view of a zoom whose markers on screen are being made, its moves not started yet
-  private var awaitingMoves: Option[(LatLon, Double)] = None
+  private var awaitingMoves: Option[(LatLon, com.histmersion.web.map.PointSet.AwaitingMovesPart2)] = None
 
   /** How many zooms have animated (the browser regressions read it through the diagnostics). */
-  var animations: Int = 0
+  var animations: com.histmersion.web.map.PointSet.Animations = 0
 
-  def size: Int = items.size
-  def keys: Iterable[String] = items.keys
-  def get(k: String): Option[D] = items.get(k)
+  def size: com.histmersion.web.map.PointSet.SizeResult = items.size
+  def keys: Iterable[com.histmersion.web.map.PointSet.KeysResult] = items.keys
+  def get(k: com.histmersion.web.map.PointSet.GetK): Option[D] = items.get(k)
 
   private def install(): Unit =
     if !installed && surface() != null then
@@ -97,7 +97,7 @@ final class PointSet[D](
     schedule()
 
   /** Take these points out: one drawn alone fades out where it stood. */
-  def remove(ks: Iterable[String]): Unit =
+  def remove(ks: Iterable[com.histmersion.web.map.PointSet.RemoveKs]): Unit =
     var any = false
     ks.foreach { k =>
       if items.remove(k).isDefined then any = true
@@ -118,7 +118,7 @@ final class PointSet[D](
     bubbles.values.foreach((m, ks) => if ks.forall(items.contains) then repaint(m, ks.map(items)))
 
   /** The point `k`'s own marker, while it is drawn alone (or fanned out of its bubble). */
-  def drawnAlone(k: String): Option[DomMarker] =
+  def drawnAlone(k: com.histmersion.web.map.PointSet.DrawnAloneK): Option[DomMarker] =
     singles
       .get(k)
       .filter((m, p) => p.has(m))
@@ -137,13 +137,13 @@ final class PointSet[D](
   private var spider: Option[Spider] = None
 
   /** The points fanned out now (none: no bubble is). */
-  def spidered: Seq[String] = spider.fold(Seq.empty)(_.keys)
+  def spidered: Seq[com.histmersion.web.map.PointSet.SpideredResult] = spider.fold(Seq.empty)(_.keys)
 
   /** Fan the points `ks` out around where their bubble stands ([[Spiderfy]]), each drawn as it is alone, a thin leg
     * back to the spot — the only way to reach points no zoom can part (one spot, or the deepest zoom). Anything else
     * fanned out folds back first. `separation`: the markers' spacing, px.
     */
-  def spiderfy(ks: Seq[String], separation: Double): Unit =
+  def spiderfy(ks: Seq[com.histmersion.web.map.PointSet.SpiderfyKs], separation: com.histmersion.web.map.PointSet.SpiderfySeparation): Unit =
     unspiderfy()
     install()
     val ds = ks.filter(items.contains)
@@ -181,13 +181,13 @@ final class PointSet[D](
     spider = None
 
   /** The group `k` is in at this zoom (itself alone: one key). */
-  def groupKeys(k: String): Seq[String] = groupOf.get(k).fold(Seq(k))(g => groups(g)._1)
+  def groupKeys(k: com.histmersion.web.map.PointSet.GroupKeysK): Seq[com.histmersion.web.map.PointSet.GroupKeysResult] = groupOf.get(k).fold(Seq(k))(g => groups(g)._1)
 
   /** Zoom (and pan) until `k` stands alone, then `andThen` — or, where no zoom parts it from its bubble (points at its
     * very spot, or the deepest zoom reached), `andThen` where it is: it was left undone there, and a picture at a spot
     * it shares never opened.
     */
-  def zoomToShow(k: String, andThen: () => Unit): Unit =
+  def zoomToShow(k: com.histmersion.web.map.PointSet.ZoomToShowK, andThen: () => Unit): Unit =
     val s = surface()
     items.get(k).foreach { d =>
       def done(): Boolean = drawnAlone(k).isDefined
@@ -232,7 +232,7 @@ final class PointSet[D](
 
   /** The groups at the map's zoom (again only when the zoom or the points changed), and the elements of those in view.
     */
-  def layout(animate: Boolean): Unit =
+  def layout(animate: com.histmersion.web.map.PointSet.LayoutAnimate): Unit =
     val s = surface()
     if s != null then
       val z = Clustering.level(s.zoom)
@@ -263,24 +263,24 @@ final class PointSet[D](
       measure("hd-points-draw", t1, dom.window.performance.now())
 
   /** What a layout cost, for the browser's performance panel (the latest of each). */
-  private def measure(name: String, t0: Double, t1: Double): Unit =
+  private def measure(name: com.histmersion.web.map.PointSet.MeasureName, t0: com.histmersion.web.map.PointSet.MeasureT0, t1: com.histmersion.web.map.PointSet.MeasureT1): Unit =
     val p = dom.window.performance.asInstanceOf[js.Dynamic]
     if js.typeOf(p.measure) == "function" then
       p.clearMeasures(name)
       p.measure(name, js.Dynamic.literal(start = t0, end = t1))
 
   /** How many markers (points alone and bubbles) are drawn now. */
-  private def drawnMarkers: Int =
+  private def drawnMarkers: com.histmersion.web.map.PointSet.DrawnMarkersResult =
     singles.valuesIterator.count((m, p) => p.has(m)) + bubbles.valuesIterator.count((m, _) => pane().has(m))
 
   /** Where each point is drawn now (alone or in its bubble), screen pixels. */
-  private def drawnPlaces(): Map[String, (Double, Double)] =
+  private def drawnPlaces(): Map[com.histmersion.web.map.PointSet.DrawnPlacesResultPart1, (com.histmersion.web.map.PointSet.DrawnPlacesResultPart2Part1, com.histmersion.web.map.PointSet.DrawnPlacesResultPart2Part2)] =
     val m = mutable.HashMap.empty[String, (Double, Double)]
     singles.foreach((k, mp) => if mp._2.has(mp._1) then m(k) = mp._1.screen)
     bubbles.values.foreach((mk, ks) => if pane().has(mk) then ks.foreach(k => m(k) = mk.screen))
     m.toMap
 
-  private def regroup(z: Int): Unit =
+  private def regroup(z: com.histmersion.web.map.PointSet.RegroupZ): Unit =
     level = z
     groups = Clustering.groups(items.toSeq.map((k, d) => k -> at(d)), z, radius())
     val m = mutable.HashMap.empty[String, Int]
@@ -291,8 +291,8 @@ final class PointSet[D](
     groupOf = m
 
   private def draw(
-      wanted: (Set[String], Map[String, Vector[String]]),
-      before: Option[Map[String, (Double, Double)]]
+      wanted: (Set[com.histmersion.web.map.PointSet.DrawWantedPart1], Map[com.histmersion.web.map.PointSet.DrawWantedPart2Part1, Vector[com.histmersion.web.map.PointSet.DrawWantedPart2Part2]]),
+      before: Option[Map[com.histmersion.web.map.PointSet.DrawBeforePart1, (com.histmersion.web.map.PointSet.DrawBeforePart2Part1, com.histmersion.web.map.PointSet.DrawBeforePart2Part2)]]
   ): Unit =
     val s = surface()
     val p = pane()
@@ -393,9 +393,9 @@ final class PointSet[D](
     * out of it (a split); one made of several stays where it is and appears as the markers that merge into it arrive.
     */
   private def animate(
-      was: Map[String, (Double, Double)],
-      fresh: List[(DomMarker, Seq[String])],
-      gone: List[(DomMarker, MarkerPane, Seq[String])]
+      was: Map[com.histmersion.web.map.PointSet.AnimateWasPart1, (com.histmersion.web.map.PointSet.AnimateWasPart2Part1, com.histmersion.web.map.PointSet.AnimateWasPart2Part2)],
+      fresh: List[(DomMarker, Seq[com.histmersion.web.map.PointSet.AnimateFreshPart2])],
+      gone: List[(DomMarker, MarkerPane, Seq[com.histmersion.web.map.PointSet.AnimateGonePart3])]
   ): Unit =
     animations += 1
     val drawnOf = mutable.HashMap.empty[String, (DomMarker, Seq[String])]
@@ -427,3 +427,79 @@ final class PointSet[D](
     }
     ClusterMotion.slideAll(slides.toList)
     arriving.foreach(ClusterMotion.arrive)
+
+object PointSet:
+  type GroupsPart1 = GroupsPart1.T
+  object GroupsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupOfPart1 = GroupOfPart1.T
+  object GroupOfPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupOfPart2 = GroupOfPart2.T
+  object GroupOfPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Level = Level.T
+  object Level extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AwaitingMovesPart2 = AwaitingMovesPart2.T
+  object AwaitingMovesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Animations = Animations.T
+  object Animations extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeResult = SizeResult.T
+  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeysResult = KeysResult.T
+  object KeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetK = GetK.T
+  object GetK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveKs = RemoveKs.T
+  object RemoveKs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnAloneK = DrawnAloneK.T
+  object DrawnAloneK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpideredResult = SpideredResult.T
+  object SpideredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpiderfyKs = SpiderfyKs.T
+  object SpiderfyKs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpiderfySeparation = SpiderfySeparation.T
+  object SpiderfySeparation extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupKeysResult = GroupKeysResult.T
+  object GroupKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupKeysK = GroupKeysK.T
+  object GroupKeysK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZoomToShowK = ZoomToShowK.T
+  object ZoomToShowK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayoutAnimate = LayoutAnimate.T
+  object LayoutAnimate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MeasureName = MeasureName.T
+  object MeasureName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MeasureT0 = MeasureT0.T
+  object MeasureT0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MeasureT1 = MeasureT1.T
+  object MeasureT1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnMarkersResult = DrawnMarkersResult.T
+  object DrawnMarkersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnPlacesResultPart1 = DrawnPlacesResultPart1.T
+  object DrawnPlacesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnPlacesResultPart2Part1 = DrawnPlacesResultPart2Part1.T
+  object DrawnPlacesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawnPlacesResultPart2Part2 = DrawnPlacesResultPart2Part2.T
+  object DrawnPlacesResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegroupZ = RegroupZ.T
+  object RegroupZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawWantedPart1 = DrawWantedPart1.T
+  object DrawWantedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawWantedPart2Part1 = DrawWantedPart2Part1.T
+  object DrawWantedPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawWantedPart2Part2 = DrawWantedPart2Part2.T
+  object DrawWantedPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawBeforePart1 = DrawBeforePart1.T
+  object DrawBeforePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawBeforePart2Part1 = DrawBeforePart2Part1.T
+  object DrawBeforePart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawBeforePart2Part2 = DrawBeforePart2Part2.T
+  object DrawBeforePart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateWasPart1 = AnimateWasPart1.T
+  object AnimateWasPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateWasPart2Part1 = AnimateWasPart2Part1.T
+  object AnimateWasPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateWasPart2Part2 = AnimateWasPart2Part2.T
+  object AnimateWasPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateFreshPart2 = AnimateFreshPart2.T
+  object AnimateFreshPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnimateGonePart3 = AnimateGonePart3.T
+  object AnimateGonePart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

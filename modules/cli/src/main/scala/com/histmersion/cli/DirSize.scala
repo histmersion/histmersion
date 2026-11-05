@@ -49,12 +49,23 @@ object DirSize:
     private val used = AtomicLong(0L)
 
     /** Count one entry; false once either cap is reached. */
-    def take(): Boolean = used.incrementAndGet() <= maxEntries && clock() < deadlineNanos
-    def spent: Long = used.get
-    def exhausted: Boolean = used.get >= maxEntries || clock() >= deadlineNanos
+    def take(): com.histmersion.cli.DirSize.Budget.TakeResult = used.incrementAndGet() <= maxEntries && clock() < deadlineNanos
+    def spent: com.histmersion.cli.DirSize.Budget.SpentResult = used.get
+    def exhausted: com.histmersion.cli.DirSize.Budget.ExhaustedResult = used.get >= maxEntries || clock() >= deadlineNanos
 
   object Budget:
-    def of(maxEntries: Long, maxMillis: Long): Budget =
+    type TakeResult = TakeResult.T
+    object TakeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpentResult = SpentResult.T
+    object SpentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExhaustedResult = ExhaustedResult.T
+    object ExhaustedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfMaxEntries = OfMaxEntries.T
+    object OfMaxEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfMaxMillis = OfMaxMillis.T
+    object OfMaxMillis extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def of(maxEntries: com.histmersion.cli.DirSize.Budget.OfMaxEntries, maxMillis: com.histmersion.cli.DirSize.Budget.OfMaxMillis): Budget =
       Budget(maxEntries, System.nanoTime() + maxMillis * 1_000_000L)
     val unlimited: Budget = Budget(Long.MaxValue, Long.MaxValue)
 

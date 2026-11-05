@@ -16,7 +16,7 @@ import scala.util.Using
   */
 final class HttpDownload(userAgent: String):
 
-  private def open(url: String, readTimeoutMs: Int): HttpURLConnection =
+  private def open(url: com.histmersion.server.HttpDownload.OpenUrl, readTimeoutMs: com.histmersion.server.HttpDownload.OpenReadTimeoutMs): HttpURLConnection =
     val conn = URI.create(url).toURL.openConnection().asInstanceOf[HttpURLConnection]
     conn.setInstanceFollowRedirects(true)
     conn.setRequestProperty("User-Agent", userAgent)
@@ -25,7 +25,7 @@ final class HttpDownload(userAgent: String):
     conn
 
   /** `url`'s text; a `.zip` is opened and its first file read. */
-  def text(url: String): Either[String, String] =
+  def text(url: com.histmersion.server.HttpDownload.TextUrl): Either[com.histmersion.server.HttpDownload.TextResultPart1, com.histmersion.server.HttpDownload.TextResultPart2] =
     try
       val conn = open(url, 120000)
       val code = conn.getResponseCode
@@ -48,6 +48,21 @@ final class HttpDownload(userAgent: String):
     catch case e: Exception => Left(s"download of $url failed: ${e.getMessage}")
 
 object HttpDownload:
+  type OpenUrl = OpenUrl.T
+  object OpenUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenReadTimeoutMs = OpenReadTimeoutMs.T
+  object OpenReadTimeoutMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResultPart1 = TextResultPart1.T
+  object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResultPart2 = TextResultPart2.T
+  object TextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextUrl = TextUrl.T
+  object TextUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnzipResultPart1 = UnzipResultPart1.T
+  object UnzipResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnzipResultPart2 = UnzipResultPart2.T
+  object UnzipResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(): HttpDownload = new HttpDownload(
     HttpPolicy.userAgent(s"Histmersion/${Version.version} (gazetteer import)")
   )
@@ -63,7 +78,7 @@ object HttpDownload:
     next()
     buf.toByteArray
 
-  private def unzip(data: Array[Byte]): Either[String, String] =
+  private def unzip(data: Array[Byte]): Either[com.histmersion.server.HttpDownload.UnzipResultPart1, com.histmersion.server.HttpDownload.UnzipResultPart2] =
     try
       val zis = new ZipInputStream(new java.io.ByteArrayInputStream(data))
       @tailrec def usable(e: java.util.zip.ZipEntry): Option[java.util.zip.ZipEntry] =

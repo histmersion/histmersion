@@ -27,12 +27,17 @@ final case class UpstreamSettings(
 ) derives ConfigReader:
 
   /** The contact e-mail, when one is configured: a blank one means anonymous (no polite pool, no Unpaywall). */
-  def contact: Option[String] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
+  def contact: Option[com.histmersion.upstreams.settings.UpstreamSettings.ContactResult] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
 
   /** The `mailto` value; empty without a contact, and [[Url]] drops an empty parameter. */
-  def mailto: String = contact.getOrElse("")
+  def mailto: com.histmersion.upstreams.settings.UpstreamSettings.MailtoResult = contact.getOrElse("")
 
 object UpstreamSettings:
+  type ContactResult = ContactResult.T
+  object ContactResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MailtoResult = MailtoResult.T
+  object MailtoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ContactEmail = ContactEmail.T
   object ContactEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PublicUserAgent = PublicUserAgent.T

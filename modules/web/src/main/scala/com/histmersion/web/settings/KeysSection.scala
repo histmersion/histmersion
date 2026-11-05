@@ -14,6 +14,23 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object KeysSection:
 
   /** The ways a reference is written: its scheme, the name shown, what the entry box asks for. */
+  type ReferenceResultPart1 = ReferenceResultPart1.T
+  object ReferenceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferenceResultPart2 = ReferenceResultPart2.T
+  object ReferenceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferenceEntry = ReferenceEntry.T
+  object ReferenceEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamedPart1 = NamedPart1.T
+  object NamedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamedPart2 = NamedPart2.T
+  object NamedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NameResult = NameResult.T
+  object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NameRelative = NameRelative.T
+  object NameRelative extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StateResult = StateResult.T
+  object StateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Form(val scheme: String, val label: String, val hint: String):
     case Env extends Form("env", "Environment variable", "its name, e.g. HISTMERSION_CORE_KEY")
     case Keepassxc extends Form("keepassxc", "KeePassXC entry", "Group/Entry#attribute")
@@ -22,10 +39,13 @@ object KeysSection:
     case Value extends Form("value", "The value itself, in the settings file", "the key or password")
 
   object Form:
-    def of(scheme: String): Form = values.find(_.scheme == scheme).getOrElse(Env)
+    type OfScheme = OfScheme.T
+    object OfScheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def of(scheme: com.histmersion.web.settings.KeysSection.Form.OfScheme): Form = values.find(_.scheme == scheme).getOrElse(Env)
 
   /** The reference a form and its entry write, or why not. Pure. */
-  def reference(form: Form, entry: String): Either[String, String] =
+  def reference(form: Form, entry: com.histmersion.web.settings.KeysSection.ReferenceEntry): Either[com.histmersion.web.settings.KeysSection.ReferenceResultPart1, com.histmersion.web.settings.KeysSection.ReferenceResultPart2] =
     val t = entry.trim
     if t.isEmpty then Left(s"Write ${form.hint}.")
     else if form == Form.Env && !t.matches("[A-Za-z_][A-Za-z0-9_]*") then
@@ -33,7 +53,7 @@ object KeysSection:
     else Right(s"${form.scheme}:$t")
 
   /** The keys that hold the value itself, by what they open. */
-  private val Named: Map[String, String] = Map(
+  private val Named: Map[com.histmersion.web.settings.KeysSection.NamedPart1, com.histmersion.web.settings.KeysSection.NamedPart2] = Map(
     "auth.api-key" -> "This server's own key for changes",
     "db.password" -> "The database's password",
     "query.password" -> "The read-only query login's password",
@@ -47,14 +67,14 @@ object KeysSection:
   /** A credential's name for a person: its plugin and what it is (`1Password: service account token`), or what it
     * opens. Pure.
     */
-  def name(relative: String): String =
+  def name(relative: com.histmersion.web.settings.KeysSection.NameRelative): com.histmersion.web.settings.KeysSection.NameResult =
     relative.split('.').toList match
       case "plugins" :: id :: rest if rest.nonEmpty =>
         s"${Wording.plugin(id)}: ${Wording.humanize(rest.mkString(" ")).toLowerCase.replace("api key", "API key")}"
       case _ => Named.getOrElse(relative, Wording.humanize(relative.replace('.', ' ')))
 
   /** How a credential is held, in words. Pure. */
-  def state(c: ConfigEdit.Credential): String = c.form match
+  def state(c: ConfigEdit.Credential): com.histmersion.web.settings.KeysSection.StateResult = c.form match
     case "unset" => "Not set"
     case "env"   => "Set · from an environment variable"
     case "vault" =>

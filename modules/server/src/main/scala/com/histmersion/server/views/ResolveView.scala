@@ -9,7 +9,11 @@ import com.histmersion.api.Api
   * article, else nothing; never an error.
   */
 final class ResolveView(source: String => Option[ResolvedSource], article: String => Option[ResolvedArticle]):
-  def apply(id: String): Either[Api.Error, ResolvedId] =
+  def apply(id: com.histmersion.server.views.ResolveView.ApplyId): Either[Api.Error, ResolvedId] =
     val src = source(id)
     val art = if src.isDefined then None else article(id)
     Right(ResolvedId(id, src, art))
+
+object ResolveView:
+  type ApplyId = ApplyId.T
+  object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

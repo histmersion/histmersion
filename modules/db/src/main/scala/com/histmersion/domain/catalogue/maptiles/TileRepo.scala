@@ -18,7 +18,60 @@ import com.histmersion.domain.catalogue.Place
 private[maptiles] object TileRepo:
 
   /** What a layer's tiles read, by the groups of V105's `map_changes`. */
-  val Groups: Map[TileLayer, List[String]] = Map(
+  type GroupsPart2 = GroupsPart2.T
+  object GroupsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionsResultPart1 = VersionsResultPart1.T
+  object VersionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionsResultPart2 = VersionsResultPart2.T
+  object VersionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeRowsResultPart1 = ChangeRowsResultPart1.T
+  object ChangeRowsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeRowsResultPart2 = ChangeRowsResultPart2.T
+  object ChangeRowsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompactGrp = CompactGrp.T
+  object CompactGrp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnitsSqlResultPart1 = UnitsSqlResultPart1.T
+  object UnitsSqlResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnitsSqlResultPart2 = UnitsSqlResultPart2.T
+  object UnitsSqlResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CellsSqlMaxPoints = CellsSqlMaxPoints.T
+  object CellsSqlMaxPoints extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CellsSqlCellUnits = CellsSqlCellUnits.T
+  object CellsSqlCellUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GridCellsSqlCellUnits = GridCellsSqlCellUnits.T
+  object GridCellsSqlCellUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCandidatesWindowPart1 = SiteCandidatesWindowPart1.T
+  object SiteCandidatesWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCandidatesWindowPart2 = SiteCandidatesWindowPart2.T
+  object SiteCandidatesWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCandidatesSiteType = SiteCandidatesSiteType.T
+  object SiteCandidatesSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCandidatesModernFrom = SiteCandidatesModernFrom.T
+  object SiteCandidatesModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCandidatesMarkUndated = SiteCandidatesMarkUndated.T
+  object SiteCandidatesMarkUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SitesOfResultPart1 = SitesOfResultPart1.T
+  object SitesOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SitesOfIds = SitesOfIds.T
+  object SitesOfIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCellsWindowPart1 = SiteCellsWindowPart1.T
+  object SiteCellsWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCellsWindowPart2 = SiteCellsWindowPart2.T
+  object SiteCellsWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCellsSiteType = SiteCellsSiteType.T
+  object SiteCellsSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteCellsModernFrom = SiteCellsModernFrom.T
+  object SiteCellsModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedSitesWindowPart1 = DatedSitesWindowPart1.T
+  object DatedSitesWindowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedSitesWindowPart2 = DatedSitesWindowPart2.T
+  object DatedSitesWindowPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedSitesSiteType = DatedSitesSiteType.T
+  object DatedSitesSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatedSitesModernFrom = DatedSitesModernFrom.T
+  object DatedSitesModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val Groups: Map[TileLayer, List[com.histmersion.domain.catalogue.maptiles.TileRepo.GroupsPart2]] = Map(
     // an undated site is shown by its findings, or by an event, dated then
     TileLayer.Sites -> List("places", "corpus", "events"),
     // under a filter of sources, an event is one of theirs; its anchor and place's name are its place's
@@ -27,7 +80,7 @@ private[maptiles] object TileRepo:
   )
 
   /** Each group's version: the sum of its changes' weights (V105). */
-  def versions(using DbCon): Map[String, Long] =
+  def versions(using DbCon): Map[com.histmersion.domain.catalogue.maptiles.TileRepo.VersionsResultPart1, com.histmersion.domain.catalogue.maptiles.TileRepo.VersionsResultPart2] =
     sql"SELECT grp, sum(weight)::bigint, count(*)::int FROM map_changes GROUP BY grp"
       .query[(String, Long, Int)]
       .run()
@@ -35,13 +88,13 @@ private[maptiles] object TileRepo:
       .toMap
 
   /** How many change rows each group holds (a group of many is folded by [[compact]]). */
-  def changeRows(using DbCon): Map[String, Int] =
+  def changeRows(using DbCon): Map[com.histmersion.domain.catalogue.maptiles.TileRepo.ChangeRowsResultPart1, com.histmersion.domain.catalogue.maptiles.TileRepo.ChangeRowsResultPart2] =
     sql"SELECT grp, count(*)::int FROM map_changes GROUP BY grp".query[(String, Int)].run().toMap
 
   /** Fold `grp`'s change rows into one of their summed weight — its version unchanged. One fold at a time (an advisory
     * lock; a second caller does nothing).
     */
-  def compact(grp: String)(using DbCon): Unit =
+  def compact(grp: com.histmersion.domain.catalogue.maptiles.TileRepo.CompactGrp)(using DbCon): Unit =
     val locked = sql"SELECT pg_try_advisory_xact_lock(hashtext('histmersion.map_changes'))".query[Boolean].run().head
     if locked then
       val _ = sql"""WITH d AS (DELETE FROM map_changes WHERE grp = $grp RETURNING weight)
@@ -60,7 +113,7 @@ private[maptiles] object TileRepo:
   /** Web Mercator in SQL over the columns `lon` and `lat`: [[TileCoord.mercator]], each axis held inside the unit
     * square, then in units of tile `c` — `(x, y)`. `TileRepoSuite` holds it to the Scala.
     */
-  def unitsSql(c: TileCoord): (String, String) =
+  def unitsSql(c: TileCoord): (com.histmersion.domain.catalogue.maptiles.TileRepo.UnitsSqlResultPart1, com.histmersion.domain.catalogue.maptiles.TileRepo.UnitsSqlResultPart2) =
     val l = s"radians(greatest(${-TileCoord.MaxLat}, least(${TileCoord.MaxLat}, lat)))"
     def held(v: String) = s"least(greatest($v, 0), 0.99999999999)"
     (
@@ -85,7 +138,7 @@ private[maptiles] object TileRepo:
     * counted by cells of `cellUnits` (a cell of one item answers as the item). Rows as [[TileCell]]'s fields, `undated`
     * how many of a cell's items are marked `ub`. Pure.
     */
-  def cellsSql(candidates: Sql, c: TileCoord, maxPoints: Int, cellUnits: Int): Sql =
+  def cellsSql(candidates: Sql, c: TileCoord, maxPoints: com.histmersion.domain.catalogue.maptiles.TileRepo.CellsSqlMaxPoints, cellUnits: com.histmersion.domain.catalogue.maptiles.TileRepo.CellsSqlCellUnits): Sql =
     val perSide = (TileCoord.Extent / cellUnits.max(1)).max(1)
     placedSql(candidates, c) ++ Sql.raw(
       ", total AS (SELECT count(*) AS n FROM t)" +
@@ -106,7 +159,7 @@ private[maptiles] object TileRepo:
     * number: one [[GridCell]] a square (`dup` those marked `ub`), its square on the world's grid of the tile's zoom.
     * Pure.
     */
-  def gridCellsSql(candidates: Sql, c: TileCoord, cellUnits: Int): Sql =
+  def gridCellsSql(candidates: Sql, c: TileCoord, cellUnits: com.histmersion.domain.catalogue.maptiles.TileRepo.GridCellsSqlCellUnits): Sql =
     val perSide = (TileCoord.Extent / cellUnits.max(1)).max(1)
     val cu = cellUnits.max(1)
     placedSql(candidates, c) ++ Sql.raw(
@@ -140,11 +193,11 @@ private[maptiles] object TileRepo:
     * less a site for being in no source yet). Over `places_site_map` (V105), whose predicate is stated word for word.
     */
   def siteCandidates(
-      window: (Long, Long),
-      siteType: Option[String],
-      modernFrom: Long,
+      window: (com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesWindowPart1, com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesWindowPart2),
+      siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesSiteType],
+      modernFrom: com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesModernFrom,
       envelope: Sql,
-      markUndated: Boolean = false
+      markUndated: com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCandidatesMarkUndated = false
   ): Sql =
     val tw = Some(window)
     // `ub`: a site of no known date the span shows by its findings or events — counted among the undated
@@ -167,7 +220,7 @@ private[maptiles] object TileRepo:
         .fold(Sql.empty)(t => Sql.of(s" AND ${SiteTypesSql.expr("p")} = ?", Param.S(t)))
 
   /** The sites of `ids` as a sites tile draws one, by id. */
-  def sitesOf(ids: List[String])(using DbCon): Map[String, SiteTile] =
+  def sitesOf(ids: List[com.histmersion.domain.catalogue.maptiles.TileRepo.SitesOfIds])(using DbCon): Map[com.histmersion.domain.catalogue.maptiles.TileRepo.SitesOfResultPart1, SiteTile] =
     if ids.isEmpty then Map.empty
     else
       Sql
@@ -186,16 +239,16 @@ private[maptiles] object TileRepo:
   def siteCells(
       c: TileCoord,
       grid: TileGrid,
-      window: (Long, Long),
-      siteType: Option[String],
-      modernFrom: Long
+      window: (com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCellsWindowPart1, com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCellsWindowPart2),
+      siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCellsSiteType],
+      modernFrom: com.histmersion.domain.catalogue.maptiles.TileRepo.SiteCellsModernFrom
   )(using DbCon): List[TileCell] =
     cells(siteCandidates(window, siteType, modernFrom, envelope(c)), c, grid)
 
   /** The sites tile `c` shows for `window` as candidates of [[items]] and [[gridCells]], an undated one the span shows
     * by its findings marked (it is among the undated sites too).
     */
-  def datedSites(c: TileCoord, window: (Long, Long), siteType: Option[String], modernFrom: Long): Sql =
+  def datedSites(c: TileCoord, window: (com.histmersion.domain.catalogue.maptiles.TileRepo.DatedSitesWindowPart1, com.histmersion.domain.catalogue.maptiles.TileRepo.DatedSitesWindowPart2), siteType: Option[com.histmersion.domain.catalogue.maptiles.TileRepo.DatedSitesSiteType], modernFrom: com.histmersion.domain.catalogue.maptiles.TileRepo.DatedSitesModernFrom): Sql =
     siteCandidates(window, siteType, modernFrom, envelope(c), markUndated = true)
 
   /** An events tile's cells, with the events of no known date `undatedWhere` selects

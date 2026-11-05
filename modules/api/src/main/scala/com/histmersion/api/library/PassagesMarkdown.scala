@@ -4,7 +4,12 @@ import com.histmersion.api.Plural
 import com.histmersion.api.given
 object PassagesMarkdown:
 
-  def render(r: PassageResult): String =
+  type RenderResult = RenderResult.T
+  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkedResult = MarkedResult.T
+  object MarkedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def render(r: PassageResult): com.histmersion.api.library.PassagesMarkdown.RenderResult =
     val what = if r.regex then s"/${r.query}/" else s"\"${r.query}\""
     if r.passages.isEmpty then s"_No match for $what in `${r.citekey}` (${r.bodyChars} chars searched)._"
     else
@@ -21,7 +26,7 @@ object PassagesMarkdown:
       val tail = if more > 0 then List(s"_$more more — raise limit or narrow the query._") else Nil
       (head :: items ++ tail).mkString("\n\n")
 
-  def marked(p: PassageHit): String =
+  def marked(p: PassageHit): com.histmersion.api.library.PassagesMarkdown.MarkedResult =
     val b = new StringBuilder(p.text.length + p.matches.size * 4)
     val end = p.matches.sortBy(_.start).foldLeft(0) { (at, m) =>
       val s = m.start.max(at).min(p.text.length)

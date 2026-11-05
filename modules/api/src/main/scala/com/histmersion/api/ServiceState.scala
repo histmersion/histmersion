@@ -8,13 +8,18 @@ import scala.annotation.tailrec
 enum ServiceState:
   case Ok, Busy, Down, Unknown
 
-  def label: String = this match
+  def label: com.histmersion.api.ServiceState.LabelResult = this match
     case Ok      => "ok"
     case Busy    => "busy"
     case Down    => "down"
     case Unknown => "unknown"
 
 object ServiceState:
+  type LabelResult = LabelResult.T
+  object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfText = OfText.T
+  object OfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val DownWords = List(
     "degraded",
     "error",
@@ -29,7 +34,7 @@ object ServiceState:
     "answered"
   )
 
-  def of(text: Option[String]): ServiceState =
+  def of(text: Option[com.histmersion.api.ServiceState.OfText]): ServiceState =
     text.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case None                                                               => Unknown
       case Some(t) if t == "ok" || t.startsWith("ok ") || t.startsWith("ok:") => Ok

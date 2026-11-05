@@ -18,6 +18,15 @@ object TopBar:
   /** Where the bar is: in the web UI (its links move between pages without a reload), or on one of the server's
     * standalone pages (a source, an article), whose links load the web UI.
     */
+  type LinkInApp = LinkInApp.T
+  object LinkInApp extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchInApp = SearchInApp.T
+  object SearchInApp extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgentsPillInApp = AgentsPillInApp.T
+  object AgentsPillInApp extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecisionsPillInApp = DecisionsPillInApp.T
+  object DecisionsPillInApp extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Host:
     case App
     case Standalone(here: PlaceTab)
@@ -69,13 +78,13 @@ object TopBar:
   /** A link to a page: in the app it moves without a reload on a plain click; on a standalone page it is an ordinary
     * link (the web UI loads there).
     */
-  private def link(r: Route, inApp: Boolean, mods: Modifier[HtmlElement]*): HtmlElement =
+  private def link(r: Route, inApp: com.histmersion.web.TopBar.LinkInApp, mods: Modifier[HtmlElement]*): HtmlElement =
     if inApp then RouteLink(r, mods*) else a(href := r.path, mods)
 
   /** The search field: the full-text filter every list and the map follow. Typing on Explore or in Library filters at
     * once; Enter anywhere else shows the results in Library. `/` puts the cursor in it from anywhere on the page.
     */
-  private def search(inApp: Boolean): HtmlElement =
+  private def search(inApp: com.histmersion.web.TopBar.SearchInApp): HtmlElement =
     div(
       cls := "top-search",
       role := "search",
@@ -131,7 +140,7 @@ object TopBar:
     case _                                                               => None
 
   /** What the agents are doing, linked to their activity; nothing where the server runs no agents. */
-  private def agentsPill(inApp: Boolean): Modifier[HtmlElement] =
+  private def agentsPill(inApp: com.histmersion.web.TopBar.AgentsPillInApp): Modifier[HtmlElement] =
     child.maybe <-- Notices.agents.map(_.map { g =>
       link(
         Route.Activity(ActivityTab.Everything),
@@ -146,7 +155,7 @@ object TopBar:
     })
 
   /** The only standing notice: the proposals that wait for a person, shown while there is one. */
-  private def decisionsPill(inApp: Boolean): Modifier[HtmlElement] =
+  private def decisionsPill(inApp: com.histmersion.web.TopBar.DecisionsPillInApp): Modifier[HtmlElement] =
     child.maybe <-- Notices.counter(UiNotices.Board.Approvals).map(_.flatMap(_.count).getOrElse(0)).distinct.map { n =>
       Wording.decisions(n).map { text =>
         link(

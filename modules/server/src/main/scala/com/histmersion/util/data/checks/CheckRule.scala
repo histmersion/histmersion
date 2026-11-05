@@ -10,5 +10,9 @@ import com.augustnagro.magnum.DbCon
 trait CheckRule:
   def owner: DataOwner
   def rule: Rule
-  def report(context: CheckContext, maxItems: Int)(using CheckRun)(using DbCon): LintRuleReport
+  def report(context: CheckContext, maxItems: com.histmersion.util.data.checks.CheckRule.ReportMaxItems)(using CheckRun)(using DbCon): LintRuleReport
   def fix: Option[SafeFix] = None
+
+object CheckRule:
+  type ReportMaxItems = ReportMaxItems.T
+  object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -9,7 +9,12 @@ enum ScheduledRefresh:
 
 object ScheduledRefresh:
   /** The configured minutes: 0 = off. */
-  def fromMinutes(minutes: Int): Either[String, ScheduledRefresh] =
+  type FromMinutesResultPart1 = FromMinutesResultPart1.T
+  object FromMinutesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromMinutesMinutes = FromMinutesMinutes.T
+  object FromMinutesMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def fromMinutes(minutes: com.histmersion.config.ScheduledRefresh.FromMinutesMinutes): Either[com.histmersion.config.ScheduledRefresh.FromMinutesResultPart1, ScheduledRefresh] =
     if minutes == 0 then Right(Off)
     else
       RefreshIntervalMinutes

@@ -56,13 +56,63 @@ object MarkdownLint:
     * @param isCitekey
     *   is this token a stored citekey? `None` = do not look for bare citekeys
     */
+  type IssuesText = IssuesText.T
+  object IssuesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LookupsResult = LookupsResult.T
+  object LookupsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LookupsTexts = LookupsTexts.T
+  object LookupsTexts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolvingLinksArg1 = ResolvingLinksArg1.T
+  object ResolvingLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolvingArticle = ResolvingArticle.T
+  object ResolvingArticle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfArticleBody = OfArticleBody.T
+  object OfArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfArticleSummary = OfArticleSummary.T
+  object OfArticleSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfArticleLinksArg1 = OfArticleLinksArg1.T
+  object OfArticleLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfSourceSummary = OfSourceSummary.T
+  object OfSourceSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfSourceNotes = OfSourceNotes.T
+  object OfSourceNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfSourceLinksArg1 = OfSourceLinksArg1.T
+  object OfSourceLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalResult = RefusalResult.T
+  object RefusalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixResultPart1 = FixResultPart1.T
+  object FixResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixResultPart2 = FixResultPart2.T
+  object FixResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FixText = FixText.T
+  object FixText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckText = CheckText.T
+  object CheckText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KnownTags = KnownTags.T
+  object KnownTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VoidTags = VoidTags.T
+  object VoidTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockTags = BlockTags.T
+  object BlockTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaKeys = MetaKeys.T
+  object MetaKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Context(
       article: Context.Article = false,
-      resolves: Option[String => Boolean] = None,
-      isCitekey: Option[String => Boolean] = None
+      resolves: Option[Context.ResolvesArg1 => Context.ResolvesResult] = None,
+      isCitekey: Option[Context.IsCitekeyArg1 => Context.IsCitekeyResult] = None
   )
 
   object Context:
+    type ResolvesArg1 = ResolvesArg1.T
+    object ResolvesArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ResolvesResult = ResolvesResult.T
+    object ResolvesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsCitekeyArg1 = IsCitekeyArg1.T
+    object IsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsCitekeyResult = IsCitekeyResult.T
+    object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Article = Article.T
     object Article extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -80,7 +130,7 @@ object MarkdownLint:
   /** An issue and the edits that repair it (empty = not mechanically fixable). */
   final case class Finding(issue: FormatIssue, edits: List[Edit])
 
-  def issues(text: String, field: FormatField, ctx: Context = Context()): List[FormatIssue] =
+  def issues(text: com.histmersion.server.MarkdownLint.IssuesText, field: FormatField, ctx: Context = Context()): List[FormatIssue] =
     check(text, field, ctx).map(_.issue)
 
   // ── one record's texts, resolved against the corpus ──────────────────────────────────────────
@@ -88,10 +138,10 @@ object MarkdownLint:
   /** What to look up before checking `texts`: every `[[target]]`, and every token shaped like a citekey (a bare one is
     * only a problem when a source by that name exists). One `pageLinks` call answers both.
     */
-  def lookups(texts: List[String]): List[String] =
+  def lookups(texts: List[com.histmersion.server.MarkdownLint.LookupsTexts]): List[com.histmersion.server.MarkdownLint.LookupsResult] =
     texts.flatMap(t => Article.Links.targets(t) ++ CitekeyTok.findAllMatchIn(t).map(_.group(1))).distinct
 
-  private def resolving(links: String => Option[LinkTarget], article: Boolean): Context =
+  private def resolving(links: com.histmersion.server.MarkdownLint.ResolvingLinksArg1 => Option[LinkTarget], article: com.histmersion.server.MarkdownLint.ResolvingArticle): Context =
     Context(
       article = article,
       resolves = Some(t => links(t).nonEmpty),
@@ -101,17 +151,17 @@ object MarkdownLint:
   /** An article's body (checked as an article: its `# Title` is expected, a `Sources cited` heading is not) and its
     * summary.
     */
-  def ofArticle(body: String, summary: Option[String], links: String => Option[LinkTarget]): List[FormatIssue] =
+  def ofArticle(body: com.histmersion.server.MarkdownLint.OfArticleBody, summary: Option[com.histmersion.server.MarkdownLint.OfArticleSummary], links: com.histmersion.server.MarkdownLint.OfArticleLinksArg1 => Option[LinkTarget]): List[FormatIssue] =
     issues(body, FormatField.Body, resolving(links, article = true)) ++
       summary.toList.flatMap(issues(_, FormatField.Summary, resolving(links, article = false)))
 
   /** A source's summary and notes — the two texts an agent writes about one source. */
-  def ofSource(summary: Option[String], notes: Option[String], links: String => Option[LinkTarget]): List[FormatIssue] =
+  def ofSource(summary: Option[com.histmersion.server.MarkdownLint.OfSourceSummary], notes: Option[com.histmersion.server.MarkdownLint.OfSourceNotes], links: com.histmersion.server.MarkdownLint.OfSourceLinksArg1 => Option[LinkTarget]): List[FormatIssue] =
     summary.toList.flatMap(issues(_, FormatField.Summary, resolving(links, article = false))) ++
       notes.toList.flatMap(issues(_, FormatField.Notes, resolving(links, article = false)))
 
   /** The `--strict` gate: the ERRORS among `issues`, as the refusal message, or `None` to write. */
-  def refusal(issues: List[FormatIssue]): Option[String] =
+  def refusal(issues: List[FormatIssue]): Option[com.histmersion.server.MarkdownLint.RefusalResult] =
     val errs = issues.filter(_.severity == FormatSeverity.Error)
     Option.when(errs.nonEmpty)(
       s"refused (strict): ${Plural.count(errs.size, "formatting error")} — " +
@@ -123,7 +173,7 @@ object MarkdownLint:
     * fence exposes the body inside it). At most three rounds; returns the new text and one line per applied repair.
     * Wording is never changed.
     */
-  def fix(text: String, field: FormatField, ctx: Context = Context()): (String, List[String]) =
+  def fix(text: com.histmersion.server.MarkdownLint.FixText, field: FormatField, ctx: Context = Context()): (com.histmersion.server.MarkdownLint.FixResultPart1, List[com.histmersion.server.MarkdownLint.FixResultPart2]) =
     @annotation.tailrec
     def loop(t: String, round: Int, done: List[String]): (String, List[String]) =
       val fixable = check(t, field, ctx).filter(_.edits.nonEmpty)
@@ -147,7 +197,7 @@ object MarkdownLint:
 
   // ── the check ────────────────────────────────────────────────────────────────────────────────
 
-  def check(text: String, field: FormatField, ctx: Context = Context()): List[Finding] =
+  def check(text: com.histmersion.server.MarkdownLint.CheckText, field: FormatField, ctx: Context = Context()): List[Finding] =
     if text.trim.isEmpty then Nil
     else
       val s = Scan(text, field, ctx)
@@ -157,7 +207,7 @@ object MarkdownLint:
         .distinctBy(f => (f.issue.rule, f.issue.line, f.issue.column))
 
   /** HTML elements a browser knows. Anything else (`<etal>`, `<insert>`) is dropped by it. */
-  private val KnownTags: Set[String] = Set(
+  private val KnownTags: Set[com.histmersion.server.MarkdownLint.KnownTags] = Set(
     "a",
     "abbr",
     "b",
@@ -231,10 +281,10 @@ object MarkdownLint:
     "big",
     "strike"
   )
-  private val VoidTags: Set[String] = Set("br", "hr", "img", "wbr", "col")
+  private val VoidTags: Set[com.histmersion.server.MarkdownLint.VoidTags] = Set("br", "hr", "img", "wbr", "col")
 
   /** An unclosed one of these swallows everything after it, not just the rest of a paragraph. */
-  private val BlockTags: Set[String] = Set(
+  private val BlockTags: Set[com.histmersion.server.MarkdownLint.BlockTags] = Set(
     "div",
     "details",
     "table",
@@ -254,7 +304,7 @@ object MarkdownLint:
   )
 
   /** Keys a pasted frontmatter block uses — the article's and the source's own metadata fields. */
-  private val MetaKeys: Set[String] = Set(
+  private val MetaKeys: Set[com.histmersion.server.MarkdownLint.MetaKeys] = Set(
     "title",
     "slug",
     "type",
@@ -313,16 +363,16 @@ object MarkdownLint:
     // offsets → (line, column), both 1-based
     private val lineStarts: Array[Int] =
       (0 +: text.indices.filter(text.charAt(_) == '\n').map(_ + 1)).toArray
-    private def lineOf(off: Int): Int =
+    private def lineOf(off: com.histmersion.server.MarkdownLint.Scan.LineOfOff): com.histmersion.server.MarkdownLint.Scan.LineOfResult =
       val i = java.util.Arrays.binarySearch(lineStarts, off)
       if i >= 0 then i else -i - 2
-    private def lineText(l: Int): String =
+    private def lineText(l: com.histmersion.server.MarkdownLint.Scan.LineTextL): com.histmersion.server.MarkdownLint.Scan.LineTextResult =
       val st = lineStarts(l)
       val en = if l + 1 < lineStarts.length then lineStarts(l + 1) - 1 else text.length
       text.substring(st, en)
     private val nLines = lineStarts.length
 
-    private def excerptAt(off: Int, len: Int): String =
+    private def excerptAt(off: com.histmersion.server.MarkdownLint.Scan.ExcerptAtOff, len: com.histmersion.server.MarkdownLint.Scan.ExcerptAtLen): com.histmersion.server.MarkdownLint.Scan.ExcerptAtResult =
       val l = lineOf(off)
       val ln = lineText(l)
       val col = off - lineStarts(l)
@@ -334,11 +384,11 @@ object MarkdownLint:
 
     def add(
         rule: FormatRule,
-        off: Int,
-        len: Int,
-        message: String,
+        off: com.histmersion.server.MarkdownLint.Scan.AddOff,
+        len: com.histmersion.server.MarkdownLint.Scan.AddLen,
+        message: com.histmersion.server.MarkdownLint.Scan.AddMessage,
         edits: List[Edit] = Nil,
-        fix: Option[String] = None,
+        fix: Option[com.histmersion.server.MarkdownLint.Scan.AddFix] = None,
         severity: Option[FormatSeverity] = None
     ): Unit =
       val o = math.max(0, math.min(off, text.length))
@@ -385,19 +435,19 @@ object MarkdownLint:
         case _                         => ()
       }
       b
-    private def insideCode(n: Node): Boolean =
+    private def insideCode(n: Node): com.histmersion.server.MarkdownLint.Scan.InsideCodeResult =
       var p = n.getParent
       var in = false
       while p != null && !in do
         in = p.isInstanceOf[Code] || p.isInstanceOf[FencedCodeBlock] || p.isInstanceOf[IndentedCodeBlock]
         p = p.getParent
       in
-    private def isLiteral(i: Int): Boolean = i >= 0 && i < text.length && literal.get(i) && !escaped(i)
-    private def escaped(i: Int): Boolean =
+    private def isLiteral(i: com.histmersion.server.MarkdownLint.Scan.IsLiteralI): com.histmersion.server.MarkdownLint.Scan.IsLiteralResult = i >= 0 && i < text.length && literal.get(i) && !escaped(i)
+    private def escaped(i: com.histmersion.server.MarkdownLint.Scan.EscapedI): com.histmersion.server.MarkdownLint.Scan.EscapedResult =
       var k = i - 1; var n = 0
       while k >= 0 && text.charAt(k) == '\\' do { n += 1; k -= 1 }
       n % 2 == 1
-    private def lineInCode(l: Int): Boolean =
+    private def lineInCode(l: com.histmersion.server.MarkdownLint.Scan.LineInCodeL): com.histmersion.server.MarkdownLint.Scan.LineInCodeResult =
       val st = lineStarts(l)
       val ln = lineText(l)
       ln.trim.nonEmpty && code.get(st + ln.indexWhere(!_.isWhitespace).max(0))
@@ -418,8 +468,8 @@ object MarkdownLint:
 
     // ── the document as a whole ────────────────────────────────────────────────────────────────
 
-    private var wrapped: Option[Int] = None // the offset of a whole-text fence, reported once
-    private var frontmatterEnd: Option[Int] = None // where a reported frontmatter block ends
+    private var wrapped: Option[com.histmersion.server.MarkdownLint.Scan.Wrapped] = None // the offset of a whole-text fence, reported once
+    private var frontmatterEnd: Option[com.histmersion.server.MarkdownLint.Scan.FrontmatterEnd] = None // where a reported frontmatter block ends
 
     private def wrapperAndFrontmatter(): Unit =
       val first = (0 until nLines).find(l => lineText(l).trim.nonEmpty)
@@ -552,7 +602,7 @@ object MarkdownLint:
     /** Cells of one pipe row, split the way GFM splits it (an escaped `\|` and a pipe in a code span do not split;
       * wikilinks are already masked).
       */
-    private def cells(line: String): Int =
+    private def cells(line: com.histmersion.server.MarkdownLint.Scan.CellsLine): com.histmersion.server.MarkdownLint.Scan.CellsResult =
       var t = line.trim
       if t.startsWith("|") then t = t.drop(1)
       if t.endsWith("|") && !t.endsWith("\\|") then t = t.dropRight(1)
@@ -565,11 +615,11 @@ object MarkdownLint:
         i += 1
       n
 
-    private def maskedLine(l: Int): String =
+    private def maskedLine(l: com.histmersion.server.MarkdownLint.Scan.MaskedLineL): com.histmersion.server.MarkdownLint.Scan.MaskedLineResult =
       val st = lineStarts(l)
       masked.substring(st, st + lineText(l).length)
 
-    private def pipeRow(l: Int): Boolean =
+    private def pipeRow(l: com.histmersion.server.MarkdownLint.Scan.PipeRowL): com.histmersion.server.MarkdownLint.Scan.PipeRowResult =
       val t = maskedLine(l).trim
       !lineInCode(l) && (t
         .startsWith("|") || (t.count(_ == '|') >= 2 && DelimRow.findFirstIn(t).isEmpty && t.contains(" | ")) ||
@@ -593,7 +643,7 @@ object MarkdownLint:
             case None                => ()
         else l += 1
 
-    private def notRendered(start: Int, end: Int): Unit =
+    private def notRendered(start: com.histmersion.server.MarkdownLint.Scan.NotRenderedStart, end: com.histmersion.server.MarkdownLint.Scan.NotRenderedEnd): Unit =
       val header = maskedLine(start)
       val second = maskedLine(start + 1)
       val prev = if start > 0 then Some(lineText(start - 1)) else None
@@ -632,7 +682,7 @@ object MarkdownLint:
           "these rows of pipes do not parse as a table — they show as text"
         )
 
-    private def renderedTable(a: Int, b: Int): Unit =
+    private def renderedTable(a: com.histmersion.server.MarkdownLint.Scan.RenderedTableA, b: com.histmersion.server.MarkdownLint.Scan.RenderedTableB): Unit =
       val headerCells = cells(maskedLine(a))
       (a + 2 to b).foreach { r =>
         val n = cells(maskedLine(r))
@@ -768,31 +818,31 @@ object MarkdownLint:
       }
 
     /** `foo__bar` / `snake_case`: an underscore with a letter or digit on both sides never emphasises. */
-    private def intraword(i: Int, run: Int): Boolean =
+    private def intraword(i: com.histmersion.server.MarkdownLint.Scan.IntrawordI, run: com.histmersion.server.MarkdownLint.Scan.IntrawordRun): com.histmersion.server.MarkdownLint.Scan.IntrawordResult =
       i > 0 && i + run < text.length && text.charAt(i - 1).isLetterOrDigit && text.charAt(i + run).isLetterOrDigit
 
     /** A lone `_` at the edge of a word — where italics would open (`_word`) or close (`word_`). */
-    private def underscoreFlank(i: Int): Boolean =
+    private def underscoreFlank(i: com.histmersion.server.MarkdownLint.Scan.UnderscoreFlankI): com.histmersion.server.MarkdownLint.Scan.UnderscoreFlankResult =
       val before = if i > 0 then text.charAt(i - 1) else ' '
       val after = if i + 1 < text.length then text.charAt(i + 1) else ' '
       val opens = !before.isLetterOrDigit && before != '_' && before != '\\' && after.isLetterOrDigit
       val closes = (before.isLetterOrDigit || ".,;:!?)".contains(before)) && !after.isLetterOrDigit && after != '_'
       opens || closes
 
-    private def inUrl(i: Int): Boolean =
+    private def inUrl(i: com.histmersion.server.MarkdownLint.Scan.InUrlI): com.histmersion.server.MarkdownLint.Scan.InUrlResult =
       val l = lineOf(i)
       val ln = lineText(l)
       val c = i - lineStarts(l)
       UrlText.findAllMatchIn(ln).exists(m => c >= m.start && c < m.end)
 
     /** A literal `*` touching an emphasis node: what is left of `***a**` or `**a***`. */
-    private def strayStar(i: Int): Boolean =
+    private def strayStar(i: com.histmersion.server.MarkdownLint.Scan.StrayStarI): com.histmersion.server.MarkdownLint.Scan.StrayStarResult =
       nodes.exists {
         case e @ (_: Emphasis | _: StrongEmphasis) => e.getStartOffset == i + 1 || e.getEndOffset == i
         case _                                     => false
       }
 
-    private def emphasisProblem(i: Int, mark: String, l: Int): Unit =
+    private def emphasisProblem(i: com.histmersion.server.MarkdownLint.Scan.EmphasisProblemI, mark: com.histmersion.server.MarkdownLint.Scan.EmphasisProblemMark, l: com.histmersion.server.MarkdownLint.Scan.EmphasisProblemL): Unit =
       val ln = lineText(l)
       val col = i - lineStarts(l)
       val q = java.util.regex.Pattern.quote(mark.take(2))
@@ -1350,3 +1400,89 @@ object MarkdownLint:
             Some(s"write [[${m.group(1)}]]")
           )
         }
+
+  object Scan:
+    type LineOfResult = LineOfResult.T
+    object LineOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LineOfOff = LineOfOff.T
+    object LineOfOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LineTextResult = LineTextResult.T
+    object LineTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LineTextL = LineTextL.T
+    object LineTextL extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExcerptAtResult = ExcerptAtResult.T
+    object ExcerptAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExcerptAtOff = ExcerptAtOff.T
+    object ExcerptAtOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExcerptAtLen = ExcerptAtLen.T
+    object ExcerptAtLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddOff = AddOff.T
+    object AddOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddLen = AddLen.T
+    object AddLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddMessage = AddMessage.T
+    object AddMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddFix = AddFix.T
+    object AddFix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InsideCodeResult = InsideCodeResult.T
+    object InsideCodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsLiteralResult = IsLiteralResult.T
+    object IsLiteralResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsLiteralI = IsLiteralI.T
+    object IsLiteralI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EscapedResult = EscapedResult.T
+    object EscapedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EscapedI = EscapedI.T
+    object EscapedI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LineInCodeResult = LineInCodeResult.T
+    object LineInCodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LineInCodeL = LineInCodeL.T
+    object LineInCodeL extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wrapped = Wrapped.T
+    object Wrapped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FrontmatterEnd = FrontmatterEnd.T
+    object FrontmatterEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CellsResult = CellsResult.T
+    object CellsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CellsLine = CellsLine.T
+    object CellsLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaskedLineResult = MaskedLineResult.T
+    object MaskedLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaskedLineL = MaskedLineL.T
+    object MaskedLineL extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PipeRowResult = PipeRowResult.T
+    object PipeRowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PipeRowL = PipeRowL.T
+    object PipeRowL extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotRenderedStart = NotRenderedStart.T
+    object NotRenderedStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotRenderedEnd = NotRenderedEnd.T
+    object NotRenderedEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenderedTableA = RenderedTableA.T
+    object RenderedTableA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RenderedTableB = RenderedTableB.T
+    object RenderedTableB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IntrawordResult = IntrawordResult.T
+    object IntrawordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IntrawordI = IntrawordI.T
+    object IntrawordI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IntrawordRun = IntrawordRun.T
+    object IntrawordRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UnderscoreFlankResult = UnderscoreFlankResult.T
+    object UnderscoreFlankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UnderscoreFlankI = UnderscoreFlankI.T
+    object UnderscoreFlankI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InUrlResult = InUrlResult.T
+    object InUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InUrlI = InUrlI.T
+    object InUrlI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StrayStarResult = StrayStarResult.T
+    object StrayStarResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StrayStarI = StrayStarI.T
+    object StrayStarI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EmphasisProblemI = EmphasisProblemI.T
+    object EmphasisProblemI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EmphasisProblemMark = EmphasisProblemMark.T
+    object EmphasisProblemMark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EmphasisProblemL = EmphasisProblemL.T
+    object EmphasisProblemL extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

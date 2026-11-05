@@ -21,10 +21,10 @@ final class SourceRepairs(db: Transactor):
     * source, so progress is guaranteed). The result carries the cursor and how many sources are left.
     */
   def reindexChunks(
-      chunkChars: Int,
-      after: Option[String] = None,
-      maxSources: Option[Int] = None,
-      maxChars: Long = Long.MaxValue
+      chunkChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexChunksChunkChars,
+      after: Option[com.histmersion.domain.library.sources.SourceRepairs.ReindexChunksAfter] = None,
+      maxSources: Option[com.histmersion.domain.library.sources.SourceRepairs.ReindexChunksMaxSources] = None,
+      maxChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexChunksMaxChars = Long.MaxValue
   ): ReindexResult =
     val pending = db.read(SourceRepo.bodiesAfter(after))
     val take = SourceRepairs.budget(pending, maxChars).take(maxSources.getOrElse(Int.MaxValue)) match
@@ -34,7 +34,7 @@ final class SourceRepairs(db: Transactor):
     ReindexResult(take.size, counts.sum, take.lastOption, pending.size - take.size)
 
   /** Rebuild every chunk in one go (tests, offline tools) — no budget, so it can run for minutes. */
-  def reindexAll(chunkChars: Int): ReindexResult =
+  def reindexAll(chunkChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexAllChunkChars): ReindexResult =
     @annotation.tailrec
     def go(after: Option[String], sources: Int, chunks: Int): ReindexResult =
       val r = reindexChunks(chunkChars, after)
@@ -49,7 +49,7 @@ final class SourceRepairs(db: Transactor):
     * and always does at least one source, so repeated calls make progress. Returns the same shape as `/api/reindex`,
     * with `remaining` = stale sources still untouched.
     */
-  def reindexStale(chunkChars: Int, maxChars: Long): ReindexResult =
+  def reindexStale(chunkChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexStaleChunkChars, maxChars: com.histmersion.domain.library.sources.SourceRepairs.ReindexStaleMaxChars): ReindexResult =
     val pending = db.read(SourceCheckRepo.stale())
     val take = SourceRepairs.budget(pending, maxChars) match
       case Nil   => pending.take(1).map(_._1).toList
@@ -113,7 +113,30 @@ final class SourceRepairs(db: Transactor):
 object SourceRepairs:
 
   /** The citekeys of `pending` (in order) whose bodies fit in `maxChars` together. */
-  def budget(pending: Vector[(String, Int)], maxChars: Long): List[String] =
+  type ReindexChunksChunkChars = ReindexChunksChunkChars.T
+  object ReindexChunksChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexChunksAfter = ReindexChunksAfter.T
+  object ReindexChunksAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexChunksMaxSources = ReindexChunksMaxSources.T
+  object ReindexChunksMaxSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexChunksMaxChars = ReindexChunksMaxChars.T
+  object ReindexChunksMaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexAllChunkChars = ReindexAllChunkChars.T
+  object ReindexAllChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexStaleChunkChars = ReindexStaleChunkChars.T
+  object ReindexStaleChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReindexStaleMaxChars = ReindexStaleMaxChars.T
+  object ReindexStaleMaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetResult = BudgetResult.T
+  object BudgetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetPendingPart1 = BudgetPendingPart1.T
+  object BudgetPendingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetPendingPart2 = BudgetPendingPart2.T
+  object BudgetPendingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BudgetMaxChars = BudgetMaxChars.T
+  object BudgetMaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def budget(pending: Vector[(com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart1, com.histmersion.domain.library.sources.SourceRepairs.BudgetPendingPart2)], maxChars: com.histmersion.domain.library.sources.SourceRepairs.BudgetMaxChars): List[com.histmersion.domain.library.sources.SourceRepairs.BudgetResult] =
     @annotation.tailrec
     def loop(rest: List[(String, Int)], spent: Long, out: List[String]): List[String] = rest match
       case (ck, len) :: tail if spent + len.toLong <= maxChars => loop(tail, spent + len.toLong, ck :: out)

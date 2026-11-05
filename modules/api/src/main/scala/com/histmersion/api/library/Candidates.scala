@@ -6,12 +6,30 @@ import com.histmersion.api.given
 
 object Candidates:
 
+  type Indexes = Indexes.T
+  object Indexes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SinceWatermark = SinceWatermark.T
+  object SinceWatermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SinceLookbackDays = SinceLookbackDays.T
+  object SinceLookbackDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrResult = StrResult.T
+  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrK = StrK.T
+  object StrK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivWorksAtom = ArxivWorksAtom.T
+  object ArxivWorksAtom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenalexAuthorIdsResult = OpenalexAuthorIdsResult.T
+  object OpenalexAuthorIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum WatchKind(val wire: String):
     case Query extends WatchKind("query")
     case Citing extends WatchKind("citing")
     case Author extends WatchKind("author")
   object WatchKind:
-    def parse(s: String): Option[WatchKind] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == s.trim.toLowerCase)
 
   enum State(val wire: String):
     case New extends State("new")
@@ -19,11 +37,14 @@ object Candidates:
     case Queued extends State("queued")
     case Dismissed extends State("dismissed")
   object State:
-    def parse(s: String): Option[State] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Indexes: List[String] = List("openalex", "crossref", "europepmc", "arxiv", "core")
+    def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == s.trim.toLowerCase)
 
-  def since(watermark: Option[String], today: java.time.LocalDate, lookbackDays: Int): java.time.LocalDate =
+  val Indexes: List[com.histmersion.api.library.Candidates.Indexes] = List("openalex", "crossref", "europepmc", "arxiv", "core")
+
+  def since(watermark: Option[com.histmersion.api.library.Candidates.SinceWatermark], today: java.time.LocalDate, lookbackDays: com.histmersion.api.library.Candidates.SinceLookbackDays): java.time.LocalDate =
     watermark
       .flatMap(w => scala.util.Try(java.time.LocalDate.parse(w.take(10))).toOption)
       .getOrElse(today.minusDays(math.max(0, lookbackDays).toLong))
@@ -41,7 +62,7 @@ object Candidates:
       _.title).setTo(a.title.orElse(b.title)).modify(_.year).setTo(a.year.orElse(b.year)).modify(_.authors).setTo(if a.authors.nonEmpty then a.authors else b.authors).modify(_.venue).setTo(a.venue.orElse(b.venue)).modify(_.isOa).setTo(a.isOa || b.isOa).modify(_.abstractText).setTo(a.abstractText.orElse(b.abstractText)).modify(_.arxivId).setTo(a.arxivId.orElse(b.arxivId)).modify(_.openalexId).setTo(a.openalexId.orElse(b.openalexId)
     )
 
-  private def str(c: ACursor, k: String): Option[String] = c.get[String](k).toOption.map(_.trim).filter(_.nonEmpty)
+  private def str(c: ACursor, k: com.histmersion.api.library.Candidates.StrK): Option[com.histmersion.api.library.Candidates.StrResult] = c.get[String](k).toOption.map(_.trim).filter(_.nonEmpty)
 
   def europepmcWorks(json: Json): List[WorkRef] =
     json.hcursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
@@ -74,7 +95,7 @@ object Candidates:
       )
     }
 
-  def arxivWorks(atom: String): List[WorkRef] =
+  def arxivWorks(atom: com.histmersion.api.library.Candidates.ArxivWorksAtom): List[WorkRef] =
     def tag(s: String, t: String): Option[String] =
       s"(?s)<$t[^>]*>(.*?)</$t>".r.findFirstMatchIn(s).map(_.group(1).replaceAll("\\s+", " ").trim).filter(_.nonEmpty)
     def unescape(s: String) =
@@ -93,7 +114,7 @@ object Candidates:
       )
     }
 
-  def openalexAuthorIds(json: Json): List[String] =
+  def openalexAuthorIds(json: Json): List[com.histmersion.api.library.Candidates.OpenalexAuthorIdsResult] =
     json.hcursor
       .downField("authorships")
       .values

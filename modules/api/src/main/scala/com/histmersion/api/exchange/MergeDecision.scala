@@ -6,9 +6,18 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeDecision.Argument] = None):
-  def wire: String = MergeDecision.Kind.wireOf(kind) + argument.fold("")(a => s":$a")
+  def wire: com.histmersion.api.exchange.MergeDecision.WireResult = MergeDecision.Kind.wireOf(kind) + argument.fold("")(a => s":$a")
 
 object MergeDecision:
+
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithArgArg = WithArgArg.T
+  object WithArgArg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRaw = ParseRaw.T
+  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Argument = Argument.T
   object Argument extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -51,12 +60,21 @@ object MergeDecision:
     case KeepUnanchored
 
     /** `true` when the decision needs an argument (`map:<citekey>`). */
-    def takesArgument: Boolean = this match
+    def takesArgument: com.histmersion.api.exchange.MergeDecision.Kind.TakesArgumentResult = this match
       case Map | RenameRight | RenameLeft | File => true
       case _                                     => false
 
   object Kind:
-    def wireOf(k: Kind): String = k match
+    type TakesArgumentResult = TakesArgumentResult.T
+    object TakesArgumentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireOfResult = WireOfResult.T
+    object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def wireOf(k: Kind): com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult = k match
       case KeepLeft       => "keep-left"
       case KeepRight      => "keep-right"
       case Both           => "both"
@@ -72,12 +90,12 @@ object MergeDecision:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): String = wireOf(e)
-      def fromWire(s: String): Option[Kind] = Kind.values.find(k => wireOf(k) == s.trim)
+      def wire(e: Kind): com.histmersion.api.exchange.MergeDecision.Kind.WireResult = wireOf(e)
+      def fromWire(s: com.histmersion.api.exchange.MergeDecision.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == s.trim)
   def of(kind: MergeDecision.Kind): MergeDecision = MergeDecision(kind, None)
-  def withArg(kind: MergeDecision.Kind, arg: String): MergeDecision = MergeDecision(kind, Some(arg))
+  def withArg(kind: MergeDecision.Kind, arg: com.histmersion.api.exchange.MergeDecision.WithArgArg): MergeDecision = MergeDecision(kind, Some(arg))
 
-  def parse(raw: String): Either[String, MergeDecision] =
+  def parse(raw: com.histmersion.api.exchange.MergeDecision.ParseRaw): Either[com.histmersion.api.exchange.MergeDecision.ParseResultPart1, MergeDecision] =
     val s = raw.trim
     val (k, arg) = s.indexOf(':') match
       case -1 => (s, None)

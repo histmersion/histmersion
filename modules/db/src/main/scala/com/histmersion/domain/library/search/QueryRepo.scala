@@ -30,10 +30,41 @@ private[search] object QueryRepo:
   /** Run one statement. A rejected or failing statement is a VALUE (`Left(message)`), not an exception: a bad query is
     * an expected outcome of handing SQL to a model.
     */
-  def run(statement: String, maxRows: Int, maxCellChars: Int)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[String, QueryResult] =
+  type RunResultPart1 = RunResultPart1.T
+  object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStatement = RunStatement.T
+  object RunStatement extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunMaxRows = RunMaxRows.T
+  object RunMaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunMaxCellChars = RunMaxCellChars.T
+  object RunMaxCellChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExecResultPart1 = ExecResultPart1.T
+  object ExecResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExecText = ExecText.T
+  object ExecText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExecMaxRows = ExecMaxRows.T
+  object ExecMaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExecMaxCellChars = ExecMaxCellChars.T
+  object ExecMaxCellChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MessageResult = MessageResult.T
+  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadMaxRows = ReadMaxRows.T
+  object ReadMaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadMaxCellChars = ReadMaxCellChars.T
+  object ReadMaxCellChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadElapsedMs = ReadElapsedMs.T
+  object ReadElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CellResult = CellResult.T
+  object CellResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CellI = CellI.T
+  object CellI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CellMaxCellChars = CellMaxCellChars.T
+  object CellMaxCellChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def run(statement: com.histmersion.domain.library.search.QueryRepo.RunStatement, maxRows: com.histmersion.domain.library.search.QueryRepo.RunMaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.RunMaxCellChars)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[com.histmersion.domain.library.search.QueryRepo.RunResultPart1, QueryResult] =
     com.histmersion.api.library.Query.check(statement).flatMap(text => exec(text, maxRows, maxCellChars))
 
-  private def exec(text: String, maxRows: Int, maxCellChars: Int)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[String, QueryResult] =
+  private def exec(text: com.histmersion.domain.library.search.QueryRepo.ExecText, maxRows: com.histmersion.domain.library.search.QueryRepo.ExecMaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.ExecMaxCellChars)(using con: DbCon, timer: com.histmersion.util.time.Timer): Either[com.histmersion.domain.library.search.QueryRepo.ExecResultPart1, QueryResult] =
     val c: Connection = con.connection
     try
       val st = c.createStatement()
@@ -51,13 +82,13 @@ private[search] object QueryRepo:
     catch case e: SQLException => Left(message(e))
 
   /** Postgres's own words, with the driver's stack noise stripped. */
-  def message(e: SQLException): String =
+  def message(e: SQLException): com.histmersion.domain.library.search.QueryRepo.MessageResult =
     Option(e.getMessage)
       .map(_.linesIterator.take(3).mkString(" ").trim)
       .filter(_.nonEmpty)
       .getOrElse(e.getClass.getSimpleName)
 
-  private def read(rs: ResultSet, maxRows: Int, maxCellChars: Int, elapsedMs: Long): QueryResult =
+  private def read(rs: ResultSet, maxRows: com.histmersion.domain.library.search.QueryRepo.ReadMaxRows, maxCellChars: com.histmersion.domain.library.search.QueryRepo.ReadMaxCellChars, elapsedMs: com.histmersion.domain.library.search.QueryRepo.ReadElapsedMs): QueryResult =
     val md = rs.getMetaData
     val columns = (1 to md.getColumnCount).map(md.getColumnLabel).toList
     val rows = List.newBuilder[List[Option[String]]]
@@ -73,7 +104,7 @@ private[search] object QueryRepo:
   /** Every value is stringified — the only shape one static JSON schema can carry for an arbitrary projection. Long
     * values (an OCR body) are cut with an explicit marker rather than silently.
     */
-  private def cell(rs: ResultSet, i: Int, maxCellChars: Int): Option[String] =
+  private def cell(rs: ResultSet, i: com.histmersion.domain.library.search.QueryRepo.CellI, maxCellChars: com.histmersion.domain.library.search.QueryRepo.CellMaxCellChars): Option[com.histmersion.domain.library.search.QueryRepo.CellResult] =
     val v = rs.getString(i)
     if v == null || rs.wasNull() then None
     else if v.length > maxCellChars then Some(v.take(maxCellChars) + s"… (+${v.length - maxCellChars} chars)")

@@ -9,6 +9,17 @@ import com.histmersion.api.library.{Acquire, RetractionNotice}
   */
 private[acquisition] object AssessmentRepo:
 
+  type ReplaceRetractionWatchResult = ReplaceRetractionWatchResult.T
+  object ReplaceRetractionWatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RetractionCountResult = RetractionCountResult.T
+  object RetractionCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PutAssessmentResult = PutAssessmentResult.T
+  object PutAssessmentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssessmentForResultPart1 = AssessmentForResultPart1.T
+  object AssessmentForResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssessmentForResultPart2 = AssessmentForResultPart2.T
+  object AssessmentForResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private case class RwRow(nature: Option[RwRow.Nature], reason: Option[RwRow.Reason], date: Option[RwRow.Date]) derives DbCodec
 
   object RwRow:
@@ -42,7 +53,7 @@ private[acquisition] object AssessmentRepo:
   /** Replace the whole mirror: the CSV is a full export, so a partial refresh would leave a mixture of two vintages.
     * Batched — 60 000 single inserts take minutes.
     */
-  def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using DbCon): Int =
+  def replaceRetractionWatch(rows: List[Acquire.RetractionRow])(using DbCon): com.histmersion.domain.library.acquisition.AssessmentRepo.ReplaceRetractionWatchResult =
     sql"DELETE FROM retraction_watch".update.run()
     // the export can list a DOI twice (a retraction and a later reinstatement); the last wins
     val unique = rows.map(r => r.doi -> r).toMap.values.toVector
@@ -54,11 +65,11 @@ private[acquisition] object AssessmentRepo:
                 reason = EXCLUDED.reason, date = EXCLUDED.date, nature = EXCLUDED.nature""".update)
       unique.size
 
-  def retractionCount()(using DbCon): Int =
+  def retractionCount()(using DbCon): com.histmersion.domain.library.acquisition.AssessmentRepo.RetractionCountResult =
     sql"SELECT count(*)::int FROM retraction_watch".query[Int].run().headOption.getOrElse(0)
 
   /** Every Retraction Watch notice recorded against this DOI (usually zero or one). */
-  def retractionsFor(doi: String)(using DbCon): List[RetractionNotice] =
+  def retractionsFor(doi: com.histmersion.domain.library.Doi)(using DbCon): List[RetractionNotice] =
     sql"""SELECT nature, reason, to_char(date, 'YYYY-MM-DD')
           FROM retraction_watch WHERE doi = ${doi.toLowerCase}"""
       .query[RwRow]
@@ -67,7 +78,7 @@ private[acquisition] object AssessmentRepo:
       .toList
 
   /** Record the verdict for a stored source; the `checked_at` stamp. */
-  def putAssessment(a: AssessmentRecord)(using DbCon): String =
+  def putAssessment(a: AssessmentRecord)(using DbCon): com.histmersion.domain.library.acquisition.AssessmentRepo.PutAssessmentResult =
     sql"""INSERT INTO assessments (citekey, checked_at, retracted, notices, cited_by, influential, verdict)
           VALUES (${a.citekey}, now(), ${a.retracted}, ${a.noticesJson}::jsonb, ${a.citedBy}, ${a.influential},
                   ${a.verdict})
@@ -79,7 +90,7 @@ private[acquisition] object AssessmentRepo:
           FROM assessments WHERE citekey = ${a.citekey}""".query[String].run().headOption.getOrElse("")
 
   /** `(verdict, checkedAt)` of the last assessment, when there is one. */
-  def assessmentFor(citekey: String)(using DbCon): Option[(String, String)] =
+  def assessmentFor(citekey: com.histmersion.domain.library.Citekey)(using DbCon): Option[(com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentForResultPart1, com.histmersion.domain.library.acquisition.AssessmentRepo.AssessmentForResultPart2)] =
     sql"""SELECT citekey, to_char(checked_at AT TIME ZONE 'UTC', 'YYYY-MM-DD"T"HH24:MI:SS"Z"'),
                  retracted, cited_by, influential, verdict
           FROM assessments WHERE citekey = $citekey"""

@@ -45,12 +45,15 @@ object Goal:
   object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Status:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Planned = "planned"
     val Seeding = "seeding"
     val Compiled = "compiled"
     val Reviewed = "reviewed"
     val Done = "done"
-    val all: scala.List[String] = scala.List(Planned, Seeding, Compiled, Reviewed, Done)
+    val all: scala.List[com.histmersion.api.automation.Goal.Status.All] = scala.List(Planned, Seeding, Compiled, Reviewed, Done)
 
   /** What a goal is linked to. */
   enum LinkKind(val wire: String):
@@ -62,13 +65,20 @@ object Goal:
   object LinkKind:
 
     /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val SearchQuery: LinkKind = Query
 
-    def parse(s: String): Option[LinkKind] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = LinkKind.values
-      def wire(e: LinkKind): String = e.wire
-      def fromWire(s: String): Option[LinkKind] = parse(s)
+      def wire(e: LinkKind): com.histmersion.api.automation.Goal.LinkKind.WireResult = e.wire
+      def fromWire(s: com.histmersion.api.automation.Goal.LinkKind.FromWireS): Option[LinkKind] = parse(s)
 
 
   final case class Deleted(
@@ -94,7 +104,12 @@ object Goal:
 
   object List:
 
-    def of(total: Int, rows: scala.List[Goal], offset: Int): List =
+    type OfTotal = OfTotal.T
+    object OfTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfOffset = OfOffset.T
+    object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def of(total: com.histmersion.api.automation.Goal.List.OfTotal, rows: scala.List[Goal], offset: com.histmersion.api.automation.Goal.List.OfOffset): List =
       List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Patch(
@@ -158,9 +173,12 @@ object Goal:
         dropped: scala.List[Plan.Dropped] = Nil
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema:
-      def isEmpty: Boolean = subGoals.isEmpty && queries.isEmpty && works.isEmpty
+      def isEmpty: com.histmersion.api.automation.Goal.Plans.Plan.IsEmptyResult = subGoals.isEmpty && queries.isEmpty && works.isEmpty
 
     object Plan:
+      type IsEmptyResult = IsEmptyResult.T
+      object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       type Rationale = Rationale.T
       object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Queries = Queries.T
@@ -318,7 +336,16 @@ object Goal:
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
   object Stages:
-    val all: scala.List[(String, String)] = scala.List(
+    type AllPart1 = AllPart1.T
+    object AllPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AllPart2 = AllPart2.T
+    object AllPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MeaningResult = MeaningResult.T
+    object MeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MeaningStatus = MeaningStatus.T
+    object MeaningStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    val all: scala.List[(com.histmersion.api.automation.Goal.Stages.AllPart1, com.histmersion.api.automation.Goal.Stages.AllPart2)] = scala.List(
       com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet",
       com.histmersion.api.automation.Goal.Status.Seeding -> "finding and reading sources, writing its articles",
       com.histmersion.api.automation.Goal.Status.Compiled -> "its articles are written; not all have passed review yet",
@@ -326,4 +353,4 @@ object Goal:
       com.histmersion.api.automation.Goal.Status.Done -> "finished: only you set this, the autopilot never does"
     )
 
-    def meaning(status: String): Option[String] = all.collectFirst { case (s, m) if s == status => m }
+    def meaning(status: com.histmersion.api.automation.Goal.Stages.MeaningStatus): Option[com.histmersion.api.automation.Goal.Stages.MeaningResult] = all.collectFirst { case (s, m) if s == status => m }

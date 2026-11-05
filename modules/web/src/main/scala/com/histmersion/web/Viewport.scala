@@ -15,6 +15,35 @@ import scala.util.Try
   */
 object Viewport:
 
+  type ModeWidth = ModeWidth.T
+  object ModeWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModeHeight = ModeHeight.T
+  object ModeHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModeCoarsePointer = ModeCoarsePointer.T
+  object ModeCoarsePointer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModeMaxWidth = ModeMaxWidth.T
+  object ModeMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModeMaxHeight = ModeMaxHeight.T
+  object ModeMaxHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModeTabletMaxWidth = ModeTabletMaxWidth.T
+  object ModeTabletMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryResult = QueryResult.T
+  object QueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryMaxWidth = QueryMaxWidth.T
+  object QueryMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryMaxHeight = QueryMaxHeight.T
+  object QueryMaxHeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TabletQueryResult = TabletQueryResult.T
+  object TabletQueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TabletQueryTabletMaxWidth = TabletQueryTabletMaxWidth.T
+  object TabletQueryTabletMaxWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Narrow = Narrow.T
+  object Narrow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NarrowNowResult = NarrowNowResult.T
+  object NarrowNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TabletNowResult = TabletNowResult.T
+  object TabletNowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Mode(val wire: String):
     case Narrow extends Mode("narrow")
     case Tablet extends Mode("narrow")
@@ -24,30 +53,30 @@ object Viewport:
     * driven by touch — a phone held sideways, which is wide but has no room; else a tablet up to `tabletMaxWidth`.
     */
   def mode(
-      width: Double,
-      height: Double,
-      coarsePointer: Boolean,
-      maxWidth: Int,
-      maxHeight: Int,
-      tabletMaxWidth: Int
+      width: com.histmersion.web.Viewport.ModeWidth,
+      height: com.histmersion.web.Viewport.ModeHeight,
+      coarsePointer: com.histmersion.web.Viewport.ModeCoarsePointer,
+      maxWidth: com.histmersion.web.Viewport.ModeMaxWidth,
+      maxHeight: com.histmersion.web.Viewport.ModeMaxHeight,
+      tabletMaxWidth: com.histmersion.web.Viewport.ModeTabletMaxWidth
   ): Mode =
     if width <= maxWidth || (coarsePointer && height <= maxHeight) then Mode.Narrow
     else if width <= tabletMaxWidth then Mode.Tablet
     else Mode.Wide
 
   /** The phone's rule as a media query, so the browser tells us when it flips. */
-  def query(maxWidth: Int, maxHeight: Int): String =
+  def query(maxWidth: com.histmersion.web.Viewport.QueryMaxWidth, maxHeight: com.histmersion.web.Viewport.QueryMaxHeight): com.histmersion.web.Viewport.QueryResult =
     s"(max-width: ${maxWidth}px), (max-height: ${maxHeight}px) and (pointer: coarse)"
 
   /** The tablet's: every width up to its own limit (the phone's query is asked first). */
-  def tabletQuery(tabletMaxWidth: Int): String = s"(max-width: ${tabletMaxWidth}px)"
+  def tabletQuery(tabletMaxWidth: com.histmersion.web.Viewport.TabletQueryTabletMaxWidth): com.histmersion.web.Viewport.TabletQueryResult = s"(max-width: ${tabletMaxWidth}px)"
 
   private val current = Var(Mode.Wide)
 
   val modeSignal: Signal[Mode] = current.signal.distinct
-  val narrow: Signal[Boolean] = current.signal.map(_ != Mode.Wide)
-  def narrowNow: Boolean = current.now() != Mode.Wide
-  def tabletNow: Boolean = current.now() == Mode.Tablet
+  val narrow: Signal[com.histmersion.web.Viewport.Narrow] = current.signal.map(_ != Mode.Wide)
+  def narrowNow: com.histmersion.web.Viewport.NarrowNowResult = current.now() != Mode.Wide
+  def tabletNow: com.histmersion.web.Viewport.TabletNowResult = current.now() == Mode.Tablet
 
   /** Follow the viewport from now on. Called once by the composition root, with the config. */
   def init(ui: UiConfig): Unit =

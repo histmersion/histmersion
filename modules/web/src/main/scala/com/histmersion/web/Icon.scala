@@ -181,7 +181,10 @@ enum Icon(val paths: List[String]):
 
 object Icon:
   /** Pure: the icon as markup, for the places that are HTML strings (the map's key). */
-  def html(i: Icon): String =
+  type HtmlResult = HtmlResult.T
+  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def html(i: Icon): com.histmersion.web.Icon.HtmlResult =
     s"""<svg class="icon" viewBox="0 0 24 24" aria-hidden="true">${i.paths
         .map(d => s"""<path d="$d"/>""")
         .mkString}</svg>"""

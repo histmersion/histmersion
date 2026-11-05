@@ -12,12 +12,17 @@ import com.histmersion.plugin.AiTurn
   * `max_completion_tokens`. Unset fields and empty lists are left out; the schemas are sent exactly as given.
   */
 final case class ChatRequest(json: Json):
-  def body: String = json.noSpaces
+  def body: com.histmersion.plugins.ai.ChatRequest.BodyResult = json.noSpaces
 
 object ChatRequest:
 
   /** The request for `r`. */
-  def of(r: AiTurn.Request, strictTools: Boolean): ChatRequest =
+  type BodyResult = BodyResult.T
+  object BodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStrictTools = OfStrictTools.T
+  object OfStrictTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(r: AiTurn.Request, strictTools: com.histmersion.plugins.ai.ChatRequest.OfStrictTools): ChatRequest =
     val system = Json.obj("content" -> Json.fromString(r.system), "role" -> Json.fromString("system"))
     val format = r.answerSchemaRendered.orElse(r.answerSchema).flatMap(s => parse(s).toOption).map { s =>
       Json.obj(

@@ -15,7 +15,7 @@ import scala.scalajs.js.JSConverters.*
   */
 final private[maplibre] class GlPointTiles(gl: GlMap, id: String, layer: String, maxZoom: Int) extends PointTiles:
   // `var`s: the template asked for, and the listeners
-  private var template: Option[String] = None
+  private var template: Option[com.histmersion.web.map.maplibre.GlPointTiles.Template] = None
   private val listeners = mutable.ListBuffer.empty[() => Unit]
   private var queued = false
   private val hitLayer = s"$id-points"
@@ -59,7 +59,7 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: String, layer: String,
         }
     }
 
-  def setTiles(t: Option[String]): Unit =
+  def setTiles(t: Option[com.histmersion.web.map.maplibre.GlPointTiles.SetTilesT]): Unit =
     if t != template then
       template = t
       t match
@@ -73,7 +73,7 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: String, layer: String,
             case Some(src) => scala.util.Try(src.setTiles(js.Array(url)))
             case None      => restore()
 
-  def loaded: Boolean =
+  def loaded: com.histmersion.web.map.maplibre.GlPointTiles.LoadedResult =
     template.isEmpty || scala.util.Try(gl.getSource(id).isDefined && gl.isSourceLoaded(id)).getOrElse(false)
 
   def onChange(f: () => Unit): Subscription =
@@ -97,3 +97,11 @@ final private[maplibre] class GlPointTiles(gl: GlMap, id: String, layer: String,
           if !atZoom || !seen.add(key) then None
           else ShapeHits.point(f.geometry).map(TilePointFeature(_, props))
         }
+
+object GlPointTiles:
+  type Template = Template.T
+  object Template extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetTilesT = SetTilesT.T
+  object SetTilesT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadedResult = LoadedResult.T
+  object LoadedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

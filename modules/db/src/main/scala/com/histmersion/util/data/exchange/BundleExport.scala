@@ -21,13 +21,18 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundleExport:
 
+  type WriteResultPart1 = WriteResultPart1.T
+  object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteSince = WriteSince.T
+  object WriteSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def write(
       ds: DataSource,
       out: OutputStream,
-      since: Option[String],
+      since: Option[com.histmersion.util.data.exchange.BundleExport.WriteSince],
       files: ContentStore,
       kinds: CarriedKinds
-  ): Either[String, Bundle.Manifest] =
+  ): Either[com.histmersion.util.data.exchange.BundleExport.WriteResultPart1, Bundle.Manifest] =
     transact(ds):
       sql"SET TRANSACTION ISOLATION LEVEL REPEATABLE READ, READ ONLY".update.run()
       val scope = since.fold(BundleScope.All)(BundleScope.Since(_))

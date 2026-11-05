@@ -15,11 +15,14 @@ final case class BasemapBathymetryConfig(
     source: SeaFloorSource,
     gebco: BasemapGebcoConfig
 ) derives ConfigReader:
-  def extractMaxZoom: Int = source match
+  def extractMaxZoom: com.histmersion.config.BasemapBathymetryConfig.ExtractMaxZoomResult = source match
     case SeaFloorSource.Etopo1 => maxZoom
     case SeaFloorSource.Gebco  => gebco.maxZoom
 
 object BasemapBathymetryConfig:
+  type ExtractMaxZoomResult = ExtractMaxZoomResult.T
+  object ExtractMaxZoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Url = Url.T
   object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxZoom = MaxZoom.T

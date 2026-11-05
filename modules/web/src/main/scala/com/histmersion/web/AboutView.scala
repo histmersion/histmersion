@@ -20,6 +20,11 @@ object AboutView:
   /** One line of the panel. `state` marks a health check with its badge; `depth` > 0 is a location inside the one above
     * it (the Storage section); `href` makes the value a link.
     */
+  type CheckLabel = CheckLabel.T
+  object CheckLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckText = CheckText.T
+  object CheckText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Row(
       label: Row.Label,
       value: Row.Value,
@@ -47,7 +52,7 @@ object AboutView:
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A health text as a row: its state, and the text itself as the detail unless it only says "ok". */
-  private[web] def check(label: String, text: Option[String]): Row =
+  private[web] def check(label: com.histmersion.web.AboutView.CheckLabel, text: Option[com.histmersion.web.AboutView.CheckText]): Row =
     val st = ServiceState.of(text)
     Row(label, st.label, Some(st), text.map(_.trim).filter(t => t.nonEmpty && !t.equalsIgnoreCase(st.label)))
 

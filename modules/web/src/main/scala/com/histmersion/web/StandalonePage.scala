@@ -11,7 +11,10 @@ import scala.scalajs.js
 object StandalonePage:
 
   /** The server marks the page kind on `<body data-page>`; the web UI's own page has none. */
-  def isStandalone: Boolean = Option(document.body).exists(_.hasAttribute("data-page"))
+  type IsStandaloneResult = IsStandaloneResult.T
+  object IsStandaloneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def isStandalone: com.histmersion.web.StandalonePage.IsStandaloneResult = Option(document.body).exists(_.hasAttribute("data-page"))
 
   def init(): Unit =
     Theme.install()

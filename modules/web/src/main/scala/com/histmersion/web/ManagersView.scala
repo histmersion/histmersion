@@ -29,13 +29,162 @@ import com.histmersion.api.automation.Goal
 object ManagersView:
 
   /** Items per page, events per page. */
+  type BadgeResult = BadgeResult.T
+  object BadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerMeaningResult = ManagerMeaningResult.T
+  object ManagerMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerMeaningId = ManagerMeaningId.T
+  object ManagerMeaningId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemStatusMeaningResult = ItemStatusMeaningResult.T
+  object ItemStatusMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemActionsForResult = ItemActionsForResult.T
+  object ItemActionsForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemActionsResult = ItemActionsResult.T
+  object ItemActionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemActionsStatus = ItemActionsStatus.T
+  object ItemActionsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntResult = IntResult.T
+  object IntResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntS = IntS.T
+  object IntS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListResult = ListResult.T
+  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListS = ListS.T
+  object ListS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListSep = ListSep.T
+  object ListSep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigResultPart1 = ConfigResultPart1.T
+  object ConfigResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigFPart1 = ConfigFPart1.T
+  object ConfigFPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigFPart2 = ConfigFPart2.T
+  object ConfigFPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldsResultPart1 = FieldsResultPart1.T
+  object FieldsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FieldsResultPart2 = FieldsResultPart2.T
+  object FieldsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsPart1 = SettingsPart1.T
+  object SettingsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsPart2 = SettingsPart2.T
+  object SettingsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsForResultPart1 = SettingsForResultPart1.T
+  object SettingsForResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsForResultPart2 = SettingsForResultPart2.T
+  object SettingsForResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsForKind = SettingsForKind.T
+  object SettingsForKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintResultPart1 = HintResultPart1.T
+  object HintResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintText = HintText.T
+  object HintText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintItem = HintItem.T
+  object HintItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintOnce = HintOnce.T
+  object HintOnce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintAction = HintAction.T
+  object HintAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintTargets = HintTargets.T
+  object HintTargets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintTag = HintTag.T
+  object HintTag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintUntil = HintUntil.T
+  object HintUntil extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintUntilSource = HintUntilSource.T
+  object HintUntilSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintSuggest = HintSuggest.T
+  object HintSuggest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnqueuedNoteResult = EnqueuedNoteResult.T
+  object EnqueuedNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnqueueButtonsTarget = EnqueueButtonsTarget.T
+  object EnqueueButtonsTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnqueueButtonsButtonsPart3 = EnqueueButtonsButtonsPart3.T
+  object EnqueueButtonsButtonsPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnqueueButtonsButtonsPart4 = EnqueueButtonsButtonsPart4.T
+  object EnqueueButtonsButtonsPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleActionsSlug = ArticleActionsSlug.T
+  object ArticleActionsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalActionsSlug = GoalActionsSlug.T
+  object GoalActionsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalLineResult = GoalLineResult.T
+  object GoalLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusPaceResult = FocusPaceResult.T
+  object FocusPaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitingSummaryResult = WaitingSummaryResult.T
+  object WaitingSummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusHeadResult = FocusHeadResult.T
+  object FocusHeadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusPanelFailure = FocusPanelFailure.T
+  object FocusPanelFailure extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainLineResult = DrainLineResult.T
+  object DrainLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StagesResult = StagesResult.T
+  object StagesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VisibleWaitingTypes = VisibleWaitingTypes.T
+  object VisibleWaitingTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VisibleWaitingCodes = VisibleWaitingCodes.T
+  object VisibleWaitingCodes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VisibleWaitingSubject = VisibleWaitingSubject.T
+  object VisibleWaitingSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobTypeMeaningResult = JobTypeMeaningResult.T
+  object JobTypeMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobTypeMeaningJobType = JobTypeMeaningJobType.T
+  object JobTypeMeaningJobType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitMeaningResult = WaitMeaningResult.T
+  object WaitMeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitMeaningCode = WaitMeaningCode.T
+  object WaitMeaningCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetResultPart1 = FacetResultPart1.T
+  object FacetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetResultPart2 = FacetResultPart2.T
+  object FacetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetOfResult = FacetOfResult.T
+  object FacetOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrategyLabelResult = StrategyLabelResult.T
+  object StrategyLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrategyLabelName = StrategyLabelName.T
+  object StrategyLabelName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobTypeLabelResult = JobTypeLabelResult.T
+  object JobTypeLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobTypeLabelT = JobTypeLabelT.T
+  object JobTypeLabelT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitLabelResult = WaitLabelResult.T
+  object WaitLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitLabelCode = WaitLabelCode.T
+  object WaitLabelCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SchedulerHeadResult = SchedulerHeadResult.T
+  object SchedulerHeadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsResult = CountsResult.T
+  object CountsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerPaneId = ManagerPaneId.T
+  object ManagerPaneId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadBusy = HeadBusy.T
+  object HeadBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadWriteArg1 = HeadWriteArg1.T
+  object HeadWriteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemRowMid = ItemRowMid.T
+  object ItemRowMid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemRowBusy = ItemRowBusy.T
+  object ItemRowBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemRowWriteArg1 = ItemRowWriteArg1.T
+  object ItemRowWriteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintBoxId = HintBoxId.T
+  object HintBoxId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintBoxBusy = HintBoxBusy.T
+  object HintBoxBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HintBoxWriteArg1 = HintBoxWriteArg1.T
+  object HintBoxWriteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsBusy = SettingsBusy.T
+  object SettingsBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsWriteArg1 = SettingsWriteArg1.T
+  object SettingsWriteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val ItemLimit = 25
   val EventLimit = 30
 
   // ── pure parts ──────────────────────────────────────────────────────────────────────────────────
 
   /** The badge of a manager: its person-set state, or — active — what the supervisor derived. */
-  def badge(m: ManagerInfo): String =
+  def badge(m: ManagerInfo): com.histmersion.web.ManagersView.BadgeResult =
     val note = m.statusNote.getOrElse("")
     if m.state != State.Active.wire then m.state
     else if note.startsWith("starved") then "starved"
@@ -48,7 +197,7 @@ object ManagersView:
   /** What a manager does, from its id (`review`, `enrich`, `seed:<goal>`, `watch:<goal>`); a tooltip on the runs
     * window's manager menu.
     */
-  def managerMeaning(id: String): Option[String] =
+  def managerMeaning(id: com.histmersion.web.ManagersView.ManagerMeaningId): Option[com.histmersion.web.ManagersView.ManagerMeaningResult] =
     val goal = id.dropWhile(_ != ':').drop(1)
     Kind.parse(id.takeWhile(_ != ':')).map {
       case Kind.Review => "The review manager: reviews the library's articles until their reviews converge."
@@ -59,7 +208,7 @@ object ManagersView:
     }
 
   /** What each status of a manager's item means; a tooltip on the items' filter buttons. */
-  def itemStatusMeaning(s: ItemStatus): String = s match
+  def itemStatusMeaning(s: ItemStatus): com.histmersion.web.ManagersView.ItemStatusMeaningResult = s match
     case ItemStatus.Pending => "Waiting to start; the scheduler picks the order."
     case ItemStatus.Held    => "Held: it does not start until released, its approval is decided, or its hold ends."
     case ItemStatus.Active  => "A run is working on it now."
@@ -72,11 +221,11 @@ object ManagersView:
   /** What a person can do to this item: by its status — but an item the autopilot's focus holds is not released by hand
     * (pin its goal instead).
     */
-  def itemActionsFor(i: ManagerItem): List[String] =
+  def itemActionsFor(i: ManagerItem): List[com.histmersion.web.ManagersView.ItemActionsForResult] =
     if i.hold.exists(_.focus.isDefined) then itemActions(i.status).filterNot(_ == "release") else itemActions(i.status)
 
   /** What a person can do to an item in this status. */
-  def itemActions(status: String): List[String] = ItemStatus.parse(status) match
+  def itemActions(status: com.histmersion.web.ManagersView.ItemActionsStatus): List[com.histmersion.web.ManagersView.ItemActionsResult] = ItemStatus.parse(status) match
     case Some(ItemStatus.Pending) => List("hold", "priority", "skip")
     case Some(ItemStatus.Held)    => List("release", "priority", "skip")
     case Some(ItemStatus.Active)  => List("priority", "skip")
@@ -84,13 +233,13 @@ object ManagersView:
     case _                        => Nil
 
   /** A whole number the person typed, or nothing. */
-  def int(s: String): Option[Int] = s.trim.toIntOption.filter(_ >= 0)
+  def int(s: com.histmersion.web.ManagersView.IntS): Option[com.histmersion.web.ManagersView.IntResult] = s.trim.toIntOption.filter(_ >= 0)
 
-  private def list(s: String, sep: String): Option[List[String]] =
+  private def list(s: com.histmersion.web.ManagersView.ListS, sep: com.histmersion.web.ManagersView.ListSep): Option[List[com.histmersion.web.ManagersView.ListResult]] =
     Option(s.split(sep).toList.map(_.trim).filter(_.nonEmpty)).filter(_.nonEmpty)
 
   /** The settings form → a config (blank fields are the server's defaults). Left = what does not parse. */
-  def config(f: Map[String, String]): Either[String, ManagerConfig] =
+  def config(f: Map[com.histmersion.web.ManagersView.ConfigFPart1, com.histmersion.web.ManagersView.ConfigFPart2]): Either[com.histmersion.web.ManagersView.ConfigResultPart1, ManagerConfig] =
     def g(k: String) = f.getOrElse(k, "").trim
     val bad = List(
       "maxRuns",
@@ -166,7 +315,7 @@ object ManagersView:
       )
 
   /** A config as the form shows it (blank = the default). */
-  def fields(c: ManagerConfig): Map[String, String] = Map(
+  def fields(c: ManagerConfig): Map[com.histmersion.web.ManagersView.FieldsResultPart1, com.histmersion.web.ManagersView.FieldsResultPart2] = Map(
     "maxRuns" -> c.maxRuns,
     "maxOpen" -> c.maxOpen,
     "rounds" -> c.rounds,
@@ -195,7 +344,7 @@ object ManagersView:
   )
 
   /** The settings the form offers, with their labels. */
-  val Settings: List[(String, String)] = List(
+  val Settings: List[(com.histmersion.web.ManagersView.SettingsPart1, com.histmersion.web.ManagersView.SettingsPart2)] = List(
     "maxRuns" -> "runs at once",
     "maxOpen" -> "open runs (incl. paused)",
     "rounds" -> "rounds per run",
@@ -225,7 +374,7 @@ object ManagersView:
   /** What a manager's settings form offers: every setting, but a watcher's only to a watcher (and the review settings
     * not to one).
     */
-  def settingsFor(kind: String): List[(String, String)] =
+  def settingsFor(kind: com.histmersion.web.ManagersView.SettingsForKind): List[(com.histmersion.web.ManagersView.SettingsForResultPart1, com.histmersion.web.ManagersView.SettingsForResultPart2)] =
     val watchOnly = Set("sweeps", "autoIngest", "autoIngestPerDay")
     val reviewOnly = Set(
       "rounds",
@@ -251,16 +400,16 @@ object ManagersView:
     * = the server's model proposes the action (none chosen here; a person approves what it proposes).
     */
   def hint(
-      text: String,
-      item: String,
-      once: Boolean,
-      action: String,
-      targets: String,
-      tag: String,
-      until: String,
-      untilSource: String,
-      suggest: Boolean = false
-  ): Either[String, HintAdd] =
+      text: com.histmersion.web.ManagersView.HintText,
+      item: com.histmersion.web.ManagersView.HintItem,
+      once: com.histmersion.web.ManagersView.HintOnce,
+      action: com.histmersion.web.ManagersView.HintAction,
+      targets: com.histmersion.web.ManagersView.HintTargets,
+      tag: com.histmersion.web.ManagersView.HintTag,
+      until: com.histmersion.web.ManagersView.HintUntil,
+      untilSource: com.histmersion.web.ManagersView.HintUntilSource,
+      suggest: com.histmersion.web.ManagersView.HintSuggest = false
+  ): Either[com.histmersion.web.ManagersView.HintResultPart1, HintAdd] =
     val t = text.trim
     val a = action.trim.toLowerCase
     if t.isEmpty then Left("a hint needs text")
@@ -286,7 +435,7 @@ object ManagersView:
   // ── the page buttons: Review, Extend, Enrich ────────────────────────────────────────────────────
 
   /** What an enqueue did, in one line: the items queued (and how many were skipped as enriched). */
-  def enqueuedNote(kind: EnqueueKind, r: EnqueueResult): String =
+  def enqueuedNote(kind: EnqueueKind, r: EnqueueResult): com.histmersion.web.ManagersView.EnqueuedNoteResult =
     val what = kind match
       case EnqueueKind.Review => "queued for review"
       case EnqueueKind.Extend => "queued to be extended, then reviewed"
@@ -302,7 +451,7 @@ object ManagersView:
   /** Buttons that hand a target to a manager (only where the server runs agents), with the line saying what was queued
     * and a link to the manager.
     */
-  def enqueueButtons(target: String, buttons: List[(EnqueueKind, Icon, String, String)]): HtmlElement =
+  def enqueueButtons(target: com.histmersion.web.ManagersView.EnqueueButtonsTarget, buttons: List[(EnqueueKind, Icon, com.histmersion.web.ManagersView.EnqueueButtonsButtonsPart3, com.histmersion.web.ManagersView.EnqueueButtonsButtonsPart4)]): HtmlElement =
     val note = Var(Option.empty[(String, String)])
     def go(kind: EnqueueKind): Unit =
       ApiClient
@@ -330,7 +479,7 @@ object ManagersView:
   /** The article window: Review (the review manager, first in line), Extend (compile the new sources of its filter into
     * it, then review it) and Enrich (the sources it cites that are not enriched yet).
     */
-  def articleActions(slug: String): HtmlElement =
+  def articleActions(slug: com.histmersion.web.ManagersView.ArticleActionsSlug): HtmlElement =
     enqueueButtons(
       slug,
       List(
@@ -348,7 +497,7 @@ object ManagersView:
   /** The goal window: Extend (its seeding manager proposes its next articles — a person approves the plan) and Enrich
     * (the sources linked to it that are not enriched yet).
     */
-  def goalActions(slug: String): HtmlElement =
+  def goalActions(slug: com.histmersion.web.ManagersView.GoalActionsSlug): HtmlElement =
     enqueueButtons(
       slug,
       List(
@@ -365,21 +514,21 @@ object ManagersView:
   // ── the autopilot ───────────────────────────────────────────────────────────────────────────────
 
   /** One goal's line in the autopilot's table: its counts and its pace. */
-  def goalLine(g: Autopilot.GoalProgress): String =
+  def goalLine(g: Autopilot.GoalProgress): com.histmersion.web.ManagersView.GoalLineResult =
     s"${Plural.count(g.sources, "source")} · ${Plural.count(g.articles, "article")}" +
       (if g.openApprovals > 0 then s" · ${Plural.count(g.openApprovals, "open approval")}" else "") +
       s" · ${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)")
 
   /** An active or queued goal's pace, in a line. */
-  def focusPace(g: Autopilot.FocusGoal): String =
+  def focusPace(g: Autopilot.FocusGoal): com.histmersion.web.ManagersView.FocusPaceResult =
     s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s" (~$d d)")
 
   /** The goals that cannot use a focus slot now, by why, the commonest first. */
-  def waitingSummary(ws: List[Autopilot.FocusWaiting]): String =
+  def waitingSummary(ws: List[Autopilot.FocusWaiting]): com.histmersion.web.ManagersView.WaitingSummaryResult =
     ws.groupBy(_.code).toList.sortBy((c, xs) => (-xs.size, c)).map((c, xs) => s"${xs.size} $c").mkString(" · ")
 
   /** The focus's heading: the cap and where it comes from, or why it is not in force. */
-  def focusHead(f: Autopilot.FocusInfo): String =
+  def focusHead(f: Autopilot.FocusInfo): com.histmersion.web.ManagersView.FocusHeadResult =
     (if f.on then s"Focus: at most ${f.max} active goals" else "Focus: not in force") +
       (if f.maxFrom == "person" then " (cap set by a person)" else "") +
       (if f.held > 0 then s" · ${Plural.count(f.held, "item")} held" else "")
@@ -391,7 +540,7 @@ object ManagersView:
   private def focusPanel(
       f: Autopilot.FocusInfo,
       changed: Autopilot.FocusInfo => Unit,
-      failure: Var[Option[String]]
+      failure: Var[Option[com.histmersion.web.ManagersView.FocusPanelFailure]]
   ): HtmlElement =
     val cap = Var(f.max.toString)
     def go(what: String)(call: => scala.concurrent.Future[Autopilot.FocusInfo]): Unit =
@@ -493,7 +642,7 @@ object ManagersView:
     )
 
   /** The drain in a line: draining (runs still finishing) or drained (safe to stop the server). */
-  def drainLine(d: Autopilot.DrainInfo): String =
+  def drainLine(d: Autopilot.DrainInfo): com.histmersion.web.ManagersView.DrainLineResult =
     if d.drained then
       s"Paused since ${d.drainedAt.getOrElse(d.since)}: nothing runs, nothing new starts — safe to stop the server"
     else
@@ -503,7 +652,7 @@ object ManagersView:
         s"${Plural.count(d.inFlight, "run")} in flight still finishing"
 
   /** The goals by stage, in the order a goal moves through them: how many in each. */
-  def stages(gs: List[Autopilot.GoalProgress]): String =
+  def stages(gs: List[Autopilot.GoalProgress]): com.histmersion.web.ManagersView.StagesResult =
     Goal.Status.all.map(st => st -> gs.count(_.status == st)).filter(_._2 > 0).map((st, n) => s"$n $st").mkString(" · ")
 
   /** The switch and the status: on/off (the click shows the new state at once; the server's answer follows), the
@@ -639,9 +788,9 @@ object ManagersView:
   /** The waiting items a person's filters leave: any of the job types, any of the reasons, the target text. */
   def visibleWaiting(
       ws: List[AgentScheduler.Waiting],
-      types: List[String],
-      codes: List[String],
-      subject: Option[String]
+      types: List[com.histmersion.web.ManagersView.VisibleWaitingTypes],
+      codes: List[com.histmersion.web.ManagersView.VisibleWaitingCodes],
+      subject: Option[com.histmersion.web.ManagersView.VisibleWaitingSubject]
   ): List[AgentScheduler.Waiting] =
     ws.filter(w =>
       (types.isEmpty || types.contains(w.jobType)) && (codes.isEmpty || codes.contains(w.code)) &&
@@ -651,7 +800,7 @@ object ManagersView:
     )
 
   /** What each job type of the scheduler's queue is; a tooltip on its filter chip. */
-  def jobTypeMeaning(jobType: String): Option[String] = jobType match
+  def jobTypeMeaning(jobType: com.histmersion.web.ManagersView.JobTypeMeaningJobType): Option[com.histmersion.web.ManagersView.JobTypeMeaningResult] = jobType match
     case "goal-plan" => Some("Planning a research goal: its sub-goals, search queries and works (plan-goal runs).")
     case "propose"   => Some("Proposing the articles a research area should have (propose-articles runs).")
     case "sweep"     =>
@@ -666,7 +815,7 @@ object ManagersView:
     case _         => None
 
   /** Why an item waits, by its code (the queue's, and an item's own); a tooltip on the "why" chips. */
-  def waitMeaning(code: String): Option[String] = code match
+  def waitMeaning(code: com.histmersion.web.ManagersView.WaitMeaningCode): Option[com.histmersion.web.ManagersView.WaitMeaningResult] = code match
     case "capacity" =>
       Some("No place free: the most runs at once are running. It starts when one finishes, in the order shown.")
     case "pool"        => Some("The subscription plan its models draw on already carries as many runs as it takes.")
@@ -686,15 +835,15 @@ object ManagersView:
     case _                           => None
 
   /** A facet of the queue as the filter chips count it: each value with its items, the most first. */
-  def facet(ws: List[AgentScheduler.Waiting], of: AgentScheduler.Waiting => String): List[(String, Int)] =
+  def facet(ws: List[AgentScheduler.Waiting], of: AgentScheduler.Waiting => com.histmersion.web.ManagersView.FacetOfResult): List[(com.histmersion.web.ManagersView.FacetResultPart1, com.histmersion.web.ManagersView.FacetResultPart2)] =
     ws.groupMapReduce(of)(_ => 1)(_ + _).toList.sortBy((v, n) => (-n, v))
 
-  def strategyLabel(name: String): String = Wording.strategies.getOrElse(name, Wording.humanize(name))
-  def jobTypeLabel(t: String): String = Wording.schedulerJobTypes.getOrElse(t, Wording.humanize(t))
-  def waitLabel(code: String): String = AgentScheduler.waitCodes.getOrElse(code, Wording.humanize(code))
+  def strategyLabel(name: com.histmersion.web.ManagersView.StrategyLabelName): com.histmersion.web.ManagersView.StrategyLabelResult = Wording.strategies.getOrElse(name, Wording.humanize(name))
+  def jobTypeLabel(t: com.histmersion.web.ManagersView.JobTypeLabelT): com.histmersion.web.ManagersView.JobTypeLabelResult = Wording.schedulerJobTypes.getOrElse(t, Wording.humanize(t))
+  def waitLabel(code: com.histmersion.web.ManagersView.WaitLabelCode): com.histmersion.web.ManagersView.WaitLabelResult = AgentScheduler.waitCodes.getOrElse(code, Wording.humanize(code))
 
   /** The scheduler's heading: the strategy (and who chose it), the runs at once, the pools, what waits for a person. */
-  def schedulerHead(s: AgentScheduler.SchedulerStatus): String =
+  def schedulerHead(s: AgentScheduler.SchedulerStatus): com.histmersion.web.ManagersView.SchedulerHeadResult =
     s"Scheduler: ${strategyLabel(s.strategy)}" + (if s.strategyFrom == "person" then " (set by a person)" else "") +
       s" · ${s.occupied} of ${s.maxRuns} runs at once" +
       (if s.pools.isEmpty then ""
@@ -969,7 +1118,7 @@ object ManagersView:
       }
     )
 
-  private def counts(c: ItemCounts): String =
+  private def counts(c: ItemCounts): com.histmersion.web.ManagersView.CountsResult =
     List(
       "pending" -> c.pending,
       "held" -> c.held,
@@ -983,7 +1132,7 @@ object ManagersView:
 
   // ── one manager ─────────────────────────────────────────────────────────────────────────────────
 
-  def managerPane(id: String): HtmlElement =
+  def managerPane(id: com.histmersion.web.ManagersView.ManagerPaneId): HtmlElement =
     val detail = Var(Option.empty[ManagerDetail])
     val page = Var(Option.empty[ItemPage])
     val offset = Var(0)
@@ -1182,8 +1331,8 @@ object ManagersView:
 
   private def head(
       d: ManagerDetail,
-      busy: Signal[Boolean],
-      write: String => (=> scala.concurrent.Future[Any]) => Unit
+      busy: Signal[com.histmersion.web.ManagersView.HeadBusy],
+      write: com.histmersion.web.ManagersView.HeadWriteArg1 => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val m = d.manager
     div(
@@ -1279,10 +1428,10 @@ object ManagersView:
     )
 
   private def itemRow(
-      mid: String,
+      mid: com.histmersion.web.ManagersView.ItemRowMid,
       i: ManagerItem,
-      busy: Signal[Boolean],
-      write: String => (=> scala.concurrent.Future[Any]) => Unit
+      busy: Signal[com.histmersion.web.ManagersView.ItemRowBusy],
+      write: com.histmersion.web.ManagersView.ItemRowWriteArg1 => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val prio = Var(i.priority.toString)
     val until = Var("")
@@ -1387,9 +1536,9 @@ object ManagersView:
     )
 
   private def hintBox(
-      id: String,
-      busy: Signal[Boolean],
-      write: String => (=> scala.concurrent.Future[Any]) => Unit
+      id: com.histmersion.web.ManagersView.HintBoxId,
+      busy: Signal[com.histmersion.web.ManagersView.HintBoxBusy],
+      write: com.histmersion.web.ManagersView.HintBoxWriteArg1 => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val text = Var("")
     val item = Var("")
@@ -1528,8 +1677,8 @@ object ManagersView:
 
   private def settings(
       m: ManagerInfo,
-      busy: Signal[Boolean],
-      write: String => (=> scala.concurrent.Future[Any]) => Unit
+      busy: Signal[com.histmersion.web.ManagersView.SettingsBusy],
+      write: com.histmersion.web.ManagersView.SettingsWriteArg1 => (=> scala.concurrent.Future[Any]) => Unit
   ): HtmlElement =
     val form = Var(fields(m.config))
     val cron = Var(m.cron.getOrElse(""))

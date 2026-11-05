@@ -14,5 +14,8 @@ enum LibrarySort(val wire: String, val label: String, val sort: Sort):
 
 object LibrarySort:
   /** Pure: the order an address names; relevance for none, or for one it does not know. */
-  def of(wire: Option[String]): LibrarySort =
+  type OfWire = OfWire.T
+  object OfWire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(wire: Option[com.histmersion.web.library.LibrarySort.OfWire]): LibrarySort =
     wire.flatMap(w => values.find(_.wire == w.trim.toLowerCase)).getOrElse(Relevance)

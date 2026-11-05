@@ -24,6 +24,17 @@ import scala.util.Using
 object OutboundTls:
 
   /** A command → its standard output (the seam a test replaces). */
+  type CertificatesPem = CertificatesPem.T
+  object CertificatesPem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootsResultPart1 = RootsResultPart1.T
+  object RootsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigureResultPart2 = ConfigureResultPart2.T
+  object ConfigureResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfigureOsName = ConfigureOsName.T
+  object ConfigureOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Run = List[String] => Either[String, String]
 
   /** Runs a command, waiting at most 30 s. */
@@ -48,7 +59,7 @@ object OutboundTls:
       catch case e: Exception => Left(s"$p: ${e.getMessage}")
 
   /** The X.509 certificates in a PEM text; a block that does not parse is skipped. */
-  def certificates(pem: String): List[X509Certificate] =
+  def certificates(pem: com.histmersion.pluginhost.OutboundTls.CertificatesPem): List[X509Certificate] =
     val cf = CertificateFactory.getInstance("X.509")
     HttpPolicy
       .pemCertificates(pem)
@@ -59,7 +70,7 @@ object OutboundTls:
       )
 
   /** The roots one source adds (none for [[HttpPolicy.Trust.Jdk]], which is the base). */
-  def roots(t: HttpPolicy.Trust, run: Run = run, read: Read = read): Either[String, List[X509Certificate]] = t match
+  def roots(t: HttpPolicy.Trust, run: Run = run, read: Read = read): Either[com.histmersion.pluginhost.OutboundTls.RootsResultPart1, List[X509Certificate]] = t match
     case HttpPolicy.Trust.Jdk              => Right(Nil)
     case HttpPolicy.Trust.Keychains(paths) =>
       val found = paths.filter(p => Files.exists(Path.of(p)))
@@ -112,10 +123,10 @@ object OutboundTls:
     */
   def configure(
       cfg: TlsConfig,
-      osName: String = System.getProperty("os.name", ""),
+      osName: com.histmersion.pluginhost.OutboundTls.ConfigureOsName = System.getProperty("os.name", ""),
       run: Run = run,
       read: Read = read
-  ): Option[(SSLContext, String)] =
+  ): Option[(SSLContext, com.histmersion.pluginhost.OutboundTls.ConfigureResultPart2)] =
     Option.when(cfg.custom) {
       val sources = HttpPolicy.trust(cfg.systemTrust, cfg.extraCa, osName).filterNot(_ == HttpPolicy.Trust.Jdk)
       val got = sources.map(s => s -> roots(s, run, read))
@@ -127,7 +138,7 @@ object OutboundTls:
       context(extra) -> s"acquire TLS trusts the JDK's roots + ${notes.mkString("; ")}"
     }
 
-  private def describe(t: HttpPolicy.Trust): String = t match
+  private def describe(t: HttpPolicy.Trust): com.histmersion.pluginhost.OutboundTls.DescribeResult = t match
     case HttpPolicy.Trust.Jdk          => "the JDK"
     case HttpPolicy.Trust.Keychains(_) => "the macOS system keychains"
     case HttpPolicy.Trust.Bundle(_)    => "the system CA bundle"

@@ -44,11 +44,11 @@ final class AgentDoctor(
 
   private val cfg = app.agents
 
-  private def ok(n: String, d: String) = DoctorCheck(n, CheckLevel.Ok, d)
-  private def warn(n: String, d: String) = DoctorCheck(n, CheckLevel.Warn, d)
-  private def fail(n: String, d: String) = DoctorCheck(n, CheckLevel.Fail, d)
+  private def ok(n: com.histmersion.server.agents.AgentDoctor.OkN, d: com.histmersion.server.agents.AgentDoctor.OkD) = DoctorCheck(n, CheckLevel.Ok, d)
+  private def warn(n: com.histmersion.server.agents.AgentDoctor.WarnN, d: com.histmersion.server.agents.AgentDoctor.WarnD) = DoctorCheck(n, CheckLevel.Warn, d)
+  private def fail(n: com.histmersion.server.agents.AgentDoctor.FailN, d: com.histmersion.server.agents.AgentDoctor.FailD) = DoctorCheck(n, CheckLevel.Fail, d)
 
-  def report(online: Boolean): DoctorReport =
+  def report(online: com.histmersion.server.agents.AgentDoctor.ReportOnline): DoctorReport =
     val chains = Role.values.toList.map(r => r -> picker.chain(r))
     val chained = chains.flatMap(_._2.toOption.toList.flatMap(_._1)).distinct
     val (allowances, allowanceProblems) = picker.allowances
@@ -91,7 +91,7 @@ final class AgentDoctor(
   /** One section per PLUGIN provider: what it is, its own checks, its free model listing (online only), and every
     * chained model priced and buildable. Nothing it does is allowed to throw the report away.
     */
-  private def plugins(chained: List[ModelRef], online: Boolean): List[ProviderDoctor] =
+  private def plugins(chained: List[ModelRef], online: com.histmersion.server.agents.AgentDoctor.PluginsOnline): List[ProviderDoctor] =
     registry.toList.flatMap(_.toList).collect {
       case (name, p) if !BuiltinAi.reserved(name) =>
         val kind = ProviderKind.Plugin(name)
@@ -138,11 +138,11 @@ final class AgentDoctor(
     }
 
   /** A role some pipeline uses (the probe is optional). */
-  private def neededBy(r: Role): Boolean = Pipeline.values.exists(_.roles.contains(r))
+  private def neededBy(r: Role): com.histmersion.server.agents.AgentDoctor.NeededByResult = Pipeline.values.exists(_.roles.contains(r))
 
   // ── the HTTP providers ─────────────────────────────────────────────────────────────────────────
 
-  private def http(k: ProviderKind, models: List[ModelRef], online: Boolean): (List[DoctorCheck], List[String]) =
+  private def http(k: ProviderKind, models: List[ModelRef], online: com.histmersion.server.agents.AgentDoctor.HttpOnline): (List[DoctorCheck], List[com.histmersion.server.agents.AgentDoctor.HttpResultPart2]) =
     val p = cfg
       .provider(k.transformInto[com.histmersion.domain.automation.ProviderKind])
       .getOrElse(throw IllegalStateException(s"${k.wire} has no HTTP config"))
@@ -285,7 +285,7 @@ final class AgentDoctor(
     )
 
   /** Whether the generated tree a CLI runtime launches exists. */
-  private def generated(runtime: String): DoctorCheck =
+  private def generated(runtime: com.histmersion.server.agents.AgentDoctor.GeneratedRuntime): DoctorCheck =
     AgentTrees.root(app, paths).map(_.resolve(runtime)) match
       case Some(d) if java.nio.file.Files.isDirectory(d) => ok("generated", s"$d")
       case Some(d) => warn("generated", s"$d does not exist yet — run `histmersion agent generate`")
@@ -293,10 +293,10 @@ final class AgentDoctor(
 
   /** A CLI provider without a login check of its own: the executable answers `--version`. */
   private def version(
-      command: String,
-      env: Map[String, Option[String]],
-      level: (String, String) => DoctorCheck,
-      hint: String
+      command: com.histmersion.server.agents.AgentDoctor.VersionCommand,
+      env: Map[com.histmersion.server.agents.AgentDoctor.VersionEnvPart1, Option[com.histmersion.server.agents.AgentDoctor.VersionEnvPart2]],
+      level: (com.histmersion.server.agents.AgentDoctor.VersionLevelArg1, com.histmersion.server.agents.AgentDoctor.VersionLevelArg2) => DoctorCheck,
+      hint: com.histmersion.server.agents.AgentDoctor.VersionHint
   ): DoctorCheck =
     runCommand(List(command, "--version"), env, cfg.doctorTimeoutSeconds) match
       case Right((0, out)) => ok("executable", s"$command: ${out.trim.linesIterator.nextOption().getOrElse("")}")
@@ -345,7 +345,84 @@ object AgentDoctor:
   /** `claude auth status` (JSON) → the login, without the account: logged in, how, which plan. Left = not usable as
     * configured.
     */
-  def login(json: String, useApiKey: Boolean): Either[String, String] =
+  type OkN = OkN.T
+  object OkN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OkD = OkD.T
+  object OkD extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WarnN = WarnN.T
+  object WarnN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WarnD = WarnD.T
+  object WarnD extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailN = FailN.T
+  object FailN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailD = FailD.T
+  object FailD extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportOnline = ReportOnline.T
+  object ReportOnline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginsOnline = PluginsOnline.T
+  object PluginsOnline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeededByResult = NeededByResult.T
+  object NeededByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HttpResultPart2 = HttpResultPart2.T
+  object HttpResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HttpOnline = HttpOnline.T
+  object HttpOnline extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeneratedRuntime = GeneratedRuntime.T
+  object GeneratedRuntime extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionCommand = VersionCommand.T
+  object VersionCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionEnvPart1 = VersionEnvPart1.T
+  object VersionEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionEnvPart2 = VersionEnvPart2.T
+  object VersionEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionLevelArg1 = VersionLevelArg1.T
+  object VersionLevelArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionLevelArg2 = VersionLevelArg2.T
+  object VersionLevelArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionHint = VersionHint.T
+  object VersionHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoginResultPart1 = LoginResultPart1.T
+  object LoginResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoginResultPart2 = LoginResultPart2.T
+  object LoginResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoginJson = LoginJson.T
+  object LoginJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoginUseApiKey = LoginUseApiKey.T
+  object LoginUseApiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsResultPart1 = ListModelsResultPart1.T
+  object ListModelsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsResultPart2 = ListModelsResultPart2.T
+  object ListModelsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsUrl = ListModelsUrl.T
+  object ListModelsUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsHeadersPart1 = ListModelsHeadersPart1.T
+  object ListModelsHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsHeadersPart2 = ListModelsHeadersPart2.T
+  object ListModelsHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListModelsTimeoutSeconds = ListModelsTimeoutSeconds.T
+  object ListModelsTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelIdsResultPart1 = ModelIdsResultPart1.T
+  object ModelIdsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelIdsResultPart2 = ModelIdsResultPart2.T
+  object ModelIdsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelIdsBody = ModelIdsBody.T
+  object ModelIdsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandResultPart1 = RunCommandResultPart1.T
+  object RunCommandResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandResultPart2Part1 = RunCommandResultPart2Part1.T
+  object RunCommandResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandResultPart2Part2 = RunCommandResultPart2Part2.T
+  object RunCommandResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandArgv = RunCommandArgv.T
+  object RunCommandArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandEnvPart1 = RunCommandEnvPart1.T
+  object RunCommandEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandEnvPart2 = RunCommandEnvPart2.T
+  object RunCommandEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCommandTimeoutSeconds = RunCommandTimeoutSeconds.T
+  object RunCommandTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def login(json: com.histmersion.server.agents.AgentDoctor.LoginJson, useApiKey: com.histmersion.server.agents.AgentDoctor.LoginUseApiKey): Either[com.histmersion.server.agents.AgentDoctor.LoginResultPart1, com.histmersion.server.agents.AgentDoctor.LoginResultPart2] =
     parser.parse(json.trim).toOption.map(_.hcursor) match
       case None    => Left(s"'claude auth status' did not answer JSON: ${json.take(200)}")
       case Some(c) =>
@@ -363,7 +440,7 @@ object AgentDoctor:
     HttpClient.newBuilder().version(HttpClient.Version.HTTP_1_1).connectTimeout(Duration.ofSeconds(10)).build()
 
   /** `GET <url>` with `headers`; `data[].id` of an OpenAI- or Anthropic-style model listing. */
-  def listModels(url: String, headers: List[(String, String)], timeoutSeconds: Int): Either[String, List[String]] =
+  def listModels(url: com.histmersion.server.agents.AgentDoctor.ListModelsUrl, headers: List[(com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart1, com.histmersion.server.agents.AgentDoctor.ListModelsHeadersPart2)], timeoutSeconds: com.histmersion.server.agents.AgentDoctor.ListModelsTimeoutSeconds): Either[com.histmersion.server.agents.AgentDoctor.ListModelsResultPart1, List[com.histmersion.server.agents.AgentDoctor.ListModelsResultPart2]] =
     try
       val req = headers
         .foldLeft(
@@ -380,7 +457,7 @@ object AgentDoctor:
       case e: Exception => Left(s"${e.getClass.getSimpleName}: ${Option(e.getMessage).getOrElse("")}".take(300))
 
   /** `{"data":[{"id":…},…]}` → the ids. */
-  def modelIds(body: String): Either[String, List[String]] =
+  def modelIds(body: com.histmersion.server.agents.AgentDoctor.ModelIdsBody): Either[com.histmersion.server.agents.AgentDoctor.ModelIdsResultPart1, List[com.histmersion.server.agents.AgentDoctor.ModelIdsResultPart2]] =
     parser.parse(body).left.map(e => s"not JSON: ${e.getMessage}").flatMap { j =>
       j.hcursor
         .downField("data")
@@ -394,10 +471,10 @@ object AgentDoctor:
     * could not be run.
     */
   def runCommand(
-      argv: List[String],
-      env: Map[String, Option[String]],
-      timeoutSeconds: Int
-  ): Either[String, (Int, String)] =
+      argv: List[com.histmersion.server.agents.AgentDoctor.RunCommandArgv],
+      env: Map[com.histmersion.server.agents.AgentDoctor.RunCommandEnvPart1, Option[com.histmersion.server.agents.AgentDoctor.RunCommandEnvPart2]],
+      timeoutSeconds: com.histmersion.server.agents.AgentDoctor.RunCommandTimeoutSeconds
+  ): Either[com.histmersion.server.agents.AgentDoctor.RunCommandResultPart1, (com.histmersion.server.agents.AgentDoctor.RunCommandResultPart2Part1, com.histmersion.server.agents.AgentDoctor.RunCommandResultPart2Part2)] =
     try
       val pb = ProcessBuilder(argv.asJava).redirectErrorStream(true)
       env.foreach {

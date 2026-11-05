@@ -12,7 +12,32 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 object Commons:
 
   /** The `extmetadata` fields read — and asked for, so the answer stays small. */
-  val MetaFields: List[String] = List(
+  type MetaFields = MetaFields.T
+  object MetaFields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileTitleResult = FileTitleResult.T
+  object FileTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileTitleName = FileTitleName.T
+  object FileTitleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoUrlResult = ImageInfoUrlResult.T
+  object ImageInfoUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoUrlApi = ImageInfoUrlApi.T
+  object ImageInfoUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoUrlTitles = ImageInfoUrlTitles.T
+  object ImageInfoUrlTitles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoUrlWidth = ImageInfoUrlWidth.T
+  object ImageInfoUrlWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoUrlMaxlag = ImageInfoUrlMaxlag.T
+  object ImageInfoUrlMaxlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoUrlMeta = ImageInfoUrlMeta.T
+  object ImageInfoUrlMeta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoResultPart1 = ImageInfoResultPart1.T
+  object ImageInfoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoResultPart2Part1 = ImageInfoResultPart2Part1.T
+  object ImageInfoResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImageInfoResultPart2Part2Part1 = ImageInfoResultPart2Part2Part1.T
+  object ImageInfoResultPart2Part2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val MetaFields: List[com.histmersion.plugins.media.Commons.MetaFields] = List(
     "LicenseShortName",
     "License",
     "LicenseUrl",
@@ -30,14 +55,14 @@ object Commons:
   /** Pure: the canonical title of a file name as Wikidata gives it (`Lions-Gate-Mycenae.jpg` →
     * `File:Lions-Gate-Mycenae.jpg`): underscores are spaces, and the first letter is upper case.
     */
-  def fileTitle(name: String): String =
+  def fileTitle(name: com.histmersion.plugins.media.Commons.FileTitleName): com.histmersion.plugins.media.Commons.FileTitleResult =
     val n = name.trim.stripPrefix("File:").stripPrefix("file:").replace('_', ' ').replaceAll("\\s+", " ").trim
     if n.isEmpty then "" else "File:" + n.head.toUpper + n.tail
 
   /** Pure: the `imageinfo` URL for a batch of titles, with the rendition `width`; `meta` adds the licence fields (the
     * thumbnail call needs only the URL). `maxlag` 0 = not sent.
     */
-  def imageInfoUrl(api: String, titles: List[String], width: Int, maxlag: Int, meta: Boolean): String =
+  def imageInfoUrl(api: com.histmersion.plugins.media.Commons.ImageInfoUrlApi, titles: List[com.histmersion.plugins.media.Commons.ImageInfoUrlTitles], width: com.histmersion.plugins.media.Commons.ImageInfoUrlWidth, maxlag: com.histmersion.plugins.media.Commons.ImageInfoUrlMaxlag, meta: com.histmersion.plugins.media.Commons.ImageInfoUrlMeta): com.histmersion.plugins.media.Commons.ImageInfoUrlResult =
     val props = if meta then "url|size|mime|extmetadata" else "url|size|mime"
     val ext = if meta then s"&iiextmetadatafilter=${MetaFields.mkString("|").enc}&iiextmetadatalanguage=en" else ""
     val lag = if maxlag > 0 then s"&maxlag=$maxlag" else ""
@@ -48,7 +73,7 @@ object Commons:
     * title to its canonical one). A file Commons does not have is `Left("missing on Commons")`; an API error is `Left`
     * for the whole answer.
     */
-  def imageInfo(json: Json): Either[String, Map[String, Either[String, com.histmersion.plugins.media.Commons.File]]] =
+  def imageInfo(json: Json): Either[com.histmersion.plugins.media.Commons.ImageInfoResultPart1, Map[com.histmersion.plugins.media.Commons.ImageInfoResultPart2Part1, Either[com.histmersion.plugins.media.Commons.ImageInfoResultPart2Part2Part1, com.histmersion.plugins.media.Commons.File]]] =
     val c = json.hcursor
     c.downField("error").focus match
       case Some(err) =>
@@ -218,16 +243,35 @@ object Commons:
     */
   object Depicts:
 
+    type SearchUrlResult = SearchUrlResult.T
+    object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchUrlApi = SearchUrlApi.T
+    object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchUrlQid = SearchUrlQid.T
+    object SearchUrlQid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchUrlLimit = SearchUrlLimit.T
+    object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SearchUrlMaxlag = SearchUrlMaxlag.T
+    object SearchUrlMaxlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TitlesResultPart1 = TitlesResultPart1.T
+    object TitlesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TitlesResultPart2 = TitlesResultPart2.T
+    object TitlesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DepictedByResultPart1 = DepictedByResultPart1.T
+    object DepictedByResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DepictedByResultPart2 = DepictedByResultPart2.T
+    object DepictedByResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Depicts = "P180"
     val DepictedBy = "P1299"
 
-    def searchUrl(api: String, qid: String, limit: Int, maxlag: Int): String =
+    def searchUrl(api: com.histmersion.plugins.media.Commons.Depicts.SearchUrlApi, qid: com.histmersion.plugins.media.Commons.Depicts.SearchUrlQid, limit: com.histmersion.plugins.media.Commons.Depicts.SearchUrlLimit, maxlag: com.histmersion.plugins.media.Commons.Depicts.SearchUrlMaxlag): com.histmersion.plugins.media.Commons.Depicts.SearchUrlResult =
       val lag = if maxlag > 0 then s"&maxlag=$maxlag" else ""
       s"$api?action=query&format=json&formatversion=2&list=search&srnamespace=6&srlimit=${limit.max(1)}" +
         s"&srsearch=${s"haswbstatement:$Depicts=$qid".enc}$lag"
 
     /** Pure: the file titles of a search answer, in its order; an API error is a `Left`. */
-    def titles(json: Json): Either[String, List[String]] =
+    def titles(json: Json): Either[com.histmersion.plugins.media.Commons.Depicts.TitlesResultPart1, List[com.histmersion.plugins.media.Commons.Depicts.TitlesResultPart2]] =
       val c = json.hcursor
       c.downField("error").focus match
         case Some(err) =>
@@ -247,7 +291,7 @@ object Commons:
           )
 
     /** Pure: the items an entity names under `P1299 depicted by`, per entity asked, best rank first. */
-    def depictedBy(json: Json): Map[String, List[String]] =
+    def depictedBy(json: Json): Map[com.histmersion.plugins.media.Commons.Depicts.DepictedByResultPart1, List[com.histmersion.plugins.media.Commons.Depicts.DepictedByResultPart2]] =
       json.hcursor
         .downField("entities")
         .focus
@@ -326,10 +370,10 @@ object Commons:
 
     /** `imageinfo` for the titles, in batches; a failed batch is a line in `failed`, and its titles get no answer. */
     def imageInfo(
-        titles: List[String],
-        width: Int,
-        meta: Boolean
-    ): (Map[String, Either[String, File]], List[String]) =
+        titles: List[com.histmersion.plugins.media.Commons.Files.ImageInfoTitles],
+        width: com.histmersion.plugins.media.Commons.Files.ImageInfoWidth,
+        meta: com.histmersion.plugins.media.Commons.Files.ImageInfoMeta
+    ): (Map[com.histmersion.plugins.media.Commons.Files.ImageInfoResultPart1Part1, Either[com.histmersion.plugins.media.Commons.Files.ImageInfoResultPart1Part2Part1, File]], List[com.histmersion.plugins.media.Commons.Files.ImageInfoResultPart2]) =
       val answers = titles
         .grouped(media.commons.batch.max(1))
         .toList
@@ -347,11 +391,11 @@ object Commons:
       * Commons marks non-free, whose licence is unreadable or all rights reserved, or whose licence requires an author
       * it does not name, is withheld with that reason.
       */
-    def items(titles: List[String]): (Map[String, MediaItem], List[String]) =
+    def items(titles: List[com.histmersion.plugins.media.Commons.Files.ItemsTitles]): (Map[com.histmersion.plugins.media.Commons.Files.ItemsResultPart1Part1, MediaItem], List[com.histmersion.plugins.media.Commons.Files.ItemsResultPart2]) =
       val (infos, failed) = imageInfo(titles, media.displayPx, meta = true)
       (titles.map(t => t -> item(t, infos.get(t))).toMap, failed)
 
-    private def item(title: String, answer: Option[Either[String, File]]): MediaItem =
+    private def item(title: com.histmersion.plugins.media.Commons.Files.ItemTitle, answer: Option[Either[com.histmersion.plugins.media.Commons.Files.ItemAnswerPart1, File]]): MediaItem =
       val bare = MediaItem(title, title.stripPrefix("File:"), "", None, Left("no answer from Commons"))
       answer match
         case None              => bare
@@ -413,6 +457,30 @@ object Commons:
         }.toMap,
         failed
       )
+
+  object Files:
+    type ImageInfoResultPart1Part1 = ImageInfoResultPart1Part1.T
+    object ImageInfoResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImageInfoResultPart1Part2Part1 = ImageInfoResultPart1Part2Part1.T
+    object ImageInfoResultPart1Part2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImageInfoResultPart2 = ImageInfoResultPart2.T
+    object ImageInfoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImageInfoTitles = ImageInfoTitles.T
+    object ImageInfoTitles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImageInfoWidth = ImageInfoWidth.T
+    object ImageInfoWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImageInfoMeta = ImageInfoMeta.T
+    object ImageInfoMeta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemsResultPart1Part1 = ItemsResultPart1Part1.T
+    object ItemsResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemsResultPart2 = ItemsResultPart2.T
+    object ItemsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemsTitles = ItemsTitles.T
+    object ItemsTitles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemTitle = ItemTitle.T
+    object ItemTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ItemAnswerPart1 = ItemAnswerPart1.T
+    object ItemAnswerPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `histmersion.media.commons`: the action API, titles per `imageinfo` call, and `maxlag`. */
   final case class Settings(apiUrl: Settings.ApiUrl, batch: Settings.Batch, maxlag: Settings.Maxlag) derives ConfigReader

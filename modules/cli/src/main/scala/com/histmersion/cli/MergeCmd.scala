@@ -34,9 +34,12 @@ object MergeCmd:
 
   /** `--resolutions`, `--resolve ID=decision`…, `--editions`, as given. */
   final case class ResolutionFlags(file: Option[ResolutionFlags.File], resolve: List[ResolutionFlags.Resolve], editions: Option[ResolutionFlags.Editions]):
-    def isEmpty: Boolean = file.isEmpty && resolve.isEmpty && editions.isEmpty
+    def isEmpty: com.histmersion.cli.MergeCmd.ResolutionFlags.IsEmptyResult = file.isEmpty && resolve.isEmpty && editions.isEmpty
 
   object ResolutionFlags:
+    type IsEmptyResult = IsEmptyResult.T
+    object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type File = File.T
     object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Resolve = Resolve.T

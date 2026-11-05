@@ -15,12 +15,47 @@ import com.histmersion.api.media.{MediaCount, MediaCoversReport, MediaProvider, 
 object MediaCovers:
 
   /** Pure: a citekey as a SQL literal for the read-only query (the only user value in it). */
-  private def lit(s: String): String = "'" + s.replace("'", "''") + "'"
+  type LitResult = LitResult.T
+  object LitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LitS = LitS.T
+  object LitS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedQueryResult = LinkedQueryResult.T
+  object LinkedQueryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedQueryOnly = LinkedQueryOnly.T
+  object LinkedQueryOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedQueryRefresh = LinkedQueryRefresh.T
+  object LinkedQueryRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedResultPart2Part1 = LinkedResultPart2Part1.T
+  object LinkedResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedResultPart2Part2 = LinkedResultPart2Part2.T
+  object LinkedResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedOnly = LinkedOnly.T
+  object LinkedOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedRefresh = LinkedRefresh.T
+  object LinkedRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OneCk = OneCk.T
+  object OneCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OneDryRun = OneDryRun.T
+  object OneDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreStepResultPart2Part2Part1 = CalibreStepResultPart2Part2Part1.T
+  object CalibreStepResultPart2Part2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreStepResultPart2Part2Part2 = CalibreStepResultPart2Part2Part2.T
+  object CalibreStepResultPart2Part2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreStepOnly = CalibreStepOnly.T
+  object CalibreStepOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreStepRefresh = CalibreStepRefresh.T
+  object CalibreStepRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreStepDryRun = CalibreStepDryRun.T
+  object CalibreStepDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreStepLimit = CalibreStepLimit.T
+  object CalibreStepLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def lit(s: com.histmersion.cli.MediaCovers.LitS): com.histmersion.cli.MediaCovers.LitResult = "'" + s.replace("'", "''") + "'"
 
   /** Pure: the read-only query for the Calibre-linked sources to look at — those with no cover yet (every one with
     * `refresh`), or just `only`.
     */
-  def linkedQuery(only: Option[String], refresh: Boolean): String =
+  def linkedQuery(only: Option[com.histmersion.cli.MediaCovers.LinkedQueryOnly], refresh: com.histmersion.cli.MediaCovers.LinkedQueryRefresh): com.histmersion.cli.MediaCovers.LinkedQueryResult =
     s"""SELECT s.citekey, s.calibre_id FROM sources s
         WHERE s.calibre_id ~ '^[0-9]+$$'
           ${only.fold("")(c => s"AND s.citekey = ${lit(c)}")}
@@ -32,7 +67,7 @@ object MediaCovers:
         ORDER BY s.citekey"""
 
   /** The Calibre-linked sources to look at, as (citekey, Calibre id). */
-  def linked(c: Client, only: Option[String], refresh: Boolean): Either[Cli.Error, List[(String, Int)]] =
+  def linked(c: Client, only: Option[com.histmersion.cli.MediaCovers.LinkedOnly], refresh: com.histmersion.cli.MediaCovers.LinkedRefresh): Either[Cli.Error, List[(com.histmersion.cli.MediaCovers.LinkedResultPart2Part1, com.histmersion.cli.MediaCovers.LinkedResultPart2Part2)]] =
     c.query(linkedQuery(only, refresh))
       .map(_.rows.flatMap { r =>
         for ck <- r.headOption.flatten; id <- r.lift(1).flatten.flatMap(_.trim.toIntOption) yield (ck, id)
@@ -47,7 +82,7 @@ object MediaCovers:
     case Skipped(reason: String)
     case Failed(message: String)
 
-  def one(c: Client, ck: String, book: Calibre.Book, dryRun: Boolean): Outcome =
+  def one(c: Client, ck: com.histmersion.cli.MediaCovers.OneCk, book: Calibre.Book, dryRun: com.histmersion.cli.MediaCovers.OneDryRun): Outcome =
     CoverChoice.choose(
       book.cover,
       p => Files.isRegularFile(Path.of(p)),
@@ -74,11 +109,11 @@ object MediaCovers:
   def calibreStep(
       c: Client,
       cal: Calibre,
-      only: Option[String],
-      refresh: Boolean,
-      dryRun: Boolean,
-      limit: Option[Int]
-  ): Either[Cli.Error, (MediaCoversReport, List[(String, String)])] =
+      only: Option[com.histmersion.cli.MediaCovers.CalibreStepOnly],
+      refresh: com.histmersion.cli.MediaCovers.CalibreStepRefresh,
+      dryRun: com.histmersion.cli.MediaCovers.CalibreStepDryRun,
+      limit: Option[com.histmersion.cli.MediaCovers.CalibreStepLimit]
+  ): Either[Cli.Error, (MediaCoversReport, List[(com.histmersion.cli.MediaCovers.CalibreStepResultPart2Part2Part1, com.histmersion.cli.MediaCovers.CalibreStepResultPart2Part2Part2)])] =
     if !cal.libraryExists then
       Right((MediaCoversReport(dryRun, skipped = List(MediaCount("no Calibre library here", 1))), Nil))
     else

@@ -26,10 +26,13 @@ final case class MergeIssue(
     detail: Option[IssueDetail] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def open: Boolean = severity == MergeIssue.Severity.Blocking && condition.isEmpty && decision.isEmpty
+  def open: com.histmersion.api.exchange.MergeIssue.OpenResult = severity == MergeIssue.Severity.Blocking && condition.isEmpty && decision.isEmpty
 object MergeIssue:
 
   /** What an issue is about. The wire name is part of the issue id, so it never changes. */
+  type OpenResult = OpenResult.T
+  object OpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
@@ -85,7 +88,14 @@ object MergeIssue:
     case GoalPlanDiffers
 
   object Kind:
-    def wireOf(k: Kind): String = k match
+    type WireOfResult = WireOfResult.T
+    object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def wireOf(k: Kind): com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult = k match
       case SameWork                => "same-work"
       case CitekeyCollision        => "citekey-collision"
       case DoiDiffers              => "doi-differs"
@@ -110,8 +120,8 @@ object MergeIssue:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): String = wireOf(e)
-      def fromWire(s: String): Option[Kind] = Kind.values.find(k => wireOf(k) == s.trim)
+      def wire(e: Kind): com.histmersion.api.exchange.MergeIssue.Kind.WireResult = wireOf(e)
+      def fromWire(s: com.histmersion.api.exchange.MergeIssue.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == s.trim)
 
   /** How much an issue holds the merge up. */
   enum Severity:
@@ -125,10 +135,15 @@ object MergeIssue:
     case Info
 
   object Severity:
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): String = Ascii.lower(e.toString)
-      def fromWire(s: String): Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase(s.trim))
+      def wire(e: Severity): com.histmersion.api.exchange.MergeIssue.Severity.WireResult = Ascii.lower(e.toString)
+      def fromWire(s: com.histmersion.api.exchange.MergeIssue.Severity.FromWireS): Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase(s.trim))
 
   /** Who decided an issue. */
   enum DecidedBy:
@@ -147,15 +162,39 @@ object MergeIssue:
     case Remembered
 
   object DecidedBy:
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given WireEnumValues[DecidedBy]:
       def all: Array[DecidedBy] = DecidedBy.values
-      def wire(e: DecidedBy): String = Ascii.lower(e.toString)
-      def fromWire(s: String): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase(s.trim))
+      def wire(e: DecidedBy): com.histmersion.api.exchange.MergeIssue.DecidedBy.WireResult = Ascii.lower(e.toString)
+      def fromWire(s: com.histmersion.api.exchange.MergeIssue.DecidedBy.FromWireS): Option[DecidedBy] = DecidedBy.values.find(_.toString.equalsIgnoreCase(s.trim))
 
 
   object Detail:
 
-    def describe(s: Bundle.Source): List[String] =
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RangeTextResult = RangeTextResult.T
+    object RangeTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PreviewResult = PreviewResult.T
+    object PreviewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PreviewS = PreviewS.T
+    object PreviewS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PreviewN = PreviewN.T
+    object PreviewN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClipResult = ClipResult.T
+    object ClipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClipS = ClipS.T
+    object ClipS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClipN = ClipN.T
+    object ClipN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlanTextResult = PlanTextResult.T
+    object PlanTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def describe(s: Bundle.Source): List[com.histmersion.api.exchange.MergeIssue.Detail.DescribeResult] =
       val who = s.authors.take(2).mkString("; ") + (if s.authors.length > 2 then " et al." else "")
       List(
         s"\"${s.title}\"",
@@ -169,12 +208,12 @@ object MergeIssue:
 
     def side(s: Bundle.Source): IssueSide = IssueSide(s.citekey, s.uid, describe(s))
 
-    def rangeText(r: Option[Bundle.Range]): String = r match
+    def rangeText(r: Option[Bundle.Range]): com.histmersion.api.exchange.MergeIssue.Detail.RangeTextResult = r match
       case None                           => "none"
       case Some(Bundle.Range(None, None)) => "always"
       case Some(b)                        => s"${b.start.fold("…")(_.toString)}..${b.end.fold("…")(_.toString)}"
 
-    def preview(s: String, n: Int = 80): String =
+    def preview(s: com.histmersion.api.exchange.MergeIssue.Detail.PreviewS, n: com.histmersion.api.exchange.MergeIssue.Detail.PreviewN = 80): com.histmersion.api.exchange.MergeIssue.Detail.PreviewResult =
       val one = s.replaceAll("\\s+", " ").trim
       if one.length <= n then one else one.take(n - 1) + "…"
 
@@ -184,7 +223,7 @@ object MergeIssue:
       val (a, b) = (e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom))
       Option.when(a.isDefined || b.isDefined)(IssueSpan(a, b))
 
-    def clip(s: Option[String], n: Int = 600): Option[String] =
+    def clip(s: Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipS], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipN = 600): Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipResult] =
       s.map(_.trim).filter(_.nonEmpty).map(t => if t.length <= n then t else t.take(n - 1) + "…")
 
     def sourceFields(l: Bundle.Source, r: Bundle.Source): List[IssueField] =
@@ -241,7 +280,7 @@ object MergeIssue:
         place = Some(IssuePlace(l.geom, r.geom, l.period.map(span), r.period.map(span)))
       )
 
-    def planText(j: Json): String =
+    def planText(j: Json): com.histmersion.api.exchange.MergeIssue.Detail.PlanTextResult =
       j.as[Goal.Plans.Plan].toOption.fold(preview(j.noSpaces, 300)) { p =>
         List(
           Option(p.rationale).filter(_.nonEmpty).map(r => preview(r, 160)),

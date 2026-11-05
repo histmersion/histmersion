@@ -14,6 +14,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
 object DownloadJobs:
 
   /** The job kinds Data and downloads follows. */
+  type ConfigureMs = ConfigureMs.T
+  object ConfigureMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BusyResult = BusyResult.T
+  object BusyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Kinds: List[JobInfo.Kind] =
     List(
       com.histmersion.api.basemap.BasemapJobKinds.BasemapFetch.kind,
@@ -27,7 +32,7 @@ object DownloadJobs:
   private var mounted = false
   private var pollMs = 1500.0
 
-  def configure(ms: Int): Unit = pollMs = math.max(500, ms).toDouble
+  def configure(ms: com.histmersion.web.settings.DownloadJobs.ConfigureMs): Unit = pollMs = math.max(500, ms).toDouble
 
   /** Read again now (after a download was started here). */
   def refresh(): Unit =
@@ -40,7 +45,7 @@ object DownloadJobs:
       }
 
   /** Is a job of `kind` going now? */
-  def busy(kind: JobInfo.Kind): Signal[Boolean] = jobs.signal.map(_.exists(_.kind == kind))
+  def busy(kind: JobInfo.Kind): Signal[com.histmersion.web.settings.DownloadJobs.BusyResult] = jobs.signal.map(_.exists(_.kind == kind))
 
   def panel: HtmlElement =
     div(

@@ -37,7 +37,7 @@ final class OnDemandTiles(
     transform: Array[Byte] => Either[String, Option[Array[Byte]]] = b => Right(Some(b))
 )(using clock: java.time.Clock):
 
-  private def url(): String = source match
+  private def url(): com.histmersion.util.basemap.OnDemandTiles.UrlResult = source match
     case OnDemandTiles.Source.Planet(u)   => u()
     case OnDemandTiles.Source.Template(u) => u()
 
@@ -74,13 +74,13 @@ final class OnDemandTiles(
     )
 
   /** Whether `z` is one this serves (deeper than the extract's `extractMax`, to the configured depth). */
-  def serves(z: Int, extractMax: Int): Boolean = cfg().enabled && z > extractMax && z <= cfg().maxZoom
+  def serves(z: com.histmersion.util.basemap.OnDemandTiles.ServesZ, extractMax: com.histmersion.util.basemap.OnDemandTiles.ServesExtractMax): com.histmersion.util.basemap.OnDemandTiles.ServesResult = cfg().enabled && z > extractMax && z <= cfg().maxZoom
 
   /** Whether it serves tile `z` at all (on, and not deeper than its configured depth) — outside the extract. */
-  def servesAt(z: Int): Boolean = cfg().enabled && z >= 0 && z <= cfg().maxZoom
+  def servesAt(z: com.histmersion.util.basemap.OnDemandTiles.ServesAtZ): com.histmersion.util.basemap.OnDemandTiles.ServesAtResult = cfg().enabled && z >= 0 && z <= cfg().maxZoom
 
   /** One request to the provider: within the concurrency and the rate. */
-  private def request[A](f: => Either[String, A]): Either[String, A] =
+  private def request[A](f: => Either[String, A]): Either[com.histmersion.util.basemap.OnDemandTiles.RequestResultPart1, A] =
     if !gate.tryAcquire(60, TimeUnit.SECONDS) then Left("too many tile requests waiting")
     else
       try
@@ -101,7 +101,7 @@ final class OnDemandTiles(
   )
 
   /** The planet's description: in memory, else from `remote/` (when it names the same URL), else read. */
-  private def described(): Either[String, Remote] =
+  private def described(): Either[com.histmersion.util.basemap.OnDemandTiles.DescribedResultPart1, Remote] =
     val u = url()
     remote
       .filter(_.url == u)
@@ -155,7 +155,7 @@ final class OnDemandTiles(
     val _ = remoteFiles.deleteTree(Store.Key.Root)
   }
 
-  private def leaf(r: Remote, e: PmTiles.Entry): Either[String, Vector[PmTiles.Entry]] =
+  private def leaf(r: Remote, e: PmTiles.Entry): Either[com.histmersion.util.basemap.OnDemandTiles.LeafResultPart1, Vector[PmTiles.Entry]] =
     Option(leaves.get(e.offset)).map(Right(_)).getOrElse {
       val f = Store.Key.applyUnsafe(s"leaf-${e.offset}-${e.length}.bin")
       val raw = remoteFiles.get(f).filter(_.size.value == e.length) match
@@ -175,7 +175,7 @@ final class OnDemandTiles(
     }
 
   /** The planet's entry for a tile, through its leaf directories. */
-  private def entry(r: Remote, z: Int, x: Long, y: Long): Either[String, Option[PmTiles.Entry]] =
+  private def entry(r: Remote, z: com.histmersion.util.basemap.OnDemandTiles.EntryZ, x: com.histmersion.util.basemap.OnDemandTiles.EntryX, y: com.histmersion.util.basemap.OnDemandTiles.EntryY): Either[com.histmersion.util.basemap.OnDemandTiles.EntryResultPart1, Option[PmTiles.Entry]] =
     val id = PmTiles.tileId(z, x, y)
     def walk(d: Vector[PmTiles.Entry], depth: Int): Either[String, Option[PmTiles.Entry]] =
       PmTiles.find(d, id) match
@@ -185,14 +185,14 @@ final class OnDemandTiles(
         case Some(e)               => leaf(r, e).flatMap(walk(_, depth + 1))
     if z < r.header.minZoom || z > r.header.maxZoom then Right(None) else walk(r.root, 0)
 
-  private def read(z: Int, x: Long, y: Long): Either[String, Option[Array[Byte]]] =
+  private def read(z: com.histmersion.util.basemap.OnDemandTiles.ReadZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadX, y: com.histmersion.util.basemap.OnDemandTiles.ReadY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadResultPart1, Option[Array[Byte]]] =
     val raw = source match
       case OnDemandTiles.Source.Planet(_)   => readPlanet(z, x, y)
       case OnDemandTiles.Source.Template(u) =>
         request(http().file(u().replace("{z}", z.toString).replace("{x}", x.toString).replace("{y}", y.toString)))
     raw.flatMap(_.fold(Right(None))(transform))
 
-  private def readPlanet(z: Int, x: Long, y: Long): Either[String, Option[Array[Byte]]] =
+  private def readPlanet(z: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetZ, x: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetX, y: com.histmersion.util.basemap.OnDemandTiles.ReadPlanetY): Either[com.histmersion.util.basemap.OnDemandTiles.ReadPlanetResultPart1, Option[Array[Byte]]] =
     def once(): Either[String, Option[Array[Byte]]] =
       for
         r <- described()
@@ -210,7 +210,7 @@ final class OnDemandTiles(
   /** The tile `z/x/y`: from the cache, else from the provider (then cached). `Right(None)`: there is none (outside the
     * configured zooms, or the provider has none); `Left`: it could not be read now.
     */
-  def tile(z: Int, x: Long, y: Long): Either[String, Option[Array[Byte]]] =
+  def tile(z: com.histmersion.util.basemap.OnDemandTiles.TileZ, x: com.histmersion.util.basemap.OnDemandTiles.TileX, y: com.histmersion.util.basemap.OnDemandTiles.TileY): Either[com.histmersion.util.basemap.OnDemandTiles.TileResultPart1, Option[Array[Byte]]] =
     val c = cfg()
     if !c.enabled || z > c.maxZoom || x < 0 || y < 0 || x >= (1L << z) || y >= (1L << z) then Right(None)
     else
@@ -245,6 +245,57 @@ final class OnDemandTiles(
               finally { val _ = inflight.remove(key, mine) }
 
 object OnDemandTiles:
+  type UrlResult = UrlResult.T
+  object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServesResult = ServesResult.T
+  object ServesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServesZ = ServesZ.T
+  object ServesZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServesExtractMax = ServesExtractMax.T
+  object ServesExtractMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServesAtResult = ServesAtResult.T
+  object ServesAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ServesAtZ = ServesAtZ.T
+  object ServesAtZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RequestResultPart1 = RequestResultPart1.T
+  object RequestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribedResultPart1 = DescribedResultPart1.T
+  object DescribedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeafResultPart1 = LeafResultPart1.T
+  object LeafResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryResultPart1 = EntryResultPart1.T
+  object EntryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryZ = EntryZ.T
+  object EntryZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryX = EntryX.T
+  object EntryX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntryY = EntryY.T
+  object EntryY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadResultPart1 = ReadResultPart1.T
+  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadZ = ReadZ.T
+  object ReadZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadX = ReadX.T
+  object ReadX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadY = ReadY.T
+  object ReadY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPlanetResultPart1 = ReadPlanetResultPart1.T
+  object ReadPlanetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPlanetZ = ReadPlanetZ.T
+  object ReadPlanetZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPlanetX = ReadPlanetX.T
+  object ReadPlanetX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPlanetY = ReadPlanetY.T
+  object ReadPlanetY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileResultPart1 = TileResultPart1.T
+  object TileResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileZ = TileZ.T
+  object TileZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileX = TileX.T
+  object TileX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileY = TileY.T
+  object TileY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Tiles = Store.Key.applyUnsafe("tiles")
   private val Remote = Store.Key.applyUnsafe("remote")
   private val RemoteJson = Store.Key.applyUnsafe("remote.json")

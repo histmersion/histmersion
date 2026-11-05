@@ -17,10 +17,18 @@ trait PlanRelabels:
   def localized: BundleEntities
 
   /** Whether the line of a bundle uid is written, as first decided. */
-  def writesInitially(foreign: UUID): Boolean
+  def writesInitially(foreign: UUID): com.histmersion.util.data.exchange.PlanRelabels.WritesInitiallyResult
 
   /** A line of the plan's notes. */
-  def info(line: String): Unit
+  def info(line: com.histmersion.util.data.exchange.PlanRelabels.InfoLine): Unit
 
   /** A line of what the plan relabels. */
-  def relabelled(line: String): Unit
+  def relabelled(line: com.histmersion.util.data.exchange.PlanRelabels.RelabelledLine): Unit
+
+object PlanRelabels:
+  type WritesInitiallyResult = WritesInitiallyResult.T
+  object WritesInitiallyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfoLine = InfoLine.T
+  object InfoLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RelabelledLine = RelabelledLine.T
+  object RelabelledLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -9,10 +9,13 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 final case class NoaaSettings(url: NoaaSettings.Url, pageSize: NoaaSettings.PageSize, requestIntervalMs: NoaaSettings.RequestIntervalMs, datasets: NoaaSettings.Datasets)
     derives ConfigReader:
   /** The datasets named, in order; a name NCEI has no dataset of is left out. */
-  def datasetList: List[String] =
+  def datasetList: List[com.histmersion.plugins.events.NoaaSettings.DatasetListResult] =
     datasets.split(",").map(_.trim).filter(NoaaCatalogue.Datasets.contains).toList
 
 object NoaaSettings:
+  type DatasetListResult = DatasetListResult.T
+  object DatasetListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Url = Url.T
   object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PageSize = PageSize.T

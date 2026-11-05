@@ -4,22 +4,35 @@ import com.histmersion.api.Markdown.*
 
 object EventsMarkdown:
 
-  private[api] def timeSpan(ts: TimeSpan): String = YearFmt.spanLong(ts)
+  type TimeSpanResult = TimeSpanResult.T
+  object TimeSpanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventLineResult = EventLineResult.T
+  object EventLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventListResult = EventListResult.T
+  object EventListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventScaleResult = EventScaleResult.T
+  object EventScaleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventResult = EventResult.T
+  object EventResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventPictures = EventPictures.T
+  object EventPictures extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private[api] def eventLine(e: EventSummary): String =
+  private[api] def timeSpan(ts: TimeSpan): com.histmersion.api.catalogue.EventsMarkdown.TimeSpanResult = YearFmt.spanLong(ts)
+
+  private[api] def eventLine(e: EventSummary): com.histmersion.api.catalogue.EventsMarkdown.EventLineResult =
     val ts = timeSpan(e.timeSpan)
     val ck = e.citekey.map(c => s" [[$c]]").getOrElse("")
     val prec = EventPrecision.label(e.precision).fold("")(l => s" · $l")
     s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts$prec)_$ck"
 
-  def eventList(result: EventList): String =
+  def eventList(result: EventList): com.histmersion.api.catalogue.EventsMarkdown.EventListResult =
     OffsetPage.markdown(result.page, "event(s)", "_No matching events._", result.events)(eventLine)
 
-  private[api] def eventScale(e: EventSummary): String =
+  private[api] def eventScale(e: EventSummary): com.histmersion.api.catalogue.EventsMarkdown.EventScaleResult =
     s"${e.scale} (${if e.scaleStated then "stated" else "derived"})"
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
-  def event(d: EventCard, pictures: List[String] = Nil): String =
+  def event(d: EventCard, pictures: List[com.histmersion.api.catalogue.EventsMarkdown.EventPictures] = Nil): com.histmersion.api.catalogue.EventsMarkdown.EventResult =
     val e = d.event
     val header = s"# ${e.label}\n\n_`${e.id}` · ${e.kind} · ${e.historicity} · ${timeSpan(e.timeSpan)}_"
     val desc = e.description.map(d => s"\n\n$d").getOrElse("")

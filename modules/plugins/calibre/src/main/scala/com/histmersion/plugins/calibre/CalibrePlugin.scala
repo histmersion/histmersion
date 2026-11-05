@@ -9,7 +9,7 @@ import com.histmersion.plugin.{Plugin, Spi}
 final class CalibrePlugin extends Plugin:
   type Config = Calibre.Settings
   val info: Plugin.Info = Plugin.Info("calibre", CalibrePlugin.Version, Spi.Version)
-  def register(c: Calibre.Settings, ctx: Plugin.Context): Either[String, Unit] =
+  def register(c: Calibre.Settings, ctx: Plugin.Context): Either[com.histmersion.plugins.calibre.CalibrePlugin.RegisterResultPart1, Unit] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
     given processes: com.histmersion.plugin.Processes = ctx.processes
     ctx.sourceCollections.add(
@@ -18,4 +18,7 @@ final class CalibrePlugin extends Plugin:
     )
 
 object CalibrePlugin:
+  type RegisterResultPart1 = RegisterResultPart1.T
+  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Version = "0.1.0"

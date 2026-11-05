@@ -29,7 +29,7 @@ enum SettingValue:
     case Items(xs) => ConfigValueFactory.fromIterable(xs.map(_.toConfig.unwrapped).asJava)
 
   /** The text written into the file: JSON, which HOCON reads as it is. */
-  def hocon: String = toConfig.render(ConfigRenderOptions.concise)
+  def hocon: com.histmersion.config.edit.SettingValue.HoconResult = toConfig.render(ConfigRenderOptions.concise)
 
   def kind: SettingKind = this match
     case Text(_)   => SettingKind.Text
@@ -39,13 +39,30 @@ enum SettingValue:
 
 object SettingValue:
 
+  type HoconResult = HoconResult.T
+  object HoconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRaw = ParseRaw.T
+  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NumberT = NumberT.T
+  object NumberT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FlagT = FlagT.T
+  object FlagT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsResultPart1 = ItemsResultPart1.T
+  object ItemsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsT = ItemsT.T
+  object ItemsT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameResult = SameResult.T
+  object SameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Truthy = Set("true", "yes", "on")
   private val Falsy = Set("false", "no", "off")
 
   /** What a person typed, read as a setting of `kind` — the CLI's argument, a field of the web form. Text is taken as
     * typed; a number, a flag and a list are read; `Any` (a plugin's own key) guesses the kind.
     */
-  def parse(raw: String, kind: SettingKind): Either[String, SettingValue] =
+  def parse(raw: com.histmersion.config.edit.SettingValue.ParseRaw, kind: SettingKind): Either[com.histmersion.config.edit.SettingValue.ParseResultPart1, SettingValue] =
     val t = Option(raw).getOrElse("")
     kind match
       case SettingKind.Text   => Right(Text(t))
@@ -61,17 +78,17 @@ object SettingValue:
             .getOrElse(Text(t))
         )
 
-  private def number(t: String): Option[SettingValue] =
+  private def number(t: com.histmersion.config.edit.SettingValue.NumberT): Option[SettingValue] =
     Option(t.trim).filter(_.matches("-?[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?")).map(s => Number(BigDecimal(s)))
 
-  private def flag(t: String): Option[SettingValue] =
+  private def flag(t: com.histmersion.config.edit.SettingValue.FlagT): Option[SettingValue] =
     t.trim.toLowerCase(java.util.Locale.ROOT) match
       case s if Truthy(s) => Some(Flag(true))
       case s if Falsy(s)  => Some(Flag(false))
       case _              => None
 
   /** `[a, "b c", 3]` (HOCON's list), or words between commas. */
-  private def items(t: String): Either[String, SettingValue] =
+  private def items(t: com.histmersion.config.edit.SettingValue.ItemsT): Either[com.histmersion.config.edit.SettingValue.ItemsResultPart1, SettingValue] =
     val s = t.trim
     if s.isEmpty then Right(Items(Nil))
     else if s.startsWith("[") then
@@ -93,7 +110,7 @@ object SettingValue:
     case _ => None
 
   /** Do two values say the same thing (`5` and `5.0` do; `"5"` and `5` do not)? */
-  def same(a: SettingValue, b: SettingValue): Boolean = (a, b) match
+  def same(a: SettingValue, b: SettingValue): com.histmersion.config.edit.SettingValue.SameResult = (a, b) match
     case (Number(x), Number(y)) => x == y
     case (Items(xs), Items(ys)) => xs.size == ys.size && xs.zip(ys).forall(same)
     case _                      => a == b

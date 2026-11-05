@@ -20,9 +20,60 @@ import org.scalajs.dom
 object PlaceHover:
 
   // `var`s: where the pointer last was over a place, and what kind of pointer last pressed the map
-  private var lastX: Double = 0
-  private var lastY: Double = 0
-  private var lastPointer: String = "mouse"
+  type LastX = LastX.T
+  object LastX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastY = LastY.T
+  object LastY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastPointer = LastPointer.T
+  object LastPointer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapesSet = ShapesSet.T
+  object ShapesSet extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsTouchResult = IsTouchResult.T
+  object IsTouchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsTouchPointerType = IsTouchPointerType.T
+  object IsTouchPointerType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceAtResultPart2Part1 = PlaceAtResultPart2Part1.T
+  object PlaceAtResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceAtResultPart2Part2 = PlaceAtResultPart2Part2.T
+  object PlaceAtResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceAtResultPart2Part3 = PlaceAtResultPart2Part3.T
+  object PlaceAtResultPart2Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettleChosenNow = SettleChosenNow.T
+  object SettleChosenNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettleKeyboard = SettleKeyboard.T
+  object SettleKeyboard extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindId = BindId.T
+  object BindId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindLabel = BindLabel.T
+  object BindLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindKind = BindKind.T
+  object BindKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindAsOfResult = BindAsOfResult.T
+  object BindAsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindNameId = BindNameId.T
+  object BindNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindNameLabel = BindNameLabel.T
+  object BindNameLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindNameKind = BindNameKind.T
+  object BindNameKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindNameAsOfResult = BindNameAsOfResult.T
+  object BindNameAsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ButtonLabel = ButtonLabel.T
+  object ButtonLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BindPointLabelResult = BindPointLabelResult.T
+  object BindPointLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActivatePlaceId = ActivatePlaceId.T
+  object ActivatePlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActivatePlaceLabel = ActivatePlaceLabel.T
+  object ActivatePlaceLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActivatePlaceKind = ActivatePlaceKind.T
+  object ActivatePlaceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActivatePlaceAsOfResult = ActivatePlaceAsOfResult.T
+  object ActivatePlaceAsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private var lastX: com.histmersion.web.PlaceHover.LastX = 0
+  private var lastY: com.histmersion.web.PlaceHover.LastY = 0
+  private var lastPointer: com.histmersion.web.PlaceHover.LastPointer = "mouse"
   private var hovered: Option[Preview.Target] = None
   // `var`s: the map, once installed (installing twice must not double-bind), and the shape hovered
   private var surface: MapSurface = null
@@ -32,17 +83,29 @@ object PlaceHover:
     HoverIntent[Preview.Target](Layout.hoverDelayMs, t => if hovered.contains(t) then Preview.showAt(t, lastX, lastY))
 
   /** A set of shapes whose shapes are places: `place(id)` is the place a shape stands for. */
-  final case class Places(place: String => Option[(String, String, String)], asOf: () => Option[Long])
+  final case class Places(place: Places.PlaceArg1 => Option[(Places.PlaceResultPart1, Places.PlaceResultPart2, Places.PlaceResultPart3)], asOf: () => Option[Places.AsOfResult])
+
+  object Places:
+    type PlaceArg1 = PlaceArg1.T
+    object PlaceArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceResultPart1 = PlaceResultPart1.T
+    object PlaceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceResultPart2 = PlaceResultPart2.T
+    object PlaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlaceResultPart3 = PlaceResultPart3.T
+    object PlaceResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AsOfResult = AsOfResult.T
+    object AsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   private val shapeSets = scala.collection.mutable.LinkedHashMap.empty[String, Places]
 
   /** The shapes of set `set` answer as the places `place` names. */
-  def shapes(set: String, places: Places): Unit = shapeSets(set) = places
+  def shapes(set: com.histmersion.web.PlaceHover.ShapesSet, places: Places): Unit = shapeSets(set) = places
 
   /** Is this pointer type a finger? (`pen` hovers like a mouse.) */
-  private[web] def isTouch(pointerType: String): Boolean = pointerType == "touch"
+  private[web] def isTouch(pointerType: com.histmersion.web.PlaceHover.IsTouchPointerType): com.histmersion.web.PlaceHover.IsTouchResult = pointerType == "touch"
 
   /** The place shape topmost under `p`, if any. */
-  private def placeAt(p: ScreenPt): Option[(ShapeHit, (String, String, String), Places)] =
+  private def placeAt(p: ScreenPt): Option[(ShapeHit, (com.histmersion.web.PlaceHover.PlaceAtResultPart2Part1, com.histmersion.web.PlaceHover.PlaceAtResultPart2Part2, com.histmersion.web.PlaceHover.PlaceAtResultPart2Part3), Places)] =
     if surface == null then None
     else
       surface
@@ -116,10 +179,10 @@ object PlaceHover:
   /** Pin `t`'s card after a click or Enter that left the place `chosenNow`, or close it. */
   private def settle(
       t: Preview.Target,
-      chosenNow: Boolean,
+      chosenNow: com.histmersion.web.PlaceHover.SettleChosenNow,
       anchor: () => Option[Preview.Anchor],
       owner: Option[dom.Element],
-      keyboard: Boolean
+      keyboard: com.histmersion.web.PlaceHover.SettleKeyboard
   ): Unit =
     intent.cancelPending()
     if PinRules.pinAfterClick(chosenNow) then
@@ -144,7 +207,7 @@ object PlaceHover:
   /** A place drawn as a MARKER (a point-only region's name, a chosen place's point): its card on hover, a click (or
     * Enter) chooses it. `asOf` is the year the card reads the hierarchy at.
     */
-  def bind(m: DomMarker, id: String, label: String, kind: String, asOf: () => Option[Long]): Unit =
+  def bind(m: DomMarker, id: com.histmersion.web.PlaceHover.BindId, label: com.histmersion.web.PlaceHover.BindLabel, kind: com.histmersion.web.PlaceHover.BindKind, asOf: () => Option[com.histmersion.web.PlaceHover.BindAsOfResult]): Unit =
     def target = Preview.Target.Place(id, asOf())
     def choose(): Boolean = PlacesInput.toggleFromMap(id, label, kind)
     m.handlers = new MarkerHandlers:
@@ -169,7 +232,7 @@ object PlaceHover:
   /** A place's NAME (an area's label on the map): a keyboard button for the place it names — the pointer passes through
     * it to the shape under it.
     */
-  def bindName(m: DomMarker, id: String, label: String, kind: String, asOf: () => Option[Long]): Unit =
+  def bindName(m: DomMarker, id: com.histmersion.web.PlaceHover.BindNameId, label: com.histmersion.web.PlaceHover.BindNameLabel, kind: com.histmersion.web.PlaceHover.BindNameKind, asOf: () => Option[com.histmersion.web.PlaceHover.BindNameAsOfResult]): Unit =
     def target = Preview.Target.Place(id, asOf())
     val el = Option(m.el.firstElementChild).getOrElse(m.el)
     m.handlers = new MarkerHandlers:
@@ -181,7 +244,7 @@ object PlaceHover:
           settle(target, PlacesInput.toggleFromMap(id, label, kind), anchorOn(el), Some(el), keyboard = true)
     button(el, s"$label — show only this place and pin its card")
 
-  private def button(el: dom.Element, label: String): Unit =
+  private def button(el: dom.Element, label: com.histmersion.web.PlaceHover.ButtonLabel): Unit =
     el.setAttribute("tabindex", "0")
     el.setAttribute("role", "button")
     el.setAttribute("aria-label", label)
@@ -218,7 +281,7 @@ object PlaceHover:
   def bindPoint(
       m: DomMarker,
       target: () => Option[Preview.Target],
-      label: () => String,
+      label: () => com.histmersion.web.PlaceHover.BindPointLabelResult,
       activate: Activation => Unit
   ): Unit =
     val el = m.el
@@ -248,7 +311,7 @@ object PlaceHover:
     * the point clicked, or on the focused element with the focus moving in; activating the chosen place again lets it
     * go and closes the card.
     */
-  def activatePlace(id: String, label: String, kind: String, asOf: () => Option[Long], how: Activation): Unit =
+  def activatePlace(id: com.histmersion.web.PlaceHover.ActivatePlaceId, label: com.histmersion.web.PlaceHover.ActivatePlaceLabel, kind: com.histmersion.web.PlaceHover.ActivatePlaceKind, asOf: () => Option[com.histmersion.web.PlaceHover.ActivatePlaceAsOfResult], how: Activation): Unit =
     val t = Preview.Target.Place(id, asOf())
     val on = PlacesInput.toggleFromMap(id, label, kind)
     val anchor = (how.keyboard, how.element, how.latlng) match

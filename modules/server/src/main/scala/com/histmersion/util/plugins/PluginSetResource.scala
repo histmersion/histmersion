@@ -14,6 +14,9 @@ import java.util.jar.{JarEntry, JarOutputStream}
   */
 object PluginSetResource:
 
+  type LoadResultPart1 = LoadResultPart1.T
+  object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val MetadataPath = "META-INF/native-image/com.histmersion/plugin-set/reachability-metadata.json"
   private val Metadata = s"""{\n  "resources": [ { "glob": "${PluginSet.Resource}" } ]\n}\n"""
 
@@ -21,7 +24,7 @@ object PluginSetResource:
   private val EntryTime = 315532800000L // 1980-01-01, the earliest a zip entry can carry
 
   /** The set on `loader`'s class path; `Right(None)` when there is none, `Left` when it does not parse. */
-  def load(loader: ClassLoader): Either[String, Option[PluginSet]] =
+  def load(loader: ClassLoader): Either[com.histmersion.util.plugins.PluginSetResource.LoadResultPart1, Option[PluginSet]] =
     Option(loader.getResourceAsStream(PluginSet.Resource)) match
       case None     => Right(None)
       case Some(in) =>

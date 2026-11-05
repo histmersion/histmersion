@@ -10,8 +10,67 @@ import com.histmersion.util.database.given
   */
 object FocusRepo:
 
+  type AtCol = AtCol.T
+  object AtCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompileOpenResultPart1 = CompileOpenResultPart1.T
+  object CompileOpenResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompileOpenResultPart2 = CompileOpenResultPart2.T
+  object CompileOpenResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastStopsResultPart1 = LastStopsResultPart1.T
+  object LastStopsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastStopsResultPart2 = LastStopsResultPart2.T
+  object LastStopsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenGoalPlansResult = OpenGoalPlansResult.T
+  object OpenGoalPlansResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceCountsResultPart1 = SourceCountsResultPart1.T
+  object SourceCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceCountsResultPart2 = SourceCountsResultPart2.T
+  object SourceCountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalsOfResultPart1 = GoalsOfResultPart1.T
+  object GoalsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalsOfResultPart2 = GoalsOfResultPart2.T
+  object GoalsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalsOfKind = GoalsOfKind.T
+  object GoalsOfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalsOfRefs = GoalsOfRefs.T
+  object GoalsOfRefs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecentTargetsResult = RecentTargetsResult.T
+  object RecentTargetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecentTargetsManagerId = RecentTargetsManagerId.T
+  object RecentTargetsManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecentTargetsN = RecentTargetsN.T
+  object RecentTargetsN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JoinedSlug = JoinedSlug.T
+  object JoinedSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JoinedWhy = JoinedWhy.T
+  object JoinedWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeftSlug = LeftSlug.T
+  object LeftSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LeftWhy = LeftWhy.T
+  object LeftWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PinResult = PinResult.T
+  object PinResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PinSlug = PinSlug.T
+  object PinSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PinPinned = PinPinned.T
+  object PinPinned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PriorityResult = PriorityResult.T
+  object PriorityResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PrioritySlug = PrioritySlug.T
+  object PrioritySlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PriorityN = PriorityN.T
+  object PriorityN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClearActiveResult = ClearActiveResult.T
+  object ClearActiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClearActiveWhy = ClearActiveWhy.T
+  object ClearActiveWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxOverrideResult = MaxOverrideResult.T
+  object MaxOverrideResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetMaxOverrideN = SetMaxOverrideN.T
+  object SetMaxOverrideN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val ts = """'YYYY-MM-DD"T"HH24:MI:SS"Z"'"""
-  private def at(col: String) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
+  private def at(col: com.histmersion.domain.automation.goals.FocusRepo.AtCol) = s"to_char($col AT TIME ZONE 'UTC', $ts)"
 
   /** A goal with what the focus recorded about it. */
   final case class GoalRow(
@@ -137,7 +196,7 @@ object FocusRepo:
           ORDER BY i.id""".query[WorkRow].run().toList
 
   /** Per goal: its seeding manager's approved articles not compiled yet (pending, held, active). */
-  def compileOpen(using DbCon): Map[String, Int] =
+  def compileOpen(using DbCon): Map[com.histmersion.domain.automation.goals.FocusRepo.CompileOpenResultPart1, com.histmersion.domain.automation.goals.FocusRepo.CompileOpenResultPart2] =
     sql"""SELECT m.goal_slug, count(*)::int FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
           WHERE m.kind = 'seed' AND m.goal_slug IS NOT NULL AND i.kind = 'article-compile'
             AND i.status IN ('pending', 'held', 'active')
@@ -146,7 +205,7 @@ object FocusRepo:
   /** Per goal: the outcome of its LAST settled model-using item when that one stopped or failed (a goal whose newest
     * settled item is done has no stop to report).
     */
-  def lastStops()(using DbCon): Map[String, String] =
+  def lastStops()(using DbCon): Map[com.histmersion.domain.automation.goals.FocusRepo.LastStopsResultPart1, com.histmersion.domain.automation.goals.FocusRepo.LastStopsResultPart2] =
     sql"""SELECT goal, outcome FROM (
             SELECT DISTINCT ON (m.goal_slug) m.goal_slug AS goal, i.status, coalesce(i.outcome, i.status) AS outcome
             FROM manager_items i JOIN agent_managers m ON m.id = i.manager_id
@@ -156,20 +215,20 @@ object FocusRepo:
           WHERE status IN ('stopped', 'failed')""".query[(String, String)].run().toMap
 
   /** Open goal-plan approvals (what a person has to decide). */
-  def openGoalPlans(using DbCon): Int =
+  def openGoalPlans(using DbCon): com.histmersion.domain.automation.goals.FocusRepo.OpenGoalPlansResult =
     (
       sql"SELECT count(*)::int FROM approvals WHERE kind = 'goal-plan' AND state = 'open'".query[Int].run().head
     )
 
   /** Per goal: its sources (goal links of kind source). */
-  def sourceCounts()(using DbCon): Map[String, Int] =
+  def sourceCounts()(using DbCon): Map[com.histmersion.domain.automation.goals.FocusRepo.SourceCountsResultPart1, com.histmersion.domain.automation.goals.FocusRepo.SourceCountsResultPart2] =
     sql"""SELECT goal_slug, count(*)::int FROM goal_links WHERE kind = 'source' GROUP BY goal_slug"""
       .query[(String, Int)]
       .run()
       .toMap
 
   /** The goals linked to each of `refs` by a link of `kind` (source: a citekey, article: a slug). */
-  def goalsOf(kind: String, refs: List[String])(using DbCon): Map[String, List[String]] =
+  def goalsOf(kind: com.histmersion.domain.automation.goals.FocusRepo.GoalsOfKind, refs: List[com.histmersion.domain.automation.goals.FocusRepo.GoalsOfRefs])(using DbCon): Map[com.histmersion.domain.automation.goals.FocusRepo.GoalsOfResultPart1, List[com.histmersion.domain.automation.goals.FocusRepo.GoalsOfResultPart2]] =
     if refs.isEmpty then Map.empty
     else
       sql"""SELECT ref, goal_slug FROM goal_links WHERE kind = $kind AND ref = ANY($refs::text[]) ORDER BY ref, goal_slug"""
@@ -179,14 +238,14 @@ object FocusRepo:
         .groupMap(_._1)(_._2)
 
   /** The targets of a manager's newest runs, newest first (what the fair order counts on from). */
-  def recentTargets(managerId: String, n: Int)(using DbCon): List[String] =
+  def recentTargets(managerId: com.histmersion.domain.automation.goals.FocusRepo.RecentTargetsManagerId, n: com.histmersion.domain.automation.goals.FocusRepo.RecentTargetsN)(using DbCon): List[com.histmersion.domain.automation.goals.FocusRepo.RecentTargetsResult] =
     sql"""SELECT target_id FROM jobs WHERE kind = 'agent' AND manager_id = $managerId AND target_id IS NOT NULL
           ORDER BY created_at DESC, id DESC LIMIT ${math.max(0, n)}""".query[String].run().toList
 
   // ── writes ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The goal became active now, `why`. */
-  def joined(slug: String, why: String, now: java.time.Instant)(using DbCon): Unit =
+  def joined(slug: com.histmersion.domain.automation.goals.FocusRepo.JoinedSlug, why: com.histmersion.domain.automation.goals.FocusRepo.JoinedWhy, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     val _ =
       sql"""INSERT INTO goal_focus (slug, active, since, why, updated_at) VALUES ($slug, true, $t::timestamptz, $why, now())
@@ -194,33 +253,33 @@ object FocusRepo:
         .run()
 
   /** The goal left the active set now, `why`. */
-  def left(slug: String, why: String, now: java.time.Instant)(using DbCon): Unit =
+  def left(slug: com.histmersion.domain.automation.goals.FocusRepo.LeftSlug, why: com.histmersion.domain.automation.goals.FocusRepo.LeftWhy, now: java.time.Instant)(using DbCon): Unit =
     val t = now.toString
     val _ =
       sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
             WHERE slug = $slug""".update.run()
 
   /** A person's pin. False = no such goal. */
-  def pin(slug: String, pinned: Boolean)(using DbCon): Boolean =
+  def pin(slug: com.histmersion.domain.automation.goals.FocusRepo.PinSlug, pinned: com.histmersion.domain.automation.goals.FocusRepo.PinPinned)(using DbCon): com.histmersion.domain.automation.goals.FocusRepo.PinResult =
     sql"""INSERT INTO goal_focus (slug, pinned) SELECT slug, $pinned FROM goals WHERE slug = $slug
           ON CONFLICT (slug) DO UPDATE SET pinned = $pinned, updated_at = now()""".update.run() > 0
 
   /** A person's priority (higher first). False = no such goal. */
-  def priority(slug: String, n: Int)(using DbCon): Boolean =
+  def priority(slug: com.histmersion.domain.automation.goals.FocusRepo.PrioritySlug, n: com.histmersion.domain.automation.goals.FocusRepo.PriorityN)(using DbCon): com.histmersion.domain.automation.goals.FocusRepo.PriorityResult =
     sql"""INSERT INTO goal_focus (slug, priority) SELECT slug, $n FROM goals WHERE slug = $slug
           ON CONFLICT (slug) DO UPDATE SET priority = $n, updated_at = now()""".update.run() > 0
 
   /** Every goal leaves the active set (the focus is not in force any more): how many did. */
-  def clearActive(why: String, now: java.time.Instant)(using DbCon): Int =
+  def clearActive(why: com.histmersion.domain.automation.goals.FocusRepo.ClearActiveWhy, now: java.time.Instant)(using DbCon): com.histmersion.domain.automation.goals.FocusRepo.ClearActiveResult =
     val t = now.toString
     sql"""UPDATE goal_focus SET active = false, left_at = $t::timestamptz, left_why = $why, updated_at = now()
           WHERE active""".update.run()
 
   /** A person's cap (None = the config's). */
-  def maxOverride(using DbCon): Option[Int] =
+  def maxOverride(using DbCon): Option[com.histmersion.domain.automation.goals.FocusRepo.MaxOverrideResult] =
     (sql"SELECT max_active_goals FROM agent_autopilot WHERE id".query[Option[Int]].run().headOption.flatten)
 
-  def setMaxOverride(n: Option[Int])(using DbCon): Unit =
+  def setMaxOverride(n: Option[com.histmersion.domain.automation.goals.FocusRepo.SetMaxOverrideN])(using DbCon): Unit =
     val _ =
       sql"INSERT INTO agent_autopilot (id) VALUES (true) ON CONFLICT DO NOTHING".update.run()
       sql"UPDATE agent_autopilot SET max_active_goals = $n WHERE id".update.run()

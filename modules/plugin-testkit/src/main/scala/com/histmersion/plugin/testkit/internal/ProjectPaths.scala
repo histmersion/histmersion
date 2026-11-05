@@ -10,6 +10,9 @@ object ProjectPaths:
   /** `dir` as given when it is absolute; else under the project directory when the build names one, else under the
     * working directory.
     */
-  def resolve(dir: Path, projectDir: Option[String]): Path =
+  type ResolveProjectDir = ResolveProjectDir.T
+  object ResolveProjectDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def resolve(dir: Path, projectDir: Option[com.histmersion.plugin.testkit.internal.ProjectPaths.ResolveProjectDir]): Path =
     if dir.isAbsolute then dir
     else projectDir.map(_.trim).filter(_.nonEmpty).fold(dir.toAbsolutePath)(p => Path.of(p).resolve(dir)).normalize

@@ -22,13 +22,22 @@ object Agents:
     * provider.
     */
   final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
-    def wire: String = s"${provider.wire}:$model"
+    def wire: com.histmersion.api.automation.Agents.ModelRef.WireResult = s"${provider.wire}:$model"
 
   object ModelRef:
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseResultPart1 = ParseResultPart1.T
+    object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseKnown = ParseKnown.T
+    object ParseKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Model = Model.T
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: String, known: Set[String] = Set.empty): Either[String, ModelRef] =
+    def parse(s: com.histmersion.api.automation.Agents.ModelRef.ParseS, known: Set[com.histmersion.api.automation.Agents.ModelRef.ParseKnown] = Set.empty): Either[com.histmersion.api.automation.Agents.ModelRef.ParseResultPart1, ModelRef] =
       val t = s.trim
       t.indexOf(':') match
         case -1 => Left(s"'$t' is not provider:model (provider: ${ProviderKind.names(known)})")
@@ -47,12 +56,19 @@ object Agents:
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Usage): Usage =
       Usage(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
-    def total: Long = input + output
+    def total: com.histmersion.api.automation.Agents.Usage.TotalResult = input + output
 
-    def budgeted(cacheReadWeight: Double): Long =
+    def budgeted(cacheReadWeight: com.histmersion.api.automation.Agents.Usage.BudgetedCacheReadWeight): com.histmersion.api.automation.Agents.Usage.BudgetedResult =
       math.max(0L, input - cacheRead) + output + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
 
   object Usage:
+    type TotalResult = TotalResult.T
+    object TotalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetedResult = BudgetedResult.T
+    object BudgetedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BudgetedCacheReadWeight = BudgetedCacheReadWeight.T
+    object BudgetedCacheReadWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Input = Input.T
     object Input extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Output = Output.T
@@ -76,9 +92,13 @@ object Agents:
       (BigDecimal(plain) * input + BigDecimal(u.cacheRead) * cacheRead.getOrElse(input) +
         BigDecimal(u.cacheWrite) * cacheWrite.getOrElse(input) + BigDecimal(u.output) * output) / Prices.Million
 
-    def text: String =
+    def text: com.histmersion.api.automation.Agents.Price.TextResult =
       val n = (d: BigDecimal) => d.bigDecimal.stripTrailingZeros.toPlainString
       (List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/")
+
+  object Price:
+    type TextResult = TextResult.T
+    object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Billing:
     case Plan(pool: PlanQuota.PoolId)
@@ -88,14 +108,41 @@ object Agents:
       case Plan(_)    => BigDecimal(0)
       case Metered(p) => p.cost(u)
 
-    def describe: String = this match
+    def describe: com.histmersion.api.automation.Agents.Billing.DescribeResult = this match
       case Plan(p)    => s"plan pool: ${p.wire}"
       case Metered(p) => s"price: ${p.text} USD per million tokens"
 
+  object Billing:
+    type DescribeResult = DescribeResult.T
+    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   object Prices:
+    type ParseResultPart1 = ParseResultPart1.T
+    object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseResultPart2Part1 = ParseResultPart2Part1.T
+    object ParseResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostResultPart1 = CostResultPart1.T
+    object CostResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostPricesPart1 = CostPricesPart1.T
+    object CostPricesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CostModel = CostModel.T
+    object CostModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BillingResultPart1 = BillingResultPart1.T
+    object BillingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type BillingPricesPart1 = BillingPricesPart1.T
+    object BillingPricesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UnpricedResult = UnpricedResult.T
+    object UnpricedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UnpricedModel = UnpricedModel.T
+    object UnpricedModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MeteredResult = MeteredResult.T
+    object MeteredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     private[Agents] val Million = BigDecimal(1000000)
 
-    def parse(s: String): Either[String, Map[String, Price]] =
+    def parse(s: com.histmersion.api.automation.Agents.Prices.ParseS): Either[com.histmersion.api.automation.Agents.Prices.ParseResultPart1, Map[com.histmersion.api.automation.Agents.Prices.ParseResultPart2Part1, Price]] =
       val entries = s.split(";").toList.map(_.trim).filter(_.nonEmpty)
       val parsed = entries.map { e =>
         e.lastIndexOf('=') match
@@ -119,18 +166,18 @@ object Agents:
     /** An unpriced model is an error, never zero: sttp-ai's `PriceTable` counts an unknown model as free, so it would
       * never trip a cost budget.
       */
-    def cost(prices: Map[String, Price], model: String, u: Usage): Either[String, BigDecimal] =
+    def cost(prices: Map[com.histmersion.api.automation.Agents.Prices.CostPricesPart1, Price], model: com.histmersion.api.automation.Agents.Prices.CostModel, u: Usage): Either[com.histmersion.api.automation.Agents.Prices.CostResultPart1, BigDecimal] =
       prices.get(model).toRight(unpriced(model)).map(_.cost(u))
 
-    def billing(prices: Map[String, Price], m: ModelRef, pool: Option[PlanQuota.PoolId]): Either[String, Billing] =
+    def billing(prices: Map[com.histmersion.api.automation.Agents.Prices.BillingPricesPart1, Price], m: ModelRef, pool: Option[PlanQuota.PoolId]): Either[com.histmersion.api.automation.Agents.Prices.BillingResultPart1, Billing] =
       pool match
         case Some(p) => Right(Billing.Plan(p))
         case None    => prices.get(m.model).map(Billing.Metered(_)).toRight(unpriced(m.model) + metered(m))
 
-    private def unpriced(model: String): String =
+    private def unpriced(model: com.histmersion.api.automation.Agents.Prices.UnpricedModel): com.histmersion.api.automation.Agents.Prices.UnpricedResult =
       s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model"
 
-    private def metered(m: ModelRef): String = m.provider match
+    private def metered(m: ModelRef): com.histmersion.api.automation.Agents.Prices.MeteredResult = m.provider match
       case ProviderKind.ClaudeCode => " (claude-code is set to use an API key, so it bills the API, not the plan)"
       case ProviderKind.Codex      => " (codex is set to use an API key, so it bills the API, not the plan)"
       case ProviderKind.Opencode   => " (an opencode model is metered unless it is openai/… on a ChatGPT login)"
@@ -155,7 +202,10 @@ object Agents:
     case Llm extends StepKind("llm")
 
   object StepKind:
-    def parse(s: String): Option[StepKind] = values.find(_.wire == s)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.Agents.StepKind.ParseS): Option[StepKind] = values.find(_.wire == s)
 
   enum Origin(val wire: String):
     case Person extends Origin("person")
@@ -167,10 +217,15 @@ object Agents:
 
     case Manager extends Origin("manager")
 
-    def unattended: Boolean = this != Person
+    def unattended: com.histmersion.api.automation.Agents.Origin.UnattendedResult = this != Person
 
   object Origin:
-    def parse(s: String): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)
+    type UnattendedResult = UnattendedResult.T
+    object UnattendedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.Agents.Origin.ParseS): Option[Origin] = values.find(_.wire == s.trim.toLowerCase)
 
   final case class ProbeRequest(citekey: com.histmersion.api.library.Citekey, model: Option[ProbeRequest.Model] = None)
       derives KindlingsCodecAsObject,
@@ -185,7 +240,7 @@ object Agents:
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
-    def problems(recordYear: Option[Int]): List[String] = List(
+    def problems(recordYear: Option[com.histmersion.api.automation.Agents.ProbeAnswer.ProblemsRecordYear]): List[com.histmersion.api.automation.Agents.ProbeAnswer.ProblemsResult] = List(
       Option.when(Option(citekey).forall(_.trim.isEmpty))("the citekey is empty — give the source's citekey"),
       Option.when(Option(title).forall(_.trim.isEmpty))(
         "the title is empty — copy the source's exact title from get_source"
@@ -194,6 +249,12 @@ object Agents:
         "the year is missing — give the source's publication year from get_source"
       )
     ).flatten
+
+  object ProbeAnswer:
+    type ProblemsResult = ProblemsResult.T
+    object ProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ProblemsRecordYear = ProblemsRecordYear.T
+    object ProblemsRecordYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ProbeResult(
@@ -286,16 +347,23 @@ object Agents:
 
 
   final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
-    def text: String = s"$role=$model"
+    def text: com.histmersion.api.automation.Agents.ModelOverride.TextResult = s"$role=$model"
   object ModelOverride:
 
+
+    type TextResult = TextResult.T
+    object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseResultPart1 = ParseResultPart1.T
+    object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Role = Role.T
     object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Model = Model.T
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: String): Either[String, ModelOverride] =
+    def parse(s: com.histmersion.api.automation.Agents.ModelOverride.ParseS): Either[com.histmersion.api.automation.Agents.ModelOverride.ParseResultPart1, ModelOverride] =
       s.indexOf('=') match
         case -1 => Left(s"'${s.trim}' is not <role>=<provider:model>")
         case i  =>
@@ -323,11 +391,16 @@ object Agents:
       oaBacklog: Option[RunParams.OaBacklog] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def fixes: Boolean = fix.contains(true)
-    def noteList: List[String] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
+    def fixes: com.histmersion.api.automation.Agents.RunParams.FixesResult = fix.contains(true)
+    def noteList: List[com.histmersion.api.automation.Agents.RunParams.NoteListResult] = notes.getOrElse(Nil).map(_.trim).filter(_.nonEmpty)
     def overrides: List[ModelOverride] = modelFor.getOrElse(Nil)
 
   object RunParams:
+    type FixesResult = FixesResult.T
+    object FixesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NoteListResult = NoteListResult.T
+    object NoteListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ChainReview = ChainReview.T
@@ -374,12 +447,17 @@ object Agents:
       heartbeatAt: Option[RunInfo.HeartbeatAt] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def isWaiting: Boolean = status == com.histmersion.api.automation.Run.State.WaitingApproval.wire
+    def isWaiting: com.histmersion.api.automation.Agents.RunInfo.IsWaitingResult = status == com.histmersion.api.automation.Run.State.WaitingApproval.wire
 
-    def modelFor(role: Role): Option[String] =
+    def modelFor(role: Role): Option[com.histmersion.api.automation.Agents.RunInfo.ModelForResult] =
       params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
 
   object RunInfo:
+    type IsWaitingResult = IsWaitingResult.T
+    object IsWaitingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ModelForResult = ModelForResult.T
+    object ModelForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Pipeline = Pipeline.T
@@ -447,13 +525,16 @@ object Agents:
       turns: Option[StepInfo.Turns] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def modelText: String = (model, actualModel) match
+    def modelText: com.histmersion.api.automation.Agents.StepInfo.ModelTextResult = (model, actualModel) match
       case (Some(m), Some(a)) if m.drop(m.indexOf(':') + 1) != a => s"$m → $a"
       case (Some(m), _)                                          => m
       case (None, Some(a))                                       => a
       case (None, None)                                          => ""
 
   object StepInfo:
+    type ModelTextResult = ModelTextResult.T
+    object ModelTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Seq = Seq.T
     object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Name = Name.T
@@ -568,11 +649,18 @@ object Agents:
     case Fail extends CheckLevel("fail")
 
   object CheckLevel:
-    def parse(s: String): Option[CheckLevel] = values.find(_.wire == s)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.Agents.CheckLevel.ParseS): Option[CheckLevel] = values.find(_.wire == s)
     given WireEnumValues[CheckLevel]:
       def all: Array[CheckLevel] = CheckLevel.values
-      def wire(e: CheckLevel): String = e.wire
-      def fromWire(s: String): Option[CheckLevel] = parse(s)
+      def wire(e: CheckLevel): com.histmersion.api.automation.Agents.CheckLevel.WireResult = e.wire
+      def fromWire(s: com.histmersion.api.automation.Agents.CheckLevel.FromWireS): Option[CheckLevel] = parse(s)
     given io.circe.Encoder[CheckLevel] = WireEnum.encoder
     given io.circe.Decoder[CheckLevel] = WireEnum.decoder
     given Schema[CheckLevel] = WireEnum.schema
@@ -668,7 +756,10 @@ object Agents:
     case Reject extends Decision("reject")
 
   object Decision:
-    def parse(s: String): Option[Decision] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.Agents.Decision.ParseS): Option[Decision] = values.find(_.wire == s.trim.toLowerCase)
 
   final case class ApprovalInfo(
       id: ApprovalInfo.Id,

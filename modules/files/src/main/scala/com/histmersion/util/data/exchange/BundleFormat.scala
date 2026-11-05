@@ -26,17 +26,60 @@ import com.histmersion.api.exchange.Bundle
   */
 object BundleFormat:
 
+  type Unrevved = Unrevved.T
+  object Unrevved extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256HexResult = Sha256HexResult.T
+  object Sha256HexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256HexText = Sha256HexText.T
+  object Sha256HexText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HexResult = HexResult.T
+  object HexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RevOfResult = RevOfResult.T
+  object RevOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LineResult = LineResult.T
+  object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeLineResultPart1 = DecodeLineResultPart1.T
+  object DecodeLineResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeLineLine = DecodeLineLine.T
+  object DecodeLineLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeLineStamped = DecodeLineStamped.T
+  object DecodeLineStamped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContentUuidParts = ContentUuidParts.T
+  object ContentUuidParts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleIdSince = BundleIdSince.T
+  object BundleIdSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BundleIdBlobs = BundleIdBlobs.T
+  object BundleIdBlobs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseManifestResultPart1 = ParseManifestResultPart1.T
+  object ParseManifestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompatibleResult = CompatibleResult.T
+  object CompatibleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompatibleServerSchema = CompatibleServerSchema.T
+  object CompatibleServerSchema extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFilesResult = CheckFilesResult.T
+  object CheckFilesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckFilesSeenPart1 = CheckFilesSeenPart1.T
+  object CheckFilesSeenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NdjsonLines = NdjsonLines.T
+  object NdjsonLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileInfoPath = FileInfoPath.T
+  object FileInfoPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinesResult = LinesResult.T
+  object LinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SplitLinesResult = SplitLinesResult.T
+  object SplitLinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val printer: Printer = Printer.noSpaces.copy(sortKeys = true, dropNullValues = true)
 
   /** Fields a rev does NOT cover. */
-  val Unrevved: Set[String] = Set("rev", "updatedAt")
+  val Unrevved: Set[com.histmersion.util.data.exchange.BundleFormat.Unrevved] = Set("rev", "updatedAt")
 
-  def sha256Hex(bytes: Array[Byte]): String =
+  def sha256Hex(bytes: Array[Byte]): com.histmersion.util.data.exchange.BundleFormat.Sha256HexResult =
     hex(MessageDigest.getInstance("SHA-256").digest(bytes))
 
-  def sha256Hex(text: String): String = sha256Hex(text.getBytes(UTF_8))
+  def sha256Hex(text: com.histmersion.util.data.exchange.BundleFormat.Sha256HexText): com.histmersion.util.data.exchange.BundleFormat.Sha256HexResult = sha256Hex(text.getBytes(UTF_8))
 
-  def hex(bytes: Array[Byte]): String =
+  def hex(bytes: Array[Byte]): com.histmersion.util.data.exchange.BundleFormat.HexResult =
     val sb = StringBuilder(bytes.length * 2)
     bytes.foreach { b =>
       val v = b & 0xff
@@ -45,7 +88,7 @@ object BundleFormat:
     sb.toString
 
   /** The rev of a record already in JSON form. */
-  def revOf(obj: JsonObject): String =
+  def revOf(obj: JsonObject): com.histmersion.util.data.exchange.BundleFormat.RevOfResult =
     sha256Hex(printer.print(Json.fromJsonObject(obj.filterKeys(k => !Unrevved(k)))))
 
   /** A record as its NDJSON line (no newline) and its rev. The record's own `rev` field, whatever it holds, is replaced
@@ -57,7 +100,7 @@ object BundleFormat:
     Stamped(rev, printer.print(Json.fromJsonObject(obj.add("rev", Json.fromString(rev)))))
 
   /** A line that is not a stamped record carries no rev: it is printed as it is. */
-  def line[A](a: A)(using enc: Encoder.AsObject[A]): String = printer.print(enc(a))
+  def line[A](a: A)(using enc: Encoder.AsObject[A]): com.histmersion.util.data.exchange.BundleFormat.LineResult = printer.print(enc(a))
 
   final case class Stamped(rev: Stamped.Rev, line: Stamped.Line)
 
@@ -68,7 +111,7 @@ object BundleFormat:
     object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Parse one line, and for a stamped kind check that its `rev` is the rev of its content. */
-  def decodeLine[A](line: String, stamped: Boolean)(using dec: Decoder[A]): Either[String, A] =
+  def decodeLine[A](line: com.histmersion.util.data.exchange.BundleFormat.DecodeLineLine, stamped: com.histmersion.util.data.exchange.BundleFormat.DecodeLineStamped)(using dec: Decoder[A]): Either[com.histmersion.util.data.exchange.BundleFormat.DecodeLineResultPart1, A] =
     parser.parse(line).left.map(e => s"not JSON: ${e.message}").flatMap { json =>
       val revOk =
         if !stamped then Right(())
@@ -87,14 +130,14 @@ object BundleFormat:
   /** A UUID (version 8, RFC 9562 "custom") made from the sha256 of `parts`: the same content from the same instance
     * always gets the same id, so the manifest — and with it the whole file — stays deterministic.
     */
-  def contentUuid(parts: Seq[String]): UUID =
+  def contentUuid(parts: Seq[com.histmersion.util.data.exchange.BundleFormat.ContentUuidParts]): UUID =
     val d = MessageDigest.getInstance("SHA-256").digest(parts.mkString("\n").getBytes(UTF_8))
     d(6) = ((d(6) & 0x0f) | 0x80).toByte // version 8
     d(8) = ((d(8) & 0x3f) | 0x80).toByte // variant 10
     val bb = java.nio.ByteBuffer.wrap(d, 0, 16)
     UUID(bb.getLong, bb.getLong)
 
-  def bundleId(instance: UUID, since: Option[String], files: List[Bundle.FileInfo], blobs: Seq[String]): UUID =
+  def bundleId(instance: UUID, since: Option[com.histmersion.util.data.exchange.BundleFormat.BundleIdSince], files: List[Bundle.FileInfo], blobs: Seq[com.histmersion.util.data.exchange.BundleFormat.BundleIdBlobs]): UUID =
     contentUuid(
       Seq(Bundle.Format, instance.toString, since.getOrElse("")) ++
         files.map(f => s"${f.path} ${f.sha256}") ++ blobs
@@ -105,13 +148,13 @@ object BundleFormat:
   def manifestBytes(m: Bundle.Manifest): Array[Byte] =
     (printer.print(Encoder.AsObject[Bundle.Manifest].apply(m)) + "\n").getBytes(UTF_8)
 
-  def parseManifest(bytes: Array[Byte]): Either[String, Bundle.Manifest] =
+  def parseManifest(bytes: Array[Byte]): Either[com.histmersion.util.data.exchange.BundleFormat.ParseManifestResultPart1, Bundle.Manifest] =
     parser.decode[Bundle.Manifest](String(bytes, UTF_8)).left.map(e => s"manifest.json: ${e.getMessage}")
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older
     * ones); every reason is returned. `serverSchema` is the Flyway version, numeric.
     */
-  def compatible(m: Bundle.Manifest, serverSchema: Option[String]): List[String] =
+  def compatible(m: Bundle.Manifest, serverSchema: Option[com.histmersion.util.data.exchange.BundleFormat.CompatibleServerSchema]): List[com.histmersion.util.data.exchange.BundleFormat.CompatibleResult] =
     def num(v: String) = v.trim.toIntOption
     List(
       Option.when(m.format != Bundle.Format)(s"not a Histmersion bundle (format '${m.format}')"),
@@ -126,7 +169,7 @@ object BundleFormat:
     ).flatten
 
   /** The manifest's file list against what the tar holds: missing, unexpected and mismatching files. */
-  def checkFiles(m: Bundle.Manifest, seen: Map[String, Bundle.FileInfo]): List[String] =
+  def checkFiles(m: Bundle.Manifest, seen: Map[com.histmersion.util.data.exchange.BundleFormat.CheckFilesSeenPart1, Bundle.FileInfo]): List[com.histmersion.util.data.exchange.BundleFormat.CheckFilesResult] =
     val listed = m.files.map(f => f.path -> f).toMap
     val missing = m.files
       .filterNot(f => seen.contains(f.path))
@@ -145,14 +188,14 @@ object BundleFormat:
     missing ++ unexpected ++ differ
 
   /** The NDJSON payload of a list of lines: one per line, each ending in `\n`. */
-  def ndjson(lines: Seq[String]): Array[Byte] =
+  def ndjson(lines: Seq[com.histmersion.util.data.exchange.BundleFormat.NdjsonLines]): Array[Byte] =
     if lines.isEmpty then Array.emptyByteArray
     else lines.mkString("", "\n", "\n").getBytes(UTF_8)
 
-  def fileInfo(path: String, payload: Array[Byte]): Bundle.FileInfo =
+  def fileInfo(path: com.histmersion.util.data.exchange.BundleFormat.FileInfoPath, payload: Array[Byte]): Bundle.FileInfo =
     Bundle.FileInfo(path, lines(payload), payload.length.toLong, sha256Hex(payload))
 
-  def lines(payload: Array[Byte]): Int = payload.count(_ == '\n'.toByte)
+  def lines(payload: Array[Byte]): com.histmersion.util.data.exchange.BundleFormat.LinesResult = payload.count(_ == '\n'.toByte)
 
-  def splitLines(payload: Array[Byte]): List[String] =
+  def splitLines(payload: Array[Byte]): List[com.histmersion.util.data.exchange.BundleFormat.SplitLinesResult] =
     String(payload, UTF_8).split('\n').toList.filter(_.nonEmpty)

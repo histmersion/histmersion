@@ -24,16 +24,22 @@ trait PlanFolds:
   def foldedTo(foreign: UUID): Option[UUID]
 
   /** A uid this collection's rows have. */
-  def here(u: UUID): Boolean
+  def here(u: UUID): com.histmersion.util.data.exchange.PlanFolds.HereResult
 
   /** The uid here a uid of the bundle maps onto (a redirect or the ledger), else itself. */
   def toLocal(u: UUID): UUID
 
   /** The decision in force for an issue that applies. */
-  def decisionIn(issue: String): Option[MergeDecision]
+  def decisionIn(issue: com.histmersion.util.data.exchange.PlanFolds.DecisionInIssue): Option[MergeDecision]
 
   /** What the apply does, counted. */
   def count(f: MergeTally => MergeTally): Unit
 
   /** This collection's row of a line stays as it is. */
   def keepLocal(foreign: UUID): Unit
+
+object PlanFolds:
+  type HereResult = HereResult.T
+  object HereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecisionInIssue = DecisionInIssue.T
+  object DecisionInIssue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

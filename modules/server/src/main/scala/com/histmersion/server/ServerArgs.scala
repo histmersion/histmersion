@@ -2,7 +2,14 @@ package com.histmersion.server
 
 object ServerArgs:
 
-  val Usage: String =
+  type Usage = Usage.T
+  object Usage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseArgs = ParseArgs.T
+  object ParseArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val Usage: com.histmersion.server.ServerArgs.Usage =
     """usage: histmersion-server [--self-check | --help]
       |
       |  (no arguments)  run the server: config from reference.conf < histmersion.conf < the environment
@@ -13,7 +20,7 @@ object ServerArgs:
       |  --help, -h      this text""".stripMargin
 
   /** Pure: the mode, or the usage error. */
-  def parse(args: List[String]): Either[String, ServerMode] =
+  def parse(args: List[com.histmersion.server.ServerArgs.ParseArgs]): Either[com.histmersion.server.ServerArgs.ParseResultPart1, ServerMode] =
     args match
       case Nil                   => Right(ServerMode.Serve)
       case List("--self-check")  => Right(ServerMode.SelfCheck)

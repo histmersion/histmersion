@@ -22,6 +22,11 @@ object EventRederiveReport:
 
 
   /** An events re-dating job's report, in its detail. */
+  type SummaryResult = SummaryResult.T
+  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type DryRun = DryRun.T
   object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Providers = Providers.T
@@ -42,7 +47,7 @@ object EventRederiveReport:
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventRederiveReport]] =
     com.histmersion.api.jobs.JobDetail.Field("eventRederive", None)
 
-  def summary(r: EventRederiveReport): String =
+  def summary(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.SummaryResult =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")
     List(
       Some(
@@ -56,7 +61,7 @@ object EventRederiveReport:
       r.corrections.summary
     ).flatten.mkString(" · ")
 
-  def markdown(r: EventRederiveReport): String =
+  def markdown(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.MarkdownResult =
     val head =
       s"## Event re-derivation — ${r.providers.mkString(", ")}${if r.dryRun then " (dry run: nothing stored)" else ""}"
     (head :: "" :: summary(r).split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n")

@@ -18,6 +18,15 @@ import com.histmersion.util.console.Console
   */
 object DeleteCmd:
 
+  type CalibreCheckCalibreId = CalibreCheckCalibreId.T
+  object CalibreCheckCalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreCheckLibrary = CalibreCheckLibrary.T
+  object CalibreCheckLibrary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreCheckByIdArg1 = CalibreCheckByIdArg1.T
+  object CalibreCheckByIdArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CalibreCheckByIdResultPart1 = CalibreCheckByIdResultPart1.T
+  object CalibreCheckByIdResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Args(citekey: Args.Citekey, apply: Args.Apply, json: Args.Json)
 
   object Args:
@@ -47,10 +56,10 @@ object DeleteCmd:
     * person has deleted since. Not a number, or no library: unchecked, with why.
     */
   def calibreCheck(
-      calibreId: String,
+      calibreId: com.histmersion.cli.DeleteCmd.CalibreCheckCalibreId,
       libraryExists: => Boolean,
-      library: String,
-      byId: Int => Either[String, Option[Calibre.Book]]
+      library: com.histmersion.cli.DeleteCmd.CalibreCheckLibrary,
+      byId: com.histmersion.cli.DeleteCmd.CalibreCheckByIdArg1 => Either[com.histmersion.cli.DeleteCmd.CalibreCheckByIdResultPart1, Option[Calibre.Book]]
   ): CalibreEntryCheck =
     calibreId.trim.toIntOption match
       case None                      => CalibreEntryCheck.Unchecked(s"'$calibreId' is not a Calibre id")

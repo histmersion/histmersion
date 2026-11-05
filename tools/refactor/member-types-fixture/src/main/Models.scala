@@ -12,3 +12,4 @@ object Service:
 class Store:
   def load(key: String): Option[Long] = ???
   override def toString: String = "store"
+  def buffer(bytes: Array[Byte]): Array[Byte] = ???

@@ -9,6 +9,15 @@ final case class AiUsage(input: AiUsage.Input, output: AiUsage.Output, cacheRead
 
 object AiUsage:
   /** The usage as a provider compiled before reasoning tokens were counted wrote it. */
+  type ApplyInput = ApplyInput.T
+  object ApplyInput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyOutput = ApplyOutput.T
+  object ApplyOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCacheRead = ApplyCacheRead.T
+  object ApplyCacheRead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyCacheWrite = ApplyCacheWrite.T
+  object ApplyCacheWrite extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Input = Input.T
   object Input extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Output = Output.T
@@ -20,5 +29,5 @@ object AiUsage:
   type Reasoning = Reasoning.T
   object Reasoning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def apply(input: Long, output: Long, cacheRead: Long, cacheWrite: Long): AiUsage =
+  def apply(input: com.histmersion.plugin.AiUsage.ApplyInput, output: com.histmersion.plugin.AiUsage.ApplyOutput, cacheRead: com.histmersion.plugin.AiUsage.ApplyCacheRead, cacheWrite: com.histmersion.plugin.AiUsage.ApplyCacheWrite): AiUsage =
     new AiUsage(input, output, cacheRead, cacheWrite, 0)

@@ -5,16 +5,27 @@ import com.histmersion.api.given
 
 object FormatMarkdown:
 
-  def problems(n: Int): String = Plural.count(n, "formatting problem")
+  type ProblemsResult = ProblemsResult.T
+  object ProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProblemsN = ProblemsN.T
+  object ProblemsN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LineResult = LineResult.T
+  object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoticeResult = NoticeResult.T
+  object NoticeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportResult = ReportResult.T
+  object ReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def line(i: FormatIssue): String =
+  def problems(n: com.histmersion.api.checks.FormatMarkdown.ProblemsN): com.histmersion.api.checks.FormatMarkdown.ProblemsResult = Plural.count(n, "formatting problem")
+
+  def line(i: FormatIssue): com.histmersion.api.checks.FormatMarkdown.LineResult =
     val sev = summon[WireEnumValues[FormatSeverity]].wire(i.severity)
     val fld = summon[WireEnumValues[FormatField]].wire(i.field)
     val ex = if i.excerpt.isEmpty then "" else s" · `${i.excerpt.replace("`", "'")}`"
     val fx = i.fix.fold("")(f => s" · fix: $f")
     s"$fld L${i.line}:${i.column} $sev ${i.rule.wire} — ${i.message}$ex$fx"
 
-  def notice(issues: List[FormatIssue]): String =
+  def notice(issues: List[FormatIssue]): com.histmersion.api.checks.FormatMarkdown.NoticeResult =
     if issues.isEmpty then ""
     else
       val errs = issues.count(_.severity == FormatSeverity.Error)
@@ -25,7 +36,7 @@ object FormatMarkdown:
       else ""
       s"\n\n$head\n\n${issues.map(i => s"- ${line(i)}").mkString("\n")}$tip"
 
-  def report(r: FormatReport): String =
+  def report(r: FormatReport): com.histmersion.api.checks.FormatMarkdown.ReportResult =
     val fixed = if r.fixed.isEmpty then "" else r.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
     if r.issues.isEmpty then s"$fixed### ${r.subject}: no formatting problems"
     else

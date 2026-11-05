@@ -6,7 +6,40 @@ import com.histmersion.api.Markdown.*
 
 object MediaMarkdown:
 
-  def assetDetail(ck: String, a: AssetDetail): String =
+  type AssetDetailResult = AssetDetailResult.T
+  object AssetDetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetDetailCk = AssetDetailCk.T
+  object AssetDetailCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsLineResult = CountsLineResult.T
+  object CountsLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaProvidersResult = MediaProvidersResult.T
+  object MediaProvidersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaImportReportResult = MediaImportReportResult.T
+  object MediaImportReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaSamplesResult = MediaSamplesResult.T
+  object MediaSamplesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaSamplesDryRun = MediaSamplesDryRun.T
+  object MediaSamplesDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaCoversReportResult = MediaCoversReportResult.T
+  object MediaCoversReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaItemLineResult = MediaItemLineResult.T
+  object MediaItemLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaListResult = MediaListResult.T
+  object MediaListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaItemResult = MediaItemResult.T
+  object MediaItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaFacetsResult = MediaFacetsResult.T
+  object MediaFacetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FigureLicenceFillResult = FigureLicenceFillResult.T
+  object FigureLicenceFillResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetLinkLineResult = AssetLinkLineResult.T
+  object AssetLinkLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetLinkListResult = AssetLinkListResult.T
+  object AssetLinkListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetLinkResult = AssetLinkResult.T
+  object AssetLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def assetDetail(ck: com.histmersion.api.media.MediaMarkdown.AssetDetailCk, a: AssetDetail): com.histmersion.api.media.MediaMarkdown.AssetDetailResult =
     val loc = (a.lat, a.lon) match
       case (Some(lat), Some(lon)) => s"  \n**Location:** $lat, $lon"
       case _                      => ""
@@ -25,11 +58,11 @@ object MediaMarkdown:
     val cap = a.caption.map(c => s"\n\n> $c").getOrElse("")
     s"# `$ck` / `${a.name}`\n\n$meta$loc$per$cap"
 
-  private[api] def countsLine(cs: List[MediaCount]): String =
+  private[api] def countsLine(cs: List[MediaCount]): com.histmersion.api.media.MediaMarkdown.CountsLineResult =
     if cs.isEmpty then "none"
     else cs.map(c => s"${c.key} ${c.n}${if c.allowed then "" else " (not allowed)"}").mkString(" · ")
 
-  def mediaProviders(ps: List[MediaProvider.Info]): String =
+  def mediaProviders(ps: List[MediaProvider.Info]): com.histmersion.api.media.MediaMarkdown.MediaProvidersResult =
     if ps.isEmpty then "No media provider is registered (every media plugin is switched off)."
     else
       ps.map { p =>
@@ -39,7 +72,7 @@ object MediaMarkdown:
           (if p.description.trim.isEmpty then "" else s"\n  ${p.description.trim}")
       }.mkString("## Media providers\n\n", "\n", "\n\n`histmersion media import <name>` runs one.")
 
-  def mediaImportReport(r: MediaImportReport): String =
+  def mediaImportReport(r: MediaImportReport): com.histmersion.api.media.MediaMarkdown.MediaImportReportResult =
     val mode = if r.dryRun then "dry run — nothing stored" else "stored"
     val licences = if r.byLicence.isEmpty then "_none_"
     else
@@ -76,7 +109,7 @@ object MediaMarkdown:
       licences + rejected + mediaSamples(r.samples, r.dryRun) + done + revoked + failed + pending
     ).mkString("\n")
 
-  private[api] def mediaSamples(xs: List[MediaSample], dryRun: Boolean): String =
+  private[api] def mediaSamples(xs: List[MediaSample], dryRun: com.histmersion.api.media.MediaMarkdown.MediaSamplesDryRun): com.histmersion.api.media.MediaMarkdown.MediaSamplesResult =
     if xs.isEmpty then ""
     else
       s"\n\n**${if dryRun then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
@@ -84,7 +117,7 @@ object MediaMarkdown:
           s"- ${x.targetType} `${x.targetId}` (${x.targetLabel}) ← ${x.title} [`${x.key}`](${x.url}) · `${x.license}` — ${x.basis}"
         ).mkString("\n")
 
-  def mediaCoversReport(r: MediaCoversReport): String =
+  def mediaCoversReport(r: MediaCoversReport): com.histmersion.api.media.MediaMarkdown.MediaCoversReportResult =
     val mode = if r.dryRun then "dry run — nothing stored" else "stored"
     val verb = if r.dryRun then "would link" else "linked"
     val lines = if r.lines.isEmpty then ""
@@ -99,7 +132,7 @@ object MediaMarkdown:
       s"${Plural.count(r.covers, "cover")} and ${Plural.count(r.illustrations, "illustration")}" +
       lines + skipped + failed
 
-  def mediaItemLine(m: MediaItem): String =
+  def mediaItemLine(m: MediaItem): com.histmersion.api.media.MediaMarkdown.MediaItemLineResult =
     val origin = m.citekey
       .map(c => s"[[$c]] / `${m.name}`")
       .getOrElse(s"${m.provider.map(MediaProvider.title).getOrElse("?")} `${m.providerKey.getOrElse(m.name)}`")
@@ -109,10 +142,10 @@ object MediaMarkdown:
     else " → " + m.targets.map(t => s"${t.targetType}:${t.targetId} (${t.role})").mkString(", ")
     s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets"
 
-  def mediaList(l: MediaList): String =
+  def mediaList(l: MediaList): com.histmersion.api.media.MediaMarkdown.MediaListResult =
     OffsetPage.markdown(l.page, Plural.noun(l.total.value, "picture"), "_No pictures._", l.items)(mediaItemLine)
 
-  def mediaItem(m: MediaItem): String =
+  def mediaItem(m: MediaItem): com.histmersion.api.media.MediaMarkdown.MediaItemResult =
     val origin = m.citekey
       .map(c => s"**Source:** [[$c]] / `${m.name}`")
       .getOrElse(
@@ -146,24 +179,24 @@ object MediaMarkdown:
     val cap = m.caption.map(c => s"\n\n> $c").getOrElse("")
     s"# `${m.uid}`\n\n$rows$targets$cap"
 
-  def mediaFacets(f: MediaFacets): String =
+  def mediaFacets(f: MediaFacets): com.histmersion.api.media.MediaMarkdown.MediaFacetsResult =
     s"**Providers:** ${countsLine(f.providers.map(c => c.modify(_.key).setTo(MediaProvider.title(c.key))))}  \n" +
       s"**Licences:** ${countsLine(f.licences)}"
 
-  def figureLicenceFill(f: FigureLicenceFill): String =
+  def figureLicenceFill(f: FigureLicenceFill): com.histmersion.api.media.MediaMarkdown.FigureLicenceFillResult =
     val what = if f.applied then s"${Plural.count(f.updated, "figure")} given their source's licence"
     else s"${Plural.count(f.candidates, "figure")} would take their source's licence (dry run; `--apply` writes it)"
     val by = if f.bySource.isEmpty then "" else "\n\n" + f.bySource.map(c => s"- [[${c.key}]]: ${c.n}").mkString("\n")
     s"# Figure licences\n\n$what$by"
 
-  def assetLinkLine(l: AssetLink): String =
+  def assetLinkLine(l: AssetLink): com.histmersion.api.media.MediaMarkdown.AssetLinkLineResult =
     val xywh = l.xywh.map(x => s" xywh=$x").getOrElse("")
     s"- **${l.relation}** ${l.targetType}:${l.targetId} ← ${l.citekey}/${l.assetName}$xywh"
 
-  def assetLinkList(ll: AssetLink.List): String =
+  def assetLinkList(ll: AssetLink.List): com.histmersion.api.media.MediaMarkdown.AssetLinkListResult =
     OffsetPage.markdown(ll.page, "link(s)", "_No asset links._", ll.links)(assetLinkLine)
 
-  def assetLink(l: AssetLink): String =
+  def assetLink(l: AssetLink): com.histmersion.api.media.MediaMarkdown.AssetLinkResult =
     val xywh = l.xywh.map(x => s"  \n**Region:** $x").getOrElse("")
     val notes = l.notes.map(n => s"  \n$n").getOrElse("")
     s"# Link #${l.id}\n\n**Relation:** ${l.relation}  \n**Target:** ${l.targetType}:${l.targetId}  \n**Asset:** ${l.citekey}/${l.assetName}$xywh$notes"

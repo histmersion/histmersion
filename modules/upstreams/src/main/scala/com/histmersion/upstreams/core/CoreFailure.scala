@@ -6,6 +6,10 @@ enum CoreFailure:
   /** Asked, and it failed (unreachable, an error answer, unparseable JSON). */
   case Failed(why: String)
 
-  def message: String = this match
+  def message: com.histmersion.upstreams.core.CoreFailure.MessageResult = this match
     case Skipped(why) => s"CORE not asked: $why"
     case Failed(why)  => why
+
+object CoreFailure:
+  type MessageResult = MessageResult.T
+  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -6,10 +6,41 @@ import com.histmersion.api.given
 
 object MergeMarkdown:
 
-  def who(i: Bundle.Instance): String =
+  type WhoResult = WhoResult.T
+  object WhoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanResult = PlanResult.T
+  object PlanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanAll = PlanAll.T
+  object PlanAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AppliedResult = AppliedResult.T
+  object AppliedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyJobResult = ApplyJobResult.T
+  object ApplyJobResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergesResult = MergesResult.T
+  object MergesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetailResult = DetailResult.T
+  object DetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgerResult = LedgerResult.T
+  object LedgerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenamedResult = RenamedResult.T
+  object RenamedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionResult = SectionResult.T
+  object SectionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionTitle = SectionTitle.T
+  object SectionTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SectionLines = SectionLines.T
+  object SectionLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssueResult = IssueResult.T
+  object IssueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByResult = ByResult.T
+  object ByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArgHintResult = ArgHintResult.T
+  object ArgHintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def who(i: Bundle.Instance): com.histmersion.api.exchange.MergeMarkdown.WhoResult =
     i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)")
 
-  def plan(p: MergePlan, all: Boolean = false): String =
+  def plan(p: MergePlan, all: com.histmersion.api.exchange.MergeMarkdown.PlanAll = false): com.histmersion.api.exchange.MergeMarkdown.PlanResult =
     val m = p.matches
     val open =
       p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty && i.decision.isEmpty)
@@ -59,7 +90,7 @@ object MergeMarkdown:
           s"(${Plural.count(p.changes, "change")}; a backup is taken first)._"
     (head :: sections ++ List(next)).mkString("\n\n")
 
-  def applied(r: MergeApplyResult): String =
+  def applied(r: MergeApplyResult): com.histmersion.api.exchange.MergeMarkdown.AppliedResult =
     val t = r.tally
     def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => Int): Int =
       r.counts.find(_.kind == k).fold(0)(f)
@@ -102,7 +133,7 @@ object MergeMarkdown:
     ).flatten
     (head :: body ++ sections).mkString("\n\n")
 
-  def applyJob(j: MergeApplyJob): String =
+  def applyJob(j: MergeApplyJob): com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult =
     j.state match
       case MergeJobState.Running =>
         s"**Applying** plan ${j.planHash} — job `${j.job}`, ${j.elapsedMs / 1000} s so far (a backup is taken first)."
@@ -112,7 +143,7 @@ object MergeMarkdown:
         s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText)}"
       case MergeJobState.Done => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
 
-  def merges(ms: List[MergeInfo]): String =
+  def merges(ms: List[MergeInfo]): com.histmersion.api.exchange.MergeMarkdown.MergesResult =
     if ms.isEmpty then "_No merges yet: nothing was imported from another collection._"
     else
       ("| merge | when | from | bundle | plan | ledger | redirects | backup |" ::
@@ -123,7 +154,7 @@ object MergeMarkdown:
             s"${m.backup.getOrElse("—")} |"
         )).mkString("\n")
 
-  def detail(d: MergeDetail): String =
+  def detail(d: MergeDetail): com.histmersion.api.exchange.MergeMarkdown.DetailResult =
     val m = d.merge
     val head = List(
       s"**Merge** `${m.id}` · ${m.appliedAt} · from ${who(m.from)}",
@@ -146,7 +177,7 @@ object MergeMarkdown:
     )
     (head :: report ++ res.toList ++ rem.toList).mkString("\n\n")
 
-  def ledger(l: MergeLedger): String =
+  def ledger(l: MergeLedger): com.histmersion.api.exchange.MergeMarkdown.LedgerResult =
     val head = l.query.fold("**Merge ledger** (latest)")(q => s"**Merge ledger** of `$q`")
     val rows =
       if l.entries.isEmpty then List("_No ledger rows._")
@@ -164,7 +195,7 @@ object MergeMarkdown:
     )
     ((head :: rows.mkString("\n") :: Nil) ++ redirects.toList).mkString("\n\n")
 
-  def renamed(r: LabelRenamed): String =
+  def renamed(r: LabelRenamed): com.histmersion.api.exchange.MergeMarkdown.RenamedResult =
     val what = r.entity match
       case com.histmersion.api.exchange.Bundle.Kind.Article => "Article"
       case com.histmersion.api.exchange.Bundle.Kind.Event   => "Event"
@@ -173,10 +204,10 @@ object MergeMarkdown:
     s"**$what renamed** `${r.from}` → `${r.to}`; the old label stays an alias — reads and writes naming it go to `${r.to}`." +
       (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else "")
 
-  private def section(title: String, lines: List[String]): Option[String] =
+  private def section(title: com.histmersion.api.exchange.MergeMarkdown.SectionTitle, lines: List[com.histmersion.api.exchange.MergeMarkdown.SectionLines]): Option[com.histmersion.api.exchange.MergeMarkdown.SectionResult] =
     Option.when(lines.nonEmpty)(s"**$title**\n" + lines.mkString("\n"))
 
-  def issue(i: MergeIssue): String =
+  def issue(i: MergeIssue): com.histmersion.api.exchange.MergeMarkdown.IssueResult =
     val cond = i.condition.fold("")(c => s" _(if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)})_")
     val lines = List(
       i.left.map(s => s"here `${s.label}`" + s.lines.map(l => s" · $l").mkString),
@@ -190,11 +221,11 @@ object MergeMarkdown:
     ).flatten
     (s"- `${i.id}` ${i.entity.wire} — ${i.title}$cond" :: lines.map(l => s"  - $l")).mkString("\n")
 
-  private def by(b: MergeIssue.DecidedBy): String = b match
+  private def by(b: MergeIssue.DecidedBy): com.histmersion.api.exchange.MergeMarkdown.ByResult = b match
     case MergeIssue.DecidedBy.Remembered => " as an earlier merge apply did"
     case other                           => s" by ${other.toString.toLowerCase(java.util.Locale.ROOT)}"
 
-  private def argHint(i: MergeIssue, k: MergeDecision.Kind): String = k match
+  private def argHint(i: MergeIssue, k: MergeDecision.Kind): com.histmersion.api.exchange.MergeMarkdown.ArgHintResult = k match
     case MergeDecision.Kind.Map => ":" + List(i.left, i.right).flatten.map(_.label).mkString("|")
     case MergeDecision.Kind.RenameRight | MergeDecision.Kind.RenameLeft | MergeDecision.Kind.File =>
       i.suggested.filter(_.kind == k).flatMap(_.argument).fold(":<value>")(a => s":$a")

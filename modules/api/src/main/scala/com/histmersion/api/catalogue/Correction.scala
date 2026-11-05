@@ -53,14 +53,19 @@ object Correction:
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
       Counts(kept + o.kept, retired + o.retired, conflicts + o.conflicts)
-    def isEmpty: Boolean = kept == 0 && retired == 0 && conflicts == 0
+    def isEmpty: com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult = kept == 0 && retired == 0 && conflicts == 0
 
-    def summary: Option[String] =
+    def summary: Option[com.histmersion.api.catalogue.Correction.Counts.SummaryResult] =
       Option.when(!isEmpty)(
         s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict"
       )
 
   object Counts:
+    type IsEmptyResult = IsEmptyResult.T
+    object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SummaryResult = SummaryResult.T
+    object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Kept = Kept.T
     object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Retired = Retired.T
@@ -77,14 +82,22 @@ object Correction:
 
 
   object Status:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Applied = Applied.T
+    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Active = "active"
     val Agreed = "agreed"
     val Conflict = "conflict"
-    val all: scala.List[String] = scala.List(Active, Agreed, Conflict)
+    val all: scala.List[com.histmersion.api.catalogue.Correction.Status.All] = scala.List(Active, Agreed, Conflict)
 
-    val applied: Set[String] = Set(Active, Conflict)
+    val applied: Set[com.histmersion.api.catalogue.Correction.Status.Applied] = Set(Active, Conflict)
 
   object Target:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Event = "event"
     val Place = "place"
-    val all: scala.List[String] = scala.List(Event, Place)
+    val all: scala.List[com.histmersion.api.catalogue.Correction.Target.All] = scala.List(Event, Place)

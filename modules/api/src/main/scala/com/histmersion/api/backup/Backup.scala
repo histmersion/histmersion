@@ -13,6 +13,53 @@ import sttp.tapir.Schema
 
 object Backup:
 
+  type TimestampResult = TimestampResult.T
+  object TimestampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileNameResult = FileNameResult.T
+  object FileNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UniqueNameResult = UniqueNameResult.T
+  object UniqueNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UniqueNameName = UniqueNameName.T
+  object UniqueNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UniqueNameTakenArg1 = UniqueNameTakenArg1.T
+  object UniqueNameTakenArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UniqueNameTakenResult = UniqueNameTakenResult.T
+  object UniqueNameTakenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPruneResult = ToPruneResult.T
+  object ToPruneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPruneNames = ToPruneNames.T
+  object ToPruneNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToPruneKeep = ToPruneKeep.T
+  object ToPruneKeep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TakenAtName = TakenAtName.T
+  object TakenAtName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SafeNameResultPart1 = SafeNameResultPart1.T
+  object SafeNameResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SafeNameResultPart2 = SafeNameResultPart2.T
+  object SafeNameResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SafeNameRaw = SafeNameRaw.T
+  object SafeNameRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJdbcResultPart1 = ParseJdbcResultPart1.T
+  object ParseJdbcResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseJdbcUrl = ParseJdbcUrl.T
+  object ParseJdbcUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestoreOutcomeResultPart1 = RestoreOutcomeResultPart1.T
+  object RestoreOutcomeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestoreOutcomeResultPart2 = RestoreOutcomeResultPart2.T
+  object RestoreOutcomeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestoreOutcomeExit = RestoreOutcomeExit.T
+  object RestoreOutcomeExit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestoreOutcomeOutput = RestoreOutcomeOutput.T
+  object RestoreOutcomeOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaintenanceOp = MaintenanceOp.T
+  object MaintenanceOp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MissingFile = MissingFile.T
+  object MissingFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HumanBytesResult = HumanBytesResult.T
+  object HumanBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HumanBytesN = HumanBytesN.T
+  object HumanBytesN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Prefix = "histmersion-"
   val Extension = ".dump"
 
@@ -20,11 +67,11 @@ object Backup:
   private val Stamp: DateTimeFormatter =
     DateTimeFormatter.ofPattern("uuuuMMdd'T'HHmmss'Z'").withZone(ZoneOffset.UTC)
 
-  def timestamp(at: Instant): String = Stamp.format(at.truncatedTo(ChronoUnit.SECONDS))
+  def timestamp(at: Instant): com.histmersion.api.backup.Backup.TimestampResult = Stamp.format(at.truncatedTo(ChronoUnit.SECONDS))
 
-  def fileName(at: Instant): String = s"$Prefix${timestamp(at)}$Extension"
+  def fileName(at: Instant): com.histmersion.api.backup.Backup.FileNameResult = s"$Prefix${timestamp(at)}$Extension"
 
-  def uniqueName(name: String, taken: String => Boolean): String =
+  def uniqueName(name: com.histmersion.api.backup.Backup.UniqueNameName, taken: com.histmersion.api.backup.Backup.UniqueNameTakenArg1 => com.histmersion.api.backup.Backup.UniqueNameTakenResult): com.histmersion.api.backup.Backup.UniqueNameResult =
     if !taken(name) then name
     else
       val stem = name.dropRight(Extension.length)
@@ -35,7 +82,7 @@ object Backup:
   /** Only names this service writes count: anything else in the directory is someone's own file. As plain text
     * `…Z-2.dump` sorts before `…Z.dump`, so the order is the stamp, then the same-second suffix.
     */
-  def toPrune(names: List[String], keep: Int): List[String] =
+  def toPrune(names: List[com.histmersion.api.backup.Backup.ToPruneNames], keep: com.histmersion.api.backup.Backup.ToPruneKeep): List[com.histmersion.api.backup.Backup.ToPruneResult] =
     if keep <= 0 then Nil
     else
       val ours = names.collect { case n @ Written(stamp, suffix) =>
@@ -46,7 +93,7 @@ object Backup:
   private val AnyStamp = """(\d{8}T\d{6}Z)(?:-(\d+))?""".r.unanchored
 
   /** The stamp in the name wins over the mtime: a copied archive keeps its name but not its mtime. */
-  def takenAt(name: String, mtime: Instant): Instant = name match
+  def takenAt(name: com.histmersion.api.backup.Backup.TakenAtName, mtime: Instant): Instant = name match
     case AnyStamp(stamp, _) =>
       scala.util.Try(Instant.from(Stamp.parse(stamp))).getOrElse(mtime)
     case _ => mtime
@@ -61,7 +108,7 @@ object Backup:
 
   private val Safe = "[A-Za-z0-9][A-Za-z0-9._-]*".r
 
-  def safeName(raw: String): Either[String, String] =
+  def safeName(raw: com.histmersion.api.backup.Backup.SafeNameRaw): Either[com.histmersion.api.backup.Backup.SafeNameResultPart1, com.histmersion.api.backup.Backup.SafeNameResultPart2] =
     val n = Option(raw).map(_.trim).getOrElse("")
     if n.isEmpty then Left("no backup file given")
     else if n.length > 128 then Left(s"backup file name is too long (${n.length} chars)")
@@ -74,12 +121,15 @@ object Backup:
   /** Absent `host`/`port` let libpq decide (its own defaults, `PGHOST`, `PGPORT`). */
   final case class PgTarget(host: Option[PgTarget.Host], port: Option[PgTarget.Port], database: PgTarget.Database):
     /** `-w`: a missing password fails instead of `pg_dump` prompting forever. */
-    def args: List[String] =
+    def args: List[com.histmersion.api.backup.Backup.PgTarget.ArgsResult] =
       host.toList.flatMap(h => List("-h", h)) ++
         port.toList.flatMap(p => List("-p", p.toString)) ++
         List("-d", database, "-w")
 
   object PgTarget:
+    type ArgsResult = ArgsResult.T
+    object ArgsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Host = Host.T
     object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Port = Port.T
@@ -89,7 +139,7 @@ object Backup:
 
   private val JdbcScheme = "jdbc:postgresql:"
 
-  def parseJdbc(url: String): Either[String, PgTarget] =
+  def parseJdbc(url: com.histmersion.api.backup.Backup.ParseJdbcUrl): Either[com.histmersion.api.backup.Backup.ParseJdbcResultPart1, PgTarget] =
     val u = Option(url).map(_.trim).getOrElse("")
     if !u.startsWith(JdbcScheme) then Left(s"not a PostgreSQL JDBC URL: '$u'")
     else
@@ -122,7 +172,7 @@ object Backup:
     * with `SET transaction_timeout = 0`, which Postgres < 17 rejects) while the data restores perfectly, so a run that
     * reached that summary succeeded with warnings.
     */
-  def restoreOutcome(exit: Int, output: List[String]): Either[String, List[String]] =
+  def restoreOutcome(exit: com.histmersion.api.backup.Backup.RestoreOutcomeExit, output: List[com.histmersion.api.backup.Backup.RestoreOutcomeOutput]): Either[com.histmersion.api.backup.Backup.RestoreOutcomeResultPart1, List[com.histmersion.api.backup.Backup.RestoreOutcomeResultPart2]] =
     val notable = output
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -133,16 +183,16 @@ object Backup:
 
   val CodeMaintenance = "maintenance"
 
-  def maintenance(op: String): Api.Error =
+  def maintenance(op: com.histmersion.api.backup.Backup.MaintenanceOp): Api.Error =
     Api.Error(s"$op is unavailable: a restore is in progress on this server", Some(CodeMaintenance))
 
-  def missing(file: String): Api.Error =
+  def missing(file: com.histmersion.api.backup.Backup.MissingFile): Api.Error =
     Api.Error(s"no backup named '$file' in the backups directory", Some(Write.CodeNotFound))
 
   /** Formatted against `Locale.ROOT`: the string goes onto the wire, and JDK 25's CLDR renders `%.1f` as `2,5` under
     * locales such as `en_PL`.
     */
-  def humanBytes(n: Long): String =
+  def humanBytes(n: com.histmersion.api.backup.Backup.HumanBytesN): com.histmersion.api.backup.Backup.HumanBytesResult =
     val units = Vector("kB", "MB", "GB", "TB")
     if n < 1000 then s"$n B"
     else
@@ -179,10 +229,15 @@ object Backup:
 
   enum State:
     case Running, Done, Failed
-    def wire: String = toString.toLowerCase(java.util.Locale.ROOT)
+    def wire: com.histmersion.api.backup.Backup.State.WireResult = toString.toLowerCase(java.util.Locale.ROOT)
 
   object State:
-    def parse(s: String): Option[State] = values.find(_.wire == s)
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.backup.Backup.State.ParseS): Option[State] = values.find(_.wire == s)
 
   final case class Status(
       file: Status.File,
@@ -200,6 +255,17 @@ object Backup:
 
   object Status:
 
+    type RunningFile = RunningFile.T
+    object RunningFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunningElapsedMs = RunningElapsedMs.T
+    object RunningElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FailedFile = FailedFile.T
+    object FailedFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FailedElapsedMs = FailedElapsedMs.T
+    object FailedElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FailedError = FailedError.T
+    object FailedError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type File = File.T
     object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type State = State.T
@@ -211,8 +277,8 @@ object Backup:
     type Pruned = Pruned.T
     object Pruned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def running(file: String, elapsedMs: Long): Status = Status(file, State.Running.wire, elapsedMs)
+    def running(file: com.histmersion.api.backup.Backup.Status.RunningFile, elapsedMs: com.histmersion.api.backup.Backup.Status.RunningElapsedMs): Status = Status(file, State.Running.wire, elapsedMs)
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
-    def failed(file: String, elapsedMs: Long, error: String): Status =
+    def failed(file: com.histmersion.api.backup.Backup.Status.FailedFile, elapsedMs: com.histmersion.api.backup.Backup.Status.FailedElapsedMs, error: com.histmersion.api.backup.Backup.Status.FailedError): Status =
       Status(file, State.Failed.wire, elapsedMs, error = Some(error))

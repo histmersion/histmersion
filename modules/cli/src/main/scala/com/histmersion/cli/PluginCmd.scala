@@ -13,6 +13,9 @@ import com.histmersion.util.console.Console
 object PluginCmd:
 
   /** The install on this machine, wherever the CLI is pointed. */
+  type RunningResultPart2 = RunningResultPart2.T
+  object RunningResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private[cli] def install(using console: Console) : Either[Cli.Error, LocalInstall] =
     val env = (k: String) => Option(java.lang.System.getenv(k))
     val exe =
@@ -35,7 +38,7 @@ object PluginCmd:
     else install.map(i => PluginOps(i, Settings.app.cli.plugins))
 
   /** The running server's plugins, when it answers. */
-  private def running(c: Client): (Option[PluginsReport], Boolean) =
+  private def running(c: Client): (Option[PluginsReport], com.histmersion.cli.PluginCmd.RunningResultPart2) =
     c.about.fold(_ => (None, false), a => (Some(a.plugins), true))
 
   private def add (using console: Console) = Opts.subcommand(

@@ -19,6 +19,11 @@ final case class AgentApprovalsConfig(
 
 object AgentApprovalsConfig:
   /** `auto` or `checked`, in any case. */
+  type IsCheckedResult = IsCheckedResult.T
+  object IsCheckedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCheckedRaw = IsCheckedRaw.T
+  object IsCheckedRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type StatusChange = StatusChange.T
   object StatusChange extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Edges = Edges.T
@@ -32,6 +37,6 @@ object AgentApprovalsConfig:
   type GoalPlan = GoalPlan.T
   object GoalPlan extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def isChecked(raw: String): Boolean =
+  def isChecked(raw: com.histmersion.config.AgentApprovalsConfig.IsCheckedRaw): com.histmersion.config.AgentApprovalsConfig.IsCheckedResult =
     val v = Option(raw).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT)
     v == "auto" || v == "checked"

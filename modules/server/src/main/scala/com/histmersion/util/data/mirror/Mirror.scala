@@ -9,7 +9,7 @@ import io.github.iltotore.iron.*
 final class Mirror(exports: List[Mirror.Export], notes: List[Mirror.Note]):
   def kinds: List[Mirror.Records] = exports.map(_.records)
 
-  def note(records: Mirror.Records, id: String): Either[Api.Error, String] =
+  def note(records: Mirror.Records, id: com.histmersion.util.data.mirror.Mirror.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.NoteResultPart2] =
     exports
       .find(_.records == records)
       .flatMap(_ => notes.find(_.records == records))
@@ -21,6 +21,11 @@ object Mirror:
   /** The Markdown mirror's notes of one kind of record: whose they are and where they go in the mirror's layout. Each
     * note is rendered by the owner's [[MirrorNote]].
     */
+  type NoteResultPart2 = NoteResultPart2.T
+  object NoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteId = NoteId.T
+  object NoteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   trait Export:
     def owner: DataOwner
     def records: Records
@@ -31,7 +36,13 @@ object Mirror:
     */
   trait Note:
     def records: Records
-    def note(id: String): Either[Api.Error, String]
+    def note(id: com.histmersion.util.data.mirror.Mirror.Note.NoteId): Either[Api.Error, com.histmersion.util.data.mirror.Mirror.Note.NoteResultPart2]
+
+  object Note:
+    type NoteResultPart2 = NoteResultPart2.T
+    object NoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NoteId = NoteId.T
+    object NoteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The kind of record a mirror contribution writes notes of (`sources`, `articles`, …). */
   type Records = Records.T

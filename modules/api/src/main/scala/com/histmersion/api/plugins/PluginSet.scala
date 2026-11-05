@@ -21,6 +21,9 @@ final case class PluginSet(
 object PluginSet:
 
 
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Digest = Digest.T
   object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpiVersion = SpiVersion.T
@@ -37,7 +40,7 @@ object PluginSet:
   /** SHA-256 of no bytes. */
   val EmptyDigest = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-  def describe(s: Option[PluginSet]): String = s match
+  def describe(s: Option[PluginSet]): com.histmersion.api.plugins.PluginSet.DescribeResult = s match
     case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
       s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest).take(12)}…)"
     case Some(set) =>

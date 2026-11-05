@@ -32,6 +32,171 @@ import com.histmersion.api.Api
   */
 private[places] object PlaceRepo:
 
+  type SuppressedResult = SuppressedResult.T
+  object SuppressedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SuppressedIds = SuppressedIds.T
+  object SuppressedIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchQ = SearchQ.T
+  object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchAsOf = SearchAsOf.T
+  object SearchAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimit.T
+  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchModernFrom = SearchModernFrom.T
+  object SearchModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetId = GetId.T
+  object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetAsOf = GetAsOf.T
+  object GetAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetModernFrom = GetModernFrom.T
+  object GetModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordOfId = RecordOfId.T
+  object RecordOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteTypeOfResult = SiteTypeOfResult.T
+  object SiteTypeOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteTypeOfId = SiteTypeOfId.T
+  object SiteTypeOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescriptionsOfId = DescriptionsOfId.T
+  object DescriptionsOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParentsId = ParentsId.T
+  object ParentsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParentsAsOf = ParentsAsOf.T
+  object ParentsAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenId = ChildrenId.T
+  object ChildrenId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenAsOf = ChildrenAsOf.T
+  object ChildrenAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenLimit = ChildrenLimit.T
+  object ChildrenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildrenModernFrom = ChildrenModernFrom.T
+  object ChildrenModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KidsId = KidsId.T
+  object KidsId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KidsAsOf = KidsAsOf.T
+  object KidsAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KidsLimit = KidsLimit.T
+  object KidsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KidsModernFrom = KidsModernFrom.T
+  object KidsModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyAsOf = HierarchyAsOf.T
+  object HierarchyAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyRoot = HierarchyRoot.T
+  object HierarchyRoot extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyMaxDepth = HierarchyMaxDepth.T
+  object HierarchyMaxDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyLimit = HierarchyLimit.T
+  object HierarchyLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyDepthCap = HierarchyDepthCap.T
+  object HierarchyDepthCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HierarchyModernFrom = HierarchyModernFrom.T
+  object HierarchyModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlacesOfFindingId = PlacesOfFindingId.T
+  object PlacesOfFindingId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonQueryKind = GeoJsonQueryKind.T
+  object GeoJsonQueryKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonQueryAsOf = GeoJsonQueryAsOf.T
+  object GeoJsonQueryAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonQueryLimit = GeoJsonQueryLimit.T
+  object GeoJsonQueryLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonQueryModernFrom = GeoJsonQueryModernFrom.T
+  object GeoJsonQueryModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonTimeQueryKind = GeoJsonTimeQueryKind.T
+  object GeoJsonTimeQueryKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonTimeQueryLimit = GeoJsonTimeQueryLimit.T
+  object GeoJsonTimeQueryLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonTimeQueryModernFrom = GeoJsonTimeQueryModernFrom.T
+  object GeoJsonTimeQueryModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonTimeQueryPairsByIndex = GeoJsonTimeQueryPairsByIndex.T
+  object GeoJsonTimeQueryPairsByIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangeShadowTestSql = RangeShadowTestSql.T
+  object RangeShadowTestSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapLo = OverlapLo.T
+  object OverlapLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapHi = OverlapHi.T
+  object OverlapHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidG = ValidG.T
+  object ValidG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangeShadowedSql = RangeShadowedSql.T
+  object RangeShadowedSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsLo = PairsLo.T
+  object PairsLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsHi = PairsHi.T
+  object PairsHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangePairsSqlSmall = RangePairsSqlSmall.T
+  object RangePairsSqlSmall extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangePairsSqlPartner = RangePairsSqlPartner.T
+  object RangePairsSqlPartner extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangePairsSqlSmallIsLo = RangePairsSqlSmallIsLo.T
+  object RangePairsSqlSmallIsLo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickVersionSqlResult = PickVersionSqlResult.T
+  object PickVersionSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonResult = GeoJsonResult.T
+  object GeoJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonKind = GeoJsonKind.T
+  object GeoJsonKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonAsOf = GeoJsonAsOf.T
+  object GeoJsonAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonLimit = GeoJsonLimit.T
+  object GeoJsonLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonModernFrom = GeoJsonModernFrom.T
+  object GeoJsonModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonAtResult = GeoJsonAtResult.T
+  object GeoJsonAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonAtKind = GeoJsonAtKind.T
+  object GeoJsonAtKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonAtLimit = GeoJsonAtLimit.T
+  object GeoJsonAtLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoJsonAtModernFrom = GeoJsonAtModernFrom.T
+  object GeoJsonAtModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScopeForValues = ScopeForValues.T
+  object ScopeForValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FootprintsAsOf = FootprintsAsOf.T
+  object FootprintsAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FootprintsInAsOf = FootprintsInAsOf.T
+  object FootprintsInAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TypesAsOf = TypesAsOf.T
+  object TypesAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TypesInAsOf = TypesInAsOf.T
+  object TypesInAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameInOldId = RenameInOldId.T
+  object RenameInOldId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameInNewId = RenameInNewId.T
+  object RenameInNewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameOldId = RenameOldId.T
+  object RenameOldId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenameNewId = RenameNewId.T
+  object RenameNewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelOfResult = LabelOfResult.T
+  object LabelOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelOfId = LabelOfId.T
+  object LabelOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddNameId = AddNameId.T
+  object AddNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddNameName = AddNameName.T
+  object AddNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddNameLang = AddNameLang.T
+  object AddNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveNameId = RemoveNameId.T
+  object RemoveNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveNameName = RemoveNameName.T
+  object RemoveNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveNameLang = RemoveNameLang.T
+  object RemoveNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManualNamesId = ManualNamesId.T
+  object ManualNamesId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountResult = CountResult.T
+  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpsertFootprintResult = UpsertFootprintResult.T
+  object UpsertFootprintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpsertFootprintRole = UpsertFootprintRole.T
+  object UpsertFootprintRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpsertFootprintGeojson = UpsertFootprintGeojson.T
+  object UpsertFootprintGeojson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpsertFootprintCertainty = UpsertFootprintCertainty.T
+  object UpsertFootprintCertainty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UpsertFootprintAccuracyM = UpsertFootprintAccuracyM.T
+  object UpsertFootprintAccuracyM extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Float, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given DbCodec[com.histmersion.api.catalogue.Place.Summary] = DbCodec.derived
   given DbCodec[com.histmersion.api.catalogue.Place.Hit] = DbCodec.derived
   given DbCodec[com.histmersion.api.catalogue.Place.TreeRow] = DbCodec.derived
@@ -100,7 +265,7 @@ private[places] object PlaceRepo:
     * of another place (`place_aliases`: a merged duplicate, a renamed place) — else the next `places seed` would bring
     * back what a person merged or removed.
     */
-  private def suppressed(ids: List[String])(using DbCon): Set[String] =
+  private def suppressed(ids: List[com.histmersion.domain.catalogue.places.PlaceRepo.SuppressedIds])(using DbCon): Set[com.histmersion.domain.catalogue.places.PlaceRepo.SuppressedResult] =
     sql"""SELECT id FROM place_removals WHERE id = ANY($ids::text[])
           UNION
           SELECT alias FROM place_aliases a WHERE a.alias = ANY($ids::text[])
@@ -175,10 +340,10 @@ private[places] object PlaceRepo:
     * carrying the most findings. `q` empty lists the gazetteer by size.
     */
   def search(
-      q: Option[String],
-      asOf: Option[Long],
-      limit: Int,
-      modernFrom: Long = DefaultModernFrom
+      q: Option[com.histmersion.domain.catalogue.places.PlaceRepo.SearchQ],
+      asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.SearchAsOf],
+      limit: com.histmersion.domain.catalogue.places.PlaceRepo.SearchLimit,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.SearchModernFrom = DefaultModernFrom
   )(using DbCon): Vector[com.histmersion.api.catalogue.Place.Hit] =
     val text = q.map(_.trim).filter(_.nonEmpty)
     val cont = text.map(LikePattern.contains).getOrElse("%")
@@ -276,9 +441,9 @@ private[places] object PlaceRepo:
     * which is what the web UI draws as its overlay.
     */
   def get(
-      id: String,
-      asOf: Option[Long] = None,
-      modernFrom: Long = DefaultModernFrom
+      id: com.histmersion.domain.catalogue.places.PlaceRepo.GetId,
+      asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.GetAsOf] = None,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.GetModernFrom = DefaultModernFrom
   )(using DbCon): Option[com.histmersion.api.catalogue.Place.Entry] =
     sql"""WITH g AS (
             SELECT COALESCE(p.geom, (
@@ -322,7 +487,7 @@ private[places] object PlaceRepo:
   /** What place `id`'s own record says beyond its names and dates ([[PlaceRecord]]): `properties.date_source`, the
     * labels of `periods`, `heritage` and `registers` — whatever shape they have, anything unexpected read as none.
     */
-  private def recordOf(id: String)(using DbCon): com.histmersion.api.catalogue.Place.Record =
+  private def recordOf(id: com.histmersion.domain.catalogue.places.PlaceRepo.RecordOfId)(using DbCon): com.histmersion.api.catalogue.Place.Record =
     val dateSource =
       sql"SELECT properties->>'date_source' FROM places WHERE id = $id".query[Option[String]].run().headOption.flatten
     def array(key: String) =
@@ -362,7 +527,7 @@ private[places] object PlaceRepo:
   /** What site `id` is (#1449), read as the map's layer reads it ([[SiteTypes.of]]): a stored refinement, else its
     * gazetteer's own fields — so its card shows the icon its marker has.
     */
-  private def siteTypeOf(id: String)(using DbCon): Option[String] =
+  private def siteTypeOf(id: com.histmersion.domain.catalogue.places.PlaceRepo.SiteTypeOfId)(using DbCon): Option[com.histmersion.domain.catalogue.places.PlaceRepo.SiteTypeOfResult] =
     sql"""SELECT kind, site_type, properties->>'feature_types', properties->>'fcode', properties->>'class',
                  properties->>'p31'
           FROM places WHERE id = $id"""
@@ -376,7 +541,7 @@ private[places] object PlaceRepo:
   /** What place `id` IS, as its sources describe it (V074): English first, then the other languages; within one
     * language the best source first (an LPF dataset, then Wikidata, then GeoNames).
     */
-  private def descriptionsOf(id: String)(using DbCon): List[com.histmersion.api.catalogue.Place.Description] =
+  private def descriptionsOf(id: com.histmersion.domain.catalogue.places.PlaceRepo.DescriptionsOfId)(using DbCon): List[com.histmersion.api.catalogue.Place.Description] =
     sql"""SELECT text, lang, import_source FROM place_descriptions WHERE place_id = $id
           ORDER BY (lang = 'en') DESC, lang,
                    CASE WHEN import_source LIKE 'lpf:%' THEN 1 WHEN import_source = 'wikidata' THEN 2
@@ -384,7 +549,7 @@ private[places] object PlaceRepo:
                    import_ref""".query[com.histmersion.api.catalogue.Place.Description].run().toList
 
   /** Parents valid at `asOf` (both the edge and the parent itself must be). */
-  private def parents(id: String, asOf: Option[Long])(using
+  private def parents(id: com.histmersion.domain.catalogue.places.PlaceRepo.ParentsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.ParentsAsOf])(using
       DbCon
   ): Vector[com.histmersion.api.catalogue.Place.Summary] =
     sql"""SELECT ${SqlLiteral(summaryCols)} FROM place_relations r JOIN places p ON p.id = r.parent_id
@@ -396,14 +561,14 @@ private[places] object PlaceRepo:
   /** `GET /api/places/{id}/children?asOf=` — with a time, only the children the time rule shows ([[inTimeSql]]).
     */
   def children(
-      id: String,
-      asOf: Option[Long],
-      limit: Int,
-      modernFrom: Long = DefaultModernFrom
+      id: com.histmersion.domain.catalogue.places.PlaceRepo.ChildrenId,
+      asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.ChildrenAsOf],
+      limit: com.histmersion.domain.catalogue.places.PlaceRepo.ChildrenLimit,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.ChildrenModernFrom = DefaultModernFrom
   )(using DbCon): Vector[com.histmersion.api.catalogue.Place.Summary] =
     kids(id, asOf, limit, modernFrom)
 
-  private def kids(id: String, asOf: Option[Long], limit: Int, modernFrom: Long)(using
+  private def kids(id: com.histmersion.domain.catalogue.places.PlaceRepo.KidsId, asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.KidsAsOf], limit: com.histmersion.domain.catalogue.places.PlaceRepo.KidsLimit, modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.KidsModernFrom)(using
       DbCon
   ): Vector[com.histmersion.api.catalogue.Place.Summary] =
     (Sql.raw("WITH ") ++ timeWindowCte(asOf, modernFrom) ++
@@ -429,12 +594,12 @@ private[places] object PlaceRepo:
     * them. Bounded by `maxDepth` (which is also what makes a cyclic edge harmless) and by `limit`.
     */
   def hierarchy(
-      asOf: Option[Long],
-      root: Option[String],
-      maxDepth: Int,
-      limit: Int,
-      depthCap: Int = Int.MaxValue,
-      modernFrom: Long = DefaultModernFrom
+      asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.HierarchyAsOf],
+      root: Option[com.histmersion.domain.catalogue.places.PlaceRepo.HierarchyRoot],
+      maxDepth: com.histmersion.domain.catalogue.places.PlaceRepo.HierarchyMaxDepth,
+      limit: com.histmersion.domain.catalogue.places.PlaceRepo.HierarchyLimit,
+      depthCap: com.histmersion.domain.catalogue.places.PlaceRepo.HierarchyDepthCap = Int.MaxValue,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.HierarchyModernFrom = DefaultModernFrom
   )(using DbCon): Vector[com.histmersion.api.catalogue.Place.TreeRow] =
     // `maxDepth` is a caller's number; `depthCap` is the configured ceiling (`places.tree-depth`).
     // A caller asking for depth 10 000 walked ten thousand levels of a recursive CTE.
@@ -471,7 +636,7 @@ private[places] object PlaceRepo:
           ORDER BY t.path, t.depth LIMIT ${limit.max(1)}""").query[com.histmersion.api.catalogue.Place.TreeRow].run()
 
   /** The gazetteer places one finding was materialised into. */
-  def placesOf(findingId: String)(using DbCon): Vector[com.histmersion.api.catalogue.Place.Summary] =
+  def placesOf(findingId: com.histmersion.domain.catalogue.places.PlaceRepo.PlacesOfFindingId)(using DbCon): Vector[com.histmersion.api.catalogue.Place.Summary] =
     sql"""SELECT ${SqlLiteral(summaryCols)} FROM finding_places fp JOIN places p ON p.id = fp.place_id
           WHERE fp.finding_id = $findingId ORDER BY p.label, p.id"""
       .query[com.histmersion.api.catalogue.Place.Summary]
@@ -499,10 +664,10 @@ private[places] object PlaceRepo:
     */
   /** The SQL of [[geoJson]], as a value — pure, so the de-duplication rules are unit-tested. */
   private[places] def geoJsonQuery(
-      kind: Option[String],
-      asOf: Option[Long],
-      limit: Int,
-      modernFrom: Long = DefaultModernFrom
+      kind: Option[com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryKind],
+      asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryAsOf],
+      limit: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryLimit,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonQueryModernFrom = DefaultModernFrom
   ): Sql =
     geoJsonTimeQuery(kind, asOf.fold(GeoTime.Always)(GeoTime.At(_)), limit, modernFrom)
 
@@ -511,11 +676,11 @@ private[places] object PlaceRepo:
     * the indexed pairing to.
     */
   private[places] def geoJsonTimeQuery(
-      kind: Option[String],
+      kind: Option[com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryKind],
       time: GeoTime,
-      limit: Int,
-      modernFrom: Long = DefaultModernFrom,
-      pairsByIndex: Boolean = true
+      limit: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryLimit,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryModernFrom = DefaultModernFrom,
+      pairsByIndex: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonTimeQueryPairsByIndex = true
   ): Sql =
     import Param.*
     val k = kind.map(_.trim.toLowerCase).filter(_.nonEmpty)
@@ -640,10 +805,10 @@ private[places] object PlaceRepo:
     * pair, and repaired only when it is invalid (`shape_valid`, V090): ST_MakeValid returns a valid shape as it is, and
     * checking that again was half the cost of the test (13 of 25 ms over -3000..2000).
     */
-  private[places] val rangeShadowTestSql: String =
-    def overlap(lo: String, hi: String) =
+  private[places] val rangeShadowTestSql: com.histmersion.domain.catalogue.places.PlaceRepo.RangeShadowTestSql =
+    def overlap(lo: com.histmersion.domain.catalogue.places.PlaceRepo.OverlapLo, hi: com.histmersion.domain.catalogue.places.PlaceRepo.OverlapHi) =
       s"greatest(0, least($hi(pr.lbb), $hi(pr.hbb)) - greatest($lo(pr.lbb), $lo(pr.hbb)))"
-    def valid(g: String) = s"CASE WHEN $g.valid THEN $g.geom ELSE ST_MakeValid($g.geom) END"
+    def valid(g: com.histmersion.domain.catalogue.places.PlaceRepo.ValidG) = s"CASE WHEN $g.valid THEN $g.geom ELSE ST_MakeValid($g.geom) END"
     " CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.hid OFFSET 0) gh" +
       " CROSS JOIN LATERAL (SELECT geom, shape_valid AS valid FROM places WHERE id = pr.lid OFFSET 0) gl" +
       s" WHERE pr.same_name OR (${overlap("ST_XMin", "ST_XMax")} * ${overlap("ST_YMin", "ST_YMax")}" +
@@ -659,8 +824,8 @@ private[places] object PlaceRepo:
     * time met each other: 170 M comparisons, past the statement timeout; split, 970 pairs in 0.3 s for the whole of
     * -3000..2000 (2026-10-16). Each shape is fetched by id for its pair, as at a year.
     */
-  private[places] val rangeShadowedSql: String =
-    def pairs(lo: String, hi: String) =
+  private[places] val rangeShadowedSql: com.histmersion.domain.catalogue.places.PlaceRepo.RangeShadowedSql =
+    def pairs(lo: com.histmersion.domain.catalogue.places.PlaceRepo.PairsLo, hi: com.histmersion.domain.catalogue.places.PlaceRepo.PairsHi) =
       "SELECT lo.id AS lid, hi.id AS hid, lo.norm = hi.norm AS same_name, least(hi.area, lo.area) AS small," +
         " lo.bb AS lbb, hi.bb AS hbb" +
         s" FROM (SELECT * FROM live WHERE $lo) lo JOIN (SELECT * FROM live WHERE $hi) hi" +
@@ -678,7 +843,7 @@ private[places] object PlaceRepo:
     * 650 000 times (80 ms). `smallIsLo`: the small tier's shape is the one shadowed (a sketch under a real dataset) or
     * the one shadowing (OHM over Cliopatria).
     */
-  private[places] def rangePairsSql(rest: Sql, small: Int, partner: String, smallIsLo: Boolean): Sql =
+  private[places] def rangePairsSql(rest: Sql, small: com.histmersion.domain.catalogue.places.PlaceRepo.RangePairsSqlSmall, partner: com.histmersion.domain.catalogue.places.PlaceRepo.RangePairsSqlPartner, smallIsLo: com.histmersion.domain.catalogue.places.PlaceRepo.RangePairsSqlSmallIsLo): Sql =
     val (lo, hi) = if smallIsLo then ("s", "c") else ("c", "s")
     Sql.raw(
       s"SELECT $lo.id AS lid, $hi.id AS hid, s.norm = c.norm AS same_name, least(c.area, s.area) AS small," +
@@ -703,7 +868,7 @@ private[places] object PlaceRepo:
     * together then both stay, as at a year. Cross-tier duplicates are gone already (`shadowed`, among shapes that
     * coexist), and different states may overlap: all are drawn.
     */
-  private[places] def pickVersionSql(w: GeoTime.Within): String =
+  private[places] def pickVersionSql(w: GeoTime.Within): com.histmersion.domain.catalogue.places.PlaceRepo.PickVersionSqlResult =
     val (lo, hi) = (w.from, w.to)
     val (edge, anchor) = if w.latest then ("ee", "max") else ("es", "min")
     ", kept AS (SELECT live.*," +
@@ -721,11 +886,11 @@ private[places] object PlaceRepo:
     * name.
     */
   def geoJson(
-      kind: Option[String],
-      asOf: Option[Long],
-      limit: Int,
-      modernFrom: Long = DefaultModernFrom
-  )(using DbCon): String =
+      kind: Option[com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonKind],
+      asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonAsOf],
+      limit: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonLimit,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonModernFrom = DefaultModernFrom
+  )(using DbCon): com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonResult =
     geoJsonAt(kind, asOf.fold(GeoTime.Always)(GeoTime.At(_)), limit, modernFrom)
 
   /** [[geoJson]] for any [[GeoTime]]. Over a range ([[GeoTime.Within]]) every state alive at any time in it is drawn,
@@ -733,11 +898,11 @@ private[places] object PlaceRepo:
     * still comes last, largest first.
     */
   def geoJsonAt(
-      kind: Option[String],
+      kind: Option[com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonAtKind],
       time: GeoTime,
-      limit: Int,
-      modernFrom: Long = DefaultModernFrom
-  )(using DbCon): String =
+      limit: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonAtLimit,
+      modernFrom: com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonAtModernFrom = DefaultModernFrom
+  )(using DbCon): com.histmersion.domain.catalogue.places.PlaceRepo.GeoJsonAtResult =
     val rows = geoJsonTimeQuery(kind, time, limit, modernFrom).frag
       .query[
         (
@@ -846,7 +1011,7 @@ private[places] object PlaceRepo:
     * Cheap by construction: no values ⇒ no query at all, and the closure is one recursive CTE per chip (there are never
     * many).
     */
-  def scopeFor(values: List[String], period: Option[Period])(using DbCon): PlaceScope =
+  def scopeFor(values: List[com.histmersion.domain.catalogue.places.PlaceRepo.ScopeForValues], period: Option[Period])(using DbCon): PlaceScope =
     val wanted = values.map(_.trim).filter(_.nonEmpty).distinct
     if wanted.isEmpty then PlaceScope.empty
     else
@@ -890,7 +1055,7 @@ private[places] object PlaceRepo:
 
   // ── temporal geography (V016) ──────────────────────────────────────────────────────────────
 
-  def footprints(placeId: String, asOf: Option[Long])(using
+  def footprints(placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.FootprintsAsOf])(using
       DbCon
   ): Vector[com.histmersion.api.catalogue.Place.Footprint] =
     footprintsIn(placeId, asOf)
@@ -898,7 +1063,7 @@ private[places] object PlaceRepo:
   /** A place's footprints valid at `asOf` (all of them without one) — [[footprints]] and the place detail read the same
     * rows.
     */
-  private def footprintsIn(placeId: String, asOf: Option[Long])(using
+  private def footprintsIn(placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.FootprintsInAsOf])(using
       DbCon
   ): Vector[com.histmersion.api.catalogue.Place.Footprint] =
     sql"""SELECT f.id, f.place_id, f.role, ${SqlLiteral(RangeSql.cols("f.period"))},
@@ -908,19 +1073,19 @@ private[places] object PlaceRepo:
             AND ($asOf::bigint IS NULL OR f.period @> $asOf::bigint)
           ORDER BY f.role, ${SqlLiteral(RangeSql.start("f.period"))}""".query[FootprintRow].run().map(_.toDto)
 
-  def links(placeId: String)(using DbCon): Vector[com.histmersion.api.catalogue.Place.Link] =
+  def links(placeId: com.histmersion.domain.catalogue.Place.Id)(using DbCon): Vector[com.histmersion.api.catalogue.Place.Link] =
     sql"""SELECT place_id, scheme, external_id, relation FROM place_links
           WHERE place_id = $placeId ORDER BY scheme, external_id"""
       .query[com.histmersion.api.catalogue.Place.Link]
       .run()
 
-  def types(placeId: String, asOf: Option[Long])(using DbCon): List[com.histmersion.api.catalogue.Place.Type] =
+  def types(placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.TypesAsOf])(using DbCon): List[com.histmersion.api.catalogue.Place.Type] =
     typesIn(placeId, asOf)
 
   /** A place's types valid at `asOf` — [[types]] and the place detail read the same rows. An undated type (`(,)`, every
     * year) reads both bounds back as NULL: Postgres reads an infinite bound so.
     */
-  private def typesIn(placeId: String, asOf: Option[Long])(using
+  private def typesIn(placeId: com.histmersion.domain.catalogue.Place.Id, asOf: Option[com.histmersion.domain.catalogue.places.PlaceRepo.TypesInAsOf])(using
       DbCon
   ): List[com.histmersion.api.catalogue.Place.Type] =
     sql"""SELECT place_id, type_label, ${SqlLiteral(RangeSql.cols("period"))}, citekey
@@ -936,7 +1101,7 @@ private[places] object PlaceRepo:
     * old id of another place; renaming back to an old id drops that alias. The caller's transaction (a bundle import
     * follows a rename made in the other collection, #888).
     */
-  private[places] def renameIn(oldId: String, newId: String)(using DbCon): Either[Api.Error, Unit] =
+  private[places] def renameIn(oldId: com.histmersion.domain.catalogue.places.PlaceRepo.RenameInOldId, newId: com.histmersion.domain.catalogue.places.PlaceRepo.RenameInNewId)(using DbCon): Either[Api.Error, Unit] =
     def exists(i: String) = sql"SELECT 1 FROM places WHERE id = $i".query[Int].run().nonEmpty
     val aliasOf = sql"SELECT place_id FROM place_aliases WHERE alias = $newId".query[String].run().headOption
     if !exists(oldId) then Left(Api.Error(s"No place '$oldId'", Some(Write.CodeNotFound)))
@@ -958,18 +1123,18 @@ private[places] object PlaceRepo:
       Right(())
 
   /** [[renameIn]] in a transaction of its own. */
-  def rename(oldId: String, newId: String)(using DbCon): Either[Api.Error, Unit] =
+  def rename(oldId: com.histmersion.domain.catalogue.places.PlaceRepo.RenameOldId, newId: com.histmersion.domain.catalogue.places.PlaceRepo.RenameNewId)(using DbCon): Either[Api.Error, Unit] =
     renameIn(oldId.trim, newId.trim)
 
   // ── a person's edits (#987) ─────────────────────────────────────────────────────────────────────
 
-  private def labelOf(id: String)(using DbCon): Option[String] =
+  private def labelOf(id: com.histmersion.domain.catalogue.places.PlaceRepo.LabelOfId)(using DbCon): Option[com.histmersion.domain.catalogue.places.PlaceRepo.LabelOfResult] =
     sql"SELECT label FROM places WHERE id = $id".query[String].run().headOption
 
   /** Give place `id` the name `name` in `lang`, as a MANUAL name (V068): no import deletes it. A name the place already
     * has from an import becomes manual (so a later seed that drops it keeps it).
     */
-  def addName(id: String, name: String, lang: String)(using
+  def addName(id: com.histmersion.domain.catalogue.places.PlaceRepo.AddNameId, name: com.histmersion.domain.catalogue.places.PlaceRepo.AddNameName, lang: com.histmersion.domain.catalogue.places.PlaceRepo.AddNameLang)(using
       DbCon
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.NameChanged] =
     labelOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).map { label =>
@@ -994,7 +1159,7 @@ private[places] object PlaceRepo:
     }
 
   /** Remove a name a person added. An IMPORTED name is refused — the next seed would bring it back. */
-  def removeName(id: String, name: String, lang: String)(using
+  def removeName(id: com.histmersion.domain.catalogue.places.PlaceRepo.RemoveNameId, name: com.histmersion.domain.catalogue.places.PlaceRepo.RemoveNameName, lang: com.histmersion.domain.catalogue.places.PlaceRepo.RemoveNameLang)(using
       DbCon
   ): Either[Api.Error, com.histmersion.api.catalogue.Place.NameChanged] =
     labelOf(id).toRight(Api.Error(s"No place '$id'", Some(Write.CodeNotFound))).flatMap { label =>
@@ -1030,7 +1195,7 @@ private[places] object PlaceRepo:
     }
 
   /** The names people added, by place then name; `id` narrows to one place. */
-  def manualNames(id: Option[String])(using DbCon): List[ManualPlaceName] =
+  def manualNames(id: Option[com.histmersion.domain.catalogue.places.PlaceRepo.ManualNamesId])(using DbCon): List[ManualPlaceName] =
     sql"""SELECT n.place_id, p.label, n.name, n.lang FROM place_names n JOIN places p ON p.id = n.place_id
           WHERE n.manual AND ($id::text IS NULL OR n.place_id = $id::text)
           ORDER BY n.place_id, n.name, n.lang""".query[ManualPlaceName].run().toList
@@ -1064,18 +1229,18 @@ private[places] object PlaceRepo:
         .toRight(Api.Error(s"place '$id' was not stored"))
 
   /** How many places the gazetteer holds — 0 on a fresh install (the first-run import, #720). */
-  def count()(using DbCon): Int =
+  def count()(using DbCon): com.histmersion.domain.catalogue.places.PlaceRepo.CountResult =
     sql"SELECT count(*)::int FROM places".query[Int].run().head
 
   def upsertFootprint(
-      placeId: String,
-      role: String,
-      geojson: String,
+      placeId: com.histmersion.domain.catalogue.Place.Id,
+      role: com.histmersion.domain.catalogue.places.PlaceRepo.UpsertFootprintRole,
+      geojson: com.histmersion.domain.catalogue.places.PlaceRepo.UpsertFootprintGeojson,
       period: Option[Period],
-      certainty: Option[String],
-      accuracyM: Option[Float],
-      citekey: Option[String]
-  )(using DbCon): Int =
+      certainty: Option[com.histmersion.domain.catalogue.places.PlaceRepo.UpsertFootprintCertainty],
+      accuracyM: Option[com.histmersion.domain.catalogue.places.PlaceRepo.UpsertFootprintAccuracyM],
+      citekey: Option[com.histmersion.domain.library.Citekey]
+  )(using DbCon): com.histmersion.domain.catalogue.places.PlaceRepo.UpsertFootprintResult =
     val p = RangeSql.always(period)
     sql"""INSERT INTO place_footprints (place_id, role, geom, period, certainty, accuracy_m, citekey)
           VALUES ($placeId, $role,

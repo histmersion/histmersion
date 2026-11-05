@@ -46,17 +46,24 @@ final case class AcquireConfig(
   /** The contact e-mail, when one is configured. It is a per-install setting (never in the repo), so a blank default
     * means "anonymous": no polite pool, and no Unpaywall, which refuses requests without an e-mail.
     */
-  def contact: Option[String] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
+  def contact: Option[com.histmersion.config.AcquireConfig.ContactResult] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
 
   /** The `mailto` value; empty without a contact, and `Url` drops an empty parameter. */
-  def mailto: String = contact.getOrElse("")
+  def mailto: com.histmersion.config.AcquireConfig.MailtoResult = contact.getOrElse("")
 
   /** The acquisition chain's order: the source-fetcher ids `chain` lists (comma-separated); fetchers it does not name
     * run after these, in plugin registration order.
     */
-  def chainIds: List[String] = chain.entries
+  def chainIds: List[com.histmersion.config.AcquireConfig.ChainIdsResult] = chain.entries
 
 object AcquireConfig:
+  type ContactResult = ContactResult.T
+  object ContactResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MailtoResult = MailtoResult.T
+  object MailtoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChainIdsResult = ChainIdsResult.T
+  object ChainIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ContactEmail = ContactEmail.T
   object ContactEmail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PublicUserAgent = PublicUserAgent.T

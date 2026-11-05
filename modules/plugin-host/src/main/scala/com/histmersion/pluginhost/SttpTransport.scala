@@ -28,7 +28,7 @@ final class SttpTransport(timeoutSeconds: Int, tls: Option[javax.net.ssl.SSLCont
     )
   }
 
-  def get(url: String, headers: Map[String, String]): Either[String, HttpAnswer] =
+  def get(url: com.histmersion.pluginhost.SttpTransport.GetUrl, headers: Map[com.histmersion.pluginhost.SttpTransport.GetHeadersPart1, com.histmersion.pluginhost.SttpTransport.GetHeadersPart2]): Either[com.histmersion.pluginhost.SttpTransport.GetResultPart1, HttpAnswer] =
     val req = basicRequest
       .get(Uri.unsafeParse(url))
       .headers(headers)
@@ -49,5 +49,14 @@ final class SttpTransport(timeoutSeconds: Int, tls: Option[javax.net.ssl.SSLCont
 
 object SttpTransport:
   /** The same request, pinned to HTTP/1.1 (see the backend above). */
+  type GetResultPart1 = GetResultPart1.T
+  object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetUrl = GetUrl.T
+  object GetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetHeadersPart1 = GetHeadersPart1.T
+  object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetHeadersPart2 = GetHeadersPart2.T
+  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val http11: java.net.http.HttpRequest => java.net.http.HttpRequest = r =>
     java.net.http.HttpRequest.newBuilder(r, (_, _) => true).version(java.net.http.HttpClient.Version.HTTP_1_1).build()

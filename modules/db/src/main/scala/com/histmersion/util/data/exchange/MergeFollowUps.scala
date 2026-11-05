@@ -14,9 +14,19 @@ trait MergeFollowUps:
     */
   def recordIn(
       m: com.histmersion.api.exchange.Bundle.Manifest,
-      from: String,
+      from: com.histmersion.util.data.exchange.MergeFollowUps.RecordInFrom,
       mergeId: UUID,
       ap: MergePlanner.Apply,
       counts: List[com.histmersion.api.exchange.Bundle.KindCounts],
-      dump: String
-  )(using DbCon): (List[String], Int)
+      dump: com.histmersion.util.data.exchange.MergeFollowUps.RecordInDump
+  )(using DbCon): (List[com.histmersion.util.data.exchange.MergeFollowUps.RecordInResultPart1], com.histmersion.util.data.exchange.MergeFollowUps.RecordInResultPart2)
+
+object MergeFollowUps:
+  type RecordInResultPart1 = RecordInResultPart1.T
+  object RecordInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordInResultPart2 = RecordInResultPart2.T
+  object RecordInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordInFrom = RecordInFrom.T
+  object RecordInFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordInDump = RecordInDump.T
+  object RecordInDump extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

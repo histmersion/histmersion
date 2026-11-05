@@ -14,12 +14,12 @@ import scala.scalajs.js
 final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf: () => Option[Long]):
   // `var`s: what was shown last (shown again when the layer is switched back on), whether it is on, and
   // its points in the cluster layer, by key
-  private var last: Option[(Iterable[A], (Long, Long))] = None
+  private var last: Option[(Iterable[A], (com.histmersion.web.PointLayer.LastPart2Part1, com.histmersion.web.PointLayer.LastPart2Part2))] = None
   private var attached = false
   private val live = scala.collection.mutable.LinkedHashMap.empty[String, Dot]
   private val prefix = s"${kind.dot.ordinal}|"
 
-  def isAttached: Boolean = attached
+  def isAttached: com.histmersion.web.PointLayer.IsAttachedResult = attached
 
   def attach(): Unit =
     if !attached then
@@ -37,7 +37,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
     LatLon(lat, lon)
 
   /** Show `items` for `span` (remembered while the layer is off). */
-  def show(items: Iterable[A], span: (Long, Long)): Unit =
+  def show(items: Iterable[A], span: (com.histmersion.web.PointLayer.ShowSpanPart1, com.histmersion.web.PointLayer.ShowSpanPart2)): Unit =
     last = Some((items, span))
     if attached then
       val next = scala.collection.mutable.LinkedHashMap.empty[String, A]
@@ -75,7 +75,7 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
       if reshaped then set().refresh() else if restyled then set().recolour()
 
   /** A point's marker, as the cluster layer draws it alone. */
-  def render(d: Dot, fadeIn: Boolean): DomMarker =
+  def render(d: Dot, fadeIn: com.histmersion.web.PointLayer.RenderFadeIn): DomMarker =
     val a = d.item.asInstanceOf[A]
     val (w, h) = kind.box
     val el = DomMarker.element(
@@ -101,4 +101,23 @@ final class PointLayer[A](val kind: PointKind[A], set: () => PointSet[Dot], asOf
 
 object PointLayer:
   /** Does dot `d` already show `a` for `span`? Then a reload that brings it again leaves it. */
-  private[web] def same[A](d: Dot, a: A, span: (Long, Long)): Boolean = d.span == span && d.item == a
+  type LastPart2Part1 = LastPart2Part1.T
+  object LastPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastPart2Part2 = LastPart2Part2.T
+  object LastPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsAttachedResult = IsAttachedResult.T
+  object IsAttachedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowSpanPart1 = ShowSpanPart1.T
+  object ShowSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowSpanPart2 = ShowSpanPart2.T
+  object ShowSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderFadeIn = RenderFadeIn.T
+  object RenderFadeIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameResult = SameResult.T
+  object SameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameSpanPart1 = SameSpanPart1.T
+  object SameSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SameSpanPart2 = SameSpanPart2.T
+  object SameSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private[web] def same[A](d: Dot, a: A, span: (com.histmersion.web.PointLayer.SameSpanPart1, com.histmersion.web.PointLayer.SameSpanPart2)): com.histmersion.web.PointLayer.SameResult = d.span == span && d.item == a

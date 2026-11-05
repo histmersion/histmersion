@@ -42,8 +42,11 @@ final case class EventDetail(
     corrections: List[Correction] = Nil
 ) extends EventCard derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
   /** The page in Markdown, with its pictures. */
-  def markdown: String = com.histmersion.api.catalogue.EventsMarkdown.event(this, media.map(_.markdownLine))
+  def markdown: com.histmersion.api.views.EventDetail.MarkdownResult = com.histmersion.api.catalogue.EventsMarkdown.event(this, media.map(_.markdownLine))
 
 object EventDetail:
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Names = Names.T
   object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

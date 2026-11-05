@@ -68,15 +68,23 @@ final class MarkerPane(val el: dom.HTMLElement, surface: MapSurface):
   /** Take `m` off the pane now (it no longer follows the map, answers the pointer or counts), but leave its element
     * drawn for `ms` more — a marker merging into a bubble flies into it first.
     */
-  def retire(m: DomMarker, ms: Int): Unit =
+  def retire(m: DomMarker, ms: com.histmersion.web.map.MarkerPane.RetireMs): Unit =
     if markers.contains(m) then
       markers.remove(m)
       m.el.classList.add("hd-cluster-ghost")
       m.removed()
       dom.window.setTimeout(() => if m.el.parentNode == el then { val _ = el.removeChild(m.el) }, ms)
 
-  def has(m: DomMarker): Boolean = markers.contains(m)
+  def has(m: DomMarker): com.histmersion.web.map.MarkerPane.HasResult = markers.contains(m)
 
-  def size: Int = markers.size
+  def size: com.histmersion.web.map.MarkerPane.SizeResult = markers.size
 
   def reposition(v: View): Unit = markers.foreach(_.place(v))
+
+object MarkerPane:
+  type RetireMs = RetireMs.T
+  object RetireMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasResult = HasResult.T
+  object HasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeResult = SizeResult.T
+  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

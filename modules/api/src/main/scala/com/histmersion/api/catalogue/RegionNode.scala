@@ -13,6 +13,15 @@ final case class RegionNode(
 
 object RegionNode:
 
+  type RootKinds = RootKinds.T
+  object RootKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertainLabelResult = UncertainLabelResult.T
+  object UncertainLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UncertainLabelLabel = UncertainLabelLabel.T
+  object UncertainLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RootEligibleResult = RootEligibleResult.T
+  object RootEligibleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
@@ -24,7 +33,7 @@ object RegionNode:
   type Withdrawn = Withdrawn.T
   object Withdrawn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val RootKinds: Set[String] = Set(
+  val RootKinds: Set[com.histmersion.api.catalogue.RegionNode.RootKinds] = Set(
     com.histmersion.api.catalogue.Place.Kind.Region,
     com.histmersion.api.catalogue.Place.Kind.Polity,
     "continent"
@@ -33,9 +42,9 @@ object RegionNode:
   /** Pleiades writes an uncertain identification into the label: a trailing `?` on the name or a part of it ("Theren?
     * (river)", "Kisamon? Pr."), and a leading `*` for a reconstructed name ("*Granouas (river)").
     */
-  def uncertainLabel(label: String): Boolean =
+  def uncertainLabel(label: com.histmersion.api.catalogue.RegionNode.UncertainLabelLabel): com.histmersion.api.catalogue.RegionNode.UncertainLabelResult =
     val l = label.trim
     l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn")
 
-  def rootEligible(n: RegionNode): Boolean =
+  def rootEligible(n: RegionNode): com.histmersion.api.catalogue.RegionNode.RootEligibleResult =
     RootKinds.contains(n.kind) && !n.withdrawn && !uncertainLabel(n.label)

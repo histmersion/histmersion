@@ -23,23 +23,50 @@ object IngestCmd:
     * The exit code is the point: a failed conversion must not look like success in a script — it exits
     * [[ExitCode.Refused]].
     */
-  def pollJob(c: Client, id: com.histmersion.api.jobs.JobInfo.Id, waited: Int)(using console: Console) : Either[Cli.Error, Unit] =
+  type PollJobWaited = PollJobWaited.T
+  object PollJobWaited extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadCitekey = UploadCitekey.T
+  object UploadCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadQuality = UploadQuality.T
+  object UploadQuality extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadForce = UploadForce.T
+  object UploadForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadTitle = UploadTitle.T
+  object UploadTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadAuthors = UploadAuthors.T
+  object UploadAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadYear = UploadYear.T
+  object UploadYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadDoi = UploadDoi.T
+  object UploadDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadNoWait = UploadNoWait.T
+  object UploadNoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadProvenance = UploadProvenance.T
+  object UploadProvenance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UploadAcquireItem = UploadAcquireItem.T
+  object UploadAcquireItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ControlAction = ControlAction.T
+  object ControlAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ControlHelp = ControlHelp.T
+  object ControlHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def pollJob(c: Client, id: com.histmersion.api.jobs.JobInfo.Id, waited: com.histmersion.cli.IngestCmd.PollJobWaited)(using console: Console) : Either[Cli.Error, Unit] =
     JobFollow.job(c.job, id, waited * 1000L).map(j => Cli.out.println(IngestMarkdown.job(j)))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
   def upload(using console: Console)(
       c: Client,
       file: Path,
-      citekey: String,
-      quality: Boolean,
-      force: Boolean,
-      title: Option[String],
-      authors: List[String],
-      year: Option[Int],
-      doi: Option[String],
-      noWait: Boolean,
-      provenance: Option[String] = None,
-      acquireItem: Option[Int] = None
+      citekey: com.histmersion.cli.IngestCmd.UploadCitekey,
+      quality: com.histmersion.cli.IngestCmd.UploadQuality,
+      force: com.histmersion.cli.IngestCmd.UploadForce,
+      title: Option[com.histmersion.cli.IngestCmd.UploadTitle],
+      authors: List[com.histmersion.cli.IngestCmd.UploadAuthors],
+      year: Option[com.histmersion.cli.IngestCmd.UploadYear],
+      doi: Option[com.histmersion.cli.IngestCmd.UploadDoi],
+      noWait: com.histmersion.cli.IngestCmd.UploadNoWait,
+      provenance: Option[com.histmersion.cli.IngestCmd.UploadProvenance] = None,
+      acquireItem: Option[com.histmersion.cli.IngestCmd.UploadAcquireItem] = None
   ) : Either[Cli.Error, Unit] =
     if citekey.trim.isEmpty then
       Left(Cli.Error("uploading a file needs --citekey to store it under", exitCode = ExitCode.Usage))
@@ -94,7 +121,7 @@ object IngestCmd:
     }
 
   /** `histmersion jobs pause|resume|cancel <id>`. */
-  private def control(action: String, help: String)(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
+  private def control(action: com.histmersion.cli.IngestCmd.ControlAction, help: com.histmersion.cli.IngestCmd.ControlHelp)(using console: Console) : Opts[Client => Either[Cli.Error, Unit]] =
     Opts.subcommand(action, help) {
       (Opts.argument[String]("id"), Output.jsonFlag).mapN { (id, json) => (c: Client) =>
         c.call(Api.jobControl)((id, action)).map(j => Output.emit(json, j)(IngestMarkdown.job))

@@ -25,12 +25,17 @@ enum PresetRegion(val wire: String, val label: String, val box: Option[BBox]):
   case Broad extends PresetRegion("broad", "Continent-wide definitions", None)
 
 object PresetRegion:
-  def fromWire(s: String): Option[PresetRegion] = values.find(_.wire == s.trim)
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def fromWire(s: com.histmersion.api.catalogue.PresetRegion.FromWireS): Option[PresetRegion] = values.find(_.wire == s.trim)
 
   given WireEnumValues[PresetRegion]:
     def all: Array[PresetRegion] = PresetRegion.values
-    def wire(e: PresetRegion): String = e.wire
-    def fromWire(s: String): Option[PresetRegion] = PresetRegion.fromWire(s)
+    def wire(e: PresetRegion): com.histmersion.api.catalogue.PresetRegion.WireResult = e.wire
+    def fromWire(s: com.histmersion.api.catalogue.PresetRegion.FromWireS): Option[PresetRegion] = PresetRegion.fromWire(s)
 
   given io.circe.Encoder[PresetRegion] = WireEnum.encoder
   given io.circe.Decoder[PresetRegion] = WireEnum.decoder

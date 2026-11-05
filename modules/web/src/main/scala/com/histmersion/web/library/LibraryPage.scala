@@ -14,10 +14,25 @@ import com.raquo.laminar.api.L.*
 object LibraryPage:
 
   /** The item the address chooses. */
-  val chosen: Signal[Option[String]] = Router.search.map(LibraryAddress.item).distinct
+  type Chosen = Chosen.T
+  object Chosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChooseKey = ChooseKey.T
+  object ChooseKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChoosePush = ChoosePush.T
+  object ChoosePush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EverythingListArticles = EverythingListArticles.T
+  object EverythingListArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EverythingListNoun = EverythingListNoun.T
+  object EverythingListNoun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TabLabel = TabLabel.T
+  object TabLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TurnBack = TurnBack.T
+  object TurnBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val chosen: Signal[Option[com.histmersion.web.library.LibraryPage.Chosen]] = Router.search.map(LibraryAddress.item).distinct
 
   /** Choose `key` in `section`'s list: a step in the history unless `push` is false. */
-  def choose(section: LibrarySection)(key: String, push: Boolean): Unit =
+  def choose(section: LibrarySection)(key: com.histmersion.web.library.LibraryPage.ChooseKey, push: com.histmersion.web.library.LibraryPage.ChoosePush): Unit =
     Router.go(
       Route.Library(section),
       push = push,
@@ -58,9 +73,9 @@ object LibraryPage:
 
   private def everythingList(
       section: LibrarySection,
-      articles: Boolean,
+      articles: com.histmersion.web.library.LibraryPage.EverythingListArticles,
       page: Signal[ListPage[TableRow]],
-      noun: String
+      noun: com.histmersion.web.library.LibraryPage.EverythingListNoun
   ): HtmlElement =
     div(
       cls := "library-everything",
@@ -83,7 +98,7 @@ object LibraryPage:
       )
     )
 
-  private def tab(s: LibrarySection, label: String, total: Signal[com.histmersion.api.RowCount], on: LibrarySection): HtmlElement =
+  private def tab(s: LibrarySection, label: com.histmersion.web.library.LibraryPage.TabLabel, total: Signal[com.histmersion.api.RowCount], on: LibrarySection): HtmlElement =
     a(
       cls := "library-tab",
       cls("on") := s == on,
@@ -136,7 +151,7 @@ object LibraryPage:
       )
     )
 
-  private def turn(section: LibrarySection, back: Boolean): Unit =
+  private def turn(section: LibrarySection, back: com.histmersion.web.library.LibraryPage.TurnBack): Unit =
     val p = if section == LibrarySection.Articles then LibraryLists.articles.now() else LibraryLists.sources.now()
     LibraryLists.turnTo(
       section,

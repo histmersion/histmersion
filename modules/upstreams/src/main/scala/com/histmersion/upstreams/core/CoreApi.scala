@@ -13,7 +13,7 @@ import com.histmersion.plugin.Plugin
 final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota):
 
   /** One search for `purpose` (`lookup`: a work's download URLs by its DOI; `search`: a saved query). */
-  def searchWorks(key: String, query: String, limit: Int, purpose: String): Either[CoreFailure, Json] =
+  def searchWorks(key: com.histmersion.upstreams.core.CoreApi.SearchWorksKey, query: com.histmersion.upstreams.core.CoreApi.SearchWorksQuery, limit: com.histmersion.upstreams.core.CoreApi.SearchWorksLimit, purpose: com.histmersion.upstreams.core.CoreApi.SearchWorksPurpose): Either[CoreFailure, Json] =
     val url = Url(core.url, "/search/works/", "q" -> query, "limit" -> limit.toString)
     quota.take(purpose) match
       case Left(why) => Left(CoreFailure.Skipped(why))
@@ -35,3 +35,13 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
                 .parse(String(a.body, UTF_8))
                 .left
                 .map(e => CoreFailure.Failed(s"$url returned unparseable JSON: ${e.getMessage}"))
+
+object CoreApi:
+  type SearchWorksKey = SearchWorksKey.T
+  object SearchWorksKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchWorksQuery = SearchWorksQuery.T
+  object SearchWorksQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchWorksLimit = SearchWorksLimit.T
+  object SearchWorksLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchWorksPurpose = SearchWorksPurpose.T
+  object SearchWorksPurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

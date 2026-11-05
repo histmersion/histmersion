@@ -8,13 +8,32 @@ import java.nio.file.Path
 object Resolution:
 
   /** Orders two versions as Maven does: negative when the first is older. */
+  type ConflictsPlugin = ConflictsPlugin.T
+  object ConflictsPlugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeededByResultPart2 = NeededByResultPart2.T
+  object NeededByResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeededByPerPluginPart1 = NeededByPerPluginPart1.T
+  object NeededByPerPluginPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DependenciesNeededPart2 = DependenciesNeededPart2.T
+  object DependenciesNeededPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClasspathFileResult = ClasspathFileResult.T
+  object ClasspathFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputsFileResult = InputsFileResult.T
+  object InputsFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputsFileFilesPart1 = InputsFileFilesPart1.T
+  object InputsFileFilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InputsFileFilesPart2 = InputsFileFilesPart2.T
+  object InputsFileFilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportResult = ReportResult.T
+  object ReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type VersionOrder = (ModuleVersion, ModuleVersion) => Int
 
   /** The modules `plugin` resolves to on its own that the server ships at an OLDER version. An older version than the
     * server's is no conflict: resolved together, the server's is chosen, as Maven chooses the newest.
     */
   def conflicts(
-      plugin: String,
+      plugin: com.histmersion.pluginresolver.Resolution.ConflictsPlugin,
       resolved: List[ModuleCoordinates],
       server: ServerModules,
       order: VersionOrder
@@ -30,7 +49,7 @@ object Resolution:
 
   /** The plugin jars each module is there for: a module is needed by every plugin whose own resolution has it.
     */
-  def neededBy(perPlugin: List[(String, List[ModuleCoordinates])]): Map[ModuleKey, List[String]] =
+  def neededBy(perPlugin: List[(com.histmersion.pluginresolver.Resolution.NeededByPerPluginPart1, List[ModuleCoordinates])]): Map[ModuleKey, List[com.histmersion.pluginresolver.Resolution.NeededByResultPart2]] =
     perPlugin
       .flatMap((plugin, modules) => modules.map(_.key -> plugin))
       .groupMap(_._1)(_._2)
@@ -45,7 +64,7 @@ object Resolution:
       joint: List[(ModuleCoordinates, Option[Path])],
       plugins: Set[ModuleKey],
       server: ServerModules,
-      needed: Map[ModuleKey, List[String]]
+      needed: Map[ModuleKey, List[com.histmersion.pluginresolver.Resolution.DependenciesNeededPart2]]
   ): List[Dependency] =
     joint
       .collect {
@@ -59,16 +78,16 @@ object Resolution:
     resolved.map(_.key).filter(k => !plugins.contains(k) && server.provides(k)).distinct.sortBy(_.toString)
 
   /** `lib/classpath`: the dependency jars' file names, one per line, in class-path order. */
-  def classpathFile(deps: List[Dependency]): String = deps.map(_.libName).map(_ + "\n").mkString
+  def classpathFile(deps: List[Dependency]): com.histmersion.pluginresolver.Resolution.ClasspathFileResult = deps.map(_.libName).map(_ + "\n").mkString
 
   /** `lib/inputs`: `<sha256>  <file name>` of every plugin jar and POM the resolution was made from, sorted by name —
     * what `histmersion-server-jvm` compares with the plugins directory to know whether `lib/` is still current.
     */
-  def inputsFile(files: List[(String, String)]): String =
+  def inputsFile(files: List[(com.histmersion.pluginresolver.Resolution.InputsFileFilesPart1, com.histmersion.pluginresolver.Resolution.InputsFileFilesPart2)]): com.histmersion.pluginresolver.Resolution.InputsFileResult =
     files.sortBy(_._1).map((name, sha) => s"$sha  $name\n").mkString
 
   /** The lines `plugin add` and the relink show. */
-  def report(deps: List[Dependency], provided: List[ModuleKey]): List[String] =
+  def report(deps: List[Dependency], provided: List[ModuleKey]): List[com.histmersion.pluginresolver.Resolution.ReportResult] =
     deps.map(d =>
       s"dependency: ${d.coordinates}" + (if d.neededBy.isEmpty then "" else s" (for ${d.neededBy.mkString(", ")})")
     ) ++

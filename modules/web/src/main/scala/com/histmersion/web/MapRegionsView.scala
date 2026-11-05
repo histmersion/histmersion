@@ -15,6 +15,23 @@ import com.histmersion.api.basemap.Basemap
   * REST: `GET /api/basemap`, `POST /api/basemap/fetch`, `GET /api/jobs/{id}`, `DELETE /api/basemap`.
   */
 object MapRegionsView:
+  type NamedOfResult = NamedOfResult.T
+  object NamedOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamedOfId = NamedOfId.T
+  object NamedOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentResultPart1 = CurrentResultPart1.T
+  object CurrentResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentDryRun = CurrentDryRun.T
+  object CurrentDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChooseId = ChooseId.T
+  object ChooseId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartDryRun = StartDryRun.T
+  object StartDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CanDownload = CanDownload.T
+  object CanDownload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Busy = Busy.T
+  object Busy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import MapRegions.*
 
   private var jobPollMs = 1000 // set from /api/config before any window opens
@@ -49,18 +66,18 @@ object MapRegionsView:
         )
       )
 
-  private def namedOf(id: String): Option[String] =
+  private def namedOf(id: com.histmersion.web.MapRegionsView.NamedOfId): Option[com.histmersion.web.MapRegionsView.NamedOfResult] =
     status.now().flatMap(_.regions.find(_.name == id)).map(_.name)
 
-  private def current(dryRun: Boolean): Either[String, Basemap.FetchQuery] =
+  private def current(dryRun: com.histmersion.web.MapRegionsView.CurrentDryRun): Either[com.histmersion.web.MapRegionsView.CurrentResultPart1, Basemap.FetchQuery] =
     request(box.now(), content.now(), namedOf(pick.now()), depth.now(), dryRun)
 
-  private def choose(id: String): Unit =
+  private def choose(id: com.histmersion.web.MapRegionsView.ChooseId): Unit =
     pick.set(id)
     status.now().toList.flatMap(choices).find(_.id == id).flatMap(_.bbox).foreach(box.set)
     checked.set(None)
 
-  private def start(dryRun: Boolean): Unit =
+  private def start(dryRun: com.histmersion.web.MapRegionsView.StartDryRun): Unit =
     current(dryRun) match
       case Left(m)  => error.set(Some(m))
       case Right(q) =>
@@ -95,13 +112,13 @@ object MapRegionsView:
       .basemapRemove(q)
       .onComplete(_.fold(e => error.set(Some(e.getMessage)), _ => { confirmAll.set(false); load() }))
 
-  private val canDownload: Signal[Boolean] =
+  private val canDownload: Signal[com.histmersion.web.MapRegionsView.CanDownload] =
     checked.signal.combineWith(box.signal, content.signal, depth.signal, pick.signal, job.signal, Auth.writable).map {
       (ok, _, _, _, _, j, writable) =>
         writable && !j.exists(!_.isTerminal) && ok.exists(q => current(dryRun = false).toOption.contains(q))
     }
 
-  private val busy: Signal[Boolean] = job.signal.map(_.exists(!_.isTerminal))
+  private val busy: Signal[com.histmersion.web.MapRegionsView.Busy] = job.signal.map(_.exists(!_.isTerminal))
 
   def panel: HtmlElement =
     div(

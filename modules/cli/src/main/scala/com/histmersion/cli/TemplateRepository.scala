@@ -13,6 +13,10 @@ enum TemplateRepository:
   case Remote(repository: PluginRepository)
 
   /** As `//> using repository` takes it. */
-  def directive: String = this match
+  def directive: com.histmersion.cli.TemplateRepository.DirectiveResult = this match
     case MavenLocal   => "m2Local"
     case Remote(repo) => repo.value
+
+object TemplateRepository:
+  type DirectiveResult = DirectiveResult.T
+  object DirectiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

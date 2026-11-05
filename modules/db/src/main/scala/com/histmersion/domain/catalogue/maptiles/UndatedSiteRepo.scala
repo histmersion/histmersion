@@ -15,7 +15,50 @@ import com.histmersion.domain.catalogue.Place
 private[maptiles] object UndatedSiteRepo:
 
   /** The group of `map_changes` a write to an undated site moves (V106's trigger). */
-  val Group: String = "undated"
+  type Group = Group.T
+  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TypedSiteType = TypedSiteType.T
+  object TypedSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesSiteType = CandidatesSiteType.T
+  object CandidatesSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesExcept = CandidatesExcept.T
+  object CandidatesExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsSiteType = ItemsSiteType.T
+  object ItemsSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsExcept = ItemsExcept.T
+  object ItemsExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountedSiteType = CountedSiteType.T
+  object CountedSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptSqlPerSide = KeptSqlPerSide.T
+  object KeptSqlPerSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptSqlSiteType = KeptSqlSiteType.T
+  object KeptSqlSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptPerSide = KeptPerSide.T
+  object KeptPerSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptSiteType = KeptSiteType.T
+  object KeptSiteType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VersionResult = VersionResult.T
+  object VersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnitSquarePart1 = UnitSquarePart1.T
+  object UnitSquarePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnitSquarePart2 = UnitSquarePart2.T
+  object UnitSquarePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeldV = HeldV.T
+  object HeldV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RebuildSqlPerSide = RebuildSqlPerSide.T
+  object RebuildSqlPerSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RebuildSqlMaxZoom = RebuildSqlMaxZoom.T
+  object RebuildSqlMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RebuildResult = RebuildResult.T
+  object RebuildResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RebuildVersion = RebuildVersion.T
+  object RebuildVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RebuildPerSide = RebuildPerSide.T
+  object RebuildPerSide extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RebuildMaxZoom = RebuildMaxZoom.T
+  object RebuildMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val Group: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.Group = "undated"
 
   /** A site with no known date that a map draws (a point, an informative name), over a `places` row `p` — word for word
     * the predicate of `places_site_undated`, then the label rule.
@@ -23,7 +66,7 @@ private[maptiles] object UndatedSiteRepo:
   private val UndatedSiteSql =
     s"p.kind = '${Place.Kind.Site}' AND p.geom IS NOT NULL AND lower_inf(p.period) AND upper_inf(p.period)"
 
-  private def typed(siteType: Option[String]): Sql =
+  private def typed(siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.TypedSiteType]): Sql =
     siteType
       .map(_.trim.toLowerCase)
       .filter(_.nonEmpty)
@@ -32,7 +75,7 @@ private[maptiles] object UndatedSiteRepo:
   /** The undated sites in the box `envelope` (of type `siteType` when one is asked for), but those of `except`, as a
     * tile's candidates ([[TileRepo.cellsSql]]: no dates, each marked `ub`). Pure.
     */
-  def candidates(siteType: Option[String], envelope: Sql, except: List[String] = Nil): Sql =
+  def candidates(siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.CandidatesSiteType], envelope: Sql, except: List[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.CandidatesExcept] = Nil): Sql =
     Sql.raw(
       "SELECT p.id AS key, ST_X(q.pt) AS lon, ST_Y(q.pt) AS lat, NULL::bigint AS ps, NULL::bigint AS pe, true AS ub" +
         " FROM places p CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(p.geom) = 'POINT' THEN p.geom" +
@@ -42,11 +85,11 @@ private[maptiles] object UndatedSiteRepo:
       (if except.isEmpty then Sql.empty else Sql.of(" AND NOT (p.id = ANY(?::text[]))", Param.A(except)))
 
   /** Every undated site in tile `c`, each alone, but those of `except`. */
-  def items(c: TileCoord, siteType: Option[String], except: List[String])(using DbCon): List[TileCell] =
+  def items(c: TileCoord, siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.ItemsSiteType], except: List[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.ItemsExcept])(using DbCon): List[TileCell] =
     TileRepo.items(candidates(siteType, TileRepo.envelope(c), except), c)
 
   /** The undated sites in tile `c` counted by the grid's squares, read from the sites themselves. */
-  def counted(c: TileCoord, grid: TileGrid, siteType: Option[String])(using DbCon): List[GridCell] =
+  def counted(c: TileCoord, grid: TileGrid, siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.CountedSiteType])(using DbCon): List[GridCell] =
     TileRepo.gridCells(candidates(siteType, TileRepo.envelope(c)), c, grid)
 
   private given DbCodec[GridCell] = DbCodec.derived
@@ -54,7 +97,7 @@ private[maptiles] object UndatedSiteRepo:
   /** The kept counts of tile `c`'s squares (`perSide` a side), in the tile's units: of every type, or of `siteType`.
     * Pure.
     */
-  def keptSql(c: TileCoord, perSide: Int, siteType: Option[String]): Sql =
+  def keptSql(c: TileCoord, perSide: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.KeptSqlPerSide, siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.KeptSqlSiteType]): Sql =
     val side = c.side.toDouble
     val e = TileCoord.Extent
     val (gx0, gy0) = (c.x * perSide, c.y * perSide)
@@ -70,7 +113,7 @@ private[maptiles] object UndatedSiteRepo:
       Sql.raw(" GROUP BY gx, gy")
 
   /** The kept counts of tile `c`'s squares ([[keptSql]]). */
-  def kept(c: TileCoord, perSide: Int, siteType: Option[String])(using DbCon): List[GridCell] =
+  def kept(c: TileCoord, perSide: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.KeptPerSide, siteType: Option[com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.KeptSiteType])(using DbCon): List[GridCell] =
     keptSql(c, perSide, siteType).frag.query[GridCell].run().toList
 
   /** What the kept counts were built from: the `undated` group's version, the grid's squares a tile side, the deepest
@@ -84,21 +127,21 @@ private[maptiles] object UndatedSiteRepo:
       .map((v, p, z) => UndatedBuild(v, p, z))
 
   /** The `undated` group's version now (0 before any write to an undated site). */
-  def version()(using DbCon): Long =
+  def version()(using DbCon): com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.VersionResult =
     sql"SELECT coalesce(sum(weight), 0)::bigint FROM map_changes WHERE grp = $Group".query[Long].run().head
 
   /** The sites' places on Web Mercator's unit square, each axis held inside it (as [[TileRepo.unitsSql]]), over the
     * columns `lon` and `lat`.
     */
-  private val unitSquare: (String, String) =
+  private val unitSquare: (com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.UnitSquarePart1, com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.UnitSquarePart2) =
     val l = s"radians(greatest(${-TileCoord.MaxLat}, least(${TileCoord.MaxLat}, lat)))"
-    def held(v: String) = s"least(greatest($v, 0), 0.99999999999)"
+    def held(v: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.HeldV) = s"least(greatest($v, 0), 0.99999999999)"
     (held("(lon + 180) / 360.0"), held(s"(1 - ln(tan($l) + 1 / cos($l)) / pi()) / 2"))
 
   /** The statement that counts every undated site again, by type, into the squares of zooms 0 to `maxZoom` (`perSide` a
     * tile side). Pure.
     */
-  def rebuildSql(perSide: Int, maxZoom: Int): Sql =
+  def rebuildSql(perSide: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.RebuildSqlPerSide, maxZoom: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.RebuildSqlMaxZoom): Sql =
     val (mx, my) = unitSquare
     Sql.raw(
       "INSERT INTO site_undated_cells (z, gx, gy, site_type, n, sx, sy, w, s, e, nn, one)" +
@@ -115,7 +158,7 @@ private[maptiles] object UndatedSiteRepo:
     * before), replacing the kept counts — in the caller's transaction, so readers see the old counts until it commits.
     * False when another rebuild holds the lock (it does the same work).
     */
-  def rebuild(version: Long, perSide: Int, maxZoom: Int)(using DbCon): Boolean =
+  def rebuild(version: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.RebuildVersion, perSide: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.RebuildPerSide, maxZoom: com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.RebuildMaxZoom)(using DbCon): com.histmersion.domain.catalogue.maptiles.UndatedSiteRepo.RebuildResult =
     val locked =
       sql"SELECT pg_try_advisory_xact_lock(hashtext('histmersion.site_undated_cells'))".query[Boolean].run().head
     if locked then

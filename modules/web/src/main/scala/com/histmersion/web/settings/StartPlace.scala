@@ -17,19 +17,40 @@ import com.histmersion.api.catalogue.Place
 object StartPlace:
 
   /** The zoom that shows a box of this size whole: a continent ~3, a country ~6, a city ~10. Pure. */
-  def zoomFor(b: GeoBounds): Double =
+  type ZoomForResult = ZoomForResult.T
+  object ZoomForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ViewOfResultPart2 = ViewOfResultPart2.T
+  object ViewOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ViewOfGeometry = ViewOfGeometry.T
+  object ViewOfGeometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangesResultPart1 = ChangesResultPart1.T
+  object ChangesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangesResultPart2 = ChangesResultPart2.T
+  object ChangesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundResult = RoundResult.T
+  object RoundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RoundV = RoundV.T
+  object RoundV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChooserName = ChooserName.T
+  object ChooserName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChooserShowLegend = ChooserShowLegend.T
+  object ChooserShowLegend extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def zoomFor(b: GeoBounds): com.histmersion.web.settings.StartPlace.ZoomForResult =
     val span = math.max(b.east - b.west, (b.north - b.south) * 1.4)
     if span <= 0.01 then 9
     else math.max(2.0, math.min(10.0, math.floor(math.log(360.0 / span) / math.log(2)) + 1))
 
   /** The centre and zoom of a place's geometry (GeoJSON), when it has one. */
-  def viewOf(geometry: String): Option[(LatLon, Double)] =
+  def viewOf(geometry: com.histmersion.web.settings.StartPlace.ViewOfGeometry): Option[(LatLon, com.histmersion.web.settings.StartPlace.ViewOfResultPart2)] =
     scala.util.Try(js.JSON.parse(geometry)).toOption.flatMap(GeoBounds.ofGeometry).filter(_.valid).map { b =>
       (LatLon((b.south + b.north) / 2, (b.west + b.east) / 2), zoomFor(b))
     }
 
   /** The changes the choice writes (`ui.map-start.*`). Pure. */
-  def changes(c: MapStartConfig): List[(String, String)] =
+  def changes(c: MapStartConfig): List[(com.histmersion.web.settings.StartPlace.ChangesResultPart1, com.histmersion.web.settings.StartPlace.ChangesResultPart2)] =
     List(
       "ui.map-start.mode" -> c.mode,
       "ui.map-start.lat" -> round(c.lat),
@@ -38,10 +59,10 @@ object StartPlace:
       "ui.map-start.label" -> c.label
     )
 
-  private def round(v: Double): String =
+  private def round(v: com.histmersion.web.settings.StartPlace.RoundV): com.histmersion.web.settings.StartPlace.RoundResult =
     BigDecimal(v).setScale(4, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString
 
-  def chooser(choice: Var[MapStartConfig], name: String, showLegend: Boolean = true): HtmlElement =
+  def chooser(choice: Var[MapStartConfig], name: com.histmersion.web.settings.StartPlace.ChooserName, showLegend: com.histmersion.web.settings.StartPlace.ChooserShowLegend = true): HtmlElement =
     val query = Var("")
     val hits = Var(List.empty[Place.Hit])
     val problem = Var(Option.empty[String])
@@ -126,7 +147,7 @@ object StartPlace:
     )
 
   /** What the choice means, in words. Pure. */
-  def describe(c: MapStartConfig): String =
+  def describe(c: MapStartConfig): com.histmersion.web.settings.StartPlace.DescribeResult =
     val at = if c.label.trim.nonEmpty then c.label else s"${round(c.lat)}, ${round(c.lon)}"
     MapStartMode.parse(c.mode) match
       case MapStartMode.Last  => s"The first time, and in a new browser, it opens at $at."

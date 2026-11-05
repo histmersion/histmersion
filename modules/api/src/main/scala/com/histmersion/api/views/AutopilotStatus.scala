@@ -64,7 +64,7 @@ final case class AutopilotStatus(
   )
 
   /** The page in Markdown: the automation's status with the library's lines in their places. */
-  def markdown: String =
+  def markdown: com.histmersion.api.views.AutopilotStatus.MarkdownResult =
     AutopilotMarkdown.status(
       engine,
       ingestedBy = acquireRecheck
@@ -75,6 +75,9 @@ final case class AutopilotStatus(
     )
 
 object AutopilotStatus:
+  type MarkdownResult = MarkdownResult.T
+  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type On = On.T
   object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Since = Since.T

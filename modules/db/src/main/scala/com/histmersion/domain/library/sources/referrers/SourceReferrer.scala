@@ -20,4 +20,12 @@ trait SourceReferrer:
   def deleting(source: SourceKeys, report: DeleteReport)(using DbCon): Unit = ()
 
   /** The source went: the entry this domain keeps of it (the log's), with `line` as its text and `day` as its topic. */
-  def recorded(source: SourceKeys, line: String, day: String)(using DbCon): Option[Int] = None
+  def recorded(source: SourceKeys, line: com.histmersion.domain.library.sources.referrers.SourceReferrer.RecordedLine, day: com.histmersion.domain.library.sources.referrers.SourceReferrer.RecordedDay)(using DbCon): Option[com.histmersion.domain.library.sources.referrers.SourceReferrer.RecordedResult] = None
+
+object SourceReferrer:
+  type RecordedResult = RecordedResult.T
+  object RecordedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordedLine = RecordedLine.T
+  object RecordedLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordedDay = RecordedDay.T
+  object RecordedDay extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

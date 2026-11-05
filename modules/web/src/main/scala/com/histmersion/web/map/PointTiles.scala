@@ -12,7 +12,7 @@ trait PointTiles:
   /** The URL template of the tiles (`{z}`, `{x}`, `{y}`), or none: no tile is asked for. A template the same as the one
     * set is no change; another one is fetched while the features of the old one stay readable until its tiles are in.
     */
-  def setTiles(template: Option[String]): Unit
+  def setTiles(template: Option[com.histmersion.web.map.PointTiles.SetTilesTemplate]): Unit
 
   /** The features of the tiles of the view at its zoom, each once (a world copy, a tile's neighbour holding the same
     * item: one).
@@ -23,4 +23,10 @@ trait PointTiles:
   def onChange(f: () => Unit): Subscription
 
   /** Every tile of the view at the current template is in. */
-  def loaded: Boolean
+  def loaded: com.histmersion.web.map.PointTiles.LoadedResult
+
+object PointTiles:
+  type SetTilesTemplate = SetTilesTemplate.T
+  object SetTilesTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadedResult = LoadedResult.T
+  object LoadedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

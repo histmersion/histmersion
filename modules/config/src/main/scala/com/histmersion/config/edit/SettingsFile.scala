@@ -8,7 +8,7 @@ import org.ekrich.config.{Config, ConfigOrigin}
   */
 trait SettingsFile:
   /** Where the file is, as messages and the settings page name it. */
-  def shown: String
+  def shown: com.histmersion.config.edit.SettingsFile.ShownResult
 
   /** The file as it is now: its text (`None`: not there yet), its version, and its settings as parsed with its
     * includes, unresolved.
@@ -20,9 +20,9 @@ trait SettingsFile:
     * file's permissions. A symbolic link at the file stays: the file it points to is changed. The `.bak`, when one was
     * kept.
     */
-  def replace(text: String, existed: Boolean)(
+  def replace(text: com.histmersion.config.edit.SettingsFile.ReplaceText, existed: com.histmersion.config.edit.SettingsFile.ReplaceExisted)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
-  ): Either[SettingError, Option[String]]
+  ): Either[SettingError, Option[com.histmersion.config.edit.SettingsFile.ReplaceResultPart2]]
 
 object SettingsFile:
 
@@ -30,8 +30,23 @@ object SettingsFile:
     * are the text itself (not a file it includes), and what loading it as the settings file gives under an environment,
     * its messages naming the file it is to replace.
     */
+  type ShownResult = ShownResult.T
+  object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceResultPart2 = ReplaceResultPart2.T
+  object ReplaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceText = ReplaceText.T
+  object ReplaceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceExisted = ReplaceExisted.T
+  object ReplaceExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Staged(
       parsed: Either[SettingError, Config],
-      own: ConfigOrigin => Boolean,
-      load: Config => Either[String, LoadedConfig]
+      own: ConfigOrigin => Staged.OwnResult,
+      load: Config => Either[Staged.LoadResultPart1, LoadedConfig]
   )
+
+  object Staged:
+    type OwnResult = OwnResult.T
+    object OwnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LoadResultPart1 = LoadResultPart1.T
+    object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

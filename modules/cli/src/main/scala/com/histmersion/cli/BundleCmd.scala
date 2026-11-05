@@ -15,13 +15,18 @@ import com.histmersion.util.console.Console
   */
 object BundleCmd:
 
-  private def existing(file: String): Either[Cli.Error, java.io.File] =
+  type ExistingFile = ExistingFile.T
+  object ExistingFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManifestOfResultPart1 = ManifestOfResultPart1.T
+  object ManifestOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def existing(file: com.histmersion.cli.BundleCmd.ExistingFile): Either[Cli.Error, java.io.File] =
     val p = Path.of(file)
     if Files.isRegularFile(p) then Right(p.toFile)
     else Left(Cli.Error(s"no such file: $file", exitCode = ExitCode.Usage))
 
   /** The manifest of a bundle on disk — its first entry. */
-  private[cli] def manifestOf(p: Path): Either[String, Bundle.Manifest] =
+  private[cli] def manifestOf(p: Path): Either[com.histmersion.cli.BundleCmd.ManifestOfResultPart1, Bundle.Manifest] =
     val in = Files.newInputStream(p)
     try
       val r = BundleTar.Reader(java.io.BufferedInputStream(in))

@@ -2,7 +2,12 @@ package com.histmersion.api.media
 import com.histmersion.api.given
 object AssetsMarkdown:
 
-  def assets(citekey: String, as: Vector[AssetInfo]): String =
+  type AssetsResult = AssetsResult.T
+  object AssetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssetsCitekey = AssetsCitekey.T
+  object AssetsCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def assets(citekey: com.histmersion.api.media.AssetsMarkdown.AssetsCitekey, as: Vector[AssetInfo]): com.histmersion.api.media.AssetsMarkdown.AssetsResult =
     if as.isEmpty then s"_No assets stored for **$citekey**._"
     else
       val rows = as.map { a =>

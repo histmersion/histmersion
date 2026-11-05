@@ -23,7 +23,7 @@ final class AuthHandler(
     tokens: com.histmersion.domain.automation.agents.RunTokens
 ) extends ChannelInboundHandlerAdapter:
   /** The key is read per request (a config reload may set, change or clear it); none = no gate. */
-  private def expected: Option[String] = Option(apiKey()).filter(_.nonEmpty).map(k => s"Bearer $k")
+  private def expected: Option[com.histmersion.server.AuthHandler.ExpectedResult] = Option(apiKey()).filter(_.nonEmpty).map(k => s"Bearer $k")
   private val body401 = """{"message":"unauthorized"}""".getBytes(StandardCharsets.UTF_8)
   // `var`: this connection is between a refused request's head and its last chunk
   private var discarding = false
@@ -55,25 +55,38 @@ final class AuthHandler(
   /** The agent MCP endpoint is gated by run tokens instead ([[com.histmersion.domain.automation.agents.RunTokenGate]],
     * in front of this handler); the quota-guard mod of a headless run reports with its run token.
     */
-  private def byRunToken(req: HttpRequest): Boolean =
+  private def byRunToken(req: HttpRequest): com.histmersion.server.AuthHandler.ByRunTokenResult =
     val path = req.uri().takeWhile(_ != '?')
     import com.histmersion.domain.automation.agents.RunTokens
     RunTokens.isAgentPath(path) ||
     (path == RunTokens.QuotaPath && tokens.bearer(req.headers().get(HttpHeaderNames.AUTHORIZATION)).isDefined)
 
 object AuthHandler:
-  def isWrite(m: HttpMethod): Boolean =
+  type ExpectedResult = ExpectedResult.T
+  object ExpectedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByRunTokenResult = ByRunTokenResult.T
+  object ByRunTokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsWriteResult = IsWriteResult.T
+  object IsWriteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenResult = OpenResult.T
+  object OpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsOpenPathResult = IsOpenPathResult.T
+  object IsOpenPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsOpenPathPath = IsOpenPathPath.T
+  object IsOpenPathPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def isWrite(m: HttpMethod): com.histmersion.server.AuthHandler.IsWriteResult =
     m == HttpMethod.POST || m == HttpMethod.PUT || m == HttpMethod.PATCH || m == HttpMethod.DELETE
 
   /** The one write that needs no key: the web UI marking a window as read (`POST /api/ui/seen/{board}`,
     * [[com.histmersion.api.instance.UiApi.markSeen]]). It changes nothing but that mark, and a reader without the key
     * must still be able to clear what they have read.
     */
-  def open(req: HttpRequest): Boolean =
+  def open(req: HttpRequest): com.histmersion.server.AuthHandler.OpenResult =
     req.method() == HttpMethod.POST && isOpenPath(req.uri().takeWhile(_ != '?'))
 
   /** Pure: is this path one the gate lets by without a key? Exactly one segment after the prefix. */
-  def isOpenPath(path: String): Boolean =
+  def isOpenPath(path: com.histmersion.server.AuthHandler.IsOpenPathPath): com.histmersion.server.AuthHandler.IsOpenPathResult =
     path.startsWith(com.histmersion.api.instance.UiApi.SeenPathPrefix) &&
       {
         val rest = path.drop(com.histmersion.api.instance.UiApi.SeenPathPrefix.length);

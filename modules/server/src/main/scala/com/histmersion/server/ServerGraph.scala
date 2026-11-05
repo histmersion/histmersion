@@ -112,7 +112,7 @@ final class ServerGraph private (
     * so turning `watch` on or off is itself a reload, and the watcher stops with its scope. Off without a file to
     * watch.
     */
-  private[server] def addWatch(): Either[String, Hot[Boolean]] =
+  private[server] def addWatch(): Either[com.histmersion.server.ServerGraph.AddWatchResultPart1, Hot[com.histmersion.server.ServerGraph.AddWatchResultPart2]] =
     graph.node[Boolean](ServerGraph.Watch, keys = List("histmersion.config")) { ctx =>
       val c = ctx.config.app.config
       val target = ctx.config.loaded.file.path.filter(_ => source.isDefined)
@@ -140,6 +140,19 @@ final class ServerGraph private (
   def close(): Unit = graph.close()
 
 object ServerGraph:
+  type AddWatchResultPart1 = AddWatchResultPart1.T
+  object AddWatchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddWatchResultPart2 = AddWatchResultPart2.T
+  object AddWatchResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartResultPart1 = StartResultPart1.T
+  object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RedactResult = RedactResult.T
+  object RedactResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RedactUrl = RedactUrl.T
+  object RedactUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WatchDebounceMs = WatchDebounceMs.T
+  object WatchDebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Pool = "pool"
   val Migrations = "migrations"
   val QueryPool = "query-pool"
@@ -157,7 +170,7 @@ object ServerGraph:
       source: Option[ConfigSource],
       plugins: Option[Generation],
       core: com.histmersion.domain.library.acquisition.CoreBudget
-  ): Either[String, ServerGraph] =
+  ): Either[com.histmersion.server.ServerGraph.StartResultPart1, ServerGraph] =
     val graph = Hot.Graph[HotConfig](initial)
     val prepare = source.map(_.prepare).getOrElse((_: AppConfig) => Right(()))
     val built =
@@ -235,7 +248,7 @@ object ServerGraph:
       case NonFatal(e)             => scribe.warn(s"startup ANALYZE failed: ${e.getMessage}")
 
   /** A JDBC URL for the log: no query string (where a password could be). */
-  def redact(url: String): String = url.takeWhile(_ != '?')
+  def redact(url: com.histmersion.server.ServerGraph.RedactUrl): com.histmersion.server.ServerGraph.RedactResult = url.takeWhile(_ != '?')
 
   private def log(r: ReloadReport): Unit =
     if r.errors.nonEmpty then
@@ -254,7 +267,7 @@ object ServerGraph:
   /** Watch `file`'s directory and call `changed` once the file has been quiet for `debounceMs` after a change. Returns
     * when interrupted (the watch node's scope closing).
     */
-  private def watch(file: Path, debounceMs: Long, changed: () => Unit): Unit =
+  private def watch(file: Path, debounceMs: com.histmersion.server.ServerGraph.WatchDebounceMs, changed: () => Unit): Unit =
     val dir = Option(file.getParent).getOrElse(Path.of("."))
     val ws = FileSystems.getDefault.newWatchService()
     try

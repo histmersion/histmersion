@@ -3,14 +3,23 @@ package com.histmersion.api.automation
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object ApprovalDigestMarkdown:
+  type DeciderResult = DeciderResult.T
+  object DeciderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeciderDecidedBy = DeciderDecidedBy.T
+  object DeciderDecidedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DigestResult = DigestResult.T
+  object DigestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BulkResult = BulkResult.T
+  object BulkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import ApprovalDigest.*
 
-  private def decider(decidedBy: String): String = decidedBy match
+  private def decider(decidedBy: com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderDecidedBy): com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult = decidedBy match
     case "checked" => "the autopilot's checks (within the day's cap); a person may decide them first"
     case Waits     => "nobody now: they wait (see above); a person may still decide one"
     case _         => "a person"
 
-  def digest(d: Digest): String =
+  def digest(d: Digest): com.histmersion.api.automation.ApprovalDigestMarkdown.DigestResult =
     val head = s"# Waiting for a person (${d.at.take(16).replace('T', ' ')} UTC)\n\n" +
       s"- ${Plural.count(d.total, "open approval")}" +
       (if d.heldForPerson > 0 then
@@ -28,7 +37,7 @@ object ApprovalDigestMarkdown:
     }
     (head :: kinds).mkString("\n\n")
 
-  def bulk(r: BulkResult): String =
+  def bulk(r: BulkResult): com.histmersion.api.automation.ApprovalDigestMarkdown.BulkResult =
     val verb = if r.dryRun then s"would ${r.decision}" else if r.decision == "approve" then "approved" else "rejected"
     s"# ${Plural.count(r.matched, "open approval")} matched: $verb ${r.decided.size}" + (if r.dryRun then
                                                                                            " (dry run: nothing decided)"

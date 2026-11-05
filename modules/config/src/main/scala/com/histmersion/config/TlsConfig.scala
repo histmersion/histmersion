@@ -12,16 +12,21 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *   a PEM file of further roots (`~` expanded); "" = none
   */
 final case class TlsConfig(systemTrust: TlsConfig.SystemTrust, extraCaFile: TlsConfig.ExtraCaFile) derives ConfigReader:
-  def extraCa: Option[String] =
+  def extraCa: Option[com.histmersion.config.TlsConfig.ExtraCaResult] =
     Option(extraCaFile)
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(p => if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p)
 
   /** Anything beyond the JDK's roots asked for? */
-  def custom: Boolean = systemTrust || extraCa.isDefined
+  def custom: com.histmersion.config.TlsConfig.CustomResult = systemTrust || extraCa.isDefined
 
 object TlsConfig:
+  type ExtraCaResult = ExtraCaResult.T
+  object ExtraCaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CustomResult = CustomResult.T
+  object CustomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SystemTrust = SystemTrust.T
   object SystemTrust extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExtraCaFile = ExtraCaFile.T

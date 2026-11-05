@@ -17,17 +17,24 @@ object Place:
     * representative point, never an area (Pleiades files them as regions; `lint --rule place-kind` moves them).
     */
   object Kind:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseResult = ParseResult.T
+    object ParseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Region = "region"
     val Polity = "polity"
     val Site = "site"
     val Feature = "feature"
     val People = "people"
-    val all: List[String] = List(Region, Polity, Site, Feature, People)
+    val all: List[com.histmersion.domain.catalogue.Place.Kind.All] = List(Region, Polity, Site, Feature, People)
 
     /** Map a foreign type label (LPF `types[].label`, an AAT id, a Natural Earth class) onto a kind; `None` when
       * nothing recognisable is there, so the caller's default wins.
       */
-    def parse(s: String): Option[String] =
+    def parse(s: com.histmersion.domain.catalogue.Place.Kind.ParseS): Option[com.histmersion.domain.catalogue.Place.Kind.ParseResult] =
       val t = s.trim.toLowerCase
       if t.isEmpty then None
       else if all.contains(t) then Some(t)
@@ -61,32 +68,45 @@ object Place:
   enum Precision:
     case Stated, GridCell
 
-    def wire: String = this match
+    def wire: com.histmersion.domain.catalogue.Place.Precision.WireResult = this match
       case Stated   => "stated"
       case GridCell => "grid-cell"
 
   object Precision:
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
-    val CellsMicro: List[Long] = List(5000000L, 1000000L, 500000L)
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CellsMicro = CellsMicro.T
+    object CellsMicro extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type GridCentreResult = GridCentreResult.T
+    object GridCentreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Approximate = Approximate.T
+    object Approximate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    val CellsMicro: List[com.histmersion.domain.catalogue.Place.Precision.CellsMicro] = List(5000000L, 1000000L, 500000L)
 
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.
       */
-    def gridCentre(lon: Double, lat: Double): Boolean =
+    def gridCentre(lon: com.histmersion.Longitude, lat: com.histmersion.Latitude): com.histmersion.domain.catalogue.Place.Precision.GridCentreResult =
       val x = math.round(lon * 1e6)
       val y = math.round(lat * 1e6)
       CellsMicro.exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2)
 
     /** The precision of the point of place `placeId`. */
-    def of(placeId: String, lon: Double, lat: Double): Precision =
+    def of(placeId: com.histmersion.domain.catalogue.Place.Id, lon: com.histmersion.Longitude, lat: com.histmersion.Latitude): Precision =
       if placeId.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
-    val Approximate: String = "approximate (atlas grid square)"
+    val Approximate: com.histmersion.domain.catalogue.Place.Precision.Approximate = "approximate (atlas grid square)"
 
-    def parse(s: String): Option[Precision] = values.find(_.wire == Ascii.lower(s.trim))
+    def parse(s: com.histmersion.domain.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(s.trim))
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = Precision.values
-      def wire(e: Precision): String = e.wire
-      def fromWire(s: String): Option[Precision] = parse(s)
+      def wire(e: Precision): com.histmersion.domain.catalogue.Place.Precision.WireResult = e.wire
+      def fromWire(s: com.histmersion.domain.catalogue.Place.Precision.FromWireS): Option[Precision] = parse(s)

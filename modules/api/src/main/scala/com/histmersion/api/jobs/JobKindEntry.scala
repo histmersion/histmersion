@@ -9,12 +9,26 @@ final case class JobKindEntry(
     name: JobKindName,
     meaning: JobKindMeaning,
     stoppable: JobKindEntry.Stoppable = false,
-    subject: JobDetail => Option[String] = _ => None,
+    subject: JobDetail => Option[JobKindEntry.SubjectResult] = _ => None,
     ownControl: JobKindEntry.OwnControl = false
 )
 
 object JobKindEntry:
   /** An entry from its owner's words. */
+  type SubjectResult = SubjectResult.T
+  object SubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  type OfName = OfName.T
+  object OfName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfMeaning = OfMeaning.T
+  object OfMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStoppable = OfStoppable.T
+  object OfStoppable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfSubjectResult = OfSubjectResult.T
+  object OfSubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfOwnControl = OfOwnControl.T
+  object OfOwnControl extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Stoppable = Stoppable.T
   object Stoppable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OwnControl = OwnControl.T
@@ -22,9 +36,9 @@ object JobKindEntry:
 
   def of(
       kind: JobInfo.Kind,
-      name: String,
-      meaning: String,
-      stoppable: Boolean = false,
-      subject: JobDetail => Option[String] = _ => None,
-      ownControl: Boolean = false
+      name: com.histmersion.api.jobs.JobKindEntry.OfName,
+      meaning: com.histmersion.api.jobs.JobKindEntry.OfMeaning,
+      stoppable: com.histmersion.api.jobs.JobKindEntry.OfStoppable = false,
+      subject: JobDetail => Option[com.histmersion.api.jobs.JobKindEntry.OfSubjectResult] = _ => None,
+      ownControl: com.histmersion.api.jobs.JobKindEntry.OfOwnControl = false
   ): JobKindEntry = JobKindEntry(kind, JobKindName(name), JobKindMeaning(meaning), stoppable, subject, ownControl)

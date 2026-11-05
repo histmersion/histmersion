@@ -6,12 +6,17 @@ import io.github.iltotore.iron.constraint.string.Match
 type Doi = Doi.T
 
 object Doi extends RefinedType[String, Match["10\\.[0-9]+/\\S+"]]:
+  type NormalizeResult = NormalizeResult.T
+  object NormalizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormalizeRaw = NormalizeRaw.T
+  object NormalizeRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Core = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
   /** The DOI a text gives (bare, `doi:`, or as a resolver URL), lower case — DOIs are case-insensitive — and without
     * the punctuation a sentence leaves after it; `None` when it gives none.
     */
-  def normalize(raw: String): Option[String] =
+  def normalize(raw: com.histmersion.domain.library.Doi.NormalizeRaw): Option[com.histmersion.domain.library.Doi.NormalizeResult] =
     val s = Option(raw)
       .getOrElse("")
       .trim

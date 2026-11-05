@@ -30,6 +30,101 @@ import com.histmersion.api.library.Finding
   */
 object FilterSql:
 
+  type EscapeLikeResult = EscapeLikeResult.T
+  object EscapeLikeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EscapeLikeS = EscapeLikeS.T
+  object EscapeLikeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsResult = ContainsResult.T
+  object ContainsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsS = ContainsS.T
+  object ContainsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartsWithResult = StartsWithResult.T
+  object StartsWithResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartsWithS = StartsWithS.T
+  object StartsWithS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JoinSep = JoinSep.T
+  object JoinSep extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdsSourceIds = PlaceIdsSourceIds.T
+  object PlaceIdsSourceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdsFindingIds = PlaceIdsFindingIds.T
+  object PlaceIdsFindingIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdsFindingFa = PlaceIdsFindingFa.T
+  object PlaceIdsFindingFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceNameSourceP = PlaceNameSourceP.T
+  object PlaceNameSourceP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceSourceP = PlaceSourceP.T
+  object PlaceSourceP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceFindingP = PlaceFindingP.T
+  object PlaceFindingP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceFindingFa = PlaceFindingFa.T
+  object PlaceFindingFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TitleLikeResult = TitleLikeResult.T
+  object TitleLikeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnvelopesGeom = EnvelopesGeom.T
+  object EnvelopesGeom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasFindingPlaceCriteriaResult = HasFindingPlaceCriteriaResult.T
+  object HasFindingPlaceCriteriaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingPlaceWhereFa = FindingPlaceWhereFa.T
+  object FindingPlaceWhereFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingPlaceWhereSa = FindingPlaceWhereSa.T
+  object FindingPlaceWhereSa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingPeriodWhereFa = FindingPeriodWhereFa.T
+  object FindingPeriodWhereFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingWhereFa = FindingWhereFa.T
+  object FindingWhereFa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingWhereSa = FindingWhereSa.T
+  object FindingWhereSa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderByResult = OrderByResult.T
+  object OrderByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderBySqlUseCte = OrderBySqlUseCte.T
+  object OrderBySqlUseCte extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResult = TextResult.T
+  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourcesQuerySnippetWords = SourcesQuerySnippetWords.T
+  object SourcesQuerySnippetWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnippetsQueryQ = SnippetsQueryQ.T
+  object SnippetsQueryQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnippetsQuerySnippetWords = SnippetsQuerySnippetWords.T
+  object SnippetsQuerySnippetWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnippetsQueryCitekeys = SnippetsQueryCitekeys.T
+  object SnippetsQueryCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingsQueryCitekeys = FindingsQueryCitekeys.T
+  object FindingsQueryCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetValuesResult = FacetValuesResult.T
+  object FacetValuesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetsQueryPrefix = FacetsQueryPrefix.T
+  object FacetsQueryPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetsQueryLimit = FacetsQueryLimit.T
+  object FacetsQueryLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CiA = CiA.T
+  object CiA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CiB = CiB.T
+  object CiB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasValues = HasValues.T
+  object HasValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HasV = HasV.T
+  object HasV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LikeValues = LikeValues.T
+  object LikeValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LikeV = LikeV.T
+  object LikeV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryTermsResult = QueryTermsResult.T
+  object QueryTermsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueryTermsQ = QueryTermsQ.T
+  object QueryTermsQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsResult = OverlapsResult.T
+  object OverlapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsStart = OverlapsStart.T
+  object OverlapsStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OverlapsEnd = OverlapsEnd.T
+  object OverlapsEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceWhyResult = SourceWhyResult.T
+  object SourceWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingWhyResult = FindingWhyResult.T
+  object FindingWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingWhyPlaceIds = FindingWhyPlaceIds.T
+  object FindingWhyPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import Param.*
 
   // ── LIKE handling ────────────────────────────────────────────────────────────────────────────
@@ -40,12 +135,12 @@ object FilterSql:
     * needed a literal backslash, and a search for `ZZR_` matched nothing (#769).
     */
   private val Esc = " ESCAPE '\\'"
-  def escapeLike(s: String): String = com.histmersion.util.database.LikePattern.escape(s)
-  def contains(s: String): String = com.histmersion.util.database.LikePattern.contains(s)
-  def startsWith(s: String): String = com.histmersion.util.database.LikePattern.startsWith(s)
+  def escapeLike(s: com.histmersion.domain.library.search.FilterSql.EscapeLikeS): com.histmersion.domain.library.search.FilterSql.EscapeLikeResult = com.histmersion.util.database.LikePattern.escape(s)
+  def contains(s: com.histmersion.domain.library.search.FilterSql.ContainsS): com.histmersion.domain.library.search.FilterSql.ContainsResult = com.histmersion.util.database.LikePattern.contains(s)
+  def startsWith(s: com.histmersion.domain.library.search.FilterSql.StartsWithS): com.histmersion.domain.library.search.FilterSql.StartsWithResult = com.histmersion.util.database.LikePattern.startsWith(s)
 
   // ── combinators ──────────────────────────────────────────────────────────────────────────────
-  private def join(sep: String, parts: List[Sql]): Sql =
+  private def join(sep: com.histmersion.domain.library.search.FilterSql.JoinSep, parts: List[Sql]): Sql =
     Sql(parts.map(_.text).mkString(sep), parts.flatMap(_.params))
   private def anyOf(parts: List[Sql]): Sql =
     if parts.sizeIs == 1 then parts.head else join(" OR ", parts).wrap("(", ")")
@@ -64,7 +159,7 @@ object FilterSql:
     * (2026-10-09). Uncorrelated, Postgres computes the matching citekeys once (a hashed sub-plan) whatever OR or IN
     * surrounds it, and one array parameter keeps a generic plan of a prepared statement from going bad on 451 `?`s.
     */
-  private def placeIdsSource(ids: List[String]): Sql =
+  private def placeIdsSource(ids: List[com.histmersion.domain.library.search.FilterSql.PlaceIdsSourceIds]): Sql =
     Sql.of(
       "s.citekey IN (SELECT f.citekey FROM findings f JOIN finding_places fp ON fp.finding_id = f.id" +
         " WHERE fp.place_id = ANY(?::text[]))",
@@ -72,13 +167,13 @@ object FilterSql:
     )
 
   /** `finding_places` membership for ONE finding row (alias `fa`), uncorrelated like [[placeIdsSource]]. */
-  private def placeIdsFinding(ids: List[String], fa: String): Sql =
+  private def placeIdsFinding(ids: List[com.histmersion.domain.library.search.FilterSql.PlaceIdsFindingIds], fa: com.histmersion.domain.library.search.FilterSql.PlaceIdsFindingFa): Sql =
     Sql.of(s"$fa.id IN (SELECT fp.finding_id FROM finding_places fp WHERE fp.place_id = ANY(?::text[]))", A(ids))
 
   /** The wave-1 name match for a source: its own regions, any of its findings' `region_name`, OR any place_name
     * matching by ILIKE prefix (so "Anatolian" reaches "Anatolian plateau" etc.).
     */
-  private def placeNameSource(p: String): Sql =
+  private def placeNameSource(p: com.histmersion.domain.library.search.FilterSql.PlaceNameSourceP): Sql =
     Sql.of(
       s"(EXISTS (SELECT 1 FROM unnest(s.regions) x WHERE x ILIKE ?$Esc)" +
         s" OR EXISTS (SELECT 1 FROM findings f WHERE f.citekey = s.citekey" +
@@ -97,13 +192,13 @@ object FilterSql:
     * nothing and, since GeoNames and Wikidata brought 8 M names in (#1064), made a place's hover counts take 3–20 s
     * (2026-10-09).
     */
-  private def placeSource(p: String, scope: PlaceScope): Sql =
+  private def placeSource(p: com.histmersion.domain.library.search.FilterSql.PlaceSourceP, scope: PlaceScope): Sql =
     scope.idsFor(p) match
       case Some(ids) => placeIdsSource(ids)
       case None      => placeNameSource(p)
 
   /** `finding_places` membership for ONE finding row (alias `fa`). */
-  private def placeFinding(p: String, scope: PlaceScope, fa: String): Sql =
+  private def placeFinding(p: com.histmersion.domain.library.search.FilterSql.PlaceFindingP, scope: PlaceScope, fa: com.histmersion.domain.library.search.FilterSql.PlaceFindingFa): Sql =
     val byName = Sql.of(s"$fa.region_name ILIKE ?$Esc", S(contains(p)))
     scope.idsFor(p) match
       case Some(ids) =>
@@ -190,7 +285,7 @@ object FilterSql:
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
 
   /** The filter's title quick-filter, trimmed; `None` when there is nothing to match. */
-  def titleLike(f: Filter): Option[String] = f.title.map(_.trim).filter(_.nonEmpty)
+  def titleLike(f: Filter): Option[com.histmersion.domain.library.search.FilterSql.TitleLikeResult] = f.title.map(_.trim).filter(_.nonEmpty)
 
   // ── what the filter selects, seen from the other lists (articles, events) ───────────────────
   // ONE rule, reused: the Articles and Events lists are the items RELATED to the sources the
@@ -249,7 +344,7 @@ object FilterSql:
   /** The PostGIS predicate for a viewport. A box with `minLon > maxLon` crosses the **antimeridian** and becomes two
     * envelopes OR'ed together (`minLon…180` and `-180…maxLon`).
     */
-  def envelopes(geom: String, b: BBox): Sql = com.histmersion.util.database.EnvelopeSql.envelopes(geom, b)
+  def envelopes(geom: com.histmersion.domain.library.search.FilterSql.EnvelopesGeom, b: BBox): Sql = com.histmersion.util.database.EnvelopeSql.envelopes(geom, b)
 
   // ── the FINDING-level predicate (map feed §1.1, histogram §1.7) ─────────────────────────────
   // `/api/sources` asks "does this SOURCE match?" — an EXISTS quantified over its findings (above).
@@ -268,13 +363,13 @@ object FilterSql:
   /** True when a finding must satisfy something besides the period — so a source with no findings at all cannot match
     * (the place filters have always been finding-level).
     */
-  def hasFindingPlaceCriteria(f: Filter): Boolean =
+  def hasFindingPlaceCriteria(f: Filter): com.histmersion.domain.library.search.FilterSql.HasFindingPlaceCriteriaResult =
     f.tags.nonEmpty || f.places.nonEmpty || f.bbox.isDefined
 
   /** The non-temporal criteria for ONE finding: tags (over `findings.tags ∪ sources.tags`, AND semantics), places
     * (any-of, ILIKE on `region_name`) and the viewport (antimeridian-split). `TRUE` when the filter sets none of them.
     */
-  def findingPlaceWhere(f: Filter, fa: String = "f", sa: String = "s", scope: PlaceScope = PlaceScope.empty): Sql =
+  def findingPlaceWhere(f: Filter, fa: com.histmersion.domain.library.search.FilterSql.FindingPlaceWhereFa = "f", sa: com.histmersion.domain.library.search.FilterSql.FindingPlaceWhereSa = "s", scope: PlaceScope = PlaceScope.empty): Sql =
     val ps = List.newBuilder[Sql]
 
     f.tags.foreach { t =>
@@ -294,11 +389,11 @@ object FilterSql:
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
 
   /** Deep-time overlap for ONE finding; `TRUE` when the filter carries no period. */
-  def findingPeriodWhere(f: Filter, fa: String = "f"): Sql =
+  def findingPeriodWhere(f: Filter, fa: com.histmersion.domain.library.search.FilterSql.FindingPeriodWhereFa = "f"): Sql =
     f.period.fold(Sql.raw("TRUE"))(p => RangeSql.overlaps(s"$fa.period", p))
 
   /** Everything ONE finding must satisfy: the period AND the rest. `TRUE` for an empty filter. */
-  def findingWhere(f: Filter, fa: String = "f", sa: String = "s", scope: PlaceScope = PlaceScope.empty): Sql =
+  def findingWhere(f: Filter, fa: com.histmersion.domain.library.search.FilterSql.FindingWhereFa = "f", sa: com.histmersion.domain.library.search.FilterSql.FindingWhereSa = "s", scope: PlaceScope = PlaceScope.empty): Sql =
     val parts = List(findingPeriodWhere(f, fa), findingPlaceWhere(f, fa, sa, scope)).filter(_.text != "TRUE")
     if parts.isEmpty then Sql.raw("TRUE") else join(" AND ", parts)
 
@@ -306,7 +401,7 @@ object FilterSql:
     * rank by, so it falls back to citations; with one it is `ts_rank_cd` — see [[orderBySql]], which is what the
     * queries actually use.
     */
-  def orderBy(sort: Sort): String = sort match
+  def orderBy(sort: Sort): com.histmersion.domain.library.search.FilterSql.OrderByResult = sort match
     case Sort.Relevance | Sort.Cited => "ORDER BY s.cited_by_count DESC NULLS LAST, s.citekey"
     case Sort.PeriodStart            => s"ORDER BY ${RangeSql.start("s.period")} ASC NULLS LAST, s.citekey"
     case Sort.Year                   => "ORDER BY s.year DESC NULLS LAST, s.citekey"
@@ -321,7 +416,7 @@ object FilterSql:
     * per-source correlated subquery. The CTE path is the default for [[sourcesQuery]]; the legacy correlated-subquery
     * path is kept for callers that do not prepend the CTE.
     */
-  def orderBySql(f: Filter, useCte: Boolean = false): Sql = (f.sort, text(f)) match
+  def orderBySql(f: Filter, useCte: com.histmersion.domain.library.search.FilterSql.OrderBySqlUseCte = false): Sql = (f.sort, text(f)) match
     case (Sort.Relevance, Some(q)) =>
       val rank = if useCte then Search.rankExprCte(q) else Search.rankExpr(q)
       Sql.raw("ORDER BY ") ++ rank ++
@@ -329,7 +424,7 @@ object FilterSql:
     case _ => Sql.raw(orderBy(f.sort))
 
   /** The filter's text query, trimmed; `None` when there is nothing to search for. */
-  def text(f: Filter): Option[String] = f.q.map(_.trim).filter(_.nonEmpty)
+  def text(f: Filter): Option[com.histmersion.domain.library.search.FilterSql.TextResult] = f.q.map(_.trim).filter(_.nonEmpty)
 
   // ── the queries ──────────────────────────────────────────────────────────────────────────────
 
@@ -351,7 +446,7 @@ object FilterSql:
     *
     * Parameter order is textual: CTE, then SELECT, then WHERE, then ORDER BY, then limit/offset.
     */
-  def sourcesQuery(f: Filter, snippetWords: Int, scope: PlaceScope = PlaceScope.empty): Sql =
+  def sourcesQuery(f: Filter, snippetWords: com.histmersion.domain.library.search.FilterSql.SourcesQuerySnippetWords, scope: PlaceScope = PlaceScope.empty): Sql =
     val (cte, cols, join) = text(f) match
       case Some(q) =>
         (
@@ -373,7 +468,7 @@ object FilterSql:
     * `(citekey, heading, snippet)` rows, one per citekey, with `ts_headline` wrapping hits in `**`. An empty `citekeys`
     * list is a no-op (the caller should skip the query).
     */
-  def snippetsQuery(q: String, snippetWords: Int, citekeys: List[String]): Sql =
+  def snippetsQuery(q: com.histmersion.domain.library.search.FilterSql.SnippetsQueryQ, snippetWords: com.histmersion.domain.library.search.FilterSql.SnippetsQuerySnippetWords, citekeys: List[com.histmersion.domain.library.search.FilterSql.SnippetsQueryCitekeys]): Sql =
     Search.snippetsQuery(q, snippetWords, citekeys)
 
   /** One snippet row: (citekey, heading, snippet). */
@@ -388,7 +483,7 @@ object FilterSql:
   /** Every finding of the page's sources; which of them actually *matched* is decided purely, by [[findingWhy]], so the
     * explanation is unit-testable without a database.
     */
-  def findingsQuery(citekeys: List[String]): Sql =
+  def findingsQuery(citekeys: List[com.histmersion.domain.library.search.FilterSql.FindingsQueryCitekeys]): Sql =
     Sql(
       "SELECT f.citekey, f.id, f.claim, f.region_name, ST_X(f.geom), ST_Y(f.geom)," +
         s" ${RangeSql.cols("f.period")}, f.period_name, f.tags," +
@@ -440,7 +535,7 @@ object FilterSql:
       Sql.raw("), (SELECT count(*)::int FROM events e WHERE ") ++ eventWhere(f, scope) ++ Sql.raw(")")
 
   /** The set of values a facet dimension draws from, as a LATERAL sub-select correlated on `s`. */
-  def facetValues(field: Facet.Field): String = field match
+  def facetValues(field: Facet.Field): com.histmersion.domain.library.search.FilterSql.FacetValuesResult = field match
     case Facet.Field.Tags =>
       "SELECT x FROM unnest(s.tags) x" +
         " UNION SELECT y FROM findings f, unnest(f.tags) y WHERE f.citekey = s.citekey"
@@ -466,9 +561,9 @@ object FilterSql:
     */
   def facetsQuery(
       field: Facet.Field,
-      prefix: Option[String],
+      prefix: Option[com.histmersion.domain.library.search.FilterSql.FacetsQueryPrefix],
       f: Filter,
-      limit: Int,
+      limit: com.histmersion.domain.library.search.FilterSql.FacetsQueryLimit,
       scope: PlaceScope = PlaceScope.empty
   ): Sql =
     val pre = prefix.map(_.trim).filter(_.nonEmpty) match
@@ -556,22 +651,22 @@ object FilterSql:
     type MatchedHeading = MatchedHeading.T
     object MatchedHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def ci(a: String, b: String) = a.equalsIgnoreCase(b)
-  private def has(values: List[String], v: String) = values.exists(ci(_, v))
-  private def like(values: List[String], v: String) = values.find(_.toLowerCase.contains(v.toLowerCase))
+  private def ci(a: com.histmersion.domain.library.search.FilterSql.CiA, b: com.histmersion.domain.library.search.FilterSql.CiB) = a.equalsIgnoreCase(b)
+  private def has(values: List[com.histmersion.domain.library.search.FilterSql.HasValues], v: com.histmersion.domain.library.search.FilterSql.HasV) = values.exists(ci(_, v))
+  private def like(values: List[com.histmersion.domain.library.search.FilterSql.LikeValues], v: com.histmersion.domain.library.search.FilterSql.LikeV) = values.find(_.toLowerCase.contains(v.toLowerCase))
 
   /** The words a `websearch_to_tsquery` string actually asks for: quotes stripped, `-excluded` terms and the `or`/`and`
     * connectives dropped. The SQL side is a tsquery, so the explanation cannot just look for the raw string —
     * `"sea peoples"` never occurs verbatim in a title.
     */
-  def queryTerms(q: String): List[String] =
+  def queryTerms(q: com.histmersion.domain.library.search.FilterSql.QueryTermsQ): List[com.histmersion.domain.library.search.FilterSql.QueryTermsResult] =
     q.split("\\s+")
       .toList
       .map(_.replace("\"", "").trim.toLowerCase)
       .filterNot(t => t.isEmpty || t.startsWith("-") || t == "or" || t == "and")
 
   /** Inclusive `[start, end]` overlap — the Scala twin of `int8range(a, b, '[]') &&`. */
-  def overlaps(start: Option[Long], end: Option[Long], p: Period): Boolean =
+  def overlaps(start: Option[com.histmersion.domain.library.search.FilterSql.OverlapsStart], end: Option[com.histmersion.domain.library.search.FilterSql.OverlapsEnd], p: Period): com.histmersion.domain.library.search.FilterSql.OverlapsResult =
     (start, end) match
       case (Some(a), Some(b)) => a <= p.end && b >= p.start
       case _                  => false
@@ -579,7 +674,7 @@ object FilterSql:
   /** Source-level reasons this source is in the result — "title matches 'collapse'", "tag: sea-peoples", … Pure:
     * everything comes from the row the SQL returned.
     */
-  def sourceWhy(f: Filter, r: SourceRow): List[String] =
+  def sourceWhy(f: Filter, r: SourceRow): List[com.histmersion.domain.library.search.FilterSql.SourceWhyResult] =
     val b = List.newBuilder[String]
     text(f).foreach { q =>
       val terms = queryTerms(q)
@@ -606,9 +701,9 @@ object FilterSql:
   def findingWhy(
       f: Filter,
       m: Finding.Match,
-      placeIds: List[String] = Nil,
+      placeIds: List[com.histmersion.domain.library.search.FilterSql.FindingWhyPlaceIds] = Nil,
       scope: PlaceScope = PlaceScope.empty
-  ): List[String] =
+  ): List[com.histmersion.domain.library.search.FilterSql.FindingWhyResult] =
     val b = List.newBuilder[String]
     f.period.foreach(p => if overlaps(m.periodStart, m.periodEnd, p) then b += "period")
     f.bbox.foreach(box =>

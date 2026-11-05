@@ -18,7 +18,16 @@ import com.histmersion.api.exchange.Bundle
 private[periods] object PeriodBundleRepo:
 
   /** The named periods of this collection's own in scope, or with one of `alsoIds`. */
-  def periods(scope: BundleScope, alsoIds: List[String] = Nil)(using DbCon): Vector[Bundle.Period] =
+  type PeriodsAlsoIds = PeriodsAlsoIds.T
+  object PeriodsAlsoIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PresentResult = PresentResult.T
+  object PresentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PresentIds = PresentIds.T
+  object PresentIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MatchPeriodsResultPart2 = MatchPeriodsResultPart2.T
+  object MatchPeriodsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def periods(scope: BundleScope, alsoIds: List[com.histmersion.domain.catalogue.periods.PeriodBundleRepo.PeriodsAlsoIds] = Nil)(using DbCon): Vector[Bundle.Period] =
     val own = Sql.raw("p.dataset = 'local' AND ") ++ where(scope, "p.uid", "p.updated_at")
     val sel = if alsoIds.isEmpty then own
     else Sql.raw("((") ++ own ++ Sql.of(") OR p.id = ANY(?::text[]))", Param.A(alsoIds.distinct))
@@ -39,13 +48,13 @@ private[periods] object PeriodBundleRepo:
     }
 
   /** Which of `ids` name a period here. */
-  def present(ids: List[String])(using DbCon): Set[String] =
+  def present(ids: List[com.histmersion.domain.catalogue.periods.PeriodBundleRepo.PresentIds])(using DbCon): Set[com.histmersion.domain.catalogue.periods.PeriodBundleRepo.PresentResult] =
     if ids.isEmpty then Set.empty
     else sql"SELECT id FROM periods WHERE id = ANY(${ids.distinct}::text[])".query[String].run().toSet
 
   /** A bundle period with no id here that names a period here: the same label (reduced) and spans sharing a year.
     */
-  def matchPeriods(ps: List[Bundle.Period])(using DbCon): Map[UUID, String] =
+  def matchPeriods(ps: List[Bundle.Period])(using DbCon): Map[UUID, com.histmersion.domain.catalogue.periods.PeriodBundleRepo.MatchPeriodsResultPart2] =
     val norm = PlaceSql.normLabelSql("p.label")
     ps.flatMap { b =>
       val (lo, hi) = (b.period.flatMap(_.start), b.period.flatMap(_.end))

@@ -14,6 +14,11 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object NoteEditor:
 
+  type IsOpenResult = IsOpenResult.T
+  object IsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteTitle = WriteTitle.T
+  object WriteTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private case class Session(target: Target, title: Session.Title, note: Option[Note], back: Option[dom.HTMLElement])
 
   object Session:
@@ -22,10 +27,10 @@ object NoteEditor:
 
   private val session = Var(Option.empty[Session])
 
-  def isOpen: Boolean = session.now().isDefined
+  def isOpen: com.histmersion.web.marks.NoteEditor.IsOpenResult = session.now().isDefined
 
   /** A new note on `target`. */
-  def write(target: Target, title: String): Unit = open(Session(target, title, None, focused))
+  def write(target: Target, title: com.histmersion.web.marks.NoteEditor.WriteTitle): Unit = open(Session(target, title, None, focused))
 
   def edit(n: Note): Unit = open(Session(n.target, n.title, Some(n), focused))
 

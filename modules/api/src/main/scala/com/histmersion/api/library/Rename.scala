@@ -9,13 +9,34 @@ import sttp.tapir.Schema
 
 object Rename:
 
-  def shortForms(ck: String): List[String] =
+  type ShortFormsResult = ShortFormsResult.T
+  object ShortFormsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShortFormsCk = ShortFormsCk.T
+  object ShortFormsCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingIdResult = FindingIdResult.T
+  object FindingIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingIdId = FindingIdId.T
+  object FindingIdId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingIdOldCk = FindingIdOldCk.T
+  object FindingIdOldCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingIdNewCk = FindingIdNewCk.T
+  object FindingIdNewCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceTokenResult = ReplaceTokenResult.T
+  object ReplaceTokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceTokenText = ReplaceTokenText.T
+  object ReplaceTokenText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceTokenOldCk = ReplaceTokenOldCk.T
+  object ReplaceTokenOldCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplaceTokenNewCk = ReplaceTokenNewCk.T
+  object ReplaceTokenNewCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def shortForms(ck: com.histmersion.api.library.Rename.ShortFormsCk): List[com.histmersion.api.library.Rename.ShortFormsResult] =
     ck.indices.filter(i => i > 0 && ck.charAt(i) == '_').map(ck.take(_)).toList
 
-  def findingId(id: String, oldCk: String, newCk: String): Option[String] =
+  def findingId(id: com.histmersion.api.library.Rename.FindingIdId, oldCk: com.histmersion.api.library.Rename.FindingIdOldCk, newCk: com.histmersion.api.library.Rename.FindingIdNewCk): Option[com.histmersion.api.library.Rename.FindingIdResult] =
     Option.when(id.startsWith(oldCk + "#"))(newCk + id.drop(oldCk.length))
 
-  def replaceToken(text: String, oldCk: String, newCk: String): String =
+  def replaceToken(text: com.histmersion.api.library.Rename.ReplaceTokenText, oldCk: com.histmersion.api.library.Rename.ReplaceTokenOldCk, newCk: com.histmersion.api.library.Rename.ReplaceTokenNewCk): com.histmersion.api.library.Rename.ReplaceTokenResult =
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote(oldCk)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement(newCk))
 

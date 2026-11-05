@@ -11,12 +11,17 @@ final case class InitPlan(
     check: InitPlan.Check = false
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def isEmpty: Boolean = !gazetteer && !periodPresets && fetch.isEmpty
+  def isEmpty: com.histmersion.api.exchange.InitPlan.IsEmptyResult = !gazetteer && !periodPresets && fetch.isEmpty
 
 object InitPlan:
 
 
   /** What an init job imports, in its detail. */
+  type IsEmptyResult = IsEmptyResult.T
+  object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Gazetteer = Gazetteer.T
   object Gazetteer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeriodPresets = PeriodPresets.T
@@ -31,7 +36,7 @@ object InitPlan:
 
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.Init.kind.value
 
-  def describe(p: InitPlan): String =
+  def describe(p: InitPlan): com.histmersion.api.exchange.InitPlan.DescribeResult =
     val bundled = List(
       Option.when(p.gazetteer)("bundled gazetteer"),
       Option.when(p.periodPresets)("bundled period presets")

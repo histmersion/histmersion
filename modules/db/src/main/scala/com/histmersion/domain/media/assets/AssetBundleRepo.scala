@@ -18,6 +18,9 @@ private[assets] object AssetBundleRepo:
 
   // ── out ──────────────────────────────────────────────────────────────────────────────────────
 
+  type NamesHereResultPart1Part2 = NamesHereResultPart1Part2.T
+  object NamesHereResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def assets(scope: BundleScope)(using DbCon): Vector[AssetBundleRow] =
     (Sql.raw(s"""SELECT x.uid, x.origin, s.uid, x.name, x.mime, x.sha256, length(x.bytes)::bigint,
                        x.width, x.height, x.kind, x.caption, x.license, encode(ST_AsEWKB(x.geom), 'hex'),
@@ -89,7 +92,7 @@ private[assets] object AssetBundleRepo:
   // ── a merge ──────────────────────────────────────────────────────────────────────────────────
 
   /** (source uid, asset name) → asset uid here, for the sources of `assets`. */
-  def namesHere(sourceUids: List[UUID])(using DbCon): Map[(UUID, String), UUID] =
+  def namesHere(sourceUids: List[UUID])(using DbCon): Map[(UUID, com.histmersion.domain.media.assets.AssetBundleRepo.NamesHereResultPart1Part2), UUID] =
     if sourceUids.isEmpty then Map.empty
     else
       sql"""SELECT s.uid, x.name, x.uid FROM assets x JOIN sources s ON s.citekey = x.citekey

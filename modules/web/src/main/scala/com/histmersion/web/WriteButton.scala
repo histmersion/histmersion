@@ -8,7 +8,12 @@ import scala.scalajs.js
   * key window instead ([[Auth]]) — it asks for the key rather than failing.
   */
 object WriteButton:
-  def apply(icon: Icon, label: String, tip: String, action: () => Unit): HtmlElement =
+  type ApplyLabel = ApplyLabel.T
+  object ApplyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTip = ApplyTip.T
+  object ApplyTip extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def apply(icon: Icon, label: com.histmersion.web.WriteButton.ApplyLabel, tip: com.histmersion.web.WriteButton.ApplyTip, action: () => Unit): HtmlElement =
     button(
       typ := "button",
       cls := "btn btn--ghost",

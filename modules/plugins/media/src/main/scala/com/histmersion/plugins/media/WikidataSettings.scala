@@ -13,11 +13,28 @@ final case class WikidataSettings(
     placeProperties: WikidataSettings.PlaceProperties,
     eventProperties: WikidataSettings.EventProperties
 ) derives ConfigReader:
-  def placeRoles: List[(String, String)] = WikidataSettings.roles(placeProperties)
-  def eventRoles: List[(String, String)] = WikidataSettings.roles(eventProperties)
+  def placeRoles: List[(com.histmersion.plugins.media.WikidataSettings.PlaceRolesResultPart1, com.histmersion.plugins.media.WikidataSettings.PlaceRolesResultPart2)] = WikidataSettings.roles(placeProperties)
+  def eventRoles: List[(com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart1, com.histmersion.plugins.media.WikidataSettings.EventRolesResultPart2)] = WikidataSettings.roles(eventProperties)
 
 object WikidataSettings:
   /** The roles a picture of a place or an event may play. */
+  type PlaceRolesResultPart1 = PlaceRolesResultPart1.T
+  object PlaceRolesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceRolesResultPart2 = PlaceRolesResultPart2.T
+  object PlaceRolesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventRolesResultPart1 = EventRolesResultPart1.T
+  object EventRolesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventRolesResultPart2 = EventRolesResultPart2.T
+  object EventRolesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PictureRoles = PictureRoles.T
+  object PictureRoles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RolesResultPart1 = RolesResultPart1.T
+  object RolesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RolesResultPart2 = RolesResultPart2.T
+  object RolesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RolesSpec = RolesSpec.T
+  object RolesSpec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ApiUrl = ApiUrl.T
   object ApiUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Batch = Batch.T
@@ -29,7 +46,7 @@ object WikidataSettings:
   type EventProperties = EventProperties.T
   object EventProperties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val PictureRoles: List[String] = List(
+  val PictureRoles: List[com.histmersion.plugins.media.WikidataSettings.PictureRoles] = List(
     MediaCollection.Image,
     MediaCollection.AerialView,
     MediaCollection.Plan,
@@ -40,7 +57,7 @@ object WikidataSettings:
   /** Pure: `P18:image,P242:locator-map` as (property, role), in order, one per property; an entry that is not a
     * property and a picture role is dropped.
     */
-  def roles(spec: String): List[(String, String)] =
+  def roles(spec: com.histmersion.plugins.media.WikidataSettings.RolesSpec): List[(com.histmersion.plugins.media.WikidataSettings.RolesResultPart1, com.histmersion.plugins.media.WikidataSettings.RolesResultPart2)] =
     CollectionSettings
       .items(spec)
       .flatMap { e =>

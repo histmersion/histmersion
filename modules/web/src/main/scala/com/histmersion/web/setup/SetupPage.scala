@@ -26,11 +26,32 @@ import com.histmersion.api.basemap.Basemap
 object SetupPage:
 
   /** This tab left the setup without saving: it is not shown again until the tab is closed. */
+  type LeftResult = LeftResult.T
+  object LeftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartDownloadResult = StartDownloadResult.T
+  object StartDownloadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckText = CheckText.T
+  object CheckText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDetail = CheckDetail.T
+  object CheckDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckOn = CheckOn.T
+  object CheckOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckSetArg1 = CheckSetArg1.T
+  object CheckSetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyFree = BodyFree.T
+  object BodyFree extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyDonePart1 = BodyDonePart1.T
+  object BodyDonePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyDonePart2Part1 = BodyDonePart2Part1.T
+  object BodyDonePart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyDonePart2Part2 = BodyDonePart2Part2.T
+  object BodyDonePart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val LeftKey = "histmersion.setupLeft"
 
   def leave(): Unit = scala.util.Try(dom.window.sessionStorage.setItem(LeftKey, "1"))
 
-  def left: Boolean = scala.util.Try(Option(dom.window.sessionStorage.getItem(LeftKey)).isDefined).getOrElse(false)
+  def left: com.histmersion.web.setup.SetupPage.LeftResult = scala.util.Try(Option(dom.window.sessionStorage.getItem(LeftKey)).isDefined).getOrElse(false)
 
   private val currentAttr = htmlAttr("aria-current", StringAsIsCodec)
 
@@ -220,7 +241,7 @@ object SetupPage:
       )
     )
 
-  private def startDownload(d: SetupDownload): Future[String] = d match
+  private def startDownload(d: SetupDownload): Future[com.histmersion.web.setup.SetupPage.StartDownloadResult] = d match
     case SetupDownload.Map(area)  => ApiClient.basemapFetch(Basemap.FetchQuery(bbox = Some(area))).map(_ => "started")
     case SetupDownload.Boundaries => ApiClient.initData(fetch = true).map(_ => "started")
     case SetupDownload.Events     =>
@@ -236,10 +257,10 @@ object SetupPage:
       Future.sequence(List("geonames", "wikidata").map(ApiClient.loadPlaces)).map(_ => "started")
 
   private def check(
-      text: String,
-      detail: String,
-      on: Signal[Boolean],
-      set: Boolean => Unit,
+      text: com.histmersion.web.setup.SetupPage.CheckText,
+      detail: com.histmersion.web.setup.SetupPage.CheckDetail,
+      on: Signal[com.histmersion.web.setup.SetupPage.CheckOn],
+      set: com.histmersion.web.setup.SetupPage.CheckSetArg1 => Unit,
       mods: Modifier[HtmlElement]*
   ): HtmlElement =
     label(
@@ -254,8 +275,8 @@ object SetupPage:
       page: ConfigEdit.Page,
       choices: Var[SetupChoices],
       start: Var[MapStartConfig],
-      free: Signal[Option[Long]],
-      done: Option[List[(String, Either[String, String])]],
+      free: Signal[Option[com.histmersion.web.setup.SetupPage.BodyFree]],
+      done: Option[List[(com.histmersion.web.setup.SetupPage.BodyDonePart1, Either[com.histmersion.web.setup.SetupPage.BodyDonePart2Part1, com.histmersion.web.setup.SetupPage.BodyDonePart2Part2])]],
       ui: UiConfig
   ): HtmlElement =
     s match

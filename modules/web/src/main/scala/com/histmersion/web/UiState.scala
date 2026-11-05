@@ -22,6 +22,91 @@ import com.histmersion.api.library.Filter
 object UiState:
 
   /** A pending write, built with `field := value` and committed by [[set]]. */
+  type LayerOnResult = LayerOnResult.T
+  object LayerOnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetLayerOn = SetLayerOn.T
+  object SetLayerOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PreviewChange = PreviewChange.T
+  object PreviewChange extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PreviewMs = PreviewMs.T
+  object PreviewMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReloadDelayResult = ReloadDelayResult.T
+  object ReloadDelayResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReloadDelayNormalMs = ReloadDelayNormalMs.T
+  object ReloadDelayNormalMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithPreviewResult = WithPreviewResult.T
+  object WithPreviewResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithPreviewKey = WithPreviewKey.T
+  object WithPreviewKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithPreviewVs = WithPreviewVs.T
+  object WithPreviewVs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Seq = Seq.T
+  object Seq extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type High = High.T
+  object High extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentSeqResult = CurrentSeqResult.T
+  object CurrentSeqResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxSeqResult = MaxSeqResult.T
+  object MaxSeqResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChangeSignal = ChangeSignal.T
+  object ChangeSignal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignalResult = SignalResult.T
+  object SignalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BumpByPreview = BumpByPreview.T
+  object BumpByPreview extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MirrorHash = MirrorHash.T
+  object MirrorHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetPush = SetPush.T
+  object SetPush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggledPlaceResult = ToggledPlaceResult.T
+  object ToggledPlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggledPlaceIds = ToggledPlaceIds.T
+  object ToggledPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggledPlaceId = ToggledPlaceId.T
+  object ToggledPlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TogglePlaceResult = TogglePlaceResult.T
+  object TogglePlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TogglePlaceId = TogglePlaceId.T
+  object TogglePlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSearchText = SetSearchText.T
+  object SetSearchText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToFilterExcept = ToFilterExcept.T
+  object ToFilterExcept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBboxResultPart1 = ParseBboxResultPart1.T
+  object ParseBboxResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBboxResultPart2 = ParseBboxResultPart2.T
+  object ParseBboxResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBboxResultPart3 = ParseBboxResultPart3.T
+  object ParseBboxResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBboxResultPart4 = ParseBboxResultPart4.T
+  object ParseBboxResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseBboxS = ParseBboxS.T
+  object ParseBboxS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveChipKey = RemoveChipKey.T
+  object RemoveChipKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RemoveChipValue = RemoveChipValue.T
+  object RemoveChipValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsOfResultPart1 = PairsOfResultPart1.T
+  object PairsOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsOfResultPart2 = PairsOfResultPart2.T
+  object PairsOfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsOfHash = PairsOfHash.T
+  object PairsOfHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HashStringResult = HashStringResult.T
+  object HashStringResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteHashPush = WriteHashPush.T
+  object WriteHashPush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NavigatePathAndSearch = NavigatePathAndSearch.T
+  object NavigatePathAndSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NavigatePush = NavigatePush.T
+  object NavigatePush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadHashHash = LoadHashHash.T
+  object LoadHashHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddHashHash = AddHashHash.T
+  object AddHashHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredResult = StoredResult.T
+  object StoredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final class Assign(private[web] val run: () => Unit)
 
   import FieldCodec.given
@@ -219,9 +304,9 @@ object UiState:
   private def localFields = fields.filter(_.persist == Persist.Local)
 
   /** One overlay's state, as its toggle shows it. */
-  def layerOn(l: MapLayer): Signal[Boolean] = layers.signal.map(_.contains(l))
+  def layerOn(l: MapLayer): Signal[com.histmersion.web.UiState.LayerOnResult] = layers.signal.map(_.contains(l))
 
-  def setLayer(l: MapLayer, on: Boolean): Unit =
+  def setLayer(l: MapLayer, on: com.histmersion.web.UiState.SetLayerOn): Unit =
     set(layers := (if on then layers.now() + l else layers.now() - l))()
 
   // ── the hovered suggestion (never a chip, never in the URL) ────────────────────────────────────
@@ -243,42 +328,42 @@ object UiState:
 
   // `var`s: whether the newest change was only a hovered suggestion's preview, and how long a reload
   // waits after one (`ui.debounce.preview-ms`, known once `/api/config` has answered)
-  private var previewChange: Boolean = false
-  private[web] var previewMs: Int = 0
+  private var previewChange: com.histmersion.web.UiState.PreviewChange = false
+  private[web] var previewMs: com.histmersion.web.UiState.PreviewMs = 0
 
   /** How long a reload scheduled NOW waits: `normalMs`, or less after a preview — the pointer resting on a suggestion
     * should see its lists at once, not after the typing debounce.
     */
-  def reloadDelay(normalMs: Int): Int = if previewChange then math.min(normalMs, previewMs) else normalMs
+  def reloadDelay(normalMs: com.histmersion.web.UiState.ReloadDelayNormalMs): com.histmersion.web.UiState.ReloadDelayResult = if previewChange then math.min(normalMs, previewMs) else normalMs
 
-  private def withPreview(key: String, vs: List[String]): List[String] =
+  private def withPreview(key: com.histmersion.web.UiState.WithPreviewKey, vs: List[com.histmersion.web.UiState.WithPreviewVs]): List[com.histmersion.web.UiState.WithPreviewResult] =
     preview.now() match
       case Some(Preview(`key`, v)) if !vs.contains(v) => vs :+ v
       case _                                          => vs
 
   // ── history sequence (the timeline's back/forward buttons read it) ─────────────────────────────
 
-  private var seq: Int = 0
-  private var high: Int = 0
+  private var seq: com.histmersion.web.UiState.Seq = 0
+  private var high: com.histmersion.web.UiState.High = 0
 
-  def currentSeq: Int = seq
-  def maxSeq: Int = high
+  def currentSeq: com.histmersion.web.UiState.CurrentSeqResult = seq
+  def maxSeq: com.histmersion.web.UiState.MaxSeqResult = high
 
   // ── committing ────────────────────────────────────────────────────────────────────────────────
 
-  private val changeSignal: Var[Int] = Var(0)
+  private val changeSignal: Var[com.histmersion.web.UiState.ChangeSignal] = Var(0)
 
   /** Ticks after every committed change: the app reloads what depends on the filter. */
-  def signal: Signal[Int] = changeSignal.signal
+  def signal: Signal[com.histmersion.web.UiState.SignalResult] = changeSignal.signal
 
-  private def bump(byPreview: Boolean = false): Unit =
+  private def bump(byPreview: com.histmersion.web.UiState.BumpByPreview = false): Unit =
     previewChange = byPreview
     changeSignal.update(_ + 1)
 
   // `var`: tests swap the browser's storage for a Store.Memory
   private[web] var store: Store = Store.Browser
   // `var`: tests run in Node, which has no location/history to mirror the hash into
-  private[web] var mirrorHash: Boolean = true
+  private[web] var mirrorHash: com.histmersion.web.UiState.MirrorHash = true
 
   private val LocalPrefix = "histmersion.ui."
 
@@ -289,7 +374,7 @@ object UiState:
     * reload its button and layer came back off). The mirroring is therefore a transaction of its own, queued after the
     * assignments; outside any transaction (tests, start-up) it runs at once, as before.
     */
-  def set(assigns: Assign*)(push: Boolean = false): Unit =
+  def set(assigns: Assign*)(push: com.histmersion.web.UiState.SetPush = false): Unit =
     assigns.foreach(_.run())
     Transaction { _ =>
       writeHash(push)
@@ -301,13 +386,13 @@ object UiState:
     * so adding it beside another would widen the lists, not narrow them); when it is already chosen, it is removed and
     * the other chosen places stay.
     */
-  def toggledPlace(ids: List[String], id: String): List[String] =
+  def toggledPlace(ids: List[com.histmersion.web.UiState.ToggledPlaceIds], id: com.histmersion.web.UiState.ToggledPlaceId): List[com.histmersion.web.UiState.ToggledPlaceResult] =
     if ids.contains(id) then ids.filterNot(_ == id) else List(id)
 
   /** Choose or unchoose place `id` (see [[toggledPlace]]); a step in the history, so Back undoes a click on the map.
     * Returns whether it is chosen now.
     */
-  def togglePlace(id: String): Boolean =
+  def togglePlace(id: com.histmersion.web.UiState.TogglePlaceId): com.histmersion.web.UiState.TogglePlaceResult =
     val next = toggledPlace(placeIds.now(), id)
     set(placeIds := next)(push = true)
     next.contains(id)
@@ -315,9 +400,9 @@ object UiState:
   /** Both search boxes share the raw draft, including a space just typed between words. Filter.of normalizes it at the
     * request boundary, not while the controlled input is editing.
     */
-  def setSearch(text: String): Unit = set(q := Option.when(text.nonEmpty)(text))()
+  def setSearch(text: com.histmersion.web.UiState.SetSearchText): Unit = set(q := Option.when(text.nonEmpty)(text))()
 
-  def toFilter(except: Set[String] = Set.empty): Filter =
+  def toFilter(except: Set[com.histmersion.web.UiState.ToFilterExcept] = Set.empty): Filter =
     def keep(keys: String*) = !keys.exists(except)
     val box = if keep("bbox") && inView.now() then bbox.now().flatMap(parseBbox) else None
     val f = Filter.of(
@@ -360,7 +445,7 @@ object UiState:
     */
   def eventQuery(): Api.EventQuery = Api.EventQuery(toFilter().modify(_.limit).setTo(ui.Layout.tabFetch))
 
-  private[web] def parseBbox(s: String): Option[(Double, Double, Double, Double)] =
+  private[web] def parseBbox(s: com.histmersion.web.UiState.ParseBboxS): Option[(com.histmersion.web.UiState.ParseBboxResultPart1, com.histmersion.web.UiState.ParseBboxResultPart2, com.histmersion.web.UiState.ParseBboxResultPart3, com.histmersion.web.UiState.ParseBboxResultPart4)] =
     s.split(",").flatMap(_.trim.toDoubleOption).toList match
       case a :: b :: c :: d :: Nil => Some((a, b, c, d))
       case _                       => None
@@ -387,32 +472,32 @@ object UiState:
       .filter(f => f.role == Role.Filter && f.chip)
       .flatMap(f => f.encoded.map(v => ActiveChip(f.key, f.label.getOrElse(f.key), v)))
 
-  def removeChip(key: String, value: String): Unit =
+  def removeChip(key: com.histmersion.web.UiState.RemoveChipKey, value: com.histmersion.web.UiState.RemoveChipValue): Unit =
     fields.find(_.key == key).foreach(_.remove(value))
     writeHash(push = false)
     bump()
 
   // ── the URL hash ──────────────────────────────────────────────────────────────────────────────
 
-  private def pairsOf(hash: String): Map[String, List[String]] =
+  private def pairsOf(hash: com.histmersion.web.UiState.PairsOfHash): Map[com.histmersion.web.UiState.PairsOfResultPart1, List[com.histmersion.web.UiState.PairsOfResultPart2]] =
     val params = new dom.URLSearchParams(hash.stripPrefix("#"))
     val out = List.newBuilder[(String, String)]
     params.forEach((value, key) => out += key -> value)
     out.result().groupMap(_._1)(_._2)
 
   /** The hash for the current state. */
-  private[web] def hashString: String =
+  private[web] def hashString: com.histmersion.web.UiState.HashStringResult =
     val params = new dom.URLSearchParams("")
     hashFields.foreach(f => f.encoded.foreach(params.append(f.hashKey, _)))
     params.toString
 
-  private def writeHash(push: Boolean): Unit =
+  private def writeHash(push: com.histmersion.web.UiState.WriteHashPush): Unit =
     if mirrorHash then navigate(window.location.pathname + window.location.search, push)
 
   /** Go to another page of the web UI (`pathAndSearch`, e.g. `/research/backlog?item=3`): the address changes, the hash
     * state goes along (the filters, the open windows), and with `push` it is a step in the history that Back undoes.
     */
-  def navigate(pathAndSearch: String, push: Boolean): Unit =
+  def navigate(pathAndSearch: com.histmersion.web.UiState.NavigatePathAndSearch, push: com.histmersion.web.UiState.NavigatePush): Unit =
     if mirrorHash then
       val qs = hashString
       val url = pathAndSearch + (if qs.nonEmpty then "#" + qs else "")
@@ -422,14 +507,14 @@ object UiState:
       else window.history.replaceState(js.Dynamic.literal(histmersionSeq = seq), "", url)
 
   /** Load every HASH field from `hash`: a field the hash does not mention goes back to its default. */
-  private[web] def loadHash(hash: String): Unit =
+  private[web] def loadHash(hash: com.histmersion.web.UiState.LoadHashHash): Unit =
     val m = pairsOf(hash)
     hashFields.foreach(f => f.load(m.getOrElse(f.hashKey, Nil)))
 
   /** Merge a hash fragment INTO the state — a `/#tag=x` link inside a window adds the tag and keeps every other filter
     * (following it as a navigation replaced them all).
     */
-  def addHash(hash: String): Unit =
+  def addHash(hash: com.histmersion.web.UiState.AddHashHash): Unit =
     val m = pairsOf(hash)
     val touched = hashFields.filter(f => m.contains(f.hashKey))
     if touched.nonEmpty then set(touched.map(f => Assign(() => f.add(m(f.hashKey))))*)()
@@ -443,7 +528,7 @@ object UiState:
   private val LegacyLayersKey = "histmersion.layers"
 
   /** Whether this browser keeps a value of the [[Persist.Local]] field `f` (a choice once made). */
-  private[web] def stored(f: Field[?]): Boolean = store.get(LocalPrefix + f.key).isDefined
+  private[web] def stored(f: Field[?]): com.histmersion.web.UiState.StoredResult = store.get(LocalPrefix + f.key).isDefined
 
   /** Load the [[Persist.Local]] fields from the store. */
   private[web] def restoreLocal(): Unit =

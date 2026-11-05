@@ -37,23 +37,56 @@ import com.histmersion.api.Api
   */
 trait BundleService:
   def instance: InstanceInfo
-  def setLabel(label: Option[String]): InstanceInfo
-  def exportBundle(since: Option[String]): Either[Api.Error, (HandedFile, Bundle.Manifest)]
+  def setLabel(label: Option[com.histmersion.util.data.exchange.BundleService.SetLabelLabel]): InstanceInfo
+  def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleService.ExportBundleSince]): Either[Api.Error, (HandedFile, Bundle.Manifest)]
   def verify(upload: ByteSource): Bundle.VerifyResult
-  def importBundle(upload: ByteSource, dryRun: Boolean): Either[Api.Error, Bundle.ImportResult]
+  def importBundle(upload: ByteSource, dryRun: com.histmersion.util.data.exchange.BundleService.ImportBundleDryRun): Either[Api.Error, Bundle.ImportResult]
   def keep(upload: ByteSource): Either[Api.Error, Bundle.Upload]
-  def plan(bundle: String, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
-  def importKept(bundle: String, resolutions: MergeResolutions, dryRun: Boolean): Either[Api.Error, Bundle.ImportResult]
-  def applyKept(bundle: String, planHash: String, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob]
-  def applyStatus(job: String): Option[MergeApplyJob]
-  def session(bundle: String): MergeSession
-  def putSession(bundle: String, resolutions: MergeResolutions): MergeSession
-  def merges(limit: Int): List[MergeInfo]
-  def mergeDetail(id: String): Either[Api.Error, MergeDetail]
-  def mergeLedger(uid: Option[String], merge: Option[String], limit: Int): Either[Api.Error, MergeLedger]
+  def plan(bundle: com.histmersion.util.data.exchange.BundleService.PlanBundle, resolutions: MergeResolutions): Either[Api.Error, MergePlan]
+  def importKept(bundle: com.histmersion.util.data.exchange.BundleService.ImportKeptBundle, resolutions: MergeResolutions, dryRun: com.histmersion.util.data.exchange.BundleService.ImportKeptDryRun): Either[Api.Error, Bundle.ImportResult]
+  def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.ApplyKeptPlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob]
+  def applyStatus(job: com.histmersion.util.data.exchange.BundleService.ApplyStatusJob): Option[MergeApplyJob]
+  def session(bundle: com.histmersion.util.data.exchange.BundleService.SessionBundle): MergeSession
+  def putSession(bundle: com.histmersion.util.data.exchange.BundleService.PutSessionBundle, resolutions: MergeResolutions): MergeSession
+  def merges(limit: com.histmersion.util.data.exchange.BundleService.MergesLimit): List[MergeInfo]
+  def mergeDetail(id: com.histmersion.util.data.exchange.BundleService.MergeDetailId): Either[Api.Error, MergeDetail]
+  def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleService.MergeLedgerMerge], limit: com.histmersion.util.data.exchange.BundleService.MergeLedgerLimit): Either[Api.Error, MergeLedger]
 
 object BundleService:
 
+
+  type SetLabelLabel = SetLabelLabel.T
+  object SetLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExportBundleSince = ExportBundleSince.T
+  object ExportBundleSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportBundleDryRun = ImportBundleDryRun.T
+  object ImportBundleDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanBundle = PlanBundle.T
+  object PlanBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportKeptBundle = ImportKeptBundle.T
+  object ImportKeptBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportKeptDryRun = ImportKeptDryRun.T
+  object ImportKeptDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyKeptBundle = ApplyKeptBundle.T
+  object ApplyKeptBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyKeptPlanHash = ApplyKeptPlanHash.T
+  object ApplyKeptPlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyStatusJob = ApplyStatusJob.T
+  object ApplyStatusJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SessionBundle = SessionBundle.T
+  object SessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PutSessionBundle = PutSessionBundle.T
+  object PutSessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergesLimit = MergesLimit.T
+  object MergesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeDetailId = MergeDetailId.T
+  object MergeDetailId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLedgerUid = MergeLedgerUid.T
+  object MergeLedgerUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLedgerMerge = MergeLedgerMerge.T
+  object MergeLedgerMerge extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLedgerLimit = MergeLedgerLimit.T
+  object MergeLedgerLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Wiring(
       ds: DataSource,
@@ -64,8 +97,12 @@ object BundleService:
       rules: MergeRuleSet,
       followUps: MergeFollowUps,
       applyJobs: MergeApplyJobs,
-      backup: () => Either[Api.Error, String]
+      backup: () => Either[Api.Error, Wiring.BackupResultPart2]
   )
+
+  object Wiring:
+    type BackupResultPart2 = BackupResultPart2.T
+    object BackupResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(wiring: Wiring): BundleService = Implementation(wiring)
 
@@ -76,14 +113,14 @@ object BundleService:
     /** The server's stored originals: the converter's spool, `<sha256>.<ext>`. */
     private def originals: Store.Contents = Store.Contents(w.storage.store(Location.IngestOriginals))
 
-    private def options(dryRun: Boolean): ImportOptions =
+    private def options(dryRun: com.histmersion.util.data.exchange.BundleService.Implementation.OptionsDryRun): ImportOptions =
       ImportOptions(dryRun, cfg.limits.chunkChars, cfg.places.pointToleranceKm)
 
     def instance: InstanceInfo = Transactor(w.ds).read(BundleRepo.instance)
 
-    def setLabel(label: Option[String]): InstanceInfo = Transactor(w.ds).transact(BundleRepo.setLabel(label))
+    def setLabel(label: Option[com.histmersion.util.data.exchange.BundleService.Implementation.SetLabelLabel]): InstanceInfo = Transactor(w.ds).transact(BundleRepo.setLabel(label))
 
-    def exportBundle(since: Option[String]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
+    def exportBundle(since: Option[com.histmersion.util.data.exchange.BundleService.Implementation.ExportBundleSince]): Either[Api.Error, (HandedFile, Bundle.Manifest)] =
       val store = bundles
       for
         _ <- usable(store)
@@ -101,7 +138,7 @@ object BundleService:
         .left
         .map(e => Api.Error(s"bundles directory ${store.where()} is not usable: ${e.message}"))
 
-    private def write(part: com.histmersion.util.storage.Reservation, since: Option[String]) =
+    private def write(part: com.histmersion.util.storage.Reservation, since: Option[com.histmersion.util.data.exchange.BundleService.Implementation.WriteSince]) =
       val written =
         try
           val out = java.io.BufferedOutputStream(part.output(), 1 << 16)
@@ -132,14 +169,14 @@ object BundleService:
     def verify(upload: ByteSource): Bundle.VerifyResult =
       upload.read(in => BundleReader.verify(in, Migrate.current(w.ds)))
 
-    def importBundle(upload: ByteSource, dryRun: Boolean): Either[Api.Error, Bundle.ImportResult] =
+    def importBundle(upload: ByteSource, dryRun: com.histmersion.util.data.exchange.BundleService.Implementation.ImportBundleDryRun): Either[Api.Error, Bundle.ImportResult] =
       importFrom(upload, upload.read(BundleReader.sha256Of), MergeResolutions(), dryRun)
 
     private def importFrom(
         bundle: ByteSource,
-        sha: String,
+        sha: com.histmersion.util.data.exchange.BundleService.Implementation.ImportFromSha,
         resolutions: MergeResolutions,
-        dryRun: Boolean
+        dryRun: com.histmersion.util.data.exchange.BundleService.Implementation.ImportFromDryRun
     ): Either[Api.Error, Bundle.ImportResult] =
       BundleImporter
         .run(
@@ -157,10 +194,10 @@ object BundleService:
         .map(e => Api.Error(s"bundle import failed: $e"))
 
     /** Where an uploaded bundle is kept: `upload-<sha256>.hmx`, content-addressed. */
-    private def keyOf(sha: String): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
+    private def keyOf(sha: com.histmersion.util.data.exchange.BundleService.Implementation.KeyOfSha): Store.Key = Store.Key.applyUnsafe(s"upload-$sha${Bundle.Extension}")
 
     /** A kept bundle, touched: a planned bundle stays as long as it is being worked on. */
-    private def kept(sha: String): Either[Api.Error, ByteSource] =
+    private def kept(sha: com.histmersion.util.data.exchange.BundleService.Implementation.KeptSha): Either[Api.Error, ByteSource] =
       val store = bundles
       store.get(keyOf(sha)) match
         case None =>
@@ -188,7 +225,7 @@ object BundleService:
         val loaded = blob.asSource.read(BundleReader.read(_, hashBlobs = false))
         Bundle.Upload(sha, blob.size.value, loaded.manifest, loaded.problems)
 
-    private def copyIn(store: Store, key: Store.Key, upload: ByteSource): Either[String, Unit] =
+    private def copyIn(store: Store, key: Store.Key, upload: ByteSource): Either[com.histmersion.util.data.exchange.BundleService.Implementation.CopyInResultPart1, Unit] =
       store.reserve(key).left.map(_.message).flatMap { part =>
         try
           scala.util
@@ -204,7 +241,7 @@ object BundleService:
         finally part.close()
       }
 
-    def plan(bundle: String, resolutions: MergeResolutions): Either[Api.Error, MergePlan] =
+    def plan(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.PlanBundle, resolutions: MergeResolutions): Either[Api.Error, MergePlan] =
       kept(bundle).flatMap { source =>
         MergePlans
           .planFile(
@@ -222,13 +259,13 @@ object BundleService:
       }
 
     def importKept(
-        bundle: String,
+        bundle: com.histmersion.util.data.exchange.BundleService.Implementation.ImportKeptBundle,
         resolutions: MergeResolutions,
-        dryRun: Boolean
+        dryRun: com.histmersion.util.data.exchange.BundleService.Implementation.ImportKeptDryRun
     ): Either[Api.Error, Bundle.ImportResult] =
       kept(bundle).flatMap(importFrom(_, bundle, resolutions, dryRun))
 
-    def applyKept(bundle: String, planHash: String, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob] =
+    def applyKept(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyKeptBundle, planHash: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyKeptPlanHash, resolutions: MergeResolutions): Either[Api.Error, MergeApplyJob] =
       kept(bundle).flatMap { source =>
         w.applyJobs.start(bundle, planHash) { () =>
           BundleImporter
@@ -255,16 +292,64 @@ object BundleService:
         }
       }
 
-    def applyStatus(job: String): Option[MergeApplyJob] = w.applyJobs.status(job)
+    def applyStatus(job: com.histmersion.util.data.exchange.BundleService.Implementation.ApplyStatusJob): Option[MergeApplyJob] = w.applyJobs.status(job)
 
-    def session(bundle: String): MergeSession = Transactor(w.ds).read(MergeRepo.session(bundle))
+    def session(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.SessionBundle): MergeSession = Transactor(w.ds).read(MergeRepo.session(bundle))
 
-    def putSession(bundle: String, resolutions: MergeResolutions): MergeSession =
+    def putSession(bundle: com.histmersion.util.data.exchange.BundleService.Implementation.PutSessionBundle, resolutions: MergeResolutions): MergeSession =
       Transactor(w.ds).transact(MergeRepo.putSession(bundle, resolutions))
 
-    def merges(limit: Int): List[MergeInfo] = Transactor(w.ds).read(MergeRepo.list(limit))
+    def merges(limit: com.histmersion.util.data.exchange.BundleService.Implementation.MergesLimit): List[MergeInfo] = Transactor(w.ds).read(MergeRepo.list(limit))
 
-    def mergeDetail(id: String): Either[Api.Error, MergeDetail] = Transactor(w.ds).read(MergeRepo.detail(id))
+    def mergeDetail(id: com.histmersion.util.data.exchange.BundleService.Implementation.MergeDetailId): Either[Api.Error, MergeDetail] = Transactor(w.ds).read(MergeRepo.detail(id))
 
-    def mergeLedger(uid: Option[String], merge: Option[String], limit: Int): Either[Api.Error, MergeLedger] =
+    def mergeLedger(uid: Option[com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerUid], merge: Option[com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerMerge], limit: com.histmersion.util.data.exchange.BundleService.Implementation.MergeLedgerLimit): Either[Api.Error, MergeLedger] =
       Transactor(w.ds).read(MergeRepo.ledger(uid, merge, limit, w.rules))
+
+  object Implementation:
+    type OptionsDryRun = OptionsDryRun.T
+    object OptionsDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetLabelLabel = SetLabelLabel.T
+    object SetLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExportBundleSince = ExportBundleSince.T
+    object ExportBundleSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WriteSince = WriteSince.T
+    object WriteSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportBundleDryRun = ImportBundleDryRun.T
+    object ImportBundleDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportFromSha = ImportFromSha.T
+    object ImportFromSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportFromDryRun = ImportFromDryRun.T
+    object ImportFromDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type KeyOfSha = KeyOfSha.T
+    object KeyOfSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type KeptSha = KeptSha.T
+    object KeptSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CopyInResultPart1 = CopyInResultPart1.T
+    object CopyInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PlanBundle = PlanBundle.T
+    object PlanBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportKeptBundle = ImportKeptBundle.T
+    object ImportKeptBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ImportKeptDryRun = ImportKeptDryRun.T
+    object ImportKeptDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApplyKeptBundle = ApplyKeptBundle.T
+    object ApplyKeptBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApplyKeptPlanHash = ApplyKeptPlanHash.T
+    object ApplyKeptPlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApplyStatusJob = ApplyStatusJob.T
+    object ApplyStatusJob extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SessionBundle = SessionBundle.T
+    object SessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PutSessionBundle = PutSessionBundle.T
+    object PutSessionBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergesLimit = MergesLimit.T
+    object MergesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeDetailId = MergeDetailId.T
+    object MergeDetailId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeLedgerUid = MergeLedgerUid.T
+    object MergeLedgerUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeLedgerMerge = MergeLedgerMerge.T
+    object MergeLedgerMerge extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergeLedgerLimit = MergeLedgerLimit.T
+    object MergeLedgerLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -7,7 +7,14 @@ package com.histmersion.api.aliases
   */
 import com.histmersion.api.exchange.Bundle
 object AliasKinds:
-  private def kind(noun: String, idWord: String): AliasKind = AliasKind(RecordNoun(noun), KeyWord(idWord))
+  type KindNoun = KindNoun.T
+  object KindNoun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindIdWord = KindIdWord.T
+  object KindIdWord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfTargetTargetType = OfTargetTargetType.T
+  object OfTargetTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def kind(noun: com.histmersion.api.aliases.AliasKinds.KindNoun, idWord: com.histmersion.api.aliases.AliasKinds.KindIdWord): AliasKind = AliasKind(RecordNoun(noun), KeyWord(idWord))
 
   val SourceRecords: AliasKind = kind("source", "citekey")
   val ArticleRecords: AliasKind = kind("article", "slug")
@@ -28,7 +35,7 @@ object AliasKinds:
   /** The kind a reference's target type names (`event`, `place`, `source`, `article`; any case, surrounding space
     * ignored), when it is one whose old identifiers are followed.
     */
-  def ofTarget(targetType: String): Option[AliasKind] =
+  def ofTarget(targetType: com.histmersion.api.aliases.AliasKinds.OfTargetTargetType): Option[AliasKind] =
     targetType.trim.toLowerCase(java.util.Locale.ROOT) match
       case "event"   => Some(EventRecords)
       case "place"   => Some(PlaceRecords)

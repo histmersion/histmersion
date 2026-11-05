@@ -22,14 +22,23 @@ final case class CollectionSettings(
 ) derives ConfigReader:
 
   /** `refusal-backoff-seconds` as milliseconds, the blank and non-positive steps dropped. */
-  def refusalBackoffMs: List[Long] =
+  def refusalBackoffMs: List[com.histmersion.plugins.media.CollectionSettings.RefusalBackoffMsResult] =
     CollectionSettings.items(refusalBackoffSeconds).flatMap(_.toLongOption).filter(_ > 0).map(_ * 1000)
 
   /** `max-year` as the last year an object may be made in; 0 sets none. */
-  def latestYear: Option[Int] = Option.when(maxYear != 0)(maxYear)
+  def latestYear: Option[com.histmersion.plugins.media.CollectionSettings.LatestYearResult] = Option.when(maxYear != 0)(maxYear)
 
 object CollectionSettings:
   /** Pure: the entries of a comma-separated setting, trimmed, blanks dropped. */
+  type RefusalBackoffMsResult = RefusalBackoffMsResult.T
+  object RefusalBackoffMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LatestYearResult = LatestYearResult.T
+  object LatestYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsResult = ItemsResult.T
+  object ItemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsList = ItemsList.T
+  object ItemsList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Enabled = Enabled.T
   object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApiUrl = ApiUrl.T
@@ -55,4 +64,4 @@ object CollectionSettings:
   type ExcludeTypes = ExcludeTypes.T
   object ExcludeTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def items(list: String): List[String] = Option(list).toList.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty)
+  def items(list: com.histmersion.plugins.media.CollectionSettings.ItemsList): List[com.histmersion.plugins.media.CollectionSettings.ItemsResult] = Option(list).toList.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty)

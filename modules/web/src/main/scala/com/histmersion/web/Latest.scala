@@ -12,13 +12,13 @@ import scala.util.{Failure, Success, Try}
   */
 final class Latest:
   // `var`: the newest ticket handed out
-  private var newest: Int = 0
+  private var newest: com.histmersion.web.Latest.Newest = 0
 
   /** A new request: the tickets handed out before it are superseded. */
-  def start(): Int = { newest += 1; newest }
+  def start(): com.histmersion.web.Latest.StartResult = { newest += 1; newest }
 
   /** Whether `ticket` is still the newest request. */
-  def isCurrent(ticket: Int): Boolean = ticket == newest
+  def isCurrent(ticket: com.histmersion.web.Latest.IsCurrentTicket): com.histmersion.web.Latest.IsCurrentResult = ticket == newest
 
   /** Supersede every request still out: none of their answers is applied (a layer switched off, an input unmounted).
     */
@@ -34,10 +34,24 @@ final class Latest:
   /** `f`'s outcome, applied only while it is the newest request: `ok` on success, `failed` with the error message
     * otherwise — a failure is never left unanswered (a view stuck on "Loading…").
     */
-  def apply[A](f: Future[A])(ok: A => Unit, failed: String => Unit)(using ExecutionContext): Unit =
+  def apply[A](f: Future[A])(ok: A => Unit, failed: com.histmersion.web.Latest.ApplyFailedArg1 => Unit)(using ExecutionContext): Unit =
     val ticket = start()
     f.onComplete(r => if isCurrent(ticket) then answer(r, ok, failed))
 
-  private[web] def answer[A](r: Try[A], ok: A => Unit, failed: String => Unit): Unit = r match
+  private[web] def answer[A](r: Try[A], ok: A => Unit, failed: com.histmersion.web.Latest.AnswerFailedArg1 => Unit): Unit = r match
     case Success(a) => ok(a)
     case Failure(e) => failed(Option(e.getMessage).filter(_.nonEmpty).getOrElse(e.toString))
+
+object Latest:
+  type Newest = Newest.T
+  object Newest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartResult = StartResult.T
+  object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCurrentResult = IsCurrentResult.T
+  object IsCurrentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCurrentTicket = IsCurrentTicket.T
+  object IsCurrentTicket extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyFailedArg1 = ApplyFailedArg1.T
+  object ApplyFailedArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnswerFailedArg1 = AnswerFailedArg1.T
+  object AnswerFailedArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

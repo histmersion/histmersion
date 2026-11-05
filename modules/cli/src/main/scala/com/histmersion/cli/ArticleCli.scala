@@ -37,10 +37,38 @@ object ArticleCli:
     * directory itself (articles are then one level up). Anything else is treated as a plain directory of notes, as
     * before.
     */
+  type FilesResultPart2 = FilesResultPart2.T
+  object FilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FilesSkip = FilesSkip.T
+  object FilesSkip extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfResult = KindOfResult.T
+  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToImportKind = ToImportKind.T
+  object ToImportKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToImportForce = ToImportForce.T
+  object ToImportForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportAllForce = ImportAllForce.T
+  object ImportAllForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportAllSkip = ImportAllSkip.T
+  object ImportAllSkip extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExportAllResultPart2 = ExportAllResultPart2.T
+  object ExportAllResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfNoteResult = KindOfNoteResult.T
+  object KindOfNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfNoteText = KindOfNoteText.T
+  object KindOfNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReasonFlags = ReasonFlags.T
+  object ReasonFlags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CritiqueReasonFlags = CritiqueReasonFlags.T
+  object CritiqueReasonFlags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class WikiLayout(sources: Path, root: Option[Path])
 
   object WikiLayout:
-    val SourcesDir: String = MirrorPlacement.SourcesDirectory
+    type SourcesDir = SourcesDir.T
+    object SourcesDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    val SourcesDir: com.histmersion.cli.ArticleCli.WikiLayout.SourcesDir = MirrorPlacement.SourcesDirectory
 
     def of(dir: Path): WikiLayout =
       val here = Option(dir.getFileName).map(_.toString).getOrElse("")
@@ -52,14 +80,14 @@ object ArticleCli:
     * fallback KIND — `concepts/` holds `concept`s), plus any `*.md` sitting at the top level (e.g. `wiki/index.md`).
     * Frontmatter `type:` always wins over the directory.
     */
-  def files(root: Path, skip: Set[String] = Set(WikiLayout.SourcesDir)): List[(Path, String)] =
+  def files(root: Path, skip: Set[com.histmersion.cli.ArticleCli.FilesSkip] = Set(WikiLayout.SourcesDir)): List[(Path, com.histmersion.cli.ArticleCli.FilesResultPart2)] =
     val top = markdown(root).map(_ -> kindOf(root))
     val sub = dirs(root)
       .filterNot(d => skip.contains(d.getFileName.toString.toLowerCase))
       .flatMap(d => markdown(d).map(_ -> kindOf(d)))
     (top ++ sub).sortBy((p, _) => p.toString)
 
-  private def kindOf(dir: Path): String =
+  private def kindOf(dir: Path): com.histmersion.cli.ArticleCli.KindOfResult =
     com.histmersion.api.research.Articles.kindOfDir(Option(dir.getFileName).map(_.toString).getOrElse(""))
 
   private def markdown(dir: Path): List[Path] =
@@ -83,7 +111,7 @@ object ArticleCli:
   /** Package one article note for the server: text, fallback slug/kind, and the mtime that drives the "stored row is
     * newer than the file" skip.
     */
-  def toImport(file: Path, kind: String, force: Boolean): Article.Import =
+  def toImport(file: Path, kind: com.histmersion.cli.ArticleCli.ToImportKind, force: com.histmersion.cli.ArticleCli.ToImportForce): Article.Import =
     Article.Import(
       text = Files.readString(file),
       slug = Some(file.getFileName.toString.stripSuffix(".md")),
@@ -95,7 +123,7 @@ object ArticleCli:
   /** Import every article note under `root`, printing progress. Returns the accumulated result so a caller
     * (`histmersion seed`) can fold it into its own report.
     */
-  def importAll(c: Client, root: Path, force: Boolean, skip: Set[String])(using console: Console): SeedResult =
+  def importAll(c: Client, root: Path, force: com.histmersion.cli.ArticleCli.ImportAllForce, skip: Set[com.histmersion.cli.ArticleCli.ImportAllSkip])(using console: Console): SeedResult =
     val fs = files(root, skip)
     val total = fs.size
     if total > 0 then Cli.out.println(s"importing $total article(s) from $root")
@@ -117,7 +145,7 @@ object ArticleCli:
     loop(fs, 1, 0, Nil, Nil)
 
   /** Write every article to `<dir>/<kind>/<slug>.md`. Returns how many were written. */
-  def exportAll(c: Client, out: Path)(using console: Console): Either[Cli.Error, Int] =
+  def exportAll(c: Client, out: Path)(using console: Console): Either[Cli.Error, com.histmersion.cli.ArticleCli.ExportAllResultPart2] =
     c.articleSlugs.flatMap { slugs =>
       val total = slugs.size
       val failed = slugs.zipWithIndex.flatMap { (slug, i) =>
@@ -140,7 +168,7 @@ object ArticleCli:
     * the fallback only guards a hand-edited file.
     */
   private val TypeKey = """(?m)^type:\s*["']?([^"'\r\n]+)["']?\s*$""".r
-  def kindOfNote(text: String): String =
+  def kindOfNote(text: com.histmersion.cli.ArticleCli.KindOfNoteText): com.histmersion.cli.ArticleCli.KindOfNoteResult =
     TypeKey
       .findFirstMatchIn(text)
       .map(_.group(1).trim)
@@ -333,7 +361,7 @@ object ArticleCli:
         .orFalse
     ).mapN(ArticlePatches.FilterFlags.apply)
 
-  private val reasonFlags: Opts[List[String]] =
+  private val reasonFlags: Opts[List[com.histmersion.cli.ArticleCli.ReasonFlags]] =
     Opts
       .options[String](
         "reason",
@@ -341,7 +369,7 @@ object ArticleCli:
       )
       .orEmpty
 
-  private val critiqueReasonFlags: Opts[List[String]] =
+  private val critiqueReasonFlags: Opts[List[com.histmersion.cli.ArticleCli.CritiqueReasonFlags]] =
     Opts
       .options[String](
         "critique-reason",

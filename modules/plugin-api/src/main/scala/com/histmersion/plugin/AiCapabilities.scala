@@ -22,6 +22,11 @@ final case class AiCapabilities(
 
 object AiCapabilities:
   /** The capabilities as a provider compiled before the loop's notes and verbatim failures wrote them. */
+  type ApplyTools = ApplyTools.T
+  object ApplyTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyStructuredOutput = ApplyStructuredOutput.T
+  object ApplyStructuredOutput extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Tools = Tools.T
   object Tools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StructuredOutput = StructuredOutput.T
@@ -31,5 +36,5 @@ object AiCapabilities:
   type VerbatimFailures = VerbatimFailures.T
   object VerbatimFailures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def apply(tools: Boolean, structuredOutput: Boolean): AiCapabilities =
+  def apply(tools: com.histmersion.plugin.AiCapabilities.ApplyTools, structuredOutput: com.histmersion.plugin.AiCapabilities.ApplyStructuredOutput): AiCapabilities =
     new AiCapabilities(tools, structuredOutput, false, false)

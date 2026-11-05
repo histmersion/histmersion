@@ -6,6 +6,19 @@ package com.histmersion.web.marks
   */
 object NoteMarkdown:
 
+  type SafeHrefResult = SafeHrefResult.T
+  object SafeHrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SafeHrefH = SafeHrefH.T
+  object SafeHrefH extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksText = BlocksText.T
+  object BlocksText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartsResult = StartsResult.T
+  object StartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartsL = StartsL.T
+  object StartsL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InlinesS = InlinesS.T
+  object InlinesS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum Inline:
     case Text(s: String)
     case Strong(s: String)
@@ -27,14 +40,14 @@ object NoteMarkdown:
   private val QuoteL = """^\s*>\s?(.*)$""".r
 
   /** Only addresses a person can follow safely: the web, mail, or a page of this server. */
-  def safeHref(h: String): Option[String] =
+  def safeHref(h: com.histmersion.web.marks.NoteMarkdown.SafeHrefH): Option[com.histmersion.web.marks.NoteMarkdown.SafeHrefResult] =
     val t = h.trim
     Option.when(
       t.startsWith("https://") || t.startsWith("http://") || t.startsWith("mailto:") ||
         (t.startsWith("/") && !t.startsWith("//"))
     )(t)
 
-  def blocks(text: String): List[Block] =
+  def blocks(text: com.histmersion.web.marks.NoteMarkdown.BlocksText): List[Block] =
     @annotation.tailrec
     def loop(lines: List[String], out: List[Block]): List[Block] = lines match
       case Nil                                   => out.reverse
@@ -58,14 +71,14 @@ object NoteMarkdown:
         loop(if para.isEmpty then lines0.tail else after, Block.Para(inlines(taken.map(_.trim).mkString(" "))) :: out)
     loop(text.replace("\r\n", "\n").split("\n", -1).toList, Nil)
 
-  private def starts(l: String): Boolean = l match
+  private def starts(l: com.histmersion.web.marks.NoteMarkdown.StartsL): com.histmersion.web.marks.NoteMarkdown.StartsResult = l match
     case Heading(_, _) | Bullet(_) | Number(_) | QuoteL(_) => true
     case _                                                 => l.trim.startsWith("```")
 
   private val Token =
     """\[\[([a-z][a-z0-9_.-]{1,120})\]\]|\[([^\]]+)\]\(([^)\s]+)\)|`([^`]+)`|\*\*([^*]+)\*\*|\*([^*]+)\*|_([^_]+)_""".r
 
-  def inlines(s: String): List[Inline] =
+  def inlines(s: com.histmersion.web.marks.NoteMarkdown.InlinesS): List[Inline] =
     val out = List.newBuilder[Inline]
     // `var`: where the text not yet taken by a token starts
     var at = 0

@@ -23,7 +23,54 @@ import com.histmersion.api.research.Article
   */
 object HtmlRender:
 
-  def esc(s: String): String = HtmlAtoms.esc(s)
+  type EscResult = EscResult.T
+  object EscResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EscS = EscS.T
+  object EscS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceLinkResult = SourceLinkResult.T
+  object SourceLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceLinkCitekey = SourceLinkCitekey.T
+  object SourceLinkCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceLinkDoi = SourceLinkDoi.T
+  object SourceLinkDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceLinkLabel = SourceLinkLabel.T
+  object SourceLinkLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceRefResult = SourceRefResult.T
+  object SourceRefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceRefLabel = SourceRefLabel.T
+  object SourceRefLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadableResult = ReadableResult.T
+  object ReadableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleRefResult = ArticleRefResult.T
+  object ArticleRefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleRefLabel = ArticleRefLabel.T
+  object ArticleRefLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DanglingResult = DanglingResult.T
+  object DanglingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DanglingLabel = DanglingLabel.T
+  object DanglingLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdentifierResult = IdentifierResult.T
+  object IdentifierResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdentifierCitekey = IdentifierCitekey.T
+  object IdentifierCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdentifierDoi = IdentifierDoi.T
+  object IdentifierDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChipResult = ChipResult.T
+  object ChipResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChipValue = ChipValue.T
+  object ChipValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChipsResult = ChipsResult.T
+  object ChipsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChipsValues = ChipsValues.T
+  object ChipsValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusBadgeResult = StatusBadgeResult.T
+  object StatusBadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConfidenceBadgeResult = ConfidenceBadgeResult.T
+  object ConfidenceBadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingResult = FindingResult.T
+  object FindingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def esc(s: com.histmersion.server.HtmlRender.EscS): com.histmersion.server.HtmlRender.EscResult = HtmlAtoms.esc(s)
 
   // ── references ───────────────────────────────────────────────────────────────────────────────
 
@@ -31,33 +78,33 @@ object HtmlRender:
     * hover handler previews anything carrying `data-ck`, and its click handler opens `/source/…` in a window — so every
     * source link on every page gets both for free.
     */
-  def sourceLink(citekey: String, doi: Option[String], label: String): String =
+  def sourceLink(citekey: com.histmersion.server.HtmlRender.SourceLinkCitekey, doi: Option[com.histmersion.server.HtmlRender.SourceLinkDoi], label: com.histmersion.server.HtmlRender.SourceLinkLabel): com.histmersion.server.HtmlRender.SourceLinkResult =
     HtmlAtoms.sourceLink(citekey, doi, label)
 
   /** A source reference labelled with its IDENTIFIER — the DOI when it has one, else the citekey. */
-  def sourceRef(r: com.histmersion.api.library.Source.Ref): String = sourceLink(r.citekey, r.doi, r.idLabel)
+  def sourceRef(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.SourceRefResult = sourceLink(r.citekey, r.doi, r.idLabel)
 
-  def sourceRef(r: com.histmersion.api.library.Source.Ref, label: String): String = sourceLink(r.citekey, r.doi, label)
+  def sourceRef(r: com.histmersion.api.library.Source.Ref, label: com.histmersion.server.HtmlRender.SourceRefLabel): com.histmersion.server.HtmlRender.SourceRefResult = sourceLink(r.citekey, r.doi, label)
 
   /** Where a READABLE label is wanted (prose, lists): "Cline 2014", or the title when the source has no authors — never
     * a bare year.
     */
-  def readable(r: com.histmersion.api.library.Source.Ref): String =
+  def readable(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.ReadableResult =
     if r.authors.exists(_.trim.nonEmpty) then r.shortCite else r.title
 
   /** THE article anchor: `<a class="art-ref" data-slug href="/article/slug">label</a>`. */
-  def articleRef(r: Article.Ref): String = articleRef(r, r.title)
+  def articleRef(r: Article.Ref): com.histmersion.server.HtmlRender.ArticleRefResult = articleRef(r, r.title)
 
-  def articleRef(r: Article.Ref, label: String): String = HtmlAtoms.articleLink(r.slug, label)
+  def articleRef(r: Article.Ref, label: com.histmersion.server.HtmlRender.ArticleRefLabel): com.histmersion.server.HtmlRender.ArticleRefResult = HtmlAtoms.articleLink(r.slug, label)
 
   /** A link nothing in the corpus answers to: text, marked, never a link to a 404. */
-  def dangling(label: String): String =
+  def dangling(label: com.histmersion.server.HtmlRender.DanglingLabel): com.histmersion.server.HtmlRender.DanglingResult =
     s"""<span class="dangling" title="unresolved link">${esc(label)}</span>"""
 
   /** The identifier line of a source: its DOI as a resolver link, else our own citekey. */
-  def identifier(r: com.histmersion.api.library.Source.Ref): String = identifier(r.citekey, r.doi)
+  def identifier(r: com.histmersion.api.library.Source.Ref): com.histmersion.server.HtmlRender.IdentifierResult = identifier(r.citekey, r.doi)
 
-  def identifier(citekey: String, doi: Option[String]): String = doi.filter(_.nonEmpty) match
+  def identifier(citekey: com.histmersion.server.HtmlRender.IdentifierCitekey, doi: Option[com.histmersion.server.HtmlRender.IdentifierDoi]): com.histmersion.server.HtmlRender.IdentifierResult = doi.filter(_.nonEmpty) match
     case Some(d) => s"""<a class="doi" href="https://doi.org/${esc(d)}" rel="noopener">${esc(d)}</a>"""
     case None    => s"""<code class="citekey">${esc(citekey)}</code>"""
 
@@ -66,28 +113,28 @@ object HtmlRender:
   /** A filter chip: readable label ([[Label.display]] — never an underscore), the raw value in the link, so clicking it
     * filters the web UI by exactly the stored value.
     */
-  def chip(field: ChipField, value: String): String =
+  def chip(field: ChipField, value: com.histmersion.server.HtmlRender.ChipValue): com.histmersion.server.HtmlRender.ChipResult =
     s"""<a class="chip chip-${field.hashKey}" data-field="${field.hashKey}" data-value="${esc(value)}"""" +
       s""" href="/#${field.hashKey}=${esc(HtmlAtoms.segment(value))}">${esc(Label.display(value))}</a>"""
 
-  def chips(field: ChipField, values: List[String]): String =
+  def chips(field: ChipField, values: List[com.histmersion.server.HtmlRender.ChipsValues]): com.histmersion.server.HtmlRender.ChipsResult =
     values.map(_.trim).filter(_.nonEmpty).distinct.map(chip(field, _)).mkString(" ")
 
   /** A source's standing: the one status code — its mark (colour and shape, the stylesheet's `st-<status>`) and its
     * word.
     */
-  def statusBadge(status: Source.Status): String =
+  def statusBadge(status: Source.Status): com.histmersion.server.HtmlRender.StatusBadgeResult =
     s"""<span class="status-badge st-${status.wire}" title="Status: ${Wording.status(
         status.transformInto[com.histmersion.api.library.Source.Status]
       )} (${status.wire})">${Wording.status(status.transformInto[com.histmersion.api.library.Source.Status])}</span>"""
 
   /** Icon + colour, the same palette as the map's dots ([[ConfidenceStyle]]). */
-  def confidenceBadge(c: Confidence): String =
+  def confidenceBadge(c: Confidence): com.histmersion.server.HtmlRender.ConfidenceBadgeResult =
     HtmlAtoms.confidenceBadge(c.transformInto[com.histmersion.api.library.Confidence])
 
   // ── findings ─────────────────────────────────────────────────────────────────────────────────
 
-  def finding(f: Finding.Row): String =
+  def finding(f: Finding.Row): com.histmersion.server.HtmlRender.FindingResult =
     val where = (f.regionName.map(_.trim).filter(_.nonEmpty).map(Label.display), f.lat, f.lon) match
       // Locale.ROOT: JDK 25's CLDR renders `35,60` under a comma-decimal default locale
       case (r, Some(la), Some(lo)) =>

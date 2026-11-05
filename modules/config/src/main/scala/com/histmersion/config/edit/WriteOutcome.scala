@@ -29,12 +29,23 @@ final case class WriteOutcome(
     restart: List[(SettingKey, WriteOutcome.RestartPart2)],
     warnings: List[WriteOutcome.Warnings]
 ):
-  def wrote: Boolean = changed.nonEmpty
+  def wrote: com.histmersion.config.edit.WriteOutcome.WroteResult = changed.nonEmpty
 
 object WriteOutcome:
   /** What `edited` did to `file`, now at `version`: the restart-only settings among the changed ones, and the warnings
     * — `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file).
     */
+  type WroteResult = WroteResult.T
+  object WroteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFile = OfFile.T
+  object OfFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfBackup = OfBackup.T
+  object OfBackup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfNotes = OfNotes.T
+  object OfNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfCreated = OfCreated.T
+  object OfCreated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type File = File.T
   object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Backup = Backup.T
@@ -47,14 +58,14 @@ object WriteOutcome:
   object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(
-      file: String,
+      file: com.histmersion.config.edit.WriteOutcome.OfFile,
       schema: ConfigSchema,
       env: Config,
       version: FileVersion,
       edited: EditedText,
-      backup: Option[String],
-      notes: List[String],
-      created: Boolean = false
+      backup: Option[com.histmersion.config.edit.WriteOutcome.OfBackup],
+      notes: List[com.histmersion.config.edit.WriteOutcome.OfNotes],
+      created: com.histmersion.config.edit.WriteOutcome.OfCreated = false
   ): WriteOutcome =
     val fields = edited.changed.flatMap(schema.field)
     val shadowed = fields.flatMap(f =>

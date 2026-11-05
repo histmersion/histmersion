@@ -20,8 +20,8 @@ import com.histmersion.api.Api
 final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: WorkCarrier = WorkCarrier.none):
 
   /** Start `run` on its own thread and wait up to `waitSeconds` for it. */
-  def start(bundle: String, planHash: String)(
-      run: () => Either[String, MergeApplyResult]
+  def start(bundle: com.histmersion.util.data.exchange.MergeApplyJobs.StartBundle, planHash: com.histmersion.util.data.exchange.MergeApplyJobs.StartPlanHash)(
+      run: () => Either[com.histmersion.util.data.exchange.MergeApplyJobs.StartRunResultPart1, MergeApplyResult]
   ): Either[Api.Error, MergeApplyJob] =
     synchronized {
       if runs.running then
@@ -55,4 +55,14 @@ final class MergeApplyJobs(runs: MergeApplyRuns, waitSeconds: => Int, carrier: W
       status(id).getOrElse(MergeApplyJob(id, MergeJobState.Running, bundle, planHash, 0))
     }
 
-  def status(id: String): Option[MergeApplyJob] = runs.status(id.trim)
+  def status(id: com.histmersion.util.data.exchange.MergeApplyJobs.StatusId): Option[MergeApplyJob] = runs.status(id.trim)
+
+object MergeApplyJobs:
+  type StartBundle = StartBundle.T
+  object StartBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartPlanHash = StartPlanHash.T
+  object StartPlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartRunResultPart1 = StartRunResultPart1.T
+  object StartRunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusId = StatusId.T
+  object StatusId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

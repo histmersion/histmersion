@@ -11,13 +11,24 @@ import java.nio.file.{Files, Path}
 final case class GazetteerPaths(extracts: Path, lpf: Path, manifest: Path, legacy: Option[Path] = None):
 
   /** The manifest's text, or why there is none. */
-  def manifestText(): Either[String, String] =
+  def manifestText(): Either[com.histmersion.server.GazetteerPaths.ManifestTextResultPart1, com.histmersion.server.GazetteerPaths.ManifestTextResultPart2] =
     if !Files.isRegularFile(manifest) then Left(s"no gazetteer manifest at $manifest (set places.sources.manifest)")
     else Right(Files.readString(manifest))
 
 object GazetteerPaths:
   /** The paths in the process environment `env` (the entry point read it once) of the operating system `osName`. */
-  def of(cfg: AppConfig, env: String => Option[String], osName: String): GazetteerPaths =
+  type ManifestTextResultPart1 = ManifestTextResultPart1.T
+  object ManifestTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManifestTextResultPart2 = ManifestTextResultPart2.T
+  object ManifestTextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfEnvArg1 = OfEnvArg1.T
+  object OfEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfEnvResult = OfEnvResult.T
+  object OfEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfOsName = OfOsName.T
+  object OfOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def of(cfg: AppConfig, env: com.histmersion.server.GazetteerPaths.OfEnvArg1 => Option[com.histmersion.server.GazetteerPaths.OfEnvResult], osName: com.histmersion.server.GazetteerPaths.OfOsName): GazetteerPaths =
     val data = UserPaths
       .dataDir(cfg.runtime.dataDir, env, osName)
       .getOrElse(Path.of(cfg.init.dataDir))

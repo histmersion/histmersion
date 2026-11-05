@@ -17,17 +17,28 @@ enum ProviderKind(val wire: String):
   case Plugin(name: String) extends ProviderKind(name)
 
   /** Runs a local command-line agent (one process per step attempt) rather than an HTTP API. */
-  def isCli: Boolean = this == ClaudeCode || this == Codex || this == Opencode
+  def isCli: com.histmersion.api.automation.ProviderKind.IsCliResult = this == ClaudeCode || this == Codex || this == Opencode
 
 object ProviderKind:
   /** The host's own providers, in their order. */
+  type IsCliResult = IsCliResult.T
+  object IsCliResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseKnown = ParseKnown.T
+  object ParseKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamesResult = NamesResult.T
+  object NamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamesKnown = NamesKnown.T
+  object NamesKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val values: List[ProviderKind] = List(Anthropic, OpenAI, Local, ClaudeCode, Codex, Opencode)
 
   /** A provider name: one of the host's, else one of the `known` plugin providers' (lower case). */
-  def parse(s: String, known: Set[String] = Set.empty): Option[ProviderKind] =
+  def parse(s: com.histmersion.api.automation.ProviderKind.ParseS, known: Set[com.histmersion.api.automation.ProviderKind.ParseKnown] = Set.empty): Option[ProviderKind] =
     val t = s.trim.toLowerCase
     values.find(_.wire == t).orElse(Option.when(known(t))(Plugin(t)))
 
   /** The names a reference may use, for an error message: the host's, then the plugins'. */
-  def names(known: Set[String] = Set.empty): String =
+  def names(known: Set[com.histmersion.api.automation.ProviderKind.NamesKnown] = Set.empty): com.histmersion.api.automation.ProviderKind.NamesResult =
     (values.map(_.wire) ++ known.toList.sorted.filterNot(k => values.exists(_.wire == k))).mkString(", ")

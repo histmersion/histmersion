@@ -12,7 +12,22 @@ import com.augustnagro.magnum.*
 private[covers] object CoverRepo:
 
   /** Sources with figures, for illustrations: those without one yet (all with `refresh`), or `only`. */
-  def illustrationCandidates(only: Option[String], refresh: Boolean, limit: Int)(using DbCon): List[String] =
+  type IllustrationCandidatesResult = IllustrationCandidatesResult.T
+  object IllustrationCandidatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IllustrationCandidatesOnly = IllustrationCandidatesOnly.T
+  object IllustrationCandidatesOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IllustrationCandidatesRefresh = IllustrationCandidatesRefresh.T
+  object IllustrationCandidatesRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IllustrationCandidatesLimit = IllustrationCandidatesLimit.T
+  object IllustrationCandidatesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoverCandidatesOnly = CoverCandidatesOnly.T
+  object CoverCandidatesOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoverCandidatesRefresh = CoverCandidatesRefresh.T
+  object CoverCandidatesRefresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoverCandidatesLimit = CoverCandidatesLimit.T
+  object CoverCandidatesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def illustrationCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesRefresh, limit: com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesLimit)(using DbCon): List[com.histmersion.domain.media.covers.CoverRepo.IllustrationCandidatesResult] =
     sql"""SELECT s.citekey FROM sources s
           WHERE ($only::text IS NULL OR s.citekey = $only::text)
             AND EXISTS (SELECT 1 FROM assets a WHERE a.citekey = s.citekey AND a.mime LIKE 'image/%')
@@ -23,7 +38,7 @@ private[covers] object CoverRepo:
   /** Sources with an ISBN or OCLC number and no cover (all with `refresh`), not asked of Open Library yet (unless
     * `refresh`), or `only`.
     */
-  def coverCandidates(only: Option[String], refresh: Boolean, limit: Int)(using DbCon): List[CoverKeys] =
+  def coverCandidates(only: Option[com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesOnly], refresh: com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesRefresh, limit: com.histmersion.domain.media.covers.CoverRepo.CoverCandidatesLimit)(using DbCon): List[CoverKeys] =
     sql"""SELECT s.citekey,
                  (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = s.uid AND i.scheme = 'isbn'),
                  (SELECT min(i.value) FROM source_identifiers i WHERE i.source_uid = s.uid AND i.scheme = 'oclc')

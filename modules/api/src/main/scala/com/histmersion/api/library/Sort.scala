@@ -7,7 +7,14 @@ enum Sort:
   case Relevance, Cited, PeriodStart, Year, Oldest, Title
 
 object Sort:
-  def label(s: Sort): String = s match
+  type LabelResult = LabelResult.T
+  object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type All = All.T
+  object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def label(s: Sort): com.histmersion.api.library.Sort.LabelResult = s match
     case Relevance   => "relevance"
     case Cited       => "cited"
     case PeriodStart => "period"
@@ -15,7 +22,7 @@ object Sort:
     case Oldest      => "oldest"
     case Title       => "title"
 
-  def parse(s: String): Option[Sort] = s.trim.toLowerCase.replace("_", "") match
+  def parse(s: com.histmersion.api.library.Sort.ParseS): Option[Sort] = s.trim.toLowerCase.replace("_", "") match
     case "relevance" | "rank"              => Some(Relevance)
     case "cited" | "citations"             => Some(Cited)
     case "period" | "periodstart" | "time" => Some(PeriodStart)
@@ -24,7 +31,7 @@ object Sort:
     case "title"                           => Some(Title)
     case _                                 => None
 
-  val all: List[String] = values.toList.map(label)
+  val all: List[com.histmersion.api.library.Sort.All] = values.toList.map(label)
 
   given CirceCodec[Sort] = CirceCodec.from(
     Decoder.decodeString.emap(s => parse(s).toRight(s"unknown sort '$s' (${all.mkString("|")})")),

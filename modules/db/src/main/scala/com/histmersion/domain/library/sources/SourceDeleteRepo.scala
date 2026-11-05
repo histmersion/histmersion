@@ -27,7 +27,28 @@ private[sources] object SourceDeleteRepo:
   /** Delete `requested`, unless something refuses it. `files` names the stored originals the service removes after the
     * commit (they are part of the answer and the log line); `logTopic` is the log entry's heading (today's date).
     */
-  def applyIn(requested: String, logTopic: String, files: SourceDeletePlan => List[String], referrers: SourceReferrers)(
+  type ApplyInRequested = ApplyInRequested.T
+  object ApplyInRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInLogTopic = ApplyInLogTopic.T
+  object ApplyInLogTopic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyInFilesResult = ApplyInFilesResult.T
+  object ApplyInFilesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeysOfCk = KeysOfCk.T
+  object KeysOfCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeysOfKeys = KeysOfKeys.T
+  object KeysOfKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanInRequested = PlanInRequested.T
+  object PlanInRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NResult = NResult.T
+  object NResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsCk = CountsCk.T
+  object CountsCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsAliases = CountsAliases.T
+  object CountsAliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountsEdgesIn = CountsEdgesIn.T
+  object CountsEdgesIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def applyIn(requested: com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInRequested, logTopic: com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInLogTopic, files: SourceDeletePlan => List[com.histmersion.domain.library.sources.SourceDeleteRepo.ApplyInFilesResult], referrers: SourceReferrers)(
       using DbCon
   ): Either[Api.Error, SourceDeletePlan] =
     val _ = sql"SELECT citekey FROM sources WHERE citekey = $requested FOR UPDATE".query[String].run()
@@ -52,10 +73,10 @@ private[sources] object SourceDeleteRepo:
     type CalibreId = CalibreId.T
     object CalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def keysOf(ck: String, keys: List[String])(using DbCon): SourceKeys =
+  private def keysOf(ck: com.histmersion.domain.library.sources.SourceDeleteRepo.KeysOfCk, keys: List[com.histmersion.domain.library.sources.SourceDeleteRepo.KeysOfKeys])(using DbCon): SourceKeys =
     SourceKeys(ck, keys, targets => SourceRepo.resolveAliases(targets))
 
-  def planIn(requested: String, referrers: SourceReferrers)(using DbCon): Either[Api.Error, SourceDeletePlan] =
+  def planIn(requested: com.histmersion.domain.library.sources.SourceDeleteRepo.PlanInRequested, referrers: SourceReferrers)(using DbCon): Either[Api.Error, SourceDeletePlan] =
     sql"SELECT citekey, title, calibre_id, sha256 FROM sources WHERE citekey = $requested"
       .query[Row]
       .run()
@@ -95,10 +116,10 @@ private[sources] object SourceDeleteRepo:
         )
         Right(SourceDeletePlan(d, r.sha256.map(_.trim).filter(_.nonEmpty), shared, keys, report))
 
-  private def n(q: Frag)(using DbCon): Int = q.query[Int].run().headOption.getOrElse(0)
+  private def n(q: Frag)(using DbCon): com.histmersion.domain.library.sources.SourceDeleteRepo.NResult = q.query[Int].run().headOption.getOrElse(0)
 
   /** What of the library goes with the source. */
-  private def counts(ck: String, aliases: Int, edgesIn: Int)(using DbCon): List[DeleteCount] =
+  private def counts(ck: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsCk, aliases: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsAliases, edgesIn: com.histmersion.domain.library.sources.SourceDeleteRepo.CountsEdgesIn)(using DbCon): List[DeleteCount] =
     import com.histmersion.api.library.DeletePart.*
     List(
       Findings -> n(sql"SELECT count(*)::int FROM findings WHERE citekey = $ck"),

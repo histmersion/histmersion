@@ -8,9 +8,12 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * `land`, `periodo`).
   */
 final case class InitConfig(auto: InitConfig.Auto, dataDir: InitConfig.DataDir, fetchSources: InitConfig.FetchSources) derives ConfigReader:
-  def sources: List[String] = PeriodsConfig.split(fetchSources)
+  def sources: List[com.histmersion.config.InitConfig.SourcesResult] = PeriodsConfig.split(fetchSources)
 
 object InitConfig:
+  type SourcesResult = SourcesResult.T
+  object SourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Auto = Auto.T
   object Auto extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DataDir = DataDir.T

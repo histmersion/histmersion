@@ -17,11 +17,16 @@ import io.github.iltotore.iron.*
   * [[Period.from]] (the start must not be after the end) or [[Period.point]].
   */
 final case class Period private (start: Year, end: Year):
-  def isPoint: Boolean = start.value == end.value
+  def isPoint: com.histmersion.plugin.Period.IsPointResult = start.value == end.value
 
 object Period:
   /** The period from `start` to `end`, or why there is none (it would end before it starts). */
-  def from(start: Year, end: Year): Either[String, Period] =
+  type IsPointResult = IsPointResult.T
+  object IsPointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromResultPart1 = FromResultPart1.T
+  object FromResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def from(start: Year, end: Year): Either[com.histmersion.plugin.Period.FromResultPart1, Period] =
     Either.cond(
       start.value <= end.value,
       new Period(start, end),

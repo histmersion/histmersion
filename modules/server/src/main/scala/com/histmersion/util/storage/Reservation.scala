@@ -11,7 +11,7 @@ trait Reservation extends AutoCloseable:
   def key: Store.Key
 
   /** Where the file being written is, for messages. */
-  def where: String
+  def where: com.histmersion.util.storage.Reservation.WhereResult
 
   /** The file's content from the start, replacing what was written. */
   def output(): OutputStream
@@ -24,7 +24,7 @@ trait Reservation extends AutoCloseable:
   /** Move the file over the key in one step, replacing what is there; with `keepPermissions`, the replaced file's
     * permissions carry over.
     */
-  def commit(keepPermissions: Boolean = false): Either[Store.Error, Stored]
+  def commit(keepPermissions: com.histmersion.util.storage.Reservation.CommitKeepPermissions = false): Either[Store.Error, Stored]
 
   /** Remove the file; nothing happens to the key. */
   def discard(): Unit
@@ -34,3 +34,9 @@ trait Reservation extends AutoCloseable:
 
   /** The file itself, for a program the supporting areas hand it to (a dump, a settings check). */
   private[util] def onDisk: Either[Store.Error, java.nio.file.Path]
+
+object Reservation:
+  type WhereResult = WhereResult.T
+  object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommitKeepPermissions = CommitKeepPermissions.T
+  object CommitKeepPermissions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

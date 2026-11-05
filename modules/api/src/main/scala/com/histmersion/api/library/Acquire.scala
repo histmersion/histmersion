@@ -9,6 +9,93 @@ import sttp.tapir.Schema
 
 object Acquire:
 
+  type CitekeyResult = CitekeyResult.T
+  object CitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyAuthors = CitekeyAuthors.T
+  object CitekeyAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyYear = CitekeyYear.T
+  object CitekeyYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyTitle = CitekeyTitle.T
+  object CitekeyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyCitekeyResult = LegacyCitekeyResult.T
+  object LegacyCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyCitekeyAuthors = LegacyCitekeyAuthors.T
+  object LegacyCitekeyAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyCitekeyYear = LegacyCitekeyYear.T
+  object LegacyCitekeyYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyCitekeyTitle = LegacyCitekeyTitle.T
+  object LegacyCitekeyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyCandidatesResult = CitekeyCandidatesResult.T
+  object CitekeyCandidatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyCandidatesAuthors = CitekeyCandidatesAuthors.T
+  object CitekeyCandidatesAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyCandidatesYear = CitekeyCandidatesYear.T
+  object CitekeyCandidatesYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitekeyCandidatesTitle = CitekeyCandidatesTitle.T
+  object CitekeyCandidatesTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsRetractingNatureResult = IsRetractingNatureResult.T
+  object IsRetractingNatureResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsRetractingNatureN = IsRetractingNatureN.T
+  object IsRetractingNatureN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictResult = VerdictResult.T
+  object VerdictResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictOpenalexRetracted = VerdictOpenalexRetracted.T
+  object VerdictOpenalexRetracted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictCitedByCount = VerdictCitedByCount.T
+  object VerdictCitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictYear = VerdictYear.T
+  object VerdictYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictWellCitedAt = VerdictWellCitedAt.T
+  object VerdictWellCitedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictLowCitedAt = VerdictLowCitedAt.T
+  object VerdictLowCitedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictStaleBefore = VerdictStaleBefore.T
+  object VerdictStaleBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BrowserDownloadTextResult = BrowserDownloadTextResult.T
+  object BrowserDownloadTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BrowserDownloadTextDoi = BrowserDownloadTextDoi.T
+  object BrowserDownloadTextDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BrowserDownloadTextCitekey = BrowserDownloadTextCitekey.T
+  object BrowserDownloadTextCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BrowserDownloadTextRefusals = BrowserDownloadTextRefusals.T
+  object BrowserDownloadTextRefusals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FlaggedResult = FlaggedResult.T
+  object FlaggedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FlaggedVerdict = FlaggedVerdict.T
+  object FlaggedVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecommendationResult = RecommendationResult.T
+  object RecommendationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecommendationVerdict = RecommendationVerdict.T
+  object RecommendationVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecommendationCitedByCount = RecommendationCitedByCount.T
+  object RecommendationCitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusForVerdict = StatusForVerdict.T
+  object StatusForVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusDecisionVerdict = StatusDecisionVerdict.T
+  object StatusDecisionVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusDecisionForce = StatusDecisionForce.T
+  object StatusDecisionForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyResult = ClassifyResult.T
+  object ClassifyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyIntents = ClassifyIntents.T
+  object ClassifyIntents extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyContexts = ClassifyContexts.T
+  object ClassifyContexts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyIsInfluential = ClassifyIsInfluential.T
+  object ClassifyIsInfluential extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyCitingYear = ClassifyCitingYear.T
+  object ClassifyCitingYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyTargetYear = ClassifyTargetYear.T
+  object ClassifyTargetYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassifyGapYears = ClassifyGapYears.T
+  object ClassifyGapYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRetractionWatchCsv = ParseRetractionWatchCsv.T
+  object ParseRetractionWatchCsv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RwDateResult = RwDateResult.T
+  object RwDateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RwDateRaw = RwDateRaw.T
+  object RwDateRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Stop = Set("the", "a", "an", "of", "on", "and", "in", "to", "for", "study", "new")
 
   val MinCitekeyYear = 1000
@@ -16,13 +103,13 @@ object Acquire:
   /** Follows the convention every existing key uses (`drews1993_collapse`, `haak2015_massive`), so a re-ingest of a
     * stored paper lands on its existing citekey instead of a duplicate.
     */
-  def citekey(authors: List[String], year: Option[Int], title: Option[String]): String =
+  def citekey(authors: List[com.histmersion.api.library.Acquire.CitekeyAuthors], year: Option[com.histmersion.api.library.Acquire.CitekeyYear], title: Option[com.histmersion.api.library.Acquire.CitekeyTitle]): com.histmersion.api.library.Acquire.CitekeyResult =
     legacyCitekey(authors.map(LatinFold.fold), year, title.map(LatinFold.fold))
 
   /** Records created before accented letters were folded keep keys that dropped them (`gterbock1938`), so a lookup by
     * generated key tries this form too.
     */
-  def legacyCitekey(authors: List[String], year: Option[Int], title: Option[String]): String =
+  def legacyCitekey(authors: List[com.histmersion.api.library.Acquire.LegacyCitekeyAuthors], year: Option[com.histmersion.api.library.Acquire.LegacyCitekeyYear], title: Option[com.histmersion.api.library.Acquire.LegacyCitekeyTitle]): com.histmersion.api.library.Acquire.LegacyCitekeyResult =
     val first = authors.map(_.trim).find(_.nonEmpty)
     val surname = first
       .map { a =>
@@ -40,16 +127,19 @@ object Acquire:
       .find(w => w.length > 3 && !Stop.contains(w))
     s"$surname$yr" + word.fold("")("_" + _)
 
-  def citekeyCandidates(authors: List[String], year: Option[Int], title: Option[String]): List[String] =
+  def citekeyCandidates(authors: List[com.histmersion.api.library.Acquire.CitekeyCandidatesAuthors], year: Option[com.histmersion.api.library.Acquire.CitekeyCandidatesYear], title: Option[com.histmersion.api.library.Acquire.CitekeyCandidatesTitle]): List[com.histmersion.api.library.Acquire.CitekeyCandidatesResult] =
     List(citekey(authors, year, title), legacyCitekey(authors, year, title)).distinct
 
   object Verdicts:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Retracted = "retracted"
     val Corrected = "corrected"
     val Current = "current"
     val LowImpact = "low-impact"
     val Unassessed = "unassessed"
-    val all: List[String] = List(Retracted, Corrected, Current, LowImpact, Unassessed)
+    val all: List[com.histmersion.api.library.Acquire.Verdicts.All] = List(Retracted, Corrected, Current, LowImpact, Unassessed)
 
   private val RetractingUpdate = Set("retraction", "withdrawal", "removal")
   private val CorrectingUpdate =
@@ -64,20 +154,20 @@ object Acquire:
       "partial retraction"
     )
 
-  private def isRetractingNature(n: String): Boolean =
+  private def isRetractingNature(n: com.histmersion.api.library.Acquire.IsRetractingNatureN): com.histmersion.api.library.Acquire.IsRetractingNatureResult =
     val s = n.toLowerCase
     s.contains("retraction") && !s.contains("reinstatement") || s.contains("withdrawal")
 
   def verdict(
       retractions: List[RetractionNotice],
       updates: List[UpdateNotice],
-      openalexRetracted: Boolean,
-      citedByCount: Option[Int],
-      year: Option[Int],
-      wellCitedAt: Int,
-      lowCitedAt: Int,
-      staleBefore: Int
-  ): String =
+      openalexRetracted: com.histmersion.api.library.Acquire.VerdictOpenalexRetracted,
+      citedByCount: Option[com.histmersion.api.library.Acquire.VerdictCitedByCount],
+      year: Option[com.histmersion.api.library.Acquire.VerdictYear],
+      wellCitedAt: com.histmersion.api.library.Acquire.VerdictWellCitedAt,
+      lowCitedAt: com.histmersion.api.library.Acquire.VerdictLowCitedAt,
+      staleBefore: com.histmersion.api.library.Acquire.VerdictStaleBefore
+  ): com.histmersion.api.library.Acquire.VerdictResult =
     val kinds = updates.flatMap(_.kind).map(_.trim.toLowerCase)
     if openalexRetracted || retractions.exists(r => r.nature.exists(isRetractingNature)) ||
       kinds.exists(RetractingUpdate.contains)
@@ -95,7 +185,7 @@ object Acquire:
     */
   val BrowserDownloadTopic = "browser download"
 
-  def browserDownloadText(work: WorkRef, doi: String, citekey: String, refusals: List[String] = Nil): Option[String] =
+  def browserDownloadText(work: WorkRef, doi: com.histmersion.api.library.Acquire.BrowserDownloadTextDoi, citekey: com.histmersion.api.library.Acquire.BrowserDownloadTextCitekey, refusals: List[com.histmersion.api.library.Acquire.BrowserDownloadTextRefusals] = Nil): Option[com.histmersion.api.library.Acquire.BrowserDownloadTextResult] =
     Option.when(work.isOa) {
       val who = work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
       val head = List(who, work.year.map(_.value.toInt).map(y => s"($y)")).flatten.mkString(" ")
@@ -112,9 +202,9 @@ object Acquire:
           }, then histmersion ingest <file> --citekey $citekey"
     }
 
-  def flagged(verdict: String): Boolean = verdict == Verdicts.Retracted || verdict == Verdicts.Corrected
+  def flagged(verdict: com.histmersion.api.library.Acquire.FlaggedVerdict): com.histmersion.api.library.Acquire.FlaggedResult = verdict == Verdicts.Retracted || verdict == Verdicts.Corrected
 
-  def recommendation(verdict: String, citedByCount: Option[Int]): String =
+  def recommendation(verdict: com.histmersion.api.library.Acquire.RecommendationVerdict, citedByCount: Option[com.histmersion.api.library.Acquire.RecommendationCitedByCount]): com.histmersion.api.library.Acquire.RecommendationResult =
     val cited = citedByCount.fold("no citation data")(c => s"$c citation(s)")
     verdict match
       case Verdicts.Retracted =>
@@ -125,16 +215,16 @@ object Acquire:
       case Verdicts.LowImpact => s"REVIEW — old and rarely cited ($cited); keep only if it is directly on topic"
       case _                  => s"UNASSESSED — $cited; judge relevance to the topic by hand"
 
-  def statusFor(verdict: String): Option[com.histmersion.api.library.Source.Status] = verdict match
+  def statusFor(verdict: com.histmersion.api.library.Acquire.StatusForVerdict): Option[com.histmersion.api.library.Source.Status] = verdict match
     case Verdicts.Retracted => Some(com.histmersion.api.library.Source.Status.Retracted)
     case Verdicts.Corrected => Some(com.histmersion.api.library.Source.Status.Contested)
     case Verdicts.Current   => Some(com.histmersion.api.library.Source.Status.Current)
     case _                  => None
 
   def statusDecision(
-      verdict: String,
+      verdict: com.histmersion.api.library.Acquire.StatusDecisionVerdict,
       current: com.histmersion.api.library.Source.Status,
-      force: Boolean
+      force: com.histmersion.api.library.Acquire.StatusDecisionForce
   ): Option[Either[com.histmersion.api.library.Source.Status, com.histmersion.api.library.Source.Status]] =
     statusFor(verdict).map { target =>
       if target == com.histmersion.api.library.Source.Status.Retracted || force || current == com.histmersion.api.library.Source.Status.Unassessed || current == target
@@ -143,12 +233,15 @@ object Acquire:
     }
 
   object EdgeKinds:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Confirms = "confirms"
     val Challenges = "challenges"
     val Refutes = "refutes"
     val Supersedes = "supersedes"
     val Cites = "cites"
-    val all: List[String] = List(Confirms, Challenges, Refutes, Supersedes, Cites)
+    val all: List[com.histmersion.api.library.Acquire.EdgeKinds.All] = List(Confirms, Challenges, Refutes, Supersedes, Cites)
 
   private val RefutesCues = List(
     "refut",
@@ -195,13 +288,13 @@ object Acquire:
   )
 
   def classify(
-      intents: List[String],
-      contexts: List[String],
-      isInfluential: Boolean,
-      citingYear: Option[Int],
-      targetYear: Option[Int],
-      gapYears: Int = 5
-  ): String =
+      intents: List[com.histmersion.api.library.Acquire.ClassifyIntents],
+      contexts: List[com.histmersion.api.library.Acquire.ClassifyContexts],
+      isInfluential: com.histmersion.api.library.Acquire.ClassifyIsInfluential,
+      citingYear: Option[com.histmersion.api.library.Acquire.ClassifyCitingYear],
+      targetYear: Option[com.histmersion.api.library.Acquire.ClassifyTargetYear],
+      gapYears: com.histmersion.api.library.Acquire.ClassifyGapYears = 5
+  ): com.histmersion.api.library.Acquire.ClassifyResult =
     val text = contexts.mkString(" ").toLowerCase
     val strong = intents.map(_.toLowerCase).exists(i => i == "result" || i == "methodology")
     val newer = (citingYear, targetYear) match
@@ -237,7 +330,7 @@ object Acquire:
     * wins because the export lists amendments chronologically. The DOI is as the export writes it: the server
     * normalizes it (and drops a row whose DOI is none).
     */
-  def parseRetractionWatch(csv: String): List[RetractionRow] =
+  def parseRetractionWatch(csv: com.histmersion.api.library.Acquire.ParseRetractionWatchCsv): List[RetractionRow] =
     Csv.parse(csv) match
       case Nil            => Nil
       case header :: rows =>
@@ -251,7 +344,7 @@ object Acquire:
         }
 
   /** Retraction Watch writes dates as `MM/DD/YYYY 0:00`; Postgres wants `YYYY-MM-DD`. */
-  def rwDate(raw: Option[String]): Option[String] =
+  def rwDate(raw: Option[com.histmersion.api.library.Acquire.RwDateRaw]): Option[com.histmersion.api.library.Acquire.RwDateResult] =
     raw.map(_.trim.takeWhile(_ != ' ')).flatMap { s =>
       s.split("[/-]").toList match
         case m :: d :: y :: Nil if y.length == 4 && m.forall(_.isDigit) && d.forall(_.isDigit) =>
@@ -371,6 +464,9 @@ object Acquire:
 
 
       /** A re-check job's plan, in its detail. */
+      type DescribeResult = DescribeResult.T
+      object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
       type All = All.T
       object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type UpTo = UpTo.T
@@ -387,7 +483,7 @@ object Acquire:
 
       val JobKind = com.histmersion.api.library.AcquisitionJobKinds.AcquireRecheck.kind.value
 
-      def describe(j: RecheckJob): String =
+      def describe(j: RecheckJob): com.histmersion.api.library.Acquire.Checks.RecheckJob.DescribeResult =
         "the acquisition list's legal re-check of " +
           (if j.all then "every open item with a DOI" else s"up to ${Plural.count(j.upTo, "due item")}") +
           j.resumes.fold("")(id => s" (resuming job $id)")

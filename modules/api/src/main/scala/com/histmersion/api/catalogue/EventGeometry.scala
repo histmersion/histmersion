@@ -1,12 +1,43 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
 object EventGeometry:
-  def point(lat: Double, lon: Double): Either[String, String] =
+  type PointResultPart1 = PointResultPart1.T
+  object PointResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointResultPart2 = PointResultPart2.T
+  object PointResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointLat = PointLat.T
+  object PointLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointLon = PointLon.T
+  object PointLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResultPart1 = OfResultPart1.T
+  object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResultPart2 = OfResultPart2.T
+  object OfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfGeometry = OfGeometry.T
+  object OfGeometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLat = OfLat.T
+  object OfLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLon = OfLon.T
+  object OfLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeometryTypes = GeometryTypes.T
+  object GeometryTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart2 = CheckResultPart2.T
+  object CheckResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckG = CheckG.T
+  object CheckG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FmtResult = FmtResult.T
+  object FmtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FmtD = FmtD.T
+  object FmtD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def point(lat: com.histmersion.api.catalogue.EventGeometry.PointLat, lon: com.histmersion.api.catalogue.EventGeometry.PointLon): Either[com.histmersion.api.catalogue.EventGeometry.PointResultPart1, com.histmersion.api.catalogue.EventGeometry.PointResultPart2] =
     if lat.isNaN || lat < -90 || lat > 90 then Left(s"lat $lat is not between -90 and 90")
     else if lon.isNaN || lon < -180 || lon > 180 then Left(s"lon $lon is not between -180 and 180")
     else Right(s"""{"type":"Point","coordinates":[${fmt(lon)},${fmt(lat)}]}""")
 
-  def of(geometry: Option[String], lat: Option[Double], lon: Option[Double]): Either[String, Option[String]] =
+  def of(geometry: Option[com.histmersion.api.catalogue.EventGeometry.OfGeometry], lat: Option[com.histmersion.api.catalogue.EventGeometry.OfLat], lon: Option[com.histmersion.api.catalogue.EventGeometry.OfLon]): Either[com.histmersion.api.catalogue.EventGeometry.OfResultPart1, Option[com.histmersion.api.catalogue.EventGeometry.OfResultPart2]] =
     (geometry.map(_.trim).filter(_.nonEmpty), lat, lon) match
       case (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Left("give geometry or lat/lon, not both")
       case (g @ Some(_), None, None)                     => Right(g)
@@ -15,7 +46,7 @@ object EventGeometry:
       case _                                             => Left("lat and lon go together")
 
   /** The GeoJSON geometry types of RFC 7946 (a Feature is not one). */
-  val GeometryTypes: Set[String] =
+  val GeometryTypes: Set[com.histmersion.api.catalogue.EventGeometry.GeometryTypes] =
     Set("Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection")
 
   private val WktShape =
@@ -23,7 +54,7 @@ object EventGeometry:
 
   private val Example = """{"type":"Point","coordinates":[<lon>,<lat>]}"""
 
-  def check(g: String): Either[String, String] =
+  def check(g: com.histmersion.api.catalogue.EventGeometry.CheckG): Either[com.histmersion.api.catalogue.EventGeometry.CheckResultPart1, com.histmersion.api.catalogue.EventGeometry.CheckResultPart2] =
     val t = g.trim
     if WktShape.matches(t) then Left(s"geometry is GeoJSON, not WKT: write $Example (or give lat/lon)")
     else
@@ -38,4 +69,4 @@ object EventGeometry:
             case None     => Left(s"geometry has no \"type\": expected an object such as $Example")
 
   // a plain decimal, never `1.0E-4`, and never with a locale's comma
-  private def fmt(d: Double): String = BigDecimal(d).bigDecimal.stripTrailingZeros.toPlainString
+  private def fmt(d: com.histmersion.api.catalogue.EventGeometry.FmtD): com.histmersion.api.catalogue.EventGeometry.FmtResult = BigDecimal(d).bigDecimal.stripTrailingZeros.toPlainString

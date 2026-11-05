@@ -7,9 +7,12 @@ import sttp.tapir.Schema
   * lists it: kept as the kind's JSON ([[PlanMatchKind]]), which the kind writes and reads.
   */
 final case class PlanMatches(rows: List[Json]):
-  def isEmpty: Boolean = rows.isEmpty
+  def isEmpty: com.histmersion.api.exchange.PlanMatches.IsEmptyResult = rows.isEmpty
 
 object PlanMatches:
+  type IsEmptyResult = IsEmptyResult.T
+  object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val empty: PlanMatches = PlanMatches(Nil)
 
   given Encoder[PlanMatches] = Encoder.encodeList[Json].contramap(_.rows)

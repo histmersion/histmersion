@@ -35,6 +35,11 @@ object EventsCmd:
     * `--from`/`--to` are matched against the event's own span, `--title` against its label. The positional query
     * searches the event's label and description.
     */
+  type PatchOptsPart1 = PatchOptsPart1.T
+  object PatchOptsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FollowNoWait = FollowNoWait.T
+  object FollowNoWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private def search (using console: Console) = Opts.subcommand(
     "search",
     "Find events by label or description (the filter flags select their sources)"
@@ -69,7 +74,7 @@ object EventsCmd:
   }
 
   /** The arguments of `events patch <id>`: the id and the patch they make (or why they make none). */
-  private[cli] val patchOpts: Opts[(String, Either[Cli.Error, EventPatch])] =
+  private[cli] val patchOpts: Opts[(com.histmersion.cli.EventsCmd.PatchOptsPart1, Either[Cli.Error, EventPatch])] =
     (
       Opts.argument[String]("id"),
       Opts
@@ -141,7 +146,7 @@ object EventsCmd:
   // ── catalogues, links and leads (#1449) ──
 
   /** Follow a job, then print what it left (an import's report). */
-  private[cli] def follow(c: Client, j: JobInfo, noWait: Boolean)(using console: Console) : Either[Cli.Error, Unit] =
+  private[cli] def follow(c: Client, j: JobInfo, noWait: com.histmersion.cli.EventsCmd.FollowNoWait)(using console: Console) : Either[Cli.Error, Unit] =
     Cli.out.println(
       s"job `${j.id}` started: ${j.detail.flatMap(com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of).getOrElse(j.kind)} (`histmersion jobs` lists it)"
     )

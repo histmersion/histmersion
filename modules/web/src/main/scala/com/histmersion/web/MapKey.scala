@@ -11,7 +11,24 @@ import com.histmersion.api.library.Source
   * layers are on — the event kinds (natural, human) and site types, each icon with its name. Pure markup.
   */
 object MapKey:
-  def eventsHtml: String =
+  type EventsHtmlResult = EventsHtmlResult.T
+  object EventsHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SitesHtmlResult = SitesHtmlResult.T
+  object SitesHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShapesHtmlResult = ShapesHtmlResult.T
+  object ShapesHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlResult = HtmlResult.T
+  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlEvents = HtmlEvents.T
+  object HtmlEvents extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlSites = HtmlSites.T
+  object HtmlSites extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlUndated = HtmlUndated.T
+  object HtmlUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UndatedHtml = UndatedHtml.T
+  object UndatedHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def eventsHtml: com.histmersion.web.MapKey.EventsHtmlResult =
     EventTaxonomy.groups.map { g =>
       val items = EventTaxonomy.kinds
         .filter(_.group == g)
@@ -27,7 +44,7 @@ object MapKey:
       """<li><span class="hd-badge hd-ev hd-ev--attested hd-key-swatch"></span><span>attested by a source</span></li>""" +
       """<li><span class="hd-badge hd-ev hd-ev--catalogue hd-key-swatch"></span><span>catalogue only (a lead)</span></li></ul></div>"""
 
-  def sitesHtml: String =
+  def sitesHtml: com.histmersion.web.MapKey.SitesHtmlResult =
     val items = (SiteTypes.all.map(t => t.icon -> t.label) :+ (CardIcons.Unknown -> "site of unknown type"))
       .map((icon, label) =>
         s"""<li><span class="hd-badge hd-badge--circle hd-key-badge">${Glyphs.badge(icon)}</span><span>${Fmt.esc(
@@ -41,7 +58,7 @@ object MapKey:
     * type, the fill its date, the outline its tier — and the findings' icons, by what their source is. Shown whatever
     * layers are on: the findings always are.
     */
-  def shapesHtml: String =
+  def shapesHtml: com.histmersion.web.MapKey.ShapesHtmlResult =
     def badge(shape: String, inner: String) = s"""<span class="hd-badge hd-badge--$shape hd-key-badge">$inner</span>"""
     // the same icons as the toolbar's layer switches
     val shapes = PointKinds.all.map(k => Icon.html(k.icon) -> k.meaning) ++ List(
@@ -84,11 +101,11 @@ object MapKey:
         )}</ul></div>"""
 
   /** The key's markup: the shapes, then the icons of the layers on. */
-  def html(events: Boolean, sites: Boolean, undated: Boolean = false): String =
+  def html(events: com.histmersion.web.MapKey.HtmlEvents, sites: com.histmersion.web.MapKey.HtmlSites, undated: com.histmersion.web.MapKey.HtmlUndated = false): com.histmersion.web.MapKey.HtmlResult =
     val body = shapesHtml + (if events then eventsHtml else "") + (if sites then sitesHtml else "")
     (if undated then undatedHtml else "") + s"""<details class="hd-key"><summary>key</summary>$body</details>"""
 
   /** The legend's entry while the sites or events of no known date are drawn: their dashed outline. */
-  val undatedHtml: String =
+  val undatedHtml: com.histmersion.web.MapKey.UndatedHtml =
     """<div class="hd-legend-undated"><span class="hd-badge hd-badge--circle hd-key-badge hd-undated-swatch" aria-hidden="true"></span>""" +
       """<span>date unknown (dashed outline)</span></div>"""

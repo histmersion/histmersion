@@ -172,7 +172,7 @@ final class McpTools(
       )
       .input[ConfigInput]
       .handle { in =>
-        def page(f: com.histmersion.api.settings.ConfigEdit.Page => String, prefix: Option[String]) =
+        def page(f: com.histmersion.api.settings.ConfigEdit.Page => com.histmersion.server.McpTools.PageFResult, prefix: Option[com.histmersion.server.McpTools.PagePrefix]) =
           h.settings.page(prefix).fold(McpOut.error, p => ToolResult.text(f(p)))
         in.action.trim.toLowerCase(java.util.Locale.ROOT) match
           case "reload" => ToolResult.text(ReloadMarkdown.report(h.instance.configReload()))
@@ -468,9 +468,16 @@ final class McpTools(
   val endpoint = server.endpoint(List("mcp"))
 
   /** Every tool `/mcp` advertises — what a `{{tool:<name>}}` placeholder in a definition may name. */
-  def toolNames: Set[String] = server.tools.map(_.name).toSet
+  def toolNames: Set[com.histmersion.server.McpTools.ToolNamesResult] = server.tools.map(_.name).toSet
 
 object McpTools:
+  type PageFResult = PageFResult.T
+  object PageFResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PagePrefix = PagePrefix.T
+  object PagePrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToolNamesResult = ToolNamesResult.T
+  object ToolNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   export com.histmersion.util.mcp.ToolInputs.given
 
   // Circe Codec + tapir Schema both derived from each input by Kindlings → matching by construction.
@@ -812,7 +819,10 @@ object McpTools:
   enum MergesAction:
     case List, Show, Ledger
   object MergesAction:
-    def parse(raw: Option[String]): Option[MergesAction] =
+    type ParseRaw = ParseRaw.T
+    object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(raw: Option[com.histmersion.server.McpTools.MergesAction.ParseRaw]): Option[MergesAction] =
       raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
         case None    => Some(List)
         case Some(a) => values.find(_.toString.equalsIgnoreCase(a))

@@ -15,9 +15,74 @@ import com.histmersion.api.catalogue.Place
   * and the placeholder points that stand for a named place. The library reaches it through [[FindingPlacement]].
   */
 private[places] object FindingPlaceRepo:
+  type RebuildFindingPlacesToleranceKm = RebuildFindingPlacesToleranceKm.T
+  object RebuildFindingPlacesToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaterialiseForResult = MaterialiseForResult.T
+  object MaterialiseForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaterialiseForToleranceKm = MaterialiseForToleranceKm.T
+  object MaterialiseForToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaterialisePlacesResult = MaterialisePlacesResult.T
+  object MaterialisePlacesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaterialisePlacesPlaceIds = MaterialisePlacesPlaceIds.T
+  object MaterialisePlacesPlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaterialisePlacesToleranceKm = MaterialisePlacesToleranceKm.T
+  object MaterialisePlacesToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExplicitOnlySqlResult = ExplicitOnlySqlResult.T
+  object ExplicitOnlySqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExplicitOnlySqlAlias = ExplicitOnlySqlAlias.T
+  object ExplicitOnlySqlAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultPlaceholderMin = DefaultPlaceholderMin.T
+  object DefaultPlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultPlaceholderAreaShare = DefaultPlaceholderAreaShare.T
+  object DefaultPlaceholderAreaShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholderSqlResult = PlaceholderSqlResult.T
+  object PlaceholderSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholderSqlF = PlaceholderSqlF.T
+  object PlaceholderSqlF extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholderFindingsSql = PlaceholderFindingsSql.T
+  object PlaceholderFindingsSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnresolvedPlaceholdersInResultPart1 = UnresolvedPlaceholdersInResultPart1.T
+  object UnresolvedPlaceholdersInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnresolvedPlaceholdersInResultPart2 = UnresolvedPlaceholdersInResultPart2.T
+  object UnresolvedPlaceholdersInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart2 = ResolveResultPart2.T
+  object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholdersResultPart1 = PlaceholdersResultPart1.T
+  object PlaceholdersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholdersResultPart2Part1 = PlaceholdersResultPart2Part1.T
+  object PlaceholdersResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceholdersResultPart2Part2 = PlaceholdersResultPart2Part2.T
+  object PlaceholdersResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertAssignmentsResultPart1 = InsertAssignmentsResultPart1.T
+  object InsertAssignmentsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertAssignmentsResultPart2 = InsertAssignmentsResultPart2.T
+  object InsertAssignmentsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertAssignmentsToleranceKm = InsertAssignmentsToleranceKm.T
+  object InsertAssignmentsToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InsertAssignmentsPlaces = InsertAssignmentsPlaces.T
+  object InsertAssignmentsPlaces extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByPlaceholderResult = ByPlaceholderResult.T
+  object ByPlaceholderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByPlaceholderNamedPart1 = ByPlaceholderNamedPart1.T
+  object ByPlaceholderNamedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByPlaceholderNamedPart2 = ByPlaceholderNamedPart2.T
+  object ByPlaceholderNamedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByPlaceholderAnyPlace = ByPlaceholderAnyPlace.T
+  object ByPlaceholderAnyPlace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByPlaceholderPids = ByPlaceholderPids.T
+  object ByPlaceholderPids extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByResolutionResult = ByResolutionResult.T
+  object ByResolutionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByResolutionAnyPlace = ByResolutionAnyPlace.T
+  object ByResolutionAnyPlace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByResolutionPids = ByResolutionPids.T
+  object ByResolutionPids extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import PlaceRepo.*
 
-  def rebuildFindingPlaces(toleranceKm: Double)(using DbCon): Place.RebuildResult =
+  def rebuildFindingPlaces(toleranceKm: com.histmersion.domain.catalogue.places.FindingPlaceRepo.RebuildFindingPlacesToleranceKm)(using DbCon): Place.RebuildResult =
     // Lock in a FIXED order — `findings` first, then `finding_places` — before touching anything.
     // Without it the INSERT…SELECT can see (in its snapshot) a finding another transaction has
     // just deleted and then fail the foreign key; and two rebuilds, or a rebuild and a
@@ -42,7 +107,7 @@ private[places] object FindingPlaceRepo:
     * transaction, so the gazetteer assignment is never observable as missing. Same table order as
     * [[rebuildFindingPlaces]]: findings, then finding_places.
     */
-  def materialiseFor(citekey: String, toleranceKm: Double)(using DbCon): Int =
+  def materialiseFor(citekey: com.histmersion.domain.library.Citekey, toleranceKm: com.histmersion.domain.catalogue.places.FindingPlaceRepo.MaterialiseForToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.FindingPlaceRepo.MaterialiseForResult =
     val _ = sql"""DELETE FROM finding_places fp
                   USING findings f
                   WHERE f.id = fp.finding_id AND f.citekey = $citekey""".update.run()
@@ -54,7 +119,7 @@ private[places] object FindingPlaceRepo:
     * inserts as a rebuild, restricted to those places, so a fix takes seconds instead of a whole rebuild's half minute
     * (live 2026-10-09). Same table order as [[rebuildFindingPlaces]]. Returns the rows written.
     */
-  def materialisePlaces(placeIds: List[String], toleranceKm: Double)(using DbCon): Int =
+  def materialisePlaces(placeIds: List[com.histmersion.domain.catalogue.places.FindingPlaceRepo.MaterialisePlacesPlaceIds], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlaceRepo.MaterialisePlacesToleranceKm)(using DbCon): com.histmersion.domain.catalogue.places.FindingPlaceRepo.MaterialisePlacesResult =
     val ids = placeIds.distinct
     if ids.isEmpty then 0
     else
@@ -71,19 +136,19 @@ private[places] object FindingPlaceRepo:
     * steppe ancestry. A finding belongs to one only by an EXPLICIT match ([[insertAssignments]]). Imported places have
     * their own, stricter rule.
     */
-  private[histmersion] def explicitOnlySql(alias: String): String =
+  private[histmersion] def explicitOnlySql(alias: com.histmersion.domain.catalogue.places.FindingPlaceRepo.ExplicitOnlySqlAlias): com.histmersion.domain.catalogue.places.FindingPlaceRepo.ExplicitOnlySqlResult =
     s"coalesce(ST_Dimension($alias.geom) = 0 AND (coalesce($alias.kind, '') NOT IN ('site', 'feature')" +
       s" OR coalesce($alias.location_precision = 'grid-cell', false)), false)"
 
   /** The placeholder minimum the assignment's geocoder pass ranks with ([[Geocode.isPlaceholder]]). It MUST equal
     * `places.geocode-placeholder-min` in `reference.conf`; `PlaceRepoSuite` asserts it.
     */
-  val DefaultPlaceholderMin: Int = 4
+  val DefaultPlaceholderMin: com.histmersion.domain.catalogue.places.FindingPlaceRepo.DefaultPlaceholderMin = 4
 
   /** The share of a placeholder finding's named place an area must cover to take the finding. It MUST equal
     * `places.placeholder-area-share` in `reference.conf`; `PlaceholderPointSuite` asserts it.
     */
-  val DefaultPlaceholderAreaShare: Double = 0.25
+  val DefaultPlaceholderAreaShare: com.histmersion.domain.catalogue.places.FindingPlaceRepo.DefaultPlaceholderAreaShare = 0.25
 
   /** A finding whose POINT is a PLACEHOLDER (2026-10-09), over a `findings` row aliased `f` — a point that stands for
     * "somewhere in this area", not "here":
@@ -97,7 +162,7 @@ private[places] object FindingPlaceRepo:
     * the Temple of Athena Alea, and by containment the Peloponnese. A placeholder finding belongs to what its NAME says
     * ([[insertAssignments]]). Within 1e-6° (0.1 m) of the point.
     */
-  private[histmersion] def placeholderSql(f: String): String =
+  private[histmersion] def placeholderSql(f: com.histmersion.domain.catalogue.places.FindingPlaceRepo.PlaceholderSqlF): com.histmersion.domain.catalogue.places.FindingPlaceRepo.PlaceholderSqlResult =
     // the two EXISTS read the partial indexes `places_rep_point` and `places_explicit_point` (V080),
     // whose predicates these are word for word
     s"(CASE WHEN $f.geom IS NULL OR GeometryType($f.geom) <> 'POINT' THEN false" +
@@ -129,14 +194,14 @@ private[places] object FindingPlaceRepo:
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Every placeholder finding: id, place name, period, citekey and point (`lint --rule finding-placeholder`). */
-  val placeholderFindingsSql: String =
+  val placeholderFindingsSql: com.histmersion.domain.catalogue.places.FindingPlaceRepo.PlaceholderFindingsSql =
     s"SELECT f.id, nullif(btrim(f.region_name), ''), ${RangeSql.cols("f.period")}, f.citekey," +
       s" ST_X(f.geom), ST_Y(f.geom) FROM findings f WHERE f.geom IS NOT NULL AND ${placeholderSql("f")}"
 
   /** The placeholder findings whose place name the geocoder does not resolve, or that have none — what
     * `lint --rule finding-placeholder` lists, as (citekey, line), by citekey and finding id.
     */
-  def unresolvedPlaceholdersIn()(using DbCon): List[(String, String)] =
+  def unresolvedPlaceholdersIn()(using DbCon): List[(com.histmersion.domain.catalogue.places.FindingPlaceRepo.UnresolvedPlaceholdersInResultPart1, com.histmersion.domain.catalogue.places.FindingPlaceRepo.UnresolvedPlaceholdersInResultPart2)] =
     val ph =
       (Sql.raw(placeholderFindingsSql) ++ Sql.raw(" ORDER BY f.citekey, f.id")).frag.query[Placeholder].run().toList
     val resolved = resolve(ph).map(_._1).toSet
@@ -150,7 +215,7 @@ private[places] object FindingPlaceRepo:
   /** Finding id → the place its name resolves to, for the placeholders that have a name the geocoder resolves (as a
     * region). One resolution per (name, period).
     */
-  private def resolve(ph: List[Placeholder])(using DbCon): List[(String, String)] =
+  private def resolve(ph: List[Placeholder])(using DbCon): List[(com.histmersion.domain.catalogue.places.FindingPlaceRepo.ResolveResultPart1, com.histmersion.domain.catalogue.places.FindingPlaceRepo.ResolveResultPart2)] =
     ph.flatMap(p => p.name.map(n => (n, p)))
       .groupBy((n, p) => (n, Geocode.periodOf(p.from, p.to)))
       .toList
@@ -165,7 +230,7 @@ private[places] object FindingPlaceRepo:
     * geocoder resolves ([[Geocoder.resolveIn]], as a region), the place it resolves to: (every placeholder id, finding
     * id → place id).
     */
-  private def placeholders(citekey: Option[String])(using DbCon): (List[String], List[(String, String)]) =
+  private def placeholders(citekey: Option[com.histmersion.domain.library.Citekey])(using DbCon): (List[com.histmersion.domain.catalogue.places.FindingPlaceRepo.PlaceholdersResultPart1], List[(com.histmersion.domain.catalogue.places.FindingPlaceRepo.PlaceholdersResultPart2Part1, com.histmersion.domain.catalogue.places.FindingPlaceRepo.PlaceholdersResultPart2Part2)]) =
     val ph = (Sql.raw(placeholderFindingsSql) ++
       citekey.fold(Sql.raw(""))(ck => Sql.of(" AND f.citekey = ?", Param.S(ck)))).frag.query[Placeholder].run().toList
     (ph.map(_.id), resolve(ph))
@@ -186,9 +251,9 @@ private[places] object FindingPlaceRepo:
     *     not to the Peloponnese — and not to areas merely covering the point; when it does not resolve, areas still
     *     take it by containment (`lint --rule finding-placeholder` lists those for a person).
     */
-  private def insertAssignments(citekey: Option[String], toleranceKm: Double, places: Option[List[String]] = None)(using
+  private def insertAssignments(citekey: Option[com.histmersion.domain.library.Citekey], toleranceKm: com.histmersion.domain.catalogue.places.FindingPlaceRepo.InsertAssignmentsToleranceKm, places: Option[List[com.histmersion.domain.catalogue.places.FindingPlaceRepo.InsertAssignmentsPlaces]] = None)(using
       DbCon
-  ): (Int, Int) =
+  ): (com.histmersion.domain.catalogue.places.FindingPlaceRepo.InsertAssignmentsResultPart1, com.histmersion.domain.catalogue.places.FindingPlaceRepo.InsertAssignmentsResultPart2) =
     // `places`: only the links of these places (a reclassified, merged or moved place, [[materialisePlaces]])
     val anyPlace = places.isEmpty
     val pids = places.getOrElse(Nil)
@@ -269,7 +334,7 @@ private[places] object FindingPlaceRepo:
     * least [[DefaultPlaceholderAreaShare]] of that place's shape, or, when the place has no shape, its point — when the
     * periods overlap. The shares are computed once per place. Returns the rows inserted.
     */
-  private def byPlaceholder(named: List[(String, String)], anyPlace: Boolean, pids: List[String])(using DbCon): Int =
+  private def byPlaceholder(named: List[(com.histmersion.domain.catalogue.places.FindingPlaceRepo.ByPlaceholderNamedPart1, com.histmersion.domain.catalogue.places.FindingPlaceRepo.ByPlaceholderNamedPart2)], anyPlace: com.histmersion.domain.catalogue.places.FindingPlaceRepo.ByPlaceholderAnyPlace, pids: List[com.histmersion.domain.catalogue.places.FindingPlaceRepo.ByPlaceholderPids])(using DbCon): com.histmersion.domain.catalogue.places.FindingPlaceRepo.ByPlaceholderResult =
     if named.isEmpty then 0
     else
       val fids = named.map(_._1)
@@ -322,7 +387,7 @@ private[places] object FindingPlaceRepo:
     * readings ([[Geocode.attempts]]) is the name key of an explicit-only place are resolved at all, so a rebuild
     * resolves a few hundred names, not every finding's. Returns the rows inserted.
     */
-  private def byResolution(citekey: Option[String], anyPlace: Boolean, pids: List[String])(using DbCon): Int =
+  private def byResolution(citekey: Option[com.histmersion.domain.library.Citekey], anyPlace: com.histmersion.domain.catalogue.places.FindingPlaceRepo.ByResolutionAnyPlace, pids: List[com.histmersion.domain.catalogue.places.FindingPlaceRepo.ByResolutionPids])(using DbCon): com.histmersion.domain.catalogue.places.FindingPlaceRepo.ByResolutionResult =
     val named = sql"""SELECT f.id, btrim(f.region_name), ${SqlLiteral(RangeSql.cols("f.period"))}
                       FROM findings f
                       WHERE btrim(coalesce(f.region_name, '')) <> ''

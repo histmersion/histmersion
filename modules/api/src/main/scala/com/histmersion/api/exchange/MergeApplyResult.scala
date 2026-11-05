@@ -23,9 +23,12 @@ final case class MergeApplyResult(
     notes: List[MergeApplyResult.Notes] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def changed: Int = counts.map(_.changed).sum
+  def changed: com.histmersion.api.exchange.MergeApplyResult.ChangedResult = counts.map(_.changed).sum
 
 object MergeApplyResult:
+  type ChangedResult = ChangedResult.T
+  object ChangedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Applied = Applied.T
   object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanHash = PlanHash.T

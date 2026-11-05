@@ -39,6 +39,11 @@ final case class MediaPlace(
 
 object MediaPlace:
   /** The place as a host of SPI 2's first release described it: no gazetteer ids. */
+  type ApplyId = ApplyId.T
+  object ApplyId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyLabel = ApplyLabel.T
+  object ApplyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Label = Label.T
@@ -49,8 +54,8 @@ object MediaPlace:
   object IdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(
-      id: String,
-      label: String,
+      id: com.histmersion.plugin.MediaPlace.ApplyId,
+      label: com.histmersion.plugin.MediaPlace.ApplyLabel,
       wikidata: Option[WikidataId],
       lat: Option[Latitude],
       lon: Option[Longitude],

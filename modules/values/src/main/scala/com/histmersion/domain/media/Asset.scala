@@ -12,9 +12,12 @@ object Asset:
 
   /** What a picture's link points at: the kinds of record it depicts. */
   object LinkTarget:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Event = "event"
     val Finding = "finding"
     val Place = "place"
     val Source = "source"
     val Article = "article"
-    val all: List[String] = List(Event, Finding, Place, Source, Article)
+    val all: List[com.histmersion.domain.media.Asset.LinkTarget.All] = List(Event, Finding, Place, Source, Article)

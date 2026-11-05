@@ -11,9 +11,12 @@ final case class EventsWikidataConfig(
     languages: EventsWikidataConfig.Languages,
     batch: EventsWikidataConfig.Batch
 ) derives ConfigReader:
-  def languageList: List[String] = languages.split(",").map(_.trim).filter(_.nonEmpty).toList
+  def languageList: List[com.histmersion.config.EventsWikidataConfig.LanguageListResult] = languages.split(",").map(_.trim).filter(_.nonEmpty).toList
 
 object EventsWikidataConfig:
+  type LanguageListResult = LanguageListResult.T
+  object LanguageListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SparqlUrl = SparqlUrl.T
   object SparqlUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApiUrl = ApiUrl.T

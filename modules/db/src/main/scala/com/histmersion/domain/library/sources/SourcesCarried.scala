@@ -32,9 +32,14 @@ import hearth.kindlings.optics.syntax.*
   * figure renames after the blobs; its chunks, finding places and parked edges in the derived step.
   */
 object SourcesCarried:
+  type RowsRank = RowsRank.T
+  object RowsRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetStem = SetStem.T
+  object SetStem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Library = DataOwner("library")
 
-  private def rows(rank: Int)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
+  private def rows(rank: com.histmersion.domain.library.sources.SourcesCarried.RowsRank)(write: BundleImport.Writer => Unit) = RowsIn(ImportStage.Rows, ImportRank(rank), write)
 
   /** The bytes of a source's body, written as a blob. */
   private def body(uid: java.util.UUID)(using DbCon): java.io.OutputStream => Unit =
@@ -105,7 +110,7 @@ object SourcesCarried:
   )(scope => SourceBundleRepo.findings(scope).toList)(_.updatedAt, (es, ls) => es.modify(_.findings).setTo(ls))
 
   /** The entry of a set records own, by its file's stem. */
-  private def set(stem: String): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
+  private def set(stem: com.histmersion.domain.library.sources.SourcesCarried.SetStem): BundleEntry = BundleEntry(s"entities/$stem.ndjson")
 
   val edges: CarriedKind =
     CarriedKind

@@ -10,4 +10,7 @@ enum VectorStyle(val id: String, val label: String):
   case Physical extends VectorStyle("physical", "Physical")
 
 object VectorStyle:
-  def parse(s: String): Option[VectorStyle] = values.find(_.id == s.trim.toLowerCase)
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: com.histmersion.web.map.VectorStyle.ParseS): Option[VectorStyle] = values.find(_.id == s.trim.toLowerCase)

@@ -12,9 +12,12 @@ final case class GebcoPlan(
     tiles: Vector[(GebcoPlan.TilesPart1, (GebcoPlan.TilesPart2Part1, GebcoPlan.TilesPart2Part2, GebcoPlan.TilesPart2Part3))],
     edge: Set[(GebcoPlan.EdgePart1, GebcoPlan.EdgePart2, GebcoPlan.EdgePart3)]
 ):
-  def readBytes: Long = parts.map(_.bytes).sum
+  def readBytes: com.histmersion.util.basemap.GebcoPlan.ReadBytesResult = parts.map(_.bytes).sum
 
 object GebcoPlan:
+  type ReadBytesResult = ReadBytesResult.T
+  object ReadBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type MaxZoom = MaxZoom.T
   object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TilesPart1 = TilesPart1.T

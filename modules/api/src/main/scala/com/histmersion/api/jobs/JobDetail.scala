@@ -13,7 +13,7 @@ import sttp.tapir.{FieldName, Schema}
   * value or the field's default; a detail holds only the values that differ from their default.
   */
 final case class JobDetail private (values: Map[JobDetail.ValuesKey, Json]):
-  def json(name: String): Option[Json] = values.get(name)
+  def json(name: com.histmersion.api.jobs.JobDetail.JsonName): Option[Json] = values.get(name)
 
   /** The detail with `field` set to `a`. */
   def set[A](field: com.histmersion.api.jobs.JobDetail.Field[A], a: A): JobDetail =
@@ -24,13 +24,20 @@ final case class JobDetail private (values: Map[JobDetail.ValuesKey, Json]):
     set(field, f(field.of(this)))
 
 object JobDetail:
+  type JsonName = JsonName.T
+  object JsonName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Purpose = Purpose.T
+  object Purpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubjectResult = SubjectResult.T
+  object SubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type ValuesKey = ValuesKey.T
   object ValuesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val empty: JobDetail = JobDetail(Map.empty)
 
   /** What a job is about, in a person's words (a places or base-map job's). */
-  val Purpose: com.histmersion.api.jobs.JobDetail.Field[Option[String]] =
+  val Purpose: com.histmersion.api.jobs.JobDetail.Field[Option[com.histmersion.api.jobs.JobDetail.Purpose]] =
     com.histmersion.api.jobs.JobDetail.Field("about", None)
 
   private def fields: List[com.histmersion.api.jobs.JobDetail.Field[?]] = RegisteredJobKinds.all.details
@@ -52,7 +59,7 @@ object JobDetail:
     Schema(SProduct(fields.map(_.schemaField)), Some(Schema.SName("com.histmersion.api.jobs.JobDetail")))
 
   /** What a job is about: its source, else what its detail says (each kind's owner says how). */
-  def subject(j: JobInfo): Option[String] = RegisteredJobKinds.all.subject(j)
+  def subject(j: JobInfo): Option[com.histmersion.api.jobs.JobDetail.SubjectResult] = RegisteredJobKinds.all.subject(j)
 
   /** One field of a job's detail, as the owner of the kinds that record it declares it: its name on the wire, its value
     * when a job records none, and how it reads and writes. The jobs keep a detail as these fields' JSON

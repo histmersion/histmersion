@@ -17,11 +17,22 @@ import scala.util.control.NonFatal
 object PluginMedia:
 
   /** A collection run's polite client: the collection's own pace, the media politeness otherwise. */
+  type PoliteSleepArg1 = PoliteSleepArg1.T
+  object PoliteSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalResult = RefusalResult.T
+  object RefusalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalProvider = RefusalProvider.T
+  object RefusalProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GuardResultPart1 = GuardResultPart1.T
+  object GuardResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RightsResultPart1 = RightsResultPart1.T
+  object RightsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def polite(
       http: HttpTransport,
       media: MediaConfig,
       collection: MediaCollection,
-      sleep: Long => Unit = ms => Thread.sleep(ms),
+      sleep: com.histmersion.pluginhost.PluginMedia.PoliteSleepArg1 => Unit = ms => Thread.sleep(ms),
       log: HostLog = HostLog.scribe
   ): Polite =
     Polite(http, media.modify(_.requestIntervalMs).setTo(collection.requestIntervalMs), sleep = sleep, log = log)
@@ -29,7 +40,7 @@ object PluginMedia:
   /** Pure: why a record may not be kept whatever place it names — a withheld record, rights the host cannot read, a
     * licence family not in `allow` (the collection's allowlist), no image — or `None`.
     */
-  def refusal(rec: MediaRecord, allow: LicencePolicy, provider: String): Option[String] =
+  def refusal(rec: MediaRecord, allow: LicencePolicy, provider: com.histmersion.pluginhost.PluginMedia.RefusalProvider): Option[com.histmersion.pluginhost.PluginMedia.RefusalResult] =
     rec.rights match
       case _ if rec.withheld.isDefined          => rec.withheld
       case Left(why)                            => Some(why)
@@ -45,7 +56,7 @@ object PluginMedia:
     def get(url: String, headers: Map[String, String]) = polite.get(url, headers).map(_.body)
 
   /** A plugin's answer, or what it threw as a failure of that call. */
-  def guard[A](a: => Either[String, A]): Either[String, A] =
+  def guard[A](a: => Either[String, A]): Either[com.histmersion.pluginhost.PluginMedia.GuardResultPart1, A] =
     try Option(a).getOrElse(Left("the plugin answered nothing"))
     catch
       case e: InterruptedException => throw e
@@ -86,7 +97,7 @@ object PluginMedia:
     * carry a credit line. The family decided here is what the allowlist is checked against: the plugin states, the host
     * judges.
     */
-  def rights(r: com.histmersion.plugin.MediaRights): Either[String, Attribution] =
+  def rights(r: com.histmersion.plugin.MediaRights): Either[com.histmersion.pluginhost.PluginMedia.RightsResultPart1, Attribution] =
     val stated =
       try Option(r.licence).map(SpiValues.licenceOf).getOrElse("").trim
       catch case NonFatal(_) => ""

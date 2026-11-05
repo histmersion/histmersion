@@ -10,14 +10,21 @@ import com.histmersion.api.given
 
 object AboutMarkdown:
 
-  def age(seconds: Long): String =
+  type AgeResult = AgeResult.T
+  object AgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AgeSeconds = AgeSeconds.T
+  object AgeSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderResult = RenderResult.T
+  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def age(seconds: com.histmersion.api.instance.AboutMarkdown.AgeSeconds): com.histmersion.api.instance.AboutMarkdown.AgeResult =
     val s = math.max(0L, seconds)
     if s < 60 then s"$s s"
     else if s < 3600 then s"${s / 60} min"
     else if s < 86400 then s"${s / 3600} h"
     else s"${s / 86400} d"
 
-  def render(a: About): String =
+  def render(a: About): com.histmersion.api.instance.AboutMarkdown.RenderResult =
     val b = a.build
     val commit = b.gitCommit.fold("unknown")(c => if b.dirty then s"$c (with uncommitted changes)" else c)
     val conv = a.health.converter

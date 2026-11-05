@@ -16,10 +16,13 @@ import hearth.kindlings.optics.syntax.*
   * uid here are one here — by id, or by label and an overlapping span.
   */
 object PeriodMergeRules extends MergeRules:
+  type LedgerLabel = LedgerLabel.T
+  object LedgerLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   override val planning: Option[PlanRules] = Some(CataloguePlan)
   val owner: DataOwner = DataOwner("catalogue")
   val kind: Bundle.Kind = Bundle.Kind.Period
-  override val ledgerLabel: Option[String] = Some("SELECT id FROM periods WHERE uid = l.local_uid")
+  override val ledgerLabel: Option[com.histmersion.domain.catalogue.periods.PeriodMergeRules.LedgerLabel] = Some("SELECT id FROM periods WHERE uid = l.local_uid")
 
   override def gather(
       bundle: BundleEntities,

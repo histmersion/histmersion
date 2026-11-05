@@ -28,10 +28,15 @@ object DeleteBlocker:
     case Job extends Kind("job", "still being written by job")
 
   object Kind:
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): String = e.wire
-      def fromWire(s: String): Option[Kind] = Kind.values.find(_.wire == s.trim.toLowerCase)
+      def wire(e: Kind): com.histmersion.api.library.DeleteBlocker.Kind.WireResult = e.wire
+      def fromWire(s: com.histmersion.api.library.DeleteBlocker.Kind.FromWireS): Option[Kind] = Kind.values.find(_.wire == s.trim.toLowerCase)
     given Encoder[Kind] = WireEnum.encoder
     given Decoder[Kind] = WireEnum.decoder
     given Schema[Kind] = WireEnum.schema

@@ -9,13 +9,28 @@ import com.histmersion.api.media.AssetLink
   */
 private[links] object AssetLinkRepo:
 
+  type ListAsset = ListAsset.T
+  object ListAsset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListTargetType = ListTargetType.T
+  object ListTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListTargetId = ListTargetId.T
+  object ListTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FigureExistsResult = FigureExistsResult.T
+  object FigureExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FigureExistsName = FigureExistsName.T
+  object FigureExistsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteResult = DeleteResult.T
+  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteId = DeleteId.T
+  object DeleteId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given DbCodec[AssetLink] = DbCodec.derived
 
   def list(
-      citekey: Option[String],
-      asset: Option[String],
-      targetType: Option[String],
-      targetId: Option[String]
+      citekey: Option[com.histmersion.domain.library.Citekey],
+      asset: Option[com.histmersion.domain.media.links.AssetLinkRepo.ListAsset],
+      targetType: Option[com.histmersion.domain.media.links.AssetLinkRepo.ListTargetType],
+      targetId: Option[com.histmersion.domain.media.links.AssetLinkRepo.ListTargetId]
   )(using DbCon): List[AssetLink] =
     sql"""SELECT id, citekey, asset_name, relation, target_type, target_id, xywh, notes
           FROM asset_links
@@ -26,7 +41,7 @@ private[links] object AssetLinkRepo:
           ORDER BY id""".query[AssetLink].run().toList
 
   /** Whether the figure a link names is stored. */
-  def figureExists(citekey: String, name: String)(using DbCon): Boolean =
+  def figureExists(citekey: com.histmersion.domain.library.Citekey, name: com.histmersion.domain.media.links.AssetLinkRepo.FigureExistsName)(using DbCon): com.histmersion.domain.media.links.AssetLinkRepo.FigureExistsResult =
     sql"SELECT 1 FROM assets WHERE citekey = $citekey AND name = $name".query[Int].run().nonEmpty
 
   def insert(in: AssetLink.Put)(using DbCon): AssetLink =
@@ -36,5 +51,5 @@ private[links] object AssetLinkRepo:
           RETURNING id""".query[Long].run().head
     AssetLink(id, in.citekey, in.assetName, in.relation, in.targetType, in.targetId, in.xywh, in.notes)
 
-  def delete(id: Long)(using DbCon): Boolean =
+  def delete(id: com.histmersion.domain.media.links.AssetLinkRepo.DeleteId)(using DbCon): com.histmersion.domain.media.links.AssetLinkRepo.DeleteResult =
     sql"DELETE FROM asset_links WHERE id = $id".update.run() > 0

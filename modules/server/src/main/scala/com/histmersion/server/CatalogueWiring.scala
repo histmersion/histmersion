@@ -133,11 +133,18 @@ object CatalogueWiring:
   /** How the gazetteer comes in, over `deps`' stores and plugins: `download` fetches a pinned extract into its file,
     * `text` a url's text (the land).
     */
+  type GazetteerTextArg1 = GazetteerTextArg1.T
+  object GazetteerTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GazetteerTextResultPart1 = GazetteerTextResultPart1.T
+  object GazetteerTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GazetteerTextResultPart2 = GazetteerTextResultPart2.T
+  object GazetteerTextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def gazetteer(
       deps: Deps,
       places: PlaceService,
       download: GazetteerLoad.Download,
-      text: String => Either[String, String]
+      text: com.histmersion.server.CatalogueWiring.GazetteerTextArg1 => Either[com.histmersion.server.CatalogueWiring.GazetteerTextResultPart1, com.histmersion.server.CatalogueWiring.GazetteerTextResultPart2]
   ): GazetteerImports =
     GazetteerImports(
       deps.transactor,

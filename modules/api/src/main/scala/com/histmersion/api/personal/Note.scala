@@ -47,10 +47,13 @@ object Note:
   type Text = Text.T
 
   object Text extends RefinedType[String, Pure]:
+    type TidyResultPart1 = TidyResultPart1.T
+    object TidyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val MaxChars = 50000
 
     /** A note's text as given, with Unix line ends and no trailing space; refused when empty or too long. */
-    def tidy(raw: Text): Either[String, Text] =
+    def tidy(raw: Text): Either[com.histmersion.api.personal.Note.Text.TidyResultPart1, Text] =
       val t = raw.value.replace("\r\n", "\n").stripTrailing
       if t.trim.isEmpty then Left("a note needs some text")
       else if t.length > MaxChars then Left(s"a note is at most $MaxChars characters (this one: ${t.length})")

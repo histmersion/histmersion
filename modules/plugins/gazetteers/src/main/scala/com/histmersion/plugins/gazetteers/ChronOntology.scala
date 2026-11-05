@@ -14,12 +14,37 @@ import io.circe.{Json, JsonObject}
   */
 object ChronOntology extends DownloadedGazetteer:
 
+  type ReadResultPart1 = ReadResultPart1.T
+  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadText = ReadText.T
+  object ReadText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadResultResultPart1 = ReadResultResultPart1.T
+  object ReadResultResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BestNameResult = BestNameResult.T
+  object BestNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllNamesResultPart1 = AllNamesResultPart1.T
+  object AllNamesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AllNamesResultPart2 = AllNamesResultPart2.T
+  object AllNamesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseYearResult = ParseYearResult.T
+  object ParseYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseYearKey = ParseYearKey.T
+  object ParseYearKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractKindResult = ExtractKindResult.T
+  object ExtractKindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractRegionsResult = ExtractRegionsResult.T
+  object ExtractRegionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrFieldResult = StrFieldResult.T
+  object StrFieldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrFieldKey = StrFieldKey.T
+  object StrFieldKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val title = "ChronOntology named periods"
   override val description = "ChronOntology named periods (DAI, open access, ~14K periods)"
   val url = "https://chronontology.dainst.org/data/period?size=15000&from=0"
   val rights: GazetteerRights = GazetteerRights(Licence("open access"), "ChronOntology (DAI), open access")
 
-  def read(text: String): Either[String, List[GazetteerPlace]] =
+  def read(text: com.histmersion.plugins.gazetteers.ChronOntology.ReadText): Either[com.histmersion.plugins.gazetteers.ChronOntology.ReadResultPart1, List[GazetteerPlace]] =
     io.circe.parser.parse(text).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val results = doc.asObject
         .flatMap(_("results"))
@@ -29,7 +54,7 @@ object ChronOntology extends DownloadedGazetteer:
       results.map(_.flatMap(r => readResult(r).toOption))
     }
 
-  def readResult(j: Json): Either[String, GazetteerPlace] =
+  def readResult(j: Json): Either[com.histmersion.plugins.gazetteers.ChronOntology.ReadResultResultPart1, GazetteerPlace] =
     j.asObject.toRight("result is not a JSON object").flatMap { wrapper =>
       val res = wrapper("resource").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val id = strField(res, "id").getOrElse("")
@@ -55,14 +80,14 @@ object ChronOntology extends DownloadedGazetteer:
           )
     }
 
-  private def bestName(res: JsonObject): String =
+  private def bestName(res: JsonObject): com.histmersion.plugins.gazetteers.ChronOntology.BestNameResult =
     val names = res("names").flatMap(_.asObject).getOrElse(JsonObject.empty)
     val en = names("en").flatMap(_.asArray).flatMap(_.headOption).flatMap(_.asString)
     en.getOrElse {
       names.toIterable.flatMap((_, v) => v.asArray.flatMap(_.headOption).flatMap(_.asString)).headOption.getOrElse("")
     }
 
-  private def allNames(res: JsonObject): List[(String, String)] =
+  private def allNames(res: JsonObject): List[(com.histmersion.plugins.gazetteers.ChronOntology.AllNamesResultPart1, com.histmersion.plugins.gazetteers.ChronOntology.AllNamesResultPart2)] =
     val names = res("names").flatMap(_.asObject).getOrElse(JsonObject.empty)
     names.toList.flatMap { (lang, arr) =>
       arr.asArray.getOrElse(Vector.empty).flatMap(_.asString).map(n => (n, lang))
@@ -83,14 +108,14 @@ object ChronOntology extends DownloadedGazetteer:
         case (None, Some(e))    => span(e, e)
         case _                  => None
 
-  private def parseYear(obj: JsonObject, key: String): Option[Long] =
+  private def parseYear(obj: JsonObject, key: com.histmersion.plugins.gazetteers.ChronOntology.ParseYearKey): Option[com.histmersion.plugins.gazetteers.ChronOntology.ParseYearResult] =
     obj(key).flatMap(_.asString).flatMap { s =>
       val trimmed = s.trim
       if trimmed.isEmpty || trimmed == "not specified" then None
       else trimmed.toLongOption
     }
 
-  private def extractKind(res: JsonObject): String =
+  private def extractKind(res: JsonObject): com.histmersion.plugins.gazetteers.ChronOntology.ExtractKindResult =
     val types = res("types")
       .flatMap(_.asArray)
       .getOrElse(Vector.empty)
@@ -100,10 +125,10 @@ object ChronOntology extends DownloadedGazetteer:
     else if types.contains("geological") || types.contains("climatological") then "feature"
     else "region"
 
-  private def extractRegions(wrapper: JsonObject): List[String] =
+  private def extractRegions(wrapper: JsonObject): List[com.histmersion.plugins.gazetteers.ChronOntology.ExtractRegionsResult] =
     wrapper("regions").flatMap(_.asArray).getOrElse(Vector.empty).toList.flatMap { r =>
       r.asObject.flatMap(o => o("en").flatMap(_.asString).orElse(o("de").flatMap(_.asString)))
     }
 
-  private def strField(o: JsonObject, key: String): Option[String] =
+  private def strField(o: JsonObject, key: com.histmersion.plugins.gazetteers.ChronOntology.StrFieldKey): Option[com.histmersion.plugins.gazetteers.ChronOntology.StrFieldResult] =
     o(key).flatMap(_.asString).filter(_.nonEmpty)

@@ -13,10 +13,15 @@ enum DriftKind(val wire: String):
   case ReasonOutside extends DriftKind("reason-outside-filter")
 
 object DriftKind:
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   given WireEnumValues[DriftKind]:
     def all: Array[DriftKind] = DriftKind.values
-    def wire(e: DriftKind): String = e.wire
-    def fromWire(s: String): Option[DriftKind] = DriftKind.values.find(_.wire == s.trim.toLowerCase)
+    def wire(e: DriftKind): com.histmersion.api.research.DriftKind.WireResult = e.wire
+    def fromWire(s: com.histmersion.api.research.DriftKind.FromWireS): Option[DriftKind] = DriftKind.values.find(_.wire == s.trim.toLowerCase)
   given Encoder[DriftKind] = WireEnum.encoder
   given Decoder[DriftKind] = WireEnum.decoder
   given Schema[DriftKind] = WireEnum.schema

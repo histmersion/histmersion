@@ -10,10 +10,10 @@ final case class ConfigFileState(
     text: Option[ConfigFileState.Text],
     version: FileVersion,
     parsed: Config,
-    own: ConfigOrigin => Boolean
+    own: ConfigOrigin => ConfigFileState.OwnResult
 ):
   /** Is `o` the file itself (not a file it includes)? */
-  def here(o: ConfigOrigin): Boolean = own(o)
+  def here(o: ConfigOrigin): com.histmersion.config.edit.ConfigFileState.HereResult = own(o)
 
   /** What the file itself writes at `key`, if it is a plain value there. */
   def ownValue(key: SettingKey): Option[SettingValue] =
@@ -22,5 +22,11 @@ final case class ConfigFileState(
       case _               => None
 
 object ConfigFileState:
+  type OwnResult = OwnResult.T
+  object OwnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  type HereResult = HereResult.T
+  object HereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

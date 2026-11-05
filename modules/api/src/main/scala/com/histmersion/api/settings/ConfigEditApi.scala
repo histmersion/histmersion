@@ -7,6 +7,9 @@ import com.histmersion.api.Api
 
 object ConfigEditApi:
 
+  type GetPart1 = GetPart1.T
+  object GetPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private def errors =
     oneOf[Api.Error](
       oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(ConfigEdit.CodeChanged)),
@@ -16,7 +19,7 @@ object ConfigEditApi:
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 
-  lazy val get: PublicEndpoint[Option[String], Api.Error, ConfigEdit.Page, Any] =
+  lazy val get: PublicEndpoint[Option[com.histmersion.api.settings.ConfigEditApi.GetPart1], Api.Error, ConfigEdit.Page, Any] =
     endpoint.get
       .in("api" / "settings")
       .in(query[Option[String]]("prefix"))

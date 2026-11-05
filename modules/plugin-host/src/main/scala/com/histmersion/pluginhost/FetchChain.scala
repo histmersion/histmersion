@@ -29,9 +29,9 @@ final class FetchChain(
 ) extends OaFetcher:
 
   /** The fetchers in the order they run, with their access — what `--self-check` and the log show. */
-  def plan: List[(String, Access)] = steps.map(s => s.id -> s.fetcher.access)
+  def plan: List[(com.histmersion.pluginhost.FetchChain.PlanResultPart1, Access)] = steps.map(s => s.id -> s.fetcher.access)
 
-  def fetch(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
+  def fetch(doi: Option[com.histmersion.pluginhost.FetchChain.FetchDoi], arxiv: Option[com.histmersion.pluginhost.FetchChain.FetchArxiv]): Either[com.histmersion.pluginhost.FetchChain.FetchResultPart1, FetchedFile] =
     fetchWork(WorkKey(doi = doi.flatMap(SpiValues.doi), arxiv = arxiv), legalOnly = false)
 
   override def fetchLegal(doi: Option[String], arxiv: Option[String]): Either[String, FetchedFile] =
@@ -92,6 +92,51 @@ final class FetchChain(
 object FetchChain:
 
   /** What every failed fetch says (the ingest step and the acquisition list read it). */
+  type PlanResultPart1 = PlanResultPart1.T
+  object PlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchResultPart1 = FetchResultPart1.T
+  object FetchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchDoi = FetchDoi.T
+  object FetchDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchArxiv = FetchArxiv.T
+  object FetchArxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyStepsPart1 = ApplyStepsPart1.T
+  object ApplyStepsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyAllowUnauthorised = ApplyAllowUnauthorised.T
+  object ApplyAllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyRegisteredArg1 = ApplyRegisteredArg1.T
+  object ApplyRegisteredArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyRegisteredResult = ApplyRegisteredResult.T
+  object ApplyRegisteredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResultPart2 = OfResultPart2.T
+  object OfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfRegisteredPart1 = OfRegisteredPart1.T
+  object OfRegisteredPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfChain = OfChain.T
+  object OfChain extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfAllowUnauthorised = OfAllowUnauthorised.T
+  object OfAllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfPlugins = OfPlugins.T
+  object OfPlugins extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderResultPart1 = OrderResultPart1.T
+  object OrderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderResultPart2 = OrderResultPart2.T
+  object OrderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderRegistered = OrderRegistered.T
+  object OrderRegistered extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OrderChain = OrderChain.T
+  object OrderChain extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunsResult = RunsResult.T
+  object RunsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunsLegalOnly = RunsLegalOnly.T
+  object RunsLegalOnly extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunsAllowUnauthorised = RunsAllowUnauthorised.T
+  object RunsAllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LooksLikePdfResult = LooksLikePdfResult.T
+  object LooksLikePdfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DescribeResult = DescribeResult.T
+  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val NoCopy = "no legal open-access PDF found"
 
   /** One registered fetcher under its id. */
@@ -104,8 +149,11 @@ object FetchChain:
   /** What one fetcher that ran answered, when it had no copy. */
   final case class Answer(fetcher: Answer.Fetcher, kind: Answer.Kind, why: Answer.Why):
     /** As the ingest report shows it: `oapen: no copy — no record of this work`. */
-    def line: String = s"$fetcher: ${kind.label} — $why"
+    def line: com.histmersion.pluginhost.FetchChain.Answer.LineResult = s"$fetcher: ${kind.label} — $why"
   object Answer:
+    type LineResult = LineResult.T
+    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Fetcher = Fetcher.T
     object Fetcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T
@@ -130,10 +178,10 @@ object FetchChain:
     * generation the fetch runs in.
     */
   def apply(
-      steps: List[(String, SourceFetcher)],
-      allowUnauthorised: Boolean = false,
+      steps: List[(com.histmersion.pluginhost.FetchChain.ApplyStepsPart1, SourceFetcher)],
+      allowUnauthorised: com.histmersion.pluginhost.FetchChain.ApplyAllowUnauthorised = false,
       log: HostLog = HostLog.scribe,
-      registered: String => Boolean = _ => false
+      registered: com.histmersion.pluginhost.FetchChain.ApplyRegisteredArg1 => com.histmersion.pluginhost.FetchChain.ApplyRegisteredResult = _ => false
   ): FetchChain =
     new FetchChain(steps.map(Step(_, _)), allowUnauthorised, log, registered)
 
@@ -142,12 +190,12 @@ object FetchChain:
     * registered in that generation, which each fetch is told of ([[Fetch.Context.registered]]).
     */
   def of(
-      registered: ListMap[String, SourceFetcher],
-      chain: List[String],
-      allowUnauthorised: Boolean,
+      registered: ListMap[com.histmersion.pluginhost.FetchChain.OfRegisteredPart1, SourceFetcher],
+      chain: List[com.histmersion.pluginhost.FetchChain.OfChain],
+      allowUnauthorised: com.histmersion.pluginhost.FetchChain.OfAllowUnauthorised,
       log: HostLog = HostLog.scribe,
-      plugins: Set[String] = Set.empty
-  ): (FetchChain, List[String]) =
+      plugins: Set[com.histmersion.pluginhost.FetchChain.OfPlugins] = Set.empty
+  ): (FetchChain, List[com.histmersion.pluginhost.FetchChain.OfResultPart2]) =
     val (ids, unknown) = order(registered.keys.toList, chain)
     val off = ids
       .filter(id => registered(id).access == Access.Unauthorised && !allowUnauthorised)
@@ -160,7 +208,7 @@ object FetchChain:
   /** Pure: the run order — the ids `acquire.chain` names that are registered, as listed, then the other registered ids
     * in registration order; with a note naming the listed ids nothing registered (a disabled plugin's, or a typo).
     */
-  def order(registered: List[String], chain: List[String]): (List[String], List[String]) =
+  def order(registered: List[com.histmersion.pluginhost.FetchChain.OrderRegistered], chain: List[com.histmersion.pluginhost.FetchChain.OrderChain]): (List[com.histmersion.pluginhost.FetchChain.OrderResultPart1], List[com.histmersion.pluginhost.FetchChain.OrderResultPart2]) =
     val listed = chain.map(_.trim).filter(_.nonEmpty).distinct
     val notes = listed.filterNot(registered.contains) match
       case Nil     => Nil
@@ -174,18 +222,18 @@ object FetchChain:
   /** Pure: the legal gate. Open and subscription fetchers always run; an unauthorised one only when the deployment
     * allows it AND the caller did not ask for the legal chain.
     */
-  def runs(access: Access, legalOnly: Boolean, allowUnauthorised: Boolean): Boolean = access match
+  def runs(access: Access, legalOnly: com.histmersion.pluginhost.FetchChain.RunsLegalOnly, allowUnauthorised: com.histmersion.pluginhost.FetchChain.RunsAllowUnauthorised): com.histmersion.pluginhost.FetchChain.RunsResult = access match
     case Access.Open | Access.Subscription => true
     case Access.Unauthorised               => allowUnauthorised && !legalOnly
 
   /** Pure: a PDF that is really a PDF. Without a PDF library this is the cheap structural check: the magic bytes within
     * the first KiB and a plausible size. A publisher's "you do not have access" interstitial is HTML and fails it.
     */
-  def looksLikePdf(b: Array[Byte]): Boolean =
+  def looksLikePdf(b: Array[Byte]): com.histmersion.pluginhost.FetchChain.LooksLikePdfResult =
     b.length > 1024 && new String(b.take(1024), "ISO-8859-1").contains("%PDF")
 
   /** Pure: the work as a log line names it. */
-  def describe(w: WorkKey): String =
+  def describe(w: WorkKey): com.histmersion.pluginhost.FetchChain.DescribeResult =
     List(
       "doi" -> w.doi.map(_.value),
       "arxiv" -> w.arxiv,
@@ -203,10 +251,14 @@ object FetchChain:
   final class Memo:
     // a var-free mutable map, owned by one fetch and dropped with it
     private val values = scala.collection.mutable.HashMap.empty[String, Any]
-    def get[A](key: String)(compute: => A): A =
+    def get[A](key: com.histmersion.pluginhost.FetchChain.Memo.GetKey)(compute: => A): A =
       values.get(key) match
         case Some(v) => v.asInstanceOf[A]
         case None    =>
           val v = compute
           values.update(key, v)
           v
+
+  object Memo:
+    type GetKey = GetKey.T
+    object GetKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

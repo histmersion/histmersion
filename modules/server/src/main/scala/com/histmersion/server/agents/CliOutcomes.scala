@@ -12,11 +12,26 @@ object CliOutcomes:
   /** The answer as the step's schema: the final text is JSON (code fences tolerated), a `null` field the same as an
     * absent one.
     */
+  type ResultUser = ResultUser.T
+  object ResultUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResultModelId = ResultModelId.T
+  object ResultModelId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextProblemText = TextProblemText.T
+  object TextProblemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripFenceResult = StripFenceResult.T
+  object StripFenceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StripFenceS = StripFenceS.T
+  object StripFenceS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsLimitResult = IsLimitResult.T
+  object IsLimitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsLimitMessage = IsLimitMessage.T
+  object IsLimitMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def result[Out](
       o: CliOutcome,
-      user: String,
+      user: com.histmersion.server.agents.CliOutcomes.ResultUser,
       schema: ResponseSchema[Out],
-      modelId: Option[String]
+      modelId: Option[com.histmersion.server.agents.CliOutcomes.ResultModelId]
   ): AgentResult[Either[AgentFailure, Out]] =
     val raw = o.finalText.getOrElse("")
     val parsed = parser.parse(stripFence(raw))
@@ -45,7 +60,7 @@ object CliOutcomes:
     * (nothing was answered) or a text that is a JSON object. What the step records and the retry is told, instead of
     * "not the JSON the schema asks for".
     */
-  def textProblem(text: String): Option[io.circe.ParsingFailure] =
+  def textProblem(text: com.histmersion.server.agents.CliOutcomes.TextProblemText): Option[io.circe.ParsingFailure] =
     val t = text.trim
     if t.isEmpty then None
     else if parser.parse(stripFence(t)).exists(j => !j.isObject) then
@@ -64,14 +79,14 @@ object CliOutcomes:
             case Right(j) if !j.isObject => Some(io.circe.ParsingFailure("the answer is JSON but not an object", null))
             case Right(_)                => None
 
-  def stripFence(s: String): String =
+  def stripFence(s: com.histmersion.server.agents.CliOutcomes.StripFenceS): com.histmersion.server.agents.CliOutcomes.StripFenceResult =
     val t = s.trim
     if t.startsWith("```") then
       t.dropWhile(_ != '\n').drop(1).reverse.dropWhile(_ != '`').dropWhile(_ == '`').reverse.trim
     else t
 
   /** A plan's usage limit as a CLI words it ("You've hit your usage limit", "rate limit reached"). */
-  def isLimit(message: String): Boolean =
+  def isLimit(message: com.histmersion.server.agents.CliOutcomes.IsLimitMessage): com.histmersion.server.agents.CliOutcomes.IsLimitResult =
     val low = message.toLowerCase(java.util.Locale.ROOT)
     low.contains("usage limit") || low.contains("rate limit reached") || low.contains("rate_limit_reached") ||
     low.contains("hit your limit") || low.contains("quota exceeded")

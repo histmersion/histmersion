@@ -24,8 +24,11 @@ final case class LandingConfig(
       */
     browserDownloadHosts: CommaList = CommaList("")
 ) derives ConfigReader:
-  def refusingHosts: List[String] = browserDownloadHosts.entries
+  def refusingHosts: List[com.histmersion.config.LandingConfig.RefusingHostsResult] = browserDownloadHosts.entries
 
 object LandingConfig:
+  type RefusingHostsResult = RefusingHostsResult.T
+  object RefusingHostsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Enabled = Enabled.T
   object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

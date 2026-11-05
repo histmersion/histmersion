@@ -18,7 +18,26 @@ import scala.util.Try
 object Pom:
 
   /** The POM's own coordinates; a group or version it does not state is its parent's, as in Maven. */
-  def coordinates(xml: String): Either[String, ModuleCoordinates] =
+  type CoordinatesResultPart1 = CoordinatesResultPart1.T
+  object CoordinatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoordinatesXml = CoordinatesXml.T
+  object CoordinatesXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfResult = OfResult.T
+  object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EmbeddedResult = EmbeddedResult.T
+  object EmbeddedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseXml = ParseXml.T
+  object ParseXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChildName = ChildName.T
+  object ChildName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResult = TextResult.T
+  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextName = TextName.T
+  object TextName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def coordinates(xml: com.histmersion.pluginresolver.Pom.CoordinatesXml): Either[com.histmersion.pluginresolver.Pom.CoordinatesResultPart1, ModuleCoordinates] =
     for
       project <- parse(xml)
       parent = child(project, "parent")
@@ -32,13 +51,13 @@ object Pom:
     * it holds exactly one (`META-INF/maven/<group>/<artifact>/pom.xml`). A shaded jar holds several, of the libraries
     * shaded into it: no POM can be told to be the plugin's then.
     */
-  def of(jar: Path): Option[String] =
+  def of(jar: Path): Option[com.histmersion.pluginresolver.Pom.OfResult] =
     val beside = besideJar(jar)
     if Files.isRegularFile(beside) then Some(Files.readString(beside, UTF_8)) else embedded(jar)
 
   def besideJar(jar: Path): Path = jar.resolveSibling(jar.getFileName.toString.stripSuffix(".jar") + ".pom")
 
-  private def embedded(jar: Path): Option[String] =
+  private def embedded(jar: Path): Option[com.histmersion.pluginresolver.Pom.EmbeddedResult] =
     Try {
       val zip = ZipFile(jar.toFile)
       try
@@ -52,7 +71,7 @@ object Pom:
       finally zip.close()
     }.toOption.flatten
 
-  private def parse(xml: String): Either[String, Element] =
+  private def parse(xml: com.histmersion.pluginresolver.Pom.ParseXml): Either[com.histmersion.pluginresolver.Pom.ParseResultPart1, Element] =
     Try {
       val factory = DocumentBuilderFactory.newInstance()
       // a POM is data from the network: no DOCTYPE, so no external entity is ever resolved
@@ -67,11 +86,11 @@ object Pom:
       .map(e => s"not a POM: ${e.getMessage}")
       .filterOrElse(_.getLocalName == "project", "not a POM: no <project>")
 
-  private def child(e: Element, name: String): Option[Element] =
+  private def child(e: Element, name: com.histmersion.pluginresolver.Pom.ChildName): Option[Element] =
     val nodes = e.getChildNodes
     (0 until nodes.getLength).map(nodes.item).collectFirst {
       case c: Element if c.getNodeType == Node.ELEMENT_NODE && c.getLocalName == name => c
     }
 
-  private def text(e: Element, name: String): Option[String] =
+  private def text(e: Element, name: com.histmersion.pluginresolver.Pom.TextName): Option[com.histmersion.pluginresolver.Pom.TextResult] =
     child(e, name).map(_.getTextContent.trim).filter(_.nonEmpty)

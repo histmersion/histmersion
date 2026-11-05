@@ -14,21 +14,40 @@ import com.histmersion.util.database.{EnvelopeSql, LikePattern, RangeSql}
 object EventSql:
 
   /** The SQL of an event's TIER over `events e`: attested when it names a source or an attestation names it. */
-  val TierSql: String =
+  type TierSql = TierSql.T
+  object TierSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnchorSql = AnchorSql.T
+  object AnchorSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoxAroundResult = BoxAroundResult.T
+  object BoxAroundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoxAroundPt = BoxAroundPt.T
+  object BoxAroundPt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BoxAroundKm = BoxAroundKm.T
+  object BoxAroundKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListWhereText = ListWhereText.T
+  object ListWhereText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListWhereKind = ListWhereKind.T
+  object ListWhereKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListWhereHistoricity = ListWhereHistoricity.T
+  object ListWhereHistoricity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnchorJoins = AnchorJoins.T
+  object AnchorJoins extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val TierSql: com.histmersion.domain.catalogue.events.EventSql.TierSql =
     "CASE WHEN e.citekey IS NOT NULL OR EXISTS (SELECT 1 FROM attestations ta WHERE ta.target_type = 'event' " +
       s"AND ta.target_id = e.id) THEN '${EventTier.Attested}' ELSE '${EventTier.Catalogue}' END"
 
   /** An event's anchor point over `events e` with its place `ep` joined: its own geometry, else its place's (a point,
     * or the point-on-surface of an area).
     */
-  val AnchorSql: String =
+  val AnchorSql: com.histmersion.domain.catalogue.events.EventSql.AnchorSql =
     "(SELECT CASE WHEN GeometryType(g) = 'POINT' THEN g ELSE ST_PointOnSurface(g) END " +
       "FROM (SELECT coalesce(e.geom, ep.geom) AS g) x)"
 
   /** SQL: the box `km` around the point `pt` in degrees — what lets the findings' geometry index answer before the
     * exact geography distance is computed (a `::geography` cast cannot use it).
     */
-  def boxAround(pt: String, km: Double): String =
+  def boxAround(pt: com.histmersion.domain.catalogue.events.EventSql.BoxAroundPt, km: com.histmersion.domain.catalogue.events.EventSql.BoxAroundKm): com.histmersion.domain.catalogue.events.EventSql.BoxAroundResult =
     val dy = km / 111.32
     s"ST_Expand($pt, $dy / greatest(cos(radians(ST_Y($pt))), 0.05), $dy)"
 
@@ -54,10 +73,10 @@ object EventSql:
       related: EventSourceFilter,
       filter: Filter,
       scope: PlaceScope,
-      text: Option[String],
-      kind: Option[String],
-      historicity: Option[String],
-      placeId: Option[String],
+      text: Option[com.histmersion.domain.catalogue.events.EventSql.ListWhereText],
+      kind: Option[com.histmersion.domain.catalogue.events.EventSql.ListWhereKind],
+      historicity: Option[com.histmersion.domain.catalogue.events.EventSql.ListWhereHistoricity],
+      placeId: Option[com.histmersion.domain.catalogue.Place.Id],
       more: Narrow = Narrow()
   ): Sql =
     def clean(o: Option[String]) = o.map(_.trim).filter(_.nonEmpty)
@@ -88,7 +107,7 @@ object EventSql:
   /** An event's ANCHOR over `events e` with its place `ep`: its own geometry, else its place's (`s.g`, `s.src`), as a
     * point — the point itself, or the point-on-surface of an area (`a.pt`).
     */
-  val anchorJoins: String =
+  val anchorJoins: com.histmersion.domain.catalogue.events.EventSql.AnchorJoins =
     """CROSS JOIN LATERAL (SELECT coalesce(e.geom, ep.geom) AS g,
                                  CASE WHEN e.geom IS NOT NULL THEN 'event' ELSE 'place' END AS src) s
        CROSS JOIN LATERAL (SELECT CASE WHEN GeometryType(s.g) = 'POINT' THEN s.g

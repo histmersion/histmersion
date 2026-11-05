@@ -9,14 +9,25 @@ import io.scalaland.chimney.dsl.*
 object UiConfigViews:
 
   /** The page's settings: the `ui` block, plus what the server knows and the block does not hold. */
+  type PageWriteKeyRequired = PageWriteKeyRequired.T
+  object PageWriteKeyRequired extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageAgentsEnabled = PageAgentsEnabled.T
+  object PageAgentsEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageBaseMapSource = PageBaseMapSource.T
+  object PageBaseMapSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageMapLanguage = PageMapLanguage.T
+  object PageMapLanguage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageSetupDue = PageSetupDue.T
+  object PageSetupDue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def page(
       ui: UiSettings,
-      writeKeyRequired: Boolean,
-      agentsEnabled: Boolean,
+      writeKeyRequired: com.histmersion.server.UiConfigViews.PageWriteKeyRequired,
+      agentsEnabled: com.histmersion.server.UiConfigViews.PageAgentsEnabled,
       plugins: PluginsReport,
-      baseMapSource: String,
-      mapLanguage: String,
-      setupDue: Boolean = false
+      baseMapSource: com.histmersion.server.UiConfigViews.PageBaseMapSource,
+      mapLanguage: com.histmersion.server.UiConfigViews.PageMapLanguage,
+      setupDue: com.histmersion.server.UiConfigViews.PageSetupDue = false
   ): UiConfig =
     ui.into[UiConfig]
       .withFieldConst(_.setupDue, setupDue)

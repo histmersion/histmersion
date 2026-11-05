@@ -29,10 +29,10 @@ final class PmTilesWriter(out: Reservation):
   private var lastId = -1L
   private var addressed = 0L
 
-  def tileCount: Long = addressed
+  def tileCount: com.histmersion.util.basemap.PmTilesWriter.TileCountResult = addressed
 
   /** Add tile `id` (strictly greater than the last one added) with its stored bytes. */
-  def add(id: Long, bytes: Array[Byte]): Unit =
+  def add(id: com.histmersion.util.basemap.PmTilesWriter.AddId, bytes: Array[Byte]): Unit =
     require(id > lastId, s"tiles must be added in ascending id order ($id after $lastId)")
     lastId = id
     addressed += 1
@@ -53,7 +53,7 @@ final class PmTilesWriter(out: Reservation):
   /** Complete the archive and return its size. `template` supplies the tile type, compression, zooms, bounds and
     * centre; the offsets and counts are this writer's.
     */
-  def finish(template: PmTiles.Header, metadata: Json): Long =
+  def finish(template: PmTiles.Header, metadata: Json): com.histmersion.util.basemap.PmTilesWriter.FinishResult =
     val ic = PmTiles.Compression.Gzip
     val (root, leaves) = PmTilesWriter.directories(entries.toVector, ic)
     val meta = PmTiles.compress(metadata.noSpaces.getBytes("UTF-8"), ic)
@@ -77,6 +77,13 @@ final class PmTilesWriter(out: Reservation):
 object PmTilesWriter:
 
   /** A writer of the archive `key` of `store`, written beside it until [[PmTilesWriter.finish]]. */
+  type TileCountResult = TileCountResult.T
+  object TileCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddId = AddId.T
+  object AddId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FinishResult = FinishResult.T
+  object FinishResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(store: Store, key: Store.Key): PmTilesWriter =
     new PmTilesWriter(store.reserve(key).fold(e => throw IOException(e.message), identity))
 

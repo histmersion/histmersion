@@ -4,9 +4,20 @@ import com.histmersion.api.{Plural, YearFmt}
 import com.histmersion.api.given
 object PeriodsMarkdown:
 
-  private def years(p: Period): String = YearFmt.period(Some(p.start), Some(p.end))
+  type YearsResult = YearsResult.T
+  object YearsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListResult = ListResult.T
+  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DetailResult = DetailResult.T
+  object DetailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportedResult = ImportedResult.T
+  object ImportedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkippedListResult = SkippedListResult.T
+  object SkippedListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def list(ps: Vector[HistoricalPeriod]): String =
+  private def years(p: Period): com.histmersion.api.catalogue.PeriodsMarkdown.YearsResult = YearFmt.period(Some(p.start), Some(p.end))
+
+  def list(ps: Vector[HistoricalPeriod]): com.histmersion.api.catalogue.PeriodsMarkdown.ListResult =
     if ps.isEmpty then "_No periods._"
     else
       val rows = ps.map(p =>
@@ -20,7 +31,7 @@ object PeriodsMarkdown:
         "|---|---|---|---|---|---|"
       ) ++ rows).mkString("\n")
 
-  def detail(d: Period.Detail): String =
+  def detail(d: Period.Detail): com.histmersion.api.catalogue.PeriodsMarkdown.DetailResult =
     val p = d.period
     val head = List(
       Some(s"### ${p.label} `${p.id}`"),
@@ -38,7 +49,7 @@ object PeriodsMarkdown:
           d.children.map(c => s"- ${c.label} `${c.id}` — ${years(c.period)}${c.region.fold("")(r => s" · $r")}")
     (head ++ kids).mkString("\n")
 
-  def imported(r: Period.ImportResult): String =
+  def imported(r: Period.ImportResult): com.histmersion.api.catalogue.PeriodsMarkdown.ImportedResult =
     val head = s"imported ${Plural.count(r.periods, "period")}" +
       (if r.roots > 0 then s", ${r.roots} of them ${Plural.noun(r.roots, "authority node")}" else "") +
       s" — ${Plural.count(r.presets, "timeline preset")} in the store" +
@@ -50,5 +61,5 @@ object PeriodsMarkdown:
       s"$head\n\nskipped ${Plural.count(r.skippedCount, "definition")} (not imported):\n" +
         skippedList(r.skipped) + (if more > 0 then s"\n- …and $more more" else "")
 
-  def skippedList(ss: List[SkippedPeriod]): String =
+  def skippedList(ss: List[SkippedPeriod]): com.histmersion.api.catalogue.PeriodsMarkdown.SkippedListResult =
     ss.map(s => s"- `${s.id}` ${s.label}: ${s.detail}").mkString("\n")

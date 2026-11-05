@@ -30,10 +30,10 @@ final class VacuumJobs(
   private val slot = BackgroundJob.Slot()
 
   /** Is a vacuum job running? A restore waits for it rather than drop tables under it. */
-  def isRunning: Boolean = slot.isRunning
+  def isRunning: com.histmersion.util.data.maintenance.VacuumJobs.IsRunningResult = slot.isRunning
 
   /** The tables a vacuum may name: the registered ones the database has. */
-  private def vacuumable: Set[String] =
+  private def vacuumable: Set[com.histmersion.util.data.maintenance.VacuumJobs.VacuumableResult] =
     transactor.read(VacuumRepo.tables).intersect(registry.tables.map(t => t._2.name.value: String).toSet)
 
   def start(in: Vacuum.Request): Either[Api.Error, JobInfo] =
@@ -50,7 +50,7 @@ final class VacuumJobs(
         )((_, progress) => run(plan, progress))
       }
 
-  private def run(plan: VacuumPlan, progress: String => Unit): BackgroundJob.Outcome =
+  private def run(plan: VacuumPlan, progress: com.histmersion.util.data.maintenance.VacuumJobs.RunProgressArg1 => Unit): BackgroundJob.Outcome =
     @tailrec def loop(rest: List[(String, Int)], lines: List[String]): BackgroundJob.Outcome =
       def outcome(failed: Option[String]) =
         BackgroundJob.Outcome(Option.when(lines.nonEmpty)(lines.mkString("; ")), failed)
@@ -70,3 +70,11 @@ final class VacuumJobs(
               scribe.info(s"[vacuum] $line")
               loop(tail, lines :+ line)
     loop(plan.tables.zipWithIndex, Nil)
+
+object VacuumJobs:
+  type IsRunningResult = IsRunningResult.T
+  object IsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VacuumableResult = VacuumableResult.T
+  object VacuumableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunProgressArg1 = RunProgressArg1.T
+  object RunProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

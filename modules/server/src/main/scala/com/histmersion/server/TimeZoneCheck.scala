@@ -14,6 +14,27 @@ import scala.util.Try
 object TimeZoneCheck:
 
   /** A zone, an instant, and the offset the zone has then (tzdb rules in force since 2008 or earlier). */
+  type ReportResultPart1 = ReportResultPart1.T
+  object ReportResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportResultPart2 = ReportResultPart2.T
+  object ReportResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportOffsetArg1 = ReportOffsetArg1.T
+  object ReportOffsetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportOffsetResultPart1 = ReportOffsetResultPart1.T
+  object ReportOffsetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportZones = ReportZones.T
+  object ReportZones extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportVersion = ReportVersion.T
+  object ReportVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportDefaultPart1 = ReportDefaultPart1.T
+  object ReportDefaultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportDefaultPart2 = ReportDefaultPart2.T
+  object ReportDefaultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JdkResultPart1 = JdkResultPart1.T
+  object JdkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JdkResultPart2 = JdkResultPart2.T
+  object JdkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Probe(zone: Probe.Zone, at: Instant, offset: ZoneOffset)
 
   object Probe:
@@ -38,11 +59,11 @@ object TimeZoneCheck:
     */
   def report(
       probes: List[Probe],
-      offset: (String, Instant) => Either[String, ZoneOffset],
-      zones: Int,
-      version: Option[String],
-      default: Either[String, String]
-  ): (Boolean, String) =
+      offset: (com.histmersion.server.TimeZoneCheck.ReportOffsetArg1, Instant) => Either[com.histmersion.server.TimeZoneCheck.ReportOffsetResultPart1, ZoneOffset],
+      zones: com.histmersion.server.TimeZoneCheck.ReportZones,
+      version: Option[com.histmersion.server.TimeZoneCheck.ReportVersion],
+      default: Either[com.histmersion.server.TimeZoneCheck.ReportDefaultPart1, com.histmersion.server.TimeZoneCheck.ReportDefaultPart2]
+  ): (com.histmersion.server.TimeZoneCheck.ReportResultPart1, com.histmersion.server.TimeZoneCheck.ReportResultPart2) =
     val wrong = probes.flatMap { p =>
       offset(p.zone, p.at) match
         case Right(o) if o == p.offset => Nil
@@ -59,7 +80,7 @@ object TimeZoneCheck:
     else (false, s"time zones: BROKEN — ${problems.mkString("; ")}")
 
   /** The check against this JDK (or binary). */
-  def jdk(): (Boolean, String) =
+  def jdk(): (com.histmersion.server.TimeZoneCheck.JdkResultPart1, com.histmersion.server.TimeZoneCheck.JdkResultPart2) =
     def err(t: Throwable) = s"${t.getClass.getSimpleName}: ${t.getMessage}"
     val ids = Try(ZoneId.getAvailableZoneIds.size).getOrElse(0)
     val version = Try(ZoneRulesProvider.getVersions("Europe/Warsaw").lastKey).toOption

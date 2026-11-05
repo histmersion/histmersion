@@ -3,20 +3,33 @@ package com.histmersion.api.automation
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object AgentSchedulerMarkdown:
+  type GoalG = GoalG.T
+  object GoalG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WaitingResult = WaitingResult.T
+  object WaitingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinutesResult = MinutesResult.T
+  object MinutesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinutesM = MinutesM.T
+  object MinutesM extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusResult = StatusResult.T
+  object StatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WhyResult = WhyResult.T
+  object WhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import AgentScheduler.*
 
-  private def goal(g: Option[String]) = g.fold("library work")(x => s"goal $x")
+  private def goal(g: Option[com.histmersion.api.automation.AgentSchedulerMarkdown.GoalG]) = g.fold("library work")(x => s"goal $x")
 
-  def waiting(w: Waiting): String =
+  def waiting(w: Waiting): com.histmersion.api.automation.AgentSchedulerMarkdown.WaitingResult =
     val place = if w.position > 0 then s"${w.position}. " else "- "
     s"$place#${w.item} ${w.jobType} **${w.target}** (${w.manager}; ${goal(w.goal)}; priority ${w.priority}; " +
       s"waited ${AgentSchedulerMarkdown.minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why}" +
       (if w.behind.isEmpty then "" else s" · behind ${w.behind.mkString(", ")}")
 
-  def minutes(m: Long): String =
+  def minutes(m: com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesM): com.histmersion.api.automation.AgentSchedulerMarkdown.MinutesResult =
     if m < 60 then s"$m min" else s"${m / 60} h" + (if m % 60 != 0 then s" ${m % 60} min" else "")
 
-  def status(s: SchedulerStatus): String =
+  def status(s: SchedulerStatus): com.histmersion.api.automation.AgentSchedulerMarkdown.StatusResult =
     val head = s"# Scheduler: ${s.strategy}" + (if s.strategyFrom == "person" then " (set by a person)"
                                                 else " (agents.scheduler.strategy)")
     val facts = List(
@@ -59,7 +72,7 @@ object AgentSchedulerMarkdown:
     val changes = if s.changes.isEmpty then "" else "\n\n## Just now\n\n" + s.changes.map(c => s"- $c").mkString("\n")
     (head :: "" :: facts).mkString("\n") + changes + types + started + queue + strategies
 
-  def why(w: WhyInfo): String =
+  def why(w: WhyInfo): com.histmersion.api.automation.AgentSchedulerMarkdown.WhyResult =
     s"# #${w.item} ${w.kind} ${w.target}\n\n- manager: ${w.manager}\n- status: ${w.status}" +
       w.run.fold("")(r => s" (run ${r.take(8)})") + w.approval.fold("")(a => s"\n- waits for approval #$a") +
       s"\n- ${if w.code.nonEmpty then s"_${w.code}_: " else ""}${w.why}" +

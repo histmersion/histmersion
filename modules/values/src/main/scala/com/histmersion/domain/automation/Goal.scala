@@ -19,12 +19,15 @@ object Goal:
 
   /** The stages of a research goal, as the store and the wire spell them. */
   object Status:
+    type All = All.T
+    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Planned = "planned"
     val Seeding = "seeding"
     val Compiled = "compiled"
     val Reviewed = "reviewed"
     val Done = "done"
-    val all: List[String] = List(Planned, Seeding, Compiled, Reviewed, Done)
+    val all: List[com.histmersion.domain.automation.Goal.Status.All] = List(Planned, Seeding, Compiled, Reviewed, Done)
 
   /** What a goal is linked to. */
   enum LinkKind(val wire: String):
@@ -36,10 +39,17 @@ object Goal:
   object LinkKind:
 
     /** The search queries a goal's plan recorded ([[Query]]): the name the engine uses, which no other type shares. */
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val SearchQuery: LinkKind = Query
 
-    def parse(s: String): Option[LinkKind] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = LinkKind.values
-      def wire(e: LinkKind): String = e.wire
-      def fromWire(s: String): Option[LinkKind] = parse(s)
+      def wire(e: LinkKind): com.histmersion.domain.automation.Goal.LinkKind.WireResult = e.wire
+      def fromWire(s: com.histmersion.domain.automation.Goal.LinkKind.FromWireS): Option[LinkKind] = parse(s)

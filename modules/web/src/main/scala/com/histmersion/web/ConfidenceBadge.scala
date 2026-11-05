@@ -10,6 +10,9 @@ import com.histmersion.api.library.Confidence
   * labelled for screen readers and on hover.
   */
 object ConfidenceBadge:
+  type HtmlResult = HtmlResult.T
+  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def apply(c: Confidence): HtmlElement =
     span(
       cls := s"conf-badge conf-${c.toString.toLowerCase}", // its colour: `.conf-badge.conf-*`
@@ -31,4 +34,4 @@ object ConfidenceBadge:
     )
 
   /** As an HTML string, for map popups — the server's markup, from [[HtmlAtoms]]. */
-  def html(c: Confidence): String = HtmlAtoms.confidenceBadge(c)
+  def html(c: Confidence): com.histmersion.web.ConfidenceBadge.HtmlResult = HtmlAtoms.confidenceBadge(c)

@@ -15,14 +15,35 @@ final class ClevelandCollection(conf: CollectionSettings)
   override val description = "The Cleveland Museum of Art (CC0, share_license_status)" + MetCollection.Museum
   val role = MediaCollection.Object
 
-  def search(place: MediaPlace, http: Plugin.Http): Either[String, List[Either[String, MediaItem]]] =
+  def search(place: MediaPlace, http: Plugin.Http): Either[com.histmersion.plugins.media.ClevelandCollection.SearchResultPart1, List[Either[com.histmersion.plugins.media.ClevelandCollection.SearchResultPart2Part1, MediaItem]]] =
     http
       .askJson(ClevelandCollection.searchUrl(conf.apiUrl, place.label, conf.candidates))
       .flatMap(ClevelandCollection.records)
 
 object ClevelandCollection:
 
-  val Fields: String = List(
+  type SearchResultPart1 = SearchResultPart1.T
+  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchResultPart2Part1 = SearchResultPart2Part1.T
+  object SearchResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Fields = Fields.T
+  object Fields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlResult = SearchUrlResult.T
+  object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlApi = SearchUrlApi.T
+  object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlName = SearchUrlName.T
+  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlLimit = SearchUrlLimit.T
+  object SearchUrlLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart1 = RecordsResultPart1.T
+  object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
+  object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordResultPart1 = RecordResultPart1.T
+  object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val Fields: com.histmersion.plugins.media.ClevelandCollection.Fields = List(
     "id",
     "accession_number",
     "title",
@@ -38,17 +59,17 @@ object ClevelandCollection:
     "tombstone"
   ).mkString(",")
 
-  def searchUrl(api: String, name: String, limit: Int): String =
+  def searchUrl(api: com.histmersion.plugins.media.ClevelandCollection.SearchUrlApi, name: com.histmersion.plugins.media.ClevelandCollection.SearchUrlName, limit: com.histmersion.plugins.media.ClevelandCollection.SearchUrlLimit): com.histmersion.plugins.media.ClevelandCollection.SearchUrlResult =
     s"${api.stripSuffix("/")}/artworks/?q=${name.enc}&cc0=1&has_image=1&limit=${limit.max(1)}&fields=$Fields"
 
   /** Pure: the records of a search answer. */
-  def records(json: Json): Either[String, List[Either[String, MediaItem]]] =
+  def records(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.RecordsResultPart1, List[Either[com.histmersion.plugins.media.ClevelandCollection.RecordsResultPart2Part1, MediaItem]]] =
     val c = json.hcursor
     c.downField("data").focus.flatMap(_.asArray) match
       case None       => Left(c.str("detail").orElse(c.str("message")).getOrElse("no data in the answer"))
       case Some(rows) => Right(rows.toList.map(record))
 
-  def record(json: Json): Either[String, MediaItem] =
+  def record(json: Json): Either[com.histmersion.plugins.media.ClevelandCollection.RecordResultPart1, MediaItem] =
     val c = json.hcursor
     c.str("accession_number").orElse(c.str("id")).toRight("no accession number").map { acc =>
       val title = c.str("title").getOrElse(acc)

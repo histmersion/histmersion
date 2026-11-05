@@ -36,10 +36,15 @@ final case class MediaConfig(
     samples: MediaConfig.Samples
 ) derives ConfigReader:
   /** `--limit`, clamped to `1 … max-limit`; absent or ≤ 0 = `default-limit`. */
-  def limit(asked: Option[Int]): Int =
+  def limit(asked: Option[com.histmersion.config.MediaConfig.LimitAsked]): com.histmersion.config.MediaConfig.LimitResult =
     asked.filter(_ > 0).getOrElse(defaultLimit).max(1).min(maxLimit.max(1))
 
 object MediaConfig:
+  type LimitResult = LimitResult.T
+  object LimitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitAsked = LimitAsked.T
+  object LimitAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type UserAgent = UserAgent.T
   object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeoutSeconds = TimeoutSeconds.T

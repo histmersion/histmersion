@@ -12,7 +12,26 @@ package com.histmersion.web
 object Glyphs:
 
   /** Name → the SVG elements of a 24×24 Lucide icon. */
-  val inner: Map[String, String] = Map(
+  type InnerPart1 = InnerPart1.T
+  object InnerPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InnerPart2 = InnerPart2.T
+  object InnerPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SvgResult = SvgResult.T
+  object SvgResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SvgName = SvgName.T
+  object SvgName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SvgExtraClass = SvgExtraClass.T
+  object SvgExtraClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeResult = BadgeResult.T
+  object BadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeName = BadgeName.T
+  object BadgeName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeOfResult = BadgeOfResult.T
+  object BadgeOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeOfName = BadgeOfName.T
+  object BadgeOfName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val inner: Map[com.histmersion.web.Glyphs.InnerPart1, com.histmersion.web.Glyphs.InnerPart2] = Map(
     "activity" -> """<path d="M22 12h-2.48a2 2 0 0 0-1.93 1.46l-2.35 8.36a.25.25 0 0 1-.48 0L9.24 2.18a.25.25 0 0 0-.48 0l-2.35 8.36A2 2 0 0 1 4.49 12H2" />""",
     // not Lucide: an exclamation mark alone (Lucide's `circle-alert` without its circle, drawn larger) —
     // the glyph of a thing on the map whose type is not known
@@ -72,7 +91,7 @@ object Glyphs:
   /** Pure: an icon as an inline `<svg>` (`.glyph`: size and stroke in the stylesheet; colour `currentColor`), or empty
     * for an unknown name.
     */
-  def svg(name: String, extraClass: String = ""): String =
+  def svg(name: com.histmersion.web.Glyphs.SvgName, extraClass: com.histmersion.web.Glyphs.SvgExtraClass = ""): com.histmersion.web.Glyphs.SvgResult =
     inner.get(name).fold("") { body =>
       val cls = if extraClass.isEmpty then "glyph" else s"glyph $extraClass"
       s"""<svg class="$cls" viewBox="0 0 24 24" aria-hidden="true" focusable="false">$body</svg>"""
@@ -82,12 +101,12 @@ object Glyphs:
     * light ink — so a white line stays readable on a pale period colour. Two strokes, no CSS filter: thousands of
     * markers draw it. Empty for an unknown name.
     */
-  def badge(name: String): String = badges.getOrElseUpdate(name, badgeOf(name))
+  def badge(name: com.histmersion.web.Glyphs.BadgeName): com.histmersion.web.Glyphs.BadgeResult = badges.getOrElseUpdate(name, badgeOf(name))
 
   // one string per icon, built once: thousands of markers share it
   private val badges = scala.collection.mutable.HashMap.empty[String, String]
 
-  private def badgeOf(name: String): String =
+  private def badgeOf(name: com.histmersion.web.Glyphs.BadgeOfName): com.histmersion.web.Glyphs.BadgeOfResult =
     inner.get(name).fold("") { body =>
       s"""<svg class="glyph glyph--badge" viewBox="0 0 24 24" aria-hidden="true" focusable="false">""" +
         s"""<g class="glyph-halo">$body</g><g class="glyph-ink">$body</g></svg>"""

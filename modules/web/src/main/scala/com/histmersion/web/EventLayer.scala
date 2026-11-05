@@ -20,6 +20,29 @@ import com.histmersion.api.instance.EventsUiConfig
 object EventLayer:
 
   // `var`s: a shown event's visibility and stacking slot change frame by frame, in place
+  type ItemsPart2Part1 = ItemsPart2Part1.T
+  object ItemsPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemsPart2Part2 = ItemsPart2Part2.T
+  object ItemsPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnchorsPart1 = AnchorsPart1.T
+  object AnchorsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastFramePart1 = LastFramePart1.T
+  object LastFramePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastFramePart2 = LastFramePart2.T
+  object LastFramePart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FramePlayhead = FramePlayhead.T
+  object FramePlayhead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FrameYearsPerSecond = FrameYearsPerSecond.T
+  object FrameYearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddStart = AddStart.T
+  object AddStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddA = AddA.T
+  object AddA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetAlphaA = SetAlphaA.T
+  object SetAlphaA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetSlotSlot = SetSlotSlot.T
+  object SetSlotSlot extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final private case class Shown(marker: DomMarker, outline: Shown.Outline, var alpha: Shown.Alpha, var slot: Shown.Slot)
 
   object Shown:
@@ -51,16 +74,16 @@ object EventLayer:
 
   private var running = false
   private var config: EventsUiConfig = null
-  private var items: Vector[(EventGeo, (Long, Long))] = Vector.empty
+  private var items: Vector[(EventGeo, (com.histmersion.web.EventLayer.ItemsPart2Part1, com.histmersion.web.EventLayer.ItemsPart2Part2))] = Vector.empty
   // the events at each anchor, by start: who stacks over whom
-  private var anchors: Map[String, Vector[com.histmersion.api.catalogue.Event.Id]] = Map.empty
+  private var anchors: Map[com.histmersion.web.EventLayer.AnchorsPart1, Vector[com.histmersion.api.catalogue.Event.Id]] = Map.empty
   private val shown = mutable.HashMap.empty[com.histmersion.api.catalogue.Event.Id, Shown]
   // the outlines drawn now, by event id, with their geometry
   private val outlined = mutable.LinkedHashMap.empty[com.histmersion.api.catalogue.Event.Id, js.Any]
   // the events request a late answer must belong to: `stop` supersedes it
   private val latest = Latest()
   // the last frame drawn, so the events that arrive after it are drawn at once
-  private var lastFrame: Option[(Long, Double)] = None
+  private var lastFrame: Option[(com.histmersion.web.EventLayer.LastFramePart1, com.histmersion.web.EventLayer.LastFramePart2)] = None
 
   /** Start: fetch the events of `query` and draw them at the next frame. */
   def start(cfg: EventsUiConfig, query: Api.EventQuery): Unit =
@@ -75,7 +98,7 @@ object EventLayer:
     })(using scala.scalajs.concurrent.JSExecutionContext.Implicits.queue)
 
   /** One frame: the playhead at `playhead`, playing `yearsPerSecond`. */
-  def frame(playhead: Long, yearsPerSecond: Double): Unit =
+  def frame(playhead: com.histmersion.web.EventLayer.FramePlayhead, yearsPerSecond: com.histmersion.web.EventLayer.FrameYearsPerSecond): Unit =
     lastFrame = Some((playhead, yearsPerSecond))
     if running && config != null && TheMap.isUp then
       val localFade = EventPlayback.fadeYears(config.localFadeSeconds, yearsPerSecond)
@@ -132,7 +155,7 @@ object EventLayer:
       _.set(outlined.toSeq.map((id, g) => ShapeFeature(id.value, g, dashed = true, alpha = shown.get(id).fold(0.0)(_.alpha))))
     )
 
-  private def add(e: EventGeo, start: Long, a: Double): Shown =
+  private def add(e: EventGeo, start: com.histmersion.web.EventLayer.AddStart, a: com.histmersion.web.EventLayer.AddA): Shown =
     val outline = e.outline
       .filter(_ => e.scale == EventScale.Regional)
       .flatMap { geometry =>
@@ -167,10 +190,10 @@ object EventLayer:
     labelOf(s).flatMap(l => Option(l.querySelector(".hd-area-point"))).map(_.asInstanceOf[dom.HTMLElement])
 
   /** The visibility, as `--a` on the label and the outline's own. */
-  private def setAlpha(id: com.histmersion.api.catalogue.Event.Id, s: Shown, a: Double): Unit =
+  private def setAlpha(id: com.histmersion.api.catalogue.Event.Id, s: Shown, a: com.histmersion.web.EventLayer.SetAlphaA): Unit =
     labelOf(s).foreach(_.style.setProperty("--a", a.toString))
     if s.outline then outlines.foreach(_.restyle(id.value, "", a))
 
   /** The stacking slot, as `--i`, on the label. */
-  private def setSlot(s: Shown, slot: Int): Unit =
+  private def setSlot(s: Shown, slot: com.histmersion.web.EventLayer.SetSlotSlot): Unit =
     labelOf(s).foreach(_.style.setProperty("--i", slot.toString))

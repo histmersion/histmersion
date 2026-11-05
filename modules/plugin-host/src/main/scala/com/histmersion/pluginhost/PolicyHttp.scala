@@ -31,7 +31,7 @@ final class PolicyHttp(
   /** One GET: the body of a 2xx answer, or why there is none. A caller's own `User-Agent` replaces the configured one;
     * either goes through [[HttpPolicy.userAgent]], so neither can carry an e-mail.
     */
-  def bytes(url: String, headers: Map[String, String] = Map.empty): Either[String, Array[Byte]] =
+  def bytes(url: com.histmersion.pluginhost.PolicyHttp.BytesUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart1, com.histmersion.pluginhost.PolicyHttp.BytesHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.BytesResultPart1, Array[Byte]] =
     val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
     val sent = headers.filterNot(_._1.equalsIgnoreCase(PolicyHttp.UserAgent)) +
       (PolicyHttp.UserAgent -> HttpPolicy.userAgent(ua.getOrElse(userAgent)))
@@ -59,7 +59,7 @@ final class PolicyHttp(
     * headers — for an upstream whose own budget decides when to ask again (CORE's rate-limit headers), where a retry
     * would spend what the budget is keeping.
     */
-  def once(url: String, headers: Map[String, String] = Map.empty): Either[String, HttpAnswer] =
+  def once(url: com.histmersion.pluginhost.PolicyHttp.OnceUrl, headers: Map[com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart1, com.histmersion.pluginhost.PolicyHttp.OnceHeadersPart2] = Map.empty): Either[com.histmersion.pluginhost.PolicyHttp.OnceResultPart1, HttpAnswer] =
     val ua = headers.collectFirst { case (k, v) if k.equalsIgnoreCase(PolicyHttp.UserAgent) => v }
     transport.get(
       url,
@@ -76,6 +76,25 @@ final class PolicyHttp(
       once(url, headers).map(a => Plugin.HttpResponse(a.code, a.headers, a.body))
 
 object PolicyHttp:
+  type BytesResultPart1 = BytesResultPart1.T
+  object BytesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BytesUrl = BytesUrl.T
+  object BytesUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BytesHeadersPart1 = BytesHeadersPart1.T
+  object BytesHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BytesHeadersPart2 = BytesHeadersPart2.T
+  object BytesHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnceResultPart1 = OnceResultPart1.T
+  object OnceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnceUrl = OnceUrl.T
+  object OnceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnceHeadersPart1 = OnceHeadersPart1.T
+  object OnceHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OnceHeadersPart2 = OnceHeadersPart2.T
+  object OnceHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AcquisitionSleepArg1 = AcquisitionSleepArg1.T
+  object AcquisitionSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val UserAgent = "User-Agent"
 
   /** The acquisition client of a configuration — the ONE client every plugin's `ctx.http`, every built-in fetcher and
@@ -85,7 +104,7 @@ object PolicyHttp:
   def acquisition(
       cfg: AppConfig,
       transport: HttpTransport,
-      sleep: Long => Unit = ms => Thread.sleep(ms),
+      sleep: com.histmersion.pluginhost.PolicyHttp.AcquisitionSleepArg1 => Unit = ms => Thread.sleep(ms),
       log: HostLog = HostLog.scribe
   ): PolicyHttp =
     PolicyHttp(

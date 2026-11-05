@@ -8,7 +8,16 @@ import io.scalaland.chimney.partial
 import scala.quoted.*
 
 object IronNewtypePairs:
-  def withoutPackageObjects(name: String): String =
+  type WithoutPackageObjectsResult = WithoutPackageObjectsResult.T
+  object WithoutPackageObjectsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithoutPackageObjectsName = WithoutPackageObjectsName.T
+  object WithoutPackageObjectsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JudgesNothingResult = JudgesNothingResult.T
+  object JudgesNothingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DifferentConstraintsMessageResult = DifferentConstraintsMessageResult.T
+  object DifferentConstraintsMessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def withoutPackageObjects(name: io.scalaland.chimney.histmersion.IronNewtypePairs.WithoutPackageObjectsName): io.scalaland.chimney.histmersion.IronNewtypePairs.WithoutPackageObjectsResult =
     name.replaceAll("""\w+\$package\$?\.""", "").replace("scala.Predef.", "")
 
 final class IronNewtypePairs(using val quotes: Quotes):
@@ -16,10 +25,18 @@ final class IronNewtypePairs(using val quotes: Quotes):
   import quotes.reflect.*
 
   final case class IronNewtype(companion: Symbol, base: TypeRepr, constraint: TypeRepr):
-    def name: String = companion.name
-    def fullName: String = withoutPackageObjects(companion.fullName)
-    def refinedTypeShown: String =
+    def name: io.scalaland.chimney.histmersion.IronNewtypePairs.IronNewtype.NameResult = companion.name
+    def fullName: io.scalaland.chimney.histmersion.IronNewtypePairs.IronNewtype.FullNameResult = withoutPackageObjects(companion.fullName)
+    def refinedTypeShown: io.scalaland.chimney.histmersion.IronNewtypePairs.IronNewtype.RefinedTypeShownResult =
       s"${withoutPackageObjects(base.show)} :| ${withoutPackageObjects(constraint.show)}"
+
+  object IronNewtype:
+    type NameResult = NameResult.T
+    object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FullNameResult = FullNameResult.T
+    object FullNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RefinedTypeShownResult = RefinedTypeShownResult.T
+    object RefinedTypeShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum NewtypePair:
     case SameRefinedType(from: IronNewtype, to: IronNewtype)
@@ -62,7 +79,7 @@ final class IronNewtypePairs(using val quotes: Quotes):
       case _: ImplicitSearchFailure => None
 
   /** A newtype that judges nothing (`Pure`): what a client layer's copy is. */
-  def judgesNothing(n: IronNewtype): Boolean = n.constraint =:= TypeRepr.of[Pure]
+  def judgesNothing(n: IronNewtype): io.scalaland.chimney.histmersion.IronNewtypePairs.JudgesNothingResult = n.constraint =:= TypeRepr.of[Pure]
 
   private def baseValue(from: IronNewtype, source: Expr[?]): Term =
     Select.unique(Ref(from.companion), "value").appliedTo(source.asTerm)
@@ -79,7 +96,7 @@ final class IronNewtypePairs(using val quotes: Quotes):
       Select.unique(Ref(to.companion), "either").appliedTo(baseValue(from, source)).asExprOf[Either[String, To]]
     '{ partial.Result.fromEitherString($either) }
 
-  def differentConstraintsMessage(from: IronNewtype, to: IronNewtype): String =
+  def differentConstraintsMessage(from: IronNewtype, to: IronNewtype): io.scalaland.chimney.histmersion.IronNewtypePairs.DifferentConstraintsMessageResult =
     s"""${from.fullName} and ${to.fullName} refine the same base type with different constraints:
        |  from: ${from.refinedTypeShown}
        |  to:   ${to.refinedTypeShown}

@@ -38,6 +38,97 @@ object BasemapFetch:
   /** What a fetch of one layer reads: `url`, the build it names (for the record), and the size the provider publishes
     * for it, when it does.
     */
+  type PerZoomResultPart1 = PerZoomResultPart1.T
+  object PerZoomResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerZoomResultPart2 = PerZoomResultPart2.T
+  object PerZoomResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerZoomResultPart3 = PerZoomResultPart3.T
+  object PerZoomResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerZoomLineResult = PerZoomLineResult.T
+  object PerZoomLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerZoomLineRowsPart1 = PerZoomLineRowsPart1.T
+  object PerZoomLineRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerZoomLineRowsPart2 = PerZoomLineRowsPart2.T
+  object PerZoomLineRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PerZoomLineRowsPart3 = PerZoomLineRowsPart3.T
+  object PerZoomLineRowsPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WantedIdsMinZoom = WantedIdsMinZoom.T
+  object WantedIdsMinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WantedIdsMaxZoom = WantedIdsMaxZoom.T
+  object WantedIdsMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoalesceResultPart1 = CoalesceResultPart1.T
+  object CoalesceResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoalesceResultPart2 = CoalesceResultPart2.T
+  object CoalesceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoalesceContentsPart1 = CoalesceContentsPart1.T
+  object CoalesceContentsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoalesceContentsPart2 = CoalesceContentsPart2.T
+  object CoalesceContentsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoalesceMaxBytes = CoalesceMaxBytes.T
+  object CoalesceMaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoalesceOverfetch = CoalesceOverfetch.T
+  object CoalesceOverfetch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanResultPart1 = PlanResultPart1.T
+  object PlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanMaxZoom = PlanMaxZoom.T
+  object PlanMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanNoteArg1 = PlanNoteArg1.T
+  object PlanNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanMinZoom = PlanMinZoom.T
+  object PlanMinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveResultPart1 = ResolveResultPart1.T
+  object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveGetArg1 = ResolveGetArg1.T
+  object ResolveGetArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveGetArg2 = ResolveGetArg2.T
+  object ResolveGetArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveGetResultPart1 = ResolveGetResultPart1.T
+  object ResolveGetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveDepth = ResolveDepth.T
+  object ResolveDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChunkKeyRPart1 = ChunkKeyRPart1.T
+  object ChunkKeyRPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChunkKeyRPart2 = ChunkKeyRPart2.T
+  object ChunkKeyRPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PendingResultPart1 = PendingResultPart1.T
+  object PendingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PendingResultPart2 = PendingResultPart2.T
+  object PendingResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadResultPart1 = DownloadResultPart1.T
+  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadResultPart2 = DownloadResultPart2.T
+  object DownloadResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadNoteArg1 = DownloadNoteArg1.T
+  object DownloadNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadRoomArg1 = DownloadRoomArg1.T
+  object DownloadRoomArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DownloadRoomResultPart1 = DownloadRoomResultPart1.T
+  object DownloadRoomResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleResultPart1 = AssembleResultPart1.T
+  object AssembleResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleResultPart2Part1 = AssembleResultPart2Part1.T
+  object AssembleResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleResultPart2Part2 = AssembleResultPart2Part2.T
+  object AssembleResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleTransformResultPart1 = AssembleTransformResultPart1.T
+  object AssembleTransformResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssembleNoteArg1 = AssembleNoteArg1.T
+  object AssembleNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalMetadataDropped = LocalMetadataDropped.T
+  object LocalMetadataDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalMetadataAttribution = LocalMetadataAttribution.T
+  object LocalMetadataAttribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalMetadataFetchedAt = LocalMetadataFetchedAt.T
+  object LocalMetadataFetchedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalMetadataFilterPart1 = LocalMetadataFilterPart1.T
+  object LocalMetadataFilterPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocalMetadataFilterPart2 = LocalMetadataFilterPart2.T
+  object LocalMetadataFilterPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StateOfExtra = StateOfExtra.T
+  object StateOfExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PrepareResult = PrepareResult.T
+  object PrepareResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Source(url: Source.Url, label: Source.Label, expectedSize: Option[Source.ExpectedSize] = None)
 
   object Source:
@@ -77,9 +168,12 @@ object BasemapFetch:
       /** The shallowest zoom planned (a focus region starts below the extract's depth). */
       minZoom: Plan.MinZoom = 0
   ):
-    def requestBytes: Long = requests.map(_._2).sum
+    def requestBytes: com.histmersion.util.basemap.BasemapFetch.Plan.RequestBytesResult = requests.map(_._2).sum
 
   object Plan:
+    type RequestBytesResult = RequestBytesResult.T
+    object RequestBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type RequestsPart1 = RequestsPart1.T
     object RequestsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RequestsPart2 = RequestsPart2.T
@@ -100,10 +194,13 @@ object BasemapFetch:
       gapMs: Pace.GapMs,
       maxRequestBytes: Pace.MaxRequestBytes,
       overfetch: Pace.Overfetch,
-      sleep: Long => Unit = ms => Thread.sleep(ms)
+      sleep: Pace.SleepArg1 => Unit = ms => Thread.sleep(ms)
   )
 
   object Pace:
+    type SleepArg1 = SleepArg1.T
+    object SleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type GapMs = GapMs.T
     object GapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MaxRequestBytes = MaxRequestBytes.T
@@ -116,13 +213,13 @@ object BasemapFetch:
   /** What a plan downloads at each zoom: its tiles and their distinct bytes, shallowest first — a download ahead's size
     * estimate per zoom (#3760). Pure.
     */
-  def perZoom(p: Plan): List[(Int, Int, Long)] =
+  def perZoom(p: Plan): List[(com.histmersion.util.basemap.BasemapFetch.PerZoomResultPart1, com.histmersion.util.basemap.BasemapFetch.PerZoomResultPart2, com.histmersion.util.basemap.BasemapFetch.PerZoomResultPart3)] =
     p.tiles.groupBy(t => PmTiles.zxy(t.id)._1).toList.sortBy(_._1).map { (z, ts) =>
       (z, ts.size, ts.map(t => (t.offset, t.length)).distinct.map(_._2.toLong).sum)
     }
 
   /** [[perZoom]] in a line: `zoom 0: 1 tile, 12 KB · …`, the deepest zooms' running total last. Pure. */
-  def perZoomLine(rows: List[(Int, Int, Long)]): String =
+  def perZoomLine(rows: List[(com.histmersion.util.basemap.BasemapFetch.PerZoomLineRowsPart1, com.histmersion.util.basemap.BasemapFetch.PerZoomLineRowsPart2, com.histmersion.util.basemap.BasemapFetch.PerZoomLineRowsPart3)]): com.histmersion.util.basemap.BasemapFetch.PerZoomLineResult =
     rows
       .map((z, n, b) =>
         s"zoom $z: ${com.histmersion.api.Plural.count(n, "tile")}, ${com.histmersion.api.backup.Backup.humanBytes(b)}"
@@ -130,7 +227,7 @@ object BasemapFetch:
       .mkString(" · ")
 
   /** Every tile id of zooms `minZoom`…`maxZoom` over `b`, sorted. Pure. */
-  def wantedIds(b: BBox, minZoom: Int, maxZoom: Int): Array[Long] =
+  def wantedIds(b: BBox, minZoom: com.histmersion.util.basemap.BasemapFetch.WantedIdsMinZoom, maxZoom: com.histmersion.util.basemap.BasemapFetch.WantedIdsMaxZoom): Array[Long] =
     val out = mutable.ArrayBuilder.make[Long]
     for z <- minZoom to maxZoom do
       val ((x0, x1), (y0, y1)) = Basemap.tileRange(b, z)
@@ -149,7 +246,7 @@ object BasemapFetch:
     * request when the gap before it is at most `overfetch` of the request so far (or 64 KiB) and the request stays
     * within `maxBytes`. Pure.
     */
-  def coalesce(contents: Seq[(Long, Long)], maxBytes: Long, overfetch: Double): Vector[(Long, Long)] =
+  def coalesce(contents: Seq[(com.histmersion.util.basemap.BasemapFetch.CoalesceContentsPart1, com.histmersion.util.basemap.BasemapFetch.CoalesceContentsPart2)], maxBytes: com.histmersion.util.basemap.BasemapFetch.CoalesceMaxBytes, overfetch: com.histmersion.util.basemap.BasemapFetch.CoalesceOverfetch): Vector[(com.histmersion.util.basemap.BasemapFetch.CoalesceResultPart1, com.histmersion.util.basemap.BasemapFetch.CoalesceResultPart2)] =
     val out = Vector.newBuilder[(Long, Long)]
     var start = -1L // the request being built: [start, end)
     var end = -1L
@@ -178,11 +275,11 @@ object BasemapFetch:
       http: RangeHttp,
       source: Source,
       bbox: BBox,
-      maxZoom: Int,
+      maxZoom: com.histmersion.util.basemap.BasemapFetch.PlanMaxZoom,
       pace: Pace,
-      note: String => Unit,
-      minZoom: Option[Int] = None
-  ): Either[String, Plan] =
+      note: com.histmersion.util.basemap.BasemapFetch.PlanNoteArg1 => Unit,
+      minZoom: Option[com.histmersion.util.basemap.BasemapFetch.PlanMinZoom] = None
+  ): Either[com.histmersion.util.basemap.BasemapFetch.PlanResultPart1, Plan] =
     var requests = 0 // directory requests made, each after a pause
     def get(offset: Long, length: Long): Either[String, (Array[Byte], RemoteFile)] =
       if requests > 0 then pace.sleep(pace.gapMs)
@@ -240,9 +337,9 @@ object BasemapFetch:
       ids: Array[Long],
       h: PmTiles.Header,
       pace: Pace,
-      get: (Long, Long) => Either[String, (Array[Byte], RemoteFile)],
-      depth: Int
-  ): Either[String, Vector[Wanted]] =
+      get: (com.histmersion.util.basemap.BasemapFetch.ResolveGetArg1, com.histmersion.util.basemap.BasemapFetch.ResolveGetArg2) => Either[com.histmersion.util.basemap.BasemapFetch.ResolveGetResultPart1, (Array[Byte], RemoteFile)],
+      depth: com.histmersion.util.basemap.BasemapFetch.ResolveDepth
+  ): Either[com.histmersion.util.basemap.BasemapFetch.ResolveResultPart1, Vector[Wanted]] =
     val found = Vector.newBuilder[Wanted]
     val leaves = mutable.LinkedHashMap.empty[PmTiles.Entry, mutable.ArrayBuilder[Long]]
     ids.foreach { id =>
@@ -279,10 +376,10 @@ object BasemapFetch:
   // ── 2. the download ────────────────────────────────────────────────────────────────────────────
 
   /** The file request `r` is kept in, in the work store. */
-  def chunkKey(r: (Long, Long)): Store.Key = Store.Key.applyUnsafe(s"${r._1}-${r._2}.bin")
+  def chunkKey(r: (com.histmersion.util.basemap.BasemapFetch.ChunkKeyRPart1, com.histmersion.util.basemap.BasemapFetch.ChunkKeyRPart2)): Store.Key = Store.Key.applyUnsafe(s"${r._1}-${r._2}.bin")
 
   /** The requests not downloaded yet. */
-  def pending(p: Plan, work: Store): Vector[(Long, Long)] =
+  def pending(p: Plan, work: Store): Vector[(com.histmersion.util.basemap.BasemapFetch.PendingResultPart1, com.histmersion.util.basemap.BasemapFetch.PendingResultPart2)] =
     p.requests.filterNot(r => work.stat(chunkKey(r)).exists(s => s.isFile && s.size.value == r._2))
 
   /** Download every pending request into `work`; `room(bytes)` is asked before each one and stops the fetch (with its
@@ -293,9 +390,9 @@ object BasemapFetch:
       p: Plan,
       work: Store,
       pace: Pace,
-      note: String => Unit,
-      room: Long => Either[String, Unit]
-  ): Either[String, Int] =
+      note: com.histmersion.util.basemap.BasemapFetch.DownloadNoteArg1 => Unit,
+      room: com.histmersion.util.basemap.BasemapFetch.DownloadRoomArg1 => Either[com.histmersion.util.basemap.BasemapFetch.DownloadRoomResultPart1, Unit]
+  ): Either[com.histmersion.util.basemap.BasemapFetch.DownloadResultPart1, com.histmersion.util.basemap.BasemapFetch.DownloadResultPart2] =
     val todo = pending(p, work)
     val total = p.requestBytes
     var done = total - todo.map(_._2).sum // bytes on disk, for the progress line
@@ -336,11 +433,11 @@ object BasemapFetch:
       work: Store,
       out: Store,
       key: Store.Key,
-      transform: Array[Byte] => Either[String, Option[Array[Byte]]],
+      transform: Array[Byte] => Either[com.histmersion.util.basemap.BasemapFetch.AssembleTransformResultPart1, Option[Array[Byte]]],
       header: PmTiles.Header,
       metadata: Json,
-      note: String => Unit
-  ): Either[String, (Long, Long)] =
+      note: com.histmersion.util.basemap.BasemapFetch.AssembleNoteArg1 => Unit
+  ): Either[com.histmersion.util.basemap.BasemapFetch.AssembleResultPart1, (com.histmersion.util.basemap.BasemapFetch.AssembleResultPart2Part1, com.histmersion.util.basemap.BasemapFetch.AssembleResultPart2Part2)] =
     val starts = p.requests.map(_._1).toArray
     val readers = mutable.HashMap.empty[Int, RandomReader]
     def read(offset: Long, length: Int): Array[Byte] =
@@ -399,11 +496,11 @@ object BasemapFetch:
     */
   def localMetadata(
       p: Plan,
-      dropped: Set[String],
-      attribution: String,
-      fetchedAt: String,
+      dropped: Set[com.histmersion.util.basemap.BasemapFetch.LocalMetadataDropped],
+      attribution: com.histmersion.util.basemap.BasemapFetch.LocalMetadataAttribution,
+      fetchedAt: com.histmersion.util.basemap.BasemapFetch.LocalMetadataFetchedAt,
       layer: Basemap.Layer,
-      filter: Option[(Boolean, String)] = None
+      filter: Option[(com.histmersion.util.basemap.BasemapFetch.LocalMetadataFilterPart1, com.histmersion.util.basemap.BasemapFetch.LocalMetadataFilterPart2)] = None
   ): Json =
     val src = p.metadata.asObject.getOrElse(io.circe.JsonObject.empty)
     val layers = src("vector_layers").flatMap(_.asArray) match
@@ -438,7 +535,7 @@ object BasemapFetch:
     )
 
   /** The resume record of a work directory: a fetch continues only the download it describes. */
-  def stateOf(p: Plan, extra: String): Json = Json.obj(
+  def stateOf(p: Plan, extra: com.histmersion.util.basemap.BasemapFetch.StateOfExtra): Json = Json.obj(
     "url" -> p.source.url.asJson,
     "size" -> p.remote.size.asJson,
     "etag" -> p.remote.etag.asJson,
@@ -450,7 +547,7 @@ object BasemapFetch:
   /** Make `work` hold only the parts of THIS plan: a work store left by another download (another build, region or
     * depth) is emptied first. Answers how many parts are already there.
     */
-  def prepare(work: Store, state: Json): Int =
+  def prepare(work: Store, state: Json): com.histmersion.util.basemap.BasemapFetch.PrepareResult =
     val file = Store.Key.applyUnsafe("state.json")
     if work.isDirectory(Store.Key.Root) && !work
         .get(file)

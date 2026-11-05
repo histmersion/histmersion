@@ -5,7 +5,26 @@ import com.histmersion.api.media.AssetLinks
 
 object SourcesMarkdown:
 
-  def sourceFindingsOnly(findings: Vector[Finding.Row]): String =
+  type SourceFindingsOnlyResult = SourceFindingsOnlyResult.T
+  object SourceFindingsOnlyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceResult = SourceResult.T
+  object SourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceFullText = SourceFullText.T
+  object SourceFullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeighborsResult = NeighborsResult.T
+  object NeighborsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeighborsCitekey = NeighborsCitekey.T
+  object NeighborsCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GraphResult = GraphResult.T
+  object GraphResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContradictionsResult = ContradictionsResult.T
+  object ContradictionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContradictionsCitekey = ContradictionsCitekey.T
+  object ContradictionsCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceRenamedResult = SourceRenamedResult.T
+  object SourceRenamedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def sourceFindingsOnly(findings: Vector[Finding.Row]): com.histmersion.api.library.SourcesMarkdown.SourceFindingsOnlyResult =
     if findings.isEmpty then "_(no findings)_"
     else
       val items = findings.map { f =>
@@ -24,7 +43,7 @@ object SourcesMarkdown:
       }
       s"## Findings (${findings.size})\n${items.mkString("\n")}"
 
-  def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: Boolean): String =
+  def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: com.histmersion.api.library.SourcesMarkdown.SourceFullText): com.histmersion.api.library.SourcesMarkdown.SourceResult =
     val authorLinks = if s.authors.map(_.value).nonEmpty then chipLinks(s.authors.map(_.value), "author") else ""
     val meta = List(authorLinks, year(s.year.map(_.value.toInt)), s.venue.map(_.value).getOrElse(""), s.status.wire).filter(_.nonEmpty).mkString(" · ")
     val per = period(s.periodStart, s.periodEnd)
@@ -65,7 +84,7 @@ object SourcesMarkdown:
           .getOrElse("\n\n_(no full text stored)_")
     header + topics + regions + tags + doi + prov + uid + summary + notes + findingsMd + body
 
-  def neighbors(citekey: String, rows: Vector[NeighborRow]): String =
+  def neighbors(citekey: com.histmersion.api.library.SourcesMarkdown.NeighborsCitekey, rows: Vector[NeighborRow]): com.histmersion.api.library.SourcesMarkdown.NeighborsResult =
     if rows.isEmpty then
       s"_No references recorded for **$citekey**._ An empty result is not evidence of agreement — " +
         "disagreement edges are sparse (the corpus has only a handful); use `contradictions` for a focused view."
@@ -84,7 +103,7 @@ object SourcesMarkdown:
         ) +
         block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r => s"**${r.citekey}**")
 
-  def graph(g: Source.Graph): String =
+  def graph(g: Source.Graph): com.histmersion.api.library.SourcesMarkdown.GraphResult =
     if g.nodes.isEmpty then s"_No graph data for **${g.root}**._"
     else
       val header =
@@ -105,7 +124,7 @@ object SourcesMarkdown:
         .mkString("\n")
       s"$header\n\n**Nodes**\n$nodeLines\n\n**Links**\n$linkLines"
 
-  def contradictions(result: ContradictionsResult, citekey: Option[String]): String =
+  def contradictions(result: ContradictionsResult, citekey: Option[com.histmersion.api.library.SourcesMarkdown.ContradictionsCitekey]): com.histmersion.api.library.SourcesMarkdown.ContradictionsResult =
     if result.rows.isEmpty then
       citekey match
         case Some(ck) =>
@@ -132,7 +151,7 @@ object SourcesMarkdown:
         "_Edge kinds: references, challenges, refutes, updates, superseded_by. " +
         "An empty result is not evidence of agreement._"
 
-  def sourceRenamed(r: Source.Renamed): String =
+  def sourceRenamed(r: Source.Renamed): com.histmersion.api.library.SourcesMarkdown.SourceRenamedResult =
     val c = r.counts
     def list(xs: List[String]) = if xs.isEmpty then "none" else xs.map(x => s"`$x`").mkString(", ")
     val columns =

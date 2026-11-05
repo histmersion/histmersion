@@ -21,7 +21,7 @@ object Fetch:
       * two steps both read. `compute` runs on the first call for `key`; later calls return that value. Name keys
       * `<plugin id>:<what>:<identifier>`: the value is stored untyped, so a key reused with another type fails.
       */
-    def memo[A](key: String)(compute: => A): A
+    def memo[A](key: com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A
 
     /** The host's log, with the fetcher's id on every line. */
     def log: Plugin.Log
@@ -30,4 +30,12 @@ object Fetch:
       * another plugin's behalf, what that plugin's upstream holds asks it only while that plugin is on. `false` from a
       * host that does not say.
       */
-    def registered(pluginId: String): Boolean = false
+    def registered(pluginId: com.histmersion.plugin.Fetch.Context.RegisteredPluginId): com.histmersion.plugin.Fetch.Context.RegisteredResult = false
+
+  object Context:
+    type MemoKey = MemoKey.T
+    object MemoKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RegisteredResult = RegisteredResult.T
+    object RegisteredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RegisteredPluginId = RegisteredPluginId.T
+    object RegisteredPluginId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

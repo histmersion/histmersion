@@ -9,6 +9,29 @@ import com.histmersion.api.Api
 
 object BasemapApi:
 
+  type TilePart1Part1 = TilePart1Part1.T
+  object TilePart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePart1Part2 = TilePart1Part2.T
+  object TilePart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePart1Part3 = TilePart1Part3.T
+  object TilePart1Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePart1Part4 = TilePart1Part4.T
+  object TilePart1Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePart1Part5 = TilePart1Part5.T
+  object TilePart1Part5 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePart1Part6 = TilePart1Part6.T
+  object TilePart1Part6 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePart3Part2 = TilePart3Part2.T
+  object TilePart3Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePart3Part3 = TilePart3Part3.T
+  object TilePart3Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TilePart3Part4 = TilePart3Part4.T
+  object TilePart3Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileTemplateResult = TileTemplateResult.T
+  object TileTemplateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileTemplateVersion = TileTemplateVersion.T
+  object TileTemplateVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private lazy val base = endpoint.in("api" / "basemap").errorOut(jsonBody[Api.Error])
 
   lazy val status: PublicEndpoint[Unit, Api.Error, Basemap.Status, Any] =
@@ -45,9 +68,9 @@ object BasemapApi:
       .out(jsonBody[Basemap.Removed])
 
   lazy val tile: PublicEndpoint[
-    (String, Int, Long, Long, Option[String], Option[String]),
+    (com.histmersion.api.basemap.BasemapApi.TilePart1Part1, com.histmersion.api.basemap.BasemapApi.TilePart1Part2, com.histmersion.api.basemap.BasemapApi.TilePart1Part3, com.histmersion.api.basemap.BasemapApi.TilePart1Part4, Option[com.histmersion.api.basemap.BasemapApi.TilePart1Part5], Option[com.histmersion.api.basemap.BasemapApi.TilePart1Part6]),
     Api.Error,
-    (Array[Byte], String, Option[String], String, StatusCode),
+    (Array[Byte], com.histmersion.api.basemap.BasemapApi.TilePart3Part2, Option[com.histmersion.api.basemap.BasemapApi.TilePart3Part3], com.histmersion.api.basemap.BasemapApi.TilePart3Part4, StatusCode),
     Any
   ] =
     endpoint.get
@@ -73,7 +96,7 @@ object BasemapApi:
 
   val Busy = "basemap_busy"
 
-  def tileTemplate(layer: Basemap.Layer, version: String): String =
+  def tileTemplate(layer: Basemap.Layer, version: com.histmersion.api.basemap.BasemapApi.TileTemplateVersion): com.histmersion.api.basemap.BasemapApi.TileTemplateResult =
     s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version"
 
   lazy val all: List[AnyEndpoint] = List(status, fetch, remove, tile)

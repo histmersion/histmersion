@@ -9,10 +9,13 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 final case class WikidataSettings(sparqlUrl: WikidataSettings.SparqlUrl, requestIntervalMs: WikidataSettings.RequestIntervalMs, classes: WikidataSettings.Classes, languages: WikidataSettings.Languages)
     derives ConfigReader:
   /** The label languages, English always among them. */
-  def labelLanguages: String =
+  def labelLanguages: com.histmersion.plugins.events.WikidataSettings.LabelLanguagesResult =
     (languages.split(",").map(_.trim).filter(_.nonEmpty).toList :+ "en").distinct.mkString(",")
 
 object WikidataSettings:
+  type LabelLanguagesResult = LabelLanguagesResult.T
+  object LabelLanguagesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type SparqlUrl = SparqlUrl.T
   object SparqlUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RequestIntervalMs = RequestIntervalMs.T

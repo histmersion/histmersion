@@ -6,6 +6,11 @@ import com.histmersion.api.given
 
 object Activity:
 
+  type KeyOfResult = KeyOfResult.T
+  object KeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyOfId = KeyOfId.T
+  object KeyOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   enum EntryKind(val wire: String):
     case Run extends EntryKind("run")
     case Job extends EntryKind("job")
@@ -13,14 +18,19 @@ object Activity:
     case Decision extends EntryKind("decision")
 
     /** The entry's kind as the activity list names it. */
-    def wording: String = this match
+    def wording: com.histmersion.api.automation.Activity.EntryKind.WordingResult = this match
       case Run      => "Agent work"
       case Job      => "Background job"
       case Log      => "Note"
       case Decision => "You decided"
 
   object EntryKind:
-    def parse(s: String): Option[EntryKind] = values.find(_.wire == s.trim.toLowerCase)
+    type WordingResult = WordingResult.T
+    object WordingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.Activity.EntryKind.ParseS): Option[EntryKind] = values.find(_.wire == s.trim.toLowerCase)
 
   enum Writer(val wire: String):
     case Agent extends Writer("agent")
@@ -35,7 +45,10 @@ object Activity:
     case Problems extends Show("problems", "Problems")
 
   object Show:
-    def parse(s: String): Option[Show] =
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.Activity.Show.ParseS): Option[Show] =
       val t = s.trim.toLowerCase
       values.find(v => v.wire == t || v.toString.toLowerCase == t)
 
@@ -118,4 +131,4 @@ object Activity:
   val MaxLimit = 200
   val DefaultLimit = 30
 
-  def keyOf(kind: EntryKind, id: String): String = s"${kind.wire}:$id"
+  def keyOf(kind: EntryKind, id: com.histmersion.api.automation.Activity.KeyOfId): com.histmersion.api.automation.Activity.KeyOfResult = s"${kind.wire}:$id"

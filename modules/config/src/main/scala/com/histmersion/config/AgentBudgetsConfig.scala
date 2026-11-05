@@ -14,11 +14,22 @@ final case class AgentBudgetsConfig(
   /** `run-tokens` for a run of `pipeline` that asks for none: its `pipeline-run-tokens` entry, else `run-tokens`. An
     * entry that does not parse (or is not positive) is ignored.
     */
-  def runTokensFor(pipeline: String): Long =
+  def runTokensFor(pipeline: com.histmersion.config.AgentBudgetsConfig.RunTokensForPipeline): com.histmersion.config.AgentBudgetsConfig.RunTokensForResult =
     AgentBudgetsConfig.parsePipelineTokens(pipelineRunTokens).getOrElse(pipeline, runTokens)
 
 object AgentBudgetsConfig:
   /** `"review-article=1200000, compile-article=800000"` → the map; malformed entries dropped. */
+  type RunTokensForResult = RunTokensForResult.T
+  object RunTokensForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunTokensForPipeline = RunTokensForPipeline.T
+  object RunTokensForPipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePipelineTokensResultPart1 = ParsePipelineTokensResultPart1.T
+  object ParsePipelineTokensResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePipelineTokensResultPart2 = ParsePipelineTokensResultPart2.T
+  object ParsePipelineTokensResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParsePipelineTokensS = ParsePipelineTokensS.T
+  object ParsePipelineTokensS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type RunUsd = RunUsd.T
   object RunUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunTokens = RunTokens.T
@@ -32,7 +43,7 @@ object AgentBudgetsConfig:
   type CacheReadWeight = CacheReadWeight.T
   object CacheReadWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parsePipelineTokens(s: String): Map[String, Long] =
+  def parsePipelineTokens(s: com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensS): Map[com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensResultPart1, com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensResultPart2] =
     s.split(",")
       .toList
       .map(_.trim)

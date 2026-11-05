@@ -65,6 +65,31 @@ final case class MediaItem(
 
 object MediaItem:
   /** The item as a plugin built against SPI 2's first release made it: no role of its own, no rendition. */
+  type ApplyKey = ApplyKey.T
+  object ApplyKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyTitle = ApplyTitle.T
+  object ApplyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyPageUrl = ApplyPageUrl.T
+  object ApplyPageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyImageUrl = ApplyImageUrl.T
+  object ApplyImageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyRightsPart1 = ApplyRightsPart1.T
+  object ApplyRightsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyThumbUrl = ApplyThumbUrl.T
+  object ApplyThumbUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyOriginalUrl = ApplyOriginalUrl.T
+  object ApplyOriginalUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyGeographyPart1 = ApplyGeographyPart1.T
+  object ApplyGeographyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyGeographyPart2 = ApplyGeographyPart2.T
+  object ApplyGeographyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyIdsPart1 = ApplyIdsPart1.T
+  object ApplyIdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyIdsPart2 = ApplyIdsPart2.T
+  object ApplyIdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyWithheld = ApplyWithheld.T
+  object ApplyWithheld extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
@@ -93,16 +118,16 @@ object MediaItem:
   object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(
-      key: String,
-      title: String,
-      pageUrl: String,
-      imageUrl: Option[String],
-      rights: Either[String, MediaRights],
-      thumbUrl: Option[String],
-      originalUrl: Option[String],
-      geography: List[(String, String)],
+      key: com.histmersion.plugin.MediaItem.ApplyKey,
+      title: com.histmersion.plugin.MediaItem.ApplyTitle,
+      pageUrl: com.histmersion.plugin.MediaItem.ApplyPageUrl,
+      imageUrl: Option[com.histmersion.plugin.MediaItem.ApplyImageUrl],
+      rights: Either[com.histmersion.plugin.MediaItem.ApplyRightsPart1, MediaRights],
+      thumbUrl: Option[com.histmersion.plugin.MediaItem.ApplyThumbUrl],
+      originalUrl: Option[com.histmersion.plugin.MediaItem.ApplyOriginalUrl],
+      geography: List[(com.histmersion.plugin.MediaItem.ApplyGeographyPart1, com.histmersion.plugin.MediaItem.ApplyGeographyPart2)],
       period: Option[Period],
-      ids: List[(String, String)],
-      withheld: Option[String]
+      ids: List[(com.histmersion.plugin.MediaItem.ApplyIdsPart1, com.histmersion.plugin.MediaItem.ApplyIdsPart2)],
+      withheld: Option[com.histmersion.plugin.MediaItem.ApplyWithheld]
   ): MediaItem =
     new MediaItem(key, title, pageUrl, imageUrl, rights, thumbUrl, originalUrl, geography, period, ids, withheld)

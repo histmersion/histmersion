@@ -4,4 +4,9 @@ package com.histmersion.fixtures.hellolib
   * plugin (the dependency-resolution tests and `scripts/bundle/smoke.sh`).
   */
 object Shout:
-  def apply(text: String): String = text.toUpperCase(java.util.Locale.ROOT) + "!"
+  type ApplyResult = ApplyResult.T
+  object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyText = ApplyText.T
+  object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def apply(text: com.histmersion.fixtures.hellolib.Shout.ApplyText): com.histmersion.fixtures.hellolib.Shout.ApplyResult = text.toUpperCase(java.util.Locale.ROOT) + "!"

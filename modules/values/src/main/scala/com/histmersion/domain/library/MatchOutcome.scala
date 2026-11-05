@@ -18,7 +18,14 @@ enum MatchOutcome:
   case DeletedHere
 
 object MatchOutcome:
-  def wireOf(o: MatchOutcome): String = o match
+  type WireOfResult = WireOfResult.T
+  object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WireResult = WireResult.T
+  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromWireS = FromWireS.T
+  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def wireOf(o: MatchOutcome): com.histmersion.domain.library.MatchOutcome.WireOfResult = o match
     case Same          => "same"
     case AutoMerge     => "auto-merge"
     case NeedsDecision => "needs-decision"
@@ -26,5 +33,5 @@ object MatchOutcome:
     case DeletedHere   => "deleted-here"
   given WireEnumValues[MatchOutcome]:
     def all: Array[MatchOutcome] = MatchOutcome.values
-    def wire(e: MatchOutcome): String = wireOf(e)
-    def fromWire(s: String): Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == s.trim)
+    def wire(e: MatchOutcome): com.histmersion.domain.library.MatchOutcome.WireResult = wireOf(e)
+    def fromWire(s: com.histmersion.domain.library.MatchOutcome.FromWireS): Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == s.trim)

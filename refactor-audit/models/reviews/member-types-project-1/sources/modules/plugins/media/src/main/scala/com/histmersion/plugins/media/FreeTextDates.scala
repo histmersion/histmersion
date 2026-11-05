@@ -1,0 +1,90 @@
+package com.histmersion.plugins.media
+
+import java.util.Locale
+
+/** Free-text object dates as museums write them (`1550-1196 BCE`, `100 BCE-100 CE`, `ca. 3300-ca. 2250 BCE`,
+  * `12th-13th century`, `5th century BCE`, `2nd millennium BCE`, `1883 or 1884`) read as a signed span, BCE negative.
+  * Conservative: an uncertain date (`?`), a range whose ends run backwards, or anything else it does not read is `None`
+  * — and a record without dates is never matched. Pure.
+  */
+object FreeTextDates:
+
+  type BoundRaw = BoundRaw.T
+  object BoundRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanResultPart1 = SpanResultPart1.T
+  object SpanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanResultPart2 = SpanResultPart2.T
+  object SpanResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart2 = ParseResultPart2.T
+  object ParseResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private val Part =
+    """^(?:(?:late|early|mid|middle|first half of|second half of|end of|beginning of)[\s-]+)?(?:the\s+)?([0-9]{1,5})(?:st|nd|rd|th)?(?:\s*(century|centuries|millennium|millennia))?(?:\s*(bce|bc|ce|ad))?$""".r
+
+  private enum Unit:
+    case Year, Century, Millennium
+
+  final private case class Bound(n: Bound.N, unit: Option[Unit], ordinal: Bound.Ordinal, bce: Option[Bound.Bce])
+
+  object Bound:
+    type N = N.T
+    object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ordinal = Ordinal.T
+    object Ordinal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bce = Bce.T
+    object Bce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def bound(raw: com.histmersion.plugins.media.FreeTextDates.BoundRaw): Option[Bound] =
+    raw.trim match
+      case Part(n, unit, era) =>
+        val u = Option(unit).map(x => if x.startsWith("cent") then Unit.Century else Unit.Millennium)
+        val e = Option(era).map(x => x.startsWith("b"))
+        Some(Bound(n.toLong, u, raw.trim.matches("""^.*?[0-9]+(st|nd|rd|th).*$"""), e))
+      case _ => None
+
+  /** Pure: the signed span of one bound, given the unit and era it carries or inherits. */
+  private def span(b: Bound): Option[(com.histmersion.plugins.media.FreeTextDates.SpanResultPart1, com.histmersion.plugins.media.FreeTextDates.SpanResultPart2)] =
+    val bce = b.bce.contains(true)
+    b.unit.getOrElse(Unit.Year) match
+      case Unit.Year if b.ordinal => None
+      case Unit.Year              => Option.when(b.n > 0)(if bce then (-b.n, -b.n) else (b.n, b.n))
+      case Unit.Century           =>
+        Option.when(b.n > 0)(if bce then (-b.n * 100, -(b.n * 100 - 99)) else ((b.n - 1) * 100 + 1, b.n * 100))
+      case Unit.Millennium =>
+        Option.when(b.n > 0)(if bce then (-b.n * 1000, -((b.n - 1) * 1000 + 1)) else ((b.n - 1) * 1000 + 1, b.n * 1000))
+
+  /** Pure: the span a date text states, or `None`. */
+  def parse(text: com.histmersion.plugins.media.FreeTextDates.ParseText): Option[(com.histmersion.plugins.media.FreeTextDates.ParseResultPart1, com.histmersion.plugins.media.FreeTextDates.ParseResultPart2)] =
+    val s0 = Option(text).getOrElse("").toLowerCase(Locale.ROOT).trim
+    if s0.isEmpty || s0.contains("?") then None
+    else
+      // eras first (so `b.c.` is not taken for `c.` = circa), then the hedges, then the separators
+      val s = s0
+        .replace("b.c.e.", "bce")
+        .replace("b.c.", "bc")
+        .replace("a.d.", "ad")
+        .replace("c.e.", "ce")
+        .replaceAll("""\b(ca\.|circa|c\.|about|approx\.|approximately)\s*""", "")
+        .replace('–', '-')
+        .replace('—', '-')
+        .replaceAll("""\b(late|early|mid)-""", "$1 ")
+        .replaceAll("""\s+or\s+""", "-")
+        .replaceAll("""\s+to\s+""", "-")
+        .replaceAll("""\s+""", " ")
+        .trim
+      val parts = s.split("""\s*-\s*""").toList.map(_.trim).filter(_.nonEmpty)
+      parts.map(bound) match
+        case List(Some(a))           => span(a)
+        case List(Some(a0), Some(b)) =>
+          // the first bound inherits the unit and era it does not state (`12th-13th century`, `305-30 BCE`)
+          val a = a0.copy(unit = a0.unit.orElse(Option.when(a0.ordinal)(b.unit).flatten), bce = a0.bce.orElse(b.bce))
+          for
+            (s1, _) <- span(a)
+            (_, e2) <- span(b)
+            if s1 <= e2
+          yield (s1, e2)
+        case _ => None

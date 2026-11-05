@@ -16,6 +16,27 @@ import com.histmersion.api.media.{AssetInput, AssetLinks}
   */
 object Notes:
 
+  type ToImportForce = ToImportForce.T
+  object ToImportForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyResult = BodyResult.T
+  object BodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyText = BodyText.T
+  object BodyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FiguresCitekey = FiguresCitekey.T
+  object FiguresCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FiguresMaxBytes = FiguresMaxBytes.T
+  object FiguresMaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FiguresMaxCount = FiguresMaxCount.T
+  object FiguresMaxCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MdPathResult = MdPathResult.T
+  object MdPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MdPathText = MdPathText.T
+  object MdPathText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FrontmatterResult = FrontmatterResult.T
+  object FrontmatterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FrontmatterText = FrontmatterText.T
+  object FrontmatterText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def markdownFiles(dir: Path): List[Path] =
     val s = Files.list(dir)
     try s.iterator.asScala.filter(_.getFileName.toString.endsWith(".md")).toList.sortBy(_.toString)
@@ -24,7 +45,7 @@ object Notes:
   /** Package one note for the server: its text, the converted body it points at, and its mtime (so the server can apply
     * the same "stored row is newer than the file" guard as a server-side seed).
     */
-  def toImport(file: Path, force: Boolean): NoteImport =
+  def toImport(file: Path, force: com.histmersion.cli.Notes.ToImportForce): NoteImport =
     val text = Files.readString(file)
     NoteImport(
       text = text,
@@ -37,7 +58,7 @@ object Notes:
   /** The converted full text this note points at via `md_path`, resolved relative to the repo root = three parents up
     * from `wiki/sources/<citekey>.md` — the same rule `Frontmatter.parseFile` uses.
     */
-  private def body(file: Path, text: String): Option[String] =
+  private def body(file: Path, text: com.histmersion.cli.Notes.BodyText): Option[com.histmersion.cli.Notes.BodyResult] =
     mdPath(text).flatMap { rel =>
       Option(file.toAbsolutePath.getParent)
         .flatMap(p => Option(p.getParent))
@@ -52,7 +73,7 @@ object Notes:
     * are sent in bounded batches through `POST /api/sources/{ck}/assets` rather than inside the note, which keeps
     * request sizes sane. Sorted and capped, so one pathological directory cannot stall a seed.
     */
-  def figures(file: Path, citekey: String, maxBytes: Long, maxCount: Int): List[AssetInput] =
+  def figures(file: Path, citekey: com.histmersion.cli.Notes.FiguresCitekey, maxBytes: com.histmersion.cli.Notes.FiguresMaxBytes, maxCount: com.histmersion.cli.Notes.FiguresMaxCount): List[AssetInput] =
     val text = scala.util.Try(Files.readString(file)).getOrElse("")
     val root = Option(file.toAbsolutePath.getParent)
       .flatMap(p => Option(p.getParent))
@@ -82,10 +103,10 @@ object Notes:
 
   private val MdPath = """(?m)^md_path:\s*["']?([^"'\r\n]+)["']?\s*$""".r
 
-  private def mdPath(text: String): Option[String] =
+  private def mdPath(text: com.histmersion.cli.Notes.MdPathText): Option[com.histmersion.cli.Notes.MdPathResult] =
     frontmatter(text).flatMap(MdPath.findFirstMatchIn(_)).map(_.group(1).trim).filter(_.nonEmpty)
 
-  private def frontmatter(text: String): Option[String] =
+  private def frontmatter(text: com.histmersion.cli.Notes.FrontmatterText): Option[com.histmersion.cli.Notes.FrontmatterResult] =
     val t = text.stripPrefix("﻿")
     if !t.startsWith("---") then None
     else

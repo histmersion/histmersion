@@ -3,11 +3,18 @@ package com.histmersion.api.library
 import com.histmersion.api.catalogue.LinkScheme
 import com.histmersion.api.given
 final case class ExternalId(scheme: LinkScheme, id: ExternalId.Id):
-  def key: String = s"${scheme.wire}:$id"
+  def key: com.histmersion.api.library.ExternalId.KeyResult = s"${scheme.wire}:$id"
 
-  def placeId: String = s"${scheme.wire}_${id.toLowerCase(java.util.Locale.ROOT)}"
+  def placeId: com.histmersion.api.library.ExternalId.PlaceIdResult = s"${scheme.wire}_${id.toLowerCase(java.util.Locale.ROOT)}"
 
 object ExternalId:
+  type KeyResult = KeyResult.T
+  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceIdResult = PlaceIdResult.T
+  object PlaceIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRaw = ParseRaw.T
+  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -18,7 +25,7 @@ object ExternalId:
   private val TgnUri = """^https?://vocab\.getty\.edu/(?:page/)?tgn/(\d+)(?:[-/].*)?$""".r
   private val WhgUri = """^https?://(?:www\.)?whgazetteer\.org/(?:api/)?(?:places?|db)/(?:\?id=)?(\d+)/?.*$""".r
 
-  def parse(raw: String): Option[ExternalId] =
+  def parse(raw: com.histmersion.api.library.ExternalId.ParseRaw): Option[ExternalId] =
     val s = raw.trim
     def make(scheme: LinkScheme, id: String): Option[ExternalId] =
       val v = id.trim.stripSuffix("/")

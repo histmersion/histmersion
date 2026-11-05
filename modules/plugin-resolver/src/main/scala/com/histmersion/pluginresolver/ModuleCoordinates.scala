@@ -8,7 +8,12 @@ final case class ModuleCoordinates(key: ModuleKey, version: ModuleVersion):
 
 object ModuleCoordinates:
   /** `group:artifact:version`. */
-  def parse(raw: String): Either[String, ModuleCoordinates] = raw.trim.split(':').toList match
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseRaw = ParseRaw.T
+  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(raw: com.histmersion.pluginresolver.ModuleCoordinates.ParseRaw): Either[com.histmersion.pluginresolver.ModuleCoordinates.ParseResultPart1, ModuleCoordinates] = raw.trim.split(':').toList match
     case List(g, a, v) =>
       for
         key <- ModuleKey.parse(s"$g:$a")

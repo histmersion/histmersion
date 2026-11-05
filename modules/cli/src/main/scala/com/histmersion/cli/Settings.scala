@@ -9,7 +9,10 @@ import com.histmersion.config.*
   * `histmersion config path` must still run to show what is wrong.
   */
 object Settings:
-  lazy val loaded: Either[String, LoadedConfig] = AppConfig.loadWithUserFile()
+  type LoadedPart1 = LoadedPart1.T
+  object LoadedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  lazy val loaded: Either[com.histmersion.cli.Settings.LoadedPart1, LoadedConfig] = AppConfig.loadWithUserFile()
 
    lazy val app: AppConfig = loaded match
     case Right(l)  => l.config

@@ -49,24 +49,75 @@ import com.histmersion.util.console.Console
 
 object RelinkPlugins:
 
+  type ExitCodeResult = ExitCodeResult.T
+  object ExitCodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExitCodeArgs = ExitCodeArgs.T
+  object ExitCodeArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunResult = RunResult.T
+  object RunResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunArgs = RunArgs.T
+  object RunArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCmd = RunCmd.T
+  object RunCmd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedFilesResultPart1 = LinkedFilesResultPart1.T
+  object LinkedFilesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkedFilesResultPart2 = LinkedFilesResultPart2.T
+  object LinkedFilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sha256Result = Sha256Result.T
+  object Sha256Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromJarResult = FromJarResult.T
+  object FromJarResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetUrl = GetUrl.T
+  object GetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetHeadersPart1 = GetHeadersPart1.T
+  object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetHeadersPart2 = GetHeadersPart2.T
+  object GetHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ClassesOfResult = ClassesOfResult.T
+  object ClassesOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesResult = DuplicatesResult.T
+  object DuplicatesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesKit = DuplicatesKit.T
+  object DuplicatesKit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesPluginsPart1 = DuplicatesPluginsPart1.T
+  object DuplicatesPluginsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DuplicatesPluginsPart2 = DuplicatesPluginsPart2.T
+  object DuplicatesPluginsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart1 = CheckResultPart1.T
+  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckResultPart2 = CheckResultPart2.T
+  object CheckResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostIdsResultPart1 = HostIdsResultPart1.T
+  object HostIdsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostIdsResultPart2 = HostIdsResultPart2.T
+  object HostIdsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KitLabelResult = KitLabelResult.T
+  object KitLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KitManifestVersion = KitManifestVersion.T
+  object KitManifestVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KitManifestCommit = KitManifestCommit.T
+  object KitManifestCommit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KitManifestGraalvm = KitManifestGraalvm.T
+  object KitManifestGraalvm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Usage =
     """usage: pluginTool describe [--lib <dir>] <jar>…
       |       pluginTool check [--lib <dir>] <kit dir> <jar>…
       |       pluginTool plugin-set [--lib <dir>] <out.jar> <record.json> <native|jvm> <kit dir> <jar>…
       |       pluginTool kit-manifest <kit dir> <version> <commit|-> <graalvm version>""".stripMargin
 
-  def exitCode(args: List[String])(using console: Console): Int = try run(args)(using console)
+  def exitCode(args: List[com.histmersion.server.plugins.RelinkPlugins.ExitCodeArgs])(using console: Console): com.histmersion.server.plugins.RelinkPlugins.ExitCodeResult = try run(args)(using console)
     catch
       case NonFatal(e) =>
         console.errorLine(s"pluginTool: ${e.getClass.getSimpleName}: ${e.getMessage}")
         3
 
-  private def run(args: List[String])(using console: Console): Int = args match
+  private def run(args: List[com.histmersion.server.plugins.RelinkPlugins.RunArgs])(using console: Console): com.histmersion.server.plugins.RelinkPlugins.RunResult = args match
     case cmd :: "--lib" :: lib :: rest => run(cmd, rest, dependencyJars(Path.of(lib)))(using console)
     case cmd :: rest                   => run(cmd, rest, Nil)(using console)
     case Nil                           => console.errorLine(Usage); 1
 
-  private def run(cmd: String, args: List[String], deps: List[Path])(using console: Console): Int =
+  private def run(cmd: com.histmersion.server.plugins.RelinkPlugins.RunCmd, args: List[com.histmersion.server.plugins.RelinkPlugins.RunArgs], deps: List[Path])(using console: Console): com.histmersion.server.plugins.RelinkPlugins.RunResult =
     val loader = withDependencies(deps, getClass.getClassLoader)
     (cmd, args) match
       case ("describe", jars) if jars.nonEmpty =>
@@ -108,7 +159,7 @@ object RelinkPlugins:
     * each jar (`x-1.0.jar` → `x-1.0.pom`, when there is one) and each dependency jar as `lib/<name>`, with their
     * SHA-256.
     */
-  def linkedFiles(jars: List[Path], deps: List[Path]): List[(String, String)] =
+  def linkedFiles(jars: List[Path], deps: List[Path]): List[(com.histmersion.server.plugins.RelinkPlugins.LinkedFilesResultPart1, com.histmersion.server.plugins.RelinkPlugins.LinkedFilesResultPart2)] =
     val poms = jars
       .map(j => j.resolveSibling(j.getFileName.toString.stripSuffix(".jar") + ".pom"))
       .filter(Files.isRegularFile(_))
@@ -127,7 +178,7 @@ object RelinkPlugins:
 
   // ── describe ──────────────────────────────────────────────────────────────────────────────────
 
-  def sha256(p: Path): String =
+  def sha256(p: Path): com.histmersion.server.plugins.RelinkPlugins.Sha256Result =
     val md = java.security.MessageDigest.getInstance("SHA-256")
     val in = Files.newInputStream(p)
     try
@@ -166,11 +217,11 @@ object RelinkPlugins:
         case e: LinkageError => List(PluginDescription("", "", 0, error = Some(PluginHost.failure(e))))
     PluginJar(abs.getFileName.toString, sha256(abs), plugins)
 
-  private def fromJar(c: Class[?], jar: Path): Boolean =
+  private def fromJar(c: Class[?], jar: Path): com.histmersion.server.plugins.RelinkPlugins.FromJarResult =
     Try(Path.of(c.getProtectionDomain.getCodeSource.getLocation.toURI).toAbsolutePath.normalize == jar).getOrElse(false)
 
   private val NoHttp: Plugin.Http = new Plugin.Http:
-    def get(url: String, headers: Map[String, String]) = Left("no HTTP while a plugin is being described")
+    def get(url: com.histmersion.server.plugins.RelinkPlugins.GetUrl, headers: Map[com.histmersion.server.plugins.RelinkPlugins.GetHeadersPart1, com.histmersion.server.plugins.RelinkPlugins.GetHeadersPart2]) = Left("no HTTP while a plugin is being described")
 
   /** Register `p` alone, enabled, with its defaults, into throw-away registries: what it provides and the access its
     * source fetchers declare.
@@ -200,7 +251,7 @@ object RelinkPlugins:
   // ── check ─────────────────────────────────────────────────────────────────────────────────────
 
   /** The class files of a jar (`module-info` and multi-release copies left out: neither is a duplicate). */
-  def classesOf(jar: Path): Set[String] =
+  def classesOf(jar: Path): Set[com.histmersion.server.plugins.RelinkPlugins.ClassesOfResult] =
     val z = ZipFile(jar.toFile)
     try
       z.entries()
@@ -213,7 +264,7 @@ object RelinkPlugins:
   /** Pure: the classes each plugin jar shares with the kit or with an earlier plugin jar. The image has one class
     * loader: a second copy of a class is a conflict, never a choice (§7.1).
     */
-  def duplicates(kit: Set[String], plugins: List[(String, Set[String])]): List[String] =
+  def duplicates(kit: Set[com.histmersion.server.plugins.RelinkPlugins.DuplicatesKit], plugins: List[(com.histmersion.server.plugins.RelinkPlugins.DuplicatesPluginsPart1, Set[com.histmersion.server.plugins.RelinkPlugins.DuplicatesPluginsPart2])]): List[com.histmersion.server.plugins.RelinkPlugins.DuplicatesResult] =
     @tailrec def loop(rest: List[(String, Set[String])], seen: Set[(String, String)], acc: List[String]): List[String] =
       rest match
         case Nil                     => acc
@@ -236,7 +287,7 @@ object RelinkPlugins:
   /** Everything that refuses linking these plugin jars, with their dependency jars `deps`, into this kit, and a line
     * per plugin found.
     */
-  def check(kit: Path, jars: List[Path], deps: List[Path], loader: ClassLoader): (List[String], List[String]) =
+  def check(kit: Path, jars: List[Path], deps: List[Path], loader: ClassLoader): (List[com.histmersion.server.plugins.RelinkPlugins.CheckResultPart1], List[com.histmersion.server.plugins.RelinkPlugins.CheckResultPart2]) =
     val described = jars.map(j => describe(j, loader))
     val taken = hostIds(loader)
     // an id provided twice among the plugin jars, or already in the binary
@@ -267,7 +318,7 @@ object RelinkPlugins:
   /** The ids the binary itself has: the plugins on the kit's class path (the first-party ones among them) and the ones
     * the host supplies itself.
     */
-  def hostIds(loader: ClassLoader): Map[String, String] =
+  def hostIds(loader: ClassLoader): Map[com.histmersion.server.plugins.RelinkPlugins.HostIdsResultPart1, com.histmersion.server.plugins.RelinkPlugins.HostIdsResultPart2] =
     val discovered = PluginHost.discover(loader)._1.map(_.info.id)
     val supplied = HostProvided.Ids
     (discovered ++ supplied).map(_ -> "this Histmersion (a first-party plugin)").toMap ++
@@ -297,12 +348,12 @@ object RelinkPlugins:
 
   // ── the kit ───────────────────────────────────────────────────────────────────────────────────
 
-  private def kitLabel(kit: Path): Option[String] =
+  private def kitLabel(kit: Path): Option[com.histmersion.server.plugins.RelinkPlugins.KitLabelResult] =
     val f = kit.resolve("kit.json")
     if Files.isRegularFile(f) then PluginKit.parseKit(Files.readString(f)).toOption.map(_.label) else None
 
   /** The manifest over every file under `kit` (the manifests themselves excluded). */
-  def kitManifest(kit: Path, version: String, commit: Option[String], graalvm: String): PluginKit.KitManifest =
+  def kitManifest(kit: Path, version: com.histmersion.server.plugins.RelinkPlugins.KitManifestVersion, commit: Option[com.histmersion.server.plugins.RelinkPlugins.KitManifestCommit], graalvm: com.histmersion.server.plugins.RelinkPlugins.KitManifestGraalvm): PluginKit.KitManifest =
     val files = Files
       .walk(kit)
       .iterator()

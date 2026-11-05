@@ -16,17 +16,48 @@ import com.histmersion.api.library.{Filter, GeoHit}
 object App:
 
   /** Drops the answers to a superseded load ([[Latest]]). */
+  type Timer = Timer.T
+  object Timer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TotalKey = TotalKey.T
+  object TotalKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TotalCount = TotalCount.T
+  object TotalCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LastParams = LastParams.T
+  object LastParams extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CachedNonTimeKey = CachedNonTimeKey.T
+  object CachedNonTimeKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptFindingsResult = KeptFindingsResult.T
+  object KeptFindingsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FiltersShownResult = FiltersShownResult.T
+  object FiltersShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParamsKeyResult = ParamsKeyResult.T
+  object ParamsKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NonTimeParamsKeyResult = NonTimeParamsKeyResult.T
+  object NonTimeParamsKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuickRenderRangeA = QuickRenderRangeA.T
+  object QuickRenderRangeA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuickRenderRangeB = QuickRenderRangeB.T
+  object QuickRenderRangeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuickRenderIfCachedFrom = QuickRenderIfCachedFrom.T
+  object QuickRenderIfCachedFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QuickRenderIfCachedTo = QuickRenderIfCachedTo.T
+  object QuickRenderIfCachedTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestoreSpanFrom = RestoreSpanFrom.T
+  object RestoreSpanFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestoreSpanTo = RestoreSpanTo.T
+  object RestoreSpanTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val latest = Latest()
-  private var timer: Int = 0
-  private var totalKey: Option[String] = None
-  private var totalCount: Int = 0
-  private var lastParams: Option[String] = None
+  private var timer: com.histmersion.web.App.Timer = 0
+  private var totalKey: Option[com.histmersion.web.App.TotalKey] = None
+  private var totalCount: com.histmersion.web.App.TotalCount = 0
+  private var lastParams: Option[com.histmersion.web.App.LastParams] = None
   private var config: UiConfig = uninitialized
   private var cachedFindings: List[GeoHit] = Nil
-  private var cachedNonTimeKey: String = ""
+  private var cachedNonTimeKey: com.histmersion.web.App.CachedNonTimeKey = ""
 
   /** How many findings are kept for time-only redraws ([[Diagnostics]]). */
-  def keptFindings: Int = cachedFindings.length
+  def keptFindings: com.histmersion.web.App.KeptFindingsResult = cachedFindings.length
 
   def init(): Unit =
     dom.console.log("Histmersion: init")
@@ -129,7 +160,7 @@ object App:
     }
 
   /** The pages the filter panel is shown on: Explore and Library's two lists. */
-  private def filtersShown(r: Route): Boolean = r match
+  private def filtersShown(r: Route): com.histmersion.web.App.FiltersShownResult = r match
     case Route.Explore    => true
     case Route.Library(s) => s.isList
     case _                => false
@@ -148,7 +179,7 @@ object App:
       }
     }
 
-  private def paramsKey(): String =
+  private def paramsKey(): com.histmersion.web.App.ParamsKeyResult =
     val f = UiState.toFilter()
     js.JSON.stringify(
       js.Dynamic.literal(
@@ -168,7 +199,7 @@ object App:
       )
     )
 
-  private def nonTimeParamsKey(): String =
+  private def nonTimeParamsKey(): com.histmersion.web.App.NonTimeParamsKeyResult =
     val f = UiState.toFilter()
     js.JSON.stringify(
       js.Dynamic.literal(
@@ -191,21 +222,21 @@ object App:
     val b = UiState.to.now().getOrElse(config.time.defaultTo)
     quickRenderRange(a, b)
 
-  private def quickRenderRange(a: Long, b: Long): Unit =
+  private def quickRenderRange(a: com.histmersion.web.App.QuickRenderRangeA, b: com.histmersion.web.App.QuickRenderRangeB): Unit =
     if cachedFindings.nonEmpty then
       val filtered = cachedFindings.filter { pt =>
         pt.periodStart.forall(_ <= b) && pt.periodEnd.forall(_ >= a)
       }
       MapView.render(filtered, (a, b))
 
-  def quickRenderIfCached(from: Long, to: Long): Unit =
+  def quickRenderIfCached(from: com.histmersion.web.App.QuickRenderIfCachedFrom, to: com.histmersion.web.App.QuickRenderIfCachedTo): Unit =
     quickRenderRange(from, to)
 
   /** The map drawn for the span `[from, to]` again, from the findings held — after playback, which drew its frames'
     * windows: the findings, the legend's years, the tiled layers and the boundaries all of the whole span, as before it
     * played (with no findings held too: the layers still follow the span).
     */
-  def restoreSpan(from: Long, to: Long): Unit =
+  def restoreSpan(from: com.histmersion.web.App.RestoreSpanFrom, to: com.histmersion.web.App.RestoreSpanTo): Unit =
     MapView.render(
       cachedFindings.filter(pt => pt.periodStart.forall(_ <= to) && pt.periodEnd.forall(_ >= from)),
       (from, to)

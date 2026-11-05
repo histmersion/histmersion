@@ -2,14 +2,100 @@ package com.histmersion.upstreams.jats
 object Jats:
 
   // ── the tree ────────────────────────────────────────────────────────────────────────────────
+  type IsJatsResult = IsJatsResult.T
+  object IsJatsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsJatsXml = IsJatsXml.T
+  object IsJatsXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseXml = ParseXml.T
+  object ParseXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AfterResult = AfterResult.T
+  object AfterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AfterS = AfterS.T
+  object AfterS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AfterToken = AfterToken.T
+  object AfterToken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AfterFrom = AfterFrom.T
+  object AfterFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TagEndResult = TagEndResult.T
+  object TagEndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TagEndS = TagEndS.T
+  object TagEndS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TagEndFrom = TagEndFrom.T
+  object TagEndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoctypeEndResult = DoctypeEndResult.T
+  object DoctypeEndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoctypeEndS = DoctypeEndS.T
+  object DoctypeEndS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoctypeEndFrom = DoctypeEndFrom.T
+  object DoctypeEndFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntitiesResult = EntitiesResult.T
+  object EntitiesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntitiesS = EntitiesS.T
+  object EntitiesS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToMarkdownResult = ToMarkdownResult.T
+  object ToMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToMarkdownXml = ToMarkdownXml.T
+  object ToMarkdownXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksResult = BlocksResult.T
+  object BlocksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksLevel = BlocksLevel.T
+  object BlocksLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockResult = BlockResult.T
+  object BlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockLevel = BlockLevel.T
+  object BlockLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CaptionTextResult = CaptionTextResult.T
+  object CaptionTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TableResult = TableResult.T
+  object TableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FormulaResult = FormulaResult.T
+  object FormulaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefListResult = RefListResult.T
+  object RefListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefListLevel = RefListLevel.T
+  object RefListLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefListParent = RefListParent.T
+  object RefListParent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitationResult = CitationResult.T
+  object CitationResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByNameResult = ByNameResult.T
+  object ByNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PersonNameResult = PersonNameResult.T
+  object PersonNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunTextResult = RunTextResult.T
+  object RunTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InlineRawResult = InlineRawResult.T
+  object InlineRawResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrapResult = WrapResult.T
+  object WrapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrapMark = WrapMark.T
+  object WrapMark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WrapS = WrapS.T
+  object WrapS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResult = TextResult.T
+  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollapseResult = CollapseResult.T
+  object CollapseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CollapseS = CollapseS.T
+  object CollapseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   sealed trait Node
   final case class Elem(name: Elem.Name, attrs: Map[Elem.AttrsKey, Elem.AttrsValue], children: Vector[Node]) extends Node:
-    def kids(n: String): Vector[Elem] = children.collect { case e: Elem if e.name == n => e }
-    def kid(n: String): Option[Elem] = kids(n).headOption
-    def attr(n: String): Option[String] = attrs.get(n)
+    def kids(n: com.histmersion.upstreams.jats.Jats.Elem.KidsN): Vector[Elem] = children.collect { case e: Elem if e.name == n => e }
+    def kid(n: com.histmersion.upstreams.jats.Jats.Elem.KidN): Option[Elem] = kids(n).headOption
+    def attr(n: com.histmersion.upstreams.jats.Jats.Elem.AttrN): Option[com.histmersion.upstreams.jats.Jats.Elem.AttrResult] = attrs.get(n)
     def elems: Vector[Elem] = children.collect { case e: Elem => e }
 
   object Elem:
+    type KidsN = KidsN.T
+    object KidsN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type KidN = KidN.T
+    object KidN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AttrResult = AttrResult.T
+    object AttrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AttrN = AttrN.T
+    object AttrN extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AttrsKey = AttrsKey.T
@@ -23,14 +109,14 @@ object Jats:
     object S extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The document starts — after an XML declaration, comments and a DOCTYPE — with `<article>`. */
-  def isJats(xml: String): Boolean =
+  def isJats(xml: com.histmersion.upstreams.jats.Jats.IsJatsXml): com.histmersion.upstreams.jats.Jats.IsJatsResult =
     Prolog.findPrefixOf(xml.take(64 * 1024)).isDefined
 
   private val Prolog =
     """(?s)﻿?\s*(?:<\?.*?\?>\s*|<!--.*?-->\s*|<!DOCTYPE[^\[>]*(?:\[.*?\])?\s*>\s*)*<article[\s>/]""".r
 
   /** The document's root element (an empty `article` when the text has none). */
-  def parse(xml: String): Elem =
+  def parse(xml: com.histmersion.upstreams.jats.Jats.ParseXml): Elem =
     final case class Frame(name: com.histmersion.upstreams.jats.Jats.Elem.Name, attrs: Map[com.histmersion.upstreams.jats.Jats.Elem.AttrsKey, com.histmersion.upstreams.jats.Jats.Elem.AttrsValue], kids: Vector[Node])
     // a hand-rolled reader walks the text once; the open elements are the one mutable state
     var stack = List(Frame("#document", Map.empty, Vector.empty))
@@ -82,12 +168,12 @@ object Jats:
 
   private val AttrRe = """([\w:.-]+)\s*=\s*(?:"([^"]*)"|'([^']*)')""".r
 
-  private def after(s: String, token: String, from: Int): Int =
+  private def after(s: com.histmersion.upstreams.jats.Jats.AfterS, token: com.histmersion.upstreams.jats.Jats.AfterToken, from: com.histmersion.upstreams.jats.Jats.AfterFrom): com.histmersion.upstreams.jats.Jats.AfterResult =
     val j = s.indexOf(token, from)
     if j < 0 then s.length else j + token.length
 
   /** The `>` that ends a tag, ignoring one inside a quoted attribute value. */
-  private def tagEnd(s: String, from: Int): Int =
+  private def tagEnd(s: com.histmersion.upstreams.jats.Jats.TagEndS, from: com.histmersion.upstreams.jats.Jats.TagEndFrom): com.histmersion.upstreams.jats.Jats.TagEndResult =
     // a scanning index and the quote it is inside: local to this call
     var j = from
     var quote = 0.toChar
@@ -99,7 +185,7 @@ object Jats:
     j
 
   /** A `<!DOCTYPE …>` with an optional `[internal subset]`. */
-  private def doctypeEnd(s: String, from: Int): Int =
+  private def doctypeEnd(s: com.histmersion.upstreams.jats.Jats.DoctypeEndS, from: com.histmersion.upstreams.jats.Jats.DoctypeEndFrom): com.histmersion.upstreams.jats.Jats.DoctypeEndResult =
     // a scanning index and the bracket depth: local to this call
     var j = from + 2
     var depth = 0
@@ -112,7 +198,7 @@ object Jats:
   private val EntityRe = """&(#x[0-9a-fA-F]+|#[0-9]+|[A-Za-z][A-Za-z0-9]*);""".r
   private val Named = Map("amp" -> "&", "lt" -> "<", "gt" -> ">", "quot" -> "\"", "apos" -> "'", "nbsp" -> " ")
 
-  def entities(s: String): String =
+  def entities(s: com.histmersion.upstreams.jats.Jats.EntitiesS): com.histmersion.upstreams.jats.Jats.EntitiesResult =
     if !s.contains('&') then s
     else
       EntityRe.replaceAllIn(
@@ -132,7 +218,7 @@ object Jats:
   /** The article as Markdown: title, authors, abstract(s), the body's sections, the back matter (acknowledgements,
     * notes, appendices, references) and floating figures/tables.
     */
-  def toMarkdown(xml: String): String =
+  def toMarkdown(xml: com.histmersion.upstreams.jats.Jats.ToMarkdownXml): com.histmersion.upstreams.jats.Jats.ToMarkdownResult =
     val article = parse(xml)
     val meta = article.kid("front").flatMap(_.kid("article-meta"))
     val title = meta
@@ -174,7 +260,7 @@ object Jats:
       .mkString("", "\n\n", "\n")
 
   /** The block-level Markdown of an element's children, sections as headings from `level`. */
-  private def blocks(e: Elem, level: Int): Vector[String] =
+  private def blocks(e: Elem, level: com.histmersion.upstreams.jats.Jats.BlocksLevel): Vector[com.histmersion.upstreams.jats.Jats.BlocksResult] =
     // an element's own title is rendered by whoever owns it (sec, abstract, ack, caption)
     e.children.flatMap {
       case Text(s)                                           => Option(collapse(s)).filter(_.nonEmpty).toVector
@@ -200,7 +286,7 @@ object Jats:
     "article-categories"
   )
 
-  private def block(e: Elem, level: Int): Vector[String] = e.name match
+  private def block(e: Elem, level: com.histmersion.upstreams.jats.Jats.BlockLevel): Vector[com.histmersion.upstreams.jats.Jats.BlockResult] = e.name match
     case "sec" | "app" | "boxed-text" | "glossary" | "notes" | "fn-group" | "app-group" | "sec-meta" =>
       val heading = (e.kid("label").map(runText).toList ++ e.kid("title").map(runText).toList)
         .filter(_.nonEmpty)
@@ -265,10 +351,10 @@ object Jats:
   private val BlockInP =
     Set("list", "disp-quote", "fig", "table-wrap", "disp-formula", "boxed-text", "def-list", "supplementary-material")
 
-  private def captionText(c: Elem): Vector[String] =
+  private def captionText(c: Elem): Vector[com.histmersion.upstreams.jats.Jats.CaptionTextResult] =
     (c.kid("title").map(runText).toVector ++ c.kids("p").map(runText)).filter(_.nonEmpty)
 
-  private def table(t: Elem): Vector[String] =
+  private def table(t: Elem): Vector[com.histmersion.upstreams.jats.Jats.TableResult] =
     def rows(e: Elem): Vector[Elem] = e.elems.flatMap(c => if c.name == "tr" then Vector(c) else rows(c))
     val all = rows(t)
       .map(
@@ -284,12 +370,12 @@ object Jats:
       val line = (r: Vector[String]) => r.mkString("| ", " | ", " |")
       Vector((line(pad.head) +: line(Vector.fill(width)("---")) +: pad.tail.map(line)).mkString("\n"))
 
-  private def formula(e: Elem): Option[String] =
+  private def formula(e: Elem): Option[com.histmersion.upstreams.jats.Jats.FormulaResult] =
     def find(x: Elem): Option[Elem] =
       if x.name == "tex-math" then Some(x) else x.elems.iterator.flatMap(find).nextOption()
     find(e).map(t => collapse(text(t)).stripPrefix("$").stripSuffix("$").trim).filter(_.nonEmpty)
 
-  private def refList(e: Elem, level: Int, parent: Option[String] = None): Vector[String] =
+  private def refList(e: Elem, level: com.histmersion.upstreams.jats.Jats.RefListLevel, parent: Option[com.histmersion.upstreams.jats.Jats.RefListParent] = None): Vector[com.histmersion.upstreams.jats.Jats.RefListResult] =
     val heading = e.kid("title").map(runText).filter(_.nonEmpty).getOrElse("References")
     val shown = Option.when(!parent.contains(heading))("#" * math.min(6, level) + " " + heading)
     val refs = e.kids("ref").map { r =>
@@ -304,7 +390,7 @@ object Jats:
   /** A `mixed-citation` carries its own punctuation; an `element-citation` is bare fields, joined — a volume with its
     * issue and a page range read as one field (`522(7555):167–172`).
     */
-  private def citation(c: Elem): String =
+  private def citation(c: Elem): com.histmersion.upstreams.jats.Jats.CitationResult =
     if c.name != "element-citation" then runText(c)
     else
       val fields: Vector[(String, String)] = c.elems.flatMap {
@@ -333,19 +419,19 @@ object Jats:
         case parts    => parts.mkString("", ". ", ".")
 
   /** `Given Surname`, for the byline. */
-  private def byName(n: Elem): String =
+  private def byName(n: Elem): com.histmersion.upstreams.jats.Jats.ByNameResult =
     (n.kid("given-names").map(runText).toList ++ n.kid("surname").map(runText).toList ++
       n.kid("suffix").map(runText).toList).filter(_.nonEmpty).mkString(" ")
 
   /** `Surname Given`, as references write it. */
-  private def personName(n: Elem): String =
+  private def personName(n: Elem): com.histmersion.upstreams.jats.Jats.PersonNameResult =
     (n.kid("surname").map(runText).toList ++ n.kid("given-names").map(runText).toList ++
       n.kid("suffix").map(runText).toList).filter(_.nonEmpty).mkString(" ")
 
   /** An element's running text as one Markdown line. */
-  def runText(e: Elem): String = collapse(inlineRaw(e))
+  def runText(e: Elem): com.histmersion.upstreams.jats.Jats.RunTextResult = collapse(inlineRaw(e))
 
-  private def inlineRaw(e: Elem): String =
+  private def inlineRaw(e: Elem): com.histmersion.upstreams.jats.Jats.InlineRawResult =
     e.children.map {
       case Text(s) => s
       case c: Elem =>
@@ -362,16 +448,16 @@ object Jats:
           case _                                                       => inlineRaw(c)
     }.mkString
 
-  private def wrap(mark: String, s: String): String =
+  private def wrap(mark: com.histmersion.upstreams.jats.Jats.WrapMark, s: com.histmersion.upstreams.jats.Jats.WrapS): com.histmersion.upstreams.jats.Jats.WrapResult =
     val t = s.trim
     if t.isEmpty then s
     else
       (if s.headOption.exists(_.isWhitespace) then " " else "") + mark + t + mark +
         (if s.lastOption.exists(_.isWhitespace) then " " else "")
 
-  private def text(e: Elem): String = e.children.map {
+  private def text(e: Elem): com.histmersion.upstreams.jats.Jats.TextResult = e.children.map {
     case Text(s) => s
     case c: Elem => text(c)
   }.mkString
 
-  private def collapse(s: String): String = s.replaceAll("[\\s ]+", " ").trim
+  private def collapse(s: com.histmersion.upstreams.jats.Jats.CollapseS): com.histmersion.upstreams.jats.Jats.CollapseResult = s.replaceAll("[\\s ]+", " ").trim

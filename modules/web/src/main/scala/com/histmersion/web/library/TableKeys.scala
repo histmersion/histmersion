@@ -4,7 +4,20 @@ package com.histmersion.web.library
 object TableKeys:
 
   /** A key the list answers by moving its choice: ↓ one row on, ↑ one row back. */
-  def delta(key: String): Option[Int] = key match
+  type DeltaResult = DeltaResult.T
+  object DeltaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeltaKey = DeltaKey.T
+  object DeltaKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepResult = StepResult.T
+  object StepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepRows = StepRows.T
+  object StepRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepCurrent = StepCurrent.T
+  object StepCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StepDelta = StepDelta.T
+  object StepDelta extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def delta(key: com.histmersion.web.library.TableKeys.DeltaKey): Option[com.histmersion.web.library.TableKeys.DeltaResult] = key match
     case "ArrowDown" => Some(1)
     case "ArrowUp"   => Some(-1)
     case _           => None
@@ -12,7 +25,7 @@ object TableKeys:
   /** The row chosen after moving `delta` rows from `current` among `rows`, held at the ends; with no choice on this
     * page yet, ↓ takes the first row and ↑ the last. `None` for an empty page.
     */
-  def step(rows: List[String], current: Option[String], delta: Int): Option[String] =
+  def step(rows: List[com.histmersion.web.library.TableKeys.StepRows], current: Option[com.histmersion.web.library.TableKeys.StepCurrent], delta: com.histmersion.web.library.TableKeys.StepDelta): Option[com.histmersion.web.library.TableKeys.StepResult] =
     if rows.isEmpty then None
     else
       current.map(rows.indexOf).filter(_ >= 0) match

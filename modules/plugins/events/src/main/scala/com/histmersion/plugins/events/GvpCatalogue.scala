@@ -25,12 +25,12 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
   override def requestIntervalMs: Int = cfg.gvp.requestIntervalMs
   override def floorYear: Option[Year] = JsonFields.year(cfg.gvp.floorYear)
 
-  def parts(query: CatalogueQuery): List[String] =
+  def parts(query: CatalogueQuery): List[com.histmersion.plugins.events.GvpCatalogue.PartsResult] =
     GvpCatalogue
       .windows(query.from.fold(cfg.minYear)(_.value.toLong), query.to.value.toLong, cfg.gvp.windowYears)
       .map((a, b) => s"years:$a..$b")
 
-  def read(part: String, query: CatalogueQuery, http: Plugin.Http): Either[String, CataloguePage] =
+  def read(part: com.histmersion.plugins.events.GvpCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[com.histmersion.plugins.events.GvpCatalogue.ReadResultPart1, CataloguePage] =
     part match
       case GvpCatalogue.Window(a, b) =>
         CatalogueJson(http)(GvpCatalogue.url(cfg.gvp.url, a.toLong, b.toLong, cfg.gvp.pageSize))
@@ -55,27 +55,62 @@ final class GvpCatalogue(cfg: GvpEvents) extends EventCatalogue:
       .orElse(Option.when(stored.central.isEmpty)(GvpCatalogue.fromBefore088(stored)))
 
 object GvpCatalogue:
+  type PartsResult = PartsResult.T
+  object PartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadResultPart1 = ReadResultPart1.T
+  object ReadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadPart = ReadPart.T
+  object ReadPart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EncResult = EncResult.T
+  object EncResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EncS = EncS.T
+  object EncS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlResult = UrlResult.T
+  object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlBase = UrlBase.T
+  object UrlBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlFrom = UrlFrom.T
+  object UrlFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlTo = UrlTo.T
+  object UrlTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlMax = UrlMax.T
+  object UrlMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsResultPart1 = WindowsResultPart1.T
+  object WindowsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsResultPart2 = WindowsResultPart2.T
+  object WindowsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsFrom = WindowsFrom.T
+  object WindowsFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsTo = WindowsTo.T
+  object WindowsTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowsYears = WindowsYears.T
+  object WindowsYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseResultPart2Part2 = ParseResultPart2Part2.T
+  object ParseResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val TypeName = "GVP-VOTW:Smithsonian_VOTW_Holocene_Eruptions"
 
   private val Window = "years:(-?\\d+)\\.\\.(-?\\d+)".r
 
-  private def enc(s: String): String = URLEncoder.encode(s, UTF_8)
+  private def enc(s: com.histmersion.plugins.events.GvpCatalogue.EncS): com.histmersion.plugins.events.GvpCatalogue.EncResult = URLEncoder.encode(s, UTF_8)
 
   /** Pure: the eruptions that started in `from`…`to` (signed years, both inclusive), unpaged. */
-  def url(base: String, from: Long, to: Long, max: Int): String =
+  def url(base: com.histmersion.plugins.events.GvpCatalogue.UrlBase, from: com.histmersion.plugins.events.GvpCatalogue.UrlFrom, to: com.histmersion.plugins.events.GvpCatalogue.UrlTo, max: com.histmersion.plugins.events.GvpCatalogue.UrlMax): com.histmersion.plugins.events.GvpCatalogue.UrlResult =
     val cql = s"StartDateYear>=$from AND StartDateYear<=$to"
     s"$base?service=WFS&version=2.0.0&request=GetFeature&typeNames=${enc(TypeName)}" +
       s"&outputFormat=${enc("application/json")}&count=$max&CQL_FILTER=${enc(cql)}"
 
   /** Pure: `from`…`to` cut into windows of `years` (the last one shorter). */
-  def windows(from: Long, to: Long, years: Long): List[(Long, Long)] =
+  def windows(from: com.histmersion.plugins.events.GvpCatalogue.WindowsFrom, to: com.histmersion.plugins.events.GvpCatalogue.WindowsTo, years: com.histmersion.plugins.events.GvpCatalogue.WindowsYears): List[(com.histmersion.plugins.events.GvpCatalogue.WindowsResultPart1, com.histmersion.plugins.events.GvpCatalogue.WindowsResultPart2)] =
     if from > to || years <= 0 then Nil
     else Iterator.iterate(from)(_ + years).takeWhile(_ <= to).map(a => (a, (a + years - 1).min(to))).toList
 
   /** Pure: the records of one page and how many match in all. "Discredited" eruptions are dropped; "Uncertain" ones are
     * `contested`. Years are GVP's signed years (BCE negative), ± its stated uncertainty.
     */
-  def parse(json: Json): Either[String, (List[CatalogueEvent], Option[Int])] =
+  def parse(json: Json): Either[com.histmersion.plugins.events.GvpCatalogue.ParseResultPart1, (List[CatalogueEvent], Option[com.histmersion.plugins.events.GvpCatalogue.ParseResultPart2Part2])] =
     val c = json.hcursor
     c.downField("features").focus.flatMap(_.asArray) match
       case None =>

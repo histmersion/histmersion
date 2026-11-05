@@ -9,6 +9,55 @@ import com.histmersion.api.given
   * window plus its reset, so a plan is governed by floors rather than budgets.
   */
 object PlanQuota:
+  type PaidResult = PaidResult.T
+  object PaidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentNow = CurrentNow.T
+  object CurrentNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CurrentModel = CurrentModel.T
+  object CurrentModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowStateNow = WindowStateNow.T
+  object WindowStateNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictHeld = VerdictHeld.T
+  object VerdictHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictRefusalPart1 = VerdictRefusalPart1.T
+  object VerdictRefusalPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictRefusalPart2 = VerdictRefusalPart2.T
+  object VerdictRefusalPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictNow = VerdictNow.T
+  object VerdictNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictModel = VerdictModel.T
+  object VerdictModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshNeedHeld = RefreshNeedHeld.T
+  object RefreshNeedHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshNeedRefusalPart1 = RefreshNeedRefusalPart1.T
+  object RefreshNeedRefusalPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshNeedRefusalPart2 = RefreshNeedRefusalPart2.T
+  object RefreshNeedRefusalPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshNeedNow = RefreshNeedNow.T
+  object RefreshNeedNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshNeedModel = RefreshNeedModel.T
+  object RefreshNeedModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThrottledResult = ThrottledResult.T
+  object ThrottledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThrottledLastAttempt = ThrottledLastAttempt.T
+  object ThrottledLastAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThrottledMinGapMs = ThrottledMinGapMs.T
+  object ThrottledMinGapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThrottledNow = ThrottledNow.T
+  object ThrottledNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshDecisionResultPart1 = RefreshDecisionResultPart1.T
+  object RefreshDecisionResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshDecisionEnabled = RefreshDecisionEnabled.T
+  object RefreshDecisionEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshDecisionLastAttempt = RefreshDecisionLastAttempt.T
+  object RefreshDecisionLastAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshDecisionMinGapMs = RefreshDecisionMinGapMs.T
+  object RefreshDecisionMinGapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshDecisionNow = RefreshDecisionNow.T
+  object RefreshDecisionNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshDecisionForce = RefreshDecisionForce.T
+  object RefreshDecisionForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   import Agents.{ModelRef, ProviderKind}
 
   enum PoolId(val wire: String, val title: String):
@@ -16,7 +65,10 @@ object PlanQuota:
     case ChatgptPlan extends PoolId("chatgpt-plan", "ChatGPT plan")
 
   object PoolId:
-    def parse(s: String): Option[PoolId] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.PlanQuota.PoolId.ParseS): Option[PoolId] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
   /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
   final case class Logins(
@@ -39,7 +91,7 @@ object PlanQuota:
     case ProviderKind.Opencode if logins.opencodeChatgpt && m.model.startsWith("openai/") => Some(PoolId.ChatgptPlan)
     case _                                                                                => None
 
-  def paid(m: ModelRef, logins: Logins): Boolean =
+  def paid(m: ModelRef, logins: Logins): com.histmersion.api.automation.PlanQuota.PaidResult =
     m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty
 
   enum Source(val wire: String):
@@ -56,7 +108,10 @@ object PlanQuota:
     case Probe extends Source("probe")
 
   object Source:
-    def parse(s: String): Option[Source] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.PlanQuota.Source.ParseS): Option[Source] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
   /** Codex names its windows by length (`300m`/`10080m`): its `primary` is not always the 5-hour window. */
   final case class Reading(
@@ -87,18 +142,33 @@ object PlanQuota:
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
-    def text: String = byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", ")
-    def of(limit: String, kind: String, default: Int): Int =
+    def text: com.histmersion.api.automation.PlanQuota.Floors.TextResult = byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", ")
+    def of(limit: com.histmersion.api.automation.PlanQuota.Floors.OfLimit, kind: com.histmersion.api.automation.PlanQuota.Floors.OfKind, default: com.histmersion.api.automation.PlanQuota.Floors.OfDefault): com.histmersion.api.automation.PlanQuota.Floors.OfResult =
       byKind.get(s"$limit/$kind").orElse(byKind.get(kind)).getOrElse(default)
 
   object Floors:
+    type TextResult = TextResult.T
+    object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfResult = OfResult.T
+    object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLimit = OfLimit.T
+    object OfLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfKind = OfKind.T
+    object OfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfDefault = OfDefault.T
+    object OfDefault extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseResultPart1 = ParseResultPart1.T
+    object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type ByKindKey = ByKindKey.T
     object ByKindKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ByKindValue = ByKindValue.T
     object ByKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Empty: Floors = Floors(Map.empty)
-    def parse(s: String): Either[String, Floors] =
+    def parse(s: com.histmersion.api.automation.PlanQuota.Floors.ParseS): Either[com.histmersion.api.automation.PlanQuota.Floors.ParseResultPart1, Floors] =
       val items = s.split(',').toList.map(_.trim).filter(_.nonEmpty)
       val parsed = items.map { i =>
         i.indexOf('=') match
@@ -150,9 +220,13 @@ object PlanQuota:
 
     case Blocked(reason: String, until: Option[Long])
 
-    def usable: Boolean = this.isInstanceOf[Usable]
+    def usable: com.histmersion.api.automation.PlanQuota.Verdict.UsableResult = this.isInstanceOf[Usable]
 
-  def current(readings: List[Reading], now: Long, model: Option[String] = None): List[Reading] =
+  object Verdict:
+    type UsableResult = UsableResult.T
+    object UsableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def current(readings: List[Reading], now: com.histmersion.api.automation.PlanQuota.CurrentNow, model: Option[com.histmersion.api.automation.PlanQuota.CurrentModel] = None): List[Reading] =
     readings
       .filter(r => r.resetsAt.forall(_ > now))
       .filter(r => r.model.isEmpty || model.isEmpty || r.model == model)
@@ -162,7 +236,7 @@ object PlanQuota:
       .toList
       .sortBy(r => (r.limit, r.kind))
 
-  def windowState(r: Reading, rules: Rules, now: Long): WindowState =
+  def windowState(r: Reading, rules: Rules, now: com.histmersion.api.automation.PlanQuota.WindowStateNow): WindowState =
     val floor = rules.floors.of(r.limit, r.kind, rules.defaultFloor)
     val left = (100.0 - r.usedPct).max(0)
     val stale = now - r.observedAt > rules.staleMs
@@ -180,11 +254,11 @@ object PlanQuota:
 
   def verdict(
       readings: List[Reading],
-      held: Boolean,
-      refusal: Option[(String, Option[Long])],
+      held: com.histmersion.api.automation.PlanQuota.VerdictHeld,
+      refusal: Option[(com.histmersion.api.automation.PlanQuota.VerdictRefusalPart1, Option[com.histmersion.api.automation.PlanQuota.VerdictRefusalPart2])],
       rules: Rules,
-      now: Long,
-      model: Option[String] = None
+      now: com.histmersion.api.automation.PlanQuota.VerdictNow,
+      model: Option[com.histmersion.api.automation.PlanQuota.VerdictModel] = None
   ): (Verdict, List[WindowState]) =
     val states = current(readings, now, model).map(windowState(_, rules, now))
     val blocking = states.filterNot(_.usable)
@@ -206,7 +280,10 @@ object PlanQuota:
     case Off extends RefreshMode("off")
 
   object RefreshMode:
-    def parse(s: String): Option[RefreshMode] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.api.automation.PlanQuota.RefreshMode.ParseS): Option[RefreshMode] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
   enum Login:
     case Present(detail: String)
@@ -229,11 +306,11 @@ object PlanQuota:
 
   def refreshNeed(
       readings: List[Reading],
-      held: Boolean,
-      refusal: Option[(String, Option[Long])],
+      held: com.histmersion.api.automation.PlanQuota.RefreshNeedHeld,
+      refusal: Option[(com.histmersion.api.automation.PlanQuota.RefreshNeedRefusalPart1, Option[com.histmersion.api.automation.PlanQuota.RefreshNeedRefusalPart2])],
       rules: Rules,
-      now: Long,
-      model: Option[String] = None
+      now: com.histmersion.api.automation.PlanQuota.RefreshNeedNow,
+      model: Option[com.histmersion.api.automation.PlanQuota.RefreshNeedModel] = None
   ): Option[RefreshNeed] =
     if held || refusal.exists(_._2.forall(_ > now)) then None
     else
@@ -245,18 +322,18 @@ object PlanQuota:
           RefreshNeed.StaleOnly
         )
 
-  def throttled(lastAttempt: Option[Long], minGapMs: Long, now: Long): Boolean =
+  def throttled(lastAttempt: Option[com.histmersion.api.automation.PlanQuota.ThrottledLastAttempt], minGapMs: com.histmersion.api.automation.PlanQuota.ThrottledMinGapMs, now: com.histmersion.api.automation.PlanQuota.ThrottledNow): com.histmersion.api.automation.PlanQuota.ThrottledResult =
     lastAttempt.exists(t => now - t < minGapMs)
 
   def refreshDecision(
       need: Option[RefreshNeed],
       login: Login,
-      enabled: Boolean,
-      lastAttempt: Option[Long],
-      minGapMs: Long,
-      now: Long,
-      force: Boolean = false
-  ): Either[String, Option[RefreshNeed]] =
+      enabled: com.histmersion.api.automation.PlanQuota.RefreshDecisionEnabled,
+      lastAttempt: Option[com.histmersion.api.automation.PlanQuota.RefreshDecisionLastAttempt],
+      minGapMs: com.histmersion.api.automation.PlanQuota.RefreshDecisionMinGapMs,
+      now: com.histmersion.api.automation.PlanQuota.RefreshDecisionNow,
+      force: com.histmersion.api.automation.PlanQuota.RefreshDecisionForce = false
+  ): Either[com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1, Option[RefreshNeed]] =
     login match
       case _ if !enabled                              => Left("refresh is off for this pool")
       case Login.Missing(why)                         => Left(s"no login: $why")

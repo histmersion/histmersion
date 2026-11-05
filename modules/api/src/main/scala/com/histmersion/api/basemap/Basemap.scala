@@ -7,6 +7,97 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 object Basemap:
 
+  type ValidFocusNameResultPart1 = ValidFocusNameResultPart1.T
+  object ValidFocusNameResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidFocusNameResultPart2 = ValidFocusNameResultPart2.T
+  object ValidFocusNameResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidFocusNameS = ValidFocusNameS.T
+  object ValidFocusNameS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusRegionResultPart1 = FocusRegionResultPart1.T
+  object FocusRegionResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusRegionResultPart2Part1 = FocusRegionResultPart2Part1.T
+  object FocusRegionResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusRegionSpec = FocusRegionSpec.T
+  object FocusRegionSpec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FocusNameOfResult = FocusNameOfResult.T
+  object FocusNameOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileXResult = TileXResult.T
+  object TileXResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileXLon = TileXLon.T
+  object TileXLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileXZ = TileXZ.T
+  object TileXZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileYResult = TileYResult.T
+  object TileYResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileYLat = TileYLat.T
+  object TileYLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileYZ = TileYZ.T
+  object TileYZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileRangeResultPart1Part1 = TileRangeResultPart1Part1.T
+  object TileRangeResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileRangeResultPart1Part2 = TileRangeResultPart1Part2.T
+  object TileRangeResultPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileRangeResultPart2Part1 = TileRangeResultPart2Part1.T
+  object TileRangeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileRangeResultPart2Part2 = TileRangeResultPart2Part2.T
+  object TileRangeResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileRangeZ = TileRangeZ.T
+  object TileRangeZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileCountResult = TileCountResult.T
+  object TileCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileCountMinZoom = TileCountMinZoom.T
+  object TileCountMinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileCountMaxZoom = TileCountMaxZoom.T
+  object TileCountMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidBBoxResultPart1 = ValidBBoxResultPart1.T
+  object ValidBBoxResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ValidBBoxS = ValidBBoxS.T
+  object ValidBBoxS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseDropResultPart1 = ParseDropResultPart1.T
+  object ParseDropResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseDropS = ParseDropS.T
+  object ParseDropS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSubsetResultPart1 = ParseSubsetResultPart1.T
+  object ParseSubsetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSubsetResultPart2Part1 = ParseSubsetResultPart2Part1.T
+  object ParseSubsetResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSubsetS = ParseSubsetS.T
+  object ParseSubsetS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetParamResult = SubsetParamResult.T
+  object SubsetParamResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetParamMPart1 = SubsetParamMPart1.T
+  object SubsetParamMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetParamFromZoomPart1 = SubsetParamFromZoomPart1.T
+  object SubsetParamFromZoomPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetParamFromZoomPart2 = SubsetParamFromZoomPart2.T
+  object SubsetParamFromZoomPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetAtResult = SubsetAtResult.T
+  object SubsetAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetAtS = SubsetAtS.T
+  object SubsetAtS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetAtZ = SubsetAtZ.T
+  object SubsetAtZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyLacks = LegacyLacks.T
+  object LegacyLacks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DroppedLayersResult = DroppedLayersResult.T
+  object DroppedLayersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DroppedLayersKeepAll = DroppedLayersKeepAll.T
+  object DroppedLayersKeepAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DroppedLayersDrop = DroppedLayersDrop.T
+  object DroppedLayersDrop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MissingForResult = MissingForResult.T
+  object MissingForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MissingForNeeds = MissingForNeeds.T
+  object MissingForNeeds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MissingForDropped = MissingForDropped.T
+  object MissingForDropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptLineResult = KeptLineResult.T
+  object KeptLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptLineKeepAll = KeptLineKeepAll.T
+  object KeptLineKeepAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptLineDrop = KeptLineDrop.T
+  object KeptLineDrop extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val FetchCommand = "histmersion basemap fetch"
 
   /** Deeper extracts run to tens of gigabytes. */
@@ -15,16 +106,16 @@ object Basemap:
   /** Web Mercator's latitude limit. */
   val MaxLat = 85.0511287798066
 
-  def validFocusName(s: String): Either[String, String] =
+  def validFocusName(s: com.histmersion.api.basemap.Basemap.ValidFocusNameS): Either[com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart1, com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart2] =
     val n = s.trim.toLowerCase(java.util.Locale.ROOT)
     Either.cond(n.matches("[a-z0-9][a-z0-9-]{0,40}"), n, s"'$s' is not a focus region name (letters, digits and -)")
 
-  def focusRegion(spec: String): Either[String, (String, BBox)] =
+  def focusRegion(spec: com.histmersion.api.basemap.Basemap.FocusRegionSpec): Either[com.histmersion.api.basemap.Basemap.FocusRegionResultPart1, (com.histmersion.api.basemap.Basemap.FocusRegionResultPart2Part1, BBox)] =
     spec.trim.split("\\s+", 2).toList match
       case n :: b :: Nil => for name <- validFocusName(n); box <- validBBox(b.replace(" ", "")) yield (name, box)
       case _             => Left(s"'$spec' is not \"name minLon,minLat,maxLon,maxLat\"")
 
-  def focusNameOf(b: BBox): String =
+  def focusNameOf(b: BBox): com.histmersion.api.basemap.Basemap.FocusNameOfResult =
     def f(d: Double) = java.math
       .BigDecimal(d)
       .setScale(2, java.math.RoundingMode.HALF_UP)
@@ -34,20 +125,20 @@ object Basemap:
       .replace(".", "p")
     s"bbox-${f(b.minLon)}-${f(b.minLat)}-${f(b.maxLon)}-${f(b.maxLat)}"
 
-  def tileX(lon: Double, z: Int): Long =
+  def tileX(lon: com.histmersion.api.basemap.Basemap.TileXLon, z: com.histmersion.api.basemap.Basemap.TileXZ): com.histmersion.api.basemap.Basemap.TileXResult =
     val n = 1L << z
     math.floor((lon + 180.0) / 360.0 * n).toLong.max(0L).min(n - 1)
 
-  def tileY(lat: Double, z: Int): Long =
+  def tileY(lat: com.histmersion.api.basemap.Basemap.TileYLat, z: com.histmersion.api.basemap.Basemap.TileYZ): com.histmersion.api.basemap.Basemap.TileYResult =
     val n = 1L << z
     val r = math.toRadians(lat.max(-MaxLat).min(MaxLat))
     val y = (1.0 - math.log(math.tan(r) + 1.0 / math.cos(r)) / math.Pi) / 2.0 * n
     math.floor(y).toLong.max(0L).min(n - 1)
 
-  def tileRange(b: BBox, z: Int): ((Long, Long), (Long, Long)) =
+  def tileRange(b: BBox, z: com.histmersion.api.basemap.Basemap.TileRangeZ): ((com.histmersion.api.basemap.Basemap.TileRangeResultPart1Part1, com.histmersion.api.basemap.Basemap.TileRangeResultPart1Part2), (com.histmersion.api.basemap.Basemap.TileRangeResultPart2Part1, com.histmersion.api.basemap.Basemap.TileRangeResultPart2Part2)) =
     ((tileX(b.minLon, z), tileX(b.maxLon, z)), (tileY(b.maxLat, z), tileY(b.minLat, z)))
 
-  def tileCount(b: BBox, minZoom: Int, maxZoom: Int): Long =
+  def tileCount(b: BBox, minZoom: com.histmersion.api.basemap.Basemap.TileCountMinZoom, maxZoom: com.histmersion.api.basemap.Basemap.TileCountMaxZoom): com.histmersion.api.basemap.Basemap.TileCountResult =
     (minZoom to maxZoom).map { z =>
       val ((x0, x1), (y0, y1)) = tileRange(b, z)
       (x1 - x0 + 1) * (y1 - y0 + 1)
@@ -56,7 +147,7 @@ object Basemap:
   /** Web Mercator's ±85.05°: as far as web maps go. */
   val World: BBox = BBox(-180, -85.05, 180, 85.05)
 
-  def validBBox(s: String): Either[String, BBox] =
+  def validBBox(s: com.histmersion.api.basemap.Basemap.ValidBBoxS): Either[com.histmersion.api.basemap.Basemap.ValidBBoxResultPart1, BBox] =
     if s.trim.equalsIgnoreCase("world") then Right(World)
     else
       BBox.parse(s).toRight(s"'$s' is not minLon,minLat,maxLon,maxLat").flatMap { b =>
@@ -83,7 +174,7 @@ object Basemap:
     type Spare = Spare.T
     object Spare extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parseDrop(s: String): Either[String, List[DropRule]] =
+  def parseDrop(s: com.histmersion.api.basemap.Basemap.ParseDropS): Either[com.histmersion.api.basemap.Basemap.ParseDropResultPart1, List[DropRule]] =
     val parts = s.split(";").toList.map(_.trim).filter(_.nonEmpty).map(_.split("\\s+").toList)
     val rules = parts.map { words =>
       val kinds = words.tail
@@ -113,7 +204,7 @@ object Basemap:
 
   private val KindName = "[A-Za-z0-9_:.-]+".r
 
-  def parseSubset(s: String): Either[String, Map[String, Read]] =
+  def parseSubset(s: com.histmersion.api.basemap.Basemap.ParseSubsetS): Either[com.histmersion.api.basemap.Basemap.ParseSubsetResultPart1, Map[com.histmersion.api.basemap.Basemap.ParseSubsetResultPart2Part1, Read]] =
     val parts = s.split(",").toList.map(_.trim).filter(_.nonEmpty)
     val parsed = parts.map { p =>
       val (head, kindPart) = p.split("~", 2).toList match
@@ -142,7 +233,7 @@ object Basemap:
           .groupMapReduce(_._1)(_._2)(_.merge(_))
       )
 
-  def subsetParam(m: Map[String, Read], fromZoom: Map[String, Int] = Map.empty): String =
+  def subsetParam(m: Map[com.histmersion.api.basemap.Basemap.SubsetParamMPart1, Read], fromZoom: Map[com.histmersion.api.basemap.Basemap.SubsetParamFromZoomPart1, com.histmersion.api.basemap.Basemap.SubsetParamFromZoomPart2] = Map.empty): com.histmersion.api.basemap.Basemap.SubsetParamResult =
     m.toList
       .sortBy(_._1)
       .map { (l, r) =>
@@ -153,7 +244,7 @@ object Basemap:
       }
       .mkString(",")
 
-  def subsetAt(s: String, z: Int): String =
+  def subsetAt(s: com.histmersion.api.basemap.Basemap.SubsetAtS, z: com.histmersion.api.basemap.Basemap.SubsetAtZ): com.histmersion.api.basemap.Basemap.SubsetAtResult =
     s.split(",")
       .toList
       .map(_.trim)
@@ -168,21 +259,21 @@ object Basemap:
       }
       .mkString(",")
 
-  val LegacyLacks: List[String] = List("boundaries", "buildings", "landuse", "places", "pois", "roads", "transit")
+  val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LegacyLacks] = List("boundaries", "buildings", "landuse", "places", "pois", "roads", "transit")
 
-  def droppedLayers(keepAll: Boolean, drop: Option[String]): List[String] =
+  def droppedLayers(keepAll: com.histmersion.api.basemap.Basemap.DroppedLayersKeepAll, drop: Option[com.histmersion.api.basemap.Basemap.DroppedLayersDrop]): List[com.histmersion.api.basemap.Basemap.DroppedLayersResult] =
     if keepAll then Nil
     else
       drop match
         case Some(d) => parseDrop(d).toOption.getOrElse(Nil).filter(_.whole).map(_.layer).distinct.sorted
         case None    => LegacyLacks
 
-  def missingFor(needs: List[String], dropped: List[String]): List[String] =
+  def missingFor(needs: List[com.histmersion.api.basemap.Basemap.MissingForNeeds], dropped: List[com.histmersion.api.basemap.Basemap.MissingForDropped]): List[com.histmersion.api.basemap.Basemap.MissingForResult] =
     needs.filter(dropped.contains).distinct.sorted
 
   val KeepAllCommand = s"$FetchCommand --layer vector --keep-all"
 
-  def keptLine(keepAll: Boolean, drop: Option[String]): String =
+  def keptLine(keepAll: com.histmersion.api.basemap.Basemap.KeptLineKeepAll, drop: Option[com.histmersion.api.basemap.Basemap.KeptLineDrop]): com.histmersion.api.basemap.Basemap.KeptLineResult =
     if keepAll then "everything (unfiltered)"
     else
       drop match
@@ -256,12 +347,21 @@ object Basemap:
     /** The relief's own tiles have the sea flat at 0; these carry its depth (ETOPO1 from NOAA, or the GEBCO grid). */
     case Bathymetry extends Layer("bathymetry", "sea floor")
 
-    def file: String = s"$wire.pmtiles"
+    def file: com.histmersion.api.basemap.Basemap.Layer.FileResult = s"$wire.pmtiles"
 
   object Layer:
-    def parse(s: String): Option[Layer] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    type FileResult = FileResult.T
+    object FileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseManyResultPart1 = ParseManyResultPart1.T
+    object ParseManyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseManyS = ParseManyS.T
+    object ParseManyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parseMany(s: String): Either[String, List[Layer]] =
+    def parse(s: com.histmersion.api.basemap.Basemap.Layer.ParseS): Option[Layer] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+
+    def parseMany(s: com.histmersion.api.basemap.Basemap.Layer.ParseManyS): Either[com.histmersion.api.basemap.Basemap.Layer.ParseManyResultPart1, List[Layer]] =
       s.trim.toLowerCase(java.util.Locale.ROOT) match
         case "" | "all" => Right(values.toList)
         case other      =>
@@ -289,10 +389,13 @@ object Basemap:
       focus: List[Focus] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def deepest: Option[Int] =
+    def deepest: Option[com.histmersion.api.basemap.Basemap.LayerInfo.DeepestResult] =
       (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter(_.enabled).map(_.maxZoom).toList).maxOption
 
   object LayerInfo:
+    type DeepestResult = DeepestResult.T
+    object DeepestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Layer = Layer.T
     object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Present = Present.T
@@ -395,9 +498,14 @@ object Basemap:
       regions: List[Region] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def missing(id: String): List[String] = styles.find(_.id == id).fold(Nil)(_.missing)
+    def missing(id: com.histmersion.api.basemap.Basemap.Status.MissingId): List[com.histmersion.api.basemap.Basemap.Status.MissingResult] = styles.find(_.id == id).fold(Nil)(_.missing)
 
   object Status:
+    type MissingResult = MissingResult.T
+    object MissingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MissingId = MissingId.T
+    object MissingId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Available = Available.T
     object Available extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Dir = Dir.T

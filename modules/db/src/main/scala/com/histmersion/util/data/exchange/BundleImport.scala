@@ -32,13 +32,18 @@ import com.histmersion.api.Api
   */
 object BundleImport:
 
+  type DeletedRev = DeletedRev.T
+  object DeletedRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportingOn = ImportingOn.T
+  object ImportingOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Options = ImportOptions
   val Options: ImportOptions.type = ImportOptions
 
   /** The ledger's foreign rev for a tombstone, which has no content to hash. */
-  val DeletedRev: String = BundlePlan.DeletedRev
+  val DeletedRev: com.histmersion.util.data.exchange.BundleImport.DeletedRev = BundlePlan.DeletedRev
 
-  private def importing(on: Boolean)(using DbCon): Unit = MergeRepo.importing(on)
+  private def importing(on: com.histmersion.util.data.exchange.BundleImport.ImportingOn)(using DbCon): Unit = MergeRepo.importing(on)
 
   // ── the writes ──────────────────────────────────────────────────────────────────────────────
 
@@ -75,21 +80,21 @@ object BundleImport:
     private def decision(u: UUID): Option[Decision] = decisionOf.get(u)
 
     /** Whether the line of `u` is a new row here. */
-    def inserts(u: UUID): Boolean = decision(u).contains(Decision.Insert)
+    def inserts(u: UUID): com.histmersion.util.data.exchange.BundleImport.Writer.InsertsResult = decision(u).contains(Decision.Insert)
 
     /** Whether a source alias of the bundle is left out (an alias the merge gave to another work). */
-    def skipsAlias(alias: String): Boolean = skipAliases(alias)
+    def skipsAlias(alias: com.histmersion.util.data.exchange.BundleImport.Writer.SkipsAliasAlias): com.histmersion.util.data.exchange.BundleImport.Writer.SkipsAliasResult = skipAliases(alias)
 
     /** citekey / slug of a uid as it stands NOW (after the writes so far). */
-    def citekeyOf(u: UUID): String =
+    def citekeyOf(u: UUID): com.histmersion.util.data.exchange.BundleImport.Writer.CitekeyOfResult =
       sql"SELECT citekey FROM sources WHERE uid = $u".query[String].run().head
 
     /** The citekey of a source here, when its uid names one. */
-    def citekeyHere(u: UUID): Option[String] =
+    def citekeyHere(u: UUID): Option[com.histmersion.util.data.exchange.BundleImport.Writer.CitekeyHereResult] =
       sql"SELECT citekey FROM sources WHERE uid = $u".query[String].run().headOption
 
     /** The label a target has HERE, when its uid names a row here; else the bundle's label. */
-    def targetLabel(tt: String, tid: String, tuid: Option[UUID]): String =
+    def targetLabel(tt: com.histmersion.util.data.exchange.BundleImport.Writer.TargetLabelTt, tid: com.histmersion.util.data.exchange.BundleImport.Writer.TargetLabelTid, tuid: Option[UUID]): com.histmersion.util.data.exchange.BundleImport.Writer.TargetLabelResult =
       tuid
         .flatMap { u =>
           val q = tt match
@@ -149,10 +154,10 @@ object BundleImport:
     def followRenames[A](
         lines: List[A],
         uid: A => UUID,
-        label: A => String,
-        localLabel: Map[UUID, String],
-        what: String
-    )(rename: (String, String) => Either[Api.Error, ?]): Unit =
+        label: A => com.histmersion.util.data.exchange.BundleImport.Writer.FollowRenamesLabelResult,
+        localLabel: Map[UUID, com.histmersion.util.data.exchange.BundleImport.Writer.FollowRenamesLocalLabelPart2],
+        what: com.histmersion.util.data.exchange.BundleImport.Writer.FollowRenamesWhat
+    )(rename: (com.histmersion.util.data.exchange.BundleImport.Writer.FollowRenamesRenameArg1, com.histmersion.util.data.exchange.BundleImport.Writer.FollowRenamesRenameArg2) => Either[Api.Error, ?]): Unit =
       lines.filter(a => writes(uid(a))).foreach { a =>
         localLabel.get(uid(a)).filter(_ != label(a)).foreach { old =>
           importing(false)
@@ -160,3 +165,31 @@ object BundleImport:
           importing(true)
         }
       }
+
+  object Writer:
+    type InsertsResult = InsertsResult.T
+    object InsertsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SkipsAliasResult = SkipsAliasResult.T
+    object SkipsAliasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SkipsAliasAlias = SkipsAliasAlias.T
+    object SkipsAliasAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CitekeyOfResult = CitekeyOfResult.T
+    object CitekeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CitekeyHereResult = CitekeyHereResult.T
+    object CitekeyHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetLabelResult = TargetLabelResult.T
+    object TargetLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetLabelTt = TargetLabelTt.T
+    object TargetLabelTt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TargetLabelTid = TargetLabelTid.T
+    object TargetLabelTid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FollowRenamesLabelResult = FollowRenamesLabelResult.T
+    object FollowRenamesLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FollowRenamesLocalLabelPart2 = FollowRenamesLocalLabelPart2.T
+    object FollowRenamesLocalLabelPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FollowRenamesWhat = FollowRenamesWhat.T
+    object FollowRenamesWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FollowRenamesRenameArg1 = FollowRenamesRenameArg1.T
+    object FollowRenamesRenameArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FollowRenamesRenameArg2 = FollowRenamesRenameArg2.T
+    object FollowRenamesRenameArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

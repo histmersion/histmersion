@@ -30,7 +30,46 @@ import com.histmersion.api.library.Edge
 private[sources] object SourceCheckRepo:
 
   /** Rules that are one SQL statement. Ordered `citekey` so the report is stable. */
-  val projections: Map[String, String] = Map(
+  type ProjectionsPart1 = ProjectionsPart1.T
+  object ProjectionsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProjectionsPart2 = ProjectionsPart2.T
+  object ProjectionsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SqlOfResult = SqlOfResult.T
+  object SqlOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SqlOfRule = SqlOfRule.T
+  object SqlOfRule extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsResultPart1 = PairsResultPart1.T
+  object PairsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsResultPart2 = PairsResultPart2.T
+  object PairsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PairsSql = PairsSql.T
+  object PairsSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TriplesResultPart1 = TriplesResultPart1.T
+  object TriplesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TriplesResultPart2 = TriplesResultPart2.T
+  object TriplesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TriplesResultPart3 = TriplesResultPart3.T
+  object TriplesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TriplesSql = TriplesSql.T
+  object TriplesSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArraysResultPart1 = ArraysResultPart1.T
+  object ArraysResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArraysResultPart2 = ArraysResultPart2.T
+  object ArraysResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArraysSql = ArraysSql.T
+  object ArraysSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredCitekeyResultArg1 = StoredCitekeyResultArg1.T
+  object StoredCitekeyResultArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredCitekeyResultResult = StoredCitekeyResultResult.T
+  object StoredCitekeyResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportMaxItems = ReportMaxItems.T
+  object ReportMaxItems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleResultPart1 = StaleResultPart1.T
+  object StaleResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleResultPart2 = StaleResultPart2.T
+  object StaleResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val projections: Map[com.histmersion.domain.library.sources.SourceCheckRepo.ProjectionsPart1, com.histmersion.domain.library.sources.SourceCheckRepo.ProjectionsPart2] = Map(
     NoFindings ->
       """SELECT s.citekey, left(coalesce(s.title, ''), 80)
          FROM sources s
@@ -112,7 +151,7 @@ private[sources] object SourceCheckRepo:
        WHERE btrim(coalesce(summary, '')) <> '' OR btrim(coalesce(notes, '')) <> '' ORDER BY citekey"""
 
   /** Every rule must be runnable — the report would otherwise lie by omission. */
-  def sqlOf(rule: String): List[String] = rule match
+  def sqlOf(rule: com.histmersion.domain.library.sources.SourceCheckRepo.SqlOfRule): List[com.histmersion.domain.library.sources.SourceCheckRepo.SqlOfResult] = rule match
     case DanglingEdges | UnresolvedShortCitekeys => List(citekeysSql, edgesSql)
     case DuplicateDoi                            => List(doiSql)
     case DuplicateSha256                         => List(sha256Sql)
@@ -125,13 +164,13 @@ private[sources] object SourceCheckRepo:
     case FindingPlaceholder                      => List(FindingPlacement.placeholderFindingsSql)
     case r                                       => projections.get(r).toList
 
-  private def pairs(sql: String)(using DbCon): List[(String, String)] =
+  private def pairs(sql: com.histmersion.domain.library.sources.SourceCheckRepo.PairsSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.PairsResultPart1, com.histmersion.domain.library.sources.SourceCheckRepo.PairsResultPart2)] =
     Sql.raw(sql).frag.query[(String, String)].run().toList
 
-  private def triples(sql: String)(using DbCon): List[(String, String, String)] =
+  private def triples(sql: com.histmersion.domain.library.sources.SourceCheckRepo.TriplesSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.TriplesResultPart1, com.histmersion.domain.library.sources.SourceCheckRepo.TriplesResultPart2, com.histmersion.domain.library.sources.SourceCheckRepo.TriplesResultPart3)] =
     Sql.raw(sql).frag.query[(String, String, String)].run().toList
 
-  private def arrays(sql: String)(using DbCon): List[(String, List[String])] =
+  private def arrays(sql: com.histmersion.domain.library.sources.SourceCheckRepo.ArraysSql)(using DbCon): List[(com.histmersion.domain.library.sources.SourceCheckRepo.ArraysResultPart1, List[com.histmersion.domain.library.sources.SourceCheckRepo.ArraysResultPart2])] =
     Sql.raw(sql).frag.query[(String, List[String])].run().toList
 
   /** What the rules read besides the database: how many prefix candidates a dangling target is offered
@@ -167,10 +206,10 @@ private[sources] object SourceCheckRepo:
   private val AuthorRows = CheckInput(arrays(authorsSql))
 
   /** Whether a citekey is stored — what the formatting rules check a bare citekey against, read once per run. */
-  def storedCitekey(using run: CheckRun)(using DbCon): String => Boolean = ck => run(StoredCitekeys).contains(ck)
+  def storedCitekey(using run: CheckRun)(using DbCon): com.histmersion.domain.library.sources.SourceCheckRepo.StoredCitekeyResultArg1 => com.histmersion.domain.library.sources.SourceCheckRepo.StoredCitekeyResultResult = ck => run(StoredCitekeys).contains(ck)
 
   /** One rule's report, on the run's connection. */
-  def report(r: Rule, c: Context, maxItems: Int)(using run: CheckRun)(using DbCon): LintRuleReport =
+  def report(r: Rule, c: Context, maxItems: com.histmersion.domain.library.sources.SourceCheckRepo.ReportMaxItems)(using run: CheckRun)(using DbCon): LintRuleReport =
     val items = r.name match
       case DanglingEdges           => CitationLint.danglingEdges(run(EdgeRows), (run(StoredCitekeys)).map(com.histmersion.api.library.Citekey.apply), c.suggestions)
       case UnresolvedShortCitekeys =>
@@ -197,4 +236,4 @@ private[sources] object SourceCheckRepo:
   // ── the safe fixes ───────────────────────────────────────────────────────────────────────────
 
   /** The sources with a body and no full-text chunks, each with its body's length (`stale-chunks`). */
-  def stale()(using DbCon): Vector[(String, Int)] = Sql.raw(staleCitekeysSql).frag.query[(String, Int)].run()
+  def stale()(using DbCon): Vector[(com.histmersion.domain.library.sources.SourceCheckRepo.StaleResultPart1, com.histmersion.domain.library.sources.SourceCheckRepo.StaleResultPart2)] = Sql.raw(staleCitekeysSql).frag.query[(String, Int)].run()

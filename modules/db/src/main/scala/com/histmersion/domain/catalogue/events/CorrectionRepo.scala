@@ -15,12 +15,47 @@ import com.histmersion.api.catalogue.Correction
   */
 private[events] object CorrectionRepo:
 
+  type OfKind = OfKind.T
+  object OfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfId = OfId.T
+  object OfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordKind = RecordKind.T
+  object RecordKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordId = RecordId.T
+  object RecordId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordField = RecordField.T
+  object RecordField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordUpstream = RecordUpstream.T
+  object RecordUpstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReconcileResultPart1Part1 = ReconcileResultPart1Part1.T
+  object ReconcileResultPart1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReconcileKind = ReconcileKind.T
+  object ReconcileKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReconcileId = ReconcileId.T
+  object ReconcileId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReconcileNowPart1 = ReconcileNowPart1.T
+  object ReconcileNowPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListKind = ListKind.T
+  object ListKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListId = ListId.T
+  object ListId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListStatus = ListStatus.T
+  object ListStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListLimit = ListLimit.T
+  object ListLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListOffset = ListOffset.T
+  object ListOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConflictsInResultPart1 = ConflictsInResultPart1.T
+  object ConflictsInResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConflictsInResultPart2 = ConflictsInResultPart2.T
+  object ConflictsInResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Cols =
     "c.id, c.target_kind, c.target_id, c.field, c.value::text, c.upstream_value::text, c.status, c.upstream, " +
       "c.upstream_now::text, c.created_at::text, c.checked_at::text"
 
   /** The corrections of one target, by field. */
-  def of(kind: String, id: String)(using DbCon): List[CorrectionRow] =
+  def of(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.OfKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.OfId)(using DbCon): List[CorrectionRow] =
     sql"""SELECT ${SqlLiteral(Cols)} FROM corrections c WHERE c.target_kind = $kind AND c.target_id = $id
           ORDER BY c.field""".query[CorrectionRow].run().toList
 
@@ -28,7 +63,7 @@ private[events] object CorrectionRepo:
     * correction is needed (one there goes); otherwise it is recorded, or updated — the upstream value then is what
     * upstream says NOW, and the status starts `active` again.
     */
-  def record(kind: String, id: String, field: String, value: Json, upstreamValue: Json, upstream: Option[String])(using
+  def record(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordId, field: com.histmersion.domain.catalogue.events.CorrectionRepo.RecordField, value: Json, upstreamValue: Json, upstream: Option[com.histmersion.domain.catalogue.events.CorrectionRepo.RecordUpstream])(using
       DbCon
   ): Unit =
     if value == upstreamValue then
@@ -46,9 +81,9 @@ private[events] object CorrectionRepo:
     * conflicts ([[Corrections.reconcile]]) and records `now`. Answers the values the target must keep (field → the
     * person's value) and the outcomes.
     */
-  def reconcile(kind: String, id: String, now: Map[String, Json])(using
+  def reconcile(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileKind, id: com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileId, now: Map[com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileNowPart1, Json])(using
       DbCon
-  ): (Map[String, Json], List[Corrections.Outcome]) =
+  ): (Map[com.histmersion.domain.catalogue.events.CorrectionRepo.ReconcileResultPart1Part1, Json], List[Corrections.Outcome]) =
     val applied = of(kind, id).filter(c => Correction.Status.applied(c.status))
     val results = applied.flatMap { c =>
       now.get(c.field).map { up =>
@@ -65,7 +100,7 @@ private[events] object CorrectionRepo:
   /** `histmersion events corrections`: the corrections of `kind` (one target's with `id`), the ones in `status`
     * (default: all but the retired), conflicts first, with each event's label.
     */
-  def list(kind: String, id: Option[String], status: Option[String], limit: Int, offset: Int)(using
+  def list(kind: com.histmersion.domain.catalogue.events.CorrectionRepo.ListKind, id: Option[com.histmersion.domain.catalogue.events.CorrectionRepo.ListId], status: Option[com.histmersion.domain.catalogue.events.CorrectionRepo.ListStatus], limit: com.histmersion.domain.catalogue.events.CorrectionRepo.ListLimit, offset: com.histmersion.domain.catalogue.events.CorrectionRepo.ListOffset)(using
       DbCon
   ): Correction.List =
     val st = status.map(_.trim.toLowerCase).filter(_.nonEmpty)
@@ -87,7 +122,7 @@ private[events] object CorrectionRepo:
   /** `lint --rule event-correction-conflict`: the events whose catalogue changed a field a person kept by hand, each
     * with what the person kept, what the catalogue said and what it says now.
     */
-  def conflictsIn()(using DbCon): List[(String, String)] =
+  def conflictsIn()(using DbCon): List[(com.histmersion.domain.catalogue.events.CorrectionRepo.ConflictsInResultPart1, com.histmersion.domain.catalogue.events.CorrectionRepo.ConflictsInResultPart2)] =
     Sql.raw(ConflictsSql).frag.query[(String, String)].run().toList
 
   private val ConflictsSql =

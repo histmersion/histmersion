@@ -17,12 +17,31 @@ import com.histmersion.api.maintenance.Storage
 object LocalStorage:
 
   /** The locations, from the CLI's config. Pure but for finding the install (it must hold a kit). */
+  type LocationsResultPart1 = LocationsResultPart1.T
+  object LocationsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocationsResultPart2 = LocationsResultPart2.T
+  object LocationsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocationsEnvArg1 = LocationsEnvArg1.T
+  object LocationsEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocationsEnvResult = LocationsEnvResult.T
+  object LocationsEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LocationsOsName = LocationsOsName.T
+  object LocationsOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddServerUrl = AddServerUrl.T
+  object AddServerUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddEnvArg1 = AddEnvArg1.T
+  object AddEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddEnvResult = AddEnvResult.T
+  object AddEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddOsName = AddOsName.T
+  object AddOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def locations(
       cfg: AppConfig,
-      env: String => Option[String],
-      osName: String,
+      env: com.histmersion.cli.LocalStorage.LocationsEnvArg1 => Option[com.histmersion.cli.LocalStorage.LocationsEnvResult],
+      osName: com.histmersion.cli.LocalStorage.LocationsOsName,
       exe: Option[Path]
-  ): List[(String, String, Path)] =
+  ): List[(com.histmersion.cli.LocalStorage.LocationsResultPart1, com.histmersion.cli.LocalStorage.LocationsResultPart2, Path)] =
     cfg.cli.calibre.originals
       .map(p => ("calibre-originals", "originals folder (cli.calibre.originals-dir)", Path.of(p)))
       .toList ++
@@ -35,10 +54,10 @@ object LocalStorage:
   /** Measure them within the `storage.*` caps and add them to `about`'s report. */
   def add(
       a: About,
-      serverUrl: String,
+      serverUrl: com.histmersion.cli.LocalStorage.AddServerUrl,
       cfg: AppConfig,
-      env: String => Option[String],
-      osName: String,
+      env: com.histmersion.cli.LocalStorage.AddEnvArg1 => Option[com.histmersion.cli.LocalStorage.AddEnvResult],
+      osName: com.histmersion.cli.LocalStorage.AddOsName,
       exe: Option[Path]
   ): About =
     if !PluginKit.isLoopback(serverUrl) then a

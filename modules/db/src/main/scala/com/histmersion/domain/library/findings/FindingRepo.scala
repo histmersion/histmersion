@@ -16,8 +16,11 @@ private[findings] object FindingRepo:
     * publication years, topics). `filter.limit` must already be resolved against the configured default (the handler
     * does that).
     */
+  type FindingsCountResult = FindingsCountResult.T
+  object FindingsCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def findingsFor(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Vector[GeoHit] =
     (FilterSql.findingsFeedQuery(filter, scope).frag.query[GeoFeedRow].run().map(_.toHit))
 
-  def findingsCount(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): Int =
+  def findingsCount(filter: Filter, scope: PlaceScope = PlaceScope.empty)(using DbCon): com.histmersion.domain.library.findings.FindingRepo.FindingsCountResult =
     (FilterSql.findingsCountQuery(filter, scope).frag.query[Int].run().headOption.getOrElse(0))

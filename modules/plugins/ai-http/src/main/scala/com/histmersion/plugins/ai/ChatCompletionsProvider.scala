@@ -22,7 +22,7 @@ final class ChatCompletionsProvider(
   override def capabilities: AiCapabilities =
     AiCapabilities(tools = true, structuredOutput = true, iterationMarkers = true, verbatimFailures = true)
 
-  private def base: Either[String, BaseUrl] = BaseUrl.parse(settings.baseUrl, s"agents.providers.$name.base-url")
+  private def base: Either[com.histmersion.plugins.ai.ChatCompletionsProvider.BaseResultPart1, BaseUrl] = BaseUrl.parse(settings.baseUrl, s"agents.providers.$name.base-url")
 
   override def check(model: String): Either[String, Unit] =
     base.flatMap(_ =>
@@ -32,7 +32,7 @@ final class ChatCompletionsProvider(
         case _ => Right(())
     )
 
-  private def key: String = if settings.apiKey.isEmpty then "none" else settings.apiKey
+  private def key: com.histmersion.plugins.ai.ChatCompletionsProvider.KeyResult = if settings.apiKey.isEmpty then "none" else settings.apiKey
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val sent = for
@@ -48,7 +48,18 @@ final class ChatCompletionsProvider(
 
 object ChatCompletionsProvider:
 
-  def headers(key: String): Map[String, String] =
+  type BaseResultPart1 = BaseResultPart1.T
+  object BaseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyResult = KeyResult.T
+  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadersResultPart1 = HeadersResultPart1.T
+  object HeadersResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadersResultPart2 = HeadersResultPart2.T
+  object HeadersResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadersKey = HeadersKey.T
+  object HeadersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def headers(key: com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey): Map[com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1, com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2] =
     Map("Authorization" -> s"Bearer $key", "Content-Type" -> "application/json")
 
   /** The OpenAI API, keyed by `OPENAI_API_KEY`. */

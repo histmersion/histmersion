@@ -10,18 +10,44 @@ import org.ekrich.config.{ConfigValue, ConfigValueType}
 object YubiKey:
 
   /** One `<slot>[:<serial>]`: the challenge-response slot (1 or 2) and, optionally, which key. */
+  type ParseResultPart1 = ParseResultPart1.T
+  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseText = ParseText.T
+  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseAllResultPart1 = ParseAllResultPart1.T
+  object ParseAllResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseAllEntries = ParseAllEntries.T
+  object ParseAllEntries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SerialsResult = SerialsResult.T
+  object SerialsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SerialsOut = SerialsOut.T
+  object SerialsOut extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanConnected = PlanConnected.T
+  object PlanConnected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailureErr = FailureErr.T
+  object FailureErr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailureEntry = FailureEntry.T
+  object FailureEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProblemResult = ProblemResult.T
+  object ProblemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProblemErr = ProblemErr.T
+  object ProblemErr extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Slot(slot: Slot.Value, serial: Option[Slot.Serial]):
     /** The form `keepassxc-cli -y` takes, and the one the settings and the errors show. */
-    def shown: String = serial.fold(slot.toString)(s => s"$slot:$s")
+    def shown: com.histmersion.plugins.vaults.YubiKey.Slot.ShownResult = serial.fold(slot.toString)(s => s"$slot:$s")
 
   object Slot:
+    type ShownResult = ShownResult.T
+    object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Serial = Serial.T
     object Serial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Pure: `"2"` or `"2:12345678"`. */
-  def parse(text: String): Either[String, Slot] =
+  def parse(text: com.histmersion.plugins.vaults.YubiKey.ParseText): Either[com.histmersion.plugins.vaults.YubiKey.ParseResultPart1, Slot] =
     val t = text.trim
     def bad =
       s"yubikey '$t' is not <slot>[:<serial>] — the slot is 1 or 2, the serial the key's number (`ykman list --serials`)"
@@ -35,20 +61,20 @@ object YubiKey:
       case _ => Left(bad)
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
-  def parseAll(entries: List[String]): Either[String, List[Slot]] =
+  def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.ParseAllEntries]): Either[com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1, List[Slot]] =
     entries.map(_.trim).filter(_.nonEmpty).foldLeft[Either[String, List[Slot]]](Right(Nil)) { (acc, e) =>
       acc.flatMap(ok => parse(e).map(s => if ok.contains(s) then ok else ok :+ s))
     }
 
   /** Pure: the serials `ykman list --serials` printed, one per line (anything else is ignored). */
-  def serials(out: String): Set[Long] =
+  def serials(out: com.histmersion.plugins.vaults.YubiKey.SerialsOut): Set[com.histmersion.plugins.vaults.YubiKey.SerialsResult] =
     out.linesIterator.map(_.trim).filter(l => l.nonEmpty && l.forall(_.isDigit)).flatMap(_.toLongOption).toSet
 
   /** Pure: which entries to try and which are absent. `connected = None` (no way to tell): all of them, in order.
     * Otherwise an entry with a serial only when that key is connected, one without when any key is. `first` (the entry
     * that last opened the database) goes to the front: its touch is the one most likely wanted.
     */
-  def plan(entries: List[Slot], connected: Option[Set[Long]], first: Option[Slot] = None): (List[Slot], List[Slot]) =
+  def plan(entries: List[Slot], connected: Option[Set[com.histmersion.plugins.vaults.YubiKey.PlanConnected]], first: Option[Slot] = None): (List[Slot], List[Slot]) =
     val (tryThese, absent) = connected match
       case None      => (entries, Nil)
       case Some(set) => entries.partition(e => e.serial.fold(set.nonEmpty)(set.contains))
@@ -67,7 +93,7 @@ object YubiKey:
     * once: another key cannot fix a wrong password, and with the same secret programmed into every listed key a wrong
     * key is the same answer. Unknown messages stop too, so a failure is never retried blindly.
     */
-  def failure(err: String, entry: String): Failure =
+  def failure(err: com.histmersion.plugins.vaults.YubiKey.FailureErr, entry: com.histmersion.plugins.vaults.YubiKey.FailureEntry): Failure =
     def has(s: String*) = s.exists(err.contains)
     if has("invalid credentials", "wrong key", "unable to unlock") then
       Failure.Stop("invalid credentials (the password, key file or YubiKey is wrong)")
@@ -98,7 +124,7 @@ object YubiKey:
   /** Pure: KeePassXC's own message for an error text — the first stderr line that is not its prompt ("Please present or
     * touch your YubiKey", "Enter password to unlock").
     */
-  def problem(err: String): String =
+  def problem(err: com.histmersion.plugins.vaults.YubiKey.ProblemErr): com.histmersion.plugins.vaults.YubiKey.ProblemResult =
     Subprocess.problem(
       err.linesIterator
         .filterNot { l =>

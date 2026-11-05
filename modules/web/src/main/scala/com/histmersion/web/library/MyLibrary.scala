@@ -10,11 +10,16 @@ import scala.scalajs.concurrent.JSExecutionContext.Implicits.queue
   */
 object MyLibrary:
 
-  private def onList(r: Route): Boolean = r match
+  type OnListResult = OnListResult.T
+  object OnListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Shown = Shown.T
+  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  private def onList(r: Route): com.histmersion.web.library.MyLibrary.OnListResult = r match
     case Route.Library(s) => s.isList
     case _                => false
 
-  private val shown: Signal[Boolean] = Router.route.map(onList)
+  private val shown: Signal[com.histmersion.web.library.MyLibrary.Shown] = Router.route.map(onList)
 
   private val everything = Var(Option.empty[com.histmersion.api.RowCount])
   private val unread = Var(Option.empty[com.histmersion.api.RowCount])

@@ -16,6 +16,9 @@ enum SettingKind(val wire: String, val describe: String):
   case Any extends SettingKind("any", "a value")
 
 object SettingKind:
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def of(v: ConfigValue): SettingKind = v.valueType match
     case ConfigValueType.STRING  => Text
     case ConfigValueType.NUMBER  => Number
@@ -24,4 +27,4 @@ object SettingKind:
     case ConfigValueType.OBJECT  => Block
     case _                       => Any
 
-  def parse(s: String): Option[SettingKind] = values.find(_.wire == s.trim.toLowerCase)
+  def parse(s: com.histmersion.config.edit.SettingKind.ParseS): Option[SettingKind] = values.find(_.wire == s.trim.toLowerCase)

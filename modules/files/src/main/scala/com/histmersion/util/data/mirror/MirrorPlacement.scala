@@ -16,12 +16,19 @@ enum MirrorPlacement:
   case Named(name: String)
 
   /** The directory the notes go in, under the export's directory; `None` when each note's type decides it. */
-  def directory: Option[String] = this match
+  def directory: Option[com.histmersion.util.data.mirror.MirrorPlacement.DirectoryResult] = this match
     case InDirectory(d) => Some(d)
     case Named(d)       => Some(d)
     case ByType         => None
 
 object MirrorPlacement:
+  type DirectoryResult = DirectoryResult.T
+  object DirectoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteFileResult = NoteFileResult.T
+  object NoteFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteFileId = NoteFileId.T
+  object NoteFileId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val SourcesDirectory = "sources"
   val MetaDirectory = "meta"
 
@@ -30,4 +37,4 @@ object MirrorPlacement:
   val MetaFiles: MirrorPlacement = Named(MetaDirectory)
 
   /** The file name of the note of the record `id`. */
-  def noteFile(id: String): String = s"$id.md"
+  def noteFile(id: com.histmersion.util.data.mirror.MirrorPlacement.NoteFileId): com.histmersion.util.data.mirror.MirrorPlacement.NoteFileResult = s"$id.md"

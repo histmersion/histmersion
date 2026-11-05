@@ -10,7 +10,7 @@ final class HelloPlugin extends Plugin:
   type Config = HelloConfig
   val info = Plugin.Info("hello", "0.1.0", Spi.Version)
 
-  def register(config: HelloConfig, ctx: Plugin.Context): Either[String, Unit] =
+  def register(config: HelloConfig, ctx: Plugin.Context): Either[com.histmersion.fixtures.hello.HelloPlugin.RegisterResultPart1, Unit] =
     scala.util
       .Try(
         Class
@@ -26,3 +26,7 @@ final class HelloPlugin extends Plugin:
         ctx.log.info(s"hello: ${greeter.greet(config.greeting)} (${config.mirrors.size} mirror(s))")
         ctx.sourceFetchers.add("hello", HelloFetcher(config.mirrors.size))
       }
+
+object HelloPlugin:
+  type RegisterResultPart1 = RegisterResultPart1.T
+  object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

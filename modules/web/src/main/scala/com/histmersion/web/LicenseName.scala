@@ -5,6 +5,29 @@ package com.histmersion.web
   */
 object LicenseName:
 
+  type LabelResult = LabelResult.T
+  object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelId = LabelId.T
+  object LabelId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlResult = UrlResult.T
+  object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlId = UrlId.T
+  object UrlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkResultPart1 = LinkResultPart1.T
+  object LinkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkResultPart2 = LinkResultPart2.T
+  object LinkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkId = LinkId.T
+  object LinkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkRecorded = LinkRecorded.T
+  object LinkRecorded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlResult = HtmlResult.T
+  object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlId = HtmlId.T
+  object HtmlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlRecorded = HtmlRecorded.T
+  object HtmlRecorded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val Cc0 = "(?i)^CC0(?:[- ]1\\.0)?\\.?$".r
   // CC-BY, CC-BY-SA-4.0, CC BY-NC-SA 2.5, CC-BY-SA-3.0-DE (a ported licence)
   private val Cc = "(?i)^CC[- ](BY(?:-(?:NC|SA|ND))*)(?:[- ](\\d(?:\\.\\d)?))?(?:[- ]([A-Z]{2,3}))?$".r
@@ -12,7 +35,7 @@ object LicenseName:
   private val Pd = "(?i)^(?:public[- ]domain|PD)$".r
 
   /** The licence's name: `CC BY-SA 3.0`, `CC0 1.0`, `Public domain`; an id it does not know, as stored. */
-  def label(id: String): String = id.trim match
+  def label(id: com.histmersion.web.LicenseName.LabelId): com.histmersion.web.LicenseName.LabelResult = id.trim match
     case Cc0()               => "CC0 1.0"
     case Cc(kind, ver, port) =>
       List(Some("CC"), Some(kind.toUpperCase), Option(ver), Option(port).map(_.toUpperCase)).flatten.mkString(" ")
@@ -21,7 +44,7 @@ object LicenseName:
     case other => other
 
   /** Where the licence's text is, for the ids it knows (Creative Commons' own pages). */
-  def url(id: String): Option[String] = id.trim match
+  def url(id: com.histmersion.web.LicenseName.UrlId): Option[com.histmersion.web.LicenseName.UrlResult] = id.trim match
     case Cc0()                              => Some("https://creativecommons.org/publicdomain/zero/1.0/")
     case Cc(kind, ver, port) if ver != null =>
       Some(
@@ -33,11 +56,11 @@ object LicenseName:
     case _     => None
 
   /** The name and the link a picture's licence is shown with: the record's own link first. */
-  def link(id: String, recorded: Option[String]): (String, Option[String]) =
+  def link(id: com.histmersion.web.LicenseName.LinkId, recorded: Option[com.histmersion.web.LicenseName.LinkRecorded]): (com.histmersion.web.LicenseName.LinkResultPart1, Option[com.histmersion.web.LicenseName.LinkResultPart2]) =
     (label(id), recorded.map(_.trim).filter(_.nonEmpty).orElse(url(id)))
 
   /** The licence as HTML: its name, linked to its text when there is one (escaped). */
-  def html(id: String, recorded: Option[String]): String =
+  def html(id: com.histmersion.web.LicenseName.HtmlId, recorded: Option[com.histmersion.web.LicenseName.HtmlRecorded]): com.histmersion.web.LicenseName.HtmlResult =
     link(id, recorded) match
       case (name, Some(u)) =>
         s"""<a class="media-license" href="${Fmt.esc(u)}" target="_blank" rel="noopener license">${Fmt.esc(name)}</a>"""

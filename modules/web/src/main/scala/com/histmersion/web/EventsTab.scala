@@ -14,6 +14,9 @@ object EventsTab:
   /** The tab ([[FilterTab]]): the GLOBAL filter (title included), as the Sources tab sends it — the server relates it
     * to events (see [[Api.EventQuery]]). A page at a time; "show more" fetches past the first.
     */
+  type WhenResult = WhenResult.T
+  object WhenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val tab = FilterTab[Api.EventQuery, EventSummary](
     name = "events",
     singular = "event",
@@ -37,7 +40,7 @@ object EventsTab:
   /** Pure: a row's date — the stated dating where there is one (`250 CE ± 2500 (tephrochronology)`), else its
     * four-point span.
     */
-  def when(e: EventSummary): String = e.datingNote.getOrElse(YearFmt.span(e.timeSpan))
+  def when(e: EventSummary): com.histmersion.web.EventsTab.WhenResult = e.datingNote.getOrElse(YearFmt.span(e.timeSpan))
 
   private def renderEvent(evt: EventSummary): HtmlElement =
     li(

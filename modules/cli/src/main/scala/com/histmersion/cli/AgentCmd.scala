@@ -16,6 +16,19 @@ import com.histmersion.util.console.Console
 object AgentCmd:
 
   /** How often `--follow` polls. This process's own cadence, not a server tunable. */
+  type FollowId = FollowId.T
+  object FollowId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FollowLast = FollowLast.T
+  object FollowLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecideHelp = DecideHelp.T
+  object DecideHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BeforeOptWhat = BeforeOptWhat.T
+  object BeforeOptWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ControlAction = ControlAction.T
+  object ControlAction extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ControlHelp = ControlHelp.T
+  object ControlHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   private val PollMs = 2000
 
   private def models(using console: Console) = Opts.subcommand(
@@ -189,7 +202,7 @@ object AgentCmd:
 
   /** Poll a run until it is no longer queued or running; a failed or cancelled run exits 2. */
   @annotation.tailrec
-  private[cli] def follow(c: Client, id: String, last: String)(using console: Console): Either[Cli.Error, Unit] =
+  private[cli] def follow(c: Client, id: com.histmersion.cli.AgentCmd.FollowId, last: com.histmersion.cli.AgentCmd.FollowLast)(using console: Console): Either[Cli.Error, Unit] =
     c.call(AgentsApi.run)(id) match
       case Left(e)  => Left(e)
       case Right(d) =>
@@ -318,7 +331,7 @@ object AgentCmd:
   /** One decision per id, in the order given, each through the same endpoint (and checks) as a single one; a refused id
     * does not stop the rest, and makes the command fail at the end.
     */
-  private def decide(d: Decision, help: String)(using console: Console) = Opts.subcommand(d.wire, help) {
+  private def decide(d: Decision, help: com.histmersion.cli.AgentCmd.DecideHelp)(using console: Console) = Opts.subcommand(d.wire, help) {
     (Opts.arguments[Long]("id"), Opts.option[String]("note", "Why — kept with the decision (with every id)").orNone)
       .mapN { (ids, note) => (c: Client) =>
         val failed = ids.toList.flatMap { id =>
@@ -351,7 +364,7 @@ object AgentCmd:
         }
     }
 
-  private def beforeOpt(what: String) =
+  private def beforeOpt(what: com.histmersion.cli.AgentCmd.BeforeOptWhat) =
     Opts
       .option[String]("before", s"The next older page: the id of the last $what shown (the listing prints the command)")
       .orNone
@@ -380,7 +393,7 @@ object AgentCmd:
     }
   }
 
-  private def control(action: String, help: String)(using console: Console) = Opts.subcommand(action, help) {
+  private def control(action: com.histmersion.cli.AgentCmd.ControlAction, help: com.histmersion.cli.AgentCmd.ControlHelp)(using console: Console) = Opts.subcommand(action, help) {
     val budget = if action == "resume" then
       (
         Opts.option[Double]("budget-usd", "Raise the run's cost cap before resuming").orNone,

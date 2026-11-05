@@ -11,17 +11,35 @@ package com.histmersion.web
 object RangeLabels:
 
   /** The gap between a year and its handle, and the least gap between the two years. */
+  type WidthResult = WidthResult.T
+  object WidthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WidthText = WidthText.T
+  object WidthText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceFromText = PlaceFromText.T
+  object PlaceFromText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceToText = PlaceToText.T
+  object PlaceToText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceX0 = PlaceX0.T
+  object PlaceX0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceX1 = PlaceX1.T
+  object PlaceX1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceBarW = PlaceBarW.T
+  object PlaceBarW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val Pad = 3.0
   val Gap = 6.0
 
   /** The width of `text` at the overview's 8 px label font (tabular digits; a rough upper bound). */
-  def width(text: String): Double = text.length * 5.0
+  def width(text: com.histmersion.web.RangeLabels.WidthText): com.histmersion.web.RangeLabels.WidthResult = text.length * 5.0
 
   /** One label: its left edge `x` and width `w` (drawn with `text-anchor: start` at `x`). */
   final case class Label(text: Label.Text, x: Label.X, w: Label.W):
-    def end: Double = x + w
+    def end: com.histmersion.web.RangeLabels.Label.EndResult = x + w
 
   object Label:
+    type EndResult = EndResult.T
+    object EndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type X = X.T
@@ -35,7 +53,7 @@ object RangeLabels:
     case Joined(label: Label)
 
   /** The placement for a selection from `x0` to `x1` (px, `x0 ≤ x1`) in a bar `barW` wide. */
-  def place(fromText: String, toText: String, x0: Double, x1: Double, barW: Double): Placement =
+  def place(fromText: com.histmersion.web.RangeLabels.PlaceFromText, toText: com.histmersion.web.RangeLabels.PlaceToText, x0: com.histmersion.web.RangeLabels.PlaceX0, x1: com.histmersion.web.RangeLabels.PlaceX1, barW: com.histmersion.web.RangeLabels.PlaceBarW): Placement =
     val wf = width(fromText)
     val wt = width(toText)
     if x0 + Pad + wf + Gap <= x1 - Pad - wt then

@@ -13,6 +13,9 @@ import com.histmersion.api.catalogue.{Latitude, Longitude, Year}
   */
 object TargetFlags:
 
+  type OptsViews = OptsViews.T
+  object OptsViews extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Raw(
       kind: Raw.Kind,
       id: Option[Raw.Id],
@@ -43,7 +46,7 @@ object TargetFlags:
     object View extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `views`: the flags of a saved view (`--zoom`, `--view`) too. */
-  def opts(kinds: Set[ItemKind], views: Boolean): Opts[Raw] =
+  def opts(kinds: Set[ItemKind], views: com.histmersion.cli.TargetFlags.OptsViews): Opts[Raw] =
     (
       Opts.argument[String](s"kind (${ItemKind.values.filter(kinds).map(_.wire).mkString(" | ")})"),
       Opts.argument[String]("id").orNone,

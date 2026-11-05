@@ -21,21 +21,34 @@ final class OaRecords(
   lazy val openalex: Option[Json] = openalexClient.raw(doi).toOption
 
   /** Where DataCite says the DOI resolves — `None` for a DOI it does not register (a Crossref one). */
-  lazy val datacite: Option[String] = OaRecords.dataciteUrl(cfg, http, log, doi)
+  lazy val datacite: Option[com.histmersion.plugins.fetchers.OaRecords.Datacite] = OaRecords.dataciteUrl(cfg, http, log, doi)
 
   /** Where the DOI handle API says it resolves (any registration agency) — asked only for an open location on an OA
     * publisher.
     */
-  lazy val handle: Option[String] = OaRecords.handleUrl(cfg, http, log, doi)
+  lazy val handle: Option[com.histmersion.plugins.fetchers.OaRecords.Handle] = OaRecords.handleUrl(cfg, http, log, doi)
 
 object OaRecords:
-  def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: String): Option[String] =
+  type Datacite = Datacite.T
+  object Datacite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Handle = Handle.T
+  object Handle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HandleUrlResult = HandleUrlResult.T
+  object HandleUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HandleUrlDoi = HandleUrlDoi.T
+  object HandleUrlDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DataciteUrlResult = DataciteUrlResult.T
+  object DataciteUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DataciteUrlDoi = DataciteUrlDoi.T
+  object DataciteUrlDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def handleUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: com.histmersion.plugins.fetchers.OaRecords.HandleUrlDoi): Option[com.histmersion.plugins.fetchers.OaRecords.HandleUrlResult] =
     http.json(Url(cfg.doiHandles.url, s"/$doi", "type" -> "URL")) match
       case Right(j) => RepositoryLanding.handleUrl(j)
       case Left(e)  =>
         log.info(s"doi handles: no URL for $doi ($e)"); None
 
-  def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: String): Option[String] =
+  def dataciteUrl(cfg: UpstreamSettings, http: Plugin.Http, log: Plugin.Log, doi: com.histmersion.plugins.fetchers.OaRecords.DataciteUrlDoi): Option[com.histmersion.plugins.fetchers.OaRecords.DataciteUrlResult] =
     http.json(Url(cfg.datacite.url, s"/dois/$doi")) match
       case Right(j) => RepositoryLanding.dataciteUrl(j)
       case Left(e)  =>

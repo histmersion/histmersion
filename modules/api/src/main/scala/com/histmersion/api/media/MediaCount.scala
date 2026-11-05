@@ -10,6 +10,13 @@ final case class MediaCount(key: MediaCount.Key, n: MediaCount.N, allowed: Media
 object MediaCount:
 
 
+  type OfKeys = OfKeys.T
+  object OfKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfAllowedArg1 = OfAllowedArg1.T
+  object OfAllowedArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfAllowedResult = OfAllowedResult.T
+  object OfAllowedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type N = N.T
@@ -17,7 +24,7 @@ object MediaCount:
   type Allowed = Allowed.T
   object Allowed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def of(keys: List[String], allowed: String => Boolean = _ => true): List[MediaCount] =
+  def of(keys: List[com.histmersion.api.media.MediaCount.OfKeys], allowed: com.histmersion.api.media.MediaCount.OfAllowedArg1 => com.histmersion.api.media.MediaCount.OfAllowedResult = _ => true): List[MediaCount] =
     keys
       .groupBy(identity)
       .toList

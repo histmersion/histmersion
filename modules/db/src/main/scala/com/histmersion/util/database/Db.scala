@@ -22,6 +22,33 @@ import javax.sql.DataSource
 object Db:
 
   /** The APPLICATION pool: owns the schema, runs the migrations, serves every repo. */
+  type PooledUrl = PooledUrl.T
+  object PooledUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PooledUser = PooledUser.T
+  object PooledUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PooledPassword = PooledPassword.T
+  object PooledPassword extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PooledMax = PooledMax.T
+  object PooledMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PooledName = PooledName.T
+  object PooledName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatabaseOfResult = DatabaseOfResult.T
+  object DatabaseOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatabaseOfUrl = DatabaseOfUrl.T
+  object DatabaseOfUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActiveConnectionsResult = ActiveConnectionsResult.T
+  object ActiveConnectionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatabaseSettingsPart1 = DatabaseSettingsPart1.T
+  object DatabaseSettingsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DatabaseSettingsPart2 = DatabaseSettingsPart2.T
+  object DatabaseSettingsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaleStatsSql = StaleStatsSql.T
+  object StaleStatsSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnalyzeStaleResult = AnalyzeStaleResult.T
+  object AnalyzeStaleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CanConnectResultPart1 = CanConnectResultPart1.T
+  object CanConnectResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def pool(cfg: DbConfig): HikariDataSource =
     pooled(cfg.url, cfg.user, cfg.password, cfg.pool.max, "histmersion")
 
@@ -41,7 +68,7 @@ object Db:
     * Neither is a workaround for a missing agent run: both are the shapes that have no reflection in them at all, which
     * is the rule this codebase already follows for everything else.
     */
-  def pooled(url: String, user: String, password: String, max: Int, name: String): HikariDataSource =
+  def pooled(url: com.histmersion.util.database.Db.PooledUrl, user: com.histmersion.util.database.Db.PooledUser, password: com.histmersion.util.database.Db.PooledPassword, max: com.histmersion.util.database.Db.PooledMax, name: com.histmersion.util.database.Db.PooledName): HikariDataSource =
     val pg = PGSimpleDataSource()
     pg.setUrl(url)
     pg.setUser(user)
@@ -56,13 +83,13 @@ object Db:
     ds
 
   /** The database a JDBC URL names (`jdbc:postgresql://h:p/NAME?…`), for a pool's name in the log. */
-  private[histmersion] def databaseOf(url: String): String =
+  private[histmersion] def databaseOf(url: com.histmersion.util.database.Db.DatabaseOfUrl): com.histmersion.util.database.Db.DatabaseOfResult =
     url.takeWhile(_ != '?').reverse.takeWhile(_ != '/').reverse
 
   /** Connections the pool behind `ds` has lent out now (0 for a pool that has not started, or no pool at all). A
     * retired pool is closed only when this is 0.
     */
-  def activeConnections(ds: DataSource): Int =
+  def activeConnections(ds: DataSource): com.histmersion.util.database.Db.ActiveConnectionsResult =
     hikari(ds).flatMap(p => Option(p.getHikariPoolMXBean)).map(_.getActiveConnections).getOrElse(0)
 
   private def hikari(ds: DataSource): Option[HikariDataSource] =
@@ -83,7 +110,7 @@ object Db:
     * went from 17 ms to 1.5 s on the sixth hover (2026-10-09), and a place-name search from 0.1 s to minutes. Every
     * statement here is small next to its planning, so each is planned for its own values.
     */
-  private[histmersion] val databaseSettings: List[(String, String)] =
+  private[histmersion] val databaseSettings: List[(com.histmersion.util.database.Db.DatabaseSettingsPart1, com.histmersion.util.database.Db.DatabaseSettingsPart2)] =
     List("random_page_cost" -> "1.1", "plan_cache_mode" -> "force_custom_plan")
 
   def ensureDatabaseSettings(ds: DataSource): Unit =
@@ -101,7 +128,7 @@ object Db:
     * (e.g. a full disk), after which autovacuum has no row counts to act on and would leave these tables unanalyzed
     * until enough new writes accumulate.
     */
-  private[histmersion] val staleStatsSql: String =
+  private[histmersion] val staleStatsSql: com.histmersion.util.database.Db.StaleStatsSql =
     "SELECT relname FROM pg_stat_user_tables" +
       " WHERE last_analyze IS NULL AND last_autoanalyze IS NULL AND schemaname = 'public'" +
       " ORDER BY relname"
@@ -109,7 +136,7 @@ object Db:
   /** ANALYZE every table listed by [[staleStatsSql]]; returns their names. Meant for a background thread at startup: it
     * is a no-op on a healthy database and self-heals one after a crash.
     */
-  def analyzeStale(ds: DataSource): List[String] =
+  def analyzeStale(ds: DataSource): List[com.histmersion.util.database.Db.AnalyzeStaleResult] =
     val c = ds.getConnection()
     try
       val rs = c.createStatement().executeQuery(staleStatsSql)
@@ -139,7 +166,7 @@ object Db:
   /** Can we actually connect as the read-only role? Checked once at startup, so a misconfigured password is a log line
     * at boot rather than a mystery 500 on the first `query`.
     */
-  def canConnect(ds: DataSource): Either[String, Unit] =
+  def canConnect(ds: DataSource): Either[com.histmersion.util.database.Db.CanConnectResultPart1, Unit] =
     try
       val c = ds.getConnection
       try Right(())

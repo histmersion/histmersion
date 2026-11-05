@@ -6,13 +6,35 @@ import scala.jdk.CollectionConverters.*
   * installation.
   */
 trait Shell:
-  def run(cmd: List[String]): Either[String, String]
-  def isRunning(processMatch: String): Boolean
+  def run(cmd: List[com.histmersion.cli.Shell.RunCmd]): Either[com.histmersion.cli.Shell.RunResultPart1, com.histmersion.cli.Shell.RunResultPart2]
+  def isRunning(processMatch: com.histmersion.cli.Shell.IsRunningProcessMatch): com.histmersion.cli.Shell.IsRunningResult
 
 object Shell:
   /** The real one: `java.lang.ProcessBuilder`, stdout captured, stderr folded into the error. */
+  type RunResultPart1 = RunResultPart1.T
+  object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunResultPart2 = RunResultPart2.T
+  object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunCmd = RunCmd.T
+  object RunCmd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsRunningResult = IsRunningResult.T
+  object IsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsRunningProcessMatch = IsRunningProcessMatch.T
+  object IsRunningProcessMatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   object System extends Shell:
-    def run(cmd: List[String]): Either[String, String] =
+    type RunResultPart1 = RunResultPart1.T
+    object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunResultPart2 = RunResultPart2.T
+    object RunResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunCmd = RunCmd.T
+    object RunCmd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsRunningResult = IsRunningResult.T
+    object IsRunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsRunningProcessMatch = IsRunningProcessMatch.T
+    object IsRunningProcessMatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def run(cmd: List[com.histmersion.cli.Shell.System.RunCmd]): Either[com.histmersion.cli.Shell.System.RunResultPart1, com.histmersion.cli.Shell.System.RunResultPart2] =
       scala.util
         .Try {
           val p = new ProcessBuilder(cmd.asJava).redirectErrorStream(false).start()
@@ -23,5 +45,5 @@ object Shell:
         }
         .fold(e => Left(s"${cmd.headOption.getOrElse("command")} could not be run: ${e.getMessage}"), identity)
 
-    def isRunning(processMatch: String): Boolean =
+    def isRunning(processMatch: com.histmersion.cli.Shell.System.IsRunningProcessMatch): com.histmersion.cli.Shell.System.IsRunningResult =
       run(List("pgrep", "-f", processMatch)).exists(_.trim.nonEmpty)

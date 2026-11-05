@@ -6,4 +6,7 @@ enum TargetKind(val wire: String):
   case Manager extends TargetKind("manager")
 
 object TargetKind:
-  def parse(s: String): Option[TargetKind] = values.find(_.wire == s.trim.toLowerCase)
+  type ParseS = ParseS.T
+  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  def parse(s: com.histmersion.api.automation.TargetKind.ParseS): Option[TargetKind] = values.find(_.wire == s.trim.toLowerCase)

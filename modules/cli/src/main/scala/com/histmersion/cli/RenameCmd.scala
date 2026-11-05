@@ -23,6 +23,11 @@ import com.histmersion.util.console.Console
   */
 object RenameCmd:
 
+  type PruneRenamedResultPart1 = PruneRenamedResultPart1.T
+  object PruneRenamedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PruneRenamedResultPart2 = PruneRenamedResultPart2.T
+  object PruneRenamedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final case class Args(oldCitekey: Args.OldCitekey, newCitekey: Args.NewCitekey, json: Args.Json)
 
   object Args:
@@ -50,7 +55,7 @@ object RenameCmd:
     * `Right("old → new")` per file removed, `Left(reason)` per file that could not be; an alias with no file is
     * neither. Only ever touches `<alias>.md` directly inside `sources`.
     */
-  def pruneRenamed(sources: Path, aliases: List[Source.Alias]): List[Either[String, String]] =
+  def pruneRenamed(sources: Path, aliases: List[Source.Alias]): List[Either[com.histmersion.cli.RenameCmd.PruneRenamedResultPart1, com.histmersion.cli.RenameCmd.PruneRenamedResultPart2]] =
     aliases.filter(a => Citekey.valid(a.alias)).flatMap { a =>
       val f = sources.resolve(s"${a.alias}.md")
       scala.util

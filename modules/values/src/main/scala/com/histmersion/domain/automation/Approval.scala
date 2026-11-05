@@ -28,21 +28,34 @@ object Approval:
     case HintEffect extends Kind("hint-effect", false)
 
     /** About a goal or an article (`subject`), not a source. */
-    def aboutSubject: Boolean = this != StatusChange && this != Edge
+    def aboutSubject: com.histmersion.domain.automation.Approval.Kind.AboutSubjectResult = this != StatusChange && this != Edge
 
     /** Its proposal is an article's coverage filter. */
-    def proposesFilter: Boolean = this == ArticleFilter
+    def proposesFilter: com.histmersion.domain.automation.Approval.Kind.ProposesFilterResult = this == ArticleFilter
 
     /** Its proposal is a plan of articles. */
-    def proposesArticles: Boolean = this == ArticlePlan
+    def proposesArticles: com.histmersion.domain.automation.Approval.Kind.ProposesArticlesResult = this == ArticlePlan
 
   object Kind:
-    def parse(s: String): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
+    type AboutSubjectResult = AboutSubjectResult.T
+    object AboutSubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ProposesFilterResult = ProposesFilterResult.T
+    object ProposesFilterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ProposesArticlesResult = ProposesArticlesResult.T
+    object ProposesArticlesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WireResult = WireResult.T
+    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FromWireS = FromWireS.T
+    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.automation.Approval.Kind.ParseS): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): String = e.wire
-      def fromWire(s: String): Option[Kind] = parse(s)
+      def wire(e: Kind): com.histmersion.domain.automation.Approval.Kind.WireResult = e.wire
+      def fromWire(s: com.histmersion.domain.automation.Approval.Kind.FromWireS): Option[Kind] = parse(s)
 
   /** How a kind of proposal is handled: `Manual` waits for a person, `Auto` is applied at once (and still recorded,
     * already approved).
@@ -52,7 +65,10 @@ object Approval:
     case Auto extends Mode("auto")
 
   object Mode:
-    def parse(s: String): Option[Mode] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.automation.Approval.Mode.ParseS): Option[Mode] = values.find(_.wire == s.trim.toLowerCase)
 
   /** `Failed` = a person approved it but applying it failed (the source changed or went away); the reason is kept in
     * `result`.
@@ -64,7 +80,10 @@ object Approval:
     case Failed extends State("failed")
 
   object State:
-    def parse(s: String): Option[State] = values.find(_.wire == s.trim.toLowerCase)
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def parse(s: com.histmersion.domain.automation.Approval.State.ParseS): Option[State] = values.find(_.wire == s.trim.toLowerCase)
 
   /** Who decided an approval. `Autopilot` = the checked auto approvals (their note starts [[AutopilotNote]]); `Auto` =
     * applied the moment it was proposed, by an `agents.approvals.*` mode of `auto` (its result starts [[AutoResult]]);
@@ -77,17 +96,26 @@ object Approval:
 
   object DecidedBy:
     /** The note every autopilot decision starts with (`AutopilotPolicy.note`). */
+    type ParseS = ParseS.T
+    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfState = OfState.T
+    object OfState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfNote = OfNote.T
+    object OfNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfResult = OfResult.T
+    object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val AutopilotNote = "autopilot:"
 
     /** The result of a proposal applied at once (`Approvals.propose`, an `auto` mode). */
     val AutoResult = "applied automatically"
 
-    def parse(s: String): Option[DecidedBy] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.automation.Approval.DecidedBy.ParseS): Option[DecidedBy] = values.find(_.wire == s.trim.toLowerCase)
 
     /** Who decided an approval in `state` with this `note` and `result`; `None` while it is open. The SQL that filters
       * and counts by it says the same (`AgentRepo`).
       */
-    def of(state: String, note: Option[String], result: Option[String]): Option[DecidedBy] =
+    def of(state: com.histmersion.domain.automation.Approval.DecidedBy.OfState, note: Option[com.histmersion.domain.automation.Approval.DecidedBy.OfNote], result: Option[com.histmersion.domain.automation.Approval.DecidedBy.OfResult]): Option[DecidedBy] =
       if state == State.Open.wire then None
       else if note.exists(_.startsWith(AutopilotNote)) then Some(Autopilot)
       else if note.isEmpty && result.exists(_.startsWith(AutoResult)) then Some(Auto)

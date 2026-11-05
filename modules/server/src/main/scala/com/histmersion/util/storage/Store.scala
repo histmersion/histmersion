@@ -16,20 +16,20 @@ trait Store:
   def location: Location
 
   /** Where `key` is, for messages and reports: the path on disk. */
-  def where(key: com.histmersion.util.storage.Store.Key = com.histmersion.util.storage.Store.Key.Root): String
+  def where(key: com.histmersion.util.storage.Store.Key = com.histmersion.util.storage.Store.Key.Root): com.histmersion.util.storage.Store.WhereResult
 
   /** The store below `prefix`, its keys relative to it. */
   def sub(prefix: com.histmersion.util.storage.Store.Key): Store
 
-  def exists(key: com.histmersion.util.storage.Store.Key): Boolean
-  def isFile(key: com.histmersion.util.storage.Store.Key): Boolean
-  def isDirectory(key: com.histmersion.util.storage.Store.Key): Boolean
+  def exists(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.ExistsResult
+  def isFile(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.IsFileResult
+  def isDirectory(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.IsDirectoryResult
 
   /** Is `key` a symbolic link (whatever it points to)? */
-  def isLink(key: com.histmersion.util.storage.Store.Key): Boolean
+  def isLink(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.IsLinkResult
 
   /** Is `key` a file this process may run? */
-  def isExecutable(key: com.histmersion.util.storage.Store.Key): Boolean
+  def isExecutable(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.IsExecutableResult
 
   /** `key` and what it is now, when it exists. */
   def stat(key: com.histmersion.util.storage.Store.Key): Option[Stored]
@@ -59,7 +59,7 @@ trait Store:
   def reserve(
       key: com.histmersion.util.storage.Store.Key,
       temp: TempName = TempName.Fixed,
-      throughLink: Boolean = false
+      throughLink: com.histmersion.util.storage.Store.ReserveThroughLink = false
   ): Either[com.histmersion.util.storage.Store.Error, Reservation]
 
   /** `from` moved to `to`, replacing it. */
@@ -72,7 +72,7 @@ trait Store:
   def copy(
       from: com.histmersion.util.storage.Store.Key,
       to: com.histmersion.util.storage.Store.Key,
-      keepAttributes: Boolean = false
+      keepAttributes: com.histmersion.util.storage.Store.CopyKeepAttributes = false
   ): Either[com.histmersion.util.storage.Store.Error, Unit]
 
   /** `prefix` made a directory, with its parents. */
@@ -81,7 +81,7 @@ trait Store:
   ): Either[com.histmersion.util.storage.Store.Error, Unit]
 
   /** The file `key` removed; `false` when there was none. */
-  def delete(key: com.histmersion.util.storage.Store.Key): Boolean
+  def delete(key: com.histmersion.util.storage.Store.Key): com.histmersion.util.storage.Store.DeleteResult
 
   /** `prefix` and everything below it removed; the bytes its files held, `None` when it was not there. */
   def deleteTree(prefix: com.histmersion.util.storage.Store.Key): Option[ByteCount]
@@ -106,7 +106,7 @@ trait Store:
   def volume: Option[com.histmersion.util.storage.Store.Volume]
 
   /** The names `prefix` holds directly, by name, without reading what they are; none when it is no directory. */
-  def names(prefix: com.histmersion.util.storage.Store.Key = com.histmersion.util.storage.Store.Key.Root): List[String]
+  def names(prefix: com.histmersion.util.storage.Store.Key = com.histmersion.util.storage.Store.Key.Root): List[com.histmersion.util.storage.Store.NamesResult]
 
   /** The files `rule` names, removed. */
   def prune(rule: PruneRule): PruneReport
@@ -124,9 +124,30 @@ trait Store:
 object Store:
 
   /** A [[ContentStore]] over a store: `<sha256>.<ext>` at its top. */
+  type WhereResult = WhereResult.T
+  object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExistsResult = ExistsResult.T
+  object ExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsFileResult = IsFileResult.T
+  object IsFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsDirectoryResult = IsDirectoryResult.T
+  object IsDirectoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsLinkResult = IsLinkResult.T
+  object IsLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsExecutableResult = IsExecutableResult.T
+  object IsExecutableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReserveThroughLink = ReserveThroughLink.T
+  object ReserveThroughLink extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CopyKeepAttributes = CopyKeepAttributes.T
+  object CopyKeepAttributes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeleteResult = DeleteResult.T
+  object DeleteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NamesResult = NamesResult.T
+  object NamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   final class Contents(store: Store) extends ContentStore:
 
-    def find(sha256: String): Option[(ByteSource, String)] =
+    def find(sha256: com.histmersion.util.storage.Store.Contents.FindSha256): Option[(ByteSource, com.histmersion.util.storage.Store.Contents.FindResultPart2)] =
       store
         .list()
         .find(s => s.isFile && s.key.name.startsWith(sha256 + "."))
@@ -136,7 +157,7 @@ object Store:
     /** Written beside its name, hashed, and moved into place only when the content IS `sha256`: the store is
       * content-addressed, and whoever reads it trusts the name.
       */
-    def store(sha256: String, ext: String, in: InputStream): Either[String, Unit] =
+    def store(sha256: com.histmersion.util.storage.Store.Contents.StoreSha256, ext: com.histmersion.util.storage.Store.Contents.StoreExt, in: InputStream): Either[com.histmersion.util.storage.Store.Contents.StoreResultPart1, Unit] =
       if find(sha256).isDefined then
         val _ = in.transferTo(java.io.OutputStream.nullOutputStream())
         Right(())
@@ -162,6 +183,18 @@ object Store:
           .map(e => s"cannot store it in ${store.where()}: ${e.getMessage}")
           .flatten
 
+  object Contents:
+    type FindResultPart2 = FindResultPart2.T
+    object FindResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FindSha256 = FindSha256.T
+    object FindSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoreResultPart1 = StoreResultPart1.T
+    object StoreResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoreSha256 = StoreSha256.T
+    object StoreSha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StoreExt = StoreExt.T
+    object StoreExt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** Why a store operation did not happen. `message` is what callers show; it names the path where the operation
     * failed, as the file system said.
     */
@@ -181,32 +214,47 @@ object Store:
   type Key = Key.T
 
   object Key extends RefinedType[String, StoreKeyRule]:
+    type OfResultPart1 = OfResultPart1.T
+    object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsRootResult = IsRootResult.T
+    object IsRootResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ChildName = ChildName.T
+    object ChildName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SegmentsResult = SegmentsResult.T
+    object SegmentsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NameResult = NameResult.T
+    object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WithSuffixSuffix = WithSuffixSuffix.T
+    object WithSuffixSuffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WithinResult = WithinResult.T
+    object WithinResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Root: Key = applyUnsafe("")
 
     /** A name made of one segment or several, each checked. */
-    def of(segments: String*): Either[String, Key] = either(segments.filter(_.nonEmpty).mkString("/"))
+    def of(segments: String*): Either[com.histmersion.util.storage.Store.Key.OfResultPart1, Key] = either(segments.filter(_.nonEmpty).mkString("/"))
 
     extension (key: Key)
-      def isRoot: Boolean = key.value.isEmpty
+      def isRoot: com.histmersion.util.storage.Store.Key.IsRootResult = key.value.isEmpty
 
       /** `key/child`; `child` may itself hold several segments. */
       def /(child: String): Either[String, Key] = of(key.value, child)
 
       /** `key/child` for a child the caller built from checked parts. */
-      def child(name: String): Key = (key / name).fold(e => throw IllegalArgumentException(e), identity)
+      def child(name: com.histmersion.util.storage.Store.Key.ChildName): Key = (key / name).fold(e => throw IllegalArgumentException(e), identity)
 
-      def segments: List[String] = if key.isRoot then Nil else key.value.split('/').toList
+      def segments: List[com.histmersion.util.storage.Store.Key.SegmentsResult] = if key.isRoot then Nil else key.value.split('/').toList
 
       /** The last segment. */
-      def name: String = segments.lastOption.getOrElse("")
+      def name: com.histmersion.util.storage.Store.Key.NameResult = segments.lastOption.getOrElse("")
 
       def parent: Key = applyUnsafe(segments.dropRight(1).mkString("/"))
 
       /** The key `name` with `suffix` added to its last segment. */
-      def withSuffix(suffix: String): Key = parent.child(name + suffix)
+      def withSuffix(suffix: com.histmersion.util.storage.Store.Key.WithSuffixSuffix): Key = parent.child(name + suffix)
 
       /** Is `key` this key or below it? */
-      def within(prefix: Key): Boolean =
+      def within(prefix: Key): com.histmersion.util.storage.Store.Key.WithinResult =
         prefix.isRoot || key.value == prefix.value || key.value.startsWith(prefix.value + "/")
 
       /** This key relative to `prefix` (which it must be within). */

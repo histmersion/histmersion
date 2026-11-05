@@ -12,11 +12,11 @@ import scala.util.Try
 
 final class SystemProcesses extends Processes:
   def run(
-      argv: List[String],
-      env: Map[String, String],
-      stdin: Option[String],
+      argv: List[com.histmersion.pluginhost.SystemProcesses.RunArgv],
+      env: Map[com.histmersion.pluginhost.SystemProcesses.RunEnvPart1, com.histmersion.pluginhost.SystemProcesses.RunEnvPart2],
+      stdin: Option[com.histmersion.pluginhost.SystemProcesses.RunStdin],
       timeout: FiniteDuration
-  ): Either[String, Result] =
+  ): Either[com.histmersion.pluginhost.SystemProcesses.RunResultPart1, Result] =
     val tool = argv.headOption.map(a => Path.of(a).getFileName.toString).getOrElse("?")
     val pb = new ProcessBuilder(argv.asJava)
     env.foreach((k, v) => pb.environment().put(k, v))
@@ -61,22 +61,22 @@ final class SystemProcesses extends Processes:
       val _ = Thread.ofVirtual().start(() => pump(proc.getErrorStream, errBytes))
   
     /** Everything the tool printed to stdout / stderr so far. */
-    def out: String = lock.synchronized(outBytes.toString(UTF_8))
-    def err: String = lock.synchronized(errBytes.toString(UTF_8))
-    def alive: Boolean = proc.isAlive
+    def out: com.histmersion.pluginhost.SystemProcesses.Session.OutResult = lock.synchronized(outBytes.toString(UTF_8))
+    def err: com.histmersion.pluginhost.SystemProcesses.Session.ErrResult = lock.synchronized(errBytes.toString(UTF_8))
+    def alive: com.histmersion.pluginhost.SystemProcesses.Session.AliveResult = proc.isAlive
   
     /** Write one line to the tool's stdin. */
-    def send(line: String): Either[String, Unit] =
+    def send(line: com.histmersion.pluginhost.SystemProcesses.Session.SendLine): Either[com.histmersion.pluginhost.SystemProcesses.Session.SendResultPart1, Unit] =
       try { in.write((line + "\n").getBytes(UTF_8)); in.flush(); Right(()) }
       catch case e: IOException => Left(s"$tool stopped reading its input")
   
     /** Wait until `ready` holds for stdout, the tool has exited, or `timeout` passed; true = `ready`. */
-    def awaitOut(timeout: FiniteDuration)(ready: String => Boolean): Boolean = await(timeout, () => ready(out))
+    def awaitOut(timeout: FiniteDuration)(ready: com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutReadyArg1 => com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutReadyResult): com.histmersion.pluginhost.SystemProcesses.Session.AwaitOutResult = await(timeout, () => ready(out))
   
     /** Wait until stderr has grown past `length` characters, the tool has exited, or `timeout` passed. */
-    def awaitErr(length: Int, timeout: FiniteDuration): Unit = { val _ = await(timeout, () => err.length > length) }
+    def awaitErr(length: com.histmersion.pluginhost.SystemProcesses.Session.AwaitErrLength, timeout: FiniteDuration): Unit = { val _ = await(timeout, () => err.length > length) }
   
-    private def await(timeout: FiniteDuration, ready: () => Boolean): Boolean =
+    private def await(timeout: FiniteDuration, ready: () => com.histmersion.pluginhost.SystemProcesses.Session.AwaitReadyResult): com.histmersion.pluginhost.SystemProcesses.Session.AwaitResult =
       val deadline = System.nanoTime + timeout.toNanos
       lock.synchronized {
         // `var`: the time left, re-read after each wake-up
@@ -88,7 +88,7 @@ final class SystemProcesses extends Processes:
       }
   
     /** Close the tool's stdin and wait for it to exit within `timeout` (killed otherwise); its exit code. */
-    def close(timeout: FiniteDuration): Option[Int] =
+    def close(timeout: FiniteDuration): Option[com.histmersion.pluginhost.SystemProcesses.Session.CloseResult] =
       try in.close()
       catch case _: IOException => ()
       if proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS) then Some(proc.exitValue)
@@ -100,12 +100,47 @@ final class SystemProcesses extends Processes:
         None
   
     /** The exit code once the tool has exited within `timeout`. */
-    def exit(timeout: FiniteDuration): Option[Int] =
+    def exit(timeout: FiniteDuration): Option[com.histmersion.pluginhost.SystemProcesses.Session.ExitResult] =
       Option.when(proc.waitFor(timeout.toMillis, TimeUnit.MILLISECONDS))(proc.exitValue)
 
   object Session:
     /** Start `argv` (no shell) with `env` added to the server's environment. */
-    def start(argv: List[String], env: Map[String, String]): Either[String, Session] =
+    type OutResult = OutResult.T
+    object OutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ErrResult = ErrResult.T
+    object ErrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AliveResult = AliveResult.T
+    object AliveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SendResultPart1 = SendResultPart1.T
+    object SendResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SendLine = SendLine.T
+    object SendLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AwaitOutResult = AwaitOutResult.T
+    object AwaitOutResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AwaitOutReadyArg1 = AwaitOutReadyArg1.T
+    object AwaitOutReadyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AwaitOutReadyResult = AwaitOutReadyResult.T
+    object AwaitOutReadyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AwaitErrLength = AwaitErrLength.T
+    object AwaitErrLength extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AwaitResult = AwaitResult.T
+    object AwaitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AwaitReadyResult = AwaitReadyResult.T
+    object AwaitReadyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CloseResult = CloseResult.T
+    object CloseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ExitResult = ExitResult.T
+    object ExitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartResultPart1 = StartResultPart1.T
+    object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartArgv = StartArgv.T
+    object StartArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartEnvPart1 = StartEnvPart1.T
+    object StartEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartEnvPart2 = StartEnvPart2.T
+    object StartEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+    def start(argv: List[com.histmersion.pluginhost.SystemProcesses.Session.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart1, com.histmersion.pluginhost.SystemProcesses.Session.StartEnvPart2]): Either[com.histmersion.pluginhost.SystemProcesses.Session.StartResultPart1, Session] =
       val tool = argv.headOption.map(a => Path.of(a).getFileName.toString).getOrElse("?")
       val pb = new ProcessBuilder(argv.asJava)
       env.foreach((k, v) => pb.environment().put(k, v))
@@ -115,7 +150,7 @@ final class SystemProcesses extends Processes:
         s
       }
 
-  private def drain(in: InputStream): () => String =
+  private def drain(in: InputStream): () => com.histmersion.pluginhost.SystemProcesses.DrainResultResult =
     val box = new CompletableFuture[String]()
     val _ = Thread.ofVirtual().start { () =>
       val _ = box.complete(try new String(in.readAllBytes(), UTF_8)
@@ -123,9 +158,9 @@ final class SystemProcesses extends Processes:
     }
     () => Try(box.get(5, TimeUnit.SECONDS)).getOrElse("")
 
-  def start(argv: List[String], env: Map[String, String]): Either[String, Processes.Session] = Session.start(argv, env)
+  def start(argv: List[com.histmersion.pluginhost.SystemProcesses.StartArgv], env: Map[com.histmersion.pluginhost.SystemProcesses.StartEnvPart1, com.histmersion.pluginhost.SystemProcesses.StartEnvPart2]): Either[com.histmersion.pluginhost.SystemProcesses.StartResultPart1, Processes.Session] = Session.start(argv, env)
 
-  def capture(argv: List[String]): Either[String, Result] =
+  def capture(argv: List[com.histmersion.pluginhost.SystemProcesses.CaptureArgv]): Either[com.histmersion.pluginhost.SystemProcesses.CaptureResultPart1, Result] =
     val tool = argv.headOption.map(a => Path.of(a).getFileName.toString).getOrElse("?")
     Try {
       val proc = new ProcessBuilder(argv.asJava).start()
@@ -135,3 +170,29 @@ final class SystemProcesses extends Processes:
       val exit = proc.waitFor()
       Result(exit, out(), err())
     }.toEither.left.map(e => s"$tool could not be run: ${e.getMessage}")
+
+object SystemProcesses:
+  type RunResultPart1 = RunResultPart1.T
+  object RunResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunArgv = RunArgv.T
+  object RunArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunEnvPart1 = RunEnvPart1.T
+  object RunEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunEnvPart2 = RunEnvPart2.T
+  object RunEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStdin = RunStdin.T
+  object RunStdin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrainResultResult = DrainResultResult.T
+  object DrainResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartResultPart1 = StartResultPart1.T
+  object StartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartArgv = StartArgv.T
+  object StartArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartEnvPart1 = StartEnvPart1.T
+  object StartEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartEnvPart2 = StartEnvPart2.T
+  object StartEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CaptureResultPart1 = CaptureResultPart1.T
+  object CaptureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CaptureArgv = CaptureArgv.T
+  object CaptureArgv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

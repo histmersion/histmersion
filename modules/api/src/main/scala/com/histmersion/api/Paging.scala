@@ -6,6 +6,45 @@ import com.histmersion.api.automation.ListFilters
 /** Paging travels in response headers so the JSON body stays the plain array older CLIs and MCP clients read. */
 object Paging:
 
+  type EncodeCountsResult = EncodeCountsResult.T
+  object EncodeCountsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EncodeCountsCountsPart1 = EncodeCountsCountsPart1.T
+  object EncodeCountsCountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EncodeCountsCountsPart2 = EncodeCountsCountsPart2.T
+  object EncodeCountsCountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeCountsResultPart1 = DecodeCountsResultPart1.T
+  object DecodeCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeCountsResultPart2 = DecodeCountsResultPart2.T
+  object DecodeCountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeCountsS = DecodeCountsS.T
+  object DecodeCountsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupedResult = GroupedResult.T
+  object GroupedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupedN = GroupedN.T
+  object GroupedN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingResult = HeadingResult.T
+  object HeadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingShown = HeadingShown.T
+  object HeadingShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingTotal = HeadingTotal.T
+  object HeadingTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingSingular = HeadingSingular.T
+  object HeadingSingular extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingPlural = HeadingPlural.T
+  object HeadingPlural extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingQualifier = HeadingQualifier.T
+  object HeadingQualifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OlderLineResult = OlderLineResult.T
+  object OlderLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OlderLineAskArg1 = OlderLineAskArg1.T
+  object OlderLineAskArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OlderLineAskResult = OlderLineAskResult.T
+  object OlderLineAskResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CutResultPart2 = CutResultPart2.T
+  object CutResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CutLimit = CutLimit.T
+  object CutLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   val TotalHeader = "X-Total-Count"
   val NextHeader = "X-Next-Before"
   val CountsHeader = "X-State-Counts"
@@ -16,14 +55,51 @@ object Paging:
       counts: List[(Page.CountsPart1, Page.CountsPart2)],
       facets: List[(Page.FacetsPart1, List[(Page.FacetsPart2Part1, Page.FacetsPart2Part2)])] = Nil
   ):
-    def hasMore: Boolean = next.isDefined
-    def count(state: String): Int = counts.collectFirst { case (s, n) if s == state => n }.getOrElse(0)
+    def hasMore: com.histmersion.api.Paging.Page.HasMoreResult = next.isDefined
+    def count(state: com.histmersion.api.Paging.Page.CountState): com.histmersion.api.Paging.Page.CountResult = counts.collectFirst { case (s, n) if s == state => n }.getOrElse(0)
 
-    def all: Int = counts.map(_._2).sum
+    def all: com.histmersion.api.Paging.Page.AllResult = counts.map(_._2).sum
 
-    def facet(name: String): List[(String, Int)] = facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)
+    def facet(name: com.histmersion.api.Paging.Page.FacetName): List[(com.histmersion.api.Paging.Page.FacetResultPart1, com.histmersion.api.Paging.Page.FacetResultPart2)] = facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)
 
   object Page:
+    type HasMoreResult = HasMoreResult.T
+    object HasMoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CountResult = CountResult.T
+    object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CountState = CountState.T
+    object CountState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AllResult = AllResult.T
+    object AllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FacetResultPart1 = FacetResultPart1.T
+    object FacetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FacetResultPart2 = FacetResultPart2.T
+    object FacetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FacetName = FacetName.T
+    object FacetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfCountsPart1 = OfCountsPart1.T
+    object OfCountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfCountsPart2 = OfCountsPart2.T
+    object OfCountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfState = OfState.T
+    object OfState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLast = OfLast.T
+    object OfLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilteredCountsPart1 = FilteredCountsPart1.T
+    object FilteredCountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilteredCountsPart2 = FilteredCountsPart2.T
+    object FilteredCountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilteredStates = FilteredStates.T
+    object FilteredStates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilteredLast = FilteredLast.T
+    object FilteredLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilteredFacetsPart1 = FilteredFacetsPart1.T
+    object FilteredFacetsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilteredFacetsPart2Part1 = FilteredFacetsPart2Part1.T
+    object FilteredFacetsPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilteredFacetsPart2Part2 = FilteredFacetsPart2Part2.T
+    object FilteredFacetsPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     type Total = Total.T
     object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Next = Next.T
@@ -41,23 +117,23 @@ object Paging:
 
     val empty: Page = Page(0, None, Nil)
 
-    def of(counts: List[(String, Int)], state: Option[String], last: Option[String]): Page =
+    def of(counts: List[(com.histmersion.api.Paging.Page.OfCountsPart1, com.histmersion.api.Paging.Page.OfCountsPart2)], state: Option[com.histmersion.api.Paging.Page.OfState], last: Option[com.histmersion.api.Paging.Page.OfLast]): Page =
       filtered(counts, state.toList, last)
 
     def filtered(
-        counts: List[(String, Int)],
-        states: List[String],
-        last: Option[String],
-        facets: List[(String, List[(String, Int)])] = Nil
+        counts: List[(com.histmersion.api.Paging.Page.FilteredCountsPart1, com.histmersion.api.Paging.Page.FilteredCountsPart2)],
+        states: List[com.histmersion.api.Paging.Page.FilteredStates],
+        last: Option[com.histmersion.api.Paging.Page.FilteredLast],
+        facets: List[(com.histmersion.api.Paging.Page.FilteredFacetsPart1, List[(com.histmersion.api.Paging.Page.FilteredFacetsPart2Part1, com.histmersion.api.Paging.Page.FilteredFacetsPart2Part2)])] = Nil
     ): Page =
       val total =
         if states.isEmpty then counts.map(_._2).sum else counts.collect { case (k, n) if states.contains(k) => n }.sum
       Page(total, last, counts, facets.filter(_._2.nonEmpty))
 
-  def encodeCounts(counts: List[(String, Int)]): String =
+  def encodeCounts(counts: List[(com.histmersion.api.Paging.EncodeCountsCountsPart1, com.histmersion.api.Paging.EncodeCountsCountsPart2)]): com.histmersion.api.Paging.EncodeCountsResult =
     counts.map((s, n) => s"$s=$n").mkString(",")
 
-  def decodeCounts(s: String): List[(String, Int)] =
+  def decodeCounts(s: com.histmersion.api.Paging.DecodeCountsS): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.DecodeCountsResultPart2)] =
     s.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { pair =>
       pair.split('=') match
         case Array(k, v) => v.trim.toIntOption.map(k.trim -> _)
@@ -87,19 +163,19 @@ object Paging:
       )
 
   /** Grouped by hand, never through a locale: JDK 25's `en_PL` groups with a space. */
-  def grouped(n: Long): String =
+  def grouped(n: com.histmersion.api.Paging.GroupedN): com.histmersion.api.Paging.GroupedResult =
     val s = math.abs(n).toString
     val g = s.reverse.grouped(3).mkString(",").reverse
     if n < 0 then s"-$g" else g
 
-  def heading(shown: Int, total: Int, singular: String, plural: String = "", qualifier: Option[String] = None): String =
+  def heading(shown: com.histmersion.api.Paging.HeadingShown, total: com.histmersion.api.Paging.HeadingTotal, singular: com.histmersion.api.Paging.HeadingSingular, plural: com.histmersion.api.Paging.HeadingPlural = "", qualifier: Option[com.histmersion.api.Paging.HeadingQualifier] = None): com.histmersion.api.Paging.HeadingResult =
     val all = math.max(shown, total)
     val noun = qualifier.fold("")(q => s"$q ") + Plural.noun(all, singular, plural)
     if shown >= all then s"${grouped(all)} $noun"
     else s"Latest ${grouped(shown)} of ${grouped(all)} $noun"
 
-  def olderLine(page: Page, ask: String => String): Option[String] =
+  def olderLine(page: Page, ask: com.histmersion.api.Paging.OlderLineAskArg1 => com.histmersion.api.Paging.OlderLineAskResult): Option[com.histmersion.api.Paging.OlderLineResult] =
     page.next.map(c => s"Older: ${ask(c)}")
 
-  def cut[A](rows: Vector[A], limit: Int): (Vector[A], Boolean) =
+  def cut[A](rows: Vector[A], limit: com.histmersion.api.Paging.CutLimit): (Vector[A], com.histmersion.api.Paging.CutResultPart2) =
     if rows.size > limit then (rows.take(limit), true) else (rows, false)

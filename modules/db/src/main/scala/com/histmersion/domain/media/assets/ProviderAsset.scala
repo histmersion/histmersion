@@ -28,6 +28,11 @@ final case class ProviderAsset(
 object ProviderAsset:
 
   /** Pure: the media kind (the layer's colour) of a picture shown in `role`. */
+  type KindOfResult = KindOfResult.T
+  object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfRole = KindOfRole.T
+  object KindOfRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   type Bytes = Bytes.T
   object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Thumb = Thumb.T
@@ -66,7 +71,7 @@ object ProviderAsset:
   type Kind = Kind.T
   object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def kindOf(role: String): String = role match
+  def kindOf(role: com.histmersion.domain.media.assets.ProviderAsset.KindOfRole): com.histmersion.domain.media.assets.ProviderAsset.KindOfResult = role match
     case MediaRole.LocatorMap | MediaRole.RouteMap | MediaRole.Map => AssetKind.Map
     case MediaRole.Plan                                            => AssetKind.Plan
     case _                                                         => AssetKind.Photo

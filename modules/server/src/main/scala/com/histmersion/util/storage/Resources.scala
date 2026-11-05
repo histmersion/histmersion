@@ -3,9 +3,16 @@ package com.histmersion.util.storage
 import java.nio.charset.StandardCharsets.UTF_8
 
 trait Resources:
-  def text(name: String): Either[String, String]
+  def text(name: com.histmersion.util.storage.Resources.TextName): Either[com.histmersion.util.storage.Resources.TextResultPart1, com.histmersion.util.storage.Resources.TextResultPart2]
 
 object Resources:
+  type TextResultPart1 = TextResultPart1.T
+  object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextResultPart2 = TextResultPart2.T
+  object TextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextName = TextName.T
+  object TextName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   def classpath(loader: ClassLoader): Resources = new Resources:
     def text(name: String): Either[String, String] =
       Option(loader.getResourceAsStream(name))
@@ -16,4 +23,12 @@ object Resources:
         )
 
   final class InMemory(contents: Map[String, String]) extends Resources:
-    def text(name: String): Either[String, String] = contents.get(name).toRight(s"missing prompt resource $name")
+    def text(name: com.histmersion.util.storage.Resources.InMemory.TextName): Either[com.histmersion.util.storage.Resources.InMemory.TextResultPart1, com.histmersion.util.storage.Resources.InMemory.TextResultPart2] = contents.get(name).toRight(s"missing prompt resource $name")
+
+  object InMemory:
+    type TextResultPart1 = TextResultPart1.T
+    object TextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TextResultPart2 = TextResultPart2.T
+    object TextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TextName = TextName.T
+    object TextName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

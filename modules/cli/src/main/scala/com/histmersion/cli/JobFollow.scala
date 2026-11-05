@@ -13,18 +13,40 @@ import com.histmersion.util.console.Console
 object JobFollow:
 
   /** How often a job is asked for. This process's own cadence, not a server tunable. */
-  val PollMs: Long = 1000
+  type PollMs = PollMs.T
+  object PollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackupPollMs = BackupPollMs.T
+  object BackupPollMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailedWhat = FailedWhat.T
+  object FailedWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FailedWhy = FailedWhy.T
+  object FailedWhy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobWaited = JobWaited.T
+  object JobWaited extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobSleepArg1 = JobSleepArg1.T
+  object JobSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobProgressArg1 = JobProgressArg1.T
+  object JobProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackupSleepArg1 = BackupSleepArg1.T
+  object BackupSleepArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BackupProgressArg1 = BackupProgressArg1.T
+  object BackupProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  val PollMs: com.histmersion.cli.JobFollow.PollMs = 1000
 
   /** How often a backup is asked for: a dump runs for minutes, and each answer prints a line. */
-  val BackupPollMs: Long = 5000
+  val BackupPollMs: com.histmersion.cli.JobFollow.BackupPollMs = 5000
 
   /** One rewritten progress line on stderr, always the same width. */
   object Progress:
+    type LineText = LineText.T
+    object LineText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
     val Width = 72
-    def line(text: String)(using console: Console) : Unit = Cli.err.print(s"\r${" " * Width}\r$text")
+    def line(text: com.histmersion.cli.JobFollow.Progress.LineText)(using console: Console) : Unit = Cli.err.print(s"\r${" " * Width}\r$text")
     def clear()(using console: Console) : Unit = Cli.err.print("\r" + " " * Width + "\r")
 
-  def failed(what: String, why: Option[String]): Cli.Error =
+  def failed(what: com.histmersion.cli.JobFollow.FailedWhat, why: Option[com.histmersion.cli.JobFollow.FailedWhy]): Cli.Error =
     Cli.Error(s"$what failed: ${why.filter(_.nonEmpty).getOrElse("unknown reason")}", ExitCode.Refused)
 
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
@@ -32,9 +54,9 @@ object JobFollow:
   def job(using console: Console)(
       fetch: com.histmersion.api.jobs.JobInfo.Id => Either[Cli.Error, JobInfo],
       id: com.histmersion.api.jobs.JobInfo.Id,
-      waited: Long = 0,
-      sleep: Long => Unit = Thread.sleep,
-      progress: String => Unit = Progress.line,
+      waited: com.histmersion.cli.JobFollow.JobWaited = 0,
+      sleep: com.histmersion.cli.JobFollow.JobSleepArg1 => Unit = Thread.sleep,
+      progress: com.histmersion.cli.JobFollow.JobProgressArg1 => Unit = Progress.line,
       clear: () => Unit = () => Progress.clear()
   ) : Either[Cli.Error, JobInfo] =
     fetch(id) match
@@ -56,9 +78,9 @@ object JobFollow:
   def backup(using console: Console)(
       fetch: () => Either[Cli.Error, Backup.Status],
       s: Backup.Status,
-      pollMs: Long = BackupPollMs,
-      sleep: Long => Unit = Thread.sleep,
-      progress: String => Unit = l => Cli.err.println(l)
+      pollMs: com.histmersion.cli.JobFollow.BackupPollMs = BackupPollMs,
+      sleep: com.histmersion.cli.JobFollow.BackupSleepArg1 => Unit = Thread.sleep,
+      progress: com.histmersion.cli.JobFollow.BackupProgressArg1 => Unit = l => Cli.err.println(l)
   ) : Either[Cli.Error, Backup.Result] =
     s.stateOf match
       case Some(Backup.State.Running) =>
