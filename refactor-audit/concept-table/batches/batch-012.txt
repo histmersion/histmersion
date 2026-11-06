@@ -1,0 +1,564 @@
+## CONCEPTS NEARBY
+com.histmersion.api.checks.FormatReport.Fixed (String)
+com.histmersion.api.checks.FormatReport.Subject (String)
+com.histmersion.api.checks.FormatReport.Text (String)
+com.histmersion.api.checks.FormatRule.Description (String)
+com.histmersion.api.checks.FormatRule.Fixable (Boolean)
+com.histmersion.api.checks.FormatRule.Wire (String)
+com.histmersion.api.checks.Lint.AbbreviationsValue (String)
+com.histmersion.api.checks.Lint.LintFixResult.Applied (String)
+com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten (Int)
+com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved (Int)
+com.histmersion.api.checks.Lint.LintFixResult.FindingsPlaced (Int)
+com.histmersion.api.checks.Lint.LintFixResult.FindingsRegeocoded (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PlacesMerged (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PlacesReclassified (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PlacesRelocated (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PointAreasRemaining (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PointAreasRemoved (Int)
+com.histmersion.api.checks.Lint.LintFixResult.Remaining (Int)
+com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed (Int)
+com.histmersion.api.checks.Lint.LintItem.Detail (String)
+com.histmersion.api.checks.Lint.LintReport.Fixed (String)
+com.histmersion.api.checks.Lint.LintRuleReport.Count (Int)
+com.histmersion.api.checks.Lint.LintRuleReport.Description (String)
+com.histmersion.api.checks.Lint.LintRuleReport.Rule (String)
+com.histmersion.api.checks.Lint.Rule.Description (String)
+com.histmersion.api.checks.Lint.Rule.Name (String)
+com.histmersion.api.exchange.Bundle.Alias.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.Alias.Value (String)
+com.histmersion.api.exchange.Bundle.Article.Body (String)
+com.histmersion.api.exchange.Bundle.Article.Kind (String)
+com.histmersion.api.exchange.Bundle.Article.Regions (String)
+com.histmersion.api.exchange.Bundle.Article.Rev (String)
+com.histmersion.api.exchange.Bundle.Article.Slug (String)
+com.histmersion.api.exchange.Bundle.Article.Summary (String)
+com.histmersion.api.exchange.Bundle.Article.Tags (String)
+com.histmersion.api.exchange.Bundle.Article.Title (String)
+com.histmersion.api.exchange.Bundle.Article.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.ArticleAlias.Alias (String)
+com.histmersion.api.exchange.Bundle.ArticleAlias.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.ArticleVersion.BodySha256 (String)
+com.histmersion.api.exchange.Bundle.ArticleVersion.Rev (String)
+com.histmersion.api.exchange.Bundle.ArticleVersion.Summary (String)
+com.histmersion.api.exchange.Bundle.ArticleVersion.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.ArticleVersion.VersionOf (String)
+com.histmersion.api.exchange.Bundle.Assessment.CheckedAt (String)
+com.histmersion.api.exchange.Bundle.Assessment.CitedBy (Int)
+com.histmersion.api.exchange.Bundle.Assessment.Influential (Int)
+com.histmersion.api.exchange.Bundle.Assessment.Retracted (Boolean)
+com.histmersion.api.exchange.Bundle.Assessment.Verdict (String)
+com.histmersion.api.exchange.Bundle.Asset.Caption (String)
+com.histmersion.api.exchange.Bundle.Asset.Geom (String)
+com.histmersion.api.exchange.Bundle.Asset.Height (Int)
+com.histmersion.api.exchange.Bundle.Asset.Kind (String)
+com.histmersion.api.exchange.Bundle.Asset.License (String)
+com.histmersion.api.exchange.Bundle.Asset.Mime (String)
+com.histmersion.api.exchange.Bundle.Asset.Name (String)
+com.histmersion.api.exchange.Bundle.Asset.Rev (String)
+com.histmersion.api.exchange.Bundle.Asset.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.Asset.Width (Int)
+com.histmersion.api.exchange.Bundle.AssetLink.Notes (String)
+com.histmersion.api.exchange.Bundle.AssetLink.Relation (String)
+com.histmersion.api.exchange.Bundle.AssetLink.Rev (String)
+com.histmersion.api.exchange.Bundle.AssetLink.TargetId (String)
+com.histmersion.api.exchange.Bundle.AssetLink.TargetType (String)
+com.histmersion.api.exchange.Bundle.AssetLink.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.AssetLink.Xywh (String)
+com.histmersion.api.exchange.Bundle.Attestation.Canvas (String)
+com.histmersion.api.exchange.Bundle.Attestation.CharEnd (Int)
+com.histmersion.api.exchange.Bundle.Attestation.CharStart (Int)
+com.histmersion.api.exchange.Bundle.Attestation.ChunkOrd (Int)
+com.histmersion.api.exchange.Bundle.Attestation.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.Attestation.CtsUrn (String)
+com.histmersion.api.exchange.Bundle.Attestation.Note (String)
+com.histmersion.api.exchange.Bundle.Attestation.Page (String)
+com.histmersion.api.exchange.Bundle.Attestation.Prefix (String)
+com.histmersion.api.exchange.Bundle.Attestation.Quote (String)
+com.histmersion.api.exchange.Bundle.Attestation.Rev (String)
+com.histmersion.api.exchange.Bundle.Attestation.Suffix (String)
+com.histmersion.api.exchange.Bundle.Attestation.TargetId (String)
+com.histmersion.api.exchange.Bundle.Attestation.TargetType (String)
+com.histmersion.api.exchange.Bundle.Attestation.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.Attestation.Xywh (String)
+com.histmersion.api.exchange.Bundle.Blobs.Count (Int)
+com.histmersion.api.exchange.Bundle.Correction.CheckedAt (String)
+com.histmersion.api.exchange.Bundle.Correction.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.Correction.Field (String)
+com.histmersion.api.exchange.Bundle.Correction.Status (String)
+com.histmersion.api.exchange.Bundle.Correction.TargetId (String)
+com.histmersion.api.exchange.Bundle.Correction.TargetKind (String)
+com.histmersion.api.exchange.Bundle.Correction.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.Correction.Upstream (String)
+com.histmersion.api.exchange.Bundle.Correction.UpstreamNow (String)
+com.histmersion.api.exchange.Bundle.Correction.UpstreamValue (String)
+com.histmersion.api.exchange.Bundle.Correction.Value (String)
+com.histmersion.api.exchange.Bundle.Edge.Kind (String)
+com.histmersion.api.exchange.Bundle.Event.BeginBy (Long)
+com.histmersion.api.exchange.Bundle.Event.Catalogue (String)
+com.histmersion.api.exchange.Bundle.Event.Central (Long)
+com.histmersion.api.exchange.Bundle.Event.DatingMethod (String)
+com.histmersion.api.exchange.Bundle.Event.Description (String)
+com.histmersion.api.exchange.Bundle.Event.EndFrom (Long)
+com.histmersion.api.exchange.Bundle.Event.Geom (String)
+com.histmersion.api.exchange.Bundle.Event.Historicity (String)
+com.histmersion.api.exchange.Bundle.Event.Id (String)
+com.histmersion.api.exchange.Bundle.Event.Kind (String)
+com.histmersion.api.exchange.Bundle.Event.Label (String)
+com.histmersion.api.exchange.Bundle.Event.Names (String)
+com.histmersion.api.exchange.Bundle.Event.NotAfter (Long)
+com.histmersion.api.exchange.Bundle.Event.NotBefore (Long)
+com.histmersion.api.exchange.Bundle.Event.PlaceId (String)
+com.histmersion.api.exchange.Bundle.Event.PlusMinus (Long)
+com.histmersion.api.exchange.Bundle.Event.Rev (String)
+com.histmersion.api.exchange.Bundle.Event.Scale (String)
+com.histmersion.api.exchange.Bundle.Event.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.Event.Wikidata (String)
+com.histmersion.api.exchange.Bundle.EventAlias.Alias (String)
+com.histmersion.api.exchange.Bundle.EventAlias.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.EventCandidate.ComputedAt (String)
+com.histmersion.api.exchange.Bundle.EventCandidate.Findings (String)
+com.histmersion.api.exchange.Bundle.EventCandidate.Reasons (String)
+com.histmersion.api.exchange.Bundle.EventCandidate.Score (Double)
+com.histmersion.api.exchange.Bundle.EventCandidate.Status (String)
+com.histmersion.api.exchange.Bundle.EventCatalogue.BeginBy (Long)
+com.histmersion.api.exchange.Bundle.EventCatalogue.Deaths (Long)
+com.histmersion.api.exchange.Bundle.EventCatalogue.EndFrom (Long)
+com.histmersion.api.exchange.Bundle.EventCatalogue.Historicity (String)
+com.histmersion.api.exchange.Bundle.EventCatalogue.Kind (String)
+com.histmersion.api.exchange.Bundle.EventCatalogue.Label (String)
+com.histmersion.api.exchange.Bundle.EventCatalogue.Magnitude (Double)
+com.histmersion.api.exchange.Bundle.EventCatalogue.NotAfter (Long)
+com.histmersion.api.exchange.Bundle.EventCatalogue.NotBefore (Long)
+com.histmersion.api.exchange.Bundle.EventCatalogue.Provider (String)
+com.histmersion.api.exchange.Bundle.EventCatalogue.ProviderId (String)
+com.histmersion.api.exchange.Bundle.EventCatalogue.RetrievedAt (String)
+com.histmersion.api.exchange.Bundle.EventCatalogue.Url (String)
+com.histmersion.api.exchange.Bundle.EventCatalogue.Vei (Int)
+com.histmersion.api.exchange.Bundle.EventCheck.CheckedAt (String)
+com.histmersion.api.exchange.Bundle.EventDating.BeginBy (Long)
+com.histmersion.api.exchange.Bundle.EventDating.EndFrom (Long)
+com.histmersion.api.exchange.Bundle.EventDating.Method (String)
+com.histmersion.api.exchange.Bundle.EventDating.NotAfter (Long)
+com.histmersion.api.exchange.Bundle.EventDating.NotBefore (Long)
+com.histmersion.api.exchange.Bundle.EventDating.Note (String)
+com.histmersion.api.exchange.Bundle.EventEdge.Kind (String)
+com.histmersion.api.exchange.Bundle.EventEdge.Note (String)
+com.histmersion.api.exchange.Bundle.EventParticipant.Actor (String)
+com.histmersion.api.exchange.Bundle.EventParticipant.Role (String)
+com.histmersion.api.exchange.Bundle.FileInfo.Lines (Int)
+com.histmersion.api.exchange.Bundle.FileInfo.Path (String)
+com.histmersion.api.exchange.Bundle.Finding.Claim (String)
+com.histmersion.api.exchange.Bundle.Finding.Id (String)
+com.histmersion.api.exchange.Bundle.Finding.PeriodName (String)
+com.histmersion.api.exchange.Bundle.Finding.Region (String)
+com.histmersion.api.exchange.Bundle.Finding.Rev (String)
+com.histmersion.api.exchange.Bundle.Finding.Significance (String)
+com.histmersion.api.exchange.Bundle.Finding.Tags (String)
+com.histmersion.api.exchange.Bundle.Finding.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.Goal.BudgetUsd (Double)
+com.histmersion.api.exchange.Bundle.Goal.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.Goal.Notes (String)
+com.histmersion.api.exchange.Bundle.Goal.PlanApprovedAt (String)
+com.histmersion.api.exchange.Bundle.Goal.Regions (String)
+com.histmersion.api.exchange.Bundle.Goal.Rev (String)
+com.histmersion.api.exchange.Bundle.Goal.Slug (String)
+com.histmersion.api.exchange.Bundle.Goal.Status (String)
+com.histmersion.api.exchange.Bundle.Goal.Tags (String)
+com.histmersion.api.exchange.Bundle.Goal.Title (String)
+com.histmersion.api.exchange.Bundle.Goal.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.GoalAlias.Alias (String)
+com.histmersion.api.exchange.Bundle.GoalAlias.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.GoalLink.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.GoalLink.Kind (String)
+com.histmersion.api.exchange.Bundle.GoalLink.Note (String)
+com.histmersion.api.exchange.Bundle.GoalLink.Ref (String)
+com.histmersion.api.exchange.Bundle.GoalSchedule.BudgetUsd (Double)
+com.histmersion.api.exchange.Bundle.GoalSchedule.Cron (String)
+com.histmersion.api.exchange.Bundle.GoalSchedule.Enabled (Boolean)
+com.histmersion.api.exchange.Bundle.GoalSchedule.Kind (String)
+com.histmersion.api.exchange.Bundle.ImportResult.Applied (Boolean)
+com.histmersion.api.exchange.Bundle.ImportResult.Blobs (Int)
+com.histmersion.api.exchange.Bundle.ImportResult.Conflicts (String)
+com.histmersion.api.exchange.Bundle.ImportResult.DryRun (Boolean)
+com.histmersion.api.exchange.Bundle.ImportResult.Notes (String)
+com.histmersion.api.exchange.Bundle.ImportResult.PlanHash (String)
+com.histmersion.api.exchange.Bundle.ImportResult.Problems (String)
+com.histmersion.api.exchange.Bundle.Instance.Label (String)
+com.histmersion.api.exchange.Bundle.KindCounts.Conflicts (Int)
+com.histmersion.api.exchange.Bundle.KindCounts.Deleted (Int)
+com.histmersion.api.exchange.Bundle.KindCounts.Held (Int)
+com.histmersion.api.exchange.Bundle.KindCounts.Inserted (Int)
+com.histmersion.api.exchange.Bundle.KindCounts.KeptLocal (Int)
+com.histmersion.api.exchange.Bundle.KindCounts.SkippedDeleted (Int)
+com.histmersion.api.exchange.Bundle.KindCounts.Unchanged (Int)
+com.histmersion.api.exchange.Bundle.KindCounts.Updated (Int)
+com.histmersion.api.exchange.Bundle.Manifest.AsOf (String)
+com.histmersion.api.exchange.Bundle.Manifest.Format (String)
+com.histmersion.api.exchange.Bundle.Manifest.FormatVersion (Int)
+com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion (String)
+com.histmersion.api.exchange.Bundle.Manifest.Since (String)
+com.histmersion.api.exchange.Bundle.Period.Authority (String)
+com.histmersion.api.exchange.Bundle.Period.Id (String)
+com.histmersion.api.exchange.Bundle.Period.Label (String)
+com.histmersion.api.exchange.Bundle.Period.ParentId (String)
+com.histmersion.api.exchange.Bundle.Period.Region (String)
+com.histmersion.api.exchange.Bundle.Period.Rev (String)
+com.histmersion.api.exchange.Bundle.Period.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.Place.Geom (String)
+com.histmersion.api.exchange.Bundle.Place.Id (String)
+com.histmersion.api.exchange.Bundle.Place.Kind (String)
+com.histmersion.api.exchange.Bundle.Place.Label (String)
+com.histmersion.api.exchange.Bundle.Place.Rev (String)
+com.histmersion.api.exchange.Bundle.Place.Source (String)
+com.histmersion.api.exchange.Bundle.Place.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.PlaceAlias.Alias (String)
+com.histmersion.api.exchange.Bundle.PlaceAlias.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.PlaceLink.ExternalId (String)
+com.histmersion.api.exchange.Bundle.PlaceLink.Relation (String)
+com.histmersion.api.exchange.Bundle.PlaceLink.Scheme (String)
+com.histmersion.api.exchange.Bundle.PlaceName.Lang (String)
+com.histmersion.api.exchange.Bundle.PlaceName.Name (String)
+com.histmersion.api.exchange.Bundle.PlaceRelation.Kind (String)
+com.histmersion.api.exchange.Bundle.PlaceRelation.ParentId (String)
+com.histmersion.api.exchange.Bundle.PlaceType.TypeLabel (String)
+com.histmersion.api.exchange.Bundle.QueueItem.CreatedAt (String)
+com.histmersion.api.exchange.Bundle.QueueItem.DoneAt (String)
+com.histmersion.api.exchange.Bundle.QueueItem.List (String)
+com.histmersion.api.exchange.Bundle.QueueItem.Reason (String)
+com.histmersion.api.exchange.Bundle.QueueItem.Rev (String)
+com.histmersion.api.exchange.Bundle.QueueItem.Status (String)
+com.histmersion.api.exchange.Bundle.QueueItem.Text (String)
+com.histmersion.api.exchange.Bundle.QueueItem.Topic (String)
+com.histmersion.api.exchange.Bundle.QueueItem.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.Reference.Periods (Int)
+com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest (String)
+com.histmersion.api.exchange.Bundle.Reference.Places (Int)
+com.histmersion.api.exchange.Bundle.Reference.PlacesDigest (String)
+com.histmersion.api.exchange.Bundle.SiteType.CheckedAt (String)
+com.histmersion.api.exchange.Bundle.SiteType.PlaceId (String)
+com.histmersion.api.exchange.Bundle.SiteType.Value (String)
+com.histmersion.api.exchange.Bundle.Source.AddedDate (String)
+com.histmersion.api.exchange.Bundle.Source.BodySha256 (String)
+com.histmersion.api.exchange.Bundle.Source.CitedByCount (Int)
+com.histmersion.api.exchange.Bundle.Source.InfluentialCitations (Int)
+com.histmersion.api.exchange.Bundle.Source.Isbns (String)
+com.histmersion.api.exchange.Bundle.Source.Notes (String)
+com.histmersion.api.exchange.Bundle.Source.OriginalExt (String)
+com.histmersion.api.exchange.Bundle.Source.OriginalSha256 (String)
+com.histmersion.api.exchange.Bundle.Source.Provenance (String)
+com.histmersion.api.exchange.Bundle.Source.Regions (String)
+com.histmersion.api.exchange.Bundle.Source.Rev (String)
+com.histmersion.api.exchange.Bundle.Source.Summary (String)
+com.histmersion.api.exchange.Bundle.Source.Tags (String)
+com.histmersion.api.exchange.Bundle.Source.Topics (String)
+com.histmersion.api.exchange.Bundle.Source.UpdatedAt (String)
+com.histmersion.api.exchange.Bundle.Tombstone.DeletedAt (String)
+com.histmersion.api.exchange.Bundle.UnresolvedEdge.Dst (String)
+com.histmersion.api.exchange.Bundle.UnresolvedEdge.Kind (String)
+com.histmersion.api.exchange.Bundle.Upload.Problems (String)
+com.histmersion.api.exchange.Bundle.VerifyResult.BlobsChecked (Int)
+com.histmersion.api.exchange.Bundle.VerifyResult.Ok (Boolean)
+com.histmersion.api.exchange.Bundle.VerifyResult.Problems (String)
+com.histmersion.api.exchange.InitPlan.Check (Boolean)
+com.histmersion.api.exchange.InitPlan.Fetch (String)
+com.histmersion.api.exchange.InitPlan.Gazetteer (Boolean)
+com.histmersion.api.exchange.InitPlan.PeriodPresets (Boolean)
+com.histmersion.api.exchange.MergeApplyJob.Bundle (String)
+com.histmersion.api.exchange.MergeApplyJob.ElapsedMs (Long)
+com.histmersion.api.exchange.MergeApplyJob.Error (String)
+com.histmersion.api.exchange.MergeApplyJob.InterruptedTextValue (String)
+com.histmersion.api.exchange.MergeApplyJob.Job (String)
+com.histmersion.api.exchange.MergeApplyJob.PlanHash (String)
+com.histmersion.api.exchange.MergeApplyResult.Applied (Boolean)
+com.histmersion.api.exchange.MergeApplyResult.Backup (String)
+com.histmersion.api.exchange.MergeApplyResult.LogEntry (Int)
+com.histmersion.api.exchange.MergeApplyResult.Notes (String)
+com.histmersion.api.exchange.MergeApplyResult.PlanHash (String)
+com.histmersion.api.exchange.MergeApplyResult.Problems (String)
+com.histmersion.api.exchange.MergeApplyResult.ReplanChanges (Int)
+com.histmersion.api.exchange.MergeApplyResult.Reviews (String)
+com.histmersion.api.exchange.MergeDecision.Argument (String)
+com.histmersion.api.exchange.MergeIssue.Id (String)
+com.histmersion.api.exchange.MergeIssue.Title (String)
+com.histmersion.api.exchange.MergeIssue.Why (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.checks.FormatMarkdown.LineResult | base String | method-result
+    def line(i: FormatIssue): com.histmersion.api.checks.FormatMarkdown.LineResult =
+com.histmersion.api.checks.FormatMarkdown.NoticeResult | base String | method-result
+    def notice(issues: List[FormatIssue]): com.histmersion.api.checks.FormatMarkdown.NoticeResult =
+com.histmersion.api.checks.FormatMarkdown.ProblemsN | base Int | method-parameter
+    def problems(n: com.histmersion.api.checks.FormatMarkdown.ProblemsN): com.histmersion.api.checks.FormatMarkdown.ProblemsResult = Plural.count(n, _root_.com.histmersion.ap
+    val head = s"## Formatting: ${problems(_root_.com.histmersion.api.checks.FormatMarkdown.ProblemsN(issues.size))}" +
+com.histmersion.api.checks.FormatMarkdown.ProblemsResult | base String | method-result
+    def problems(n: com.histmersion.api.checks.FormatMarkdown.ProblemsN): com.histmersion.api.checks.FormatMarkdown.ProblemsResult = Plural.count(n, _root_.com.histmersion.ap
+com.histmersion.api.checks.FormatMarkdown.ReportResult | base String | method-result
+    def report(r: FormatReport): com.histmersion.api.checks.FormatMarkdown.ReportResult =
+com.histmersion.api.checks.FormatReport.ErrorsResult | base Int | method-result
+    def errors: com.histmersion.api.checks.FormatReport.ErrorsResult = _root_.com.histmersion.api.checks.FormatReport.ErrorsResult(issues.count(_.severity == FormatSeverity.E
+com.histmersion.api.checks.FormatReport.WarningsResult | base Int | method-result
+    def warnings: com.histmersion.api.checks.FormatReport.WarningsResult = _root_.com.histmersion.api.checks.FormatReport.WarningsResult(issues.count(_.severity == FormatSeve
+com.histmersion.api.checks.FormatRule.FromWireS | base String | method-parameter
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[FormatRule] = FormatRule.values.find(_.wire == _root_.com.histmersion.api.checks
+    def fromWire(s: com.histmersion.api.checks.FormatRule.FromWireS): Option[FormatRule] = summon[WireEnumValues[FormatRule]].fromWire(s)
+com.histmersion.api.checks.FormatRule.WireResult | base String | no-resolved-use
+    def wire(e: FormatRule): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+com.histmersion.api.checks.FormatSeverity.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[FormatSeverity] = FormatSeverity.values.find(_.toString.equalsIgnoreCase((s).val
+com.histmersion.api.checks.FormatSeverity.WireResult | base String | no-resolved-use
+    def wire(e: FormatSeverity): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((_root_.com.histmersion.api.check
+com.histmersion.api.checks.Lint.AuthorPipeRowsPart1 | base String | method-parameter
+    def authorPipe(rows: List[(com.histmersion.api.checks.Lint.AuthorPipeRowsPart1, List[com.histmersion.api.checks.Lint.AuthorPipeRowsPart2])]): List[LintItem] =
+com.histmersion.api.checks.Lint.AuthorPipeRowsPart2 | base String | method-parameter
+    def authorPipe(rows: List[(com.histmersion.api.checks.Lint.AuthorPipeRowsPart1, List[com.histmersion.api.checks.Lint.AuthorPipeRowsPart2])]): List[LintItem] =
+com.histmersion.api.checks.Lint.BlankS | base String | method-parameter
+    def blank(s: Option[com.histmersion.api.checks.Lint.BlankS]): com.histmersion.api.checks.Lint.BlankResult = _root_.com.histmersion.api.checks.Lint.BlankResult(s.forall((_
+com.histmersion.api.checks.Lint.DuplicatesLabel | base String | method-parameter
+    def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicatesRowsPart1, com.histmersion.api.checks.Lint.DuplicatesRowsPart2)], label: com.histmersion.api.checks.L
+com.histmersion.api.checks.Lint.DuplicatesRowsPart1 | base String | method-parameter
+    def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicatesRowsPart1, com.histmersion.api.checks.Lint.DuplicatesRowsPart2)], label: com.histmersion.api.checks.L
+com.histmersion.api.checks.Lint.DuplicatesRowsPart2 | base String | method-parameter
+    def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicatesRowsPart1, com.histmersion.api.checks.Lint.DuplicatesRowsPart2)], label: com.histmersion.api.checks.L
+com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList | base Boolean | method-parameter
+    def block(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList): Unit = { flush(); settle(nextIsList) }
+com.histmersion.api.checks.Lint.ExtractParagraphsBody | base String | method-parameter
+    def extractParagraphs(body: com.histmersion.api.checks.Lint.ExtractParagraphsBody): List[com.histmersion.api.checks.Lint.ExtractParagraphsResult] =
+com.histmersion.api.checks.Lint.ExtractParagraphsIsListT | base String | method-parameter
+    def isList(t: com.histmersion.api.checks.Lint.ExtractParagraphsIsListT) = (t).value.startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).valu
+com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn | base String | variable
+    var leadIn: Option[com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn] = None
+com.histmersion.api.checks.Lint.ExtractParagraphsResult | base String | method-result
+    def extractParagraphs(body: com.histmersion.api.checks.Lint.ExtractParagraphsBody): List[com.histmersion.api.checks.Lint.ExtractParagraphsResult] =
+com.histmersion.api.checks.Lint.ExtractParagraphsSettleNextIsList | base Boolean | method-parameter
+    def settle(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsSettleNextIsList): Unit =
+com.histmersion.api.checks.Lint.FormatItemsRowsPart1 | base String | method-parameter
+    def formatItems(rows: List[(com.histmersion.api.checks.Lint.FormatItemsRowsPart1, FormatField, com.histmersion.api.checks.Lint.FormatItemsRowsPart3)], check: FormatChecke
+com.histmersion.api.checks.Lint.FormatItemsRowsPart3 | base String | method-parameter
+    def formatItems(rows: List[(com.histmersion.api.checks.Lint.FormatItemsRowsPart1, FormatField, com.histmersion.api.checks.Lint.FormatItemsRowsPart3)], check: FormatChecke
+com.histmersion.api.checks.Lint.IsCanonicalTagTag | base String | method-parameter
+    def isCanonicalTag(tag: com.histmersion.api.checks.Lint.IsCanonicalTagTag): com.histmersion.api.checks.Lint.IsCanonicalTagResult = _root_.com.histmersion.api.checks.Lint.
+com.histmersion.api.checks.Lint.IsListLeadInText | base String | method-parameter
+    def isListLeadIn(text: com.histmersion.api.checks.Lint.IsListLeadInText): com.histmersion.api.checks.Lint.IsListLeadInResult =
+com.histmersion.api.checks.Lint.LintReport.TotalResult | base Int | method-result
+    def total: com.histmersion.api.checks.Lint.LintReport.TotalResult = rules.map(_.count).sum
+com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget | base String | method-parameter
+    def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget): com.histmersion.api.checks.Lint.LooksLikeCitekeyResult = _root_.com.histmersion.api.
+com.histmersion.api.checks.Lint.MarkdownResult | base String | method-result
+    def markdown(rep: LintReport): com.histmersion.api.checks.Lint.MarkdownResult =
+com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart1 | base String | method-parameter
+    def nonCanonicalTags(rows: List[(com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart1, List[com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart2])]): List[LintI
+com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart2 | base String | method-parameter
+    def nonCanonicalTags(rows: List[(com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart1, List[com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart2])]): List[LintI
+com.histmersion.api.checks.Lint.NormaliseTagResult | base String | method-result
+    def normaliseTag(tag: com.histmersion.api.checks.Lint.NormaliseTagTag): com.histmersion.api.checks.Lint.NormaliseTagResult =
+com.histmersion.api.checks.Lint.NormaliseTagTag | base String | method-parameter
+    def normaliseTag(tag: com.histmersion.api.checks.Lint.NormaliseTagTag): com.histmersion.api.checks.Lint.NormaliseTagResult =
+com.histmersion.api.checks.Lint.ReportMaxItems | base Int | method-parameter
+    def report(r: Rule, items: List[LintItem], maxItems: com.histmersion.api.checks.Lint.ReportMaxItems): LintRuleReport =
+com.histmersion.api.checks.Lint.RuleName | base String | method-parameter
+    def rule(name: com.histmersion.api.checks.Lint.RuleName): Option[Rule] = all.find(_.name == _root_.com.histmersion.api.checks.Lint.Rule.Name((name).value.trim.toLowerCase
+    val unknown = wanted.filter(w => rule(_root_.com.histmersion.api.checks.Lint.RuleName(w)).isEmpty)
+com.histmersion.api.checks.Lint.SelectRequested | base String | method-parameter
+    def select(requested: List[com.histmersion.api.checks.Lint.SelectRequested]): Either[com.histmersion.api.checks.Lint.SelectResultPart1, List[Rule]] =
+com.histmersion.api.checks.Lint.SelectResultPart1 | base String | method-result
+    def select(requested: List[com.histmersion.api.checks.Lint.SelectRequested]): Either[com.histmersion.api.checks.Lint.SelectResultPart1, List[Rule]] =
+com.histmersion.api.checks.Lint.SentenceCountResult | base Int | method-result
+    def sentenceCount(text: com.histmersion.api.checks.Lint.SentenceCountText): com.histmersion.api.checks.Lint.SentenceCountResult =
+com.histmersion.api.checks.Lint.SentenceCountText | base String | method-parameter
+    def sentenceCount(text: com.histmersion.api.checks.Lint.SentenceCountText): com.histmersion.api.checks.Lint.SentenceCountResult =
+com.histmersion.api.checks.Lint.SuggestCitekeys | base String | method-parameter
+    def suggest(target: com.histmersion.api.checks.Lint.SuggestTarget, citekeys: Iterable[com.histmersion.api.checks.Lint.SuggestCitekeys], max: com.histmersion.api.checks.Li
+com.histmersion.api.checks.Lint.SuggestCommonPrefixA | base String | method-parameter
+    def commonPrefix(a: com.histmersion.api.checks.Lint.SuggestCommonPrefixA, b: com.histmersion.api.checks.Lint.SuggestCommonPrefixB): com.histmersion.api.checks.Lint.Sugges
+    val p = commonPrefix(_root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixA(c), _root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixB(t))
+com.histmersion.api.checks.Lint.SuggestCommonPrefixB | base String | method-parameter
+    def commonPrefix(a: com.histmersion.api.checks.Lint.SuggestCommonPrefixA, b: com.histmersion.api.checks.Lint.SuggestCommonPrefixB): com.histmersion.api.checks.Lint.Sugges
+    val p = commonPrefix(_root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixA(c), _root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixB(t))
+com.histmersion.api.checks.Lint.SuggestCommonPrefixResult | base Int | method-result
+    def commonPrefix(a: com.histmersion.api.checks.Lint.SuggestCommonPrefixA, b: com.histmersion.api.checks.Lint.SuggestCommonPrefixB): com.histmersion.api.checks.Lint.Sugges
+com.histmersion.api.checks.Lint.SuggestMax | base Int | method-parameter
+    def suggest(target: com.histmersion.api.checks.Lint.SuggestTarget, citekeys: Iterable[com.histmersion.api.checks.Lint.SuggestCitekeys], max: com.histmersion.api.checks.Li
+com.histmersion.api.checks.Lint.SuggestResult | base String | method-result
+    def suggest(target: com.histmersion.api.checks.Lint.SuggestTarget, citekeys: Iterable[com.histmersion.api.checks.Lint.SuggestCitekeys], max: com.histmersion.api.checks.Li
+com.histmersion.api.checks.Lint.SuggestTarget | base String | method-parameter
+    def suggest(target: com.histmersion.api.checks.Lint.SuggestTarget, citekeys: Iterable[com.histmersion.api.checks.Lint.SuggestCitekeys], max: com.histmersion.api.checks.Li
+com.histmersion.api.checks.Lint.YearCitekeyMismatchRowsPart1 | base String | method-parameter
+    def yearCitekeyMismatch(rows: List[(com.histmersion.api.checks.Lint.YearCitekeyMismatchRowsPart1, Option[com.histmersion.api.checks.Lint.YearCitekeyMismatchRowsPart2])]):
+com.histmersion.api.checks.Lint.YearCitekeyMismatchRowsPart2 | base Int | method-parameter
+    def yearCitekeyMismatch(rows: List[(com.histmersion.api.checks.Lint.YearCitekeyMismatchRowsPart1, Option[com.histmersion.api.checks.Lint.YearCitekeyMismatchRowsPart2])]):
+com.histmersion.api.exchange.Bundle.BlobPathResult | base String | method-result
+    def blobPath(sha256: com.histmersion.api.exchange.Bundle.BlobPathSha256): com.histmersion.api.exchange.Bundle.BlobPathResult = _root_.com.histmersion.api.exchange.Bundle.
+com.histmersion.api.exchange.Bundle.BlobPathSha256 | base String | method-parameter
+    def blobPath(sha256: com.histmersion.api.exchange.Bundle.BlobPathSha256): com.histmersion.api.exchange.Bundle.BlobPathResult = _root_.com.histmersion.api.exchange.Bundle.
+com.histmersion.api.exchange.Bundle.BlobShaPath | base String | method-parameter
+    def blobSha(path: com.histmersion.api.exchange.Bundle.BlobShaPath): Option[com.histmersion.api.exchange.Bundle.BlobShaResult] =
+com.histmersion.api.exchange.Bundle.BlobShaResult | base String | method-result
+    def blobSha(path: com.histmersion.api.exchange.Bundle.BlobShaPath): Option[com.histmersion.api.exchange.Bundle.BlobShaResult] =
+com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere | base String | method-parameter
+    def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere, there: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusThere): c
+com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult | base String | method-result
+    def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere, there: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusThere): c
+com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusThere | base String | method-parameter
+    def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere, there: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusThere): c
+com.histmersion.api.exchange.Bundle.EventSets.NewerHere | base String | method-parameter
+    def newer(here: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerHere], there: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerThere]): com.histmersion
+com.histmersion.api.exchange.Bundle.EventSets.NewerThere | base String | method-parameter
+    def newer(here: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerHere], there: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerThere]): com.histmersion
+com.histmersion.api.exchange.Bundle.Files.All | base String | value
+    val all: List[com.histmersion.api.exchange.Bundle.Files.All] =
+com.histmersion.api.exchange.Bundle.ImportResult.ChangedResult | base Int | method-result
+    def changed: com.histmersion.api.exchange.Bundle.ImportResult.ChangedResult = counts.map(_.changed).sum
+    def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = _root_.com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult((inserted).value + (update
+com.histmersion.api.exchange.Bundle.Kind.FileResult | base String | method-result
+    def file: com.histmersion.api.exchange.Bundle.Kind.FileResult = _root_.com.histmersion.api.exchange.Bundle.Kind.FileResult(s"entities/${Kind.fileStem(this)}.ndjson")
+com.histmersion.api.exchange.Bundle.Kind.FileStemResult | base String | method-result
+    private def fileStem(k: Kind): com.histmersion.api.exchange.Bundle.Kind.FileStemResult = k match
+    case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.FileStemResult("sources")
+com.histmersion.api.exchange.Bundle.Kind.FromWireS | base String | method-parameter
+    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.exchange.Bundle.Kind.WireResult((s).v
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.api.exchange.Bundle.Kind.FromWireS(
+com.histmersion.api.exchange.Bundle.Kind.IssueLetterResult | base String | method-result
+    def issueLetter: com.histmersion.api.exchange.Bundle.Kind.IssueLetterResult = Kind.letterOf(this)
+com.histmersion.api.exchange.Bundle.Kind.LetterOfResult | base String | method-result
+    private def letterOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.LetterOfResult = k match
+    case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("S")
+com.histmersion.api.exchange.Bundle.Kind.WireOfResult | base String | method-result
+    def wireOf(k: Kind): com.histmersion.api.exchange.Bundle.Kind.WireOfResult = k match
+    case Source         => _root_.com.histmersion.api.exchange.Bundle.Kind.WireOfResult("source")
+com.histmersion.api.exchange.Bundle.Kind.WireResult | base String | method-result
+    def wire: com.histmersion.api.exchange.Bundle.Kind.WireResult = _root_.com.histmersion.api.exchange.Bundle.Kind.WireResult((Kind.wireOf(this)).value)
+    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.exchange.Bundle.Kind.WireResult((s).v
+com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult | base Int | method-result
+    def changed: com.histmersion.api.exchange.Bundle.ImportResult.ChangedResult = counts.map(_.changed).sum
+    def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = _root_.com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult((inserted).value + (update
+com.histmersion.api.exchange.BundleMarkdown.BytesN | base Long | method-parameter
+    private def bytes(n: com.histmersion.api.exchange.BundleMarkdown.BytesN): com.histmersion.api.exchange.BundleMarkdown.BytesResult =
+com.histmersion.api.exchange.BundleMarkdown.BytesResult | base String | method-result
+    private def bytes(n: com.histmersion.api.exchange.BundleMarkdown.BytesN): com.histmersion.api.exchange.BundleMarkdown.BytesResult =
+com.histmersion.api.exchange.BundleMarkdown.ImportResultResult | base String | method-result
+    def importResult(r: Bundle.ImportResult): com.histmersion.api.exchange.BundleMarkdown.ImportResultResult =
+com.histmersion.api.exchange.BundleMarkdown.InstanceResult | base String | method-result
+    def instance(i: InstanceInfo): com.histmersion.api.exchange.BundleMarkdown.InstanceResult =
+com.histmersion.api.exchange.BundleMarkdown.ManifestResult | base String | method-result
+    def manifest(m: Bundle.Manifest): com.histmersion.api.exchange.BundleMarkdown.ManifestResult =
+com.histmersion.api.exchange.BundleMarkdown.ProblemsPs | base String | method-parameter
+    private def problems(title: com.histmersion.api.exchange.BundleMarkdown.ProblemsTitle, ps: List[com.histmersion.api.exchange.BundleMarkdown.ProblemsPs]): List[com.histmer
+com.histmersion.api.exchange.BundleMarkdown.ProblemsResult | base String | method-result
+    private def problems(title: com.histmersion.api.exchange.BundleMarkdown.ProblemsTitle, ps: List[com.histmersion.api.exchange.BundleMarkdown.ProblemsPs]): List[com.histmer
+com.histmersion.api.exchange.BundleMarkdown.ProblemsTitle | base String | method-parameter
+    private def problems(title: com.histmersion.api.exchange.BundleMarkdown.ProblemsTitle, ps: List[com.histmersion.api.exchange.BundleMarkdown.ProblemsPs]): List[com.histmer
+com.histmersion.api.exchange.BundleMarkdown.VerifyResult | base String | method-result
+    def verify(r: Bundle.VerifyResult): com.histmersion.api.exchange.BundleMarkdown.VerifyResult =
+    val head = if ((r.ok) == _root_.com.histmersion.api.exchange.Bundle.VerifyResult.Ok(true)) then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, _root
+com.histmersion.api.exchange.BundleMarkdown.WhoResult | base String | method-result
+    private def who(i: Bundle.Instance): com.histmersion.api.exchange.BundleMarkdown.WhoResult = _root_.com.histmersion.api.exchange.BundleMarkdown.WhoResult(i.label.fold(i.i
+com.histmersion.api.exchange.EditionsPolicy.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[EditionsPolicy] = EditionsPolicy.values.find(_.toString.equalsIgnoreCase((s).val
+com.histmersion.api.exchange.EditionsPolicy.WireResult | base String | no-resolved-use
+    def wire(e: EditionsPolicy): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersi
+com.histmersion.api.exchange.InitPlan.DescribeResult | base String | method-result
+    def describe(p: InitPlan): com.histmersion.api.exchange.InitPlan.DescribeResult =
+    case Nil   => _root_.com.histmersion.api.exchange.InitPlan.DescribeResult("nothing to import")
+com.histmersion.api.exchange.MergeApplyJob.OfId | base String | method-parameter
+com.histmersion.api.exchange.MergeApplyResult.ChangedResult | base Int | method-result
+    def changed: com.histmersion.api.exchange.MergeApplyResult.ChangedResult = counts.map(_.changed).sum
+com.histmersion.api.exchange.MergeDecision.Kind.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.M
+com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult | base String | method-result
+    def wireOf(k: Kind): com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult = k match
+    case KeepLeft       => _root_.com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult("keep-left")
+com.histmersion.api.exchange.MergeDecision.Kind.WireResult | base String | no-resolved-use
+    def wire: com.histmersion.api.exchange.MergeDecision.WireResult = MergeDecision.Kind.wireOf(kind) + argument.fold("")(a => s":$a")
+    def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+com.histmersion.api.exchange.MergeDecision.ParseRaw | base String | method-parameter
+    def parse(raw: com.histmersion.api.exchange.MergeDecision.ParseRaw): Either[com.histmersion.api.exchange.MergeDecision.ParseResultPart1, MergeDecision] =
+com.histmersion.api.exchange.MergeDecision.ParseResultPart1 | base String | method-result
+    def parse(raw: com.histmersion.api.exchange.MergeDecision.ParseRaw): Either[com.histmersion.api.exchange.MergeDecision.ParseResultPart1, MergeDecision] =
+com.histmersion.api.exchange.MergeDecision.WireResult | base String | method-result
+    def wire: com.histmersion.api.exchange.MergeDecision.WireResult = MergeDecision.Kind.wireOf(kind) + argument.fold("")(a => s":$a")
+    def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+com.histmersion.api.exchange.MergeDecision.WithArgArg | base String | method-parameter
+    def withArg(kind: MergeDecision.Kind, arg: com.histmersion.api.exchange.MergeDecision.WithArgArg): MergeDecision = MergeDecision(kind, Some(_root_.com.histmersion.api.exc
+com.histmersion.api.exchange.MergeIssue.DecidedBy.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.M
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+com.histmersion.api.exchange.MergeIssue.DecidedBy.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+    def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.api
+com.histmersion.api.exchange.MergeIssue.Detail.ClipN | base Int | method-parameter
+    def clip(s: Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipS], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipN = _root_.com.histmersion.api.exchange.Me
+com.histmersion.api.exchange.MergeIssue.Detail.ClipResult | base String | method-result
+    def clip(s: Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipS], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipN = _root_.com.histmersion.api.exchange.Me
+com.histmersion.api.exchange.MergeIssue.Detail.ClipS | base String | method-parameter
+    def clip(s: Option[com.histmersion.api.exchange.MergeIssue.Detail.ClipS], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipN = _root_.com.histmersion.api.exchange.Me
+com.histmersion.api.exchange.MergeIssue.Detail.DescribeResult | base String | method-result
+    def describe(s: Bundle.Source): List[com.histmersion.api.exchange.MergeIssue.Detail.DescribeResult] =
+com.histmersion.api.exchange.MergeIssue.Detail.PlanTextResult | base String | method-result
+    def planText(j: Json): com.histmersion.api.exchange.MergeIssue.Detail.PlanTextResult =
+com.histmersion.api.exchange.MergeIssue.Detail.PreviewN | base Int | method-parameter
+    def preview(s: com.histmersion.api.exchange.MergeIssue.Detail.PreviewS, n: com.histmersion.api.exchange.MergeIssue.Detail.PreviewN = _root_.com.histmersion.api.exchange.M
+com.histmersion.api.exchange.MergeIssue.Detail.PreviewResult | base String | method-result
+    def preview(s: com.histmersion.api.exchange.MergeIssue.Detail.PreviewS, n: com.histmersion.api.exchange.MergeIssue.Detail.PreviewN = _root_.com.histmersion.api.exchange.M
+com.histmersion.api.exchange.MergeIssue.Detail.PreviewS | base String | method-parameter
+    def preview(s: com.histmersion.api.exchange.MergeIssue.Detail.PreviewS, n: com.histmersion.api.exchange.MergeIssue.Detail.PreviewN = _root_.com.histmersion.api.exchange.M
+com.histmersion.api.exchange.MergeIssue.Detail.RangeTextResult | base String | method-result
+    def rangeText(r: Option[Bundle.Range]): com.histmersion.api.exchange.MergeIssue.Detail.RangeTextResult = r match
+    case None                           => _root_.com.histmersion.api.exchange.MergeIssue.Detail.RangeTextResult("none")
+com.histmersion.api.exchange.MergeIssue.Detail.SourceFieldsListXs | base String | method-parameter
+    def list(xs: List[com.histmersion.api.exchange.MergeIssue.Detail.SourceFieldsListXs]) = Option(xs.mkString("; ")).filter(_.nonEmpty)
+com.histmersion.api.exchange.MergeIssue.Kind.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.M
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult | base String | method-result
+    def wireOf(k: Kind): com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult = k match
+    case SameWork                => _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult("same-work")
+com.histmersion.api.exchange.MergeIssue.Kind.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+    def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.api
+com.histmersion.api.exchange.MergeIssue.Severity.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.M
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+com.histmersion.api.exchange.MergeIssue.Severity.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+    def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.api
+com.histmersion.api.exchange.MergeJobState.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[MergeJobState] = MergeJobState.values.find(_.toString.equalsIgnoreCase((s).value
+com.histmersion.api.exchange.MergeJobState.WireResult | base String | no-resolved-use
+    def wire(e: MergeJobState): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((_root_.com.histmersion.api.exchan
+com.histmersion.api.exchange.MergeMarkdown.AppliedCountFResult | base Int | method-parameter
+    def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => com.histmersion.api.exchange.MergeMarkdown.AppliedCountFResult): com.histmersion.api.exchan
+com.histmersion.api.exchange.MergeMarkdown.AppliedCountResult | base Int | method-result
+    def count(k: com.histmersion.api.exchange.Bundle.Kind)(f: Bundle.KindCounts => com.histmersion.api.exchange.MergeMarkdown.AppliedCountFResult): com.histmersion.api.exchan
+com.histmersion.api.exchange.MergeMarkdown.AppliedResult | base String | method-result
+    def applied(r: MergeApplyResult): com.histmersion.api.exchange.MergeMarkdown.AppliedResult =
+com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult | base String | method-result
+    def applyJob(j: MergeApplyJob): com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult =
+com.histmersion.api.exchange.MergeMarkdown.ArgHintResult | base String | method-result
+    private def argHint(i: MergeIssue, k: MergeDecision.Kind): com.histmersion.api.exchange.MergeMarkdown.ArgHintResult = k match
+    case MergeDecision.Kind.Map => _root_.com.histmersion.api.exchange.MergeMarkdown.ArgHintResult(":" + List(i.left, i.right).flatten.map(_.label).mkString("|"))
+com.histmersion.api.exchange.MergeMarkdown.ByResult | base String | method-result
+    private def by(b: MergeIssue.DecidedBy): com.histmersion.api.exchange.MergeMarkdown.ByResult = b match
+    case MergeIssue.DecidedBy.Remembered => _root_.com.histmersion.api.exchange.MergeMarkdown.ByResult(" as an earlier merge apply did")
+com.histmersion.api.exchange.MergeMarkdown.DetailResult | base String | method-result
+    def detail(d: MergeDetail): com.histmersion.api.exchange.MergeMarkdown.DetailResult =
+com.histmersion.api.exchange.MergeMarkdown.IssueResult | base String | method-result
+    def issue(i: MergeIssue): com.histmersion.api.exchange.MergeMarkdown.IssueResult =
+com.histmersion.api.exchange.MergeMarkdown.LedgerResult | base String | method-result
+    def ledger(l: MergeLedger): com.histmersion.api.exchange.MergeMarkdown.LedgerResult =
+com.histmersion.api.exchange.MergeMarkdown.MergesResult | base String | method-result
+    def merges(ms: List[MergeInfo]): com.histmersion.api.exchange.MergeMarkdown.MergesResult =
+com.histmersion.api.exchange.MergeMarkdown.PlanAll | base Boolean | method-parameter
+    def plan(p: MergePlan, all: com.histmersion.api.exchange.MergeMarkdown.PlanAll = _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(false)): com.histmersion.api.ex
+com.histmersion.api.exchange.MergeMarkdown.PlanResult | base String | method-result
+    def plan(p: MergePlan, all: com.histmersion.api.exchange.MergeMarkdown.PlanAll = _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(false)): com.histmersion.api.ex
+com.histmersion.api.exchange.MergeMarkdown.RenamedResult | base String | method-result
+    def renamed(r: LabelRenamed): com.histmersion.api.exchange.MergeMarkdown.RenamedResult =
+com.histmersion.api.exchange.MergeMarkdown.SectionLines | base String | method-parameter
+    private def section(title: com.histmersion.api.exchange.MergeMarkdown.SectionTitle, lines: List[com.histmersion.api.exchange.MergeMarkdown.SectionLines]): Option[com.hist
+com.histmersion.api.exchange.MergeMarkdown.SectionResult | base String | method-result
+    private def section(title: com.histmersion.api.exchange.MergeMarkdown.SectionTitle, lines: List[com.histmersion.api.exchange.MergeMarkdown.SectionLines]): Option[com.hist
+com.histmersion.api.exchange.MergeMarkdown.SectionTitle | base String | method-parameter
+    private def section(title: com.histmersion.api.exchange.MergeMarkdown.SectionTitle, lines: List[com.histmersion.api.exchange.MergeMarkdown.SectionLines]): Option[com.hist
+com.histmersion.api.exchange.MergeMarkdown.WhoResult | base String | method-result
+    def who(i: Bundle.Instance): com.histmersion.api.exchange.MergeMarkdown.WhoResult =

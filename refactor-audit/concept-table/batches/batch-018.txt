@@ -1,0 +1,292 @@
+## CONCEPTS NEARBY
+com.histmersion.api.media.Iiif.Region.Pixels.H (Int)
+com.histmersion.api.media.Iiif.Region.Pixels.W (Int)
+com.histmersion.api.media.Iiif.Region.Pixels.X (Int)
+com.histmersion.api.media.Iiif.Region.Pixels.Y (Int)
+com.histmersion.api.media.Iiif.Size.BestFit.H (Int)
+com.histmersion.api.media.Iiif.Size.BestFit.W (Int)
+com.histmersion.api.media.Iiif.Size.Exact.H (Int)
+com.histmersion.api.media.Iiif.Size.Exact.W (Int)
+com.histmersion.api.media.Iiif.Size.Height.H (Int)
+com.histmersion.api.media.Iiif.Size.Width.W (Int)
+com.histmersion.api.media.MediaCount.Allowed (Boolean)
+com.histmersion.api.media.MediaCount.Key (String)
+com.histmersion.api.media.MediaCount.N (Int)
+com.histmersion.api.media.MediaProvider.Info.Builtin (Boolean)
+com.histmersion.api.media.MediaProvider.Info.Description (String)
+com.histmersion.api.media.MediaProvider.Info.Licences (String)
+com.histmersion.api.media.MediaProvider.Info.Over (String)
+com.histmersion.api.media.MediaProvider.Info.Plugin (String)
+com.histmersion.api.media.MediaProvider.Info.Title (String)
+com.histmersion.api.media.MediaThumb.Role (String)
+com.histmersion.api.media.MediaThumb.Url (String)
+com.histmersion.api.personal.Bookmark.CreatedAt (String)
+com.histmersion.api.personal.Bookmark.Id (String)
+com.histmersion.api.personal.Bookmark.Label (String)
+com.histmersion.api.personal.Bookmark.UpdatedAt (String)
+com.histmersion.api.personal.Note.CreatedAt (String)
+com.histmersion.api.personal.Note.Id (String)
+com.histmersion.api.personal.Note.Text (String)
+com.histmersion.api.personal.Note.UpdatedAt (String)
+com.histmersion.api.personal.Target.ItemKey (String)
+com.histmersion.api.plugins.PluginSet.Digest (String)
+com.histmersion.api.plugins.PluginSet.Kit (String)
+com.histmersion.api.plugins.PluginSet.LinkedAt (String)
+com.histmersion.api.plugins.PluginSet.Mode (String)
+com.histmersion.api.plugins.PluginSet.SpiVersion (Int)
+
+## TYPES TO DECIDE
+com.histmersion.api.media.Iiif.ContentTypeFormat | base String | method-parameter
+    def contentType(format: com.histmersion.api.media.Iiif.ContentTypeFormat): com.histmersion.api.media.Iiif.ContentTypeResult = format match
+com.histmersion.api.media.Iiif.ContentTypeResult | base String | method-result
+    def contentType(format: com.histmersion.api.media.Iiif.ContentTypeFormat): com.histmersion.api.media.Iiif.ContentTypeResult = format match
+    case refactorPattern2 if (refactorPattern.value == "png") && (refactorPattern2.value == "png") => _root_.com.histmersion.api.media.Iiif.ContentTypeResult("image/png")
+com.histmersion.api.media.Iiif.InfoJsonHeight | base Int | method-parameter
+    def infoJson(id: com.histmersion.api.media.Iiif.InfoJsonId, width: com.histmersion.api.media.Iiif.InfoJsonWidth, height: com.histmersion.api.media.Iiif.InfoJsonHeight): i
+com.histmersion.api.media.Iiif.InfoJsonId | base String | method-parameter
+    def infoJson(id: com.histmersion.api.media.Iiif.InfoJsonId, width: com.histmersion.api.media.Iiif.InfoJsonWidth, height: com.histmersion.api.media.Iiif.InfoJsonHeight): i
+com.histmersion.api.media.Iiif.InfoJsonWidth | base Int | method-parameter
+    def infoJson(id: com.histmersion.api.media.Iiif.InfoJsonId, width: com.histmersion.api.media.Iiif.InfoJsonWidth, height: com.histmersion.api.media.Iiif.InfoJsonHeight): i
+com.histmersion.api.media.Iiif.ParseFormatResultPart1 | base String | method-result
+    def parseFormat(s: com.histmersion.api.media.Iiif.ParseFormatS): Either[com.histmersion.api.media.Iiif.ParseFormatResultPart1, com.histmersion.api.media.Iiif.ParseFormatR
+    case other          => Left(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart1(s"unsupported format: '$other' (use jpg or png)"))
+com.histmersion.api.media.Iiif.ParseFormatResultPart2 | base String | method-result
+    def parseFormat(s: com.histmersion.api.media.Iiif.ParseFormatS): Either[com.histmersion.api.media.Iiif.ParseFormatResultPart1, com.histmersion.api.media.Iiif.ParseFormatR
+    case "jpg" | "jpeg" => Right(_root_.com.histmersion.api.media.Iiif.ParseFormatResultPart2("jpg"))
+com.histmersion.api.media.Iiif.ParseFormatS | base String | method-parameter
+    def parseFormat(s: com.histmersion.api.media.Iiif.ParseFormatS): Either[com.histmersion.api.media.Iiif.ParseFormatResultPart1, com.histmersion.api.media.Iiif.ParseFormatR
+com.histmersion.api.media.Iiif.Region.ParseResultPart1 | base String | method-result
+    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
+    case _ => Left(_root_.com.histmersion.api.media.Iiif.Region.ParseResultPart1(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')"))
+com.histmersion.api.media.Iiif.Region.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
+    def parse(s: com.histmersion.api.media.Iiif.Size.ParseS): Either[com.histmersion.api.media.Iiif.Size.ParseResultPart1, Size] =
+com.histmersion.api.media.Iiif.Size.ParseResultPart1 | base String | method-result
+    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
+    case _ => Left(_root_.com.histmersion.api.media.Iiif.Region.ParseResultPart1(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')"))
+com.histmersion.api.media.Iiif.Size.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.media.Iiif.Region.ParseS): Either[com.histmersion.api.media.Iiif.Region.ParseResultPart1, Region] = (s).value.trim.toLowerCase match
+    def parse(s: com.histmersion.api.media.Iiif.Size.ParseS): Either[com.histmersion.api.media.Iiif.Size.ParseResultPart1, Size] =
+com.histmersion.api.media.ImageSize.Be16Result | base Int | method-result
+    private def be16(b: com.histmersion.api.media.ImageSize.Be16B, i: com.histmersion.api.media.ImageSize.Be16I): com.histmersion.api.media.ImageSize.Be16Result = ((u8(b, i))
+com.histmersion.api.media.ImageSize.Be32Result | base Int | method-result
+    private def be32(b: com.histmersion.api.media.ImageSize.Be32B, i: com.histmersion.api.media.ImageSize.Be32I): com.histmersion.api.media.ImageSize.Be32Result =
+com.histmersion.api.media.ImageSize.GifB | base Byte] | method-parameter
+    private def gif(b: com.histmersion.api.media.ImageSize.GifB): com.histmersion.api.media.ImageSize.GifResult =
+com.histmersion.api.media.ImageSize.GifSizeResultPart1 | base Int | method-result
+    private def gifSize(b: com.histmersion.api.media.ImageSize.GifSizeB): Option[(com.histmersion.api.media.ImageSize.GifSizeResultPart1, com.histmersion.api.media.ImageSize.
+com.histmersion.api.media.ImageSize.GifSizeResultPart2 | base Int | method-result
+    private def gifSize(b: com.histmersion.api.media.ImageSize.GifSizeB): Option[(com.histmersion.api.media.ImageSize.GifSizeResultPart1, com.histmersion.api.media.ImageSize.
+com.histmersion.api.media.ImageSize.JpegSizeB | base Byte] | method-parameter
+    private def jpegSize(b: com.histmersion.api.media.ImageSize.JpegSizeB): Option[(com.histmersion.api.media.ImageSize.JpegSizeResultPart1, com.histmersion.api.media.ImageSi
+com.histmersion.api.media.ImageSize.JpegSizeGoI | base Int | method-parameter
+    def go(i: com.histmersion.api.media.ImageSize.JpegSizeGoI): Option[(com.histmersion.api.media.ImageSize.JpegSizeGoResultPart1, com.histmersion.api.media.ImageSize.JpegSiz
+com.histmersion.api.media.ImageSize.JpegSizeGoResultPart1 | base Int | method-result
+    def go(i: com.histmersion.api.media.ImageSize.JpegSizeGoI): Option[(com.histmersion.api.media.ImageSize.JpegSizeGoResultPart1, com.histmersion.api.media.ImageSize.JpegSiz
+com.histmersion.api.media.ImageSize.JpegSizeGoResultPart2 | base Int | method-result
+    def go(i: com.histmersion.api.media.ImageSize.JpegSizeGoI): Option[(com.histmersion.api.media.ImageSize.JpegSizeGoResultPart1, com.histmersion.api.media.ImageSize.JpegSiz
+com.histmersion.api.media.ImageSize.JpegSizeResultPart1 | base Int | method-result
+    private def jpegSize(b: com.histmersion.api.media.ImageSize.JpegSizeB): Option[(com.histmersion.api.media.ImageSize.JpegSizeResultPart1, com.histmersion.api.media.ImageSi
+com.histmersion.api.media.ImageSize.JpegSizeResultPart2 | base Int | method-result
+    private def jpegSize(b: com.histmersion.api.media.ImageSize.JpegSizeB): Option[(com.histmersion.api.media.ImageSize.JpegSizeResultPart1, com.histmersion.api.media.ImageSi
+com.histmersion.api.media.ImageSize.Le16Result | base Int | method-result
+    private def le16(b: com.histmersion.api.media.ImageSize.Le16B, i: com.histmersion.api.media.ImageSize.Le16I): com.histmersion.api.media.ImageSize.Le16Result = ((u8(b, _ro
+com.histmersion.api.media.ImageSize.OfBytes | base Byte] | method-parameter
+    def of(bytes: com.histmersion.api.media.ImageSize.OfBytes): Option[(com.histmersion.api.media.ImageSize.OfResultPart1, com.histmersion.api.media.ImageSize.OfResultPart2)]
+com.histmersion.api.media.ImageSize.OfResultPart1 | base Int | method-result
+    def of(bytes: com.histmersion.api.media.ImageSize.OfBytes): Option[(com.histmersion.api.media.ImageSize.OfResultPart1, com.histmersion.api.media.ImageSize.OfResultPart2)]
+com.histmersion.api.media.ImageSize.OfResultPart2 | base Int | method-result
+    def of(bytes: com.histmersion.api.media.ImageSize.OfBytes): Option[(com.histmersion.api.media.ImageSize.OfResultPart1, com.histmersion.api.media.ImageSize.OfResultPart2)]
+com.histmersion.api.media.ImageSize.PngSizeResultPart1 | base Int | method-result
+    private def pngSize(b: com.histmersion.api.media.ImageSize.PngSizeB): Option[(com.histmersion.api.media.ImageSize.PngSizeResultPart1, com.histmersion.api.media.ImageSize.
+com.histmersion.api.media.ImageSize.PngSizeResultPart2 | base Int | method-result
+    private def pngSize(b: com.histmersion.api.media.ImageSize.PngSizeB): Option[(com.histmersion.api.media.ImageSize.PngSizeResultPart1, com.histmersion.api.media.ImageSize.
+com.histmersion.api.media.ImageSize.U8B | base Byte] | alias,method-parameter
+    val Be16B: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
+    val Le16B: _root_.com.histmersion.api.media.ImageSize.U8B.type = _root_.com.histmersion.api.media.ImageSize.U8B
+com.histmersion.api.media.ImageSize.U8I | base Int | alias,method-parameter
+    val Be16I: _root_.com.histmersion.api.media.ImageSize.U8I.type = _root_.com.histmersion.api.media.ImageSize.U8I
+    val Le16I: _root_.com.histmersion.api.media.ImageSize.U8I.type = _root_.com.histmersion.api.media.ImageSize.U8I
+com.histmersion.api.media.ImageSize.U8Result | base Int | method-result
+    private def u8(b: com.histmersion.api.media.ImageSize.U8B, i: com.histmersion.api.media.ImageSize.U8I): com.histmersion.api.media.ImageSize.U8Result = b(i) & 0xff
+com.histmersion.api.media.MediaCount.OfAllowedArg1 | base String | method-parameter
+    def of(keys: List[com.histmersion.api.media.MediaCount.OfKeys], allowed: com.histmersion.api.media.MediaCount.OfAllowedArg1 => com.histmersion.api.media.MediaCount.OfAllo
+com.histmersion.api.media.MediaCount.OfAllowedResult | base Boolean | method-parameter
+    def of(keys: List[com.histmersion.api.media.MediaCount.OfKeys], allowed: com.histmersion.api.media.MediaCount.OfAllowedArg1 => com.histmersion.api.media.MediaCount.OfAllo
+com.histmersion.api.media.MediaCount.OfKeys | base String | method-parameter
+    def of(keys: List[com.histmersion.api.media.MediaCount.OfKeys], allowed: com.histmersion.api.media.MediaCount.OfAllowedArg1 => com.histmersion.api.media.MediaCount.OfAllo
+com.histmersion.api.media.MediaList.OfOffset | base Int | method-parameter
+    def of(total: com.histmersion.api.media.MediaList.OfTotal, rows: List[MediaItem], offset: com.histmersion.api.media.MediaList.OfOffset): MediaList =
+com.histmersion.api.media.MediaList.OfTotal | base Int | method-parameter
+    def of(total: com.histmersion.api.media.MediaList.OfTotal, rows: List[MediaItem], offset: com.histmersion.api.media.MediaList.OfOffset): MediaList =
+com.histmersion.api.media.MediaMarkdown.AssetDetailCk | base String | method-parameter
+    def assetDetail(ck: com.histmersion.api.media.MediaMarkdown.AssetDetailCk, a: AssetDetail): com.histmersion.api.media.MediaMarkdown.AssetDetailResult =
+com.histmersion.api.media.MediaMarkdown.AssetDetailResult | base String | method-result
+    def assetDetail(ck: com.histmersion.api.media.MediaMarkdown.AssetDetailCk, a: AssetDetail): com.histmersion.api.media.MediaMarkdown.AssetDetailResult =
+com.histmersion.api.media.MediaMarkdown.AssetLinkLineResult | base String | method-result
+    def assetLinkLine(l: AssetLink): com.histmersion.api.media.MediaMarkdown.AssetLinkLineResult =
+com.histmersion.api.media.MediaMarkdown.AssetLinkListResult | base String | method-result
+    def assetLinkList(ll: AssetLink.List): com.histmersion.api.media.MediaMarkdown.AssetLinkListResult =
+com.histmersion.api.media.MediaMarkdown.AssetLinkResult | base String | method-result
+    def assetLink(l: AssetLink): com.histmersion.api.media.MediaMarkdown.AssetLinkResult =
+com.histmersion.api.media.MediaMarkdown.CountsLineResult | base String | method-result
+    private[api] def countsLine(cs: List[MediaCount]): com.histmersion.api.media.MediaMarkdown.CountsLineResult =
+com.histmersion.api.media.MediaMarkdown.FigureLicenceFillResult | base String | method-result
+    def figureLicenceFill(f: FigureLicenceFill): com.histmersion.api.media.MediaMarkdown.FigureLicenceFillResult =
+com.histmersion.api.media.MediaMarkdown.MediaCoversReportResult | base String | method-result
+    def mediaCoversReport(r: MediaCoversReport): com.histmersion.api.media.MediaMarkdown.MediaCoversReportResult =
+com.histmersion.api.media.MediaMarkdown.MediaFacetsResult | base String | method-result
+    def mediaFacets(f: MediaFacets): com.histmersion.api.media.MediaMarkdown.MediaFacetsResult =
+com.histmersion.api.media.MediaMarkdown.MediaImportReportResult | base String | method-result
+    def mediaImportReport(r: MediaImportReport): com.histmersion.api.media.MediaMarkdown.MediaImportReportResult =
+com.histmersion.api.media.MediaMarkdown.MediaItemLineResult | base String | method-result
+    def mediaItemLine(m: MediaItem): com.histmersion.api.media.MediaMarkdown.MediaItemLineResult =
+com.histmersion.api.media.MediaMarkdown.MediaItemResult | base String | method-result
+    def mediaItem(m: MediaItem): com.histmersion.api.media.MediaMarkdown.MediaItemResult =
+com.histmersion.api.media.MediaMarkdown.MediaListResult | base String | method-result
+    def mediaList(l: MediaList): com.histmersion.api.media.MediaMarkdown.MediaListResult =
+com.histmersion.api.media.MediaMarkdown.MediaProvidersResult | base String | method-result
+    def mediaProviders(ps: List[MediaProvider.Info]): com.histmersion.api.media.MediaMarkdown.MediaProvidersResult =
+com.histmersion.api.media.MediaMarkdown.MediaSamplesResult | base String | method-result
+    private[api] def mediaSamples(xs: List[MediaSample], dryRun: com.histmersion.api.media.MediaMarkdown.MediaSamplesDryRun): com.histmersion.api.media.MediaMarkdown.MediaSam
+com.histmersion.api.media.MediaProvider.All | base String | value
+    val all: List[com.histmersion.api.media.MediaProvider.All] = List(
+com.histmersion.api.media.MediaProvider.Covers | base String | value
+    val covers: Set[com.histmersion.api.media.MediaProvider.Covers] = Set(_root_.com.histmersion.api.media.MediaProvider.Covers(Calibre), _root_.com.histmersion.api.media.Med
+com.histmersion.api.media.MediaProvider.Museums | base String | value
+    val museums: Set[com.histmersion.api.media.MediaProvider.Museums] = Set(_root_.com.histmersion.api.media.MediaProvider.Museums(Met), _root_.com.histmersion.api.media.Medi
+com.histmersion.api.media.MediaProvider.TitleP | base String | method-parameter
+    def title(p: com.histmersion.api.media.MediaProvider.TitleP): com.histmersion.api.media.MediaProvider.TitleResult = p match
+com.histmersion.api.media.MediaProvider.TitleResult | base String | method-result
+    def title(p: com.histmersion.api.media.MediaProvider.TitleP): com.histmersion.api.media.MediaProvider.TitleResult = p match
+    case Source            => _root_.com.histmersion.api.media.MediaProvider.TitleResult("source figures")
+com.histmersion.api.media.MediaRole.All | base String | value
+    val all: List[com.histmersion.api.media.MediaRole.All] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration)
+com.histmersion.api.media.MediaRole.OrderResult | base Int | method-result
+    def order(role: com.histmersion.api.media.MediaRole.OrderRole): com.histmersion.api.media.MediaRole.OrderResult = all.indexOf(role) match
+    case -1 => _root_.com.histmersion.api.media.MediaRole.OrderResult(all.size)
+com.histmersion.api.media.MediaRole.OrderRole | base String | method-parameter
+    def order(role: com.histmersion.api.media.MediaRole.OrderRole): com.histmersion.api.media.MediaRole.OrderResult = all.indexOf(role) match
+com.histmersion.api.media.MediaRole.PlaceRoles | base String | value
+    val placeRoles: List[com.histmersion.api.media.MediaRole.PlaceRoles] = List(_root_.com.histmersion.api.media.MediaRole.PlaceRoles(Image), _root_.com.histmersion.api.media
+com.histmersion.api.media.MediaThumb.FilePathResult | base String | method-result
+    def filePath(uid: com.histmersion.api.media.MediaThumb.FilePathUid): com.histmersion.api.media.MediaThumb.FilePathResult = _root_.com.histmersion.api.media.MediaThumb.Fil
+com.histmersion.api.media.MediaThumb.FilePathUid | base String | method-parameter
+    def filePath(uid: com.histmersion.api.media.MediaThumb.FilePathUid): com.histmersion.api.media.MediaThumb.FilePathResult = _root_.com.histmersion.api.media.MediaThumb.Fil
+com.histmersion.api.media.MediaThumb.MarkdownLineResult | base String | method-result
+    def markdownLine: com.histmersion.api.media.MediaThumb.MarkdownLineResult =
+com.histmersion.api.media.MediaThumb.ThumbPathResult | base String | method-result
+    def thumbPath(uid: com.histmersion.api.media.MediaThumb.ThumbPathUid): com.histmersion.api.media.MediaThumb.ThumbPathResult = _root_.com.histmersion.api.media.MediaThumb.
+com.histmersion.api.media.MediaThumb.ThumbPathUid | base String | method-parameter
+    def thumbPath(uid: com.histmersion.api.media.MediaThumb.ThumbPathUid): com.histmersion.api.media.MediaThumb.ThumbPathResult = _root_.com.histmersion.api.media.MediaThumb.
+com.histmersion.api.personal.Bookmark.Label.TidyResultPart1 | base String | method-result
+    def tidy(raw: Option[Label]): Either[com.histmersion.api.personal.Bookmark.Label.TidyResultPart1, Option[Label]] =
+    case Some(l) if l.length > MaxChars => Left(_root_.com.histmersion.api.personal.Bookmark.Label.TidyResultPart1(s"a bookmark's name is at most $MaxChars characters"))
+com.histmersion.api.personal.Bookmark.NameResult | base String | method-result
+    def name: com.histmersion.api.personal.Bookmark.NameResult = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
+com.histmersion.api.personal.Note.Text.TidyResultPart1 | base String | method-result
+    def tidy(raw: Text): Either[com.histmersion.api.personal.Note.Text.TidyResultPart1, Text] =
+com.histmersion.api.personal.PersonalApi.BookmarksPart1Part1 | base String | lambda-parameter,value
+    lazy val bookmarks: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.BookmarksPart1Part1], Option[com.histmersion.api.personal.PersonalApi.BookmarksPart1Pa
+com.histmersion.api.personal.PersonalApi.BookmarksPart1Part2 | base String | lambda-parameter,value
+    lazy val bookmarks: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.BookmarksPart1Part1], Option[com.histmersion.api.personal.PersonalApi.BookmarksPart1Pa
+com.histmersion.api.personal.PersonalApi.BookmarksPart1Part3 | base Int | lambda-parameter,value
+    lazy val bookmarks: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.BookmarksPart1Part1], Option[com.histmersion.api.personal.PersonalApi.BookmarksPart1Pa
+com.histmersion.api.personal.PersonalApi.EditBookmarkPart1Part1 | base String | lambda-parameter,value
+    lazy val editBookmark: PublicEndpoint[(com.histmersion.api.personal.PersonalApi.EditBookmarkPart1Part1, Bookmark.Edit), Api.Error, Bookmark, Any] =
+com.histmersion.api.personal.PersonalApi.EditNotePart1Part1 | base String | lambda-parameter,value
+    lazy val editNote: PublicEndpoint[(com.histmersion.api.personal.PersonalApi.EditNotePart1Part1, Note.Edit), Api.Error, Note, Any] =
+com.histmersion.api.personal.PersonalApi.NotePart1 | base String | lambda-parameter,value
+    lazy val note: PublicEndpoint[com.histmersion.api.personal.PersonalApi.NotePart1, Api.Error, Note, Any] =
+com.histmersion.api.personal.PersonalApi.NotesPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.personal.PersonalApi.NotesPart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.personal.PersonalApi.NotesPart1Part3 | base String | lambda-parameter,value
+com.histmersion.api.personal.PersonalApi.NotesPart1Part4 | base Int | lambda-parameter,value
+com.histmersion.api.personal.PersonalApi.ReadingPart1Part1 | base String | lambda-parameter,value
+    lazy val reading: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.ReadingPart1Part1], Option[com.histmersion.api.personal.PersonalApi.ReadingPart1Part2], 
+com.histmersion.api.personal.PersonalApi.ReadingPart1Part2 | base String | lambda-parameter,value
+    lazy val reading: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.ReadingPart1Part1], Option[com.histmersion.api.personal.PersonalApi.ReadingPart1Part2], 
+com.histmersion.api.personal.PersonalApi.ReadingPart1Part3 | base Int | lambda-parameter,value
+    lazy val reading: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.ReadingPart1Part1], Option[com.histmersion.api.personal.PersonalApi.ReadingPart1Part2], 
+com.histmersion.api.personal.PersonalApi.RemoveBookmarkPart1 | base String | lambda-parameter,value
+    lazy val removeBookmark: PublicEndpoint[com.histmersion.api.personal.PersonalApi.RemoveBookmarkPart1, Api.Error, Bookmark, Any] =
+com.histmersion.api.personal.PersonalApi.RemoveNotePart1 | base String | lambda-parameter,value
+    lazy val removeNote: PublicEndpoint[com.histmersion.api.personal.PersonalApi.RemoveNotePart1, Api.Error, Note, Any] =
+com.histmersion.api.personal.PersonalApi.UnreadPart1Part1 | base String | lambda-parameter,value
+    lazy val unread: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.UnreadPart1Part1], Option[com.histmersion.api.personal.PersonalApi.UnreadPart1Part2], Opt
+com.histmersion.api.personal.PersonalApi.UnreadPart1Part2 | base Int | lambda-parameter,value
+    lazy val unread: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.UnreadPart1Part1], Option[com.histmersion.api.personal.PersonalApi.UnreadPart1Part2], Opt
+com.histmersion.api.personal.PersonalApi.UnreadPart1Part3 | base Int | lambda-parameter,value
+    lazy val unread: PublicEndpoint[(Option[com.histmersion.api.personal.PersonalApi.UnreadPart1Part1], Option[com.histmersion.api.personal.PersonalApi.UnreadPart1Part2], Opt
+com.histmersion.api.personal.PersonalIds.LimitAsked | base Int | method-parameter
+    def limit(asked: Option[com.histmersion.api.personal.PersonalIds.LimitAsked]): com.histmersion.api.personal.PersonalIds.LimitResult = _root_.com.histmersion.api.personal.
+com.histmersion.api.personal.PersonalIds.LimitResult | base Int | method-result
+    def limit(asked: Option[com.histmersion.api.personal.PersonalIds.LimitAsked]): com.histmersion.api.personal.PersonalIds.LimitResult = _root_.com.histmersion.api.personal.
+com.histmersion.api.personal.PersonalMarkdown.BookmarkLineResult | base String | method-result
+    def bookmarkLine(b: Bookmark): com.histmersion.api.personal.PersonalMarkdown.BookmarkLineResult =
+com.histmersion.api.personal.PersonalMarkdown.BookmarksResult | base String | method-result
+    def bookmarks(bs: List[Bookmark]): com.histmersion.api.personal.PersonalMarkdown.BookmarksResult =
+com.histmersion.api.personal.PersonalMarkdown.ExcerptChars | base Int | method-parameter
+    def excerpt(text: com.histmersion.api.personal.PersonalMarkdown.ExcerptText, chars: com.histmersion.api.personal.PersonalMarkdown.ExcerptChars = _root_.com.histmersion.ap
+com.histmersion.api.personal.PersonalMarkdown.ExcerptResult | base String | method-result
+    def excerpt(text: com.histmersion.api.personal.PersonalMarkdown.ExcerptText, chars: com.histmersion.api.personal.PersonalMarkdown.ExcerptChars = _root_.com.histmersion.ap
+com.histmersion.api.personal.PersonalMarkdown.ExcerptText | base String | method-parameter
+    def excerpt(text: com.histmersion.api.personal.PersonalMarkdown.ExcerptText, chars: com.histmersion.api.personal.PersonalMarkdown.ExcerptChars = _root_.com.histmersion.ap
+com.histmersion.api.personal.PersonalMarkdown.MinuteAt | base String | method-parameter
+    def minute(at: com.histmersion.api.personal.PersonalMarkdown.MinuteAt): com.histmersion.api.personal.PersonalMarkdown.MinuteResult = _root_.com.histmersion.api.personal.P
+com.histmersion.api.personal.PersonalMarkdown.MinuteResult | base String | method-result
+    def minute(at: com.histmersion.api.personal.PersonalMarkdown.MinuteAt): com.histmersion.api.personal.PersonalMarkdown.MinuteResult = _root_.com.histmersion.api.personal.P
+com.histmersion.api.personal.PersonalMarkdown.NoteLineResult | base String | method-result
+    def noteLine(n: Note): com.histmersion.api.personal.PersonalMarkdown.NoteLineResult =
+com.histmersion.api.personal.PersonalMarkdown.NoteResult | base String | method-result
+    def note(n: Note): com.histmersion.api.personal.PersonalMarkdown.NoteResult =
+com.histmersion.api.personal.PersonalMarkdown.NotesResult | base String | method-result
+    def notes(ns: List[Note]): com.histmersion.api.personal.PersonalMarkdown.NotesResult =
+com.histmersion.api.personal.PersonalMarkdown.ReadLineResult | base String | method-result
+    def readLine(m: ReadMark): com.histmersion.api.personal.PersonalMarkdown.ReadLineResult =
+com.histmersion.api.personal.PersonalMarkdown.ReadingResult | base String | method-result
+    def reading(ms: List[ReadMark]): com.histmersion.api.personal.PersonalMarkdown.ReadingResult =
+com.histmersion.api.personal.PersonalMarkdown.TargetLineResult | base String | method-result
+    def targetLine(t: Target): com.histmersion.api.personal.PersonalMarkdown.TargetLineResult =
+com.histmersion.api.personal.Target.CheckResultPart1 | base String | method-result
+    def check(t: Target, allowed: Set[ItemKind], what: com.histmersion.api.personal.Target.CheckWhat): Either[com.histmersion.api.personal.Target.CheckResultPart1, Target] =
+com.histmersion.api.personal.Target.CheckWhat | base String | method-parameter
+    def check(t: Target, allowed: Set[ItemKind], what: com.histmersion.api.personal.Target.CheckWhat): Either[com.histmersion.api.personal.Target.CheckResultPart1, Target] =
+com.histmersion.api.personal.Target.DegreesMinus | base String | method-parameter
+    val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, _root_.com.histmersion.api.personal.Target.DegreesPlus("N"), _root_.com.histmersion.api.personal.Targ
+    private def degrees(v: com.histmersion.api.personal.Target.DegreesV, plus: com.histmersion.api.personal.Target.DegreesPlus, minus: com.histmersion.api.personal.Target.Deg
+com.histmersion.api.personal.Target.DegreesPlus | base String | method-parameter
+    val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, _root_.com.histmersion.api.personal.Target.DegreesPlus("N"), _root_.com.histmersion.api.personal.Targ
+    private def degrees(v: com.histmersion.api.personal.Target.DegreesV, plus: com.histmersion.api.personal.Target.DegreesPlus, minus: com.histmersion.api.personal.Target.Deg
+com.histmersion.api.personal.Target.DegreesResult | base String | method-result
+    private def degrees(v: com.histmersion.api.personal.Target.DegreesV, plus: com.histmersion.api.personal.Target.DegreesPlus, minus: com.histmersion.api.personal.Target.Deg
+com.histmersion.api.personal.Target.DegreesV | base Double | method-parameter
+    private def degrees(v: com.histmersion.api.personal.Target.DegreesV, plus: com.histmersion.api.personal.Target.DegreesPlus, minus: com.histmersion.api.personal.Target.Deg
+com.histmersion.api.personal.Target.IdentityResult | base String | method-result
+    def identity: Option[com.histmersion.api.personal.Target.IdentityResult] = itemKey.map(k => _root_.com.histmersion.api.personal.Target.IdentityResult(s"${kind.wire}:$k"))
+com.histmersion.api.personal.Target.ItemKeyResult | base String | method-result
+    def itemKey: Option[com.histmersion.api.personal.Target.ItemKeyResult] = Option.when(((kind.isItem) == _root_.com.histmersion.api.ItemKind.IsItemResult(true)))(id.map(_.v
+com.histmersion.api.personal.Target.Round1Result | base String | method-result
+    private def round1(v: com.histmersion.api.personal.Target.Round1V): com.histmersion.api.personal.Target.Round1Result =
+com.histmersion.api.personal.Target.Round1V | base Double | method-parameter
+    private def round1(v: com.histmersion.api.personal.Target.Round1V): com.histmersion.api.personal.Target.Round1Result =
+com.histmersion.api.personal.Target.WhereResult | base String | method-result
+    def where(t: Target): com.histmersion.api.personal.Target.WhereResult =
+    case ItemKind.Point => _root_.com.histmersion.api.personal.Target.WhereResult(List(at, span).filter(_.nonEmpty).mkString(" · "))
+com.histmersion.api.plugins.PluginSet.DescribeResult | base String | method-result
+    def describe(s: Option[PluginSet]): com.histmersion.api.plugins.PluginSet.DescribeResult = s match
+com.histmersion.api.plugins.PluginState.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.plugins.PluginState.ParseS): Option[PluginState] = values.find(_.wire == _root_.com.histmersion.api.plugins.PluginState.WireResult((s).va
+com.histmersion.api.plugins.PluginState.WireResult | base String | method-result
+    def wire: com.histmersion.api.plugins.PluginState.WireResult = _root_.com.histmersion.api.plugins.PluginState.WireResult(toString.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.plugins.PluginState.ParseS): Option[PluginState] = values.find(_.wire == _root_.com.histmersion.api.plugins.PluginState.WireResult((s).va
+com.histmersion.api.plugins.PluginsMarkdown.LineResult | base String | method-result
+    def line(p: PluginStatus): com.histmersion.api.plugins.PluginsMarkdown.LineResult =
+com.histmersion.api.plugins.PluginsMarkdown.SelfCheckChecksPart1 | base Boolean | method-parameter
+    def selfCheck(file: ConfigFileInfo, r: PluginsReport, checks: List[(com.histmersion.api.plugins.PluginsMarkdown.SelfCheckChecksPart1, com.histmersion.api.plugins.PluginsM
+com.histmersion.api.plugins.PluginsMarkdown.SelfCheckChecksPart2 | base String | method-parameter
+    def selfCheck(file: ConfigFileInfo, r: PluginsReport, checks: List[(com.histmersion.api.plugins.PluginsMarkdown.SelfCheckChecksPart1, com.histmersion.api.plugins.PluginsM
+com.histmersion.api.plugins.PluginsMarkdown.SelfCheckResult | base String | method-result
+    def selfCheck(file: ConfigFileInfo, r: PluginsReport, checks: List[(com.histmersion.api.plugins.PluginsMarkdown.SelfCheckChecksPart1, com.histmersion.api.plugins.PluginsM
+com.histmersion.api.plugins.PluginsMarkdown.SummaryResult | base String | method-result
+    def summary(r: PluginsReport): List[com.histmersion.api.plugins.PluginsMarkdown.SummaryResult] =

@@ -1,0 +1,274 @@
+## CONCEPTS NEARBY
+com.histmersion.api.library.Filter.Authors (String)
+com.histmersion.api.library.Filter.Docs.Param.Brief (String)
+com.histmersion.api.library.Filter.Docs.Param.Doc (String)
+com.histmersion.api.library.Filter.Docs.Param.Mcp (String)
+com.histmersion.api.library.Filter.Docs.Param.Rest (String)
+com.histmersion.api.library.Filter.EarliestValue (Long)
+com.histmersion.api.library.Filter.Goal (String)
+com.histmersion.api.library.Filter.LatestValue (Long)
+com.histmersion.api.library.Filter.Limit (Int)
+com.histmersion.api.library.Filter.Offset (Int)
+com.histmersion.api.library.Filter.Places (String)
+com.histmersion.api.library.Filter.Q (String)
+com.histmersion.api.library.Filter.Query.Sort (String)
+com.histmersion.api.library.Filter.Status (String)
+com.histmersion.api.library.Filter.Tags (String)
+com.histmersion.api.library.Filter.Title (String)
+com.histmersion.api.library.Filter.Topics (String)
+com.histmersion.api.library.Ingest.Accepted.Status (String)
+com.histmersion.api.library.Ingest.Params.AcquireItem (Int)
+com.histmersion.api.library.Ingest.Params.Filename (String)
+com.histmersion.api.library.Ingest.Params.Force (Boolean)
+com.histmersion.api.library.Ingest.Params.Provenance (String)
+com.histmersion.api.library.Ingest.Params.Quality (Boolean)
+com.histmersion.api.library.Ingest.Report.Created (Boolean)
+com.histmersion.api.library.Ingest.Report.DropIn (String)
+com.histmersion.api.library.Ingest.Report.EdgesAdded (Int)
+com.histmersion.api.library.Ingest.Request.Arxiv (String)
+com.histmersion.api.library.Ingest.Request.Id (String)
+com.histmersion.api.library.Ingest.Request.LegalOnly (Boolean)
+com.histmersion.api.library.Ingest.Request.Refetch (Boolean)
+com.histmersion.api.library.Ingest.Step.Detail (String)
+com.histmersion.api.library.Ingest.Step.Ok (Boolean)
+com.histmersion.api.library.Ingest.Step.Value (String)
+com.histmersion.api.library.Query.QueryRequest.Sql (String)
+com.histmersion.api.library.Query.QueryResult.Columns (String)
+com.histmersion.api.library.Query.QueryResult.ElapsedMs (Long)
+com.histmersion.api.library.Query.QueryResult.RowCount (Int)
+com.histmersion.api.library.Query.QueryResult.Rows (String)
+com.histmersion.api.library.Query.QueryResult.Truncated (Boolean)
+com.histmersion.api.library.Query.SchemaColumn.DataType (String)
+com.histmersion.api.library.Query.SchemaColumn.Name (String)
+com.histmersion.api.library.Query.SchemaColumn.Nullable (Boolean)
+com.histmersion.api.library.Query.SchemaTable.Kind (String)
+com.histmersion.api.library.Query.SchemaTable.Name (String)
+com.histmersion.api.library.Rename.Count.Rows (Int)
+com.histmersion.api.library.Rename.Count.Table (String)
+com.histmersion.api.library.Rename.Counts.Articles (String)
+com.histmersion.api.library.Rename.Counts.EdgesPromoted (Int)
+com.histmersion.api.library.Rename.Counts.Findings (Int)
+com.histmersion.api.library.Rename.Counts.Links (Int)
+com.histmersion.api.library.Rename.Counts.Sources (String)
+com.histmersion.api.library.RepairAcquire.RepairRequest.By (String)
+com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun (Boolean)
+com.histmersion.api.library.RepairAcquire.RepairResult.Backlog (Int)
+com.histmersion.api.library.RepairAcquire.RepairResult.BacklogDays (Int)
+com.histmersion.api.library.RepairAcquire.RepairResult.DryRun (Boolean)
+com.histmersion.api.library.RepairAcquire.RepairResult.Kept (Int)
+com.histmersion.api.library.RepairAcquire.RepairResult.Moved (Int)
+com.histmersion.api.library.RepairAcquire.RepairResult.Removed (Int)
+com.histmersion.api.library.RepairAcquire.RepairResult.Untouched (Int)
+com.histmersion.api.library.RepairAcquire.RepairRow.Action (String)
+com.histmersion.api.library.RepairAcquire.RepairRow.BacklogItem (Long)
+com.histmersion.api.library.RepairAcquire.RepairRow.Detail (String)
+com.histmersion.api.library.RepairAcquire.RepairRow.Goals (String)
+com.histmersion.api.library.RepairAcquire.RepairRow.Item (Int)
+com.histmersion.api.library.RepairAcquire.RepairRow.Watcher (String)
+com.histmersion.api.library.SearchMarkdown.CollapsedBucket.Count (Int)
+com.histmersion.api.library.SearchMarkdown.CollapsedBucket.End (Long)
+com.histmersion.api.library.SearchMarkdown.CollapsedBucket.Merged (Int)
+com.histmersion.api.library.SearchMarkdown.CollapsedBucket.Start (Long)
+
+## TYPES TO DECIDE
+com.histmersion.api.library.Filter.BboxOfMaxLat | base Double | alias,method-parameter
+    val OfMaxLat: _root_.com.histmersion.api.library.Filter.BboxOfMaxLat.type = _root_.com.histmersion.api.library.Filter.BboxOfMaxLat
+com.histmersion.api.library.Filter.BboxOfMaxLon | base Double | alias,method-parameter
+    val OfMaxLon: _root_.com.histmersion.api.library.Filter.BboxOfMaxLon.type = _root_.com.histmersion.api.library.Filter.BboxOfMaxLon
+com.histmersion.api.library.Filter.BboxOfMinLat | base Double | alias,method-parameter
+    val OfMinLat: _root_.com.histmersion.api.library.Filter.BboxOfMinLat.type = _root_.com.histmersion.api.library.Filter.BboxOfMinLat
+com.histmersion.api.library.Filter.BboxOfMinLon | base Double | alias,method-parameter
+    val OfMinLon: _root_.com.histmersion.api.library.Filter.BboxOfMinLon.type = _root_.com.histmersion.api.library.Filter.BboxOfMinLon
+com.histmersion.api.library.Filter.ClampResult | base Long | method-result
+    def clamp(v: com.histmersion.api.library.Filter.ClampV): com.histmersion.api.library.Filter.ClampResult = math.max(Earliest, math.min(Latest, (v).value))
+com.histmersion.api.library.Filter.ClampV | base Long | method-parameter
+    def clamp(v: com.histmersion.api.library.Filter.ClampV): com.histmersion.api.library.Filter.ClampResult = math.max(Earliest, math.min(Latest, (v).value))
+    (from.map({ val refactorFunction4 = clamp; (refactorValue36) => refactorFunction4(_root_.com.histmersion.api.library.Filter.ClampV((refactorValue36).value)) }), to.map({ 
+com.histmersion.api.library.Filter.Docs.DescribeWithTextResult | base String | method-parameter
+    private def describeWith[T](schema: Schema[T])(text: Param => com.histmersion.api.library.Filter.Docs.DescribeWithTextResult): Schema[T] =
+com.histmersion.api.library.Filter.LowerGivenResult | base Long | method-result
+    def lowerGiven(p: Option[Period]): Option[com.histmersion.api.library.Filter.LowerGivenResult] = p.map(_.start).filter(_ != Earliest)
+com.histmersion.api.library.Filter.OfAuthors | base String | method-parameter
+com.histmersion.api.library.Filter.OfCleanXs | base String | method-parameter
+    def clean(xs: List[com.histmersion.api.library.Filter.OfCleanXs]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty)
+com.histmersion.api.library.Filter.OfGoal | base String | method-parameter
+com.histmersion.api.library.Filter.OfLimit | base Int | method-parameter
+com.histmersion.api.library.Filter.OfOffset | base Int | method-parameter
+com.histmersion.api.library.Filter.OfPlaces | base String | method-parameter
+com.histmersion.api.library.Filter.OfQ | base String | method-parameter
+com.histmersion.api.library.Filter.OfSort | base String | method-parameter
+com.histmersion.api.library.Filter.OfStatus | base String | method-parameter
+com.histmersion.api.library.Filter.OfTags | base String | method-parameter
+com.histmersion.api.library.Filter.OfTitle | base String | method-parameter
+com.histmersion.api.library.Filter.OfTopics | base String | method-parameter
+com.histmersion.api.library.Filter.OfYearFrom | base Long | method-parameter
+com.histmersion.api.library.Filter.OfYearTo | base Long | method-parameter
+com.histmersion.api.library.Filter.PeriodOfFrom | base Long | alias,method-parameter
+    val OfFrom: _root_.com.histmersion.api.library.Filter.PeriodOfFrom.type = _root_.com.histmersion.api.library.Filter.PeriodOfFrom
+    def periodOf(from: Option[com.histmersion.api.library.Filter.PeriodOfFrom], to: Option[com.histmersion.api.library.Filter.PeriodOfTo]): Option[Period] =
+com.histmersion.api.library.Filter.PeriodOfTo | base Long | alias,method-parameter
+    val OfTo: _root_.com.histmersion.api.library.Filter.PeriodOfTo.type = _root_.com.histmersion.api.library.Filter.PeriodOfTo
+    def periodOf(from: Option[com.histmersion.api.library.Filter.PeriodOfFrom], to: Option[com.histmersion.api.library.Filter.PeriodOfTo]): Option[Period] =
+com.histmersion.api.library.Filter.UpperGivenResult | base Long | method-result
+    def upperGiven(p: Option[Period]): Option[com.histmersion.api.library.Filter.UpperGivenResult] = p.map(_.end).filter(_ != Latest)
+com.histmersion.api.library.GeoHitPage.OfOffset | base Int | method-parameter
+    def of(total: com.histmersion.api.library.GeoHitPage.OfTotal, hits: List[GeoHit], offset: com.histmersion.api.library.GeoHitPage.OfOffset): GeoHitPage =
+com.histmersion.api.library.GeoHitPage.OfTotal | base Int | method-parameter
+    def of(total: com.histmersion.api.library.GeoHitPage.OfTotal, hits: List[GeoHit], offset: com.histmersion.api.library.GeoHitPage.OfOffset): GeoHitPage =
+com.histmersion.api.library.Ingest.DispositionExtensionDisposition | base String | method-parameter
+    def dispositionExtension(disposition: com.histmersion.api.library.Ingest.DispositionExtensionDisposition): Option[com.histmersion.api.library.Ingest.DispositionExtensionR
+com.histmersion.api.library.Ingest.DispositionExtensionResult | base String | method-result
+    def dispositionExtension(disposition: com.histmersion.api.library.Ingest.DispositionExtensionDisposition): Option[com.histmersion.api.library.Ingest.DispositionExtensionR
+com.histmersion.api.library.Ingest.OriginalDispositionCitekey | base String | method-parameter
+    def originalDisposition(citekey: com.histmersion.api.library.Ingest.OriginalDispositionCitekey, storedName: com.histmersion.api.library.Ingest.OriginalDispositionStoredNa
+com.histmersion.api.library.Ingest.OriginalDispositionResult | base String | method-result
+    def originalDisposition(citekey: com.histmersion.api.library.Ingest.OriginalDispositionCitekey, storedName: com.histmersion.api.library.Ingest.OriginalDispositionStoredNa
+com.histmersion.api.library.Ingest.OriginalDispositionStoredName | base String | method-parameter
+    def originalDisposition(citekey: com.histmersion.api.library.Ingest.OriginalDispositionCitekey, storedName: com.histmersion.api.library.Ingest.OriginalDispositionStoredNa
+com.histmersion.api.library.IngestMarkdown.AssetsCitekey | base String | method-parameter
+    def assets(citekey: com.histmersion.api.library.IngestMarkdown.AssetsCitekey, as: Vector[AssetInfo]): com.histmersion.api.library.IngestMarkdown.AssetsResult = AssetsMark
+com.histmersion.api.library.IngestMarkdown.AssetsResult | base String | method-result
+    def assets(citekey: com.histmersion.api.library.IngestMarkdown.AssetsCitekey, as: Vector[AssetInfo]): com.histmersion.api.library.IngestMarkdown.AssetsResult = AssetsMark
+com.histmersion.api.library.IngestMarkdown.JobResult | base String | method-result
+    def job(j: JobInfo): com.histmersion.api.library.IngestMarkdown.JobResult =
+com.histmersion.api.library.IngestMarkdown.JobsOlder | base String | method-parameter
+com.histmersion.api.library.IngestMarkdown.JobsResult | base String | method-result
+com.histmersion.api.library.IngestMarkdown.JobsStatus | base String | method-parameter
+com.histmersion.api.library.Label.DisplayResult | base String | method-result
+    def display(s: com.histmersion.api.library.Label.DisplayS): com.histmersion.api.library.Label.DisplayResult = _root_.com.histmersion.api.library.Label.DisplayResult((s).v
+com.histmersion.api.library.Label.DisplayS | base String | method-parameter
+    def display(s: com.histmersion.api.library.Label.DisplayS): com.histmersion.api.library.Label.DisplayResult = _root_.com.histmersion.api.library.Label.DisplayResult((s).v
+com.histmersion.api.library.MatchMethod.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase((s).value.tri
+com.histmersion.api.library.MatchMethod.WireResult | base String | no-resolved-use
+    def wire(e: MatchMethod): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.
+com.histmersion.api.library.MatchOutcome.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == _root_.com.histmersio
+com.histmersion.api.library.MatchOutcome.WireOfResult | base String | method-result
+    def wireOf(o: MatchOutcome): com.histmersion.api.library.MatchOutcome.WireOfResult = o match
+    case Same          => _root_.com.histmersion.api.library.MatchOutcome.WireOfResult("same")
+com.histmersion.api.library.MatchOutcome.WireResult | base String | no-resolved-use
+    def wire(e: MatchOutcome): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+com.histmersion.api.library.MetadataField.FromWireS | base String | method-parameter
+    def fromWire(s: com.histmersion.api.library.MetadataField.FromWireS): Option[MetadataField] = values.find(wireOf(_) == s)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[MetadataField] = MetadataField.fromWire(_root_.com.histmersion.api.library.Metad
+com.histmersion.api.library.MetadataField.WireOfResult | base String | method-result
+    def wireOf(f: MetadataField): com.histmersion.api.library.MetadataField.WireOfResult = f match
+    case Year       => _root_.com.histmersion.api.library.MetadataField.WireOfResult("year")
+com.histmersion.api.library.MetadataField.WireResult | base String | no-resolved-use
+    def wire(e: MetadataField): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+com.histmersion.api.library.NeighborTarget.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[NeighborTarget] =
+com.histmersion.api.library.NeighborTarget.WireResult | base String | no-resolved-use
+    def wire(e: NeighborTarget): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((_root_.com.histmersion.api.libra
+com.histmersion.api.library.PassagesMarkdown.MarkedResult | base String | method-result
+    def marked(p: PassageHit): com.histmersion.api.library.PassagesMarkdown.MarkedResult =
+com.histmersion.api.library.PassagesMarkdown.RenderResult | base String | method-result
+    def render(r: PassageResult): com.histmersion.api.library.PassagesMarkdown.RenderResult =
+com.histmersion.api.library.Query.CellResult | base String | method-result
+    private def cell(v: Option[com.histmersion.api.library.Query.CellV]): com.histmersion.api.library.Query.CellResult =
+com.histmersion.api.library.Query.CellV | base String | method-parameter
+    private def cell(v: Option[com.histmersion.api.library.Query.CellV]): com.histmersion.api.library.Query.CellResult =
+com.histmersion.api.library.Query.CheckResultPart1 | base String | method-result
+    def check(sql: com.histmersion.api.library.Query.CheckSql): Either[com.histmersion.api.library.Query.CheckResultPart1, com.histmersion.api.library.Query.CheckResultPart2]
+    case Nil        => Left(_root_.com.histmersion.api.library.Query.CheckResultPart1("empty statement"))
+com.histmersion.api.library.Query.CheckResultPart2 | base String | method-result
+    def check(sql: com.histmersion.api.library.Query.CheckSql): Either[com.histmersion.api.library.Query.CheckResultPart1, com.histmersion.api.library.Query.CheckResultPart2]
+com.histmersion.api.library.Query.CheckSql | base String | method-parameter
+    def check(sql: com.histmersion.api.library.Query.CheckSql): Either[com.histmersion.api.library.Query.CheckResultPart1, com.histmersion.api.library.Query.CheckResultPart2]
+com.histmersion.api.library.Query.DollarTagI | base Int | method-parameter
+    private def dollarTag(sql: com.histmersion.api.library.Query.DollarTagSql, i: com.histmersion.api.library.Query.DollarTagI): Option[com.histmersion.api.library.Query.Doll
+com.histmersion.api.library.Query.DollarTagResult | base String | method-result
+    private def dollarTag(sql: com.histmersion.api.library.Query.DollarTagSql, i: com.histmersion.api.library.Query.DollarTagI): Option[com.histmersion.api.library.Query.Doll
+com.histmersion.api.library.Query.DollarTagSql | base String | alias,method-parameter
+    val StatementsSql: _root_.com.histmersion.api.library.Query.DollarTagSql.type = _root_.com.histmersion.api.library.Query.DollarTagSql
+    private def dollarTag(sql: com.histmersion.api.library.Query.DollarTagSql, i: com.histmersion.api.library.Query.DollarTagI): Option[com.histmersion.api.library.Query.Doll
+com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentResult | base String | method-result
+    def afterBlockComment(text: com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentText): com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentResul
+com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentText | base String | method-parameter
+    def afterBlockComment(text: com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentText): com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentResul
+com.histmersion.api.library.Query.LeadingKeywordResult | base String | method-result
+    def leadingKeyword(statement: com.histmersion.api.library.Query.LeadingKeywordStatement): com.histmersion.api.library.Query.LeadingKeywordResult =
+com.histmersion.api.library.Query.LeadingKeywordStatement | base String | method-parameter
+    def leadingKeyword(statement: com.histmersion.api.library.Query.LeadingKeywordStatement): com.histmersion.api.library.Query.LeadingKeywordResult =
+    val kw = leadingKeyword(_root_.com.histmersion.api.library.Query.LeadingKeywordStatement((one).value))
+com.histmersion.api.library.Query.MarkdownResult | base String | method-result
+    def markdown(r: QueryResult): com.histmersion.api.library.Query.MarkdownResult =
+com.histmersion.api.library.Query.MarkdownTableResult | base String | method-result
+    def markdownTable(columns: List[com.histmersion.api.library.Query.MarkdownTableColumns], rows: List[List[Option[com.histmersion.api.library.Query.MarkdownTableRows]]]): c
+com.histmersion.api.library.Query.SchemaMarkdownResult | base String | method-result
+    def schemaMarkdown(s: SchemaTables): com.histmersion.api.library.Query.SchemaMarkdownResult =
+com.histmersion.api.library.Query.StatementsAtK | base Int | method-parameter
+    def at(k: com.histmersion.api.library.Query.StatementsAtK): com.histmersion.api.library.Query.StatementsAtResult = if k >= 0 && k < n then _root_.com.histmersion.api.libr
+com.histmersion.api.library.Query.StatementsAtResult | base Char | method-result
+    def at(k: com.histmersion.api.library.Query.StatementsAtK): com.histmersion.api.library.Query.StatementsAtResult = if k >= 0 && k < n then _root_.com.histmersion.api.libr
+com.histmersion.api.library.Query.StatementsResult | base String | method-result
+    def statements(sql: com.histmersion.api.library.Query.StatementsSql): List[com.histmersion.api.library.Query.StatementsResult] =
+com.histmersion.api.library.Query.ToolDescriptionResult | base String | method-result
+    def toolDescription(s: SchemaTables): com.histmersion.api.library.Query.ToolDescriptionResult =
+com.histmersion.api.library.Rename.FindingIdId | base String | method-parameter
+    def findingId(id: com.histmersion.api.library.Rename.FindingIdId, oldCk: com.histmersion.api.library.Rename.FindingIdOldCk, newCk: com.histmersion.api.library.Rename.Find
+com.histmersion.api.library.Rename.FindingIdNewCk | base String | method-parameter
+    def findingId(id: com.histmersion.api.library.Rename.FindingIdId, oldCk: com.histmersion.api.library.Rename.FindingIdOldCk, newCk: com.histmersion.api.library.Rename.Find
+com.histmersion.api.library.Rename.FindingIdOldCk | base String | method-parameter
+    def findingId(id: com.histmersion.api.library.Rename.FindingIdId, oldCk: com.histmersion.api.library.Rename.FindingIdOldCk, newCk: com.histmersion.api.library.Rename.Find
+com.histmersion.api.library.Rename.FindingIdResult | base String | method-result
+    def findingId(id: com.histmersion.api.library.Rename.FindingIdId, oldCk: com.histmersion.api.library.Rename.FindingIdOldCk, newCk: com.histmersion.api.library.Rename.Find
+com.histmersion.api.library.Rename.ReplaceTokenNewCk | base String | method-parameter
+    def replaceToken(text: com.histmersion.api.library.Rename.ReplaceTokenText, oldCk: com.histmersion.api.library.Rename.ReplaceTokenOldCk, newCk: com.histmersion.api.librar
+com.histmersion.api.library.Rename.ReplaceTokenOldCk | base String | method-parameter
+    def replaceToken(text: com.histmersion.api.library.Rename.ReplaceTokenText, oldCk: com.histmersion.api.library.Rename.ReplaceTokenOldCk, newCk: com.histmersion.api.librar
+com.histmersion.api.library.Rename.ReplaceTokenResult | base String | method-result
+    def replaceToken(text: com.histmersion.api.library.Rename.ReplaceTokenText, oldCk: com.histmersion.api.library.Rename.ReplaceTokenOldCk, newCk: com.histmersion.api.librar
+com.histmersion.api.library.Rename.ReplaceTokenText | base String | method-parameter
+    def replaceToken(text: com.histmersion.api.library.Rename.ReplaceTokenText, oldCk: com.histmersion.api.library.Rename.ReplaceTokenOldCk, newCk: com.histmersion.api.librar
+com.histmersion.api.library.Rename.ShortFormsCk | base String | method-parameter
+    def shortForms(ck: com.histmersion.api.library.Rename.ShortFormsCk): List[com.histmersion.api.library.Rename.ShortFormsResult] =
+com.histmersion.api.library.Rename.ShortFormsResult | base String | method-result
+    def shortForms(ck: com.histmersion.api.library.Rename.ShortFormsCk): List[com.histmersion.api.library.Rename.ShortFormsResult] =
+com.histmersion.api.library.RepairAcquire.MarkdownResult | base String | method-result
+    def markdown(r: RepairResult): com.histmersion.api.library.RepairAcquire.MarkdownResult =
+com.histmersion.api.library.SearchMarkdown.BriefResultsResult | base String | method-result
+    def briefResults(result: SearchResult): com.histmersion.api.library.SearchMarkdown.BriefResultsResult =
+com.histmersion.api.library.SearchMarkdown.ChildNounResult | base String | method-result
+    private[api] def childNoun(b: Bucket): com.histmersion.api.library.SearchMarkdown.ChildNounResult =
+com.histmersion.api.library.SearchMarkdown.FacetsField | base String | method-parameter
+    def facets(field: com.histmersion.api.library.SearchMarkdown.FacetsField, rows: Vector[Facet]): com.histmersion.api.library.SearchMarkdown.FacetsResult =
+com.histmersion.api.library.SearchMarkdown.FacetsResult | base String | method-result
+    def facets(field: com.histmersion.api.library.SearchMarkdown.FacetsField, rows: Vector[Facet]): com.histmersion.api.library.SearchMarkdown.FacetsResult =
+com.histmersion.api.library.SearchMarkdown.GeoPageResult | base String | method-result
+    def geoPage(p: GeoHitPage): com.histmersion.api.library.SearchMarkdown.GeoPageResult =
+com.histmersion.api.library.SearchMarkdown.GeoResultsResult | base String | method-result
+    def geoResults(hits: Vector[GeoHit]): com.histmersion.api.library.SearchMarkdown.GeoResultsResult =
+com.histmersion.api.library.SearchMarkdown.HistogramResult | base String | method-result
+    def histogram(h: TimeHistogram, unit: com.histmersion.api.library.SearchMarkdown.HistogramUnit): com.histmersion.api.library.SearchMarkdown.HistogramResult =
+com.histmersion.api.library.SearchMarkdown.HistogramUnit | base String | method-parameter
+    def histogram(h: TimeHistogram, unit: com.histmersion.api.library.SearchMarkdown.HistogramUnit): com.histmersion.api.library.SearchMarkdown.HistogramResult =
+    val starts = unit == _root_.com.histmersion.api.library.SearchMarkdown.HistogramUnit(Aggregate.UnitStarts)
+com.histmersion.api.library.SearchMarkdown.SearchResultsResult | base String | method-result
+    def searchResults(hits: Vector[SearchHit]): com.histmersion.api.library.SearchMarkdown.SearchResultsResult =
+    def searchResults(result: SearchResult): com.histmersion.api.library.SearchMarkdown.SearchResultsResult =
+com.histmersion.api.library.SearchMarkdown.SnippetResult | base String | method-result
+    private[api] def snippet(h: SearchHit): com.histmersion.api.library.SearchMarkdown.SnippetResult =
+    case None    => _root_.com.histmersion.api.library.SearchMarkdown.SnippetResult("")
+com.histmersion.api.library.SearchMarkdown.TreeLinesDepth | base Int | method-parameter
+    private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.SearchMarkdown.TreeLinesUnit, depth: com.histmersion.api.library.SearchMarkdown.TreeLi
+    val kids = treeLines(b.children, unit, _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesDepth((depth).value + 1))
+com.histmersion.api.library.SearchMarkdown.TreeLinesResult | base String | method-result
+    private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.SearchMarkdown.TreeLinesUnit, depth: com.histmersion.api.library.SearchMarkdown.TreeLi
+com.histmersion.api.library.SearchMarkdown.TreeLinesUnit | base String | alias,method-parameter
+    val TreeUnit: _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesUnit.type = _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesUnit
+    private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.SearchMarkdown.TreeLinesUnit, depth: com.histmersion.api.library.SearchMarkdown.TreeLi
+com.histmersion.api.library.SearchMarkdown.TreeResult | base String | method-result
+    def tree(h: TimeHistogram, unit: com.histmersion.api.library.SearchMarkdown.TreeUnit): com.histmersion.api.library.SearchMarkdown.TreeResult =
+com.histmersion.api.library.SearchResult.OfOffset | base Int | method-parameter
+    def of(total: com.histmersion.api.library.SearchResult.OfTotal, hits: List[Hit], offset: com.histmersion.api.library.SearchResult.OfOffset): SearchResult =
+com.histmersion.api.library.SearchResult.OfTotal | base Int | method-parameter
+    def of(total: com.histmersion.api.library.SearchResult.OfTotal, hits: List[Hit], offset: com.histmersion.api.library.SearchResult.OfOffset): SearchResult =
+com.histmersion.api.library.Sort.All | base String | value
+    val all: List[com.histmersion.api.library.Sort.All] = values.toList.map(_root_.com.histmersion.api.library.Sort.All((label).value))
+com.histmersion.api.library.Sort.LabelResult | base String | method-result
+    def label(s: Sort): com.histmersion.api.library.Sort.LabelResult = s match
+    case Relevance   => _root_.com.histmersion.api.library.Sort.LabelResult("relevance")
+com.histmersion.api.library.Sort.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.library.Sort.ParseS): Option[Sort] = (s).value.trim.toLowerCase.replace("_", "") match

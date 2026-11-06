@@ -1,0 +1,351 @@
+## CONCEPTS NEARBY
+com.histmersion.api.Api.AggregateQuery.AsOf (Long)
+com.histmersion.api.Api.AggregateQuery.By (String)
+com.histmersion.api.Api.AggregateQuery.Depth (Int)
+com.histmersion.api.Api.AggregateQuery.Samples (Int)
+com.histmersion.api.Api.AggregateQuery.Size (Long)
+com.histmersion.api.Api.AggregateQuery.Unit (String)
+com.histmersion.api.Api.ArticleQuery.Kind (String)
+com.histmersion.api.Api.ArticleQuery.Text (String)
+com.histmersion.api.Api.AttestationQuery.Limit (Int)
+com.histmersion.api.Api.AttestationQuery.Offset (Int)
+com.histmersion.api.Api.AttestationQuery.TargetId (String)
+com.histmersion.api.Api.AttestationQuery.TargetType (String)
+com.histmersion.api.Api.Error.Code (String)
+com.histmersion.api.Api.Error.Message (String)
+com.histmersion.api.Api.EventQuery.Area (String)
+com.histmersion.api.Api.EventQuery.Context (Boolean)
+com.histmersion.api.Api.EventQuery.Historicity (String)
+com.histmersion.api.Api.EventQuery.Kind (String)
+com.histmersion.api.Api.EventQuery.PlaceId (String)
+com.histmersion.api.Api.EventQuery.Text (String)
+com.histmersion.api.Api.EventQuery.Tier (String)
+com.histmersion.api.Api.FindingsQuery.Region (String)
+com.histmersion.api.Api.GoalQuery.Limit (Int)
+com.histmersion.api.Api.GoalQuery.Offset (Int)
+com.histmersion.api.Api.GoalQuery.Status (String)
+com.histmersion.api.Api.MediaGeoQuery.From (Long)
+com.histmersion.api.Api.MediaGeoQuery.Kind (String)
+com.histmersion.api.Api.MediaGeoQuery.License (String)
+com.histmersion.api.Api.MediaGeoQuery.Limit (Int)
+com.histmersion.api.Api.MediaGeoQuery.Provider (String)
+com.histmersion.api.Api.MediaGeoQuery.To (Long)
+com.histmersion.api.Api.MediaQuery.Event (String)
+com.histmersion.api.Api.MediaQuery.License (String)
+com.histmersion.api.Api.MediaQuery.Limit (Int)
+com.histmersion.api.Api.MediaQuery.Offset (Int)
+com.histmersion.api.Api.MediaQuery.Place (String)
+com.histmersion.api.Api.MediaQuery.Provider (String)
+com.histmersion.api.Api.MediaQuery.Q (String)
+com.histmersion.api.Api.PassagesQuery.Context (Int)
+com.histmersion.api.Api.PassagesQuery.Limit (Int)
+com.histmersion.api.Api.PassagesQuery.Q (String)
+com.histmersion.api.Api.PassagesQuery.Regex (Boolean)
+com.histmersion.api.Api.PlacesGeoQuery.AsOf (Long)
+com.histmersion.api.Api.PlacesGeoQuery.From (Long)
+com.histmersion.api.Api.PlacesGeoQuery.Kind (String)
+com.histmersion.api.Api.PlacesGeoQuery.Limit (Int)
+com.histmersion.api.Api.PlacesGeoQuery.Pick (String)
+com.histmersion.api.Api.PlacesGeoQuery.To (Long)
+com.histmersion.api.Api.SourceViewQuery.Chars (Int)
+com.histmersion.api.Api.SourceViewQuery.FullText (Boolean)
+com.histmersion.api.Api.SourceViewQuery.Heading (String)
+com.histmersion.api.Api.SourceViewQuery.Offset (Int)
+com.histmersion.api.Api.SourceViewQuery.Section (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.Api.ActivityPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.ActivityPart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.ActivityPart1Part3 | base String | lambda-parameter,value
+com.histmersion.api.Api.ActivityPart1Part4 | base Int | lambda-parameter,value
+com.histmersion.api.Api.ActivityPart1Part5 | base String | lambda-parameter,value
+com.histmersion.api.Api.AddPlaceNamePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.AgentStateDeletePart1 | base String | lambda-parameter,value
+    lazy val agentStateDelete: PublicEndpoint[com.histmersion.api.Api.AgentStateDeletePart1, com.histmersion.api.Api.Error, AgentStateDeleted, Any] =
+com.histmersion.api.Api.AgentStateGetPart1 | base String | lambda-parameter,value
+    lazy val agentStateGet: PublicEndpoint[com.histmersion.api.Api.AgentStateGetPart1, com.histmersion.api.Api.Error, AgentStateEntry, Any] =
+com.histmersion.api.Api.AgentStateSetPart1Part1 | base String | lambda-parameter,value
+    lazy val agentStateSet: PublicEndpoint[(com.histmersion.api.Api.AgentStateSetPart1Part1, AgentStatePut), com.histmersion.api.Api.Error, AgentStateEntry, Any] =
+com.histmersion.api.Api.AggregateQuery.TreeBy | base String | method-parameter
+com.histmersion.api.Api.AggregateQuery.TreeDepth | base Int | method-parameter
+com.histmersion.api.Api.ArticleCoveragePart1 | base String | lambda-parameter,value
+    lazy val articleCoverage: PublicEndpoint[com.histmersion.api.Api.ArticleCoveragePart1, com.histmersion.api.Api.Error, Coverage, Any] =
+com.histmersion.api.Api.ArticleReviewPart1 | base String | lambda-parameter,value
+    lazy val articleReview: PublicEndpoint[com.histmersion.api.Api.ArticleReviewPart1, com.histmersion.api.Api.Error, Article.ReviewView, Any] =
+com.histmersion.api.Api.ArticleSlugsPart3 | base String | lambda-parameter,value
+    lazy val articleSlugs: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[com.histmersion.api.Api.ArticleSlugsPart3], Any] =
+com.histmersion.api.Api.ArticleVersionPart1Part1 | base String | lambda-parameter,value
+    lazy val articleVersion: PublicEndpoint[(com.histmersion.api.Api.ArticleVersionPart1Part1, com.histmersion.api.Api.ArticleVersionPart1Part2), com.histmersion.api.Api.Erro
+com.histmersion.api.Api.ArticleVersionPart1Part2 | base Long | lambda-parameter,value
+    lazy val articleVersion: PublicEndpoint[(com.histmersion.api.Api.ArticleVersionPart1Part1, com.histmersion.api.Api.ArticleVersionPart1Part2), com.histmersion.api.Api.Erro
+com.histmersion.api.Api.ArticleVersionsPart1 | base String | lambda-parameter,value
+    lazy val articleVersions: PublicEndpoint[com.histmersion.api.Api.ArticleVersionsPart1, com.histmersion.api.Api.Error, List[Article.Version], Any] =
+com.histmersion.api.Api.AssetDetailPart1Part1 | base String | lambda-parameter,value
+    lazy val assetDetail: PublicEndpoint[(com.histmersion.api.Api.AssetDetailPart1Part1, com.histmersion.api.Api.AssetDetailPart1Part2), com.histmersion.api.Api.Error, AssetD
+com.histmersion.api.Api.AssetDetailPart1Part2 | base String | lambda-parameter,value
+    lazy val assetDetail: PublicEndpoint[(com.histmersion.api.Api.AssetDetailPart1Part1, com.histmersion.api.Api.AssetDetailPart1Part2), com.histmersion.api.Api.Error, AssetD
+com.histmersion.api.Api.AssetLinksPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.AssetLinksPart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.AssetLinksPart1Part3 | base String | lambda-parameter,value
+com.histmersion.api.Api.AssetLinksPart1Part4 | base String | lambda-parameter,value
+com.histmersion.api.Api.AssetPart1Part1 | base String | lambda-parameter,value
+    lazy val asset: PublicEndpoint[(com.histmersion.api.Api.AssetPart1Part1, com.histmersion.api.Api.AssetPart1Part2), com.histmersion.api.Api.Error, (com.histmersion.api.Api
+com.histmersion.api.Api.AssetPart1Part2 | base String | lambda-parameter,value
+    lazy val asset: PublicEndpoint[(com.histmersion.api.Api.AssetPart1Part1, com.histmersion.api.Api.AssetPart1Part2), com.histmersion.api.Api.Error, (com.histmersion.api.Api
+com.histmersion.api.Api.AssetPart3Part1 | base Byte] | lambda-parameter,value
+    lazy val asset: PublicEndpoint[(com.histmersion.api.Api.AssetPart1Part1, com.histmersion.api.Api.AssetPart1Part2), com.histmersion.api.Api.Error, (com.histmersion.api.Api
+com.histmersion.api.Api.AssetPart3Part2 | base String | lambda-parameter,value
+    lazy val asset: PublicEndpoint[(com.histmersion.api.Api.AssetPart1Part1, com.histmersion.api.Api.AssetPart1Part2), com.histmersion.api.Api.Error, (com.histmersion.api.Api
+com.histmersion.api.Api.AssetsPart1 | base String | lambda-parameter,value
+    lazy val assets: PublicEndpoint[com.histmersion.api.Api.AssetsPart1, com.histmersion.api.Api.Error, List[AssetInfo], Any] =
+com.histmersion.api.Api.CheckArticlePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.CitekeysPart3 | base String | lambda-parameter,value
+    lazy val citekeys: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[com.histmersion.api.Api.CitekeysPart3], Any] =
+com.histmersion.api.Api.ContradictionsPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.ContradictionsPart1Part2 | base Long | lambda-parameter,value
+com.histmersion.api.Api.DeleteArticlePart1 | base String | lambda-parameter,value
+    lazy val deleteArticle: PublicEndpoint[com.histmersion.api.Api.DeleteArticlePart1, com.histmersion.api.Api.Error, Article.Deleted, Any] =
+com.histmersion.api.Api.DeleteAssetLinkPart1 | base Long | lambda-parameter,value
+    lazy val deleteAssetLink: PublicEndpoint[com.histmersion.api.Api.DeleteAssetLinkPart1, com.histmersion.api.Api.Error, AssetLink.Deleted, Any] =
+com.histmersion.api.Api.DeleteAttestationPart1 | base Long | lambda-parameter,value
+    lazy val deleteAttestation: PublicEndpoint[com.histmersion.api.Api.DeleteAttestationPart1, com.histmersion.api.Api.Error, Attestation.Deleted, Any] =
+com.histmersion.api.Api.DeleteEventPart1 | base String | lambda-parameter,value
+    lazy val deleteEvent: PublicEndpoint[com.histmersion.api.Api.DeleteEventPart1, com.histmersion.api.Api.Error, EventDeleted, Any] =
+com.histmersion.api.Api.DeleteGoalPart1 | base String | lambda-parameter,value
+    lazy val deleteGoal: PublicEndpoint[com.histmersion.api.Api.DeleteGoalPart1, com.histmersion.api.Api.Error, Goal.Deleted, Any] =
+com.histmersion.api.Api.DeleteSourcePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.DownloadBackupPart1 | base String | value
+    lazy val downloadBackup: PublicEndpoint[com.histmersion.api.Api.DownloadBackupPart1, com.histmersion.api.Api.Error, TapirFile, Any] =
+com.histmersion.api.Api.Error.HasCodeCode | base String | method-parameter
+    def hasCode(code: com.histmersion.api.Api.Error.HasCodeCode): PartialFunction[Any, com.histmersion.api.Api.Error.HasCodeResultPart2] =
+com.histmersion.api.Api.ExportArticlePart1 | base String | lambda-parameter,value
+    lazy val exportArticle: PublicEndpoint[com.histmersion.api.Api.ExportArticlePart1, com.histmersion.api.Api.Error, com.histmersion.api.Api.ExportArticlePart3, Any] =
+com.histmersion.api.Api.ExportArticlePart3 | base String | lambda-parameter,value
+    lazy val exportArticle: PublicEndpoint[com.histmersion.api.Api.ExportArticlePart1, com.histmersion.api.Api.Error, com.histmersion.api.Api.ExportArticlePart3, Any] =
+com.histmersion.api.Api.ExportBundlePart1 | base String | value
+    lazy val exportBundle: PublicEndpoint[Option[com.histmersion.api.Api.ExportBundlePart1], com.histmersion.api.Api.Error, (TapirFile, com.histmersion.api.Api.ExportBundlePa
+com.histmersion.api.Api.ExportBundlePart3Part2 | base String | value
+    lazy val exportBundle: PublicEndpoint[Option[com.histmersion.api.Api.ExportBundlePart1], com.histmersion.api.Api.Error, (TapirFile, com.histmersion.api.Api.ExportBundlePa
+com.histmersion.api.Api.ExportSourcePart1 | base String | lambda-parameter,value
+    lazy val exportSource: PublicEndpoint[com.histmersion.api.Api.ExportSourcePart1, com.histmersion.api.Api.Error, com.histmersion.api.Api.ExportSourcePart3, Any] =
+com.histmersion.api.Api.ExportSourcePart3 | base String | lambda-parameter,value
+    lazy val exportSource: PublicEndpoint[com.histmersion.api.Api.ExportSourcePart1, com.histmersion.api.Api.Error, com.histmersion.api.Api.ExportSourcePart3, Any] =
+com.histmersion.api.Api.FacetsPart1Part1 | base String | lambda-parameter,value
+    lazy val facets: PublicEndpoint[(com.histmersion.api.Api.FacetsPart1Part1, Option[com.histmersion.api.Api.FacetsPart1Part2], Filter), com.histmersion.api.Api.Error, List[
+com.histmersion.api.Api.FacetsPart1Part2 | base String | lambda-parameter,value
+    lazy val facets: PublicEndpoint[(com.histmersion.api.Api.FacetsPart1Part1, Option[com.histmersion.api.Api.FacetsPart1Part2], Filter), com.histmersion.api.Api.Error, List[
+com.histmersion.api.Api.FetchExternalPlacesPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.FetchExternalPlacesPart1Part2 | base Boolean | lambda-parameter,value
+com.histmersion.api.Api.FetchPeriodsPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.FetchPeriodsPart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.FillFigureLicencesPart1 | base Boolean | lambda-parameter,value
+    lazy val fillFigureLicences: PublicEndpoint[com.histmersion.api.Api.FillFigureLicencesPart1, com.histmersion.api.Api.Error, FigureLicenceFill, Any] =
+com.histmersion.api.Api.FixArticleFormatPart1 | base String | lambda-parameter,value
+    lazy val fixArticleFormat: PublicEndpoint[com.histmersion.api.Api.FixArticleFormatPart1, com.histmersion.api.Api.Error, FormatReport, Any] =
+com.histmersion.api.Api.FixSourceFormatPart1 | base String | lambda-parameter,value
+    lazy val fixSourceFormat: PublicEndpoint[com.histmersion.api.Api.FixSourceFormatPart1, com.histmersion.api.Api.Error, FormatReport, Any] =
+com.histmersion.api.Api.GenerateApiIndexRepo | base String | method-parameter
+    @main def generateApiIndex(repo: com.histmersion.api.Api.GenerateApiIndexRepo): Unit =
+com.histmersion.api.Api.GetArticlePart1Part1 | base String | lambda-parameter,value
+    lazy val getArticle: PublicEndpoint[(com.histmersion.api.Api.GetArticlePart1Part1, com.histmersion.api.Api.GetArticlePart1Part2), com.histmersion.api.Api.Error, Article.V
+com.histmersion.api.Api.GetArticlePart1Part2 | base Boolean | lambda-parameter,value
+    lazy val getArticle: PublicEndpoint[(com.histmersion.api.Api.GetArticlePart1Part1, com.histmersion.api.Api.GetArticlePart1Part2), com.histmersion.api.Api.Error, Article.V
+com.histmersion.api.Api.GetAttestationPart1 | base Long | lambda-parameter,value
+    lazy val getAttestation: PublicEndpoint[com.histmersion.api.Api.GetAttestationPart1, com.histmersion.api.Api.Error, Attestation, Any] =
+com.histmersion.api.Api.GetEventPart1 | base String | lambda-parameter,value
+    lazy val getEvent: PublicEndpoint[com.histmersion.api.Api.GetEventPart1, com.histmersion.api.Api.Error, EventDetail, Any] =
+com.histmersion.api.Api.GetGoalPart1 | base String | lambda-parameter,value
+    lazy val getGoal: PublicEndpoint[com.histmersion.api.Api.GetGoalPart1, com.histmersion.api.Api.Error, Goal, Any] =
+com.histmersion.api.Api.GetSourcePart1Part1 | base String | lambda-parameter,value
+    lazy val getSource: PublicEndpoint[(com.histmersion.api.Api.GetSourcePart1Part1, com.histmersion.api.Api.GetSourcePart1Part2), com.histmersion.api.Api.Error, Source.WithF
+com.histmersion.api.Api.GetSourcePart1Part2 | base Boolean | lambda-parameter,value
+    lazy val getSource: PublicEndpoint[(com.histmersion.api.Api.GetSourcePart1Part1, com.histmersion.api.Api.GetSourcePart1Part2), com.histmersion.api.Api.Error, Source.WithF
+com.histmersion.api.Api.GraphPart1Part1 | base String | lambda-parameter,value
+    lazy val graph: PublicEndpoint[(com.histmersion.api.Api.GraphPart1Part1, Option[com.histmersion.api.Api.GraphPart1Part2]), com.histmersion.api.Api.Error, Source.Graph, An
+com.histmersion.api.Api.GraphPart1Part2 | base Int | lambda-parameter,value
+    lazy val graph: PublicEndpoint[(com.histmersion.api.Api.GraphPart1Part1, Option[com.histmersion.api.Api.GraphPart1Part2]), com.histmersion.api.Api.Error, Source.Graph, An
+com.histmersion.api.Api.IiifImagePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.IiifImagePart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.IiifImagePart1Part3 | base String | lambda-parameter,value
+com.histmersion.api.Api.IiifImagePart1Part4 | base String | lambda-parameter,value
+com.histmersion.api.Api.IiifImagePart1Part5 | base String | lambda-parameter,value
+com.histmersion.api.Api.IiifImagePart1Part6 | base String | lambda-parameter,value
+com.histmersion.api.Api.IiifImagePart3Part1 | base Byte] | lambda-parameter,value
+com.histmersion.api.Api.IiifImagePart3Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.IiifInfoPart1Part1 | base String | lambda-parameter,value
+    lazy val iiifInfo: PublicEndpoint[(com.histmersion.api.Api.IiifInfoPart1Part1, com.histmersion.api.Api.IiifInfoPart1Part2), com.histmersion.api.Api.Error, io.circe.Json, 
+com.histmersion.api.Api.IiifInfoPart1Part2 | base String | lambda-parameter,value
+    lazy val iiifInfo: PublicEndpoint[(com.histmersion.api.Api.IiifInfoPart1Part1, com.histmersion.api.Api.IiifInfoPart1Part2), com.histmersion.api.Api.Error, io.circe.Json, 
+com.histmersion.api.Api.ImportBundlePart1Part1 | base Boolean | value
+    lazy val importBundle: PublicEndpoint[(com.histmersion.api.Api.ImportBundlePart1Part1, TapirFile), com.histmersion.api.Api.Error, Bundle.ImportResult, Any] =
+com.histmersion.api.Api.ImportPeriodsPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.ImportPeriodsPart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.ImportPeriodsPart1Part3 | base String | lambda-parameter,value
+com.histmersion.api.Api.ImportPlacesPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.ImportPlacesPart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.ImportPlacesPart1Part3 | base String | lambda-parameter,value
+com.histmersion.api.Api.Index.CurrentReadme | base String | method-parameter
+    def current(readme: com.histmersion.api.Api.Index.CurrentReadme): Option[com.histmersion.api.Api.Index.CurrentResult] =
+com.histmersion.api.Api.Index.CurrentResult | base String | method-result
+    def current(readme: com.histmersion.api.Api.Index.CurrentReadme): Option[com.histmersion.api.Api.Index.CurrentResult] =
+com.histmersion.api.Api.Index.MarkdownResult | base String | method-result
+    def markdown(endpoints: List[AnyEndpoint]): com.histmersion.api.Api.Index.MarkdownResult =
+com.histmersion.api.Api.Index.MethodResult | base String | method-result
+    def method(e: AnyEndpoint): com.histmersion.api.Api.Index.MethodResult = _root_.com.histmersion.api.Api.Index.MethodResult(e.method.map(_.method).getOrElse("GET"))
+com.histmersion.api.Api.Index.PathResult | base String | method-result
+    def path(e: AnyEndpoint): com.histmersion.api.Api.Index.PathResult = _root_.com.histmersion.api.Api.Index.PathResult(e.showPathTemplate(showQueryParam = None))
+com.histmersion.api.Api.Index.SpliceIndex | base String | method-parameter
+    def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Index.SpliceResultPart1, 
+com.histmersion.api.Api.Index.SpliceReadme | base String | method-parameter
+    def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Index.SpliceResultPart1, 
+com.histmersion.api.Api.Index.SpliceResultPart1 | base String | method-result
+    def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Index.SpliceResultPart1, 
+com.histmersion.api.Api.Index.SpliceResultPart2 | base String | method-result
+    def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Index.SpliceResultPart1, 
+com.histmersion.api.Api.InitPart1 | base Boolean | lambda-parameter,value
+    lazy val init: PublicEndpoint[com.histmersion.api.Api.InitPart1, com.histmersion.api.Api.Error, JobInfo, Any] =
+com.histmersion.api.Api.JobControlPart1Part1 | base String | value
+    lazy val jobControl: PublicEndpoint[(com.histmersion.api.Api.JobControlPart1Part1, com.histmersion.api.Api.JobControlPart1Part2), com.histmersion.api.Api.Error, JobInfo, 
+com.histmersion.api.Api.JobControlPart1Part2 | base String | value
+    lazy val jobControl: PublicEndpoint[(com.histmersion.api.Api.JobControlPart1Part1, com.histmersion.api.Api.JobControlPart1Part2), com.histmersion.api.Api.Error, JobInfo, 
+com.histmersion.api.Api.JobPart1 | base String | lambda-parameter,value
+    lazy val job: PublicEndpoint[com.histmersion.api.Api.JobPart1, com.histmersion.api.Api.Error, JobInfo, Any] =
+com.histmersion.api.Api.JobsPart1Part2 | base Int | lambda-parameter,value
+com.histmersion.api.Api.JobsPart1Part3 | base String | lambda-parameter,value
+com.histmersion.api.Api.JobsPart1Part4 | base String | lambda-parameter,value
+com.histmersion.api.Api.LintArticlePart1 | base String | lambda-parameter,value
+    lazy val lintArticle: PublicEndpoint[com.histmersion.api.Api.LintArticlePart1, com.histmersion.api.Api.Error, FormatReport, Any] =
+com.histmersion.api.Api.LintSourcePart1 | base String | lambda-parameter,value
+    lazy val lintSource: PublicEndpoint[com.histmersion.api.Api.LintSourcePart1, com.histmersion.api.Api.Error, FormatReport, Any] =
+com.histmersion.api.Api.LoadPlacesPart1Part1 | base String | lambda-parameter,value
+    lazy val loadPlaces: PublicEndpoint[(com.histmersion.api.Api.LoadPlacesPart1Part1, com.histmersion.api.Api.LoadPlacesPart1Part2), com.histmersion.api.Api.Error, JobInfo, 
+com.histmersion.api.Api.LoadPlacesPart1Part2 | base Boolean | lambda-parameter,value
+    lazy val loadPlaces: PublicEndpoint[(com.histmersion.api.Api.LoadPlacesPart1Part1, com.histmersion.api.Api.LoadPlacesPart1Part2), com.histmersion.api.Api.Error, JobInfo, 
+com.histmersion.api.Api.MediaFilePart1 | base String | lambda-parameter,value
+    lazy val mediaFile: PublicEndpoint[com.histmersion.api.Api.MediaFilePart1, com.histmersion.api.Api.Error, (com.histmersion.api.Api.MediaFilePart3Part1, com.histmersion.ap
+com.histmersion.api.Api.MediaFilePart3Part1 | base Byte] | lambda-parameter,value
+    lazy val mediaFile: PublicEndpoint[com.histmersion.api.Api.MediaFilePart1, com.histmersion.api.Api.Error, (com.histmersion.api.Api.MediaFilePart3Part1, com.histmersion.ap
+com.histmersion.api.Api.MediaFilePart3Part2 | base String | lambda-parameter,value
+    lazy val mediaFile: PublicEndpoint[com.histmersion.api.Api.MediaFilePart1, com.histmersion.api.Api.Error, (com.histmersion.api.Api.MediaFilePart3Part1, com.histmersion.ap
+com.histmersion.api.Api.MediaShowPart1 | base String | lambda-parameter,value
+    lazy val mediaShow: PublicEndpoint[com.histmersion.api.Api.MediaShowPart1, com.histmersion.api.Api.Error, MediaItem, Any] =
+com.histmersion.api.Api.MediaThumbPart1 | base String | lambda-parameter,value
+    lazy val mediaThumb: PublicEndpoint[com.histmersion.api.Api.MediaThumbPart1, com.histmersion.api.Api.Error, (com.histmersion.api.Api.MediaThumbPart3Part1, com.histmersion
+com.histmersion.api.Api.MediaThumbPart3Part1 | base Byte] | lambda-parameter,value
+    lazy val mediaThumb: PublicEndpoint[com.histmersion.api.Api.MediaThumbPart1, com.histmersion.api.Api.Error, (com.histmersion.api.Api.MediaThumbPart3Part1, com.histmersion
+com.histmersion.api.Api.MediaThumbPart3Part2 | base String | lambda-parameter,value
+    lazy val mediaThumb: PublicEndpoint[com.histmersion.api.Api.MediaThumbPart1, com.histmersion.api.Api.Error, (com.histmersion.api.Api.MediaThumbPart3Part1, com.histmersion
+com.histmersion.api.Api.MergeApplyStatusPart1 | base String | lambda-parameter,value
+    lazy val mergeApplyStatus: PublicEndpoint[com.histmersion.api.Api.MergeApplyStatusPart1, com.histmersion.api.Api.Error, MergeApplyJob, Any] =
+com.histmersion.api.Api.MergeDetailPart1 | base String | lambda-parameter,value
+    lazy val mergeDetail: PublicEndpoint[com.histmersion.api.Api.MergeDetailPart1, com.histmersion.api.Api.Error, MergeDetail, Any] =
+com.histmersion.api.Api.MergeLedgerPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.MergeLedgerPart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.MergeLedgerPart1Part3 | base Int | lambda-parameter,value
+com.histmersion.api.Api.MergePlacePart1Part1 | base String | lambda-parameter,value
+    lazy val mergePlace: PublicEndpoint[(com.histmersion.api.Api.MergePlacePart1Part1, Place.MergeIn), com.histmersion.api.Api.Error, Place.Gone, Any] =
+com.histmersion.api.Api.MergeSessionPart1 | base String | lambda-parameter,value
+    lazy val mergeSession: PublicEndpoint[com.histmersion.api.Api.MergeSessionPart1, com.histmersion.api.Api.Error, MergeSession, Any] =
+com.histmersion.api.Api.MergesPart1 | base Int | lambda-parameter,value
+    lazy val merges: PublicEndpoint[Option[com.histmersion.api.Api.MergesPart1], com.histmersion.api.Api.Error, List[MergeInfo], Any] =
+com.histmersion.api.Api.NeighborsPart1Part1 | base String | lambda-parameter,value
+    lazy val neighbors: PublicEndpoint[(com.histmersion.api.Api.NeighborsPart1Part1, List[com.histmersion.api.Api.NeighborsPart1Part2]), com.histmersion.api.Api.Error, List[N
+com.histmersion.api.Api.NeighborsPart1Part2 | base String | lambda-parameter,value
+    lazy val neighbors: PublicEndpoint[(com.histmersion.api.Api.NeighborsPart1Part1, List[com.histmersion.api.Api.NeighborsPart1Part2]), com.histmersion.api.Api.Error, List[N
+com.histmersion.api.Api.OriginalPart1 | base String | value
+    lazy val original: PublicEndpoint[com.histmersion.api.Api.OriginalPart1, com.histmersion.api.Api.Error, (TapirFile, com.histmersion.api.Api.OriginalPart3Part2), Any] =
+com.histmersion.api.Api.OriginalPart3Part2 | base String | value
+    lazy val original: PublicEndpoint[com.histmersion.api.Api.OriginalPart1, com.histmersion.api.Api.Error, (TapirFile, com.histmersion.api.Api.OriginalPart3Part2), Any] =
+com.histmersion.api.Api.ParseResolutionsPart1 | base String | lambda-parameter,value
+    lazy val parseResolutions: PublicEndpoint[com.histmersion.api.Api.ParseResolutionsPart1, com.histmersion.api.Api.Error, MergeResolutions, Any] =
+com.histmersion.api.Api.PatchArticlePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PatchArticlePart1Part3 | base Boolean | lambda-parameter,value
+com.histmersion.api.Api.PatchAssetPart1Part1 | base String | lambda-parameter,value
+    lazy val patchAsset: PublicEndpoint[(com.histmersion.api.Api.PatchAssetPart1Part1, com.histmersion.api.Api.PatchAssetPart1Part2, AssetPatch), com.histmersion.api.Api.Erro
+com.histmersion.api.Api.PatchAssetPart1Part2 | base String | lambda-parameter,value
+    lazy val patchAsset: PublicEndpoint[(com.histmersion.api.Api.PatchAssetPart1Part1, com.histmersion.api.Api.PatchAssetPart1Part2, AssetPatch), com.histmersion.api.Api.Erro
+com.histmersion.api.Api.PatchAttestationPart1Part1 | base Long | lambda-parameter,value
+com.histmersion.api.Api.PatchEventPart1Part1 | base String | lambda-parameter,value
+    lazy val patchEvent: PublicEndpoint[(com.histmersion.api.Api.PatchEventPart1Part1, EventPatch), com.histmersion.api.Api.Error, EventDetail, Any] =
+com.histmersion.api.Api.PatchGoalPart1Part1 | base String | lambda-parameter,value
+    lazy val patchGoal: PublicEndpoint[(com.histmersion.api.Api.PatchGoalPart1Part1, Goal.Patch), com.histmersion.api.Api.Error, Goal, Any] =
+com.histmersion.api.Api.PatchSourcePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PatchSourcePart1Part3 | base Boolean | lambda-parameter,value
+com.histmersion.api.Api.PeriodPart1 | base String | lambda-parameter,value
+    lazy val period: PublicEndpoint[com.histmersion.api.Api.PeriodPart1, com.histmersion.api.Api.Error, Period.Detail, Any] =
+com.histmersion.api.Api.PeriodsPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PeriodsPart1Part2 | base String | lambda-parameter,value
+com.histmersion.api.Api.PeriodsPart1Part3 | base Long | lambda-parameter,value
+com.histmersion.api.Api.PeriodsPart1Part4 | base Long | lambda-parameter,value
+com.histmersion.api.Api.PlaceChildrenPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PlaceChildrenPart1Part2 | base Long | lambda-parameter,value
+com.histmersion.api.Api.PlaceFootprintsPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PlaceFootprintsPart1Part2 | base Long | lambda-parameter,value
+com.histmersion.api.Api.PlaceLinksPart1 | base String | lambda-parameter,value
+    lazy val placeLinks: PublicEndpoint[com.histmersion.api.Api.PlaceLinksPart1, com.histmersion.api.Api.Error, List[Place.Link], Any] =
+com.histmersion.api.Api.PlaceNamesPart1 | base String | lambda-parameter,value
+    lazy val placeNames: PublicEndpoint[Option[com.histmersion.api.Api.PlaceNamesPart1], com.histmersion.api.Api.Error, List[ManualPlaceName], Any] =
+com.histmersion.api.Api.PlaceOverridesPart1 | base String | lambda-parameter,value
+    lazy val placeOverrides: PublicEndpoint[Option[com.histmersion.api.Api.PlaceOverridesPart1], com.histmersion.api.Api.Error, List[Place.Override], Any] =
+com.histmersion.api.Api.PlacePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PlacePart1Part2 | base Long | lambda-parameter,value
+com.histmersion.api.Api.PlacePart1Part3 | base Boolean | lambda-parameter,value
+com.histmersion.api.Api.PlaceTreePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PlaceTreePart1Part2 | base Long | lambda-parameter,value
+com.histmersion.api.Api.PlaceTreePart1Part3 | base Int | lambda-parameter,value
+com.histmersion.api.Api.PlacesGeoPart3 | base String | lambda-parameter,value
+    lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.PlacesGeoPart3, Any] =
+com.histmersion.api.Api.PlacesPart1Part1 | base String | lambda-parameter,value
+    lazy val places: PublicEndpoint[(Option[com.histmersion.api.Api.PlacesPart1Part1], Option[com.histmersion.api.Api.PlacesPart1Part2], Option[com.histmersion.api.Api.Places
+com.histmersion.api.Api.PlacesPart1Part2 | base Long | lambda-parameter,value
+    lazy val places: PublicEndpoint[(Option[com.histmersion.api.Api.PlacesPart1Part1], Option[com.histmersion.api.Api.PlacesPart1Part2], Option[com.histmersion.api.Api.Places
+com.histmersion.api.Api.PlacesPart1Part3 | base Int | lambda-parameter,value
+    lazy val places: PublicEndpoint[(Option[com.histmersion.api.Api.PlacesPart1Part1], Option[com.histmersion.api.Api.PlacesPart1Part2], Option[com.histmersion.api.Api.Places
+com.histmersion.api.Api.PutArticlePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PutArticlePart1Part3 | base Boolean | lambda-parameter,value
+com.histmersion.api.Api.PutAssetsPart1Part1 | base String | lambda-parameter,value
+    lazy val putAssets: PublicEndpoint[(com.histmersion.api.Api.PutAssetsPart1Part1, List[AssetInput]), com.histmersion.api.Api.Error, AssetsStored, Any] =
+com.histmersion.api.Api.PutEventPart1Part1 | base String | lambda-parameter,value
+    lazy val putEvent: PublicEndpoint[(com.histmersion.api.Api.PutEventPart1Part1, EventPut), com.histmersion.api.Api.Error, EventDetail, Any] =
+com.histmersion.api.Api.PutGoalPart1Part1 | base String | lambda-parameter,value
+    lazy val putGoal: PublicEndpoint[(com.histmersion.api.Api.PutGoalPart1Part1, Goal.Put), com.histmersion.api.Api.Error, Goal, Any] =
+com.histmersion.api.Api.PutMergeSessionPart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PutSourceCoverPart1Part2 | base Byte] | lambda-parameter,value
+com.histmersion.api.Api.PutSourcePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.PutSourcePart1Part3 | base Boolean | lambda-parameter,value
+com.histmersion.api.Api.QAnonymousPart1 | base String | method-parameter
+    def q[A](p: D.Param)(using Codec[List[com.histmersion.api.Api.QAnonymousPart1], A, CodecFormat.TextPlain]) =
+com.histmersion.api.Api.ReindexPart1Part1 | base String | lambda-parameter,value
+    lazy val reindex: PublicEndpoint[(Option[com.histmersion.api.Api.ReindexPart1Part1], Option[com.histmersion.api.Api.ReindexPart1Part2]), com.histmersion.api.Api.Error, Re
+com.histmersion.api.Api.ReindexPart1Part2 | base Int | lambda-parameter,value
+    lazy val reindex: PublicEndpoint[(Option[com.histmersion.api.Api.ReindexPart1Part1], Option[com.histmersion.api.Api.ReindexPart1Part2]), com.histmersion.api.Api.Error, Re
+com.histmersion.api.Api.RemovePlaceNamePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.RemovePlacePart1Part1 | base String | lambda-parameter,value
+    lazy val removePlace: PublicEndpoint[(com.histmersion.api.Api.RemovePlacePart1Part1, Place.RemoveIn), com.histmersion.api.Api.Error, Place.Gone, Any] =
+com.histmersion.api.Api.RenameArticlePart1Part1 | base String | lambda-parameter,value
+    lazy val renameArticle: PublicEndpoint[(com.histmersion.api.Api.RenameArticlePart1Part1, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
+com.histmersion.api.Api.RenameEventPart1Part1 | base String | lambda-parameter,value
+    lazy val renameEvent: PublicEndpoint[(com.histmersion.api.Api.RenameEventPart1Part1, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
+com.histmersion.api.Api.RenameGoalPart1Part1 | base String | lambda-parameter,value
+    lazy val renameGoal: PublicEndpoint[(com.histmersion.api.Api.RenameGoalPart1Part1, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
+com.histmersion.api.Api.RenamePlacePart1Part1 | base String | lambda-parameter,value
+    lazy val renamePlace: PublicEndpoint[(com.histmersion.api.Api.RenamePlacePart1Part1, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
+com.histmersion.api.Api.RenameSourcePart1Part1 | base String | lambda-parameter,value
+    lazy val renameSource: PublicEndpoint[(com.histmersion.api.Api.RenameSourcePart1Part1, Rename.Request), com.histmersion.api.Api.Error, Source.Renamed, Any] =
+com.histmersion.api.Api.ReocrPart1Part1 | base String | lambda-parameter,value
+    lazy val reocr: PublicEndpoint[(com.histmersion.api.Api.ReocrPart1Part1, com.histmersion.api.Api.ReocrPart1Part2), com.histmersion.api.Api.Error, Ingest.Accepted, Any] =
+com.histmersion.api.Api.ReocrPart1Part2 | base Boolean | lambda-parameter,value
+    lazy val reocr: PublicEndpoint[(com.histmersion.api.Api.ReocrPart1Part1, com.histmersion.api.Api.ReocrPart1Part2), com.histmersion.api.Api.Error, Ingest.Accepted, Any] =
+com.histmersion.api.Api.ResolveIdPart1 | base String | lambda-parameter,value
+    lazy val resolveId: PublicEndpoint[com.histmersion.api.Api.ResolveIdPart1, com.histmersion.api.Api.Error, ResolvedId, Any] =
+com.histmersion.api.Api.SearchPart1Part1 | base String | lambda-parameter,value
+    lazy val search: PublicEndpoint[(Option[com.histmersion.api.Api.SearchPart1Part1], Option[com.histmersion.api.Api.SearchPart1Part2]), com.histmersion.api.Api.Error, List[
+com.histmersion.api.Api.SearchPart1Part2 | base Int | lambda-parameter,value
+    lazy val search: PublicEndpoint[(Option[com.histmersion.api.Api.SearchPart1Part1], Option[com.histmersion.api.Api.SearchPart1Part2]), com.histmersion.api.Api.Error, List[
+com.histmersion.api.Api.SeedPeriodsPart1 | base Boolean | lambda-parameter,value
+    lazy val seedPeriods: PublicEndpoint[com.histmersion.api.Api.SeedPeriodsPart1, com.histmersion.api.Api.Error, Period.ImportResult, Any] =
+com.histmersion.api.Api.SetPlaceOverridePart1Part1 | base String | lambda-parameter,value
+com.histmersion.api.Api.SourceArticlesPart1 | base String | lambda-parameter,value
+    lazy val sourceArticles: PublicEndpoint[com.histmersion.api.Api.SourceArticlesPart1, com.histmersion.api.Api.Error, List[Backlink], Any] =
+com.histmersion.api.Api.SourceViewPart3 | base String | lambda-parameter,value
+    lazy val sourceView: PublicEndpoint[SourceViewQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.SourceViewPart3, Any] =

@@ -1,0 +1,245 @@
+## CONCEPTS NEARBY
+com.histmersion.api.research.Coverage.Checked (Int)
+com.histmersion.api.research.Coverage.Edge.Kind (String)
+com.histmersion.api.research.Coverage.Entry.Reason (String)
+com.histmersion.api.research.Coverage.FilterLine (String)
+com.histmersion.api.research.Coverage.Reason.Value (String)
+com.histmersion.api.research.Coverage.Total (Int)
+com.histmersion.api.research.CritiquePair.Kinds (String)
+com.histmersion.api.research.CritiquePair.Reason (String)
+com.histmersion.api.research.CritiquePair.ReasonBy (String)
+com.histmersion.api.research.CritiquePairing.Hit.Edges (String)
+com.histmersion.api.research.CritiquePairing.Hit.From (Int)
+com.histmersion.api.research.CritiquePairing.Hit.Mechanical (Boolean)
+com.histmersion.api.research.CritiquePairing.Hit.Named (String)
+com.histmersion.api.research.CritiquePairing.Hit.To (Int)
+com.histmersion.api.research.CritiquePairing.Hit.Unit (Int)
+com.histmersion.api.research.CritiquePairing.Hit.Where (String)
+com.histmersion.api.research.CritiquePairing.Work.Names (String)
+com.histmersion.api.research.CritiqueReason.By (String)
+com.histmersion.api.research.CritiqueReason.Reason (String)
+com.histmersion.api.research.CritiqueState.Wire (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.research.ArticleMarkdown.ArticleFullResult | base String | method-result
+    private def articleFull(v: Article.View): com.histmersion.api.research.ArticleMarkdown.ArticleFullResult =
+com.histmersion.api.research.ArticleMarkdown.ArticleParts | base String | method-parameter
+    def article(v: Article.View, parts: List[com.histmersion.api.research.ArticleMarkdown.ArticleParts] = Nil): com.histmersion.api.research.ArticleMarkdown.ArticleResult =
+com.histmersion.api.research.ArticleMarkdown.ArticlePartsResult | base String | method-result
+    private def articleParts(v: Article.View, show: List[com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow]): com.histmersion.api.research.ArticleMarkdown.Article
+com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow | base String | method-parameter
+    private def articleParts(v: Article.View, show: List[com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow]): com.histmersion.api.research.ArticleMarkdown.Article
+com.histmersion.api.research.ArticleMarkdown.ArticleResult | base String | method-result
+    def article(v: Article.View, parts: List[com.histmersion.api.research.ArticleMarkdown.ArticleParts] = Nil): com.histmersion.api.research.ArticleMarkdown.ArticleResult =
+com.histmersion.api.research.ArticleMarkdown.BacklinksResult | base String | method-result
+    def backlinks(rows: List[Backlink], truncate: com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate = _root_.com.histmersion.api.research.ArticleMarkdown.Backlin
+com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate | base Boolean | method-parameter
+    val bl = backlinks(v.backlinks, truncate = _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate(true))
+    def backlinks(rows: List[Backlink], truncate: com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate = _root_.com.histmersion.api.research.ArticleMarkdown.Backlin
+com.histmersion.api.research.ArticleMarkdown.ChipLinksListHashKey | base String | method-parameter
+    val parts = List(Label.display(_root_.com.histmersion.api.library.Label.DisplayS((kind).value.trim)), chipLinksList(regions, _root_.com.histmersion.api.research.ArticleMa
+    private def chipLinksList(values: List[com.histmersion.api.research.ArticleMarkdown.ChipLinksListValues], hashKey: com.histmersion.api.research.ArticleMarkdown.ChipLinksL
+com.histmersion.api.research.ArticleMarkdown.ChipLinksListResult | base String | method-result
+    private def chipLinksList(values: List[com.histmersion.api.research.ArticleMarkdown.ChipLinksListValues], hashKey: com.histmersion.api.research.ArticleMarkdown.ChipLinksL
+com.histmersion.api.research.ArticleMarkdown.ChipLinksListValues | base String | method-parameter
+    private def chipLinksList(values: List[com.histmersion.api.research.ArticleMarkdown.ChipLinksListValues], hashKey: com.histmersion.api.research.ArticleMarkdown.ChipLinksL
+com.histmersion.api.research.ArticleMarkdown.CoverageResult | base String | method-result
+    private def coverage(v: Article.View): com.histmersion.api.research.ArticleMarkdown.CoverageResult = _root_.com.histmersion.api.research.ArticleMarkdown.CoverageResult(v.
+com.histmersion.api.research.ArticleMarkdown.ListResult | base String | method-result
+    def list(r: Article.List): com.histmersion.api.research.ArticleMarkdown.ListResult =
+com.histmersion.api.research.ArticleMarkdown.MetaLinePeriod | base String | method-parameter
+    private[api] def metaLine(kind: com.histmersion.api.research.ArticleMarkdown.MetaLineKind, regions: List[com.histmersion.api.research.ArticleMarkdown.MetaLineRegions], pe
+com.histmersion.api.research.ArticleMarkdown.MetaLineResult | base String | method-result
+    private[api] def metaLine(kind: com.histmersion.api.research.ArticleMarkdown.MetaLineKind, regions: List[com.histmersion.api.research.ArticleMarkdown.MetaLineRegions], pe
+com.histmersion.api.research.ArticleMarkdown.SourcesCitedResult | base String | method-result
+    def sourcesCited(rows: List[CitedSource], truncate: com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate = _root_.com.histmersion.api.research.ArticleMarkdow
+com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate | base Boolean | method-parameter
+    val sc = sourcesCited(v.sourcesCited, truncate = _root_.com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate(true))
+    def sourcesCited(rows: List[CitedSource], truncate: com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate = _root_.com.histmersion.api.research.ArticleMarkdow
+com.histmersion.api.research.ArticleMarkdown.StripMdResult | base String | method-result
+    private def stripMd(s: com.histmersion.api.research.ArticleMarkdown.StripMdS): com.histmersion.api.research.ArticleMarkdown.StripMdResult =
+com.histmersion.api.research.ArticleMarkdown.StripMdS | base String | method-parameter
+    private def stripMd(s: com.histmersion.api.research.ArticleMarkdown.StripMdS): com.histmersion.api.research.ArticleMarkdown.StripMdResult =
+com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody | base String | method-parameter
+    val trimmed = if (footer).value.isEmpty then head else stripSourcesSection(_root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody(head))
+    def stripSourcesSection(body: com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody): com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResul
+com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult | base String | method-result
+    def stripSourcesSection(body: com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody): com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResul
+    case -1 => _root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult((body).value)
+com.histmersion.api.research.ArticleMarkdown.VersionResult | base String | method-result
+    def version(v: Article.VersionFull): com.histmersion.api.research.ArticleMarkdown.VersionResult =
+com.histmersion.api.research.ArticleMarkdown.VersionsResult | base String | method-result
+    def versions(slug: com.histmersion.api.research.ArticleMarkdown.VersionsSlug, vs: List[Article.Version]): com.histmersion.api.research.ArticleMarkdown.VersionsResult =
+com.histmersion.api.research.ArticleMarkdown.VersionsSlug | base String | method-parameter
+    def versions(slug: com.histmersion.api.research.ArticleMarkdown.VersionsSlug, vs: List[Article.Version]): com.histmersion.api.research.ArticleMarkdown.VersionsResult =
+com.histmersion.api.research.Articles.AppendUnderSectionBody | base String | method-parameter
+    def appendUnderSection(body: com.histmersion.api.research.Articles.AppendUnderSectionBody, section: com.histmersion.api.research.Articles.AppendUnderSectionSection, text:
+com.histmersion.api.research.Articles.AppendUnderSectionResultPart1 | base String | method-result
+    def appendUnderSection(body: com.histmersion.api.research.Articles.AppendUnderSectionBody, section: com.histmersion.api.research.Articles.AppendUnderSectionSection, text:
+com.histmersion.api.research.Articles.AppendUnderSectionResultPart2 | base String | method-result
+    def appendUnderSection(body: com.histmersion.api.research.Articles.AppendUnderSectionBody, section: com.histmersion.api.research.Articles.AppendUnderSectionSection, text:
+com.histmersion.api.research.Articles.AppendUnderSectionSection | base String | method-parameter
+    def appendUnderSection(body: com.histmersion.api.research.Articles.AppendUnderSectionBody, section: com.histmersion.api.research.Articles.AppendUnderSectionSection, text:
+com.histmersion.api.research.Articles.AppendUnderSectionText | base String | method-parameter
+    def appendUnderSection(body: com.histmersion.api.research.Articles.AppendUnderSectionBody, section: com.histmersion.api.research.Articles.AppendUnderSectionSection, text:
+com.histmersion.api.research.Articles.ApplyPatchResultPart1 | base String | method-result
+    def applyPatch(existing: Article, patch: Article.Patch): Either[com.histmersion.api.research.Articles.ApplyPatchResultPart1, Article] =
+com.histmersion.api.research.Articles.ApplyPutResultPart1 | base String | method-result
+    def applyPut(slug: com.histmersion.api.research.Articles.ApplyPutSlug, p: Article.Put): Either[com.histmersion.api.research.Articles.ApplyPutResultPart1, Article] =
+com.histmersion.api.research.Articles.ApplyPutSlug | base String | method-parameter
+    def applyPut(slug: com.histmersion.api.research.Articles.ApplyPutSlug, p: Article.Put): Either[com.histmersion.api.research.Articles.ApplyPutResultPart1, Article] =
+com.histmersion.api.research.Articles.BodyOfCurrent | base String | method-parameter
+    private def bodyOf(current: com.histmersion.api.research.Articles.BodyOfCurrent, patch: Article.Patch): Either[com.histmersion.api.research.Articles.BodyOfResultPart1, co
+com.histmersion.api.research.Articles.BodyOfResultPart1 | base String | method-result
+    private def bodyOf(current: com.histmersion.api.research.Articles.BodyOfCurrent, patch: Article.Patch): Either[com.histmersion.api.research.Articles.BodyOfResultPart1, co
+com.histmersion.api.research.Articles.BodyOfResultPart2 | base String | method-result
+    private def bodyOf(current: com.histmersion.api.research.Articles.BodyOfCurrent, patch: Article.Patch): Either[com.histmersion.api.research.Articles.BodyOfResultPart1, co
+com.histmersion.api.research.Articles.DirOfKindKind | base String | method-parameter
+    def dirOfKind(kind: com.histmersion.api.research.Articles.DirOfKindKind): com.histmersion.api.research.Articles.DirOfKindResult = _root_.com.histmersion.api.research.Arti
+com.histmersion.api.research.Articles.DirOfKindResult | base String | method-result
+    def dirOfKind(kind: com.histmersion.api.research.Articles.DirOfKindKind): com.histmersion.api.research.Articles.DirOfKindResult = _root_.com.histmersion.api.research.Arti
+com.histmersion.api.research.Articles.HeadingBody | base String | method-parameter
+    def heading(body: com.histmersion.api.research.Articles.HeadingBody): Option[com.histmersion.api.research.Articles.HeadingResult] =
+com.histmersion.api.research.Articles.HeadingResult | base String | method-result
+    def heading(body: com.histmersion.api.research.Articles.HeadingBody): Option[com.histmersion.api.research.Articles.HeadingResult] =
+com.histmersion.api.research.Articles.KindOfDirDirName | base String | method-parameter
+    def kindOfDir(dirName: com.histmersion.api.research.Articles.KindOfDirDirName): com.histmersion.api.research.Articles.KindOfDirResult =
+com.histmersion.api.research.Articles.KindOfDirResult | base String | method-result
+    def kindOfDir(dirName: com.histmersion.api.research.Articles.KindOfDirDirName): com.histmersion.api.research.Articles.KindOfDirResult =
+com.histmersion.api.research.Articles.KindOfRaw | base String | method-parameter
+    def kindOf(raw: com.histmersion.api.research.Articles.KindOfRaw): Either[com.histmersion.api.research.Articles.KindOfResultPart1, com.histmersion.api.research.Articles.Ki
+com.histmersion.api.research.Articles.KindOfResultPart1 | base String | method-result
+    def kindOf(raw: com.histmersion.api.research.Articles.KindOfRaw): Either[com.histmersion.api.research.Articles.KindOfResultPart1, com.histmersion.api.research.Articles.Ki
+    else Left(_root_.com.histmersion.api.research.Articles.KindOfResultPart1(s"invalid kind '$raw' — one of ${Kinds.mkString(", ")} (or another lower-case word)"))
+com.histmersion.api.research.Articles.KindOfResultPart2 | base String | method-result
+    def kindOf(raw: com.histmersion.api.research.Articles.KindOfRaw): Either[com.histmersion.api.research.Articles.KindOfResultPart1, com.histmersion.api.research.Articles.Ki
+com.histmersion.api.research.Articles.LedeBody | base String | method-parameter
+    def lede(body: com.histmersion.api.research.Articles.LedeBody): Option[com.histmersion.api.research.Articles.LedeResult] =
+com.histmersion.api.research.Articles.LedeResult | base String | method-result
+    def lede(body: com.histmersion.api.research.Articles.LedeBody): Option[com.histmersion.api.research.Articles.LedeResult] =
+com.histmersion.api.research.Articles.NotFoundSlug | base String | method-parameter
+    def notFound(slug: com.histmersion.api.research.Articles.NotFoundSlug): Api.Error = Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"No article '$slug'"), Some(_r
+com.histmersion.api.research.Articles.PeriodOfEnd | base Long | method-parameter
+    private def periodOf(start: Option[com.histmersion.api.research.Articles.PeriodOfStart], end: Option[com.histmersion.api.research.Articles.PeriodOfEnd]): Either[com.histm
+com.histmersion.api.research.Articles.PeriodOfResultPart1 | base String | method-result
+    private def periodOf(start: Option[com.histmersion.api.research.Articles.PeriodOfStart], end: Option[com.histmersion.api.research.Articles.PeriodOfEnd]): Either[com.histm
+    case (Some(a), Some(b))           => Left(_root_.com.histmersion.api.research.Articles.PeriodOfResultPart1(s"period_start ($a) must not be after period_end ($b)"))
+com.histmersion.api.research.Articles.PeriodOfStart | base Long | method-parameter
+    private def periodOf(start: Option[com.histmersion.api.research.Articles.PeriodOfStart], end: Option[com.histmersion.api.research.Articles.PeriodOfEnd]): Either[com.histm
+com.histmersion.api.research.Articles.PreconditionResultPart1 | base String | method-result
+    def precondition(existing: Article, patch: Article.Patch): Either[com.histmersion.api.research.Articles.PreconditionResultPart1, Unit] =
+com.histmersion.api.research.Articles.SummaryOfRaw | base String | method-parameter
+    def summaryOf(raw: Option[com.histmersion.api.research.Articles.SummaryOfRaw]): Either[com.histmersion.api.research.Articles.SummaryOfResultPart1, Option[com.histmersion.
+com.histmersion.api.research.Articles.SummaryOfResultPart1 | base String | method-result
+    def summaryOf(raw: Option[com.histmersion.api.research.Articles.SummaryOfRaw]): Either[com.histmersion.api.research.Articles.SummaryOfResultPart1, Option[com.histmersion.
+com.histmersion.api.research.Articles.SummaryOfResultPart2 | base String | method-result
+    def summaryOf(raw: Option[com.histmersion.api.research.Articles.SummaryOfRaw]): Either[com.histmersion.api.research.Articles.SummaryOfResultPart1, Option[com.histmersion.
+com.histmersion.api.research.BacklinksMarkdown.SourceArticlesResult | base String | method-result
+    def sourceArticles(rows: Vector[Backlink]): com.histmersion.api.research.BacklinksMarkdown.SourceArticlesResult =
+com.histmersion.api.research.Coverage.Reason.ListMPart1 | base String | method-parameter
+    def list(m: Map[com.histmersion.api.research.Coverage.Reason.ListMPart1, com.histmersion.api.research.Coverage.Reason.ListMPart2]): List[Reason] = m.toList.sortBy(_._1).m
+com.histmersion.api.research.Coverage.Reason.ListMPart2 | base String | method-parameter
+    def list(m: Map[com.histmersion.api.research.Coverage.Reason.ListMPart1, com.histmersion.api.research.Coverage.Reason.ListMPart2]): List[Reason] = m.toList.sortBy(_._1).m
+com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1 | base String | method-parameter
+    def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reaso
+com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2 | base String | method-parameter
+    def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reaso
+com.histmersion.api.research.Coverage.Reason.MergeResultPart1 | base String | method-result
+    def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reaso
+com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part1 | base String | method-result
+    def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reaso
+com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part2 | base String | method-result
+    def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reaso
+com.histmersion.api.research.Coverage.UnplacedResult | base String | method-result
+    def unplaced: List[com.histmersion.api.research.Coverage.UnplacedResult] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
+com.histmersion.api.research.CritiquePair.LineResult | base String | method-result
+    def line: com.histmersion.api.research.CritiquePair.LineResult = _root_.com.histmersion.api.research.CritiquePair.LineResult(s"[[${src.citekey}]] ${kinds.mkString("/")} [
+com.histmersion.api.research.CritiquePairing.AsciiResult | base String | method-result
+    private def ascii(s: com.histmersion.api.research.CritiquePairing.AsciiS): com.histmersion.api.research.CritiquePairing.AsciiResult = _root_.com.histmersion.api.research.
+    val byKey = words.filter(w => lead.nonEmpty && (letters(_root_.com.histmersion.api.research.CritiquePairing.LettersS(w)) == _root_.com.histmersion.api.research.CritiquePa
+com.histmersion.api.research.CritiquePairing.AsciiS | base String | method-parameter
+    private def ascii(s: com.histmersion.api.research.CritiquePairing.AsciiS): com.histmersion.api.research.CritiquePairing.AsciiResult = _root_.com.histmersion.api.research.
+    val byKey = words.filter(w => lead.nonEmpty && (letters(_root_.com.histmersion.api.research.CritiquePairing.LettersS(w)) == _root_.com.histmersion.api.research.CritiquePa
+com.histmersion.api.research.CritiquePairing.EdgeLineResult | base String | method-result
+    private def edgeLine(e: Coverage.Edge): com.histmersion.api.research.CritiquePairing.EdgeLineResult = _root_.com.histmersion.api.research.CritiquePairing.EdgeLineResult(s
+com.histmersion.api.research.CritiquePairing.Hit.LineResult | base String | method-result
+    def line: com.histmersion.api.research.CritiquePairing.Hit.LineResult =
+com.histmersion.api.research.CritiquePairing.HitsBody | base String | method-parameter
+com.histmersion.api.research.CritiquePairing.HitsResolveArg1 | base String | method-parameter
+com.histmersion.api.research.CritiquePairing.HitsResolveResult | base String | method-parameter
+com.histmersion.api.research.CritiquePairing.HitsWorkArg1 | base String | method-parameter
+com.histmersion.api.research.CritiquePairing.InstructionBody | base String | method-parameter
+com.histmersion.api.research.CritiquePairing.InstructionNear | base Int | method-parameter
+com.histmersion.api.research.CritiquePairing.InstructionResolveArg1 | base String | method-parameter
+com.histmersion.api.research.CritiquePairing.InstructionResolveResult | base String | method-parameter
+com.histmersion.api.research.CritiquePairing.InstructionResult | base String | method-result
+com.histmersion.api.research.CritiquePairing.LettersResult | base String | method-result
+    private def letters(s: com.histmersion.api.research.CritiquePairing.LettersS): com.histmersion.api.research.CritiquePairing.LettersResult =
+    val byKey = words.filter(w => lead.nonEmpty && (letters(_root_.com.histmersion.api.research.CritiquePairing.LettersS(w)) == _root_.com.histmersion.api.research.CritiquePa
+com.histmersion.api.research.CritiquePairing.LettersS | base String | method-parameter
+    private def letters(s: com.histmersion.api.research.CritiquePairing.LettersS): com.histmersion.api.research.CritiquePairing.LettersResult =
+    val byKey = words.filter(w => lead.nonEmpty && (letters(_root_.com.histmersion.api.research.CritiquePairing.LettersS(w)) == _root_.com.histmersion.api.research.CritiquePa
+com.histmersion.api.research.CritiquePairing.MentionName | base String | method-parameter
+    private def mention(text: com.histmersion.api.research.CritiquePairing.MentionText, name: com.histmersion.api.research.CritiquePairing.MentionName, year: Option[com.histm
+com.histmersion.api.research.CritiquePairing.MentionText | base String | method-parameter
+    private def mention(text: com.histmersion.api.research.CritiquePairing.MentionText, name: com.histmersion.api.research.CritiquePairing.MentionName, year: Option[com.histm
+com.histmersion.api.research.CritiquePairing.MentionYear | base Int | method-parameter
+    private def mention(text: com.histmersion.api.research.CritiquePairing.MentionText, name: com.histmersion.api.research.CritiquePairing.MentionName, year: Option[com.histm
+com.histmersion.api.research.CritiquePairing.NamesAuthors | base String | method-parameter
+    def names(citekey: com.histmersion.api.research.CritiquePairing.NamesCitekey, authors: List[com.histmersion.api.research.CritiquePairing.NamesAuthors]): List[com.histmers
+com.histmersion.api.research.CritiquePairing.NamesCitekey | base String | method-parameter
+    def names(citekey: com.histmersion.api.research.CritiquePairing.NamesCitekey, authors: List[com.histmersion.api.research.CritiquePairing.NamesAuthors]): List[com.histmers
+com.histmersion.api.research.CritiquePairing.NamesResult | base String | method-result
+    def names(citekey: com.histmersion.api.research.CritiquePairing.NamesCitekey, authors: List[com.histmersion.api.research.CritiquePairing.NamesAuthors]): List[com.histmers
+com.histmersion.api.research.CritiquePairing.ProseResult | base String | method-result
+    private def prose(text: com.histmersion.api.research.CritiquePairing.ProseText): com.histmersion.api.research.CritiquePairing.ProseResult = _root_.com.histmersion.api.res
+com.histmersion.api.research.CritiquePairing.ProseText | base String | method-parameter
+    private def prose(text: com.histmersion.api.research.CritiquePairing.ProseText): com.histmersion.api.research.CritiquePairing.ProseResult = _root_.com.histmersion.api.res
+com.histmersion.api.research.CritiquePairing.RepairBody | base String | method-parameter
+    def repair(body: com.histmersion.api.research.CritiquePairing.RepairBody, hs: List[Hit]): (com.histmersion.api.research.CritiquePairing.RepairResultPart1, List[Hit]) =
+com.histmersion.api.research.CritiquePairing.RepairInsertLs | base String | method-parameter
+com.histmersion.api.research.CritiquePairing.RepairInsertRestPart1Part1 | base Int | method-parameter
+com.histmersion.api.research.CritiquePairing.RepairInsertRestPart1Part2 | base Int | method-parameter
+com.histmersion.api.research.CritiquePairing.RepairInsertResultPart1 | base String | method-result
+com.histmersion.api.research.CritiquePairing.RepairResultPart1 | base String | method-result
+    def repair(body: com.histmersion.api.research.CritiquePairing.RepairBody, hs: List[Hit]): (com.histmersion.api.research.CritiquePairing.RepairResultPart1, List[Hit]) =
+com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1 | base String | method-parameter
+    def resolver(citekeys: Set[com.histmersion.api.research.CritiquePairing.ResolverCitekeys], aliases: Map[com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1,
+com.histmersion.api.research.CritiquePairing.ResolverAliasesPart2 | base String | method-parameter
+    def resolver(citekeys: Set[com.histmersion.api.research.CritiquePairing.ResolverCitekeys], aliases: Map[com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1,
+com.histmersion.api.research.CritiquePairing.ResolverCitekeys | base String | method-parameter
+    def resolver(citekeys: Set[com.histmersion.api.research.CritiquePairing.ResolverCitekeys], aliases: Map[com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1,
+com.histmersion.api.research.CritiquePairing.ResolverResultArg1 | base String | method-result
+    def resolver(citekeys: Set[com.histmersion.api.research.CritiquePairing.ResolverCitekeys], aliases: Map[com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1,
+com.histmersion.api.research.CritiquePairing.ResolverResultResult | base String | method-result
+    def resolver(citekeys: Set[com.histmersion.api.research.CritiquePairing.ResolverCitekeys], aliases: Map[com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1,
+com.histmersion.api.research.CritiquePairing.WordsResult | base String | method-result
+    private def words(text: com.histmersion.api.research.CritiquePairing.WordsText): List[com.histmersion.api.research.CritiquePairing.WordsResult] = ((text).value.split("\\s
+com.histmersion.api.research.CritiquePairing.WordsText | base String | method-parameter
+    private def words(text: com.histmersion.api.research.CritiquePairing.WordsText): List[com.histmersion.api.research.CritiquePairing.WordsResult] = ((text).value.split("\\s
+com.histmersion.api.research.CritiqueReason.MaxCharsValue | base Int | alias
+    val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = _root_.com.histmersion.api.research.CritiqueReason.MaxCharsValue(Coverage.Reason.MaxChars)
+com.histmersion.api.research.CritiqueReason.ParseResultPart1 | base String | method-result
+    def parse(s: com.histmersion.api.research.CritiqueReason.ParseS): Either[com.histmersion.api.research.CritiqueReason.ParseResultPart1, CritiqueReason] =
+com.histmersion.api.research.CritiqueReason.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.research.CritiqueReason.ParseS): Either[com.histmersion.api.research.CritiqueReason.ParseResultPart1, CritiqueReason] =
+com.histmersion.api.research.CritiqueReason.TidyResultPart1 | base String | method-result
+    def tidy(r: CritiqueReason): Either[com.histmersion.api.research.CritiqueReason.TidyResultPart1, CritiqueReason] =
+com.histmersion.api.research.CritiqueRef.KeyResult | base String | method-result
+    private def key(s: com.histmersion.api.research.CritiqueRef.KeyS): com.histmersion.api.research.CritiqueRef.KeyResult =
+com.histmersion.api.research.CritiqueRef.KeyS | base String | method-parameter
+    private def key(s: com.histmersion.api.research.CritiqueRef.KeyS): com.histmersion.api.research.CritiqueRef.KeyResult =
+    case a :: b :: Nil if (key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a))).value.nonEmpty && (key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b))).valu
+com.histmersion.api.research.CritiqueRef.ParseResultPart1 | base String | method-result
+    def parse(s: com.histmersion.api.research.CritiqueRef.ParseS): Either[com.histmersion.api.research.CritiqueRef.ParseResultPart1, CritiqueRef] =
+com.histmersion.api.research.CritiqueRef.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.research.CritiqueRef.ParseS): Either[com.histmersion.api.research.CritiqueRef.ParseResultPart1, CritiqueRef] =
+com.histmersion.api.research.CritiqueRef.WireResult | base String | method-result
+    def wire: com.histmersion.api.research.CritiqueRef.WireResult = _root_.com.histmersion.api.research.CritiqueRef.WireResult(s"$src>$dst")
+com.histmersion.api.research.CritiqueState.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[CritiqueState] = parse(_root_.com.histmersion.api.research.CritiqueState.ParseS(
+com.histmersion.api.research.CritiqueState.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.research.CritiqueState.ParseS): Option[CritiqueState] = values.find(_.wire == _root_.com.histmersion.api.research.CritiqueState.Wire((s).
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[CritiqueState] = parse(_root_.com.histmersion.api.research.CritiqueState.ParseS(
+com.histmersion.api.research.CritiqueState.WireResult | base String | no-resolved-use
+    def wire(e: CritiqueState): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)

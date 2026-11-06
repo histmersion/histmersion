@@ -1,0 +1,137 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.places.Wikidata.Id (String)
+com.histmersion.domain.library.Citekey (String)
+com.histmersion.domain.library.Doi (String)
+com.histmersion.domain.library.Source.Uid (UUID)
+com.histmersion.domain.media.Asset.Uid (UUID)
+com.histmersion.domain.research.DraftMode.Wire (String)
+com.histmersion.domain.research.Slug (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.places.Wikidata.IsQidS | base String | method-parameter
+    def isQid(s: com.histmersion.domain.catalogue.places.Wikidata.IsQidS): com.histmersion.domain.catalogue.places.Wikidata.IsQidResult = _root_.com.histmersion.domain.catalo
+com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId | base String | method-parameter
+    def qidOfPlaceId(id: com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId): Option[com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult] =
+com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult | base String | method-result
+    def qidOfPlaceId(id: com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId): Option[com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult] =
+com.histmersion.domain.library.Citekey.ParseRaw | base String | alias,method-parameter
+    val ValidRaw: _root_.com.histmersion.domain.library.Citekey.ParseRaw.type = _root_.com.histmersion.domain.library.Citekey.ParseRaw
+    def parse(raw: com.histmersion.domain.library.Citekey.ParseRaw): Either[com.histmersion.domain.library.Citekey.ParseResultPart1, Citekey] =
+com.histmersion.domain.library.Citekey.ParseResultPart1 | base String | method-result
+    def parse(raw: com.histmersion.domain.library.Citekey.ParseRaw): Either[com.histmersion.domain.library.Citekey.ParseResultPart1, Citekey] =
+com.histmersion.domain.library.Confidence.FromStringS | base String | method-parameter
+    def fromString(s: com.histmersion.domain.library.Confidence.FromStringS): Option[Confidence] =
+com.histmersion.domain.library.Confidence.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Confidence] =
+com.histmersion.domain.library.Confidence.WireResult | base String | method-result
+    def wire: com.histmersion.domain.library.Confidence.WireResult = Ascii.lower(_root_.com.histmersion.Ascii.LowerS(toString))
+    def wire(e: Confidence): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((_root_.com.histmersion.domain.library.Confid
+com.histmersion.domain.library.Doi.NormalizeRaw | base String | method-parameter
+    def normalize(raw: com.histmersion.domain.library.Doi.NormalizeRaw): Option[com.histmersion.domain.library.Doi.NormalizeResult] =
+com.histmersion.domain.library.Doi.NormalizeResult | base String | method-result
+    def normalize(raw: com.histmersion.domain.library.Doi.NormalizeRaw): Option[com.histmersion.domain.library.Doi.NormalizeResult] =
+com.histmersion.domain.library.Edge.Kind.AllWire | base String | value
+    val allWire: List[com.histmersion.domain.library.Edge.Kind.AllWire] = (values.map(wireOf).toList).map(refactorValue => _root_.com.histmersion.domain.library.Edge.Kind.All
+com.histmersion.domain.library.Edge.Kind.FromWireS | base String | method-parameter
+    def fromWire(s: com.histmersion.domain.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(_root_.com.histmersion.domain.library.Edge.Kind.WireMapPart1((s).value.toL
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.domain.library.Edge.Kind.FromWireS((s).
+com.histmersion.domain.library.Edge.Kind.WireMapPart1 | base String | value
+    private val wireMap: Map[com.histmersion.domain.library.Edge.Kind.WireMapPart1, Kind] = values.map(e => wireOf(e) -> e).toMap
+    def fromWire(s: com.histmersion.domain.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(_root_.com.histmersion.domain.library.Edge.Kind.WireMapPart1((s).value.toL
+com.histmersion.domain.library.Edge.Kind.WireOfResult | base String | method-result
+    def wireOf(e: Kind): com.histmersion.domain.library.Edge.Kind.WireOfResult = e match
+    case References      => _root_.com.histmersion.domain.library.Edge.Kind.WireOfResult("references")
+com.histmersion.domain.library.Edge.Kind.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+com.histmersion.domain.library.EditionsPolicy.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[EditionsPolicy] = EditionsPolicy.values.find(_.toString.equalsIgnoreCase((s).value.t
+com.histmersion.domain.library.EditionsPolicy.WireResult | base String | no-resolved-use
+    def wire(e: EditionsPolicy): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii
+com.histmersion.domain.library.MatchMethod.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+com.histmersion.domain.library.MatchMethod.WireResult | base String | no-resolved-use
+    def wire(e: MatchMethod): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii.Lo
+com.histmersion.domain.library.MatchOutcome.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == _root_.com.histmersion.do
+com.histmersion.domain.library.MatchOutcome.WireOfResult | base String | method-result
+    def wireOf(o: MatchOutcome): com.histmersion.domain.library.MatchOutcome.WireOfResult = o match
+    case Same          => _root_.com.histmersion.domain.library.MatchOutcome.WireOfResult("same")
+com.histmersion.domain.library.MatchOutcome.WireResult | base String | no-resolved-use
+    def wire(e: MatchOutcome): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+com.histmersion.domain.library.Source.Status.FromStringS | base String | method-parameter
+    def fromString(s: com.histmersion.domain.library.Source.Status.FromStringS): Status =
+com.histmersion.domain.library.Source.Status.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Status] =
+com.histmersion.domain.library.Source.Status.WireResult | base String | method-result
+    def wire: com.histmersion.domain.library.Source.Status.WireResult = Ascii.lower(_root_.com.histmersion.Ascii.LowerS(toString))
+    def wire(e: Status): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((_root_.com.histmersion.domain.library.Source.Sta
+com.histmersion.domain.media.Asset.LinkTarget.All | base String | value
+    val all: List[com.histmersion.domain.media.Asset.LinkTarget.All] = List(_root_.com.histmersion.domain.media.Asset.LinkTarget.All(Event), _root_.com.histmersion.domain.med
+com.histmersion.domain.media.MediaRole.All | base String | value
+    val all: List[com.histmersion.domain.media.MediaRole.All] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration)
+com.histmersion.domain.media.MediaRole.OrderResult | base Int | method-result
+    def order(role: com.histmersion.domain.media.MediaRole.OrderRole): com.histmersion.domain.media.MediaRole.OrderResult = all.indexOf(role) match
+    case -1 => _root_.com.histmersion.domain.media.MediaRole.OrderResult(all.size)
+com.histmersion.domain.media.MediaRole.OrderRole | base String | method-parameter
+    def order(role: com.histmersion.domain.media.MediaRole.OrderRole): com.histmersion.domain.media.MediaRole.OrderResult = all.indexOf(role) match
+com.histmersion.domain.media.MediaRole.PlaceRoles | base String | value
+    val placeRoles: List[com.histmersion.domain.media.MediaRole.PlaceRoles] = List(_root_.com.histmersion.domain.media.MediaRole.PlaceRoles(Image), _root_.com.histmersion.dom
+com.histmersion.domain.research.DraftMode.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[DraftMode] = parse(_root_.com.histmersion.domain.research.DraftMode.ParseS((s).value
+com.histmersion.domain.research.DraftMode.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.domain.research.DraftMode.ParseS): Option[DraftMode] = values.find(_.wire == _root_.com.histmersion.domain.research.DraftMode.Wire((s).value.
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[DraftMode] = parse(_root_.com.histmersion.domain.research.DraftMode.ParseS((s).value
+com.histmersion.domain.research.DraftMode.WireResult | base String | no-resolved-use
+    def wire(e: DraftMode): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((e.wire).value)
+com.histmersion.domain.research.Slug.ParseRaw | base String | method-parameter
+    def parse(raw: com.histmersion.domain.research.Slug.ParseRaw): Either[com.histmersion.domain.research.Slug.ParseResultPart1, Slug] =
+com.histmersion.domain.research.Slug.ParseResultPart1 | base String | method-result
+    def parse(raw: com.histmersion.domain.research.Slug.ParseRaw): Either[com.histmersion.domain.research.Slug.ParseResultPart1, Slug] =
+    _root_.com.histmersion.domain.research.Slug.ParseResultPart1(s"invalid slug '$raw' — use lower-case letters, digits, '_', '-' or '.' (e.g. sea_peoples)")
+com.histmersion.util.data.exchange.Bundle.Kind.FileResult | base String | method-result
+    def file: com.histmersion.util.data.exchange.Bundle.Kind.FileResult = _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileResult(s"entities/${Kind.fileStem(this)}.n
+com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult | base String | method-result
+    private def fileStem(k: Kind): com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult = k match
+    case Source         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("sources")
+com.histmersion.util.data.exchange.Bundle.Kind.FromWireS | base String | method-parameter
+    def fromWire(s: com.histmersion.util.data.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.util.data.exchange.Bundle.Kind.Wire
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.util.data.exchange.Bundle.Kind.FromWire
+com.histmersion.util.data.exchange.Bundle.Kind.IssueLetterResult | base String | method-result
+    def issueLetter: com.histmersion.util.data.exchange.Bundle.Kind.IssueLetterResult = Kind.letterOf(this)
+com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult | base String | method-result
+    private def letterOf(k: Kind): com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult = k match
+    case Source         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("S")
+com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult | base String | method-result
+    def wireOf(k: Kind): com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult = k match
+    case Source         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("source")
+com.histmersion.util.data.exchange.Bundle.Kind.WireResult | base String | method-result
+    def wire: com.histmersion.util.data.exchange.Bundle.Kind.WireResult = _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireResult((Kind.wireOf(this)).value)
+    def fromWire(s: com.histmersion.util.data.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.util.data.exchange.Bundle.Kind.Wire
+com.histmersion.util.data.exchange.DecisionKind.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[DecisionKind] = DecisionKind.values.find(k => wireOf(k) == _root_.com.histmersion.ut
+com.histmersion.util.data.exchange.DecisionKind.WireOfResult | base String | method-result
+    def wireOf(k: DecisionKind): com.histmersion.util.data.exchange.DecisionKind.WireOfResult = k match
+    case KeepLeft       => _root_.com.histmersion.util.data.exchange.DecisionKind.WireOfResult("keep-left")
+com.histmersion.util.data.exchange.DecisionKind.WireResult | base String | no-resolved-use
+    def wire(e: DecisionKind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+com.histmersion.util.data.exchange.Issue.DecidedBy.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.util.data.exchange
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+com.histmersion.util.data.exchange.Issue.DecidedBy.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+    def wire(e: Severity): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii.Lower
+com.histmersion.util.data.exchange.Issue.Kind.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.util.data.exchange
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+com.histmersion.util.data.exchange.Issue.Kind.WireOfResult | base String | method-result
+    def wireOf(k: Kind): com.histmersion.util.data.exchange.Issue.Kind.WireOfResult = k match
+    case SameWork                => _root_.com.histmersion.util.data.exchange.Issue.Kind.WireOfResult("same-work")
+com.histmersion.util.data.exchange.Issue.Kind.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+    def wire(e: Severity): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii.Lower
+com.histmersion.util.data.exchange.Issue.Severity.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.util.data.exchange
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Severity] = Severity.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+com.histmersion.util.data.exchange.Issue.Severity.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((wireOf(e)).value)
+    def wire(e: Severity): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii.Lower

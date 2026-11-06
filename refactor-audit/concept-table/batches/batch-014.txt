@@ -1,0 +1,278 @@
+## CONCEPTS NEARBY
+com.histmersion.api.library.Candidates.Found.By (String)
+com.histmersion.api.library.Candidates.Found.Key (String)
+com.histmersion.api.library.Candidates.IndexesValue (String)
+com.histmersion.api.library.Candidates.State.Wire (String)
+com.histmersion.api.library.Candidates.WatchKind.Wire (String)
+com.histmersion.api.library.DeleteBlocker.Id (String)
+com.histmersion.api.library.DeleteBlocker.Kind.Label (String)
+com.histmersion.api.library.DeleteBlocker.Kind.Wire (String)
+com.histmersion.api.library.DeleteBlocker.Title (String)
+com.histmersion.api.library.DeletePart.Label (String)
+com.histmersion.api.library.DeletePart.Wire (String)
+com.histmersion.api.library.ExternalId.Id (String)
+com.histmersion.api.library.Facet.Contested (Boolean)
+com.histmersion.api.library.Facet.Count (Int)
+com.histmersion.api.library.Facet.Id (String)
+com.histmersion.api.library.Facet.Value (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.library.AcquireMarkdown.ArchiveItemResult | base String | method-result
+    def archiveItem(i: ArchiveItem): com.histmersion.api.library.AcquireMarkdown.ArchiveItemResult =
+com.histmersion.api.library.AcquireMarkdown.ArchiveSearchResult | base String | method-parameter,method-result
+    def archiveSearch(r: ArchiveSearchResult): com.histmersion.api.library.AcquireMarkdown.ArchiveSearchResult =
+com.histmersion.api.library.AcquireMarkdown.AssessmentResult | base String | method-result
+    def assessment(a: Assessment): com.histmersion.api.library.AcquireMarkdown.AssessmentResult =
+com.histmersion.api.library.AcquireMarkdown.CalibreGapsResult | base String | method-result
+    def calibreGaps(g: CalibreGaps): com.histmersion.api.library.AcquireMarkdown.CalibreGapsResult =
+com.histmersion.api.library.AcquireMarkdown.CellResult | base String | method-result
+    private def cell(s: Option[com.histmersion.api.library.AcquireMarkdown.CellS]): com.histmersion.api.library.AcquireMarkdown.CellResult = esc(s.getOrElse("—"))
+com.histmersion.api.library.AcquireMarkdown.CellS | base String | method-parameter
+    private def cell(s: Option[com.histmersion.api.library.AcquireMarkdown.CellS]): com.histmersion.api.library.AcquireMarkdown.CellResult = esc(s.getOrElse("—"))
+com.histmersion.api.library.AcquireMarkdown.DiscoverResult | base String | method-parameter,method-result
+    def discover(r: DiscoverResult): com.histmersion.api.library.AcquireMarkdown.DiscoverResult =
+com.histmersion.api.library.AcquireMarkdown.DoiLinkDoi | base String | method-parameter
+    private def doiLink(doi: Option[com.histmersion.api.library.AcquireMarkdown.DoiLinkDoi]): com.histmersion.api.library.AcquireMarkdown.DoiLinkResult =
+com.histmersion.api.library.AcquireMarkdown.DoiLinkResult | base String | method-result
+    private def doiLink(doi: Option[com.histmersion.api.library.AcquireMarkdown.DoiLinkDoi]): com.histmersion.api.library.AcquireMarkdown.DoiLinkResult =
+com.histmersion.api.library.AcquireMarkdown.EdgeNoteResult | base String | method-result
+    private def edgeNote(r: RefsResult): com.histmersion.api.library.AcquireMarkdown.EdgeNoteResult =
+com.histmersion.api.library.AcquireMarkdown.EscResult | base String | method-result
+    private def esc(s: com.histmersion.api.library.AcquireMarkdown.EscS): com.histmersion.api.library.AcquireMarkdown.EscResult = _root_.com.histmersion.api.library.AcquireMa
+com.histmersion.api.library.AcquireMarkdown.EscS | base String | method-parameter
+    private def esc(s: com.histmersion.api.library.AcquireMarkdown.EscS): com.histmersion.api.library.AcquireMarkdown.EscResult = _root_.com.histmersion.api.library.AcquireMa
+com.histmersion.api.library.AcquireMarkdown.FollowupsResult | base String | method-parameter,method-result
+    def followups(r: FollowupsResult): com.histmersion.api.library.AcquireMarkdown.FollowupsResult =
+com.histmersion.api.library.AcquireMarkdown.IngestResult | base String | method-result
+    def ingest(r: Ingest.Report): com.histmersion.api.library.AcquireMarkdown.IngestResult =
+com.histmersion.api.library.AcquireMarkdown.NumN | base Int | method-parameter
+    private def num(n: Option[com.histmersion.api.library.AcquireMarkdown.NumN]): com.histmersion.api.library.AcquireMarkdown.NumResult = _root_.com.histmersion.api.library.A
+com.histmersion.api.library.AcquireMarkdown.NumResult | base String | method-result
+    private def num(n: Option[com.histmersion.api.library.AcquireMarkdown.NumN]): com.histmersion.api.library.AcquireMarkdown.NumResult = _root_.com.histmersion.api.library.A
+com.histmersion.api.library.AcquireMarkdown.RefsResult | base String | method-parameter,method-result
+    def refs(r: RefsResult): com.histmersion.api.library.AcquireMarkdown.RefsResult =
+    private def edgeNote(r: RefsResult): com.histmersion.api.library.AcquireMarkdown.EdgeNoteResult =
+com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult | base String | method-result
+    def retractionsUpdate(r: RetractionsUpdate): com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult =
+    case Some(e)           => _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.row
+com.histmersion.api.library.AcquireMarkdown.TableHeader | base String | method-parameter
+    private def table(header: List[com.histmersion.api.library.AcquireMarkdown.TableHeader], rows: List[List[com.histmersion.api.library.AcquireMarkdown.TableRows]]): com.his
+com.histmersion.api.library.AcquireMarkdown.TableResult | base String | method-result
+    private def table(header: List[com.histmersion.api.library.AcquireMarkdown.TableHeader], rows: List[List[com.histmersion.api.library.AcquireMarkdown.TableRows]]): com.his
+com.histmersion.api.library.AcquireMarkdown.TableRows | base String | method-parameter
+    private def table(header: List[com.histmersion.api.library.AcquireMarkdown.TableHeader], rows: List[List[com.histmersion.api.library.AcquireMarkdown.TableRows]]): com.his
+com.histmersion.api.library.AcquireMarkdown.WikirefsResult | base String | method-parameter,method-result
+    def wikirefs(r: WikirefsResult): com.histmersion.api.library.AcquireMarkdown.WikirefsResult =
+com.histmersion.api.library.AcquireMarkdown.WorkResult | base String | method-result
+    def work(w: WorkRef): com.histmersion.api.library.AcquireMarkdown.WorkResult =
+com.histmersion.api.library.Aggregate.BucketCountFrom | base Long | method-parameter
+    def bucketCount(from: com.histmersion.api.library.Aggregate.BucketCountFrom, to: com.histmersion.api.library.Aggregate.BucketCountTo, size: com.histmersion.api.library.Ag
+com.histmersion.api.library.Aggregate.BucketCountSize | base Long | method-parameter
+    def bucketCount(from: com.histmersion.api.library.Aggregate.BucketCountFrom, to: com.histmersion.api.library.Aggregate.BucketCountTo, size: com.histmersion.api.library.Ag
+com.histmersion.api.library.Aggregate.BucketCountTo | base Long | method-parameter
+    def bucketCount(from: com.histmersion.api.library.Aggregate.BucketCountFrom, to: com.histmersion.api.library.Aggregate.BucketCountTo, size: com.histmersion.api.library.Ag
+com.histmersion.api.library.Aggregate.BucketSizeResult | base Long | method-result
+    def bucketSize(spanYears: com.histmersion.api.library.Aggregate.BucketSizeSpanYears): com.histmersion.api.library.Aggregate.BucketSizeResult =
+com.histmersion.api.library.Aggregate.BucketSizeSpanYears | base Long | method-parameter
+    def bucketSize(spanYears: com.histmersion.api.library.Aggregate.BucketSizeSpanYears): com.histmersion.api.library.Aggregate.BucketSizeResult =
+com.histmersion.api.library.Aggregate.BucketsFrom | base Long | alias,method-parameter
+    val HistogramFrom: _root_.com.histmersion.api.library.Aggregate.BucketsFrom.type = _root_.com.histmersion.api.library.Aggregate.BucketsFrom
+    def buckets(from: com.histmersion.api.library.Aggregate.BucketsFrom, to: com.histmersion.api.library.Aggregate.BucketsTo, size: com.histmersion.api.library.Aggregate.Buck
+com.histmersion.api.library.Aggregate.BucketsResultPart1 | base Long | method-result
+    def buckets(from: com.histmersion.api.library.Aggregate.BucketsFrom, to: com.histmersion.api.library.Aggregate.BucketsTo, size: com.histmersion.api.library.Aggregate.Buck
+    (out.result()).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.api.library.Aggregate.BucketsResultPart1(refactorTuple._1), _root_.com.hi
+com.histmersion.api.library.Aggregate.BucketsResultPart2 | base Long | method-result
+    def buckets(from: com.histmersion.api.library.Aggregate.BucketsFrom, to: com.histmersion.api.library.Aggregate.BucketsTo, size: com.histmersion.api.library.Aggregate.Buck
+    (out.result()).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.api.library.Aggregate.BucketsResultPart1(refactorTuple._1), _root_.com.hi
+com.histmersion.api.library.Aggregate.BucketsSize | base Long | alias,method-parameter
+    val HistogramSize: _root_.com.histmersion.api.library.Aggregate.BucketsSize.type = _root_.com.histmersion.api.library.Aggregate.BucketsSize
+    def buckets(from: com.histmersion.api.library.Aggregate.BucketsFrom, to: com.histmersion.api.library.Aggregate.BucketsTo, size: com.histmersion.api.library.Aggregate.Buck
+com.histmersion.api.library.Aggregate.BucketsTo | base Long | alias,method-parameter
+    val HistogramTo: _root_.com.histmersion.api.library.Aggregate.BucketsTo.type = _root_.com.histmersion.api.library.Aggregate.BucketsTo
+    def buckets(from: com.histmersion.api.library.Aggregate.BucketsFrom, to: com.histmersion.api.library.Aggregate.BucketsTo, size: com.histmersion.api.library.Aggregate.Buck
+com.histmersion.api.library.Aggregate.Counting.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.library.Aggregate.Counting.ParseS): Option[Counting] = (s).value.trim.toLowerCase match
+com.histmersion.api.library.Aggregate.FinerResult | base Long | method-result
+    def finer(size: com.histmersion.api.library.Aggregate.FinerSize): com.histmersion.api.library.Aggregate.FinerResult = size match
+    case s if (s).value > 1000 => _root_.com.histmersion.api.library.Aggregate.FinerResult((1000).toLong)
+com.histmersion.api.library.Aggregate.FinerSize | base Long | method-parameter
+    def finer(size: com.histmersion.api.library.Aggregate.FinerSize): com.histmersion.api.library.Aggregate.FinerResult = size match
+com.histmersion.api.library.Aggregate.OrderA | base Long | method-parameter
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
+com.histmersion.api.library.Aggregate.OrderB | base Long | method-parameter
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
+    val (lo, hi) = order(_root_.com.histmersion.api.library.Aggregate.OrderA((from).value), _root_.com.histmersion.api.library.Aggregate.OrderB((to).value))
+com.histmersion.api.library.Aggregate.OrderResultPart1 | base Long | method-result
+    private def order(a: com.histmersion.api.library.Aggregate.OrderA, b: com.histmersion.api.library.Aggregate.OrderB): (com.histmersion.api.library.Aggregate.OrderResultPar
+com.histmersion.api.library.Aggregate.OrderResultPart2 | base Long | method-result
+    private def order(a: com.histmersion.api.library.Aggregate.OrderA, b: com.histmersion.api.library.Aggregate.OrderB): (com.histmersion.api.library.Aggregate.OrderResultPar
+com.histmersion.api.library.Aggregate.SpanResultPart1 | base Long | method-result
+    def span(row: Period.Row): Option[(com.histmersion.api.library.Aggregate.SpanResultPart1, com.histmersion.api.library.Aggregate.SpanResultPart2)] = (row.periodStart, row.
+com.histmersion.api.library.Aggregate.SpanResultPart2 | base Long | method-result
+    def span(row: Period.Row): Option[(com.histmersion.api.library.Aggregate.SpanResultPart1, com.histmersion.api.library.Aggregate.SpanResultPart2)] = (row.periodStart, row.
+com.histmersion.api.library.Candidates.ArxivWorksAtom | base String | method-parameter
+    def arxivWorks(atom: com.histmersion.api.library.Candidates.ArxivWorksAtom): List[WorkRef] =
+com.histmersion.api.library.Candidates.ArxivWorksTagResult | base String | method-result
+    def tag(s: com.histmersion.api.library.Candidates.ArxivWorksTagS, t: com.histmersion.api.library.Candidates.ArxivWorksTagT): Option[com.histmersion.api.library.Candidates
+com.histmersion.api.library.Candidates.ArxivWorksTagS | base String | method-parameter
+    def tag(s: com.histmersion.api.library.Candidates.ArxivWorksTagS, t: com.histmersion.api.library.Candidates.ArxivWorksTagT): Option[com.histmersion.api.library.Candidates
+    val id = tag(_root_.com.histmersion.api.library.Candidates.ArxivWorksTagS(e), _root_.com.histmersion.api.library.Candidates.ArxivWorksTagT("id")).map((_).value.replaceFir
+com.histmersion.api.library.Candidates.ArxivWorksTagT | base String | method-parameter
+    def tag(s: com.histmersion.api.library.Candidates.ArxivWorksTagS, t: com.histmersion.api.library.Candidates.ArxivWorksTagT): Option[com.histmersion.api.library.Candidates
+    val id = tag(_root_.com.histmersion.api.library.Candidates.ArxivWorksTagS(e), _root_.com.histmersion.api.library.Candidates.ArxivWorksTagT("id")).map((_).value.replaceFir
+com.histmersion.api.library.Candidates.ArxivWorksUnescapeS | base String | method-parameter
+    def unescape(s: com.histmersion.api.library.Candidates.ArxivWorksUnescapeS) =
+com.histmersion.api.library.Candidates.OpenalexAuthorIdsResult | base String | method-result
+    def openalexAuthorIds(json: Json): List[com.histmersion.api.library.Candidates.OpenalexAuthorIdsResult] =
+com.histmersion.api.library.Candidates.SinceLookbackDays | base Int | method-parameter
+    def since(watermark: Option[com.histmersion.api.library.Candidates.SinceWatermark], today: java.time.LocalDate, lookbackDays: com.histmersion.api.library.Candidates.Since
+com.histmersion.api.library.Candidates.SinceWatermark | base String | method-parameter
+    def since(watermark: Option[com.histmersion.api.library.Candidates.SinceWatermark], today: java.time.LocalDate, lookbackDays: com.histmersion.api.library.Candidates.Since
+com.histmersion.api.library.Candidates.State.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.WatchKind.W
+    def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.State.Wire((s).valu
+com.histmersion.api.library.Candidates.StrK | base String | method-parameter
+    private def str(c: ACursor, k: com.histmersion.api.library.Candidates.StrK): Option[com.histmersion.api.library.Candidates.StrResult] = (c.get[String]((k).value).toOption
+com.histmersion.api.library.Candidates.StrResult | base String | method-result
+    private def str(c: ACursor, k: com.histmersion.api.library.Candidates.StrK): Option[com.histmersion.api.library.Candidates.StrResult] = (c.get[String]((k).value).toOption
+com.histmersion.api.library.Candidates.WatchKind.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.WatchKind.W
+    def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.State.Wire((s).valu
+com.histmersion.api.library.CandidatesMarkdown.CountsResult | base String | method-result
+    private def counts(cs: List[CandidateCount]): com.histmersion.api.library.CandidatesMarkdown.CountsResult =
+com.histmersion.api.library.CandidatesMarkdown.ListResult | base String | method-result
+    def list(l: CandidateList): com.histmersion.api.library.CandidatesMarkdown.ListResult =
+com.histmersion.api.library.CandidatesMarkdown.MarkedResult | base String | method-result
+    def marked(m: CandidateMarked): com.histmersion.api.library.CandidatesMarkdown.MarkedResult = _root_.com.histmersion.api.library.CandidatesMarkdown.MarkedResult(s"${m.upd
+com.histmersion.api.library.CandidatesMarkdown.SweepResult | base String | method-result
+    def sweep(s: CandidateSweep): com.histmersion.api.library.CandidatesMarkdown.SweepResult =
+com.histmersion.api.library.CitationLint.DanglingEdgesMaxSuggestions | base Int | method-parameter
+    def danglingEdges(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: com.histmersion.api.library.CitationLint.DanglingEdgesMaxSuggesti
+com.histmersion.api.library.CitationLint.UnresolvedShortCitekeysMaxSuggestions | base Int | method-parameter
+    def unresolvedShortCitekeys(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: com.histmersion.api.library.CitationLint.UnresolvedShor
+com.histmersion.api.library.CollectionsApi.AuditPart1 | base String | lambda-parameter,value
+    lazy val audit: PublicEndpoint[com.histmersion.api.library.CollectionsApi.AuditPart1, Api.Error, CollectionAudit, Any] =
+com.histmersion.api.library.CollectionsApi.CollectionPart1 | base String | lambda-parameter,value
+    lazy val collection: PublicEndpoint[com.histmersion.api.library.CollectionsApi.CollectionPart1, Api.Error, CollectionInfo, Any] =
+com.histmersion.api.library.CollectionsApi.GapsPart1Part1 | base String | lambda-parameter,value
+    lazy val gaps: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.GapsPart1Part1, Option[com.histmersion.api.library.CollectionsApi.GapsPart1Part2]), Api.Error, C
+com.histmersion.api.library.CollectionsApi.GapsPart1Part2 | base Int | lambda-parameter,value
+    lazy val gaps: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.GapsPart1Part1, Option[com.histmersion.api.library.CollectionsApi.GapsPart1Part2]), Api.Error, C
+com.histmersion.api.library.CollectionsApi.ImportItemPart1Part1 | base String | lambda-parameter,value
+    lazy val importItem: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.ImportItemPart1Part1, CollectionImportRequest), Api.Error, CollectionImported, Any] =
+com.histmersion.api.library.CollectionsApi.LinkPart1Part1 | base String | lambda-parameter,value
+    lazy val link: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.LinkPart1Part1, CollectionLinkRequest), Api.Error, CollectionLinked, Any] =
+com.histmersion.api.library.CollectionsApi.PushPart1Part1 | base String | lambda-parameter,value
+    lazy val push: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.PushPart1Part1, CollectionPushRequest), Api.Error, CollectionPushed, Any] =
+com.histmersion.api.library.CollectionsApi.SearchPart1Part1 | base String | lambda-parameter,value
+    lazy val search: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.SearchPart1Part1, Option[com.histmersion.api.library.CollectionsApi.SearchPart1Part2], Option[
+com.histmersion.api.library.CollectionsApi.SearchPart1Part2 | base String | lambda-parameter,value
+    lazy val search: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.SearchPart1Part1, Option[com.histmersion.api.library.CollectionsApi.SearchPart1Part2], Option[
+com.histmersion.api.library.CollectionsApi.SearchPart1Part3 | base Int | lambda-parameter,value
+    lazy val search: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.SearchPart1Part1, Option[com.histmersion.api.library.CollectionsApi.SearchPart1Part2], Option[
+com.histmersion.api.library.CollectionsApi.SearchPart1Part4 | base Boolean | lambda-parameter,value
+    lazy val search: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.SearchPart1Part1, Option[com.histmersion.api.library.CollectionsApi.SearchPart1Part2], Option[
+com.histmersion.api.library.CollectionsApi.SetPart1Part1 | base String | lambda-parameter,value
+    lazy val set: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.SetPart1Part1, CollectionSetRequest), Api.Error, CollectionSetDone, Any] =
+com.histmersion.api.library.CollectionsApi.SyncPart1Part1 | base String | lambda-parameter,value
+    lazy val sync: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.SyncPart1Part1, CollectionSync.Request), Api.Error, CollectionSync, Any] =
+com.histmersion.api.library.CollectionsApi.UpdateAllPart1Part1 | base String | lambda-parameter,value
+    lazy val updateAll: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.UpdateAllPart1Part1, CollectionUpdateAll.Request), Api.Error, CollectionUpdateAll, Any] =
+com.histmersion.api.library.CollectionsApi.UpdateOnePart1Part1 | base String | lambda-parameter,value
+    lazy val updateOne: PublicEndpoint[(com.histmersion.api.library.CollectionsApi.UpdateOnePart1Part1, CollectionUpdateOne), Api.Error, CollectionUpdatedOne, Any] =
+com.histmersion.api.library.CollectionsMarkdown.AuditCellS | base String | method-parameter
+    def cell(s: com.histmersion.api.library.CollectionsMarkdown.AuditCellS) = (s).value.replace("|", "\\|").replace("\n", " ").take(90)
+com.histmersion.api.library.CollectionsMarkdown.AuditResult | base String | method-result
+    def audit(a: CollectionAudit): com.histmersion.api.library.CollectionsMarkdown.AuditResult =
+com.histmersion.api.library.CollectionsMarkdown.CollectionResult | base String | method-result
+    def collection(c: CollectionInfo): com.histmersion.api.library.CollectionsMarkdown.CollectionResult =
+com.histmersion.api.library.CollectionsMarkdown.CollectionsResult | base String | method-result
+    def collections(cs: List[CollectionInfo]): com.histmersion.api.library.CollectionsMarkdown.CollectionsResult =
+com.histmersion.api.library.CollectionsMarkdown.GapsEscS | base String | method-parameter
+    def esc(s: com.histmersion.api.library.CollectionsMarkdown.GapsEscS) = (s).value.replace("|", "\\|").replace("\n", " ").trim
+com.histmersion.api.library.CollectionsMarkdown.GapsResult | base String | method-result
+    def gaps(rows: List[CollectionGapRow]): com.histmersion.api.library.CollectionsMarkdown.GapsResult =
+com.histmersion.api.library.CollectionsMarkdown.ImportedResult | base String | method-result
+    def imported(i: CollectionImported): com.histmersion.api.library.CollectionsMarkdown.ImportedResult =
+com.histmersion.api.library.CollectionsMarkdown.LinkedResult | base String | method-result
+    def linked(l: CollectionLinked): com.histmersion.api.library.CollectionsMarkdown.LinkedResult = _root_.com.histmersion.api.library.CollectionsMarkdown.LinkedResult(s"link
+com.histmersion.api.library.CollectionsMarkdown.PushedResult | base String | method-result
+    def pushed(p: CollectionPushed): com.histmersion.api.library.CollectionsMarkdown.PushedResult =
+com.histmersion.api.library.CollectionsMarkdown.SearchResult | base String | method-result
+    def search(entries: List[CollectionEntry]): com.histmersion.api.library.CollectionsMarkdown.SearchResult =
+com.histmersion.api.library.CollectionsMarkdown.SetResult | base String | method-result
+    def set(s: CollectionSetDone): com.histmersion.api.library.CollectionsMarkdown.SetResult = _root_.com.histmersion.api.library.CollectionsMarkdown.SetResult(s"set ${s.fiel
+com.histmersion.api.library.CollectionsMarkdown.SyncResult | base String | method-result
+    def sync(s: CollectionSync): com.histmersion.api.library.CollectionsMarkdown.SyncResult =
+com.histmersion.api.library.CollectionsMarkdown.UncountedLineN | base Int | method-parameter
+    def uncountedLine(n: com.histmersion.api.library.CollectionsMarkdown.UncountedLineN): com.histmersion.api.library.CollectionsMarkdown.UncountedLineResult =
+    val note = if missing == 0 then "" else " · " + uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.UncountedLineN(missing))
+com.histmersion.api.library.CollectionsMarkdown.UncountedLineResult | base String | method-result
+    def uncountedLine(n: com.histmersion.api.library.CollectionsMarkdown.UncountedLineN): com.histmersion.api.library.CollectionsMarkdown.UncountedLineResult =
+com.histmersion.api.library.CollectionsMarkdown.UnlinkedResult | base String | method-result
+    def unlinked(entries: List[CollectionEntry], total: com.histmersion.api.library.CollectionsMarkdown.UnlinkedTotal): com.histmersion.api.library.CollectionsMarkdown.Unlink
+com.histmersion.api.library.CollectionsMarkdown.UnlinkedTotal | base Int | method-parameter
+    def unlinked(entries: List[CollectionEntry], total: com.histmersion.api.library.CollectionsMarkdown.UnlinkedTotal): com.histmersion.api.library.CollectionsMarkdown.Unlink
+com.histmersion.api.library.CollectionsMarkdown.UpdateAllApplied | base Boolean | method-parameter
+    def updateAll(rows: List[CollectionUpdateRow], applied: com.histmersion.api.library.CollectionsMarkdown.UpdateAllApplied): com.histmersion.api.library.CollectionsMarkdown
+com.histmersion.api.library.CollectionsMarkdown.UpdateAllCellS | base String | method-parameter
+    def cell(s: com.histmersion.api.library.CollectionsMarkdown.UpdateAllCellS) = (s).value.replace("|", "\\|").replace("\n", " ").take(80)
+com.histmersion.api.library.CollectionsMarkdown.UpdateAllResult | base String | method-result
+    def updateAll(rows: List[CollectionUpdateRow], applied: com.histmersion.api.library.CollectionsMarkdown.UpdateAllApplied): com.histmersion.api.library.CollectionsMarkdown
+com.histmersion.api.library.CollectionsMarkdown.UpdatedOneResult | base String | method-result
+    def updatedOne(u: CollectionUpdatedOne): com.histmersion.api.library.CollectionsMarkdown.UpdatedOneResult =
+com.histmersion.api.library.CollectionsMarkdown.WhoAuthors | base String | method-parameter
+    private def who(authors: List[com.histmersion.api.library.CollectionsMarkdown.WhoAuthors]): com.histmersion.api.library.CollectionsMarkdown.WhoResult =
+com.histmersion.api.library.CollectionsMarkdown.WhoResult | base String | method-result
+    private def who(authors: List[com.histmersion.api.library.CollectionsMarkdown.WhoAuthors]): com.histmersion.api.library.CollectionsMarkdown.WhoResult =
+com.histmersion.api.library.Confidence.FromStringS | base String | method-parameter
+    def fromString(s: com.histmersion.api.library.Confidence.FromStringS): Option[Confidence] =
+com.histmersion.api.library.Confidence.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Confidence] =
+com.histmersion.api.library.Confidence.WireResult | base String | method-result
+    def wire: com.histmersion.api.library.Confidence.WireResult = Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS(toString))
+    def wire(e: Confidence): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((_root_.com.histmersion.api.library.C
+com.histmersion.api.library.CorrespondingSource.UrlCommit | base String | method-parameter
+    def url(repository: com.histmersion.api.library.CorrespondingSource.UrlRepository, commit: Option[com.histmersion.api.library.CorrespondingSource.UrlCommit]): com.histmer
+com.histmersion.api.library.CorrespondingSource.UrlRepository | base String | method-parameter
+    def url(repository: com.histmersion.api.library.CorrespondingSource.UrlRepository, commit: Option[com.histmersion.api.library.CorrespondingSource.UrlCommit]): com.histmer
+com.histmersion.api.library.CorrespondingSource.UrlResult | base String | method-result
+    def url(repository: com.histmersion.api.library.CorrespondingSource.UrlRepository, commit: Option[com.histmersion.api.library.CorrespondingSource.UrlCommit]): com.histmer
+com.histmersion.api.library.DeleteBlocker.Kind.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(_.wire == _root_.com.histmersion.api.library.DeleteBloc
+com.histmersion.api.library.DeleteBlocker.Kind.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+com.histmersion.api.library.DeletePart.FromWireS | base String | no-resolved-use
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[DeletePart] = DeletePart.values.find(_.wire == _root_.com.histmersion.api.librar
+com.histmersion.api.library.DeletePart.WireResult | base String | no-resolved-use
+    def wire(e: DeletePart): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+com.histmersion.api.library.Edge.Kind.AllWire | base String | value
+    val allWire: List[com.histmersion.api.library.Edge.Kind.AllWire] = (values.map(wireOf).toList).map(refactorValue => _root_.com.histmersion.api.library.Edge.Kind.AllWire((
+com.histmersion.api.library.Edge.Kind.FromWireS | base String | method-parameter
+    def fromWire(s: com.histmersion.api.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(_root_.com.histmersion.api.library.Edge.Kind.WireMapPart1((s).value.toLowerCa
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.api.library.Edge.Kind.FromWireS((s)
+com.histmersion.api.library.Edge.Kind.WireMapPart1 | base String | value
+    private val wireMap: Map[com.histmersion.api.library.Edge.Kind.WireMapPart1, Kind] = values.map(e => wireOf(e) -> e).toMap
+    def fromWire(s: com.histmersion.api.library.Edge.Kind.FromWireS): Option[Kind] = wireMap.get(_root_.com.histmersion.api.library.Edge.Kind.WireMapPart1((s).value.toLowerCa
+com.histmersion.api.library.Edge.Kind.WireOfResult | base String | method-result
+    def wireOf(e: Kind): com.histmersion.api.library.Edge.Kind.WireOfResult = e match
+    case References      => _root_.com.histmersion.api.library.Edge.Kind.WireOfResult("references")
+com.histmersion.api.library.Edge.Kind.WireResult | base String | no-resolved-use
+    def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+com.histmersion.api.library.ExternalId.KeyResult | base String | method-result
+    def key: com.histmersion.api.library.ExternalId.KeyResult = _root_.com.histmersion.api.library.ExternalId.KeyResult(s"${scheme.wire}:$id")
+com.histmersion.api.library.ExternalId.ParseMakeId | base String | method-parameter
+    def make(scheme: LinkScheme, id: com.histmersion.api.library.ExternalId.ParseMakeId): Option[ExternalId] =
+    case WikidataUri(id) => make(LinkScheme.Wikidata, _root_.com.histmersion.api.library.ExternalId.ParseMakeId(id))
+com.histmersion.api.library.ExternalId.ParseRaw | base String | method-parameter
+    def parse(raw: com.histmersion.api.library.ExternalId.ParseRaw): Option[ExternalId] =
+com.histmersion.api.library.ExternalId.PlaceIdResult | base String | method-result
+    def placeId: com.histmersion.api.library.ExternalId.PlaceIdResult = _root_.com.histmersion.api.library.ExternalId.PlaceIdResult(s"${scheme.wire}_${(id).value.toLowerCase(
+com.histmersion.api.library.Facet.Field.All | base String | value
+    val all: List[com.histmersion.api.library.Facet.Field.All] = values.toList.map(_root_.com.histmersion.api.library.Facet.Field.All((label).value))
+com.histmersion.api.library.Facet.Field.LabelResult | base String | method-result
+    def label(f: Field): com.histmersion.api.library.Facet.Field.LabelResult = f match
+    case Tags       => _root_.com.histmersion.api.library.Facet.Field.LabelResult("tags");
+com.histmersion.api.library.Facet.Field.ParseS | base String | method-parameter
+    def parse(s: com.histmersion.api.library.Facet.Field.ParseS): Option[Field] =
