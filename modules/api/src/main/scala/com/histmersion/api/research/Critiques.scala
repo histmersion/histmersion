@@ -53,7 +53,7 @@ object Critiques:
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def units(body: String): List[Block] =
-    val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
+    val lines = (body).replace("\r\n", "\n").split("\n", -1).toVector
     val skip = notUsedLines(lines)
     val out = List.newBuilder[Block]
     val cur = new StringBuilder()
@@ -84,8 +84,8 @@ object Critiques:
     out.result()
 
   private def notUsedLines(lines: Vector[String]): Set[Int] =
-    def heading(l: String) = (l).value.trim.startsWith("#")
-    def level(l: String) = (l).value.trim.takeWhile(_ == '#').length
+    def heading(l: String) = (l).trim.startsWith("#")
+    def level(l: String) = (l).trim.takeWhile(_ == '#').length
     lines.indexWhere(l => heading(l) && l.trim.replaceAll("^#+\\s*", "").trim.toLowerCase.startsWith("not used")) match
       case -1 => Set.empty
       case i  =>

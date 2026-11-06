@@ -101,8 +101,8 @@ object Target:
       case _               => _root_.com.histmersion.api.personal.Target.WhereResult("")
 
   private def round1(v: Double): com.histmersion.api.personal.Target.Round1Result =
-    _root_.com.histmersion.api.personal.Target.Round1Result(BigDecimal((v).value).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString)
+    _root_.com.histmersion.api.personal.Target.Round1Result(BigDecimal((v)).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString)
 
   private def degrees(v: Double, plus: com.histmersion.api.personal.Target.DegreesPlus, minus: com.histmersion.api.personal.Target.DegreesMinus): com.histmersion.api.personal.Target.DegreesResult =
-    val a = BigDecimal(math.abs((v).value)).setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
+    val a = BigDecimal(math.abs((v))).setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
     s"$a° ${if v >= 0 then plus else minus}"

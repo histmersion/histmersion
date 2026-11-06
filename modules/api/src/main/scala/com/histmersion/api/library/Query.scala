@@ -112,32 +112,32 @@ object Query:
     val out = List.newBuilder[String]
     val cur = StringBuilder()
     var i = 0
-    val n = (sql).value.length
+    val n = (sql).length
     var depth = 0
-    def at(k: Int): Char = if k >= 0 && k < n then ((sql).value.charAt((k).value)) else (0.toChar)
+    def at(k: Int): Char = if k >= 0 && k < n then ((sql).charAt((k).value)) else (0.toChar)
     while i < n do
-      val c = (sql).value.charAt(i)
+      val c = (sql).charAt(i)
       if depth > 0 then
         if c == '*' && at((i + 1)) == ('/') then { depth -= 1; cur.append("*/"); i += 2 }
         else if c == '/' && at((i + 1)) == ('*') then { depth += 1; cur.append("/*"); i += 2 }
         else { cur.append(c); i += 1 }
       else if c == '-' && at((i + 1)) == ('-') then
-        while i < n && (sql).value.charAt(i) != '\n' do { cur.append((sql).value.charAt(i)); i += 1 }
+        while i < n && (sql).value.charAt(i) != '\n' do { cur.append((sql).charAt(i)); i += 1 }
       else if c == '/' && at((i + 1)) == ('*') then { depth += 1; cur.append("/*"); i += 2 }
       else if c == '\'' || c == '"' then
         cur.append(c); i += 1
         var closed = false
         while i < n && !closed do
-          val q = (sql).value.charAt(i)
+          val q = (sql).charAt(i)
           if q == c && at((i + 1)) == (c) then { cur.append(c).append(c); i += 2 }
           else if q == c then { cur.append(c); i += 1; closed = true }
           else { cur.append(q); i += 1 }
       else if c == '$' then
         dollarTag(sql, (i)) match
           case Some(tag) =>
-            val end = (sql).value.indexOf(tag, i + (tag).value.length)
+            val end = (sql).indexOf(tag, i + (tag).value.length)
             val to = if end < 0 then n else end + (tag).value.length
-            cur.append((sql).value.substring(i, to)); i = to
+            cur.append((sql).substring(i, to)); i = to
           case None => { cur.append(c); i += 1 }
       else if c == ';' then { out += cur.toString; cur.clear(); i += 1 }
       else { cur.append(c); i += 1 }
@@ -145,32 +145,32 @@ object Query:
     (out.result().map(_.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.library.Query.Statement(refactorValue))
 
   private def dollarTag(sql: String, i: Int): Option[String] =
-    val close = (sql).value.indexOf('$', (i).value + 1)
+    val close = (sql).indexOf('$', (i).value + 1)
     if close < 0 then None
     else
-      val tag = (sql).value.substring((i).value + 1, close)
+      val tag = (sql).substring((i).value + 1, close)
       if tag.isEmpty || (tag.head.isLetter || tag.head == '_') && tag.forall(ch => ch.isLetterOrDigit || ch == '_')
-      then Some(((sql).value.substring((i).value, close + 1)))
+      then Some(((sql).substring((i).value, close + 1)))
       else None
 
   def leadingKeyword(statement: com.histmersion.api.library.Query.Statement): String =
     def afterBlockComment(text: String): String =
       var at = 2
       var depth = 1
-      while at < (text).value.length && depth > 0 do
-        if (text).value.startsWith("/*", at) then
+      while at < (text).length && depth > 0 do
+        if (text).startsWith("/*", at) then
           depth += 1
           at += 2
-        else if (text).value.startsWith("*/", at) then
+        else if (text).startsWith("*/", at) then
           depth -= 1
           at += 2
         else at += 1
-      if depth == 0 then ((text).value.substring(at).trim) else ("")
+      if depth == 0 then ((text).substring(at).trim) else ("")
     var s = (statement).value.trim
     var go = true
     while go do
       if s.startsWith("--") then s = s.dropWhile(_ != '\n').trim
-      else if s.startsWith("/*") then s = (afterBlockComment((s))).value
+      else if s.startsWith("/*") then s = (afterBlockComment((s)))
       else go = false
     (s.takeWhile(c => c.isLetter).toUpperCase)
 
@@ -182,7 +182,7 @@ object Query:
         case Nil        => Left(_root_.com.histmersion.api.library.Query.Problem("empty statement"))
         case one :: Nil =>
           val kw = leadingKeyword(_root_.com.histmersion.api.library.Query.Statement((one).value))
-          if Forbidden.contains((kw).value) then
+          if Forbidden.contains((kw)) then
             Left(
               _root_.com.histmersion.api.library.Query.Problem(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
                 "WITH that only reads); transaction and session control are refused")

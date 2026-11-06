@@ -55,10 +55,10 @@ object Gazetteer:
     val base = fileName
       .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
       .replaceAll("(?i)\\.lpf$", "")
-    _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName((slug(base)).value.take(48))
+    _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName((slug(base)).take(48))
 
   private def slug(s: String): String =
-    ((s).value.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
+    ((s).trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
   def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.Rank = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
     case None                                                        => if m.importSource.isEmpty then _root_.com.histmersion.api.catalogue.Gazetteer.Rank(0) else _root_.com.histmersion.api.catalogue.Gazetteer.Rank(5)
@@ -271,39 +271,39 @@ object Gazetteer:
       defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key] = None
   ): Either[com.histmersion.api.catalogue.Gazetteer.Problem, GazRecord] =
     val row =
-      header.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).value.trim) ++ List.fill(header.size)("")).toMap
-    def get(k: String): Option[String] = (row.get((k).value).filter(_.nonEmpty)).map(refactorValue19 => (refactorValue19))
+      header.map((_).trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).trim) ++ List.fill(header.size)("")).toMap
+    def get(k: String): Option[String] = (row.get((k)).filter(_.nonEmpty)).map(refactorValue19 => (refactorValue19))
     (get(("id")), get(("title"))) match
       case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.Problem(s"line $line: no id"))
       case (_, None)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.Problem(s"line $line: no title"))
       case (Some(ref), Some(title)) =>
         val own = ExternalId.parse(ref)
-        val variants = get(("variants")).toList.flatMap((_).value.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
+        val variants = get(("variants")).toList.flatMap((_).split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
           val at = v.lastIndexOf('@')
           if at > 0 && v.drop(at + 1).matches("[A-Za-z]{2,3}(-[A-Za-z0-9]+)?") then
             GazName(_root_.com.histmersion.api.catalogue.GazName.Name(v.take(at).trim), _root_.com.histmersion.api.catalogue.GazName.Lang(v.drop(at + 1)))
           else GazName(_root_.com.histmersion.api.catalogue.GazName.Name(v))
         }
         val links = get(("matches")).toList
-          .flatMap((_).value.split(";").toList)
+          .flatMap((_).split(";").toList)
           .flatMap({ val refactorFunction3 = ExternalId.parse; (refactorValue8) => refactorFunction3(_root_.com.histmersion.api.library.ExternalId.Reference(refactorValue8)) })
           .filterNot(own.contains)
           .distinct
           .map(GazLink(_, LinkMatch.Close))
         val point = for
-          lon <- get(("lon")).flatMap((_).value.toDoubleOption)
-          lat <- get(("lat")).flatMap((_).value.toDoubleOption)
+          lon <- get(("lon")).flatMap((_).toDoubleOption)
+          lat <- get(("lat")).flatMap((_).toDoubleOption)
         yield GazGeometry.GeoJson(_root_.com.histmersion.api.catalogue.GazGeometry.GeoJson.Text(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))
         val kind =
           get(("types"))
-            .flatMap(t => (t).value.split(";").toList.flatMap({ val refactorFunction4 = com.histmersion.api.catalogue.Place.Kind.parse; (refactorValue10) => refactorFunction4(_root_.com.histmersion.api.catalogue.Place.Kind.ParseS(refactorValue10)) }).headOption)
+            .flatMap(t => (t).split(";").toList.flatMap({ val refactorFunction4 = com.histmersion.api.catalogue.Place.Kind.parse; (refactorValue10) => refactorFunction4(_root_.com.histmersion.api.catalogue.Place.Kind.ParseS(refactorValue10)) }).headOption)
             .getOrElse(com.histmersion.api.catalogue.Place.Kind.Site)
         val sp = Span(get(("start")).flatMap(Lpf.parseYear), get(("end")).flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
           get(("ccodes"))
-            .map(c => "ccodes" -> Json.arr((c).value.split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
+            .map(c => "ccodes" -> Json.arr((c).split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
             .toList ++
-            get(("types")).map(t => "types" -> Json.fromString((t).value)).toList
+            get(("types")).map(t => "types" -> Json.fromString((t))).toList
         )
         Right(
           GazRecord(
@@ -323,7 +323,7 @@ object Gazetteer:
         )
 
   /** LP-TSV has no quoting: a tab separates, nothing escapes. */
-  def tsvCells(line: String): List[String] = ((line).value.split("\t", -1).toList).map(refactorValue7 => (refactorValue7))
+  def tsvCells(line: String): List[String] = ((line).split("\t", -1).toList).map(refactorValue7 => (refactorValue7))
 
   final case class Extract(
       name: Extract.Name,
@@ -411,7 +411,7 @@ object Gazetteer:
         com.histmersion.api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
       this.modify(
-        _.records).setTo(((records).value + (o.records).value).value).modify(_.created).setTo((created).value + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
+        _.records).setTo(((records).value + (o.records).value)).modify(_.created).setTo((created).value + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
       )
 
     def unchanged: Boolean =

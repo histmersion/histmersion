@@ -35,10 +35,10 @@ object ImageSize:
     else None
 
   private def u8(b: com.histmersion.api.media.ImageSize.Bytes, i: Int): Int = b(i) & 0xff
-  private def be16(b: com.histmersion.api.media.ImageSize.Be16B, i: com.histmersion.api.media.ImageSize.Be16I): Int = ((u8(b, i)).value << 8) | u8(b, ((i).value + 1))
-  private def le16(b: com.histmersion.api.media.ImageSize.Le16B, i: com.histmersion.api.media.ImageSize.Le16I): Int = ((u8(b, ((i).value + 1))).value << 8) | u8(b, i)
+  private def be16(b: com.histmersion.api.media.ImageSize.Be16B, i: com.histmersion.api.media.ImageSize.Be16I): Int = ((u8(b, i)) << 8) | u8(b, ((i).value + 1))
+  private def le16(b: com.histmersion.api.media.ImageSize.Le16B, i: com.histmersion.api.media.ImageSize.Le16I): Int = ((u8(b, ((i) + 1))).value << 8) | u8(b, i)
   private def be32(b: com.histmersion.api.media.ImageSize.Be32B, i: com.histmersion.api.media.ImageSize.Be32I): Int =
-    ((u8(b, i)).value << 24) | ((u8(b, ((i).value + 1))).value << 16) | ((u8(b, ((i).value + 2))).value << 8) | u8(b, i + 3)
+    ((u8(b, i)) << 24) | ((u8(b, ((i).value + 1))).value << 16) | ((u8(b, ((i).value + 2))).value << 8) | u8(b, i + 3)
 
   private def png(b: com.histmersion.api.media.ImageSize.PngB): Boolean =
     (b).value.length >= 24 && u8(b, (0)) == 0x89 && b(1) == 'P' && b(2) == 'N' && b(3) == 'G'
@@ -60,12 +60,12 @@ object ImageSize:
   private def jpegSize(b: com.histmersion.api.media.ImageSize.Bytes): Option[(com.histmersion.api.media.ImageSize.Width, com.histmersion.api.media.ImageSize.Height)] =
     @annotation.tailrec
     def go(i: Int): Option[(com.histmersion.api.media.ImageSize.Width, com.histmersion.api.media.ImageSize.Height)] =
-      if (i).value + 9 >= (b).value.length || u8(b, i) != 0xff then None
+      if (i) + 9 >= (b).value.length || u8(b, i) != 0xff then None
       else
-        val marker = u8(b, ((i).value + 1))
-        val len = be16(b, _root_.com.histmersion.api.media.ImageSize.Be16I((i).value + 2))
+        val marker = u8(b, ((i) + 1))
+        val len = be16(b, _root_.com.histmersion.api.media.ImageSize.Be16I((i) + 2))
         if len < 2 then None
         else if (marker >= 0xc0 && marker <= 0xcf) && marker != 0xc4 && marker != 0xc8 && marker != 0xcc
-        then Some((be16(b, _root_.com.histmersion.api.media.ImageSize.Be16I((i).value + 7)), be16(b, _root_.com.histmersion.api.media.ImageSize.Be16I((i).value + 5))))
-        else go((i).value + 2 + len)
+        then Some((be16(b, _root_.com.histmersion.api.media.ImageSize.Be16I((i) + 7)), be16(b, _root_.com.histmersion.api.media.ImageSize.Be16I((i) + 5))))
+        else go((i) + 2 + len)
     go((2))

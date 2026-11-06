@@ -30,8 +30,8 @@ object ManagersMarkdown:
     BigDecimal((d).value).setScale(if d != 0 && math.abs((d).value) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
 
   private def tokens(n: Long): String =
-    def one(x: Double) = BigDecimal((x).value).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
-    if n >= 1000000 then (s"${one(((n).value / 1e6))}M") else if n >= 1000 then (s"${one(((n).value / 1e3))}k") else (n.toString)
+    def one(x: Double) = BigDecimal((x)).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
+    if n >= 1000000 then (s"${one(((n) / 1e6))}M") else if n >= 1000 then (s"${one(((n) / 1e3))}k") else (n.toString)
 
   def backlog(n: com.histmersion.api.automation.Managers.ManagerInfo.Backlog, days: Option[com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays]): com.histmersion.api.Markdown.Text =
     s"${Plural.count(n, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n == 0 then ""

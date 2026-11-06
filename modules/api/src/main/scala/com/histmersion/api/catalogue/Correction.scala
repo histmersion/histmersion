@@ -56,7 +56,7 @@ object Correction:
     def isEmpty: Boolean = (kept == _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0) && retired == _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(0) && conflicts == _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(0))
 
     def summary: Option[String] =
-      Option.when(!(isEmpty).value)(
+      Option.when(!(isEmpty))(
         (s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict")
       )
 

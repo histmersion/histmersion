@@ -21,10 +21,10 @@ object YearFmt:
 
   def openPeriod(start: Option[com.histmersion.api.YearFmt.OpenPeriodStart], end: Option[com.histmersion.api.YearFmt.OpenPeriodEnd], none: String = ("undated")): String =
     (start, end) match
-      case (Some(_), Some(_)) => ((period(start, end)).value)
+      case (Some(_), Some(_)) => ((period(start, end)))
       case (Some(a), None)    => s"from ${apply(a)}"
       case (None, Some(b))    => s"until ${apply(b)}"
-      case (None, None)       => ((none).value)
+      case (None, None)       => ((none))
 
   def span(ts: TimeSpan): String =
     ts.outer.fold("undated")((a, b) => period(Some(a), Some(b)))
