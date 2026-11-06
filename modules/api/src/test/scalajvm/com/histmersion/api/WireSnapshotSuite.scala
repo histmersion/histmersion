@@ -207,7 +207,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     children = List(EventSummary(com.histmersion.api.catalogue.Event.Id("zq-child"), com.histmersion.api.catalogue.EventSummary.Label("Zq ash fall"), com.histmersion.api.catalogue.EventSummary.Kind("ashfall"), TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1610))), com.histmersion.api.catalogue.EventSummary.Historicity("inferred"))),
     datings =
       List(EventDating(com.histmersion.api.catalogue.Event.Id("zq-event"), com.histmersion.api.library.Citekey("zq_alpha_2001"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1620)), None, None, Some(com.histmersion.api.catalogue.Year(-1590))), Some(com.histmersion.api.catalogue.EventDating.Method("c14")))),
-    wikidata = Some("Q1"),
+    wikidata = Some(com.histmersion.api.catalogue.EventEntry.Wikidata("Q1")),
     media = List(thumb),
     names = List("Zq eruption", "Zq event")
   )
@@ -327,7 +327,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       "job detail json" -> InitPlan
         .Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List(com.histmersion.api.exchange.InitPlan.Fetch("zq-gaz")))))
         .set(SkippedPeriod.SkippedCount, com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(2))
-        .set(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash, Some("zq-hash"))
+        .set(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash, Some(com.histmersion.api.exchange.MergePlan.PlanHash("zq-hash")))
         .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = true, List("sources"))))
         .set(com.histmersion.api.media.ImportJobKinds.Media, Some("a media run"))
         .set(com.histmersion.api.catalogue.EventsJobKinds.Catalogue, Some("zq-catalogue"))
