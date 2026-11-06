@@ -1,0 +1,368 @@
+## CONCEPTS NEARBY
+com.histmersion.config.AcquireConfig.AllowUnauthorised (Boolean)
+com.histmersion.config.AcquireConfig.ContactEmail (String)
+com.histmersion.config.AcquireConfig.PublicUserAgent (String)
+com.histmersion.config.AcquireConfig.SpoolDir (String)
+com.histmersion.config.AcquireConfig.TimeoutSeconds (Int)
+com.histmersion.config.AcquireConfig.UserAgent (String)
+com.histmersion.config.AgentApprovalsConfig.ArticleFilter (String)
+com.histmersion.config.AgentApprovalsConfig.ArticlePlan (String)
+com.histmersion.config.AgentApprovalsConfig.ArticlePublish (String)
+com.histmersion.config.AgentApprovalsConfig.Edges (String)
+com.histmersion.config.AgentApprovalsConfig.GoalPlan (String)
+com.histmersion.config.AgentApprovalsConfig.StatusChange (String)
+com.histmersion.config.AgentAutopilotConfig.BackupHours (Int)
+com.histmersion.config.AgentAutopilotConfig.DigestHour (Int)
+com.histmersion.config.AgentAutopilotConfig.EnsureMinutes (Int)
+com.histmersion.config.AgentAutopilotConfig.ExtendMinNew (Int)
+com.histmersion.config.AgentAutopilotConfig.FinishedWatchCron (String)
+com.histmersion.config.AgentAutopilotConfig.FocusQueueShown (Int)
+com.histmersion.config.AgentAutopilotConfig.FocusRatio (Int)
+com.histmersion.config.AgentAutopilotConfig.IngestBacklogShare (Double)
+com.histmersion.config.AgentAutopilotConfig.IngestCeiling (Int)
+com.histmersion.config.AgentAutopilotConfig.IngestPerDay (Int)
+com.histmersion.config.AgentAutopilotConfig.LintHours (Int)
+com.histmersion.config.AgentAutopilotConfig.MaxActiveGoals (Int)
+com.histmersion.config.AgentAutopilotConfig.MaxOpenSubGoals (Int)
+com.histmersion.config.AgentAutopilotConfig.MaxUnfinishedGoals (Int)
+com.histmersion.config.AgentAutopilotConfig.NextArticleHours (Int)
+com.histmersion.config.AgentAutopilotConfig.SeedCron (String)
+com.histmersion.config.AgentAutopilotConfig.StallDays (Int)
+com.histmersion.config.AgentAutopilotConfig.WatchCron (String)
+com.histmersion.config.AgentAutopilotConfig.WatchIngestPerDay (Int)
+com.histmersion.config.AgentBudgetsConfig.CacheReadWeight (Double)
+com.histmersion.config.AgentBudgetsConfig.DailyUsd (Double)
+com.histmersion.config.AgentBudgetsConfig.MonthlyUsd (Double)
+com.histmersion.config.AgentBudgetsConfig.PipelineRunTokens (String)
+com.histmersion.config.AgentBudgetsConfig.RunTokens (Long)
+com.histmersion.config.AgentBudgetsConfig.RunUsd (Double)
+com.histmersion.config.AgentCompileConfig.DraftMaxTokens (Int)
+com.histmersion.config.AgentCompileConfig.MaxClaims (Int)
+com.histmersion.config.AgentCompileConfig.MaxSources (Int)
+com.histmersion.config.AgentCompileConfig.RecordChars (Int)
+com.histmersion.config.AgentCompileConfig.Review (Boolean)
+com.histmersion.config.AgentEnrichConfig.HeadChars (Int)
+com.histmersion.config.AgentEnrichConfig.MaxWindows (Int)
+com.histmersion.config.AgentEnrichConfig.Upstream (Boolean)
+com.histmersion.config.AgentEnrichConfig.WindowChars (Int)
+com.histmersion.config.AgentEnrichGuardsConfig.CenturyGapYears (Int)
+com.histmersion.config.AgentEnrichGuardsConfig.MinPlacedShare (Double)
+com.histmersion.config.AgentEnrichGuardsConfig.PointerPhrases (String)
+com.histmersion.config.AgentInferFilterConfig.MaxHits (Int)
+com.histmersion.config.AgentInferFilterConfig.MinCitedShare (Double)
+com.histmersion.config.AgentInferFilterConfig.MinHits (Int)
+com.histmersion.config.AgentInferFilterConfig.Sample (Int)
+com.histmersion.config.AgentManagersConfig.BackoffMinutes (Int)
+com.histmersion.config.AgentManagersConfig.DailyUsd (Double)
+com.histmersion.config.AgentManagersConfig.Enabled (Boolean)
+com.histmersion.config.AgentManagersConfig.KeepEventsDays (Int)
+com.histmersion.config.AgentManagersConfig.MaxBackoffMinutes (Int)
+com.histmersion.config.AgentManagersConfig.MaxFailures (Int)
+com.histmersion.config.AgentManagersConfig.TickSeconds (Int)
+com.histmersion.config.AgentPlanConfig.MaxQueries (Int)
+com.histmersion.config.AgentPlanConfig.MaxSubGoals (Int)
+com.histmersion.config.AgentPlanConfig.MaxWorks (Int)
+com.histmersion.config.AgentPlanConfig.QueryChars (Int)
+com.histmersion.config.AgentProviderConfig.ApiKey (String)
+com.histmersion.config.AgentProviderConfig.BaseUrl (String)
+com.histmersion.config.AgentProviderConfig.StrictTools (Boolean)
+com.histmersion.config.AgentProviderConfig.TimeoutSeconds (Int)
+com.histmersion.config.AgentReviewConfig.ArticleChars (Int)
+com.histmersion.config.AgentReviewConfig.CritiquePairs (Int)
+com.histmersion.config.AgentReviewConfig.CritiqueReasoned (Int)
+com.histmersion.config.AgentReviewConfig.FinalPanel (String)
+com.histmersion.config.AgentReviewConfig.FixerMaxTokens (Int)
+com.histmersion.config.AgentReviewConfig.FixerTurnsCap (Int)
+com.histmersion.config.AgentReviewConfig.FixerTurnsPerFinding (Int)
+com.histmersion.config.AgentReviewConfig.LedgerClosedLines (Int)
+com.histmersion.config.AgentReviewConfig.MaxRounds (Int)
+com.histmersion.config.AgentReviewConfig.RecheckTurns (Int)
+com.histmersion.config.AgentReviewConfig.RoundsCap (Int)
+com.histmersion.config.AgentReviewConfig.SpotChecks (Int)
+com.histmersion.config.AgentRolesConfig.ColdReader (String)
+com.histmersion.config.AgentRolesConfig.Extractor (String)
+com.histmersion.config.AgentRolesConfig.Fixer (String)
+com.histmersion.config.AgentRolesConfig.Planner (String)
+com.histmersion.config.AgentRolesConfig.Probe (String)
+com.histmersion.config.AgentRolesConfig.Reviewer (String)
+com.histmersion.config.AgentRolesConfig.Skeptic (String)
+com.histmersion.config.AgentRolesConfig.Writer (String)
+com.histmersion.config.AgentRuntimesConfig.ClaudeMod (Boolean)
+com.histmersion.config.AgentRuntimesConfig.Dir (String)
+com.histmersion.config.AgentRuntimesConfig.Generate (Boolean)
+com.histmersion.config.AgentRuntimesConfig.InteractiveMod (Boolean)
+com.histmersion.config.AgentSchedulerConfig.AgingHours (Int)
+com.histmersion.config.AgentSchedulerConfig.CurrencySources (Int)
+com.histmersion.config.AgentSchedulerConfig.DiscoverPerQuery (Int)
+com.histmersion.config.AgentSchedulerConfig.Enabled (Boolean)
+com.histmersion.config.AgentSchedulerConfig.FollowupsPerSource (Int)
+com.histmersion.config.AgentSchedulerConfig.GatheringSlots (Int)
+com.histmersion.config.AgentSchedulerConfig.MaxWaitHours (Int)
+com.histmersion.config.AgentSchedulerConfig.MinIntervalMinutes (Int)
+com.histmersion.config.AgentSchedulerConfig.MinShare (Double)
+com.histmersion.config.AgentSchedulerConfig.PoolOvercommit (Int)
+com.histmersion.config.AgentSchedulerConfig.SeedEveryHours (Int)
+com.histmersion.config.AgentSchedulerConfig.SeedGoalsPerTick (Int)
+com.histmersion.config.AgentSchedulerConfig.SeedIngestPerGoal (Int)
+com.histmersion.config.AgentSchedulerConfig.ShareWindow (Int)
+com.histmersion.config.AgentSchedulerConfig.Strategy (String)
+com.histmersion.config.AgentSchedulerConfig.SweepCandidates (Int)
+com.histmersion.config.AgentSchedulerConfig.TypePriorities (String)
+com.histmersion.config.AgentSchedulerConfig.TypeWeights (String)
+com.histmersion.config.AgentSeedConfig.MaxArticles (Int)
+com.histmersion.config.AgentSeedConfig.MaxOverlap (Double)
+com.histmersion.config.AgentSeedConfig.MinSources (Int)
+com.histmersion.config.AgentStepConfig.MaxIterations (Int)
+com.histmersion.config.AgentStepConfig.MaxRetries (Int)
+com.histmersion.config.AgentStepConfig.MaxTokens (Int)
+com.histmersion.config.AgentToolsConfig.BodyChars (Int)
+com.histmersion.config.AgentToolsConfig.QueryMaxRows (Int)
+com.histmersion.config.AgentToolsConfig.ResultMaxChars (Int)
+com.histmersion.config.AgentTraceConfig.KeepMessagesDays (Int)
+com.histmersion.config.AgentTraceConfig.MaxToolResultChars (Int)
+com.histmersion.config.AgentTraceConfig.PruneEveryMinutes (Int)
+com.histmersion.config.AgentVerifyConfig.MaxAbsYear (Long)
+com.histmersion.config.AgentVerifyConfig.QuoteMinRatio (Double)
+com.histmersion.config.AgentWatchdogConfig.HeartbeatSeconds (Int)
+com.histmersion.config.AgentWatchdogConfig.InterruptedResumeMinutes (Int)
+com.histmersion.config.AgentWatchdogConfig.MaxStalls (Int)
+com.histmersion.config.AgentWatchdogConfig.ResumeMinutes (Int)
+com.histmersion.config.AgentWatchdogConfig.StallMinutes (Int)
+com.histmersion.config.AgentsConfig.AllowanceCheckSeconds (Int)
+com.histmersion.config.AgentsConfig.Allowances (String)
+com.histmersion.config.AgentsConfig.AutoEnrich (Boolean)
+com.histmersion.config.AgentsConfig.DoctorTimeoutSeconds (Int)
+com.histmersion.config.AgentsConfig.Enabled (Boolean)
+com.histmersion.config.AgentsConfig.MaxConcurrentRuns (Int)
+com.histmersion.config.AgentsConfig.MaxLlmCallsInFlight (Int)
+com.histmersion.config.AgentsConfig.Prices (String)
+com.histmersion.config.AgentsConfig.PromptsDir (String)
+com.histmersion.config.ApiKey (String)
+com.histmersion.config.AuthConfig.ApiKey (String)
+
+## TYPES TO DECIDE
+com.histmersion.config.AcquireConfig.AllowUnauthorised | base Boolean | original | constructor-parameter
+com.histmersion.config.AcquireConfig.ChainIdsResult | base String | generated | method-result
+    def chainIds: List[com.histmersion.config.AcquireConfig.ChainIdsResult] = chain.entries
+com.histmersion.config.AcquireConfig.ContactEmail | base String | original | constructor-parameter
+com.histmersion.config.AcquireConfig.ContactResult | base String | generated | method-result
+    def contact: Option[com.histmersion.config.AcquireConfig.ContactResult] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
+com.histmersion.config.AcquireConfig.MailtoResult | base String | generated | method-result
+    def mailto: com.histmersion.config.AcquireConfig.MailtoResult = contact.getOrElse("")
+com.histmersion.config.AcquireConfig.PublicUserAgent | base String | original | constructor-parameter
+com.histmersion.config.AcquireConfig.SpoolDir | base String | original | constructor-parameter
+com.histmersion.config.AcquireConfig.TimeoutSeconds | base Int | original | constructor-parameter
+com.histmersion.config.AcquireConfig.UserAgent | base String | original | constructor-parameter
+com.histmersion.config.AgentApprovalsConfig.ArticleFilter | base String | original | constructor-parameter
+com.histmersion.config.AgentApprovalsConfig.ArticlePlan | base String | original | constructor-parameter
+com.histmersion.config.AgentApprovalsConfig.ArticlePublish | base String | original | constructor-parameter
+com.histmersion.config.AgentApprovalsConfig.Edges | base String | original | constructor-parameter
+com.histmersion.config.AgentApprovalsConfig.GoalPlan | base String | original | constructor-parameter
+com.histmersion.config.AgentApprovalsConfig.IsCheckedRaw | base String | generated | method-parameter
+    def isChecked(raw: com.histmersion.config.AgentApprovalsConfig.IsCheckedRaw): com.histmersion.config.AgentApprovalsConfig.IsCheckedResult =
+com.histmersion.config.AgentApprovalsConfig.IsCheckedResult | base Boolean | generated | method-result
+    def isChecked(raw: com.histmersion.config.AgentApprovalsConfig.IsCheckedRaw): com.histmersion.config.AgentApprovalsConfig.IsCheckedResult =
+com.histmersion.config.AgentApprovalsConfig.StatusChange | base String | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.BackupHours | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.DigestHour | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.EnsureMinutes | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.ExtendMinNew | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.FinishedWatchCron | base String | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.FocusQueueShown | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.FocusRatio | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.IngestBacklogShare | base Double | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.IngestCeiling | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.IngestPerDay | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.LintHours | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.MaxActiveGoals | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.MaxOpenSubGoals | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.MaxUnfinishedGoals | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.NextArticleHours | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.SeedCron | base String | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.StallDays | base Int | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.WatchCron | base String | original | constructor-parameter
+com.histmersion.config.AgentAutopilotConfig.WatchIngestPerDay | base Int | original | constructor-parameter
+com.histmersion.config.AgentBudgetsConfig.CacheReadWeight | base Double | original | constructor-parameter
+com.histmersion.config.AgentBudgetsConfig.DailyUsd | base Double | original | constructor-parameter
+com.histmersion.config.AgentBudgetsConfig.MonthlyUsd | base Double | original | constructor-parameter
+com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensResultPart1 | base String | generated | method-result
+    def parsePipelineTokens(s: com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensS): Map[com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensResultPart1, 
+com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensResultPart2 | base Long | generated | method-result
+    def parsePipelineTokens(s: com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensS): Map[com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensResultPart1, 
+com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensS | base String | generated | method-parameter
+    def parsePipelineTokens(s: com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensS): Map[com.histmersion.config.AgentBudgetsConfig.ParsePipelineTokensResultPart1, 
+com.histmersion.config.AgentBudgetsConfig.PipelineRunTokens | base String | original | constructor-parameter
+com.histmersion.config.AgentBudgetsConfig.RunTokens | base Long | original | constructor-parameter
+com.histmersion.config.AgentBudgetsConfig.RunTokensForPipeline | base String | generated | method-parameter
+    def runTokensFor(pipeline: com.histmersion.config.AgentBudgetsConfig.RunTokensForPipeline): com.histmersion.config.AgentBudgetsConfig.RunTokensForResult =
+com.histmersion.config.AgentBudgetsConfig.RunTokensForResult | base Long | generated | method-result
+    def runTokensFor(pipeline: com.histmersion.config.AgentBudgetsConfig.RunTokensForPipeline): com.histmersion.config.AgentBudgetsConfig.RunTokensForResult =
+com.histmersion.config.AgentBudgetsConfig.RunUsd | base Double | original | constructor-parameter
+com.histmersion.config.AgentCompileConfig.DraftMaxTokens | base Int | original | constructor-parameter
+com.histmersion.config.AgentCompileConfig.MaxClaims | base Int | original | constructor-parameter
+com.histmersion.config.AgentCompileConfig.MaxSources | base Int | original | constructor-parameter
+com.histmersion.config.AgentCompileConfig.RecordChars | base Int | original | constructor-parameter
+com.histmersion.config.AgentCompileConfig.Review | base Boolean | original | constructor-parameter
+com.histmersion.config.AgentEnrichConfig.HeadChars | base Int | original | constructor-parameter
+com.histmersion.config.AgentEnrichConfig.MaxWindows | base Int | original | constructor-parameter
+com.histmersion.config.AgentEnrichConfig.Upstream | base Boolean | original | constructor-parameter
+com.histmersion.config.AgentEnrichConfig.WindowChars | base Int | original | constructor-parameter
+com.histmersion.config.AgentEnrichGuardsConfig.CenturyGapYears | base Int | original | constructor-parameter
+    final case class AgentEnrichGuardsConfig(minPlacedShare: AgentEnrichGuardsConfig.MinPlacedShare, centuryGapYears: AgentEnrichGuardsConfig.CenturyGapYears, pointerPhrases:
+com.histmersion.config.AgentEnrichGuardsConfig.MinPlacedShare | base Double | original | constructor-parameter
+    final case class AgentEnrichGuardsConfig(minPlacedShare: AgentEnrichGuardsConfig.MinPlacedShare, centuryGapYears: AgentEnrichGuardsConfig.CenturyGapYears, pointerPhrases:
+com.histmersion.config.AgentEnrichGuardsConfig.PhrasesResult | base String | generated | method-result
+    def phrases: List[com.histmersion.config.AgentEnrichGuardsConfig.PhrasesResult] = PeriodsConfig.split(pointerPhrases).map(_.toLowerCase(java.util.Locale.ROOT)).distinct
+com.histmersion.config.AgentEnrichGuardsConfig.PointerPhrases | base String | original | constructor-parameter
+    final case class AgentEnrichGuardsConfig(minPlacedShare: AgentEnrichGuardsConfig.MinPlacedShare, centuryGapYears: AgentEnrichGuardsConfig.CenturyGapYears, pointerPhrases:
+com.histmersion.config.AgentInferFilterConfig.MaxHits | base Int | original | constructor-parameter
+    final case class AgentInferFilterConfig(minHits: AgentInferFilterConfig.MinHits, maxHits: AgentInferFilterConfig.MaxHits, minCitedShare: AgentInferFilterConfig.MinCitedSh
+com.histmersion.config.AgentInferFilterConfig.MinCitedShare | base Double | original | constructor-parameter
+    final case class AgentInferFilterConfig(minHits: AgentInferFilterConfig.MinHits, maxHits: AgentInferFilterConfig.MaxHits, minCitedShare: AgentInferFilterConfig.MinCitedSh
+com.histmersion.config.AgentInferFilterConfig.MinHits | base Int | original | constructor-parameter
+    final case class AgentInferFilterConfig(minHits: AgentInferFilterConfig.MinHits, maxHits: AgentInferFilterConfig.MaxHits, minCitedShare: AgentInferFilterConfig.MinCitedSh
+com.histmersion.config.AgentInferFilterConfig.Sample | base Int | original | constructor-parameter
+    final case class AgentInferFilterConfig(minHits: AgentInferFilterConfig.MinHits, maxHits: AgentInferFilterConfig.MaxHits, minCitedShare: AgentInferFilterConfig.MinCitedSh
+com.histmersion.config.AgentManagersConfig.BackoffMinutes | base Int | original | constructor-parameter
+com.histmersion.config.AgentManagersConfig.DailyUsd | base Double | original | constructor-parameter
+com.histmersion.config.AgentManagersConfig.Enabled | base Boolean | original | constructor-parameter
+com.histmersion.config.AgentManagersConfig.KeepEventsDays | base Int | original | constructor-parameter
+com.histmersion.config.AgentManagersConfig.MaxBackoffMinutes | base Int | original | constructor-parameter
+com.histmersion.config.AgentManagersConfig.MaxFailures | base Int | original | constructor-parameter
+com.histmersion.config.AgentManagersConfig.TickSeconds | base Int | original | constructor-parameter
+com.histmersion.config.AgentPlanConfig.MaxQueries | base Int | original | constructor-parameter
+    final case class AgentPlanConfig(maxSubGoals: AgentPlanConfig.MaxSubGoals, maxQueries: AgentPlanConfig.MaxQueries, maxWorks: AgentPlanConfig.MaxWorks, queryChars: AgentPl
+com.histmersion.config.AgentPlanConfig.MaxSubGoals | base Int | original | constructor-parameter
+    final case class AgentPlanConfig(maxSubGoals: AgentPlanConfig.MaxSubGoals, maxQueries: AgentPlanConfig.MaxQueries, maxWorks: AgentPlanConfig.MaxWorks, queryChars: AgentPl
+com.histmersion.config.AgentPlanConfig.MaxWorks | base Int | original | constructor-parameter
+    final case class AgentPlanConfig(maxSubGoals: AgentPlanConfig.MaxSubGoals, maxQueries: AgentPlanConfig.MaxQueries, maxWorks: AgentPlanConfig.MaxWorks, queryChars: AgentPl
+com.histmersion.config.AgentPlanConfig.QueryChars | base Int | original | constructor-parameter
+    final case class AgentPlanConfig(maxSubGoals: AgentPlanConfig.MaxSubGoals, maxQueries: AgentPlanConfig.MaxQueries, maxWorks: AgentPlanConfig.MaxWorks, queryChars: AgentPl
+com.histmersion.config.AgentProviderConfig.ApiKey | base String | original | constructor-parameter
+    final case class AgentProviderConfig(baseUrl: AgentProviderConfig.BaseUrl, apiKey: AgentProviderConfig.ApiKey, strictTools: AgentProviderConfig.StrictTools, timeoutSecond
+com.histmersion.config.AgentProviderConfig.BaseUrl | base String | original | constructor-parameter
+    final case class AgentProviderConfig(baseUrl: AgentProviderConfig.BaseUrl, apiKey: AgentProviderConfig.ApiKey, strictTools: AgentProviderConfig.StrictTools, timeoutSecond
+com.histmersion.config.AgentProviderConfig.StrictTools | base Boolean | original | constructor-parameter
+    final case class AgentProviderConfig(baseUrl: AgentProviderConfig.BaseUrl, apiKey: AgentProviderConfig.ApiKey, strictTools: AgentProviderConfig.StrictTools, timeoutSecond
+com.histmersion.config.AgentProviderConfig.TimeoutSeconds | base Int | original | constructor-parameter
+    final case class AgentProviderConfig(baseUrl: AgentProviderConfig.BaseUrl, apiKey: AgentProviderConfig.ApiKey, strictTools: AgentProviderConfig.StrictTools, timeoutSecond
+com.histmersion.config.AgentReviewConfig.ArticleChars | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.CritiquePairs | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.CritiqueReasoned | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.FinalPanel | base String | original | constructor-parameter,method-result
+    def finalPanelMode: FinalPanel = FinalPanel.parse(finalPanel).getOrElse(FinalPanel.Clear)
+com.histmersion.config.AgentReviewConfig.FixerMaxTokens | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.FixerTurnsCap | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.FixerTurnsPerFinding | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.LedgerClosedLines | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.MaxRounds | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.RecheckTurns | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.RoundsCap | base Int | original | constructor-parameter
+com.histmersion.config.AgentReviewConfig.SpotChecks | base Int | original | constructor-parameter
+com.histmersion.config.AgentRolesConfig.ColdReader | base String | original | constructor-parameter
+com.histmersion.config.AgentRolesConfig.Extractor | base String | original | constructor-parameter
+com.histmersion.config.AgentRolesConfig.Fixer | base String | original | constructor-parameter
+com.histmersion.config.AgentRolesConfig.Planner | base String | original | constructor-parameter
+com.histmersion.config.AgentRolesConfig.Probe | base String | original | constructor-parameter
+com.histmersion.config.AgentRolesConfig.Reviewer | base String | original | constructor-parameter
+com.histmersion.config.AgentRolesConfig.Skeptic | base String | original | constructor-parameter
+com.histmersion.config.AgentRolesConfig.Writer | base String | original | constructor-parameter
+com.histmersion.config.AgentRuntimesConfig.ClaudeMod | base Boolean | original | constructor-parameter
+    final case class AgentRuntimesConfig(dir: AgentRuntimesConfig.Dir, generate: AgentRuntimesConfig.Generate, claudeMod: AgentRuntimesConfig.ClaudeMod, interactiveMod: Agent
+com.histmersion.config.AgentRuntimesConfig.Dir | base String | original | constructor-parameter
+    final case class AgentRuntimesConfig(dir: AgentRuntimesConfig.Dir, generate: AgentRuntimesConfig.Generate, claudeMod: AgentRuntimesConfig.ClaudeMod, interactiveMod: Agent
+com.histmersion.config.AgentRuntimesConfig.Generate | base Boolean | original | constructor-parameter
+    final case class AgentRuntimesConfig(dir: AgentRuntimesConfig.Dir, generate: AgentRuntimesConfig.Generate, claudeMod: AgentRuntimesConfig.ClaudeMod, interactiveMod: Agent
+com.histmersion.config.AgentRuntimesConfig.InteractiveMod | base Boolean | original | constructor-parameter
+    final case class AgentRuntimesConfig(dir: AgentRuntimesConfig.Dir, generate: AgentRuntimesConfig.Generate, claudeMod: AgentRuntimesConfig.ClaudeMod, interactiveMod: Agent
+com.histmersion.config.AgentSchedulerConfig.AgingHours | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.CurrencySources | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.DiscoverPerQuery | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.Enabled | base Boolean | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.FollowupsPerSource | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.GatheringSlots | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.MaxWaitHours | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.MinIntervalMinutes | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.MinShare | base Double | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.PoolOvercommit | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.SeedEveryHours | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.SeedGoalsPerTick | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.SeedIngestPerGoal | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.ShareWindow | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.Strategy | base String | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.SweepCandidates | base Int | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.TypePriorities | base String | original | constructor-parameter
+com.histmersion.config.AgentSchedulerConfig.TypeWeights | base String | original | constructor-parameter
+com.histmersion.config.AgentSeedConfig.MaxArticles | base Int | original | constructor-parameter
+    final case class AgentSeedConfig(maxArticles: AgentSeedConfig.MaxArticles, minSources: AgentSeedConfig.MinSources, maxOverlap: AgentSeedConfig.MaxOverlap) derives ConfigR
+com.histmersion.config.AgentSeedConfig.MaxOverlap | base Double | original | constructor-parameter
+    final case class AgentSeedConfig(maxArticles: AgentSeedConfig.MaxArticles, minSources: AgentSeedConfig.MinSources, maxOverlap: AgentSeedConfig.MaxOverlap) derives ConfigR
+com.histmersion.config.AgentSeedConfig.MinSources | base Int | original | constructor-parameter
+    final case class AgentSeedConfig(maxArticles: AgentSeedConfig.MaxArticles, minSources: AgentSeedConfig.MinSources, maxOverlap: AgentSeedConfig.MaxOverlap) derives ConfigR
+com.histmersion.config.AgentStepConfig.MaxIterations | base Int | original | constructor-parameter
+    final case class AgentStepConfig(maxIterations: AgentStepConfig.MaxIterations, maxTokens: AgentStepConfig.MaxTokens, maxRetries: AgentStepConfig.MaxRetries) derives Confi
+com.histmersion.config.AgentStepConfig.MaxRetries | base Int | original | constructor-parameter
+    final case class AgentStepConfig(maxIterations: AgentStepConfig.MaxIterations, maxTokens: AgentStepConfig.MaxTokens, maxRetries: AgentStepConfig.MaxRetries) derives Confi
+com.histmersion.config.AgentStepConfig.MaxTokens | base Int | original | constructor-parameter
+    final case class AgentStepConfig(maxIterations: AgentStepConfig.MaxIterations, maxTokens: AgentStepConfig.MaxTokens, maxRetries: AgentStepConfig.MaxRetries) derives Confi
+com.histmersion.config.AgentToolsConfig.BodyChars | base Int | original | constructor-parameter
+    final case class AgentToolsConfig(resultMaxChars: AgentToolsConfig.ResultMaxChars, bodyChars: AgentToolsConfig.BodyChars, queryMaxRows: AgentToolsConfig.QueryMaxRows) der
+com.histmersion.config.AgentToolsConfig.QueryMaxRows | base Int | original | constructor-parameter
+    final case class AgentToolsConfig(resultMaxChars: AgentToolsConfig.ResultMaxChars, bodyChars: AgentToolsConfig.BodyChars, queryMaxRows: AgentToolsConfig.QueryMaxRows) der
+com.histmersion.config.AgentToolsConfig.ResultMaxChars | base Int | original | constructor-parameter
+    final case class AgentToolsConfig(resultMaxChars: AgentToolsConfig.ResultMaxChars, bodyChars: AgentToolsConfig.BodyChars, queryMaxRows: AgentToolsConfig.QueryMaxRows) der
+com.histmersion.config.AgentTraceConfig.KeepMessagesDays | base Int | original | constructor-parameter
+    final case class AgentTraceConfig(maxToolResultChars: AgentTraceConfig.MaxToolResultChars, keepMessagesDays: AgentTraceConfig.KeepMessagesDays, pruneEveryMinutes: AgentTr
+com.histmersion.config.AgentTraceConfig.MaxToolResultChars | base Int | original | constructor-parameter
+    final case class AgentTraceConfig(maxToolResultChars: AgentTraceConfig.MaxToolResultChars, keepMessagesDays: AgentTraceConfig.KeepMessagesDays, pruneEveryMinutes: AgentTr
+com.histmersion.config.AgentTraceConfig.PruneEveryMinutes | base Int | original | constructor-parameter
+    final case class AgentTraceConfig(maxToolResultChars: AgentTraceConfig.MaxToolResultChars, keepMessagesDays: AgentTraceConfig.KeepMessagesDays, pruneEveryMinutes: AgentTr
+com.histmersion.config.AgentVerifyConfig.MaxAbsYear | base Long | original | constructor-parameter
+    final case class AgentVerifyConfig(quoteMinRatio: AgentVerifyConfig.QuoteMinRatio, maxAbsYear: AgentVerifyConfig.MaxAbsYear) derives ConfigReader
+com.histmersion.config.AgentVerifyConfig.QuoteMinRatio | base Double | original | constructor-parameter
+    final case class AgentVerifyConfig(quoteMinRatio: AgentVerifyConfig.QuoteMinRatio, maxAbsYear: AgentVerifyConfig.MaxAbsYear) derives ConfigReader
+com.histmersion.config.AgentWatchdogConfig.HeartbeatSeconds | base Int | original | constructor-parameter
+com.histmersion.config.AgentWatchdogConfig.InterruptedResumeMinutes | base Int | original | constructor-parameter
+com.histmersion.config.AgentWatchdogConfig.MaxStalls | base Int | original | constructor-parameter
+com.histmersion.config.AgentWatchdogConfig.ResumeMinutes | base Int | original | constructor-parameter
+com.histmersion.config.AgentWatchdogConfig.StallMinutes | base Int | original | constructor-parameter
+com.histmersion.config.AgentWatchdogConfig.StallMinutesForResult | base Int | generated | method-result
+    def stallMinutesFor(p: AgentProvidersConfig): com.histmersion.config.AgentWatchdogConfig.StallMinutesForResult =
+com.histmersion.config.AgentsConfig.AllowanceCheckSeconds | base Int | original | constructor-parameter
+com.histmersion.config.AgentsConfig.Allowances | base String | original | constructor-parameter
+com.histmersion.config.AgentsConfig.AutoEnrich | base Boolean | original | constructor-parameter
+com.histmersion.config.AgentsConfig.DoctorTimeoutSeconds | base Int | original | constructor-parameter
+com.histmersion.config.AgentsConfig.Enabled | base Boolean | original | constructor-parameter
+com.histmersion.config.AgentsConfig.MaxConcurrentRuns | base Int | original | constructor-parameter
+com.histmersion.config.AgentsConfig.MaxLlmCallsInFlight | base Int | original | constructor-parameter
+com.histmersion.config.AgentsConfig.Prices | base String | original | constructor-parameter
+com.histmersion.config.AgentsConfig.PromptsDir | base String | original | constructor-parameter
+com.histmersion.config.ApiKey | base String | original | constructor-parameter
+com.histmersion.config.AppConfig.DecodeResultPart1 | base String | generated | method-result
+    private def decode(c: => org.ekrich.config.Config): Either[com.histmersion.config.AppConfig.DecodeResultPart1, AppConfig] =
+com.histmersion.config.AppConfig.FromMergedResultPart1 | base String | generated | method-result
+    def fromMerged(c: org.ekrich.config.Config): Either[com.histmersion.config.AppConfig.FromMergedResultPart1, AppConfig] = decode(c)
+com.histmersion.config.AppConfig.LoadWithUserFileInFileMsg | base String | generated | method-parameter
+    def inFile(p: java.nio.file.Path)(msg: com.histmersion.config.AppConfig.LoadWithUserFileInFileMsg) =
+com.histmersion.config.AppConfig.LoadWithUserFileResultPart1 | base String | generated | method-result
+    def loadWithUserFile(): Either[com.histmersion.config.AppConfig.LoadWithUserFileResultPart1, LoadedConfig] =
+    def loadWithUserFile(env: org.ekrich.config.Config, file: Option[java.nio.file.Path]): Either[com.histmersion.config.AppConfig.LoadWithUserFileResultPart1, LoadedConfig] 
+com.histmersion.config.AppConfig.LoadWithUserTextResultPart1 | base String | generated | method-result
+    def loadWithUserText(env: org.ekrich.config.Config, text: com.histmersion.config.AppConfig.LoadWithUserTextText): Either[com.histmersion.config.AppConfig.LoadWithUserText
+com.histmersion.config.AppConfig.LoadWithUserTextText | base String | generated | method-parameter
+    def loadWithUserText(env: org.ekrich.config.Config, text: com.histmersion.config.AppConfig.LoadWithUserTextText): Either[com.histmersion.config.AppConfig.LoadWithUserText
+com.histmersion.config.AppConfig.LookupResultArg1 | base String | generated | method-result
+    def lookup(env: org.ekrich.config.Config): com.histmersion.config.AppConfig.LookupResultArg1 => Option[com.histmersion.config.AppConfig.LookupResultResult] =
+com.histmersion.config.AppConfig.LookupResultResult | base String | generated | method-result
+    def lookup(env: org.ekrich.config.Config): com.histmersion.config.AppConfig.LookupResultArg1 => Option[com.histmersion.config.AppConfig.LookupResultResult] =
+com.histmersion.config.AppConfig.ParseUserFileResultPart1 | base String | generated | method-result
+    def parseUserFile(file: java.nio.file.Path): Either[com.histmersion.config.AppConfig.ParseUserFileResultPart1, Option[org.ekrich.config.Config]] =
+com.histmersion.config.AppConfig.ResolvedResultPart1 | base String | generated | method-result
+    private def resolved(c: => org.ekrich.config.Config): Either[com.histmersion.config.AppConfig.ResolvedResultPart1, org.ekrich.config.Config] =
+com.histmersion.config.AppConfig.WithUserInFileArg1 | base String | generated | method-parameter
+com.histmersion.config.AppConfig.WithUserInFileResult | base String | generated | method-parameter
+com.histmersion.config.AppConfig.WithUserResultPart1 | base String | generated | method-result
+com.histmersion.config.AppConfig.WrittenInResult | base Boolean | generated | method-result
+    def writtenIn(file: java.nio.file.Path)(origin: org.ekrich.config.ConfigOrigin): com.histmersion.config.AppConfig.WrittenInResult =
+com.histmersion.config.AuthConfig.ApiKey | base String | original | constructor-parameter
+    final case class AuthConfig(apiKey: AuthConfig.ApiKey) derives ConfigReader

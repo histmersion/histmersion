@@ -1,0 +1,353 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.library.acquisition.CoreEndpoint.ApiKey (String)
+com.histmersion.domain.library.acquisition.CoreEndpoint.Url (String)
+com.histmersion.domain.library.acquisition.Endpoint.Url (String)
+com.histmersion.domain.library.acquisition.FollowupRow.Arxiv (String)
+com.histmersion.domain.library.acquisition.FollowupRow.CitedBy (Int)
+com.histmersion.domain.library.acquisition.FollowupRow.Contexts (String)
+com.histmersion.domain.library.acquisition.FollowupRow.Intents (String)
+com.histmersion.domain.library.acquisition.FollowupRow.IsInfluential (Boolean)
+com.histmersion.domain.library.acquisition.FollowupRow.Title (String)
+com.histmersion.domain.library.acquisition.LandingSettings.AcademicHostWords (String)
+com.histmersion.domain.library.acquisition.LandingSettings.AllowHosts (String)
+com.histmersion.domain.library.acquisition.LandingSettings.DenyGenerators (String)
+com.histmersion.domain.library.acquisition.LandingSettings.DenyHostWords (String)
+com.histmersion.domain.library.acquisition.LandingSettings.DenyHosts (String)
+com.histmersion.domain.library.acquisition.LandingSettings.DenyHostsExtra (String)
+com.histmersion.domain.library.acquisition.LandingSettings.Enabled (Boolean)
+com.histmersion.domain.library.acquisition.LandingSettings.Generators (String)
+com.histmersion.domain.library.acquisition.LandingSettings.MaxPages (Int)
+com.histmersion.domain.library.acquisition.LandingSettings.OaPublisherHosts (String)
+com.histmersion.domain.library.acquisition.RefRow.Authors (String)
+com.histmersion.domain.library.acquisition.RefRow.Raw (String)
+com.histmersion.domain.library.acquisition.RefRow.Title (String)
+com.histmersion.domain.library.acquisition.SearchDefaults.MinYear (Int)
+com.histmersion.domain.library.acquisition.UpdateNotice.Kind (String)
+com.histmersion.domain.library.acquisition.UpdateNotice.Label (String)
+com.histmersion.domain.library.acquisition.WorkLookup.WorkFieldsValue (String)
+com.histmersion.domain.library.acquisition.WorkRef.AbstractText (String)
+com.histmersion.domain.library.acquisition.WorkRef.ArxivId (String)
+com.histmersion.domain.library.acquisition.WorkRef.Authors (String)
+com.histmersion.domain.library.acquisition.WorkRef.CitedByCount (Int)
+com.histmersion.domain.library.acquisition.WorkRef.IsOa (Boolean)
+com.histmersion.domain.library.acquisition.WorkRef.IsRetracted (Boolean)
+com.histmersion.domain.library.acquisition.WorkRef.OaLicence (String)
+com.histmersion.domain.library.acquisition.WorkRef.OaLocations (String)
+com.histmersion.domain.library.acquisition.WorkRef.OaStatus (String)
+com.histmersion.domain.library.acquisition.WorkRef.OaUrl (String)
+com.histmersion.domain.library.acquisition.WorkRef.OpenalexId (String)
+com.histmersion.domain.library.acquisition.WorkRef.ReferencedWorks (String)
+com.histmersion.domain.library.acquisition.WorkRef.Title (String)
+com.histmersion.domain.library.acquisition.WorkRef.Venue (String)
+com.histmersion.domain.library.acquisition.WorkRef.WorkType (String)
+com.histmersion.upstreams.archiveorg.ArchiveFile.Format (String)
+com.histmersion.upstreams.archiveorg.ArchiveFile.Megabytes (Double)
+com.histmersion.upstreams.archiveorg.ArchiveFile.Name (String)
+com.histmersion.upstreams.archiveorg.ArchiveItem.Creator (String)
+com.histmersion.upstreams.archiveorg.ArchiveItem.Description (String)
+com.histmersion.upstreams.archiveorg.ArchiveItem.Identifier (String)
+com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly (Boolean)
+com.histmersion.upstreams.archiveorg.ArchiveItem.Publisher (String)
+com.histmersion.upstreams.archiveorg.ArchiveItem.Title (String)
+com.histmersion.upstreams.archiveorg.ArchiveItem.Year (Int)
+com.histmersion.util.plugins.PluginKit.Coordinates.Artifact (String)
+com.histmersion.util.plugins.PluginKit.Coordinates.Group (String)
+com.histmersion.util.plugins.PluginKit.Coordinates.Version (String)
+com.histmersion.util.plugins.PluginKit.Installed.AddedAt (String)
+com.histmersion.util.plugins.PluginKit.Installed.File (String)
+com.histmersion.util.plugins.PluginKit.Installed.Sha256 (String)
+com.histmersion.util.plugins.PluginKit.Installed.Signer (String)
+com.histmersion.util.plugins.PluginKit.Installed.Source (String)
+com.histmersion.util.plugins.PluginKit.KitFile.File (String)
+com.histmersion.util.plugins.PluginKit.KitFile.Sha256 (String)
+com.histmersion.util.plugins.PluginKit.KitManifest.Commit (String)
+com.histmersion.util.plugins.PluginKit.KitManifest.Format (Int)
+com.histmersion.util.plugins.PluginKit.KitManifest.Graalvm (String)
+com.histmersion.util.plugins.PluginKit.KitManifest.MainClass (String)
+com.histmersion.util.plugins.PluginKit.KitManifest.SpiVersion (Int)
+com.histmersion.util.plugins.PluginKit.KitManifest.Version (String)
+com.histmersion.util.plugins.PluginKit.Origin.File.Path (String)
+com.histmersion.util.plugins.PluginKit.Origin.Url.Value (String)
+com.histmersion.util.plugins.PluginKit.SetStatus.Added (String)
+com.histmersion.util.plugins.PluginKit.SetStatus.Changed (String)
+com.histmersion.util.plugins.PluginKit.SetStatus.DirDigest (String)
+com.histmersion.util.plugins.PluginKit.SetStatus.Removed (String)
+
+## TYPES TO DECIDE
+com.histmersion.util.plugins.PluginKit.CheckSignerIds | base String | generated | method-parameter
+    def checkSigner(ids: List[com.histmersion.util.plugins.PluginKit.CheckSignerIds], seen: com.histmersion.util.plugins.PluginKit.CheckSignerSeen, index: Index): Either[com.
+com.histmersion.util.plugins.PluginKit.CheckSignerResultPart1 | base String | generated | method-result
+    def checkSigner(ids: List[com.histmersion.util.plugins.PluginKit.CheckSignerIds], seen: com.histmersion.util.plugins.PluginKit.CheckSignerSeen, index: Index): Either[com.
+com.histmersion.util.plugins.PluginKit.CheckSignerSeen | base String | generated | method-parameter
+    def checkSigner(ids: List[com.histmersion.util.plugins.PluginKit.CheckSignerIds], seen: com.histmersion.util.plugins.PluginKit.CheckSignerSeen, index: Index): Either[com.
+com.histmersion.util.plugins.PluginKit.Coordinates.Artifact | base String | original | constructor-parameter
+    final case class Coordinates(group: Coordinates.Group, artifact: Coordinates.Artifact, version: Coordinates.Version):
+com.histmersion.util.plugins.PluginKit.Coordinates.Group | base String | original | constructor-parameter
+    final case class Coordinates(group: Coordinates.Group, artifact: Coordinates.Artifact, version: Coordinates.Version):
+com.histmersion.util.plugins.PluginKit.Coordinates.JarUrlRepo | base String | generated | method-parameter
+    def jarUrl(repo: com.histmersion.util.plugins.PluginKit.Coordinates.JarUrlRepo): com.histmersion.util.plugins.PluginKit.Coordinates.JarUrlResult = s"${repo.stripSuffix("/
+com.histmersion.util.plugins.PluginKit.Coordinates.JarUrlResult | base String | generated | method-result
+    def jarUrl(repo: com.histmersion.util.plugins.PluginKit.Coordinates.JarUrlRepo): com.histmersion.util.plugins.PluginKit.Coordinates.JarUrlResult = s"${repo.stripSuffix("/
+com.histmersion.util.plugins.PluginKit.Coordinates.PathResult | base String | generated | method-result
+    def path: com.histmersion.util.plugins.PluginKit.Coordinates.PathResult = s"${group.replace('.', '/')}/$artifact/$version/$artifact-$version"
+com.histmersion.util.plugins.PluginKit.Coordinates.PomUrlRepo | base String | generated | method-parameter
+    def pomUrl(repo: com.histmersion.util.plugins.PluginKit.Coordinates.PomUrlRepo): com.histmersion.util.plugins.PluginKit.Coordinates.PomUrlResult = s"${repo.stripSuffix("/
+com.histmersion.util.plugins.PluginKit.Coordinates.PomUrlResult | base String | generated | method-result
+    def pomUrl(repo: com.histmersion.util.plugins.PluginKit.Coordinates.PomUrlRepo): com.histmersion.util.plugins.PluginKit.Coordinates.PomUrlResult = s"${repo.stripSuffix("/
+com.histmersion.util.plugins.PluginKit.Coordinates.Version | base String | original | constructor-parameter
+    final case class Coordinates(group: Coordinates.Group, artifact: Coordinates.Artifact, version: Coordinates.Version):
+    def refusals(jar: PluginJar, spiVersion: com.histmersion.util.plugins.PluginKit.RefusalsSpiVersion, taken: Map[com.histmersion.util.plugins.PluginKit.RefusalsTakenPart1, 
+com.histmersion.util.plugins.PluginKit.DigestEntriesPart1 | base String | generated | method-parameter
+    def digest(entries: List[(com.histmersion.util.plugins.PluginKit.DigestEntriesPart1, com.histmersion.util.plugins.PluginKit.DigestEntriesPart2)]): com.histmersion.util.pl
+com.histmersion.util.plugins.PluginKit.DigestEntriesPart2 | base String | generated | method-parameter
+    def digest(entries: List[(com.histmersion.util.plugins.PluginKit.DigestEntriesPart1, com.histmersion.util.plugins.PluginKit.DigestEntriesPart2)]): com.histmersion.util.pl
+com.histmersion.util.plugins.PluginKit.DigestResult | base String | generated | method-result
+    def digest(entries: List[(com.histmersion.util.plugins.PluginKit.DigestEntriesPart1, com.histmersion.util.plugins.PluginKit.DigestEntriesPart2)]): com.histmersion.util.pl
+com.histmersion.util.plugins.PluginKit.IdsOfFile | base String | generated | method-parameter
+    def idsOf(file: com.histmersion.util.plugins.PluginKit.IdsOfFile, index: Index): List[com.histmersion.util.plugins.PluginKit.IdsOfResult] =
+com.histmersion.util.plugins.PluginKit.IdsOfResult | base String | generated | method-result
+    def idsOf(file: com.histmersion.util.plugins.PluginKit.IdsOfFile, index: Index): List[com.histmersion.util.plugins.PluginKit.IdsOfResult] =
+com.histmersion.util.plugins.PluginKit.Index.DropFile | base String | generated | method-parameter
+    def drop(file: com.histmersion.util.plugins.PluginKit.Index.DropFile): Index = Index(jars.filterNot(_.file == file))
+com.histmersion.util.plugins.PluginKit.Index.PinnedSignerId | base String | generated | method-parameter
+    def pinnedSigner(id: com.histmersion.util.plugins.PluginKit.Index.PinnedSignerId): Option[com.histmersion.util.plugins.PluginKit.Index.PinnedSignerResult] =
+com.histmersion.util.plugins.PluginKit.Index.PinnedSignerResult | base String | generated | method-result
+    def pinnedSigner(id: com.histmersion.util.plugins.PluginKit.Index.PinnedSignerId): Option[com.histmersion.util.plugins.PluginKit.Index.PinnedSignerResult] =
+com.histmersion.util.plugins.PluginKit.Installed.AddedAt | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.Installed.File | base String | original | constructor-parameter
+    case File(path: Origin.File.Path)
+    final case class KitFile(file: KitFile.File, sha256: KitFile.Sha256) derives KindlingsCodecAsObject
+com.histmersion.util.plugins.PluginKit.Installed.Sha256 | base String | original | constructor-parameter
+    final case class KitFile(file: KitFile.File, sha256: KitFile.Sha256) derives KindlingsCodecAsObject
+com.histmersion.util.plugins.PluginKit.Installed.Signer | base String | original | constructor-parameter
+    def pinnedSigner(id: com.histmersion.util.plugins.PluginKit.Index.PinnedSignerId): Option[com.histmersion.util.plugins.PluginKit.Index.PinnedSignerResult] =
+    def checkSigner(ids: List[com.histmersion.util.plugins.PluginKit.CheckSignerIds], seen: com.histmersion.util.plugins.PluginKit.CheckSignerSeen, index: Index): Either[com.
+com.histmersion.util.plugins.PluginKit.Installed.Source | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.IsLoopbackResult | base Boolean | generated | method-result
+    def isLoopback(url: com.histmersion.util.plugins.PluginKit.IsLoopbackUrl): com.histmersion.util.plugins.PluginKit.IsLoopbackResult =
+com.histmersion.util.plugins.PluginKit.IsLoopbackUrl | base String | generated | method-parameter
+    def isLoopback(url: com.histmersion.util.plugins.PluginKit.IsLoopbackUrl): com.histmersion.util.plugins.PluginKit.IsLoopbackResult =
+com.histmersion.util.plugins.PluginKit.JarNameCleanS | base String | generated | method-parameter
+    def clean(s: com.histmersion.util.plugins.PluginKit.JarNameCleanS) = s.replaceAll("[^A-Za-z0-9._+\\-]", "_")
+com.histmersion.util.plugins.PluginKit.JarNameFallback | base String | generated | method-parameter
+    def jarName(plugins: List[PluginDescription], fallback: com.histmersion.util.plugins.PluginKit.JarNameFallback): com.histmersion.util.plugins.PluginKit.JarNameResult =
+com.histmersion.util.plugins.PluginKit.JarNameResult | base String | generated | method-result
+    def jarName(plugins: List[PluginDescription], fallback: com.histmersion.util.plugins.PluginKit.JarNameFallback): com.histmersion.util.plugins.PluginKit.JarNameResult =
+com.histmersion.util.plugins.PluginKit.KitFile.File | base String | original | constructor-parameter
+    case File(path: Origin.File.Path)
+    final case class KitFile(file: KitFile.File, sha256: KitFile.Sha256) derives KindlingsCodecAsObject
+com.histmersion.util.plugins.PluginKit.KitFile.Sha256 | base String | original | constructor-parameter
+    final case class KitFile(file: KitFile.File, sha256: KitFile.Sha256) derives KindlingsCodecAsObject
+com.histmersion.util.plugins.PluginKit.KitManifest.Commit | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.KitManifest.Format | base Int | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.KitManifest.Graalvm | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.KitManifest.LabelResult | base String | generated | method-result
+    def label: com.histmersion.util.plugins.PluginKit.KitManifest.LabelResult = version + commit.fold("")(c => s" ($c)")
+com.histmersion.util.plugins.PluginKit.KitManifest.MainClass | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.KitManifest.SpiVersion | base Int | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.KitManifest.Version | base String | original | constructor-parameter
+    final case class Coordinates(group: Coordinates.Group, artifact: Coordinates.Artifact, version: Coordinates.Version):
+    def refusals(jar: PluginJar, spiVersion: com.histmersion.util.plugins.PluginKit.RefusalsSpiVersion, taken: Map[com.histmersion.util.plugins.PluginKit.RefusalsTakenPart1, 
+com.histmersion.util.plugins.PluginKit.Origin.File.Path | base String | generated | constructor-parameter
+    case File(path: Origin.File.Path)
+com.histmersion.util.plugins.PluginKit.Origin.Url.Value | base String | generated | constructor-parameter
+    case Url(url: Origin.Url.Value)
+com.histmersion.util.plugins.PluginKit.OriginArg | base String | generated | method-parameter
+    def origin(arg: com.histmersion.util.plugins.PluginKit.OriginArg, exists: com.histmersion.util.plugins.PluginKit.OriginExistsArg1 => com.histmersion.util.plugins.PluginKi
+com.histmersion.util.plugins.PluginKit.OriginExistsArg1 | base String | generated | method-parameter
+    def origin(arg: com.histmersion.util.plugins.PluginKit.OriginArg, exists: com.histmersion.util.plugins.PluginKit.OriginExistsArg1 => com.histmersion.util.plugins.PluginKi
+com.histmersion.util.plugins.PluginKit.OriginExistsResult | base Boolean | generated | method-parameter
+    def origin(arg: com.histmersion.util.plugins.PluginKit.OriginArg, exists: com.histmersion.util.plugins.PluginKit.OriginExistsArg1 => com.histmersion.util.plugins.PluginKi
+com.histmersion.util.plugins.PluginKit.OriginResultPart1 | base String | generated | method-result
+    def origin(arg: com.histmersion.util.plugins.PluginKit.OriginArg, exists: com.histmersion.util.plugins.PluginKit.OriginExistsArg1 => com.histmersion.util.plugins.PluginKi
+com.histmersion.util.plugins.PluginKit.ParseCoordinatesResultPart1 | base String | generated | method-result
+    def parseCoordinates(s: com.histmersion.util.plugins.PluginKit.ParseCoordinatesS): Either[com.histmersion.util.plugins.PluginKit.ParseCoordinatesResultPart1, Coordinates]
+com.histmersion.util.plugins.PluginKit.ParseCoordinatesS | base String | generated | method-parameter
+    def parseCoordinates(s: com.histmersion.util.plugins.PluginKit.ParseCoordinatesS): Either[com.histmersion.util.plugins.PluginKit.ParseCoordinatesResultPart1, Coordinates]
+com.histmersion.util.plugins.PluginKit.ParseIndexResultPart1 | base String | generated | method-result
+    def parseIndex(text: com.histmersion.util.plugins.PluginKit.ParseIndexText): Either[com.histmersion.util.plugins.PluginKit.ParseIndexResultPart1, Index] =
+com.histmersion.util.plugins.PluginKit.ParseIndexText | base String | generated | method-parameter
+    def parseIndex(text: com.histmersion.util.plugins.PluginKit.ParseIndexText): Either[com.histmersion.util.plugins.PluginKit.ParseIndexResultPart1, Index] =
+com.histmersion.util.plugins.PluginKit.ParseJarsResultPart1 | base String | generated | method-result
+    def parseJars(text: com.histmersion.util.plugins.PluginKit.ParseJarsText): Either[com.histmersion.util.plugins.PluginKit.ParseJarsResultPart1, List[PluginJar]] =
+com.histmersion.util.plugins.PluginKit.ParseJarsText | base String | generated | method-parameter
+    def parseJars(text: com.histmersion.util.plugins.PluginKit.ParseJarsText): Either[com.histmersion.util.plugins.PluginKit.ParseJarsResultPart1, List[PluginJar]] =
+com.histmersion.util.plugins.PluginKit.ParseKitResultPart1 | base String | generated | method-result
+    def parseKit(text: com.histmersion.util.plugins.PluginKit.ParseKitText): Either[com.histmersion.util.plugins.PluginKit.ParseKitResultPart1, KitManifest] =
+com.histmersion.util.plugins.PluginKit.ParseKitText | base String | generated | method-parameter
+    def parseKit(text: com.histmersion.util.plugins.PluginKit.ParseKitText): Either[com.histmersion.util.plugins.PluginKit.ParseKitResultPart1, KitManifest] =
+com.histmersion.util.plugins.PluginKit.ParseSetResultPart1 | base String | generated | method-result
+    def parseSet(text: com.histmersion.util.plugins.PluginKit.ParseSetText): Either[com.histmersion.util.plugins.PluginKit.ParseSetResultPart1, PluginSet] =
+com.histmersion.util.plugins.PluginKit.ParseSetText | base String | generated | method-parameter
+    def parseSet(text: com.histmersion.util.plugins.PluginKit.ParseSetText): Either[com.histmersion.util.plugins.PluginKit.ParseSetResultPart1, PluginSet] =
+com.histmersion.util.plugins.PluginKit.ParseSha256sumsResultPart1 | base String | generated | method-result
+    def parseSha256sums(text: com.histmersion.util.plugins.PluginKit.ParseSha256sumsText): Either[com.histmersion.util.plugins.PluginKit.ParseSha256sumsResultPart1, List[KitF
+com.histmersion.util.plugins.PluginKit.ParseSha256sumsText | base String | generated | method-parameter
+    def parseSha256sums(text: com.histmersion.util.plugins.PluginKit.ParseSha256sumsText): Either[com.histmersion.util.plugins.PluginKit.ParseSha256sumsResultPart1, List[KitF
+com.histmersion.util.plugins.PluginKit.PluginSetDependenciesPart1 | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.PluginSetDependenciesPart2 | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.PluginSetKit | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.PluginSetLinkedAt | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.PluginSetMode | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.PluginSetSpiVersion | base Int | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.RefusalsResult | base String | generated | method-result
+    def refusals(jar: PluginJar, spiVersion: com.histmersion.util.plugins.PluginKit.RefusalsSpiVersion, taken: Map[com.histmersion.util.plugins.PluginKit.RefusalsTakenPart1, 
+com.histmersion.util.plugins.PluginKit.RefusalsSpiVersion | base Int | generated | method-parameter
+    def refusals(jar: PluginJar, spiVersion: com.histmersion.util.plugins.PluginKit.RefusalsSpiVersion, taken: Map[com.histmersion.util.plugins.PluginKit.RefusalsTakenPart1, 
+com.histmersion.util.plugins.PluginKit.RefusalsTakenPart1 | base String | generated | method-parameter
+    def refusals(jar: PluginJar, spiVersion: com.histmersion.util.plugins.PluginKit.RefusalsSpiVersion, taken: Map[com.histmersion.util.plugins.PluginKit.RefusalsTakenPart1, 
+com.histmersion.util.plugins.PluginKit.RefusalsTakenPart2 | base String | generated | method-parameter
+    def refusals(jar: PluginJar, spiVersion: com.histmersion.util.plugins.PluginKit.RefusalsSpiVersion, taken: Map[com.histmersion.util.plugins.PluginKit.RefusalsTakenPart1, 
+com.histmersion.util.plugins.PluginKit.RenderIndexResult | base String | generated | method-result
+    def renderIndex(i: Index): com.histmersion.util.plugins.PluginKit.RenderIndexResult = i.asJson.printWith(printer)
+com.histmersion.util.plugins.PluginKit.RenderJarsResult | base String | generated | method-result
+    def renderJars(js: List[PluginJar]): com.histmersion.util.plugins.PluginKit.RenderJarsResult = js.asJson.printWith(printer)
+com.histmersion.util.plugins.PluginKit.RenderKitResult | base String | generated | method-result
+    def renderKit(k: KitManifest): com.histmersion.util.plugins.PluginKit.RenderKitResult = k.asJson.printWith(printer)
+com.histmersion.util.plugins.PluginKit.RenderSetResult | base String | generated | method-result
+    def renderSet(s: PluginSet): com.histmersion.util.plugins.PluginKit.RenderSetResult = s.asJson.printWith(printer)
+com.histmersion.util.plugins.PluginKit.SetStatus.Added | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.SetStatus.Changed | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.SetStatus.DirDigest | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.SetStatus.Removed | base String | original | constructor-parameter
+com.histmersion.util.plugins.PluginKit.Sha256HexBytes | base Array[Byte] | generated | method-parameter
+    def sha256Hex(bytes: com.histmersion.util.plugins.PluginKit.Sha256HexBytes): com.histmersion.util.plugins.PluginKit.Sha256HexResult =
+com.histmersion.util.plugins.PluginKit.Sha256HexResult | base String | generated | method-result
+    def sha256Hex(bytes: com.histmersion.util.plugins.PluginKit.Sha256HexBytes): com.histmersion.util.plugins.PluginKit.Sha256HexResult =
+com.histmersion.util.plugins.PluginKit.Sha256sumsResult | base String | generated | method-result
+    def sha256sums(files: List[KitFile]): com.histmersion.util.plugins.PluginKit.Sha256sumsResult =
+com.histmersion.util.plugins.PluginKit.StatusDependenciesPart1 | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.StatusDependenciesPart2 | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.StatusDirPart1 | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.StatusDirPart2 | base String | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.StatusLinesResult | base String | generated | method-result
+    def statusLines(s: SetStatus, serverAnswered: com.histmersion.util.plugins.PluginKit.StatusLinesServerAnswered): List[com.histmersion.util.plugins.PluginKit.StatusLinesRe
+com.histmersion.util.plugins.PluginKit.StatusLinesServerAnswered | base Boolean | generated | method-parameter
+    def statusLines(s: SetStatus, serverAnswered: com.histmersion.util.plugins.PluginKit.StatusLinesServerAnswered): List[com.histmersion.util.plugins.PluginKit.StatusLinesRe
+com.histmersion.util.plugins.PluginKit.StatusLinesShortD | base String | generated | method-parameter
+    def short(d: com.histmersion.util.plugins.PluginKit.StatusLinesShortD) = d.take(12) + "…"
+com.histmersion.util.plugins.PluginKit.StatusServerAnswered | base Boolean | generated | method-parameter
+com.histmersion.util.plugins.PluginKit.VerifyKitActualPart1 | base String | generated | method-parameter
+    def verifyKit(expected: List[KitFile], actual: Map[com.histmersion.util.plugins.PluginKit.VerifyKitActualPart1, com.histmersion.util.plugins.PluginKit.VerifyKitActualPart
+com.histmersion.util.plugins.PluginKit.VerifyKitActualPart2 | base String | generated | method-parameter
+    def verifyKit(expected: List[KitFile], actual: Map[com.histmersion.util.plugins.PluginKit.VerifyKitActualPart1, com.histmersion.util.plugins.PluginKit.VerifyKitActualPart
+com.histmersion.util.plugins.PluginKit.VerifyKitResult | base String | generated | method-result
+    def verifyKit(expected: List[KitFile], actual: Map[com.histmersion.util.plugins.PluginKit.VerifyKitActualPart1, com.histmersion.util.plugins.PluginKit.VerifyKitActualPart
+com.histmersion.util.storage.SafePath.ConfiguredBase | base String | generated | method-parameter
+    def configured(base: Option[com.histmersion.util.storage.SafePath.ConfiguredBase]): com.histmersion.util.storage.SafePath.ConfiguredResult = base.exists(_.trim.nonEmpty)
+com.histmersion.util.storage.SafePath.ConfiguredResult | base Boolean | generated | method-result
+    def configured(base: Option[com.histmersion.util.storage.SafePath.ConfiguredBase]): com.histmersion.util.storage.SafePath.ConfiguredResult = base.exists(_.trim.nonEmpty)
+com.histmersion.util.storage.SafePath.ConfineBase | base String | generated | method-parameter
+    def confine(base: Option[com.histmersion.util.storage.SafePath.ConfineBase], candidate: com.histmersion.util.storage.SafePath.ConfineCandidate): Either[com.histmersion.ut
+com.histmersion.util.storage.SafePath.ConfineCandidate | base String | generated | method-parameter
+    def confine(base: Option[com.histmersion.util.storage.SafePath.ConfineBase], candidate: com.histmersion.util.storage.SafePath.ConfineCandidate): Either[com.histmersion.ut
+com.histmersion.util.storage.SafePath.ConfineResultPart1 | base String | generated | method-result
+    def confine(base: Option[com.histmersion.util.storage.SafePath.ConfineBase], candidate: com.histmersion.util.storage.SafePath.ConfineCandidate): Either[com.histmersion.ut
+com.histmersion.util.storage.SafePath.WithinBase | base String | generated | method-parameter
+    def within(base: Option[com.histmersion.util.storage.SafePath.WithinBase], candidate: Path): com.histmersion.util.storage.SafePath.WithinResult =
+com.histmersion.util.storage.SafePath.WithinResult | base Boolean | generated | method-result
+    def within(base: Option[com.histmersion.util.storage.SafePath.WithinBase], candidate: Path): com.histmersion.util.storage.SafePath.WithinResult =
+com.histmersion.util.storage.TextFiles.ExistsResult | base Boolean | generated | method-result
+    def exists(path: Path): com.histmersion.util.storage.TextFiles.ExistsResult
+com.histmersion.util.storage.TextFiles.ReadResult | base String | generated | method-result
+    def read(path: Path): com.histmersion.util.storage.TextFiles.ReadResult
+com.histmersion.domain.library.acquisition.CoreEndpoint.ApiKey | base String | original | constructor-parameter
+    final case class CoreEndpoint(url: CoreEndpoint.Url, apiKey: CoreEndpoint.ApiKey) derives ConfigReader:
+com.histmersion.domain.library.acquisition.CoreEndpoint.KeyResult | base String | generated | method-result
+    def key: Option[com.histmersion.domain.library.acquisition.CoreEndpoint.KeyResult] = (Option(apiKey).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => _root_.c
+com.histmersion.domain.library.acquisition.CoreEndpoint.Url | base String | original | constructor-parameter
+    final case class CoreEndpoint(url: CoreEndpoint.Url, apiKey: CoreEndpoint.ApiKey) derives ConfigReader:
+com.histmersion.domain.library.acquisition.Endpoint.Url | base String | original | constructor-parameter
+    final case class Endpoint(url: Endpoint.Url) derives ConfigReader
+com.histmersion.domain.library.acquisition.FollowupRow.Arxiv | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.FollowupRow.CitedBy | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.FollowupRow.Contexts | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.FollowupRow.Intents | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.FollowupRow.IsInfluential | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.acquisition.FollowupRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.AcademicHostWords | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.AllowHosts | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.DenyGenerators | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.DenyHostWords | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.DenyHosts | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.DenyHostsExtra | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.Enabled | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.EntriesList | base String | generated | method-parameter
+    def entries(list: com.histmersion.domain.library.acquisition.LandingSettings.EntriesList): List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] 
+com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult | base String | generated | method-result
+    def entries(list: com.histmersion.domain.library.acquisition.LandingSettings.EntriesList): List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] 
+com.histmersion.domain.library.acquisition.LandingSettings.Generators | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.MaxPages | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.LandingSettings.OaPublisherHosts | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.RefRow.Authors | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.RefRow.Raw | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.RefRow.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.SearchDefaults.MinYear | base Int | original | constructor-parameter
+    final case class SearchDefaults(minYear: SearchDefaults.MinYear) derives ConfigReader
+com.histmersion.domain.library.acquisition.UpdateNotice.Kind | base String | original | constructor-parameter
+    final case class UpdateNotice(kind: Option[UpdateNotice.Kind], label: Option[UpdateNotice.Label], doi: Option[com.histmersion.domain.library.Doi])
+com.histmersion.domain.library.acquisition.UpdateNotice.Label | base String | original | constructor-parameter
+    final case class UpdateNotice(kind: Option[UpdateNotice.Kind], label: Option[UpdateNotice.Label], doi: Option[com.histmersion.domain.library.Doi])
+com.histmersion.domain.library.acquisition.WorkLookup.CrossrefUrlResult | base String | generated | method-result
+    def crossrefUrl(cfg: UpstreamSettings, doi: com.histmersion.domain.library.Doi): com.histmersion.domain.library.acquisition.WorkLookup.CrossrefUrlResult =
+com.histmersion.domain.library.acquisition.WorkLookup.KeyArxiv | base String | generated | method-parameter
+    def key(doi: Option[com.histmersion.domain.library.Doi], arxiv: Option[com.histmersion.domain.library.acquisition.WorkLookup.KeyArxiv], work: Option[WorkRef]): WorkKey =
+com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1 | base String | generated | method-parameter
+    def meta(cfg: UpstreamSettings, json: com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.M
+com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonResultPart1 | base String | generated | method-parameter
+    def meta(cfg: UpstreamSettings, json: com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.M
+com.histmersion.domain.library.acquisition.WorkLookup.MetaResultPart1 | base String | generated | method-result
+com.histmersion.domain.library.acquisition.WorkLookup.WithUnpaywallJsonArg1 | base String | generated | method-parameter
+com.histmersion.domain.library.acquisition.WorkLookup.WithUnpaywallJsonResultPart1 | base String | generated | method-parameter
+com.histmersion.domain.library.acquisition.WorkLookup.WorkFieldsValue | base String | original | alias
+com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult | base String | generated | method-result
+    def workUrl(cfg: UpstreamSettings, doi: com.histmersion.domain.library.Doi): com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult =
+com.histmersion.domain.library.acquisition.WorkRef.AbstractText | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.ArxivId | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.Authors | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.CitedByCount | base Int | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.IsOa | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.IsRetracted | base Boolean | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.OaLicence | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.OaLocations | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.OaStatus | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.OaUrl | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.OpenalexId | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.ReferencedWorks | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.Title | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.Venue | base String | original | constructor-parameter
+com.histmersion.domain.library.acquisition.WorkRef.WorkType | base String | original | constructor-parameter
+com.histmersion.upstreams.archiveorg.ArchiveFile.Format | base String | original | constructor-parameter
+    final case class ArchiveFile(name: ArchiveFile.Name, format: Option[ArchiveFile.Format], megabytes: ArchiveFile.Megabytes)
+com.histmersion.upstreams.archiveorg.ArchiveFile.Megabytes | base Double | original | constructor-parameter
+    final case class ArchiveFile(name: ArchiveFile.Name, format: Option[ArchiveFile.Format], megabytes: ArchiveFile.Megabytes)
+com.histmersion.upstreams.archiveorg.ArchiveFile.Name | base String | original | constructor-parameter
+    final case class ArchiveFile(name: ArchiveFile.Name, format: Option[ArchiveFile.Format], megabytes: ArchiveFile.Megabytes)
+com.histmersion.upstreams.archiveorg.ArchiveItem.Creator | base String | original | constructor-parameter
+com.histmersion.upstreams.archiveorg.ArchiveItem.Description | base String | original | constructor-parameter
+com.histmersion.upstreams.archiveorg.ArchiveItem.Identifier | base String | original | constructor-parameter
+com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly | base Boolean | original | constructor-parameter
+com.histmersion.upstreams.archiveorg.ArchiveItem.Publisher | base String | original | constructor-parameter
+com.histmersion.upstreams.archiveorg.ArchiveItem.Title | base String | original | constructor-parameter
+com.histmersion.upstreams.archiveorg.ArchiveItem.Year | base Int | original | constructor-parameter
+com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile | base String | generated | method-parameter
+    def download(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.u
+com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadId | base String | generated | method-parameter
+    def download(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.u
+com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadResultPart1 | base String | generated | method-result
+    def download(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.u
+com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierResult | base String | generated | method-result
+    private def identifier(s: com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS): com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierResult =
+com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS | base String | generated | method-parameter
+    private def identifier(s: com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS): com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierResult =
+    val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
+com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoId | base String | generated | method-parameter
+    def info(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoResultPart1, ArchiveItem] =
+com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoResultPart1 | base String | generated | method-result
+    def info(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoResultPart1, ArchiveItem] =
+com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery | base String | generated | method-parameter
+    def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchRows): Either[com.histmersion.u
+com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchResultPart1 | base String | generated | method-result
+    def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchRows): Either[com.histmersion.u
+com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchRows | base Int | generated | method-parameter
+    def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchRows): Either[com.histmersion.u

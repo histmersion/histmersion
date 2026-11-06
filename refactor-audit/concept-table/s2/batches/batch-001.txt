@@ -1,0 +1,360 @@
+## CONCEPTS NEARBY
+com.histmersion.config.AutoApprovalsConfig.ArticlesPerGoalPerDay (Int)
+com.histmersion.config.AutoApprovalsConfig.GoalPlansBacklogShare (Double)
+com.histmersion.config.AutoApprovalsConfig.GoalPlansCeiling (Int)
+com.histmersion.config.AutoApprovalsConfig.GoalPlansPerDay (Int)
+com.histmersion.config.AutoApprovalsConfig.MaxGoalDepth (Int)
+com.histmersion.config.AutoApprovalsConfig.PublishBacklogShare (Double)
+com.histmersion.config.AutoApprovalsConfig.PublishCeiling (Int)
+com.histmersion.config.AutoApprovalsConfig.PublishMinSources (Int)
+com.histmersion.config.AutoApprovalsConfig.PublishPerDay (Int)
+com.histmersion.config.BackupsConfig.Dir (String)
+com.histmersion.config.BackupsConfig.Keep (Int)
+com.histmersion.config.BackupsConfig.PgBinDir (String)
+com.histmersion.config.BackupsConfig.RequestWaitSeconds (Int)
+com.histmersion.config.BackupsConfig.TimeoutSeconds (Int)
+com.histmersion.config.BasemapBathymetryConfig.Attribution (String)
+com.histmersion.config.BasemapBathymetryConfig.MaxZoom (Int)
+com.histmersion.config.BasemapBathymetryConfig.RequestGapMs (Int)
+com.histmersion.config.BasemapBathymetryConfig.Url (String)
+com.histmersion.config.BasemapConfig.Bbox (String)
+com.histmersion.config.BasemapConfig.Dir (String)
+com.histmersion.config.BasemapConfig.MapMaxZoom (Int)
+com.histmersion.config.BasemapConfig.MaxRequestMb (Int)
+com.histmersion.config.BasemapConfig.MinFreeGb (Double)
+com.histmersion.config.BasemapConfig.Overfetch (Double)
+com.histmersion.config.BasemapConfig.RequestGapMs (Int)
+com.histmersion.config.BasemapConfig.Retries (Int)
+com.histmersion.config.BasemapConfig.SetupAreas (String)
+com.histmersion.config.BasemapConfig.TileCacheSeconds (Int)
+com.histmersion.config.BasemapConfig.TimeoutSeconds (Int)
+com.histmersion.config.BasemapGebcoConfig.Attribution (String)
+com.histmersion.config.BasemapGebcoConfig.MaxZoom (Int)
+com.histmersion.config.BasemapGebcoConfig.TileDegrees (Int)
+com.histmersion.config.BasemapGebcoConfig.Url (String)
+com.histmersion.config.BasemapLabelsConfig.Attribution (String)
+com.histmersion.config.BasemapLabelsConfig.Files (String)
+com.histmersion.config.BasemapLabelsConfig.Language (String)
+com.histmersion.config.BasemapLabelsConfig.MaxZoom (Int)
+com.histmersion.config.BasemapLabelsConfig.Url (String)
+com.histmersion.config.BasemapOnDemandConfig.CacheGb (Double)
+com.histmersion.config.BasemapOnDemandConfig.Concurrency (Int)
+com.histmersion.config.BasemapOnDemandConfig.Enabled (Boolean)
+com.histmersion.config.BasemapOnDemandConfig.MaxZoom (Int)
+com.histmersion.config.BasemapOnDemandConfig.RequestsPerSecond (Double)
+com.histmersion.config.BasemapOnDemandConfig.RetryAfterSeconds (Int)
+com.histmersion.config.BasemapTerrainConfig.Attribution (String)
+com.histmersion.config.BasemapTerrainConfig.FocusRegions (String)
+com.histmersion.config.BasemapTerrainConfig.MaxZoom (Int)
+com.histmersion.config.BasemapTerrainConfig.Url (String)
+com.histmersion.config.BasemapVectorConfig.Attribution (String)
+com.histmersion.config.BasemapVectorConfig.Build (String)
+com.histmersion.config.BasemapVectorConfig.BuildsUrl (String)
+com.histmersion.config.BasemapVectorConfig.Drop (String)
+com.histmersion.config.BasemapVectorConfig.MaxZoom (Int)
+com.histmersion.config.BasemapVectorConfig.Url (String)
+com.histmersion.config.BundlesConfig.Dir (String)
+com.histmersion.config.BundlesConfig.StaleMinutes (Int)
+com.histmersion.config.CalibreCliConfig.Calibredb (String)
+com.histmersion.config.CalibreCliConfig.LibraryDir (String)
+com.histmersion.config.CalibreCliConfig.OriginalsDir (String)
+com.histmersion.config.CalibreCliConfig.Sqlite (String)
+com.histmersion.config.CitationCount (Int)
+com.histmersion.config.ClaudeCodeConfig.AllowNonLoopback (Boolean)
+com.histmersion.config.ClaudeCodeConfig.Command (String)
+com.histmersion.config.ClaudeCodeConfig.ConfigDir (String)
+com.histmersion.config.ClaudeCodeConfig.DisableSlashCommands (Boolean)
+com.histmersion.config.ClaudeCodeConfig.EnvKey (String)
+com.histmersion.config.ClaudeCodeConfig.EnvValue (String)
+com.histmersion.config.ClaudeCodeConfig.ExtraArgs (String)
+com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes (Int)
+com.histmersion.config.ClaudeCodeConfig.McpUrl (String)
+com.histmersion.config.ClaudeCodeConfig.TimeoutSeconds (Int)
+com.histmersion.config.ClaudeCodeConfig.UseApiKey (Boolean)
+com.histmersion.config.ClaudePlanConfig.Floors (String)
+com.histmersion.config.ClaudePlanConfig.MaxCallsInFlight (Int)
+com.histmersion.config.ClaudePlanConfig.ProbeMaxTokens (Int)
+com.histmersion.config.ClaudePlanConfig.ProbeModel (String)
+com.histmersion.config.ClaudePlanConfig.ProbeTimeoutSeconds (Int)
+com.histmersion.config.ClaudePlanConfig.Refresh (String)
+com.histmersion.config.CliConfig.ServerUrl (String)
+com.histmersion.config.CliPluginsConfig.Curl (String)
+com.histmersion.config.CliPluginsConfig.InstallDir (String)
+com.histmersion.config.CliPluginsConfig.MavenRepos (String)
+com.histmersion.config.CodexConfig.AppServer (Boolean)
+com.histmersion.config.CodexConfig.BaseInstructions (String)
+com.histmersion.config.CodexConfig.Command (String)
+com.histmersion.config.CodexConfig.Home (String)
+com.histmersion.config.CodexConfig.KeepSessionsDays (Int)
+com.histmersion.config.CodexConfig.RetentionEveryHours (Int)
+com.histmersion.config.CodexConfig.Sqlite (String)
+com.histmersion.config.CodexConfig.TimeoutSeconds (Int)
+com.histmersion.config.CodexConfig.ToolOutputTokens (Int)
+com.histmersion.config.CodexConfig.UseApiKey (Boolean)
+com.histmersion.config.CodexConfig.Vacuum (Boolean)
+com.histmersion.config.CommaList (String)
+com.histmersion.config.ConfigLayers.Keys.Settings (String)
+com.histmersion.config.ConfigLayers.Keys.Unknown (String)
+com.histmersion.config.ConfigLayers.OpenBlocksValue (String)
+com.histmersion.config.ConfigReload.Config.DrainSeconds (Int)
+com.histmersion.config.ConfigReload.Config.Watch (Boolean)
+com.histmersion.config.ConfigReload.Config.WatchDebounceMs (Int)
+com.histmersion.config.ConverterConfig.Dpi (Int)
+com.histmersion.config.ConverterConfig.HealthCacheMs (Int)
+com.histmersion.config.ConverterConfig.HealthTimeoutMs (Int)
+com.histmersion.config.ConverterConfig.MaxImagePx (Int)
+com.histmersion.config.ConverterConfig.Parallelism (Int)
+com.histmersion.config.ConverterConfig.SecondsPerPage (Int)
+com.histmersion.config.ConverterConfig.SecondsPerPageQuality (Int)
+com.histmersion.config.ConverterConfig.SecondsPerScannedPage (Int)
+com.histmersion.config.ConverterConfig.SpoolDir (String)
+com.histmersion.config.ConverterConfig.TimeoutSeconds (Int)
+com.histmersion.config.ConverterConfig.Url (String)
+com.histmersion.config.CorpusConfig.Dir (String)
+com.histmersion.config.Days (Int)
+com.histmersion.config.DbConfig.Password (String)
+com.histmersion.config.DbConfig.Url (String)
+com.histmersion.config.DbConfig.User (String)
+com.histmersion.config.DbPoolConfig.Max (Int)
+com.histmersion.config.Environment.VariablesKey (String)
+com.histmersion.config.Environment.VariablesValue (String)
+
+## TYPES TO DECIDE
+com.histmersion.config.AutoApprovalsConfig.ArticlesPerGoalPerDay | base Int | original | constructor-parameter
+com.histmersion.config.AutoApprovalsConfig.GoalPlansBacklogShare | base Double | original | constructor-parameter
+com.histmersion.config.AutoApprovalsConfig.GoalPlansCeiling | base Int | original | constructor-parameter
+com.histmersion.config.AutoApprovalsConfig.GoalPlansPerDay | base Int | original | constructor-parameter
+com.histmersion.config.AutoApprovalsConfig.MaxGoalDepth | base Int | original | constructor-parameter
+com.histmersion.config.AutoApprovalsConfig.PublishBacklogShare | base Double | original | constructor-parameter
+com.histmersion.config.AutoApprovalsConfig.PublishCeiling | base Int | original | constructor-parameter
+com.histmersion.config.AutoApprovalsConfig.PublishMinSources | base Int | original | constructor-parameter
+com.histmersion.config.AutoApprovalsConfig.PublishPerDay | base Int | original | constructor-parameter
+com.histmersion.config.BackupsConfig.Dir | base String | original | constructor-parameter
+    final case class BackupsConfig(dir: BackupsConfig.Dir, pgBinDir: BackupsConfig.PgBinDir, timeoutSeconds: BackupsConfig.TimeoutSeconds, requestWaitSeconds: BackupsConfig.R
+com.histmersion.config.BackupsConfig.Keep | base Int | original | constructor-parameter
+    final case class BackupsConfig(dir: BackupsConfig.Dir, pgBinDir: BackupsConfig.PgBinDir, timeoutSeconds: BackupsConfig.TimeoutSeconds, requestWaitSeconds: BackupsConfig.R
+com.histmersion.config.BackupsConfig.PgBinDir | base String | original | constructor-parameter
+    final case class BackupsConfig(dir: BackupsConfig.Dir, pgBinDir: BackupsConfig.PgBinDir, timeoutSeconds: BackupsConfig.TimeoutSeconds, requestWaitSeconds: BackupsConfig.R
+com.histmersion.config.BackupsConfig.RequestWaitSeconds | base Int | original | constructor-parameter
+    final case class BackupsConfig(dir: BackupsConfig.Dir, pgBinDir: BackupsConfig.PgBinDir, timeoutSeconds: BackupsConfig.TimeoutSeconds, requestWaitSeconds: BackupsConfig.R
+com.histmersion.config.BackupsConfig.TimeoutSeconds | base Int | original | constructor-parameter
+    final case class BackupsConfig(dir: BackupsConfig.Dir, pgBinDir: BackupsConfig.PgBinDir, timeoutSeconds: BackupsConfig.TimeoutSeconds, requestWaitSeconds: BackupsConfig.R
+com.histmersion.config.BasemapBathymetryConfig.Attribution | base String | original | constructor-parameter
+com.histmersion.config.BasemapBathymetryConfig.ExtractMaxZoomResult | base Int | generated | method-result
+    def extractMaxZoom: com.histmersion.config.BasemapBathymetryConfig.ExtractMaxZoomResult = source match
+com.histmersion.config.BasemapBathymetryConfig.MaxZoom | base Int | original | constructor-parameter
+    def extractMaxZoom: com.histmersion.config.BasemapBathymetryConfig.ExtractMaxZoomResult = source match
+com.histmersion.config.BasemapBathymetryConfig.RequestGapMs | base Int | original | constructor-parameter
+com.histmersion.config.BasemapBathymetryConfig.Url | base String | original | constructor-parameter
+com.histmersion.config.BasemapConfig.Bbox | base String | original | constructor-parameter
+com.histmersion.config.BasemapConfig.Dir | base String | original | constructor-parameter
+com.histmersion.config.BasemapConfig.MapMaxZoom | base Int | original | constructor-parameter
+com.histmersion.config.BasemapConfig.MaxRequestMb | base Int | original | constructor-parameter
+com.histmersion.config.BasemapConfig.MinFreeGb | base Double | original | constructor-parameter
+com.histmersion.config.BasemapConfig.Overfetch | base Double | original | constructor-parameter
+com.histmersion.config.BasemapConfig.RequestGapMs | base Int | original | constructor-parameter
+com.histmersion.config.BasemapConfig.Retries | base Int | original | constructor-parameter
+com.histmersion.config.BasemapConfig.SetupAreas | base String | original | constructor-parameter
+com.histmersion.config.BasemapConfig.TileCacheSeconds | base Int | original | constructor-parameter
+com.histmersion.config.BasemapConfig.TimeoutSeconds | base Int | original | constructor-parameter
+com.histmersion.config.BasemapGebcoConfig.Attribution | base String | original | constructor-parameter
+    final case class BasemapGebcoConfig(url: BasemapGebcoConfig.Url, tileDegrees: BasemapGebcoConfig.TileDegrees, maxZoom: BasemapGebcoConfig.MaxZoom, attribution: BasemapGeb
+com.histmersion.config.BasemapGebcoConfig.MaxZoom | base Int | original | constructor-parameter
+    final case class BasemapGebcoConfig(url: BasemapGebcoConfig.Url, tileDegrees: BasemapGebcoConfig.TileDegrees, maxZoom: BasemapGebcoConfig.MaxZoom, attribution: BasemapGeb
+com.histmersion.config.BasemapGebcoConfig.TileDegrees | base Int | original | constructor-parameter
+    final case class BasemapGebcoConfig(url: BasemapGebcoConfig.Url, tileDegrees: BasemapGebcoConfig.TileDegrees, maxZoom: BasemapGebcoConfig.MaxZoom, attribution: BasemapGeb
+com.histmersion.config.BasemapGebcoConfig.Url | base String | original | constructor-parameter
+    final case class BasemapGebcoConfig(url: BasemapGebcoConfig.Url, tileDegrees: BasemapGebcoConfig.TileDegrees, maxZoom: BasemapGebcoConfig.MaxZoom, attribution: BasemapGeb
+com.histmersion.config.BasemapLabelsConfig.Attribution | base String | original | constructor-parameter
+com.histmersion.config.BasemapLabelsConfig.Files | base String | original | constructor-parameter
+com.histmersion.config.BasemapLabelsConfig.Language | base String | original | constructor-parameter
+com.histmersion.config.BasemapLabelsConfig.MaxZoom | base Int | original | constructor-parameter
+com.histmersion.config.BasemapLabelsConfig.Url | base String | original | constructor-parameter
+com.histmersion.config.BasemapOnDemandConfig.CacheGb | base Double | original | constructor-parameter
+com.histmersion.config.BasemapOnDemandConfig.Concurrency | base Int | original | constructor-parameter
+com.histmersion.config.BasemapOnDemandConfig.Enabled | base Boolean | original | constructor-parameter
+com.histmersion.config.BasemapOnDemandConfig.MaxZoom | base Int | original | constructor-parameter
+com.histmersion.config.BasemapOnDemandConfig.RequestsPerSecond | base Double | original | constructor-parameter
+com.histmersion.config.BasemapOnDemandConfig.RetryAfterSeconds | base Int | original | constructor-parameter
+com.histmersion.config.BasemapTerrainConfig.Attribution | base String | original | constructor-parameter
+com.histmersion.config.BasemapTerrainConfig.FocusRegions | base String | original | constructor-parameter
+com.histmersion.config.BasemapTerrainConfig.MaxZoom | base Int | original | constructor-parameter
+com.histmersion.config.BasemapTerrainConfig.Url | base String | original | constructor-parameter
+com.histmersion.config.BasemapVectorConfig.Attribution | base String | original | constructor-parameter
+com.histmersion.config.BasemapVectorConfig.Build | base String | original | constructor-parameter
+com.histmersion.config.BasemapVectorConfig.BuildsUrl | base String | original | constructor-parameter
+com.histmersion.config.BasemapVectorConfig.Drop | base String | original | constructor-parameter
+com.histmersion.config.BasemapVectorConfig.MaxZoom | base Int | original | constructor-parameter
+com.histmersion.config.BasemapVectorConfig.Url | base String | original | constructor-parameter
+com.histmersion.config.BundlesConfig.Dir | base String | original | constructor-parameter
+    final case class BundlesConfig(dir: BundlesConfig.Dir, staleMinutes: BundlesConfig.StaleMinutes) derives ConfigReader
+com.histmersion.config.BundlesConfig.StaleMinutes | base Int | original | constructor-parameter
+    final case class BundlesConfig(dir: BundlesConfig.Dir, staleMinutes: BundlesConfig.StaleMinutes) derives ConfigReader
+com.histmersion.config.CalibreCliConfig.Calibredb | base String | original | constructor-parameter
+    final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calibredb: CalibreCliConfig.Calibredb, sqlite: CalibreCliConfig.Sqlite, originalsDir: CalibreCl
+com.histmersion.config.CalibreCliConfig.ExpandP | base String | generated | method-parameter
+    private def expand(p: com.histmersion.config.CalibreCliConfig.ExpandP): com.histmersion.config.CalibreCliConfig.ExpandResult =
+com.histmersion.config.CalibreCliConfig.ExpandResult | base String | generated | method-result
+    private def expand(p: com.histmersion.config.CalibreCliConfig.ExpandP): com.histmersion.config.CalibreCliConfig.ExpandResult =
+com.histmersion.config.CalibreCliConfig.LibraryDir | base String | original | constructor-parameter
+    final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calibredb: CalibreCliConfig.Calibredb, sqlite: CalibreCliConfig.Sqlite, originalsDir: CalibreCl
+com.histmersion.config.CalibreCliConfig.LibraryResult | base String | generated | method-result
+    def library: com.histmersion.config.CalibreCliConfig.LibraryResult = expand(libraryDir)
+com.histmersion.config.CalibreCliConfig.OriginalsDir | base String | original | constructor-parameter
+    final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calibredb: CalibreCliConfig.Calibredb, sqlite: CalibreCliConfig.Sqlite, originalsDir: CalibreCl
+com.histmersion.config.CalibreCliConfig.OriginalsResult | base String | generated | method-result
+    def originals: Option[com.histmersion.config.CalibreCliConfig.OriginalsResult] = Option(originalsDir).map(expand).map(_.trim).filter(_.nonEmpty)
+com.histmersion.config.CalibreCliConfig.Sqlite | base String | original | constructor-parameter
+    final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calibredb: CalibreCliConfig.Calibredb, sqlite: CalibreCliConfig.Sqlite, originalsDir: CalibreCl
+com.histmersion.config.CitationCount | base Int | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.AllowNonLoopback | base Boolean | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.Command | base String | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.ConfigDir | base String | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.DisableSlashCommands | base Boolean | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart1 | base String | generated | method-result
+    def envChanges: List[(com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart1, Option[com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart2])] =
+com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart2 | base String | generated | method-result
+    def envChanges: List[(com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart1, Option[com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart2])] =
+com.histmersion.config.ClaudeCodeConfig.EnvKey | base String | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.EnvValue | base String | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.ExtraArgs | base String | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.LimitCooldownMinutes | base Int | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.McpUrl | base String | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.TimeoutSeconds | base Int | original | constructor-parameter
+com.histmersion.config.ClaudeCodeConfig.UseApiKey | base Boolean | original | constructor-parameter
+com.histmersion.config.ClaudePlanConfig.Floors | base String | original | constructor-parameter
+com.histmersion.config.ClaudePlanConfig.MaxCallsInFlight | base Int | original | constructor-parameter
+com.histmersion.config.ClaudePlanConfig.ProbeMaxTokens | base Int | original | constructor-parameter
+com.histmersion.config.ClaudePlanConfig.ProbeModel | base String | original | constructor-parameter
+com.histmersion.config.ClaudePlanConfig.ProbeTimeoutSeconds | base Int | original | constructor-parameter
+com.histmersion.config.ClaudePlanConfig.Refresh | base String | original | constructor-parameter
+com.histmersion.config.CliConfig.ServerUrl | base String | original | constructor-parameter
+    final case class CliConfig(serverUrl: CliConfig.ServerUrl, calibre: CalibreCliConfig, plugins: CliPluginsConfig) derives ConfigReader
+com.histmersion.config.CliPluginsConfig.Curl | base String | original | constructor-parameter
+    final case class CliPluginsConfig(installDir: CliPluginsConfig.InstallDir, mavenRepos: CliPluginsConfig.MavenRepos, curl: CliPluginsConfig.Curl) derives ConfigReader:
+com.histmersion.config.CliPluginsConfig.InstallDir | base String | original | constructor-parameter
+    final case class CliPluginsConfig(installDir: CliPluginsConfig.InstallDir, mavenRepos: CliPluginsConfig.MavenRepos, curl: CliPluginsConfig.Curl) derives ConfigReader:
+com.histmersion.config.CliPluginsConfig.MavenRepos | base String | original | constructor-parameter
+    final case class CliPluginsConfig(installDir: CliPluginsConfig.InstallDir, mavenRepos: CliPluginsConfig.MavenRepos, curl: CliPluginsConfig.Curl) derives ConfigReader:
+com.histmersion.config.CliPluginsConfig.ReposResult | base String | generated | method-result
+    def repos: List[com.histmersion.config.CliPluginsConfig.ReposResult] = mavenRepos.split(",").toList.map(_.trim).filter(_.nonEmpty)
+com.histmersion.config.CodexConfig.AppServer | base Boolean | original | constructor-parameter
+com.histmersion.config.CodexConfig.BaseInstructions | base String | original | constructor-parameter
+com.histmersion.config.CodexConfig.Command | base String | original | constructor-parameter
+com.histmersion.config.CodexConfig.Home | base String | original | constructor-parameter
+com.histmersion.config.CodexConfig.KeepSessionsDays | base Int | original | constructor-parameter
+com.histmersion.config.CodexConfig.LeanBaseResult | base Boolean | generated | method-result
+    def leanBase: com.histmersion.config.CodexConfig.LeanBaseResult = !baseInstructions.trim.equalsIgnoreCase("builtin")
+com.histmersion.config.CodexConfig.RetentionEveryHours | base Int | original | constructor-parameter
+com.histmersion.config.CodexConfig.Sqlite | base String | original | constructor-parameter
+com.histmersion.config.CodexConfig.TimeoutSeconds | base Int | original | constructor-parameter
+com.histmersion.config.CodexConfig.ToolOutputTokens | base Int | original | constructor-parameter
+com.histmersion.config.CodexConfig.UseApiKey | base Boolean | original | constructor-parameter
+com.histmersion.config.CodexConfig.Vacuum | base Boolean | original | constructor-parameter
+com.histmersion.config.CommaList | base String | original | constructor-parameter,parameter
+    def entries: List[com.histmersion.config.CommaList.EntriesResult] =
+com.histmersion.config.CommaList.EntriesResult | base String | generated | method-result
+    def entries: List[com.histmersion.config.CommaList.EntriesResult] =
+com.histmersion.config.ConfigLayers.CheckLoopRestPart1 | base String | generated | method-parameter
+com.histmersion.config.ConfigLayers.CheckLoopRestPart2 | base Boolean | generated | method-parameter
+com.histmersion.config.ConfigLayers.CheckLoopResultPart1 | base String | generated | method-result
+com.histmersion.config.ConfigLayers.CheckLoopSettings | base String | generated | method-parameter
+com.histmersion.config.ConfigLayers.CheckLoopUnknown | base String | generated | method-parameter
+com.histmersion.config.ConfigLayers.CheckResultPart1 | base String | generated | method-result
+    def check(user: Config, known: Config): Either[com.histmersion.config.ConfigLayers.CheckResultPart1, Keys] =
+com.histmersion.config.ConfigLayers.DescribeResult | base String | generated | method-result
+    def describe(err: ConfigDecodingError): com.histmersion.config.ConfigLayers.DescribeResult =
+com.histmersion.config.ConfigLayers.InOpenBlockKeys | base String | generated | method-parameter
+    private def inOpenBlock(keys: List[com.histmersion.config.ConfigLayers.InOpenBlockKeys]): com.histmersion.config.ConfigLayers.InOpenBlockResult =
+com.histmersion.config.ConfigLayers.InOpenBlockResult | base Boolean | generated | method-result
+    private def inOpenBlock(keys: List[com.histmersion.config.ConfigLayers.InOpenBlockKeys]): com.histmersion.config.ConfigLayers.InOpenBlockResult =
+com.histmersion.config.ConfigLayers.Keys.Settings | base String | original | constructor-parameter
+    final case class Keys(settings: List[Keys.Settings], unknown: List[Keys.Unknown])
+com.histmersion.config.ConfigLayers.Keys.Unknown | base String | original | constructor-parameter
+    final case class Keys(settings: List[Keys.Settings], unknown: List[Keys.Unknown])
+com.histmersion.config.ConfigLayers.LeavesPrefix | base String | generated | method-parameter
+    private def leaves(obj: ConfigObject, prefix: List[com.histmersion.config.ConfigLayers.LeavesPrefix]): List[(List[com.histmersion.config.ConfigLayers.LeavesResultPart1], 
+com.histmersion.config.ConfigLayers.LeavesResultPart1 | base String | generated | method-result
+    private def leaves(obj: ConfigObject, prefix: List[com.histmersion.config.ConfigLayers.LeavesPrefix]): List[(List[com.histmersion.config.ConfigLayers.LeavesResultPart1], 
+com.histmersion.config.ConfigLayers.LeavesResultPart2 | base Boolean | generated | method-result
+    private def leaves(obj: ConfigObject, prefix: List[com.histmersion.config.ConfigLayers.LeavesPrefix]): List[(List[com.histmersion.config.ConfigLayers.LeavesResultPart1], 
+com.histmersion.config.ConfigLayers.MismatchPath | base String | generated | method-parameter
+    private def mismatch(path: com.histmersion.config.ConfigLayers.MismatchPath, k: ConfigValue, v: ConfigValue): Option[com.histmersion.config.ConfigLayers.MismatchResult] =
+com.histmersion.config.ConfigLayers.MismatchResult | base String | generated | method-result
+    private def mismatch(path: com.histmersion.config.ConfigLayers.MismatchPath, k: ConfigValue, v: ConfigValue): Option[com.histmersion.config.ConfigLayers.MismatchResult] =
+com.histmersion.config.ConfigLayers.OpenBlocksValue | base String | original | alias
+com.histmersion.config.ConfigLayers.ParseResultPart1 | base String | generated | method-result
+    def parse(file: Path): Either[com.histmersion.config.ConfigLayers.ParseResultPart1, Option[Config]] =
+com.histmersion.config.ConfigLayers.SameFileResult | base Boolean | generated | method-result
+    def sameFile(o: ConfigOrigin, file: Path): com.histmersion.config.ConfigLayers.SameFileResult =
+com.histmersion.config.ConfigLayers.TypeCheckResultPart1 | base String | generated | method-result
+    def typeCheck(settings: List[com.histmersion.config.ConfigLayers.TypeCheckSettings], merged: Config, known: Config): Either[com.histmersion.config.ConfigLayers.TypeCheckR
+com.histmersion.config.ConfigLayers.TypeCheckSettings | base String | generated | method-parameter
+    def typeCheck(settings: List[com.histmersion.config.ConfigLayers.TypeCheckSettings], merged: Config, known: Config): Either[com.histmersion.config.ConfigLayers.TypeCheckR
+com.histmersion.config.ConfigReload.ChangedResult | base String | generated | method-result
+    def changed(before: org.ekrich.config.Config, after: org.ekrich.config.Config): List[com.histmersion.config.ConfigReload.ChangedResult] =
+com.histmersion.config.ConfigReload.Config.DrainSeconds | base Int | original | constructor-parameter
+    final case class Config(watch: Config.Watch, watchDebounceMs: Config.WatchDebounceMs, drainSeconds: Config.DrainSeconds) derives ConfigReader
+com.histmersion.config.ConfigReload.Config.Watch | base Boolean | original | constructor-parameter
+    final case class Config(watch: Config.Watch, watchDebounceMs: Config.WatchDebounceMs, drainSeconds: Config.DrainSeconds) derives ConfigReader
+com.histmersion.config.ConfigReload.Config.WatchDebounceMs | base Int | original | constructor-parameter
+    final case class Config(watch: Config.Watch, watchDebounceMs: Config.WatchDebounceMs, drainSeconds: Config.DrainSeconds) derives ConfigReader
+com.histmersion.config.ConfigReload.EffectiveChanged | base String | generated | method-parameter
+com.histmersion.config.ConfigReload.LeavesResultPart1 | base String | generated | method-result
+    def leaves(c: org.ekrich.config.Config): Map[com.histmersion.config.ConfigReload.LeavesResultPart1, com.histmersion.config.ConfigReload.LeavesResultPart2] =
+com.histmersion.config.ConfigReload.LeavesResultPart2 | base String | generated | method-result
+    def leaves(c: org.ekrich.config.Config): Map[com.histmersion.config.ConfigReload.LeavesResultPart1, com.histmersion.config.ConfigReload.LeavesResultPart2] =
+com.histmersion.config.ConfigReload.RestartOnlyKey | base String | generated | method-parameter
+    def restartOnly(key: com.histmersion.config.ConfigReload.RestartOnlyKey): com.histmersion.config.ConfigReload.RestartOnlyResult = RestartOnly.exists((k, _) => HotPlan.key
+com.histmersion.config.ConfigReload.RestartOnlyPart1 | base String | generated | value
+    val RestartOnly: List[(com.histmersion.config.ConfigReload.RestartOnlyPart1, com.histmersion.config.ConfigReload.RestartOnlyPart2)] = List(
+com.histmersion.config.ConfigReload.RestartOnlyPart2 | base String | generated | value
+    val RestartOnly: List[(com.histmersion.config.ConfigReload.RestartOnlyPart1, com.histmersion.config.ConfigReload.RestartOnlyPart2)] = List(
+com.histmersion.config.ConfigReload.RestartOnlyResult | base Boolean | generated | method-result
+    def restartOnly(key: com.histmersion.config.ConfigReload.RestartOnlyKey): com.histmersion.config.ConfigReload.RestartOnlyResult = RestartOnly.exists((k, _) => HotPlan.key
+com.histmersion.config.ConfigReload.SplitChanged | base String | generated | method-parameter
+    def split(changed: List[com.histmersion.config.ConfigReload.SplitChanged]): (List[com.histmersion.config.ConfigReload.SplitResultPart1], List[com.histmersion.config.Confi
+com.histmersion.config.ConfigReload.SplitResultPart1 | base String | generated | method-result
+    def split(changed: List[com.histmersion.config.ConfigReload.SplitChanged]): (List[com.histmersion.config.ConfigReload.SplitResultPart1], List[com.histmersion.config.Confi
+com.histmersion.config.ConfigReload.SplitResultPart2 | base String | generated | method-result
+    def split(changed: List[com.histmersion.config.ConfigReload.SplitChanged]): (List[com.histmersion.config.ConfigReload.SplitResultPart1], List[com.histmersion.config.Confi
+com.histmersion.config.ConverterConfig.Dpi | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.HealthCacheMs | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.HealthTimeoutMs | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.MaxImagePx | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.Parallelism | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.SecondsPerPage | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.SecondsPerPageQuality | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.SecondsPerScannedPage | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.SpoolDir | base String | original | constructor-parameter
+com.histmersion.config.ConverterConfig.TimeoutSeconds | base Int | original | constructor-parameter
+com.histmersion.config.ConverterConfig.Url | base String | original | constructor-parameter
+com.histmersion.config.CoreServiceConfig.KeyResult | base String | generated | method-result
+    def key: Option[com.histmersion.config.CoreServiceConfig.KeyResult] = Option(apiKey.value: String).map(_.trim).filter(_.nonEmpty)
+com.histmersion.config.CorpusConfig.Dir | base String | original | constructor-parameter
+    final case class CorpusConfig(dir: CorpusConfig.Dir) derives ConfigReader
+com.histmersion.config.Days | base Int | original | constructor-parameter
+com.histmersion.config.DbConfig.Password | base String | original | constructor-parameter
+    final case class DbConfig(url: DbConfig.Url, user: DbConfig.User, password: DbConfig.Password, pool: DbPoolConfig) derives ConfigReader
+com.histmersion.config.DbConfig.Url | base String | original | constructor-parameter
+    final case class DbConfig(url: DbConfig.Url, user: DbConfig.User, password: DbConfig.Password, pool: DbPoolConfig) derives ConfigReader
+com.histmersion.config.DbConfig.User | base String | original | constructor-parameter
+    final case class DbConfig(url: DbConfig.Url, user: DbConfig.User, password: DbConfig.Password, pool: DbPoolConfig) derives ConfigReader
+com.histmersion.config.DbPoolConfig.Max | base Int | original | constructor-parameter
+    final case class DbPoolConfig(max: DbPoolConfig.Max) derives ConfigReader
+com.histmersion.config.Environment.GetName | base String | generated | method-parameter
+    def get(name: com.histmersion.config.Environment.GetName): Option[com.histmersion.config.Environment.GetResult] = variables.get(name)
+com.histmersion.config.Environment.GetResult | base String | generated | method-result
+    def get(name: com.histmersion.config.Environment.GetName): Option[com.histmersion.config.Environment.GetResult] = variables.get(name)
+com.histmersion.config.Environment.LookupResultArg1 | base String | generated | method-result
+    def lookup: com.histmersion.config.Environment.LookupResultArg1 => Option[com.histmersion.config.Environment.LookupResultResult] = get
+com.histmersion.config.Environment.LookupResultResult | base String | generated | method-result
+    def lookup: com.histmersion.config.Environment.LookupResultArg1 => Option[com.histmersion.config.Environment.LookupResultResult] = get
+com.histmersion.config.Environment.NonBlankName | base String | generated | method-parameter
+    def nonBlank(name: com.histmersion.config.Environment.NonBlankName): Option[com.histmersion.config.Environment.NonBlankResult] = get(name).map(_.trim).filter(_.nonEmpty)
+com.histmersion.config.Environment.NonBlankResult | base String | generated | method-result
+    def nonBlank(name: com.histmersion.config.Environment.NonBlankName): Option[com.histmersion.config.Environment.NonBlankResult] = get(name).map(_.trim).filter(_.nonEmpty)
+com.histmersion.config.Environment.VariablesKey | base String | original | constructor-parameter
+    final case class Environment(variables: Map[Environment.VariablesKey, Environment.VariablesValue]):
+com.histmersion.config.Environment.VariablesValue | base String | original | constructor-parameter
+    final case class Environment(variables: Map[Environment.VariablesKey, Environment.VariablesValue]):
