@@ -1,5 +1,72 @@
 # Priority-family status
 
+## Current checkpoint: plugin API test sources compile
+
+The reusable overload, collection and interface transformations have been applied
+across every eligible plugin API test caller, in six test files. All eight test
+sources now compile. No production source changed in this batch, and no application
+or application-test source was edited by hand. The existing AstRecipe →
+ApplyFrozenPreview → CompileBatch pipeline was reused without another runner or
+verification framework.
+
+The overload rule reads case-class constructors and companion factories from the
+current frozen ASTs. It binds positional/named arguments, preserves omitted defaults
+and argument order, and requires all viable conversions to agree. Private,
+generic, constrained and ambiguous cases remain outside its supported proof.
+Collection conversions additionally cover Set, Some/Option, empty Nil/None,
+Left/Right, and qualified Array[Byte] bases. Test comparisons retain their expected
+values and use typed projections or typed equality literals; they introduce no
+casts or permissive equality instances.
+
+Two additional test-only nominal boundary targets are explicit: Echo turns a user
+message into its answer, and the Portal fakes use a place label as an item title.
+These are conversions between different meanings, not duplicate-type mergers.
+Production callers are excluded from this test-boundary configuration because
+their behavior and validation responsibilities have not been established here.
+
+Build observations preserve 33 → 12 → 8 expression errors. Once expression typing
+succeeds, 23 previously hidden override errors are exposed. The existing interface
+transformation then aligns all eligible test implementations of six SPI contracts
+(including nested and anonymous implementations); its 80 declaration patches are
+followed by nine body repairs using the existing compiler transformation. All eight
+test sources compile in plugin-api-overloads-tests-1. The intermediate 23 and nine
+errors are retained, not classified as new policy regressions by aggregate counts.
+
+The default `pluginApi/test` delegates to testQuick and reports 39 tests: 36 pass,
+three fail. `pluginApi/testOnly *` explicitly covers all eight suites and reports
+45 tests: 42 pass, three fail (plugin-api-overloads-tests-2). The three failures are
+the same coordinate-range, DOI-format and Wikidata-format assertions against
+pre-existing Pure client types. Their expectations and definitions remain unchanged.
+This is not a green test run. The earlier six SecretSuite passes are also present
+in the all-suite observation. Build status uses COMPILE_FAILED for any nonzero
+exit; the logs distinguish successful compilation from behavioral test failures.
+
+Compiler fixtures match exact output and compile/run with Scala 3.10,
+-source:future and fatal E165. Runtime checks cover named-argument binding,
+compatibility-factory selection, default evaluation, Some/empty arguments, array
+identity, both equality directions, and deliberate Set/map/assertion mismatches.
+Eight negative cases remain unresolved, including ambiguous factories and
+constrained construction. The extended interface fixture independently checks a
+nested anonymous implementation; wrong overloads and generic substitution remain
+explicit limits. Source hashes gate every applied preview.
+
+type-positions-after-overloads-1 records the expression-only checkpoint with no
+primitive/newtype identity changes. The subsequent type-positions-after-overloads-2
+retains all 3168 Scala files and records 42 removed test primitive declaration IDs,
+zero introduced IDs, and no newtype-definition changes. Raw candidates are now
+production594/test6009 (6603 total); definitions remain production27634/test15,
+with 3014 overlap candidate groups. Unresolved candidate references increase from
+16095 to 16105: these ten added declaration references remain unresolved evidence,
+not compliant cases. Removed declaration IDs and compiler-error counts are not a
+global confirmed-violation denominator or an overall repair percentage.
+
+Inventory acceptance and the other policy families remain frozen partial. There
+is no new whole-project compilation, native-build or architectural-regression
+claim. Next reuse these transformations on the seven known hello-deps fixture
+errors, then follow the dependency compilation frontier; retain the three client
+validation conflicts as explicit design/test work. Their prior observations and
+the earlier checkpoints below remain historical evidence.
+
 ## Verified locally: plugin API production compilation; test migration incomplete
 
 pluginApi/compile now passes. Scalafix repaired 28 production files and applied

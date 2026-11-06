@@ -34,3 +34,10 @@ object Generic:
 
 abstract class WrongGeneric extends Registry[String]:
   def add(id: Int, a: String) = Right(())
+
+object Api:
+  trait Port:
+    def emit(text: Values.Text): Unit
+
+object NestedTesting:
+  val fake = new Api.Port { def emit(text: String) = () }

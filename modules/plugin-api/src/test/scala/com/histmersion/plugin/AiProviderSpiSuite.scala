@@ -9,10 +9,10 @@ class AiProviderSpiSuite extends munit.FunSuite:
       r.messages
         .collectFirst { case AiMessage.User(t) => t }
         .toRight(AiFailure.Error(_root_.com.histmersion.plugin.AiFailure.Error.Message("no user message")))
-        .map(t => AiTurn(t, usage = Some(AiUsage(_root_.com.histmersion.plugin.AiUsage.Input((10).toLong), _root_.com.histmersion.plugin.AiUsage.Output((2).toLong)))))
+        .map(t => AiTurn(_root_.com.histmersion.plugin.AiTurn.Text((t).value), usage = Some(AiUsage(_root_.com.histmersion.plugin.AiUsage.Input((10).toLong), _root_.com.histmersion.plugin.AiUsage.Output((2).toLong)))))
 
   test("a provider's defaults: tools, no native structured output, no personal plan, nothing to check or list"):
-    assertEquals(Echo.capabilities, AiCapabilities(tools = true, structuredOutput = false))
+    assertEquals(Echo.capabilities, AiCapabilities(tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true), structuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(false)))
     assert(!(Echo.spendsPersonalPlan).value)
     assertEquals(Echo.check(_root_.com.histmersion.plugin.AiProvider.CheckModel("any")), Right(()))
     assertEquals(Echo.models(AiHttp.Offline), Right(Nil))
@@ -20,10 +20,10 @@ class AiProviderSpiSuite extends munit.FunSuite:
     assertEquals(((Echo.description).value: String), "")
 
   test("one turn: the request in, the answer out; a turn's defaults"):
-    val req = AiTurn.Request("m", "sys", List(AiMessage.User(_root_.com.histmersion.plugin.AiMessage.User.Text("hi"))), Nil, None, 16000, 1, 4)
+    val req = AiTurn.Request(_root_.com.histmersion.plugin.AiTurn.Request.Model("m"), _root_.com.histmersion.plugin.AiTurn.Request.System("sys"), List(AiMessage.User(_root_.com.histmersion.plugin.AiMessage.User.Text("hi"))), Nil, None, _root_.com.histmersion.plugin.AiTurn.Request.MaxTokens(16000), _root_.com.histmersion.plugin.AiTurn.Request.Iteration(1), _root_.com.histmersion.plugin.AiTurn.Request.MaxIterations(4))
     val t = Echo.turn(req, AiHttp.Offline).toOption.get
-    assertEquals((t.text, t.toolCalls, t.stop, t.servedBy), ("hi", Nil, AiStop.EndTurn, None))
-    assertEquals(t.usage, Some(AiUsage(10, 2, 0, 0)))
+    assertEquals(({ val refactorTuple = (t.text, t.toolCalls, t.stop, t.servedBy); ((refactorTuple._1).value, refactorTuple._2, refactorTuple._3, (refactorTuple._4).map(refactorValue => (refactorValue).value)) }: (String, List[com.histmersion.plugin.AiTool.Call], com.histmersion.plugin.AiStop, Option[String])), ("hi", Nil, AiStop.EndTurn, None))
+    assertEquals(t.usage, Some(AiUsage(_root_.com.histmersion.plugin.AiUsage.Input((10).toLong), _root_.com.histmersion.plugin.AiUsage.Output((2).toLong), _root_.com.histmersion.plugin.AiUsage.CacheRead((0).toLong), _root_.com.histmersion.plugin.AiUsage.CacheWrite((0).toLong))))
     assertEquals(Echo.turn(req.copy(messages = Nil), AiHttp.Offline), Left(AiFailure.Error(_root_.com.histmersion.plugin.AiFailure.Error.Message("no user message"))))
     assertEquals(AiFailure.LimitReached(_root_.com.histmersion.plugin.AiFailure.LimitReached.Message("limit")), AiFailure.LimitReached(_root_.com.histmersion.plugin.AiFailure.LimitReached.Message("limit"), None))
 
@@ -33,10 +33,10 @@ class AiProviderSpiSuite extends munit.FunSuite:
 
   test("a context written before AI providers existed still compiles and refuses one; the SPI is still 1"):
     val ctx = new Plugin.Context:
-      def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
-      def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
-      def env(name: String) = None
-      def secret(s: Secret) = Left(_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1("none"))
+      def http = new Plugin.Http { def get(url: _root_.com.histmersion.plugin.Plugin.Http.GetUrl, headers: Map[_root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1, _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2]): Either[_root_.com.histmersion.plugin.Plugin.Http.GetResultPart1, _root_.com.histmersion.plugin.Plugin.HttpResponse.Body] = Left(_root_.com.histmersion.plugin.Plugin.Http.GetResultPart1("offline")) }
+      def log = new Plugin.Log { def info(m: _root_.com.histmersion.plugin.Plugin.Log.InfoMessage): Unit = (); def warn(m: _root_.com.histmersion.plugin.Plugin.Log.WarnMessage): Unit = () }
+      def env(name: _root_.com.histmersion.plugin.Plugin.Context.EnvName): _root_.scala.Option[_root_.com.histmersion.plugin.Plugin.Context.EnvResult] = None
+      def secret(s: Secret): Either[_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1, _root_.com.histmersion.plugin.Plugin.Context.SecretResultPart2] = Left(_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1("none"))
       def secretVaults = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("no vaults"))
     assert(ctx.aiProviders.add(_root_.com.histmersion.plugin.Registry.AddId("echo"), Echo).left.exists((_).value.contains("no AI providers")))
     assertEquals(Spi.Version, 2)

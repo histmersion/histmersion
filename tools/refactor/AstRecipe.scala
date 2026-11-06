@@ -61,7 +61,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     require(policy.appendStats.keySet.subsetOf(policy.edits.map(_.path).toSet), "Append requires a reviewed edit in the same file")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
     val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence,policy.creates)
-    val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence)
+    val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence,policy.boundaryRoots)
     val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
     val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
@@ -180,10 +180,27 @@ class RepairTypes(frozen: Map[String,String], index: String) {
   }.mkString(".")
   def clean(s: String): String = s.stripPrefix("_root_.") match {
     case "java.lang.String" => "String"
-    case s if s.startsWith("scala.") && Set("Boolean","Byte","Short","Int","Long","Float","Double","Char","Unit","Option")(s.stripPrefix("scala.")) => s.stripPrefix("scala.")
+    case s if s.startsWith("scala.") && Set("Boolean","Byte","Short","Int","Long","Float","Double","Char","Unit","Option","Array","List","Set","Map","Either")(s.stripPrefix("scala.")) => s.stripPrefix("scala.")
     case s => s
   }
   case class Pure(name: String, base: String)
+  def base(t: Type): String = t match {
+    case a: Type.Apply => clean(a.tpe.syntax) + a.argClause.values.map(base).mkString("[",",","]")
+    case a: Type.Tuple => a.args.map(base).mkString("(",",",")")
+    case _ => clean(t.syntax)
+  }
+  def caseClass(name: String, at: Tree): Option[Defn.Class] = {
+    val prefixes = owner(at).split('.').toList.inits.map(_.mkString(".")).filter(_.nonEmpty).toList
+    val names = (name.stripPrefix("_root_.") :: prefixes.map(_ + "." + name)).distinct
+    names.foreach { n =>
+      val suffixes = n.split('.').toList.inits.filter(_.nonEmpty).map(_.mkString("/") + ".scala").toList
+      frozen.keys.filter(p => suffixes.exists(s => p.endsWith("/" + s))).foreach(tree)
+    }
+    val matches = loaded.values.toList.flatMap(_.collect {
+      case c: Defn.Class if c.mods.exists(_.is[Mod.Case]) && names.contains(owner(c) + "." + c.name.value) => c
+    })
+    if(matches.size == 1) Some(matches.head) else None
+  }
   private def exact(name: String, seen: Set[String]): Option[Pure] = {
     if(seen(name)) return None
     val direct = indexed.filter(_(5) == name)
@@ -203,7 +220,7 @@ class RepairTypes(frozen: Map[String,String], index: String) {
         case i if i.tpe.is[Type.Apply] => i.tpe.asInstanceOf[Type.Apply]
       }.filter(a => a.tpe.syntax.stripPrefix("_root_.") == "io.github.iltotore.iron.RefinedType" && a.argClause.values.size == 2 &&
         a.argClause.values(1).syntax.stripPrefix("_root_.") == "io.github.iltotore.iron.constraint.any.Pure" &&
-        (a.argClause.values.head.syntax.startsWith("_root_.java.lang.") || a.argClause.values.head.syntax.startsWith("_root_.scala."))).map(a => Pure(name,clean(a.argClause.values.head.syntax)))
+        (a.argClause.values.head.syntax.startsWith("_root_.java.lang.") || a.argClause.values.head.syntax.startsWith("_root_.scala."))).map(a => Pure(name,base(a.argClause.values.head)))
     }
   }
   def pure(s: String, at: Tree): Option[Pure] = {
@@ -224,7 +241,7 @@ class RepairTypes(frozen: Map[String,String], index: String) {
 }
 
 object InterfaceSignatures {
-  def patches(frozen: Map[String,String], index: String, contracts: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]]): Map[String,List[(Int,Int,String)]] = {
+  def patches(frozen: Map[String,String], index: String, contracts: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], roots: List[String] = Nil): Map[String,List[(Int,Int,String)]] = {
     if(contracts.isEmpty) return Map.empty
     val types = new RepairTypes(frozen,index)
     val paths = frozen.keys.filter(p => p.endsWith(".scala") && contracts.exists(c => Files.readString(Paths.get(p)).contains(c.split('.').last))).toList.sorted
@@ -234,11 +251,12 @@ object InterfaceSignatures {
     }}.groupBy(_._1)
     require(contracts.forall(n => interfaces.get(n).exists(_.size == 1)),"Interface contract missing or ambiguous")
     val patches = scala.collection.mutable.ListBuffer.empty[(String,(Int,Int,String))]
-    trees.foreach { case(path,tree) => tree.collect { case template: Template =>
+    trees.filter { case(path,_) => roots.isEmpty || roots.exists(path.startsWith) }.foreach { case(path,tree) => tree.collect { case template: Template =>
       template.inits.foreach { init =>
         val raw = (init.tpe match { case a: Type.Apply => a.tpe.syntax; case t => t.syntax }).stripPrefix("_root_.")
         val local = tree.collect { case t: Defn.Trait if types.owner(t) + "." + t.name.value == raw || t.name.value == raw => types.owner(t) + "." + t.name.value }.distinct
-        val resolved = if(contracts.contains(raw)) Some(raw) else if(local.size == 1 && contracts.contains(local.head)) Some(local.head) else None
+        val scoped = types.owner(init).split('.').toList.inits.map(_.mkString(".")).filter(_.nonEmpty).map(_ + "." + raw).filter(contracts.contains).toList.distinct
+        val resolved = if(contracts.contains(raw)) Some(raw) else if(local.size == 1 && contracts.contains(local.head)) Some(local.head) else if(scoped.size == 1) Some(scoped.head) else None
         resolved.foreach { contract =>
           val parent = interfaces(contract).head._2
           val variables = parent.tparamClause.values.map(_.name.value)
@@ -363,7 +381,13 @@ object CompilerRepairs {
               input.substring(token.pos.end,input.length - 1).trim.parse[Term].toOption.collect { case Term.Ascribe(_: Lit,t) => t }
             }
           }
-          val parsed = input.parse[Term].toOption.collect { case Term.Ascribe(_,t) => t }.orElse(literalBase).orElse(input.parse[Type].toOption)
+          val renderedAscription = if(input.startsWith("(") && input.endsWith(")") && input.contains(" : ")) {
+            val raw = input.substring(input.indexOf(" : ") + 3,input.length - 1).trim
+            raw.parse[Type].toOption.orElse(raw.parse[Term].toOption.collect { case Term.Ascribe(_: Lit,t) => t }).orElse {
+              if(raw == "scala.collection.immutable.Nil².type") Some("scala.collection.immutable.Nil.type".parse[Type].get) else None
+            }
+          } else None
+          val parsed = input.parse[Term].toOption.collect { case Term.Ascribe(_,t) => t }.orElse(literalBase).orElse(renderedAscription).orElse(input.parse[Type].toOption)
           parsed.map { case a: Type.ApplyInfix if nullable && a.op.value == "|" && a.rhs.syntax == "Null" => a.lhs; case t => t }.map { t =>
             t.syntax.parse[Term].toOption.collect { case Term.Ascribe(_: Lit,base) => base }.getOrElse(t)
           }
@@ -385,20 +409,22 @@ object CompilerRepairs {
             }
         }
         def convert(from: Type, to: Type, value: String): Option[String] = {
-          if(normalize(from) == normalize(to) || to.syntax == "Any" || refinedBase(from).exists(b => normalize(b) == normalize(to))) Some(value) else {
+          if(normalize(from) == normalize(to) || contextual(from) == contextual(to) || from.syntax == "Nothing" || to.syntax == "Any" || refinedBase(from).exists(b => normalize(b) == normalize(to))) Some(value) else {
             val a = types.pure(from.syntax,tree); val b = types.pure(to.syntax,tree)
-            if(a.isEmpty && b.exists(_.base == types.clean(from.syntax))) b.map(n => "_root_." + n.name + "(" + value + ")")
+            if(a.isEmpty && b.exists(_.base == types.base(from))) b.map(n => "_root_." + n.name + "(" + value + ")")
             else if(a.isEmpty && types.clean(from.syntax) == "Null" && b.exists(_.base == "String")) b.map(n => "_root_." + n.name + "(" + value + ")")
             else if(a.isEmpty && types.clean(from.syntax) == "Int" && b.exists(_.base == "Long")) b.map(n => "_root_." + n.name + "((" + value + ").toLong)")
             else if(b.isEmpty && a.exists(n => n.base == types.clean(to.syntax) || (n.base == "String" && Set("CharSequence","java.lang.CharSequence")(to.syntax)))) Some("(" + value + ").value")
             else if(a.nonEmpty && b.exists(n => n.base == a.get.base && rawInputs.contains(n.name))) b.map(n => "_root_." + n.name + "((" + value + ").value)")
             else (from,to) match {
-              case (f: Type.Apply,t: Type.Apply) if types.clean(f.tpe.syntax) == types.clean(t.tpe.syntax) && f.argClause.values.size == t.argClause.values.size =>
+              case (_,t: Type.Apply) if types.clean(t.tpe.syntax) == "Option" && from.syntax == "None.type" => Some(value)
+              case (_,t: Type.Apply) if types.clean(t.tpe.syntax) == "List" && Set("Nil.type","scala.collection.immutable.Nil.type","scala.collection.immutable.Nil².type")(from.syntax) => Some(value)
+              case (f: Type.Apply,t: Type.Apply) if (types.clean(f.tpe.syntax) == types.clean(t.tpe.syntax) || (types.clean(f.tpe.syntax) == "Some" && types.clean(t.tpe.syntax) == "Option") || (Set("Left","Right")(types.clean(f.tpe.syntax)) && types.clean(t.tpe.syntax) == "Either")) && f.argClause.values.size == t.argClause.values.size =>
                 val fa = f.argClause.values; val ta = t.argClause.values
-                if(Set("List","Option")(types.clean(f.tpe.syntax)) && fa.size == 1) {
+                if(Set("List","Option","Some","Set")(types.clean(f.tpe.syntax)) && fa.size == 1) {
                   val name = fresh("refactorValue",tree)
                   convert(fa.head,ta.head,name).map(body => "(" + value + ").map(" + name + " => " + body + ")")
-                } else if(types.clean(f.tpe.syntax) == "Either" && fa.size == 2) {
+                } else if(Set("Either","Left","Right")(types.clean(f.tpe.syntax)) && fa.size == 2) {
                   val left = fresh("refactorError",tree); val right = fresh("refactorValue",tree)
                   for(l <- convert(fa.head,ta.head,left); r <- convert(fa(1),ta(1),right)) yield {
                     val first = if(l == left) value else "(" + value + ").left.map(" + left + " => " + l + ")"
@@ -439,7 +465,9 @@ object CompilerRepairs {
           def projection(t: Type): Type = if(refinedBase(t).nonEmpty) refinedBase(t).get else types.pure(t.syntax,tree) match {
             case Some(n) => n.base.parse[Type].get
             case None => t match {
-              case a: Type.Apply if Set("List","Option","Some","Map","Either","Left","Right")(types.clean(a.tpe.syntax)) =>
+              case t if t.syntax == "None.type" => "Option[Nothing]".parse[Type].get
+              case t if Set("Nil.type","scala.collection.immutable.Nil.type","scala.collection.immutable.Nil².type")(t.syntax) => "List[Nothing]".parse[Type].get
+              case a: Type.Apply if Set("List","Option","Some","Set","Map","Either","Left","Right")(types.clean(a.tpe.syntax)) =>
                 val container = types.clean(a.tpe.syntax) match { case "Some" => "Option"; case "Left" | "Right" => "Either"; case n => n }
                 (container + a.argClause.values.map(projection).map(_.syntax).mkString("[",", ", "]")).parse[Type].get
               case a: Type.Tuple => a.args.map(projection).map(_.syntax).mkString("(",", ", ")").parse[Type].get
@@ -447,6 +475,7 @@ object CompilerRepairs {
             }
           }
           def comparable(a: Type,b: Type): Boolean = normalize(a) == normalize(b) || b.syntax == "Nothing" || ((a,b) match {
+            case (x: Type.Apply,y: Type.Apply) if types.clean(x.tpe.syntax) == "Map" && types.clean(y.tpe.syntax) == "Map" && x.argClause.values.size == 2 && y.argClause.values.size == 2 && y.argClause.values(1).syntax == "Nothing" => true
             case (x: Type.Apply,y: Type.Apply) if normalize(x.tpe) == normalize(y.tpe) && x.argClause.values.size == y.argClause.values.size => x.argClause.values.zip(y.argClause.values).forall { case(c,d) => comparable(c,d) }
             case (x: Type.Tuple,y: Type.Tuple) if x.args.size == y.args.size => x.args.zip(y.args).forall { case(c,d) => comparable(c,d) }
             case _ => false
@@ -466,7 +495,9 @@ object CompilerRepairs {
         if(d.group(1) == "E007") {
           for(found <- fullDetail("Found").flatMap(s => diagnosticType(s)); required <- fullDetail("Required").flatMap(s => diagnosticType(s,nullable = true))) {
             val body = tree.collect { case m: Defn.Def if displays.nonEmpty && m.body.pos.startLine + 1 == displays.head.group(1).toInt && m.body.pos.endLine + 1 == displays.last.group(1).toInt && m.decltpe.exists(t => contextual(t) == contextual(required)) => m.body }.headOption
-            val target = if(sourceDisplayMatches) mismatch else if(displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) body else None
+            val target = if(sourceDisplayMatches) mismatch else if(displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) {
+              body.orElse(tree.collect { case t: Term if displays.size > 1 && t.pos.startLine + 1 == displays.head.group(1).toInt && t.pos.endLine + 1 == displays.last.group(1).toInt => t }.sortBy(t => -(t.pos.end - t.pos.start)).headOption)
+            } else None
             target.foreach { t =>
             val original = source.substring(t.pos.start,t.pos.end)
             convert(found,required,original).filter(_ != original).foreach { n => proposed += ((path,t,n,"E007 " + found.syntax + " -> " + required.syntax)); supported = true }
@@ -545,6 +576,49 @@ object CompilerRepairs {
               if(description.charAt(i) == ')') { depth -= 1; if(depth == 0) end = i }
             }
             val actuals = if(end < 0) Nil else parts(description.substring(1,end))
+            if(!supported && actuals.size == app.argClause.values.size) types.caseClass(app.fun.syntax,app).foreach { record =>
+              val fullName = types.owner(record) + "." + record.name.value
+              val primary = if(record.tparamClause.values.isEmpty && record.ctor.paramClauses.size == 1 &&
+                !record.ctor.mods.exists(m => m.is[Mod.Private] || m.is[Mod.Protected])) List(record.ctor.paramClauses.head.values) else Nil
+              val factories = record.parent.toList.flatMap(_.children).collect {
+                case o: Defn.Object if types.owner(o) + "." + o.name.value == fullName => o
+              }.flatMap(_.templ.stats.collect {
+                case m: Defn.Def if m.name.value == "apply" && !m.mods.exists(x => x.is[Mod.Private] || x.is[Mod.Protected]) &&
+                  m.paramClauseGroups.flatMap(_.paramClauses).size == 1 && m.collect { case _: Type.Param => true }.isEmpty &&
+                  m.decltpe.exists(t => Set(record.name.value,fullName,"_root_." + fullName)(t.syntax)) => m.paramClauseGroups.flatMap(_.paramClauses).head.values
+              })
+              if(block.contains("of method apply in object " + record.name.value + " with types")) {
+                val beforeNames = freshNames.getOrElse(tree,Set.empty[String])
+                val attempts = (primary ++ factories).flatMap { parameters =>
+                  freshNames(tree) = beforeNames
+                  val bound = scala.collection.mutable.Set.empty[Int]
+                  var named = false
+                  val conversions = app.argClause.values.zip(actuals).zipWithIndex.map { case((argument,actual),ordinal) =>
+                    val (index,value) = argument match {
+                      case Term.Assign(n: Term.Name,rhs) => named = true; (parameters.indexWhere(_.name.value == n.value),rhs)
+                      case t if !named => (ordinal,t)
+                      case t => (-1,t)
+                    }
+                    if(index < 0 || index >= parameters.size || bound(index)) None else {
+                      bound += index
+                      for(target <- parameters(index).decltpe; found <- diagnosticType(actual); next <- convert(found,types.qualified(target).parse[Type].get,source.substring(value.pos.start,value.pos.end)))
+                        yield (value,next)
+                    }
+                  }
+                  if(conversions.forall(_.nonEmpty) && parameters.indices.filterNot(bound).forall(i => parameters(i).default.nonEmpty))
+                    Some(conversions.flatten -> freshNames.getOrElse(tree,Set.empty[String])) else None
+                }
+                freshNames(tree) = beforeNames
+                val distinct = attempts.groupBy { case(changes,_) => changes.map { case(t,next) => (t.pos.start,t.pos.end,next) } }.values.map(_.head).toList
+                if(distinct.size == 1 && distinct.head._1.exists { case(t,next) => source.substring(t.pos.start,t.pos.end) != next }) {
+                  freshNames(tree) = distinct.head._2
+                  distinct.head._1.filter { case(t,next) => source.substring(t.pos.start,t.pos.end) != next }.foreach { case(t,next) =>
+                    proposed += ((path,t,next,"E134 agreed case-class overload conversion"))
+                  }
+                  supported = true
+                }
+              }
+            }
             if(!supported && actuals.size == app.argClause.values.size) actuals.zip(app.argClause.values).foreach { case(actual,arg) =>
               diagnosticType(actual).flatMap(t => types.pure(t.syntax,tree)).foreach { n =>
                 val signatures = if(at < 0) "" else block.take(at)
@@ -563,6 +637,16 @@ object CompilerRepairs {
           }
         }
         if(sourceDisplayMatches && d.group(1) == "E172") {
+          if(testComparisons) {
+            val pair = "Values of types ([_A-Za-z][_A-Za-z0-9.]*) and ([_A-Za-z][_A-Za-z0-9.]*) cannot be compared".r.findFirstMatchIn(block)
+            for {
+              p <- pair
+              name <- List((p.group(1),p.group(2)),(p.group(2),p.group(1))).collectFirst { case (nominal,"String") => nominal }
+              nominal <- types.pure(name,tree).filter(_.base == "String")
+              equality <- terms.collectFirst { case a: Term.ApplyInfix if Set("==","!=")(a.op.value) && a.argClause.values.size == 1 => a }
+              literal <- (equality.lhs :: equality.argClause.values).collectFirst { case s: Lit.String => s }
+            } { proposed += ((path,literal,"_root_." + nominal.name + "(" + literal.syntax + ")","E172 typed comparison literal")); supported = true }
+          }
           val comparison = "Values of types String and ([_A-Za-z][_A-Za-z0-9.]*) cannot be compared".r.findFirstMatchIn(block)
           for {
             name <- comparison.map(_.group(1))

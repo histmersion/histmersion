@@ -1,0 +1,147 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35873 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / maxErrors
+[info] The new value will be used by Compile / compile / compileOptions, Compile / compile / compilerReporter and 237 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 8 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-api/test-classes ...
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/AiProviderSpiSuite.scala:12:25 
+[error] 12 |        .map(t => AiTurn(t, usage = Some(AiUsage(_root_.com.histmersion.plugin.AiUsage.Input((10).toLong), _root_.com.histmersion.plugin.AiUsage.Output((2).toLong)))))
+[error]    |                         ^
+[error]    |            Found:    (t : com.histmersion.plugin.AiMessage.User.Text.T)
+[error]    |            Required: com.histmersion.plugin.AiTurn.Text
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/ProviderSpiSuite.scala:12:89 
+[error] 12 |      Right(List(Right(MediaItem(_root_.com.histmersion.plugin.MediaItem.Key("k"), place.label, _root_.com.histmersion.plugin.MediaItem.PageUrl("https://portal.example/k"), None, Left(_root_.com.histmersion.plugin.MediaItem.RightsPart1("not open access"))))))
+[error]    |                                                                                   ^^^^^^^^^^^
+[error]    |       Found:    (place.label : com.histmersion.plugin.MediaPlace.Label)
+[error]    |       Required: com.histmersion.plugin.MediaItem.Title
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceCollectionSpiSuite.scala:54:112 
+[error] 54 |    assertEquals((i.title, i.authors, i.files, i.restricted, i.identifiers), (None, Nil, Nil, false, Map.empty))
+[error]    |                                                                                                                ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  (Option[com.histmersion.plugin.CollectionItem.Title],
+[error]    |  List[com.histmersion.plugin.CollectionItem.Authors],
+[error]    |  List[com.histmersion.plugin.CollectionFile],
+[error]    |  com.histmersion.plugin.CollectionItem.Restricted,
+[error]    |  Map[com.histmersion.plugin.CollectionItem.IdentifiersKey,
+[error]    |    com.histmersion.plugin.CollectionItem.IdentifiersValue]
+[error]    |)
+[error]    |  Second type: (None.type, scala.collection.immutable.Nil.type,
+[error]    |  scala.collection.immutable.Nil.type, Boolean, Map[K, Nothing])
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[(Option[com.histmersion.plugin.CollectionItem.Title],
+[error]    |  List[com.histmersion.plugin.CollectionItem.Authors],
+[error]    |  List[com.histmersion.plugin.CollectionFile],
+[error]    |  com.histmersion.plugin.CollectionItem.Restricted,
+[error]    |  Map[com.histmersion.plugin.CollectionItem.IdentifiersKey,
+[error]    |    com.histmersion.plugin.CollectionItem.IdentifiersValue]
+[error]    |), (None.type, scala.collection.immutable.Nil.type,
+[error]    |  scala.collection.immutable.Nil.type, Boolean, Map[K, Nothing])]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      
+[error]    |        (Option[com.histmersion.plugin.CollectionItem.Title],
+[error]    |          List[com.histmersion.plugin.CollectionItem.Authors],
+[error]    |          List[com.histmersion.plugin.CollectionFile],
+[error]    |          com.histmersion.plugin.CollectionItem.Restricted,
+[error]    |          Map[com.histmersion.plugin.CollectionItem.IdentifiersKey,
+[error]    |            com.histmersion.plugin.CollectionItem.IdentifiersValue]
+[error]    |        )
+[error]    |      ,
+[error]    |      
+[error]    |        (None.type, scala.collection.immutable.Nil.type,
+[error]    |          scala.collection.immutable.Nil.type, Boolean, Map[K, Nothing])
+[error]    |      
+[error]    |    ](
+[error]    |      /* missing */
+[error]    |        summon[(Option[com.histmersion.plugin.CollectionItem.Title],
+[error]    |          List[com.histmersion.plugin.CollectionItem.Authors],
+[error]    |          List[com.histmersion.plugin.CollectionFile],
+[error]    |          com.histmersion.plugin.CollectionItem.Restricted,
+[error]    |          Map[com.histmersion.plugin.CollectionItem.IdentifiersKey,
+[error]    |            com.histmersion.plugin.CollectionItem.IdentifiersValue]
+[error]    |        ) <:< (None.type, scala.collection.immutable.Nil.type,
+[error]    |          scala.collection.immutable.Nil.type, Boolean, Map[K, Nothing])]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type (Option[com.histmersion.plugin.CollectionItem.Title],
+[error]    |  List[com.histmersion.plugin.CollectionItem.Authors],
+[error]    |  List[com.histmersion.plugin.CollectionFile],
+[error]    |  com.histmersion.plugin.CollectionItem.Restricted,
+[error]    |  Map[com.histmersion.plugin.CollectionItem.IdentifiersKey,
+[error]    |    com.histmersion.plugin.CollectionItem.IdentifiersValue]
+[error]    |) <:< (None.type, scala.collection.immutable.Nil.type,
+[error]    |  scala.collection.immutable.Nil.type, Boolean, Map[K, Nothing])
+[error]    |
+[error]    |where:    K is a type variable
+[error]    |.
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceFetcherSuite.scala:14:8 
+[error]  9 |      WorkKey(
+[error] 10 |        title = Some(_root_.com.histmersion.plugin.WorkKey.Title("Black Athena")),
+[error] 11 |        authors = List(_root_.com.histmersion.plugin.WorkKey.Authors("Martin Bernal")),
+[error] 12 |        year = Some(Year(1987)),
+[error] 13 |        format = Some(_root_.com.histmersion.plugin.WorkKey.Format("pdf"))
+[error] 14 |      ).isEmpty
+[error]    |      ^
+[error]    |      Found:    com.histmersion.plugin.WorkKey.IsEmptyResult
+[error]    |      Required: Boolean
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:23:124 
+[error] 23 |    assertEquals(r.header(_root_.com.histmersion.plugin.Plugin.HttpResponse.HeaderName("X-RateLimit-Remaining")), Some("0"))
+[error]    |                                                                                                                            ^
+[error]    |Can't compare these two types:
+[error]    |  First type:  Option[com.histmersion.plugin.Plugin.HttpResponse.HeaderResult]
+[error]    |  Second type: Some[String]
+[error]    |Possible ways to fix this error:
+[error]    |  Alternative 1: provide an implicit instance for Compare[Option[com.histmersion.plugin.Plugin.HttpResponse.HeaderResult], Some[String]]
+[error]    |  Alternative 2: upcast either type into `Any` or a shared supertype.
+[error]    |I found:
+[error]    |
+[error]    |    munit.Compare.compareSubtypeWithSupertype[
+[error]    |      Option[com.histmersion.plugin.Plugin.HttpResponse.HeaderResult], Some[String]]
+[error]    |      (
+[error]    |      /* missing */
+[error]    |        summon[Option[com.histmersion.plugin.Plugin.HttpResponse.HeaderResult] <:<
+[error]    |          Some[String]]
+[error]    |    )
+[error]    |
+[error]    |But no implicit values were found that match type Option[com.histmersion.plugin.Plugin.HttpResponse.HeaderResult] <:< Some[String].
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:108:9 
+[error] 108 |      if place.label == "Nowhere" then Left(_root_.com.histmersion.plugin.MediaCollection.SearchResultPart1("offline"))
+[error]     |         ^^^^^^^^^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.plugin.MediaPlace.Label and String cannot be compared with == or !=
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:112:97 
+[error] 112 |            Right(MediaItem(_root_.com.histmersion.plugin.MediaItem.Key(s"${place.id}-1"), place.label, _root_.com.histmersion.plugin.MediaItem.PageUrl("https://portal.example/1"), None, Left(_root_.com.histmersion.plugin.MediaItem.RightsPart1("closed")))),
+[error]     |                                                                                           ^^^^^^^^^^^
+[error]     |     Found:    (place.label : com.histmersion.plugin.MediaPlace.Label)
+[error]     |     Required: com.histmersion.plugin.MediaItem.Title
+[error]     |
+[error]     | longer explanation available when compiling with `-explain`
+[error] -- [E172] Type Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:168:11 
+[error] 168 |        if item.key == "k1" then Left(_root_.com.histmersion.plugin.MediaCollection.CompleteResultPart1("gone")) else Right(item)
+[error]     |           ^^^^^^^^^^^^^^^^
+[error]     |Values of types com.histmersion.plugin.MediaItem.Key and String cannot be compared with == or !=
+[error] 8 errors found
+[error] (pluginApi / Test / compileIncremental) Compilation failed
+[error] elapsed time: 3 s, cache 95%, 20 disk cache hits, 1 onsite task

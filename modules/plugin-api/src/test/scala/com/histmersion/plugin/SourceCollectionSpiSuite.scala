@@ -6,23 +6,23 @@ package com.histmersion.plugin
 class SourceCollectionSpiSuite extends munit.FunSuite:
 
   private object Bodies extends Plugin.Http:
-    def get(url: String, headers: Map[String, String]) = Left("offline")
+    def get(url: _root_.com.histmersion.plugin.Plugin.Http.GetUrl, headers: Map[_root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1, _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2]): Either[_root_.com.histmersion.plugin.Plugin.Http.GetResultPart1, _root_.com.histmersion.plugin.Plugin.HttpResponse.Body] = Left(_root_.com.histmersion.plugin.Plugin.Http.GetResultPart1("offline"))
 
   private object EarlyContext extends Plugin.Context:
     def http = Bodies
-    def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
-    def env(name: String) = None
-    def secret(s: Secret) = Left(_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1("none"))
+    def log = new Plugin.Log { def info(m: _root_.com.histmersion.plugin.Plugin.Log.InfoMessage): Unit = (); def warn(m: _root_.com.histmersion.plugin.Plugin.Log.WarnMessage): Unit = () }
+    def env(name: _root_.com.histmersion.plugin.Plugin.Context.EnvName): _root_.scala.Option[_root_.com.histmersion.plugin.Plugin.Context.EnvResult] = None
+    def secret(s: Secret): Either[_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1, _root_.com.histmersion.plugin.Plugin.Context.SecretResultPart2] = Left(_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1("none"))
     def secretVaults = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("no vaults"))
 
   /** A read-only collection with one item. */
   private object Shelf extends SourceCollection:
-    def title = _root_.com.histmersion.plugin.SourceCollection.TitleResult("Shelf")
+    def title: _root_.com.histmersion.plugin.SourceCollection.TitleResult = _root_.com.histmersion.plugin.SourceCollection.TitleResult("Shelf")
     private val one = CollectionItem(CollectionId("b1"), Some(_root_.com.histmersion.plugin.CollectionItem.Title("A book")), List(_root_.com.histmersion.plugin.CollectionItem.Authors("An Author")))
-    def search(query: CollectionQuery) = Right(List(one))
-    def item(id: CollectionId) = Right(Option.when(id == one.id)(one))
-    def file(item: CollectionItem, format: Option[String]) = Left("no files")
-    def original(item: CollectionItem, file: CollectionFile) = Left(_root_.com.histmersion.plugin.SourceCollection.OriginalResultPart1("no files"))
+    def search(query: CollectionQuery): Either[_root_.com.histmersion.plugin.SourceCollection.SearchResultPart1, List[CollectionItem]] = Right(List(one))
+    def item(id: CollectionId): Either[_root_.com.histmersion.plugin.SourceCollection.ItemResultPart1, _root_.scala.Option[CollectionItem]] = Right(Option.when(id == one.id)(one))
+    def file(item: CollectionItem, format: _root_.scala.Option[_root_.com.histmersion.plugin.SourceCollection.FileFormat]): Either[_root_.com.histmersion.plugin.SourceCollection.FileResultPart1, CollectionFile] = Left(_root_.com.histmersion.plugin.SourceCollection.FileResultPart1("no files"))
+    def original(item: CollectionItem, file: CollectionFile): Either[_root_.com.histmersion.plugin.SourceCollection.OriginalResultPart1, FetchedFile] = Left(_root_.com.histmersion.plugin.SourceCollection.OriginalResultPart1("no files"))
 
   test("a context written before source collections refuses one, naming why"):
     assertEquals(
@@ -41,7 +41,7 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
 
   test("every write is refused by default, with the collection's reason"):
     val meta = CollectionMetadata(_root_.com.histmersion.plugin.CollectionMetadata.Key("k"), _root_.com.histmersion.plugin.CollectionMetadata.Title("A book"), List(_root_.com.histmersion.plugin.CollectionMetadata.Authors("An Author")))
-    val file = FetchedFile(_root_.com.histmersion.plugin.FetchedFile.Source("test"), None, Array[Byte](1), _root_.com.histmersion.plugin.FetchedFile.Extension("pdf"))
+    val file = FetchedFile(_root_.com.histmersion.plugin.FetchedFile.Source("test"), None, _root_.com.histmersion.plugin.FetchedFile.Bytes(Array[Byte](1)), _root_.com.histmersion.plugin.FetchedFile.Extension("pdf"))
     val id = CollectionId("b1")
     assertEquals(((Shelf.add(meta, file)).left.map(refactorError => (refactorError).value): Either[String, com.histmersion.plugin.CollectionId]), Left("Shelf does not take new items: it is read-only"))
     assertEquals((((Shelf.replace(id, _root_.com.histmersion.plugin.SourceCollection.ReplaceKey("k"), file)).left.map(refactorError4 => (refactorError4).value)).map(refactorValue2 => (refactorValue2).value): Either[String, String]), Left("Shelf does not take new files: it is read-only"))
@@ -51,6 +51,6 @@ class SourceCollectionSpiSuite extends munit.FunSuite:
 
   test("an item and a query carry what they were given, with empty defaults"):
     val i = CollectionItem(CollectionId("x"))
-    assertEquals((i.title, i.authors, i.files, i.restricted, i.identifiers), (None, Nil, Nil, false, Map.empty))
+    assertEquals(({ val refactorTuple2 = (i.title, i.authors, i.files, i.restricted, i.identifiers); ((refactorTuple2._1).map(refactorValue => (refactorValue).value), (refactorTuple2._2).map(refactorValue3 => (refactorValue3).value), refactorTuple2._3, (refactorTuple2._4).value, (refactorTuple2._5).iterator.map { case (refactorKey, refactorItem) => ((refactorKey).value, (refactorItem).value) }.toMap) }: (Option[String], List[String], List[com.histmersion.plugin.CollectionFile], Boolean, Map[String, String])), (None, Nil, Nil, false, Map.empty))
     assertEquals(CollectionQuery(None).limit, None)
     assertEquals(CollectionId("x").value, "x")

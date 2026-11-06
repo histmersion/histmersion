@@ -1,0 +1,2 @@
+path	before-sha256	after-sha256
+modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala	50261408025243460655d27ce8cf303f79a43b00feff65659435b4258adebecf	d7f5f080eee65c097ae463008067e961427c3123d8c50edfa991f2aec6c32ceb
