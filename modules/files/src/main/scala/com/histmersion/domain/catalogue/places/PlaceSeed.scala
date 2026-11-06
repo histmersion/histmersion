@@ -7,13 +7,13 @@ package com.histmersion.domain.catalogue.places
   */
 import com.histmersion.domain.catalogue.Place
 object PlaceSeed:
+  type DirKind = DirKind.T
+  object DirKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileName = FileName.T
+  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One entry of a seed directory: its name, whether it is a directory, and the caller's handle to it. */
-  type FilesDirKindName = FilesDirKindName.T
-  object FilesDirKindName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FilesResultPart2 = FilesResultPart2.T
-  object FilesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Entry[K](name: Entry.Name, directory: Entry.Directory, at: K)
 
@@ -28,11 +28,11 @@ object PlaceSeed:
     * a file comes from its directory — `polities/` → `polity` — and a feature that declares its own `kind` always wins
     * over it. `top` is what the seed directory holds, `list` what a subdirectory holds.
     */
-  def files[K](top: List[Entry[K]], list: K => List[Entry[K]]): List[(K, Option[com.histmersion.domain.catalogue.places.PlaceSeed.FilesResultPart2])] =
+  def files[K](top: List[Entry[K]], list: K => List[Entry[K]]): List[(K, Option[com.histmersion.domain.catalogue.places.PlaceSeed.FileName])] =
     def isSeed(e: Entry[K]) = !e.directory && (e.name.endsWith(".json") || e.name.endsWith(".geojson"))
 
     /** `polities` → `polity`, `sites` → `site`, `regions` → `region`; anything else → no override. */
-    def dirKind(name: com.histmersion.domain.catalogue.places.PlaceSeed.FilesDirKindName) =
+    def dirKind(name: com.histmersion.domain.catalogue.places.PlaceSeed.DirKind) =
       val singular = if name.endsWith("ies") then name.dropRight(3) + "y"
       else if name.endsWith("s") then name.dropRight(1)
       else name

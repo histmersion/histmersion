@@ -17,5 +17,5 @@ enum Written:
 
 object Written:
   object Elsewhere:
-    type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = com.histmersion.config.edit.SettingsFile.Path
+    val File: _root_.com.histmersion.config.edit.SettingsFile.Path.type = _root_.com.histmersion.config.edit.SettingsFile.Path

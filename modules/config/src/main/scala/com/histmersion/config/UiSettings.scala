@@ -39,8 +39,8 @@ object UiSettings:
   object MarkerRadius extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ViewportDebounceMs = ViewportDebounceMs.T
   object ViewportDebounceMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageSize = PageSize.T
-  object PageSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageSize = com.histmersion.PageSize
+  val PageSize: _root_.com.histmersion.PageSize.type = _root_.com.histmersion.PageSize
   type FacetSuggestions = FacetSuggestions.T
   object FacetSuggestions extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TreeDepth = TreeDepth.T

@@ -6,18 +6,18 @@ enum CoreFailure:
   /** Asked, and it failed (unreachable, an error answer, unparseable JSON). */
   case Failed(why: CoreFailure.Failed.Why)
 
-  def message: com.histmersion.upstreams.core.CoreFailure.MessageResult = this match
-    case Skipped(why) => _root_.com.histmersion.upstreams.core.CoreFailure.MessageResult(s"CORE not asked: $why")
+  def message: com.histmersion.upstreams.core.CoreFailure.Problem = this match
+    case Skipped(why) => _root_.com.histmersion.upstreams.core.CoreFailure.Problem(s"CORE not asked: $why")
     case Failed(why)  => why
 
 object CoreFailure:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Skipped:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.upstreams.core.CoreFailure.Problem
+    val Why: _root_.com.histmersion.upstreams.core.CoreFailure.Problem.type = _root_.com.histmersion.upstreams.core.CoreFailure.Problem
 
   object Failed:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.upstreams.core.CoreFailure.Problem
+    val Why: _root_.com.histmersion.upstreams.core.CoreFailure.Problem.type = _root_.com.histmersion.upstreams.core.CoreFailure.Problem
 
-  type MessageResult = MessageResult.T
-  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

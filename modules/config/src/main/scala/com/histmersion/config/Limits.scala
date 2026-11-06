@@ -24,24 +24,18 @@ final case class Limits(
     passages: PassageLimits
 ) derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
-  def snippetWords: com.histmersion.config.Limits.SnippetWordsResult = math.max(1, snippetChars / 6)
+  def snippetWords: com.histmersion.config.Limits.SnippetWords = math.max(1, snippetChars / 6)
 
   /** Clamp a caller's `limit` into `[1, maxPage]`; `<= 0` means "the caller gave none" and yields `dflt` (itself
     * capped). ONE definition, so no surface can forget the cap.
     */
-  def page(limit: Option[com.histmersion.config.Limits.PageLimit], dflt: com.histmersion.config.Limits.PageDflt): com.histmersion.config.Limits.PageResult =
+  def page(limit: Option[com.histmersion.PageSize], dflt: com.histmersion.PageSize): com.histmersion.PageSize =
     val cap = math.max(1, maxPage)
     limit.filter(_ > 0).map(_.min(cap)).getOrElse(math.max(1, dflt).min(cap))
 
 object Limits:
-  type SnippetWordsResult = SnippetWordsResult.T
-  object SnippetWordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageResult = PageResult.T
-  object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageLimit = PageLimit.T
-  object PageLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageDflt = PageDflt.T
-  object PageDflt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnippetWords = SnippetWords.T
+  object SnippetWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type MaxPage = MaxPage.T
   object MaxPage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

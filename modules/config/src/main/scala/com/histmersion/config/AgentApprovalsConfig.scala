@@ -18,11 +18,9 @@ final case class AgentApprovalsConfig(
 ) derives ConfigReader
 
 object AgentApprovalsConfig:
+  type Gate = Gate.T
+  object Gate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** `auto` or `checked`, in any case. */
-  type IsCheckedResult = IsCheckedResult.T
-  object IsCheckedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsCheckedRaw = IsCheckedRaw.T
-  object IsCheckedRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type StatusChange = StatusChange.T
   object StatusChange extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -37,6 +35,6 @@ object AgentApprovalsConfig:
   type GoalPlan = GoalPlan.T
   object GoalPlan extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def isChecked(raw: com.histmersion.config.AgentApprovalsConfig.IsCheckedRaw): com.histmersion.config.AgentApprovalsConfig.IsCheckedResult =
+  def isChecked(raw: com.histmersion.config.AgentApprovalsConfig.Gate): Boolean =
     val v = Option(raw).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT)
     v == "auto" || v == "checked"

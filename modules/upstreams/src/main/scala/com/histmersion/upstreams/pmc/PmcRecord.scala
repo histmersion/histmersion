@@ -9,8 +9,8 @@ final case class PmcRecord(
 )
 
 object PmcRecord:
-  type Pmcid = Pmcid.T
-  object Pmcid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Pmcid = com.histmersion.domain.library.Pmcid
+  val Pmcid: _root_.com.histmersion.domain.library.Pmcid.type = _root_.com.histmersion.domain.library.Pmcid
   type OpenAccess = OpenAccess.T
   object OpenAccess extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Manuscript = Manuscript.T

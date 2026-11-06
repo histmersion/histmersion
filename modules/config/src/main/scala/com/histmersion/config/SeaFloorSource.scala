@@ -9,15 +9,13 @@ enum SeaFloorSource(val wire: SeaFloorSource.Wire):
   case Gebco extends SeaFloorSource("gebco")
 
 object SeaFloorSource:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.config.SeaFloorSource.ParseS): Either[com.histmersion.config.SeaFloorSource.ParseResultPart1, SeaFloorSource] =
+  def parse(s: com.histmersion.config.SeaFloorSource.Wire): Either[com.histmersion.config.SeaFloorSource.Problem, SeaFloorSource] =
     values
       .find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
       .toRight(s"'$s' is not a sea-floor source (${values.map(_.wire).mkString(", ")})")

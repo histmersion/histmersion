@@ -29,7 +29,7 @@ enum SettingValue:
     case Items(xs) => ConfigValueFactory.fromIterable(xs.map(_.toConfig.unwrapped).asJava)
 
   /** The text written into the file: JSON, which HOCON reads as it is. */
-  def hocon: com.histmersion.config.edit.SettingValue.HoconResult = toConfig.render(ConfigRenderOptions.concise)
+  def hocon: com.histmersion.config.edit.SettingValue.Hocon = toConfig.render(ConfigRenderOptions.concise)
 
   def kind: SettingKind = this match
     case Text(_)   => SettingKind.Text
@@ -38,6 +38,10 @@ enum SettingValue:
     case Items(_)  => SettingKind.Items
 
 object SettingValue:
+  type Hocon = Hocon.T
+  object Hocon extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Text:
     type Value = Value.T
@@ -47,22 +51,14 @@ object SettingValue:
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type HoconResult = HoconResult.T
-  object HoconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseRaw = ParseRaw.T
   object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NumberT = NumberT.T
   object NumberT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FlagT = FlagT.T
   object FlagT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemsResultPart1 = ItemsResultPart1.T
-  object ItemsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemsT = ItemsT.T
   object ItemsT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameResult = SameResult.T
-  object SameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Truthy = Set("true", "yes", "on")
   private val Falsy = Set("false", "no", "off")
@@ -70,7 +66,7 @@ object SettingValue:
   /** What a person typed, read as a setting of `kind` — the CLI's argument, a field of the web form. Text is taken as
     * typed; a number, a flag and a list are read; `Any` (a plugin's own key) guesses the kind.
     */
-  def parse(raw: com.histmersion.config.edit.SettingValue.ParseRaw, kind: SettingKind): Either[com.histmersion.config.edit.SettingValue.ParseResultPart1, SettingValue] =
+  def parse(raw: com.histmersion.config.edit.SettingValue.ParseRaw, kind: SettingKind): Either[com.histmersion.config.edit.SettingValue.Problem, SettingValue] =
     val t = Option(raw).getOrElse("")
     kind match
       case SettingKind.Text   => Right(Text(t))
@@ -96,7 +92,7 @@ object SettingValue:
       case _              => None
 
   /** `[a, "b c", 3]` (HOCON's list), or words between commas. */
-  private def items(t: com.histmersion.config.edit.SettingValue.ItemsT): Either[com.histmersion.config.edit.SettingValue.ItemsResultPart1, SettingValue] =
+  private def items(t: com.histmersion.config.edit.SettingValue.ItemsT): Either[com.histmersion.config.edit.SettingValue.Problem, SettingValue] =
     val s = t.trim
     if s.isEmpty then Right(Items(Nil))
     else if s.startsWith("[") then
@@ -118,7 +114,7 @@ object SettingValue:
     case _ => None
 
   /** Do two values say the same thing (`5` and `5.0` do; `"5"` and `5` do not)? */
-  def same(a: SettingValue, b: SettingValue): com.histmersion.config.edit.SettingValue.SameResult = (a, b) match
+  def same(a: SettingValue, b: SettingValue): Boolean = (a, b) match
     case (Number(x), Number(y)) => x == y
     case (Items(xs), Items(ys)) => xs.size == ys.size && xs.zip(ys).forall(same)
     case _                      => a == b

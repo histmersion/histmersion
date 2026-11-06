@@ -14,12 +14,10 @@ type FileVersionRule = Match["none|[0-9a-f]{64}"]
 type FileVersion = FileVersion.T
 
 object FileVersion extends RefinedType[String, FileVersionRule]:
-  type OfText = OfText.T
-  object OfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Missing: FileVersion = applyUnsafe("none")
 
-  def of(text: Option[com.histmersion.config.edit.FileVersion.OfText]): FileVersion = text.fold(Missing) { t =>
+  def of(text: Option[com.histmersion.config.edit.ConfigFileState.Text]): FileVersion = text.fold(Missing) { t =>
     val d = MessageDigest.getInstance("SHA-256").digest(t.getBytes(StandardCharsets.UTF_8))
     applyUnsafe(d.map(b => f"${b & 0xff}%02x").mkString)
   }

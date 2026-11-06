@@ -33,17 +33,13 @@ final case class PlacesConfig(
     fetchConnectTimeoutSeconds: PlacesConfig.FetchConnectTimeoutSeconds
 ) derives ConfigReader:
   /** `/api/places/geo`'s `limit` into `[1, geoMaxLimit]`; absent or `<= 0` is `dflt` (itself capped). */
-  def geoLimit(requested: Option[com.histmersion.config.PlacesConfig.GeoLimitRequested], dflt: com.histmersion.config.PlacesConfig.GeoLimitDflt): com.histmersion.config.PlacesConfig.GeoLimitResult =
+  def geoLimit(requested: Option[com.histmersion.config.PlacesConfig.GeoLimit], dflt: com.histmersion.config.PlacesConfig.GeoLimit): com.histmersion.config.PlacesConfig.GeoLimit =
     val cap = math.max(1, geoMaxLimit)
     requested.filter(_ > 0).getOrElse(dflt).max(1).min(cap)
 
 object PlacesConfig:
-  type GeoLimitResult = GeoLimitResult.T
-  object GeoLimitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoLimitRequested = GeoLimitRequested.T
-  object GeoLimitRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoLimitDflt = GeoLimitDflt.T
-  object GeoLimitDflt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GeoLimit = GeoLimit.T
+  object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type PointToleranceKm = PointToleranceKm.T
   object PointToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

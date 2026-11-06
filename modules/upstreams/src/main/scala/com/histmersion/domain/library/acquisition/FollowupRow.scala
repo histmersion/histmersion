@@ -11,10 +11,10 @@ final case class FollowupRow(
 )
 
 object FollowupRow:
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Arxiv = Arxiv.T
-  object Arxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = com.histmersion.domain.Title
+  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+  type Arxiv = com.histmersion.domain.library.ArxivId
+  val Arxiv: _root_.com.histmersion.domain.library.ArxivId.type = _root_.com.histmersion.domain.library.ArxivId
   type CitedBy = CitedBy.T
   object CitedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsInfluential = IsInfluential.T

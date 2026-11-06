@@ -11,14 +11,14 @@ final case class ArchiveItem(
 )
 
 object ArchiveItem:
-  type Identifier = Identifier.T
-  object Identifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Identifier = com.histmersion.domain.library.ArchiveId
+  val Identifier: _root_.com.histmersion.domain.library.ArchiveId.type = _root_.com.histmersion.domain.library.ArchiveId
+  type Title = com.histmersion.domain.Title
+  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
   type Creator = Creator.T
   object Creator extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Year = Year.T
-  object Year extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Year = com.histmersion.Year
+  val Year: _root_.com.histmersion.Year.type = _root_.com.histmersion.Year
   type Publisher = Publisher.T
   object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T

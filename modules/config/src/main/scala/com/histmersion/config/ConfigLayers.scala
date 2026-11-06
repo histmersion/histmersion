@@ -35,47 +35,15 @@ import scala.util.Try
   * reference.conf.
   */
 private[config] object ConfigLayers:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CheckLoopResultPart1 = CheckLoopResultPart1.T
-  object CheckLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckLoopRestPart1 = CheckLoopRestPart1.T
-  object CheckLoopRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckLoopRestPart2 = CheckLoopRestPart2.T
-  object CheckLoopRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckLoopSettings = CheckLoopSettings.T
-  object CheckLoopSettings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckLoopUnknown = CheckLoopUnknown.T
-  object CheckLoopUnknown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LeavesResultPart1 = LeavesResultPart1.T
-  object LeavesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeavesResultPart2 = LeavesResultPart2.T
-  object LeavesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LeavesPrefix = LeavesPrefix.T
-  object LeavesPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpenBlocks = OpenBlocksValue
   type OpenBlocksValue = OpenBlocksValue.T
   object OpenBlocksValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InOpenBlockResult = InOpenBlockResult.T
-  object InOpenBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InOpenBlockKeys = InOpenBlockKeys.T
   object InOpenBlockKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypeCheckResultPart1 = TypeCheckResultPart1.T
-  object TypeCheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TypeCheckSettings = TypeCheckSettings.T
-  object TypeCheckSettings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MismatchResult = MismatchResult.T
-  object MismatchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MismatchPath = MismatchPath.T
-  object MismatchPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameFileResult = SameFileResult.T
-  object SameFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def reference: Config = ConfigFactory.parseResources("reference.conf")
 
@@ -90,7 +58,7 @@ private[config] object ConfigLayers:
   /** Every key the user file sets (full paths, sorted), each with whether its value is a block. Unresolved values are
     * leaves; an object that cannot be listed (a delayed merge) is one too.
     */
-  private def leaves(obj: ConfigObject, prefix: List[com.histmersion.config.ConfigLayers.LeavesPrefix]): List[(List[com.histmersion.config.ConfigLayers.LeavesResultPart1], com.histmersion.config.ConfigLayers.LeavesResultPart2)] =
+  private def leaves(obj: ConfigObject, prefix: List[String]): List[(List[String], Boolean)] =
     obj.keySet.asScala.toList.sorted.flatMap { k =>
       val p = prefix :+ k
       obj.get(k) match
@@ -125,15 +93,15 @@ private[config] object ConfigLayers:
     List("histmersion", "media", "collections", "per-collection")
   )
 
-  private def inOpenBlock(keys: List[com.histmersion.config.ConfigLayers.InOpenBlockKeys]): com.histmersion.config.ConfigLayers.InOpenBlockResult =
+  private def inOpenBlock(keys: List[com.histmersion.config.ConfigLayers.InOpenBlockKeys]): Boolean =
     OpenBlocks.exists(b => keys.length > b.length && keys.startsWith(b))
 
-  def check(user: Config, known: Config): Either[com.histmersion.config.ConfigLayers.CheckResultPart1, Keys] =
+  def check(user: Config, known: Config): Either[com.histmersion.config.ConfigLayers.Problem, Keys] =
     @tailrec def loop(
-        rest: List[(List[com.histmersion.config.ConfigLayers.CheckLoopRestPart1], com.histmersion.config.ConfigLayers.CheckLoopRestPart2)],
-        settings: List[com.histmersion.config.ConfigLayers.CheckLoopSettings],
-        unknown: List[com.histmersion.config.ConfigLayers.CheckLoopUnknown]
-    ): Either[com.histmersion.config.ConfigLayers.CheckLoopResultPart1, Keys] =
+        rest: List[(List[String], Boolean)],
+        settings: List[com.histmersion.config.ConfigLayers.Keys.Settings],
+        unknown: List[com.histmersion.config.ConfigLayers.Keys.Unknown]
+    ): Either[com.histmersion.config.ConfigLayers.Problem, Keys] =
       rest match
         case Nil                                    => Right(Keys(settings, unknown))
         case (keys, _) :: tail if inOpenBlock(keys) => loop(tail, settings, unknown)
@@ -151,7 +119,7 @@ private[config] object ConfigLayers:
     * accept it (that is how env values arrive). Finer mismatches (a fraction for a whole number) are left to the
     * readers.
     */
-  def typeCheck(settings: List[com.histmersion.config.ConfigLayers.TypeCheckSettings], merged: Config, known: Config): Either[com.histmersion.config.ConfigLayers.TypeCheckResultPart1, Unit] =
+  def typeCheck(settings: List[com.histmersion.config.ConfigLayers.Keys.Settings], merged: Config, known: Config): Either[com.histmersion.config.ConfigLayers.Problem, Unit] =
     settings.iterator
       .flatMap(path =>
         (Try(known.getValue(path)).toOption, Try(merged.getValue(path)).toOption) match
@@ -161,7 +129,7 @@ private[config] object ConfigLayers:
       .nextOption()
       .toLeft(())
 
-  private def mismatch(path: com.histmersion.config.ConfigLayers.MismatchPath, k: ConfigValue, v: ConfigValue): Option[com.histmersion.config.ConfigLayers.MismatchResult] =
+  private def mismatch(path: String, k: ConfigValue, v: ConfigValue): Option[com.histmersion.config.ConfigLayers.Problem] =
     import ConfigValueType.*
     def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
     def shown = v.render(ConfigRenderOptions.concise)
@@ -175,7 +143,7 @@ private[config] object ConfigLayers:
     Option.unless(ok)(s"'$path' must be $want, not $shown")
 
   /** `file` as HOCON; `None` when there is no such file. */
-  def parse(file: Path): Either[com.histmersion.config.ConfigLayers.ParseResultPart1, Option[Config]] =
+  def parse(file: Path): Either[com.histmersion.config.ConfigLayers.Problem, Option[Config]] =
     if !Files.exists(file) then Right(None)
     else if !Files.isRegularFile(file) then Left(s"$file is not a file")
     else
@@ -183,13 +151,13 @@ private[config] object ConfigLayers:
       catch case e: ConfigException => Left(e.getMessage)
 
   /** Is `o` the origin of `file` itself, not of a file it includes? */
-  def sameFile(o: ConfigOrigin, file: Path): com.histmersion.config.ConfigLayers.SameFileResult =
+  def sameFile(o: ConfigOrigin, file: Path): Boolean =
     Option(o.filename).exists(f =>
       Try(Path.of(f).toAbsolutePath.normalize).toOption.contains(file.toAbsolutePath.normalize)
     )
 
   /** A decoding error as `<key>: <what is wrong>`, the key spelled as it is in the file. */
-  def describe(err: ConfigDecodingError): com.histmersion.config.ConfigLayers.DescribeResult =
+  def describe(err: ConfigDecodingError): com.histmersion.config.ConfigLayers.Problem =
     err match
       case ConfigDecodingError.Multiple(errs) => errs.toList.map(describe).mkString("; ")
       case e                                  =>

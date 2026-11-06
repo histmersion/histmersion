@@ -16,15 +16,13 @@ enum SecretRule:
   case Reference
 
 object SecretRule:
+  type Leaf = Leaf.T
+  object Leaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The words a credential's key is called by. */
-  type LooksSecretResult = LooksSecretResult.T
-  object LooksSecretResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LooksSecretLeaf = LooksSecretLeaf.T
-  object LooksSecretLeaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Names = Set("api-key", "password", "session", "service-account-token", "token", "secret")
 
-  def looksSecret(leaf: com.histmersion.config.edit.SecretRule.LooksSecretLeaf): com.histmersion.config.edit.SecretRule.LooksSecretResult =
+  def looksSecret(leaf: com.histmersion.config.edit.SecretRule.Leaf): Boolean =
     Names(leaf) || leaf.endsWith("-api-key") || leaf.endsWith("-password") || leaf.endsWith("-token")
 
   /** The rule for `key`: a plugin's credential is a reference; any other is the value itself. */

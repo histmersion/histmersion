@@ -35,12 +35,10 @@ final case class ClaudeCodeConfig(
     env: Map[ClaudeCodeConfig.EnvKey, Option[ClaudeCodeConfig.EnvValue]]
 ) derives ConfigReader:
   /** [[env]] as changes to an environment, sorted by name: `Some(value)` sets, `None` removes. */
-  def envChanges: List[(com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart1, Option[com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart2])] =
+  def envChanges: List[(com.histmersion.config.ClaudeCodeConfig.EnvKey, Option[com.histmersion.config.ClaudeCodeConfig.EnvChangesResultPart2])] =
     env.toList.map((k, v) => k.trim -> v.filter(_.trim.nonEmpty)).filter(_._1.nonEmpty).sortBy(_._1)
 
 object ClaudeCodeConfig:
-  type EnvChangesResultPart1 = EnvChangesResultPart1.T
-  object EnvChangesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EnvChangesResultPart2 = EnvChangesResultPart2.T
   object EnvChangesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

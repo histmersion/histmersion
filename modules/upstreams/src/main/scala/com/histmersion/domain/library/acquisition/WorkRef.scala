@@ -22,10 +22,10 @@ final case class WorkRef(
 object WorkRef:
   type OpenalexId = OpenalexId.T
   object OpenalexId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArxivId = ArxivId.T
-  object ArxivId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArxivId = com.histmersion.domain.library.ArxivId
+  val ArxivId: _root_.com.histmersion.domain.library.ArxivId.type = _root_.com.histmersion.domain.library.ArxivId
+  type Title = com.histmersion.domain.Title
+  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
   type Authors = Authors.T
   object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Venue = Venue.T
@@ -48,5 +48,5 @@ object WorkRef:
   object ReferencedWorks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OaLocations = OaLocations.T
   object OaLocations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OaLicence = OaLicence.T
-  object OaLicence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OaLicence = com.histmersion.domain.Licence.Id
+  val OaLicence: _root_.com.histmersion.domain.Licence.Id.type = _root_.com.histmersion.domain.Licence.Id

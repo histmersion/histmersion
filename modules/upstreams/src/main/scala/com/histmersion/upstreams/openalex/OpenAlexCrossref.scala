@@ -15,7 +15,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
 
   private def mailto = "mailto" -> cfg.mailto
 
-  def search(query: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchQuery, since: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSince], sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSort], limit: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchLimit): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchResultPart1, List[WorkRef]] =
+  def search(query: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchQuery, since: Option[com.histmersion.Year], sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSort], limit: com.histmersion.PageSize): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem, List[WorkRef]] =
     // relevance keeps results ON TOPIC; sorting purely by citations surfaces mega-cited but tangential
     // work. `cited_by_count` comes back either way, so a caller can re-rank the relevant set.
     val order = if sort.map((_).value.trim.toLowerCase).contains("cited") then "cited_by_count:desc"
@@ -25,7 +25,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .json(
         Url(
           cfg.openalex.url,
-          _root_.com.histmersion.upstreams.http.Url.ApplyPath("/works"),
+          _root_.com.histmersion.upstreams.http.Url.UrlPath("/works"),
           "search" -> (query).value,
           "per-page" -> math.max(1, math.min((limit).value, 50)).toString,
           "sort" -> order,
@@ -47,10 +47,10 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
     */
   private def crossrefSearch(
       query: com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefSearchQuery,
-      from: com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefSearchFrom,
+      from: com.histmersion.Offset,
       sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefSearchSort],
-      limit: com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefSearchLimit
-  ): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefSearchResultPart1, List[WorkRef]] =
+      limit: com.histmersion.PageSize
+  ): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem, List[WorkRef]] =
     val bySort = if sort.map((_).value.trim.toLowerCase).contains("cited") then
       List("sort" -> "is-referenced-by-count", "order" -> "desc")
     else Nil
@@ -58,7 +58,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .json(
         Url(
           cfg.crossref.url,
-          _root_.com.histmersion.upstreams.http.Url.ApplyPath("/works"),
+          _root_.com.histmersion.upstreams.http.Url.UrlPath("/works"),
           (List(
             "query" -> query,
             "rows" -> math.max(1, math.min((limit).value, 50)).toString,
@@ -71,22 +71,22 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .map(AcquireParse.crossrefWorks)
 
   /** OpenAlex first (richer, keyless), Crossref as the fallback — [[WorkLookup.meta]]. */
-  def meta(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.MetaDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.MetaResultPart1, WorkRef] = WorkLookup.meta(cfg, http.json(_), log)(doi)
+  def meta(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem, WorkRef] = WorkLookup.meta(cfg, http.json(_), log)(doi)
 
-  private def crossrefWork(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefWorkDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefWorkResultPart1, Json] = http.json(WorkLookup.crossrefUrl(cfg, doi))
+  private def crossrefWork(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem, Json] = http.json(WorkLookup.crossrefUrl(cfg, doi))
 
   /** `(backend, references)` — Crossref's deposited list, falling back to OpenAlex's `referenced_works` resolved to
     * titles when the publisher deposited none.
     */
-  def references(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferencesDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferencesResultPart1, (com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferencesResultPart2Part1, List[RefRow])] =
-    crossrefWork(_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefWorkDoi((doi).value)).map(AcquireParse.crossrefReferences) match
-      case Right(refs) if refs.nonEmpty => Right((_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferencesResultPart2Part1("crossref"), refs))
-      case _                            => openalexReferences(_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.OpenalexReferencesDoi((doi).value)).map(("openalex", _))
+  def references(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem, (com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferenceSource, List[RefRow])] =
+    crossrefWork(_root_.com.histmersion.domain.library.Doi((doi).value)).map(AcquireParse.crossrefReferences) match
+      case Right(refs) if refs.nonEmpty => Right((_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferenceSource("crossref"), refs))
+      case _                            => openalexReferences(_root_.com.histmersion.domain.library.Doi((doi).value)).map(("openalex", _))
 
   /** Fallback: resolve OpenAlex `referenced_works` ids to titles, 50 at a time. */
-  private def openalexReferences(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.OpenalexReferencesDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.OpenalexReferencesResultPart1, List[RefRow]] =
+  private def openalexReferences(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem, List[RefRow]] =
     http
-      .json(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), "select" -> "referenced_works", mailto))
+      .json(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.UrlPath(""), "select" -> "referenced_works", mailto))
       .map(j => AcquireParse.openalexWork(j).referencedWorks.take(100))
       .map { ids =>
         ids.grouped(50).toList.flatMap { chunk =>
@@ -108,57 +108,23 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       }
 
   /** Crossref `update-to` notices (retraction / correction / expression of concern). */
-  def updates(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.UpdatesDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.UpdatesResultPart1, List[UpdateNotice]] =
-    (crossrefWork(_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefWorkDoi((doi).value)).map(AcquireParse.crossrefUpdates).orElse(Right(Nil))).left.map(refactorError2 => _root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.UpdatesResultPart1((refactorError2).value))
+  def updates(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem, List[UpdateNotice]] =
+    (crossrefWork(_root_.com.histmersion.domain.library.Doi((doi).value)).map(AcquireParse.crossrefUpdates).orElse(Right(Nil))).left.map(refactorError2 => _root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem((refactorError2).value))
 
   /** The raw OpenAlex record, for the citation counts an assessment reports and the open locations a fetcher reads. */
-  def raw(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.RawDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.RawResultPart1, Json] =
-    http.json(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), "select" -> WorkLookup.WorkFields, mailto))
+  def raw(doi: com.histmersion.domain.library.Doi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.Problem, Json] =
+    http.json(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.UrlPath(""), "select" -> WorkLookup.WorkFields, mailto))
 
 object OpenAlexCrossref:
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReferenceSource = ReferenceSource.T
+  object ReferenceSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchQuery = SearchQuery.T
   object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchSince = SearchSince.T
-  object SearchSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchSort = SearchSort.T
   object SearchSort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchLimit = SearchLimit.T
-  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CrossrefSearchResultPart1 = CrossrefSearchResultPart1.T
-  object CrossrefSearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CrossrefSearchQuery = CrossrefSearchQuery.T
   object CrossrefSearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CrossrefSearchFrom = CrossrefSearchFrom.T
-  object CrossrefSearchFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CrossrefSearchSort = CrossrefSearchSort.T
   object CrossrefSearchSort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CrossrefSearchLimit = CrossrefSearchLimit.T
-  object CrossrefSearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaResultPart1 = MetaResultPart1.T
-  object MetaResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaDoi = MetaDoi.T
-  object MetaDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CrossrefWorkResultPart1 = CrossrefWorkResultPart1.T
-  object CrossrefWorkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CrossrefWorkDoi = CrossrefWorkDoi.T
-  object CrossrefWorkDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencesResultPart1 = ReferencesResultPart1.T
-  object ReferencesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencesResultPart2Part1 = ReferencesResultPart2Part1.T
-  object ReferencesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencesDoi = ReferencesDoi.T
-  object ReferencesDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenalexReferencesResultPart1 = OpenalexReferencesResultPart1.T
-  object OpenalexReferencesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenalexReferencesDoi = OpenalexReferencesDoi.T
-  object OpenalexReferencesDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatesResultPart1 = UpdatesResultPart1.T
-  object UpdatesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatesDoi = UpdatesDoi.T
-  object UpdatesDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RawResultPart1 = RawResultPart1.T
-  object RawResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RawDoi = RawDoi.T
-  object RawDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

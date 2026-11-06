@@ -5,13 +5,9 @@ import sttp.model.Uri
   * the query from pairs is what makes `q=sea peoples & co` safe.
   */
 object Url:
-  type ApplyResult = ApplyResult.T
-  object ApplyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyBase = ApplyBase.T
-  object ApplyBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyPath = ApplyPath.T
-  object ApplyPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlPath = UrlPath.T
+  object UrlPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def apply(base: com.histmersion.upstreams.http.Url.ApplyBase, path: com.histmersion.upstreams.http.Url.ApplyPath = _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), params: (String, String)*): com.histmersion.upstreams.http.Url.ApplyResult =
+  def apply(base: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url, path: com.histmersion.upstreams.http.Url.UrlPath = _root_.com.histmersion.upstreams.http.Url.UrlPath(""), params: (String, String)*): com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url =
     val u = Uri.unsafeParse((base).value + path)
-    _root_.com.histmersion.upstreams.http.Url.ApplyResult(u.addParams(params.filter(_._2.nonEmpty)*).toString)
+    _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url(u.addParams(params.filter(_._2.nonEmpty)*).toString)

@@ -25,6 +25,8 @@ import com.histmersion.api.exchange.Bundle
   * remember what was merged.
   */
 object BundleFormat:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type CompatibleNumV = CompatibleNumV.T
   object CompatibleNumV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -49,18 +51,12 @@ object BundleFormat:
   type Unrevved = UnrevvedValue
   type UnrevvedValue = UnrevvedValue.T
   object UnrevvedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sha256HexResult = Sha256HexResult.T
-  object Sha256HexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Sha256HexText = Sha256HexText.T
   object Sha256HexText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HexResult = HexResult.T
   object HexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RevOfResult = RevOfResult.T
-  object RevOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LineResult = LineResult.T
   object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeLineResultPart1 = DecodeLineResultPart1.T
-  object DecodeLineResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeLineLine = DecodeLineLine.T
   object DecodeLineLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeLineStamped = DecodeLineStamped.T
@@ -71,8 +67,6 @@ object BundleFormat:
   object BundleIdSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BundleIdBlobs = BundleIdBlobs.T
   object BundleIdBlobs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseManifestResultPart1 = ParseManifestResultPart1.T
-  object ParseManifestResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CompatibleResult = CompatibleResult.T
   object CompatibleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CompatibleServerSchema = CompatibleServerSchema.T
@@ -95,10 +89,10 @@ object BundleFormat:
   /** Fields a rev does NOT cover. */
   val Unrevved: Set[com.histmersion.util.data.exchange.BundleFormat.Unrevved] = Set("rev", "updatedAt")
 
-  def sha256Hex(bytes: com.histmersion.util.data.exchange.BundleFormat.Sha256HexBytes): com.histmersion.util.data.exchange.BundleFormat.Sha256HexResult =
+  def sha256Hex(bytes: com.histmersion.util.data.exchange.BundleFormat.Sha256HexBytes): com.histmersion.Sha256 =
     hex(MessageDigest.getInstance("SHA-256").digest(bytes))
 
-  def sha256Hex(text: com.histmersion.util.data.exchange.BundleFormat.Sha256HexText): com.histmersion.util.data.exchange.BundleFormat.Sha256HexResult = sha256Hex(text.getBytes(UTF_8))
+  def sha256Hex(text: com.histmersion.util.data.exchange.BundleFormat.Sha256HexText): com.histmersion.Sha256 = sha256Hex(text.getBytes(UTF_8))
 
   def hex(bytes: com.histmersion.util.data.exchange.BundleFormat.HexBytes): com.histmersion.util.data.exchange.BundleFormat.HexResult =
     val sb = StringBuilder(bytes.length * 2)
@@ -109,7 +103,7 @@ object BundleFormat:
     sb.toString
 
   /** The rev of a record already in JSON form. */
-  def revOf(obj: JsonObject): com.histmersion.util.data.exchange.BundleFormat.RevOfResult =
+  def revOf(obj: JsonObject): com.histmersion.util.data.exchange.BundleFormat.Stamped.Rev =
     sha256Hex(printer.print(Json.fromJsonObject(obj.filterKeys(k => !Unrevved(k)))))
 
   /** A record as its NDJSON line (no newline) and its rev. The record's own `rev` field, whatever it holds, is replaced
@@ -132,7 +126,7 @@ object BundleFormat:
     object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Parse one line, and for a stamped kind check that its `rev` is the rev of its content. */
-  def decodeLine[A](line: com.histmersion.util.data.exchange.BundleFormat.DecodeLineLine, stamped: com.histmersion.util.data.exchange.BundleFormat.DecodeLineStamped)(using dec: Decoder[A]): Either[com.histmersion.util.data.exchange.BundleFormat.DecodeLineResultPart1, A] =
+  def decodeLine[A](line: com.histmersion.util.data.exchange.BundleFormat.DecodeLineLine, stamped: com.histmersion.util.data.exchange.BundleFormat.DecodeLineStamped)(using dec: Decoder[A]): Either[com.histmersion.util.data.exchange.BundleFormat.Problem, A] =
     parser.parse(line).left.map(e => s"not JSON: ${e.message}").flatMap { json =>
       val revOk =
         if !stamped then Right(())
@@ -169,7 +163,7 @@ object BundleFormat:
   def manifestBytes(m: Bundle.Manifest): com.histmersion.util.data.exchange.BundleFormat.ManifestBytesResult =
     (printer.print(Encoder.AsObject[Bundle.Manifest].apply(m)) + "\n").getBytes(UTF_8)
 
-  def parseManifest(bytes: com.histmersion.util.data.exchange.BundleFormat.ParseManifestBytes): Either[com.histmersion.util.data.exchange.BundleFormat.ParseManifestResultPart1, Bundle.Manifest] =
+  def parseManifest(bytes: com.histmersion.util.data.exchange.BundleFormat.ParseManifestBytes): Either[com.histmersion.util.data.exchange.BundleFormat.Problem, Bundle.Manifest] =
     parser.decode[Bundle.Manifest](String(bytes, UTF_8)).left.map(e => s"manifest.json: ${e.getMessage}")
 
   /** Can THIS server read `m`? A newer format or a newer schema is refused (the importer only ever upgrades older

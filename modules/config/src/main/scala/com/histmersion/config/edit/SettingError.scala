@@ -36,7 +36,7 @@ enum SettingError:
   case NoFile(why: SettingError.NoFile.Why)
   case Io(why: SettingError.Io.Why)
 
-  def message: com.histmersion.config.edit.SettingError.MessageResult = this match
+  def message: com.histmersion.config.edit.SettingError.Problem = this match
     case BadKey(why)            => why
     case UnknownKey(k, closest) =>
       s"There is no setting called ${k.relative}." +
@@ -65,41 +65,41 @@ enum SettingError:
     case Io(why)      => s"The settings file could not be written: $why"
 
 object SettingError:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object BadKey:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.config.edit.SettingError.Problem
+    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
 
   object BadValue:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.config.edit.SettingError.Problem
+    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
 
   object CredentialInFile:
-    type EnvVar = EnvVar.T
-    object EnvVar extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EnvVar = com.histmersion.config.edit.SettingField.EnvVar
+    val EnvVar: _root_.com.histmersion.config.edit.SettingField.EnvVar.type = _root_.com.histmersion.config.edit.SettingField.EnvVar
 
   object NotAReference:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.config.edit.SettingError.Problem
+    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
 
   object FromInclude:
-    type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = com.histmersion.config.edit.SettingsFile.Path
+    val File: _root_.com.histmersion.config.edit.SettingsFile.Path.type = _root_.com.histmersion.config.edit.SettingsFile.Path
 
   object Unreadable:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.config.edit.SettingError.Problem
+    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
 
   object Invalid:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.config.edit.SettingError.Problem
+    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
 
   object NoFile:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.config.edit.SettingError.Problem
+    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
 
   object Io:
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = com.histmersion.config.edit.SettingError.Problem
+    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
 
-  type MessageResult = MessageResult.T
-  object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

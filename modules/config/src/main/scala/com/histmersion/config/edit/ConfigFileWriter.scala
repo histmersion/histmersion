@@ -17,7 +17,7 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
   def write(
       edits: List[SettingEdit],
       expected: Option[FileVersion],
-      literalConsent: com.histmersion.config.edit.ConfigFileWriter.WriteLiteralConsent
+      literalConsent: com.histmersion.config.edit.SettingPolicy.LiteralConsent
   ): Either[SettingError, WriteOutcome] =
     ConfigFileWriter.lock.synchronized {
       for
@@ -53,8 +53,8 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
   private def commit(
       current: ConfigFileState,
       edited: EditedText,
-      intended: Map[com.histmersion.config.edit.ConfigFileWriter.CommitIntendedPart1, Option[SettingValue]]
-  ): Either[SettingError, Option[com.histmersion.config.edit.ConfigFileWriter.CommitResultPart2]] =
+      intended: Map[com.histmersion.config.edit.EditedText.Text, Option[SettingValue]]
+  ): Either[SettingError, Option[com.histmersion.config.edit.EditedText.Text]] =
     file.replace(edited.text, existed = current.text.isDefined) { staged =>
       for
         parsed <- staged.parsed.left.map(e => SettingError.Invalid(e.message))
@@ -65,12 +65,6 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
 
 object ConfigFileWriter:
   /** One write at a time in this process: two at once would each read the same old text. */
-  type WriteLiteralConsent = WriteLiteralConsent.T
-  object WriteLiteralConsent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommitResultPart2 = CommitResultPart2.T
-  object CommitResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommitIntendedPart1 = CommitIntendedPart1.T
-  object CommitIntendedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NewFileHeader = NewFileHeaderValue
   type NewFileHeaderValue = NewFileHeaderValue.T
   object NewFileHeaderValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -5,16 +5,6 @@ package com.histmersion.domain.media.covers
   * then Calibre's), else by OCLC number; else none. Pure: whether the Calibre file exists is a parameter.
   */
 object CoverChoice:
-  type ChooseCalibreCover = ChooseCalibreCover.T
-  object ChooseCalibreCover extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooseExistsArg1 = ChooseExistsArg1.T
-  object ChooseExistsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooseExistsResult = ChooseExistsResult.T
-  object ChooseExistsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooseIsbns = ChooseIsbns.T
-  object ChooseIsbns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooseOclc = ChooseOclc.T
-  object ChooseOclc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Pick:
     case Calibre(path: Pick.Calibre.Path)
@@ -31,10 +21,10 @@ object CoverChoice:
       object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def choose(
-      calibreCover: Option[com.histmersion.domain.media.covers.CoverChoice.ChooseCalibreCover],
-      exists: com.histmersion.domain.media.covers.CoverChoice.ChooseExistsArg1 => com.histmersion.domain.media.covers.CoverChoice.ChooseExistsResult,
-      isbns: List[com.histmersion.domain.media.covers.CoverChoice.ChooseIsbns],
-      oclc: Option[com.histmersion.domain.media.covers.CoverChoice.ChooseOclc]
+      calibreCover: Option[com.histmersion.domain.media.covers.CoverChoice.Pick.Calibre.Path],
+      exists: String => Boolean,
+      isbns: List[com.histmersion.domain.library.Isbn],
+      oclc: Option[com.histmersion.domain.media.covers.OpenLibrary.Oclc]
   ): Option[Pick] =
     calibreCover
       .map(_.trim)
