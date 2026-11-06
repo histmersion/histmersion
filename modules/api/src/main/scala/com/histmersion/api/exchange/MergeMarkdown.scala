@@ -56,33 +56,33 @@ object MergeMarkdown:
     val head = List(
       s"**Bundle** ${who(p.from)} → ${who(p.into)} · format ${p.formatVersion} · schema V${p.schemaVersion} · " +
         s"as of ${p.asOf.getOrElse("—")}",
-      s"**Matched** ${Plural.count(m.sources, "source")}: ${m.byUid} by uid · ${m.byLedger} by ledger · " +
+      s"**Matched** ${Plural.count(m.sources, _root_.com.histmersion.api.Plural.NounSingular("source"))}: ${m.byUid} by uid · ${m.byLedger} by ledger · " +
         s"${m.byStrongKey} by DOI/file/ISBN · ${m.byScore} by score · ${m.undecided} to decide · ${m.unmatched} new" +
         (if m.deletedHere > 0 then s" · ${m.deletedHere} deleted here" else ""),
       s"**Summary** ${open.size} blocking · ${p.resolutionErrors.size} stale or invalid · ${conditional.size} conditional · " +
-        s"${defaults.size} ${Plural.noun(defaults.size, "default")} · ${p.info.size} info · " +
+        s"${defaults.size} ${Plural.noun(_root_.com.histmersion.api.Plural.NounN((defaults.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("default"))} · ${p.info.size} info · " +
         s"${Plural.count(p.problems.size, "problem")} · plan ${p.planHash}" +
         (if p.resolved > 0 then s"+r(${p.resolved})" else "")
     ).mkString("  \n")
     val sections = List(
-      section("Problems (no decision fixes these)", p.problems.map(x => s"- $x")),
-      section("Resolutions not used (errors)", p.resolutionErrors.map(x => s"- $x")),
-      section("Blocking", open.map(issue)),
-      section("Decided", decided.map(issue)),
-      section("Conditional (listed now, so no new issue appears after a decision)", conditional.map(issue)),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Problems (no decision fixes these)"), p.problems.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x"))),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Resolutions not used (errors)"), p.resolutionErrors.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x"))),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Blocking"), open.map(issue)),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Decided"), decided.map(issue)),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(issue)),
       section(
-        "Defaults (applied unless overridden with --resolve)",
-        (if all then defaults else defaults.take(5)).map(issue) ++
+        _root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Defaults (applied unless overridden with --resolve)"),
+        (if ((all) == _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(true)) then defaults else defaults.take(5)).map(issue) ++
           Option.when(!(all).value && defaults.size > 5)(s"- … ${defaults.size - 5} more (--all)").toList
       ),
       section(
-        "Info",
-        (if all then p.info else p.info.take(8)).map(x => s"- $x") ++
+        _root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Info"),
+        (if ((all) == _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(true)) then p.info else p.info.take(8)).map(x => s"- $x") ++
           Option.when(!(all).value && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList
       ),
       section(
-        "Matches",
-        RegisteredPlanMatches.kind.lines(p.sources, if all then Int.MaxValue else 20)
+        _root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Matches"),
+        RegisteredPlanMatches.kind.lines(p.sources, if ((all) == _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(true)) then _root_.com.histmersion.api.exchange.PlanMatchKind.LinesLimit(Int.MaxValue) else _root_.com.histmersion.api.exchange.PlanMatchKind.LinesLimit(20))
       )
     ).flatten
     val next =
@@ -120,21 +120,21 @@ object MergeMarkdown:
             s"**places** +${count(com.histmersion.api.exchange.Bundle.Kind.Place)(_.inserted)} · merged ${t.placesMerged} · " +
             s"**periods** +${count(com.histmersion.api.exchange.Bundle.Kind.Period)(_.inserted)} · merged ${t.periodsMerged} · " +
             s"self-loops dropped ${t.selfLoopsDropped} · redirects +${t.redirects}",
-          s"**queued** ${Plural.count(r.reviews.size, "/review-article task")}" +
+          s"**queued** ${Plural.count(_root_.com.histmersion.api.Plural.NounN((r.reviews.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("/review-article task"))}" +
             (if r.reviews.nonEmpty then r.reviews.map(s => s"`$s`").mkString(" (", ", ", ")") else "") +
             r.logEntry.fold("")(id => s" · log entry #$id"),
           r.replanChanges.fold("")(n =>
             if n == _root_.com.histmersion.api.exchange.MergeApplyResult.ReplanChanges(0) then "**re-run** `histmersion merge plan` on this bundle → 0 changes (idempotent)"
             else
-              s"**re-run** `histmersion merge plan` on this bundle → ${Plural.count(n, "change")} left (not idempotent — report it)"
+              s"**re-run** `histmersion merge plan` on this bundle → ${Plural.count(n, _root_.com.histmersion.api.Plural.NounSingular("change"))} left (not idempotent — report it)"
           )
         ).filter(_.nonEmpty).mkString("  \n")
       )
       .toList
     val sections = List(
-      section("Problems (nothing was written)", r.problems.map(x => s"- $x")),
-      section("Open", r.issues.map(issue)),
-      section("Notes", r.notes.map(x => s"- $x"))
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Problems (nothing was written)"), r.problems.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x"))),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Open"), r.issues.map(issue)),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Notes"), r.notes.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x")))
     ).flatten
     (head :: body ++ sections).mkString("\n\n")
 
@@ -165,7 +165,7 @@ object MergeMarkdown:
       s"**Merge** `${m.id}` · ${m.appliedAt} · from ${who(m.from)}",
       s"**bundle** `${m.bundleId}` (sha256 `${m.bundleSha256.take(12)}…`)" +
         m.planHash.fold(" · imported without matching")(h => s" · plan `$h`") + m.backup.fold("")(b => s" · backup $b"),
-      s"**left** ${Plural.count(m.ledgerRows, "ledger row")} · ${Plural.count(m.redirects, "redirect")}"
+      s"**left** ${Plural.count(m.ledgerRows, _root_.com.histmersion.api.Plural.NounSingular("ledger row"))} · ${Plural.count(m.redirects, _root_.com.histmersion.api.Plural.NounSingular("redirect"))}"
     ).mkString("  \n")
     val report = d.applied.map(applied).orElse(d.imported.map(BundleMarkdown.importResult)).toList
     val res = d.resolutions

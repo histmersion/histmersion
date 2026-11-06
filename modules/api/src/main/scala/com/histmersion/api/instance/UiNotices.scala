@@ -124,7 +124,7 @@ object UiNotices:
   def counter(board: Board, count: Option[com.histmersion.api.instance.UiNotices.CounterCount], latest: Option[com.histmersion.api.instance.UiNotices.CounterLatest], seen: Option[com.histmersion.api.instance.UiNotices.CounterSeen]): Counter =
     Counter(board.wire, count.filter(_ => ((board.counted) == _root_.com.histmersion.api.instance.UiNotices.Board.Counted(true))), latest, seen, fresh(latest, seen))
 
-  def advance(held: Option[com.histmersion.api.instance.UiNotices.AdvanceHeld], at: com.histmersion.api.instance.UiNotices.AdvanceAt): com.histmersion.api.instance.UiNotices.AdvanceResult = held.filter((_).value > at).getOrElse(at)
+  def advance(held: Option[com.histmersion.api.instance.UiNotices.AdvanceHeld], at: com.histmersion.api.instance.UiNotices.AdvanceAt): com.histmersion.api.instance.UiNotices.AdvanceResult = held.filter((_).value > (at).value).getOrElse(at)
 
   def badge(count: Option[com.histmersion.api.instance.UiNotices.BadgeCount]): Option[com.histmersion.api.instance.UiNotices.BadgeResult] =
     count.filter((_).value > 0).map(n => if (n).value > 99 then _root_.com.histmersion.api.instance.UiNotices.BadgeResult("99+") else _root_.com.histmersion.api.instance.UiNotices.BadgeResult(n.toString))

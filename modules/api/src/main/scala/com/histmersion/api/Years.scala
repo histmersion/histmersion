@@ -59,7 +59,7 @@ object Years:
 
   def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((h).value + 1) else if h == 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((0).toLong) else h
 
-  def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical(toAstronomical(h) + d)
+  def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical((toAstronomical(h)).value + d)
 
   val NoYearZero: com.histmersion.api.Years.NoYearZero = _root_.com.histmersion.api.Years.NoYearZero("there is no year 0 (1 BCE is -1, 1 CE is 1)")
 
@@ -99,4 +99,4 @@ object Years:
     (raw).value.trim.toLongOption.map(fromAstronomical)
 
   def fromJson(j: Json, text: com.histmersion.api.Years.FromJsonTextArg1 => Option[com.histmersion.api.Years.FromJsonTextResult]): Option[com.histmersion.api.Years.FromJsonResult] =
-    j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(text)).orElse(j.asNumber.map(_.toDouble.round))
+    j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(_root_.com.histmersion.api.Years.FromJsonTextArg1(refactorValue))).map(refactorValue2 => (refactorValue2).value) })).orElse(j.asNumber.map(_.toDouble.round))

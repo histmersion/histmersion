@@ -150,7 +150,7 @@ object AcquireParse:
       referencedWorks = strings(c, "referenced_works").map(tail),
       oaLocations = openalexOaLocations(c),
       oaLicence = str(c.downField("best_oa_location"), "license").orElse(
-        arr(c, "locations").filter(l => bool(l.hcursor, "is_oa")).flatMap(l => str(l.hcursor, "license")).headOption
+        arr(c, "locations").filter(l => ((bool(l.hcursor, "is_oa")) == _root_.com.histmersion.upstreams.parse.AcquireParse.BoolResult(true))).flatMap(l => str(l.hcursor, "license")).headOption
       )
     )
 
@@ -308,7 +308,7 @@ object AcquireParse:
         val pdfs = arr(c, "fullTextUrlList", "fullTextUrl").flatMap { u =>
           val h = u.hcursor
           val isPdf = str(h, "documentStyle").exists((_).value.equalsIgnoreCase("pdf"))
-          val free = str(h, "availabilityCode").exists(a => EuropePmcFree((a).value.toUpperCase))
+          val free = str(h, "availabilityCode").exists(a => EuropePmcFree(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree((a).value.toUpperCase)))
           if isPdf && free then str(h, "url").filter((_).value.startsWith("http")) else None
         }.distinct
         EuropePmcHit(
@@ -327,12 +327,12 @@ object AcquireParse:
     if !PmcId.matches((pmcid).value) then None
     else
       val key = ("<Key>metadata/" + pmcid + """\.(\d+)\.json</Key>""").r
-      key.findAllMatchIn(listXml).flatMap(m => m.group(1).toIntOption).maxOption
+      key.findAllMatchIn((listXml).value).flatMap(m => m.group(1).toIntOption).maxOption
 
   /** A dataset metadata record (`metadata/<pmcid>.<v>.json`). */
   def pmcRecord(json: Json): Option[PmcRecord] =
     val c = json.hcursor
-    str(c, "pmcid").filter(PmcId.matches).map { id =>
+    str(c, "pmcid").filter((PmcId).value.matches).map { id =>
       PmcRecord(
         id,
         bool(c, "is_pmc_openaccess"),
@@ -456,8 +456,8 @@ object AcquireParse:
     * `.`) into the match, so each hit goes through [[Identifiers.doi]].
     */
   def wikiRefs(wikitext: com.histmersion.upstreams.parse.AcquireParse.WikiRefsWikitext): (List[com.histmersion.upstreams.parse.AcquireParse.WikiRefsResultPart1], List[com.histmersion.upstreams.parse.AcquireParse.WikiRefsResultPart2]) =
-    val dois = DoiInText.findAllIn(wikitext).toList.flatMap(Identifiers.doi).distinct.sorted
-    val arxiv = ArxivInText.findAllMatchIn(wikitext).map(_.group(1)).toList.distinct.sorted
+    val dois = DoiInText.findAllIn((wikitext).value).toList.flatMap(Identifiers.doi).distinct.sorted
+    val arxiv = ArxivInText.findAllMatchIn((wikitext).value).map(_.group(1)).toList.distinct.sorted
     (dois, arxiv)
 
   /** The Wikipedia page title of an article URL (`…/wiki/Late_Bronze_Age_collapse`). */

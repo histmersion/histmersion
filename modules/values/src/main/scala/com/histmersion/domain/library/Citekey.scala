@@ -34,4 +34,4 @@ object Citekey extends RefinedType[String, CitekeyRule]:
       )
 
   /** Is `raw` a citekey as it stands — for the places that classify rather than reject (a `[[link]]` target). */
-  def valid(raw: com.histmersion.domain.library.Citekey.ValidRaw): com.histmersion.domain.library.Citekey.ValidResult = parse(raw).isRight
+  def valid(raw: com.histmersion.domain.library.Citekey.ValidRaw): com.histmersion.domain.library.Citekey.ValidResult = _root_.com.histmersion.domain.library.Citekey.ValidResult(parse(raw).isRight)

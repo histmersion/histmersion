@@ -58,7 +58,7 @@ object SourcesMarkdown:
 
   def source(s: Source.Detail, findings: Vector[Finding.Row], fullText: com.histmersion.api.library.SourcesMarkdown.SourceFullText): com.histmersion.api.library.SourcesMarkdown.SourceResult =
     val authorLinks = if s.authors.map(_.value).nonEmpty then chipLinks(s.authors.map(_.value), "author") else ""
-    val meta = List(authorLinks, year(s.year.map(_.value.toInt)), s.venue.map(_.value).getOrElse(""), s.status.wire).filter(_.nonEmpty).mkString(" · ")
+    val meta = List(authorLinks, year(s.year.map((refactorCallback => _root_.com.histmersion.api.Markdown.YearY(refactorCallback.value.toInt)))), s.venue.map(_.value).getOrElse(""), s.status.wire).filter(_.nonEmpty).mkString(" · ")
     val per = period(s.periodStart, s.periodEnd)
     val header = s"# ${s.title}\n\n_$meta${if per.nonEmpty then s" · $per" else ""}_"
     val topics = if s.topics.nonEmpty then s"\n\n**Topics:** ${chipLinks(s.topics, "topic")}" else ""

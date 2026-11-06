@@ -1,0 +1,5 @@
+PREVIEW_SUPERSEDED_NOT_APPLIED
+This initial snapshot19 preview found five supported output concatenation adapters.
+The expression-context batch was applied first across the project. Its real build20
+supplies a fresh snapshot for the same reusable Tapir rule; the applied preview is
+project-tapir-concat-2. No repairs were reverted because of batch size.

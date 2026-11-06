@@ -185,7 +185,7 @@ object Critiques:
       .minOption
       .getOrElse(3)
     pairs
-      .filter(_.open)
+      .filter((refactorCallback2 => ((refactorCallback2.open) == _root_.com.histmersion.api.research.CritiquePair.OpenResult(true))))
       .sortBy(p => (tier(p), kind(p), -(p.src.mentions + p.dst.mentions), p.src.citekey, p.dst.citekey))
 
   def summary(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.SummaryResult =
@@ -225,8 +225,8 @@ object Critiques:
 
   def toRule(pairs: List[CritiquePair]): List[CritiquePair] =
     ranked(pairs)
-      .filter(_.bearing)
-      .foldLeft(Vector.empty[CritiquePair])((acc, p) => if acc.exists(_.ref.same(p.ref)) then acc else acc :+ p)
+      .filter((refactorCallback2 => ((refactorCallback2.bearing) == _root_.com.histmersion.api.research.CritiquePair.BearingResult(true))))
+      .foldLeft(Vector.empty[CritiquePair])((acc, p) => if acc.exists((refactorCallback2 => ((refactorCallback2.ref.same(p.ref)) == _root_.com.histmersion.api.research.CritiqueRef.SameResult(true)))) then acc else acc :+ p)
       .toList
 
   def promptText(pairs: List[CritiquePair], maxOpen: com.histmersion.api.research.Critiques.PromptTextMaxOpen, maxReasoned: com.histmersion.api.research.Critiques.PromptTextMaxReasoned): (com.histmersion.api.research.Critiques.PromptTextResultPart1, List[CritiquePair]) =

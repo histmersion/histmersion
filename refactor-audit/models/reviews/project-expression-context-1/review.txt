@@ -1,0 +1,7 @@
+PREVIEW_FAILED_NOT_APPLIED
+The original preview stopped on overlapping compiler-expression and pattern-guard
+edits in RepositoryLanding. Source positions were 32586..32587 against the enclosing
+guard32586..32596 and 33035..33036 against guard33035..33045. No application patch
+was emitted. The existing rule now composes accepted repairs inside existing guard
+AST ranges into the guard patch, and defers enclosing conflicts. The corrected
+preview is project-expression-context-2, validated by the composed-guard fixture.

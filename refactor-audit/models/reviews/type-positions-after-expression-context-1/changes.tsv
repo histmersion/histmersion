@@ -1,0 +1,6 @@
+change	stable-position-and-route
+new-primitive	modules/api/src/main/scala/com/histmersion/api/Api.scala::com.histmersion.api.Api.refactorDecoded14:lambda-parameter#0|type
+new-primitive	modules/api/src/main/scala/com/histmersion/api/Api.scala::com.histmersion.api.Api.refactorDecoded28:lambda-parameter#0|type/argument[0]
+new-primitive	modules/api/src/main/scala/com/histmersion/api/Api.scala::com.histmersion.api.Api.refactorDecoded2:lambda-parameter#0|type/argument[0]
+new-primitive	modules/api/src/main/scala/com/histmersion/api/Api.scala::com.histmersion.api.Api.refactorDecoded:lambda-parameter#0|type
+new-primitive	modules/api/src/main/scala/com/histmersion/api/OpsApi.scala::com.histmersion.api.OpsApi.refactorDecoded2:lambda-parameter#0|type

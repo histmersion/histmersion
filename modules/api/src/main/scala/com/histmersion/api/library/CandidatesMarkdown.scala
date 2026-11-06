@@ -35,7 +35,7 @@ object CandidatesMarkdown:
     }
     val left = if s.skipped.isEmpty then ""
     else " Left out: " + s.skipped.toList.sortBy(_._1).map((k, n) => s"$n $k").mkString(", ") + "."
-    (s"# Candidate sweep of goal `${s.goal}`${if s.dryRun then " (dry run: nothing stored)" else ""}" :: "" ::
+    (s"# Candidate sweep of goal `${s.goal}`${if ((s.dryRun) == _root_.com.histmersion.api.library.CandidateSweep.DryRun(true)) then " (dry run: nothing stored)" else ""}" :: "" ::
       s"${s.found} work(s) found by ${s.watches.size} watch(es): ${s.added} new candidate(s), ${s.again} found again.$left " +
       s"${s.unseen} unseen candidate(s) wait for a decision (`histmersion candidates --goal ${s.goal}`)." :: "" ::
       (s.notes.map(n => s"- **$n**") ++ (if s.notes.isEmpty then Nil else List("")) ++ w)).mkString("\n")

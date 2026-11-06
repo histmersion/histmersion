@@ -83,7 +83,7 @@ object WikiLinks:
 
   def occurrences(md: com.histmersion.api.text.WikiLinks.OccurrencesMd): List[Occurrence] =
     Link
-      .findAllMatchIn(md)
+      .findAllMatchIn((md).value)
       .map { m =>
         val raw = m.group(2)
         Occurrence(
@@ -107,7 +107,7 @@ object WikiLinks:
   /** The distinct targets a text links, in order; embeds are not links. */
   def targets(body: com.histmersion.api.text.WikiLinks.TargetsBody): List[com.histmersion.api.text.WikiLinks.TargetsResult] =
     Link
-      .findAllMatchIn(body)
+      .findAllMatchIn((body).value)
       .filter(_.group(1).isEmpty)
       .flatMap(m => normalize(m.group(2)))
       .toList
@@ -133,8 +133,8 @@ object WikiLinks:
   def retarget(md: com.histmersion.api.text.WikiLinks.RetargetMd, to: com.histmersion.api.text.WikiLinks.RetargetToArg1 => Option[com.histmersion.api.text.WikiLinks.RetargetToResult]): (com.histmersion.api.text.WikiLinks.RetargetResultPart1, com.histmersion.api.text.WikiLinks.RetargetResultPart2) =
     def moved(m: scala.util.matching.Regex.Match): Option[com.histmersion.api.text.WikiLinks.RetargetMovedResult] =
       if m.group(1).nonEmpty then None
-      else normalize(m.group(2).takeWhile(_ != '|')).flatMap(to)
-    val count = Link.findAllMatchIn(md).count(moved(_).isDefined)
+      else normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(m.group(2).takeWhile(_ != '|'))).flatMap(to)
+    val count = Link.findAllMatchIn((md).value).count(moved(_).isDefined)
     if count == 0 then (md, _root_.com.histmersion.api.text.WikiLinks.RetargetResultPart2(0))
     else
       val out = Link.replaceAllIn(

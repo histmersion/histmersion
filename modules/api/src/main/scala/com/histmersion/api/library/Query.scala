@@ -164,7 +164,7 @@ object Query:
       else if c == '$' then
         dollarTag(sql, _root_.com.histmersion.api.library.Query.DollarTagI(i)) match
           case Some(tag) =>
-            val end = (sql).value.indexOf(tag, i + tag.length)
+            val end = (sql).value.indexOf(tag, i + (tag).value.length)
             val to = if end < 0 then n else end + tag.length
             cur.append((sql).value.substring(i, to)); i = to
           case None => { cur.append(c); i += 1 }

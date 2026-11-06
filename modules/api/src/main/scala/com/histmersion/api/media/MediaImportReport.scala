@@ -59,7 +59,7 @@ object MediaImportReport:
       (x ++ y)
         .groupBy(_.key)
         .toList
-        .map((k, cs) => MediaCount(k, cs.map(_.n).sum, cs.forall(_.allowed)))
+        .map((k, cs) => MediaCount(k, cs.map(_.n).sum, cs.forall((refactorCallback => ((refactorCallback.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true))))))
         .sortBy(c => (-c.n, c.key))
     MediaImportReport(
       b.provider,

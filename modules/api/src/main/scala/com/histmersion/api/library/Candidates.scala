@@ -74,16 +74,16 @@ object Candidates:
 
   def richer(a: WorkRef, b: WorkRef): WorkRef =
     a.modify(
-      _.title).setTo(a.title.orElse(b.title)).modify(_.year).setTo(a.year.orElse(b.year)).modify(_.authors).setTo(if a.authors.nonEmpty then a.authors else b.authors).modify(_.venue).setTo(a.venue.orElse(b.venue)).modify(_.isOa).setTo(((a.isOa) == _root_.com.histmersion.api.library.WorkRef.IsOa(true)) || b.isOa).modify(_.abstractText).setTo(a.abstractText.orElse(b.abstractText)).modify(_.arxivId).setTo(a.arxivId.orElse(b.arxivId)).modify(_.openalexId).setTo(a.openalexId.orElse(b.openalexId)
+      _.title).setTo(a.title.orElse(b.title)).modify(_.year).setTo(a.year.orElse(b.year)).modify(_.authors).setTo(if a.authors.nonEmpty then a.authors else b.authors).modify(_.venue).setTo(a.venue.orElse(b.venue)).modify(_.isOa).setTo(((a.isOa) == _root_.com.histmersion.api.library.WorkRef.IsOa(true)) || ((b.isOa) == _root_.com.histmersion.api.library.WorkRef.IsOa(true))).modify(_.abstractText).setTo(a.abstractText.orElse(b.abstractText)).modify(_.arxivId).setTo(a.arxivId.orElse(b.arxivId)).modify(_.openalexId).setTo(a.openalexId.orElse(b.openalexId)
     )
 
-  private def str(c: ACursor, k: com.histmersion.api.library.Candidates.StrK): Option[com.histmersion.api.library.Candidates.StrResult] = c.get[String](k).toOption.map(_.trim).filter(_.nonEmpty)
+  private def str(c: ACursor, k: com.histmersion.api.library.Candidates.StrK): Option[com.histmersion.api.library.Candidates.StrResult] = c.get[String]((k).value).toOption.map(_.trim).filter(_.nonEmpty)
 
   def europepmcWorks(json: Json): List[WorkRef] =
     json.hcursor.downField("resultList").downField("result").values.toList.flatten.map { r =>
       val c = r.hcursor
       WorkRef(
-        doi = (str(c, "doi")).map(com.histmersion.api.library.Doi.apply),
+        doi = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("doi"))).map(com.histmersion.api.library.Doi.apply),
         title = (str(c, "title").map(_.stripSuffix("."))).map(com.histmersion.api.library.Title.apply),
         year = (str(c, "pubYear").flatMap(_.toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
         authors = (str(c, "authorString").toList.flatMap(_.stripSuffix(".").split(",").map(_.trim).filter(_.nonEmpty))).map(com.histmersion.api.library.AuthorName.apply),
@@ -99,7 +99,7 @@ object Candidates:
     json.hcursor.downField("results").values.toList.flatten.map { r =>
       val c = r.hcursor
       WorkRef(
-        doi = (str(c, "doi")).map(com.histmersion.api.library.Doi.apply),
+        doi = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("doi"))).map(com.histmersion.api.library.Doi.apply),
         title = (str(c, "title")).map(com.histmersion.api.library.Title.apply),
         year = (c.get[Int]("yearPublished").toOption).map(com.histmersion.api.catalogue.Year.apply),
         authors = (c.downField("authors").values.toList.flatten.flatMap(a => str(a.hcursor, "name"))).map(com.histmersion.api.library.AuthorName.apply),
@@ -112,10 +112,10 @@ object Candidates:
 
   def arxivWorks(atom: com.histmersion.api.library.Candidates.ArxivWorksAtom): List[WorkRef] =
     def tag(s: com.histmersion.api.library.Candidates.ArxivWorksTagS, t: com.histmersion.api.library.Candidates.ArxivWorksTagT): Option[com.histmersion.api.library.Candidates.ArxivWorksTagResult] =
-      s"(?s)<$t[^>]*>(.*?)</$t>".r.findFirstMatchIn(s).map(_.group(1).replaceAll("\\s+", " ").trim).filter(_.nonEmpty)
+      s"(?s)<$t[^>]*>(.*?)</$t>".r.findFirstMatchIn((s).value).map(_.group(1).replaceAll("\\s+", " ").trim).filter(_.nonEmpty)
     def unescape(s: com.histmersion.api.library.Candidates.ArxivWorksUnescapeS) =
       (s).value.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
-    "(?s)<entry>(.*?)</entry>".r.findAllMatchIn(atom).map(_.group(1)).toList.map { e =>
+    "(?s)<entry>(.*?)</entry>".r.findAllMatchIn((atom).value).map(_.group(1)).toList.map { e =>
       val id = tag(e, "id").map(_.replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
       WorkRef(
         arxivId = id,

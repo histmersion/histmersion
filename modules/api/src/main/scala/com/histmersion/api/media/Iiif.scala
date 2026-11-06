@@ -65,7 +65,7 @@ object Iiif:
               y <- ys.toIntOption
               w <- ws.toIntOption.filter(_ > 0)
               h <- hs.toIntOption.filter(_ > 0)
-            yield Pixels(x, y, w, h))
+            yield Pixels(_root_.com.histmersion.api.media.Iiif.Region.Pixels.X(x), _root_.com.histmersion.api.media.Iiif.Region.Pixels.Y(y), _root_.com.histmersion.api.media.Iiif.Region.Pixels.W(w), _root_.com.histmersion.api.media.Iiif.Region.Pixels.H(h)))
               .toRight(_root_.com.histmersion.api.media.Iiif.Region.ParseResultPart1(s"invalid region coordinates: '$s' (expected x,y,w,h with w,h > 0)"))
           case _ => Left(_root_.com.histmersion.api.media.Iiif.Region.ParseResultPart1(s"invalid region: '$s' (expected 'full' or 'x,y,w,h')"))
 
@@ -112,26 +112,26 @@ object Iiif:
           t.drop(1).split(",").toList match
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
-              yield BestFit(w, h))
+              yield BestFit(_root_.com.histmersion.api.media.Iiif.Size.BestFit.W(w), _root_.com.histmersion.api.media.Iiif.Size.BestFit.H(h)))
                 .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid best-fit size: '$s'"))
             case _ => Left(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid size: '$s'"))
         case _ if t.endsWith(",") =>
           t.dropRight(1)
             .toIntOption
             .filter(_ > 0)
-            .map(Width(_))
+            .map(Width(_root_.com.histmersion.api.media.Iiif.Size.Width.W(_)))
             .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid width size: '$s'"))
         case _ if t.startsWith(",") =>
           t.drop(1)
             .toIntOption
             .filter(_ > 0)
-            .map(Height(_))
+            .map(Height(_root_.com.histmersion.api.media.Iiif.Size.Height.H(_)))
             .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid height size: '$s'"))
         case _ =>
           t.split(",").toList match
             case List(ws, hs) =>
               (for w <- ws.toIntOption.filter(_ > 0); h <- hs.toIntOption.filter(_ > 0)
-              yield Exact(w, h))
+              yield Exact(_root_.com.histmersion.api.media.Iiif.Size.Exact.W(w), _root_.com.histmersion.api.media.Iiif.Size.Exact.H(h)))
                 .toRight(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid exact size: '$s'"))
             case _ => Left(_root_.com.histmersion.api.media.Iiif.Size.ParseResultPart1(s"invalid size: '$s'"))
 

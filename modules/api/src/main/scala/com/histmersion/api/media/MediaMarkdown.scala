@@ -49,7 +49,7 @@ object MediaMarkdown:
     val meta = List(
       a.kind.map(k => s"**Kind:** $k"),
       a.license.map(l => s"**License:** $l"),
-      Some(s"**Size:** ${Plural.count(a.bytes, "byte")}"),
+      Some(s"**Size:** ${Plural.count(a.bytes, _root_.com.histmersion.api.Plural.NounSingular("byte"))}"),
       (a.width, a.height) match {
         case (Some(w), Some(h)) => Some(s"**Dimensions:** $w×$h")
         case _                  => None
@@ -60,13 +60,13 @@ object MediaMarkdown:
 
   private[api] def countsLine(cs: List[MediaCount]): com.histmersion.api.media.MediaMarkdown.CountsLineResult =
     if cs.isEmpty then _root_.com.histmersion.api.media.MediaMarkdown.CountsLineResult("none")
-    else cs.map(c => s"${c.key} ${c.n}${if c.allowed then "" else " (not allowed)"}").mkString(" · ")
+    else cs.map(c => s"${c.key} ${c.n}${if ((c.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true)) then "" else " (not allowed)"}").mkString(" · ")
 
   def mediaProviders(ps: List[MediaProvider.Info]): com.histmersion.api.media.MediaMarkdown.MediaProvidersResult =
     if ps.isEmpty then _root_.com.histmersion.api.media.MediaMarkdown.MediaProvidersResult("No media provider is registered (every media plugin is switched off).")
     else
       ps.map { p =>
-        val origin = if p.builtin then s"built in, plugin `${p.plugin}`" else s"plugin `${p.plugin}`"
+        val origin = if ((p.builtin) == _root_.com.histmersion.api.media.MediaProvider.Info.Builtin(true)) then s"built in, plugin `${p.plugin}`" else s"plugin `${p.plugin}`"
         val terms = if p.licences.trim.isEmpty then "" else s" · licences: ${p.licences}"
         s"- **`${p.name}`** — ${p.title} (${p.over}; $origin$terms)" +
           (if p.description.trim.isEmpty then "" else s"\n  ${p.description.trim}")
@@ -77,7 +77,7 @@ object MediaMarkdown:
     val licences = if r.byLicence.isEmpty then "_none_"
     else
       r.byLicence
-        .map(c => s"| `${c.key}` | ${c.n} | ${if c.allowed then "yes" else "**no**"} |")
+        .map(c => s"| `${c.key}` | ${c.n} | ${if ((c.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true)) then "yes" else "**no**"} |")
         .mkString("| licence | files | allowed |\n|---|---|---|\n", "\n", "")
     val rejected = if r.rejected.isEmpty then ""
     else "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
@@ -94,13 +94,13 @@ object MediaMarkdown:
       s"# Media import · ${MediaProvider.title(r.provider)} ($mode)",
       "",
       (if MediaProvider.all.contains(r.provider) && r.provider != _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Commons) then
-         s"**Asked about:** ${Plural.count(r.targets, "place")} · ${Plural.count(r.items, "record")} read · " +
+         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.NounSingular("place"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.NounSingular("record"))} read · " +
            s"${Plural.count(r.statements, "match", "matches")} · ${Plural.count(r.files, "picture")}  "
        else if r.provider == _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Pleiades) then
-         s"**Asked about:** ${Plural.count(r.targets, "place")} · ${Plural.count(r.items, "Pleiades record")} read · " +
+         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.NounSingular("place"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.NounSingular("Pleiades record"))} read · " +
            s"${Plural.count(r.statements, "linked Commons file")} · ${Plural.count(r.files, "file")}  "
        else
-         s"**Asked about:** ${Plural.count(r.targets, "place/event", "places/events")} · ${Plural.count(r.items, "Wikidata item")} · " +
+         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.NounSingular("place/event"), _root_.com.histmersion.api.Plural.NounPlural("places/events"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.NounSingular("Wikidata item"))} · " +
            s"${Plural.count(r.statements, "picture statement")} · ${Plural.count(r.files, "file")}  "
       ) ,
       s"**By provider:** ${MediaProvider.title(r.provider)} ${r.files}  ",
@@ -161,7 +161,7 @@ object MediaMarkdown:
       m.retrievedAt.map(t => s"**Retrieved:** $t"),
       Some(
         s"**File:** ${m.mime} · ${Plural
-            .count(m.bytes, "byte")}${(m.width, m.height) match { case (Some(w), Some(h)) => s" · $w×$h"; case _ => "" }} · `${m.fileUrl}`"
+            .count(m.bytes, _root_.com.histmersion.api.Plural.NounSingular("byte"))}${(m.width, m.height) match { case (Some(w), Some(h)) => s" · $w×$h"; case _ => "" }} · `${m.fileUrl}`"
       ),
       m.thumbUrl.map(u => s"**Thumbnail:** `$u`"),
       m.kind.map(k => s"**Kind:** $k")

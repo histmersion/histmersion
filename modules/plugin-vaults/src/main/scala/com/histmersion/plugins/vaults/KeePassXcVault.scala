@@ -48,7 +48,7 @@ final class KeePassXcVault(
     val batched = requests.collect {
       case (r, Right((e, a))) if KeePassXcSession.sendable(e) && KeePassXcSession.sendable(a) => r -> (e, a)
     }
-    val single = asked.filterNot(r => batched.exists(_._1 == r)).map(r => r -> resolve(r)).toMap
+    val single = asked.filterNot(r => batched.exists(_._1 == r)).map(r => r -> resolve(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef(r))).toMap
     if batched.size <= 1 then (single ++ batched.map((r, _) => r -> resolve(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef(r)))).iterator.map { case (refactorKey, refactorItem) => (refactorKey, ((refactorItem).left.map(refactorError => (refactorError).value)).map(refactorValue => (refactorValue).value)) }.toMap
     else single ++ session(batched)
 
@@ -104,7 +104,7 @@ final class KeePassXcVault(
           case Left(why)      => Left(_root_.com.histmersion.plugins.vaults.KeePassXcVault.SessionOpenedPart1(s"$name: could not $what ($why)"))
           case Right(Left(r)) =>
             Left(
-              classify("")(r.err.toLowerCase(java.util.Locale.ROOT))
+              classify(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyEntry(""))(r.err.toLowerCase(java.util.Locale.ROOT))
                 .getOrElse(s"$name: could not $what (exit ${r.exit}: ${YubiKey.problem(r.err)})")
             )
           case Right(Right(o)) => Right(o)

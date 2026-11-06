@@ -167,9 +167,9 @@ object ApprovalDigest:
           .map(SubjectCount.apply)
         KindGroup(
           k,
-          as.size,
+          _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.Count(as.size),
           sorted.headOption.map(_.createdAt.take(10)),
-          if waiting(k) then Waits else if checked(k) then "checked" else "person",
+          if waiting(k) then _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy(Waits) else if checked(k) then _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy("checked") else _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy("person"),
           subjects,
           sorted.take(IdsShown).map(_.id)
         )

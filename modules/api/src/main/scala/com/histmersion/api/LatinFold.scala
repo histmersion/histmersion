@@ -96,7 +96,7 @@ object LatinFold:
   private def isCombiningMark(c: com.histmersion.api.LatinFold.IsCombiningMarkC): com.histmersion.api.LatinFold.IsCombiningMarkResult = c >= '\u0300' && c <= '\u036f'
 
   def foldChar(c: com.histmersion.api.LatinFold.FoldCharC): com.histmersion.api.LatinFold.FoldCharResult =
-    if isCombiningMark(c) then _root_.com.histmersion.api.LatinFold.FoldCharResult("") else Table.getOrElse(c, c.toString)
+    if ((isCombiningMark(c)) == _root_.com.histmersion.api.LatinFold.IsCombiningMarkResult(true)) then _root_.com.histmersion.api.LatinFold.FoldCharResult("") else Table.getOrElse(c, c.toString)
 
   def fold(s: com.histmersion.api.LatinFold.FoldS): com.histmersion.api.LatinFold.FoldResult =
     val b = new StringBuilder((s).value.length)

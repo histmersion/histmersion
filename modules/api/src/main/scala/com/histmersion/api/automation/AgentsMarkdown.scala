@@ -157,7 +157,7 @@ object AgentsMarkdown:
     _root_.com.histmersion.api.automation.AgentsMarkdown.UsdResult(BigDecimal((d).value).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString)
 
   def callShape(firstCallTokens: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeFirstCallTokens], turns: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeTurns]): com.histmersion.api.automation.AgentsMarkdown.CallShapeResult =
-    (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, "turn"))).mkString(" · ")
+    (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, _root_.com.histmersion.api.Plural.NounSingular("turn")))).mkString(" · ")
 
   private def tokens(u: Usage): com.histmersion.api.automation.AgentsMarkdown.TokensResult =
     val cache = if u.cacheRead + u.cacheWrite > 0 then s", cache ${u.cacheRead} read / ${u.cacheWrite} written" else ""
@@ -247,7 +247,7 @@ object AgentsMarkdown:
           p.windows
             .map { w =>
               val name = if w.limit == _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("claude") || w.limit == _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("codex") then w.kind else s"${w.limit}/${w.kind}"
-              val left = if w.usable then s"${pct(w.leftPct)}%" else s"**${pct(w.leftPct)}%**"
+              val left = if ((w.usable) == _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Usable(true)) then s"${pct(w.leftPct)}%" else s"**${pct(w.leftPct)}%**"
               s"| $name | ${pct(w.usedPct)}% | $left | ${w.floor}% | ${w.resetsAt.getOrElse("—")} | " +
                 s"${age(w.ageSeconds)} ago${if w.stale then " (stale)" else ""} | ${w.source} |"
             }
@@ -267,7 +267,7 @@ object AgentsMarkdown:
 
   def refreshed(q: PlanQuota.QuotaRefreshed): com.histmersion.api.automation.AgentsMarkdown.RefreshedResult =
     q.pools
-      .map(r => s"**${r.pool}**: ${if r.refreshed then "read" else "no reading"} — ${r.detail}\n\n${pool(r.status)}")
+      .map(r => s"**${r.pool}**: ${if ((r.refreshed) == _root_.com.histmersion.api.automation.PlanQuota.PoolRefreshed.Refreshed(true)) then "read" else "no reading"} — ${r.detail}\n\n${pool(r.status)}")
       .mkString("\n\n") +
       (if q.lifted.isEmpty then ""
        else
@@ -329,10 +329,10 @@ object AgentsMarkdown:
 
   def options(r: RunInfo): com.histmersion.api.automation.AgentsMarkdown.OptionsResult =
     List(
-      Option.when(r.dryRun)("dry run, writes nothing"),
+      Option.when(((r.dryRun) == _root_.com.histmersion.api.automation.Agents.RunInfo.DryRun(true)))("dry run, writes nothing"),
       Option.when(r.params.overrides.nonEmpty)(r.params.overrides.map(_.text).mkString(", ")),
-      Option.when(r.params.fixes)("fix"),
-      r.params.rounds.map(n => Plural.count(n, "round")),
+      Option.when(((r.params.fixes) == _root_.com.histmersion.api.automation.Agents.RunParams.FixesResult(true)))("fix"),
+      r.params.rounds.map(n => Plural.count(n, _root_.com.histmersion.api.Plural.NounSingular("round"))),
       r.acquireItem.map(i => s"for acquisition item $i"),
       r.params.query.map(q => s"query \"$q\""),
       r.params.topics.filter(_.nonEmpty).map(ts => s"topics ${ts.mkString(", ")}"),

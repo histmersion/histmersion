@@ -47,7 +47,7 @@ object WorkLookup:
   def meta(cfg: UpstreamSettings, json: com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonResultPart1, Json], log: Plugin.Log)(
       doi: com.histmersion.domain.library.Doi
   ): Either[com.histmersion.domain.library.acquisition.WorkLookup.MetaResultPart1, WorkRef] =
-    json(Url(workUrl(cfg, doi), "", "select" -> WorkFields, "mailto" -> cfg.mailto))
+    json(Url(workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), "select" -> WorkFields, "mailto" -> cfg.mailto))
       .map(AcquireParse.openalexWork)
       .left
       .flatMap { why =>
@@ -68,7 +68,7 @@ object WorkLookup:
       w: WorkRef
   ): WorkRef =
     cfg.contact
-      .flatMap(email => json(Url(cfg.unpaywall.url, s"/$doi", "email" -> email)).toOption)
+      .flatMap(email => json(Url(cfg.unpaywall.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath(s"/$doi"), "email" -> email)).toOption)
       .map(AcquireParse.unpaywallAccess)
       .fold(w)(a => w.copy(isOa = a.isOa, oaStatus = a.status, oaUrl = a.url))
 

@@ -286,9 +286,9 @@ object MergeIssue:
     def planText(j: Json): com.histmersion.api.exchange.MergeIssue.Detail.PlanTextResult =
       j.as[Goal.Plans.Plan].toOption.fold(preview(_root_.com.histmersion.api.exchange.MergeIssue.Detail.PreviewS(j.noSpaces), _root_.com.histmersion.api.exchange.MergeIssue.Detail.PreviewN(300))) { p =>
         List(
-          Option(p.rationale).filter(_.nonEmpty).map(r => preview(r, 160)),
+          Option(p.rationale).filter(_.nonEmpty).map(r => preview(r, _root_.com.histmersion.api.exchange.MergeIssue.Detail.PreviewN(160))),
           Option.when(p.subGoals.nonEmpty)(s"sub-goals: ${p.subGoals.map(_.slug).mkString(", ")}"),
           Option.when(p.queries.nonEmpty)(s"queries: ${p.queries.mkString("; ")}"),
-          Option.when(p.works.nonEmpty)(s"${Plural.count(p.works.size, "work")}")
+          Option.when(p.works.nonEmpty)(s"${Plural.count(_root_.com.histmersion.api.Plural.NounN((p.works.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("work"))}")
         ).flatten.mkString(" · ")
       }

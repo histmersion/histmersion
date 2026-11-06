@@ -1,0 +1,10 @@
+change	stable-position-and-route
+previously-unresolved-primitive-correction	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootString:constructor-parameter#0|type
+new-primitive	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootBoolean:constructor-parameter#0|type
+new-primitive	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootByte:constructor-parameter#0|type
+new-primitive	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootChar:constructor-parameter#0|type
+new-primitive	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootDouble:constructor-parameter#0|type
+new-primitive	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootFloat:constructor-parameter#0|type
+new-primitive	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootInt:constructor-parameter#0|type
+new-primitive	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootLong:constructor-parameter#0|type
+new-primitive	tools/refactor/model-type-measurement-fixture/src/main/Models.scala::measurefixture.Qualified.rootShort:constructor-parameter#0|type

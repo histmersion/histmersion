@@ -84,7 +84,7 @@ object ArticleMarkdown:
   private def coverage(v: Article.View): com.histmersion.api.research.ArticleMarkdown.CoverageResult = _root_.com.histmersion.api.research.ArticleMarkdown.CoverageResult(v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
 
   private[api] def metaLine(kind: com.histmersion.api.research.ArticleMarkdown.MetaLineKind, regions: List[com.histmersion.api.research.ArticleMarkdown.MetaLineRegions], period: com.histmersion.api.research.ArticleMarkdown.MetaLinePeriod, tags: List[com.histmersion.api.research.ArticleMarkdown.MetaLineTags]): com.histmersion.api.research.ArticleMarkdown.MetaLineResult =
-    val parts = List(Label.display((kind).value.trim), chipLinksList(regions, "place"), (period).value.trim, chipLinksList(tags, "tag"))
+    val parts = List(Label.display(_root_.com.histmersion.api.library.Label.DisplayS((kind).value.trim)), chipLinksList(regions, _root_.com.histmersion.api.research.ArticleMarkdown.ChipLinksListHashKey("place")), (period).value.trim, chipLinksList(tags, _root_.com.histmersion.api.research.ArticleMarkdown.ChipLinksListHashKey("tag")))
       .filter(_.nonEmpty)
     if parts.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.MetaLineResult("") else s"_${parts.mkString(" · ")}_"
 
@@ -153,7 +153,7 @@ object ArticleMarkdown:
     if rows.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksResult("")
     else
       val items = rows.map { b =>
-        val title = b.title.map(t => if truncate then s" — ${stripMd(t).take(200)}" else s" — $t").getOrElse("")
+        val title = b.title.map(t => if ((truncate) == _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate(true)) then s" — ${stripMd(t).take(200)}" else s" — $t").getOrElse("")
         s"- [[${b.id}]]$title"
       }
       _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksResult(s"\n\n## Backlinks (${rows.size})\n\n${items.mkString("\n")}")
@@ -163,7 +163,7 @@ object ArticleMarkdown:
     else
       val items = rows.map { s =>
         val t = s.title.map(_.value)
-          .map(v => if truncate then stripMd(v).take(200) else v)
+          .map(v => if ((truncate) == _root_.com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate(true)) then stripMd(v).take(200) else v)
           .getOrElse("_(not in the corpus)_")
         val auth = Source.Ref.shortAuthors(s.authors.map(_.value))
         val yr = s.year.map(_.value.toInt).map(_.toString).getOrElse("")

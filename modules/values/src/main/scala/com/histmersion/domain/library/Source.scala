@@ -22,7 +22,7 @@ object Source:
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def fromString(s: com.histmersion.domain.library.Source.Status.FromStringS): Status =
-      values.find(_.toString.equalsIgnoreCase(s)).getOrElse(Unassessed)
+      values.find(_.toString.equalsIgnoreCase((s).value)).getOrElse(Unassessed)
 
     given WireEnumValues[Status]:
       def all: Array[Status] = Status.values

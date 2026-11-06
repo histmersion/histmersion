@@ -17,4 +17,4 @@ object Dataset:
   def ofParam(raw: Option[com.histmersion.api.Dataset.OfParamRaw]): Either[Api.Error, Dataset] =
     raw.map((_).value.trim).filter(_.nonEmpty) match
       case None    => Right(Local)
-      case Some(s) => parse(s).toRight(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"dataset '$s' is not seed or local"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))
+      case Some(s) => parse(_root_.com.histmersion.api.Dataset.ParseS(s)).toRight(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"dataset '$s' is not seed or local"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))

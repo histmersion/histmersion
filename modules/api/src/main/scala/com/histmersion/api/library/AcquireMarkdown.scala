@@ -260,7 +260,7 @@ object AcquireMarkdown:
       s"### ${i.title.getOrElse(i.identifier)}",
       "",
       s"**Identifier:** `${i.identifier}`  ",
-      s"**Creator:** ${esc(i.creator.mkString(", "))}  ",
+      s"**Creator:** ${esc(_root_.com.histmersion.api.library.AcquireMarkdown.EscS(i.creator.mkString(", ")))}  ",
       s"**Year:** ${num(i.year)}  ",
       s"**Publisher:** ${cell(i.publisher)}"
     ) ++ restriction ++ List("", files) ++ i.description.toList.flatMap(d => List("", d)))
@@ -276,7 +276,7 @@ object AcquireMarkdown:
       case None => "**PDF:** none found through legal open access"
     // No stripMargin: `assessment` embeds tables, whose rows start with '|'.
     (List(
-      s"### ${if r.created then "Ingested" else "Updated"} `${r.citekey}`",
+      s"### ${if ((r.created) == _root_.com.histmersion.api.library.Ingest.Report.Created(true)) then "Ingested" else "Updated"} `${r.citekey}`",
       "",
       r.title.getOrElse("(untitled)") + "  ",
       s"**DOI:** ${doiLink(r.doi)}  ",

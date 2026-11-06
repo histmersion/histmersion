@@ -168,11 +168,11 @@ object AssetLinks:
   def toWeb(md: com.histmersion.api.media.AssetLinks.ToWebMd, citekey: com.histmersion.api.media.AssetLinks.ToWebCitekey): com.histmersion.api.media.AssetLinks.ToWebResult = retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), webBase(citekey))
 
   def toAbsolute(md: com.histmersion.api.media.AssetLinks.ToAbsoluteMd, citekey: com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey, publicUrl: com.histmersion.api.media.AssetLinks.ToAbsolutePublicUrl): com.histmersion.api.media.AssetLinks.ToAbsoluteResult =
-    retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), (publicUrl).value.trim.stripSuffix("/") + webBase(citekey))
+    retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), _root_.com.histmersion.api.media.AssetLinks.RetargetTo((publicUrl).value.trim.stripSuffix("/") + webBase(citekey)))
 
   def webBase(citekey: com.histmersion.api.media.AssetLinks.WebBaseCitekey): com.histmersion.api.media.AssetLinks.WebBaseResult = s"/source/${enc(citekey)}/assets/"
 
-  def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.UrlResult = webBase(citekey) + enc(name)
+  def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.UrlResult = (webBase(citekey)).value + enc(name)
 
   private def enc(s: com.histmersion.api.media.AssetLinks.EncS): com.histmersion.api.media.AssetLinks.EncResult =
     _root_.com.histmersion.api.media.AssetLinks.EncResult(java.net.URLEncoder.encode((s).value, "UTF-8").replace("+", "%20"))

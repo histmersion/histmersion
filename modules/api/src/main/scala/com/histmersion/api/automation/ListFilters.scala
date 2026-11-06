@@ -312,7 +312,7 @@ object ListFilters:
         scala.util
           .Try(LocalDate.parse(d))
           .toOption
-          .map(day => (if end then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
+          .map(day => (if ((end) == _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(true)) then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
           .toRight(_root_.com.histmersion.api.automation.ListFilters.TimeBoundResultPart1(s"'$s' is not a date"))
       case _ =>
         scala.util
@@ -328,8 +328,8 @@ object ListFilters:
       now: Instant
   ): Either[com.histmersion.api.automation.ListFilters.RangeResultPart1, (Option[Instant], Option[Instant])] =
     for
-      s <- since.fold(Right(None))(timeBound(_, end = false, now).map(Some(_)).left.map(m => s"since: $m"))
-      u <- until.fold(Right(None))(timeBound(_, end = true, now).map(Some(_)).left.map(m => s"until: $m"))
+      s <- since.fold(Right(None))(timeBound(_, end = _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(false), now).map(Some(_)).left.map(m => s"since: $m"))
+      u <- until.fold(Right(None))(timeBound(_, end = _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(true), now).map(Some(_)).left.map(m => s"until: $m"))
       _ <- Either.cond(s.zip(u).forall((a, b) => a.isBefore(b)), (), "since must lie before until")
     yield (s, u)
 

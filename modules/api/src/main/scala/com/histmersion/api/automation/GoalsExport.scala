@@ -111,7 +111,7 @@ object GoalsExport:
     val heading = s"${"#" * math.min((depth).value + 2, 6)} ${oneLine(g.title)}"
     val facts = List(
       Some(s"`${g.slug}` · ${g.status}"),
-      Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, "")).filter(_.nonEmpty).map(p => s"**Period:** $p"),
+      Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, _root_.com.histmersion.api.YearFmt.OpenPeriodNone(""))).filter(_.nonEmpty).map(p => s"**Period:** $p"),
       Option.when(g.regions.nonEmpty)(s"**Regions:** ${g.regions.mkString(", ")}"),
       Option.when(g.tags.nonEmpty)(s"**Tags:** ${g.tags.mkString(", ")}"),
       g.parentSlug.filter(_ => depth == _root_.com.histmersion.api.automation.GoalsExport.BlockDepth(0)).map(p => s"**Parent:** `$p`" + (if known(p) then "" else " (not found)")),
@@ -142,25 +142,25 @@ object GoalsExport:
     List(
       section(
         com.histmersion.api.automation.Goal.LinkKind.Article,
-        "Articles",
-        l => s"[[${l.ref}]]${titled(l)}${noted(l)}",
+        _root_.com.histmersion.api.automation.GoalsExport.LinkSectionsSectionLabel("Articles"),
+        l => _root_.com.histmersion.api.automation.GoalsExport.LinkSectionsSectionLineResult(s"[[${l.ref}]]${titled(l)}${noted(l)}"),
         byRef
       ),
       section(
         com.histmersion.api.automation.Goal.LinkKind.Source,
-        "Sources",
-        l => s"[[${l.ref}]]${titled(l)}${noted(l)}",
+        _root_.com.histmersion.api.automation.GoalsExport.LinkSectionsSectionLabel("Sources"),
+        l => _root_.com.histmersion.api.automation.GoalsExport.LinkSectionsSectionLineResult(s"[[${l.ref}]]${titled(l)}${noted(l)}"),
         byRef
       ),
       section(
         com.histmersion.api.automation.Goal.LinkKind.Query,
-        "Searches",
+        _root_.com.histmersion.api.automation.GoalsExport.LinkSectionsSectionLabel("Searches"),
         l => s"\"${oneLine(l.ref)}\"${noted(l)}",
         byRef
       ),
       section(
         com.histmersion.api.automation.Goal.LinkKind.QueueItem,
-        "Queue items",
+        _root_.com.histmersion.api.automation.GoalsExport.LinkSectionsSectionLabel("Queue items"),
         l => queueLine(l, itemStatus),
         byId
       )

@@ -124,7 +124,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
         (tree.pos.end, tree.pos.end, "\n\n" + snippet + "\n")
       }
       val ordered = patches.sortBy(_._1)
-      require(ordered.sliding(2).forall { case List(a,b) => a._2 <= b._1; case _ => true }, "Overlapping AST patches")
+      require(ordered.sliding(2).forall { case List(a,b) => a._2 <= b._1; case _ => true }, "Overlapping AST patches in " + path + ": " + ordered.sliding(2).collect { case List(a,b) if a._2 > b._1 => (a._1,a._2,b._1,b._2) }.mkString(","))
       val next = ordered.reverse.foldLeft(source) { case(s,(a,b,n)) => s.patch(a,n,b-a) }
       parseSource(next,path)
       if(source == next) Nil else List((path, source, next))
@@ -363,7 +363,7 @@ object CompilerRepairs {
     val text = Files.readString(Paths.get(observation,"build.log")).replaceAll("\u001b\\[[;\\d]*m","")
     val header = "(?m)^.*-- \\[(E[0-9]+)\\].*?: (.+\\.scala):([0-9]+):([0-9]+).*$".r
     val allDiagnostics = header.findAllMatchIn(text).toList
-    val diagnostics = allDiagnostics.filter(d => !tapirEndpointsOnly || d.group(1) == "E007")
+    val diagnostics = allDiagnostics.filter(d => !tapirEndpointsOnly || Set("E007","E172")(d.group(1)))
     val unclassifiedHeaders = "(?m)^.*-- (?:Error|Warning): (.+\\.scala):([0-9]+):([0-9]+).*$".r.findAllMatchIn(text).toList
     val boundaries = (allDiagnostics.map(_.start) ++ unclassifiedHeaders.map(_.start)).sorted
     require(diagnostics.nonEmpty,"No positioned compiler diagnostics parsed; do not infer a clean build")
@@ -736,8 +736,46 @@ object CompilerRepairs {
             proposed += ((path,selection,next,"E081 lift historically applied scalar callback from " + historical._6)); supported = true
           }
         }
-        if(d.group(1) == "E007") {
-          for(found <- fullDetail("Found").flatMap(s => diagnosticType(s)); required <- fullDetail("Required").flatMap(s => diagnosticType(s,nullable = true))) {
+        if(d.group(1) == "E007" || (tapirEndpointsOnly && d.group(1) == "E172")) {
+          val concatenation = if(tapirEndpointsOnly && d.group(1) == "E172" && sourceDisplayMatches) {
+            val message = block.linesIterator.filter(_.contains('|')).map(s => s.substring(s.indexOf('|') + 1).trim).mkString(" ")
+            val request = "No given instance of type (sttp.tapir.typelevel.ParamConcat.Aux\\[.+?\\]) was found for parameter ts of method (out|errorOut) in trait (EndpointOutputsOps|EndpointErrorOutputsOps)\\.".r.findFirstMatchIn(message)
+            request.toList.flatMap { m => m.group(1).parse[Type].toOption.toList.collect {
+              case a: Type.Apply if a.argClause.values.size == 3 && types.base(a.argClause.values.head) == "Unit" => a.argClause.values
+            }.flatMap { arguments =>
+              val slot = if(m.group(2) == "out") 2 else 1
+              val expectedTrait = if(slot == 2) "EndpointOutputsOps" else "EndpointErrorOutputsOps"
+              val bindings = tree.collect {
+                case v: Defn.Val if v.decltpe.nonEmpty => v.rhs -> v.decltpe.get
+                case f: Defn.Def if f.decltpe.nonEmpty => f.body -> f.decltpe.get
+              }
+              def declaredIdentity(t: Type): String = t match {
+                case a: Type.Apply => types.clean(a.tpe.syntax) + a.argClause.values.map(declaredIdentity).mkString("[",",","]")
+                case a: Type.Tuple => a.args.map(declaredIdentity).mkString("(",",",")")
+                case _ => types.pure(t.syntax,t).map(_.name).getOrElse(contextual(t))
+              }
+              if(m.group(3) != expectedTrait) Nil else bindings.flatMap { case(rhs,declared) =>
+                val part = declared match {
+                  case a: Type.Apply if Set("PublicEndpoint","sttp.tapir.PublicEndpoint")(a.tpe.syntax.stripPrefix("_root_.")) && a.argClause.values.size == 4 => Some(a.argClause.values(slot))
+                  case _ => None
+                }
+                val rootCall = rhs match {
+                  case a: Term.Apply if a.argClause.values.size == 1 && a.fun.is[Term.Select] && a.fun.asInstanceOf[Term.Select].name.value == m.group(2) && a.fun.asInstanceOf[Term.Select].name.pos.start <= offset && offset <= a.pos.end => true
+                  case _ => false
+                }
+                if(!rootCall || !part.exists(t => declaredIdentity(t) == contextual(arguments(2)))) Nil else {
+                  val initial = List("Unit","Unit","Unit","Any").map(_.parse[Type].get)
+                  def endpointPart(t: Type) = ("sttp.tapir.PublicEndpoint" + initial.updated(slot,t).map(_.syntax).mkString("[",", ","]")).parse[Type].get
+                  List((endpointPart(arguments(1)),endpointPart(arguments(2)),Some(rhs)))
+                }
+              }
+            }} match { case List(value) => Some(value); case _ => None }
+          } else None
+          val mismatchTypes = if(d.group(1) == "E007") for {
+            f <- fullDetail("Found").flatMap(s => diagnosticType(s))
+            r <- fullDetail("Required").flatMap(s => diagnosticType(s,nullable = true))
+          } yield (f,r,Option.empty[Term]) else concatenation
+          for((found,required,knownEndpointBody) <- mismatchTypes) {
             val body = tree.collect { case m: Defn.Def if displays.nonEmpty && m.body.pos.startLine + 1 == displays.head.group(1).toInt && m.body.pos.endLine + 1 == displays.last.group(1).toInt && m.decltpe.exists(t => contextual(t) == contextual(required)) => m.body }.headOption
             def endpoint(t: Type): Option[List[Type]] = t match {
               case a: Type.Apply if a.tpe.syntax.stripPrefix("_root_.") == "sttp.tapir.Endpoint" && a.argClause.values.size == 5 => Some(a.argClause.values)
@@ -750,7 +788,7 @@ object CompilerRepairs {
               displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim)) &&
               rhs.pos.startLine + 1 == displays.head.group(1).toInt && rhs.pos.endLine + 1 == displays.last.group(1).toInt &&
               (!sourceDisplayMatches || mismatch.exists(t => t.pos.start == rhs.pos.start && t.pos.end == rhs.pos.end))
-            val endpointBodies = if(tapirEndpointsOnly && endpoint(found).nonEmpty && endpoint(required).nonEmpty) tree.collect {
+            val endpointBodies = if(knownEndpointBody.nonEmpty) knownEndpointBody.toList else if(tapirEndpointsOnly && endpoint(found).nonEmpty && endpoint(required).nonEmpty) tree.collect {
               case v: Defn.Val if v.decltpe.exists(t => endpointBinding(v.rhs,t)) => v.rhs
               case m: Defn.Def if m.decltpe.exists(t => endpointBinding(m.body,t)) => m.body
             }.distinct else Nil
@@ -758,7 +796,11 @@ object CompilerRepairs {
               else if(sourceDisplayMatches) mismatch else if(displays.nonEmpty && displays.forall(m => m.group(1).toInt <= starts.size && (m.group(2).trim == "..." || m.group(2).trim == source.linesIterator.drop(m.group(1).toInt - 1).next().trim))) {
               body.orElse(tree.collect { case t: Term if displays.head.group(1).toInt < displays.last.group(1).toInt && t.pos.startLine + 1 == displays.head.group(1).toInt && t.pos.endLine + 1 == displays.last.group(1).toInt => t }.sortBy(t => -(t.pos.end - t.pos.start)).headOption)
             } else None
-            target.filterNot(t => types.parents(t).exists(_.is[Pat]) || t.parent.exists {
+            target.filterNot(t => types.parents(t).exists {
+              case c: Case => c.pat.pos.start <= t.pos.start && t.pos.end <= c.pat.pos.end
+              case p: Pat => !p.is[Term]
+              case _ => false
+            } || t.parent.exists {
               case d: Defn.Def => d.name eq t
               case d: Decl.Def => d.name eq t
               case o: Defn.Object => o.name eq t
@@ -815,7 +857,10 @@ object CompilerRepairs {
               case f: Term.AnonymousFunction if !found.is[Type.Function] && !required.is[Type.Function] => callback(f)(body => convert(found,required,body))
               case _ => convert(found,required,original)
             }
-            converted.filter(_ != original).foreach { n => proposed += ((path,t,n,"E007 " + found.syntax + " -> " + required.syntax)); supported = true }
+            converted.filter(_ != original).foreach { n =>
+              val reason = if(knownEndpointBody.nonEmpty) "E172 Tapir Unit output concatenation (only changed slot witnessed) " else "E007 "
+              proposed += ((path,t,n,reason + found.syntax + " -> " + required.syntax)); supported = true
+            }
             }
           }
         }
@@ -969,7 +1014,7 @@ object CompilerRepairs {
             }
           }
         }
-        if(!constructionOnly && sourceDisplayMatches && d.group(1) == "E172") {
+        if(!constructionOnly && !tapirEndpointsOnly && sourceDisplayMatches && d.group(1) == "E172") {
           if(testComparisons) {
             val pair = "Values of types ([_A-Za-z][_A-Za-z0-9.]*) and ([_A-Za-z][_A-Za-z0-9.]*) cannot be compared".r.findFirstMatchIn(block)
             for {
@@ -1082,22 +1127,36 @@ object CompilerRepairs {
         case _ => ()
       }
     }}
-    val guardPatches = patternGuards.toList.map { case((path,c),guards) =>
-      val source = Files.readString(Paths.get(path))
-      val condition = guards.map(s => "(" + s + ")").mkString(" && ")
-      val patch = c.cond match {
-        case Some(old) => (old.pos.start,old.pos.end,condition + " && (" + source.substring(old.pos.start,old.pos.end) + ")")
-        case None => (c.pat.pos.end,c.pat.pos.end," if " + condition)
-      }
-      evidence += List(path,(c.pos.startLine + 1).toString,"PATTERN_GUARD " + c.pat.structure,patch._3)
-      path -> patch
-    }
     val accepted = scala.collection.mutable.ListBuffer.empty[(String,Tree,String,String)]
     proposed.toList.groupBy(p => (p._1,p._2.pos.start,p._2.pos.end,p._3)).values.map(_.head).toList.sortBy(p => (p._2.pos.end - p._2.pos.start,p._1,p._2.pos.start)).foreach { p =>
       if(!accepted.exists(q => p._1 == q._1 && p._2.pos.start < q._2.pos.end && q._2.pos.start < p._2.pos.end)) accepted += p
       else evidence += List(p._1,(p._2.pos.startLine + 1).toString,"UNRESOLVED compiler overlapping expression","innermost repair first; recompile before retry")
     }
-    (accepted.toList.map { case(path,t,next,reason) =>
+    val absorbed = scala.collection.mutable.Set.empty[(String,Int,Int)]
+    val guardPatches = patternGuards.toList.map { case((path,c),guards) =>
+      val source = Files.readString(Paths.get(path))
+      val condition = guards.map(s => "(" + s + ")").mkString(" && ")
+      val patch = c.cond match {
+        case Some(old) =>
+          val inner = accepted.filter(p => p._1 == path && old.pos.start <= p._2.pos.start && p._2.pos.end <= old.pos.end).toList
+          val body = inner.sortBy(_._2.pos.start).reverse.foldLeft(source.substring(old.pos.start,old.pos.end)) { case(s,(_,t,next,reason)) =>
+            absorbed += ((path,t.pos.start,t.pos.end))
+            evidence += List(path,(t.pos.startLine + 1).toString,"GUARD_EXPRESSION_COMPILER " + reason + " " + t.structure,next)
+            s.patch(t.pos.start - old.pos.start,next,t.pos.end - t.pos.start)
+          }
+          (old.pos.start,old.pos.end,condition + " && (" + body + ")")
+        case None => (c.pat.pos.end,c.pat.pos.end," if " + condition)
+      }
+      evidence += List(path,(c.pos.startLine + 1).toString,"PATTERN_GUARD " + c.pat.structure,patch._3)
+      path -> patch
+    }
+    val emitted = accepted.toList.filterNot { p =>
+      val incorporated = absorbed((p._1,p._2.pos.start,p._2.pos.end))
+      val conflict = !incorporated && guardPatches.exists { case(path,(start,end,_)) => path == p._1 && p._2.pos.start < end && start < p._2.pos.end }
+      if(conflict) evidence += List(p._1,(p._2.pos.startLine + 1).toString,"UNRESOLVED compiler overlapping pattern guard","Pattern and guard changes retained together; recompile before retrying the enclosing expression")
+      incorporated || conflict
+    }
+    (emitted.map { case(path,t,next,reason) =>
       evidence += List(path,(t.pos.startLine + 1).toString,"COMPILER " + reason + " " + t.structure,next)
       path -> ((t.pos.start,t.pos.end,next))
     } ++ guardPatches).groupBy(_._1).map { case(p,rs) => p -> rs.map(_._2) }
@@ -1566,6 +1625,11 @@ object TypeMeasurement {
     import scala.jdk.CollectionConverters._
     implicit val dialect: Dialect = dialects.Scala3
     val primitives = Set("String","Boolean","Byte","Short","Int","Long","Float","Double","Char")
+    def rootPrimitive(s: String): Option[String] = {
+      if(s == "_root_.java.lang.String") Some("String")
+      else if(s.startsWith("_root_.scala.") && primitives(s.stripPrefix("_root_.scala."))) Some(s.stripPrefix("_root_.scala."))
+      else None
+    }
     val positions = scala.collection.mutable.ListBuffer.empty[List[String]]
     val leaves = scala.collection.mutable.ListBuffer.empty[List[String]]
     val contexts = scala.collection.mutable.Map.empty[String,List[String]]
@@ -1629,6 +1693,7 @@ object TypeMeasurement {
           case Type.Name(n) if primitives(n) => emit(route,"primitive",n,Some(t),callback)
           case Type.Select(Term.Name("scala"),Type.Name(n)) if primitives(n) => emit(route,"primitive",n,Some(t),callback)
           case Type.Select(Term.Select(Term.Name("java"),Term.Name("lang")),Type.Name("String")) => emit(route,"primitive","String",Some(t),callback)
+          case t: Type.Select if rootPrimitive(t.syntax).nonEmpty => emit(route,"primitive",rootPrimitive(t.syntax).get,Some(t),callback)
           case a: Type.Apply => a.argClause.values.zipWithIndex.foreach { case(v,i) => inspect(v,route + "/argument[" + i + "]",callback) }
           case f: Type.Function =>
             f.paramClause.values.zipWithIndex.foreach { case(v,i) => inspect(v,route + "/function-parameter[" + i + "]",true) }
@@ -1700,11 +1765,16 @@ object TypeMeasurement {
     val summary = leaves.toList.groupBy(l => (byId(l.head)(3),byId(l.head)(4),l(5),l(2),l(6))).toList.sortBy(_._1)
     write("totals.tsv","scope\tlocality\tfamily\tstatus\tclassification\tpositions\tleaves",summary.map { case((s,o,f,t,c),ls) => List(s,o,f,t,c,ls.map(_.head).distinct.size.toString,ls.size.toString) })
     if(previous.nonEmpty) {
-      val before = Files.readAllLines(Paths.get(previous,"leaves.tsv")).asScala.drop(1).map(_.split("\t",-1)).filter(_(2) == "primitive").map(r => r(0) + "|" + r(1)).toSet
+      val previousRows = Files.readAllLines(Paths.get(previous,"leaves.tsv")).asScala.drop(1).map(_.split("\t",-1)).toList
+      val before = previousRows.filter(_(2) == "primitive").map(r => r(0) + "|" + r(1)).toSet
+      val previousRootPrimitives = previousRows.filter(r => r(2) == "unresolved" && rootPrimitive(r(3)).nonEmpty).map(r => r(0) + "|" + r(1)).toSet
       val after = leaves.filter(_(2) == "primitive").map(r => esc(r.head) + "|" + esc(r(1))).toSet
-      val delta = before.diff(after).toList.sorted.map(id => List("raw-primitive-eliminated-unverified",id)) ++ after.diff(before).toList.sorted.map(id => List("new-primitive",id))
+      val recognized = after.diff(before).intersect(previousRootPrimitives)
+      val introduced = after.diff(before) -- recognized
+      val delta = before.diff(after).toList.sorted.map(id => List("raw-primitive-eliminated-unverified",id)) ++
+        recognized.toList.sorted.map(id => List("previously-unresolved-primitive-correction",id)) ++ introduced.toList.sorted.map(id => List("new-primitive",id))
       write("changes.tsv","change\tstable-position-and-route",delta)
-      println(s"Stable-ID delta: ${before.diff(after).size} raw leaves eliminated; ${after.diff(before).size} new primitive leaves")
+      println(s"Stable-ID delta: ${before.diff(after).size} raw leaves eliminated; ${introduced.size} new primitive leaves; ${recognized.size} previously unresolved primitive corrections")
     }
     Files.writeString(out.resolve("measurement.txt"),s"${sources.size} files; ${positions.size} positions; ${leaves.count(_(2) == "primitive")} explicit primitive leaves; ${leaves.count(_(6) == "confirmed")} confirmed occurrences.\nAST-only: inference, aliases, named references and primitive shadowing require semantic review. Candidates are not confirmed violations; no accepted exceptions inferred. IDs omit line numbers; same-name overloads use source-order ordinals. Historical semantic inventory remains unchanged.\n")
     println(Files.readString(out.resolve("measurement.txt")))

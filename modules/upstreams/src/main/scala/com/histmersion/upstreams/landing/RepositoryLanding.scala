@@ -238,7 +238,7 @@ object RepositoryLanding:
     */
   def wordLabel(label: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelLabel, w: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelW): com.histmersion.upstreams.landing.RepositoryLanding.WordLabelResult =
     (w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
-      ((label).value.startsWith((w).value) && label.length > w.length && { val c = label.charAt(w.length); c == '-' || c.isDigit }))
+      ((label).value.startsWith((w).value) && (label).value.length > w.length && { val c = label.charAt(w.length); c == '-' || c.isDigit }))
 
   /** A host entry matches the host itself or any subdomain of it. */
   def matchesHost(host: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost, entry: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostEntry): com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostResult =
@@ -300,8 +300,8 @@ object RepositoryLanding:
       .groupBy(_.url)
       .toList
       .map { (u, xs) =>
-        val repo = xs.exists(_.repository)
-        (cs.indexWhere(_.url == u), Candidate(u, repo, !repo && xs.exists(_.publisher), xs.exists(_.open)))
+        val repo = xs.exists((refactorCallback => ((refactorCallback.repository) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(true))))
+        (cs.indexWhere(_.url == u), Candidate(u, _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(repo), !repo && xs.exists((refactorCallback => ((refactorCallback.publisher) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(true)))), xs.exists((refactorCallback => ((refactorCallback.open) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(true))))))
       }
       .sortBy(_._1)
       .map(_._2)
@@ -373,7 +373,7 @@ object RepositoryLanding:
         .toMap
       for
         key <- attrs.get("name").orElse(attrs.get("property")).map(_.trim.toLowerCase).filter(_.nonEmpty)
-        content <- attrs.get("content").map(decode).map(_.trim)
+        content <- attrs.get("content").map({ val refactorFunction = decode; (refactorValue5) => refactorFunction(_root_.com.histmersion.upstreams.landing.RepositoryLanding.DecodeS(refactorValue5)) }).map(_.trim)
       yield key -> content
     }
 
@@ -391,11 +391,11 @@ object RepositoryLanding:
       .replace("&#47;", "/"))
 
   /** Pure: the page's `generator` tags (`DSpace 6.3`, `EPrints 3.4`). */
-  def generators(html: com.histmersion.upstreams.landing.RepositoryLanding.GeneratorsHtml): List[com.histmersion.upstreams.landing.RepositoryLanding.GeneratorsResult] = metaTags(html).collect { case ("generator", g) if g.nonEmpty => g }
+  def generators(html: com.histmersion.upstreams.landing.RepositoryLanding.GeneratorsHtml): List[com.histmersion.upstreams.landing.RepositoryLanding.GeneratorsResult] = metaTags(html).collect { case (refactorPattern, g) if (refactorPattern.value == "generator") && ((g).value.nonEmpty) => g }
 
   /** Pure: the `citation_pdf_url`s a page names, made absolute against `pageUrl`, http(s) only. */
   def citationPdfUrls(html: com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsHtml, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsPageUrl): List[com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsResult] =
-    metaTags(html).collect { case ("citation_pdf_url", u) if u.nonEmpty => absolute(u, pageUrl) }.flatten.distinct
+    metaTags(html).collect { case (refactorPattern2, u) if (refactorPattern2.value == "citation_pdf_url") && ((u).value.nonEmpty) => absolute(u, pageUrl) }.flatten.distinct
 
   /** Pure: `href` against the page it is on (`/bitstream/…` → `https://host/bitstream/…`). */
   def absolute(href: com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteHref, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl): Option[com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteResult] =
@@ -439,7 +439,7 @@ object RepositoryLanding:
         .map(ojsDownload)
         .distinct
         .filter(u => host(u).exists(h => own.contains(h) || rules.oaPublisher(h)))
-    else if !isRepository(pageUrl, indexSaysRepository, html, rules) then Nil
+    else if !((isRepository(pageUrl, indexSaysRepository, html, rules)) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryResult(true)) then Nil
     else citationPdfUrls(html, pageUrl).filterNot(u => host(u).exists(rules.denied))
 
   private val GalleyLink = "(?is)<a\\s+([^>]*)>".r
@@ -463,12 +463,12 @@ object RepositoryLanding:
           }
           .toMap
         val cls = attrs.getOrElse("class", "").toLowerCase.split("\\s+").toSet
-        attrs.get("href").filter(_ => cls("obj_galley_link") && cls("pdf")).map(decode)
+        attrs.get("href").filter(_ => cls("obj_galley_link") && cls("pdf")).map({ val refactorFunction3 = decode; (refactorValue7) => refactorFunction3(_root_.com.histmersion.upstreams.landing.RepositoryLanding.DecodeS(refactorValue7)) })
       }
       .toList
     val unescaped = page.replace("\\u0022", "\"").replace("&quot;", "\"").replace("\\\\/", "/").replace("\\/", "/")
     val listed = GalleyJson.findAllMatchIn(unescaped).map(_.group(1)).toList
-    (links ++ listed).flatMap(absolute(_, pageUrl)).filter(u => "(?i)^https?://".r.findPrefixOf(u).isDefined).distinct
+    (links ++ listed).flatMap(absolute(_, pageUrl)).filter(u => "(?i)^https?://".r.findPrefixOf((u).value).isDefined).distinct
 
   /** Pure: an OJS galley's viewer URL (`…/article/view/<article>/<galley>`, an HTML page around the PDF) as its
     * download (`…/article/download/<article>/<galley>`); any other URL as it is.

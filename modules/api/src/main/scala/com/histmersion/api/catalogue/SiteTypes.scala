@@ -298,7 +298,7 @@ object SiteTypes:
 
   def geonames(fcode: com.histmersion.api.catalogue.SiteTypes.GeonamesFcode): Option[com.histmersion.api.catalogue.SiteTypes.GeonamesResult] =
     Option(fcode).map((_).value.trim.toUpperCase(java.util.Locale.ROOT)).filter(_.nonEmpty).flatMap { c =>
-      geonamesCodes.get(c).orElse(Option.when(c.startsWith("P."))(Settlement))
+      geonamesCodes.get(_root_.com.histmersion.api.catalogue.SiteTypes.GeonamesCodesPart1(c)).orElse(Option.when(c.startsWith("P."))(Settlement))
     }
 
   val ArchaeologicalSite = "Q839954"
@@ -392,7 +392,7 @@ object SiteTypes:
   def wikidataOwn(p31: List[com.histmersion.api.catalogue.SiteTypes.WikidataOwnP31]): Option[com.histmersion.api.catalogue.SiteTypes.WikidataOwnResult] = best(p31.map((_).value.trim).flatMap(wikidataClasses.get))
 
   def p31Of(json: Option[com.histmersion.api.catalogue.SiteTypes.P31OfJson]): List[com.histmersion.api.catalogue.SiteTypes.P31OfResult] =
-    json.toList.flatMap(s => "Q[0-9]+".r.findAllIn(s).toList)
+    json.toList.flatMap(s => "Q[0-9]+".r.findAllIn((s).value).toList)
 
   def of(
       placeId: com.histmersion.api.catalogue.SiteTypes.OfPlaceId,

@@ -186,9 +186,9 @@ object ModelChains:
           val (lhs, win) = (t.substring(0, i).trim, t.substring(i + 1))
           val words = lhs.split("\\s+").toList.filter(_.nonEmpty)
           val parsed: Either[com.histmersion.api.automation.ModelChains.Limit.ParseParsedPart1, (BigDecimal, Measure)] = words match
-            case List(a) if a.startsWith("$") => amount(a).map(_ -> Measure.Usd)
+            case List(a) if a.startsWith("$") => amount(_root_.com.histmersion.api.automation.ModelChains.Limit.AmountRaw(a)).map(_ -> Measure.Usd)
             case List(a, m)                   =>
-              Measure.parse(m).toRight(s"'$m' is neither tokens nor usd").flatMap(me => amount(a).map(_ -> me))
+              Measure.parse(_root_.com.histmersion.api.automation.ModelChains.Measure.ParseS(m)).toRight(s"'$m' is neither tokens nor usd").flatMap(me => amount(a).map(_ -> me))
             case _ => Left(_root_.com.histmersion.api.automation.ModelChains.Limit.ParseParsedPart1(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
           for
             am <- parsed
@@ -237,10 +237,10 @@ object ModelChains:
       if t.endsWith(":*") then
         val p = t.dropRight(2)
         ProviderKind
-          .parse(p, known)
+          .parse(_root_.com.histmersion.api.automation.ProviderKind.ParseS(p), known)
           .map(Provider(_))
           .toRight(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
-      else ModelRef.parse(t, known).map(Model(_))
+      else ModelRef.parse(_root_.com.histmersion.api.automation.Agents.ModelRef.ParseS(t), known).map(Model(_))
 
   final case class Allowance(target: Target, limits: List[Limit], reservePct: Allowance.ReservePct):
     def text: com.histmersion.api.automation.ModelChains.Allowance.TextResult =

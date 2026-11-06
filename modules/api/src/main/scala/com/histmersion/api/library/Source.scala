@@ -86,7 +86,7 @@ object Source:
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def fromString(s: com.histmersion.api.library.Source.Status.FromStringS): Status =
-      values.find(_.toString.equalsIgnoreCase(s)).getOrElse(Unassessed)
+      values.find(_.toString.equalsIgnoreCase((s).value)).getOrElse(Unassessed)
 
     given WireEnumValues[Status]:
       def all: Array[Status] = Status.values
@@ -413,10 +413,10 @@ object Source:
       else
         @tailrec def isbnEnd(i: com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI, digits: com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits): Option[com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndResult] =
           if digits >= 13 then Some(i)
-          else if (i).value < suffix.length && suffix(i).isDigit then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits((digits).value + 1))
+          else if (i).value < suffix.length && suffix((i).value).isDigit then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits((digits).value + 1))
           else if (i).value < suffix.length && suffix((i).value) == '-' then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), digits)
           else None
-        isbnEnd(0, 0).map(end => suffix.drop(end).exists(_.isLetterOrDigit))
+        isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI(0), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits(0)).map(end => suffix.drop(end).exists(_.isLetterOrDigit))
 
   final case class Match(
       rightUid: UUID,
@@ -563,8 +563,8 @@ object Source:
       names match
         case Nil           => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult("")
         case a :: Nil      => surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))
-        case a :: b :: Nil => (surname(a)).value + " & " + surname(b)
-        case a :: _        => (surname(a)).value + " et al."
+        case a :: b :: Nil => (surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " & " + surname(b)
+        case a :: _        => (surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " et al."
 
   final case class Renamed(
       oldCitekey: com.histmersion.api.library.Citekey,
@@ -835,7 +835,7 @@ object Source:
         rest match
           case Nil        => acc.reverse
           case in :: tail =>
-            val id = Iterator.from(0).map(findingId(citekey, _)).find(n => !used.contains(n)).get
+            val id = Iterator.from(0).map(findingId(citekey, _root_.com.histmersion.api.library.Source.Write.FindingIdN(_))).find(n => !used.contains(n)).get
             loop(tail, used + id, toFinding(citekey, id, in) :: acc)
       traverse(loop(adds, existing.map(_.id).toSet, Nil))(Predef.identity)
 
@@ -855,7 +855,7 @@ object Source:
         case None    => Right(None)
         case Some(c) =>
           Confidence
-            .fromString(c)
+            .fromString(_root_.com.histmersion.api.library.Confidence.FromStringS(c))
             .map(Some(_))
             .toRight(_root_.com.histmersion.api.library.Source.Write.ConfidenceOfResultPart1(s"$what: confidence '$c' is not one of ${Confidence.values.map(_.wire).mkString("|")}"))
 

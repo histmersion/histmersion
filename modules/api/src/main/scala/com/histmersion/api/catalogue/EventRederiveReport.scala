@@ -54,7 +54,7 @@ object EventRederiveReport:
         s"${r.providers.mkString(", ")}: ${r.records} record(s) re-derived (${r.fromRaw} from the catalogue's own record)"
       ),
       Some(
-        s"${r.changed} dating(s) ${if r.dryRun then "would change" else "changed"}, ${r.updated} event(s) refreshed"
+        s"${r.changed} dating(s) ${if ((r.dryRun) == _root_.com.histmersion.api.catalogue.EventRederiveReport.DryRun(true)) then "would change" else "changed"}, ${r.updated} event(s) refreshed"
       ),
       Option.when(r.after.nonEmpty)(s"precision ${counts(r.before)} → ${counts(r.after)}"),
       Option.when((r.offMap).value > 0)(s"${r.offMap} imprecise (off the map, on the list)"),

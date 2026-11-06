@@ -34,7 +34,7 @@ object ConfidenceStyle:
 
   def desaturate(rgb: com.histmersion.api.ConfidenceStyle.DesaturateRgb, c: Confidence): com.histmersion.api.ConfidenceStyle.DesaturateResult =
     val s = saturation(c)
-    "\\d+".r.findAllIn(rgb).take(3).map(_.toInt).toList match
+    "\\d+".r.findAllIn((rgb).value).take(3).map(_.toInt).toList match
       case r :: g :: b :: Nil if (s).value < 1.0 =>
         val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
         def mix(v: com.histmersion.api.ConfidenceStyle.DesaturateMixV) = (grey + (v - grey) * s).round.toInt
@@ -62,7 +62,7 @@ object ConfidenceStyle:
   def icon(c: Confidence): com.histmersion.api.ConfidenceStyle.IconResult =
     val parts = iconParts(c)
       .map(p =>
-        if p.filled then s"""<path d="${p.d}" fill="currentColor"/>"""
+        if ((p.filled) == _root_.com.histmersion.api.ConfidenceStyle.IconPart.Filled(true)) then s"""<path d="${p.d}" fill="currentColor"/>"""
         else s"""<path d="${p.d}" fill="none" stroke="currentColor"/>"""
       )
       .mkString

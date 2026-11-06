@@ -37,7 +37,7 @@ object Rename:
     Option.when((id).value.startsWith((oldCk).value + "#"))(_root_.com.histmersion.api.library.Rename.FindingIdResult((newCk).value + (id).value.drop((oldCk).value.length)))
 
   def replaceToken(text: com.histmersion.api.library.Rename.ReplaceTokenText, oldCk: com.histmersion.api.library.Rename.ReplaceTokenOldCk, newCk: com.histmersion.api.library.Rename.ReplaceTokenNewCk): com.histmersion.api.library.Rename.ReplaceTokenResult =
-    val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote(oldCk)}(?![a-z0-9_.-])".r
+    val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote((oldCk).value)}(?![a-z0-9_.-])".r
     token.replaceAllIn(text, java.util.regex.Matcher.quoteReplacement(newCk))
 
   final case class Count(table: Count.Table, rows: Count.Rows) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

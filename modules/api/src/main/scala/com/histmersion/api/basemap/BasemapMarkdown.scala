@@ -39,18 +39,18 @@ object BasemapMarkdown:
     }
     val table = ("| layer | what | size | zoom | region | source, fetched |" :: "|---|---|---|---|---|---|" :: rows)
       .mkString("\n")
-    val kept = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && l.present).flatMap(_.kept)
+    val kept = s.layers.find(l => l.layer == Basemap.Layer.Vector.wire && ((l.present) == _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Present(true))).flatMap(_.kept)
     val terrain = s.layers.find(_.layer == Basemap.Layer.Terrain.wire)
     val focus =
       terrain.toList.flatMap(_.focus).map(f => s"- focus region `${f.name}`: zoom ${f.minZoom}–${f.maxZoom}, ${f.bbox}, ${Backup.humanBytes(f.bytes)}${f.fetchedAt.fold("")(t => s", $t")}")
     val notes = List(
       kept.map(k => s"The vector layer keeps $k."),
       terrain.flatMap(_.onDemand).map(onDemand),
-      s.layers.find(_.layer == Basemap.Layer.Vector.wire).flatMap(_.onDemand).map(outside("The map", "vector", _)),
+      s.layers.find(_.layer == Basemap.Layer.Vector.wire).flatMap(_.onDemand).map(outside(_root_.com.histmersion.api.basemap.BasemapMarkdown.OutsideWhat("The map"), _root_.com.histmersion.api.basemap.BasemapMarkdown.OutsideKey("vector"), _)),
       s.layers
         .find(_.layer == Basemap.Layer.Bathymetry.wire)
         .flatMap(_.onDemand)
-        .map(outside("The sea floor", "bathymetry", _)),
+        .map(outside(_root_.com.histmersion.api.basemap.BasemapMarkdown.OutsideWhat("The sea floor"), _root_.com.histmersion.api.basemap.BasemapMarkdown.OutsideKey("bathymetry"), _)),
       Option.when(focus.nonEmpty)(("Relief kept deeper for:" :: focus).mkString("\n")),
       Option.when(((s.available) == _root_.com.histmersion.api.basemap.Basemap.Status.Available(true)) && s.styles.nonEmpty)(
         "Styles: " + s.styles
@@ -64,8 +64,8 @@ object BasemapMarkdown:
       ),
       s.running.map(r => s"A fetch is running ($r) — `histmersion jobs`."),
       Option.when(s.hints.nonEmpty)(s.hints.mkString(" ")),
-      Option.when(s.layers.exists(_.present))(
-        "Credits: " + s.layers.filter(_.present).map(l => plain(l.attribution)).distinct.mkString(" · ")
+      Option.when(s.layers.exists((refactorCallback => ((refactorCallback.present) == _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Present(true)))))(
+        "Credits: " + s.layers.filter((refactorCallback => ((refactorCallback.present) == _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Present(true)))).map(l => plain(l.attribution)).distinct.mkString(" · ")
       )
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")

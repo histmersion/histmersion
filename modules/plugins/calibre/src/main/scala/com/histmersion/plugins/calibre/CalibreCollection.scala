@@ -33,7 +33,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
     ).map(_.map(CalibreCollection.item))
 
   def item(id: CollectionId): Either[com.histmersion.plugins.calibre.CalibreCollection.ItemResultPart1, Option[CollectionItem]] =
-    id.value.trim.toIntOption.fold(Right(None))(calibre.byId(_).map(_.map(CalibreCollection.item)))
+    id.value.trim.toIntOption.fold(Right(None))(calibre.byId(_root_.com.histmersion.plugins.calibre.Calibre.ByIdId(_)).map(_.map(CalibreCollection.item)))
 
   override def admits(item: CollectionItem): Either[String, Unit] =
     Calibre.guard(item.title.getOrElse(""), item.authors).left.map(e => s"Calibre id ${item.id.value} has $e")
@@ -79,7 +79,7 @@ final class CalibreCollection(library: Calibre.Library, writeBack: CalibreCollec
     val linked = links.flatMap(l =>
       l.id.value.trim.toIntOption.map(LinkedRecord(l.metadata.key, _root_.com.histmersion.plugins.calibre.LinkedRecord.CalibreId(_), CalibreCollection.push(l.metadata)))
     )
-    calibre.updateAll(linked, apply).map(_.map(CalibreCollection.entry))
+    calibre.updateAll(linked, _root_.com.histmersion.plugins.calibre.Calibre.UpdateAllApply(apply)).map(_.map(CalibreCollection.entry))
 
   override def set(id: CollectionId, fields: List[(String, String)]): Either[String, Unit] =
     CalibreCollection.number(id).flatMap(calibre.set(_, (fields).map(refactorValue => { val refactorTuple = refactorValue; (_root_.com.histmersion.plugins.calibre.Calibre.SetFieldsPart1(refactorTuple._1), _root_.com.histmersion.plugins.calibre.Calibre.SetFieldsPart2(refactorTuple._2)) })))
@@ -226,7 +226,7 @@ object CalibreCollection:
           "holds metadata.db (a server in a container needs that folder mounted)")
       )
     else
-      Try { files.readPrefix(db, 16); () }.toEither.left
+      Try { files.readPrefix(db, _root_.com.histmersion.plugin.LocalFiles.ReadPrefixLength(16)); () }.toEither.left
         .map {
           case _: java.nio.file.NoSuchFileException =>
             s"there is no metadata.db in $dir — set histmersion.plugins.calibre.library-path to the Calibre library's folder"

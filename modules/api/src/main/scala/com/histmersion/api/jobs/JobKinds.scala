@@ -21,7 +21,7 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
   def ownControl(wire: com.histmersion.api.jobs.JobKinds.OwnControlWire): com.histmersion.api.jobs.JobKinds.OwnControlResult = byWire.get(wire).exists(_.ownControl)
 
   /** The identifiers of the kinds a person may pause and cancel. */
-  def stoppableKinds: Set[com.histmersion.api.jobs.JobKinds.StoppableKindsResult] = entries.filter(_.stoppable).map(_.kind.value).toSet
+  def stoppableKinds: Set[com.histmersion.api.jobs.JobKinds.StoppableKindsResult] = entries.filter((refactorCallback => ((refactorCallback.stoppable) == _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable(true)))).map(_.kind.value).toSet
 
   /** What a job is about: its source, else what its detail says. */
   def subject(job: JobInfo): Option[com.histmersion.api.jobs.JobKinds.SubjectResult] =

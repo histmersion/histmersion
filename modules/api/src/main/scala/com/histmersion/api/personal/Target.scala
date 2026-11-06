@@ -20,7 +20,7 @@ final case class Target(
     view: Option[ViewState] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def itemKey: Option[com.histmersion.api.personal.Target.ItemKeyResult] = Option.when(kind.isItem)(id.map(_.value)).flatten
+  def itemKey: Option[com.histmersion.api.personal.Target.ItemKeyResult] = Option.when(((kind.isItem) == _root_.com.histmersion.api.ItemKind.IsItemResult(true)))(id.map(_.value)).flatten
 
   def identity: Option[com.histmersion.api.personal.Target.IdentityResult] = itemKey.map(k => _root_.com.histmersion.api.personal.Target.IdentityResult(s"${kind.wire}:$k"))
 

@@ -387,7 +387,7 @@ object Queue:
       .toList
       .sortBy { (_, is) =>
         val minId = is.map(_.id).minOption.getOrElse(0)
-        if kind.checkboxes then (0L, minId.toLong)
+        if ((kind.checkboxes) == _root_.com.histmersion.api.automation.Queue.Kind.Checkboxes(true)) then (0L, minId.toLong)
         else (-is.flatMap(_.createdAt).maxOption.map(instantKey).getOrElse(0L), minId.toLong)
       }
       .map((topic, is) => (path(Some(topic)), is.sortBy(_.id)))
@@ -439,7 +439,7 @@ object Queue:
     _root_.com.histmersion.api.automation.Queue.JoinResult(sb.result())
 
   private def instantKey(s: com.histmersion.api.automation.Queue.InstantKeyS): com.histmersion.api.automation.Queue.InstantKeyResult =
-    scala.util.Try(java.time.Instant.parse(s).toEpochMilli).getOrElse(_root_.com.histmersion.api.automation.Queue.InstantKeyResult(0L))
+    scala.util.Try(java.time.Instant.parse((s).value).toEpochMilli).getOrElse(_root_.com.histmersion.api.automation.Queue.InstantKeyResult(0L))
 
   /** A list's open items by topic; `notes` is a line under an item, by its id (an ACQUIRE item's last check). */
   def markdown(kind: Kind, items: List[QueueItem], notes: Map[com.histmersion.api.automation.Queue.MarkdownNotesPart1, com.histmersion.api.automation.Queue.MarkdownNotesPart2] = Map.empty): com.histmersion.api.automation.Queue.MarkdownResult =

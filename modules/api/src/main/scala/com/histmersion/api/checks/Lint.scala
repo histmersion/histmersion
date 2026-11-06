@@ -317,10 +317,10 @@ object Lint:
     val wanted = requested.map((_).value.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(all)
     else
-      val unknown = wanted.filter(w => rule(w).isEmpty)
+      val unknown = wanted.filter(w => rule(_root_.com.histmersion.api.checks.Lint.RuleName(w)).isEmpty)
       if unknown.nonEmpty then
         Left(_root_.com.histmersion.api.checks.Lint.SelectResultPart1(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}"))
-      else Right(wanted.flatMap(rule).distinct)
+      else Right(wanted.flatMap({ val refactorFunction = rule; (refactorValue) => refactorFunction(_root_.com.histmersion.api.checks.Lint.RuleName(refactorValue)) }).distinct)
 
   def blank(s: Option[com.histmersion.api.checks.Lint.BlankS]): com.histmersion.api.checks.Lint.BlankResult = _root_.com.histmersion.api.checks.Lint.BlankResult(s.forall((_).value.trim.isEmpty))
 
@@ -337,7 +337,7 @@ object Lint:
         .filter(_ != target)
         .flatMap { ck =>
           val c = (ck).value.toLowerCase
-          val p = commonPrefix(c, t)
+          val p = commonPrefix(_root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixA(c), _root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixB(t))
           if c.startsWith(t + "_") then Some((0, c.length, ck))
           else if c.startsWith(t) || t.startsWith(c) then Some((1, -(p).value, ck))
           else if p >= 4 then Some((2, -(p).value, ck))
@@ -346,7 +346,7 @@ object Lint:
         .toList
       scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take((max).value)
 
-  def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget): com.histmersion.api.checks.Lint.LooksLikeCitekeyResult = """\d{4}""".r.findFirstIn(target).isDefined
+  def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget): com.histmersion.api.checks.Lint.LooksLikeCitekeyResult = """\d{4}""".r.findFirstIn((target).value).isDefined
 
   def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicatesRowsPart1, com.histmersion.api.checks.Lint.DuplicatesRowsPart2)], label: com.histmersion.api.checks.Lint.DuplicatesLabel): List[LintItem] =
     rows
@@ -380,7 +380,7 @@ object Lint:
     rows
       .flatMap { (ck, yr) =>
         yr.flatMap { y =>
-          YearInCitekey.findFirstMatchIn(ck).flatMap { m =>
+          YearInCitekey.findFirstMatchIn((ck).value).flatMap { m =>
             val inKey = m.group(1).toInt
             if inKey == y then None
             else Some(LintItem(ck, s"citekey has $inKey but stored year is $y"))
@@ -392,7 +392,7 @@ object Lint:
   def authorPipe(rows: List[(com.histmersion.api.checks.Lint.AuthorPipeRowsPart1, List[com.histmersion.api.checks.Lint.AuthorPipeRowsPart2])]): List[LintItem] =
     rows
       .flatMap { (ck, authors) =>
-        authors.filter((_).value.contains("|")).map(a => LintItem(ck, s"author '$a'"))
+        authors.filter((_).value.contains("|")).map(a => LintItem(ck, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"author '$a'")))
       }
       .sortBy(i => (i.citekey, i.detail))
 
@@ -452,7 +452,7 @@ object Lint:
       val text = current.toString.trim
       if text.nonEmpty then if (isListLeadIn(_root_.com.histmersion.api.checks.Lint.IsListLeadInText(text))).value then leadIn = Some(_root_.com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn(text)) else paras += text
       current.clear()
-    def isList(t: com.histmersion.api.checks.Lint.ExtractParagraphsIsListT) = (t).value.startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
+    def isList(t: com.histmersion.api.checks.Lint.ExtractParagraphsIsListT) = (t).value.startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).value).isDefined
     def block(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
       val t = line.trim
@@ -476,7 +476,7 @@ object Lint:
 
   def formatItems(rows: List[(com.histmersion.api.checks.Lint.FormatItemsRowsPart1, FormatField, com.histmersion.api.checks.Lint.FormatItemsRowsPart3)], check: FormatChecker): List[LintItem] =
     rows.filter((_._3).value.trim.nonEmpty).sortBy((id, f, _) => (id, f.ordinal)).flatMap { (id, field, text) =>
-      check(text, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
+      check((text).value, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
     }
 
   def report(r: Rule, items: List[LintItem], maxItems: com.histmersion.api.checks.Lint.ReportMaxItems): LintRuleReport =

@@ -86,7 +86,7 @@ object CollectionsMarkdown:
       }
       val shown = if (total).value > entries.size then s"${entries.size} of $total" else entries.size.toString
       (List(
-        s"### $shown Calibre ${Plural.noun(total, "entry", "entries")} not linked to any source (newest first)",
+        s"### $shown Calibre ${Plural.noun(total, _root_.com.histmersion.api.Plural.NounSingular("entry"), _root_.com.histmersion.api.Plural.NounPlural("entries"))} not linked to any source (newest first)",
         ""
       )
         ++ lines ++ List(
@@ -168,7 +168,7 @@ object CollectionsMarkdown:
       else
         val verb = if (applied).value then "updated" else "would change"
         (List(
-          s"### ${changing.size} Calibre ${Plural.noun(changing.size, "entry", "entries")} $verb · $upToDate up to date",
+          s"### ${changing.size} Calibre ${Plural.noun(_root_.com.histmersion.api.Plural.NounN((changing.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("entry"), _root_.com.histmersion.api.Plural.NounPlural("entries"))} $verb · $upToDate up to date",
           "",
           "| id | citekey | field | Calibre | record | |",
           "|---:|---|---|---|---|---|"
@@ -190,7 +190,7 @@ object CollectionsMarkdown:
             .map { f =>
               val todo =
                 f.fix.fold("re-push, or clear the source's calibre id")(ck => s"`histmersion calibre update $ck`")
-              s"| ${f.id} | ${f.citekeys.mkString(", ")} | ${f.labels.mkString("; ")} | ${cell(view(f.record))} | " +
+              s"| ${f.id} | ${f.citekeys.mkString(", ")} | ${f.labels.mkString("; ")} | ${cell(_root_.com.histmersion.api.library.CollectionsMarkdown.AuditCellS(view(f.record)))} | " +
                 s"${cell(f.entry.fold("—")(view))} | $todo |"
             }
             .mkString("\n")
@@ -201,7 +201,7 @@ object CollectionsMarkdown:
     (List(s"Imported Calibre id ${i.id} as `${i.citekey}` — ${i.title}") ++
       i.relinkedFrom.map(prev => s"Re-linked `${i.citekey}` from Calibre id $prev to ${i.id}") ++
       List(s"File (left in place, never modified): ${i.file}") ++
-      i.cover.map(c => if c.warning then s"warning: cover not stored — ${c.line}" else c.line) ++
+      i.cover.map(c => if ((c.warning) == _root_.com.histmersion.api.library.CollectionCover.Warning(true)) then s"warning: cover not stored — ${c.line}" else c.line) ++
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
       i.jobError.map(e => s"not converted: $e")).mkString("\n")
 

@@ -19,7 +19,7 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
       .json(
         Url(
           archive.url,
-          "/advancedsearch.php",
+          _root_.com.histmersion.upstreams.http.Url.ApplyPath("/advancedsearch.php"),
           "q" -> s"($query) AND mediatype:texts",
           "fl[]" -> "identifier",
           "rows" -> rows.toString,
@@ -34,7 +34,7 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   def info(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoResultPart1, ArchiveItem] =
     val ident = identifier(id)
-    http.json(Url(archive.url, s"/metadata/$ident")).map(AcquireParse.archiveItem(ident, _))
+    http.json(Url(archive.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath(s"/metadata/$ident"))).map(AcquireParse.archiveItem(ident, _))
 
   def download(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadResultPart1, FetchedFile] =
     val ident = identifier(id)
