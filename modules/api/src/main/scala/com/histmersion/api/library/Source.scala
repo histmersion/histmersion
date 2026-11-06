@@ -400,8 +400,8 @@ object Source:
       else
         @tailrec def isbnEnd(i: Int, digits: Int): Option[Int] =
           if digits >= 13 then Some(i)
-          else if (i) < suffix.length && suffix((i).value).isDigit then isbnEnd(((i) + 1), ((digits) + 1))
-          else if (i) < suffix.length && suffix((i).value) == '-' then isbnEnd(((i) + 1), digits)
+          else if (i) < suffix.length && suffix((i)).isDigit then isbnEnd(((i) + 1), ((digits) + 1))
+          else if (i) < suffix.length && suffix((i)) == '-' then isbnEnd(((i) + 1), digits)
           else None
         isbnEnd((0), (0)).map(end => (suffix.drop((end)).exists(_.isLetterOrDigit)))
 

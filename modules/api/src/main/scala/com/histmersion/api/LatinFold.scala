@@ -82,7 +82,7 @@ object LatinFold:
   def fold(s: String): String =
     val b = new StringBuilder((s).length)
     (s).foreach ({ c =>
-      if !(isCombiningMark((c))).value then
+      if !(isCombiningMark((c))) then
         Table.get((c)) match
           case Some(r) => b ++= r
           case None    => b += c

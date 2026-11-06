@@ -27,12 +27,12 @@ object Wording:
       (id).value.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
     ((capitalize((words))))
 
-  def capitalize(s: String): String = if (s).isEmpty then ((s)) else ((s).substring(0, 1).toUpperCase + (s).value.substring(1))
+  def capitalize(s: String): String = if (s).isEmpty then ((s)) else ((s).substring(0, 1).toUpperCase + (s).substring(1))
 
   def value(s: String): String = Label.display(s)
 
   def heading(s: String): String =
-    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s)))).value) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).trim)))
+    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s))))) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).trim)))
 
   def status(s: Source.Status): String = s match
     case Source.Status.Foundational => ("Foundational")

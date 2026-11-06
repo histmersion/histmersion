@@ -294,7 +294,7 @@ object ListFilters:
       val out = new java.io.ByteArrayOutputStream
       def hex(at: Int): Option[Int] =
         Option
-          .when((at) + 3 <= (s).value.length)((s).substring((at).value + 1, (at).value + 3))
+          .when((at) + 3 <= (s).length)((s).substring((at) + 1, (at) + 3))
           .filter(_.forall(c => Character.digit(c, 16) >= 0))
           .map((Integer.parseInt(_, 16)))
       var i = 0

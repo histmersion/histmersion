@@ -277,7 +277,7 @@ object Queue:
     flush()
     out.result()
 
-  private def isBold(s: String): Boolean = ((s).startsWith("**") && (s).value.endsWith("**"))
+  private def isBold(s: String): Boolean = ((s).startsWith("**") && (s).endsWith("**"))
 
   private def entryDate(stack: Vector[String]): Option[com.histmersion.api.automation.Queue.EntryDate] =
     stack.headOption.flatMap (({

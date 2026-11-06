@@ -233,7 +233,7 @@ object Article:
     private def statusNote(s: Source.Status): String = if Stated(s) then (s" (${s.wire})") else ("")
 
     private def endSentence(s: String): String =
-      if (s).endsWith(".") || (s).value.endsWith("?") || (s).value.endsWith("!") then ((s)) else (s"$s.")
+      if (s).endsWith(".") || (s).endsWith("?") || (s).value.endsWith("!") then ((s)) else (s"$s.")
 
     def method(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.Method =
       val statuses =

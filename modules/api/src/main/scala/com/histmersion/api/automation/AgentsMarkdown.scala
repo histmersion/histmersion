@@ -76,7 +76,7 @@ object AgentsMarkdown:
   private def amount(v: Double, m: ModelChains.Measure): String = m match
     case ModelChains.Measure.Tokens =>
       ModelChains.Limit.compact(BigDecimal((v)).setScale(0, BigDecimal.RoundingMode.HALF_UP))
-    case ModelChains.Measure.Usd => ((usd(((v)))).value)
+    case ModelChains.Measure.Usd => ((usd(((v)))))
 
   private def allowanceBlock(a: ModelChains.AllowanceStatus): String =
     val state = if ((a.usable) == _root_.com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(true)) then "has headroom"
@@ -430,7 +430,7 @@ object AgentsMarkdown:
     else (plan.mkString(", "))
 
   private def ratio(n: Int, of: Int): String =
-    if of == (0) then ("—") else s"$n/$of (${BigDecimal(((100.0 * (n) / (of).value).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
+    if of == (0) then ("—") else s"$n/$of (${BigDecimal(((100.0 * (n) / (of)).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
   def compare(c: RunCompare.Comparison): String =
     import RunCompare.*
