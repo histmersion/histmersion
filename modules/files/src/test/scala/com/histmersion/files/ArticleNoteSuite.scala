@@ -36,17 +36,17 @@ class ArticleNoteSuite extends munit.FunSuite:
       |""".stripMargin
 
   test("a real wiki article parses: kind, slug, regions, period, title from the heading"):
-    val a = ArticleNote.parse(wikiNote, "fallback", "unknown").get
+    val a = ArticleNote.parse(wikiNote, com.histmersion.api.research.Article.Slug("fallback"), com.histmersion.api.research.Article.KindValue("unknown")).get
     assertEquals(a.slug, "sea_peoples")
     assertEquals(a.kind, "concept")
     assertEquals(a.title, "The Sea Peoples")
     assertEquals(a.regions, List("Eastern Mediterranean", "Egypt", "Levant", "Cyprus", "Anatolia", "Aegean"))
-    assertEquals(a.period, Some(Period(-1220, -1100)))
+    assertEquals(a.period, Some(Period(com.histmersion.api.catalogue.Year(-1220), com.histmersion.api.catalogue.Year(-1100))))
     assert(a.body.startsWith("# The Sea Peoples"), a.body.take(40))
     assert(a.body.contains("[[cline2014_year]]"), "the body keeps its wikilinks verbatim")
 
   test("the italic lede becomes the summary when the frontmatter has none"):
-    val a = ArticleNote.parse(wikiNote, "x", "concept").get
+    val a = ArticleNote.parse(wikiNote, com.histmersion.api.research.Article.Slug("x"), com.histmersion.api.research.Article.KindValue("concept")).get
     assert(a.summary.exists(_.startsWith("A loose label")), a.summary.toString)
     assert(!a.summary.exists(_.contains("*")), a.summary.toString)
 
@@ -61,7 +61,7 @@ class ArticleNoteSuite extends munit.FunSuite:
         |
         |# The Two Sources of the Gods
         |""".stripMargin
-    val a = ArticleNote.parse(note, "gods_and_migrations", "report").get
+    val a = ArticleNote.parse(note, com.histmersion.api.research.Article.Slug("gods_and_migrations"), com.histmersion.api.research.Article.KindValue("report")).get
     assertEquals(a.slug, "gods_and_migrations") // no `slug:` key → the filename
     assertEquals(a.kind, "report")
     assertEquals(a.summary, Some("Which gods came from the Near East vs from PIE?"))
@@ -69,51 +69,51 @@ class ArticleNoteSuite extends munit.FunSuite:
 
   test("the directory is the fallback kind; frontmatter `type` wins"):
     val bare = "---\nslug: divine_twins\n---\n\n# The Divine Twins\n"
-    assertEquals(ArticleNote.parse(bare, "divine_twins", "myth").get.kind, "myth")
+    assertEquals(ArticleNote.parse(bare, com.histmersion.api.research.Article.Slug("divine_twins"), com.histmersion.api.research.Article.KindValue("myth")).get.kind, "myth")
 
   test("no frontmatter fence at all is not an article note"):
-    assertEquals(ArticleNote.parse("# Just Markdown\n", "x", "concept"), None)
+    assertEquals(ArticleNote.parse("# Just Markdown\n", com.histmersion.api.research.Article.Slug("x"), com.histmersion.api.research.Article.KindValue("concept")), None)
 
   test("render → parse → render is byte-stable (the export/import round trip)"):
     val a = Article(
-      slug = "sea_peoples",
-      title = "The Sea Peoples",
-      kind = "concept",
-      body = "# The Sea Peoples\n\nMedinet Habu [[cline2014_year]].",
-      summary = Some("A loose label."),
-      tags = List("sea-peoples", "collapse"),
-      regions = List("Levant", "Egypt"),
-      period = Some(Period(-1220, -1100))
+      slug = com.histmersion.api.research.Article.Slug("sea_peoples"),
+      title = com.histmersion.api.research.Article.Title("The Sea Peoples"),
+      kind = com.histmersion.api.research.Article.KindValue("concept"),
+      body = com.histmersion.api.research.Article.Body("# The Sea Peoples\n\nMedinet Habu [[cline2014_year]]."),
+      summary = Some(com.histmersion.api.research.Article.SummaryText("A loose label.")),
+      tags = List(com.histmersion.api.research.Article.Tags("sea-peoples"), com.histmersion.api.research.Article.Tags("collapse")),
+      regions = List(com.histmersion.api.research.Article.Regions("Levant"), com.histmersion.api.research.Article.Regions("Egypt")),
+      period = Some(Period(com.histmersion.api.catalogue.Year(-1220), com.histmersion.api.catalogue.Year(-1100)))
     )
     val once = ArticleNote.render(a)
-    val again = ArticleNote.render(ArticleNote.parse(once, "zz", "zz").get)
+    val again = ArticleNote.render(ArticleNote.parse(once, com.histmersion.api.research.Article.Slug("zz"), com.histmersion.api.research.Article.KindValue("zz")).get)
     assertEquals(again, once)
     assert(once.startsWith("---\ntype: concept\n"), once.take(60))
     assert(once.contains("period_start: -1220"), once)
 
   test("render carries no timestamp, so an unchanged article exports identically every time"):
-    val a = Article("x_y", "T", "concept", "# T", updatedAt = Some("2026-08-25T10:00:00.000000Z"))
+    val a = Article(com.histmersion.api.research.Article.Slug("x_y"), com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("# T"), updatedAt = Some("2026-08-25T10:00:00.000000Z"))
     assert(!ArticleNote.render(a).contains("2026-08-25"), ArticleNote.render(a))
 
   test("the lede skips a leading image embed line and never invents a summary"):
-    assertEquals(Articles.lede("# T\n\n"), None)
-    assertEquals(Articles.lede("# T\n\n![[map.png]]\n"), None)
+    assertEquals(Articles.lede(com.histmersion.api.research.Article.Body("# T\n\n")), None)
+    assertEquals(Articles.lede(com.histmersion.api.research.Article.Body("# T\n\n![[map.png]]\n")), None)
 
   test("the lede strips a MATCHED emphasis pair only"):
-    assertEquals(Articles.lede("# T\n\n*A lede.*\n"), Some("A lede."))
-    assertEquals(Articles.lede("# T\n\n_A lede._\n"), Some("A lede."))
-    assertEquals(Articles.lede("# T\n\n**A lede.**\n"), Some("A lede."))
-    assertEquals(Articles.lede("# T\n\nsome *emphasis* inside\n"), Some("some *emphasis* inside"))
+    assertEquals(Articles.lede(com.histmersion.api.research.Article.Body("# T\n\n*A lede.*\n")), Some("A lede."))
+    assertEquals(Articles.lede(com.histmersion.api.research.Article.Body("# T\n\n_A lede._\n")), Some("A lede."))
+    assertEquals(Articles.lede(com.histmersion.api.research.Article.Body("# T\n\n**A lede.**\n")), Some("A lede."))
+    assertEquals(Articles.lede(com.histmersion.api.research.Article.Body("# T\n\nsome *emphasis* inside\n")), Some("some *emphasis* inside"))
 
   test(
     "#958: the filter and reasons travel in the frontmatter; the generated sections are exported and dropped on import"
   ):
     val a = Article(
-      slug = "theseus_origins",
-      title = "Theseus",
-      kind = "myth",
-      body = "# Theseus\n\nAn Attic hero [[walker1995_theseus]].",
-      summary = Some("Where the hero Theseus came from."),
+      slug = com.histmersion.api.research.Article.Slug("theseus_origins"),
+      title = com.histmersion.api.research.Article.Title("Theseus"),
+      kind = com.histmersion.api.research.Article.KindValue("myth"),
+      body = com.histmersion.api.research.Article.Body("# Theseus\n\nAn Attic hero [[walker1995_theseus]]."),
+      summary = Some(com.histmersion.api.research.Article.SummaryText("Where the hero Theseus came from.")),
       filter = Some(
         Article.Filter(
           query = Some("Theseus"),
@@ -128,10 +128,10 @@ class ArticleNoteSuite extends munit.FunSuite:
     val c = Article.Coverage.compute(
       a.slug,
       a.filter.get,
-      1,
-      List(Coverage.Source("graves2017_greek", "Greek Myths", Some(2017), Source.Status.Current)),
+      com.histmersion.api.research.Article.Coverage.ComputeTotal(1),
+      List(Coverage.Source(com.histmersion.api.library.Citekey("graves2017_greek"), com.histmersion.api.library.Title("Greek Myths"), Some(com.histmersion.api.catalogue.Year(2017)), Source.Status.Current)),
       Set.empty,
-      List("walker1995_theseus"),
+      List(com.histmersion.api.library.Citekey("walker1995_theseus")),
       a.reasons,
       Nil,
       Nil
@@ -148,7 +148,7 @@ class ArticleNoteSuite extends munit.FunSuite:
       text.contains("## Not used") && text.contains(Article.Coverage.GeneratedStart) && text.contains("_Method: "),
       text
     )
-    val back = ArticleNote.parse(text, "zz", "zz").get
+    val back = ArticleNote.parse(text, com.histmersion.api.research.Article.Slug("zz"), com.histmersion.api.research.Article.KindValue("zz")).get
     assertEquals(back.body, a.body, "the generated sections never reach the stored body")
     assertEquals((back.filter, back.reasons), (a.filter, a.reasons))
     // and the round trip stays byte-stable
