@@ -73,7 +73,7 @@ class ArticleReviewViewSuite extends munit.FunSuite:
     assert(Article.ReviewView.markdown(v.modify(_.rounds).setTo(Nil)).endsWith("No finding recorded."))
 
   test("the state crosses the wire as its word"):
-    val b = ReviewBadge(ReviewState.InReview, com.histmersion.api.research.ReviewBadge.Label("in review · round 2"), com.histmersion.api.research.ReviewBadge.Detail("In review."), round = Some(2))
+    val b = ReviewBadge(ReviewState.InReview, com.histmersion.api.research.ReviewBadge.Label("in review · round 2"), com.histmersion.api.research.ReviewBadge.Detail("In review."), round = Some(com.histmersion.api.research.ReviewRound.Round(2)))
     assert(b.asJson.noSpaces.contains("\"state\":\"in-review\""), b.asJson.noSpaces)
     assertEquals(decode[ReviewBadge](b.asJson.noSpaces), Right(b))
     assertEquals(ReviewState.parse(com.histmersion.api.research.ReviewState.Wire(" Majors-Open ")), Some(ReviewState.MajorsOpen))

@@ -123,7 +123,7 @@ class WriteSuite extends munit.FunSuite:
     assertEquals(out.findings.map(_.id), List(s"$ck#0", s"$ck#1", s"$ck#2", s"$ck#3", s"$ck#4"))
 
   test("findings: a confidence outside the vocabulary is refused, never dropped or read as high (#1798)"):
-    val bad = FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("x"), confidence = Some("certain"))))
+    val bad = FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("x"), confidence = Some(com.histmersion.api.library.Confidence.Wire("certain")))))
     val r = Source.Write.applyPatch(existing, Source.Patch(findings = Some(bad)))
     assert(
       r.left.exists(m => m.contains("confidence 'certain'") && m.contains("high|medium|low|contested")),
@@ -134,7 +134,7 @@ class WriteSuite extends munit.FunSuite:
       Source.Patch(findings =
         Some(
           FindingsPatch(add =
-            List(Finding.Input(com.histmersion.api.library.Finding.Claim("y"), confidence = Some(" Medium ")), Finding.Input(com.histmersion.api.library.Finding.Claim("z"), confidence = Some("")))
+            List(Finding.Input(com.histmersion.api.library.Finding.Claim("y"), confidence = Some(com.histmersion.api.library.Confidence.Wire(" Medium "))), Finding.Input(com.histmersion.api.library.Finding.Claim("z"), confidence = Some(com.histmersion.api.library.Confidence.Wire(""))))
           )
         )
       )
@@ -158,7 +158,7 @@ class WriteSuite extends munit.FunSuite:
     assertEquals(out.findings.last.period, None)
 
   test("findings: a half-specified period is rejected with a readable message"):
-    val p = FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("bad"), periodStart = Some(-1000))))
+    val p = FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("bad"), periodStart = Some(com.histmersion.api.catalogue.Year(-1000)))))
     val e = Source.Write.applyPatch(existing, Source.Patch(findings = Some(p))).swap.toOption.get
     assert(e.contains("period_start"), e)
 
@@ -250,7 +250,7 @@ class WriteSuite extends munit.FunSuite:
 
   test("ifUpdatedAt: absent means last-write-wins, and a stale one blocks the whole patch"):
     assert(Source.Write.applyPatch(existing, Source.Patch(tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("x")))))).isRight)
-    val stale = Source.Patch(tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("x")))), ifUpdatedAt = Some("nope"))
+    val stale = Source.Patch(tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("x")))), ifUpdatedAt = Some(com.histmersion.api.library.Source.UpdatedAt("nope")))
     assert(Source.Write.applyPatch(existing, stale).isLeft)
 
   // ── put ──────────────────────────────────────────────────────────────────────────────────────
@@ -333,7 +333,7 @@ class WriteSuite extends munit.FunSuite:
   test("a finding's period is range-checked too"):
     val put = Source.Put(
       title = com.histmersion.api.library.Title("T"),
-      findings = List(Finding.Input(claim = com.histmersion.api.library.Finding.Claim("c"), periodStart = Some(-1200), periodEnd = Some(Long.MaxValue)))
+      findings = List(Finding.Input(claim = com.histmersion.api.library.Finding.Claim("c"), periodStart = Some(com.histmersion.api.catalogue.Year(-1200)), periodEnd = Some(Long.MaxValue)))
     )
     assert(Source.Write.applyPut(com.histmersion.api.library.Citekey("zz_range"), put).isLeft)
 
@@ -451,17 +451,17 @@ class WriteSuite extends munit.FunSuite:
     val p = Source.Patch(
       metadata = Some(MetadataPatch(title = (Some("T")).map(com.histmersion.api.library.Title.apply), clear = List(MetadataField.Doi))),
       summary = Some(com.histmersion.api.library.Source.Summary("s")),
-      tags = Some(ListPatch(add = List("a"), replace = Some(List("b")))),
-      findings = Some(FindingsPatch(add = List(Finding.Input("c", lat = Some(1.0), lon = Some(2.0))))),
-      edges = Some(EdgesPatch(add = List(Edge.Input("d", com.histmersion.api.library.Edge.Kind.Refutes)))),
-      period = Some(Period.Input(-10, 10)),
-      ifUpdatedAt = Some("t")
+      tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("a")), replace = Some(List("b")))),
+      findings = Some(FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("c"), lat = Some(1.0), lon = Some(2.0))))),
+      edges = Some(EdgesPatch(add = List(Edge.Input(com.histmersion.api.library.Citekey("d"), com.histmersion.api.library.Edge.Kind.Refutes)))),
+      period = Some(Period.Input(com.histmersion.api.catalogue.Year(-10), com.histmersion.api.catalogue.Year(10))),
+      ifUpdatedAt = Some(com.histmersion.api.library.Source.UpdatedAt("t"))
     )
     assertEquals(decode[Source.Patch](p.asJson.noSpaces), Right(p))
     val put = Source.Put.of(existing)
     assertEquals(decode[Source.Put](put.asJson.noSpaces), Right(put))
     val ap =
-      Article.Patch(append = Some(com.histmersion.api.research.Article.Patch.Append("x")), tags = Some(ListPatch(add = List("t"))), period = Some(Period.Input(1, 2)))
+      Article.Patch(append = Some(com.histmersion.api.research.Article.Patch.Append("x")), tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("t")))), period = Some(Period.Input(1, 2)))
     assertEquals(decode[Article.Patch](ap.asJson.noSpaces), Right(ap))
 
   test("strict: metadata null-clears still work alongside the key check"):

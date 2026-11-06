@@ -275,7 +275,7 @@ class IngestSuite extends munit.FunSuite:
     assert(out.contains("012345678"), out)
 
   test("job Markdown names the acquisition item a job will tick off, and nothing when there is none"):
-    val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("abc"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), com.histmersion.api.jobs.JobInfo.Status("running"), (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = Some(42))
+    val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("abc"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), com.histmersion.api.jobs.JobInfo.Status("running"), (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = Some(com.histmersion.api.automation.Queue.QueueItem.Id(42)))
     assert(
       IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"),
       IngestMarkdown.job(j)
@@ -304,7 +304,7 @@ class IngestSuite extends munit.FunSuite:
 
   // #770 / #771: an init job names what it imports; the periods it skipped are counted and listed
   test("an init job's Markdown says what it imports and which period definitions it skipped"):
-    val plan = InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List("periodo"))
+    val plan = InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List(com.histmersion.api.exchange.InitPlan.Fetch("periodo")))
     val j = JobInfo(
       com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
       com.histmersion.api.jobs.JobKinds.Wire(InitPlan.JobKind),
@@ -316,7 +316,7 @@ class IngestSuite extends munit.FunSuite:
             SkippedPeriod.Skipped,
             List(SkippedPeriod(com.histmersion.api.catalogue.SkippedPeriod.Id("p0x1"), com.histmersion.api.catalogue.SkippedPeriod.Label("Old Kingdom"), Period.Skip.OutOfRange, com.histmersion.api.catalogue.SkippedPeriod.Detail("-2701 → 2150 lies outside")))
           )
-          .set(SkippedPeriod.SkippedCount, 1)
+          .set(SkippedPeriod.SkippedCount, com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(1))
       )
     )
     val md = IngestMarkdown.job(j)

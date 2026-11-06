@@ -27,8 +27,8 @@ class AliasesSuite extends munit.FunSuite:
       Some("_`zz_old` is an old id of this event — it went to `zz_new`._")
     )
     assertEquals(Aliases.followed(AliasKinds.EventRecords, com.histmersion.api.aliases.Aliases.Id(" zz_new "), com.histmersion.api.aliases.Aliases.Id("zz_new")), None)
-    assertEquals(Aliases.note(AliasKinds.GoalRecords, com.histmersion.api.aliases.Aliases.Id("a"), com.histmersion.api.aliases.Aliases.Id("a"))("md"), "md")
-    assert(Aliases.note(AliasKinds.GoalRecords, com.histmersion.api.aliases.Aliases.Id("a"), com.histmersion.api.aliases.Aliases.Id("b"))("md").endsWith("\n\nmd"))
+    assertEquals(Aliases.note(AliasKinds.GoalRecords, com.histmersion.api.aliases.Aliases.Id("a"), com.histmersion.api.aliases.Aliases.Id("a"))(com.histmersion.api.aliases.Aliases.Note("md")), "md")
+    assert(Aliases.note(AliasKinds.GoalRecords, com.histmersion.api.aliases.Aliases.Id("a"), com.histmersion.api.aliases.Aliases.Id("b"))(com.histmersion.api.aliases.Aliases.Note("md")).endsWith("\n\nmd"))
 
   test("every label kind of a bundle that can be renamed has an alias kind"):
     assertEquals(

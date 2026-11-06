@@ -217,7 +217,7 @@ class PeriodsSuite extends munit.FunSuite:
     assert(md.contains("`p0x1` Old Kingdom: -2701 → 2150 lies outside"), md)
     assert(md.contains("…and 1 more"), md)
     assert(
-      PeriodsMarkdown.imported(Period.ImportResult(com.histmersion.api.catalogue.Period.ImportResult.Periods(1), presets = 1)).startsWith("imported 1 period — 1 timeline preset")
+      PeriodsMarkdown.imported(Period.ImportResult(com.histmersion.api.catalogue.Period.ImportResult.Periods(1), presets = com.histmersion.api.catalogue.Period.ImportResult.Presets(1))).startsWith("imported 1 period — 1 timeline preset")
     )
 
   test("what is not a PeriodO dataset is refused"):

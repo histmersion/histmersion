@@ -61,7 +61,7 @@ class AcquireChecksSuite extends munit.FunSuite:
 
   test("the autopilot status and about carry the line; the re-check's finds are named among the day's ingests"):
     val r = RecheckStatus(enabled = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Enabled(true), withDoi = com.histmersion.api.library.Acquire.Checks.RecheckStatus.WithDoi(3), due = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Due(1), triedToday = com.histmersion.api.library.Acquire.Checks.RecheckStatus.TriedToday(2), perDay = com.histmersion.api.library.Acquire.Checks.RecheckStatus.PerDay(40), fetchedToday = com.histmersion.api.library.Acquire.Checks.RecheckStatus.FetchedToday(2))
-    val st = AutopilotStatus(on = com.histmersion.api.views.AutopilotStatus.On(true), ingestedToday = 9, ingestCap = 60, acquireRecheck = Some(r))
+    val st = AutopilotStatus(on = com.histmersion.api.views.AutopilotStatus.On(true), ingestedToday = com.histmersion.api.views.AutopilotStatus.IngestedToday(9), ingestCap = com.histmersion.api.views.AutopilotStatus.IngestCap(60), acquireRecheck = Some(r))
     val md = st.markdown
     assert(
       md.contains(
@@ -109,7 +109,7 @@ class AcquireChecksSuite extends munit.FunSuite:
     assert(AcquireChecksMarkdown.result(RecheckResult(dryRun = com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(false))).contains("_Nothing to do._"))
 
   test("a pass that runs as a job: what it re-checks and how to follow it; the jobs list names it"):
-    val detail = RecheckJob(all = com.histmersion.api.library.Acquire.Checks.RecheckJob.All(true), since = "2026-10-27T10:00:00Z", by = "cli")
+    val detail = RecheckJob(all = com.histmersion.api.library.Acquire.Checks.RecheckJob.All(true), since = com.histmersion.api.library.Acquire.Checks.RecheckJob.Since("2026-10-27T10:00:00Z"), by = com.histmersion.api.library.Acquire.Checks.RecheckJob.By("cli"))
     val job = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("j-1"), com.histmersion.api.jobs.JobKinds.Wire(RecheckJob.JobKind), com.histmersion.api.jobs.JobInfo.Status("running"), detail = Some(RecheckJob.Detail(Some(detail))))
     val md = AcquireChecksMarkdown.result(
       RecheckResult(dryRun = com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(false), open = com.histmersion.api.library.Acquire.Checks.RecheckResult.Open(460), withDoi = com.histmersion.api.library.Acquire.Checks.RecheckResult.WithDoi(453), due = com.histmersion.api.library.Acquire.Checks.RecheckResult.Due(453), allowance = com.histmersion.api.library.Acquire.Checks.RecheckResult.Allowance(453), job = Some(job))
@@ -124,14 +124,14 @@ class AcquireChecksSuite extends munit.FunSuite:
     )
     assertEquals(JobDetail.subject(job), Some("the acquisition list's legal re-check of every open item with a DOI"))
     assertEquals(
-      RecheckJob.describe(RecheckJob(all = com.histmersion.api.library.Acquire.Checks.RecheckJob.All(false), upTo = com.histmersion.api.library.Acquire.Checks.RecheckJob.UpTo(5), resumes = Some("j-0"))),
+      RecheckJob.describe(RecheckJob(all = com.histmersion.api.library.Acquire.Checks.RecheckJob.All(false), upTo = com.histmersion.api.library.Acquire.Checks.RecheckJob.UpTo(5), resumes = Some(com.histmersion.api.library.Acquire.Checks.RecheckJob.Resumes("j-0")))),
       "the acquisition list's legal re-check of up to 5 due items (resuming job j-0)"
     )
 
   test("the status line names the re-check job running, on or off"):
     val running =
       Some("job j-1 running: 120/453 items · 3 closed · 9 fetched · 98 no legal copy · 10 failed (HTTP 429)")
-    val s = RecheckStatus(enabled = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Enabled(true), withDoi = com.histmersion.api.library.Acquire.Checks.RecheckStatus.WithDoi(453), due = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Due(300), perDay = 40, job = running)
+    val s = RecheckStatus(enabled = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Enabled(true), withDoi = com.histmersion.api.library.Acquire.Checks.RecheckStatus.WithDoi(453), due = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Due(300), perDay = com.histmersion.api.library.Acquire.Checks.RecheckStatus.PerDay(40), job = running)
     assert(
       AcquireChecksMarkdown
         .line(s)
@@ -142,6 +142,6 @@ class AcquireChecksSuite extends munit.FunSuite:
       AcquireChecksMarkdown.line(s)
     )
     assertEquals(
-      AcquireChecksMarkdown.line(RecheckStatus(enabled = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Enabled(false), job = Some("job j-1 running: 0/2 items"))),
+      AcquireChecksMarkdown.line(RecheckStatus(enabled = com.histmersion.api.library.Acquire.Checks.RecheckStatus.Enabled(false), job = Some(com.histmersion.api.SpatialHierarchyResult.Job.Id("job j-1 running: 0/2 items")))),
       "acquire re-check: off (acquire.recheck.enabled = false) — job j-1 running: 0/2 items"
     )

@@ -250,7 +250,7 @@ class GeocodeSuite extends munit.FunSuite:
       Resolution(com.histmersion.api.catalogue.Geocode.Resolution.Asked("Albania"), com.histmersion.api.catalogue.Place.Id("ne_country_alb"), com.histmersion.api.catalogue.Place.Label("Albania"), 19.97, 41.25)
     )
     assert(m.km > 2000 && m.km < 2500, m.km)
-    assert(worthMoving(m, com.histmersion.api.catalogue.Geocode.Move.MinKm(25)) && !worthMoving(m.modify(_.to).setTo(m.to.modify(_.lon).setTo((45.86: _root_.scala.Double)).modify(_.lat).setTo((34.47: _root_.scala.Double))), 25))
+    assert(worthMoving(m, com.histmersion.api.catalogue.Geocode.Move.MinKm(25)) && !worthMoving(m.modify(_.to).setTo(m.to.modify(_.lon).setTo((45.86: _root_.scala.Double)).modify(_.lat).setTo((34.47: _root_.scala.Double))), com.histmersion.api.catalogue.Geocode.Move.MinKm(25)))
     assertEquals(
       m.describe,
       "heraclides2025_ancient#0: 'Albania' (stored as '[Hulwan]/Valashfarr/Beth Lashpar/Chala/Albania') at 34.47 N 45.86 E → Albania [ne_country_alb] at 41.25 N 19.97 E, " +

@@ -25,7 +25,7 @@ class ListFiltersSuite extends munit.FunSuite:
       status = List(com.histmersion.api.automation.ListFilters.RunFilter.Status("Failed,DONE")),
       pipeline = List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("Review-Article")),
       manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("seed:Tin")),
-      model = List("codex:GPT-6"),
+      model = List(com.histmersion.api.automation.ListFilters.RunFilter.Model("codex:GPT-6")),
       subject = Some("  ")
     )
     val n = f.normalized
@@ -114,7 +114,7 @@ class ListFiltersSuite extends munit.FunSuite:
     )
     assertEquals(JobFilter().qualifier, None)
     assertEquals(
-      ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("edge,goal-plan")), decidedBy = List("person")).options,
+      ApprovalFilter(kind = List(com.histmersion.api.automation.Approval.Kind.Wire("edge,goal-plan")), decidedBy = List(com.histmersion.api.automation.Approval.DecidedBy.Wire("person"))).options,
       List(
         "state" -> None,
         "kind" -> Some("edge"),

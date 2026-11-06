@@ -30,9 +30,9 @@ class ApprovalDigestSuite extends munit.FunSuite:
       matching(open, BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("approve"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), subject = Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Subject("tin")))).map(_.id),
       List(1L, 3L)
     )
-    assertEquals(matching(open, BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("approve"), ids = List(5, 4))).map(_.id), List(4L, 5L))
+    assertEquals(matching(open, BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("approve"), ids = List(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Ids(5), com.histmersion.api.automation.ApprovalDigest.BulkDecide.Ids(4)))).map(_.id), List(4L, 5L))
     assertEquals(
-      matching(open, BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("approve"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), limit = Some(2))).map(_.id),
+      matching(open, BulkDecide(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision("approve"), kind = Some(com.histmersion.api.automation.Approval.Kind.Wire("goal-plan")), limit = Some(com.histmersion.api.automation.ApprovalDigest.BulkDecide.Limit(2)))).map(_.id),
       List(1L, 2L)
     )
 

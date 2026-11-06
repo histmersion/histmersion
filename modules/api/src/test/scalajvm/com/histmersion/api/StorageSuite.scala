@@ -25,7 +25,7 @@ class StorageSuite extends munit.FunSuite:
         e("kit", Some("/h/kit"), 2),
         e("deep", Some("/h/kit/lib"), 1),
         e("logs", Some("/d/logs"), 3),
-        Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("database"), com.histmersion.api.maintenance.Storage.Entry.Label("db"), com.histmersion.api.maintenance.Storage.Entry.Group("database"), None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some("cluster"))
+        Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("database"), com.histmersion.api.maintenance.Storage.Entry.Label("db"), com.histmersion.api.maintenance.Storage.Entry.Group("database"), None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some(com.histmersion.api.maintenance.Storage.Entry.Key("cluster")))
       )
     )
     assertEquals(
@@ -52,7 +52,7 @@ class StorageSuite extends munit.FunSuite:
   test("shown: children follow their parent, missing locations are left out"):
     val es = Storage.nest(
       List(
-        Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("database"), com.histmersion.api.maintenance.Storage.Entry.Label("db"), com.histmersion.api.maintenance.Storage.Entry.Group("database"), None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some("cluster")),
+        Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("database"), com.histmersion.api.maintenance.Storage.Entry.Label("db"), com.histmersion.api.maintenance.Storage.Entry.Group("database"), None, (Some(5L)).map(com.histmersion.api.ByteCount.apply), within = Some(com.histmersion.api.maintenance.Storage.Entry.Key("cluster"))),
         e("cluster", Some("/d/pg"), 6),
         e("gone", Some("/nope"), 0).modify(_.exists).setTo(false).modify(_.bytes).setTo((None: _root_.scala.Option[com.histmersion.api.ByteCount])),
         e("logs", Some("/d/logs"), 1)
@@ -129,8 +129,8 @@ class StorageSuite extends munit.FunSuite:
           com.histmersion.api.maintenance.Storage.Entry.Group("database"),
           None,
           (Some(9 * GB)).map(com.histmersion.api.ByteCount.apply),
-          within = Some("database-cluster"),
-          detail = Some("histmersion")
+          within = Some(com.histmersion.api.maintenance.Storage.Entry.Key("database-cluster")),
+          detail = Some(com.histmersion.api.maintenance.Storage.Entry.Detail("histmersion"))
         ),
         Storage.Entry(
           com.histmersion.api.maintenance.Storage.Entry.Key("database-cluster"),
@@ -149,7 +149,7 @@ class StorageSuite extends munit.FunSuite:
           (Some(28 * GB)).map(com.histmersion.api.ByteCount.apply),
           (Some(5L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           volume = Some(vol),
-          shrink = Storage.Advice.shrink("backups", 5)
+          shrink = Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("backups"), com.histmersion.api.maintenance.Storage.Advice.Keep(5))
         ),
         Storage.Entry(com.histmersion.api.maintenance.Storage.Entry.Key("toolchain"), com.histmersion.api.maintenance.Storage.Entry.Label("GraalVM toolchain"), com.histmersion.api.maintenance.Storage.Entry.Group("install"), Some(com.histmersion.api.maintenance.Storage.Entry.Path("/d/toolchain")), None, None, exists = com.histmersion.api.maintenance.Storage.Entry.Exists(false)),
         Storage.Entry(
@@ -159,7 +159,7 @@ class StorageSuite extends munit.FunSuite:
           Some(com.histmersion.api.maintenance.Storage.Entry.Path("/c/basemap")),
           (Some(600_000_000L)).map(com.histmersion.api.ByteCount.apply),
           (Some(3L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
-          partial = true,
+          partial = com.histmersion.api.maintenance.Storage.Entry.Partial(true),
           detail = Some("vector 410.0 MB · terrain 190.0 MB"),
           volume = Some(vol)
         )

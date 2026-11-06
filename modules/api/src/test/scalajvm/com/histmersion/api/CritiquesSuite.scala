@@ -110,7 +110,7 @@ class CritiquesSuite extends munit.FunSuite:
     assertEquals(both.map(_.state), List(CritiqueState.Addressed))
     // an empty stored reason is no reason
     assertEquals(
-      Critiques.build(body, resolve, edges.slice(1, 2), List(reasons.head.copy(reason = " ")), refs).map(_.state),
+      Critiques.build(body, resolve, edges.slice(1, 2), List(reasons.head.copy(reason = com.histmersion.api.research.CritiqueReason.Reason(" "))), refs).map(_.state),
       List(CritiqueState.Open)
     )
 
@@ -231,7 +231,7 @@ class CritiquesSuite extends munit.FunSuite:
     )
     assertEquals(CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a2000_x -> b2001_y")).map(_.wire), Right("a2000_x>b2001_y"))
     assertEquals(CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a2000_x → b2001_y")).map(_.wire), Right("a2000_x>b2001_y"))
-    assert(CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a2000_x")).isLeft && CritiqueRef.parse("a>a").isLeft && CritiqueRef.parse(">b").isLeft)
+    assert(CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a2000_x")).isLeft && CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire("a>a")).isLeft && CritiqueRef.parse(com.histmersion.api.research.CritiqueRef.Wire(">b")).isLeft)
     assertEquals(
       CritiqueReason.parse(com.histmersion.api.research.CritiqueReason.Reason("a2000_x>b2001_y=Not the point.  ")),
       Right(CritiqueReason(com.histmersion.api.library.Citekey("a2000_x"), com.histmersion.api.library.Citekey("b2001_y"), com.histmersion.api.research.CritiqueReason.Reason("Not the point.")))
@@ -243,8 +243,8 @@ class CritiquesSuite extends munit.FunSuite:
       CritiqueReason.tidy(CritiqueReason(com.histmersion.api.library.Citekey(" A "), com.histmersion.api.library.Citekey("b"), com.histmersion.api.research.CritiqueReason.Reason(" one\n line "))).map(r => (r.src, r.reason)),
       Right(("a", "one line"))
     )
-    assert(Article.Patch(critiqueReasons = List(CritiqueReason("a", "b", "x")), ifUpdatedAt = Some(com.histmersion.api.research.Article.UpdatedAt("t"))).onlyCritiques)
-    assert(!Article.Patch(body = Some(com.histmersion.api.research.Article.Body("b")), critiqueReasons = List(CritiqueReason("a", "b", "x"))).onlyCritiques)
+    assert(Article.Patch(critiqueReasons = List(CritiqueReason(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b"), com.histmersion.api.research.CritiqueReason.Reason("x"))), ifUpdatedAt = Some(com.histmersion.api.research.Article.UpdatedAt("t"))).onlyCritiques)
+    assert(!Article.Patch(body = Some(com.histmersion.api.research.Article.Body("b")), critiqueReasons = List(CritiqueReason(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b"), com.histmersion.api.research.CritiqueReason.Reason("x")))).onlyCritiques)
     assert(!Article.Patch().onlyCritiques)
 
   // ── §6.9: blocks with their lines, the criticised side, bearing pairs ─────────────────────────────
