@@ -1,0 +1,22 @@
+## modules/core/src/main/scala/com/histmersion/domain/catalogue/evidence/EventMatcher.scala
+95:95 [E172] 95 |        val fs = byCk.getOrElse(ck, Nil).sortBy(f => (f.yearGap.value, f.km.value, f.id.value)) / |No given instance of type Ordering[ / |  ( / |    io.github.iltotore.iron.IronType[Long, / |      io.github.iltotore.iron.constraint.any.Pure], / |    io.github.iltotore.iron.IronType[Double,
+129:21 [E007] 129 |      .sortBy(c => (-c.score.value, c.citekey.value)) / |Found:    (c : Nothing) / |Required: ?{ score: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ score: ?{ value: ?{ unary_- : T1 } } } / |where:    T1 is a type variable
+129:36 [E007] 129 |      .sortBy(c => (-c.score.value, c.citekey.value)) / |Found:    (c : Nothing) / |Required: ?{ citekey: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ citekey: ?{ value: T2 } } / |where:    T2 is a type variable
+129:53 [E172] 129 |      .sortBy(c => (-c.score.value, c.citekey.value)) / |No best given instance of type Ordering[(T1, T2)] was found for parameter ord of method sortBy in trait SeqOps. / |I found: / |    scala.math.Ordering.Tuple2[T1, T2]( / |      /* ambiguous: both object Int in object Ordering and object Short in object Ordering match type Ordering[T1] */ / |        summon[Ordering[T1]],
+136:57 [E172] 136 |    ps.sortBy(p => (-p.name.value.length, p.start.value)).headOption / |No given instance of type Ordering[ / |  (Int, / |    io.github.iltotore.iron.IronType[Int, / |      io.github.iltotore.iron.constraint.any.Pure] / |  )
+
+## modules/core/src/main/scala/com/histmersion/domain/catalogue/events/CatalogMerge.scala
+84:106 [E172] 84 |    given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score.value, f.years.value, f.km.value, f.id.value)) / |No given instance of type Ordering[ / |  (Double, / |    io.github.iltotore.iron.IronType[Double, / |      io.github.iltotore.iron.constraint.any.Pure], / |    io.github.iltotore.iron.IronType[Double,
+117:53 [E007] 117 |      fit(r, e.timeSpan, point(e)._1, point(e)._2, e.id) / |Found:    (e.id : com.histmersion.domain.catalogue.events.StoredEvent.Id) / |Required: com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Id
+123:17 [E007] 123 |          .get(r.key) / |Found:    (com.histmersion.api.catalogue.CatalogRecord.Provider, / |  com.histmersion.api.catalogue.EventCatalogueRef.ProviderId) / |Required: (com.histmersion.domain.catalogue².events.StoredEvent.KeysPart1, / |  com.histmersion.domain.catalogue².events.StoredEvent.KeysPart2) / |where:    catalogue  is a package in package com.histmersion.api
+
+## modules/core/src/main/scala/com/histmersion/domain/media/imports/MediaMatch.scala
+154:49 [E007] 154 |    val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty) / |Found:    (id : (com.histmersion.domain.media.imports.MediaRecord.IdsPart1, / |  com.histmersion.domain.media.imports.MediaRecord.IdsPart2)) / |Required: (com.histmersion.domain.catalogue.places.ExternalIds.Scheme, / |  com.histmersion.domain.catalogue.places.ExternalIds.ExternalId)
+155:94 [E007] 155 |    val idAlone = byId.find(_._2 == Set(target.id)).map((id, _) => Basis(s"${ExternalIds.show(id)} (the record's place id)")) / |Found:    (id : (com.histmersion.domain.media.imports.MediaRecord.IdsPart1, / |  com.histmersion.domain.media.imports.MediaRecord.IdsPart2)) / |Required: (com.histmersion.domain.catalogue.places.ExternalIds.Scheme, / |  com.histmersion.domain.catalogue.places.ExternalIds.ExternalId)
+
+## modules/core/src/main/scala/com/histmersion/domain/SeedPlanDefaults.scala
+13:27 [E007] 13 |      maxFailures = Some(m.maxFailures), / |Found:    (m.maxFailures : com.histmersion.domain.ManagerDefaults.MaxFailures) / |Required: com.histmersion.api.automation.Managers.ManagerConfig.MaxFailures.T
+
+## modules/core/src/main/scala/com/histmersion/domain/media/assets/AssetPlan.scala
+55:57 [E008] 55 |            folds.count(_.modify(_.assetsMerged).using(_ + 1)) / |value + is not a member of com.histmersion.api.exchange.MergeTally.AssetsMerged.T
+

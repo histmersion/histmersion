@@ -1,0 +1,19 @@
+## modules/core/src/main/scala/com/histmersion/domain/catalogue/maptiles/UndatedCells.scala
+58:29 [E007] 58 |        math.floor(sumX / n).toInt, / |        Found:    Int / |        Required: com.histmersion.domain.catalogue.maptiles.TileCell.X
+59:29 [E007] 59 |        math.floor(sumY / n).toInt, / |        Found:    Int / |        Required: com.histmersion.domain.catalogue.maptiles.TileCell.Y
+60:8 [E007] 60 |        n, / |        Found:    (n : Int) / |        Required: com.histmersion.domain.catalogue.maptiles.TileCell.N
+67:18 [E007] 67 |        undated = u / |    Found:    (u : Int) / |    Required: com.histmersion.domain.catalogue.maptiles.TileCell.Undated
+
+## modules/core/src/main/scala/com/histmersion/domain/CompileArticle.scala
+387:33 [E007] 387 |      if !inFilterKeys(r.citekey.value) then Some(s"a reason for [[${r.citekey}]], which is not a source of the claim table") / |                    Found:    io.github.iltotore.iron.IronType[String, / |                      io.github.iltotore.iron.constraint.any.Pure] / |                    Required: io.github.iltotore.iron.IronType[String, / |                      com.histmersion.domain.library.CitekeyRule] / |                    The following import might fix the problem:
+388:37 [E007] 388 |      else if citesAllKeys(r.citekey.value) then / |                    Found:    io.github.iltotore.iron.IronType[String, / |                      io.github.iltotore.iron.constraint.any.Pure] / |                    Required: io.github.iltotore.iron.IronType[String, / |                      com.histmersion.domain.library.CitekeyRule] / |                    The following import might fix the problem:
+394:42 [E007] 394 |      .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && r.reason.value.nonEmpty) / |                    Found:    io.github.iltotore.iron.IronType[String, / |                      io.github.iltotore.iron.constraint.any.Pure] / |                    Required: io.github.iltotore.iron.IronType[String, / |                      com.histmersion.domain.library.CitekeyRule] / |                    The following import might fix the problem:
+
+## modules/core/src/main/scala/com/histmersion/domain/catalogue/places/PlacePlan.scala
+51:6 [E007] 51 |      in.foreign.places.flatMap(p => in.placeMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap ++ / |   Found:    Map[com.histmersion.api.catalogue.Place.Id.T, / |     com.histmersion.domain.MergePlanner.Input.PlaceMatchesValue.T | / |     com.histmersion.api.catalogue.Place.Id.T] / |   Required: Map[com.histmersion.api.exchange.Bundle.Place².Id, / |     com.histmersion.api.exchange.Bundle.Place².Id]
+84:22 [E007] 84 |            q.rightRev(f), / |Found:    com.histmersion.util.data.exchange.PairQuestions.RightRevResult / |Required: com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
+85:22 [E007] 85 |            q.localRev(o.uid) / |Found:    com.histmersion.util.data.exchange.PairQuestions.LocalRevResult / |Required: com.histmersion.util.data.exchange.BundlePlan.Local.Rev
+
+## modules/core/src/main/scala/com/histmersion/domain/WatchManagerDefaults.scala
+15:27 [E007] 15 |      maxFailures = Some(m.maxFailures), / |Found:    (m.maxFailures : com.histmersion.domain.ManagerDefaults.MaxFailures) / |Required: com.histmersion.api.automation.Managers.ManagerConfig.MaxFailures.T
+
