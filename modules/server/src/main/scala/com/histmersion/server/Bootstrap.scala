@@ -273,8 +273,9 @@ object Bootstrap:
   type PeriodSeed = PeriodSeedValue
   type PeriodSeedValue = PeriodSeedValue.T
   object PeriodSeedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkippedListed = SkippedListed.T
-  object SkippedListed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkippedListed = SkippedListedValue
+  type SkippedListedValue = SkippedListedValue.T
+  object SkippedListedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourcesResult = SourcesResult.T
   object SourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

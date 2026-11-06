@@ -19,8 +19,9 @@ object EventGeometry:
   object OfLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfLon = OfLon.T
   object OfLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeometryTypes = GeometryTypes.T
-  object GeometryTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+  type GeometryTypes = GeometryTypesValue
+  type GeometryTypesValue = GeometryTypesValue.T
+  object GeometryTypesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type CheckResultPart1 = CheckResultPart1.T
   object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -48,7 +49,7 @@ object EventGeometry:
 
   /** The GeoJSON geometry types of RFC 7946 (a Feature is not one). */
   val GeometryTypes: Set[com.histmersion.api.catalogue.EventGeometry.GeometryTypes] =
-    Set(_root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("Point"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("MultiPoint"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("LineString"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("MultiLineString"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("Polygon"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("MultiPolygon"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("GeometryCollection"))
+    Set(_root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypesValue("Point"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypesValue("MultiPoint"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypesValue("LineString"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypesValue("MultiLineString"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypesValue("Polygon"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypesValue("MultiPolygon"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypesValue("GeometryCollection"))
 
   private val WktShape =
     "(?is)^(SRID=\\d+;\\s*)?(POINT|MULTIPOINT|LINESTRING|MULTILINESTRING|POLYGON|MULTIPOLYGON|GEOMETRYCOLLECTION)\\b.*".r
@@ -63,10 +64,10 @@ object EventGeometry:
         case Left(_)  => Left(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart1(s"geometry is not GeoJSON: expected an object such as $Example"))
         case Right(j) =>
           j.asObject.flatMap(_("type")).flatMap(_.asString) match
-            case Some(tp) if GeometryTypes(_root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes(tp))                => Right(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart2(t))
+            case Some(tp) if GeometryTypes(_root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes(_root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypesValue(tp)))                => Right(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart2(t))
             case Some(tp @ ("Feature" | "FeatureCollection")) =>
               Left(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart1(s"geometry is a GeoJSON geometry, not a $tp: give its \"geometry\" member"))
-            case Some(tp) => Left(s"geometry type '$tp' is not one of ${GeometryTypes.toList.sorted.mkString(", ")}")
+            case Some(tp) => Left(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart1(s"geometry type '$tp' is not one of ${GeometryTypes.toList.sorted.mkString(", ")}"))
             case None     => Left(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart1(s"geometry has no \"type\": expected an object such as $Example"))
 
   // a plain decimal, never `1.0E-4`, and never with a locale's comma

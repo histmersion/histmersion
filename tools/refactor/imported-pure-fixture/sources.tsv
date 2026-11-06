@@ -1,0 +1,6 @@
+path	sha256
+tools/refactor/imported-pure-fixture/src/main/scala/CrossFile.scala	0e822b05b8c3127e9adf4c69910509261679c3b772f26c3fbfd16b762e29d48d
+tools/refactor/imported-pure-fixture/src/main/scala/Excluded.scala	794f5a55fc6040afea19eb7e4e3ebd62a997dd54235c3ffa705bd9061142bf5e
+tools/refactor/imported-pure-fixture/src/main/scala/Native.scala	235a4924febf4e93eef7bb6661e66d3587c4120948327e643ea2352d56ac0505
+tools/refactor/imported-pure-fixture/src/main/scala/RootPackage.scala	f56e8cac4c4796b7e5184ffd246c3514f1ffba708dd254fc73e12c016f8ff4d7
+tools/refactor/imported-pure-fixture/src/main/scala/Sibling.scala	c00d6faa3a66885052fd3f90921839a07cf28dbdec285eac8ea517358d80441c

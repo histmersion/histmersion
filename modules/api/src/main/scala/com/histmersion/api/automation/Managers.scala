@@ -590,7 +590,7 @@ object Managers:
 
   final case class OaWork(
       doi: com.histmersion.api.library.Doi,
-      title: com.histmersion.api.library.Title = "",
+      title: com.histmersion.api.library.Title = _root_.com.histmersion.api.library.Title(""),
       year: Option[com.histmersion.api.catalogue.Year] = None,
       authors: List[com.histmersion.api.library.AuthorName] = Nil,
       venue: Option[com.histmersion.api.library.Venue] = None,

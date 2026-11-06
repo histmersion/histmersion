@@ -1,0 +1,2 @@
+PASS
+21 application files exactly match the frozen preview.

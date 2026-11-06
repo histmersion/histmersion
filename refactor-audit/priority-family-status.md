@@ -1,6 +1,96 @@
 # Priority-family status
 
-## Current checkpoint: generated companion/value collisions repaired, compilation incomplete
+## Current checkpoint: map property sharing and imported Pure adapters, compilation incomplete
+
+project-type-flows-1 combines seven further companion/value naming repairs (22 AST
+patches) and six helper consolidations (12 patches) in one frozen application over
+ten production files. Three map keys now share their property types: Licence.Family.
+ByWirePart1 -> Wire, EventTaxonomy.ByKindPart1 -> Kind.Value and SiteTypes.ByIdPart1
+-> SiteType.Id. Three E007 property flows in Calibre share Doi, Isbn and Calibredb
+types. The standalone project-value-names-3 preview was not applied separately.
+project-imported-pure-2 then applies 93 compiler adapters (89 E007/4 E008) across
+21 files. Together these are 127 AST patches across 28 distinct production files,
+zero application test edits. No individual application-expression/type mappings,
+new runners, verifiers or report frameworks were introduced. They are applied
+transformations, not a global verified-policy repair numerator or automation rate.
+
+Naming now preserves given aliases without same-name term references, and preserves
+foreign qualified members with the same spelling. Unqualified/own-owner self
+references remain excluded. Five positive naming cases match the golden and run,
+including sorting with a retained Ordering and foreign member preservation; all
+seven old negatives plus two new self-reference negatives stay outside the plan.
+Seven old/new IDs and origins are retained. Five of the preceding twelve naming
+candidates remain unresolved, including the differing lowercase all/uppercase All
+origin. They remain targeted-rewrite/design candidates, not accepted exceptions.
+
+Map sharing consumes exact E172 tuple subtype evidence at a complete typed Map
+val/method-result RHS ending in map(...).toMap. The declared key must match the
+required key, and the exact tuple/arrow position must be a direct model property
+projection. Values additionally require an exact compiler upper bound matching
+the declared value type. Key and value constraints both taint conflicting helpers,
+including unsupported value projections. Existing source-set/module/platform,
+Pure/base, provenance, custom-behavior and model-property protection gates remain.
+Nested bindings, transforms, raw/non-property sources and unsupported bounds stay
+unresolved. Five map aliases match the independent golden; actual rewritten
+future-source/fatal-E165 runtime checks pass for identity, lookups, empty input,
+one producer evaluation and duplicate-key behavior. Conflict tests reject both
+different key properties and a key/value conflict even beside a valid key use.
+The combined fixture changes exactly its two positive files; both negative files
+stay absent. The legacy five-property output remains exact. Origins are synthetic
+test data and are not independent policy quality holdouts.
+
+resolveImportedPure is opt-in for compiler adapters and disabled for consolidation.
+It proves canonical Iron RefinedType/Pure bindings through imports/import renames
+or qualified names, with native scalar/Array bases. Frozen-source declarations,
+package/member/type/term shadows, imports and enclosing inheritance guard lookup.
+Import-dependent names under uncertain wildcards/inheritance or constraint aliases
+remain unsupported. The repair AST object index also finds renamed-parent types
+missed by the measurement shape index; measurement classifications are unchanged.
+The first fixture preview missed two such aliases; the final preview fixes that
+without changing the golden or exclusions. Ten positive adapters match exactly and
+actual runtime passes, including Array identity and both Boolean states. Seven
+fake-parent/constraint/base/import/namespace/inheritance/cross-file cases remain
+untouched. Disabling the feature gives an empty plan. Five ordinary/two owner
+goldens remain exact; their previously executed behavior is unchanged. E134 remains
+disabled, ownership guards remain, and no new nominal-boundary permission is added.
+
+| Module | Before, frontier26/latest | After type flows, frontier27 | After imported adapters, frontier28 |
+|---|---:|---:|---:|
+| api JVM and JS, each | 1958 | 1945 | 1847 |
+| values | latest18, cached | 17 | cached17 |
+| upstreams | 247 | cached | 246 |
+| plugin-vaults | 95 | cached | cached95 |
+| plugins/calibre | 148 | 145 | 145 |
+| plugins/ai-http | 65 | cached | 64 |
+
+All ten previously failing tasks still fail. Hello/latest1, hello-ai/latest7 and
+chimney-iron retain cached failures; dependent application tests remain blocked.
+E120 printed diagnostics fall6 ->2, remaining2 in28. Aggregate reductions are not
+complete attribution of changed diagnostics or a zero-regression proof. Compiler
+checks, stack16m, maxErrors10000 and serial settings are unchanged, with all3170
+source/build hashes stable. Plugin API/resolver/console sources are unchanged;
+their earlier test evidence is retained, not rerun or claimed as a new pass.
+No full-project test/native pass is claimed. Other policy families retain their
+prior evidence and were not reassessed by these model/compiler observations.
+
+All ten first-stage files verified before the final adapters; all21 final files
+match their frozen preview. The final full3169-Scala census matches frontier28,
+which also snapshots build.sbt. Type-flow history records13 removed opaque IDs
+(seven renamed, six consolidated) and seven introduced rename IDs. Every rename
+pair/origin is explicit, and the final census retains the origins byte-for-byte
+with zero further shape-ID delta. Current shapes: production26888/test19; raw
+candidates: production886/test6009, with zero introduced/removed/corrected raw IDs.
+Final positions137026, overlap groups2978 (previous2980), unresolved references16260
+(previous16256). Alias/import/inferred/inherited/external measurement resolution
+is still partial; repair lookup improvements do not constitute inventory acceptance
+or shrink historical obligations. No detector refinement round, new exception or
+overall automation percentage is claimed. The scope and90% target remain unchanged.
+
+Next is the remaining naming and helper/utility contract mismatches in the fresh
+compiler evidence, while retaining raw candidates, semantic sharing, smart
+construction and application tests in scope.
+
+## Previous checkpoint: generated companion/value collisions repaired, compilation incomplete
 
 Three applications use the existing pipeline. project-helper-adapters-2 applies168
 compiler AST patches in48 production files (128 E007/40 E008); project-value-names-2

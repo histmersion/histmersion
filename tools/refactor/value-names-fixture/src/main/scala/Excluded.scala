@@ -35,3 +35,14 @@ final class InstanceOwner:
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   val Label: Label = _root_.collisionfixture.InstanceOwner.Label("label")
+
+object GivenSelf:
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given T = _root_.collisionfixture.GivenSelf.Label("label")
+  val Label: Label = _root_.collisionfixture.GivenSelf.Label("label")
+
+object RootedSelf:
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  val Label: Label = _root_.collisionfixture.RootedSelf.Label(_root_.collisionfixture.RootedSelf.Label.value)

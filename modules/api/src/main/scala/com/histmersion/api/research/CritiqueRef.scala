@@ -31,6 +31,6 @@ object CritiqueRef:
   def parse(s: com.histmersion.api.research.CritiqueRef.ParseS): Either[com.histmersion.api.research.CritiqueRef.ParseResultPart1, CritiqueRef] =
     val t = Option((s).value).getOrElse("").replace("->", ">").replace("→", ">")
     t.split(">", -1).toList match
-      case a :: b :: Nil if (key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a))).value.nonEmpty && (key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b))).value.nonEmpty && key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a)) != key(b) => Right(CritiqueRef(key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a)), key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b))))
+      case a :: b :: Nil if (key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a))).value.nonEmpty && (key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b))).value.nonEmpty && key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a)) != key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b)) => Right(CritiqueRef(key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a)), key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b))))
       case _                                                                       =>
         Left(_root_.com.histmersion.api.research.CritiqueRef.ParseResultPart1(s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"))

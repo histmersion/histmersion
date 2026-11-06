@@ -3,7 +3,7 @@
 Detector configurations read application sources; explicitly named repair configurations apply Scalafix patches.
 Run commands from the `contracts3-scalafix` worktree root.
 
-`AstRecipe.propertyFlowsOnly` consumes frozen E007 diagnostics and the existing
+`AstRecipe.propertyFlowsOnly` consumes frozen E007/E172 diagnostics and the existing
 newtype index/history, then delegates patches to TypeConsolidation. It aliases a
 generated helper to a model constructor property's type when the compiler and AST
 show an unchanged property projection: a matching-name parameter, a whole method
@@ -18,6 +18,15 @@ individual application type or expression mappings. Golden and negative fixtures
 are in compiler-repairs-fixture/property-flows; their synthetic provenance is
 documented in property-origins/README.md. The mode uses the existing preview,
 ApplyFrozenPreview, CompileBatch and stable-ID measurement pipeline.
+
+For `.map(...).toMap`, an E172 tuple `<:<` witness must match the key of the whole
+typed Map val/method result. Only direct property projections in the matching
+tuple/arrow position qualify. A value rewrite additionally needs the compiler's
+exact value-variable upper bound to match the declared Map value. Both key and
+value constraints are retained for conflict checks, including unsupported value
+projections; a helper used for two properties is not consolidated. Nested bindings,
+transformed keys/values, raw primitives and non-property sources remain unresolved.
+The map-property-fixture proves key/value identity and negative/conflict cases.
 
 `AstRecipe.generatedHelperAdapters` extends native-Boolean owner mode with
 same-base Pure helper-to-helper/property conversions, retaining both type
@@ -36,12 +45,15 @@ negative and synthetic-provenance fixtures;
 compiler-repairs-helper-reject-overloads.conf must fail.
 
 `AstRecipe.generatedValueNames` repairs generated companion/value collisions.
-An indexed, canonical, empty qualified Pure companion must have a unique typed
+An indexed, canonical qualified Pure companion must have a unique typed
 same-name value and exact owner-match provenance for that value in a stable object
 owner. The rule chooses a fresh `<Name>Value` companion and canonical alias,
 retains the original type name as an alias and retains the value's public name.
 Only rooted one-argument constructor heads inside that value's initializer change;
-other term references to that name in the initializer veto the repair. No
+unqualified/own-owner term references to that name in the initializer veto the
+repair. Foreign qualified members with the same spelling are preserved. Given
+aliases may remain when they have no same-name term reference; other companion
+behavior stays excluded. No
 constructor is required for empty or raw initializers. Other constructor/member
 references outside the initializer remain outside this repair's coverage; ordinary
 value indexing and iteration are preserved. Unsupported/custom/local/ambiguous
@@ -50,6 +62,24 @@ identities and carries the generated origin to the new definition through the
 standard appliedPlans index history. This is naming repair, not semantic type
 merging, primitive elimination or a new finding denominator. Fixtures are in
 value-names-fixture; execution still uses ApplyFrozenPreview and CompileBatch.
+It may run with propertyFlowsOnly in one frozen pass; all other rewrite combinations
+remain prohibited, and the existing overlap check protects the combined patches.
+
+`AstRecipe.resolveImportedPure` is opt-in for compiler adapters and is prohibited
+in property consolidation. It resolves canonical Iron RefinedType/Pure imports,
+explicit import renames and qualified names, and native scalar/Array bases. Scope
+checks use declarations across frozen Scala sources, including package/type/term
+shadows, visible imports and enclosing inheritance. Import-dependent recognition
+rejects unknown wildcards, uncertain inherited bindings, misleading Pure aliases,
+fake parents and shadowed primitives/namespaces. Fully rooted identities remain
+available. Only Iron/any, Scala/Predef and java.lang wildcards have known bindings;
+arbitrary aliases/inheritance/imports stay unsupported. An AST object index finds
+canonical companions with renamed parent imports even when the inventory's
+syntactic newtype-shape index misses them. This changes repair resolution, not the
+measurement detector or its acceptance limits. Existing ownership, same-base,
+constraint and boundary gates still apply; E134 stays disabled in the project mode.
+imported-pure-fixture checks the supported and shadowed cases, and the disabled
+fixture config must produce an empty plan.
 
 ## Project-wide measurement and bulk rewrite gates
 

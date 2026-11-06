@@ -4,8 +4,8 @@ object EventTaxonomy:
 
   type Groups = Groups.T
   object Groups extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ByKindPart1 = ByKindPart1.T
-  object ByKindPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ByKindPart1 = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value
+  val ByKindPart1: _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value
   type AliasesPart1 = AliasesPart1.T
   object AliasesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AliasesPart2 = AliasesPart2.T

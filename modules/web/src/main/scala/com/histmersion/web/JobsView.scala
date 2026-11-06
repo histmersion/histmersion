@@ -77,10 +77,12 @@ object JobsView:
 
   /** The polling schedule — the one every polled window shares ([[com.histmersion.web.Poll]]). */
   object Poll:
-    type FirstMs = FirstMs.T
-    object FirstMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MaxMs = MaxMs.T
-    object MaxMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FirstMs = FirstMsValue
+    type FirstMsValue = FirstMsValue.T
+    object FirstMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxMs = MaxMsValue
+    type MaxMsValue = MaxMsValue.T
+    object MaxMsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NextResult = NextResult.T
     object NextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NextPrevious = NextPrevious.T

@@ -172,7 +172,7 @@ object RepositoryLanding:
       */
     def denied(host: com.histmersion.upstreams.landing.RepositoryLanding.Rules.DeniedHost): com.histmersion.upstreams.landing.RepositoryLanding.Rules.DeniedResult =
       denyHosts.exists(d => matchesHost(host, d)) ||
-        (!((allowed(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedHost((host).value))) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedResult(true)) && (host).value.split('.').toList.dropRight(1).exists(l => denyHostWords.exists(w => wordLabel(l, w))))
+        (!((allowed(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedHost((host).value))) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedResult(true)) && (host).value.split('.').toList.dropRight(1).exists(l => denyHostWords.exists(w => wordLabel(_root_.com.histmersion.upstreams.landing.RepositoryLanding.WordLabelLabel(l), w))))
 
     /** A university's host: `.edu` (`.edu.au` too), `.ac.<cc>`, or a label that is a configured word ([[wordLabel]]:
       * `repository`, `eprints`, `pure`, `opus4`, `uni-tuebingen` for `uni-`).

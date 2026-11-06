@@ -353,7 +353,7 @@ object Geocode:
   private def broad(kind: com.histmersion.api.catalogue.Geocode.BroadKind) =
     kind == _root_.com.histmersion.api.catalogue.Geocode.BroadKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Geocode.BroadKind(com.histmersion.api.catalogue.Place.Kind.Polity)
 
-  def tierOf(importSource: Option[com.histmersion.api.catalogue.Geocode.TierOfImportSource]): com.histmersion.api.catalogue.Geocode.TierOfResult = Gazetteer.rank(Place.Match("", importSource))
+  def tierOf(importSource: Option[com.histmersion.api.catalogue.Geocode.TierOfImportSource]): com.histmersion.api.catalogue.Geocode.TierOfResult = Gazetteer.rank(Place.Match(_root_.com.histmersion.api.catalogue.Place.Id(""), importSource))
 
   def isPlaceholder(c: Candidate, placeholderMin: com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin): com.histmersion.api.catalogue.Geocode.IsPlaceholderResult = c.dimension == _root_.com.histmersion.api.catalogue.Geocode.Candidate.Dimension(0) && c.shared >= placeholderMin
 
