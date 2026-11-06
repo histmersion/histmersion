@@ -58,3 +58,10 @@ More in core, from round 3, to compare with 7e197c2b:
 Model-answer fields done right so far: `AcquisitionSweepRules.Pick.doi`, `AgentProposals.ProposalAnswer.citekey` (raw, parsed at the check). Found and fixed, generic-call class: `ActivityRules` `e.goal.contains(g)`, `e.by.contains(...)`.
 
 From the core finisher, to compare with 7e197c2b: `MergePlanner` folds, renames and relinks go through `Citekey.option`, dropping a bundle citekey that fails `CitekeyRule` where master passed it through (bundles from another install could carry one: test this). The evidence check runs `Citekey.option` before `isCitekey`, so an invalid model citekey can get a different problem text.
+
+## Blockers before any install
+
+- Stored JSON must still load: `VerifiedFindings` lost its defaults ("checkpoint older than the counts"). Check every record stored as JSON (checkpoints, agent state, run outputs, bundles) that lost a default or gained a constraint in this migration, and test the decoders on real saved data in a restored copy.
+- `parseRetractionWatch` no longer normalises DOIs, and a repair agent moved that into `AcquireSuite`. Restore it in main and remove it from the test: a retracted paper must not be missed.
+
+Also check: `ModelChains.headroom` returns `Option[LimitState.FreesAt]` for a token headroom; `EventPrecision`, `Correction.Status`, `HintEffect` constants are plain strings; `AcquisitionControllers:357` has a mangled `Ident.doi(r.doi)`.
