@@ -19,7 +19,7 @@ class PeriodPlanSuite extends munit.FunSuite:
       Some(Bundle.Range(Some(from), Some(to))),
       None,
       parent,
-      "2026-01-01T00:00:00.000000Z"
+      com.histmersion.api.exchange.Bundle.Period.UpdatedAt("2026-01-01T00:00:00.000000Z")
     )
 
   test(

@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.util.jobs.Job
 
@@ -115,7 +117,7 @@ class JobControlRulesSuite extends munit.FunSuite:
     )
 
   test("a stopped job keeps what it had done in its progress line"):
-    assertEquals(JobControlRules.stoppedLine(JobStop.Pause, Some("12/40 places")), "paused after: 12/40 places")
+    assertEquals(JobControlRules.stoppedLine(JobStop.Pause, Some(com.histmersion.api.jobs.JobInfo.Progress("12/40 places"))), "paused after: 12/40 places")
     assertEquals(JobControlRules.stoppedLine(JobStop.Cancel, None), "cancelled")
-    assertEquals(JobAction.parse(" Pause "), Some(JobAction.Pause))
-    assertEquals(JobAction.parse("stop"), None)
+    assertEquals(JobAction.parse(com.histmersion.util.jobs.JobAction.Wire(" Pause ")), Some(JobAction.Pause))
+    assertEquals(JobAction.parse(com.histmersion.util.jobs.JobAction.Wire("stop")), None)

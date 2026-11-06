@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.PlacesMarkdown
@@ -52,7 +54,7 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
 
   test("visible: only what the basis allows"):
     def vis(b: com.histmersion.api.catalogue.Place.TimeBasis, hi: Long, overlaps: Boolean, evidence: Boolean) =
-      com.histmersion.api.catalogue.Place.TimeBasis.visible(b, hi, modernFrom = 1500, overlaps, evidence)
+      com.histmersion.api.catalogue.Place.TimeBasis.visible(b, hi, modernFrom = com.histmersion.api.catalogue.Place.TimeBasis.ModernFrom(1500), overlaps, evidence)
     assert(vis(Dated, -2500, overlaps = true, evidence = false))
     assert(!vis(Dated, -2500, overlaps = false, evidence = true), "a finding does not date a dated place")
     assert(vis(Timeless, -2500, overlaps = false, evidence = false))
@@ -64,12 +66,12 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
 
   test("the wire names round-trip"):
     assertEquals(values.toList.flatMap(b => parse(b.wire)), values.toList)
-    assertEquals(parse("Findings"), Some(Findings))
-    assertEquals(parse("sometimes"), None)
+    assertEquals(parse(com.histmersion.api.catalogue.Place.TimeBasis.Wire("Findings")), Some(Findings))
+    assertEquals(parse(com.histmersion.api.catalogue.Place.TimeBasis.Wire("sometimes")), None)
 
   test("a card at a time says a place is there by its findings; with no time, or dated, it says nothing"):
-    val p = com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("x"), "Anatolia", Place.Kind.Region, None, None, None, "")
-    val d = PlaceDetail(p, None, Nil, Nil, 0, Some(-2500L), timeBasis = Findings)
+    val p = com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("x"), com.histmersion.api.catalogue.Place.Summary.Label("Anatolia"), Place.Kind.Region, None, None, None, com.histmersion.api.catalogue.Place.Summary.Names(""))
+    val d = PlaceDetail(p, None, Nil, Nil, com.histmersion.api.catalogue.Place.Counts.Findings(0), Some(com.histmersion.api.catalogue.Year(-2500L)), timeBasis = Findings)
     assert(d.datedByFindings)
     assert(!d.modify(_.asOf).setTo((None: _root_.scala.Option[_root_.scala.Long])).datedByFindings)
     assert(!d.modify(_.timeBasis).setTo(Dated).datedByFindings)

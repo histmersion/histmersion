@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.catalogue.EventsMarkdown
@@ -30,11 +32,11 @@ import com.histmersion.api.exchange.Bundle
 class EventScaleSuite extends munit.FunSuite:
 
   test("parse: local and regional are stored, auto clears, anything else is refused"):
-    assertEquals(EventScale.parse("local"), Some(Some("local")))
-    assertEquals(EventScale.parse(" Regional "), Some(Some("regional")))
-    assertEquals(EventScale.parse("auto"), Some(None))
-    assertEquals(EventScale.parse("global"), None)
-    assertEquals(EventScale.parse(""), None)
+    assertEquals(EventScale.parse(com.histmersion.api.catalogue.EventSummary.Scale("local")), Some(Some("local")))
+    assertEquals(EventScale.parse(com.histmersion.api.catalogue.EventSummary.Scale(" Regional ")), Some(Some("regional")))
+    assertEquals(EventScale.parse(com.histmersion.api.catalogue.EventSummary.Scale("auto")), Some(None))
+    assertEquals(EventScale.parse(com.histmersion.api.catalogue.EventSummary.Scale("global")), None)
+    assertEquals(EventScale.parse(com.histmersion.api.catalogue.EventSummary.Scale("")), None)
 
   test("the kind decides first: battle, siege, destruction local; migration, change, era, war regional"):
     List("battle", "siege", "destruction", "Destruction", "construction", "founding").foreach(k =>
@@ -57,15 +59,15 @@ class EventScaleSuite extends munit.FunSuite:
     List("event", "natural_disaster", "treaty", "").foreach(k => assertEquals(EventScale.ofKind(k), None, k))
 
   test("the place's kind: a site or feature is local, a region, polity or people regional"):
-    assertEquals(EventScale.ofPlaceKind("site"), Some("local"))
-    assertEquals(EventScale.ofPlaceKind("feature"), Some("local"))
-    assertEquals(EventScale.ofPlaceKind("region"), Some("regional"))
-    assertEquals(EventScale.ofPlaceKind("polity"), Some("regional"))
-    assertEquals(EventScale.ofPlaceKind("people"), Some("regional"))
-    assertEquals(EventScale.ofPlaceKind("something"), None)
-    assertEquals(EventScale.ofGeometry("POINT"), Some("local"))
-    assertEquals(EventScale.ofGeometry("ST_MultiPolygon"), Some("regional"))
-    assertEquals(EventScale.ofGeometry("LINESTRING"), None)
+    assertEquals(EventScale.ofPlaceKind(com.histmersion.api.catalogue.Place.Kind.Wire("site")), Some("local"))
+    assertEquals(EventScale.ofPlaceKind(com.histmersion.api.catalogue.Place.Kind.Wire("feature")), Some("local"))
+    assertEquals(EventScale.ofPlaceKind(com.histmersion.api.catalogue.Place.Kind.Wire("region")), Some("regional"))
+    assertEquals(EventScale.ofPlaceKind(com.histmersion.api.catalogue.Place.Kind.Wire("polity")), Some("regional"))
+    assertEquals(EventScale.ofPlaceKind(com.histmersion.api.catalogue.Place.Kind.Wire("people")), Some("regional"))
+    assertEquals(EventScale.ofPlaceKind(com.histmersion.api.catalogue.Place.Kind.Wire("something")), None)
+    assertEquals(EventScale.ofGeometry(com.histmersion.api.catalogue.EventScale.GeometryType("POINT")), Some("local"))
+    assertEquals(EventScale.ofGeometry(com.histmersion.api.catalogue.EventScale.GeometryType("ST_MultiPolygon")), Some("regional"))
+    assertEquals(EventScale.ofGeometry(com.histmersion.api.catalogue.EventScale.GeometryType("LINESTRING")), None)
 
   test("effective: stated, then kind, then own geometry, then place kind, then sub-event, then local"):
     def eff(
@@ -99,50 +101,50 @@ class EventScaleSuite extends munit.FunSuite:
   test("EventGeometry: a point is GeoJSON, longitude first; lat/lon and geometry exclude each other"):
     assertEquals(EventGeometry.point(36.5, -1.25), Right("""{"type":"Point","coordinates":[-1.25,36.5]}"""))
     assertEquals(EventGeometry.point(1e-4, 0.0), Right("""{"type":"Point","coordinates":[0,0.0001]}"""))
-    assert(EventGeometry.point(91, 0).isLeft)
-    assert(EventGeometry.point(0, 181).isLeft)
+    assert(EventGeometry.point(com.histmersion.api.catalogue.Latitude(91), com.histmersion.api.catalogue.Longitude(0)).isLeft)
+    assert(EventGeometry.point(com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(181)).isLeft)
     assertEquals(EventGeometry.of(None, None, None), Right(None))
-    assertEquals(EventGeometry.of(Some(" {} "), None, None), Right(Some("{}")))
-    assert(EventGeometry.of(Some("{}"), Some(1), Some(2)).isLeft)
-    assert(EventGeometry.of(None, Some(1), None).isLeft)
-    assertEquals(EventGeometry.of(None, Some(1), Some(2)), Right(Some("""{"type":"Point","coordinates":[2,1]}""")))
+    assertEquals(EventGeometry.of(Some(com.histmersion.api.catalogue.EventGeometry.Geojson(" {} ")), None, None), Right(Some("{}")))
+    assert(EventGeometry.of(Some(com.histmersion.api.catalogue.EventGeometry.Geojson("{}")), Some(com.histmersion.api.catalogue.Latitude(1)), Some(com.histmersion.api.catalogue.Longitude(2))).isLeft)
+    assert(EventGeometry.of(None, Some(com.histmersion.api.catalogue.Latitude(1)), None).isLeft)
+    assertEquals(EventGeometry.of(None, Some(com.histmersion.api.catalogue.Latitude(1)), Some(com.histmersion.api.catalogue.Longitude(2))), Right(Some("""{"type":"Point","coordinates":[2,1]}""")))
 
   test("EventGeometry.check: GeoJSON geometries pass; WKT, Features and non-JSON are refused (#2554)"):
     val pt = """{"type":"Point","coordinates":[36.5,34.55]}"""
     assertEquals(EventGeometry.check(s"  $pt\n"), Right(pt))
     assert(EventGeometry.check("""{"type":"MultiPolygon","coordinates":[]}""").isRight)
-    val wkt = EventGeometry.check("POINT(36.5 34.55)")
+    val wkt = EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("POINT(36.5 34.55)"))
     assert(wkt.left.exists(_.contains("not WKT")), wkt.toString)
-    assert(EventGeometry.check("srid=4326;polygon((0 0,1 0,1 1,0 0))").left.exists(_.contains("not WKT")))
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("srid=4326;polygon((0 0,1 0,1 1,0 0))")).left.exists(_.contains("not WKT")))
     assert(EventGeometry.check("""{"type":"Feature","geometry":null}""").left.exists(_.contains("not a Feature")))
     assert(EventGeometry.check("""{"type":"Circle"}""").left.exists(_.contains("'Circle'")))
     assert(EventGeometry.check("""{"coordinates":[1,2]}""").left.exists(_.contains("no \"type\"")))
-    assert(EventGeometry.check("[1,2]").isLeft)
-    assert(EventGeometry.check("near Kadesh").left.exists(_.contains("not GeoJSON")))
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("[1,2]")).isLeft)
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("near Kadesh")).left.exists(_.contains("not GeoJSON")))
 
   test("EventGeo.outer: the outer span, one known end alone, nothing when undated"):
-    assertEquals((TimeSpan(Some(-1300), Some(-1290), Some(-1260), Some(-1250))).outer, Some((-1300L, -1250L)))
-    assertEquals((TimeSpan(beginBy = Some(-1290), endFrom = Some(-1260))).outer, Some((-1290L, -1260L)))
-    assertEquals((TimeSpan(notBefore = Some(-1274))).outer, Some((-1274L, -1274L)))
+    assertEquals((TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), Some(com.histmersion.api.catalogue.Year(-1290)), Some(com.histmersion.api.catalogue.Year(-1260)), Some(com.histmersion.api.catalogue.Year(-1250)))).outer, Some((-1300L, -1250L)))
+    assertEquals((TimeSpan(beginBy = Some(com.histmersion.api.catalogue.Year(-1290)), endFrom = Some(com.histmersion.api.catalogue.Year(-1260)))).outer, Some((-1290L, -1260L)))
+    assertEquals((TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1274)))).outer, Some((-1274L, -1274L)))
     assertEquals((TimeSpan()).outer, None)
 
   test("EventGeo.outer: an open-ended event stands at the end it states, not forever after (#1768)"):
     // a start alone: that year; a start window alone: the window; an end alone: that year
-    assertEquals((TimeSpan(beginBy = Some(-1200))).outer, Some((-1200L, -1200L)))
-    assertEquals((TimeSpan(notBefore = Some(-1200), beginBy = Some(-1195))).outer, Some((-1200L, -1195L)))
-    assertEquals((TimeSpan(notAfter = Some(-1100))).outer, Some((-1100L, -1100L)))
-    assertEquals((TimeSpan(endFrom = Some(-1110), notAfter = Some(-1100))).outer, Some((-1110L, -1100L)))
+    assertEquals((TimeSpan(beginBy = Some(com.histmersion.api.catalogue.Year(-1200)))).outer, Some((-1200L, -1200L)))
+    assertEquals((TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200)), beginBy = Some(com.histmersion.api.catalogue.Year(-1195)))).outer, Some((-1200L, -1195L)))
+    assertEquals((TimeSpan(notAfter = Some(com.histmersion.api.catalogue.Year(-1100)))).outer, Some((-1100L, -1100L)))
+    assertEquals((TimeSpan(endFrom = Some(com.histmersion.api.catalogue.Year(-1110)), notAfter = Some(com.histmersion.api.catalogue.Year(-1100)))).outer, Some((-1110L, -1100L)))
     // points recorded out of order are ordered, not inverted
-    assertEquals((TimeSpan(notBefore = Some(-1000), notAfter = Some(-1100))).outer, Some((-1100L, -1000L)))
-    assertEquals(EventGeo.missingEnd(TimeSpan(notBefore = Some(-1200))), Some("end not recorded"))
-    assertEquals(EventGeo.missingEnd(TimeSpan(endFrom = Some(-1200))), Some("start not recorded"))
-    assertEquals(EventGeo.missingEnd(TimeSpan(Some(-1300), None, None, Some(-1250))), None)
+    assertEquals((TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1000)), notAfter = Some(-1100))).outer, Some((-1100L, -1000L)))
+    assertEquals(EventGeo.missingEnd(TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200)))), Some("end not recorded"))
+    assertEquals(EventGeo.missingEnd(TimeSpan(endFrom = Some(com.histmersion.api.catalogue.Year(-1200)))), Some("start not recorded"))
+    assertEquals(EventGeo.missingEnd(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), None, None, Some(com.histmersion.api.catalogue.Year(-1250)))), None)
     assertEquals(EventGeo.missingEnd(TimeSpan()), None)
 
   test("the wire: a patch and a put take scale; a summary carries it with whether it is stated"):
-    assertEquals(decode[EventPatch]("""{"scale":"regional"}"""), Right(EventPatch(scale = Some("regional"))))
+    assertEquals(decode[EventPatch]("""{"scale":"regional"}"""), Right(EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("regional")))))
     assertEquals(decode[EventPut]("""{"label":"x","scale":"local"}""").map(_.scale), Right(Some("local")))
-    val s = EventSummary("e", "E", "battle", TimeSpan(), "attested", scale = "local", scaleStated = true)
+    val s = EventSummary(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventSummary.Label("E"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(), com.histmersion.api.catalogue.EventSummary.Historicity("attested"), scale = "local", scaleStated = true)
     assertEquals(decode[EventSummary](s.asJson.noSpaces), Right(s))
     // an older client's summary without the fields still reads
     assertEquals(
@@ -153,11 +155,11 @@ class EventScaleSuite extends munit.FunSuite:
 
   test("Markdown: the list line and the detail show the scale and whether it is stated"):
     val e = EventSummary(
-      "kadesh",
-      "Battle of Kadesh",
-      "battle",
-      TimeSpan(Some(-1274), None, None, Some(-1274)),
-      "attested",
+      com.histmersion.api.catalogue.Event.Id("kadesh"),
+      com.histmersion.api.catalogue.EventSummary.Label("Battle of Kadesh"),
+      com.histmersion.api.catalogue.EventSummary.Kind("battle"),
+      TimeSpan(Some(com.histmersion.api.catalogue.Year(-1274)), None, None, Some(com.histmersion.api.catalogue.Year(-1274))),
+      com.histmersion.api.catalogue.EventSummary.Historicity("attested"),
       scale = "local",
       scaleStated = false
     )
@@ -173,14 +175,14 @@ class EventScaleSuite extends munit.FunSuite:
     val ev = Bundle.Event(
       java.util.UUID.fromString("00000000-0000-0000-0000-000000000001"),
       java.util.UUID.fromString("00000000-0000-0000-0000-000000000002"),
-      "e",
-      "E",
-      "battle",
+      com.histmersion.api.exchange.Bundle.Event.Id("e"),
+      com.histmersion.api.exchange.Bundle.Event.Label("E"),
+      com.histmersion.api.exchange.Bundle.Event.Kind("battle"),
       None,
       None,
       None,
       None,
-      "attested",
+      com.histmersion.api.exchange.Bundle.Event.Historicity("attested"),
       None,
       None,
       None,
@@ -190,7 +192,7 @@ class EventScaleSuite extends munit.FunSuite:
       Nil,
       Nil,
       Nil,
-      "2026-01-01T00:00:00Z"
+      com.histmersion.api.exchange.Bundle.Event.UpdatedAt("2026-01-01T00:00:00Z")
     )
     val line = BundleFormat.stamp(ev).line
     assert(!line.contains("scale"), line)

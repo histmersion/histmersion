@@ -11,34 +11,34 @@ import MergeText.AuthorAgreement
 class MergeTextSuite extends munit.FunSuite with Bounded:
 
   test("fold removes diacritics and the letters NFD cannot split"):
-    assertEquals(MergeText.fold("Güterbock"), "guterbock")
-    assertEquals(MergeText.fold("López-Ruiz"), "lopez-ruiz")
-    assertEquals(MergeText.fold("Łukasz Ståhl Æsir Straße"), "lukasz stahl aesir strasse")
-    assertEquals(MergeText.fold("Ḫattuša"), "hattusa")
+    assertEquals(MergeText.fold(com.histmersion.domain.library.sources.MergeText.Text("Güterbock")), "guterbock")
+    assertEquals(MergeText.fold(com.histmersion.domain.library.sources.MergeText.Text("López-Ruiz")), "lopez-ruiz")
+    assertEquals(MergeText.fold(com.histmersion.domain.library.sources.MergeText.Text("Łukasz Ståhl Æsir Straße")), "lukasz stahl aesir strasse")
+    assertEquals(MergeText.fold(com.histmersion.domain.library.sources.MergeText.Text("Ḫattuša")), "hattusa")
 
   test("fingerprint: case, accents, punctuation and word order do not matter"):
     assertEquals(
-      MergeText.fingerprint("Perspectives on Hittite Civilization"),
-      MergeText.fingerprint("perspectives on hittite civilization.")
+      MergeText.fingerprint(com.histmersion.domain.library.sources.MergeText.Text("Perspectives on Hittite Civilization")),
+      MergeText.fingerprint(com.histmersion.domain.library.sources.MergeText.Text("perspectives on hittite civilization."))
     )
     assertEquals(
-      MergeText.fingerprint("The Ancient Near East, c. 3000–330 BC"),
-      MergeText.fingerprint("the ancient near east c 3000 330 bc")
+      MergeText.fingerprint(com.histmersion.domain.library.sources.MergeText.Text("The Ancient Near East, c. 3000–330 BC")),
+      MergeText.fingerprint(com.histmersion.domain.library.sources.MergeText.Text("the ancient near east c 3000 330 bc"))
     )
 
   test("mainTitle cuts the subtitle at a colon, a dash or a full stop"):
     assertEquals(
-      MergeText.mainTitle("Perspectives on Hittite Civilization: Selected Writings"),
+      MergeText.mainTitle(com.histmersion.domain.Title("Perspectives on Hittite Civilization: Selected Writings")),
       "Perspectives on Hittite Civilization"
     )
-    assertEquals(MergeText.mainTitle("Troy and Homer — Towards a Solution"), "Troy and Homer")
-    assertEquals(MergeText.mainTitle("Themis. A Study of the Social Origins"), "Themis")
-    assertEquals(MergeText.mainTitle("No subtitle"), "No subtitle")
+    assertEquals(MergeText.mainTitle(com.histmersion.domain.Title("Troy and Homer — Towards a Solution")), "Troy and Homer")
+    assertEquals(MergeText.mainTitle(com.histmersion.domain.Title("Themis. A Study of the Social Origins")), "Themis")
+    assertEquals(MergeText.mainTitle(com.histmersion.domain.Title("No subtitle")), "No subtitle")
 
   test("titleKey: the first three significant words of the main title, sorted"):
-    assertEquals(MergeText.titleKey("The Ancient Near East: c. 3000-330 BC"), "ancient east near")
+    assertEquals(MergeText.titleKey(com.histmersion.domain.Title("The Ancient Near East: c. 3000-330 BC")), "ancient east near")
     assertEquals(
-      MergeText.titleKey("Perspectives on Hittite civilization"),
+      MergeText.titleKey(com.histmersion.domain.Title("Perspectives on Hittite civilization")),
       "hittite perspectives civilization".split(" ").sorted.mkString(" ")
     )
 
@@ -68,45 +68,45 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     assert(!same("López-Ruiz, Carolina", "Carolina Ruiz"), "half a double surname is not the surname")
 
   test("surname blocking keys cover both halves of a double surname"):
-    assert(MergeText.surnameKeys("López-Ruiz, Carolina").contains("lopezruiz"))
-    assert(MergeText.surnameKeys("Carolina Lopez Ruiz").contains("ruiz"))
-    assert(MergeText.surnameKeys("López-Ruiz, Carolina").contains("ruiz"))
+    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("López-Ruiz, Carolina")).contains("lopezruiz"))
+    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("Carolina Lopez Ruiz")).contains("ruiz"))
+    assert(MergeText.surnameKeys(com.histmersion.domain.AuthorName("López-Ruiz, Carolina")).contains("ruiz"))
     assertEquals(
-      MergeText.surnameKeys("Güterbock, Hans G.").intersect(MergeText.surnameKeys("H. G. Guterbock")),
+      MergeText.surnameKeys(com.histmersion.domain.AuthorName("Güterbock, Hans G.")).intersect(MergeText.surnameKeys("H. G. Guterbock")),
       Set("guterbock")
     )
 
   test("author lists: order, name forms, overlap and disjointness"):
     assertEquals(
-      MergeText.authors(List("H. G. Güterbock", "Harry A. Hoffner"), List("Hoffner, Harry A.", "Guterbock, Hans G.")),
+      MergeText.authors(List(com.histmersion.domain.AuthorName("H. G. Güterbock"), com.histmersion.domain.AuthorName("Harry A. Hoffner")), List(com.histmersion.domain.AuthorName("Hoffner, Harry A."), com.histmersion.domain.AuthorName("Guterbock, Hans G."))),
       AuthorAgreement.Same
     )
     assertEquals(
-      MergeText.authors(List("Güterbock, Hans G.", "Hoffner, Harry A."), List("Hans G. Guterbock")),
+      MergeText.authors(List(com.histmersion.domain.AuthorName("Güterbock, Hans G."), com.histmersion.domain.AuthorName("Hoffner, Harry A.")), List(com.histmersion.domain.AuthorName("Hans G. Guterbock"))),
       AuthorAgreement.FirstAuthor
     )
     assertEquals(
-      MergeText.authors(List("A. Kuhrt", "B. Bryce", "C. Cline"), List("D. Dodds", "Bryce, B.", "Cline, C.")),
+      MergeText.authors(List(com.histmersion.domain.AuthorName("A. Kuhrt"), com.histmersion.domain.AuthorName("B. Bryce"), com.histmersion.domain.AuthorName("C. Cline")), List(com.histmersion.domain.AuthorName("D. Dodds"), com.histmersion.domain.AuthorName("Bryce, B."), com.histmersion.domain.AuthorName("Cline, C."))),
       AuthorAgreement.Overlap
     )
-    assertEquals(MergeText.authors(List("M. Smith"), List("Smith, J.")), AuthorAgreement.Disjoint)
-    assertEquals(MergeText.authors(Nil, List("Smith, J.")), AuthorAgreement.Unknown)
+    assertEquals(MergeText.authors(List(com.histmersion.domain.AuthorName("M. Smith")), List(com.histmersion.domain.AuthorName("Smith, J."))), AuthorAgreement.Disjoint)
+    assertEquals(MergeText.authors(Nil, List(com.histmersion.domain.AuthorName("Smith, J."))), AuthorAgreement.Unknown)
 
   test("Jaro-Winkler: the textbook values"):
-    assertEqualsDouble(MergeText.jaroWinkler("martha", "marhta"), 0.961, 0.001)
-    assertEqualsDouble(MergeText.jaroWinkler("dwayne", "duane"), 0.84, 0.001)
-    assertEqualsDouble(MergeText.jaroWinkler("dixon", "dicksonx"), 0.813, 0.001)
-    assertEquals(MergeText.jaroWinkler("", "x"), 0.0)
-    assertEquals(MergeText.jaroWinkler("same", "same"), 1.0)
+    assertEqualsDouble(MergeText.jaroWinkler(com.histmersion.domain.library.sources.MergeText.Words("martha"), com.histmersion.domain.library.sources.MergeText.Words("marhta")), 0.961, 0.001)
+    assertEqualsDouble(MergeText.jaroWinkler(com.histmersion.domain.library.sources.MergeText.Words("dwayne"), com.histmersion.domain.library.sources.MergeText.Words("duane")), 0.84, 0.001)
+    assertEqualsDouble(MergeText.jaroWinkler(com.histmersion.domain.library.sources.MergeText.Words("dixon"), com.histmersion.domain.library.sources.MergeText.Words("dicksonx")), 0.813, 0.001)
+    assertEquals(MergeText.jaroWinkler(com.histmersion.domain.library.sources.MergeText.Words(""), com.histmersion.domain.library.sources.MergeText.Words("x")), 0.0)
+    assertEquals(MergeText.jaroWinkler(com.histmersion.domain.library.sources.MergeText.Words("same"), com.histmersion.domain.library.sources.MergeText.Words("same")), 1.0)
 
   test("identifiers: a DOI key as V032 makes it; ISBN-10 to ISBN-13; a bad check digit is no ISBN"):
-    assertEquals(MergeText.doiKey("https://doi.org/10.4324/9780203431566"), Some("10.4324/9780203431566"))
-    assertEquals(MergeText.doiKey("doi: 10.1017/S0003"), Some("10.1017/s0003"))
-    assertEquals(MergeText.doiKey("  "), None)
-    assertEquals(MergeText.isbn13("0-415-01353-4"), Some("9780415013536"))
-    assertEquals(MergeText.isbn13("978-0-415-01353-6"), Some("9780415013536"))
-    assertEquals(MergeText.isbn13("978-0-415-01353-7"), None)
-    assertEquals(MergeText.isbn13("080442957X"), Some("9780804429573"))
+    assertEquals(MergeText.doiKey(com.histmersion.domain.library.sources.MergeText.WrittenDoi("https://doi.org/10.4324/9780203431566")), Some("10.4324/9780203431566"))
+    assertEquals(MergeText.doiKey(com.histmersion.domain.library.sources.MergeText.WrittenDoi("doi: 10.1017/S0003")), Some("10.1017/s0003"))
+    assertEquals(MergeText.doiKey(com.histmersion.domain.library.sources.MergeText.WrittenDoi("  ")), None)
+    assertEquals(MergeText.isbn13(com.histmersion.domain.library.Isbn("0-415-01353-4")), Some("9780415013536"))
+    assertEquals(MergeText.isbn13(com.histmersion.domain.library.Isbn("978-0-415-01353-6")), Some("9780415013536"))
+    assertEquals(MergeText.isbn13(com.histmersion.domain.library.Isbn("978-0-415-01353-7")), None)
+    assertEquals(MergeText.isbn13(com.histmersion.domain.library.Isbn("080442957X")), Some("9780804429573"))
 
   test("MinHash: identical text 1, a light OCR difference high, an unrelated text low; deterministic"):
     val rnd = scala.util.Random(7)
@@ -125,7 +125,7 @@ class MergeTextSuite extends munit.FunSuite with Bounded:
     // a text shorter than a shingle is still a signature
     assertEquals(
       com.histmersion.util.text.MinHash
-        .of("short text")
+        .of(com.histmersion.util.text.MinHash.Text("short text"))
         .similarity(com.histmersion.util.text.MinHash.of("Short, text!")),
       1.0
     )

@@ -22,13 +22,13 @@ class AgentProposalsSuite extends munit.FunSuite:
   test("a status change: a known citekey, a status in the vocabulary, a quote in its record"):
     val p = check(
       ProposalAnswer(
-        "status",
-        "knapp2016_tin",
-        Some("Contested"),
+        com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("status"),
+        com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"),
+        Some(com.histmersion.domain.library.Source.Status.Wire("Contested")),
         None,
         None,
-        "a later paper disagrees",
-        "carried ten tons of copper and one ton of tin"
+        com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("a later paper disagrees"),
+        com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("carried ten tons of copper and one ton of tin")
       )
     ).toOption.get
     assertEquals((p.kind, p.status), (ApprovalKind.StatusChange, Some(Source.Status.Contested)))
@@ -40,65 +40,65 @@ class AgentProposalsSuite extends munit.FunSuite:
   test("an edge: the quote may come from either end; references and self-edges are refused"):
     val p = check(
       ProposalAnswer(
-        "edge",
-        "knapp2016_tin",
+        com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("edge"),
+        com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"),
         None,
-        Some("superseded_by"),
-        Some("jones2021_tin"),
-        "newer provenance study",
-        "the tin of the Uluburun cargo came from Central Asia"
+        Some(com.histmersion.api.library.Edge.Kind.Wire("superseded_by")),
+        Some(com.histmersion.domain.AgentProposals.ProposalAnswer.Target("jones2021_tin")),
+        com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("newer provenance study"),
+        com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("the tin of the Uluburun cargo came from Central Asia")
       )
     ).toOption.get
     assertEquals(
       p.patch.edges.map(_.add),
-      Some(List(com.histmersion.api.library.Edge.Input("jones2021_tin", Edge.Kind.SupersededBy)))
+      Some(List(com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey("jones2021_tin"), Edge.Kind.SupersededBy)))
     )
     assert(p.describe.contains("superseded_by"))
     assert(
       check(
-        ProposalAnswer("edge", "knapp2016_tin", None, Some("references"), Some("jones2021_tin"), "e", "one ton of tin")
+        ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("edge"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), None, Some(com.histmersion.api.library.Edge.Kind.Wire("references")), Some(com.histmersion.domain.AgentProposals.ProposalAnswer.Target("jones2021_tin")), com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))
       ).left.exists(_.contains("edge kind"))
     )
     assert(
       check(
-        ProposalAnswer("edge", "knapp2016_tin", None, Some("refutes"), Some("knapp2016_tin"), "e", "one ton of tin")
+        ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("edge"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), None, Some(com.histmersion.api.library.Edge.Kind.Wire("refutes")), Some(com.histmersion.domain.AgentProposals.ProposalAnswer.Target("knapp2016_tin")), com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))
       ).left.exists(_.contains("itself"))
     )
 
   test("refused: unknown citekey, no evidence, an invented quote, unassessed, an unknown kind"):
     assert(
-      check(ProposalAnswer("status", "ghost", Some("contested"), None, None, "e", "q")).left
+      check(ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("status"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("ghost"), Some(com.histmersion.domain.library.Source.Status.Wire("contested")), None, None, com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("q"))).left
         .exists(_.contains("not a citekey"))
     )
     assert(
-      check(ProposalAnswer("status", "knapp2016_tin", Some("contested"), None, None, " ", "one ton of tin")).left
+      check(ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("status"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), Some(com.histmersion.domain.library.Source.Status.Wire("contested")), None, None, com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence(" "), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))).left
         .exists(_.contains("no evidence"))
     )
     assert(
       check(
         ProposalAnswer(
-          "status",
-          "knapp2016_tin",
-          Some("debunked"),
+          com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("status"),
+          com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"),
+          Some(com.histmersion.domain.library.Source.Status.Wire("debunked")),
           None,
           None,
-          "e",
-          "the ship was a Phoenician trader from Tyre"
+          com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"),
+          com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("the ship was a Phoenician trader from Tyre")
         )
       ).left.exists(_.contains("not in the record"))
     )
     assert(
-      check(ProposalAnswer("status", "knapp2016_tin", Some("unassessed"), None, None, "e", "one ton of tin")).isLeft
+      check(ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("status"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), Some(com.histmersion.domain.library.Source.Status.Wire("unassessed")), None, None, com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))).isLeft
     )
     assert(
-      check(ProposalAnswer("rename", "knapp2016_tin", None, None, None, "e", "one ton of tin")).left
+      check(ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("rename"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), None, None, None, com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))).left
         .exists(_.contains("neither"))
     )
 
   test("route: the fill rule applies, anything else waits for a person unless configured auto"):
-    val current = Proposal(ApprovalKind.StatusChange, "a", status = Some(Source.Status.Current))
-    val debunk = Proposal(ApprovalKind.StatusChange, "a", status = Some(Source.Status.Debunked))
-    val edge = Proposal(ApprovalKind.Edge, "a", edgeKind = Some(Edge.Kind.Refutes), target = Some("b"))
+    val current = Proposal(ApprovalKind.StatusChange, com.histmersion.domain.library.Citekey("a"), status = Some(Source.Status.Current))
+    val debunk = Proposal(ApprovalKind.StatusChange, com.histmersion.domain.library.Citekey("a"), status = Some(Source.Status.Debunked))
+    val edge = Proposal(ApprovalKind.Edge, com.histmersion.domain.library.Citekey("a"), edgeKind = Some(Edge.Kind.Refutes), target = Some("b"))
     import ApprovalMode.*
     assertEquals(route(current, Some(Source.Status.Unassessed), Manual, Manual), Route.Apply)
     assertEquals(route(current, Some(Source.Status.Contested), Manual, Manual), Route.Ask)
@@ -109,6 +109,6 @@ class AgentProposalsSuite extends munit.FunSuite:
     assertEquals(route(edge, None, Manual, Auto), Route.Apply)
 
   test("an approval mode that is not exactly auto is manual"):
-    assertEquals(ApprovalModes.configured("AUTO"), com.histmersion.domain.automation.Approval.Mode.Auto)
-    assertEquals(ApprovalModes.configured("automatic"), com.histmersion.domain.automation.Approval.Mode.Manual)
-    assertEquals(ApprovalModes.configured(""), com.histmersion.domain.automation.Approval.Mode.Manual)
+    assertEquals(ApprovalModes.configured(com.histmersion.domain.automation.Approval.Mode.Wire("AUTO")), com.histmersion.domain.automation.Approval.Mode.Auto)
+    assertEquals(ApprovalModes.configured(com.histmersion.domain.automation.Approval.Mode.Wire("automatic")), com.histmersion.domain.automation.Approval.Mode.Manual)
+    assertEquals(ApprovalModes.configured(com.histmersion.domain.automation.Approval.Mode.Wire("")), com.histmersion.domain.automation.Approval.Mode.Manual)

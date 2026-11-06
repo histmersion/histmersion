@@ -15,13 +15,13 @@ import com.histmersion.api.research.Article
 class PlanArticlesSuite extends munit.FunSuite:
 
   private def art(slug: String, topics: List[String], title: String = "T") =
-    ArticleAnswer(slug, title, None, None, topics, Nil, "why")
+    ArticleAnswer(slug, title, None, None, topics, Nil, com.histmersion.domain.PlanArticles.ArticleAnswer.Why("why"))
 
   test(
     "check: invalid slugs, empty titles, filterless articles go back; a duplicate is dropped; last keeps what passed"
   ):
     val a = ArticlesAnswer(
-      "covers it",
+      com.histmersion.domain.PlanArticles.ArticlesAnswer.Rationale("covers it"),
       List(
         art("good", List("tin")),
         art("Bad Slug", List("x")),
@@ -30,7 +30,7 @@ class PlanArticlesSuite extends munit.FunSuite:
         art("untitled", List("x"), title = " ")
       )
     )
-    val back = check(a, maxArticles = 6, last = false)
+    val back = check(a, maxArticles = com.histmersion.domain.PlanArticles.Limits.MaxArticles(6), last = com.histmersion.domain.PlanArticles.LastRound(false))
     assert(
       back.left.exists(ps =>
         ps.exists(_.contains("Bad Slug")) && ps.exists(_.contains("no filter")) &&
@@ -38,19 +38,19 @@ class PlanArticlesSuite extends munit.FunSuite:
       ),
       back.toString
     )
-    check(a, maxArticles = 6, last = true) match
+    check(a, maxArticles = com.histmersion.domain.PlanArticles.Limits.MaxArticles(6), last = com.histmersion.domain.PlanArticles.LastRound(true)) match
       case Right((cs, dropped)) =>
         assertEquals(cs.map(c => (c.slug, c.kind)), List(("good", "concept")))
         assert(dropped.exists(_.contains("proposed twice")))
       case other => fail(other.toString)
-    assert(check(ArticlesAnswer("", Nil), 6, last = false).isLeft)
+    assert(check(ArticlesAnswer(com.histmersion.domain.PlanArticles.ArticlesAnswer.Rationale(""), Nil), com.histmersion.domain.PlanArticles.Limits.MaxArticles(6), last = com.histmersion.domain.PlanArticles.LastRound(false)).isLeft)
     assert(
-      check(ArticlesAnswer("r", List(art("a", List("x")), art("b", List("y")))), 1, last = false).left
+      check(ArticlesAnswer(com.histmersion.domain.PlanArticles.ArticlesAnswer.Rationale("r"), List(art("a", List("x")), art("b", List("y")))), com.histmersion.domain.PlanArticles.Limits.MaxArticles(1), last = com.histmersion.domain.PlanArticles.LastRound(false)).left
         .exists(_.exists(_.contains("at most 1")))
     )
 
   test("verify: slug taken, too few sources, too much overlap with an area article or an earlier proposal are dropped"):
-    val lim = Limits(minSources = 3, maxOverlap = 0.5, maxArticles = 6)
+    val lim = Limits(minSources = com.histmersion.domain.PlanArticles.Limits.MinSources(3), maxOverlap = 0.5, maxArticles = com.histmersion.domain.PlanArticles.Limits.MaxArticles(6))
     val sets = Map(
       "tin" -> Set("a", "b", "c", "d"),
       "copper" -> Set("e", "f", "g"),
@@ -58,10 +58,10 @@ class PlanArticlesSuite extends munit.FunSuite:
       "old" -> Set("a", "b", "c", "x"),
       "dup" -> Set("e", "f", "g", "h")
     )
-    def c(slug: String, topic: String) = Candidate(slug, slug, "concept", Article.Filter(topics = List(topic)), "w")
+    def c(slug: String, topic: String) = Candidate(slug, slug, com.histmersion.api.research.Article.Kind.Wire("concept"), Article.Filter(topics = List(topic)), com.histmersion.api.research.Article.Plans.ProposedArticle.Why("w"))
     val plan = verify(
-      "goal",
-      " r ",
+      com.histmersion.domain.automation.Goal.Slug("goal"),
+      com.histmersion.domain.PlanArticles.ArticlesAnswer.Rationale(" r "),
       List(c("taken", "copper"), c("small", "few"), c("tinny", "tin"), c("cop", "copper"), c("copper-again", "dup")),
       Nil,
       _ != "taken",
@@ -78,8 +78,8 @@ class PlanArticlesSuite extends munit.FunSuite:
     assert(plan.dropped.exists(d => d.contains("'copper-again'") && d.contains("[[cop]]")), plan.dropped)
     // the overlap with an area article: 3 of "old"'s 4 sources are "existing2"'s
     val p2 = verify(
-      "goal",
-      "r",
+      com.histmersion.domain.automation.Goal.Slug("goal"),
+      com.histmersion.domain.PlanArticles.ArticlesAnswer.Rationale("r"),
       List(c("old", "old")),
       Nil,
       _ => true,
@@ -91,5 +91,5 @@ class PlanArticlesSuite extends munit.FunSuite:
     assert(p2.dropped.head.contains("75%"), p2.dropped)
 
   test("overlap: the share of mine the other holds"):
-    assertEquals(overlap(Set("a", "b"), Set("b", "c")), 0.5)
-    assertEquals(overlap(Set.empty, Set("a")), 0.0)
+    assertEquals(overlap(Set(com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.Citekey("b")), Set(com.histmersion.domain.library.Citekey("b"), com.histmersion.domain.library.Citekey("c"))), 0.5)
+    assertEquals(overlap(Set.empty, Set(com.histmersion.domain.library.Citekey("a"))), 0.0)

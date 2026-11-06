@@ -73,7 +73,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       at.map(_._2),
       period.map((a, b) => Bundle.Range(Some(a), Some(b))),
       None,
-      List("zz"),
+      List(com.histmersion.api.exchange.Bundle.Finding.Tags("zz")),
       confidence,
       None,
       At
@@ -294,7 +294,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       doi = Some("10.9999/zz.treaties.a")
     ),
     src("e-isbn", "zzhoffner2009_letters", "Letters from the Hittite Kingdom", List("Hoffner, Harry"), Some(2009))
-      .copy(isbns = Some(List("978-1-58983-212-1"))),
+      .copy(isbns = Some(List(com.histmersion.api.exchange.Bundle.Source.Isbns("978-1-58983-212-1")))),
     src("e-two", "zzcollins2007_hittites", "The Hittites and Their World", List("Collins, Billie Jean"), Some(2007)),
     src("e-alias", "zzseeher2002_hethiter", "Die Hethiter", List("Seeher, Jürgen"), Some(2002)),
     src(
@@ -307,7 +307,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     src("e-ambiguous", "zzdurand2010_rites", "Rites of Hatti", List("Durand, J."), Some(2010))
   )
 
-  private val edgeAliases: List[Bundle.Alias] = List(Bundle.Alias("zzseeher_old", uid("e-alias"), At))
+  private val edgeAliases: List[Bundle.Alias] = List(Bundle.Alias(com.histmersion.api.exchange.Bundle.Alias.Value("zzseeher_old"), uid("e-alias"), At))
 
   private val edgeHere: List[Bundle.Source] = List(
     src(
@@ -378,7 +378,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       List("Unknown, A."),
       Some(2010),
       origin = home
-    ).copy(isbns = Some(List("1589832124"))),
+    ).copy(isbns = Some(List(com.histmersion.api.exchange.Bundle.Source.Isbns("1589832124")))),
     src(
       "f-two-a",
       "zzcollins2007_world",
@@ -450,7 +450,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val mapped = scenario("the fixture, every question answered", fixture, sketches)(answered).plan
     val year = mapped.issues.find(_.kind == Issue.Kind.YearDiffers).map(_.id).toList
     scenario("the fixture, every question answered and the year kept right", fixture, sketches)(
-      MergeResolutions(answered.resolve ++ year.map(MergeResolution(_, "keep-right")))
+      MergeResolutions(answered.resolve ++ year.map(MergeResolution(_, com.histmersion.api.exchange.MergeResolution.Decision("keep-right"))))
     )
     scenario("the fixture, the gate answered both, the collision renamed left", fixture, sketches)(
       resolve(
@@ -482,11 +482,11 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val near = f0.issues.filter(_.kind == Issue.Kind.FindingNearDuplicate).map(_.id)
     scenario("findings, the near duplicates merged, the gate mapped, the collision renamed", fs, sketches)(
       MergeResolutions(
-        near.map(MergeResolution(_, "merge")) ++ List(
-          MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), "map:page1959_history"),
+        near.map(MergeResolution(_, com.histmersion.api.exchange.MergeResolution.Decision("merge"))) ++ List(
+          MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), com.histmersion.api.exchange.MergeResolution.Decision("map:page1959_history")),
           MergeResolution(
             idOf(f0, Issue.Kind.CitekeyCollision, "smith2019_ritual"),
-            "rename-right:smith2019_ritualkingship"
+            com.histmersion.api.exchange.MergeResolution.Decision("rename-right:smith2019_ritualkingship")
           )
         )
       )
@@ -499,14 +499,14 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val nearMapped = f1.issues.filter(_.kind == Issue.Kind.FindingNearDuplicate).map(_.id)
     scenario("findings, the gate mapped, every near duplicate merged", fs, sketches)(
       MergeResolutions(
-        MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), "map:page1959_history") ::
-          nearMapped.map(MergeResolution(_, "merge"))
+        MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), com.histmersion.api.exchange.MergeResolution.Decision("map:page1959_history")) ::
+          nearMapped.map(MergeResolution(_, com.histmersion.api.exchange.MergeResolution.Decision("merge")))
       )
     )
     scenario("findings, the gate both, the near duplicates kept both", fs, sketches)(
       MergeResolutions(
-        MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), "both") ::
-          near.map(MergeResolution(_, "both"))
+        MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), com.histmersion.api.exchange.MergeResolution.Decision("both")) ::
+          near.map(MergeResolution(_, com.histmersion.api.exchange.MergeResolution.Decision("both")))
       )
     )
 
@@ -522,7 +522,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     )
     scenario("the score's edge cases, every gate both, editions separate", e, edgeSketches)(
       MergeResolutions(
-        e0.issues.filter(_.kind == Issue.Kind.SameWork).map(i => MergeResolution(i.id, "both")),
+        e0.issues.filter(_.kind == Issue.Kind.SameWork).map(i => MergeResolution(i.id, com.histmersion.api.exchange.MergeResolution.Decision("both"))),
         MergePolicy(Some(EditionsPolicy.Separate))
       )
     )

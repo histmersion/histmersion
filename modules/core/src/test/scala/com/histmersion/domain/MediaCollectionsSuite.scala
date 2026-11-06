@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.MediaMatch
@@ -15,23 +17,23 @@ class MediaCollectionsSuite extends munit.FunSuite:
 
   private def rec(
       geo: List[(String, String)],
-      period: Option[com.histmersion.Period] = DeepTime.span(-1400L, -1200L)
+      period: Option[com.histmersion.Period] = DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1400L), com.histmersion.domain.DeepTime.SignedYear(-1200L))
   ) =
     MediaRecord(
-      "k",
-      "t",
-      "https://x",
-      Some("https://x/i.jpg"),
+      com.histmersion.domain.media.imports.MediaRecord.Key("k"),
+      com.histmersion.domain.media.imports.MediaRecord.Title("t"),
+      com.histmersion.domain.media.imports.MediaRecord.PageUrl("https://x"),
+      Some(com.histmersion.domain.media.imports.MediaRecord.ImageUrl("https://x/i.jpg")),
       None,
       None,
-      Right(Attribution.cc0(None, "t")),
+      Right(Attribution.cc0(None, com.histmersion.domain.Attribution.Cc0Credit("t"))),
       geo,
       period
     )
 
   private val mycenae =
-    MediaMatch.PlaceInfo("pleiades_570491", "Mycenae", Set("mycenae", "mykenai"), DeepTime.span(-1600L, -1100L))
-  private val greece = MediaMatch.PlaceInfo("geonames_390903", "Greece", Set("greece"), DeepTime.span(-3000L, -100L))
+    MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("pleiades_570491"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Mycenae"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("mycenae"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("mykenai")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1600L), com.histmersion.domain.DeepTime.SignedYear(-1100L)))
+  private val greece = MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("geonames_390903"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Greece"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("greece")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(-100L)))
   private val onMap: MediaMatch.Resolve = Map(
     "mycenae" -> Set("pleiades_570491"),
     "mykenai" -> Set("pleiades_570491"),
@@ -62,7 +64,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       MediaMatch.museum(rec(List("culture" -> "probably Mycenae")), mycenae, onMap),
       Left("no place on the record")
     )
-    val thebes = MediaMatch.PlaceInfo("thebes_greece", "Thebes", Set("thebes"), DeepTime.span(-1600L, -1100L))
+    val thebes = MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("thebes_greece"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Thebes"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("thebes")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1600L), com.histmersion.domain.DeepTime.SignedYear(-1100L)))
     assertEquals(
       MediaMatch.museum(rec(List("city" -> "Thebes")), thebes, onMap),
       Left("its place name is ambiguous on the map")
@@ -76,7 +78,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       Left("the place has no period to compare")
     )
     assertEquals(
-      MediaMatch.museum(rec(List("excavation" -> "Mycenae"), DeepTime.span(1700L, 1750L)), mycenae, onMap),
+      MediaMatch.museum(rec(List("excavation" -> "Mycenae"), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(1700L), com.histmersion.domain.DeepTime.SignedYear(1750L))), mycenae, onMap),
       Left("its dates do not overlap the place's")
     )
     assertEquals(
@@ -86,19 +88,19 @@ class MediaCollectionsSuite extends munit.FunSuite:
     )
 
   test("map rule: any location naming the place alone, made by max-year"):
-    val m = rec(List("location" -> "greece", "location" -> "mycenae"), DeepTime.span(1880L, 1880L))
-    assertEquals(MediaMatch.map(m, mycenae, onMap, 1928), Right("location = mycenae; map of 1880–1880 CE"))
-    assertEquals(MediaMatch.map(m, greece, onMap, 1928), Right("location = greece; map of 1880–1880 CE"))
+    val m = rec(List("location" -> "greece", "location" -> "mycenae"), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(1880L), com.histmersion.domain.DeepTime.SignedYear(1880L)))
+    assertEquals(MediaMatch.map(m, mycenae, onMap, com.histmersion.Year(1928)), Right("location = mycenae; map of 1880–1880 CE"))
+    assertEquals(MediaMatch.map(m, greece, onMap, com.histmersion.Year(1928)), Right("location = greece; map of 1880–1880 CE"))
     assertEquals(
-      MediaMatch.map(m.modify(_.period).setTo(DeepTime.span(1950L, 1950L)), greece, onMap, 1928),
+      MediaMatch.map(m.modify(_.period).setTo(DeepTime.span(1950L, 1950L)), greece, onMap, com.histmersion.Year(1928)),
       Left("made after 1928")
     )
     assertEquals(
       MediaMatch.map(
-        rec(List("location" -> "thebes"), DeepTime.span(1880L, 1880L)),
-        MediaMatch.PlaceInfo("thebes_egypt", "Thebes", Set("thebes"), None),
+        rec(List("location" -> "thebes"), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(1880L), com.histmersion.domain.DeepTime.SignedYear(1880L))),
+        MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("thebes_egypt"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Thebes"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("thebes")), None),
         onMap,
-        1928
+        com.histmersion.Year(1928)
       ),
       Left("its place name is ambiguous on the map")
     )
@@ -110,8 +112,8 @@ class MediaCollectionsSuite extends munit.FunSuite:
     assert(!MediaMatch.overlaps(p(-1200L, -1101L), p(-1100L, -1000L)))
 
   test("deep time: two years in either order make a period; a year no Year holds makes none"):
-    assertEquals(DeepTime.span(-1100L, -1200L), DeepTime.span(-1200L, -1100L))
-    assertEquals(DeepTime.span(-1200L, -1100L).map(q => (q.start.value: Int, q.end.value: Int)), Some((-1200, -1100)))
-    assertEquals(DeepTime.span(5L, 5L).map(_.isPoint), Some(true))
-    assertEquals(DeepTime.span(-1L, Int.MaxValue.toLong + 1), None)
+    assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1100L), com.histmersion.domain.DeepTime.SignedYear(-1200L)), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1200L), com.histmersion.domain.DeepTime.SignedYear(-1100L)))
+    assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1200L), com.histmersion.domain.DeepTime.SignedYear(-1100L)).map(q => (q.start.value: Int, q.end.value: Int)), Some((-1200, -1100)))
+    assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(5L), com.histmersion.domain.DeepTime.SignedYear(5L)).map(_.isPoint), Some(true))
+    assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1L), Int.MaxValue.toLong + 1), None)
     assertEquals(DeepTime.year(Int.MinValue.toLong - 1), None)

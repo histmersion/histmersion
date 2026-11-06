@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.media.MediaMarkdown
@@ -40,16 +42,16 @@ class SourcePicturesSuite extends munit.FunSuite:
     assertEquals(figs.size, 4)
     assertEquals(FigurePick.choose(figs, rules).map(_.name), Some("fig-0002-03.png"))
     val why = figs.map(f => f.name -> FigurePick.reject(f, rules)).toMap
-    assertEquals(why("fig-0001-01.png"), Some("too small"), "the logo")
-    assertEquals(why("fig-0001-02.png"), Some("a strip"), "the masthead")
-    assertEquals(why("fig-0003-02.png"), Some("too small"), "the badge")
+    assertEquals(why(com.histmersion.domain.media.figures.FigurePick.Figure.Name("fig-0001-01.png")), Some("too small"), "the logo")
+    assertEquals(why(com.histmersion.domain.media.figures.FigurePick.Figure.Name("fig-0001-02.png")), Some("a strip"), "the masthead")
+    assertEquals(why(com.histmersion.domain.media.figures.FigurePick.Figure.Name("fig-0003-02.png")), Some("too small"), "the badge")
 
   test("names: the page of pymupdf4llm's figures, the order of docling's"):
-    assertEquals(FigurePick.page("fig-0004-03.png"), Some(4))
-    assertEquals(FigurePick.page("fig-0004-03-2.png"), Some(4))
-    assertEquals(FigurePick.page("image_000003_ab.png"), None)
-    assertEquals(FigurePick.order("image_000003_ab.png"), Some(3))
-    assertEquals(FigurePick.order("cover.jpg"), None)
+    assertEquals(FigurePick.page(com.histmersion.domain.media.figures.FigurePick.Figure.Name("fig-0004-03.png")), Some(4))
+    assertEquals(FigurePick.page(com.histmersion.domain.media.figures.FigurePick.Figure.Name("fig-0004-03-2.png")), Some(4))
+    assertEquals(FigurePick.page(com.histmersion.domain.media.figures.FigurePick.Figure.Name("image_000003_ab.png")), None)
+    assertEquals(FigurePick.order(com.histmersion.domain.media.figures.FigurePick.Figure.Name("image_000003_ab.png")), Some(3))
+    assertEquals(FigurePick.order(com.histmersion.domain.media.figures.FigurePick.Figure.Name("cover.jpg")), None)
 
   test("a figure linked again and again is a running header; a page-sized series is page scans"):
     assertEquals(FigurePick.reject(fig("fig-0001-01.png", 600, 400, refs = 9), rules), Some("repeated in the text"))
@@ -69,7 +71,7 @@ class SourcePicturesSuite extends munit.FunSuite:
     assertEquals(FigurePick.choose(List(late, early), rules).map(_.name), Some("fig-0002-01.png"))
     val huge = fig("fig-0019-02.png", 1600, 1000)
     assertEquals(FigurePick.choose(List(huge, early), rules).map(_.name), Some("fig-0019-02.png"), "unless far larger")
-    assertEquals(FigurePick.reject(FigurePick.Figure("x.png", None, None), rules), Some("no size"))
+    assertEquals(FigurePick.reject(FigurePick.Figure(com.histmersion.domain.media.figures.FigurePick.Figure.Name("x.png"), None, None), rules), Some("no size"))
     // docling names: the position in the text decides what is early
     val a = fig("image_000009_x.png", 600, 400, at = Some(0.1))
     val b = fig("image_000001_y.png", 800, 500, at = Some(0.9))
@@ -87,11 +89,11 @@ class SourcePicturesSuite extends munit.FunSuite:
   test("reports: a job's batches add up; the covers report in Markdown"):
     val a = MediaImportReport(
       MediaProvider.Commons,
-      dryRun = false,
-      targets = 50,
+      dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false),
+      targets = com.histmersion.api.media.MediaImportReport.Targets(50),
       files = 10,
       stored = 4,
-      byLicence = List(MediaCount("CC0-1.0", 2)),
+      byLicence = List(MediaCount(com.histmersion.api.media.MediaCount.Key("CC0-1.0"), com.histmersion.api.media.MediaCount.N(2))),
       failed = List("x"),
       pending = 900,
       batches = 1
@@ -101,15 +103,15 @@ class SourcePicturesSuite extends munit.FunSuite:
     )
     val c = MediaImportReport.combine(a, b)
     assertEquals((c.targets, c.stored, c.batches, c.pending, c.failed), (70, 5, 2, 880, List("x")))
-    assertEquals(c.byLicence, List(MediaCount("CC0-1.0", 3), MediaCount("CC-BY-4.0", 1)))
+    assertEquals(c.byLicence, List(MediaCount(com.histmersion.api.media.MediaCount.Key("CC0-1.0"), com.histmersion.api.media.MediaCount.N(3)), MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-4.0"), com.histmersion.api.media.MediaCount.N(1))))
     assert(MediaMarkdown.mediaImportReport(c).contains("**Not asked yet:** 880 places/events · 2 batches run"))
     val r = MediaCoversReport(
-      dryRun = true,
-      sources = 3,
-      covers = 1,
-      illustrations = 1,
-      lines = List(MediaSourceLine("anthony2007", "cover", MediaProvider.Calibre, "Calibre id 12")),
-      skipped = List(MediaCount("illustration: no figures", 1))
+      dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true),
+      sources = com.histmersion.api.media.MediaCoversReport.Sources(3),
+      covers = com.histmersion.api.media.MediaCoversReport.Covers(1),
+      illustrations = com.histmersion.api.media.MediaCoversReport.Illustrations(1),
+      lines = List(MediaSourceLine(com.histmersion.api.library.Citekey("anthony2007"), com.histmersion.api.media.MediaSourceLine.Role("cover"), MediaProvider.Calibre, com.histmersion.api.media.MediaSourceLine.Detail("Calibre id 12"))),
+      skipped = List(MediaCount(com.histmersion.api.media.MediaCount.Key("illustration: no figures"), com.histmersion.api.media.MediaCount.N(1)))
     )
     val md = MediaMarkdown.mediaCoversReport(r)
     assert(md.contains("3 sources looked at · would link 1 cover and 1 illustration"), md)

@@ -22,46 +22,46 @@ class MediaProvidersSuite extends munit.FunSuite:
   // ── licences ─────────────────────────────────────────────────────────────────────────────────
 
   test("Commons' machine ids and short names read as SPDX ids and families"):
-    assertEquals(classify("cc-by-sa-3.0"), Licence(Licence.Id("CC-BY-SA-3.0"), CcBySa))
-    assertEquals(classify("CC BY-SA 3.0"), Licence(Licence.Id("CC-BY-SA-3.0"), CcBySa))
-    assertEquals(classify("cc-by-2.0"), Licence(Licence.Id("CC-BY-2.0"), CcBy))
-    assertEquals(classify("CC BY 4.0"), Licence(Licence.Id("CC-BY-4.0"), CcBy))
-    assertEquals(classify("cc-by-sa-3.0-de"), Licence(Licence.Id("CC-BY-SA-3.0-DE"), CcBySa))
-    assertEquals(classify("cc-by-nc-sa-4.0"), Licence(Licence.Id("CC-BY-NC-SA-4.0"), CcByNcSa))
-    assertEquals(classify("cc-by-nc-4.0"), Licence(Licence.Id("CC-BY-NC-4.0"), CcByNc))
-    assertEquals(classify("cc-by-nd-4.0"), Licence(Licence.Id("CC-BY-ND-4.0"), CcByNd))
-    assertEquals(classify("cc-by-sa-4"), Licence(Licence.Id("CC-BY-SA-4.0"), CcBySa))
-    assertEquals(classify("cc0"), Licence(Licence.Id("CC0-1.0"), Cc0))
-    assertEquals(classify("CC0 1.0"), Licence(Licence.Id("CC0-1.0"), Cc0))
-    assertEquals(classify("pd"), Licence(Licence.Id("public-domain"), PublicDomain))
-    assertEquals(classify("Public domain"), Licence(Licence.Id("public-domain"), PublicDomain))
-    assertEquals(classify("PD-old-70"), Licence(Licence.Id("public-domain"), PublicDomain))
-    assertEquals(classify("GFDL").family, Gfdl)
-    assertEquals(classify("Copyrighted").family, AllRightsReserved)
-    assertEquals(classify("Attribution only license").family, Unknown)
-    assertEquals(classify("").family, Unknown)
+    assertEquals(classify(com.histmersion.domain.Licence.Id("cc-by-sa-3.0")), Licence(Licence.Id("CC-BY-SA-3.0"), CcBySa))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("CC BY-SA 3.0")), Licence(Licence.Id("CC-BY-SA-3.0"), CcBySa))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("cc-by-2.0")), Licence(Licence.Id("CC-BY-2.0"), CcBy))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("CC BY 4.0")), Licence(Licence.Id("CC-BY-4.0"), CcBy))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("cc-by-sa-3.0-de")), Licence(Licence.Id("CC-BY-SA-3.0-DE"), CcBySa))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("cc-by-nc-sa-4.0")), Licence(Licence.Id("CC-BY-NC-SA-4.0"), CcByNcSa))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("cc-by-nc-4.0")), Licence(Licence.Id("CC-BY-NC-4.0"), CcByNc))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("cc-by-nd-4.0")), Licence(Licence.Id("CC-BY-ND-4.0"), CcByNd))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("cc-by-sa-4")), Licence(Licence.Id("CC-BY-SA-4.0"), CcBySa))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("cc0")), Licence(Licence.Id("CC0-1.0"), Cc0))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("CC0 1.0")), Licence(Licence.Id("CC0-1.0"), Cc0))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("pd")), Licence(Licence.Id("public-domain"), PublicDomain))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("Public domain")), Licence(Licence.Id("public-domain"), PublicDomain))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("PD-old-70")), Licence(Licence.Id("public-domain"), PublicDomain))
+    assertEquals(classify(com.histmersion.domain.Licence.Id("GFDL")).family, Gfdl)
+    assertEquals(classify(com.histmersion.domain.Licence.Id("Copyrighted")).family, AllRightsReserved)
+    assertEquals(classify(com.histmersion.domain.Licence.Id("Attribution only license")).family, Unknown)
+    assertEquals(classify(com.histmersion.domain.Licence.Id("")).family, Unknown)
 
   test("parse takes the machine id first, then the short name; neither read is unknown"):
-    assertEquals(Licence.parse(Some("cc-by-sa-4.0"), Some("CC BY 2.0")).id.value, "CC-BY-SA-4.0")
-    assertEquals(Licence.parse(Some("something-odd"), Some("CC BY 2.0")).id.value, "CC-BY-2.0")
+    assertEquals(Licence.parse(Some(com.histmersion.domain.Licence.Statement("cc-by-sa-4.0")), Some(com.histmersion.domain.Licence.Statement("CC BY 2.0"))).id.value, "CC-BY-SA-4.0")
+    assertEquals(Licence.parse(Some(com.histmersion.domain.Licence.Statement("something-odd")), Some(com.histmersion.domain.Licence.Statement("CC BY 2.0"))).id.value, "CC-BY-2.0")
     assertEquals(Licence.parse(None, None), Licence(Licence.Id(""), Unknown))
-    assertEquals(Licence.parse(Some("weird"), None), Licence(Licence.Id("weird"), Unknown))
+    assertEquals(Licence.parse(Some(com.histmersion.domain.Licence.Statement("weird")), None), Licence(Licence.Id("weird"), Unknown))
     assertEquals(
-      firstKnown(List(" ", "odd", "CC BY 2.0")),
+      firstKnown(List(com.histmersion.domain.Licence.Statement(" "), com.histmersion.domain.Licence.Statement("odd"), com.histmersion.domain.Licence.Statement("CC BY 2.0"))),
       Licence(Licence.Id("CC-BY-2.0"), CcBy),
       "any number of statements"
     )
-    assertEquals(firstKnown(List(" ", "odd")), Licence(Licence.Id("odd"), Unknown))
+    assertEquals(firstKnown(List(com.histmersion.domain.Licence.Statement(" "), com.histmersion.domain.Licence.Statement("odd"))), Licence(Licence.Id("odd"), Unknown))
     assertEquals(firstKnown(Nil), Licence(Licence.Id(""), Unknown))
 
   test("the allowlist keeps known families only, and never all-rights-reserved or unknown"):
-    assertEquals(allowList("cc0, public-domain,CC-BY ,cc-by-sa"), Set(Cc0, PublicDomain, CcBy, CcBySa))
-    assertEquals(allowList("cc-by,all-rights-reserved,unknown,bogus"), Set(CcBy))
-    assertEquals(allowList(""), Set.empty[Licence.Family])
-    val default = allowList("cc0,public-domain,cc-by,cc-by-sa")
-    assert(allowed(classify("cc-by-sa-4.0"), default))
-    assert(!allowed(classify("cc-by-nc-4.0"), default), "non-commercial is off by default")
-    assert(allowed(classify("cc-by-nc-4.0"), default + CcByNc), "…and on when the provider lists it")
+    assertEquals(allowList(com.histmersion.domain.Licence.AllowList("cc0, public-domain,CC-BY ,cc-by-sa")), Set(Cc0, PublicDomain, CcBy, CcBySa))
+    assertEquals(allowList(com.histmersion.domain.Licence.AllowList("cc-by,all-rights-reserved,unknown,bogus")), Set(CcBy))
+    assertEquals(allowList(com.histmersion.domain.Licence.AllowList("")), Set.empty[Licence.Family])
+    val default = allowList(com.histmersion.domain.Licence.AllowList("cc0,public-domain,cc-by,cc-by-sa"))
+    assert(allowed(classify(com.histmersion.domain.Licence.Id("cc-by-sa-4.0")), default))
+    assert(!allowed(classify(com.histmersion.domain.Licence.Id("cc-by-nc-4.0")), default), "non-commercial is off by default")
+    assert(allowed(classify(com.histmersion.domain.Licence.Id("cc-by-nc-4.0")), default + CcByNc), "…and on when the provider lists it")
     assert(
       !allowed(Licence(Licence.Id("all-rights-reserved"), AllRightsReserved), Set(AllRightsReserved)),
       "all rights reserved: never"
@@ -76,20 +76,20 @@ class MediaProvidersSuite extends munit.FunSuite:
 
   test("the card's role order puts the item's own image first, unknown roles last"):
     assert(MediaRole.order(MediaRole.Image) < MediaRole.order(MediaRole.LocatorMap))
-    assertEquals(MediaRole.order("other"), MediaRole.all.size)
+    assertEquals(MediaRole.order(com.histmersion.domain.media.MediaRole.Wire("other")), MediaRole.all.size)
 
   test("counts: most frequent first, then by key, with the allowed flag"):
     assertEquals(
-      MediaCount.of(List("b", "a", "b", "c"), _ != "c"),
-      List(MediaCount("b", 2), MediaCount("a", 1), MediaCount("c", 1, allowed = false))
+      MediaCount.of(List(com.histmersion.api.media.MediaCount.Key("b"), com.histmersion.api.media.MediaCount.Key("a"), com.histmersion.api.media.MediaCount.Key("b"), com.histmersion.api.media.MediaCount.Key("c")), _ != "c"),
+      List(MediaCount(com.histmersion.api.media.MediaCount.Key("b"), com.histmersion.api.media.MediaCount.N(2)), MediaCount(com.histmersion.api.media.MediaCount.Key("a"), com.histmersion.api.media.MediaCount.N(1)), MediaCount(com.histmersion.api.media.MediaCount.Key("c"), com.histmersion.api.media.MediaCount.N(1), allowed = com.histmersion.api.media.MediaCount.Allowed(false)))
     )
 
   // ── Wikidata ─────────────────────────────────────────────────────────────────────────────────
 
   test("a gazetteer id that IS a Wikidata item names it"):
-    assertEquals(Wikidata.qidOfPlaceId("wikidata_q132564"), Some("Q132564"))
-    assertEquals(Wikidata.qidOfPlaceId("pleiades_570491"), None)
-    assertEquals(Wikidata.qidOfPlaceId("wikidata_qabc"), None)
+    assertEquals(Wikidata.qidOfPlaceId(com.histmersion.domain.catalogue.Place.Id("wikidata_q132564")), Some("Q132564"))
+    assertEquals(Wikidata.qidOfPlaceId(com.histmersion.domain.catalogue.Place.Id("pleiades_570491")), None)
+    assertEquals(Wikidata.qidOfPlaceId(com.histmersion.domain.catalogue.Place.Id("wikidata_qabc")), None)
     assert(Wikidata.isQid("Q1") && !Wikidata.isQid("Q01") && !Wikidata.isQid("P18"))
 
   // ── config ───────────────────────────────────────────────────────────────────────────────────
@@ -97,23 +97,23 @@ class MediaProvidersSuite extends munit.FunSuite:
   test("media config: --limit is clamped to 1 … max-limit, absent = the default"):
     val m = AppConfig.load(org.ekrich.config.ConfigFactory.empty).media
     assertEquals(m.limit(None), m.defaultLimit)
-    assertEquals(m.limit(Some(0)), m.defaultLimit)
-    assertEquals(m.limit(Some(7)), 7)
-    assertEquals(m.limit(Some(1000000)), m.maxLimit)
+    assertEquals(m.limit(Some(com.histmersion.config.MediaConfig.Limit(0))), m.defaultLimit)
+    assertEquals(m.limit(Some(com.histmersion.config.MediaConfig.Limit(7))), 7)
+    assertEquals(m.limit(Some(com.histmersion.config.MediaConfig.Limit(1000000))), m.maxLimit)
 
   // ── the report ───────────────────────────────────────────────────────────────────────────────
 
   test("the import report prints the counts per provider and licence as a table, refusals and failures after"):
     val r = MediaImportReport(
       MediaProvider.Commons,
-      dryRun = true,
-      targets = 20,
-      items = 9,
-      statements = 19,
-      files = 10,
-      byLicence = List(MediaCount("CC-BY-SA-3.0", 5), MediaCount("CC-BY-NC-4.0", 1, allowed = false)),
-      byRole = List(MediaCount("locator-map", 16), MediaCount("image", 3)),
-      rejected = List(MediaCount("licence cc-by-nc not allowed for wikimedia-commons", 1)),
+      dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true),
+      targets = com.histmersion.api.media.MediaImportReport.Targets(20),
+      items = com.histmersion.api.media.MediaImportReport.Items(9),
+      statements = com.histmersion.api.media.MediaImportReport.Statements(19),
+      files = com.histmersion.api.media.MediaImportReport.Files(10),
+      byLicence = List(MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-SA-3.0"), com.histmersion.api.media.MediaCount.N(5)), MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-NC-4.0"), com.histmersion.api.media.MediaCount.N(1), allowed = com.histmersion.api.media.MediaCount.Allowed(false))),
+      byRole = List(MediaCount(com.histmersion.api.media.MediaCount.Key("locator-map"), com.histmersion.api.media.MediaCount.N(16)), MediaCount(com.histmersion.api.media.MediaCount.Key("image"), com.histmersion.api.media.MediaCount.N(3))),
+      rejected = List(MediaCount(com.histmersion.api.media.MediaCount.Key("licence cc-by-nc not allowed for wikimedia-commons"), com.histmersion.api.media.MediaCount.N(1))),
       failed = List("x: y")
     )
     val md = MediaMarkdown.mediaImportReport(r)

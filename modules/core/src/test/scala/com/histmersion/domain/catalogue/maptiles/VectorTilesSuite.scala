@@ -5,15 +5,15 @@ package com.histmersion.domain.catalogue.maptiles
   */
 class VectorTilesSuite extends munit.FunSuite:
 
-  private def tile(z: Int, x: Long, y: Long) = TileCoord.of(z, x, y, 22).toOption.get
+  private def tile(z: Int, x: Long, y: Long) = TileCoord.of(z, x, y, com.histmersion.domain.catalogue.maptiles.TileCoord.Z(22)).toOption.get
 
   test("only a tile inside the grid exists, no deeper than the server cuts"):
-    assert(TileCoord.of(0, 0, 0, 12).isRight)
-    assert(TileCoord.of(2, 3, 3, 12).isRight)
-    assert(TileCoord.of(2, 4, 0, 12).isLeft)
-    assert(TileCoord.of(2, 0, -1, 12).isLeft)
-    assert(TileCoord.of(13, 0, 0, 12).isLeft)
-    assert(TileCoord.of(-1, 0, 0, 12).isLeft)
+    assert(TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(0), com.histmersion.domain.catalogue.maptiles.TileCoord.X(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(12)).isRight)
+    assert(TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(2), com.histmersion.domain.catalogue.maptiles.TileCoord.X(3), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(3), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(12)).isRight)
+    assert(TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(2), com.histmersion.domain.catalogue.maptiles.TileCoord.X(4), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(12)).isLeft)
+    assert(TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(2), com.histmersion.domain.catalogue.maptiles.TileCoord.X(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(-1), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(12)).isLeft)
+    assert(TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(13), com.histmersion.domain.catalogue.maptiles.TileCoord.X(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(12)).isLeft)
+    assert(TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(-1), com.histmersion.domain.catalogue.maptiles.TileCoord.X(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(12)).isLeft)
 
   test("a tile's bounds: the world at zoom 0, a quarter at zoom 1"):
     val (w, s, e, n) = tile(0, 0, 0).bounds
@@ -47,21 +47,21 @@ class VectorTilesSuite extends munit.FunSuite:
 
   test("latOf is mercator's inverse"):
     Seq(-80.0, -33.3, 0.0, 12.5, 61.2).foreach { lat =>
-      assertEqualsDouble(TileCoord.latOf(TileCoord.mercator(lat, 0)._2), lat, 1e-9)
+      assertEqualsDouble(TileCoord.latOf(TileCoord.mercator(lat, com.histmersion.Longitude(0))._2), lat, 1e-9)
     }
 
   test("the grid groups only below its deepest zoom, and cells are tile units"):
-    val g = TileGrid.of(maxZoom = 12, maxPoints = 600, cellPx = 32)
+    val g = TileGrid.of(maxZoom = com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom(12), maxPoints = com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints(600), cellPx = com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx(32))
     assertEquals(g.cellUnits, 256)
     assertEquals(g.pointsAt(tile(5, 0, 0)), 600)
     assertEquals(g.pointsAt(tile(12, 0, 0)), Int.MaxValue)
-    assertEquals(TileGrid.of(12, 600, 0).cellUnits, 8)
-    assertEquals(TileGrid.of(12, 600, 4096).cellUnits, TileCoord.Extent)
+    assertEquals(TileGrid.of(com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom(12), com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints(600), com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx(0)).cellUnits, 8)
+    assertEquals(TileGrid.of(com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom(12), com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints(600), com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx(4096)).cellUnits, TileCoord.Extent)
 
   test("a written tile reads back: layer, extent, places and typed properties"):
     val pts = Seq(
-      TilePoint(10, 20, Seq("k" -> TileValue.Text("a"), "n" -> TileValue.Whole(-3), "lo" -> TileValue.Real(-1500.5))),
-      TilePoint(4095, 0, Seq("k" -> TileValue.Text("b"), "f" -> TileValue.Flag(true), "n" -> TileValue.Whole(-3)))
+      TilePoint(com.histmersion.domain.catalogue.maptiles.TilePoint.X(10), com.histmersion.domain.catalogue.maptiles.TilePoint.Y(20), Seq("k" -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("a")), "n" -> TileValue.Whole(com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value(-3)), "lo" -> TileValue.Real(-1500.5))),
+      TilePoint(com.histmersion.domain.catalogue.maptiles.TilePoint.X(4095), com.histmersion.domain.catalogue.maptiles.TilePoint.Y(0), Seq("k" -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("b")), "f" -> TileValue.Flag(com.histmersion.domain.catalogue.maptiles.TileValue.Flag.Value(true)), "n" -> TileValue.Whole(com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value(-3))))
     )
     val layers = VectorTileReader.read(VectorTileWriter.tile(Seq("sites" -> pts, "empty" -> Nil)))
     assertEquals(layers.map(_.name), Vector("sites"))
@@ -71,10 +71,10 @@ class VectorTilesSuite extends munit.FunSuite:
     assertEquals(l.features(0).text("k"), Some("a"))
     assertEquals(l.features(0).whole("n"), Some(-3L))
     assertEquals(l.features(0).real("lo"), Some(-1500.5))
-    assertEquals(l.features(1).props.get("f"), Some(TileValue.Flag(true)))
+    assertEquals(l.features(1).props.get("f"), Some(TileValue.Flag(com.histmersion.domain.catalogue.maptiles.TileValue.Flag.Value(true))))
     assertEquals(l.features(1).whole("n"), Some(-3L))
 
   test("a key and a value are stored once per layer"):
-    val pts = (1 to 50).map(i => TilePoint(i, i, Seq("kind" -> TileValue.Text("site"))))
-    val bytes = VectorTileWriter.layer("sites", pts)
+    val pts = (1 to 50).map(i => TilePoint(i, i, Seq("kind" -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("site")))))
+    val bytes = VectorTileWriter.layer(com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName("sites"), pts)
     assertEquals(new String(bytes, "UTF-8").sliding(4).count(_ == "site"), 2) // the layer's name and the value

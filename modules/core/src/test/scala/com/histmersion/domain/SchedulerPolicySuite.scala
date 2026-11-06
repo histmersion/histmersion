@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -33,7 +35,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       gathering: Boolean = false,
       manager: String = "m"
   ) =
-    Candidate(id, manager, kind, s"t$id", goal, prio, created, gathering, 0, ago(waited), pools, block)
+    Candidate(id, manager, kind, s"t$id", goal, prio, created, gathering, com.histmersion.domain.SchedulerPolicy.Candidate.ItemPriority(0), ago(waited), pools, block)
 
   private val typePrio = parseTypeMap(
     "review=9, compile=8, extend=7, filter=6, propose=5, goal-plan=4, enrich=3, sweep=2, currency=1"
@@ -48,7 +50,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
   ) =
     Settings(st, aging, maxWait, minShare, parseTypeMap(weights), typePrio, gathering)
 
-  private def res(room: Int, recent: List[JobType] = Nil) = Resources(maxRuns = room, occupied = 0, recent = recent)
+  private def res(room: Int, recent: List[JobType] = Nil) = Resources(maxRuns = room, occupied = com.histmersion.domain.SchedulerPolicy.Resources.Occupied(0), recent = recent)
   private val ok: Candidate => Either[String, Unit] = _ => Right(())
   private def ids(d: Decision) = d.started.map(_._1.c.id)
 
@@ -169,7 +171,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
     val cs = List(
       c(1, pools = List("chatgpt-plan"), prio = 9, goal = Some("a")),
       c(2, pools = List("claude-plan"), goal = Some("b")),
-      c(3, block = Some(Block("quota", "reviewer chain below its plan floor")), prio = 99, goal = Some("c"))
+      c(3, block = Some(Block(com.histmersion.domain.SchedulerPolicy.Block.Code("quota"), com.histmersion.domain.SchedulerPolicy.Block.Why("reviewer chain below its plan floor"))), prio = 99, goal = Some("c"))
     )
     val r = res(3).modify(_.poolCap).setTo(Map("chatgpt-plan" -> 2, "claude-plan" -> 2)).modify(_.poolUsed).setTo(Map("chatgpt-plan" -> 2))
     val d = run(cs, r, settings(GoalFirst), now)(ok)
@@ -187,8 +189,8 @@ class SchedulerPolicySuite extends munit.FunSuite:
 
   test("only runs that run or are queued occupy places: occupied comes off maxRuns"):
     val cs = List(c(1), c(2), c(3))
-    assertEquals(ids(run(cs, Resources(maxRuns = 4, occupied = 3), settings(GoalFirst), now)(ok)).size, 1)
-    assertEquals(ids(run(cs, Resources(maxRuns = 4, occupied = 5), settings(GoalFirst), now)(ok)), Nil)
+    assertEquals(ids(run(cs, Resources(maxRuns = com.histmersion.domain.SchedulerPolicy.Resources.MaxRuns(4), occupied = com.histmersion.domain.SchedulerPolicy.Resources.Occupied(3)), settings(GoalFirst), now)(ok)).size, 1)
+    assertEquals(ids(run(cs, Resources(maxRuns = com.histmersion.domain.SchedulerPolicy.Resources.MaxRuns(4), occupied = com.histmersion.domain.SchedulerPolicy.Resources.Occupied(5)), settings(GoalFirst), now)(ok)), Nil)
 
   test("a manager's own saved maxRuns still caps it"):
     val cs = List(c(1, manager = "review"), c(2, manager = "review"), c(3, manager = "enrich", kind = SourceEnrich))
@@ -226,8 +228,8 @@ class SchedulerPolicySuite extends munit.FunSuite:
     assertEquals(order(cs.reverse, res(0), settings(GoalFirst)).map(_._1.c.id), o1)
 
   test("strategies by name; job types of every item kind; type maps parse leniently"):
-    assertEquals(Strategies.parse(" Goal-First ").map(_.name), Some("goal-first"))
-    assertEquals(Strategies.parse("nope"), None)
+    assertEquals(Strategies.parse(com.histmersion.domain.SchedulerPolicy.StrategyName(" Goal-First ")).map(_.name), Some("goal-first"))
+    assertEquals(Strategies.parse(com.histmersion.domain.SchedulerPolicy.StrategyName("nope")), None)
     assertEquals(Strategies.names, List("type-balanced", "goal-first"))
     assertEquals(
       List(
@@ -244,8 +246,8 @@ class SchedulerPolicySuite extends munit.FunSuite:
       List("goal-plan", "propose", "sweep", "currency", "enrich", "compile", "extend", "filter", "review")
     )
     assertEquals(parseTypeMap("review=3, bogus=2, enrich = x, sweep=1"), Map(JobType.Review -> 3, JobType.Sweep -> 1))
-    assertEquals(hours(95), "1 h 35 min")
-    assertEquals(hours(42), "42 min")
+    assertEquals(hours(com.histmersion.domain.SchedulerPolicy.Scored.WaitedMinutes(95)), "1 h 35 min")
+    assertEquals(hours(com.histmersion.domain.SchedulerPolicy.Scored.WaitedMinutes(42)), "42 min")
 
   test("pools wanted: a waiting item's own pools, a quota-starved item's chain pools, none for another block"):
     val chains: Candidate => List[String] =
@@ -253,8 +255,8 @@ class SchedulerPolicySuite extends munit.FunSuite:
     val waiting = List(
       c(1, pools = List("chatgpt-plan")),
       c(2),
-      c(3, block = Some(Block(QuotaBlock, "starved: extractor chain below its plan floor"))),
-      c(4, pools = List("claude-plan"), block = Some(Block("budget", "budget: today's agent spend reached")))
+      c(3, block = Some(Block(QuotaBlock, com.histmersion.domain.SchedulerPolicy.Block.Why("starved: extractor chain below its plan floor")))),
+      c(4, pools = List("claude-plan"), block = Some(Block(com.histmersion.domain.SchedulerPolicy.Block.Code("budget"), "budget: today's agent spend reached")))
     )
     assertEquals(poolsWanted(waiting, chains), Set("chatgpt-plan", "claude-plan"))
     assertEquals(poolsWanted(waiting.take(2), chains), Set("chatgpt-plan"))
@@ -264,20 +266,20 @@ class SchedulerPolicySuite extends munit.FunSuite:
     "the settings: a person's strategy over the configured one, limits clamped, configured weights over the built-in"
   ):
     val d = SchedulerDefaults(
-      strategy = "goal-first",
-      agingHours = -1,
-      maxWaitHours = 48,
+      strategy = com.histmersion.domain.SchedulerDefaults.Strategy("goal-first"),
+      agingHours = com.histmersion.domain.SchedulerDefaults.AgingHours(-1),
+      maxWaitHours = com.histmersion.domain.SchedulerDefaults.MaxWaitHours(48),
       minShare = 1.5,
-      builtInWeights = "review=3, compile=3",
-      typeWeights = "review=5",
-      builtInPriorities = "review=9, sweep=2",
-      typePriorities = "sweep=4",
-      gatheringSlots = -2
+      builtInWeights = com.histmersion.domain.SchedulerDefaults.BuiltInWeights("review=3, compile=3"),
+      typeWeights = com.histmersion.domain.SchedulerDefaults.TypeWeights("review=5"),
+      builtInPriorities = com.histmersion.domain.SchedulerDefaults.BuiltInPriorities("review=9, sweep=2"),
+      typePriorities = com.histmersion.domain.SchedulerDefaults.TypePriorities("sweep=4"),
+      gatheringSlots = com.histmersion.domain.SchedulerDefaults.GatheringSlots(-2)
     )
     val s = SchedulerPolicy.settings(d)
     assertEquals(s.strategy, GoalFirst)
     assertEquals((s.agingHours, s.maxWaitHours, s.minShare, s.gatheringSlots), (0, 48, 1.0, 0))
     assertEquals(s.weights, parseTypeMap("review=5, compile=3"))
     assertEquals(s.typePriority, parseTypeMap("review=9, sweep=4"))
-    assertEquals(SchedulerPolicy.settings(d, Some("type-balanced")).strategy, TypeBalanced)
-    assertEquals(SchedulerPolicy.settings(d.modify(_.strategy).setTo("no-such"), Some("nor-this")).strategy, Strategies.all.head)
+    assertEquals(SchedulerPolicy.settings(d, Some(com.histmersion.domain.SchedulerDefaults.Strategy("type-balanced"))).strategy, TypeBalanced)
+    assertEquals(SchedulerPolicy.settings(d.modify(_.strategy).setTo("no-such"), Some(com.histmersion.domain.SchedulerDefaults.Strategy("nor-this"))).strategy, Strategies.all.head)

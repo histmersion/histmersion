@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -26,7 +28,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
       quote: String = "",
       kind: String = "term"
   ) =
-    Finding(id, r, sev, kind, where, quote, problem, "fix it")
+    Finding(id, r, sev, kind, where, quote, problem, com.histmersion.domain.ReviewArticle.Finding.Fix("fix it"))
 
   private val tinMajor =
     f("R1", Reviewer.Rules, Severity.Major, "Intro", "tin is not defined", "Tin reached the Aegean")
@@ -35,7 +37,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
   private val readerMin =
     f("C1", Reviewer.ColdReader, Severity.Minor, "Open questions", "opaque sentence", "Where the tin was mined")
 
-  private def fresh: Ledger = absorb(Ledger("tin"), List(tinMajor, dateMajor, readerMin), "run1", 1)._1
+  private def fresh: Ledger = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), List(tinMajor, dateMajor, readerMin), com.histmersion.domain.automation.Run.Id("run1"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
 
   test("absorb: new findings get ledger ids per reviewer; the same one again keeps its id"):
     val l = fresh
@@ -46,7 +48,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     // pass 2 numbers its findings from 1 again: the ledger maps them
     val again = f("R1", Reviewer.Rules, Severity.Major, "Intro", "tin is still not defined", "Tin reached the Aegean")
     val other = f("R2", Reviewer.Rules, Severity.Minor, "Summary", "a filler phrase", "it is worth noting")
-    val (l2, ids) = absorb(l, List(other, again), "run2", 2)
+    val (l2, ids) = absorb(l, List(other, again), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(2))
     assertEquals(ids.map(_.id), List("R2", "R1"))
     assertEquals(l2.entries.size, 4)
     assertEquals(l2.entry("R1").map(_.finding.problem), Some("tin is still not defined"))
@@ -77,22 +79,22 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assert(!same(cov, cov.modify(_.kind).setTo("citation")))
 
   test("transitions: claimed by the fixer, then fixed by its reviewer; not fixed carries the note"):
-    val fixed = Fix("body", Nil, List("R1", "S1"), Nil, Nil, Nil, "", 1, 1)
-    val l = applyFix(fresh, fixed, "run1", 1)
+    val fixed = Fix(com.histmersion.domain.ReviewArticle.Fix.Body("body"), Nil, List(com.histmersion.domain.ReviewArticle.Finding.Id("R1"), com.histmersion.domain.ReviewArticle.Finding.Id("S1")), Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1))
+    val l = applyFix(fresh, fixed, com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     assertEquals(l.claimed(Reviewer.Rules).map(_.id), List("R1"))
     assertEquals(l.claimed(Reviewer.Skeptic).map(_.id), List("S1"))
     val checked =
-      applyChecks(l, Reviewer.Rules, List(Check("R1", fixed = true, "Tin, a metal", "defined now")), "run1", 2)
+      applyChecks(l, Reviewer.Rules, List(Check(com.histmersion.domain.ReviewArticle.Check.Id("R1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("Tin, a metal"), com.histmersion.domain.ReviewArticle.Check.Note("defined now"))), com.histmersion.domain.ReviewLedger.ApplyChecksRun("run1"), com.histmersion.domain.ReviewLedger.ApplyChecksRound(2))
     assertEquals(
       checked.entry("R1").map(e => (e.status, e.claimed, e.closed)),
-      Some((Status.Fixed, false, Some(Closure("rules", 2, "run1", "defined now", "Tin, a metal"))))
+      Some((Status.Fixed, false, Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("rules"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("run1"), com.histmersion.domain.ReviewLedger.Closure.Note("defined now"), com.histmersion.domain.ReviewLedger.Closure.Quote("Tin, a metal")))))
     )
     val notYet = applyChecks(
       checked,
       Reviewer.Skeptic,
-      List(Check("S1", fixed = false, "The date is argued", "still no year")),
-      "run1",
-      2
+      List(Check(com.histmersion.domain.ReviewArticle.Check.Id("S1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(false), com.histmersion.domain.ReviewArticle.Check.Quote("The date is argued"), com.histmersion.domain.ReviewArticle.Check.Note("still no year"))),
+      com.histmersion.domain.ReviewLedger.ApplyChecksRun("run1"),
+      com.histmersion.domain.ReviewLedger.ApplyChecksRound(2)
     )
     assertEquals(
       notYet.entry("S1").map(e => (e.status, e.claimed, e.notFixed)),
@@ -100,7 +102,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assertEquals(notes(notYet), Map("S1" -> "not fixed yet — still no year"))
     // a reviewer cannot close another's finding, nor a closed one
-    val foreign = applyChecks(notYet, Reviewer.Rules, List(Check("S1", fixed = true, "x", "")), "run1", 2)
+    val foreign = applyChecks(notYet, Reviewer.Rules, List(Check(com.histmersion.domain.ReviewArticle.Check.Id("S1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("x"), com.histmersion.domain.ReviewArticle.Check.Note(""))), com.histmersion.domain.ReviewLedger.ApplyChecksRun("run1"), com.histmersion.domain.ReviewLedger.ApplyChecksRound(2))
     assertEquals(foreign.entry("S1").map(_.status), Some(Status.Open))
     assertEquals(notYet.verdict, Verdict.Major)
 
@@ -108,18 +110,18 @@ class ReviewLedgerSuite extends munit.FunSuite:
     "transitions: a verified rejection closes with the record's sentence and teaches a lesson; a minor may be declined"
   ):
     val fix = Fix(
-      "body",
+      com.histmersion.domain.ReviewArticle.Fix.Body("body"),
       Nil,
       Nil,
-      List(Rejection("S1", "the record dates it", "ck2019", "Its cargo dates to 1320 BCE.", 1.0)),
+      List(Rejection(com.histmersion.domain.ReviewArticle.Rejection.Id("S1"), com.histmersion.domain.ReviewArticle.Rejection.Reason("the record dates it"), com.histmersion.domain.library.Citekey("ck2019"), com.histmersion.domain.ReviewArticle.Rejection.Quote("Its cargo dates to 1320 BCE."), 1.0)),
       Nil,
       Nil,
-      "",
-      1,
-      1,
+      com.histmersion.domain.ReviewArticle.Fix.Notes(""),
+      com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1),
+      com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1),
       wontFix = List(WontFix("C1", "defined in the glossary"), WontFix("R1", "a major cannot be declined"))
     )
-    val l = applyFix(fresh, fix, "run1", 1)
+    val l = applyFix(fresh, fix, com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     assertEquals(
       l.entry("S1").map(e => (e.status, e.closed.flatMap(_.citekey), e.closed.map(_.quote))),
       Some((Status.Rejected, Some("ck2019"), Some("Its cargo dates to 1320 BCE.")))
@@ -133,15 +135,15 @@ class ReviewLedgerSuite extends munit.FunSuite:
 
   test("transitions: a fixed finding raised again is re-opened; a rejected one is re-opened and escalated"):
     val fixedAll =
-      applyFix(fresh, Fix("b", Nil, Nil, List(Rejection("S1", "dated", "ck", "q", 1.0)), Nil, Nil, "", 1, 1), "run1", 1)
+      applyFix(fresh, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, Nil, List(Rejection(com.histmersion.domain.ReviewArticle.Rejection.Id("S1"), com.histmersion.domain.ReviewArticle.Rejection.Reason("dated"), com.histmersion.domain.library.Citekey("ck"), com.histmersion.domain.ReviewArticle.Rejection.Quote("q"), 1.0)), Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1)), com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     val l = applyChecks(
-      applyFix(fixedAll, Fix("b", Nil, List("R1"), Nil, Nil, Nil, "", 1, 1), "run1", 1),
+      applyFix(fixedAll, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, List(com.histmersion.domain.ReviewArticle.Finding.Id("R1")), Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1)), com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1)),
       Reviewer.Rules,
-      List(Check("R1", fixed = true, "q", "")),
-      "run1",
-      2
+      List(Check(com.histmersion.domain.ReviewArticle.Check.Id("R1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("q"), com.histmersion.domain.ReviewArticle.Check.Note(""))),
+      com.histmersion.domain.ReviewLedger.ApplyChecksRun("run1"),
+      com.histmersion.domain.ReviewLedger.ApplyChecksRound(2)
     )
-    val (back, ids) = absorb(l, List(tinMajor.modify(_.id).setTo("R7"), dateMajor.modify(_.id).setTo("S9")), "run2", 1)
+    val (back, ids) = absorb(l, List(tinMajor.modify(_.id).setTo("R7"), dateMajor.modify(_.id).setTo("S9")), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))
     assertEquals(ids.map(_.id), List("R1", "S1"))
     assertEquals(back.entry("R1").map(e => (e.status, e.reopened, e.closed)), Some((Status.Open, 1, None)))
     assert(back.entry("R1").flatMap(_.notFixed).exists(_.contains("raised again")))
@@ -149,10 +151,10 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assert(back.entry("S1").flatMap(_.notFixed).exists(_.contains("rejected before ([[ck]]): dated")))
     // a declined minor raised again stays declined; raised as MAJOR it opens
     val declined =
-      applyFix(fresh, Fix("b", Nil, Nil, Nil, Nil, Nil, "", 1, 1, wontFix = List(WontFix("C1", "fine"))), "run1", 1)
-    assertEquals(absorb(declined, List(readerMin), "run2", 1)._1.entry("C1").map(_.status), Some(Status.WontFix))
+      applyFix(fresh, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, Nil, Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1), wontFix = List(WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("C1"), com.histmersion.domain.ReviewArticle.WontFix.Reason("fine")))), com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
+    assertEquals(absorb(declined, List(readerMin), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("C1").map(_.status), Some(Status.WontFix))
     assertEquals(
-      absorb(declined, List(readerMin.modify(_.severity).setTo(Severity.Major)), "run2", 1)._1.entry("C1").map(_.status),
+      absorb(declined, List(readerMin.modify(_.severity).setTo(Severity.Major)), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("C1").map(_.status),
       Some(Status.Open)
     )
 
@@ -168,9 +170,9 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     val filler =
       f("M2", Reviewer.Mechanical, Severity.Minor, "body", "banned filler — it is worth noting", "", "language")
-    val l0 = absorb(Ledger("tin"), List(uncited, filler), "run1", 1)._1
+    val l0 = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), List(uncited, filler), com.histmersion.domain.automation.Run.Id("run1"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     val dup = f("M1", Reviewer.Mechanical, Severity.Minor, "Summary", "a duplicated heading", "## Summary", "section")
-    val (l1, _) = recheckMechanical(l0, List(filler.modify(_.id).setTo("M1"), dup.modify(_.id).setTo("M2")), "run1", 2)
+    val (l1, _) = recheckMechanical(l0, List(filler.modify(_.id).setTo("M1"), dup.modify(_.id).setTo("M2")), com.histmersion.domain.ReviewLedger.RecheckMechanicalRun("run1"), com.histmersion.domain.ReviewLedger.RecheckMechanicalRound(2))
     assertEquals(
       l1.entries.map(e => (e.id, e.status, e.closed.map(_.by))),
       List(("M1", Status.Fixed, Some("mechanical")), ("M2", Status.Open, None), ("M3", Status.Open, None))
@@ -178,38 +180,38 @@ class ReviewLedgerSuite extends munit.FunSuite:
 
   test("the term count: a MAJOR count stored by an earlier run is superseded by the pass's minor one, under its id"):
     val legacy = f("C2", Reviewer.ColdReader, Severity.Major, "explain-back", "27 terms are undefined (more than 8)")
-    val stored = absorb(fresh, List(legacy), "run1", 1)._1
+    val stored = absorb(fresh, List(legacy), com.histmersion.domain.automation.Run.Id("run1"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     assertEquals(stored.openMajors.map(_.id), List("R1", "S1", "C2"))
     // the next full pass: the reader counts 12 — a different count and wording, the same finding
     val count = Finding(
-      "C1",
+      com.histmersion.domain.ReviewArticle.Finding.Id("C1"),
       Reviewer.ColdReader,
       Severity.Minor,
       TermCount.Kind,
       TermCount.Where,
-      "",
-      TermCount.problem(12),
+      com.histmersion.domain.ReviewArticle.Finding.Quote(""),
+      TermCount.problem(com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined(12)),
       TermCount.Fix
     )
     assert(same(legacy, count))
     assert(!same(readerMin, count))
-    val (l, ids) = absorb(recheckTermCount(stored, List(count), "run2", 1), List(count), "run2", 1)
+    val (l, ids) = absorb(recheckTermCount(stored, List(count), com.histmersion.domain.ReviewLedger.RecheckTermCountRun("run2"), com.histmersion.domain.ReviewLedger.RecheckTermCountRound(1)), List(count), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))
     assertEquals(ids.map(_.id), List("C2"))
     assertEquals(l.entries.size, stored.entries.size)
     assertEquals(
       l.entry("C2").map(e => (e.status, e.finding.severity, e.finding.problem)),
-      Some((Status.Open, Severity.Minor, TermCount.problem(12)))
+      Some((Status.Open, Severity.Minor, TermCount.problem(com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined(12))))
     )
     assertEquals(l.openMajors.map(_.id), List("R1", "S1"))
     // with the other MAJORs fixed, the count alone leaves the article MINOR
     val onlyCount = l.modify(_.entries).setTo(l.entries.filter(e => e.id == "C2" || e.id == "C1"))
     assertEquals(onlyCount.verdict, Verdict.Minor)
-    assertEquals(taskText(onlyCount, "run2"), None)
+    assertEquals(taskText(onlyCount, com.histmersion.domain.automation.Run.Id("run2")), None)
 
   test("the term count: a pass that does not raise it again (8 or fewer) closes it; a declined one stays declined"):
     val legacy = f("C2", Reviewer.ColdReader, Severity.Major, "explain-back", "27 terms are undefined (more than 8)")
-    val stored = absorb(fresh, List(legacy), "run1", 1)._1
-    val closed = recheckTermCount(stored, List(readerMin), "run2", 3)
+    val stored = absorb(fresh, List(legacy), com.histmersion.domain.automation.Run.Id("run1"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
+    val closed = recheckTermCount(stored, List(readerMin), com.histmersion.domain.ReviewLedger.RecheckTermCountRun("run2"), com.histmersion.domain.ReviewLedger.RecheckTermCountRound(3))
     assertEquals(
       closed.entry("C2").map(e => (e.status, e.closed.map(c => (c.by, c.round)))),
       Some((Status.Fixed, Some(("mechanical", 3))))
@@ -217,51 +219,51 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(closed.entry("C1").map(_.status), Some(Status.Open))
     // a minor count the fixer declined is not re-opened by the next pass's minor count
     val count = Finding(
-      "C1",
+      com.histmersion.domain.ReviewArticle.Finding.Id("C1"),
       Reviewer.ColdReader,
       Severity.Minor,
       TermCount.Kind,
       TermCount.Where,
-      "",
-      TermCount.problem(10),
+      com.histmersion.domain.ReviewArticle.Finding.Quote(""),
+      TermCount.problem(com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined(10)),
       TermCount.Fix
     )
-    val minor = absorb(Ledger("tin"), List(count), "run1", 1)._1
+    val minor = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), List(count), com.histmersion.domain.automation.Run.Id("run1"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     val declined = applyFix(
       minor,
-      Fix("body", Nil, Nil, Nil, Nil, Nil, "", 1, 1, wontFix = List(WontFix("C1", "names, not terms"))),
-      "run1",
-      1
+      Fix(com.histmersion.domain.ReviewArticle.Fix.Body("body"), Nil, Nil, Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1), wontFix = List(WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("C1"), com.histmersion.domain.ReviewArticle.WontFix.Reason("names, not terms")))),
+      com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"),
+      com.histmersion.domain.ReviewLedger.ApplyFixRound(1)
     )
     assertEquals(declined.entry("C1").map(_.status), Some(Status.WontFix))
     assertEquals(
-      absorb(declined, List(count.modify(_.problem).setTo(TermCount.problem(11))), "run2", 1)._1.entry("C1").map(_.status),
+      absorb(declined, List(count.modify(_.problem).setTo(TermCount.problem(11))), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("C1").map(_.status),
       Some(Status.WontFix)
     )
 
   test("lessons: trimmed, never twice, the newest 15 kept"):
     val l = learn(
-      Ledger("tin"),
-      List("  every date needs  its [[citekey]] ", "", "Every date needs its [[citekey]]"),
+      Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")),
+      List(com.histmersion.domain.ReviewArticle.Recheck.Lessons("  every date needs  its [[citekey]] "), com.histmersion.domain.ReviewArticle.Recheck.Lessons(""), com.histmersion.domain.ReviewArticle.Recheck.Lessons("Every date needs its [[citekey]]")),
       LessonSource.Recheck,
-      "r",
-      2
+      com.histmersion.domain.ReviewLedger.LearnRun("r"),
+      com.histmersion.domain.ReviewLedger.LearnRound(2)
     )
     assertEquals(l.lessons.map(_.text), List("every date needs its [[citekey]]"))
-    val many = learn(l, (1 to 20).map(i => s"lesson $i").toList, LessonSource.Recheck, "r", 3)
+    val many = learn(l, (1 to 20).map(i => s"lesson $i").toList, LessonSource.Recheck, com.histmersion.domain.ReviewLedger.LearnRun("r"), com.histmersion.domain.ReviewLedger.LearnRound(3))
     assertEquals(many.lessons.size, MaxLessons)
     assertEquals(many.lessons.last.text, "lesson 20")
-    assertEquals(learn(l, List("x" * 500), LessonSource.Recheck, "r", 3).lessons.last.text.length, LessonChars)
+    assertEquals(learn(l, List("x" * 500), LessonSource.Recheck, com.histmersion.domain.ReviewLedger.LearnRun("r"), com.histmersion.domain.ReviewLedger.LearnRound(3)).lessons.last.text.length, LessonChars)
 
   test("a verification pass applies checks, absorbs its findings and keeps its lessons"):
-    val l = applyFix(fresh, Fix("b", Nil, List("S1"), Nil, Nil, Nil, "", 1, 1), "run1", 1)
+    val l = applyFix(fresh, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, List(com.histmersion.domain.ReviewArticle.Finding.Id("S1")), Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1)), com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     val rc = Recheck(
       Reviewer.Skeptic,
-      List(Check("S1", fixed = true, "1320 BCE", "")),
+      List(Check(com.histmersion.domain.ReviewArticle.Check.Id("S1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("1320 BCE"), com.histmersion.domain.ReviewArticle.Check.Note(""))),
       List(f("S1", Reviewer.Skeptic, Severity.Minor, "Open questions", "a source is missing", "Where the tin")),
-      List("cite the year")
+      List(com.histmersion.domain.ReviewArticle.Recheck.Lessons("cite the year"))
     )
-    val after = applyRecheck(l, rc, "run1", 2)
+    val after = applyRecheck(l, rc, com.histmersion.domain.ReviewLedger.ApplyRecheckRun("run1"), com.histmersion.domain.ReviewLedger.ApplyRecheckRound(2))
     assertEquals(
       after.entries.map(e => (e.id, e.status)),
       List(("R1", Status.Open), ("S1", Status.Fixed), ("C1", Status.Open), ("S2", Status.Open))
@@ -270,32 +272,32 @@ class ReviewLedgerSuite extends munit.FunSuite:
 
   test("merged: the open findings in reviewer order, under ledger ids, with their verdict"):
     val l = applyChecks(
-      applyFix(fresh, Fix("b", Nil, List("R1"), Nil, Nil, Nil, "", 1, 1), "r", 1),
+      applyFix(fresh, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, List(com.histmersion.domain.ReviewArticle.Finding.Id("R1")), Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1)), com.histmersion.domain.ReviewLedger.ApplyFixRun("r"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1)),
       Reviewer.Rules,
-      List(Check("R1", fixed = true, "q", "")),
-      "r",
-      2
+      List(Check(com.histmersion.domain.ReviewArticle.Check.Id("R1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("q"), com.histmersion.domain.ReviewArticle.Check.Note(""))),
+      com.histmersion.domain.ReviewLedger.ApplyChecksRun("r"),
+      com.histmersion.domain.ReviewLedger.ApplyChecksRound(2)
     )
-    val m = merged(l, 2)
+    val m = merged(l, com.histmersion.domain.ReviewLedger.Closure.Round(2))
     assertEquals((m.round, m.verdict, m.findings.map(_.id)), (2, Verdict.Major, List("C1", "S1")))
-    assertEquals(merged(Ledger("tin"), 1).verdict, Verdict.Pass)
+    assertEquals(merged(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), com.histmersion.domain.ReviewLedger.Closure.Round(1)).verdict, Verdict.Pass)
 
   test("promptText: open findings in full or as lines, closed ones as one line each, the lessons; empty when empty"):
-    assertEquals(promptText(Ledger("tin"), OpenStyle.Full, 60), "")
+    assertEquals(promptText(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), OpenStyle.Full, com.histmersion.domain.ReviewLedger.ClosedLimit(60)), "")
     val l = learn(
       applyChecks(
-        applyFix(fresh, Fix("b", Nil, List("R1", "S1"), Nil, Nil, Nil, "", 1, 1), "r", 1),
+        applyFix(fresh, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, List(com.histmersion.domain.ReviewArticle.Finding.Id("R1"), com.histmersion.domain.ReviewArticle.Finding.Id("S1")), Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1)), com.histmersion.domain.ReviewLedger.ApplyFixRun("r"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1)),
         Reviewer.Rules,
-        List(Check("R1", fixed = true, "q", "")),
-        "r",
-        2
+        List(Check(com.histmersion.domain.ReviewArticle.Check.Id("R1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("q"), com.histmersion.domain.ReviewArticle.Check.Note(""))),
+        com.histmersion.domain.ReviewLedger.ApplyChecksRun("r"),
+        com.histmersion.domain.ReviewLedger.ApplyChecksRound(2)
       ),
-      List("cite the year"),
+      List(com.histmersion.domain.ReviewArticle.Recheck.Lessons("cite the year")),
       LessonSource.Recheck,
-      "r",
-      2
+      com.histmersion.domain.ReviewLedger.LearnRun("r"),
+      com.histmersion.domain.ReviewLedger.LearnRound(2)
     )
-    val full = promptText(l, OpenStyle.Full, 60)
+    val full = promptText(l, OpenStyle.Full, com.histmersion.domain.ReviewLedger.ClosedLimit(60))
     assert(
       full.contains("Open findings:\n- C1 [cold-reader, minor, term]") && full.contains("- S1 [skeptic, major, date]"),
       full
@@ -308,10 +310,10 @@ class ReviewLedgerSuite extends munit.FunSuite:
       full
     )
     assert(full.endsWith("Lessons:\n- cite the year"), full)
-    val mine = promptText(l, OpenStyle.Lines, 60, Some(Reviewer.Skeptic))
+    val mine = promptText(l, OpenStyle.Lines, com.histmersion.domain.ReviewLedger.ClosedLimit(60), Some(Reviewer.Skeptic))
     assert(mine.contains("- S1 major: the date has no support") && !mine.contains("C1") && !mine.contains("R1"), mine)
-    assert(!promptText(l, OpenStyle.Omit, 60).contains("Open findings"))
-    assert(!promptText(l, OpenStyle.Full, 0).contains("Closed findings"))
+    assert(!promptText(l, OpenStyle.Omit, com.histmersion.domain.ReviewLedger.ClosedLimit(60)).contains("Open findings"))
+    assert(!promptText(l, OpenStyle.Full, com.histmersion.domain.ReviewLedger.ClosedLimit(0)).contains("Closed findings"))
 
   test("editedPassages: the changed paragraphs with a paragraph of margin, under their heading; what was removed"):
     val before =
@@ -321,7 +323,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     val e = editedPassages(before, after)
     assertEquals(
       e.passages,
-      List(Passage(Some("Disagreements"), "## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point."))
+      List(Passage(Some(com.histmersion.domain.ReviewLedger.Passage.Heading("Disagreements")), com.histmersion.domain.ReviewLedger.Passage.Text("## Disagreements\n\nThe cargo dates to 1320 BCE.\n\nA second point.")))
     )
     assertEquals(e.removed, List("The date is argued."))
     assert(
@@ -334,71 +336,71 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(two.passages.size, 2)
     assertEquals(editedPassages(before, before + "\n\nAdded.").removed, Nil)
     assert(editedPassages(before, before).isEmpty)
-    assertEquals(editedPassages(before, after, margin = 0).passages.map(_.text), List("The cargo dates to 1320 BCE."))
+    assertEquals(editedPassages(before, after, margin = com.histmersion.domain.ReviewLedger.PassageMargin(0)).passages.map(_.text), List("The cargo dates to 1320 BCE."))
 
   test("taskText (#934): one line per article listing its open MAJORs, cut to size; none when none is open"):
     val esc = absorb(
-      applyFix(fresh, Fix("b", Nil, Nil, List(Rejection("S1", "dated", "ck", "q", 1.0)), Nil, Nil, "", 1, 1), "r", 1),
+      applyFix(fresh, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, Nil, List(Rejection(com.histmersion.domain.ReviewArticle.Rejection.Id("S1"), com.histmersion.domain.ReviewArticle.Rejection.Reason("dated"), com.histmersion.domain.library.Citekey("ck"), com.histmersion.domain.ReviewArticle.Rejection.Quote("q"), 1.0)), Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1)), com.histmersion.domain.ReviewLedger.ApplyFixRun("r"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1)),
       List(dateMajor),
-      "r2",
-      1
+      com.histmersion.domain.automation.Run.Id("r2"),
+      com.histmersion.domain.ReviewLedger.Closure.Round(1)
     )._1
     assertEquals(
-      taskText(esc, "abcdef0123"),
+      taskText(esc, com.histmersion.domain.automation.Run.Id("abcdef0123")),
       Some(
         "review-article [[tin]]: 2 open MAJORs — R1 (Intro): tin is not defined; " +
           "S1 (Disagreements): the date has no support [raised again after a rejection] (agent run abcdef01)"
       )
     )
     val one = esc.modify(_.entries).setTo(esc.entries.filterNot(_.id == "S1"))
-    assert(taskText(one, "abcdef0123").exists(_.contains(": 1 open MAJOR — R1 (Intro)")))
-    assertEquals(taskText(fresh.copy(entries = fresh.entries.filterNot(_.major)), "x"), None)
+    assert(taskText(one, com.histmersion.domain.automation.Run.Id("abcdef0123")).exists(_.contains(": 1 open MAJOR — R1 (Intro)")))
+    assertEquals(taskText(fresh.copy(entries = fresh.entries.filterNot(_.major)), com.histmersion.domain.automation.Run.Id("x")), None)
     val long = absorb(
-      Ledger("tin"),
+      Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")),
       (1 to 40).toList.map(i => f(s"R$i", Reviewer.Rules, Severity.Major, s"Section $i", s"problem number $i " * 5)),
-      "r",
-      1
+      com.histmersion.domain.automation.Run.Id("r"),
+      com.histmersion.domain.ReviewLedger.Closure.Round(1)
     )._1
-    val t = taskText(long, "abcdef0123", maxChars = 300).get
+    val t = taskText(long, com.histmersion.domain.automation.Run.Id("abcdef0123"), maxChars = com.histmersion.domain.ReviewLedger.TaskTextLimit(300)).get
     assert(t.length <= 300 && t.contains("…") && t.endsWith("(agent run abcdef01)"), t)
-    assert(legacyTask("tin", "review-article [[tin]]: MAJOR open — S1 major: x"))
-    assert(legacyTask("tin", "review-article [[tin]]: MAJOR raised again after the fixer rejected it — S1"))
+    assert(legacyTask(com.histmersion.domain.research.Slug("tin"), com.histmersion.domain.ReviewLedger.TaskText("review-article [[tin]]: MAJOR open — S1 major: x")))
+    assert(legacyTask(com.histmersion.domain.research.Slug("tin"), com.histmersion.domain.ReviewLedger.TaskText("review-article [[tin]]: MAJOR raised again after the fixer rejected it — S1")))
     assert(
-      !legacyTask("tin", t.replace("[[tin]]", "[[tin]]")) && !legacyTask("tin2", "review-article [[tin]]: MAJOR open")
+      !legacyTask(com.histmersion.domain.research.Slug("tin"), t.replace("[[tin]]", "[[tin]]")) && !legacyTask("tin2", "review-article [[tin]]: MAJOR open")
     )
     // the collapsed item, as a run or the interactive skill writes it, is found again by its article
-    assert(articleTask("tin", t))
-    assert(articleTask("tin", "review-article tin: 2 open MAJORs — R4 (Intro): x; S2: y"))
-    assert(!articleTask("tin2", t) && !articleTask("ti", t))
+    assert(articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin"), t))
+    assert(articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin"), com.histmersion.domain.ReviewLedger.TaskText("review-article tin: 2 open MAJORs — R4 (Intro): x; S2: y")))
+    assert(!articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin2"), t) && !articleTask("ti", t))
     assert(
-      !articleTask("tin", "review-article [[tin]]: MAJOR open — S1 major: x"),
+      !articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin"), com.histmersion.domain.ReviewLedger.TaskText("review-article [[tin]]: MAJOR open — S1 major: x")),
       "a legacy item is closed, not reused"
     )
-    assert(!articleTask("tin", "compile-article [[tin]]: 2 open MAJORs"))
+    assert(!articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin"), com.histmersion.domain.ReviewLedger.TaskText("compile-article [[tin]]: 2 open MAJORs")))
 
   test("the ledger round-trips through JSON (what review_ledgers stores and a step checkpoints)"):
     val l = learn(
       applyFix(
         fresh,
         Fix(
-          "b",
+          com.histmersion.domain.ReviewArticle.Fix.Body("b"),
           Nil,
-          List("R1"),
-          List(Rejection("S1", "dated", "ck", "q", 1.0)),
+          List(com.histmersion.domain.ReviewArticle.Finding.Id("R1")),
+          List(Rejection(com.histmersion.domain.ReviewArticle.Rejection.Id("S1"), com.histmersion.domain.ReviewArticle.Rejection.Reason("dated"), com.histmersion.domain.library.Citekey("ck"), com.histmersion.domain.ReviewArticle.Rejection.Quote("q"), 1.0)),
           Nil,
           Nil,
-          "",
-          1,
-          1,
+          com.histmersion.domain.ReviewArticle.Fix.Notes(""),
+          com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1),
+          com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1),
           wontFix = List(WontFix("C1", "fine"))
         ),
-        "r",
-        1
+        com.histmersion.domain.ReviewLedger.ApplyFixRun("r"),
+        com.histmersion.domain.ReviewLedger.ApplyFixRound(1)
       ),
-      List("x"),
+      List(com.histmersion.domain.ReviewArticle.Recheck.Lessons("x")),
       LessonSource.Recheck,
-      "r",
-      1
+      com.histmersion.domain.ReviewLedger.LearnRun("r"),
+      com.histmersion.domain.ReviewLedger.LearnRound(1)
     ).copy(task = Some(12))
     assertEquals(decode[Ledger](l.asJson.noSpaces), Right(l))
     assert(l.asJson.noSpaces.contains("\"status\":\"wont-fix\""))

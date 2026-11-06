@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.events.EventPlan
@@ -29,11 +31,11 @@ class MergeFoldSuite extends munit.FunSuite:
   test("goals, queue items and events folded"):
     val gl = MergeFixture.goal("g1", "zz_g", "Goal", home, Some("home's plan")).copy(status = Goal.Status.Seeding)
     val gr = MergeFixture.goal("g2", "zz_g", "Goal", work, Some("work's plan")).copy(status = Goal.Status.Compiled)
-    val g = MergeFold.foldGoal(gl, gr, "work")
+    val g = MergeFold.foldGoal(gl, gr, com.histmersion.domain.MergePlanner.Row.Label("work"))
     assertEquals(g.status, Goal.Status.Compiled)
     assertEquals(g.notes, Some("home's plan\n\n### From work\n\nwork's plan"))
-    assertEquals(MergeFold.foldGoal(gl, gl.modify(_.uid).setTo(gr.uid), "work").notes, gl.notes)
-    val q = Bundle.QueueItem(uid("q1"), home, "tasks", "Find the Kuhrt reprint", None, Queue.Open, None, At, None, At)
+    assertEquals(MergeFold.foldGoal(gl, gl.modify(_.uid).setTo(gr.uid), com.histmersion.domain.MergePlanner.Row.Label("work")).notes, gl.notes)
+    val q = Bundle.QueueItem(uid("q1"), home, com.histmersion.api.exchange.Bundle.QueueItem.List("tasks"), com.histmersion.api.exchange.Bundle.QueueItem.Text("Find the Kuhrt reprint"), None, Queue.Open, None, At, None, At)
     val qd = q.modify(_.uid).setTo(uid("q2")).modify(_.text).setTo("find the  kuhrt reprint").modify(_.status).setTo(Queue.Done).modify(_.doneAt).setTo(Some(At))
     assertEquals(MergeFold.queueKey(q.text), MergeFold.queueKey(qd.text))
     assertEquals(MergeFold.foldQueue(q, qd).status, Queue.Done)
@@ -41,7 +43,7 @@ class MergeFoldSuite extends munit.FunSuite:
     val e1 = MergeFixture.event("e1", "zz_e", "Here", home)
     val e2 = MergeFixture
       .event("e2", "zz_e", "There", work)
-      .copy(datings = List(Bundle.EventDating("a2000_x", None, Some(-1200), None, None, Some(-1190), None, None)))
+      .copy(datings = List(Bundle.EventDating(com.histmersion.api.library.Citekey("a2000_x"), None, Some(com.histmersion.api.exchange.Bundle.EventDating.NotBefore(-1200)), None, None, Some(com.histmersion.api.exchange.Bundle.EventDating.NotAfter(-1190)), None, None)))
     assert(EventPlan.sameCore(e1, e2))
     assert(!EventPlan.sameCore(e1, e2.modify(_.notAfter).setTo((Some(-1100): _root_.scala.Option[_root_.scala.Long]))))
     val e = EventPlan.foldEvent(e1, e2)
@@ -58,16 +60,16 @@ class MergeFoldSuite extends munit.FunSuite:
     assertEquals(MergeFold.articleOutcome(base, Nil, theirs, Set(sha(base))), ArticleOutcome.Theirs)
     assertEquals(
       MergeFold.articleOutcome(ours, List(sha(base) -> base), theirs, Set(sha(base))),
-      ArticleOutcome.Merged("Intro (home).\n\nMiddle.\n\nEnd (work).", sha(base))
+      ArticleOutcome.Merged(com.histmersion.domain.MergeFold.ArticleOutcome.Merged.Body("Intro (home).\n\nMiddle.\n\nEnd (work)."), sha(base))
     )
     assertEquals(
-      MergeFold.articleOutcome(ours, List(sha(base) -> base), "Intro (work).\n\nMiddle.\n\nEnd.", Set(sha(base))),
-      ArticleOutcome.Conflict(1, sha(base))
+      MergeFold.articleOutcome(ours, List(sha(base) -> base), com.histmersion.domain.MergeFold.ArticleBody("Intro (work).\n\nMiddle.\n\nEnd."), Set(sha(base))),
+      ArticleOutcome.Conflict(com.histmersion.domain.MergeFold.ArticleOutcome.Conflict.Conflicts(1), sha(base))
     )
     assertEquals(MergeFold.articleOutcome(ours, List(sha(base) -> base), theirs, Set.empty), ArticleOutcome.NoBase)
     // the newest common version is the base
     val older = "Intro.\n\nEnd."
     assertEquals(
       MergeFold.articleOutcome(ours, List(sha(base) -> base, sha(older) -> older), theirs, Set(sha(older), sha(base))),
-      ArticleOutcome.Merged("Intro (home).\n\nMiddle.\n\nEnd (work).", sha(base))
+      ArticleOutcome.Merged(com.histmersion.domain.MergeFold.ArticleOutcome.Merged.Body("Intro (home).\n\nMiddle.\n\nEnd (work)."), sha(base))
     )

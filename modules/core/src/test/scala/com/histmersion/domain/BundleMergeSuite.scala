@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.events.EventPlan
@@ -28,14 +30,14 @@ class BundleMergeSuite extends munit.FunSuite:
     com.histmersion.api.exchange.Bundle.Event(
       U1,
       I,
-      "e1",
-      "Eruption",
-      "eruption",
-      Some(-1600),
+      com.histmersion.api.exchange.Bundle.Event.Id("e1"),
+      com.histmersion.api.exchange.Bundle.Event.Label("Eruption"),
+      com.histmersion.api.exchange.Bundle.Event.Kind("eruption"),
+      Some(com.histmersion.api.exchange.Bundle.Event.NotBefore(-1600)),
       None,
       None,
-      Some(-1500),
-      "attested",
+      Some(com.histmersion.api.exchange.Bundle.Event.NotAfter(-1500)),
+      com.histmersion.api.exchange.Bundle.Event.Historicity("attested"),
       None,
       None,
       None,
@@ -45,7 +47,7 @@ class BundleMergeSuite extends munit.FunSuite:
       Nil,
       Nil,
       Nil,
-      "2026-10-03T00:00:00.000000Z"
+      com.histmersion.api.exchange.Bundle.Event.UpdatedAt("2026-10-03T00:00:00.000000Z")
     )
   )
 
@@ -54,13 +56,11 @@ class BundleMergeSuite extends munit.FunSuite:
       eventCatalogue = List(
         com.histmersion.api.exchange.Bundle.EventCatalogue(
           U1,
-          "gvp",
-          "1",
+          com.histmersion.api.exchange.Bundle.EventCatalogue.Provider("gvp"),
+          com.histmersion.api.exchange.Bundle.EventCatalogue.ProviderId("1"),
           None,
-          "x",
-          "eruption",
-          None,
-          None,
+          com.histmersion.api.exchange.Bundle.EventCatalogue.Label("x"),
+          com.histmersion.api.exchange.Bundle.EventCatalogue.Kind("eruption"),
           None,
           None,
           None,
@@ -68,38 +68,40 @@ class BundleMergeSuite extends munit.FunSuite:
           None,
           None,
           None,
-          "attested",
+          None,
+          None,
+          com.histmersion.api.exchange.Bundle.EventCatalogue.Historicity("attested"),
           io.circe.Json.obj(),
-          "2026-10-05T00:00:00.000000Z"
+          com.histmersion.api.exchange.Bundle.EventCatalogue.RetrievedAt("2026-10-05T00:00:00.000000Z")
         )
       ),
       eventCandidates = List(
         com.histmersion.api.exchange.Bundle.EventCandidate(
           U1,
           U2,
-          "ck",
+          com.histmersion.api.library.Citekey("ck"),
           1.0,
-          "proposed",
+          com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed"),
           Nil,
           io.circe.Json.arr(),
           Nil,
-          "2026-10-05T00:00:00.000000Z"
+          com.histmersion.api.exchange.Bundle.EventCandidate.ComputedAt("2026-10-05T00:00:00.000000Z")
         )
       ),
-      eventChecks = List(com.histmersion.api.exchange.Bundle.EventCheck(U1, "2026-10-05T00:00:00.000000Z")),
+      eventChecks = List(com.histmersion.api.exchange.Bundle.EventCheck(U1, com.histmersion.api.exchange.Bundle.EventCheck.CheckedAt("2026-10-05T00:00:00.000000Z"))),
       corrections = List(
         com.histmersion.api.exchange.Bundle.Correction(
-          "event",
-          "e1",
+          com.histmersion.api.exchange.Bundle.Correction.TargetKind("event"),
+          com.histmersion.api.exchange.Bundle.Correction.TargetId("e1"),
           Some(U1),
-          "label",
-          "1",
+          com.histmersion.api.exchange.Bundle.Correction.Field("label"),
+          com.histmersion.api.exchange.Bundle.Correction.Value("1"),
           None,
-          "2",
+          com.histmersion.api.exchange.Bundle.Correction.UpstreamValue("2"),
           None,
-          "active",
-          "2026-10-05T00:00:00.000000Z",
-          "2026-10-05T00:00:00.000000Z",
+          com.histmersion.api.exchange.Bundle.Correction.Status("active"),
+          com.histmersion.api.exchange.Bundle.Correction.CreatedAt("2026-10-05T00:00:00.000000Z"),
+          com.histmersion.api.exchange.Bundle.Correction.UpdatedAt("2026-10-05T00:00:00.000000Z"),
           None
         )
       )
@@ -128,30 +130,30 @@ class BundleMergeSuite extends munit.FunSuite:
 
   test("decisions: the whole table of a two-way merge with the ledger as ancestor"):
     def d(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None, own: Boolean = false) =
-      BundlePlan.entity("F", Local(local, tomb, ledger), own)
+      BundlePlan.entity(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), Local(local, tomb, ledger), own)
     assertEquals(d(None), Decision.Insert)
     assertEquals(d(None, tomb = true), Decision.SkipDeleted)
     assertEquals(d(Some("F")), Decision.Unchanged)
     assertEquals(d(Some("L"), own = true), Decision.KeepLocal)
-    assertEquals(d(Some("L"), ledger = Some(Ledger("F", Some("X")))), Decision.KeepLocal) // theirs unchanged
-    assertEquals(d(Some("L"), ledger = Some(Ledger("E", Some("L")))), Decision.FastForward) // ours unchanged
-    assertEquals(d(Some("L"), ledger = Some(Ledger("E", Some("X")))), Decision.Conflict) // both changed
+    assertEquals(d(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("X"))))), Decision.KeepLocal) // theirs unchanged
+    assertEquals(d(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("L"))))), Decision.FastForward) // ours unchanged
+    assertEquals(d(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("X"))))), Decision.Conflict) // both changed
     assertEquals(d(Some("L")), Decision.Conflict) // never merged
 
   test("tombstones: delete only what is still as the last merge left it; record the rest"):
     def t(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None) =
-      BundlePlan.tombstone(Local(local, tomb, ledger), ownBundle = false)
-    assertEquals(t(Some("L"), ledger = Some(Ledger("E", Some("L")))), Decision.Delete)
-    assertEquals(t(Some("L"), ledger = Some(Ledger("E", Some("X")))), Decision.Conflict)
+      BundlePlan.tombstone(Local(local, tomb, ledger), ownBundle = com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle(false))
+    assertEquals(t(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("L"))))), Decision.Delete)
+    assertEquals(t(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("X"))))), Decision.Conflict)
     assertEquals(t(Some("L")), Decision.Conflict)
     assertEquals(t(None), Decision.RecordTombstone)
     assertEquals(t(None, tomb = true), Decision.Unchanged)
 
   test("the ledger keeps the old ancestor for a kept row, so a later change over there is a conflict"):
-    assertEquals(BundlePlan.ledgerAfter(Decision.KeepLocal, "F", tombstone = false), None)
-    assertEquals(BundlePlan.ledgerAfter(Decision.Insert, "F", tombstone = false), Some(Ledger("F", Some("F"))))
-    assertEquals(BundlePlan.ledgerAfter(Decision.Unchanged, "deleted", tombstone = true), Some(Ledger("deleted", None)))
-    assertEquals(BundlePlan.ledgerAfter(Decision.Conflict, "F", tombstone = false), None)
+    assertEquals(BundlePlan.ledgerAfter(Decision.KeepLocal, com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), tombstone = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(false)), None)
+    assertEquals(BundlePlan.ledgerAfter(Decision.Insert, com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), tombstone = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(false)), Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("F")))))
+    assertEquals(BundlePlan.ledgerAfter(Decision.Unchanged, com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("deleted"), tombstone = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(true)), Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("deleted"), None)))
+    assertEquals(BundlePlan.ledgerAfter(Decision.Conflict, com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), tombstone = com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned(false)), None)
 
   test("cascade: a line needing a row deleted here is skipped too, transitively; optional links are not"):
     val (src, asset, link, ev) = (U1, U2, UUID.randomUUID(), UUID.randomUUID())
@@ -179,6 +181,6 @@ class BundleMergeSuite extends munit.FunSuite:
     assertEquals(
       c,
       com.histmersion.api.exchange.Bundle
-        .KindCounts(Bundle.Kind.Goal, inserted = 2, conflicts = 1, unchanged = 1, deleted = 1)
+        .KindCounts(Bundle.Kind.Goal, inserted = com.histmersion.api.exchange.Bundle.KindCounts.Inserted(2), conflicts = 1, unchanged = 1, deleted = 1)
     )
     assertEquals(c.changed, 3)
