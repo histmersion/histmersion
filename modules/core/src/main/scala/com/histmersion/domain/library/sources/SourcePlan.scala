@@ -185,7 +185,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           MergeIssue.Title(s"year differs: $b here, $a in the bundle"),
           lr,
           Some(MergeDecision.of(earliest)),
-          why = List("the suggestion keeps the earliest year (the first edition)")
+          why = List(com.histmersion.api.exchange.MergeIssue.Why("the suggestion keeps the earliest year (the first edition)"))
         )
       },
       Option.when(r.status != l.status && r.status != Source.Status.Unassessed && l.status != Source.Status.Unassessed)(
@@ -225,7 +225,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         val sim = sketches
           .get(a)
           .zip(sketches.get(b))
-          .map((x, y) => s" (MinHash ${SourceMatcher.fixed(x.similarity(y), 2)})")
+          .map((x, y) => s" (MinHash ${SourceMatcher.fixed(x.similarity(y), com.histmersion.domain.library.sources.SourceMatcher.Decimals(2))})")
           .getOrElse("")
         mk(
           MergeIssue.Kind.BodyDiffers,
