@@ -1,0 +1,2 @@
+path	before-sha256	after-sha256
+modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala	463ce42ae6262fc7da9e55d57e07906cd8374b98bfec39371468cf67226a26a8	4c866fcb110d2a0d87caa62b832d64b08dc14633fa2cf6335762876210c68c5c

@@ -1,0 +1,92 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35873 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / maxErrors
+[info] The new value will be used by Compile / compile / compileOptions, Compile / compile / compilerReporter and 237 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsFetcher.scala:8:67 
+[error] 8 |  def fetch(work: WorkKey, ctx: Fetch.Context): Fetch = Fetch.Miss(s"hello-deps has no copy ($greeting)")
+[error]   |                                                                   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]   |                           Found:    String
+[error]   |                           Required: com.histmersion.plugin.Fetch.Miss.Why
+[error]   |
+[error]   | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala:9:25 
+[error] 9 |  val info = Plugin.Info("hello-deps", "0.1.0", Spi.Version)
+[error]   |                         ^^^^^^^^^^^^
+[error]   |                         Found:    ("hello-deps" : String)
+[error]   |                         Required: com.histmersion.plugin.Plugin.Info.Id
+[error]   |
+[error]   | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala:9:39 
+[error] 9 |  val info = Plugin.Info("hello-deps", "0.1.0", Spi.Version)
+[error]   |                                       ^^^^^^^
+[error]   |                      Found:    ("0.1.0" : String)
+[error]   |                      Required: com.histmersion.plugin.Plugin.Info.Version
+[error]   |
+[error]   | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala:9:52 
+[error] 9 |  val info = Plugin.Info("hello-deps", "0.1.0", Spi.Version)
+[error]   |                                                ^^^^^^^^^^^
+[error]   |                Found:    (com.histmersion.plugin.Spi.Version : (2 : Int))
+[error]   |                Required: com.histmersion.plugin.Plugin.Info.SpiVersion
+[error]   |
+[error]   | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala:12:46 
+[error] 12 |    ctx.log.info(s"hello-deps: ${Shout(config.greeting)}")
+[error]    |                                       ^^^^^^^^^^^^^^^
+[error]    |Found:    (config.greeting : com.histmersion.fixtures.hellodeps.HelloDepsConfig.Greeting)
+[error]    |Required: com.histmersion.fixtures.hellolib.Shout.ApplyText
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala:13:27 
+[error] 13 |    ctx.sourceFetchers.add("hello-deps", HelloDepsFetcher(Shout(config.greeting)))
+[error]    |                           ^^^^^^^^^^^^
+[error]    |                         Found:    ("hello-deps" : String)
+[error]    |                         Required: com.histmersion.plugin.Registry.AddId
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala:13:71 
+[error] 13 |    ctx.sourceFetchers.add("hello-deps", HelloDepsFetcher(Shout(config.greeting)))
+[error]    |                                                                ^^^^^^^^^^^^^^^
+[error]    |Found:    (config.greeting : com.histmersion.fixtures.hellodeps.HelloDepsConfig.Greeting)
+[error]    |Required: com.histmersion.fixtures.hellolib.Shout.ApplyText
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] sbt.util.CachedCompileFailure$$anon$1: Compilation failed
+[error] 	at sbt.util.CachedCompileFailure.toException(CachedCompileFailure.scala:23)
+[error] 	at sbt.util.ActionCache$.cache(ActionCache.scala:185)
+[error] 	at sbt.Defaults$.$init$$$anonfun$1(Defaults.scala:2377)
+[error] 	at scala.Function1.$anonfun$compose$1(Function1.scala:79)
+[error] 	at scala.Function1.$anonfun$compose$1(Function1.scala:79)
+[error] 	at sbt.std.Transform$$anon$3.work(Transform.scala:79)
+[error] 	at sbt.std.Transform$$anon$3.work(Transform.scala:79)
+[error] 	at sbt.Execute.submit$$anonfun$1$$anonfun$1(Execute.scala:283)
+[error] 	at sbt.internal.util.ErrorHandling$.wideConvert(ErrorHandling.scala:24)
+[error] 	at sbt.Execute.work(Execute.scala:294)
+[error] 	at sbt.Execute.submit$$anonfun$1(Execute.scala:283)
+[error] 	at sbt.ConcurrentRestrictions$$anon$4.$anonfun$2(ConcurrentRestrictions.scala:269)
+[error] 	at sbt.CompletionService$$anon$2.call(CompletionService.scala:75)
+[error] 	at sbt.CompletionService$$anon$2.call(CompletionService.scala:73)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.Executors$RunnableAdapter.call(Executors.java:545)
+[error] 	at java.base/java.util.concurrent.FutureTask.run(FutureTask.java:328)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1090)
+[error] 	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:614)
+[error] 	at java.base/java.lang.Thread.run(Thread.java:1474)
+[error] (pluginHelloDeps / Compile / compileIncremental) sbt.util.CachedCompileFailure$$anon$1: Compilation failed
+[error] elapsed time: 0 s, cache 100%, 1 cached-failure cache hit, 43 disk cache hits

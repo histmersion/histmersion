@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
 object AstRecipe {
-  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1, primitiveEitherLeft: Boolean = false, constructorProperties: Boolean = false)
+  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1, primitiveEitherLeft: Boolean = false, constructorProperties: Boolean = false, reuseAcross: List[String] = Nil)
   object Consolidation {
     implicit val surface: generic.Surface[Consolidation] = generic.deriveSurface[Consolidation]
     implicit val decoder: ConfDecoder[Consolidation] = generic.deriveDecoder(Consolidation()).noTypos
@@ -22,7 +22,7 @@ object AstRecipe {
     expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty,
     consolidationIndex: String = "", consolidations: List[Consolidation] = Nil, additionalManifest: String = "",
     ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil,
-    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false)
+    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -57,14 +57,14 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     }
     frozen.foreach { case(p,h) => require(hash(read(p)) == h, "Stale source: " + p) }
     val out = Paths.get(policy.report)
-    require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty || policy.measureTypes || policy.consolidations.nonEmpty || policy.ironProjects.nonEmpty || policy.interfaceContracts.nonEmpty || policy.compilerObservation.nonEmpty))
+    require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty || policy.measureTypes || policy.consolidations.nonEmpty || policy.ironProjects.nonEmpty || policy.interfaceContracts.nonEmpty || policy.compilerObservation.nonEmpty || policy.triviaFiles.nonEmpty))
     require(policy.appendStats.keySet.subsetOf(policy.edits.map(_.path).toSet), "Append requires a reviewed edit in the same file")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
     val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence,policy.creates)
     val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence,policy.boundaryRoots)
     val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
-    val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
+    val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ policy.triviaFiles.toSet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
     def parseSource(s: String,path: String): Source = {
       implicit val dialect: Dialect = if(path.endsWith(".sbt")) dialects.Scala3.withAllowToplevelTerms(true) else dialects.Scala3
       s.parse[Source].get
@@ -98,7 +98,11 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
         }
       } else Nil
       val build = if(path == "build.sbt") IronDependencies.patches(tree,policy.ironProjects,evidence) else Nil
-      val patches = definitionPatches ++ consolidated.getOrElse(path,Nil) ++ aligned.getOrElse(path,Nil) ++ repaired.getOrElse(path,Nil) ++ build ++ recipes.flatMap { recipe =>
+      val trivia = if(!policy.triviaFiles.contains(path)) Nil else tree.tokens.groupBy(_.pos.startLine).values.filter(_.forall(t => t.is[Token.Space] || t.is[Token.LF])).flatten.filter(_.is[Token.Space]).toList.map { t =>
+        evidence += List(path,(t.pos.startLine + 1).toString,"TRIVIA " + t.structure,"remove blank-line indentation; AST unchanged")
+        (t.pos.start,t.pos.end,"")
+      }
+      val patches = definitionPatches ++ consolidated.getOrElse(path,Nil) ++ aligned.getOrElse(path,Nil) ++ repaired.getOrElse(path,Nil) ++ build ++ trivia ++ recipes.flatMap { recipe =>
         require(Set("stat","type")(recipe.kind))
         val pattern: Tree = if(recipe.kind == "type") recipe.before.parse[Type].get else recipe.before.parse[Stat].get
         val replacementAst = if(recipe.kind == "type") recipe.after.parse[Type].get.structure else fragment(recipe.after)
@@ -107,7 +111,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
         matches.map { t =>
           val prefix = source.substring(source.lastIndexOf('\n', t.pos.start - 1) + 1, t.pos.start)
           val indent = prefix.takeWhile(_ == ' ')
-          val replacement = recipe.after.linesIterator.zipWithIndex.map { case(line,i) => if(i == 0) line else indent + line }.mkString("\n")
+          val replacement = recipe.after.linesIterator.zipWithIndex.map { case(line,i) => if(i == 0 || line.isEmpty) line else indent + line }.mkString("\n")
           val end = if(recipe.after.isEmpty) tree.tokens.find(tok => tok.pos.start == t.pos.end && tok.is[Token.LF]).map(_.pos.end).getOrElse(t.pos.end) else t.pos.end
           val start = if(recipe.after.isEmpty && prefix.forall(_ == ' ')) t.pos.start - prefix.length else t.pos.start
           evidence += List(path, (t.pos.startLine + 1).toString, t.structure, replacementAst)
@@ -826,6 +830,7 @@ object TypeConsolidation {
       pairs.map { case(a,b) => AstRecipe.Consolidation(within = a.substring(0,a.lastIndexOf('.')), names = List(a.split('.').last), target = b, expected = 1) }
     }
     val selected = (roles.filterNot(_.constructorProperties) ++ factoryRoles).flatMap { role =>
+      require(role.reuseAcross.isEmpty || (role.reuseAcross.size == 2 && role.reuseAcross.distinct.size == 2 && role.target.nonEmpty && role.names.nonEmpty && role.expected > 0),"Cross-module reuse requires exact named bindings, a positive count and a directed module pair")
       require(role.within.nonEmpty && (role.target.nonEmpty != role.targetOwner.nonEmpty),"Choose one canonical type or projection owner")
       require(role.target.isEmpty || (role.names.nonEmpty && role.target.contains(".")),"Canonical role needs names and a qualified type")
       val candidates = definitions.filter { d =>
@@ -840,7 +845,8 @@ object TypeConsolidation {
       }
       require(role.expected < 0 || candidates.size == role.expected,"Consolidation candidate count differs: " + role.target + " expected=" + role.expected + " actual=" + candidates.size)
       candidates.map { case(d,target) =>
-        require(d(2) == target(2) && d(3) == target(3),"Consolidation cannot cross module or source-set boundaries")
+        require(d(3) == target(3),"Consolidation cannot cross source-set boundaries")
+        require(d(2) == target(2) || role.reuseAcross == List(d(2),target(2)),"Consolidation cannot cross an unapproved module boundary")
         require(d(12) == "member" && target(12) == "member","Local consolidation requires semantic evidence")
         (d,target)
       }

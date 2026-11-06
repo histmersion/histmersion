@@ -1,0 +1,65 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35873 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] scalafmt: Checking 51 Scala sources (/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api)...
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaCompleted.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionUpdateEntry.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaRendition.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/GazetteerSource.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/UpstreamQuota.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiTurn.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/GazetteerName.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/Licence.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiUsage.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaFound.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionFile.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionQuery.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/Registry.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/Processes.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiFailure.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/LicenceReader.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/Period.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaRights.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionUpdateOutcome.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionRecord.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaItem.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaMatchRule.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/Fetch.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiCapabilities.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionIssue.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiTool.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiCheck.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaCollection.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CataloguePage.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiHttp.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionFinding.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/Plugin.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/FetchedFile.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionMetadata.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaPlace.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/Secret.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/LocalFiles.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/SourceCollection.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/GazetteerPlace.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/WorkKey.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaUse.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/EventCatalogue.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/GazetteerRelation.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionChange.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiProvider.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaTarget.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/GazetteerRights.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CatalogueEvent.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/MediaEvent.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/CollectionItem.scala isn't formatted properly!
+[warn] scalafmt: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/main/scala/com/histmersion/plugin/AiMessage.scala isn't formatted properly!
+[error] scalafmt: 51 files must be formatted (/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api)
+[error] (pluginApi / Compile / scalafmtCheck) scalafmt: 51 files must be formatted (/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api)
+[error] elapsed time: 2 s, cache 100%, 1 disk cache hit

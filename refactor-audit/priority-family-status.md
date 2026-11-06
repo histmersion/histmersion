@@ -1,6 +1,66 @@
 # Priority-family status
 
-## Current checkpoint: plugin API test sources compile
+## Current checkpoint: resolver integration passes
+
+The hello-deps fixture compiles and all 24 resolver tests pass, including all nine
+offline dependency-resolution tests that previously could not execute. The same
+successful build runs nine plugin config/secret tests (hello-deps-resolver-tests-3).
+The complete plugin API run reports 48 tests: 45 pass and the same three existing
+ValuesSuite validation expectations fail (plugin-config-all-tests-1). Their expected
+values and Pure definitions are unchanged. There is no whole-project test claim.
+The required read-only formatting check fails in 51 plugin API production files;
+subsequent hello-deps/resolver formatting commands did not execute after that
+failure. format-check-2.log retains the result. No formatting baseline was measured
+before this batch, so those 51 files are not classified as new regressions. The
+checkpoint is not release-ready; native/bundle checks remain unverified.
+
+The existing compiler transformation repairs all eligible findings in both
+hello-deps implementation files. Seven initial errors become two newly exposed
+body errors, then a config-derivation failure; the observations are preserved in
+hello-deps-build-1/-2 and hello-deps-resolver-tests-1. Two reviewed opaque duplicates
+become aliases: the fetcher's greeting is Shout's output, and the registration
+result is the Plugin interface's error. Registry errors are explicitly converted
+to registration errors; those different concepts are not merged.
+
+Consolidation now accepts an explicitly configured, directed module pair only for
+named type bindings with a positive expected count. The two fixture bindings reuse
+already declared build dependencies. An absent or reversed pair is rejected by the
+existing consolidation fixture; source-set, base-type, Pure-constraint, owner and
+behavior checks remain mandatory. The exact-output fixture also compiles/runs and
+proves alias identity and construction. This is permission for reviewed type reuse,
+not a new architectural exception or inferred approval of arbitrary dependencies.
+
+One shared generic ConfigReader is added to Plugin.Config.given, using Iron's
+Mirror and the base reader. Three new tests cover lenient numeric/Boolean strings,
+string and nested container newtypes, failed base decoding, and precedence of an
+explicit reader. The Mirror-indexed adapter uses the same representation cast as
+config.NewtypeReaders after checking with ops.either; no caller mismatch is hidden
+by a cast. No per-newtype reader table is introduced. The implementation and its
+test source were installed through the existing frozen AST pipeline.
+
+The first executed integration run had seven failures because its mock kit omitted
+Iron from the host-supplied libraries. The shared kit excludes now include Iron,
+like Scala; the real host already supplies it. Resolver assertions are unchanged.
+All seven failures then disappear. The generic AST renderer also stops indenting
+empty replacement lines; token-only blank-line cleanup uses the same pipeline.
+No new batch runner, verifier or report framework was introduced.
+
+type-positions-after-hello-deps-1 preserves the two removed opaque-definition IDs
+and zero raw primitive-ID changes. The final type-positions-after-hello-deps-2 adds
+one standard test source (3169 Scala files total), four test newtype definitions,
+and zero new/removed raw primitive IDs. Counts remain production594/test6009
+(6603 candidates). Definitions are production27632/test19; overlap candidate
+groups remain 3014; unresolved references rise from 16105 to 16108 across these
+two observations and remain explicitly unresolved. These changes do not establish
+a global confirmed denominator, overall repair percentage or inventory acceptance.
+
+All application/test edits use Scalafix and the existing frozen-plan chain.
+Inventory acceptance and the other policy families remain frozen partial. Next
+measure the remaining module compilation frontier and select the next reusable
+consumer transformation; preserve the three client-validation conflicts as design
+work. Earlier checkpoints below remain historical evidence.
+
+## Previous checkpoint: plugin API test sources compile
 
 The reusable overload, collection and interface transformations have been applied
 across every eligible plugin API test caller, in six test files. All eight test

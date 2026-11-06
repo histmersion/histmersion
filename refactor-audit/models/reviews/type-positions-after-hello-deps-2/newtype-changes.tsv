@@ -1,0 +1,5 @@
+definition	status	previous-index
+modules/plugin-api/src/test/scala/com/histmersion/plugin/PluginConfigSuite.scala::com.histmersion.plugin.PluginConfigSuite.Settings.Enabled#0	introduced-newtype-shape	refactor-audit/models/reviews/type-positions-after-hello-deps-1
+modules/plugin-api/src/test/scala/com/histmersion/plugin/PluginConfigSuite.scala::com.histmersion.plugin.PluginConfigSuite.Settings.Retries#0	introduced-newtype-shape	refactor-audit/models/reviews/type-positions-after-hello-deps-1
+modules/plugin-api/src/test/scala/com/histmersion/plugin/PluginConfigSuite.scala::com.histmersion.plugin.PluginConfigSuite.Settings.Title#0	introduced-newtype-shape	refactor-audit/models/reviews/type-positions-after-hello-deps-1
+modules/plugin-api/src/test/scala/com/histmersion/plugin/PluginConfigSuite.scala::com.histmersion.plugin.PluginConfigSuite.Settings.Weight#0	introduced-newtype-shape	refactor-audit/models/reviews/type-positions-after-hello-deps-1

@@ -1,0 +1,119 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35873 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / maxErrors
+[info] The new value will be used by Compile / compile / compileOptions, Compile / compile / compilerReporter and 237 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+Test run com.histmersion.plugin.SourceFetcherSuite started
+com.histmersion.plugin.SourceFetcherSuite: finished 0.029s
+Test run com.histmersion.plugin.GazetteerSpiSuite started
+com.histmersion.plugin.GazetteerSpiSuite: finished 0.03s
+Test run com.histmersion.plugin.GazetteerSpiSuite finished: 0 failed, 0 ignored, 2 total 0.036s
+Test run com.histmersion.plugin.SourceFetcherSuite finished: 0 failed, 0 ignored, 4 total 0.036s
+Test run com.histmersion.plugin.SourceCollectionSpiSuite started
+com.histmersion.plugin.SourceCollectionSpiSuite: finished 0.034s
+Test run com.histmersion.plugin.SourceCollectionSpiSuite finished: 0 failed, 0 ignored, 4 total 0.037s
+Test run com.histmersion.plugin.PluginConfigSuite started
+com.histmersion.plugin.PluginConfigSuite: finished 0.035s
+Test run com.histmersion.plugin.PluginConfigSuite finished: 0 failed, 0 ignored, 3 total 0.036s
+Test run com.histmersion.plugin.SecretSuite started
+com.histmersion.plugin.SecretSuite: finished 0.035s
+Test run com.histmersion.plugin.SecretSuite finished: 0 failed, 0 ignored, 6 total 0.038s
+Test run com.histmersion.plugin.ProviderSpiSuite started
+com.histmersion.plugin.ProviderSpiSuite: finished 0.036s
+Test run com.histmersion.plugin.ProviderSpiSuite finished: 0 failed, 0 ignored, 3 total 0.039s
+Test run com.histmersion.plugin.AiProviderSpiSuite started
+com.histmersion.plugin.AiProviderSpiSuite: finished 0.037s
+Test run com.histmersion.plugin.AiProviderSpiSuite finished: 0 failed, 0 ignored, 4 total 0.04s
+Test run com.histmersion.plugin.ValuesSuite started
+==> X com.histmersion.plugin.ValuesSuite.coordinates are on the globe 0.024s munit.ComparisonFailException: modules/plugin-api/src/test/scala/com/histmersion/plugin/ValuesSuite.scala:20
+19:    assertEquals((Latitude(36.4).value, Longitude(-25.4).value), (36.4, -25.4))
+20:    assertEquals(List(-90.0, 90.0, 90.5).map(Latitude.option(_).isDefined), List(true, true, false))
+21:    assertEquals(List(-180.0, 180.0, 180.5).map(Longitude.option(_).isDefined), List(true, true, false))
+values are not the same
+=> Obtained
+List(
+  true,
+  true,
+  true
+)
+=> Diff (- expected, + obtained)
+   true,
+-  false
++  true
+ )
+    at munit.FunSuite.assertEquals(FunSuite.scala:12)
+    at com.histmersion.plugin.ValuesSuite.$init$$$anonfun$3(ValuesSuite.scala:20)
+==> X com.histmersion.plugin.ValuesSuite.a DOI is 10.<registrant>/<suffix>, without a resolver 0.0s munit.ComparisonFailException: modules/plugin-api/src/test/scala/com/histmersion/plugin/ValuesSuite.scala:28
+27:      List(true, false, false, false)
+28:    )
+29:    assert(Doi.either("nature14317").isLeft)
+values are not the same
+=> Obtained
+List(
+  true,
+  true,
+  true,
+  true
+)
+=> Diff (- expected, + obtained)
+   true,
+-  false,
+-  false,
+-  false
++  true,
++  true,
++  true
+ )
+    at munit.FunSuite.assertEquals(FunSuite.scala:12)
+    at com.histmersion.plugin.ValuesSuite.$init$$$anonfun$4(ValuesSuite.scala:28)
+==> X com.histmersion.plugin.ValuesSuite.a Wikidata item is Q and its number 0.001s munit.ComparisonFailException: modules/plugin-api/src/test/scala/com/histmersion/plugin/ValuesSuite.scala:36
+35:      List(true, false, false, false, false)
+36:    )
+37:
+values are not the same
+=> Obtained
+List(
+  true,
+  true,
+  true,
+  true,
+  true
+)
+=> Diff (- expected, + obtained)
+   true,
+-  false,
+-  false,
+-  false,
+-  false
++  true,
++  true,
++  true,
++  true
+ )
+    at munit.FunSuite.assertEquals(FunSuite.scala:12)
+    at com.histmersion.plugin.ValuesSuite.$init$$$anonfun$5(ValuesSuite.scala:36)
+com.histmersion.plugin.ValuesSuite: finished 0.053s
+Test run com.histmersion.plugin.ValuesSuite finished: 3 failed, 0 ignored, 7 total 0.056s
+Test run com.histmersion.plugin.SpiAdditionsSuite started
+com.histmersion.plugin.SpiAdditionsSuite: finished 0.053s
+Test run com.histmersion.plugin.SpiAdditionsSuite finished: 0 failed, 0 ignored, 15 total 0.056s
+[error] Failed: Total 48, Failed 3, Errors 0, Passed 45
+[error] Failed tests:
+[error] 	com.histmersion.plugin.ValuesSuite
+[error] (pluginApi / Test / testOnly) sbt.TestsFailedException: Tests unsuccessful
+[error] elapsed time: 0 s, cache 85%, 34 disk cache hits, 6 onsite tasks

@@ -39,7 +39,7 @@ class PluginResolverSuite extends munit.FunSuite:
     val kit = Files.createDirectories(root.resolve("kit"))
     val plugins = Files.createDirectories(root.resolve("plugins"))
     Files.writeString(kit.resolve("modules"), shipped.mkString("", "\n", "\n"))
-    Files.writeString(kit.resolve("excludes"), "org.scala-lang:scala3-library_3\norg.scala-lang:scala-library\n")
+    Files.writeString(kit.resolve("excludes"), "org.scala-lang:scala3-library_3\norg.scala-lang:scala-library\nio.github.iltotore:iron_3\n")
     Files.copy(published("histmersion-plugin-hello-deps_3", "jar"), plugins.resolve("hello-deps-0.1.0.jar"))
     if withPom then
       Files.copy(published("histmersion-plugin-hello-deps_3", "pom"), plugins.resolve("hello-deps-0.1.0.pom"))
