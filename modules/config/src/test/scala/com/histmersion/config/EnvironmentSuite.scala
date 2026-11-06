@@ -21,12 +21,12 @@ class EnvironmentSuite extends munit.FunSuite:
 
   test("the paths of one environment are the pure resolver's"):
     val paths = UserPaths(env, com.histmersion.config.UserPaths.OsName("Linux"))
-    assertEquals(paths.dataDir(""), Some(Path.of("/home/ada/.local/share/histmersion")))
-    assertEquals(paths.dataDir("/srv/h"), Some(Path.of("/srv/h")))
+    assertEquals(paths.dataDir(com.histmersion.config.RuntimeConfig.DataDir("")), Some(Path.of("/home/ada/.local/share/histmersion")))
+    assertEquals(paths.dataDir(com.histmersion.config.RuntimeConfig.DataDir("/srv/h")), Some(Path.of("/srv/h")))
     assertEquals(paths.cacheDir, Some(Path.of("/home/ada/.cache/histmersion")))
     assertEquals(paths.configFile, Some(Path.of("/home/ada/.config/histmersion/histmersion.conf")))
     assertEquals(
       UserPaths(env, com.histmersion.config.UserPaths.OsName("Mac OS X")).defaultDataDir,
       Some(Path.of("/home/ada/Library/Application Support/Histmersion"))
     )
-    assertEquals(UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName("Linux")).dataDir(""), None)
+    assertEquals(UserPaths(Environment.empty, com.histmersion.config.UserPaths.OsName("Linux")).dataDir(com.histmersion.config.RuntimeConfig.DataDir("")), None)
