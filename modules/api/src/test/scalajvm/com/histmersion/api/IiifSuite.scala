@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** Pure tests for the IIIF Image API parameter parsing (plan §4.3). No database, no HTTP — only the [[Iiif]] object's
   * parse/format logic.
   */

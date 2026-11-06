@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.catalogue.PlacesMarkdown
 
 import com.histmersion.api.views.PlaceDetail

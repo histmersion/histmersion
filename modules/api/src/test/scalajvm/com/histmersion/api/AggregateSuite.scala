@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.library.SearchMarkdown
 import com.histmersion.api.library.{Aggregate, TimeHistogram}
 import com.histmersion.api.catalogue.Period

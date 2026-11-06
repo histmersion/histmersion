@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import java.nio.file.{Files, Path}
 import scala.jdk.CollectionConverters.*
 

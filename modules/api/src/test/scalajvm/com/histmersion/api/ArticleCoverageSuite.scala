@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.research.{Articles, CoverageSearch, DriftKind}

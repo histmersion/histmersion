@@ -1,5 +1,7 @@
 package com.histmersion.util.jobs
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.exchange.InitPlan
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.catalogue.SkippedPeriod

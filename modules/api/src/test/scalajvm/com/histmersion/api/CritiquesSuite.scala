@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** The critique checklist (docs/research-review-convergence.md §6.8), pure: the paragraphs "the same paragraph" is
   * judged in, the pair states (alias resolution, both sides cited or one), the ranking and the bound of the skeptic's
   * brief, the generated Method part and the wire forms.
