@@ -73,8 +73,9 @@ object Lint:
   object AuthorPipeRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AuthorPipeRowsPart2 = AuthorPipeRowsPart2.T
   object AuthorPipeRowsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Abbreviations = Abbreviations.T
-  object Abbreviations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Abbreviations = AbbreviationsValue
+  type AbbreviationsValue = AbbreviationsValue.T
+  object AbbreviationsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SentenceCountResult = SentenceCountResult.T
   object SentenceCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SentenceCountText = SentenceCountText.T
@@ -400,25 +401,25 @@ object Lint:
 
   private val Abbreviations: Set[com.histmersion.api.checks.Lint.Abbreviations] =
     Set(
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("c"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("ca"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("cf"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("e.g"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("i.e"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("etc"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("vs"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("al"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("fl"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("st"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("mt"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("no"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("vol"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("pp"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("p"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("ed"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("eds"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("dr"),
-      _root_.com.histmersion.api.checks.Lint.Abbreviations("fig")
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("c"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("ca"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("cf"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("e.g"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("i.e"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("etc"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("vs"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("al"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("fl"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("st"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("mt"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("no"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("vol"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("pp"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("p"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("ed"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("eds"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("dr"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("fig")
     )
 
   private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
@@ -431,7 +432,7 @@ object Lint:
       val ends = SentenceEnd.findAllMatchIn(t).count { m =>
         val next = m.group(2).head
         val word = m.group(1).replaceAll("^[(\"“]+", "").toLowerCase
-        (next.isUpper || "[“\"(".contains(next)) && !(Abbreviations(word) || (word.length == 1 && word.head.isLetter))
+        (next.isUpper || "[“\"(".contains(next)) && !(Abbreviations(_root_.com.histmersion.api.checks.Lint.AbbreviationsValue(word)) || (word.length == 1 && word.head.isLetter))
       }
       _root_.com.histmersion.api.checks.Lint.SentenceCountResult(ends + 1)
 

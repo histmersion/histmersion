@@ -22,8 +22,9 @@ object TimelinePlayback:
   object SpanFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpanTo = SpanTo.T
   object SpanTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Speeds = Speeds.T
-  object Speeds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Speeds = SpeedsValue
+  type SpeedsValue = SpeedsValue.T
+  object SpeedsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpeedWordsResult = SpeedWordsResult.T
   object SpeedWordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpeedWordsS = _root_.com.histmersion.web.TimelinePlayback.SpeedLabelS

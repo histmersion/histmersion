@@ -93,7 +93,7 @@ object EventScale:
   def ofKind(kind: com.histmersion.api.catalogue.EventScale.OfKindKind): Option[com.histmersion.api.catalogue.EventScale.OfKindResult] =
     val k = normKind(kind)
     if localKinds(_root_.com.histmersion.api.catalogue.EventScale.LocalKinds((k).value)) then Some(_root_.com.histmersion.api.catalogue.EventScale.OfKindResult(Local))
-    else if regionalKinds(_root_.com.histmersion.api.catalogue.EventScale.RegionalKinds((k).value)) || k.endsWith("_era") then Some(_root_.com.histmersion.api.catalogue.EventScale.OfKindResult(Regional))
+    else if regionalKinds(_root_.com.histmersion.api.catalogue.EventScale.RegionalKinds((k).value)) || (k).value.endsWith("_era") then Some(_root_.com.histmersion.api.catalogue.EventScale.OfKindResult(Regional))
     else None
 
   def ofPlaceKind(placeKind: com.histmersion.api.catalogue.EventScale.OfPlaceKindPlaceKind): Option[com.histmersion.api.catalogue.EventScale.OfPlaceKindResult] =
@@ -122,6 +122,6 @@ object EventScale:
       .flatMap(s => parse(_root_.com.histmersion.api.catalogue.EventScale.ParseS((s).value)).flatten)
       .orElse(ofKind(kind))
       .orElse(geometryType.flatMap({ val refactorFunction2 = ofGeometry; (refactorValue2) => refactorFunction2(_root_.com.histmersion.api.catalogue.EventScale.OfGeometryGeometryType((refactorValue2).value)) }))
-      .orElse(placeKind.flatMap(ofPlaceKind))
-      .orElse(Option.when(hasParent)(Local))
+      .orElse(placeKind.flatMap({ val refactorFunction3 = ofPlaceKind; (refactorValue3) => refactorFunction3(_root_.com.histmersion.api.catalogue.EventScale.OfPlaceKindPlaceKind((refactorValue3).value)) }))
+      .orElse(Option.when(((hasParent) == _root_.com.histmersion.api.catalogue.EventScale.EffectiveHasParent(true)))(Local))
       .getOrElse(Local)

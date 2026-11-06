@@ -76,18 +76,20 @@ object Place:
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
     type WireResult = WireResult.T
     object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CellsMicro = CellsMicro.T
-    object CellsMicro extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CellsMicro = CellsMicroValue
+    type CellsMicroValue = CellsMicroValue.T
+    object CellsMicroValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GridCentreResult = GridCentreResult.T
     object GridCentreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Approximate = Approximate.T
-    object Approximate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Approximate = ApproximateValue
+    type ApproximateValue = ApproximateValue.T
+    object ApproximateValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val CellsMicro: List[com.histmersion.domain.catalogue.Place.Precision.CellsMicro] = List(_root_.com.histmersion.domain.catalogue.Place.Precision.CellsMicro(5000000L), _root_.com.histmersion.domain.catalogue.Place.Precision.CellsMicro(1000000L), _root_.com.histmersion.domain.catalogue.Place.Precision.CellsMicro(500000L))
+    val CellsMicro: List[com.histmersion.domain.catalogue.Place.Precision.CellsMicro] = List(_root_.com.histmersion.domain.catalogue.Place.Precision.CellsMicroValue(5000000L), _root_.com.histmersion.domain.catalogue.Place.Precision.CellsMicroValue(1000000L), _root_.com.histmersion.domain.catalogue.Place.Precision.CellsMicroValue(500000L))
 
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.
@@ -102,7 +104,7 @@ object Place:
       if placeId.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
-    val Approximate: com.histmersion.domain.catalogue.Place.Precision.Approximate = _root_.com.histmersion.domain.catalogue.Place.Precision.Approximate("approximate (atlas grid square)")
+    val Approximate: com.histmersion.domain.catalogue.Place.Precision.Approximate = _root_.com.histmersion.domain.catalogue.Place.Precision.ApproximateValue("approximate (atlas grid square)")
 
     def parse(s: com.histmersion.domain.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(_root_.com.histmersion.Ascii.LowerS((s).value.trim)))
 

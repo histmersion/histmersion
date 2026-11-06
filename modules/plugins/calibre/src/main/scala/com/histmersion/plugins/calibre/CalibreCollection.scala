@@ -114,8 +114,9 @@ object CalibreCollection:
   object FileFormat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OriginalResultPart1 = OriginalResultPart1.T
   object OriginalResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchLimit = SearchLimit.T
-  object SearchLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchLimit = SearchLimitValue
+  type SearchLimitValue = SearchLimitValue.T
+  object SearchLimitValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NumberResultPart1 = NumberResultPart1.T
   object NumberResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NumberResultPart2 = NumberResultPart2.T
@@ -137,7 +138,7 @@ object CalibreCollection:
   type ReachResultPart1 = ReachResultPart1.T
   object ReachResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val SearchLimit: com.histmersion.plugins.calibre.CalibreCollection.SearchLimit = 20
+  val SearchLimit: com.histmersion.plugins.calibre.CalibreCollection.SearchLimit = _root_.com.histmersion.plugins.calibre.CalibreCollection.SearchLimitValue(20)
 
   /** A book as a collection item. */
   def item(b: Calibre.Book): CollectionItem =

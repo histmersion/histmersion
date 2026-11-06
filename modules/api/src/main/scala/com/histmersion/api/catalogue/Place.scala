@@ -112,8 +112,9 @@ object Place:
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
     type WireResult = WireResult.T
     object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CellsMicro = CellsMicro.T
-    object CellsMicro extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CellsMicro = CellsMicroValue
+    type CellsMicroValue = CellsMicroValue.T
+    object CellsMicroValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GridCentreResult = GridCentreResult.T
     object GridCentreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type GridCentreLon = GridCentreLon.T
@@ -126,14 +127,15 @@ object Place:
     val OfLon: _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLon.type = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLon
     type OfLat = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat
     val OfLat: _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat.type = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat
-    type Approximate = Approximate.T
-    object Approximate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Approximate = ApproximateValue
+    type ApproximateValue = ApproximateValue.T
+    object ApproximateValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val CellsMicro: List[com.histmersion.api.catalogue.Place.Precision.CellsMicro] = List(_root_.com.histmersion.api.catalogue.Place.Precision.CellsMicro(5000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicro(1000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicro(500000L))
+    val CellsMicro: List[com.histmersion.api.catalogue.Place.Precision.CellsMicro] = List(_root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroValue(5000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroValue(1000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroValue(500000L))
 
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.
@@ -141,14 +143,14 @@ object Place:
     def gridCentre(lon: com.histmersion.api.catalogue.Place.Precision.GridCentreLon, lat: com.histmersion.api.catalogue.Place.Precision.GridCentreLat): com.histmersion.api.catalogue.Place.Precision.GridCentreResult =
       val x = math.round((lon).value * 1e6)
       val y = math.round((lat).value * 1e6)
-      _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(CellsMicro.exists(c => Math.floorMod(x, (c).value) == c / 2 && Math.floorMod(y, c) == c / 2))
+      _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(CellsMicro.exists(c => Math.floorMod(x, (c).value) == (c).value / 2 && Math.floorMod(y, c) == c / 2))
 
     /** The precision of the point of place `placeId`. */
     def of(placeId: com.histmersion.api.catalogue.Place.Precision.OfPlaceId, lon: com.histmersion.api.catalogue.Place.Precision.OfLon, lat: com.histmersion.api.catalogue.Place.Precision.OfLat): Precision =
       if (placeId).value.startsWith("pleiades_") && ((gridCentre(lon, lat)) == _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(true)) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
-    val Approximate: com.histmersion.api.catalogue.Place.Precision.Approximate = _root_.com.histmersion.api.catalogue.Place.Precision.Approximate("approximate (atlas grid square)")
+    val Approximate: com.histmersion.api.catalogue.Place.Precision.Approximate = _root_.com.histmersion.api.catalogue.Place.Precision.ApproximateValue("approximate (atlas grid square)")
 
     def parse(s: com.histmersion.api.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS((s).value.trim)))
 
@@ -500,10 +502,12 @@ object Place:
         KindlingsSchema, com.histmersion.api.json.Schema
   object Footprint:
 
-    type Roles = Roles.T
-    object Roles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Certainties = Certainties.T
-    object Certainties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Roles = RolesValue
+    type RolesValue = RolesValue.T
+    object RolesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Certainties = CertaintiesValue
+    type CertaintiesValue = CertaintiesValue.T
+    object CertaintiesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -514,8 +518,8 @@ object Place:
     type AccuracyM = AccuracyM.T
     object AccuracyM extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Float, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val Roles: List[com.histmersion.api.catalogue.Place.Footprint.Roles] = List(_root_.com.histmersion.api.catalogue.Place.Footprint.Roles("extent"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("core"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("maximal"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("frontier"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("seat"), _root_.com.histmersion.api.catalogue.Place.Footprint.Roles("snapshot"))
-    val Certainties: List[com.histmersion.api.catalogue.Place.Footprint.Certainties] = List(_root_.com.histmersion.api.catalogue.Place.Footprint.Certainties("definite"), _root_.com.histmersion.api.catalogue.Place.Footprint.Certainties("approximate"), _root_.com.histmersion.api.catalogue.Place.Footprint.Certainties("uncertain"))
+    val Roles: List[com.histmersion.api.catalogue.Place.Footprint.Roles] = List(_root_.com.histmersion.api.catalogue.Place.Footprint.RolesValue("extent"), _root_.com.histmersion.api.catalogue.Place.Footprint.RolesValue("core"), _root_.com.histmersion.api.catalogue.Place.Footprint.RolesValue("maximal"), _root_.com.histmersion.api.catalogue.Place.Footprint.RolesValue("frontier"), _root_.com.histmersion.api.catalogue.Place.Footprint.RolesValue("seat"), _root_.com.histmersion.api.catalogue.Place.Footprint.RolesValue("snapshot"))
+    val Certainties: List[com.histmersion.api.catalogue.Place.Footprint.Certainties] = List(_root_.com.histmersion.api.catalogue.Place.Footprint.CertaintiesValue("definite"), _root_.com.histmersion.api.catalogue.Place.Footprint.CertaintiesValue("approximate"), _root_.com.histmersion.api.catalogue.Place.Footprint.CertaintiesValue("uncertain"))
 
   final case class Gone(
       placeId: com.histmersion.api.catalogue.Place.Id,
@@ -609,10 +613,12 @@ object Place:
         KindlingsSchema, com.histmersion.api.json.Schema
   object Link:
 
-    type Schemes = Schemes.T
-    object Schemes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Relations = Relations.T
-    object Relations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Schemes = SchemesValue
+    type SchemesValue = SchemesValue.T
+    object SchemesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Relations = RelationsValue
+    type RelationsValue = RelationsValue.T
+    object RelationsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UrlResult = UrlResult.T
     object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UrlScheme = _root_.com.histmersion.api.catalogue.Place.Link.Scheme
@@ -631,8 +637,8 @@ object Place:
     type Relation = Relation.T
     object Relation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val Schemes: List[com.histmersion.api.catalogue.Place.Link.Schemes] = List(_root_.com.histmersion.api.catalogue.Place.Link.Schemes("pleiades"), _root_.com.histmersion.api.catalogue.Place.Link.Schemes("wikidata"), _root_.com.histmersion.api.catalogue.Place.Link.Schemes("tgn"), _root_.com.histmersion.api.catalogue.Place.Link.Schemes("geonames"), _root_.com.histmersion.api.catalogue.Place.Link.Schemes("whg"))
-    val Relations: List[com.histmersion.api.catalogue.Place.Link.Relations] = List(_root_.com.histmersion.api.catalogue.Place.Link.Relations("close_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("exact_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("broad_match"), _root_.com.histmersion.api.catalogue.Place.Link.Relations("see_also"))
+    val Schemes: List[com.histmersion.api.catalogue.Place.Link.Schemes] = List(_root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("pleiades"), _root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("wikidata"), _root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("tgn"), _root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("geonames"), _root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("whg"))
+    val Relations: List[com.histmersion.api.catalogue.Place.Link.Relations] = List(_root_.com.histmersion.api.catalogue.Place.Link.RelationsValue("close_match"), _root_.com.histmersion.api.catalogue.Place.Link.RelationsValue("exact_match"), _root_.com.histmersion.api.catalogue.Place.Link.RelationsValue("broad_match"), _root_.com.histmersion.api.catalogue.Place.Link.RelationsValue("see_also"))
 
     def url(scheme: com.histmersion.api.catalogue.Place.Link.UrlScheme, externalId: com.histmersion.api.catalogue.Place.Link.UrlExternalId): Option[com.histmersion.api.catalogue.Place.Link.UrlResult] =
       val id = (externalId).value.trim
@@ -1131,25 +1137,27 @@ object Place:
     val PointOnlyAreaKind: _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind.type = _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind
     type PointOnlyAreaHasBoundary = PointOnlyAreaHasBoundary.T
     object PointOnlyAreaHasBoundary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NoBoundaryNote = NoBoundaryNote.T
-    object NoBoundaryNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NoBoundaryNote = NoBoundaryNoteValue
+    type NoBoundaryNoteValue = NoBoundaryNoteValue.T
+    object NoBoundaryNoteValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsPeopleResult = IsPeopleResult.T
     object IsPeopleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsPeopleKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
     val IsPeopleKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
-    type PeopleNote = PeopleNote.T
-    object PeopleNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PeopleNote = PeopleNoteValue
+    type PeopleNoteValue = PeopleNoteValue.T
+    object PeopleNoteValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def isArea(kind: com.histmersion.api.catalogue.Place.Shape.IsAreaKind): com.histmersion.api.catalogue.Place.Shape.IsAreaResult =
       _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Polity))
 
     def pointOnlyArea(kind: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind, hasBoundary: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary): com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult = _root_.com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult(((isArea(kind)) == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(true)) && !((hasBoundary) == _root_.com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary(true)))
 
-    val NoBoundaryNote: com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote = "point only — boundary not yet available"
+    val NoBoundaryNote: com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote = _root_.com.histmersion.api.catalogue.Place.Shape.NoBoundaryNoteValue("point only — boundary not yet available")
 
     def isPeople(kind: com.histmersion.api.catalogue.Place.Shape.IsPeopleKind): com.histmersion.api.catalogue.Place.Shape.IsPeopleResult = _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleResult(kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleKind(com.histmersion.api.catalogue.Place.Kind.People))
 
-    val PeopleNote: com.histmersion.api.catalogue.Place.Shape.PeopleNote = _root_.com.histmersion.api.catalogue.Place.Shape.PeopleNote("a people or tribe — placed at a representative point, not an area")
+    val PeopleNote: com.histmersion.api.catalogue.Place.Shape.PeopleNote = _root_.com.histmersion.api.catalogue.Place.Shape.PeopleNoteValue("a people or tribe — placed at a representative point, not an area")
 
   final case class Summary(
       id: com.histmersion.api.catalogue.Place.Id,
@@ -1217,8 +1225,9 @@ object Place:
     object VisibleHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type VisibleModernFrom = VisibleModernFrom.T
     object VisibleModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FindingsNote = FindingsNote.T
-    object FindingsNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FindingsNote = FindingsNoteValue
+    type FindingsNoteValue = FindingsNoteValue.T
+    object FindingsNoteValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.catalogue.Place.TimeBasis.ParseS): Option[TimeBasis] = values.find(_.wire == _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
@@ -1245,7 +1254,7 @@ object Place:
         case Dated               => _root_.com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult(overlaps)
         case Findings            => _root_.com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult(evidence)
 
-    val FindingsNote: com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote = _root_.com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote("dated by its findings — the place has no date of its own")
+    val FindingsNote: com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote = _root_.com.histmersion.api.catalogue.Place.TimeBasis.FindingsNoteValue("dated by its findings — the place has no date of its own")
 
   final case class TreeRow(
       id: com.histmersion.api.catalogue.Place.Id,

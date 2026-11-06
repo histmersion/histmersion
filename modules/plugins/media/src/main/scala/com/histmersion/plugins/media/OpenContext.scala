@@ -20,8 +20,9 @@ object OpenContext:
   type ItemFileT = ItemFileT.T
   object ItemFileT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Attributes = Attributes.T
-  object Attributes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Attributes = AttributesValue
+  type AttributesValue = AttributesValue.T
+  object AttributesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlResult = SearchUrlResult.T
   object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlApi = SearchUrlApi.T

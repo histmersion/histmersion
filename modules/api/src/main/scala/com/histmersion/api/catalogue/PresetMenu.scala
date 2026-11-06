@@ -4,8 +4,9 @@ import com.histmersion.api.BBox
 import com.histmersion.api.given
 object PresetMenu:
 
-  type MinShare = MinShare.T
-  object MinShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinShare = MinShareValue
+  type MinShareValue = MinShareValue.T
+  object MinShareValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShareResult = ShareResult.T
   object ShareResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceResult = SourceResult.T
@@ -19,7 +20,7 @@ object PresetMenu:
     type InView = InView.T
     object InView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = _root_.com.histmersion.api.catalogue.PresetMenu.MinShare(0.5)
+  val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = _root_.com.histmersion.api.catalogue.PresetMenu.MinShareValue(0.5)
 
   def share(view: BBox, box: BBox): com.histmersion.api.catalogue.PresetMenu.ShareResult =
     val area = (view.maxLon - view.minLon) * (view.maxLat - view.minLat)

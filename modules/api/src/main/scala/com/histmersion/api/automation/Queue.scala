@@ -19,8 +19,9 @@ object Queue:
   type ParsePushIndex = ParsePushIndex.T
   object ParsePushIndex extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Statuses = Statuses.T
-  object Statuses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Statuses = StatusesValue
+  type StatusesValue = StatusesValue.T
+  object StatusesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusOfResultPart1 = StatusOfResultPart1.T
   object StatusOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusOfResultPart2 = StatusOfResultPart2.T
@@ -228,7 +229,7 @@ object Queue:
   val Done = "done"
   val Note = "note"
 
-  val Statuses: List[com.histmersion.api.automation.Queue.Statuses] = List(_root_.com.histmersion.api.automation.Queue.Statuses(Open), _root_.com.histmersion.api.automation.Queue.Statuses(Done), _root_.com.histmersion.api.automation.Queue.Statuses(Note))
+  val Statuses: List[com.histmersion.api.automation.Queue.Statuses] = List(_root_.com.histmersion.api.automation.Queue.StatusesValue(Open), _root_.com.histmersion.api.automation.Queue.StatusesValue(Done), _root_.com.histmersion.api.automation.Queue.StatusesValue(Note))
 
   def statusOf(raw: Option[com.histmersion.api.automation.Queue.StatusOfRaw]): Either[com.histmersion.api.automation.Queue.StatusOfResultPart1, Option[com.histmersion.api.automation.Queue.StatusOfResultPart2]] =
     raw.map((_).value.trim.toLowerCase).filter(_.nonEmpty) match
@@ -412,7 +413,7 @@ object Queue:
       val from = firstDiff.getOrElse(next.length - 1)
       (from until next.length).toList.map { i =>
         val seg = next(i)
-        if isBold(_root_.com.histmersion.api.automation.Queue.IsBoldS((seg).value)) then Block.Heading(seg)
+        if ((isBold(_root_.com.histmersion.api.automation.Queue.IsBoldS((seg).value))) == _root_.com.histmersion.api.automation.Queue.IsBoldResult(true)) then Block.Heading(seg)
         else Block.Heading(_root_.com.histmersion.api.automation.Queue.Block.Heading.Line(s"${"#" * (i + 2)} $seg"))
       }
 

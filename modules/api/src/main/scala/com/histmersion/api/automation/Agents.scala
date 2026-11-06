@@ -167,7 +167,7 @@ object Agents:
       * never trip a cost budget.
       */
     def cost(prices: Map[com.histmersion.api.automation.Agents.Prices.CostPricesPart1, Price], model: com.histmersion.api.automation.Agents.Prices.CostModel, u: Usage): Either[com.histmersion.api.automation.Agents.Prices.CostResultPart1, BigDecimal] =
-      prices.get(_root_.com.histmersion.api.automation.Agents.Prices.CostPricesPart1((model).value)).toRight(unpriced(model)).map(_.cost(u))
+      (prices.get(_root_.com.histmersion.api.automation.Agents.Prices.CostPricesPart1((model).value)).toRight(unpriced(model)).map(_.cost(u))).left.map(refactorError => _root_.com.histmersion.api.automation.Agents.Prices.CostResultPart1((refactorError).value))
 
     def billing(prices: Map[com.histmersion.api.automation.Agents.Prices.BillingPricesPart1, Price], m: ModelRef, pool: Option[PlanQuota.PoolId]): Either[com.histmersion.api.automation.Agents.Prices.BillingResultPart1, Billing] =
       pool match

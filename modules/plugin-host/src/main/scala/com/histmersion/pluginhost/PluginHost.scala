@@ -68,8 +68,9 @@ object PluginHost:
   type RegisterFailE = RegisterFailE.T
   object RegisterFailE extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type SpiGeneration = SpiGeneration.T
-  object SpiGeneration extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpiGeneration = SpiGenerationValue
+  type SpiGenerationValue = SpiGenerationValue.T
+  object SpiGenerationValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DiscoverResultPart2 = DiscoverResultPart2.T
   object DiscoverResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProviderOfResult = ProviderOfResult.T

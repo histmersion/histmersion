@@ -19,8 +19,9 @@ object PluginGazetteers:
   type AllLoopResultPart1 = AllLoopResultPart1.T
   object AllLoopResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type UserAgent = UserAgent.T
-  object UserAgent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UserAgent = UserAgentValue
+  type UserAgentValue = UserAgentValue.T
+  object UserAgentValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GuardResultPart1 = GuardResultPart1.T
   object GuardResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlacesResultPart1 = PlacesResultPart1.T

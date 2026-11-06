@@ -28,8 +28,9 @@ object Plugins:
   type OfflineWithGetHPart2 = OfflineWithGetHPart2.T
   object OfflineWithGetHPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Keys = Keys.T
-  object Keys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Keys = KeysValue
+  type KeysValue = KeysValue.T
+  object KeysValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadChanged = _root_.com.histmersion.util.plugins.Plugins.CarriedChanged
   val LoadChanged: _root_.com.histmersion.util.plugins.Plugins.CarriedChanged.type = _root_.com.histmersion.util.plugins.Plugins.CarriedChanged
   type GenerationErrors = GenerationErrors.T
@@ -58,10 +59,12 @@ object Plugins:
   object CoreKeyHostKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfflineWithCarriedPart1 = OfflineWithCarriedPart1.T
   object OfflineWithCarriedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Offline = Offline.T
-  object Offline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Fetchers = Fetchers.T
-  object Fetchers extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Offline = OfflineValue
+  type OfflineValue = OfflineValue.T
+  object OfflineValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Fetchers = FetchersValue
+  type FetchersValue = FetchersValue.T
+  object FetchersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LogId = LogId.T
   object LogId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LogWarn = LogWarn.T

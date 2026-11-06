@@ -13,8 +13,9 @@ import com.histmersion.plugin.Plugin
 object WorkLookup:
 
   /** The OpenAlex `select` list — asking for only these fields keeps a search page small. */
-  type WorkFields = WorkFields.T
-  object WorkFields extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WorkFields = WorkFieldsValue
+  type WorkFieldsValue = WorkFieldsValue.T
+  object WorkFieldsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WorkUrlResult = WorkUrlResult.T
   object WorkUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CrossrefUrlResult = CrossrefUrlResult.T
@@ -33,7 +34,7 @@ object WorkLookup:
   object KeyArxiv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val WorkFields: com.histmersion.domain.library.acquisition.WorkLookup.WorkFields =
-    _root_.com.histmersion.domain.library.acquisition.WorkLookup.WorkFields("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
+    _root_.com.histmersion.domain.library.acquisition.WorkLookup.WorkFieldsValue("id,doi,display_name,publication_year,authorships,open_access,primary_location,best_oa_location," +
       "locations,cited_by_count,is_retracted,type,abstract_inverted_index,referenced_works")
 
   /** OpenAlex resolves a DOI as a path segment: `/works/https://doi.org/10.1234/x`. */
@@ -47,7 +48,7 @@ object WorkLookup:
   def meta(cfg: UpstreamSettings, json: com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1 => Either[com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonResultPart1, Json], log: Plugin.Log)(
       doi: com.histmersion.domain.library.Doi
   ): Either[com.histmersion.domain.library.acquisition.WorkLookup.MetaResultPart1, WorkRef] =
-    json(Url(workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), "select" -> WorkFields, "mailto" -> cfg.mailto))
+    json(Url(workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), "select" -> (WorkFields).value, "mailto" -> cfg.mailto))
       .map(AcquireParse.openalexWork)
       .left
       .flatMap { why =>

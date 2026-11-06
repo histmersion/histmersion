@@ -25,8 +25,9 @@ private[testkit] object RecordedExchange:
   type ParseFieldK = ParseFieldK.T
   object ParseFieldK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type KeptHeaders = KeptHeaders.T
-  object KeptHeaders extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeptHeaders = KeptHeadersValue
+  type KeptHeadersValue = KeptHeadersValue.T
+  object KeptHeadersValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenderResult = RenderResult.T
   object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseResultPart1 = ParseResultPart1.T

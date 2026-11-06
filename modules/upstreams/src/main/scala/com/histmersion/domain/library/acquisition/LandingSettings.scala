@@ -21,7 +21,7 @@ final case class LandingSettings(
   def rules: RepositoryLanding.Rules =
     RepositoryLanding.Rules(
       LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((allowHosts).value)),
-      (LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHosts).value)) ++ LandingSettings.entries(denyHostsExtra)).distinct,
+      (LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHosts).value)) ++ LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHostsExtra).value))).distinct,
       LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((academicHostWords).value)),
       LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((generators).value)),
       LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyGenerators).value)),

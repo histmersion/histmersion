@@ -106,18 +106,18 @@ object WikiLinks:
 
   /** The distinct targets a text links, in order; embeds are not links. */
   def targets(body: com.histmersion.api.text.WikiLinks.TargetsBody): List[com.histmersion.api.text.WikiLinks.TargetsResult] =
-    Link
+    (Link
       .findAllMatchIn((body).value)
       .filter(_.group(1).isEmpty)
       .flatMap(m => normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(m.group(2))))
       .toList
-      .distinct
+      .distinct).map(refactorValue7 => _root_.com.histmersion.api.text.WikiLinks.TargetsResult((refactorValue7).value))
 
   /** Every link replaced by what `render` makes of its target, explicit label and written target; embeds and links to
     * no target are kept as written.
     */
   def rewriteLinks(md: com.histmersion.api.text.WikiLinks.RewriteLinksMd)(render: (com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg1, Option[com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg2], com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg3) => com.histmersion.api.text.WikiLinks.RewriteLinksRenderResult): com.histmersion.api.text.WikiLinks.RewriteLinksResult =
-    Link.replaceAllIn(
+    _root_.com.histmersion.api.text.WikiLinks.RewriteLinksResult(Link.replaceAllIn(
       (md).value,
       m =>
         val raw = m.group(2)
@@ -125,9 +125,9 @@ object WikiLinks:
           case -1 => (raw, None)
           case i  => (raw.take(i), Some(raw.drop(i + 1).trim))
         java.util.regex.Matcher.quoteReplacement(normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(targetPart)) match
-          case Some(t) if m.group(1).isEmpty => render(_root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg1((t).value), (explicit).map(refactorValue => _root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg2(refactorValue)), _root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg3(targetPart.takeWhile(_ != '#').trim))
+          case Some(t) if m.group(1).isEmpty => (render(_root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg1((t).value), (explicit).map(refactorValue => _root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg2(refactorValue)), _root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg3(targetPart.takeWhile(_ != '#').trim))).value
           case _                             => m.matched)
-    )
+    ))
 
   /** The links whose target `to` moves pointed at the new target, labels and anchors kept; with how many moved. */
   def retarget(md: com.histmersion.api.text.WikiLinks.RetargetMd, to: com.histmersion.api.text.WikiLinks.RetargetToArg1 => Option[com.histmersion.api.text.WikiLinks.RetargetToResult]): (com.histmersion.api.text.WikiLinks.RetargetResultPart1, com.histmersion.api.text.WikiLinks.RetargetResultPart2) =

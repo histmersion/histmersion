@@ -6,12 +6,15 @@ import com.histmersion.config.*
   */
 object ExitCode:
   /** The command line itself is wrong (a missing file, a bad flag value, "aborted"). */
-  type Usage = Usage.T
-  object Usage extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Refused = Refused.T
-  object Refused extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Unreachable = Unreachable.T
-  object Unreachable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Usage = UsageValue
+  type UsageValue = UsageValue.T
+  object UsageValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Refused = RefusedValue
+  type RefusedValue = RefusedValue.T
+  object RefusedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Unreachable = UnreachableValue
+  type UnreachableValue = UnreachableValue.T
+  object UnreachableValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Usage: com.histmersion.cli.ExitCode.Usage = 1
 

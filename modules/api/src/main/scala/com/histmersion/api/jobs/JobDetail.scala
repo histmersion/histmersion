@@ -26,8 +26,9 @@ final case class JobDetail private (values: Map[JobDetail.ValuesKey, Json]):
 object JobDetail:
   type JsonName = JsonName.T
   object JsonName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Purpose = Purpose.T
-  object Purpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Purpose = PurposeValue
+  type PurposeValue = PurposeValue.T
+  object PurposeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SubjectResult = SubjectResult.T
   object SubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

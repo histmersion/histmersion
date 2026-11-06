@@ -211,7 +211,7 @@ object Query:
         case Nil        => Left(_root_.com.histmersion.api.library.Query.CheckResultPart1("empty statement"))
         case one :: Nil =>
           val kw = leadingKeyword(_root_.com.histmersion.api.library.Query.LeadingKeywordStatement((one).value))
-          if Forbidden.contains(kw) then
+          if Forbidden.contains((kw).value) then
             Left(
               _root_.com.histmersion.api.library.Query.CheckResultPart1(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
                 "WITH that only reads); transaction and session control are refused")

@@ -62,8 +62,9 @@ object Article:
 
   object Coverage:
 
-    type DisagreementKinds = DisagreementKinds.T
-    object DisagreementKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DisagreementKinds = DisagreementKindsValue
+    type DisagreementKindsValue = DisagreementKindsValue.T
+    object DisagreementKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ComputeSlug = _root_.com.histmersion.api.research.Article.Slug
     val ComputeSlug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
     type ComputeTotal = _root_.com.histmersion.api.research.Coverage.Total
@@ -126,7 +127,7 @@ object Article:
     type MarkdownResult = MarkdownResult.T
     object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val DisagreementKinds: scala.List[com.histmersion.api.research.Article.Coverage.DisagreementKinds] = scala.List(_root_.com.histmersion.api.research.Article.Coverage.DisagreementKinds("challenges"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKinds("refutes"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKinds("updates"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKinds("superseded_by"))
+    val DisagreementKinds: scala.List[com.histmersion.api.research.Article.Coverage.DisagreementKinds] = scala.List(_root_.com.histmersion.api.research.Article.Coverage.DisagreementKindsValue("challenges"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKindsValue("refutes"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKindsValue("updates"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKindsValue("superseded_by"))
 
     private val Stated: Set[Source.Status] = Set(
       Source.Status.Contested,
@@ -555,7 +556,7 @@ object Article:
         case Nil =>
           val (sq, pos) = squeeze(_root_.com.histmersion.api.research.Article.Edits.SqueezeS((text).value))
           val na = a.replaceAll("\\s+", " ")
-          occurrences(sq, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(na)) match
+          occurrences(_root_.com.histmersion.api.research.Article.Edits.CutText((sq).value), _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(na)) match
             case scala.List(i) =>
               val last = (i).value + na.length - 1
               Right((pos(i), pos(last) + 1))
@@ -919,7 +920,7 @@ object Article:
     def hrefFor(target: com.histmersion.api.research.Article.Links.HrefForTarget, citekeyOf: com.histmersion.api.research.Article.Links.HrefForCitekeyOfArg1 => Option[com.histmersion.api.research.Article.Links.HrefForCitekeyOfResult], isArticle: com.histmersion.api.research.Article.Links.HrefForIsArticleArg1 => com.histmersion.api.research.Article.Links.HrefForIsArticleResult): Option[com.histmersion.api.research.Article.Links.HrefForResult] =
       citekeyOf(_root_.com.histmersion.api.research.Article.Links.HrefForCitekeyOfArg1((target).value))
         .map(ck => s"/source/$ck")
-        .orElse(Option.when(isArticle(target))(s"/article/$target"))
+        .orElse(Option.when(((isArticle(_root_.com.histmersion.api.research.Article.Links.HrefForIsArticleArg1((target).value))) == _root_.com.histmersion.api.research.Article.Links.HrefForIsArticleResult(true)))(s"/article/$target"))
 
     def linkMarkdown(
         md: com.histmersion.api.research.Article.Links.LinkMarkdownMd,
@@ -942,8 +943,9 @@ object Article:
   /** The articles' lint rules: a thin or stand-in summary, filler phrases, uncited paragraphs, unpaired critiques. */
   object Lint:
 
-    type FillerPhrases = FillerPhrases.T
-    object FillerPhrases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FillerPhrases = FillerPhrasesValue
+    type FillerPhrasesValue = FillerPhrasesValue.T
+    object FillerPhrasesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ArticleThinSummaryRowsPart1 = ArticleThinSummaryRowsPart1.T
     object ArticleThinSummaryRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ArticleThinSummaryRowsPart2 = ArticleThinSummaryRowsPart2.T
@@ -968,31 +970,31 @@ object Article:
     object ArticleCritiquePairingWorkArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val FillerPhrases: scala.List[com.histmersion.api.research.Article.Lint.FillerPhrases] = scala.List(
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("it is worth noting"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("it should be noted"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("it is important to note"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("interestingly"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("notably"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("significantly"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("it is clear that"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("needless to say"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("of course"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("as is well known"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("it goes without saying"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("in conclusion"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("to summarize"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("in summary"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("broadly speaking"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("generally speaking"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("it must be emphasized"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("it cannot be overstated"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("plays a crucial role"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("rich tapestry"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("sheds light on"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("shed new light"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("paved the way"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("remains to be seen"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrases("further research is needed")
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it is worth noting"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it should be noted"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it is important to note"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("interestingly"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("notably"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("significantly"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it is clear that"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("needless to say"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("of course"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("as is well known"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it goes without saying"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("in conclusion"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("to summarize"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("in summary"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("broadly speaking"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("generally speaking"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it must be emphasized"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it cannot be overstated"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("plays a crucial role"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("rich tapestry"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("sheds light on"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("shed new light"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("paved the way"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("remains to be seen"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("further research is needed")
     )
 
     private[api] val FillerPattern: scala.util.matching.Regex =

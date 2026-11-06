@@ -39,10 +39,12 @@ object BaseMaps:
   object ChoicesLocal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OptionLabelResult = OptionLabelResult.T
   object OptionLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PastNotice = PastNotice.T
-  object PastNotice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SoftwareNotice = SoftwareNotice.T
-  object SoftwareNotice extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PastNotice = PastNoticeValue
+  type PastNoticeValue = PastNoticeValue.T
+  object PastNoticeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SoftwareNotice = SoftwareNoticeValue
+  type SoftwareNoticeValue = SoftwareNoticeValue.T
+  object SoftwareNoticeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DocsLinkResult = DocsLinkResult.T
   object DocsLinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DocsLinkDocsUrl = DocsLinkDocsUrl.T
@@ -129,8 +131,9 @@ object BaseMaps:
   object LanguageChoicesDefault extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DeeperReliefResult = DeeperReliefResult.T
   object DeeperReliefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContoursFromZoom = ContoursFromZoom.T
-  object ContoursFromZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContoursFromZoom = ContoursFromZoomValue
+  type ContoursFromZoomValue = ContoursFromZoomValue.T
+  object ContoursFromZoomValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContoursWhyResult = ContoursWhyResult.T
   object ContoursWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContoursWhySoft = ContoursWhySoft.T

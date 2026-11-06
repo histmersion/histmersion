@@ -26,16 +26,18 @@ object ViewportToggle:
   object WrapLonX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BboxOfResult = BboxOfResult.T
   object BboxOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AreaPickHelp = AreaPickHelp.T
-  object AreaPickHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AreaPickHelp = AreaPickHelpValue
+  type AreaPickHelpValue = AreaPickHelpValue.T
+  object AreaPickHelpValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LayersLabelResult = LayersLabelResult.T
   object LayersLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LayersLabelOn = LayersLabelOn.T
   object LayersLabelOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LayersLabelTotal = LayersLabelTotal.T
   object LayersLabelTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LayerCount = LayerCount.T
-  object LayerCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LayerCount = LayerCountValue
+  type LayerCountValue = LayerCountValue.T
+  object LayerCountValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Open = Open.T
   object Open extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OnCount = OnCount.T

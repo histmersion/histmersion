@@ -109,7 +109,7 @@ object Wording:
   def value(s: com.histmersion.api.Wording.ValueS): com.histmersion.api.Wording.ValueResult = Label.display(s)
 
   def heading(s: com.histmersion.api.Wording.HeadingS): com.histmersion.api.Wording.HeadingResult =
-    if (s).value.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then humanize(_root_.com.histmersion.api.Wording.HumanizeId((s).value)) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.DisplayS((s).value.trim)))
+    if (s).value.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then _root_.com.histmersion.api.Wording.HeadingResult((humanize(_root_.com.histmersion.api.Wording.HumanizeId((s).value))).value) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.DisplayS((s).value.trim)))
 
   def status(s: Source.Status): com.histmersion.api.Wording.StatusResult = s match
     case Source.Status.Foundational => _root_.com.histmersion.api.Wording.StatusResult("Foundational")
@@ -243,7 +243,7 @@ object Wording:
     pluginNames
       .get(_root_.com.histmersion.api.Wording.PluginNamesPart1((id).value))
       .orElse(families.collectFirst {
-        case (prefix, family) if id.startsWith(prefix) => s"$family: ${humanize(id.stripPrefix(prefix))}"
+        case (prefix, family) if (id).value.startsWith(prefix) => s"$family: ${humanize(_root_.com.histmersion.api.Wording.HumanizeId((id).value.stripPrefix(prefix)))}"
       })
       .getOrElse(humanize(id))
 

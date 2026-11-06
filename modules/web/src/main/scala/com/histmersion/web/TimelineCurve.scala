@@ -27,8 +27,9 @@ object TimelineCurve:
   type TangentsEndInner = TangentsEndInner.T
   object TangentsEndInner extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PxPerBucket = PxPerBucket.T
-  object PxPerBucket extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PxPerBucket = PxPerBucketValue
+  type PxPerBucketValue = PxPerBucketValue.T
+  object PxPerBucketValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointsFrom = PointsFrom.T
   object PointsFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointsTo = PointsTo.T

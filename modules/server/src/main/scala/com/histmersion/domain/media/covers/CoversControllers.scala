@@ -48,7 +48,8 @@ object CoversControllers:
   object PutCoverBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AfterIngestResult = AfterIngestResult.T
   object AfterIngestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoversJobKind = CoversJobKind.T
-  object CoversJobKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CoversJobKind = CoversJobKindValue
+  type CoversJobKindValue = CoversJobKindValue.T
+  object CoversJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val CoversJobKind: com.histmersion.domain.media.covers.CoversControllers.CoversJobKind = com.histmersion.api.media.CoversJobKinds.MediaCovers.kind.value

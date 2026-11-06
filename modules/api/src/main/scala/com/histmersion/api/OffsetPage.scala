@@ -10,8 +10,9 @@ final case class OffsetPage(total: com.histmersion.api.RowCount, offset: com.his
 object OffsetPage:
   type IsAllResult = IsAllResult.T
   object IsAllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FullSetMax = FullSetMax.T
-  object FullSetMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FullSetMax = FullSetMaxValue
+  type FullSetMaxValue = FullSetMaxValue.T
+  object FullSetMaxValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeaderResult = HeaderResult.T
   object HeaderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeaderNoun = HeaderNoun.T
@@ -27,7 +28,7 @@ object OffsetPage:
   type MarkdownLineResult = MarkdownLineResult.T
   object MarkdownLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val FullSetMax: com.histmersion.api.OffsetPage.FullSetMax = _root_.com.histmersion.api.OffsetPage.FullSetMax(500)
+  val FullSetMax: com.histmersion.api.OffsetPage.FullSetMax = _root_.com.histmersion.api.OffsetPage.FullSetMaxValue(500)
 
   def header(p: OffsetPage, noun: com.histmersion.api.OffsetPage.HeaderNoun): com.histmersion.api.OffsetPage.HeaderResult =
     if (p.isAll).value then _root_.com.histmersion.api.OffsetPage.HeaderResult(s"### ${math.max(p.total.value, p.shown.value)} $noun")
@@ -45,4 +46,4 @@ object OffsetPage:
       p.offset.value match
         case 0 => _root_.com.histmersion.api.OffsetPage.MarkdownResult((empty).value)
         case o => _root_.com.histmersion.api.OffsetPage.MarkdownResult(s"$empty\n\n_offset=$o is past the end: there are ${p.total.value}_")
-    else s"${header(p, _root_.com.histmersion.api.OffsetPage.HeaderNoun((noun).value))}\n\n${items.map(line).mkString("\n")}${footer(p)}"
+    else _root_.com.histmersion.api.OffsetPage.MarkdownResult(s"${header(p, _root_.com.histmersion.api.OffsetPage.HeaderNoun((noun).value))}\n\n${items.map(line).mkString("\n")}${footer(p)}")

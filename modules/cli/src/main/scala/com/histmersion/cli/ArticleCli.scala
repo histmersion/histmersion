@@ -78,8 +78,9 @@ object ArticleCli:
   final case class WikiLayout(sources: Path, root: Option[Path])
 
   object WikiLayout:
-    type SourcesDir = SourcesDir.T
-    object SourcesDir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SourcesDir = SourcesDirValue
+    type SourcesDirValue = SourcesDirValue.T
+    object SourcesDirValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val SourcesDir: com.histmersion.cli.ArticleCli.WikiLayout.SourcesDir = MirrorPlacement.SourcesDirectory
 

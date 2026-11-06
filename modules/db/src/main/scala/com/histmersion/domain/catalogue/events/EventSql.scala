@@ -17,10 +17,12 @@ object EventSql:
   type ListWhereCleanO = ListWhereCleanO.T
   object ListWhereCleanO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TierSql = TierSql.T
-  object TierSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AnchorSql = AnchorSql.T
-  object AnchorSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierSql = TierSqlValue
+  type TierSqlValue = TierSqlValue.T
+  object TierSqlValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AnchorSql = AnchorSqlValue
+  type AnchorSqlValue = AnchorSqlValue.T
+  object AnchorSqlValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BoxAroundResult = BoxAroundResult.T
   object BoxAroundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BoxAroundPt = BoxAroundPt.T

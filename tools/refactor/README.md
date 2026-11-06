@@ -35,6 +35,22 @@ or callback history. helper-adapters and helper-origins contain the positive,
 negative and synthetic-provenance fixtures;
 compiler-repairs-helper-reject-overloads.conf must fail.
 
+`AstRecipe.generatedValueNames` repairs generated companion/value collisions.
+An indexed, canonical, empty qualified Pure companion must have a unique typed
+same-name value and exact owner-match provenance for that value in a stable object
+owner. The rule chooses a fresh `<Name>Value` companion and canonical alias,
+retains the original type name as an alias and retains the value's public name.
+Only rooted one-argument constructor heads inside that value's initializer change;
+other term references to that name in the initializer veto the repair. No
+constructor is required for empty or raw initializers. Other constructor/member
+references outside the initializer remain outside this repair's coverage; ordinary
+value indexing and iteration are preserved. Unsupported/custom/local/ambiguous
+cases stay unresolved. Existing shapes.tsv records old-to-new opaque definition
+identities and carries the generated origin to the new definition through the
+standard appliedPlans index history. This is naming repair, not semantic type
+merging, primitive elimination or a new finding denominator. Fixtures are in
+value-names-fixture; execution still uses ApplyFrozenPreview and CompileBatch.
+
 ## Project-wide measurement and bulk rewrite gates
 
 The bounded migration goal uses `refactor-audit/migration-rounds.tsv` to retain every original goal while limiting further detector refinement to two rounds per family. Existing fixtures and source regressions are not independent holdouts. Confirmed violations, unresolved candidates, and evidence relationships remain separate; no overall completion percentage is available until the baseline is established. Historical fixes are not added to the new baseline's numerator. Production and test findings remain visible; a production-first batch does not exempt tests.

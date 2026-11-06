@@ -25,12 +25,15 @@ object DotCluster:
   object SummaryUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MixedResult = MixedResult.T
   object MixedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Ring = Ring.T
-  object Ring extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SquareCorner = SquareCorner.T
-  object SquareCorner extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Tab = Tab.T
-  object Tab extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Ring = RingValue
+  type RingValue = RingValue.T
+  object RingValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SquareCorner = SquareCornerValue
+  type SquareCornerValue = SquareCornerValue.T
+  object SquareCornerValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tab = TabValue
+  type TabValue = TabValue.T
+  object TabValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BubbleHtmlResult = BubbleHtmlResult.T
   object BubbleHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BubbleHtmlN = BubbleHtmlN.T

@@ -1,8 +1,9 @@
 package com.histmersion.api.basemap
 import com.histmersion.api.given
 object BaseMapSource:
-  type All = All.T
-  object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type All = AllValue
+  type AllValue = AllValue.T
+  object AllValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResult = ResolveResult.T
   object ResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveSetting = ResolveSetting.T
@@ -11,7 +12,7 @@ object BaseMapSource:
   val Auto = "auto"
   val Local = "local"
   val Online = "online"
-  val All: List[com.histmersion.api.basemap.BaseMapSource.All] = List(_root_.com.histmersion.api.basemap.BaseMapSource.All(Auto), _root_.com.histmersion.api.basemap.BaseMapSource.All(Local), _root_.com.histmersion.api.basemap.BaseMapSource.All(Online))
+  val All: List[com.histmersion.api.basemap.BaseMapSource.All] = List(_root_.com.histmersion.api.basemap.BaseMapSource.AllValue(Auto), _root_.com.histmersion.api.basemap.BaseMapSource.AllValue(Local), _root_.com.histmersion.api.basemap.BaseMapSource.AllValue(Online))
 
   def resolve(setting: com.histmersion.api.basemap.BaseMapSource.ResolveSetting, status: Basemap.Status): com.histmersion.api.basemap.BaseMapSource.ResolveResult =
     (setting).value.trim.toLowerCase(java.util.Locale.ROOT) match

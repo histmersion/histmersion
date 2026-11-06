@@ -55,8 +55,9 @@ object AcquireParse:
   object UnpaywallResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnpaywallResultPart2 = UnpaywallResultPart2.T
   object UnpaywallResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EuropePmcFree = EuropePmcFree.T
-  object EuropePmcFree extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EuropePmcFree = EuropePmcFreeValue
+  type EuropePmcFreeValue = EuropePmcFreeValue.T
+  object EuropePmcFreeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EuropepmcHitDoi = EuropepmcHitDoi.T
   object EuropepmcHitDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PmcLatestVersionResult = PmcLatestVersionResult.T
@@ -208,7 +209,7 @@ object AcquireParse:
         List(str(h, "given"), str(h, "family")).flatten.mkString(" ").trim
       }
       .filter(_.nonEmpty)
-    val title = strings(c, "title").headOption.map({ val refactorFunction4 = inlineMarkup; (refactorValue23) => refactorFunction4(_root_.com.histmersion.upstreams.parse.AcquireParse.InlineMarkupS((refactorValue23).value)) }).map(gluedPageNumber)
+    val title = strings(c, "title").headOption.map({ val refactorFunction4 = inlineMarkup; (refactorValue23) => refactorFunction4(_root_.com.histmersion.upstreams.parse.AcquireParse.InlineMarkupS((refactorValue23).value)) }).map({ val refactorFunction5 = gluedPageNumber; (refactorValue26) => refactorFunction5(_root_.com.histmersion.upstreams.parse.AcquireParse.GluedPageNumberS((refactorValue26).value)) })
     val year = arr(c, "issued", "date-parts").headOption
       .flatMap(_.asArray)
       .flatMap(_.headOption)
@@ -294,7 +295,7 @@ object AcquireParse:
   // ── Europe PMC / PMC Article Datasets ───────────────────────────────────────────────────────
 
   /** Europe PMC availability codes that mean a reader may download the copy without an account. */
-  val EuropePmcFree: Set[com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree] = Set(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree("OA"), _root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree("F"))
+  val EuropePmcFree: Set[com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree] = Set(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFreeValue("OA"), _root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFreeValue("F"))
 
   /** The `search?query=DOI:"…"&resultType=core` hit whose DOI IS the one asked for (a DOI query can match a correction
     * or a comment that cites it).
@@ -308,7 +309,7 @@ object AcquireParse:
         val pdfs = arr(c, "fullTextUrlList", "fullTextUrl").flatMap { u =>
           val h = u.hcursor
           val isPdf = str(h, "documentStyle").exists((_).value.equalsIgnoreCase("pdf"))
-          val free = str(h, "availabilityCode").exists(a => EuropePmcFree(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree((a).value.toUpperCase)))
+          val free = str(h, "availabilityCode").exists(a => EuropePmcFree(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFreeValue((a).value.toUpperCase))))
           if isPdf && free then str(h, "url").filter((_).value.startsWith("http")) else None
         }.distinct
         EuropePmcHit(
@@ -407,7 +408,7 @@ object AcquireParse:
       creator = creators,
       year = (yr).map(refactorValue46 => _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Year(refactorValue46)),
       publisher = str(m, "publisher"),
-      description = str(m, "description").map({ val refactorFunction11 = stripTags; (refactorValue55) => refactorFunction11(_root_.com.histmersion.upstreams.parse.AcquireParse.StripTagsS((refactorValue55).value)) }).map(_.take(500)),
+      description = str(m, "description").map({ val refactorFunction11 = stripTags; (refactorValue55) => refactorFunction11(_root_.com.histmersion.upstreams.parse.AcquireParse.StripTagsS((refactorValue55).value)) }).map((refactorCallback => _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Description((refactorCallback).value.take(500)))),
       _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly(lendingOnly = str(m, "access-restricted-item").exists((_).value.equalsIgnoreCase("true")) ||
         (bool(c, "is_dark")).value),
       files = files

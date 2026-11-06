@@ -15,10 +15,12 @@ private[activity] object ActivityRepo:
 
   type IsoCol = IsoCol.T
   object IsoCol extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Merged = Merged.T
-  object Merged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Projection = Projection.T
-  object Projection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Merged = MergedValue
+  type MergedValue = MergedValue.T
+  object MergedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Projection = ProjectionValue
+  type ProjectionValue = ProjectionValue.T
+  object ProjectionValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShowSqlResult = ShowSqlResult.T
   object ShowSqlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QuotedResult = QuotedResult.T

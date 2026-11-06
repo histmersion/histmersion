@@ -53,8 +53,9 @@ private[config] object ConfigLayers:
   object LeavesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LeavesPrefix = LeavesPrefix.T
   object LeavesPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenBlocks = OpenBlocks.T
-  object OpenBlocks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenBlocks = OpenBlocksValue
+  type OpenBlocksValue = OpenBlocksValue.T
+  object OpenBlocksValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InOpenBlockResult = InOpenBlockResult.T
   object InOpenBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InOpenBlockKeys = InOpenBlockKeys.T

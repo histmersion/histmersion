@@ -541,8 +541,9 @@ object PlanPools:
   object ReadCodexCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadCodexTimeoutSeconds = ReadCodexTimeoutSeconds.T
   object ReadCodexTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadRequests = ReadRequests.T
-  object ReadRequests extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadRequests = ReadRequestsValue
+  type ReadRequestsValue = ReadRequestsValue.T
+  object ReadRequestsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def scheduleText(schedule: ScheduledRefresh): com.histmersion.server.agents.PlanPools.ScheduleTextResult = schedule match
     case ScheduledRefresh.Off             => ""

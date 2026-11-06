@@ -10,12 +10,15 @@ import sttp.client4.*
 
 /** The placeholders of a tile URL template ([[ApiClient.tileTemplate]]). Pure. */
 object TilePlaceholder:
-  type Z = Z.T
-  object Z extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type X = X.T
-  object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Y = Y.T
-  object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Z = ZValue
+  type ZValue = ZValue.T
+  object ZValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type X = XValue
+  type XValue = XValue.T
+  object XValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Y = YValue
+  type YValue = YValue.T
+  object YValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FillResult = FillResult.T
   object FillResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FillUri = FillUri.T

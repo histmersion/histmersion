@@ -416,7 +416,7 @@ object Source:
           else if (i).value < suffix.length && suffix((i).value).isDigit then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits((digits).value + 1))
           else if (i).value < suffix.length && suffix((i).value) == '-' then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), digits)
           else None
-        isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI(0), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits(0)).map(end => suffix.drop((end).value).exists(_.isLetterOrDigit))
+        isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI(0), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits(0)).map(end => _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiResult(suffix.drop((end).value).exists(_.isLetterOrDigit)))
 
   final case class Match(
       rightUid: UUID,
@@ -563,7 +563,7 @@ object Source:
       names match
         case Nil           => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult("")
         case a :: Nil      => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult((surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value)
-        case a :: b :: Nil => (surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " & " + surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(b))
+        case a :: b :: Nil => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult((surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " & " + surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(b)))
         case a :: _        => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult((surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " et al.")
 
   final case class Renamed(
@@ -863,8 +863,8 @@ object Source:
     private[api] def periodOf(start: Option[com.histmersion.api.library.Source.Write.PeriodOfStart], end: Option[com.histmersion.api.library.Source.Write.PeriodOfEnd], what: com.histmersion.api.library.Source.Write.PeriodOfWhat): Either[com.histmersion.api.library.Source.Write.PeriodOfResultPart1, Option[Period]] =
       def sane(v: com.histmersion.api.library.Source.Write.PeriodOfSaneV) = v >= Filter.Earliest && v <= Filter.Latest
       (start, end) match
-        case (Some(a), _) if !sane(a)     => Left(outOfRange(what, _root_.com.histmersion.api.library.Source.Write.OutOfRangeField("period_start"), _root_.com.histmersion.api.library.Source.Write.OutOfRangeV((a).value)))
-        case (_, Some(b)) if !sane(b)     => Left(outOfRange(what, _root_.com.histmersion.api.library.Source.Write.OutOfRangeField("period_end"), _root_.com.histmersion.api.library.Source.Write.OutOfRangeV((b).value)))
+        case (Some(a), _) if !sane(a)     => Left(_root_.com.histmersion.api.library.Source.Write.PeriodOfResultPart1((outOfRange(what, _root_.com.histmersion.api.library.Source.Write.OutOfRangeField("period_start"), _root_.com.histmersion.api.library.Source.Write.OutOfRangeV((a).value))).value))
+        case (_, Some(b)) if !sane(b)     => Left(_root_.com.histmersion.api.library.Source.Write.PeriodOfResultPart1((outOfRange(what, _root_.com.histmersion.api.library.Source.Write.OutOfRangeField("period_end"), _root_.com.histmersion.api.library.Source.Write.OutOfRangeV((b).value))).value))
         case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
         case (Some(a), Some(b))           => Left(_root_.com.histmersion.api.library.Source.Write.PeriodOfResultPart1(s"$what: period_start ($a) must not be after period_end ($b)"))
         case (None, None)                 => Right(None)

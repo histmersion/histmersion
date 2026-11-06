@@ -22,8 +22,9 @@ import java.time.format.DateTimeFormatter
 object HttpPolicy:
 
   /** What to do with an answer. */
-  type Throttled = Throttled.T
-  object Throttled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Throttled = ThrottledValue
+  type ThrottledValue = ThrottledValue.T
+  object ThrottledValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UserAgentResult = UserAgentResult.T
   object UserAgentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UserAgentConfigured = UserAgentConfigured.T
@@ -50,10 +51,12 @@ object HttpPolicy:
   object DecideMaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecideSlowDown = DecideSlowDown.T
   object DecideSlowDown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MacKeychains = MacKeychains.T
-  object MacKeychains extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinuxBundles = LinuxBundles.T
-  object LinuxBundles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MacKeychains = MacKeychainsValue
+  type MacKeychainsValue = MacKeychainsValue.T
+  object MacKeychainsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinuxBundles = LinuxBundlesValue
+  type LinuxBundlesValue = LinuxBundlesValue.T
+  object LinuxBundlesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TrustSystemTrust = TrustSystemTrust.T
   object TrustSystemTrust extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TrustExtraCaFile = TrustExtraCaFile.T

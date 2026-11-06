@@ -45,10 +45,12 @@ object Filter:
   object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HasFindingCriteriaResult = HasFindingCriteriaResult.T
   object HasFindingCriteriaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Earliest = Earliest.T
-  object Earliest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Latest = Latest.T
-  object Latest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Earliest = EarliestValue
+  type EarliestValue = EarliestValue.T
+  object EarliestValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Latest = LatestValue
+  type LatestValue = LatestValue.T
+  object LatestValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClampResult = ClampResult.T
   object ClampResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClampV = ClampV.T
@@ -129,8 +131,8 @@ object Filter:
   type Goal = Goal.T
   object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Earliest: com.histmersion.api.library.Filter.Earliest = _root_.com.histmersion.api.library.Filter.Earliest(-1000000000L)
-  val Latest: com.histmersion.api.library.Filter.Latest = _root_.com.histmersion.api.library.Filter.Latest(1000000000L)
+  val Earliest: com.histmersion.api.library.Filter.Earliest = _root_.com.histmersion.api.library.Filter.EarliestValue(-1000000000L)
+  val Latest: com.histmersion.api.library.Filter.Latest = _root_.com.histmersion.api.library.Filter.LatestValue(1000000000L)
 
   /** Postgres rejects an inverted range (`range lower bound must be less than or equal to range upper bound`), so a
     * nonsense bound is clamped before it can build one.

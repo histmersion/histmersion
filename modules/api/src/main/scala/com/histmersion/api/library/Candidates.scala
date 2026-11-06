@@ -15,8 +15,9 @@ object Candidates:
   type ArxivWorksUnescapeS = ArxivWorksUnescapeS.T
   object ArxivWorksUnescapeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Indexes = Indexes.T
-  object Indexes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Indexes = IndexesValue
+  type IndexesValue = IndexesValue.T
+  object IndexesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SinceWatermark = SinceWatermark.T
   object SinceWatermark extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SinceLookbackDays = SinceLookbackDays.T
@@ -57,7 +58,7 @@ object Candidates:
 
     def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.State.Wire((s).value.trim.toLowerCase))
 
-  val Indexes: List[com.histmersion.api.library.Candidates.Indexes] = List(_root_.com.histmersion.api.library.Candidates.Indexes("openalex"), _root_.com.histmersion.api.library.Candidates.Indexes("crossref"), _root_.com.histmersion.api.library.Candidates.Indexes("europepmc"), _root_.com.histmersion.api.library.Candidates.Indexes("arxiv"), _root_.com.histmersion.api.library.Candidates.Indexes("core"))
+  val Indexes: List[com.histmersion.api.library.Candidates.Indexes] = List(_root_.com.histmersion.api.library.Candidates.IndexesValue("openalex"), _root_.com.histmersion.api.library.Candidates.IndexesValue("crossref"), _root_.com.histmersion.api.library.Candidates.IndexesValue("europepmc"), _root_.com.histmersion.api.library.Candidates.IndexesValue("arxiv"), _root_.com.histmersion.api.library.Candidates.IndexesValue("core"))
 
   def since(watermark: Option[com.histmersion.api.library.Candidates.SinceWatermark], today: java.time.LocalDate, lookbackDays: com.histmersion.api.library.Candidates.SinceLookbackDays): java.time.LocalDate =
     watermark
@@ -84,12 +85,12 @@ object Candidates:
       val c = r.hcursor
       WorkRef(
         doi = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("doi"))).map((com).value.histmersion.api.library.Doi.apply),
-        title = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("title")).map(_.stripSuffix("."))).map(com.histmersion.api.library.Title.apply),
-        year = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("pubYear")).flatMap(_.toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
-        authors = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("authorString")).toList.flatMap(_.stripSuffix(".").split(",").map(_.trim).filter(_.nonEmpty))).map(com.histmersion.api.library.AuthorName.apply),
+        title = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("title")).map((_).value.stripSuffix("."))).map(com.histmersion.api.library.Title.apply),
+        year = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("pubYear")).flatMap((_).value.toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
+        authors = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("authorString")).toList.flatMap((_).value.stripSuffix(".").split(",").map(_.trim).filter(_.nonEmpty))).map(com.histmersion.api.library.AuthorName.apply),
         venue =
           (str(c, _root_.com.histmersion.api.library.Candidates.StrK("journalTitle")).orElse(c.downField("journalInfo").downField("journal").get[String]("title").toOption)).map(com.histmersion.api.library.Venue.apply),
-        isOa = str(c, "isOpenAccess").contains("Y"),
+        isOa = _root_.com.histmersion.api.library.WorkRef.IsOa(str(c, _root_.com.histmersion.api.library.Candidates.StrK("isOpenAccess")).contains("Y")),
         abstractText = str(c, "abstractText").map(_.replaceAll("<[^>]+>", ""))
       )
     }
@@ -100,10 +101,10 @@ object Candidates:
       val c = r.hcursor
       WorkRef(
         doi = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("doi"))).map((com).value.histmersion.api.library.Doi.apply),
-        title = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("title"))).map(com.histmersion.api.library.Title.apply),
+        title = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("title"))).map((com).value.histmersion.api.library.Title.apply),
         year = (c.get[Int]("yearPublished").toOption).map(com.histmersion.api.catalogue.Year.apply),
         authors = (c.downField("authors").values.toList.flatten.flatMap(a => str(a.hcursor, _root_.com.histmersion.api.library.Candidates.StrK("name")))).map((com).value.histmersion.api.library.AuthorName.apply),
-        venue = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("publisher"))).map(com.histmersion.api.library.Venue.apply),
+        venue = (str(c, _root_.com.histmersion.api.library.Candidates.StrK("publisher"))).map((com).value.histmersion.api.library.Venue.apply),
         isOa = str(c, "downloadUrl").isDefined,
         abstractText = str(c, "abstract"),
         arxivId = str(c, _root_.com.histmersion.api.library.Candidates.StrK("arxivId"))
@@ -116,13 +117,13 @@ object Candidates:
     def unescape(s: com.histmersion.api.library.Candidates.ArxivWorksUnescapeS) =
       (s).value.replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
     "(?s)<entry>(.*?)</entry>".r.findAllMatchIn((atom).value).map(_.group(1)).toList.map { e =>
-      val id = tag(_root_.com.histmersion.api.library.Candidates.ArxivWorksTagS(e), _root_.com.histmersion.api.library.Candidates.ArxivWorksTagT("id")).map(_.replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
+      val id = tag(_root_.com.histmersion.api.library.Candidates.ArxivWorksTagS(e), _root_.com.histmersion.api.library.Candidates.ArxivWorksTagT("id")).map((_).value.replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
       WorkRef(
-        arxivId = id,
-        title = (tag(e, "title").map(unescape)).map(com.histmersion.api.library.Title.apply),
-        year = (tag(e, "published").flatMap(_.take(4).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
-        authors = ("(?s)<author>\\s*<name>(.*?)</name>".r.findAllMatchIn(e).map(m => unescape(m.group(1).trim)).toList).map(com.histmersion.api.library.AuthorName.apply),
-        doi = (tag(_root_.com.histmersion.api.library.Candidates.ArxivWorksTagS(e), _root_.com.histmersion.api.library.Candidates.ArxivWorksTagT("arxiv:doi"))).map(com.histmersion.api.library.Doi.apply),
+        arxivId = (id).map(refactorValue8 => _root_.com.histmersion.api.library.WorkRef.ArxivId(refactorValue8)),
+        title = (tag(_root_.com.histmersion.api.library.Candidates.ArxivWorksTagS(e), _root_.com.histmersion.api.library.Candidates.ArxivWorksTagT("title")).map(unescape)).map(com.histmersion.api.library.Title.apply),
+        year = (tag(_root_.com.histmersion.api.library.Candidates.ArxivWorksTagS(e), _root_.com.histmersion.api.library.Candidates.ArxivWorksTagT("published")).flatMap((_).value.take(4).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
+        authors = ("(?s)<author>\\s*<name>(.*?)</name>".r.findAllMatchIn(e).map(m => unescape(_root_.com.histmersion.api.library.Candidates.ArxivWorksUnescapeS(m.group(1).trim))).toList).map(com.histmersion.api.library.AuthorName.apply),
+        doi = (tag(_root_.com.histmersion.api.library.Candidates.ArxivWorksTagS(e), _root_.com.histmersion.api.library.Candidates.ArxivWorksTagT("arxiv:doi"))).map((com).value.histmersion.api.library.Doi.apply),
         venue = (Some("arXiv")).map(com.histmersion.api.library.Venue.apply),
         isOa = true,
         abstractText = tag(e, "summary").map(unescape)

@@ -2,8 +2,9 @@ package com.histmersion.server
 
 object ServerArgs:
 
-  type Usage = Usage.T
-  object Usage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Usage = UsageValue
+  type UsageValue = UsageValue.T
+  object UsageValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseResultPart1 = ParseResultPart1.T
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseArgs = ParseArgs.T

@@ -28,16 +28,21 @@ object PeriodO:
   object IsoYearResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsoYearRaw = IsoYearRaw.T
   object IsoYearRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinYear = MinYear.T
-  object MinYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxYear = MaxYear.T
-  object MaxYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpanFactor = SpanFactor.T
-  object SpanFactor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinImplausibleSpan = MinImplausibleSpan.T
-  object MinImplausibleSpan extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinSiblings = MinSiblings.T
-  object MinSiblings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinYear = MinYearValue
+  type MinYearValue = MinYearValue.T
+  object MinYearValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxYear = MaxYearValue
+  type MaxYearValue = MaxYearValue.T
+  object MaxYearValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SpanFactor = SpanFactorValue
+  type SpanFactorValue = SpanFactorValue.T
+  object SpanFactorValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinImplausibleSpan = MinImplausibleSpanValue
+  type MinImplausibleSpanValue = MinImplausibleSpanValue.T
+  object MinImplausibleSpanValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinSiblings = MinSiblingsValue
+  type MinSiblingsValue = MinSiblingsValue.T
+  object MinSiblingsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseResultPart1 = ParseResultPart1.T
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseJson = ParseJson.T
@@ -73,28 +78,28 @@ object PeriodO:
     Years.parseIso(raw)
 
   /** The Lower Palaeolithic starts around 3.3 million years ago, and no period ends after 2100. */
-  val MinYear: com.histmersion.api.catalogue.PeriodO.MinYear = _root_.com.histmersion.api.catalogue.PeriodO.MinYear(-3000000L)
-  val MaxYear: com.histmersion.api.catalogue.PeriodO.MaxYear = _root_.com.histmersion.api.catalogue.PeriodO.MaxYear(2100L)
+  val MinYear: com.histmersion.api.catalogue.PeriodO.MinYear = _root_.com.histmersion.api.catalogue.PeriodO.MinYearValue(-3000000L)
+  val MaxYear: com.histmersion.api.catalogue.PeriodO.MaxYear = _root_.com.histmersion.api.catalogue.PeriodO.MaxYearValue(2100L)
 
   /** A lost minus sign lands a period across BCE into CE (EAMENA's "Old Kingdom", -2701 → 2150), but long spans alone
     * are normal in deep time (a Lower Palaeolithic of 1.2 million years), so length is judged against the authority's
     * other definitions for the same region.
     */
-  val SpanFactor: com.histmersion.api.catalogue.PeriodO.SpanFactor = _root_.com.histmersion.api.catalogue.PeriodO.SpanFactor(3L)
-  val MinImplausibleSpan: com.histmersion.api.catalogue.PeriodO.MinImplausibleSpan = _root_.com.histmersion.api.catalogue.PeriodO.MinImplausibleSpan(1000L)
+  val SpanFactor: com.histmersion.api.catalogue.PeriodO.SpanFactor = _root_.com.histmersion.api.catalogue.PeriodO.SpanFactorValue(3L)
+  val MinImplausibleSpan: com.histmersion.api.catalogue.PeriodO.MinImplausibleSpan = _root_.com.histmersion.api.catalogue.PeriodO.MinImplausibleSpanValue(1000L)
 
-  val MinSiblings: com.histmersion.api.catalogue.PeriodO.MinSiblings = _root_.com.histmersion.api.catalogue.PeriodO.MinSiblings(3)
+  val MinSiblings: com.histmersion.api.catalogue.PeriodO.MinSiblings = _root_.com.histmersion.api.catalogue.PeriodO.MinSiblingsValue(3)
 
   def parse(json: com.histmersion.api.catalogue.PeriodO.ParseJson): Either[com.histmersion.api.catalogue.PeriodO.ParseResultPart1, PeriodODataset] =
     io.circe.parser.parse((json).value).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
       val c = doc.hcursor
       val overlay = c.downField("histmersion")
-      def strings(key: com.histmersion.api.catalogue.PeriodO.ParseStringsKey): List[(com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart1, com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart2)] = overlay
+      def strings(key: com.histmersion.api.catalogue.PeriodO.ParseStringsKey): List[(com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart1, com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart2)] = (overlay
         .downField((key).value)
         .focus
         .flatMap(_.asObject)
         .map(_.toList.flatMap((k, v) => v.asString.map(k -> _)))
-        .getOrElse(Nil)
+        .getOrElse(Nil)).map(refactorValue2 => { val refactorTuple = refactorValue2; (_root_.com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart1(refactorTuple._1), _root_.com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart2(refactorTuple._2)) })
       val presets = strings(_root_.com.histmersion.api.catalogue.PeriodO.ParseStringsKey("presets")).map((id, r) =>
         PresetRegion
           .fromWire(r)
@@ -112,13 +117,13 @@ object PeriodO:
           .toRight("not a PeriodO dataset: no `authorities` object")
         ps <- presets.collectFirst { case Left(e) => e }.toLeft(presets.collect { case Right(p) => p }.toMap)
       yield
-        val read = auths.toList.map((id, a) => authority(id, a.hcursor))
+        val read = auths.toList.map((id, a) => authority(_root_.com.histmersion.api.catalogue.PeriodO.Authority.Id(id), a.hcursor))
         PeriodODataset(
           read.map(_._1),
-          strings("parents").toMap,
+          strings(_root_.com.histmersion.api.catalogue.PeriodO.ParseStringsKey("parents")).toMap,
           read.flatMap(_._2),
           ps,
-          overlay.downField("version").focus.flatMap(_.asNumber).flatMap(_.toInt)
+          overlay.downField("version").focus.flatMap(_.asNumber).flatMap((refactorCallback2 => (refactorCallback2.toInt).map(refactorValue3 => _root_.com.histmersion.api.PeriodODataset.Version(refactorValue3))))
         )
     }
 
@@ -212,7 +217,7 @@ object PeriodO:
       case _                  => skip(Period.Skip.NoSpan, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail("no readable start or stop year"))
 
   private def bound(in: ACursor, outer: com.histmersion.api.catalogue.PeriodO.BoundOuter): Option[com.histmersion.api.catalogue.PeriodO.BoundResult] =
-    yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey("year")).orElse(yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey((outer).value)))
+    (yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey("year")).orElse(yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey((outer).value)))).map(refactorValue7 => _root_.com.histmersion.api.catalogue.PeriodO.BoundResult((refactorValue7).value))
 
   private def yearAt(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.YearAtKey): Option[com.histmersion.api.catalogue.PeriodO.YearAtResult] =
     c.downField((key).value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).flatMap((isoYear).map(refactorValue10 => _root_.com.histmersion.api.catalogue.PeriodO.YearAtResult((refactorValue10).value)))

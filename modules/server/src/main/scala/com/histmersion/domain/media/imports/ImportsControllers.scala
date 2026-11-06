@@ -191,8 +191,9 @@ object ImportsControllers:
   object RunImportSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunImportProgressArg1 = RunImportProgressArg1.T
   object RunImportProgressArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ImportJobKind = ImportJobKind.T
-  object ImportJobKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ImportJobKind = ImportJobKindValue
+  type ImportJobKindValue = ImportJobKindValue.T
+  object ImportJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SingleResult = SingleResult.T
   object SingleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProgressLineResult = ProgressLineResult.T

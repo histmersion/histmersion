@@ -35,10 +35,12 @@ object CitationService:
   object GraphDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContradictionsSince = ContradictionsSince.T
   object ContradictionsSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Disagreeing = Disagreeing.T
-  object Disagreeing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DisagreeingStatuses = DisagreeingStatuses.T
-  object DisagreeingStatuses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Disagreeing = DisagreeingValue
+  type DisagreeingValue = DisagreeingValue.T
+  object DisagreeingValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DisagreeingStatuses = DisagreeingStatusesValue
+  type DisagreeingStatusesValue = DisagreeingStatusesValue.T
+  object DisagreeingStatusesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Disagreeing: Set[com.histmersion.domain.library.citations.CitationService.Disagreeing] = Set("challenges", "refutes", "updates", "superseded_by")
 

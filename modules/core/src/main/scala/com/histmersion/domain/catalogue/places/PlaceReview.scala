@@ -37,20 +37,25 @@ object PlaceReview:
   type ProposeToReason = ProposeToReason.T
   object ProposeToReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PolityTypes = PolityTypes.T
-  object PolityTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeopleTypes = PeopleTypes.T
-  object PeopleTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SiteTypes = SiteTypes.T
-  object SiteTypes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtantYear = ExtantYear.T
-  object ExtantYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PolityTypes = PolityTypesValue
+  type PolityTypesValue = PolityTypesValue.T
+  object PolityTypesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeopleTypes = PeopleTypesValue
+  type PeopleTypesValue = PeopleTypesValue.T
+  object PeopleTypesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SiteTypes = SiteTypesValue
+  type SiteTypesValue = SiteTypesValue.T
+  object SiteTypesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtantYear = ExtantYearValue
+  type ExtantYearValue = ExtantYearValue.T
+  object ExtantYearValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WikidataClassesPart1 = WikidataClassesPart1.T
   object WikidataClassesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WikidataClassesPart2 = WikidataClassesPart2.T
   object WikidataClassesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikidataPolity = WikidataPolity.T
-  object WikidataPolity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikidataPolity = WikidataPolityValue
+  type WikidataPolityValue = WikidataPolityValue.T
+  object WikidataPolityValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DuplicateOfResult = DuplicateOfResult.T
   object DuplicateOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DuplicateOfLabel = DuplicateOfLabel.T

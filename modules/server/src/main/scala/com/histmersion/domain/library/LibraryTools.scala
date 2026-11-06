@@ -28,14 +28,16 @@ import com.histmersion.api.library.Rename
   * renders a source as its Markdown note (the mirror's).
   */
 object LibraryTools:
-  type StrictDoc = StrictDoc.T
-  object StrictDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrictDoc = StrictDocValue
+  type StrictDocValue = StrictDocValue.T
+  object StrictDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyExportNoteArg1 = ApplyExportNoteArg1.T
   object ApplyExportNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyExportNoteResultPart2 = ApplyExportNoteResultPart2.T
   object ApplyExportNoteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PassagesDoc = PassagesDoc.T
-  object PassagesDoc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassagesDoc = PassagesDocValue
+  type PassagesDocValue = PassagesDocValue.T
+  object PassagesDocValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PassagesMarkdownResult = PassagesMarkdownResult.T
   object PassagesMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -109,7 +109,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
 
   /** Crossref `update-to` notices (retraction / correction / expression of concern). */
   def updates(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.UpdatesDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.UpdatesResultPart1, List[UpdateNotice]] =
-    crossrefWork(_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefWorkDoi((doi).value)).map(AcquireParse.crossrefUpdates).orElse(Right(Nil))
+    (crossrefWork(_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.CrossrefWorkDoi((doi).value)).map(AcquireParse.crossrefUpdates).orElse(Right(Nil))).left.map(refactorError2 => _root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.UpdatesResultPart1((refactorError2).value))
 
   /** The raw OpenAlex record, for the citation counts an assessment reports and the open locations a fetcher reads. */
   def raw(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.RawDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.RawResultPart1, Json] =

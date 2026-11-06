@@ -20,10 +20,12 @@ object ActivityRules:
   type QueryBadM = QueryBadM.T
   object QueryBadM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RunningStates = RunningStates.T
-  object RunningStates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProblemStates = ProblemStates.T
-  object ProblemStates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunningStates = RunningStatesValue
+  type RunningStatesValue = RunningStatesValue.T
+  object RunningStatesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProblemStates = ProblemStatesValue
+  type ProblemStatesValue = ProblemStatesValue.T
+  object ProblemStatesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShowsResult = ShowsResult.T
   object ShowsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsRunOrJobResult = IsRunOrJobResult.T

@@ -210,7 +210,7 @@ object AgentsMarkdown:
   private def amount(v: com.histmersion.api.automation.AgentsMarkdown.AmountV, m: ModelChains.Measure): com.histmersion.api.automation.AgentsMarkdown.AmountResult = m match
     case ModelChains.Measure.Tokens =>
       ModelChains.Limit.compact(BigDecimal((v).value).setScale(0, BigDecimal.RoundingMode.HALF_UP))
-    case ModelChains.Measure.Usd => usd(_root_.com.histmersion.api.automation.AgentsMarkdown.UsdD((v).value))
+    case ModelChains.Measure.Usd => _root_.com.histmersion.api.automation.AgentsMarkdown.AmountResult((usd(_root_.com.histmersion.api.automation.AgentsMarkdown.UsdD((v).value))).value)
 
   private def allowanceBlock(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceBlockResult =
     val state = if ((a.usable) == _root_.com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(true)) then "has headroom"
@@ -358,8 +358,8 @@ object AgentsMarkdown:
   ): com.histmersion.api.automation.AgentsMarkdown.RunsResult =
     if rs.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.RunsResult(status.fold("_No agent runs._")(s => s"_No $s agent runs._"))
     else
-      "# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(rs.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("run"), (status).map(refactorValue15 => _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier((refactorValue15).value))) + facetLines(page, RunFacets) +
-        rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o")
+      _root_.com.histmersion.api.automation.AgentsMarkdown.RunsResult("# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(rs.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("run"), (status).map(refactorValue15 => _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier((refactorValue15).value))) + facetLines(page, (RunFacets).map(refactorValue17 => { val refactorTuple14 = refactorValue17; (_root_.com.histmersion.api.automation.AgentsMarkdown.FacetLinesFacetsPart1((refactorTuple14._1).value), _root_.com.histmersion.api.automation.AgentsMarkdown.FacetLinesFacetsPart2((refactorTuple14._2).value)) })) +
+        rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o"))
 
   private def pageLine(shown: com.histmersion.api.automation.AgentsMarkdown.PageLineShown, page: Paging.Page, singular: com.histmersion.api.automation.AgentsMarkdown.PageLineSingular, qualifier: Option[com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier]): com.histmersion.api.automation.AgentsMarkdown.PageLineResult =
     if page.total <= shown then _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineResult("") else s"${Paging.heading(shown, page.total, singular, qualifier = qualifier)}.\n\n"
@@ -467,13 +467,13 @@ object AgentsMarkdown:
   ): com.histmersion.api.automation.AgentsMarkdown.ApprovalsResult =
     if as.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ApprovalsResult("_No approvals._")
     else
-      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(as.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("approval"), (state).map(refactorValue16 => _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier((refactorValue16).value))) + facetLines(page, ApprovalFacets) + as
+      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(as.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("approval"), (state).map(refactorValue16 => _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier((refactorValue16).value))) + facetLines(page, (ApprovalFacets).map(refactorValue2 => { val refactorTuple7 = refactorValue2; (_root_.com.histmersion.api.automation.AgentsMarkdown.FacetLinesFacetsPart1((refactorTuple7._1).value), _root_.com.histmersion.api.automation.AgentsMarkdown.FacetLinesFacetsPart2((refactorTuple7._2).value)) })) + as
         .map { a =>
           val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
           val note = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
           val detail = a.plan
             .map(planBlock)
-            .orElse(a.article.map(draftBlock(_, 1500)))
+            .orElse(a.article.map(draftBlock(_, _root_.com.histmersion.api.automation.AgentsMarkdown.DraftBlockChars(1500))))
             .orElse(a.filter.map(Article.Plans.filterBlock))
             .orElse(a.articles.map(Article.Plans.planBlock))
             .fold("")(b => "\n\n" + indent(b) + "\n")

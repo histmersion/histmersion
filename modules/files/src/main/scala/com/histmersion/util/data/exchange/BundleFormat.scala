@@ -46,8 +46,9 @@ object BundleFormat:
   type SplitLinesPayload = SplitLinesPayload.T
   object SplitLinesPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Unrevved = Unrevved.T
-  object Unrevved extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Unrevved = UnrevvedValue
+  type UnrevvedValue = UnrevvedValue.T
+  object UnrevvedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Sha256HexResult = Sha256HexResult.T
   object Sha256HexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Sha256HexText = Sha256HexText.T

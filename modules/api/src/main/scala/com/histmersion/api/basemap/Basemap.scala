@@ -81,8 +81,9 @@ object Basemap:
   object SubsetAtS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SubsetAtZ = SubsetAtZ.T
   object SubsetAtZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegacyLacks = LegacyLacks.T
-  object LegacyLacks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LegacyLacks = LegacyLacksValue
+  type LegacyLacksValue = LegacyLacksValue.T
+  object LegacyLacksValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DroppedLayersResult = DroppedLayersResult.T
   object DroppedLayersResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DroppedLayersKeepAll = DroppedLayersKeepAll.T
@@ -245,7 +246,7 @@ object Basemap:
         val g = if r.geoms.isEmpty then ""
         else ":" + r.geoms.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
         val k = if r.kinds.isEmpty then "" else "~" + r.kinds.toList.sorted.mkString("|")
-        (l).value + g + k + fromZoom.get(_root_.com.histmersion.api.basemap.Basemap.SubsetParamFromZoomPart1((l).value)).filter(_ > 0).fold("")(z => s"@$z")
+        (l).value + g + k + fromZoom.get(_root_.com.histmersion.api.basemap.Basemap.SubsetParamFromZoomPart1((l).value)).filter((_).value > 0).fold("")(z => s"@$z")
       }
       .mkString(",")
 
@@ -264,14 +265,14 @@ object Basemap:
       }
       .mkString(",")
 
-  val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LegacyLacks] = List(_root_.com.histmersion.api.basemap.Basemap.LegacyLacks("boundaries"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("buildings"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("landuse"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("places"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("pois"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("roads"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("transit"))
+  val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LegacyLacks] = List(_root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("boundaries"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("buildings"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("landuse"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("places"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("pois"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("roads"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("transit"))
 
   def droppedLayers(keepAll: com.histmersion.api.basemap.Basemap.DroppedLayersKeepAll, drop: Option[com.histmersion.api.basemap.Basemap.DroppedLayersDrop]): List[com.histmersion.api.basemap.Basemap.DroppedLayersResult] =
     if (keepAll).value then Nil
     else
       drop match
-        case Some(d) => parseDrop(_root_.com.histmersion.api.basemap.Basemap.ParseDropS((d).value)).toOption.getOrElse(Nil).filter(_.whole).map(_.layer).distinct.sorted
-        case None    => LegacyLacks
+        case Some(d) => parseDrop(_root_.com.histmersion.api.basemap.Basemap.ParseDropS((d).value)).toOption.getOrElse(Nil).filter((refactorCallback2 => ((refactorCallback2.whole) == _root_.com.histmersion.api.basemap.Basemap.DropRule.Whole(true)))).map(_.layer).distinct.sorted
+        case None    => (LegacyLacks).map(refactorValue10 => _root_.com.histmersion.api.basemap.Basemap.DroppedLayersResult((refactorValue10).value))
 
   def missingFor(needs: List[com.histmersion.api.basemap.Basemap.MissingForNeeds], dropped: List[com.histmersion.api.basemap.Basemap.MissingForDropped]): List[com.histmersion.api.basemap.Basemap.MissingForResult] =
     (needs.filter(dropped.contains).distinct.sorted).map(refactorValue9 => _root_.com.histmersion.api.basemap.Basemap.MissingForResult((refactorValue9).value))

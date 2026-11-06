@@ -108,8 +108,9 @@ object ModelChains:
   object Window:
     type TextResult = TextResult.T
     object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MaxSeconds = MaxSeconds.T
-    object MaxSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxSeconds = MaxSecondsValue
+    type MaxSecondsValue = MaxSecondsValue.T
+    object MaxSecondsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseResultPart1 = ParseResultPart1.T
     object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T
@@ -121,7 +122,7 @@ object ModelChains:
     private val Unit = Map('m' -> 60L, 'h' -> 3600L, 'd' -> 86400L, 'w' -> 604800L)
     private val Names = Map("hour" -> 3600L, "day" -> 86400L, "week" -> 604800L, "month" -> 30L * 86400L)
 
-    val MaxSeconds: com.histmersion.api.automation.ModelChains.Window.MaxSeconds = _root_.com.histmersion.api.automation.ModelChains.Window.MaxSeconds(90L * 86400L)
+    val MaxSeconds: com.histmersion.api.automation.ModelChains.Window.MaxSeconds = _root_.com.histmersion.api.automation.ModelChains.Window.MaxSecondsValue(90L * 86400L)
 
     def parse(s: com.histmersion.api.automation.ModelChains.Window.ParseS): Either[com.histmersion.api.automation.ModelChains.Window.ParseResultPart1, Window] =
       val t = (s).value.trim.toLowerCase(java.util.Locale.ROOT)

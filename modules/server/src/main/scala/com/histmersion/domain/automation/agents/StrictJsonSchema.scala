@@ -30,10 +30,12 @@ import com.histmersion.api.VocabularyCodecs.given
 object StrictJsonSchema:
 
   /** The keywords strict mode supports (OpenAI "Structured Outputs — supported schemas"). */
-  type Keywords = Keywords.T
-  object Keywords extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StringFormats = StringFormats.T
-  object StringFormats extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Keywords = KeywordsValue
+  type KeywordsValue = KeywordsValue.T
+  object KeywordsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StringFormats = StringFormatsValue
+  type StringFormatsValue = StringFormatsValue.T
+  object StringFormatsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TypesResult = TypesResult.T
   object TypesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsObjectSchemaResult = IsObjectSchemaResult.T

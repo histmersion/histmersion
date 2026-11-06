@@ -157,7 +157,7 @@ object Paging:
         (
           Some(p.total),
           p.next,
-          Some(encodeCounts(p.counts)).filter((_).value.nonEmpty),
+          (Some(encodeCounts(p.counts)).filter((_).value.nonEmpty)).map(refactorValue8 => (refactorValue8).value),
           Some(ListFilters.encodeFacets(p.facets)).filter(_.nonEmpty)
         )
       )

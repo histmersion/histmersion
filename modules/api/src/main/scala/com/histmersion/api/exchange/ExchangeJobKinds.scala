@@ -6,8 +6,9 @@ import com.histmersion.api.jobs.JobDetail
 /** Data management's exchange jobs, as it registers them: the first-run import of reference data, and a merge apply.
   */
 object ExchangeJobKinds:
-  type PlanHash = PlanHash.T
-  object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanHash = PlanHashValue
+  type PlanHashValue = PlanHashValue.T
+  object PlanHashValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Init: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("init"),

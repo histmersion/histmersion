@@ -21,7 +21,7 @@ object AstRecipe {
     signatureBuffers: Boolean = false, bufferHistory: List[String] = Nil, localMemberTypes: Boolean = false, indexNewtypes: Boolean = false,
     expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty,
     consolidationIndex: String = "", consolidations: List[Consolidation] = Nil, additionalManifest: String = "",
-    ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil,
+    ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil, generatedValueNames: Boolean = false,
     compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, compilerRepairHistory: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false, propertyFlowsOnly: Boolean = false, generatedHelperAdapters: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
@@ -57,14 +57,16 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     }
     frozen.foreach { case(p,h) => require(hash(read(p)) == h, "Stale source: " + p) }
     val out = Paths.get(policy.report)
-    require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty || policy.measureTypes || policy.consolidations.nonEmpty || policy.ironProjects.nonEmpty || policy.interfaceContracts.nonEmpty || policy.compilerObservation.nonEmpty || policy.triviaFiles.nonEmpty))
+    require(!Files.exists(out) && (policy.edits.nonEmpty || policy.creates.nonEmpty || policy.appendStats.nonEmpty || policy.definitionRoots.nonEmpty || policy.measureTypes || policy.consolidations.nonEmpty || policy.ironProjects.nonEmpty || policy.interfaceContracts.nonEmpty || policy.compilerObservation.nonEmpty || policy.triviaFiles.nonEmpty || policy.generatedValueNames))
     require(policy.appendStats.keySet.subsetOf(policy.edits.map(_.path).toSet), "Append requires a reviewed edit in the same file")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
+    require(!policy.generatedValueNames || (policy.compilerObservation.isEmpty && policy.definitionRoots.isEmpty && policy.consolidations.isEmpty && policy.edits.isEmpty && policy.interfaceContracts.isEmpty),"Generated value-name repair cannot combine with other source rewrites")
+    val renamed = if(policy.generatedValueNames) GeneratedValueNames.patches(frozen,policy.consolidationIndex,policy.boundaryRoots,evidence) else Map.empty[String,List[(Int,Int,String)]]
     val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence,policy.creates)
     val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence,policy.boundaryRoots)
     val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons,policy.constructionOnly,policy.ownerOperationsOnly,policy.orderingsOnly,policy.rawInputSources,policy.nominalBoundaryContracts,policy.compilerRepairHistory,policy.nativeBooleans,policy.tapirEndpointsOnly,policy.propertyFlowsOnly,policy.generatedHelperAdapters)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
-    val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ policy.triviaFiles.toSet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
+    val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ renamed.keySet ++ policy.triviaFiles.toSet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
     def parseSource(s: String,path: String): Source = {
       implicit val dialect: Dialect = if(path.endsWith(".sbt")) dialects.Scala3.withAllowToplevelTerms(true) else dialects.Scala3
       s.parse[Source].get
@@ -102,7 +104,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
         evidence += List(path,(t.pos.startLine + 1).toString,"TRIVIA " + t.structure,"remove blank-line indentation; AST unchanged")
         (t.pos.start,t.pos.end,"")
       }
-      val patches = definitionPatches ++ consolidated.getOrElse(path,Nil) ++ aligned.getOrElse(path,Nil) ++ repaired.getOrElse(path,Nil) ++ build ++ trivia ++ recipes.flatMap { recipe =>
+      val patches = definitionPatches ++ consolidated.getOrElse(path,Nil) ++ aligned.getOrElse(path,Nil) ++ repaired.getOrElse(path,Nil) ++ renamed.getOrElse(path,Nil) ++ build ++ trivia ++ recipes.flatMap { recipe =>
         require(Set("stat","type")(recipe.kind))
         val pattern: Tree = if(recipe.kind == "type") recipe.before.parse[Type].get else recipe.before.parse[Stat].get
         val replacementAst = if(recipe.kind == "type") recipe.after.parse[Type].get.structure else fragment(recipe.after)
@@ -150,6 +152,66 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
       println(summary)
       if(policy.buffers.nonEmpty) Files.writeString(out.resolve("status.txt"),s"Buffer corrections: ${evidence.count(_(2).startsWith("CORRECTION"))}\n",java.nio.file.StandardOpenOption.APPEND)
     }
+  }
+}
+
+object GeneratedValueNames {
+  def patches(frozen: Map[String,String], index: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]]): Map[String,List[(Int,Int,String)]] = {
+    require(index.nonEmpty && roots.nonEmpty,"Generated value-name repair requires an index and explicit roots")
+    implicit val dialect: Dialect = dialects.Scala3
+    def rows(file: String) = Files.readAllLines(Paths.get(index,file)).asScala.drop(1).map(_.split("\t",-1).toList).toList
+    val definitions = rows("newtypes.tsv").groupBy(_(5))
+    val origins = rows("newtype-origins.tsv").groupBy(_.head)
+    val types = new RepairTypes(frozen,index)
+    val occupied = scala.collection.mutable.Map.empty[Tree,Set[String]]
+    definitions.toList.sortBy(_._1).flatMap {
+      case (full,List(d)) if roots.exists(d(1).startsWith) && frozen.contains(d(1)) =>
+        val tree = types.tree(d(1))
+        val objects = tree.collect { case o: Defn.Object if types.owner(o) + "." + o.name.value == full => o }
+        objects match {
+          case List(obj) =>
+            val siblings = obj.parent.toList.flatMap(_.children)
+            val values = siblings.collect { case v: Defn.Val if v.pats.exists { case Pat.Var(n) => n.value == obj.name.value; case _ => false } => v }
+            if(values.isEmpty) Nil else {
+              val source = Files.readString(Paths.get(d(1)))
+              val owner = full.substring(0,full.lastIndexOf('.'))
+              val provenance = origins.getOrElse(d.head,Nil).filter(r => r(3) == "owner-match" && r(1) == obj.name.value)
+              val aliases = siblings.collect { case a: Defn.Type if a.name.value == obj.name.value && a.body.syntax == obj.name.value + ".T" && a.mods.isEmpty && a.tparamClause.values.isEmpty => a }
+              val constructors = values.flatMap(_.rhs.collect {
+                case a: Term.Apply if a.fun.syntax == "_root_." + full && a.argClause.values.size == 1 => a.fun
+              })
+              val unresolved = values.flatMap(_.rhs.collect {
+                case n: Term.Name if n.value == obj.name.value && !constructors.exists(c => c.pos.start <= n.pos.start && n.pos.end <= c.pos.end) => n
+              })
+              val stable = !types.parents(obj).exists(t => t.is[Defn.Def] || t.is[Defn.Class] || t.is[Defn.Trait] || t.is[Defn.Enum])
+              val valid = values.size == 1 && values.head.pats.size == 1 && values.head.decltpe.exists(_.collect {
+                case t: Type if t.syntax.stripPrefix("_root_.") == full || t.syntax == obj.name.value => true
+              }.nonEmpty) && provenance.nonEmpty && aliases.size == 1 && unresolved.isEmpty && stable &&
+                obj.mods.isEmpty && obj.templ.stats.isEmpty && obj.templ.inits.size == 1 && obj.templ.inits.head.argClauses.isEmpty && types.pure(full,obj).nonEmpty
+              if(!valid) {
+                evidence += List(d(1),(obj.pos.startLine + 1).toString,"UNRESOLVED generated value-name collision " + d.head,"Requires unique typed value, exact generated value origin, canonical alias, empty qualified Pure companion, stable owner and only rooted one-argument constructors inside the value initializer")
+                Nil
+              } else {
+                val scope = obj.parent.get
+                val taken = occupied.getOrElse(scope,siblings.flatMap(_.collect { case n: Name => n.value }).toSet)
+                val next = Iterator.from(1).map(i => obj.name.value + "Value" + (if(i == 1) "" else i.toString)).find(n => !taken(n)).get
+                occupied(scope) = taken + next
+                val target = owner + "." + next
+                val indent = source.substring(source.lastIndexOf('\n',aliases.head.pos.start - 1) + 1,aliases.head.pos.start).takeWhile(_ == ' ')
+                val alias = "type " + obj.name.value + " = " + next + "\n" + indent + "type " + next + " = " + next + ".T"
+                val changes: List[(Tree,String)] = List(aliases.head -> alias,obj.name -> next) ++ constructors.map(_ -> ("_root_." + target))
+                evidence += List(d(1),(obj.pos.startLine + 1).toString,"RENAME_NEWTYPE " + d.head,d(1) + "::" + target + "#0")
+                provenance.foreach(r => evidence += List(d(1),(obj.pos.startLine + 1).toString,owner + "#" + r(1),next))
+                changes.map { case(t,replacement) =>
+                  evidence += List(d(1),(t.pos.startLine + 1).toString,"VALUE_NAME " + t.structure,replacement)
+                  d(1) -> ((t.pos.start,t.pos.end,replacement))
+                }
+              }
+            }
+          case _ => Nil
+        }
+      case _ => Nil
+    }.groupBy(_._1).map { case(path,rs) => path -> rs.map(_._2) }
   }
 }
 

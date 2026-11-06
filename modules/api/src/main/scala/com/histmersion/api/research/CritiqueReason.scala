@@ -47,7 +47,7 @@ object CritiqueReason:
   def parse(s: com.histmersion.api.research.CritiqueReason.ParseS): Either[com.histmersion.api.research.CritiqueReason.ParseResultPart1, CritiqueReason] =
     val i = (s).value.indexOf('=')
     if i < 0 then Left(_root_.com.histmersion.api.research.CritiqueReason.ParseResultPart1(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
-    else CritiqueRef.parse(_root_.com.histmersion.api.research.CritiqueRef.ParseS((s).value.take(i))).map(r => CritiqueReason(r.src, r.dst, (s).value.drop(i + 1).trim))
+    else CritiqueRef.parse(_root_.com.histmersion.api.research.CritiqueRef.ParseS((s).value.take(i))).map(r => CritiqueReason(r.src, r.dst, _root_.com.histmersion.api.research.CritiqueReason.Reason((s).value.drop(i + 1).trim)))
 
   def tidy(r: CritiqueReason): Either[com.histmersion.api.research.CritiqueReason.TidyResultPart1, CritiqueReason] =
     val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")

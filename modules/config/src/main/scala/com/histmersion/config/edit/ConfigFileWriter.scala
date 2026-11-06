@@ -71,8 +71,9 @@ object ConfigFileWriter:
   object CommitResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CommitIntendedPart1 = CommitIntendedPart1.T
   object CommitIntendedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewFileHeader = NewFileHeader.T
-  object NewFileHeader extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewFileHeader = NewFileHeaderValue
+  type NewFileHeaderValue = NewFileHeaderValue.T
+  object NewFileHeaderValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val lock = new Object
 

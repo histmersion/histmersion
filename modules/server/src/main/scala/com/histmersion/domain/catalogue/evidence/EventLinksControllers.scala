@@ -345,7 +345,8 @@ object EventLinksControllers:
   object ArticleLeadsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleLeadsCitekeys = ArticleLeadsCitekeys.T
   object ArticleLeadsCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidatesJobKind = CandidatesJobKind.T
-  object CandidatesJobKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CandidatesJobKind = CandidatesJobKindValue
+  type CandidatesJobKindValue = CandidatesJobKindValue.T
+  object CandidatesJobKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val CandidatesJobKind: com.histmersion.domain.catalogue.evidence.EventLinksControllers.CandidatesJobKind = com.histmersion.api.catalogue.EvidenceJobKinds.EventsCandidates.kind.value
