@@ -311,7 +311,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         sourcesByUid.get(o).map(l => IssueDetail(MergeIssue.Detail.sourceFields(l, s)))
     )
 
-  override def citekeyArgument(i: MergeIssue, dec: MergeDecision): Option[Either[String, Unit]] =
+  override def citekeyArgument(i: MergeIssue, dec: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
     dec.kind match
       case km.Map =>
         val allowed = List(i.left, i.right).flatten.map(_.label.value)
@@ -319,17 +319,17 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         val leftUid = i.left.map(_.uid)
         Some(
           if !allowed.contains(ck) then
-            Left(s"map takes one of the two citekeys: ${allowed.map(c => s"map:$c").mkString(" or ")}")
+            Left(MergePlan.ResolutionErrors(s"map takes one of the two citekeys: ${allowed.map(c => s"map:$c").mkString(" or ")}"))
           else if in.labels.citekeys.get(wire(ck)).orElse(in.labels.aliases.get(wire(ck))).exists(o => !leftUid.contains(o))
-          then Left(s"'$ck' is a citekey (or an old one) of another source here — merge under the other citekey")
+          then Left(MergePlan.ResolutionErrors(s"'$ck' is a citekey (or an old one) of another source here — merge under the other citekey"))
           else Right(())
         )
       case km.RenameRight | km.RenameLeft =>
         val ck = dec.argument.map(_.value).getOrElse("")
         val labelsHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey)
         Some(
-          if !Citekeys.valid(Citekeys.ValidCk(ck)) then Left(s"'$ck' is not a citekey (lower-case letters, digits and _)")
-          else if labelsHere(wire(ck)) then Left(s"'$ck' is already a citekey (or an old one) here or in the bundle")
+          if !Citekeys.valid(Citekeys.ValidCk(ck)) then Left(MergePlan.ResolutionErrors(s"'$ck' is not a citekey (lower-case letters, digits and _)"))
+          else if labelsHere(wire(ck)) then Left(MergePlan.ResolutionErrors(s"'$ck' is already a citekey (or an old one) here or in the bundle"))
           else Right(())
         )
       case _ => None
@@ -346,7 +346,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       .get(right.uid)
       .filterNot(_.evidence.strongKey)
       .foreach(_ => folds.count(_.modify(_.sourcesByScore).using(n => MergeTally.SourcesByScore(n.value + 1))))
-    val fieldDec = pairFieldIds.getOrElse(right.uid, Map.empty).flatMap((k, id) => folds.decisionIn(PlanFolds.DecisionInIssue(id.value)).map(k -> _))
+    val fieldDec = pairFieldIds.getOrElse(right.uid, Map.empty).flatMap((k, id) => folds.decisionIn(id).map(k -> _))
     val merged = fold(left, right, fieldDec, citekey)
     sourceLine(left.uid) = _ => merged
     merged.bodySha256 != left.bodySha256

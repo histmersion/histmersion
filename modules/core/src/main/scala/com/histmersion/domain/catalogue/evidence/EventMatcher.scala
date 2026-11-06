@@ -92,7 +92,7 @@ object EventMatcher:
     val byCk = near.groupBy(_.citekey)
     (byCk.keySet ++ named.keySet).toList
       .flatMap { ck =>
-        val fs = byCk.getOrElse(ck, Nil).sortBy(f => (f.yearGap.value, f.km.value, f.id.value))
+        val fs = byCk.getOrElse(ck, Nil).sortBy(f => (f.yearGap.value: Long, f.km.value: Double, f.id.value: String))
         val ps = named.getOrElse(ck, Nil)
         val fScore = (fs.map(findingWeight(_, w).value).sum * w.finding.value).min(w.finding.value)
         val nScore = if ps.isEmpty then 0.0 else w.name.value * (1.0 + 0.1 * (ps.size - 1).min(4))
@@ -133,7 +133,7 @@ object EventMatcher:
     * when no passage names the event: then no attestation may be written.
     */
   def attestationPassage(ps: List[EventPassage]): Option[EventPassage] =
-    ps.sortBy(p => (-p.name.value.length, p.start.value)).headOption
+    ps.sortBy(p => (-p.name.value.length, p.start.value: Int)).headOption
 
   /** Pure: the attestation a confirmed passage becomes — the quote and its offsets (W3C TextQuoteSelector +
     * TextPositionSelector), and a note saying how it was found.

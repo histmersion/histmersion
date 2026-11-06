@@ -81,7 +81,7 @@ object CatalogMerge:
     type Id = com.histmersion.domain.catalogue.Event.Id
     val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
 
-    given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score.value, f.years.value, f.km.value, f.id.value))
+    given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score.value, f.years.value: Double, f.km.value: Double, f.id.value: String))
 
   /** Pure: the [[Fit]] of a candidate (`ts`, `lat`/`lon`, `id`) to a record. */
   def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[com.histmersion.api.catalogue.Latitude], lon: Option[com.histmersion.api.catalogue.Longitude], id: Fit.Id): Fit =

@@ -45,7 +45,6 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
         .flatMap(p =>
           in.periodMatches
             .get(p.uid)
-            .map(m => Bundle.Period.Id(m.value))
             .filter(_ != p.id)
             .map(m => Bundle.Period.ParentId(p.id.value) -> Bundle.Period.ParentId(m.value))
         )
@@ -106,7 +105,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
           )
         case None =>
           localPeriodById.values
-            .find(x => in.periodMatches.get(f).exists(m => m.value == x.id.value))
+            .find(x => in.periodMatches.get(f).contains(x.id))
             .foreach(o => q.merge(f, o.uid, SamePeriod))
     }
 
@@ -117,7 +116,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
         folds.fold(f, o, Bundle.Kind.Period)
         folds.count(_.modify(_.periodsMerged).using(n => com.histmersion.api.exchange.MergeTally.PeriodsMerged(n.value + 1)))
         if d.kind == km.KeepRight then
-          periodLine(o) = es => periodIn(es, o).modify(_.origin).setTo(localPeriod(o).origin).modify(_.rev).setTo("")
+          periodLine(o) = es => periodIn(es, o).modify(_.origin).setTo(localPeriod(o).origin).modify(_.rev).setTo(Bundle.Period.Rev(""))
         else folds.keepLocal(f)
       case _ => ()
 

@@ -126,7 +126,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   ): Boolean =
     val ms = findingMatches.getOrElse(right.uid, Nil)
     def merging(rf: com.histmersion.api.exchange.Bundle.Finding) =
-      nearIssue.get(rf.uid).flatMap(id => folds.decisionIn(PlanFolds.DecisionInIssue(id.value))).exists(_.kind == km.Merge)
+      nearIssue.get(rf.uid).flatMap(id => folds.decisionIn(id)).exists(_.kind == km.Merge)
     val renumbered =
       localFindingsOf.getOrElse(left.uid, Nil).map(f => Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}")).toSet
     val incoming = ms.collect {
@@ -323,7 +323,7 @@ object FindingPlan:
       case (a, b)             => a.orElse(b)
     val point = if l.lon.isDefined && l.lat.isDefined then (l.lon, l.lat) else (r.lon, r.lat)
     l.modify(
-      _.region).setTo(text(l.region).orElse(text(r.region))).modify(_.lon).setTo(point._1).modify(_.lat).setTo(point._2).modify(_.period).setTo(period).modify(_.periodName).setTo(if period == l.period then l.periodName.orElse(r.periodName) else r.periodName.orElse(l.periodName)).modify(_.tags).setTo(MergeFold.unionTags(l.tags, r.tags)).modify(_.confidence).setTo(conf).modify(_.significance).setTo(l.significance.orElse(r.significance)).modify(_.rev).setTo(""
+      _.region).setTo(text(l.region).orElse(text(r.region))).modify(_.lon).setTo(point._1).modify(_.lat).setTo(point._2).modify(_.period).setTo(period).modify(_.periodName).setTo(if period == l.period then l.periodName.orElse(r.periodName) else r.periodName.orElse(l.periodName)).modify(_.tags).setTo(MergeFold.unionTags(l.tags, r.tags)(_.value)).modify(_.confidence).setTo(conf).modify(_.significance).setTo(l.significance.orElse(r.significance)).modify(_.rev).setTo(Bundle.Finding.Rev("")
     )
 
   /** `<citekey>#<n>` labels for `count` new findings: after the highest number in use, never one that is taken. */

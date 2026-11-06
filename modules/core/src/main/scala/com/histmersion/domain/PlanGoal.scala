@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -58,8 +59,10 @@ object PlanGoal:
       .modify(_.notes)(_.description("What it should establish, in one or two sentences; null if obvious"))
       .modify(_.tags)(_.description("Tags from the corpus vocabulary (facets), not new ones"))
 
-  final case class WorkAnswer(doi: com.histmersion.domain.library.Doi, why: WorkAnswer.Why) derives KindlingsCodecAsObject
+  final case class WorkAnswer(doi: WorkAnswer.Doi, why: WorkAnswer.Why) derives KindlingsCodecAsObject
   object WorkAnswer:
+    type Doi = Doi.T
+    object Doi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -1,6 +1,7 @@
 package com.histmersion.domain.media.assets
 
 import com.histmersion.api.exchange.Bundle
+import com.histmersion.api.exchange.MergeTally
 
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
@@ -52,7 +53,7 @@ final class AssetPlan(in: MergePlanner.Input) extends PlanRun:
             usedLocal += x.uid
             folds.fold(a.uid, x.uid, Bundle.Kind.Asset)
             assetLine(x.uid) = _ => x
-            folds.count(_.modify(_.assetsMerged).using(_ + 1))
+            folds.count(_.modify(_.assetsMerged).using(n => MergeTally.AssetsMerged(n.value + 1)))
           case None if names(a.name) =>
             val n = AssetPlan.freeName(a.name, in.fromLabel, names.toSet)
             names += n

@@ -55,15 +55,15 @@ object UndatedCells:
       )
       TileCell(
         key,
-        math.floor(sumX / n).toInt,
-        math.floor(sumY / n).toInt,
-        n,
+        TileCell.X(math.floor(sumX / n).toInt),
+        TileCell.Y(math.floor(sumY / n).toInt),
+        TileCell.N(n),
         dated.flatMap(_.midLo).map(m => TileCell.MidLo(m.value)),
         dated.flatMap(_.midHi).map(m => TileCell.MidHi(m.value)),
         TileCell.West(both.map(b => (b.west.value: Double)).min),
         TileCell.South(both.map(b => (b.south.value: Double)).min),
         TileCell.East(both.map(b => (b.east.value: Double)).max),
         TileCell.North(both.map(b => (b.north.value: Double)).max),
-        undated = u
+        undated = TileCell.Undated(u)
       )
     }

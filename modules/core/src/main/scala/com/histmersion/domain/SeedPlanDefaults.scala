@@ -10,9 +10,9 @@ final case class SeedPlanDefaults(maxArticles: SeedPlanDefaults.MaxArticles, min
     ManagerConfig(
       maxRuns = Some(ManagerConfig.MaxRuns(m.seed.maxRuns.value)),
       maxOpen = Some(ManagerConfig.MaxOpen(2 * m.seed.maxRuns.value)),
-      maxFailures = Some(m.maxFailures),
-      minSources = Some(minSources),
-      maxArticles = Some(maxArticles),
+      maxFailures = Some(ManagerConfig.MaxFailures(m.maxFailures.value)),
+      minSources = Some(ManagerConfig.MinSources(minSources.value)),
+      maxArticles = Some(ManagerConfig.MaxArticles(maxArticles.value)),
       dailyUsd = ManagerPolicy.dailyCap(ManagerConfig(), m)
     )
 

@@ -210,8 +210,8 @@ object CompareRuns:
       placesAsked: EnrichSide.PlacesAsked,
       placesResolved: EnrichSide.PlacesResolved,
       datedFindings: EnrichSide.DatedFindings,
-      periodStart: Option[com.histmersion.Year],
-      periodEnd: Option[com.histmersion.Year],
+      periodStart: Option[com.histmersion.api.catalogue.Year],
+      periodEnd: Option[com.histmersion.api.catalogue.Year],
       summaryChars: EnrichSide.SummaryChars,
       notesChars: EnrichSide.NotesChars,
       uniqueClaims: List[EnrichSide.UniqueClaims]

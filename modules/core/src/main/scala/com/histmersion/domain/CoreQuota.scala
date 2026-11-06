@@ -180,7 +180,7 @@ object CoreQuota:
   /** `s` on `now`'s day: a new day starts with no tokens spent; a block and the recent slots stay. */
   def onDay(s: State, now: Instant): State =
     val today = day(now)
-    if s.day == today then s else s.modify(_.day).setTo(today).modify(_.lookupTokens).setTo(0).modify(_.searchTokens).setTo(0)
+    if s.day == today then s else s.modify(_.day).setTo(today).modify(_.lookupTokens).setTo(State.LookupTokens(0)).modify(_.searchTokens).setTo(State.SearchTokens(0))
 
   /** May a call for `purpose` go out at `now`? Counts it when it may (the reservation is made before the call is sent,
     * so callers on several threads never overspend together).
