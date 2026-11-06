@@ -8,7 +8,7 @@ final case class SpatialHierarchyResult(
     edgesCreated: SpatialHierarchyResult.EdgesCreated,
     polygonPlaces: SpatialHierarchyResult.PolygonPlaces,
     pointPlaces: SpatialHierarchyResult.PointPlaces,
-    job: Option[SpatialHierarchyResult.Job] = None
+    job: Option[SpatialHierarchyResult.Job.Id] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -22,5 +22,3 @@ object SpatialHierarchyResult:
   object PolygonPlaces extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointPlaces = PointPlaces.T
   object PointPlaces extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Job = com.histmersion.api.SpatialHierarchyResult.Job.Id
-  val Job: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id

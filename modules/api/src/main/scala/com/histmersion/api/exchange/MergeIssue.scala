@@ -181,7 +181,7 @@ object MergeIssue:
         ).flatten.mkString(" · "))
       )
 
-    def side(s: Bundle.Source): IssueSide = IssueSide(s.citekey, s.uid, describe(s))
+    def side(s: Bundle.Source): IssueSide = IssueSide(IssueSide.Label(s.citekey.value), s.uid, describe(s).map(IssueSide.Lines(_)))
 
     def rangeText(r: Option[Bundle.Range]): String = r match
       case None                           => ("none")
@@ -195,31 +195,35 @@ object MergeIssue:
     def span(r: Bundle.Range): IssueSpan = IssueSpan(r.start, r.end)
 
     def eventSpan(e: Bundle.Event): Option[IssueSpan] =
-      val (a, b) = (e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom))
+      val a = e.notBefore.map(y => com.histmersion.api.catalogue.Year(y.value)).orElse(e.beginBy.map(y => com.histmersion.api.catalogue.Year(y.value)))
+      val b = e.notAfter.map(y => com.histmersion.api.catalogue.Year(y.value)).orElse(e.endFrom.map(y => com.histmersion.api.catalogue.Year(y.value)))
       Option.when(a.isDefined || b.isDefined)(IssueSpan(a, b))
 
     def clip(s: Option[String], n: com.histmersion.api.exchange.MergeIssue.Detail.ClipLength = _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(600)): Option[String] =
       s.map((_).trim).filter(_.nonEmpty).map(t => if t.length <= (n).value then (t) else (t.take((n).value - 1) + "…"))
 
+    private def field(name: String, l: Option[String], r: Option[String]): IssueField =
+      IssueField(IssueField.Field(name), l.map(IssueField.Left(_)), r.map(IssueField.Right(_)))
+
     def sourceFields(l: Bundle.Source, r: Bundle.Source): List[IssueField] =
       def range(p: Option[Bundle.Range]) = p.map(x => rangeText(Some(x)))
       def list(xs: List[String]) = Option(xs.mkString("; ")).filter(_.nonEmpty)
       List(
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("citekey"), Some(l.citekey), Some(r.citekey)),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("title"), Some(l.title), Some(r.title)),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("authors"), list(l.authors), list(r.authors)),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("year"), l.year.map(_root_.com.histmersion.api.exchange.IssueField.Left(_.toString)), r.year.map(_root_.com.histmersion.api.exchange.IssueField.Right(_.toString))),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("DOI"), l.doi, r.doi),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("venue"), l.venue, r.venue),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("status"), Some(l.status.wire), Some(r.status.wire)),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("period"), range(l.period), range(r.period)),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("tags"), list(l.tags), list(r.tags)),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("summary"), clip(l.summary), clip(r.summary)),
-        IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("notes"), clip(l.notes), clip(r.notes)),
-        IssueField(
-          _root_.com.histmersion.api.exchange.IssueField.Field("OCR body"),
-          l.bodySha256.map(h => s"sha256 ${h.take(12)}…"),
-          r.bodySha256.map(h => s"sha256 ${h.take(12)}…")
+        field("citekey", Some(l.citekey.value), Some(r.citekey.value)),
+        field("title", Some(l.title.value), Some(r.title.value)),
+        field("authors", list(l.authors.map(_.value)), list(r.authors.map(_.value))),
+        field("year", l.year.map(_.value.toString), r.year.map(_.value.toString)),
+        field("DOI", l.doi.map(_.value), r.doi.map(_.value)),
+        field("venue", l.venue.map(_.value), r.venue.map(_.value)),
+        field("status", Some(l.status.wire.value), Some(r.status.wire.value)),
+        field("period", range(l.period), range(r.period)),
+        field("tags", list(l.tags.map(_.value)), list(r.tags.map(_.value))),
+        field("summary", clip(l.summary.map(_.value)), clip(r.summary.map(_.value))),
+        field("notes", clip(l.notes.map(_.value)), clip(r.notes.map(_.value))),
+        field(
+          "OCR body",
+          l.bodySha256.map(h => s"sha256 ${h.value.take(12)}…"),
+          r.bodySha256.map(h => s"sha256 ${h.value.take(12)}…")
         )
       )
 
@@ -229,13 +233,13 @@ object MergeIssue:
       )
       IssueDetail(
         fields = List(
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("id"), Some(l.id), Some(r.id)),
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("label"), Some(l.label), Some(r.label)),
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("kind"), Some(l.kind), Some(r.kind)),
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("dates (not before · begin by · end from · not after)"), (dates(l)).map(refactorValue43 => _root_.com.histmersion.api.exchange.IssueField.Left(refactorValue43)), (dates(r)).map(refactorValue44 => _root_.com.histmersion.api.exchange.IssueField.Right(refactorValue44))),
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("place"), l.placeId, r.placeId),
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("historicity"), Some(l.historicity), Some(r.historicity)),
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("description"), clip(l.description), clip(r.description))
+          field("id", Some(l.id.value), Some(r.id.value)),
+          field("label", Some(l.label.value), Some(r.label.value)),
+          field("kind", Some(l.kind.value), Some(r.kind.value)),
+          field("dates (not before · begin by · end from · not after)", dates(l), dates(r)),
+          field("place", l.placeId.map(_.value), r.placeId.map(_.value)),
+          field("historicity", Some(l.historicity.value), Some(r.historicity.value)),
+          field("description", clip(l.description.map(_.value)), clip(r.description.map(_.value)))
         ),
         place = Some(IssuePlace(l.geom, r.geom, eventSpan(l), eventSpan(r)))
       )
@@ -243,13 +247,13 @@ object MergeIssue:
     def placeDetail(l: Bundle.Place, r: Bundle.Place): IssueDetail =
       IssueDetail(
         fields = List(
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("label"), Some(l.label), Some(r.label)),
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("kind"), Some(l.kind), Some(r.kind)),
-          IssueField(_root_.com.histmersion.api.exchange.IssueField.Field("span"), Some(rangeText(l.period)), Some(rangeText(r.period))),
-          IssueField(
-            _root_.com.histmersion.api.exchange.IssueField.Field("names"),
-            (Option(l.names.map(_.name).mkString("; ")).filter(_.nonEmpty)).map(refactorValue49 => _root_.com.histmersion.api.exchange.IssueField.Left(refactorValue49)),
-            (Option(r.names.map(_.name).mkString("; ")).filter(_.nonEmpty)).map(refactorValue50 => _root_.com.histmersion.api.exchange.IssueField.Right(refactorValue50))
+          field("label", Some(l.label.value), Some(r.label.value)),
+          field("kind", Some(l.kind.value), Some(r.kind.value)),
+          field("span", Some(rangeText(l.period)), Some(rangeText(r.period))),
+          field(
+            "names",
+            Option(l.names.map(_.name).mkString("; ")).filter(_.nonEmpty),
+            Option(r.names.map(_.name).mkString("; ")).filter(_.nonEmpty)
           )
         ),
         place = Some(IssuePlace(l.geom, r.geom, l.period.map(span), r.period.map(span)))
@@ -258,7 +262,7 @@ object MergeIssue:
     def planText(j: Json): String =
       j.as[Goal.Plans.Plan].toOption.fold(preview((j.noSpaces), _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(300))) { p =>
         List(
-          Option(p.rationale).filter(_.nonEmpty).map(r => preview(r, _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(160))),
+          Option(p.rationale.value).filter(_.nonEmpty).map(r => preview(r, _root_.com.histmersion.api.exchange.MergeIssue.Detail.ClipLength(160))),
           Option.when(p.subGoals.nonEmpty)(s"sub-goals: ${p.subGoals.map(_.slug).mkString(", ")}"),
           Option.when(p.queries.nonEmpty)(s"queries: ${p.queries.mkString("; ")}"),
           Option.when(p.works.nonEmpty)(s"${Plural.count(_root_.com.histmersion.api.Plural.Count((p.works.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("work"))}")

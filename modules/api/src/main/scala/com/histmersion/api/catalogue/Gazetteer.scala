@@ -53,10 +53,10 @@ object Gazetteer:
 
   def sourceKey(kind: com.histmersion.api.catalogue.Gazetteer.Kind, dataset: Option[com.histmersion.api.catalogue.Gazetteer.DatasetName] = None): com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key = kind match
     case com.histmersion.api.catalogue.Gazetteer.Kind.Lpf => _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key(s"lpf:${dataset.getOrElse("")}")
-    case k                                                => k.wire
+    case k                                                => _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key(k.wire.value)
 
   def datasetSlug(fileName: com.histmersion.api.catalogue.Gazetteer.SourceInfo.File): com.histmersion.api.catalogue.Gazetteer.DatasetName =
-    val base = fileName
+    val base = fileName.value
       .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
       .replaceAll("(?i)\\.lpf$", "")
     _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName((slug(base)).take(48))
@@ -64,7 +64,7 @@ object Gazetteer:
   private def slug(s: String): String =
     ((s).trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
-  def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.Rank = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
+  def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.Rank = m.importSource.flatMap(s => com.histmersion.api.catalogue.Gazetteer.Kind.ofKey(_root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key(s.value))) match
     case None                                                        => if m.importSource.isEmpty then _root_.com.histmersion.api.catalogue.Gazetteer.Rank(0) else _root_.com.histmersion.api.catalogue.Gazetteer.Rank(5)
     case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)      => _root_.com.histmersion.api.catalogue.Gazetteer.Rank(1)
     case Some(com.histmersion.api.catalogue.Gazetteer.Kind.Wikidata) => _root_.com.histmersion.api.catalogue.Gazetteer.Rank(2)
@@ -84,7 +84,7 @@ object Gazetteer:
       .values
       .map(_.minBy((m, via) => (if ((m.native) == _root_.com.histmersion.api.catalogue.Place.Match.Native(true)) then 0 else 1, via)))
       .toList
-      .sortBy((m, via) => (if ((m.native) == _root_.com.histmersion.api.catalogue.Place.Match.Native(true)) then 0 else 1, via, rank(m), m.placeId))
+      .sortBy((m, via) => (if ((m.native) == _root_.com.histmersion.api.catalogue.Place.Match.Native(true)) then 0 else 1, via, rank(m).value, m.placeId.value))
       .headOption
       .map(_._1.placeId)
 
@@ -115,27 +115,27 @@ object Gazetteer:
   def pointOnly(g: Option[GazGeometry]): Boolean = g match
     case None                     => (true)
     case Some(GazGeometry.Wkt(t)) =>
-      val u = t.trim.toUpperCase(java.util.Locale.ROOT).replaceFirst("^SRID=\\d+;", "")
+      val u = t.value.trim.toUpperCase(java.util.Locale.ROOT).replaceFirst("^SRID=\\d+;", "")
       u.startsWith("POINT") || u.startsWith("MULTIPOINT")
     case Some(GazGeometry.GeoJson(t)) =>
       io.circe.parser
-        .parse(t)
+        .parse(t.value)
         .toOption
         .flatMap(_.asObject)
         .flatMap(_("type"))
         .flatMap(_.asString)
         .exists(k => k == "Point" || k == "MultiPoint")
 
-  def dropsPointArea(source: com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key, r: GazRecord, kinds: Set[com.histmersion.api.catalogue.Gazetteer.Kind.Wire]): Boolean =
-    PointAreaSources.contains(source) && kinds.contains(r.kind) && pointOnly(r.geometry)
+  def dropsPointArea(source: com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key, r: GazRecord, kinds: Set[com.histmersion.api.catalogue.Gazetteer.PointAreaKinds]): Boolean =
+    PointAreaSources.contains(source) && kinds.map(_.value).contains(r.kind.value) && pointOnly(r.geometry)
 
   def inDataset(r: GazRecord, ds: LpfDataset): GazRecord =
     if ((r.span.isEmpty) == (true)) && !((ds.span.isEmpty) == (true)) then r.modify(_.span).setTo(ds.span) else r
 
   def mergeNames(ns: List[GazName]): List[GazName] =
-    ns.map(n => n.modify(_.name).setTo(n.name.trim).modify(_.lang).setTo(n.lang.trim.toLowerCase(java.util.Locale.ROOT)))
-      .filter(_.name.nonEmpty)
-      .groupBy(n => (n.name, n.lang))
+    ns.map(n => n.modify(_.name).setTo(GazName.Name(n.name.value.trim)).modify(_.lang).setTo(GazName.Lang(n.lang.value.trim.toLowerCase(java.util.Locale.ROOT))))
+      .filter(_.name.value.nonEmpty)
+      .groupBy(n => (n.name.value, n.lang.value))
       .toList
       .map { case ((name, lang), group) =>
         val dated = group.filterNot(_.span.isEmpty)
@@ -143,21 +143,21 @@ object Gazetteer:
           if dated.isEmpty then Span.always
           else
             Span(
-              if dated.forall(_.span.from.isDefined) then Some(dated.flatMap(_.span.from).min) else None,
-              if dated.forall(_.span.to.isDefined) then Some(dated.flatMap(_.span.to).max) else None
+              if dated.forall(_.span.from.isDefined) then Some(dated.flatMap(_.span.from).minBy(_.value)) else None,
+              if dated.forall(_.span.to.isDefined) then Some(dated.flatMap(_.span.to).maxBy(_.value)) else None
             )
         val cites =
-          group.flatMap(_.citation).flatMap(_.split("; ").toList).map(_.trim).filter(_.nonEmpty).distinct.sorted
-        GazName(name, lang, span, Option.when(cites.nonEmpty)(cites.mkString("; ")))
+          group.flatMap(_.citation).flatMap(_.value.split("; ").toList).map(_.trim).filter(_.nonEmpty).distinct.sorted
+        GazName(GazName.Name(name), GazName.Lang(lang), span, Option.when(cites.nonEmpty)(GazName.Citation(cites.mkString("; "))))
       }
-      .sortBy(n => (n.name.toLowerCase(java.util.Locale.ROOT), n.name, n.lang))
+      .sortBy(n => (n.name.value.toLowerCase(java.util.Locale.ROOT), n.name.value, n.lang.value))
 
   def span(j: Json): Span = Lpf.parseWhen(j).getOrElse(Span.always)
 
   private def str(o: JsonObject, keys: String*): Option[String] =
     (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue9 => (refactorValue9))
 
-  private def citationOf(n: JsonObject): Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Citation] =
+  private def citationOf(n: JsonObject): Option[com.histmersion.api.catalogue.GazName.Citation] =
     val cites = n("citations").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { c =>
       c.asString.orElse(
         c.asObject.flatMap(o =>
@@ -169,15 +169,15 @@ object Gazetteer:
         )
       )
     }
-    Option.when(cites.nonEmpty)(_root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Citation(cites.distinct.mkString("; ")))
+    Option.when(cites.nonEmpty)(_root_.com.histmersion.api.catalogue.GazName.Citation(cites.distinct.mkString("; ")))
 
   private def readNames(f: JsonObject): List[GazName] =
     f("names").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { j =>
       j.asString
-        .map(GazName(_root_.com.histmersion.api.catalogue.GazName.Name(_)))
+        .map(s => GazName(_root_.com.histmersion.api.catalogue.GazName.Name(s)))
         .orElse(j.asObject.flatMap { o =>
           str(o, "toponym", "name", "label").map(t =>
-            GazName(t, str(o, "lang", "language").getOrElse(""), o("when").fold(Span.always)(span), citationOf(o))
+            GazName(GazName.Name(t), GazName.Lang(str(o, "lang", "language").getOrElse("")), o("when").fold(Span.always)(span), citationOf(o))
           )
         })
     }
@@ -189,17 +189,17 @@ object Gazetteer:
       .getOrElse(Nil)
       .flatMap { j =>
         j.asString
-          .map(GazDescription(_root_.com.histmersion.api.catalogue.GazDescription.Text(_)))
+          .map(s => GazDescription(_root_.com.histmersion.api.catalogue.GazDescription.Text(s)))
           .orElse(
             j.asObject.flatMap(o =>
               str(o, "value", "description", "text")
-                .map(v => GazDescription(v, str(o, "lang", "language").getOrElse("")))
+                .map(v => GazDescription(GazDescription.Text(v), GazDescription.Lang(str(o, "lang", "language").getOrElse(""))))
             )
           )
       }
-      .map(d => d.modify(_.text).setTo(d.text.trim).modify(_.lang).setTo(d.lang.trim.toLowerCase(java.util.Locale.ROOT)))
-      .filter(_.text.nonEmpty)
-      .distinctBy(d => (d.lang, d.text))
+      .map(d => d.modify(_.text).setTo(GazDescription.Text(d.text.value.trim)).modify(_.lang).setTo(GazDescription.Lang(d.lang.value.trim.toLowerCase(java.util.Locale.ROOT))))
+      .filter(_.text.value.nonEmpty)
+      .distinctBy(d => (d.lang.value, d.text.value))
 
   private def readLinks(f: JsonObject): List[GazLink] =
     f("links")
@@ -209,16 +209,16 @@ object Gazetteer:
       .flatMap(_.asObject)
       .flatMap { o =>
         for
-          rel <- str(o, "type", "relation").flatMap(LinkMatch.ofLpf)
-          id <- str(o, "identifier", "id", "@id").flatMap(ExternalId.parse)
+          rel <- str(o, "type", "relation").flatMap(s => LinkMatch.ofLpf(LinkMatch.Wire(s)))
+          id <- str(o, "identifier", "id", "@id").flatMap(s => ExternalId.parse(ExternalId.Reference(s)))
         yield GazLink(id, rel)
       }
       .distinctBy(_.id)
 
   def placeIdFor(own: Option[ExternalId], ref: com.histmersion.api.catalogue.Gazetteer.PlaceRef, dataset: com.histmersion.api.catalogue.Gazetteer.DatasetName): com.histmersion.api.catalogue.Place.Id =
-    own.map(_.placeId).getOrElse {
-      val tail = slug((ref).value.split("[/#=]").filter(_.trim.nonEmpty).lastOption.getOrElse(ref))
-      s"lpf_${dataset}_${if tail.nonEmpty then tail.take(64) else "x" + Integer.toHexString(ref.hashCode)}"
+    own.map(o => com.histmersion.api.catalogue.Place.Id(o.placeId.value)).getOrElse {
+      val tail = slug((ref).value.split("[/#=]").filter(_.trim.nonEmpty).lastOption.getOrElse(ref.value))
+      com.histmersion.api.catalogue.Place.Id(s"lpf_${dataset}_${if tail.nonEmpty then tail.take(64) else "x" + Integer.toHexString(ref.value.hashCode)}")
     }
 
   def fromFeature(
@@ -227,39 +227,39 @@ object Gazetteer:
       ordinal: Int,
       defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key] = None
   ): Either[com.histmersion.api.catalogue.Gazetteer.Problem, GazRecord] =
-    Lpf.readFeature(j, _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).flatMap { in =>
+    Lpf.readFeature(j, _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).left.map(p => Problem(p.value)).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
-      raw.toRight(s"feature #$ordinal has no @id").map { ref =>
-        val own = ExternalId.parse(ref)
+      raw.toRight(Problem(s"feature #$ordinal has no @id")).map { ref =>
+        val own = ExternalId.parse(ExternalId.Reference(ref))
         val names = readNames(f)
-        val label = in.place.label
-        val all = if names.exists(_.name == label) then names else GazName(label) :: names
+        val label = in.place.label.value
+        val all = if names.exists(_.name.value == label) then names else GazName(GazName.Name(label)) :: names
         GazRecord(
-          ref = own.map(_.key).getOrElse(ref),
+          ref = GazRecord.Ref(own.map(_.key.value).getOrElse(ref)),
           own = own,
-          placeId = com.histmersion.api.catalogue.Place.Id(placeIdFor(own, ref, dataset)),
-          label = label,
-          kind = in.place.kind,
-          geometry = in.place.geometry.map(GazGeometry.GeoJson(_)),
+          placeId = placeIdFor(own, PlaceRef(ref), dataset),
+          label = GazRecord.Label(label),
+          kind = GazRecord.Kind(in.place.kind.value),
+          geometry = in.place.geometry.map(g => GazGeometry.GeoJson(GazGeometry.GeoJson.Text(g.value))),
           span = f("when").orElse(f("properties").flatMap(_.asObject).flatMap(_("when"))).fold(Span.always)(span),
           names = mergeNames(all),
           links = readLinks(f).filterNot(l => own.contains(l.id)),
-          source = in.place.source.orElse(defaultSource),
-          properties = in.place.properties,
+          source = in.place.source.map(s => GazRecord.Source(s.value)).orElse(defaultSource.map(k => GazRecord.Source(k.value))),
+          properties = in.place.properties.map(p => GazRecord.Properties(p.value)),
           descriptions = readDescriptions(f),
-          itemClass = f("properties").flatMap(_.asObject).flatMap(str(_, "class"))
+          itemClass = f("properties").flatMap(_.asObject).flatMap(str(_, "class")).map(c => GazRecord.ItemClass(c))
         )
       }
     }
 
   def dataset(top: JsonObject, sidecar: Option[JsonObject] = None): LpfDataset =
-    def pick(keys: String*): Option[com.histmersion.api.catalogue.Gazetteer.DatasetField] = sidecar.flatMap(str(_, keys*)).orElse(str(top, keys*))
+    def pick(keys: String*): Option[String] = sidecar.flatMap(str(_, keys*)).orElse(str(top, keys*))
     val when = sidecar.flatMap(_("when")).orElse(top("when")).fold(Span.always)(span)
     LpfDataset(
-      pick("title", "name", "label"),
-      pick("citation", "bibliographicCitation", "attribution"),
-      pick("license", "licence", "rights"),
+      pick("title", "name", "label").map(LpfDataset.Title(_)),
+      pick("citation", "bibliographicCitation", "attribution").map(LpfDataset.Citation(_)),
+      pick("license", "licence", "rights").map(LpfDataset.Licence(_)),
       when
     )
 
@@ -281,7 +281,7 @@ object Gazetteer:
       case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.Problem(s"line $line: no id"))
       case (_, None)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.Problem(s"line $line: no title"))
       case (Some(ref), Some(title)) =>
-        val own = ExternalId.parse(ref)
+        val own = ExternalId.parse(ExternalId.Reference(ref))
         val variants = get(("variants")).toList.flatMap((_).split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
           val at = v.lastIndexOf('@')
           if at > 0 && v.drop(at + 1).matches("[A-Za-z]{2,3}(-[A-Za-z0-9]+)?") then
@@ -301,6 +301,7 @@ object Gazetteer:
         val kind =
           get(("types"))
             .flatMap(t => (t).split(";").toList.flatMap({ val refactorFunction4 = com.histmersion.api.catalogue.Place.Kind.parse; (refactorValue10) => refactorFunction4(_root_.com.histmersion.api.catalogue.Place.Kind.ParseS(refactorValue10)) }).headOption)
+            .map(_.value)
             .getOrElse(com.histmersion.api.catalogue.Place.Kind.Site)
         val sp = Span(get(("start")).flatMap(Lpf.parseYear), get(("end")).flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
@@ -311,18 +312,18 @@ object Gazetteer:
         )
         Right(
           GazRecord(
-            ref = own.map(_.key).getOrElse(ref),
+            ref = GazRecord.Ref(own.map(_.key.value).getOrElse(ref)),
             own = own,
-            placeId = com.histmersion.api.catalogue.Place.Id(placeIdFor(own, ref, dataset)),
-            label = title,
+            placeId = placeIdFor(own, PlaceRef(ref), dataset),
+            label = GazRecord.Label(title),
             kind = _root_.com.histmersion.api.catalogue.GazRecord.Kind(kind),
-            geometry = point.orElse(get(("geowkt")).map(GazGeometry.Wkt(_))),
+            geometry = point.orElse(get(("geowkt")).map(w => GazGeometry.Wkt(GazGeometry.Wkt.Text(w)))),
             span = sp,
-            names = mergeNames(GazName(title) :: variants),
+            names = mergeNames(GazName(GazName.Name(title)) :: variants),
             links = links,
-            source = get(("title_source")).orElse(defaultSource),
+            source = get(("title_source")).map(s => GazRecord.Source(s)).orElse(defaultSource.map(k => GazRecord.Source(k.value))),
             properties = Option.when(props.nonEmpty)(_root_.com.histmersion.api.catalogue.GazRecord.Properties(Json.fromJsonObject(props).noSpaces)),
-            descriptions = get(("description")).map(GazDescription(_)).toList
+            descriptions = get(("description")).map(d => GazDescription(GazDescription.Text(d))).toList
           )
         )
 
@@ -414,24 +415,39 @@ object Gazetteer:
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
-      this.modify(
-        _.records).setTo(((records).value + (o.records).value)).modify(_.created).setTo((created).value + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
+      copy(
+        records = LoadCounts.Records(records.value + o.records.value),
+        created = LoadCounts.Created(created.value + o.created.value),
+        joined = LoadCounts.Joined(joined.value + o.joined.value),
+        placesChanged = LoadCounts.PlacesChanged(placesChanged.value + o.placesChanged.value),
+        namesAdded = LoadCounts.NamesAdded(namesAdded.value + o.namesAdded.value),
+        namesRemoved = LoadCounts.NamesRemoved(namesRemoved.value + o.namesRemoved.value),
+        namesChanged = LoadCounts.NamesChanged(namesChanged.value + o.namesChanged.value),
+        linksAdded = LoadCounts.LinksAdded(linksAdded.value + o.linksAdded.value),
+        linksRemoved = LoadCounts.LinksRemoved(linksRemoved.value + o.linksRemoved.value),
+        placesRemoved = LoadCounts.PlacesRemoved(placesRemoved.value + o.placesRemoved.value),
+        skipped = (skipped ++ o.skipped).take(20),
+        descriptionsAdded = LoadCounts.DescriptionsAdded(descriptionsAdded.value + o.descriptionsAdded.value),
+        descriptionsRemoved = LoadCounts.DescriptionsRemoved(descriptionsRemoved.value + o.descriptionsRemoved.value),
+        descriptionsChanged = LoadCounts.DescriptionsChanged(descriptionsChanged.value + o.descriptionsChanged.value),
+        linksChanged = LoadCounts.LinksChanged(linksChanged.value + o.linksChanged.value),
+        pointAreasSkipped = LoadCounts.PointAreasSkipped(pointAreasSkipped.value + o.pointAreasSkipped.value)
       )
 
     def unchanged: Boolean =
-      created == 0 && placesChanged == 0 && namesAdded == 0 && namesRemoved == 0 && namesChanged == 0 &&
-        linksAdded == 0 && linksRemoved == 0 && linksChanged == 0 && placesRemoved == 0 &&
-        descriptionsAdded == 0 && descriptionsRemoved == 0 && descriptionsChanged == 0
+      created.value == 0L && placesChanged.value == 0L && namesAdded.value == 0L && namesRemoved.value == 0L && namesChanged.value == 0L &&
+        linksAdded.value == 0L && linksRemoved.value == 0L && linksChanged.value == 0L && placesRemoved.value == 0L &&
+        descriptionsAdded.value == 0L && descriptionsRemoved.value == 0L && descriptionsChanged.value == 0L
 
     def describe: String =
-      s"$source $version: ${Plural.count(records, _root_.com.histmersion.api.Plural.CountSingular("record"))}, $created new place(s), $joined joined an existing place, " +
+      s"$source $version: ${Plural.count(Plural.CountN(records.value), _root_.com.histmersion.api.Plural.CountSingular("record"))}, $created new place(s), $joined joined an existing place, " +
         s"$placesChanged place(s) changed, names +$namesAdded −$namesRemoved ~$namesChanged, links +$linksAdded −$linksRemoved" +
-        (if linksChanged > 0 then s" ~$linksChanged" else "") +
-        (if descriptionsAdded + descriptionsRemoved + descriptionsChanged > 0 then
+        (if linksChanged.value > 0 then s" ~$linksChanged" else "") +
+        (if descriptionsAdded.value + descriptionsRemoved.value + descriptionsChanged.value > 0 then
            s", descriptions +$descriptionsAdded −$descriptionsRemoved ~$descriptionsChanged"
          else "") +
-        (if placesRemoved > 0 then s", $placesRemoved place(s) removed" else "") +
-        (if pointAreasSkipped > 0 then s", $pointAreasSkipped point-only region(s)/polity(ies) not kept as places"
+        (if placesRemoved.value > 0 then s", $placesRemoved place(s) removed" else "") +
+        (if pointAreasSkipped.value > 0 then s", $pointAreasSkipped point-only region(s)/polity(ies) not kept as places"
          else "") +
         (if skipped.nonEmpty then s", ${skipped.size} skipped" else "")
 
