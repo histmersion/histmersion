@@ -25,11 +25,8 @@ object ImageSize:
   val JpegB: _root_.com.histmersion.api.media.ImageSize.Bytes.type = _root_.com.histmersion.api.media.ImageSize.Bytes
 
   type Be16I = Int
-  val Be16I: Int.type = Int
   type Le16I = Int
-  val Le16I: Int.type = Int
   type Be32I = Int
-  val Be32I: Int.type = Int
 
   def of(bytes: com.histmersion.api.media.ImageSize.Bytes): Option[(com.histmersion.api.media.ImageSize.Width, com.histmersion.api.media.ImageSize.Height)] =
     if png(bytes) then pngSize(bytes)

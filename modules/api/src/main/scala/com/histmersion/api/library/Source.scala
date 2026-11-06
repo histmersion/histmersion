@@ -592,7 +592,6 @@ object Source:
     type ToFindingId = _root_.com.histmersion.api.library.Finding.Id
     val ToFindingId: _root_.com.histmersion.api.library.Finding.Id.type = _root_.com.histmersion.api.library.Finding.Id
     type PeriodOfWhat = String
-    val PeriodOfWhat: String.type = String
 
     def findingId(citekey: com.histmersion.api.library.Citekey, n: com.histmersion.api.library.Finding.Ordinal): com.histmersion.api.library.Finding.Id = _root_.com.histmersion.api.library.Finding.Id(s"$citekey#$n")
 

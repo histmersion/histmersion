@@ -28,7 +28,6 @@ object Query:
 
 
   type StatementsSql = String
-  val StatementsSql: String.type = String
   type MarkdownTableColumns = _root_.com.histmersion.api.library.Query.QueryResult.Columns
   val MarkdownTableColumns: _root_.com.histmersion.api.library.Query.QueryResult.Columns.type = _root_.com.histmersion.api.library.Query.QueryResult.Columns
   type MarkdownTableRows = _root_.com.histmersion.api.library.Query.QueryResult.Rows
