@@ -11,13 +11,13 @@ class JatsSuite extends munit.FunSuite:
   test("a JATS article is recognised through its prolog, comments and DOCTYPE"):
     assert(Jats.isJats(article))
     assert(Jats.isJats("\n<!DOCTYPE article PUBLIC \"x\" \"y\">\n<article dtd-version=\"1.4\"><front/></article>"))
-    assert(Jats.isJats("<article/>"))
+    assert(Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<article/>")))
 
   test("anything else is not JATS"):
-    assert(!Jats.isJats("%PDF-1.4 binary"))
-    assert(!Jats.isJats("<?xml version=\"1.0\"?><ListBucketResult/>"))
-    assert(!Jats.isJats("<html><body>Just a moment...</body></html>"))
-    assert(!Jats.isJats("<articles/>"))
+    assert(!Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("%PDF-1.4 binary")))
+    assert(!Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<?xml version=\"1.0\"?><ListBucketResult/>")))
+    assert(!Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<html><body>Just a moment...</body></html>")))
+    assert(!Jats.isJats(com.histmersion.upstreams.jats.Jats.Xml("<articles/>")))
 
   test("title, authors (not editors) and the abstract head the text; a teaser abstract is left out"):
     val lines = md.linesIterator.toList
@@ -63,11 +63,11 @@ class JatsSuite extends munit.FunSuite:
     assertEquals(Jats.entities("a &amp; b &lt;c&gt; &#8212; &#x2014; &local;"), "a & b <c> — — &local;")
 
   test("a truncated or malformed document still yields its text, never an exception"):
-    val out = Jats.toMarkdown("<article><body><sec><title>Only</title><p>half a para")
+    val out = Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("<article><body><sec><title>Only</title><p>half a para"))
     assert(out.contains("## Only"), out)
     assert(out.contains("half a para"), out)
-    assertEquals(Jats.toMarkdown("").trim, "")
-    assert(Jats.toMarkdown("<article><body><p>a</q></p></body></article>").contains("a"))
+    assertEquals(Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("")).trim, "")
+    assert(Jats.toMarkdown(com.histmersion.upstreams.jats.Jats.Xml("<article><body><p>a</q></p></body></article>")).contains("a"))
 
   test("an attribute value may hold a '>'"):
     val out = Jats.toMarkdown("""<article><body><p><ext-link href="a>b">link</ext-link> text</p></body></article>""")
