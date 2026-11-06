@@ -1,0 +1,384 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.CompareRuns.Comparison.Notes (String)
+com.histmersion.domain.CompareRuns.EnrichSide.DatedFindings (Int)
+com.histmersion.domain.CompareRuns.EnrichSide.Findings (Int)
+com.histmersion.domain.CompareRuns.EnrichSide.NotesChars (Int)
+com.histmersion.domain.CompareRuns.EnrichSide.PlacesAsked (Int)
+com.histmersion.domain.CompareRuns.EnrichSide.PlacesResolved (Int)
+com.histmersion.domain.CompareRuns.EnrichSide.QuotesChecked (Int)
+com.histmersion.domain.CompareRuns.EnrichSide.QuotesPassed (Int)
+com.histmersion.domain.CompareRuns.EnrichSide.SummaryChars (Int)
+com.histmersion.domain.CompareRuns.EnrichSide.UniqueClaims (String)
+com.histmersion.domain.CompareRuns.KindCount.Count (Int)
+com.histmersion.domain.CompareRuns.KindCount.Kind (String)
+com.histmersion.domain.CompareRuns.MajorOverlap.A (String)
+com.histmersion.domain.CompareRuns.MajorOverlap.AMajors (Int)
+com.histmersion.domain.CompareRuns.MajorOverlap.B (String)
+com.histmersion.domain.CompareRuns.MajorOverlap.BMajors (Int)
+com.histmersion.domain.CompareRuns.MajorOverlap.Pairs (String)
+com.histmersion.domain.CompareRuns.MajorOverlap.Shared (Int)
+com.histmersion.domain.CompareRuns.ModelChoice.Model (String)
+com.histmersion.domain.CompareRuns.ModelChoice.Role (String)
+com.histmersion.domain.CompareRuns.ReviewSide.Majors (String)
+com.histmersion.domain.CompareRuns.ReviewSide.Rounds (Int)
+com.histmersion.domain.CompareRuns.ReviewSide.Verdict (String)
+com.histmersion.domain.CompareRuns.ReviewerSide.Majors (Int)
+com.histmersion.domain.CompareRuns.ReviewerSide.Minors (Int)
+com.histmersion.domain.CompareRuns.ReviewerSide.Reviewer (String)
+com.histmersion.domain.CompareRuns.ReviewerSide.Verdict (String)
+com.histmersion.domain.CompareRuns.RunHead.DryRun (Boolean)
+com.histmersion.domain.CompareRuns.RunHead.Id (String)
+com.histmersion.domain.CompareRuns.RunHead.Model (String)
+com.histmersion.domain.CompareRuns.RunHead.Pipeline (String)
+com.histmersion.domain.CompareRuns.RunHead.Status (String)
+com.histmersion.domain.CompareRuns.RunHead.Target (String)
+com.histmersion.domain.CompareRuns.RunSide.Attempts (Int)
+com.histmersion.domain.CompareRuns.RunSide.Failures (Int)
+com.histmersion.domain.CompareRuns.Step.ActualModel (String)
+com.histmersion.domain.CompareRuns.Step.CostUsd (Double)
+com.histmersion.domain.CompareRuns.Step.Error (String)
+com.histmersion.domain.CompareRuns.Step.FinishedAt (String)
+com.histmersion.domain.CompareRuns.Step.FirstCallTokens (Long)
+com.histmersion.domain.CompareRuns.Step.Model (String)
+com.histmersion.domain.CompareRuns.Step.Name (String)
+com.histmersion.domain.CompareRuns.Step.Output (String)
+com.histmersion.domain.CompareRuns.Step.StartedAt (String)
+com.histmersion.domain.CompareRuns.Step.Status (String)
+com.histmersion.domain.CompareRuns.Step.Turns (Int)
+com.histmersion.domain.CompareRuns.StepSide.Billing (String)
+com.histmersion.domain.CompareRuns.Tokens.CacheRead (Long)
+com.histmersion.domain.CompareRuns.Tokens.CacheWrite (Long)
+com.histmersion.domain.CompareRuns.Tokens.Input (Long)
+com.histmersion.domain.CompareRuns.Tokens.Output (Long)
+com.histmersion.domain.CompileArticle.Claim.Date (String)
+com.histmersion.domain.CompileArticle.Claim.Place (String)
+com.histmersion.domain.CompileArticle.Claim.Quote (String)
+com.histmersion.domain.CompileArticle.Claim.Ratio (Double)
+com.histmersion.domain.CompileArticle.Claim.Value (String)
+com.histmersion.domain.CompileArticle.ClaimAnswer.Claim (String)
+com.histmersion.domain.CompileArticle.ClaimAnswer.Confidence (String)
+com.histmersion.domain.CompileArticle.ClaimAnswer.Date (String)
+com.histmersion.domain.CompileArticle.ClaimAnswer.Place (String)
+com.histmersion.domain.CompileArticle.ClaimAnswer.Quote (String)
+com.histmersion.domain.CompileArticle.Corpus.IsCitekeyArg1 (String)
+com.histmersion.domain.CompileArticle.Corpus.IsCitekeyResult (Boolean)
+com.histmersion.domain.CompileArticle.Corpus.IsTargetArg1 (String)
+com.histmersion.domain.CompileArticle.Corpus.IsTargetResult (Boolean)
+com.histmersion.domain.CompileArticle.Corpus.StatusOfArg1 (String)
+com.histmersion.domain.CompileArticle.DraftAnswer.Body (String)
+com.histmersion.domain.CompileArticle.DraftAnswer.Section (String)
+com.histmersion.domain.CompileArticle.DraftAnswer.Summary (String)
+com.histmersion.domain.CompileArticle.DraftAnswer.Title (String)
+com.histmersion.domain.CompileArticle.EdgeFact.Kind (String)
+com.histmersion.domain.CompileArticle.Evidence.ClaimsKey (String)
+com.histmersion.domain.CompileArticle.Evidence.ClaimsValue (Int)
+com.histmersion.domain.CompileArticle.Evidence.Disputed (String)
+com.histmersion.domain.CompileArticle.Evidence.Filter (String)
+com.histmersion.domain.CompileArticle.ExtractAnswer.Reason (String)
+com.histmersion.domain.CompileArticle.ExtractAnswer.Relevant (Boolean)
+com.histmersion.domain.CompileArticle.Extracted.NotUsed (String)
+com.histmersion.domain.CompileArticle.NotUsed.Reason (String)
+com.histmersion.domain.CoreQuota.Block.Why (String)
+com.histmersion.domain.CoreQuota.Grant.WaitMs (Long)
+com.histmersion.domain.CoreQuota.Limits.DailyTokens (Int)
+com.histmersion.domain.CoreQuota.Limits.ExhaustedPauseSeconds (Int)
+com.histmersion.domain.CoreQuota.Limits.LookupCost (Int)
+com.histmersion.domain.CoreQuota.Limits.MaxWaitSeconds (Int)
+com.histmersion.domain.CoreQuota.Limits.PerMinute (Int)
+com.histmersion.domain.CoreQuota.Limits.SearchCost (Int)
+com.histmersion.domain.CoreQuota.Limits.SearchDailyTokens (Int)
+com.histmersion.domain.CoreQuota.Purpose.Label (String)
+com.histmersion.domain.CoreQuota.Purpose.Wire (String)
+com.histmersion.domain.CoreQuota.Refusal.Blocked.Why (String)
+com.histmersion.domain.CoreQuota.Refusal.OverBudget.Cap (Int)
+com.histmersion.domain.CoreQuota.Refusal.OverBudget.Spent (Int)
+com.histmersion.domain.CoreQuota.Refusal.Paced.WaitMs (Long)
+com.histmersion.domain.CoreQuota.State.LookupTokens (Int)
+com.histmersion.domain.CoreQuota.State.SearchTokens (Int)
+com.histmersion.domain.CoreQuota.Window.Limit (Int)
+com.histmersion.domain.CoreQuota.Window.Remaining (Int)
+
+## TYPES TO DECIDE
+com.histmersion.domain.CompareRuns.CompareBillingArg1 | base String | generated | method-parameter
+com.histmersion.domain.CompareRuns.CompareBillingResult | base String | generated | method-parameter
+com.histmersion.domain.CompareRuns.CompareResultPart1 | base String | generated | method-result
+com.histmersion.domain.CompareRuns.Comparison.Notes | base String | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.DatedFindings | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.Findings | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.NotesChars | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.PlacesAsked | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.PlacesResolved | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.QuotesChecked | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.QuotesPassed | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.SummaryChars | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.EnrichSide.UniqueClaims | base String | original | constructor-parameter
+com.histmersion.domain.CompareRuns.KindCount.Count | base Int | original | constructor-parameter
+    final case class KindCount(kind: KindCount.Kind, count: KindCount.Count)
+com.histmersion.domain.CompareRuns.KindCount.Kind | base String | original | constructor-parameter
+    final case class KindCount(kind: KindCount.Kind, count: KindCount.Count)
+com.histmersion.domain.CompareRuns.MajorOverlap.A | base String | original | constructor-parameter
+com.histmersion.domain.CompareRuns.MajorOverlap.AMajors | base Int | original | constructor-parameter
+    final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List
+com.histmersion.domain.CompareRuns.MajorOverlap.B | base String | original | constructor-parameter
+com.histmersion.domain.CompareRuns.MajorOverlap.BMajors | base Int | original | constructor-parameter
+    final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List
+com.histmersion.domain.CompareRuns.MajorOverlap.Pairs | base String | original | constructor-parameter
+    final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List
+com.histmersion.domain.CompareRuns.MajorOverlap.Shared | base Int | original | constructor-parameter
+    final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List
+com.histmersion.domain.CompareRuns.ModelChoice.Model | base String | original | constructor-parameter
+    final case class ModelChoice(role: ModelChoice.Role, model: ModelChoice.Model)
+    val Model: _root_.com.histmersion.domain.CompareRuns.RunHead.Model.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Model
+com.histmersion.domain.CompareRuns.ModelChoice.Role | base String | original | constructor-parameter
+    final case class ModelChoice(role: ModelChoice.Role, model: ModelChoice.Model)
+com.histmersion.domain.CompareRuns.OutputName | base String | generated | method-parameter
+    def output[O: Decoder](d: Run, name: com.histmersion.domain.CompareRuns.OutputName): Option[O] =
+com.histmersion.domain.CompareRuns.ReviewSide.Majors | base String | original | constructor-parameter
+    final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
+    final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List
+com.histmersion.domain.CompareRuns.ReviewSide.Rounds | base Int | original | constructor-parameter
+com.histmersion.domain.CompareRuns.ReviewSide.Verdict | base String | original | constructor-parameter
+    final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
+com.histmersion.domain.CompareRuns.ReviewerSide.Majors | base Int | original | constructor-parameter
+    final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
+    final case class MajorOverlap(a: MajorOverlap.A, b: MajorOverlap.B, aMajors: MajorOverlap.AMajors, bMajors: MajorOverlap.BMajors, shared: MajorOverlap.Shared, pairs: List
+com.histmersion.domain.CompareRuns.ReviewerSide.Minors | base Int | original | constructor-parameter
+    final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
+com.histmersion.domain.CompareRuns.ReviewerSide.Reviewer | base String | original | constructor-parameter
+    final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
+com.histmersion.domain.CompareRuns.ReviewerSide.Verdict | base String | original | constructor-parameter
+    final case class ReviewerSide(reviewer: ReviewerSide.Reviewer, verdict: Option[ReviewerSide.Verdict], majors: ReviewerSide.Majors, minors: ReviewerSide.Minors)
+com.histmersion.domain.CompareRuns.RunHead.DryRun | base Boolean | original | alias,constructor-parameter
+    val DryRun: _root_.com.histmersion.domain.CompareRuns.RunHead.DryRun.type = _root_.com.histmersion.domain.CompareRuns.RunHead.DryRun
+com.histmersion.domain.CompareRuns.RunHead.Id | base String | original | alias,constructor-parameter
+    val Id: _root_.com.histmersion.domain.CompareRuns.RunHead.Id.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Id
+com.histmersion.domain.CompareRuns.RunHead.Model | base String | original | alias,constructor-parameter
+    final case class ModelChoice(role: ModelChoice.Role, model: ModelChoice.Model)
+    val Model: _root_.com.histmersion.domain.CompareRuns.RunHead.Model.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Model
+com.histmersion.domain.CompareRuns.RunHead.Pipeline | base String | original | alias,constructor-parameter
+    val Pipeline: _root_.com.histmersion.domain.CompareRuns.RunHead.Pipeline.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Pipeline
+com.histmersion.domain.CompareRuns.RunHead.Status | base String | original | alias,constructor-parameter
+    val Status: _root_.com.histmersion.domain.CompareRuns.RunHead.Status.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Status
+com.histmersion.domain.CompareRuns.RunHead.Target | base String | original | alias,constructor-parameter
+    val Target: _root_.com.histmersion.domain.CompareRuns.RunHead.Target.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Target
+com.histmersion.domain.CompareRuns.RunSide.Attempts | base Int | original | alias,constructor-parameter
+    val Attempts: _root_.com.histmersion.domain.CompareRuns.RunSide.Attempts.type = _root_.com.histmersion.domain.CompareRuns.RunSide.Attempts
+com.histmersion.domain.CompareRuns.RunSide.Failures | base Int | original | alias,constructor-parameter
+    val Failures: _root_.com.histmersion.domain.CompareRuns.RunSide.Failures.type = _root_.com.histmersion.domain.CompareRuns.RunSide.Failures
+com.histmersion.domain.CompareRuns.Seconds | base Long | generated | alias,method-result
+    val Seconds: _root_.com.histmersion.domain.CompareRuns.Seconds.type = _root_.com.histmersion.domain.CompareRuns.Seconds
+    val Seconds: _root_.com.histmersion.domain.CompareRuns.Seconds.type = _root_.com.histmersion.domain.CompareRuns.Seconds
+com.histmersion.domain.CompareRuns.SimilarityA | base String | generated | method-parameter
+    def similarity(a: com.histmersion.domain.CompareRuns.SimilarityA, b: com.histmersion.domain.CompareRuns.SimilarityB): com.histmersion.domain.CompareRuns.SimilarityResult 
+com.histmersion.domain.CompareRuns.SimilarityB | base String | generated | method-parameter
+    def similarity(a: com.histmersion.domain.CompareRuns.SimilarityA, b: com.histmersion.domain.CompareRuns.SimilarityB): com.histmersion.domain.CompareRuns.SimilarityResult 
+com.histmersion.domain.CompareRuns.SimilarityResult | base Double | generated | method-result
+    def similarity(a: com.histmersion.domain.CompareRuns.SimilarityA, b: com.histmersion.domain.CompareRuns.SimilarityB): com.histmersion.domain.CompareRuns.SimilarityResult 
+com.histmersion.domain.CompareRuns.Step.ActualModel | base String | original | alias,constructor-parameter
+    val Actual: _root_.com.histmersion.domain.CompareRuns.Step.ActualModel.type = _root_.com.histmersion.domain.CompareRuns.Step.ActualModel
+com.histmersion.domain.CompareRuns.Step.CostUsd | base Double | original | alias,constructor-parameter
+    val CostUsd: _root_.com.histmersion.domain.CompareRuns.Step.CostUsd.type = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
+    val CostUsd: _root_.com.histmersion.domain.CompareRuns.Step.CostUsd.type = _root_.com.histmersion.domain.CompareRuns.Step.CostUsd
+com.histmersion.domain.CompareRuns.Step.Error | base String | original | constructor-parameter
+com.histmersion.domain.CompareRuns.Step.FinishedAt | base String | original | constructor-parameter
+com.histmersion.domain.CompareRuns.Step.FirstCallTokens | base Long | original | alias,constructor-parameter
+    val FirstCallTokens: _root_.com.histmersion.domain.CompareRuns.Step.FirstCallTokens.type = _root_.com.histmersion.domain.CompareRuns.Step.FirstCallTokens
+com.histmersion.domain.CompareRuns.Step.Model | base String | original | alias,constructor-parameter
+    final case class ModelChoice(role: ModelChoice.Role, model: ModelChoice.Model)
+    val Model: _root_.com.histmersion.domain.CompareRuns.RunHead.Model.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Model
+com.histmersion.domain.CompareRuns.Step.Name | base String | original | alias,constructor-parameter
+    final case class StepRow(name: StepRow.Name, runs: List[Option[StepSide]])
+    val Name: _root_.com.histmersion.domain.CompareRuns.Step.Name.type = _root_.com.histmersion.domain.CompareRuns.Step.Name
+com.histmersion.domain.CompareRuns.Step.Output | base String | original | constructor-parameter
+    final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
+com.histmersion.domain.CompareRuns.Step.StartedAt | base String | original | constructor-parameter
+com.histmersion.domain.CompareRuns.Step.Status | base String | original | constructor-parameter
+    val Status: _root_.com.histmersion.domain.CompareRuns.RunHead.Status.type = _root_.com.histmersion.domain.CompareRuns.RunHead.Status
+com.histmersion.domain.CompareRuns.Step.Turns | base Int | original | alias,constructor-parameter
+    val Turns: _root_.com.histmersion.domain.CompareRuns.Step.Turns.type = _root_.com.histmersion.domain.CompareRuns.Step.Turns
+com.histmersion.domain.CompareRuns.StepSide.Billing | base String | original | constructor-parameter
+com.histmersion.domain.CompareRuns.StepSideBillingArg1 | base String | generated | method-parameter
+    def stepSide(attempts: List[Step], billing: com.histmersion.domain.CompareRuns.StepSideBillingArg1 => Option[com.histmersion.domain.CompareRuns.StepSideBillingResult]): S
+com.histmersion.domain.CompareRuns.StepSideBillingResult | base String | generated | method-parameter
+    def stepSide(attempts: List[Step], billing: com.histmersion.domain.CompareRuns.StepSideBillingArg1 => Option[com.histmersion.domain.CompareRuns.StepSideBillingResult]): S
+com.histmersion.domain.CompareRuns.Tokens.CacheRead | base Long | original | constructor-parameter
+    final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
+com.histmersion.domain.CompareRuns.Tokens.CacheWrite | base Long | original | constructor-parameter
+    final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
+com.histmersion.domain.CompareRuns.Tokens.Input | base Long | original | constructor-parameter
+    final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
+com.histmersion.domain.CompareRuns.Tokens.Output | base Long | original | constructor-parameter
+    final case class Tokens(input: Tokens.Input = 0, output: Tokens.Output = 0, cacheRead: Tokens.CacheRead = 0, cacheWrite: Tokens.CacheWrite = 0):
+com.histmersion.domain.CompareRuns.UnionInOrderLists | base String | generated | method-parameter
+    def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.UnionInOrderLists]]): List[com.histmersion.domain.CompareRuns.UnionInOrderResult] =
+com.histmersion.domain.CompareRuns.UnionInOrderPlaceA | base String | generated | method-parameter
+    @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.UnionInOrderPlaceRest], a: Vector[com.histmersion.domain.CompareRuns.UnionInOrderPlaceA], pos: com.histme
+com.histmersion.domain.CompareRuns.UnionInOrderPlacePos | base Int | generated | method-parameter
+    @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.UnionInOrderPlaceRest], a: Vector[com.histmersion.domain.CompareRuns.UnionInOrderPlaceA], pos: com.histme
+com.histmersion.domain.CompareRuns.UnionInOrderPlaceRest | base String | generated | method-parameter
+    @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.UnionInOrderPlaceRest], a: Vector[com.histmersion.domain.CompareRuns.UnionInOrderPlaceA], pos: com.histme
+com.histmersion.domain.CompareRuns.UnionInOrderPlaceResult | base String | generated | method-result
+    @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.UnionInOrderPlaceRest], a: Vector[com.histmersion.domain.CompareRuns.UnionInOrderPlaceA], pos: com.histme
+com.histmersion.domain.CompareRuns.UnionInOrderResult | base String | generated | method-result
+    def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.UnionInOrderLists]]): List[com.histmersion.domain.CompareRuns.UnionInOrderResult] =
+com.histmersion.domain.CompareRuns.WordsResult | base String | generated | method-result
+    private def words(s: com.histmersion.domain.CompareRuns.WordsS): Set[com.histmersion.domain.CompareRuns.WordsResult] =
+com.histmersion.domain.CompareRuns.WordsS | base String | generated | method-parameter
+    private def words(s: com.histmersion.domain.CompareRuns.WordsS): Set[com.histmersion.domain.CompareRuns.WordsResult] =
+com.histmersion.domain.CompileArticle.BlocksBody | base String | generated | alias,method-parameter
+    val StatusesSilentBody: _root_.com.histmersion.domain.CompileArticle.BlocksBody.type = _root_.com.histmersion.domain.CompileArticle.BlocksBody
+    private def blocks(body: com.histmersion.domain.CompileArticle.BlocksBody): List[com.histmersion.domain.CompileArticle.BlocksResult] =
+com.histmersion.domain.CompileArticle.BlocksResult | base String | generated | method-result
+    private def blocks(body: com.histmersion.domain.CompileArticle.BlocksBody): List[com.histmersion.domain.CompileArticle.BlocksResult] =
+com.histmersion.domain.CompileArticle.CheckDraftCurrentTitle | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckDraftFilter | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckDraftKind | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckDraftLast | base Boolean | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckDraftResultPart1 | base String | generated | method-result
+com.histmersion.domain.CompileArticle.CheckDraftResultPart2Part2 | base String | generated | method-result
+com.histmersion.domain.CompileArticle.CheckDraftSlug | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckExtractLast | base Boolean | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckExtractMaxClaims | base Int | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckExtractMinRatio | base Double | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckExtractRecord | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.CheckExtractResultPart1 | base String | generated | method-result
+com.histmersion.domain.CompileArticle.CheckExtractResultPart2Part2 | base String | generated | method-result
+com.histmersion.domain.CompileArticle.CitedIsCitekeyArg1 | base String | generated | method-parameter
+    def cited(text: com.histmersion.domain.CompileArticle.CitedText, isCitekey: com.histmersion.domain.CompileArticle.CitedIsCitekeyArg1 => com.histmersion.domain.CompileArti
+com.histmersion.domain.CompileArticle.CitedIsCitekeyResult | base Boolean | generated | method-parameter
+    def cited(text: com.histmersion.domain.CompileArticle.CitedText, isCitekey: com.histmersion.domain.CompileArticle.CitedIsCitekeyArg1 => com.histmersion.domain.CompileArti
+com.histmersion.domain.CompileArticle.CitedResult | base String | generated | method-result
+    def cited(text: com.histmersion.domain.CompileArticle.CitedText, isCitekey: com.histmersion.domain.CompileArticle.CitedIsCitekeyArg1 => com.histmersion.domain.CompileArti
+com.histmersion.domain.CompileArticle.Claim.Date | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.Claim.Place | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.Claim.Quote | base String | original | constructor-parameter
+    val m = AgentVerify.findQuote(q, record, minRatio)
+com.histmersion.domain.CompileArticle.Claim.Ratio | base Double | original | constructor-parameter
+    val m = AgentVerify.findQuote(q, record, minRatio)
+com.histmersion.domain.CompileArticle.Claim.Value | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.ClaimAnswer.Claim | base String | original | constructor-parameter
+    final case class Claim(
+    final case class Extracted(citekey: com.histmersion.domain.library.Citekey, claims: List[Claim], notUsed: Option[Extracted.NotUsed])
+com.histmersion.domain.CompileArticle.ClaimAnswer.Confidence | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.ClaimAnswer.Date | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.ClaimAnswer.Place | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.ClaimAnswer.Quote | base String | original | constructor-parameter
+    val m = AgentVerify.findQuote(q, record, minRatio)
+com.histmersion.domain.CompileArticle.CombinedCurrent | base String | generated | alias,method-parameter
+    val CheckDraftCurrent: _root_.com.histmersion.domain.CompileArticle.CombinedCurrent.type = _root_.com.histmersion.domain.CompileArticle.CombinedCurrent
+    def combined(mode: DraftMode, current: com.histmersion.domain.CompileArticle.CombinedCurrent, text: com.histmersion.domain.CompileArticle.CombinedText, section: Option[co
+com.histmersion.domain.CompileArticle.CombinedResultPart1 | base String | generated | method-result
+    def combined(mode: DraftMode, current: com.histmersion.domain.CompileArticle.CombinedCurrent, text: com.histmersion.domain.CompileArticle.CombinedText, section: Option[co
+com.histmersion.domain.CompileArticle.CombinedResultPart2 | base String | generated | method-result
+    def combined(mode: DraftMode, current: com.histmersion.domain.CompileArticle.CombinedCurrent, text: com.histmersion.domain.CompileArticle.CombinedText, section: Option[co
+com.histmersion.domain.CompileArticle.CombinedSection | base String | generated | method-parameter
+    def combined(mode: DraftMode, current: com.histmersion.domain.CompileArticle.CombinedCurrent, text: com.histmersion.domain.CompileArticle.CombinedText, section: Option[co
+com.histmersion.domain.CompileArticle.CombinedText | base String | generated | method-parameter
+    def combined(mode: DraftMode, current: com.histmersion.domain.CompileArticle.CombinedCurrent, text: com.histmersion.domain.CompileArticle.CombinedText, section: Option[co
+com.histmersion.domain.CompileArticle.Corpus.IsCitekeyArg1 | base String | generated | constructor-parameter
+com.histmersion.domain.CompileArticle.Corpus.IsCitekeyResult | base Boolean | generated | constructor-parameter
+com.histmersion.domain.CompileArticle.Corpus.IsTargetArg1 | base String | generated | constructor-parameter
+com.histmersion.domain.CompileArticle.Corpus.IsTargetResult | base Boolean | generated | constructor-parameter
+com.histmersion.domain.CompileArticle.Corpus.StatusOfArg1 | base String | generated | constructor-parameter
+com.histmersion.domain.CompileArticle.DisagreementKindsValue | base String | generated | alias
+com.histmersion.domain.CompileArticle.DraftAnswer.Body | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.DraftAnswer.Section | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.DraftAnswer.Summary | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.DraftAnswer.Title | base String | original | constructor-parameter
+    final case class SourceFact(citekey: com.histmersion.domain.library.Citekey, title: com.histmersion.domain.Title, year: Option[com.histmersion.Year], status: Source.Statu
+    val title = currentTitle.orElse(Option(a.title).map(_.trim).filter(_.nonEmpty)).getOrElse(slug)
+com.histmersion.domain.CompileArticle.EdgeFact.Kind | base String | original | constructor-parameter
+    final case class EdgeFact(from: com.histmersion.domain.library.Citekey, kind: EdgeFact.Kind, to: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject
+com.histmersion.domain.CompileArticle.Evidence.ClaimsKey | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.Evidence.ClaimsValue | base Int | original | constructor-parameter
+com.histmersion.domain.CompileArticle.Evidence.Disputed | base String | original | constructor-parameter
+com.histmersion.domain.CompileArticle.Evidence.Filter | base String | original | alias,constructor-parameter
+    val EvidenceFilter: _root_.com.histmersion.domain.CompileArticle.Evidence.Filter.type = _root_.com.histmersion.domain.CompileArticle.Evidence.Filter
+    val inFilter = evidence.sources.map(_.citekey).toSet
+com.histmersion.domain.CompileArticle.Evidence.UsedResult | base String | generated | method-result
+    def used: List[com.histmersion.domain.CompileArticle.Evidence.UsedResult] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, 0) > 0)
+com.histmersion.domain.CompileArticle.EvidenceTextResult | base String | generated | method-result
+    def evidenceText(ev: Evidence, extracted: List[Extracted]): com.histmersion.domain.CompileArticle.EvidenceTextResult =
+com.histmersion.domain.CompileArticle.ExtractAnswer.Reason | base String | original | constructor-parameter
+    final case class ExtractAnswer(relevant: ExtractAnswer.Relevant, reason: ExtractAnswer.Reason, claims: List[ClaimAnswer] = Nil)
+    val noReason = Option.when((!a.relevant || a.claims.isEmpty) && reason.isEmpty)("say why the record is not used")
+com.histmersion.domain.CompileArticle.ExtractAnswer.Relevant | base Boolean | original | constructor-parameter
+    final case class ExtractAnswer(relevant: ExtractAnswer.Relevant, reason: ExtractAnswer.Reason, claims: List[ClaimAnswer] = Nil)
+com.histmersion.domain.CompileArticle.Extracted.NotUsed | base String | original | constructor-parameter
+    final case class Extracted(citekey: com.histmersion.domain.library.Citekey, claims: List[Claim], notUsed: Option[Extracted.NotUsed])
+    final case class NotUsed(citekey: com.histmersion.domain.library.Citekey, reason: NotUsed.Reason) derives KindlingsCodecAsObject
+com.histmersion.domain.CompileArticle.LogLineResult | base String | generated | method-result
+    def logLine(d: ArticleDraft, written: com.histmersion.domain.CompileArticle.LogLineWritten, why: com.histmersion.domain.CompileArticle.LogLineWhy, review: Option[com.hist
+com.histmersion.domain.CompileArticle.LogLineReview | base String | generated | method-parameter
+    def logLine(d: ArticleDraft, written: com.histmersion.domain.CompileArticle.LogLineWritten, why: com.histmersion.domain.CompileArticle.LogLineWhy, review: Option[com.hist
+com.histmersion.domain.CompileArticle.LogLineWhy | base String | generated | method-parameter
+    def logLine(d: ArticleDraft, written: com.histmersion.domain.CompileArticle.LogLineWritten, why: com.histmersion.domain.CompileArticle.LogLineWhy, review: Option[com.hist
+com.histmersion.domain.CompileArticle.LogLineWritten | base Boolean | generated | method-parameter
+    def logLine(d: ArticleDraft, written: com.histmersion.domain.CompileArticle.LogLineWritten, why: com.histmersion.domain.CompileArticle.LogLineWhy, review: Option[com.hist
+com.histmersion.domain.CompileArticle.NotUsed.Reason | base String | original | constructor-parameter
+    final case class ExtractAnswer(relevant: ExtractAnswer.Relevant, reason: ExtractAnswer.Reason, claims: List[ClaimAnswer] = Nil)
+    val noReason = Option.when((!a.relevant || a.claims.isEmpty) && reason.isEmpty)("say why the record is not used")
+com.histmersion.domain.CompileArticle.RunFilterExistingTitle | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.RunFilterQuery | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.RunFilterTags | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.RunFilterTopics | base String | generated | method-parameter
+com.histmersion.domain.CompileArticle.StatusesSilentResult | base String | generated | method-result
+    def statusesSilent(body: com.histmersion.domain.CompileArticle.StatusesSilentBody, statusOf: com.histmersion.domain.CompileArticle.StatusesSilentStatusOfArg1 => Option[So
+com.histmersion.domain.CompileArticle.StatusesSilentStatusOfArg1 | base String | generated | method-parameter
+    def statusesSilent(body: com.histmersion.domain.CompileArticle.StatusesSilentBody, statusOf: com.histmersion.domain.CompileArticle.StatusesSilentStatusOfArg1 => Option[So
+com.histmersion.domain.CompileArticle.WithoutNotUsedResult | base String | generated | method-result
+    def withoutNotUsed(text: com.histmersion.domain.CompileArticle.WithoutNotUsedText): com.histmersion.domain.CompileArticle.WithoutNotUsedResult = Article.Coverage.withoutN
+com.histmersion.domain.CompileArticle.WithoutNotUsedText | base String | generated | alias,method-parameter
+    val CitedText: _root_.com.histmersion.domain.CompileArticle.WithoutNotUsedText.type = _root_.com.histmersion.domain.CompileArticle.WithoutNotUsedText
+    def withoutNotUsed(text: com.histmersion.domain.CompileArticle.WithoutNotUsedText): com.histmersion.domain.CompileArticle.WithoutNotUsedResult = Article.Coverage.withoutN
+com.histmersion.domain.CoreQuota.Block.Why | base String | original | constructor-parameter
+    final case class Block(until: Instant, why: Block.Why)
+    case Blocked(until: Instant, why: Refusal.Blocked.Why)
+com.histmersion.domain.CoreQuota.Grant.WaitMs | base Long | original | constructor-parameter
+    case Paced(waitMs: Refusal.Paced.WaitMs)
+    final case class Grant(state: State, waitMs: Grant.WaitMs)
+com.histmersion.domain.CoreQuota.Limits.CostResult | base Int | generated | method-result
+    def cost(p: Purpose): com.histmersion.domain.CoreQuota.Limits.CostResult = p match
+com.histmersion.domain.CoreQuota.Limits.DailyTokens | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.Limits.ExhaustedPauseSeconds | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.Limits.LookupCost | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.Limits.MaxWaitSeconds | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.Limits.PerMinute | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.Limits.SearchCost | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.Limits.SearchDailyTokens | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.ObserveCode | base Int | generated | method-parameter
+    def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.ObserveCode, headers: Map[com.histmersion.domain.CoreQuota.ObserveHeadersPart1, com.histmersi
+com.histmersion.domain.CoreQuota.ObserveHeadersPart1 | base String | generated | method-parameter
+    def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.ObserveCode, headers: Map[com.histmersion.domain.CoreQuota.ObserveHeadersPart1, com.histmersi
+com.histmersion.domain.CoreQuota.ObserveHeadersPart2 | base String | generated | method-parameter
+    def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.ObserveCode, headers: Map[com.histmersion.domain.CoreQuota.ObserveHeadersPart1, com.histmersi
+com.histmersion.domain.CoreQuota.ObserveIntName | base String | generated | method-parameter
+    def int(name: com.histmersion.domain.CoreQuota.ObserveIntName) = headers.get(name).flatMap(_.trim.toIntOption)
+com.histmersion.domain.CoreQuota.Purpose.Label | base String | generated | constructor-parameter
+    enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label):
+com.histmersion.domain.CoreQuota.Purpose.Wire | base String | generated | constructor-parameter
+    enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label):
+com.histmersion.domain.CoreQuota.Refusal.Blocked.Why | base String | generated | constructor-parameter
+    final case class Block(until: Instant, why: Block.Why)
+    case Blocked(until: Instant, why: Refusal.Blocked.Why)
+com.histmersion.domain.CoreQuota.Refusal.DescribeResult | base String | generated | method-result
+    def describe: com.histmersion.domain.CoreQuota.Refusal.DescribeResult = this match
+com.histmersion.domain.CoreQuota.Refusal.OverBudget.Cap | base Int | generated | constructor-parameter
+    case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
+com.histmersion.domain.CoreQuota.Refusal.OverBudget.Spent | base Int | generated | constructor-parameter
+    case OverBudget(purpose: Purpose, spent: Refusal.OverBudget.Spent, cap: Refusal.OverBudget.Cap)
+com.histmersion.domain.CoreQuota.Refusal.Paced.WaitMs | base Long | generated | constructor-parameter
+    case Paced(waitMs: Refusal.Paced.WaitMs)
+    final case class Grant(state: State, waitMs: Grant.WaitMs)
+com.histmersion.domain.CoreQuota.RetryAtV | base String | generated | method-parameter
+    def retryAt(v: Option[com.histmersion.domain.CoreQuota.RetryAtV], now: Instant): Option[Instant] =
+com.histmersion.domain.CoreQuota.State.LookupTokens | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.State.SearchTokens | base Int | original | constructor-parameter
+com.histmersion.domain.CoreQuota.State.SpentOnResult | base Int | generated | method-result
+    def spentOn(p: Purpose): com.histmersion.domain.CoreQuota.State.SpentOnResult = p match
+com.histmersion.domain.CoreQuota.State.SpentResult | base Int | generated | method-result
+    def spent: com.histmersion.domain.CoreQuota.State.SpentResult = lookupTokens + searchTokens
+com.histmersion.domain.CoreQuota.Window.Limit | base Int | original | constructor-parameter
+    final case class Window(limit: Option[Window.Limit], remaining: Option[Window.Remaining], at: Instant)
+com.histmersion.domain.CoreQuota.Window.Remaining | base Int | original | constructor-parameter
+    final case class Window(limit: Option[Window.Limit], remaining: Option[Window.Remaining], at: Instant)

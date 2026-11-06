@@ -1,0 +1,280 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.PassageFinder.Folded.Text (String)
+com.histmersion.domain.PassageFinder.Headings.Text (String)
+com.histmersion.domain.PassageFinder.Range.End (Int)
+com.histmersion.domain.PassageFinder.Range.FirstMatch (Int)
+com.histmersion.domain.PassageFinder.Range.SpansPart1 (Int)
+com.histmersion.domain.PassageFinder.Range.SpansPart2 (Int)
+com.histmersion.domain.PassageFinder.Range.Start (Int)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Kind (String)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Query (String)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Slug (String)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Tags (String)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Title (String)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Topics (String)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Why (String)
+com.histmersion.domain.PlanArticles.ArticlesAnswer.Rationale (String)
+com.histmersion.domain.PlanArticles.Candidate.Kind (String)
+com.histmersion.domain.PlanArticles.Candidate.Slug (String)
+com.histmersion.domain.PlanArticles.Candidate.Title (String)
+com.histmersion.domain.PlanArticles.Candidate.Why (String)
+com.histmersion.domain.PlanArticles.Limits.MaxArticles (Int)
+com.histmersion.domain.PlanArticles.Limits.MaxOverlap (Double)
+com.histmersion.domain.PlanArticles.Limits.MinSources (Int)
+com.histmersion.domain.PlanGoal.Caps.Queries (Int)
+com.histmersion.domain.PlanGoal.Caps.QueryChars (Int)
+com.histmersion.domain.PlanGoal.Caps.SubGoals (Int)
+com.histmersion.domain.PlanGoal.Caps.Works (Int)
+com.histmersion.domain.PlanGoal.PlanAnswer.Queries (String)
+com.histmersion.domain.PlanGoal.PlanAnswer.Rationale (String)
+com.histmersion.domain.PlanGoal.Proposed.Dropped (String)
+com.histmersion.domain.PlanGoal.Proposed.Queries (String)
+com.histmersion.domain.PlanGoal.Proposed.Rationale (String)
+com.histmersion.domain.PlanGoal.ProposedWork.Why (String)
+com.histmersion.domain.PlanGoal.SubGoalAnswer.Notes (String)
+com.histmersion.domain.PlanGoal.SubGoalAnswer.Slug (String)
+com.histmersion.domain.PlanGoal.SubGoalAnswer.Tags (String)
+com.histmersion.domain.PlanGoal.SubGoalAnswer.Title (String)
+com.histmersion.domain.PlanGoal.Work.Authors (String)
+com.histmersion.domain.PlanGoal.Work.InDb (Boolean)
+com.histmersion.domain.PlanGoal.Work.IsOa (Boolean)
+com.histmersion.domain.PlanGoal.Work.IsRetracted (Boolean)
+com.histmersion.domain.PlanGoal.Work.Title (String)
+com.histmersion.domain.PlanGoal.WorkAnswer.Why (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.PassageFinder.BodyResult | base String | generated | method-result
+    def body(segments: Seq[Chunk]): com.histmersion.domain.PassageFinder.BodyResult = segments.map(_.body).mkString(Separator)
+com.histmersion.domain.PassageFinder.Bounded.CharAtI | base Int | generated | method-parameter
+    def charAt(i: com.histmersion.domain.PassageFinder.Bounded.CharAtI): com.histmersion.domain.PassageFinder.Bounded.CharAtResult =
+com.histmersion.domain.PassageFinder.Bounded.CharAtResult | base Char | generated | method-result
+    def charAt(i: com.histmersion.domain.PassageFinder.Bounded.CharAtI): com.histmersion.domain.PassageFinder.Bounded.CharAtResult =
+com.histmersion.domain.PassageFinder.Bounded.LengthResult | base Int | generated | method-result
+    def length: com.histmersion.domain.PassageFinder.Bounded.LengthResult = s.length
+com.histmersion.domain.PassageFinder.Bounded.SubSequenceA | base Int | generated | method-parameter
+    def subSequence(a: com.histmersion.domain.PassageFinder.Bounded.SubSequenceA, b: com.histmersion.domain.PassageFinder.Bounded.SubSequenceB): CharSequence = new Bounded(s.
+com.histmersion.domain.PassageFinder.Bounded.SubSequenceB | base Int | generated | method-parameter
+    def subSequence(a: com.histmersion.domain.PassageFinder.Bounded.SubSequenceA, b: com.histmersion.domain.PassageFinder.Bounded.SubSequenceB): CharSequence = new Bounded(s.
+com.histmersion.domain.PassageFinder.CompileQ | base String | generated | method-parameter
+    private[domain] def compile(q: com.histmersion.domain.PassageFinder.CompileQ, regex: com.histmersion.domain.PassageFinder.CompileRegex): Either[com.histmersion.domain.Pas
+com.histmersion.domain.PassageFinder.CompileRegex | base Boolean | generated | method-parameter
+    private[domain] def compile(q: com.histmersion.domain.PassageFinder.CompileQ, regex: com.histmersion.domain.PassageFinder.CompileRegex): Either[com.histmersion.domain.Pas
+com.histmersion.domain.PassageFinder.CompileResultPart1 | base String | generated | method-result
+    private[domain] def compile(q: com.histmersion.domain.PassageFinder.CompileQ, regex: com.histmersion.domain.PassageFinder.CompileRegex): Either[com.histmersion.domain.Pas
+com.histmersion.domain.PassageFinder.DropBlanksDownTo | base Int | generated | method-parameter
+    private def dropBlanks(text: com.histmersion.domain.PassageFinder.DropBlanksText, to: com.histmersion.domain.PassageFinder.DropBlanksTo, downTo: com.histmersion.domain.Pa
+com.histmersion.domain.PassageFinder.DropBlanksResult | base Int | generated | method-result
+    private def dropBlanks(text: com.histmersion.domain.PassageFinder.DropBlanksText, to: com.histmersion.domain.PassageFinder.DropBlanksTo, downTo: com.histmersion.domain.Pa
+com.histmersion.domain.PassageFinder.DropBlanksText | base String | generated | alias,method-parameter
+    val MergeText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
+    val StartOfText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
+com.histmersion.domain.PassageFinder.DropBlanksTo | base Int | generated | method-parameter
+    private def dropBlanks(text: com.histmersion.domain.PassageFinder.DropBlanksText, to: com.histmersion.domain.PassageFinder.DropBlanksTo, downTo: com.histmersion.domain.Pa
+com.histmersion.domain.PassageFinder.EndOfE | base Int | generated | method-parameter
+    private[domain] def endOf(text: com.histmersion.domain.PassageFinder.EndOfText, e: com.histmersion.domain.PassageFinder.EndOfE, half: com.histmersion.domain.PassageFinder
+com.histmersion.domain.PassageFinder.EndOfHalf | base Int | generated | method-parameter
+    private[domain] def endOf(text: com.histmersion.domain.PassageFinder.EndOfText, e: com.histmersion.domain.PassageFinder.EndOfE, half: com.histmersion.domain.PassageFinder
+com.histmersion.domain.PassageFinder.EndOfResult | base Int | generated | method-result
+    private[domain] def endOf(text: com.histmersion.domain.PassageFinder.EndOfText, e: com.histmersion.domain.PassageFinder.EndOfE, half: com.histmersion.domain.PassageFinder
+com.histmersion.domain.PassageFinder.FindContext | base Int | generated | method-parameter
+com.histmersion.domain.PassageFinder.FindLimit | base Int | generated | method-parameter
+com.histmersion.domain.PassageFinder.FindMaxMatches | base Int | generated | method-parameter
+com.histmersion.domain.PassageFinder.FindQuery | base String | generated | method-parameter
+com.histmersion.domain.PassageFinder.FindRegex | base Boolean | generated | method-parameter
+com.histmersion.domain.PassageFinder.FindResultPart1 | base String | generated | method-result
+com.histmersion.domain.PassageFinder.FindTimeoutMs | base Long | generated | method-parameter
+com.histmersion.domain.PassageFinder.FoldCharC | base Char | generated | method-parameter
+    private[domain] def foldChar(c: com.histmersion.domain.PassageFinder.FoldCharC): com.histmersion.domain.PassageFinder.FoldCharResult =
+com.histmersion.domain.PassageFinder.FoldCharResult | base String | generated | method-result
+    private[domain] def foldChar(c: com.histmersion.domain.PassageFinder.FoldCharC): com.histmersion.domain.PassageFinder.FoldCharResult =
+com.histmersion.domain.PassageFinder.FoldResult | base String | generated | method-result
+    private[domain] def fold(s: com.histmersion.domain.PassageFinder.FoldS): com.histmersion.domain.PassageFinder.FoldResult = Folded(s).text
+com.histmersion.domain.PassageFinder.FoldS | base String | generated | method-parameter
+    private[domain] def fold(s: com.histmersion.domain.PassageFinder.FoldS): com.histmersion.domain.PassageFinder.FoldResult = Folded(s).text
+com.histmersion.domain.PassageFinder.Folded.ApplySource | base String | generated | method-parameter
+    def apply(source: com.histmersion.domain.PassageFinder.Folded.ApplySource): Folded =
+com.histmersion.domain.PassageFinder.Folded.EndI | base Int | generated | method-parameter
+    def end(i: com.histmersion.domain.PassageFinder.Folded.EndI, source: com.histmersion.domain.PassageFinder.Folded.EndSource): com.histmersion.domain.PassageFinder.Folded.E
+com.histmersion.domain.PassageFinder.Folded.EndResult | base Int | generated | method-result
+    def end(i: com.histmersion.domain.PassageFinder.Folded.EndI, source: com.histmersion.domain.PassageFinder.Folded.EndSource): com.histmersion.domain.PassageFinder.Folded.E
+com.histmersion.domain.PassageFinder.Folded.EndSource | base String | generated | method-parameter
+    def end(i: com.histmersion.domain.PassageFinder.Folded.EndI, source: com.histmersion.domain.PassageFinder.Folded.EndSource): com.histmersion.domain.PassageFinder.Folded.E
+com.histmersion.domain.PassageFinder.Folded.StartI | base Int | generated | method-parameter
+    def start(i: com.histmersion.domain.PassageFinder.Folded.StartI): com.histmersion.domain.PassageFinder.Folded.StartResult = back(i)
+com.histmersion.domain.PassageFinder.Folded.StartResult | base Int | generated | method-result
+    def start(i: com.histmersion.domain.PassageFinder.Folded.StartI): com.histmersion.domain.PassageFinder.Folded.StartResult = back(i)
+com.histmersion.domain.PassageFinder.Folded.Text | base String | generated | constructor-parameter
+    final private[domain] class Folded(val text: Folded.Text, back: Array[Int]):
+    final private class Headings(segments: Seq[Chunk], text: Headings.Text):
+com.histmersion.domain.PassageFinder.Headings.AtOffset | base Int | generated | method-parameter
+    def at(offset: com.histmersion.domain.PassageFinder.Headings.AtOffset): Option[com.histmersion.domain.PassageFinder.Headings.AtResult] =
+com.histmersion.domain.PassageFinder.Headings.AtResult | base String | generated | method-result
+    def at(offset: com.histmersion.domain.PassageFinder.Headings.AtOffset): Option[com.histmersion.domain.PassageFinder.Headings.AtResult] =
+com.histmersion.domain.PassageFinder.Headings.InlinePart1 | base Int | generated | value
+    private lazy val inline: Vector[(com.histmersion.domain.PassageFinder.Headings.InlinePart1, com.histmersion.domain.PassageFinder.Headings.InlinePart2)] =
+com.histmersion.domain.PassageFinder.Headings.InlinePart2 | base String | generated | value
+    private lazy val inline: Vector[(com.histmersion.domain.PassageFinder.Headings.InlinePart1, com.histmersion.domain.PassageFinder.Headings.InlinePart2)] =
+com.histmersion.domain.PassageFinder.Headings.Starts | base Int | generated | value
+    private val starts: Array[com.histmersion.domain.PassageFinder.Headings.Starts] =
+com.histmersion.domain.PassageFinder.Headings.Text | base String | generated | constructor-parameter
+    final private[domain] class Folded(val text: Folded.Text, back: Array[Int]):
+    final private class Headings(segments: Seq[Chunk], text: Headings.Text):
+com.histmersion.domain.PassageFinder.IsMarkC | base Char | generated | method-parameter
+    private def isMark(c: com.histmersion.domain.PassageFinder.IsMarkC): com.histmersion.domain.PassageFinder.IsMarkResult = c >= '̀' && c <= 'ͯ'
+com.histmersion.domain.PassageFinder.IsMarkResult | base Boolean | generated | method-result
+    private def isMark(c: com.histmersion.domain.PassageFinder.IsMarkC): com.histmersion.domain.PassageFinder.IsMarkResult = c >= '̀' && c <= 'ͯ'
+com.histmersion.domain.PassageFinder.MatchesMax | base Int | generated | method-parameter
+    private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.MatchesSource, max: com.histmersion.domain.PassageFinder.MatchesMax, until: com.hi
+com.histmersion.domain.PassageFinder.MatchesResultPart1Part1 | base Int | generated | method-result
+    private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.MatchesSource, max: com.histmersion.domain.PassageFinder.MatchesMax, until: com.hi
+com.histmersion.domain.PassageFinder.MatchesResultPart1Part2 | base Int | generated | method-result
+    private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.MatchesSource, max: com.histmersion.domain.PassageFinder.MatchesMax, until: com.hi
+com.histmersion.domain.PassageFinder.MatchesResultPart2 | base Boolean | generated | method-result
+    private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.MatchesSource, max: com.histmersion.domain.PassageFinder.MatchesMax, until: com.hi
+com.histmersion.domain.PassageFinder.MatchesSource | base String | generated | method-parameter
+    private def matches(p: Pattern, f: Folded, source: com.histmersion.domain.PassageFinder.MatchesSource, max: com.histmersion.domain.PassageFinder.MatchesMax, until: com.hi
+com.histmersion.domain.PassageFinder.MergeContext | base Int | generated | method-parameter
+    private def merge(spans: Vector[(com.histmersion.domain.PassageFinder.MergeSpansPart1, com.histmersion.domain.PassageFinder.MergeSpansPart2)], text: com.histmersion.domai
+com.histmersion.domain.PassageFinder.MergeSpansPart1 | base Int | generated | method-parameter
+    private def merge(spans: Vector[(com.histmersion.domain.PassageFinder.MergeSpansPart1, com.histmersion.domain.PassageFinder.MergeSpansPart2)], text: com.histmersion.domai
+com.histmersion.domain.PassageFinder.MergeSpansPart2 | base Int | generated | method-parameter
+    private def merge(spans: Vector[(com.histmersion.domain.PassageFinder.MergeSpansPart1, com.histmersion.domain.PassageFinder.MergeSpansPart2)], text: com.histmersion.domai
+com.histmersion.domain.PassageFinder.Range.End | base Int | original | constructor-parameter
+    final private case class Range(start: Range.Start, end: Range.End, firstMatch: Range.FirstMatch, spans: List[(Range.SpansPart1, Range.SpansPart2)])
+com.histmersion.domain.PassageFinder.Range.FirstMatch | base Int | original | constructor-parameter
+    final private case class Range(start: Range.Start, end: Range.End, firstMatch: Range.FirstMatch, spans: List[(Range.SpansPart1, Range.SpansPart2)])
+com.histmersion.domain.PassageFinder.Range.SpansPart1 | base Int | original | constructor-parameter
+    final private case class Range(start: Range.Start, end: Range.End, firstMatch: Range.FirstMatch, spans: List[(Range.SpansPart1, Range.SpansPart2)])
+com.histmersion.domain.PassageFinder.Range.SpansPart2 | base Int | original | constructor-parameter
+    final private case class Range(start: Range.Start, end: Range.End, firstMatch: Range.FirstMatch, spans: List[(Range.SpansPart1, Range.SpansPart2)])
+com.histmersion.domain.PassageFinder.Range.Start | base Int | original | constructor-parameter
+    final private case class Range(start: Range.Start, end: Range.End, firstMatch: Range.FirstMatch, spans: List[(Range.SpansPart1, Range.SpansPart2)])
+com.histmersion.domain.PassageFinder.SkipBlanksFrom | base Int | generated | method-parameter
+    private def skipBlanks(text: com.histmersion.domain.PassageFinder.SkipBlanksText, from: com.histmersion.domain.PassageFinder.SkipBlanksFrom, upTo: com.histmersion.domain.
+com.histmersion.domain.PassageFinder.SkipBlanksResult | base Int | generated | method-result
+    private def skipBlanks(text: com.histmersion.domain.PassageFinder.SkipBlanksText, from: com.histmersion.domain.PassageFinder.SkipBlanksFrom, upTo: com.histmersion.domain.
+com.histmersion.domain.PassageFinder.SkipBlanksUpTo | base Int | generated | method-parameter
+    private def skipBlanks(text: com.histmersion.domain.PassageFinder.SkipBlanksText, from: com.histmersion.domain.PassageFinder.SkipBlanksFrom, upTo: com.histmersion.domain.
+com.histmersion.domain.PassageFinder.StartOfHalf | base Int | generated | method-parameter
+    private[domain] def startOf(text: com.histmersion.domain.PassageFinder.StartOfText, s: com.histmersion.domain.PassageFinder.StartOfS, half: com.histmersion.domain.Passage
+com.histmersion.domain.PassageFinder.StartOfResult | base Int | generated | method-result
+    private[domain] def startOf(text: com.histmersion.domain.PassageFinder.StartOfText, s: com.histmersion.domain.PassageFinder.StartOfS, half: com.histmersion.domain.Passage
+com.histmersion.domain.PassageFinder.StartOfS | base Int | generated | method-parameter
+    private[domain] def startOf(text: com.histmersion.domain.PassageFinder.StartOfText, s: com.histmersion.domain.PassageFinder.StartOfS, half: com.histmersion.domain.Passage
+com.histmersion.domain.PlanArticles.ArticleAnswer.Kind | base String | original | constructor-parameter
+    final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Query | base String | original | constructor-parameter
+com.histmersion.domain.PlanArticles.ArticleAnswer.Slug | base String | original | constructor-parameter
+    final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Tags | base String | original | constructor-parameter
+com.histmersion.domain.PlanArticles.ArticleAnswer.Title | base String | original | constructor-parameter
+    final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+com.histmersion.domain.PlanArticles.ArticleAnswer.Topics | base String | original | constructor-parameter
+com.histmersion.domain.PlanArticles.ArticleAnswer.Why | base String | original | constructor-parameter
+    final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+com.histmersion.domain.PlanArticles.ArticlesAnswer.Rationale | base String | original | constructor-parameter
+    final case class ArticlesAnswer(rationale: ArticlesAnswer.Rationale, articles: List[ArticleAnswer] = Nil) derives KindlingsCodecAsObject
+com.histmersion.domain.PlanArticles.Candidate.Kind | base String | original | constructor-parameter
+    final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+com.histmersion.domain.PlanArticles.Candidate.Slug | base String | original | constructor-parameter
+    final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+com.histmersion.domain.PlanArticles.Candidate.Title | base String | original | constructor-parameter
+    final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+com.histmersion.domain.PlanArticles.Candidate.Why | base String | original | constructor-parameter
+    final case class Candidate(slug: Candidate.Slug, title: Candidate.Title, kind: Candidate.Kind, filter: Article.Filter, why: Candidate.Why)
+com.histmersion.domain.PlanArticles.CheckLast | base Boolean | generated | method-parameter
+    def check(a: ArticlesAnswer, maxArticles: com.histmersion.domain.PlanArticles.CheckMaxArticles, last: com.histmersion.domain.PlanArticles.CheckLast): Either[List[com.hist
+com.histmersion.domain.PlanArticles.CheckMaxArticles | base Int | generated | method-parameter
+    def check(a: ArticlesAnswer, maxArticles: com.histmersion.domain.PlanArticles.CheckMaxArticles, last: com.histmersion.domain.PlanArticles.CheckLast): Either[List[com.hist
+com.histmersion.domain.PlanArticles.CheckResultPart1 | base String | generated | method-result
+    def check(a: ArticlesAnswer, maxArticles: com.histmersion.domain.PlanArticles.CheckMaxArticles, last: com.histmersion.domain.PlanArticles.CheckLast): Either[List[com.hist
+com.histmersion.domain.PlanArticles.CheckResultPart2Part2 | base String | generated | method-result
+    def check(a: ArticlesAnswer, maxArticles: com.histmersion.domain.PlanArticles.CheckMaxArticles, last: com.histmersion.domain.PlanArticles.CheckLast): Either[List[com.hist
+com.histmersion.domain.PlanArticles.Limits.MaxArticles | base Int | original | constructor-parameter
+    final case class Limits(minSources: Limits.MinSources, maxOverlap: Limits.MaxOverlap, maxArticles: Limits.MaxArticles)
+com.histmersion.domain.PlanArticles.Limits.MaxOverlap | base Double | original | constructor-parameter
+    final case class Limits(minSources: Limits.MinSources, maxOverlap: Limits.MaxOverlap, maxArticles: Limits.MaxArticles)
+com.histmersion.domain.PlanArticles.Limits.MinSources | base Int | original | constructor-parameter
+    final case class Limits(minSources: Limits.MinSources, maxOverlap: Limits.MaxOverlap, maxArticles: Limits.MaxArticles)
+com.histmersion.domain.PlanArticles.LogLineGoal | base String | generated | method-parameter
+    def logLine(goal: com.histmersion.domain.PlanArticles.LogLineGoal, plan: ArticlePlan, outcome: com.histmersion.domain.PlanArticles.LogLineOutcome, runId: com.histmersion.
+com.histmersion.domain.PlanArticles.LogLineOutcome | base String | generated | method-parameter
+    def logLine(goal: com.histmersion.domain.PlanArticles.LogLineGoal, plan: ArticlePlan, outcome: com.histmersion.domain.PlanArticles.LogLineOutcome, runId: com.histmersion.
+com.histmersion.domain.PlanArticles.LogLineResult | base String | generated | method-result
+    def logLine(goal: com.histmersion.domain.PlanArticles.LogLineGoal, plan: ArticlePlan, outcome: com.histmersion.domain.PlanArticles.LogLineOutcome, runId: com.histmersion.
+com.histmersion.domain.PlanArticles.OverlapMine | base String | generated | method-parameter
+    def overlap(mine: Set[com.histmersion.domain.PlanArticles.OverlapMine], theirs: Set[com.histmersion.domain.PlanArticles.OverlapTheirs]): com.histmersion.domain.PlanArticl
+com.histmersion.domain.PlanArticles.OverlapResult | base Double | generated | method-result
+    def overlap(mine: Set[com.histmersion.domain.PlanArticles.OverlapMine], theirs: Set[com.histmersion.domain.PlanArticles.OverlapTheirs]): com.histmersion.domain.PlanArticl
+com.histmersion.domain.PlanArticles.OverlapTheirs | base String | generated | method-parameter
+    def overlap(mine: Set[com.histmersion.domain.PlanArticles.OverlapMine], theirs: Set[com.histmersion.domain.PlanArticles.OverlapTheirs]): com.histmersion.domain.PlanArticl
+com.histmersion.domain.PlanArticles.VerifyDropped | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifyExistingPart1 | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifyExistingPart2 | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifyGoal | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifyHitsResultPart1 | base Int | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifyHitsResultPart2 | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifyLoopAccPart2 | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifyLoopDrop | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifyRationale | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifySlugFreeArg1 | base String | generated | method-parameter
+com.histmersion.domain.PlanArticles.VerifySlugFreeResult | base Boolean | generated | method-parameter
+com.histmersion.domain.PlanGoal.AcquireTextGoal | base String | generated | method-parameter
+    def acquireText(w: PlannedWork, goal: com.histmersion.domain.PlanGoal.AcquireTextGoal): com.histmersion.domain.PlanGoal.AcquireTextResult =
+com.histmersion.domain.PlanGoal.AcquireTextResult | base String | generated | method-result
+    def acquireText(w: PlannedWork, goal: com.histmersion.domain.PlanGoal.AcquireTextGoal): com.histmersion.domain.PlanGoal.AcquireTextResult =
+com.histmersion.domain.PlanGoal.Caps.Queries | base Int | original | constructor-parameter
+    final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
+    val known = knownQueries.map(_.trim.toLowerCase)
+com.histmersion.domain.PlanGoal.Caps.QueryChars | base Int | original | constructor-parameter
+    final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
+com.histmersion.domain.PlanGoal.Caps.SubGoals | base Int | original | constructor-parameter
+    final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
+com.histmersion.domain.PlanGoal.Caps.Works | base Int | original | constructor-parameter
+    final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
+com.histmersion.domain.PlanGoal.CheckGoal | base String | generated | method-parameter
+com.histmersion.domain.PlanGoal.CheckGoalExistsArg1 | base String | generated | method-parameter
+com.histmersion.domain.PlanGoal.CheckGoalExistsResult | base Boolean | generated | method-parameter
+com.histmersion.domain.PlanGoal.CheckKnownQueries | base String | generated | method-parameter
+com.histmersion.domain.PlanGoal.CheckLast | base Boolean | generated | method-parameter
+com.histmersion.domain.PlanGoal.CheckResultPart1 | base String | generated | method-result
+com.histmersion.domain.PlanGoal.CheckResultPart2Part2 | base String | generated | method-result
+com.histmersion.domain.PlanGoal.LogLineApproved | base Boolean | generated | method-parameter
+com.histmersion.domain.PlanGoal.LogLineCreated | base Int | generated | method-parameter
+com.histmersion.domain.PlanGoal.LogLineGoal | base String | generated | method-parameter
+com.histmersion.domain.PlanGoal.LogLineLinked | base Int | generated | method-parameter
+com.histmersion.domain.PlanGoal.LogLineQueued | base Int | generated | method-parameter
+com.histmersion.domain.PlanGoal.LogLineResult | base String | generated | method-result
+com.histmersion.domain.PlanGoal.PlanAnswer.Queries | base String | original | constructor-parameter
+    final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
+    val known = knownQueries.map(_.trim.toLowerCase)
+com.histmersion.domain.PlanGoal.PlanAnswer.Rationale | base String | original | constructor-parameter
+com.histmersion.domain.PlanGoal.Proposed.Dropped | base String | original | constructor-parameter
+com.histmersion.domain.PlanGoal.Proposed.Queries | base String | original | constructor-parameter
+    final case class Caps(subGoals: Caps.SubGoals, queries: Caps.Queries, works: Caps.Works, queryChars: Caps.QueryChars)
+    val known = knownQueries.map(_.trim.toLowerCase)
+com.histmersion.domain.PlanGoal.Proposed.Rationale | base String | original | constructor-parameter
+com.histmersion.domain.PlanGoal.ProposedWork.Why | base String | original | constructor-parameter
+    final case class WorkAnswer(doi: com.histmersion.domain.library.Doi, why: WorkAnswer.Why) derives KindlingsCodecAsObject
+    final case class ProposedWork(doi: com.histmersion.domain.library.Doi, why: ProposedWork.Why) derives KindlingsCodecAsObject
+com.histmersion.domain.PlanGoal.SubGoalAnswer.Notes | base String | original | constructor-parameter
+    final case class SubGoalAnswer(slug: SubGoalAnswer.Slug, title: SubGoalAnswer.Title, notes: Option[SubGoalAnswer.Notes] = None, tags: List[SubGoalAnswer.Tags] = Nil)
+com.histmersion.domain.PlanGoal.SubGoalAnswer.Slug | base String | original | constructor-parameter
+    final case class SubGoalAnswer(slug: SubGoalAnswer.Slug, title: SubGoalAnswer.Title, notes: Option[SubGoalAnswer.Notes] = None, tags: List[SubGoalAnswer.Tags] = Nil)
+com.histmersion.domain.PlanGoal.SubGoalAnswer.Tags | base String | original | constructor-parameter
+    final case class SubGoalAnswer(slug: SubGoalAnswer.Slug, title: SubGoalAnswer.Title, notes: Option[SubGoalAnswer.Notes] = None, tags: List[SubGoalAnswer.Tags] = Nil)
+com.histmersion.domain.PlanGoal.SubGoalAnswer.Title | base String | original | constructor-parameter
+    final case class SubGoalAnswer(slug: SubGoalAnswer.Slug, title: SubGoalAnswer.Title, notes: Option[SubGoalAnswer.Notes] = None, tags: List[SubGoalAnswer.Tags] = Nil)
+com.histmersion.domain.PlanGoal.VerifyGoal | base String | generated | method-parameter
+    def verify(p: Proposed, goal: com.histmersion.domain.PlanGoal.VerifyGoal, lookup: Lookup): Plan =
+com.histmersion.domain.PlanGoal.Work.Authors | base String | original | constructor-parameter
+com.histmersion.domain.PlanGoal.Work.InDb | base Boolean | original | constructor-parameter
+com.histmersion.domain.PlanGoal.Work.IsOa | base Boolean | original | constructor-parameter
+com.histmersion.domain.PlanGoal.Work.IsRetracted | base Boolean | original | constructor-parameter
+com.histmersion.domain.PlanGoal.Work.Title | base String | original | constructor-parameter
+    final case class SubGoalAnswer(slug: SubGoalAnswer.Slug, title: SubGoalAnswer.Title, notes: Option[SubGoalAnswer.Notes] = None, tags: List[SubGoalAnswer.Tags] = Nil)
+com.histmersion.domain.PlanGoal.WorkAnswer.Why | base String | original | constructor-parameter
+    final case class WorkAnswer(doi: com.histmersion.domain.library.Doi, why: WorkAnswer.Why) derives KindlingsCodecAsObject
+    final case class ProposedWork(doi: com.histmersion.domain.library.Doi, why: ProposedWork.Why) derives KindlingsCodecAsObject
+com.histmersion.domain.PlanReadSchedule.ScheduledReadAutopilotOn | base Boolean | generated | method-parameter
+com.histmersion.domain.PlanReadSchedule.ScheduledReadWanted | base Boolean | generated | method-parameter

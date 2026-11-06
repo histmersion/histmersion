@@ -1,0 +1,257 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.ManagerPolicy.Candidate.Id (Long)
+com.histmersion.domain.ManagerPolicy.Candidate.Priority (Int)
+com.histmersion.domain.ManagerPolicy.Candidate.Target (String)
+com.histmersion.domain.ManagerPolicy.GoalKindsValue (String)
+com.histmersion.domain.ManagerPolicy.Next.Again.Note (String)
+com.histmersion.domain.ManagerPolicy.Next.Done.Outcome (String)
+com.histmersion.domain.ManagerPolicy.Next.Retry.Failures (Int)
+com.histmersion.domain.ManagerPolicy.Next.Retry.Note (String)
+com.histmersion.domain.ManagerPolicy.Next.Stop.Outcome (String)
+com.histmersion.domain.ManagerPolicy.Next.Stop.Task (String)
+com.histmersion.domain.ManagerPolicy.Next.Wait.Approval (Long)
+com.histmersion.domain.ManagerPolicy.Next.Wait.Note (String)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.CooldownMinutes (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.InferFilter (Boolean)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.LowWater (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxFailures (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxOpen (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRuns (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRunsPerArticle (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.NoProgressRuns (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.RefillBatch (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.ReopenLimit (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.Rounds (Int)
+com.histmersion.domain.ManagerPolicy.ReviewSettings.StaleAfterDays (Int)
+com.histmersion.domain.ManagerPolicy.StepFacts.Finished.Outcome (String)
+com.histmersion.domain.ManagerPolicy.StepFacts.NotDone.Outcome (String)
+com.histmersion.domain.ManagerPolicy.StepFacts.NotDone.Task (String)
+com.histmersion.domain.ManagerPolicy.StepFacts.Redo.Outcome (String)
+com.histmersion.domain.ManagerPolicy.StepFacts.Waiting.Approval (Long)
+com.histmersion.domain.ManagerPolicy.StepFacts.Waiting.What (String)
+com.histmersion.domain.ManagerRunDefaults.MaxRuns (Int)
+com.histmersion.domain.MergeFold.ArticleOutcome.Conflict.BaseSha (String)
+com.histmersion.domain.MergeFold.ArticleOutcome.Conflict.Conflicts (Int)
+com.histmersion.domain.MergeFold.ArticleOutcome.Merged.BaseSha (String)
+com.histmersion.domain.MergeFold.ArticleOutcome.Merged.Body (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.ManagerPolicy.BackoffBaseMinutes | base Int | generated | method-parameter
+    def backoff(baseMinutes: com.histmersion.domain.ManagerPolicy.BackoffBaseMinutes, maxMinutes: com.histmersion.domain.ManagerPolicy.BackoffMaxMinutes, failures: com.histme
+com.histmersion.domain.ManagerPolicy.BackoffFailures | base Int | generated | method-parameter
+    def backoff(baseMinutes: com.histmersion.domain.ManagerPolicy.BackoffBaseMinutes, maxMinutes: com.histmersion.domain.ManagerPolicy.BackoffMaxMinutes, failures: com.histme
+com.histmersion.domain.ManagerPolicy.BackoffMaxMinutes | base Int | generated | method-parameter
+    def backoff(baseMinutes: com.histmersion.domain.ManagerPolicy.BackoffBaseMinutes, maxMinutes: com.histmersion.domain.ManagerPolicy.BackoffMaxMinutes, failures: com.histme
+com.histmersion.domain.ManagerPolicy.BlocksKind | base String | generated | method-parameter
+    def blocks(kind: com.histmersion.domain.ManagerPolicy.BlocksKind, pipeline: com.histmersion.domain.ManagerPolicy.BlocksPipeline, unsettled: Seq[com.histmersion.domain.Man
+com.histmersion.domain.ManagerPolicy.BlocksPipeline | base String | generated | method-parameter
+    def blocks(kind: com.histmersion.domain.ManagerPolicy.BlocksKind, pipeline: com.histmersion.domain.ManagerPolicy.BlocksPipeline, unsettled: Seq[com.histmersion.domain.Man
+com.histmersion.domain.ManagerPolicy.BlocksResult | base Boolean | generated | method-result
+    def blocks(kind: com.histmersion.domain.ManagerPolicy.BlocksKind, pipeline: com.histmersion.domain.ManagerPolicy.BlocksPipeline, unsettled: Seq[com.histmersion.domain.Man
+com.histmersion.domain.ManagerPolicy.BlocksUnsettled | base String | generated | method-parameter
+    def blocks(kind: com.histmersion.domain.ManagerPolicy.BlocksKind, pipeline: com.histmersion.domain.ManagerPolicy.BlocksPipeline, unsettled: Seq[com.histmersion.domain.Man
+com.histmersion.domain.ManagerPolicy.Candidate.Id | base Long | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, target: Candidate.Target, priority: Candidate.Priority, notBefore: Option[Instant])
+    def notesFor(hints: List[ManagerHint], itemId: com.histmersion.domain.ManagerPolicy.NotesForItemId): List[ManagerHint] =
+com.histmersion.domain.ManagerPolicy.Candidate.Priority | base Int | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, target: Candidate.Target, priority: Candidate.Priority, notBefore: Option[Instant])
+com.histmersion.domain.ManagerPolicy.Candidate.Target | base String | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, target: Candidate.Target, priority: Candidate.Priority, notBefore: Option[Instant])
+com.histmersion.domain.ManagerPolicy.CapacityActiveAll | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.CapacityMaxConcurrent | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.CapacityMaxOpen | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.CapacityMaxRuns | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.CapacityMineOpen | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.CapacityMineRunning | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.CapacityPoolCap | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.CapacityResult | base Int | generated | method-result
+com.histmersion.domain.ManagerPolicy.CheckCronMinIntervalMinutes | base Int | generated | method-parameter
+    def checkCron(text: com.histmersion.domain.ManagerPolicy.CheckCronText, now: Instant, minIntervalMinutes: com.histmersion.domain.ManagerPolicy.CheckCronMinIntervalMinutes
+com.histmersion.domain.ManagerPolicy.CheckCronResultPart1 | base String | generated | method-result
+    def checkCron(text: com.histmersion.domain.ManagerPolicy.CheckCronText, now: Instant, minIntervalMinutes: com.histmersion.domain.ManagerPolicy.CheckCronMinIntervalMinutes
+com.histmersion.domain.ManagerPolicy.CheckCronText | base String | generated | method-parameter
+    def checkCron(text: com.histmersion.domain.ManagerPolicy.CheckCronText, now: Instant, minIntervalMinutes: com.histmersion.domain.ManagerPolicy.CheckCronMinIntervalMinutes
+com.histmersion.domain.ManagerPolicy.DailyBlockCap | base Double | generated | method-parameter
+    def dailyBlock(cap: Option[com.histmersion.domain.ManagerPolicy.DailyBlockCap], spentToday: BigDecimal): Option[com.histmersion.domain.ManagerPolicy.DailyBlockResult] =
+com.histmersion.domain.ManagerPolicy.DailyBlockResult | base String | generated | method-result
+    def dailyBlock(cap: Option[com.histmersion.domain.ManagerPolicy.DailyBlockCap], spentToday: BigDecimal): Option[com.histmersion.domain.ManagerPolicy.DailyBlockResult] =
+com.histmersion.domain.ManagerPolicy.DailyCapResult | base Double | generated | method-result
+    def dailyCap(c: ManagerConfig, m: ManagerDefaults): Option[com.histmersion.domain.ManagerPolicy.DailyCapResult] =
+com.histmersion.domain.ManagerPolicy.DecidedResult | base String | generated | method-parameter,method-result
+    def decided(state: com.histmersion.domain.ManagerPolicy.DecidedState, result: Option[com.histmersion.domain.ManagerPolicy.DecidedResult]): Option[com.histmersion.domain.M
+com.histmersion.domain.ManagerPolicy.DecidedState | base String | generated | method-parameter
+    def decided(state: com.histmersion.domain.ManagerPolicy.DecidedState, result: Option[com.histmersion.domain.ManagerPolicy.DecidedResult]): Option[com.histmersion.domain.M
+com.histmersion.domain.ManagerPolicy.DueResult | base Boolean | generated | method-result
+    def due(c: Candidate, now: Instant): com.histmersion.domain.ManagerPolicy.DueResult = c.notBefore.forall(!_.isAfter(now))
+com.histmersion.domain.ManagerPolicy.EvaluateStepError | base String | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.EvaluateStepFailures | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.EvaluateStepLabel | base String | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.EvaluateStepRun | base String | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.EvaluateStepTarget | base String | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.GoalKindsValue | base String | original | alias
+com.histmersion.domain.ManagerPolicy.MatchesEqA | base String | generated | method-parameter
+    def eq(a: com.histmersion.domain.ManagerPolicy.MatchesEqA, b: com.histmersion.domain.ManagerPolicy.MatchesEqB) = a.trim.equalsIgnoreCase(b.trim)
+com.histmersion.domain.ManagerPolicy.MatchesEqB | base String | generated | method-parameter
+    def eq(a: com.histmersion.domain.ManagerPolicy.MatchesEqA, b: com.histmersion.domain.ManagerPolicy.MatchesEqB) = a.trim.equalsIgnoreCase(b.trim)
+com.histmersion.domain.ManagerPolicy.MatchesGoals | base String | generated | method-parameter
+    def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.MatchesTarget, tags: List[com.histmersion.domain.ManagerPolicy.MatchesTags], topics: List[com.hist
+com.histmersion.domain.ManagerPolicy.MatchesResult | base Boolean | generated | method-result
+    def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.MatchesTarget, tags: List[com.histmersion.domain.ManagerPolicy.MatchesTags], topics: List[com.hist
+com.histmersion.domain.ManagerPolicy.MatchesTags | base String | generated | method-parameter
+    def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.MatchesTarget, tags: List[com.histmersion.domain.ManagerPolicy.MatchesTags], topics: List[com.hist
+com.histmersion.domain.ManagerPolicy.MatchesTarget | base String | generated | method-parameter
+    def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.MatchesTarget, tags: List[com.histmersion.domain.ManagerPolicy.MatchesTags], topics: List[com.hist
+com.histmersion.domain.ManagerPolicy.MatchesTopics | base String | generated | method-parameter
+    def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.MatchesTarget, tags: List[com.histmersion.domain.ManagerPolicy.MatchesTags], topics: List[com.hist
+com.histmersion.domain.ManagerPolicy.Next.Again.Note | base String | generated | constructor-parameter
+    case Again(notBefore: Option[Instant], state: ItemState, note: Next.Again.Note)
+    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: Next.Retry.Note)
+com.histmersion.domain.ManagerPolicy.Next.Done.Outcome | base String | generated | constructor-parameter
+    case Done(outcome: Next.Done.Outcome, state: ItemState)
+    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
+com.histmersion.domain.ManagerPolicy.Next.Retry.Failures | base Int | generated | constructor-parameter
+    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: Next.Retry.Note)
+com.histmersion.domain.ManagerPolicy.Next.Retry.Note | base String | generated | constructor-parameter
+    case Again(notBefore: Option[Instant], state: ItemState, note: Next.Again.Note)
+    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: Next.Retry.Note)
+com.histmersion.domain.ManagerPolicy.Next.Stop.Outcome | base String | generated | constructor-parameter
+    case Done(outcome: Next.Done.Outcome, state: ItemState)
+    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
+com.histmersion.domain.ManagerPolicy.Next.Stop.Task | base String | generated | constructor-parameter
+    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
+    case NotDone(outcome: StepFacts.NotDone.Outcome, task: Option[StepFacts.NotDone.Task])
+com.histmersion.domain.ManagerPolicy.Next.Wait.Approval | base Long | generated | constructor-parameter
+    case Wait(approval: Next.Wait.Approval, note: Next.Wait.Note)
+    case Waiting(approval: StepFacts.Waiting.Approval, what: StepFacts.Waiting.What)
+com.histmersion.domain.ManagerPolicy.Next.Wait.Note | base String | generated | constructor-parameter
+    case Again(notBefore: Option[Instant], state: ItemState, note: Next.Again.Note)
+    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: Next.Retry.Note)
+com.histmersion.domain.ManagerPolicy.NotesForItemId | base Long | generated | method-parameter
+    def notesFor(hints: List[ManagerHint], itemId: com.histmersion.domain.ManagerPolicy.NotesForItemId): List[ManagerHint] =
+com.histmersion.domain.ManagerPolicy.ParseInstantS | base String | generated | method-parameter
+    def parseInstant(s: com.histmersion.domain.ManagerPolicy.ParseInstantS): Option[Instant] =
+com.histmersion.domain.ManagerPolicy.ReleasedResult | base Boolean | generated | method-result
+    def released(h: Hold, now: Instant, sourceExists: com.histmersion.domain.ManagerPolicy.ReleasedSourceExistsArg1 => com.histmersion.domain.ManagerPolicy.ReleasedSourceExis
+com.histmersion.domain.ManagerPolicy.ReleasedSourceExistsArg1 | base String | generated | method-parameter
+    def released(h: Hold, now: Instant, sourceExists: com.histmersion.domain.ManagerPolicy.ReleasedSourceExistsArg1 => com.histmersion.domain.ManagerPolicy.ReleasedSourceExis
+com.histmersion.domain.ManagerPolicy.ReleasedSourceExistsResult | base Boolean | generated | method-parameter
+    def released(h: Hold, now: Instant, sourceExists: com.histmersion.domain.ManagerPolicy.ReleasedSourceExistsArg1 => com.histmersion.domain.ManagerPolicy.ReleasedSourceExis
+com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.CooldownMinutes | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.InferFilter | base Boolean | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.LowWater | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxFailures | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxOpen | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRuns | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRunsPerArticle | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.NoProgressRuns | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.RefillBatch | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.ReopenLimit | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.Rounds | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.ReviewSettings.StaleAfterDays | base Int | original | constructor-parameter
+com.histmersion.domain.ManagerPolicy.RoundRobinGoLeft | base Int | generated | method-parameter
+    def go(qs: List[(M, com.histmersion.domain.ManagerPolicy.RoundRobinGoQsPart2, List[A])], left: com.histmersion.domain.ManagerPolicy.RoundRobinGoLeft, acc: Vector[(M, A)])
+com.histmersion.domain.ManagerPolicy.RoundRobinGoQsPart2 | base Int | generated | method-parameter
+    def go(qs: List[(M, com.histmersion.domain.ManagerPolicy.RoundRobinGoQsPart2, List[A])], left: com.histmersion.domain.ManagerPolicy.RoundRobinGoLeft, acc: Vector[(M, A)])
+com.histmersion.domain.ManagerPolicy.RoundRobinQueuesPart2 | base Int | generated | method-parameter
+    def roundRobin[M, A](queues: List[(M, com.histmersion.domain.ManagerPolicy.RoundRobinQueuesPart2, List[A])], room: com.histmersion.domain.ManagerPolicy.RoundRobinRoom): L
+com.histmersion.domain.ManagerPolicy.RoundRobinRoom | base Int | generated | method-parameter
+    def roundRobin[M, A](queues: List[(M, com.histmersion.domain.ManagerPolicy.RoundRobinQueuesPart2, List[A])], room: com.histmersion.domain.ManagerPolicy.RoundRobinRoom): L
+com.histmersion.domain.ManagerPolicy.StatusNoteBudget | base String | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.StatusNoteCapacity | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.StatusNoteDue | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.StatusNoteInFlight | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.StatusNotePending | base Int | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.StatusNoteResult | base String | generated | method-result
+com.histmersion.domain.ManagerPolicy.StatusNoteStarved | base String | generated | method-parameter
+com.histmersion.domain.ManagerPolicy.StepFacts.Finished.Outcome | base String | generated | constructor-parameter
+    case Done(outcome: Next.Done.Outcome, state: ItemState)
+    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
+com.histmersion.domain.ManagerPolicy.StepFacts.NotDone.Outcome | base String | generated | constructor-parameter
+    case Done(outcome: Next.Done.Outcome, state: ItemState)
+    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
+com.histmersion.domain.ManagerPolicy.StepFacts.NotDone.Task | base String | generated | constructor-parameter
+    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
+    case NotDone(outcome: StepFacts.NotDone.Outcome, task: Option[StepFacts.NotDone.Task])
+com.histmersion.domain.ManagerPolicy.StepFacts.Redo.Outcome | base String | generated | constructor-parameter
+    case Done(outcome: Next.Done.Outcome, state: ItemState)
+    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
+com.histmersion.domain.ManagerPolicy.StepFacts.Waiting.Approval | base Long | generated | constructor-parameter
+    case Wait(approval: Next.Wait.Approval, note: Next.Wait.Note)
+    case Waiting(approval: StepFacts.Waiting.Approval, what: StepFacts.Waiting.What)
+com.histmersion.domain.ManagerPolicy.StepFacts.Waiting.What | base String | generated | constructor-parameter
+    case Waiting(approval: StepFacts.Waiting.Approval, what: StepFacts.Waiting.What)
+com.histmersion.domain.ManagerPolicy.WaitsForKind | base String | generated | method-parameter
+    def waitsFor(kind: com.histmersion.domain.ManagerPolicy.WaitsForKind, target: com.histmersion.domain.ManagerPolicy.WaitsForTarget, open: List[(com.histmersion.domain.Mana
+com.histmersion.domain.ManagerPolicy.WaitsForOpenPart1 | base String | generated | method-parameter
+    def waitsFor(kind: com.histmersion.domain.ManagerPolicy.WaitsForKind, target: com.histmersion.domain.ManagerPolicy.WaitsForTarget, open: List[(com.histmersion.domain.Mana
+com.histmersion.domain.ManagerPolicy.WaitsForOpenPart2 | base String | generated | method-parameter
+    def waitsFor(kind: com.histmersion.domain.ManagerPolicy.WaitsForKind, target: com.histmersion.domain.ManagerPolicy.WaitsForTarget, open: List[(com.histmersion.domain.Mana
+com.histmersion.domain.ManagerPolicy.WaitsForResult | base Boolean | generated | method-result
+    def waitsFor(kind: com.histmersion.domain.ManagerPolicy.WaitsForKind, target: com.histmersion.domain.ManagerPolicy.WaitsForTarget, open: List[(com.histmersion.domain.Mana
+com.histmersion.domain.ManagerPolicy.WaitsForTarget | base String | generated | method-parameter
+    def waitsFor(kind: com.histmersion.domain.ManagerPolicy.WaitsForKind, target: com.histmersion.domain.ManagerPolicy.WaitsForTarget, open: List[(com.histmersion.domain.Mana
+com.histmersion.domain.ManagerRunDefaults.MaxRuns | base Int | original | constructor-parameter
+    final case class ManagerRunDefaults(maxRuns: ManagerRunDefaults.MaxRuns)
+com.histmersion.domain.MergeFold.ArticleOutcome.Conflict.BaseSha | base String | generated | constructor-parameter
+    case Merged(body: ArticleOutcome.Merged.Body, baseSha: ArticleOutcome.Merged.BaseSha)
+    case Conflict(conflicts: ArticleOutcome.Conflict.Conflicts, baseSha: ArticleOutcome.Conflict.BaseSha)
+com.histmersion.domain.MergeFold.ArticleOutcome.Conflict.Conflicts | base Int | generated | constructor-parameter
+    case Conflict(conflicts: ArticleOutcome.Conflict.Conflicts, baseSha: ArticleOutcome.Conflict.BaseSha)
+com.histmersion.domain.MergeFold.ArticleOutcome.Merged.BaseSha | base String | generated | constructor-parameter
+    case Merged(body: ArticleOutcome.Merged.Body, baseSha: ArticleOutcome.Merged.BaseSha)
+    case Conflict(conflicts: ArticleOutcome.Conflict.Conflicts, baseSha: ArticleOutcome.Conflict.BaseSha)
+com.histmersion.domain.MergeFold.ArticleOutcome.Merged.Body | base String | generated | constructor-parameter
+    case Merged(body: ArticleOutcome.Merged.Body, baseSha: ArticleOutcome.Merged.BaseSha)
+    val (ls, fs) = (BundleFormat.sha256Hex(localBody), BundleFormat.sha256Hex(foreignBody))
+com.histmersion.domain.MergeFold.ArticleOutcomeForeignBody | base String | generated | method-parameter
+com.histmersion.domain.MergeFold.ArticleOutcomeForeignHistory | base String | generated | method-parameter
+com.histmersion.domain.MergeFold.ArticleOutcomeLocalBody | base String | generated | method-parameter
+com.histmersion.domain.MergeFold.ArticleOutcomeLocalHistoryPart1 | base String | generated | method-parameter
+com.histmersion.domain.MergeFold.ArticleOutcomeLocalHistoryPart2 | base String | generated | method-parameter
+com.histmersion.domain.MergeFold.FoldArticleBody | base String | generated | method-parameter
+    def foldArticle(l: Bundle.Article, r: Bundle.Article, body: com.histmersion.domain.MergeFold.FoldArticleBody): Bundle.Article =
+com.histmersion.domain.MergeFold.FoldGoalFrom | base String | generated | method-parameter
+com.histmersion.domain.MergeFold.FoldGoalRankS | base String | generated | method-parameter
+    def rank(s: com.histmersion.domain.MergeFold.FoldGoalRankS) = Goal.Status.all.indexOf(s)
+com.histmersion.domain.MergeFold.NarrowerWidthResult | base Long | generated | method-result
+    def width(r: Bundle.Range): com.histmersion.domain.MergeFold.NarrowerWidthResult = r.start.zip(r.end).map((s, e) => e - s).getOrElse(Long.MaxValue)
+com.histmersion.domain.MergeFold.OverlapResult | base Boolean | generated | method-result
+    def overlap(a: Option[Bundle.Range], b: Option[Bundle.Range]): com.histmersion.domain.MergeFold.OverlapResult =
+com.histmersion.domain.MergeFold.QueueKeyResult | base String | generated | method-result
+    def queueKey(t: com.histmersion.domain.MergeFold.QueueKeyT): com.histmersion.domain.MergeFold.QueueKeyResult = Fingerprint.fold(t).trim.replaceAll("\\s+", " ")
+com.histmersion.domain.MergeFold.QueueKeyT | base String | generated | method-parameter
+    def queueKey(t: com.histmersion.domain.MergeFold.QueueKeyT): com.histmersion.domain.MergeFold.QueueKeyResult = Fingerprint.fold(t).trim.replaceAll("\\s+", " ")
+com.histmersion.domain.MergeFold.RicherL | base String | generated | method-parameter
+    def richer(l: com.histmersion.domain.MergeFold.RicherL, r: com.histmersion.domain.MergeFold.RicherR): com.histmersion.domain.MergeFold.RicherResult =
+com.histmersion.domain.MergeFold.RicherR | base String | generated | method-parameter
+    def richer(l: com.histmersion.domain.MergeFold.RicherL, r: com.histmersion.domain.MergeFold.RicherR): com.histmersion.domain.MergeFold.RicherResult =
+com.histmersion.domain.MergeFold.RicherResult | base String | generated | method-result
+    def richer(l: com.histmersion.domain.MergeFold.RicherL, r: com.histmersion.domain.MergeFold.RicherR): com.histmersion.domain.MergeFold.RicherResult =
+com.histmersion.domain.MergeFold.RicherScoreS | base String | generated | method-parameter
+    def score(s: com.histmersion.domain.MergeFold.RicherScoreS) =
+com.histmersion.domain.MergeFold.ScheduleDifferencesResultPart1 | base String | generated | method-result
+    def scheduleDifferences(l: Bundle.Goal, r: Bundle.Goal): List[(com.histmersion.domain.MergeFold.ScheduleDifferencesResultPart1, Bundle.GoalSchedule, Bundle.GoalSchedule)]
+com.histmersion.domain.MergeFold.TextO | base String | generated | method-parameter
+    private def text(o: Option[com.histmersion.domain.MergeFold.TextO]): Option[com.histmersion.domain.MergeFold.TextResult] = o.map(_.trim).filter(_.nonEmpty)
+com.histmersion.domain.MergeFold.TextResult | base String | generated | method-result
+    private def text(o: Option[com.histmersion.domain.MergeFold.TextO]): Option[com.histmersion.domain.MergeFold.TextResult] = o.map(_.trim).filter(_.nonEmpty)
+com.histmersion.domain.MergeFold.UnionKeyArg1 | base String | generated | method-parameter
+    def union(l: List[com.histmersion.domain.MergeFold.UnionL], r: List[com.histmersion.domain.MergeFold.UnionR], key: com.histmersion.domain.MergeFold.UnionKeyArg1 => com.hi
+com.histmersion.domain.MergeFold.UnionKeyResult | base String | generated | method-parameter
+    def union(l: List[com.histmersion.domain.MergeFold.UnionL], r: List[com.histmersion.domain.MergeFold.UnionR], key: com.histmersion.domain.MergeFold.UnionKeyArg1 => com.hi
+com.histmersion.domain.MergeFold.UnionL | base String | generated | alias,method-parameter
+    val UnionTagsL: _root_.com.histmersion.domain.MergeFold.UnionL.type = _root_.com.histmersion.domain.MergeFold.UnionL
+    val UnionNamesL: _root_.com.histmersion.domain.MergeFold.UnionL.type = _root_.com.histmersion.domain.MergeFold.UnionL
+com.histmersion.domain.MergeFold.UnionNamesResult | base String | generated | method-result
+    def unionNames(l: List[com.histmersion.domain.MergeFold.UnionNamesL], r: List[com.histmersion.domain.MergeFold.UnionNamesR]): List[com.histmersion.domain.MergeFold.UnionN
+com.histmersion.domain.MergeFold.UnionR | base String | generated | alias,method-parameter
+    val UnionTagsR: _root_.com.histmersion.domain.MergeFold.UnionR.type = _root_.com.histmersion.domain.MergeFold.UnionR
+    val UnionNamesR: _root_.com.histmersion.domain.MergeFold.UnionR.type = _root_.com.histmersion.domain.MergeFold.UnionR
+com.histmersion.domain.MergeFold.UnionResult | base String | generated | method-result
+    def union(l: List[com.histmersion.domain.MergeFold.UnionL], r: List[com.histmersion.domain.MergeFold.UnionR], key: com.histmersion.domain.MergeFold.UnionKeyArg1 => com.hi
+com.histmersion.domain.MergeFold.UnionTagsResult | base String | generated | method-result
+    def unionTags(l: List[com.histmersion.domain.MergeFold.UnionTagsL], r: List[com.histmersion.domain.MergeFold.UnionTagsR]): List[com.histmersion.domain.MergeFold.UnionTags

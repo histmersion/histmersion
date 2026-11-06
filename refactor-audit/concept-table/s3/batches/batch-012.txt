@@ -1,0 +1,358 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideMagnitude (Double)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideVei (Int)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionMagnitude (Double)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionVei (Int)
+com.histmersion.domain.catalogue.events.StoredEvent.Catalogue (Boolean)
+com.histmersion.domain.catalogue.events.StoredEvent.Id (String)
+com.histmersion.domain.catalogue.events.StoredEvent.KeysPart1 (String)
+com.histmersion.domain.catalogue.events.StoredEvent.KeysPart2 (String)
+com.histmersion.domain.catalogue.events.StoredEvent.Kind (String)
+com.histmersion.domain.catalogue.events.StoredEvent.Label (String)
+com.histmersion.domain.catalogue.events.StoredEvent.Wikidata (String)
+com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchorTry.ChunkOrd (Int)
+com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchorTry.Foreign (Boolean)
+com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchorTry.Issue (String)
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id (String)
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap (Long)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Finding (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Km (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MaxCandidates (Int)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinNameChars (Int)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinScore (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Name (Double)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Years (Long)
+com.histmersion.domain.catalogue.maptiles.GridCell.Dup (Int)
+com.histmersion.domain.catalogue.maptiles.GridCell.DupX (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.DupY (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.East (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.Gx (Long)
+com.histmersion.domain.catalogue.maptiles.GridCell.Gy (Long)
+com.histmersion.domain.catalogue.maptiles.GridCell.MidHi (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.MidLo (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.N (Int)
+com.histmersion.domain.catalogue.maptiles.GridCell.North (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.One (String)
+com.histmersion.domain.catalogue.maptiles.GridCell.South (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.SumX (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.SumY (Double)
+com.histmersion.domain.catalogue.maptiles.GridCell.West (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.East (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.Key (String)
+com.histmersion.domain.catalogue.maptiles.TileCell.MidHi (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.MidLo (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.N (Int)
+com.histmersion.domain.catalogue.maptiles.TileCell.North (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.South (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.Undated (Int)
+com.histmersion.domain.catalogue.maptiles.TileCell.West (Double)
+com.histmersion.domain.catalogue.maptiles.TileCell.X (Int)
+com.histmersion.domain.catalogue.maptiles.TileCell.Y (Int)
+com.histmersion.domain.catalogue.maptiles.TileCoord.ExtentValue (Int)
+com.histmersion.domain.catalogue.maptiles.TileCoord.MaxLatValue (Double)
+com.histmersion.domain.catalogue.maptiles.TileCoord.X (Long)
+com.histmersion.domain.catalogue.maptiles.TileCoord.Y (Long)
+com.histmersion.domain.catalogue.maptiles.TileCoord.Z (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.CellUnits (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom (Int)
+com.histmersion.domain.catalogue.maptiles.TileGrid.TilePxValue (Int)
+com.histmersion.domain.catalogue.maptiles.TilePoint.PropsPart1 (String)
+com.histmersion.domain.catalogue.maptiles.TilePoint.X (Int)
+com.histmersion.domain.catalogue.maptiles.TilePoint.Y (Int)
+com.histmersion.domain.catalogue.maptiles.TileValue.Flag.Value (Boolean)
+com.histmersion.domain.catalogue.maptiles.TileValue.Real.Value (Double)
+com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value (String)
+com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value (Long)
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom (Int)
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide (Int)
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version (Long)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel | base String | generated | method-parameter
+    def info(label: com.histmersion.domain.catalogue.events.EventPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel): com.histmers
+    def info(label: com.histmersion.domain.catalogue.events.EventPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel): com.histmers
+com.histmersion.domain.catalogue.events.EventPlan.InfoLabel | base String | generated | method-parameter
+    def info(label: com.histmersion.domain.catalogue.events.EventPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel): com.histmers
+    def info(label: com.histmersion.domain.catalogue.events.EventPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel): com.histmers
+com.histmersion.domain.catalogue.events.EventPlan.InfoResult | base String | generated | method-result
+    def info(label: com.histmersion.domain.catalogue.events.EventPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel): com.histmers
+    def info(label: com.histmersion.domain.catalogue.events.EventPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.InfoBundleLabel): com.histmers
+com.histmersion.domain.catalogue.events.EventPlan.SameCoreResult | base Boolean | generated | method-result
+    def sameCore(l: com.histmersion.api.exchange.Bundle.Event, r: com.histmersion.api.exchange.Bundle.Event): com.histmersion.domain.catalogue.events.EventPlan.SameCoreResult
+com.histmersion.domain.catalogue.events.EventPlan.SameEventAcrossIdsResult | base Boolean | generated | method-result
+com.histmersion.domain.catalogue.events.EventProviders.EncResult | base String | generated | method-result
+    private def enc(s: com.histmersion.domain.catalogue.events.EventProviders.EncS): com.histmersion.domain.catalogue.events.EventProviders.EncResult = URLEncoder.encode(s, U
+com.histmersion.domain.catalogue.events.EventProviders.EncS | base String | generated | method-parameter
+    private def enc(s: com.histmersion.domain.catalogue.events.EventProviders.EncS): com.histmersion.domain.catalogue.events.EventProviders.EncResult = URLEncoder.encode(s, U
+com.histmersion.domain.catalogue.events.EventProviders.KeepResultPart1 | base String | generated | method-result
+    def keep(r: CatalogRecord, t: Thresholds): Either[com.histmersion.domain.catalogue.events.EventProviders.KeepResultPart1, Unit] =
+com.histmersion.domain.catalogue.events.EventProviders.PartsInRecorded | base String | generated | method-parameter
+    def partsIn(recorded: Set[com.histmersion.domain.catalogue.events.EventProviders.PartsInRecorded], scope: com.histmersion.domain.catalogue.events.EventProviders.PartsInSc
+com.histmersion.domain.catalogue.events.EventProviders.PartsInResult | base String | generated | method-result
+    def partsIn(recorded: Set[com.histmersion.domain.catalogue.events.EventProviders.PartsInRecorded], scope: com.histmersion.domain.catalogue.events.EventProviders.PartsInSc
+com.histmersion.domain.catalogue.events.EventProviders.PartsInScope | base String | generated | method-parameter
+    def partsIn(recorded: Set[com.histmersion.domain.catalogue.events.EventProviders.PartsInRecorded], scope: com.histmersion.domain.catalogue.events.EventProviders.PartsInSc
+com.histmersion.domain.catalogue.events.EventProviders.ScopeResult | base String | generated | method-result
+    def scope(t: Thresholds): com.histmersion.domain.catalogue.events.EventProviders.ScopeResult =
+com.histmersion.domain.catalogue.events.EventProviders.ScopedPartPart | base String | generated | method-parameter
+    def scopedPart(part: com.histmersion.domain.catalogue.events.EventProviders.ScopedPartPart, scope: com.histmersion.domain.catalogue.events.EventProviders.ScopedPartScope)
+com.histmersion.domain.catalogue.events.EventProviders.ScopedPartResult | base String | generated | method-result
+    def scopedPart(part: com.histmersion.domain.catalogue.events.EventProviders.ScopedPartPart, scope: com.histmersion.domain.catalogue.events.EventProviders.ScopedPartScope)
+com.histmersion.domain.catalogue.events.EventProviders.ScopedPartScope | base String | generated | method-parameter
+    def scopedPart(part: com.histmersion.domain.catalogue.events.EventProviders.ScopedPartPart, scope: com.histmersion.domain.catalogue.events.EventProviders.ScopedPartScope)
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideMagnitude | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.OutsideVei | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionMagnitude | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventProviders.Thresholds.RegionVei | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.ClaimsProperty | base String | generated | method-parameter
+    def claims(json: Json, property: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.ClaimsProperty): Either[com.histmersion.domain.catalogue.events.Eve
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.ClaimsResultPart1 | base String | generated | method-result
+    def claims(json: Json, property: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.ClaimsProperty): Either[com.histmersion.domain.catalogue.events.Eve
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.ClaimsResultPart2Part1 | base String | generated | method-result
+    def claims(json: Json, property: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.ClaimsProperty): Either[com.histmersion.domain.catalogue.events.Eve
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.ClaimsResultPart2Part2 | base String | generated | method-result
+    def claims(json: Json, property: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.ClaimsProperty): Either[com.histmersion.domain.catalogue.events.Eve
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificA | base String | generated | method-parameter
+    def moreSpecific(order: List[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificOrder], a: com.histmersion.domain.catalogue.events.EventPro
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificB | base String | generated | method-parameter
+    def moreSpecific(order: List[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificOrder], a: com.histmersion.domain.catalogue.events.EventPro
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificOrder | base String | generated | method-parameter
+    def moreSpecific(order: List[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificOrder], a: com.histmersion.domain.catalogue.events.EventPro
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificRankK | base String | generated | method-parameter
+    def rank(k: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificRankK) = order.indexOf(EventTaxonomy.canonical(k)) match
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificResult | base String | generated | method-result
+    def moreSpecific(order: List[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.MoreSpecificOrder], a: com.histmersion.domain.catalogue.events.EventPro
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesResultPart1 | base String | generated | method-result
+    def names(json: Json): Either[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesResultPart1, Map[com.histmersion.domain.catalogue.events.EventPro
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesResultPart2Part1 | base String | generated | method-result
+    def names(json: Json): Either[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesResultPart1, Map[com.histmersion.domain.catalogue.events.EventPro
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesResultPart2Part2 | base String | generated | method-result
+    def names(json: Json): Either[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesResultPart1, Map[com.histmersion.domain.catalogue.events.EventPro
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesUrlApi | base String | generated | method-parameter
+    def namesUrl(api: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesUrlApi, ids: List[com.histmersion.domain.catalogue.events.EventProviders.Wiki
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesUrlIds | base String | generated | method-parameter
+    def namesUrl(api: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesUrlApi, ids: List[com.histmersion.domain.catalogue.events.EventProviders.Wiki
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesUrlLangs | base String | generated | method-parameter
+    def namesUrl(api: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesUrlApi, ids: List[com.histmersion.domain.catalogue.events.EventProviders.Wiki
+com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesUrlResult | base String | generated | method-result
+    def namesUrl(api: com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.NamesUrlApi, ids: List[com.histmersion.domain.catalogue.events.EventProviders.Wiki
+com.histmersion.domain.catalogue.events.StoredEvent.Catalogue | base Boolean | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEvent.Id | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEvent.KeysPart1 | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEvent.KeysPart2 | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEvent.Kind | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEvent.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.events.StoredEvent.Wikidata | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchorTry.ChunkOrd | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchorTry.Foreign | base Boolean | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchorTry.Issue | base String | original | constructor-parameter
+    val alternatives: List[(Option[MergeDecision.Kind], Option[com.histmersion.domain.catalogue.evidence.AttestationPlan.PairAlternativesPart2], Option[IssueCondition])] = bo
+    override def pairIssue(kind: MergeIssue.Kind): Boolean = kind == MergeIssue.Kind.AttestationUnanchored
+com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchoredResult | base Boolean | generated | method-result
+    def anchored(t: com.histmersion.api.exchange.Bundle.Attestation): com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchoredResult =
+com.histmersion.domain.catalogue.evidence.AttestationPlan.FoldPairTargetKeyResult | base String | generated | method-result
+    def targetKey(t: com.histmersion.api.exchange.Bundle.Attestation): com.histmersion.domain.catalogue.evidence.AttestationPlan.FoldPairTargetKeyResult =
+com.histmersion.domain.catalogue.evidence.AttestationPlan.ForeignAttsOfHereResult | base Boolean | generated | method-parameter
+com.histmersion.domain.catalogue.evidence.AttestationPlan.PairAlternativesPart2 | base String | generated | value
+    val alternatives: List[(Option[MergeDecision.Kind], Option[com.histmersion.domain.catalogue.evidence.AttestationPlan.PairAlternativesPart2], Option[IssueCondition])] = bo
+com.histmersion.domain.catalogue.evidence.EventMatcher.CandidatesNamedPart1 | base String | generated | method-parameter
+com.histmersion.domain.catalogue.evidence.EventMatcher.CandidatesTitlesPart1 | base String | generated | method-parameter
+com.histmersion.domain.catalogue.evidence.EventMatcher.CandidatesTitlesPart2 | base String | generated | method-parameter
+com.histmersion.domain.catalogue.evidence.EventMatcher.FindingWeightResult | base Double | generated | method-result
+    def findingWeight(f: NearFinding, w: Weights): com.histmersion.domain.catalogue.evidence.EventMatcher.FindingWeightResult =
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id | base String | original | constructor-parameter
+    final case class NearFinding(id: NearFinding.Id, citekey: com.histmersion.domain.library.Citekey, km: NearFinding.Km, yearGap: NearFinding.YearGap)
+    def attestation(eventId: com.histmersion.domain.catalogue.Event.Id, citekey: com.histmersion.domain.library.Citekey, p: EventPassage): Attestation.Put =
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km | base Double | original | constructor-parameter
+    final case class NearFinding(id: NearFinding.Id, citekey: com.histmersion.domain.library.Citekey, km: NearFinding.Km, yearGap: NearFinding.YearGap)
+com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap | base Long | original | constructor-parameter
+    final case class NearFinding(id: NearFinding.Id, citekey: com.histmersion.domain.library.Citekey, km: NearFinding.Km, yearGap: NearFinding.YearGap)
+com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesMinChars | base Int | generated | method-parameter
+    def searchNames(names: List[com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesNames], minChars: com.histmersion.domain.catalogue.evidence.EventMatcher.Sea
+com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesNames | base String | generated | method-parameter
+    def searchNames(names: List[com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesNames], minChars: com.histmersion.domain.catalogue.evidence.EventMatcher.Sea
+com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesResult | base String | generated | method-result
+    def searchNames(names: List[com.histmersion.domain.catalogue.evidence.EventMatcher.SearchNamesNames], minChars: com.histmersion.domain.catalogue.evidence.EventMatcher.Sea
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Finding | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Km | base Double | original | constructor-parameter
+    final case class NearFinding(id: NearFinding.Id, citekey: com.histmersion.domain.library.Citekey, km: NearFinding.Km, yearGap: NearFinding.YearGap)
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MaxCandidates | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinNameChars | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinScore | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Name | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Years | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.evidence.TextAnchor.BestHint | base Int | generated | alias,method-parameter
+    val ReanchorHint: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestHint.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestHint
+com.histmersion.domain.catalogue.evidence.TextAnchor.BestPrefix | base String | generated | method-parameter
+com.histmersion.domain.catalogue.evidence.TextAnchor.BestSuffix | base String | generated | method-parameter
+com.histmersion.domain.catalogue.evidence.TextAnchor.BestText | base String | generated | alias,method-parameter
+    val ReanchorText: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestText.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestText
+com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkOfChunkChars | base Int | generated | method-parameter
+    def chunkOf(text: com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkOfText, anchor: Anchor, chunkChars: com.histmersion.domain.catalogue.evidence.TextAnchor.Chunk
+com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkOfResult | base Int | generated | method-result
+    def chunkOf(text: com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkOfText, anchor: Anchor, chunkChars: com.histmersion.domain.catalogue.evidence.TextAnchor.Chunk
+com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkOfText | base String | generated | method-parameter
+    def chunkOf(text: com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkOfText, anchor: Anchor, chunkChars: com.histmersion.domain.catalogue.evidence.TextAnchor.Chunk
+com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseResultPart1 | base String | generated | method-result
+    private def collapse(s: com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseS): (com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseResultPart1, Array[
+com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseResultPart2 | base Int | generated | method-result
+    private def collapse(s: com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseS): (com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseResultPart1, Array[
+com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseS | base String | generated | method-parameter
+    private def collapse(s: com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseS): (com.histmersion.domain.catalogue.evidence.TextAnchor.CollapseResultPart1, Array[
+com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixA | base String | generated | method-parameter
+    private def commonPrefix(a: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixA, b: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixB): co
+com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixB | base String | generated | method-parameter
+    private def commonPrefix(a: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixA, b: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixB): co
+com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixResult | base Int | generated | method-result
+    private def commonPrefix(a: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixA, b: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonPrefixB): co
+com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixA | base String | generated | method-parameter
+    private def commonSuffix(a: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixA, b: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixB): co
+com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixB | base String | generated | method-parameter
+    private def commonSuffix(a: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixA, b: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixB): co
+com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixResult | base Int | generated | method-result
+    private def commonSuffix(a: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixA, b: com.histmersion.domain.catalogue.evidence.TextAnchor.CommonSuffixB): co
+com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesHay | base String | generated | method-parameter
+    def occurrences(hay: com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesHay, needle: com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesNeedle):
+com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesNeedle | base String | generated | method-parameter
+    def occurrences(hay: com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesHay, needle: com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesNeedle):
+com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesResult | base Int | generated | method-result
+    def occurrences(hay: com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesHay, needle: com.histmersion.domain.catalogue.evidence.TextAnchor.OccurrencesNeedle):
+com.histmersion.domain.catalogue.evidence.TextAnchor.ReanchorPrefix | base String | generated | method-parameter
+com.histmersion.domain.catalogue.evidence.TextAnchor.ReanchorQuote | base String | generated | method-parameter
+com.histmersion.domain.catalogue.evidence.TextAnchor.ReanchorSuffix | base String | generated | method-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.Dup | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.DupX | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.DupY | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.East | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.Gx | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.Gy | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.MidHi | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.MidLo | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.N | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.North | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.One | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.South | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.SumX | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.SumY | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.GridCell.West | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.East | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.IsItemResult | base Boolean | generated | method-result
+    def isItem: com.histmersion.domain.catalogue.maptiles.TileCell.IsItemResult = n == 1
+com.histmersion.domain.catalogue.maptiles.TileCell.Key | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.MidHi | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.MidLo | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.N | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.North | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.South | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.Undated | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.West | base Double | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.X | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCell.Y | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart1 | base Double | generated | method-result
+    def bounds: (com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart1, com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart2, com.histmersion
+com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart2 | base Double | generated | method-result
+    def bounds: (com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart1, com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart2, com.histmersion
+com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart3 | base Double | generated | method-result
+    def bounds: (com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart1, com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart2, com.histmersion
+com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart4 | base Double | generated | method-result
+    def bounds: (com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart1, com.histmersion.domain.catalogue.maptiles.TileCoord.BoundsResultPart2, com.histmersion
+com.histmersion.domain.catalogue.maptiles.TileCoord.ExtentValue | base Int | original | alias
+com.histmersion.domain.catalogue.maptiles.TileCoord.LatOfResult | base Double | generated | method-result
+    def latOf(v: com.histmersion.domain.catalogue.maptiles.TileCoord.LatOfV): com.histmersion.domain.catalogue.maptiles.TileCoord.LatOfResult = math.toDegrees(math.atan(math.
+com.histmersion.domain.catalogue.maptiles.TileCoord.LatOfV | base Double | generated | method-parameter
+    def latOf(v: com.histmersion.domain.catalogue.maptiles.TileCoord.LatOfV): com.histmersion.domain.catalogue.maptiles.TileCoord.LatOfResult = math.toDegrees(math.atan(math.
+com.histmersion.domain.catalogue.maptiles.TileCoord.MaxLatValue | base Double | original | alias
+com.histmersion.domain.catalogue.maptiles.TileCoord.MercatorResultPart1 | base Double | generated | method-result
+    def mercator(lat: com.histmersion.Latitude, lon: com.histmersion.Longitude): (com.histmersion.domain.catalogue.maptiles.TileCoord.MercatorResultPart1, com.histmersion.dom
+com.histmersion.domain.catalogue.maptiles.TileCoord.MercatorResultPart2 | base Double | generated | method-result
+    def mercator(lat: com.histmersion.Latitude, lon: com.histmersion.Longitude): (com.histmersion.domain.catalogue.maptiles.TileCoord.MercatorResultPart1, com.histmersion.dom
+com.histmersion.domain.catalogue.maptiles.TileCoord.OfMaxZoom | base Int | generated | method-parameter
+    def of(z: com.histmersion.domain.catalogue.maptiles.TileCoord.OfZ, x: com.histmersion.domain.catalogue.maptiles.TileCoord.OfX, y: com.histmersion.domain.catalogue.maptile
+com.histmersion.domain.catalogue.maptiles.TileCoord.OfResultPart1 | base String | generated | method-result
+    def of(z: com.histmersion.domain.catalogue.maptiles.TileCoord.OfZ, x: com.histmersion.domain.catalogue.maptiles.TileCoord.OfX, y: com.histmersion.domain.catalogue.maptile
+com.histmersion.domain.catalogue.maptiles.TileCoord.SideResult | base Long | generated | method-result
+    def side: com.histmersion.domain.catalogue.maptiles.TileCoord.SideResult = 1L << z
+com.histmersion.domain.catalogue.maptiles.TileCoord.UnitsOfResultPart1 | base Double | generated | method-result
+    def unitsOf(lat: com.histmersion.Latitude, lon: com.histmersion.Longitude): (com.histmersion.domain.catalogue.maptiles.TileCoord.UnitsOfResultPart1, com.histmersion.domai
+com.histmersion.domain.catalogue.maptiles.TileCoord.UnitsOfResultPart2 | base Double | generated | method-result
+    def unitsOf(lat: com.histmersion.Latitude, lon: com.histmersion.Longitude): (com.histmersion.domain.catalogue.maptiles.TileCoord.UnitsOfResultPart1, com.histmersion.domai
+com.histmersion.domain.catalogue.maptiles.TileCoord.X | base Long | original | alias,constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCoord.Y | base Long | original | alias,constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileCoord.Z | base Int | original | alias,constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileFeatures.OfRecordArg1 | base String | generated | method-parameter
+com.histmersion.domain.catalogue.maptiles.TileFeatures.OfZoom | base Int | generated | method-parameter
+com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK | base String | generated | method-parameter
+    def text(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK, v: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV): Seq[(com.histmersion.domain.ca
+    def text(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV]): Seq[(com.histmersion.d
+com.histmersion.domain.catalogue.maptiles.TileFeatures.TextResultPart1 | base String | generated | method-result
+    def text(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK, v: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV): Seq[(com.histmersion.domain.ca
+    def text(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV]): Seq[(com.histmersion.d
+com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV | base String | generated | method-parameter
+    def text(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK, v: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV): Seq[(com.histmersion.domain.ca
+    def text(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.TextK, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.TextV]): Seq[(com.histmersion.d
+com.histmersion.domain.catalogue.maptiles.TileFeatures.UndatedResultPart1 | base String | generated | method-result
+    private def undated(c: TileCell): Seq[(com.histmersion.domain.catalogue.maptiles.TileFeatures.UndatedResultPart1, TileValue)] =
+com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeK | base String | generated | method-parameter
+    def whole(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeK, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeV]): Seq[(com.histmersio
+com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeResultPart1 | base String | generated | method-result
+    def whole(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeK, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeV]): Seq[(com.histmersio
+com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeV | base Long | generated | method-parameter
+    def whole(k: com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeK, v: Option[com.histmersion.domain.catalogue.maptiles.TileFeatures.WholeV]): Seq[(com.histmersio
+com.histmersion.domain.catalogue.maptiles.TileGrid.CellUnits | base Int | original | constructor-parameter
+    final case class TileGrid private (maxZoom: TileGrid.MaxZoom, maxPoints: TileGrid.MaxPoints, cellUnits: TileGrid.CellUnits):
+com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints | base Int | original | constructor-parameter
+    final case class TileGrid private (maxZoom: TileGrid.MaxZoom, maxPoints: TileGrid.MaxPoints, cellUnits: TileGrid.CellUnits):
+com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom | base Int | original | constructor-parameter
+    final case class TileGrid private (maxZoom: TileGrid.MaxZoom, maxPoints: TileGrid.MaxPoints, cellUnits: TileGrid.CellUnits):
+com.histmersion.domain.catalogue.maptiles.TileGrid.OfCellPx | base Int | generated | method-parameter
+    def of(maxZoom: com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxZoom, maxPoints: com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxPoints, cellPx: com.histm
+com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxPoints | base Int | generated | method-parameter
+    def of(maxZoom: com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxZoom, maxPoints: com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxPoints, cellPx: com.histm
+com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxZoom | base Int | generated | method-parameter
+    def of(maxZoom: com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxZoom, maxPoints: com.histmersion.domain.catalogue.maptiles.TileGrid.OfMaxPoints, cellPx: com.histm
+com.histmersion.domain.catalogue.maptiles.TileGrid.PointsAtResult | base Int | generated | method-result
+    def pointsAt(c: TileCoord): com.histmersion.domain.catalogue.maptiles.TileGrid.PointsAtResult = if c.z >= maxZoom then Int.MaxValue else maxPoints
+com.histmersion.domain.catalogue.maptiles.TileGrid.TilePxValue | base Int | original | alias
+com.histmersion.domain.catalogue.maptiles.TilePoint.PropsPart1 | base String | original | constructor-parameter
+    final case class TilePoint(x: TilePoint.X, y: TilePoint.Y, props: Seq[(TilePoint.PropsPart1, TileValue)])
+com.histmersion.domain.catalogue.maptiles.TilePoint.X | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TilePoint.Y | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.maptiles.TileValue.Flag.Value | base Boolean | generated | constructor-parameter
+    case Text(value: TileValue.Text.Value)
+    case Whole(value: TileValue.Whole.Value)
+com.histmersion.domain.catalogue.maptiles.TileValue.Real.Value | base Double | generated | constructor-parameter
+    case Text(value: TileValue.Text.Value)
+    case Whole(value: TileValue.Whole.Value)
+com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value | base String | generated | constructor-parameter
+    case Text(value: TileValue.Text.Value)
+    case Whole(value: TileValue.Whole.Value)
+com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value | base Long | generated | constructor-parameter
+    case Text(value: TileValue.Text.Value)
+    case Whole(value: TileValue.Whole.Value)
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersCurrent | base Long | generated | method-parameter
+    def answers(current: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersCurrent, wantedPerSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersW
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersResult | base Boolean | generated | method-result
+    def answers(current: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersCurrent, wantedPerSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersW
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersWantedMaxZoom | base Int | generated | method-parameter
+    def answers(current: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersCurrent, wantedPerSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersW
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersWantedPerSide | base Int | generated | method-parameter
+    def answers(current: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersCurrent, wantedPerSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersW
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom | base Int | original | constructor-parameter
+    final case class UndatedBuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom):
+    def answers(current: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersCurrent, wantedPerSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersW
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide | base Int | original | constructor-parameter
+    final case class UndatedBuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom):
+    def answers(current: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersCurrent, wantedPerSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.AnswersW
+com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version | base Long | original | constructor-parameter
+    final case class UndatedBuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom):
+com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ | base Int | generated | alias,method-parameter
+    val MergeZ: _root_.com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ.type = _root_.com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ
+    private[maptiles] def cellOf(z: com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ, dated: Option[GridCell], undated: Option[GridCell]): Option[TileCell] =
+com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalLoopResult | base Long | generated | method-result
+    @tailrec def loop(rest: List[GridCell], sum: com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalLoopSum): com.histmersion.domain.catalogue.maptiles.UndatedCells.
+com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalLoopSum | base Long | generated | method-parameter
+    @tailrec def loop(rest: List[GridCell], sum: com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalLoopSum): com.histmersion.domain.catalogue.maptiles.UndatedCells.
+com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalResult | base Long | generated | method-result
+    def total(dated: List[GridCell], undated: List[GridCell]): com.histmersion.domain.catalogue.maptiles.UndatedCells.TotalResult =

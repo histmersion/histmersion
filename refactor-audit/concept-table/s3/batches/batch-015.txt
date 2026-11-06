@@ -1,0 +1,327 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.media.figures.FigurePick.Figure.FirstAt (Double)
+com.histmersion.domain.media.figures.FigurePick.Figure.Height (Int)
+com.histmersion.domain.media.figures.FigurePick.Figure.Name (String)
+com.histmersion.domain.media.figures.FigurePick.Figure.Refs (Int)
+com.histmersion.domain.media.figures.FigurePick.Figure.Width (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.EarlyPages (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MaxAspect (Double)
+com.histmersion.domain.media.figures.FigurePick.Rules.MaxRefs (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MinArea (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.MinSide (Int)
+com.histmersion.domain.media.figures.FigurePick.Rules.PageScanMin (Int)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id (String)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys (String)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label (String)
+com.histmersion.domain.media.imports.MediaRecord.GeographyPart1 (String)
+com.histmersion.domain.media.imports.MediaRecord.GeographyPart2 (String)
+com.histmersion.domain.media.imports.MediaRecord.IdsPart1 (String)
+com.histmersion.domain.media.imports.MediaRecord.IdsPart2 (String)
+com.histmersion.domain.media.imports.MediaRecord.ImageUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.Key (String)
+com.histmersion.domain.media.imports.MediaRecord.OriginalUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.PageUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.RightsPart1 (String)
+com.histmersion.domain.media.imports.MediaRecord.Role (String)
+com.histmersion.domain.media.imports.MediaRecord.ThumbUrl (String)
+com.histmersion.domain.media.imports.MediaRecord.Title (String)
+com.histmersion.domain.media.imports.MediaRecord.Withheld (String)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Kind (String)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Priority (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Target (String)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Why (String)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.Escalated (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.MaxReopened (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OnlyMissingCritiques (Boolean)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenMajors (Int)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenPairs (Int)
+com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev (String)
+com.histmersion.util.data.exchange.BundlePlan.Ledger.LocalRevAfter (String)
+com.histmersion.util.data.exchange.BundlePlan.Local.Rev (String)
+com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned (Boolean)
+com.histmersion.util.data.exchange.Diff3.Hunk.Agreed.Lines (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Base (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Left (String)
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Right (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.media.figures.FigurePick.Figure.FirstAt | base Double | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.Figure.Height | base Int | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.Figure.Name | base String | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.Figure.Refs | base Int | original | constructor-parameter
+    def withRefs(figs: List[Figure], body: com.histmersion.domain.media.figures.FigurePick.WithRefsBody): List[Figure] =
+com.histmersion.domain.media.figures.FigurePick.Figure.Width | base Int | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.OrderName | base String | generated | method-parameter
+    def order(name: com.histmersion.domain.media.figures.FigurePick.OrderName): Option[com.histmersion.domain.media.figures.FigurePick.OrderResult] = page(name).orElse(name m
+com.histmersion.domain.media.figures.FigurePick.OrderResult | base Int | generated | method-result
+    def order(name: com.histmersion.domain.media.figures.FigurePick.OrderName): Option[com.histmersion.domain.media.figures.FigurePick.OrderResult] = page(name).orElse(name m
+com.histmersion.domain.media.figures.FigurePick.PageName | base String | generated | method-parameter
+    private val PageName = """^fig-(\d{1,5})-\d+(?:-\d+)?\.[A-Za-z0-9]+$""".r
+    def page(name: com.histmersion.domain.media.figures.FigurePick.PageName): Option[com.histmersion.domain.media.figures.FigurePick.PageResult] = name match
+com.histmersion.domain.media.figures.FigurePick.PageResult | base Int | generated | method-result
+    def page(name: com.histmersion.domain.media.figures.FigurePick.PageName): Option[com.histmersion.domain.media.figures.FigurePick.PageResult] = name match
+com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart1 | base Int | generated | method-parameter
+    def near(a: (com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart2), b: (com.hi
+com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart2 | base Int | generated | method-parameter
+    def near(a: (com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart2), b: (com.hi
+com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearBPart1 | base Int | generated | method-parameter
+    def near(a: (com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart2), b: (com.hi
+com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearBPart2 | base Int | generated | method-parameter
+    def near(a: (com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart2), b: (com.hi
+com.histmersion.domain.media.figures.FigurePick.PageScanSizesResultPart1 | base Int | generated | method-result
+    def pageScanSizes(figs: List[Figure], rules: Rules): Set[(com.histmersion.domain.media.figures.FigurePick.PageScanSizesResultPart1, com.histmersion.domain.media.figures.F
+com.histmersion.domain.media.figures.FigurePick.PageScanSizesResultPart2 | base Int | generated | method-result
+    def pageScanSizes(figs: List[Figure], rules: Rules): Set[(com.histmersion.domain.media.figures.FigurePick.PageScanSizesResultPart1, com.histmersion.domain.media.figures.F
+com.histmersion.domain.media.figures.FigurePick.RefsBody | base String | generated | alias,method-parameter
+    val WithRefsBody: _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody.type = _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody
+    def refs(body: com.histmersion.domain.media.figures.FigurePick.RefsBody): Map[com.histmersion.domain.media.figures.FigurePick.RefsResultPart1, (com.histmersion.domain.med
+com.histmersion.domain.media.figures.FigurePick.RefsResultPart1 | base String | generated | method-result
+    def refs(body: com.histmersion.domain.media.figures.FigurePick.RefsBody): Map[com.histmersion.domain.media.figures.FigurePick.RefsResultPart1, (com.histmersion.domain.med
+com.histmersion.domain.media.figures.FigurePick.RefsResultPart2Part1 | base Int | generated | method-result
+    def refs(body: com.histmersion.domain.media.figures.FigurePick.RefsBody): Map[com.histmersion.domain.media.figures.FigurePick.RefsResultPart1, (com.histmersion.domain.med
+com.histmersion.domain.media.figures.FigurePick.RefsResultPart2Part2 | base Double | generated | method-result
+    def refs(body: com.histmersion.domain.media.figures.FigurePick.RefsBody): Map[com.histmersion.domain.media.figures.FigurePick.RefsResultPart1, (com.histmersion.domain.med
+com.histmersion.domain.media.figures.FigurePick.RejectResult | base String | generated | method-result
+    def reject(f: Figure, rules: Rules, scans: Set[(com.histmersion.domain.media.figures.FigurePick.RejectScansPart1, com.histmersion.domain.media.figures.FigurePick.RejectSc
+com.histmersion.domain.media.figures.FigurePick.RejectScansPart1 | base Int | generated | method-parameter
+    def reject(f: Figure, rules: Rules, scans: Set[(com.histmersion.domain.media.figures.FigurePick.RejectScansPart1, com.histmersion.domain.media.figures.FigurePick.RejectSc
+com.histmersion.domain.media.figures.FigurePick.RejectScansPart2 | base Int | generated | method-parameter
+    def reject(f: Figure, rules: Rules, scans: Set[(com.histmersion.domain.media.figures.FigurePick.RejectScansPart1, com.histmersion.domain.media.figures.FigurePick.RejectSc
+com.histmersion.domain.media.figures.FigurePick.Rules.EarlyPages | base Int | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.Rules.MaxAspect | base Double | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.Rules.MaxRefs | base Int | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.Rules.MinArea | base Int | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.Rules.MinSide | base Int | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.Rules.PageScanMin | base Int | original | constructor-parameter
+com.histmersion.domain.media.figures.FigurePick.ScoreResult | base Double | generated | method-result
+    def score(f: Figure, rules: Rules): com.histmersion.domain.media.figures.FigurePick.ScoreResult =
+com.histmersion.domain.media.figures.Figures.MdPathOfNoteText | base String | generated | method-parameter
+    def mdPathOf(noteText: com.histmersion.domain.media.figures.Figures.MdPathOfNoteText): Option[com.histmersion.domain.media.figures.Figures.MdPathOfResult] =
+com.histmersion.domain.media.figures.Figures.MdPathOfResult | base String | generated | method-result
+    def mdPathOf(noteText: com.histmersion.domain.media.figures.Figures.MdPathOfNoteText): Option[com.histmersion.domain.media.figures.Figures.MdPathOfResult] =
+com.histmersion.domain.media.figures.Figures.OfFilesPart1 | base String | generated | method-parameter
+    def of(files: List[(com.histmersion.domain.media.figures.Figures.OfFilesPart1, com.histmersion.domain.media.figures.Figures.OfFilesPart2)], maxBytes: com.histmersion.doma
+com.histmersion.domain.media.figures.Figures.OfFilesPart2 | base Array[Byte] | generated | method-parameter
+    def of(files: List[(com.histmersion.domain.media.figures.Figures.OfFilesPart1, com.histmersion.domain.media.figures.Figures.OfFilesPart2)], maxBytes: com.histmersion.doma
+com.histmersion.domain.media.figures.Figures.OfMaxBytes | base Long | generated | method-parameter
+    def of(files: List[(com.histmersion.domain.media.figures.Figures.OfFilesPart1, com.histmersion.domain.media.figures.Figures.OfFilesPart2)], maxBytes: com.histmersion.doma
+com.histmersion.domain.media.imports.LicencePolicy.AllowsResult | base Boolean | generated | method-result
+    def allows(l: Licence): com.histmersion.domain.media.imports.LicencePolicy.AllowsResult = Licence.allowed(l, allowed)
+com.histmersion.domain.media.imports.LicencePolicy.OfCsv | base String | generated | method-parameter
+    def of(csv: com.histmersion.domain.media.imports.LicencePolicy.OfCsv): LicencePolicy = LicencePolicy(Licence.allowList(csv))
+com.histmersion.domain.media.imports.MediaMatch.DatedBasis | base String | generated | method-parameter
+    def dated(basis: com.histmersion.domain.media.imports.MediaMatch.DatedBasis, rec: MediaRecord, target: PlaceInfo, latest: Option[com.histmersion.domain.media.imports.Medi
+com.histmersion.domain.media.imports.MediaMatch.DatedLatest | base Int | generated | alias,method-parameter
+    val MuseumLatest: _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest.type = _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest
+    val WithIdsLatest: _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest.type = _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest
+com.histmersion.domain.media.imports.MediaMatch.DatedResultPart1 | base String | generated | method-result
+    def dated(basis: com.histmersion.domain.media.imports.MediaMatch.DatedBasis, rec: MediaRecord, target: PlaceInfo, latest: Option[com.histmersion.domain.media.imports.Medi
+com.histmersion.domain.media.imports.MediaMatch.DatedResultPart2 | base String | generated | method-result
+    def dated(basis: com.histmersion.domain.media.imports.MediaMatch.DatedBasis, rec: MediaRecord, target: PlaceInfo, latest: Option[com.histmersion.domain.media.imports.Medi
+com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart1 | base String | generated | method-result
+    def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: com.histmersion.domain.media.imports.MediaMatch.GeographySpecific): Either[com.histmersion.
+com.histmersion.domain.media.imports.MediaMatch.GeographyResultPart2 | base String | generated | method-result
+    def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: com.histmersion.domain.media.imports.MediaMatch.GeographySpecific): Either[com.histmersion.
+com.histmersion.domain.media.imports.MediaMatch.GeographySpecific | base Boolean | generated | method-parameter
+    def geography(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, specific: com.histmersion.domain.media.imports.MediaMatch.GeographySpecific): Either[com.histmersion.
+com.histmersion.domain.media.imports.MediaMatch.KeyOfResult | base String | generated | method-result
+    def keyOf(v: com.histmersion.domain.media.imports.MediaMatch.KeyOfV): com.histmersion.domain.media.imports.MediaMatch.KeyOfResult = if uncertain(v) then "" else Geocode.k
+com.histmersion.domain.media.imports.MediaMatch.MapMaxYear | base Int | generated | method-parameter
+    def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: com.histmersion.domain.media.imports.MediaMatch.MapMaxYear): Either[com.histmersion.domain.media.i
+com.histmersion.domain.media.imports.MediaMatch.MapResultPart1 | base String | generated | method-result
+    def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: com.histmersion.domain.media.imports.MediaMatch.MapMaxYear): Either[com.histmersion.domain.media.i
+com.histmersion.domain.media.imports.MediaMatch.MapResultPart2 | base String | generated | method-result
+    def map(rec: MediaRecord, target: PlaceInfo, resolve: Resolve, maxYear: com.histmersion.domain.media.imports.MediaMatch.MapMaxYear): Either[com.histmersion.domain.media.i
+com.histmersion.domain.media.imports.MediaMatch.MuseumResultPart1 | base String | generated | method-result
+com.histmersion.domain.media.imports.MediaMatch.MuseumResultPart2 | base String | generated | method-result
+com.histmersion.domain.media.imports.MediaMatch.OverlapsResult | base Boolean | generated | method-result
+    def overlaps(a: Period, b: Period): com.histmersion.domain.media.imports.MediaMatch.OverlapsResult = a.start.value <= b.end.value && b.start.value <= a.end.value
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id | base String | original | constructor-parameter
+    final case class PlaceInfo(id: PlaceInfo.Id, label: PlaceInfo.Label, keys: Set[PlaceInfo.Keys], period: Option[Period])
+    val byId = rec.ids.map(id => id -> resolveId(id)).filter(_._2.nonEmpty)
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys | base String | original | constructor-parameter
+    final case class PlaceInfo(id: PlaceInfo.Id, label: PlaceInfo.Label, keys: Set[PlaceInfo.Keys], period: Option[Period])
+com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label | base String | original | constructor-parameter
+    final case class PlaceInfo(id: PlaceInfo.Id, label: PlaceInfo.Label, keys: Set[PlaceInfo.Keys], period: Option[Period])
+com.histmersion.domain.media.imports.MediaMatch.UncertainResult | base Boolean | generated | method-result
+    def uncertain(v: com.histmersion.domain.media.imports.MediaMatch.UncertainV): com.histmersion.domain.media.imports.MediaMatch.UncertainResult =
+com.histmersion.domain.media.imports.MediaMatch.UncertainV | base String | generated | alias,method-parameter
+    val KeyOfV: _root_.com.histmersion.domain.media.imports.MediaMatch.UncertainV.type = _root_.com.histmersion.domain.media.imports.MediaMatch.UncertainV
+    def uncertain(v: com.histmersion.domain.media.imports.MediaMatch.UncertainV): com.histmersion.domain.media.imports.MediaMatch.UncertainResult =
+com.histmersion.domain.media.imports.MediaMatch.WithIdsDeeper | base String | generated | method-parameter
+com.histmersion.domain.media.imports.MediaMatch.WithIdsResultPart1 | base String | generated | method-result
+com.histmersion.domain.media.imports.MediaMatch.WithIdsResultPart2 | base String | generated | method-result
+com.histmersion.domain.media.imports.MediaMatch.YearV | base Int | generated | method-parameter
+    def year(v: com.histmersion.domain.media.imports.MediaMatch.YearV): com.histmersion.Year = if v < 0 then s"${-v} BCE" else s"$v CE"
+com.histmersion.domain.media.imports.MediaMatch.YearsResult | base String | generated | method-result
+    def years(p: Period): com.histmersion.domain.media.imports.MediaMatch.YearsResult =
+com.histmersion.domain.media.imports.MediaRecord.GeographyPart1 | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.GeographyPart2 | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.IdsPart1 | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.IdsPart2 | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.ImageUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.Key | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.OriginalUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.PageUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.RightsPart1 | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.Role | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.ThumbUrl | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.Title | base String | original | constructor-parameter
+com.histmersion.domain.media.imports.MediaRecord.Withheld | base String | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewComparison.RoundName | base String | generated | method-parameter
+    private def round(name: com.histmersion.domain.research.workflows.ReviewComparison.RoundName, prefix: com.histmersion.domain.research.workflows.ReviewComparison.RoundPref
+com.histmersion.domain.research.workflows.ReviewComparison.RoundPrefix | base String | generated | method-parameter
+    private def round(name: com.histmersion.domain.research.workflows.ReviewComparison.RoundName, prefix: com.histmersion.domain.research.workflows.ReviewComparison.RoundPref
+com.histmersion.domain.research.workflows.ReviewComparison.RoundResult | base Int | generated | method-result
+    private def round(name: com.histmersion.domain.research.workflows.ReviewComparison.RoundName, prefix: com.histmersion.domain.research.workflows.ReviewComparison.RoundPref
+com.histmersion.domain.research.workflows.ReviewComparison.SameMajorResult | base Boolean | generated | method-result
+    def sameMajor(a: Finding, b: Finding): com.histmersion.domain.research.workflows.ReviewComparison.SameMajorResult =
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewAttempts | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewError | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewFailures | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewRun | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewSlug | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewStopWhy | base String | generated | method-parameter
+    def stop(why: com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewStopWhy) =
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.EvaluateReviewTaskText | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.NoProgressN | base Int | generated | method-parameter
+    def noProgress(history: List[RunMark], n: com.histmersion.domain.research.workflows.ReviewManagerPolicy.NoProgressN): com.histmersion.domain.research.workflows.ReviewMana
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.NoProgressResult | base Boolean | generated | method-result
+    def noProgress(history: List[RunMark], n: com.histmersion.domain.research.workflows.ReviewManagerPolicy.NoProgressN): com.histmersion.domain.research.workflows.ReviewMana
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.PairsStalledN | base Int | generated | method-parameter
+    def pairsStalled(history: List[RunMark], n: com.histmersion.domain.research.workflows.ReviewManagerPolicy.PairsStalledN): com.histmersion.domain.research.workflows.Review
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.PairsStalledResult | base Boolean | generated | method-result
+    def pairsStalled(history: List[RunMark], n: com.histmersion.domain.research.workflows.ReviewManagerPolicy.PairsStalledN): com.histmersion.domain.research.workflows.Review
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Kind | base String | original | constructor-parameter
+    final case class Pick(kind: Pick.Kind, target: Pick.Target, priority: Pick.Priority, why: Pick.Why)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Priority | base Int | original | constructor-parameter
+    final case class Pick(kind: Pick.Kind, target: Pick.Target, priority: Pick.Priority, why: Pick.Why)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Target | base String | original | constructor-parameter
+    final case class Pick(kind: Pick.Kind, target: Pick.Target, priority: Pick.Priority, why: Pick.Why)
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.Pick.Why | base String | original | constructor-parameter
+    final case class Pick(kind: Pick.Kind, target: Pick.Target, priority: Pick.Priority, why: Pick.Why)
+    def staleWhy(
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.Escalated | base Int | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.MaxReopened | base Int | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OnlyMissingCritiques | base Boolean | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenMajors | base Int | original | constructor-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenPairs | base Int | original | alias,constructor-parameter
+    val OfOpenPairs: _root_.com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenPairs.type = _root_.com.histmersion.domain.research.workflows.Review
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectBatch | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectHasFilterArg1 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectHasFilterResult | base Boolean | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectInferFilter | base Boolean | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectInferredBeforeArg1 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectInferredBeforeResult | base Boolean | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectMajorsPart1 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectMajorsPart2 | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectStalePart1 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectStalePart2 | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.SelectUnreviewed | base String | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.StaleWhyDays | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.StaleWhyHitsNow | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.StaleWhyHitsThen | base Int | generated | method-parameter
+com.histmersion.domain.research.workflows.ReviewManagerPolicy.StaleWhyResult | base String | generated | method-result
+com.histmersion.util.data.exchange.BundlePlan.CascadeDeletedHereResult | base Boolean | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.CascadeGoneResult | base Boolean | generated | method-result
+    def gone(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeGoneResult =
+com.histmersion.util.data.exchange.BundlePlan.CascadeHeldResult | base Boolean | generated | method-result
+    def held(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeHeldResult = ds.get(u).contains(Decision.Held)
+com.histmersion.util.data.exchange.BundlePlan.CascadeWritingResult | base Boolean | generated | method-result
+    def writing(ds: Map[java.util.UUID, Decision])(u: java.util.UUID): com.histmersion.util.data.exchange.BundlePlan.CascadeWritingResult =
+com.histmersion.util.data.exchange.BundlePlan.CountsLoopConflicts | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.CountsLoopDeleted | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.CountsLoopHeld | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.CountsLoopInserted | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.CountsLoopKeptLocal | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.CountsLoopSkippedDeleted | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.CountsLoopUnchanged | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.CountsLoopUpdated | base Int | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.Decision.WritesResult | base Boolean | generated | method-result
+    def writes: com.histmersion.util.data.exchange.BundlePlan.Decision.WritesResult = this match
+com.histmersion.util.data.exchange.BundlePlan.EntityForeignRev | base String | generated | method-parameter
+    def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.EntityForeignRev, local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBun
+    def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.EntityForeignRev, localizedRev: com.histmersion.util.data.exchange.BundlePlan.EntityLocalizedRev, loc
+com.histmersion.util.data.exchange.BundlePlan.EntityLocalizedRev | base String | generated | method-parameter
+    def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.EntityForeignRev, localizedRev: com.histmersion.util.data.exchange.BundlePlan.EntityLocalizedRev, loc
+com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle | base Boolean | generated | method-parameter
+    def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.EntityForeignRev, local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBun
+    def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.EntityForeignRev, localizedRev: com.histmersion.util.data.exchange.BundlePlan.EntityLocalizedRev, loc
+com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev | base String | original | alias,constructor-parameter
+    val LedgerAfterForeignRev: _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev.type = _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.Forei
+    final case class Ledger(foreignRev: Ledger.ForeignRev, localRevAfter: Option[Ledger.LocalRevAfter])
+com.histmersion.util.data.exchange.BundlePlan.Ledger.LocalRevAfter | base String | original | constructor-parameter
+    final case class Ledger(foreignRev: Ledger.ForeignRev, localRevAfter: Option[Ledger.LocalRevAfter])
+com.histmersion.util.data.exchange.BundlePlan.LedgerAfterLocalRev | base String | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.LedgerAfterLocalizedRev | base String | generated | method-parameter
+com.histmersion.util.data.exchange.BundlePlan.LedgerAfterTombstone | base Boolean | generated | method-parameter
+    def ledgerAfter(d: Decision, foreignRev: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterForeignRev, tombstone: com.histmersion.util.data.exchange.BundlePlan.Led
+com.histmersion.util.data.exchange.BundlePlan.Local.Rev | base String | original | constructor-parameter
+    final case class Ledger(foreignRev: Ledger.ForeignRev, localRevAfter: Option[Ledger.LocalRevAfter])
+    final case class Local(rev: Option[Local.Rev], tombstoned: Local.Tombstoned, ledger: Option[Ledger])
+com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned | base Boolean | original | constructor-parameter
+    final case class Local(rev: Option[Local.Rev], tombstoned: Local.Tombstoned, ledger: Option[Ledger])
+com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle | base Boolean | generated | method-parameter
+    def tombstone(local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle): Decision =
+com.histmersion.util.data.exchange.Diff3.Hunk.Agreed.Lines | base String | generated | constructor-parameter
+    case Agreed(lines: Vector[Hunk.Agreed.Lines])
+    def mergeLines(o: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesO], a: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesA], b: Vector[com.histmersion
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Base | base String | generated | constructor-parameter
+    case Conflict(base: Vector[Hunk.Conflict.Base], left: Vector[Hunk.Conflict.Left], right: Vector[Hunk.Conflict.Right])
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Left | base String | generated | constructor-parameter
+    case Conflict(base: Vector[Hunk.Conflict.Base], left: Vector[Hunk.Conflict.Left], right: Vector[Hunk.Conflict.Right])
+com.histmersion.util.data.exchange.Diff3.Hunk.Conflict.Right | base String | generated | constructor-parameter
+    case Conflict(base: Vector[Hunk.Conflict.Base], left: Vector[Hunk.Conflict.Left], right: Vector[Hunk.Conflict.Right])
+com.histmersion.util.data.exchange.Diff3.LinesResult | base String | generated | method-result
+    private def lines(s: com.histmersion.util.data.exchange.Diff3.LinesS): Vector[com.histmersion.util.data.exchange.Diff3.LinesResult] = s.split("\n", -1).toVector
+com.histmersion.util.data.exchange.Diff3.LinesS | base String | generated | method-parameter
+    private def lines(s: com.histmersion.util.data.exchange.Diff3.LinesS): Vector[com.histmersion.util.data.exchange.Diff3.LinesResult] = s.split("\n", -1).toVector
+com.histmersion.util.data.exchange.Diff3.MatchingO | base String | generated | alias,method-parameter
+    val MergeLinesO: _root_.com.histmersion.util.data.exchange.Diff3.MatchingO.type = _root_.com.histmersion.util.data.exchange.Diff3.MatchingO
+    private def matching(o: Vector[com.histmersion.util.data.exchange.Diff3.MatchingO], x: Vector[com.histmersion.util.data.exchange.Diff3.MatchingX]): com.histmersion.util.d
+com.histmersion.util.data.exchange.Diff3.MatchingResult | base Array[Int] | generated | method-result
+    private def matching(o: Vector[com.histmersion.util.data.exchange.Diff3.MatchingO], x: Vector[com.histmersion.util.data.exchange.Diff3.MatchingX]): com.histmersion.util.d
+com.histmersion.util.data.exchange.Diff3.MatchingTraceI | base Int | generated | method-parameter
+    def trace(i: com.histmersion.util.data.exchange.Diff3.MatchingTraceI, j: com.histmersion.util.data.exchange.Diff3.MatchingTraceJ): Unit =
+com.histmersion.util.data.exchange.Diff3.MatchingTraceJ | base Int | generated | method-parameter
+    def trace(i: com.histmersion.util.data.exchange.Diff3.MatchingTraceI, j: com.histmersion.util.data.exchange.Diff3.MatchingTraceJ): Unit =
+com.histmersion.util.data.exchange.Diff3.MatchingX | base String | generated | method-parameter
+    private def matching(o: Vector[com.histmersion.util.data.exchange.Diff3.MatchingO], x: Vector[com.histmersion.util.data.exchange.Diff3.MatchingX]): com.histmersion.util.d
+com.histmersion.util.data.exchange.Diff3.MergeBase | base String | generated | method-parameter
+    def merge(base: com.histmersion.util.data.exchange.Diff3.MergeBase, left: com.histmersion.util.data.exchange.Diff3.MergeLeft, right: com.histmersion.util.data.exchange.Di
+com.histmersion.util.data.exchange.Diff3.MergeLeft | base String | generated | method-parameter
+    def merge(base: com.histmersion.util.data.exchange.Diff3.MergeBase, left: com.histmersion.util.data.exchange.Diff3.MergeLeft, right: com.histmersion.util.data.exchange.Di
+com.histmersion.util.data.exchange.Diff3.MergeLinesA | base String | generated | method-parameter
+    def mergeLines(o: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesO], a: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesA], b: Vector[com.histmersion
+com.histmersion.util.data.exchange.Diff3.MergeLinesB | base String | generated | method-parameter
+    def mergeLines(o: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesO], a: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesA], b: Vector[com.histmersion
+com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCa | base String | generated | method-parameter
+    def chunk(co: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCo], ca: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCa], cb: Vector[com.h
+com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCb | base String | generated | method-parameter
+    def chunk(co: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCo], ca: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCa], cb: Vector[com.h
+com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCo | base String | generated | method-parameter
+    def chunk(co: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCo], ca: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCa], cb: Vector[com.h
+com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIa | base Int | generated | method-parameter
+    def walk(io: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIo, ia: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIa, ib: com.histmersion.util.data.excha
+com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIb | base Int | generated | method-parameter
+    def walk(io: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIo, ia: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIa, ib: com.histmersion.util.data.excha
+com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIo | base Int | generated | method-parameter
+    def walk(io: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIo, ia: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIa, ib: com.histmersion.util.data.excha
+com.histmersion.util.data.exchange.Diff3.MergeRight | base String | generated | method-parameter
+    def merge(base: com.histmersion.util.data.exchange.Diff3.MergeBase, left: com.histmersion.util.data.exchange.Diff3.MergeLeft, right: com.histmersion.util.data.exchange.Di
+com.histmersion.util.data.exchange.Diff3.Result.CleanResult | base Boolean | generated | method-result
+    def clean: com.histmersion.util.data.exchange.Diff3.Result.CleanResult = conflicts == 0
+com.histmersion.util.data.exchange.Diff3.Result.ConflictsResult | base Int | generated | method-result
+    def conflicts: com.histmersion.util.data.exchange.Diff3.Result.ConflictsResult = hunks.count(_.isInstanceOf[Hunk.Conflict])
+com.histmersion.util.data.exchange.Diff3.Result.MarkedLeftName | base String | generated | method-parameter
+    def marked(leftName: com.histmersion.util.data.exchange.Diff3.Result.MarkedLeftName, rightName: com.histmersion.util.data.exchange.Diff3.Result.MarkedRightName): com.hist
+com.histmersion.util.data.exchange.Diff3.Result.MarkedResult | base String | generated | method-result
+    def marked(leftName: com.histmersion.util.data.exchange.Diff3.Result.MarkedLeftName, rightName: com.histmersion.util.data.exchange.Diff3.Result.MarkedRightName): com.hist
+com.histmersion.util.data.exchange.Diff3.Result.MarkedRightName | base String | generated | method-parameter
+    def marked(leftName: com.histmersion.util.data.exchange.Diff3.Result.MarkedLeftName, rightName: com.histmersion.util.data.exchange.Diff3.Result.MarkedRightName): com.hist
+com.histmersion.util.data.exchange.Diff3.Result.RenderConflictResult | base String | generated | method-parameter
+    private def render(conflict: Hunk.Conflict => Vector[com.histmersion.util.data.exchange.Diff3.Result.RenderConflictResult]): com.histmersion.util.data.exchange.Diff3.Resu
+com.histmersion.util.data.exchange.Diff3.Result.RenderResult | base String | generated | method-result
+    private def render(conflict: Hunk.Conflict => Vector[com.histmersion.util.data.exchange.Diff3.Result.RenderConflictResult]): com.histmersion.util.data.exchange.Diff3.Resu
+com.histmersion.util.data.exchange.Diff3.Result.TextResult | base String | generated | method-result
+    def text: com.histmersion.util.data.exchange.Diff3.Result.TextResult = render(_ => Vector.empty)

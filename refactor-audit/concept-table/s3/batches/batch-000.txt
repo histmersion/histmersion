@@ -1,0 +1,359 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.AcquireMatch.Decision.Propose.OtherDoi (String)
+com.histmersion.domain.AcquireMatch.Decision.Propose.Score (Double)
+com.histmersion.domain.AcquireRecheck.Action.Fetch.Into (String)
+com.histmersion.domain.AcquireRecheck.Candidate.Item (Int)
+com.histmersion.domain.AcquireRecheck.Held.HasOriginal (Boolean)
+com.histmersion.domain.AcquireRecheck.JobPlan.All (Boolean)
+com.histmersion.domain.AcquireRecheck.JobPlan.UpTo (Int)
+com.histmersion.domain.AcquireRecheck.LastCheck.Failed (Boolean)
+com.histmersion.domain.AcquireRecheck.LastCheck.Generation (String)
+com.histmersion.domain.AcquireRecheck.Outcome.Wire (String)
+com.histmersion.domain.AcquireRecheck.Settings.Enabled (Boolean)
+com.histmersion.domain.AcquireRecheck.Settings.EveryDays (Int)
+com.histmersion.domain.AcquireRecheck.Settings.PassMinutes (Int)
+com.histmersion.domain.AcquireRecheck.Settings.PerDay (Int)
+com.histmersion.domain.AcquireRecheck.Settings.PerPass (Int)
+com.histmersion.domain.AcquireRecheck.Settings.RetryHours (Int)
+com.histmersion.domain.AcquireRecheck.Settings.SharePercent (Int)
+com.histmersion.domain.AcquireRecheck.Shared.BacklogPending (Int)
+com.histmersion.domain.AcquireRecheck.Shared.Cap (Int)
+com.histmersion.domain.AcquireRecheck.Shared.FetchedToday (Int)
+com.histmersion.domain.AcquireRecheck.Shared.Left (Int)
+com.histmersion.domain.AcquireRecheck.Tally.Closed (Int)
+com.histmersion.domain.AcquireRecheck.Tally.Failed (Int)
+com.histmersion.domain.AcquireRecheck.Tally.Fetched (Int)
+com.histmersion.domain.AcquireRecheck.Tally.LastFailure (String)
+com.histmersion.domain.AcquireRecheck.Tally.NoCopy (Int)
+com.histmersion.domain.AcquireRecheck.Tally.Total (Int)
+com.histmersion.domain.AcquireRecheck.Tally.Tried (Int)
+com.histmersion.domain.AgentProposals.Proposal.Evidence (String)
+com.histmersion.domain.AgentProposals.Proposal.Quote (String)
+com.histmersion.domain.AgentProposals.Proposal.Target (String)
+com.histmersion.domain.AgentProposals.ProposalAnswer.EdgeKind (String)
+com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence (String)
+com.histmersion.domain.AgentProposals.ProposalAnswer.Kind (String)
+com.histmersion.domain.AgentProposals.ProposalAnswer.Quote (String)
+com.histmersion.domain.AgentProposals.ProposalAnswer.Status (String)
+com.histmersion.domain.AgentProposals.ProposalAnswer.Target (String)
+com.histmersion.domain.AgentProposals.Route.Skip.Reason (String)
+com.histmersion.domain.AgentVerify.QuoteMatch.Fuzzy.Matched (Double)
+com.histmersion.domain.AgentVerify.QuoteMatch.Missing.Best (Double)
+com.histmersion.domain.AgentVerify.YearUnit.Wire (String)
+com.histmersion.domain.ArticleReviewStatus.Facts.Round (Int)
+com.histmersion.domain.ArticleReviewStatus.ItemFacts.Attempts (Int)
+com.histmersion.domain.ArticleReviewStatus.ItemFacts.Outcome (String)
+com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Findings (Int)
+com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMajors (Int)
+com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMinors (Int)
+com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Runs (Int)
+com.histmersion.domain.Attribution.Author (String)
+com.histmersion.domain.Attribution.Credit (String)
+com.histmersion.domain.Attribution.LicenceUrl (String)
+
+## TYPES TO DECIDE
+com.histmersion.domain.AcquireMatch.DecideProposeAt | base Double | generated | method-parameter
+com.histmersion.domain.AcquireMatch.DecimalResult | base String | generated | method-result
+    def decimal(x: com.histmersion.domain.AcquireMatch.DecimalX): com.histmersion.domain.AcquireMatch.DecimalResult =
+com.histmersion.domain.AcquireMatch.DecimalX | base Double | generated | method-parameter
+    def decimal(x: com.histmersion.domain.AcquireMatch.DecimalX): com.histmersion.domain.AcquireMatch.DecimalResult =
+com.histmersion.domain.AcquireMatch.Decision.Propose.OtherDoi | base String | generated | constructor-parameter
+    case Propose(item: Queue.QueueItem, score: Decision.Propose.Score, otherDoi: Option[Decision.Propose.OtherDoi])
+com.histmersion.domain.AcquireMatch.Decision.Propose.Score | base Double | generated | constructor-parameter
+    case Propose(item: Queue.QueueItem, score: Decision.Propose.Score, otherDoi: Option[Decision.Propose.OtherDoi])
+com.histmersion.domain.AcquireMatch.DescribeClosedArg1 | base Int | generated | method-parameter
+    def describe(d: Decision, closed: com.histmersion.domain.AcquireMatch.DescribeClosedArg1 => Either[com.histmersion.domain.AcquireMatch.DescribeClosedResultPart1, Unit] = 
+com.histmersion.domain.AcquireMatch.DescribeClosedResultPart1 | base String | generated | method-parameter
+    def describe(d: Decision, closed: com.histmersion.domain.AcquireMatch.DescribeClosedArg1 => Either[com.histmersion.domain.AcquireMatch.DescribeClosedResultPart1, Unit] = 
+com.histmersion.domain.AcquireMatch.DescribeResult | base String | generated | method-result
+    def describe(d: Decision, closed: com.histmersion.domain.AcquireMatch.DescribeClosedArg1 => Either[com.histmersion.domain.AcquireMatch.DescribeClosedResultPart1, Unit] = 
+com.histmersion.domain.AcquireMatch.DoiKeyRaw | base String | generated | method-parameter
+    def doiKey(raw: com.histmersion.domain.AcquireMatch.DoiKeyRaw): Option[com.histmersion.domain.AcquireMatch.DoiKeyResult] =
+com.histmersion.domain.AcquireMatch.DoiKeyResult | base String | generated | method-result
+    def doiKey(raw: com.histmersion.domain.AcquireMatch.DoiKeyRaw): Option[com.histmersion.domain.AcquireMatch.DoiKeyResult] =
+com.histmersion.domain.AcquireMatch.DoisInResult | base String | generated | method-result
+    def doisIn(text: com.histmersion.domain.AcquireMatch.DoisInText): Set[com.histmersion.domain.AcquireMatch.DoisInResult] =
+com.histmersion.domain.AcquireMatch.DoisInText | base String | generated | method-parameter
+    def doisIn(text: com.histmersion.domain.AcquireMatch.DoisInText): Set[com.histmersion.domain.AcquireMatch.DoisInResult] =
+com.histmersion.domain.AcquireMatch.ScoreItemText | base String | generated | method-parameter
+    def score(itemText: com.histmersion.domain.AcquireMatch.ScoreItemText, title: com.histmersion.domain.AcquireMatch.ScoreTitle, authors: List[com.histmersion.domain.Acquire
+com.histmersion.domain.AcquireMatch.ScoreResult | base Double | generated | method-result
+    def score(itemText: com.histmersion.domain.AcquireMatch.ScoreItemText, title: com.histmersion.domain.AcquireMatch.ScoreTitle, authors: List[com.histmersion.domain.Acquire
+com.histmersion.domain.AcquireMatch.ScoreTitle | base String | generated | alias,method-parameter
+    val DecideTitle: _root_.com.histmersion.domain.AcquireMatch.ScoreTitle.type = _root_.com.histmersion.domain.AcquireMatch.ScoreTitle
+    def score(itemText: com.histmersion.domain.AcquireMatch.ScoreItemText, title: com.histmersion.domain.AcquireMatch.ScoreTitle, authors: List[com.histmersion.domain.Acquire
+com.histmersion.domain.AcquireMatch.SurnameAuthors | base String | generated | alias,method-parameter
+    val ScoreAuthors: _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors.type = _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors
+    val DecideAuthors: _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors.type = _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors
+com.histmersion.domain.AcquireMatch.SurnameResult | base String | generated | method-result
+    def surname(authors: List[com.histmersion.domain.AcquireMatch.SurnameAuthors]): Option[com.histmersion.domain.AcquireMatch.SurnameResult] =
+com.histmersion.domain.AcquireMatch.TokensResult | base String | generated | method-result
+    def tokens(text: com.histmersion.domain.AcquireMatch.TokensText): Set[com.histmersion.domain.AcquireMatch.TokensResult] =
+com.histmersion.domain.AcquireMatch.TokensText | base String | generated | method-parameter
+    def tokens(text: com.histmersion.domain.AcquireMatch.TokensText): Set[com.histmersion.domain.AcquireMatch.TokensResult] =
+com.histmersion.domain.AcquireMatch.TrimD | base String | generated | method-parameter
+    private def trim(d: com.histmersion.domain.AcquireMatch.TrimD): com.histmersion.domain.AcquireMatch.TrimResult =
+com.histmersion.domain.AcquireMatch.TrimResult | base String | generated | method-result
+    private def trim(d: com.histmersion.domain.AcquireMatch.TrimD): com.histmersion.domain.AcquireMatch.TrimResult =
+com.histmersion.domain.AcquireRecheck.Action.Fetch.Into | base String | generated | constructor-parameter
+    case Fetch(doi: com.histmersion.domain.library.Doi, into: Option[Action.Fetch.Into])
+com.histmersion.domain.AcquireRecheck.ActionDois | base String | generated | method-parameter
+    def action(dois: List[com.histmersion.domain.AcquireRecheck.ActionDois], held: com.histmersion.domain.AcquireRecheck.ActionHeldArg1 => Option[Held]): Action =
+com.histmersion.domain.AcquireRecheck.ActionHeldArg1 | base String | generated | method-parameter
+    def action(dois: List[com.histmersion.domain.AcquireRecheck.ActionDois], held: com.histmersion.domain.AcquireRecheck.ActionHeldArg1 => Option[Held]): Action =
+com.histmersion.domain.AcquireRecheck.AllowanceCheckedToday | base Int | generated | method-parameter
+    def allowance(s: Settings, checkedToday: com.histmersion.domain.AcquireRecheck.AllowanceCheckedToday, shared: Option[Shared]): com.histmersion.domain.AcquireRecheck.Allow
+com.histmersion.domain.AcquireRecheck.AllowanceResult | base Int | generated | method-result
+    def allowance(s: Settings, checkedToday: com.histmersion.domain.AcquireRecheck.AllowanceCheckedToday, shared: Option[Shared]): com.histmersion.domain.AcquireRecheck.Allow
+com.histmersion.domain.AcquireRecheck.AnswersMessage | base String | generated | method-parameter
+    def answers(message: com.histmersion.domain.AcquireRecheck.AnswersMessage): com.histmersion.domain.AcquireRecheck.AnswersResult =
+com.histmersion.domain.AcquireRecheck.AnswersResult | base String | generated | method-result
+    def answers(message: com.histmersion.domain.AcquireRecheck.AnswersMessage): com.histmersion.domain.AcquireRecheck.AnswersResult =
+com.histmersion.domain.AcquireRecheck.Candidate.Item | base Int | original | constructor-parameter
+    final case class Candidate(item: Candidate.Item, last: Option[LastCheck])
+com.histmersion.domain.AcquireRecheck.CheckedSinceResult | base Boolean | generated | method-result
+    def checkedSince(last: Option[LastCheck], since: Instant): com.histmersion.domain.AcquireRecheck.CheckedSinceResult = last.exists(l => !l.at.isBefore(since))
+com.histmersion.domain.AcquireRecheck.DueAtEveryDays | base Int | generated | alias,method-parameter
+    val IsDueEveryDays: _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays
+    val NextDueEveryDays: _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtEveryDays
+com.histmersion.domain.AcquireRecheck.DueAtGeneration | base String | generated | alias,method-parameter
+    val IsDueGeneration: _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration
+    val NextDueGeneration: _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtGeneration
+com.histmersion.domain.AcquireRecheck.DueAtRetryHours | base Int | generated | alias,method-parameter
+    val IsDueRetryHours: _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours
+    val NextDueRetryHours: _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours.type = _root_.com.histmersion.domain.AcquireRecheck.DueAtRetryHours
+com.histmersion.domain.AcquireRecheck.FailureMessage | base String | generated | method-parameter
+    def failure(message: com.histmersion.domain.AcquireRecheck.FailureMessage): Outcome =
+com.histmersion.domain.AcquireRecheck.GenerationParts | base String | generated | method-parameter
+    def generation(parts: List[com.histmersion.domain.AcquireRecheck.GenerationParts]): com.histmersion.domain.AcquireRecheck.GenerationResult =
+com.histmersion.domain.AcquireRecheck.GenerationResult | base String | generated | method-result
+    def generation(parts: List[com.histmersion.domain.AcquireRecheck.GenerationParts]): com.histmersion.domain.AcquireRecheck.GenerationResult =
+com.histmersion.domain.AcquireRecheck.Held.HasOriginal | base Boolean | original | constructor-parameter
+    final case class Held(citekey: com.histmersion.domain.library.Citekey, hasOriginal: Held.HasOriginal)
+com.histmersion.domain.AcquireRecheck.IsDueResult | base Boolean | generated | method-result
+    def isDue(last: Option[LastCheck], generation: com.histmersion.domain.AcquireRecheck.IsDueGeneration, everyDays: com.histmersion.domain.AcquireRecheck.IsDueEveryDays, ret
+com.histmersion.domain.AcquireRecheck.JobPicksDueResult | base Boolean | generated | method-parameter
+com.histmersion.domain.AcquireRecheck.JobPicksTriedByJob | base Int | generated | method-parameter
+com.histmersion.domain.AcquireRecheck.JobPlan.All | base Boolean | original | constructor-parameter
+    final case class JobPlan(all: JobPlan.All, upTo: JobPlan.UpTo, since: Instant)
+com.histmersion.domain.AcquireRecheck.JobPlan.UpTo | base Int | original | constructor-parameter
+    final case class JobPlan(all: JobPlan.All, upTo: JobPlan.UpTo, since: Instant)
+com.histmersion.domain.AcquireRecheck.LastCheck.Failed | base Boolean | original | constructor-parameter
+    final case class LastCheck(at: Instant, generation: LastCheck.Generation, failed: LastCheck.Failed = false)
+    case Failed extends Outcome("failed")
+com.histmersion.domain.AcquireRecheck.LastCheck.Generation | base String | original | constructor-parameter
+    final case class LastCheck(at: Instant, generation: LastCheck.Generation, failed: LastCheck.Failed = false)
+com.histmersion.domain.AcquireRecheck.Outcome.ParseS | base String | generated | method-parameter
+    def parse(s: com.histmersion.domain.AcquireRecheck.Outcome.ParseS): Option[Outcome] = values.find(_.wire == s.trim)
+com.histmersion.domain.AcquireRecheck.Outcome.Wire | base String | generated | constructor-parameter
+    enum Outcome(val wire: Outcome.Wire):
+com.histmersion.domain.AcquireRecheck.PassDuePassMinutes | base Int | generated | method-parameter
+    def passDue(last: Option[Instant], passMinutes: com.histmersion.domain.AcquireRecheck.PassDuePassMinutes, now: Instant): com.histmersion.domain.AcquireRecheck.PassDueResu
+com.histmersion.domain.AcquireRecheck.PassDueResult | base Boolean | generated | method-result
+    def passDue(last: Option[Instant], passMinutes: com.histmersion.domain.AcquireRecheck.PassDuePassMinutes, now: Instant): com.histmersion.domain.AcquireRecheck.PassDueResu
+com.histmersion.domain.AcquireRecheck.ProgressLineResult | base String | generated | method-result
+    def progressLine(t: Tally): com.histmersion.domain.AcquireRecheck.ProgressLineResult =
+com.histmersion.domain.AcquireRecheck.ReasonDetail | base String | generated | method-parameter
+    def reason(at: Instant, outcome: Outcome, detail: com.histmersion.domain.AcquireRecheck.ReasonDetail): com.histmersion.domain.AcquireRecheck.ReasonResult =
+com.histmersion.domain.AcquireRecheck.ReasonResult | base String | generated | method-result
+    def reason(at: Instant, outcome: Outcome, detail: com.histmersion.domain.AcquireRecheck.ReasonDetail): com.histmersion.domain.AcquireRecheck.ReasonResult =
+com.histmersion.domain.AcquireRecheck.ResumableError | base String | generated | method-parameter
+    def resumable(status: com.histmersion.domain.AcquireRecheck.ResumableStatus, error: Option[com.histmersion.domain.AcquireRecheck.ResumableError]): com.histmersion.domain.
+com.histmersion.domain.AcquireRecheck.ResumableResult | base Boolean | generated | method-result
+    def resumable(status: com.histmersion.domain.AcquireRecheck.ResumableStatus, error: Option[com.histmersion.domain.AcquireRecheck.ResumableError]): com.histmersion.domain.
+com.histmersion.domain.AcquireRecheck.ResumableStatus | base String | generated | method-parameter
+    def resumable(status: com.histmersion.domain.AcquireRecheck.ResumableStatus, error: Option[com.histmersion.domain.AcquireRecheck.ResumableError]): com.histmersion.domain.
+com.histmersion.domain.AcquireRecheck.Settings.Enabled | base Boolean | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Settings.EveryDays | base Int | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Settings.PassMinutes | base Int | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Settings.PerDay | base Int | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Settings.PerPass | base Int | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Settings.RetryHours | base Int | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Settings.SharePercent | base Int | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Shared.BacklogPending | base Int | original | constructor-parameter
+    final case class Shared(left: Shared.Left, cap: Shared.Cap, backlogPending: Shared.BacklogPending, fetchedToday: Shared.FetchedToday)
+com.histmersion.domain.AcquireRecheck.Shared.Cap | base Int | original | constructor-parameter
+    final case class Shared(left: Shared.Left, cap: Shared.Cap, backlogPending: Shared.BacklogPending, fetchedToday: Shared.FetchedToday)
+com.histmersion.domain.AcquireRecheck.Shared.FetchedToday | base Int | original | constructor-parameter
+    final case class Shared(left: Shared.Left, cap: Shared.Cap, backlogPending: Shared.BacklogPending, fetchedToday: Shared.FetchedToday)
+com.histmersion.domain.AcquireRecheck.Shared.Left | base Int | original | constructor-parameter
+    final case class Shared(left: Shared.Left, cap: Shared.Cap, backlogPending: Shared.BacklogPending, fetchedToday: Shared.FetchedToday)
+com.histmersion.domain.AcquireRecheck.Tally.AddDetail | base String | generated | method-parameter
+    def add(outcome: Outcome, detail: com.histmersion.domain.AcquireRecheck.Tally.AddDetail): Tally = outcome match
+com.histmersion.domain.AcquireRecheck.Tally.Closed | base Int | original | constructor-parameter
+    case Closed extends Outcome("closed")
+    case Outcome.Closed  => s"checked $day: in the corpus with its original as [[$d]] — closed"
+com.histmersion.domain.AcquireRecheck.Tally.Failed | base Int | original | constructor-parameter
+    final case class LastCheck(at: Instant, generation: LastCheck.Generation, failed: LastCheck.Failed = false)
+    case Failed extends Outcome("failed")
+com.histmersion.domain.AcquireRecheck.Tally.Fetched | base Int | original | constructor-parameter
+    case Fetched extends Outcome("fetched")
+    case Outcome.Fetched => s"checked $day: a legal copy found ($d) — converting; the item closes once it is stored"
+com.histmersion.domain.AcquireRecheck.Tally.LastFailure | base String | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Tally.NoCopy | base Int | original | constructor-parameter
+    case NoCopy extends Outcome("no-copy")
+    case Outcome.NoCopy  =>
+com.histmersion.domain.AcquireRecheck.Tally.Total | base Int | original | constructor-parameter
+com.histmersion.domain.AcquireRecheck.Tally.Tried | base Int | original | constructor-parameter
+com.histmersion.domain.AgentProposals.CheckIsCitekeyArg1 | base String | generated | method-parameter
+com.histmersion.domain.AgentProposals.CheckIsCitekeyResult | base Boolean | generated | method-parameter
+com.histmersion.domain.AgentProposals.CheckMinRatio | base Double | generated | method-parameter
+com.histmersion.domain.AgentProposals.CheckQuotedKeys | base String | generated | method-parameter
+    def quoted(keys: List[com.histmersion.domain.AgentProposals.CheckQuotedKeys]): Either[com.histmersion.domain.AgentProposals.CheckQuotedResultPart1, com.histmersion.domain
+com.histmersion.domain.AgentProposals.CheckQuotedResultPart1 | base String | generated | method-result
+    def quoted(keys: List[com.histmersion.domain.AgentProposals.CheckQuotedKeys]): Either[com.histmersion.domain.AgentProposals.CheckQuotedResultPart1, com.histmersion.domain
+com.histmersion.domain.AgentProposals.CheckQuotedResultPart2 | base String | generated | method-result
+    def quoted(keys: List[com.histmersion.domain.AgentProposals.CheckQuotedKeys]): Either[com.histmersion.domain.AgentProposals.CheckQuotedResultPart1, com.histmersion.domain
+com.histmersion.domain.AgentProposals.CheckResultPart1 | base String | generated | method-result
+com.histmersion.domain.AgentProposals.CheckTextArg1 | base String | generated | method-parameter
+com.histmersion.domain.AgentProposals.CheckTextResult | base String | generated | method-parameter
+com.histmersion.domain.AgentProposals.Proposal.DescribeResult | base String | generated | method-result
+    def describe: com.histmersion.domain.AgentProposals.Proposal.DescribeResult = kind match
+com.histmersion.domain.AgentProposals.Proposal.Evidence | base String | original | constructor-parameter
+com.histmersion.domain.AgentProposals.Proposal.Quote | base String | original | constructor-parameter
+com.histmersion.domain.AgentProposals.Proposal.Target | base String | original | constructor-parameter
+com.histmersion.domain.AgentProposals.ProposalAnswer.EdgeKind | base String | original | constructor-parameter
+com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence | base String | original | constructor-parameter
+com.histmersion.domain.AgentProposals.ProposalAnswer.Kind | base String | original | constructor-parameter
+    val EdgeKinds: List[Edge.Kind] =
+    case Approval.Kind.StatusChange => s"[[$citekey]] status → ${status.fold("?")(_.wire)}"
+com.histmersion.domain.AgentProposals.ProposalAnswer.Quote | base String | original | constructor-parameter
+com.histmersion.domain.AgentProposals.ProposalAnswer.Status | base String | original | constructor-parameter
+    def route(p: Proposal, current: Option[Source.Status], statusMode: Approval.Mode, edgeMode: Approval.Mode): Route =
+com.histmersion.domain.AgentProposals.ProposalAnswer.Target | base String | original | constructor-parameter
+com.histmersion.domain.AgentProposals.Route.Skip.Reason | base String | generated | constructor-parameter
+    case Skip(reason: Route.Skip.Reason)
+com.histmersion.domain.AgentVerify.ConfidenceResultPart1 | base String | generated | method-result
+    def confidence(s: com.histmersion.domain.AgentVerify.ConfidenceS): Either[com.histmersion.domain.AgentVerify.ConfidenceResultPart1, Confidence] =
+com.histmersion.domain.AgentVerify.ConfidenceS | base String | generated | method-parameter
+    def confidence(s: com.histmersion.domain.AgentVerify.ConfidenceS): Either[com.histmersion.domain.AgentVerify.ConfidenceResultPart1, Confidence] =
+com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA | base String | generated | alias,method-parameter
+    val SimilarWordA: _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA.type = _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA
+    private def editDistanceAtMostOne(a: com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA, b: com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB): com.histmer
+com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB | base String | generated | alias,method-parameter
+    val SimilarWordB: _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB.type = _root_.com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB
+    private def editDistanceAtMostOne(a: com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA, b: com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB): com.histmer
+com.histmersion.domain.AgentVerify.EditDistanceAtMostOneResult | base Boolean | generated | method-result
+    private def editDistanceAtMostOne(a: com.histmersion.domain.AgentVerify.EditDistanceAtMostOneA, b: com.histmersion.domain.AgentVerify.EditDistanceAtMostOneB): com.histmer
+com.histmersion.domain.AgentVerify.FindQuoteBody | base String | generated | method-parameter
+    def findQuote(quote: com.histmersion.domain.AgentVerify.FindQuoteQuote, body: com.histmersion.domain.AgentVerify.FindQuoteBody, minRatio: com.histmersion.domain.AgentVeri
+com.histmersion.domain.AgentVerify.FindQuoteMinRatio | base Double | generated | method-parameter
+    def findQuote(quote: com.histmersion.domain.AgentVerify.FindQuoteQuote, body: com.histmersion.domain.AgentVerify.FindQuoteBody, minRatio: com.histmersion.domain.AgentVeri
+com.histmersion.domain.AgentVerify.FindQuoteQuote | base String | generated | method-parameter
+    def findQuote(quote: com.histmersion.domain.AgentVerify.FindQuoteQuote, body: com.histmersion.domain.AgentVerify.FindQuoteBody, minRatio: com.histmersion.domain.AgentVeri
+com.histmersion.domain.AgentVerify.LcsQ | base String | generated | method-parameter
+    private def lcs(q: Array[com.histmersion.domain.AgentVerify.LcsQ], w: Array[com.histmersion.domain.AgentVerify.LcsW]): com.histmersion.domain.AgentVerify.LcsResult =
+com.histmersion.domain.AgentVerify.LcsResult | base Int | generated | method-result
+    private def lcs(q: Array[com.histmersion.domain.AgentVerify.LcsQ], w: Array[com.histmersion.domain.AgentVerify.LcsW]): com.histmersion.domain.AgentVerify.LcsResult =
+com.histmersion.domain.AgentVerify.LcsW | base String | generated | method-parameter
+    private def lcs(q: Array[com.histmersion.domain.AgentVerify.LcsQ], w: Array[com.histmersion.domain.AgentVerify.LcsW]): com.histmersion.domain.AgentVerify.LcsResult =
+com.histmersion.domain.AgentVerify.LinkProblemsIsCitekeyArg1 | base String | generated | method-parameter
+    def linkProblems(text: com.histmersion.domain.AgentVerify.LinkProblemsText, isCitekey: com.histmersion.domain.AgentVerify.LinkProblemsIsCitekeyArg1 => com.histmersion.dom
+com.histmersion.domain.AgentVerify.LinkProblemsIsCitekeyResult | base Boolean | generated | method-parameter
+    def linkProblems(text: com.histmersion.domain.AgentVerify.LinkProblemsText, isCitekey: com.histmersion.domain.AgentVerify.LinkProblemsIsCitekeyArg1 => com.histmersion.dom
+com.histmersion.domain.AgentVerify.LinkProblemsIsSlugArg1 | base String | generated | method-parameter
+    def linkProblems(text: com.histmersion.domain.AgentVerify.LinkProblemsText, isCitekey: com.histmersion.domain.AgentVerify.LinkProblemsIsCitekeyArg1 => com.histmersion.dom
+com.histmersion.domain.AgentVerify.LinkProblemsIsSlugResult | base Boolean | generated | method-parameter
+    def linkProblems(text: com.histmersion.domain.AgentVerify.LinkProblemsText, isCitekey: com.histmersion.domain.AgentVerify.LinkProblemsIsCitekeyArg1 => com.histmersion.dom
+com.histmersion.domain.AgentVerify.LinkProblemsResult | base String | generated | method-result
+    def linkProblems(text: com.histmersion.domain.AgentVerify.LinkProblemsText, isCitekey: com.histmersion.domain.AgentVerify.LinkProblemsIsCitekeyArg1 => com.histmersion.dom
+com.histmersion.domain.AgentVerify.NormaliseResult | base String | generated | method-result
+    def normalise(s: com.histmersion.domain.AgentVerify.NormaliseS): com.histmersion.domain.AgentVerify.NormaliseResult = ComparedText.normalise(s)
+com.histmersion.domain.AgentVerify.NormaliseS | base String | generated | method-parameter
+    def normalise(s: com.histmersion.domain.AgentVerify.NormaliseS): com.histmersion.domain.AgentVerify.NormaliseResult = ComparedText.normalise(s)
+com.histmersion.domain.AgentVerify.PeriodProblemsEnd | base Long | generated | method-parameter
+    def periodProblems(start: com.histmersion.domain.AgentVerify.PeriodProblemsStart, end: com.histmersion.domain.AgentVerify.PeriodProblemsEnd, maxAbsYear: com.histmersion.d
+com.histmersion.domain.AgentVerify.PeriodProblemsMaxAbsYear | base Long | generated | method-parameter
+    def periodProblems(start: com.histmersion.domain.AgentVerify.PeriodProblemsStart, end: com.histmersion.domain.AgentVerify.PeriodProblemsEnd, maxAbsYear: com.histmersion.d
+com.histmersion.domain.AgentVerify.PeriodProblemsResult | base String | generated | method-result
+    def periodProblems(start: com.histmersion.domain.AgentVerify.PeriodProblemsStart, end: com.histmersion.domain.AgentVerify.PeriodProblemsEnd, maxAbsYear: com.histmersion.d
+com.histmersion.domain.AgentVerify.PeriodProblemsStart | base Long | generated | method-parameter
+    def periodProblems(start: com.histmersion.domain.AgentVerify.PeriodProblemsStart, end: com.histmersion.domain.AgentVerify.PeriodProblemsEnd, maxAbsYear: com.histmersion.d
+com.histmersion.domain.AgentVerify.QuoteMatch.AcceptedResult | base Boolean | generated | method-result
+    def accepted: com.histmersion.domain.AgentVerify.QuoteMatch.AcceptedResult = this match
+com.histmersion.domain.AgentVerify.QuoteMatch.Fuzzy.Matched | base Double | generated | constructor-parameter
+    case Fuzzy(matched: QuoteMatch.Fuzzy.Matched)
+com.histmersion.domain.AgentVerify.QuoteMatch.Missing.Best | base Double | generated | constructor-parameter
+    case Missing(best: QuoteMatch.Missing.Best)
+com.histmersion.domain.AgentVerify.QuoteMatch.RatioResult | base Double | generated | method-result
+    def ratio: com.histmersion.domain.AgentVerify.QuoteMatch.RatioResult = this match
+com.histmersion.domain.AgentVerify.SameTitleA | base String | generated | method-parameter
+    def sameTitle(a: com.histmersion.domain.AgentVerify.SameTitleA, b: com.histmersion.domain.AgentVerify.SameTitleB): com.histmersion.domain.AgentVerify.SameTitleResult =
+com.histmersion.domain.AgentVerify.SameTitleB | base String | generated | method-parameter
+    def sameTitle(a: com.histmersion.domain.AgentVerify.SameTitleA, b: com.histmersion.domain.AgentVerify.SameTitleB): com.histmersion.domain.AgentVerify.SameTitleResult =
+com.histmersion.domain.AgentVerify.SameTitleResult | base Boolean | generated | method-result
+    def sameTitle(a: com.histmersion.domain.AgentVerify.SameTitleA, b: com.histmersion.domain.AgentVerify.SameTitleB): com.histmersion.domain.AgentVerify.SameTitleResult =
+com.histmersion.domain.AgentVerify.SimilarWordResult | base Boolean | generated | method-result
+    private[domain] def similarWord(a: com.histmersion.domain.AgentVerify.SimilarWordA, b: com.histmersion.domain.AgentVerify.SimilarWordB): com.histmersion.domain.AgentVerif
+com.histmersion.domain.AgentVerify.StatusResultPart1 | base String | generated | method-result
+    def status(s: com.histmersion.domain.AgentVerify.StatusS): Either[com.histmersion.domain.AgentVerify.StatusResultPart1, Source.Status] =
+com.histmersion.domain.AgentVerify.StatusS | base String | generated | method-parameter
+    def status(s: com.histmersion.domain.AgentVerify.StatusS): Either[com.histmersion.domain.AgentVerify.StatusResultPart1, Source.Status] =
+com.histmersion.domain.AgentVerify.ToSignedYearResultPart1 | base String | generated | method-result
+    def toSignedYear(value: com.histmersion.domain.AgentVerify.ToSignedYearValue, unit: YearUnit): Either[com.histmersion.domain.AgentVerify.ToSignedYearResultPart1, com.hist
+com.histmersion.domain.AgentVerify.ToSignedYearResultPart2 | base Long | generated | method-result
+    def toSignedYear(value: com.histmersion.domain.AgentVerify.ToSignedYearValue, unit: YearUnit): Either[com.histmersion.domain.AgentVerify.ToSignedYearResultPart1, com.hist
+com.histmersion.domain.AgentVerify.ToSignedYearValue | base Long | generated | method-parameter
+    def toSignedYear(value: com.histmersion.domain.AgentVerify.ToSignedYearValue, unit: YearUnit): Either[com.histmersion.domain.AgentVerify.ToSignedYearResultPart1, com.hist
+com.histmersion.domain.AgentVerify.WikilinksResult | base String | generated | method-result
+    def wikilinks(text: com.histmersion.domain.AgentVerify.WikilinksText): List[com.histmersion.domain.AgentVerify.WikilinksResult] =
+com.histmersion.domain.AgentVerify.WikilinksText | base String | generated | alias,method-parameter
+    val LinkProblemsText: _root_.com.histmersion.domain.AgentVerify.WikilinksText.type = _root_.com.histmersion.domain.AgentVerify.WikilinksText
+    def wikilinks(text: com.histmersion.domain.AgentVerify.WikilinksText): List[com.histmersion.domain.AgentVerify.WikilinksResult] =
+com.histmersion.domain.AgentVerify.WordsNormalised | base String | generated | method-parameter
+    private def words(normalised: com.histmersion.domain.AgentVerify.WordsNormalised): Array[com.histmersion.domain.AgentVerify.WordsResult] =
+com.histmersion.domain.AgentVerify.WordsResult | base String | generated | method-result
+    private def words(normalised: com.histmersion.domain.AgentVerify.WordsNormalised): Array[com.histmersion.domain.AgentVerify.WordsResult] =
+com.histmersion.domain.AgentVerify.YearUnit.ParseS | base String | generated | method-parameter
+    def parse(s: com.histmersion.domain.AgentVerify.YearUnit.ParseS): Option[YearUnit] =
+com.histmersion.domain.AgentVerify.YearUnit.Wire | base String | generated | constructor-parameter
+    enum YearUnit(val wire: YearUnit.Wire):
+com.histmersion.domain.ApprovalModes.ConfiguredRaw | base String | generated | method-parameter
+    def configured(raw: com.histmersion.domain.ApprovalModes.ConfiguredRaw): Approval.Mode = Approval.Mode.parse(raw).getOrElse(Approval.Mode.Manual)
+com.histmersion.domain.ArticleReviewStatus.Facts.Round | base Int | original | constructor-parameter
+com.histmersion.domain.ArticleReviewStatus.FindingNumberPart1 | base String | generated | method-parameter
+    private def finding(e: Entry, number: Map[com.histmersion.domain.ArticleReviewStatus.FindingNumberPart1, com.histmersion.domain.ArticleReviewStatus.FindingNumberPart2]): 
+com.histmersion.domain.ArticleReviewStatus.FindingNumberPart2 | base Int | generated | method-parameter
+    private def finding(e: Entry, number: Map[com.histmersion.domain.ArticleReviewStatus.FindingNumberPart1, com.histmersion.domain.ArticleReviewStatus.FindingNumberPart2]): 
+com.histmersion.domain.ArticleReviewStatus.ItemFacts.Attempts | base Int | original | constructor-parameter
+    final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = 0)
+com.histmersion.domain.ArticleReviewStatus.ItemFacts.Outcome | base String | original | constructor-parameter
+    final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = 0)
+com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Findings | base Int | original | constructor-parameter
+    final case class LedgerFacts(openMajors: LedgerFacts.OpenMajors, openMinors: LedgerFacts.OpenMinors, findings: LedgerFacts.Findings, runs: LedgerFacts.Runs)
+com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMajors | base Int | original | constructor-parameter
+    final case class LedgerFacts(openMajors: LedgerFacts.OpenMajors, openMinors: LedgerFacts.OpenMinors, findings: LedgerFacts.Findings, runs: LedgerFacts.Runs)
+com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMinors | base Int | original | constructor-parameter
+    final case class LedgerFacts(openMajors: LedgerFacts.OpenMajors, openMinors: LedgerFacts.OpenMinors, findings: LedgerFacts.Findings, runs: LedgerFacts.Runs)
+com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Runs | base Int | original | constructor-parameter
+    final case class LedgerFacts(openMajors: LedgerFacts.OpenMajors, openMinors: LedgerFacts.OpenMinors, findings: LedgerFacts.Findings, runs: LedgerFacts.Runs)
+com.histmersion.domain.ArticleReviewStatus.MajorsLineResult | base String | generated | method-result
+    private def majorsLine(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.MajorsLineResult =
+com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixLead | base String | generated | method-parameter
+    private def outcomeSuffix(outcome: Option[com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixOutcome], lead: com.histmersion.domain.ArticleReviewStatus.OutcomeSuffix
+com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixNone | base String | generated | method-parameter
+    private def outcomeSuffix(outcome: Option[com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixOutcome], lead: com.histmersion.domain.ArticleReviewStatus.OutcomeSuffix
+com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixOutcome | base String | generated | method-parameter
+    private def outcomeSuffix(outcome: Option[com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixOutcome], lead: com.histmersion.domain.ArticleReviewStatus.OutcomeSuffix
+com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixResult | base String | generated | method-result
+    private def outcomeSuffix(outcome: Option[com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixOutcome], lead: com.histmersion.domain.ArticleReviewStatus.OutcomeSuffix
+com.histmersion.domain.ArticleReviewStatus.RunOrderResult | base String | generated | method-result
+    def runOrder(l: Ledger, runStarts: Map[com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1, com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart
+com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1 | base String | generated | alias,method-parameter
+    val HistoryRunStartsPart1: _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunSt
+    def runOrder(l: Ledger, runStarts: Map[com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1, com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart
+com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2 | base String | generated | alias,method-parameter
+    val HistoryRunStartsPart2: _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunSt
+    def runOrder(l: Ledger, runStarts: Map[com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1, com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart
+com.histmersion.domain.ArticleReviewStatus.SoFarResult | base String | generated | method-result
+    private def soFar(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.SoFarResult =
+com.histmersion.domain.Attribution.Author | base String | original | alias,constructor-parameter
+    final case class Attribution(licence: Licence, licenceUrl: Option[Attribution.LicenceUrl], author: Option[Attribution.Author], credit: Attribution.Credit)
+    val Cc0Author: _root_.com.histmersion.domain.Attribution.Author.type = _root_.com.histmersion.domain.Attribution.Author
+com.histmersion.domain.Attribution.Credit | base String | original | alias,constructor-parameter
+    final case class Attribution(licence: Licence, licenceUrl: Option[Attribution.LicenceUrl], author: Option[Attribution.Author], credit: Attribution.Credit)
+    val Cc0Credit: _root_.com.histmersion.domain.Attribution.Credit.type = _root_.com.histmersion.domain.Attribution.Credit
+com.histmersion.domain.Attribution.LicenceUrl | base String | original | constructor-parameter
+    final case class Attribution(licence: Licence, licenceUrl: Option[Attribution.LicenceUrl], author: Option[Attribution.Author], credit: Attribution.Credit)
+com.histmersion.domain.Attribution.PublicDomainUrl | base String | generated | method-parameter
+    def publicDomain(author: Option[com.histmersion.domain.Attribution.PublicDomainAuthor], credit: com.histmersion.domain.Attribution.PublicDomainCredit, url: Option[com.his
