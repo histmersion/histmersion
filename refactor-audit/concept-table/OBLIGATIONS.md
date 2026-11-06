@@ -16,3 +16,12 @@ Each check an API-layer test used to make must exist as a server test once the s
 Suspected wrong merges to check: `PeriodO.int` returns `Year` for `yearPublished`; `Queue.createdAtOf` and `Tree.timeTime` carry mangled wrappers.
 
 4. A newtype with its own codec can lose it to the generic `NewtypeCodecs` given, silently dropping normalisation (found: `ItemKey`'s trimming decoder in `Target`). Check every hand-written codec on a newtype is the one actually used.
+
+## Behaviour changes made by repair agents, to review against 7e197c2b
+
+- `BundleTar.parseHeader` reports a negative octal size as unreadable; master accepted it.
+- `s2Next` uses `Offset.option`, so a negative value is `None` where it threw before.
+
+## Types agents reverted to primitives on public signatures, to restore
+
+`BundleEntities` (problems, `payloads`, `decode`), `SecretForm`, `Jats` (`runText`, attributes), `BundleReader.Loaded.problems`, `Compatible`, `checkFiles`, `ProviderKind.names`, `AboutMarkdown.age`.
