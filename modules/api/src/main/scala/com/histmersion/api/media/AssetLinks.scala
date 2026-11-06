@@ -59,7 +59,7 @@ object AssetLinks:
     */
   def fromFigures(md: com.histmersion.api.media.AssetLinks.Body): com.histmersion.api.media.AssetLinks.Body =
     mapImages(_root_.com.histmersion.api.media.AssetLinks.Body((md).value))((alt, target, title) =>
-      target match
+      target.value match
         case FiguresTarget(name) => s"![$alt]($Prefix${safeName(java.net.URLDecoder.decode(name, "UTF-8"))}$title)"
         case _                   => (s"![$alt]($target$title)")
     )
@@ -116,7 +116,7 @@ object AssetLinks:
 
   def webBase(citekey: com.histmersion.api.library.Citekey): com.histmersion.api.media.AssetLinks.Url = _root_.com.histmersion.api.media.AssetLinks.Url(s"/source/${enc(((citekey).value))}/assets/")
 
-  def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.Url = (webBase(citekey)).value + enc(name)
+  def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.Url = (webBase(citekey)).value + enc(name.value)
 
   private def enc(s: String): String =
     (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))
@@ -127,7 +127,7 @@ object AssetLinks:
     _root_.com.histmersion.api.media.AssetLinks.Html(BareImg.replaceAllIn((html).value, _ => java.util.regex.Matcher.quoteReplacement("""<img loading="lazy" """)))
 
   /** Must match the converter's `_safe_name`: either side may name a file. */
-  def safeName(raw: String): com.histmersion.api.exchange.Bundle.Asset.FileName = com.histmersion.api.text.SafeName.of(raw)
+  def safeName(raw: String): com.histmersion.api.text.SafeName.Sanitized = com.histmersion.api.text.SafeName.of(raw)
 
   def mimeOf(name: com.histmersion.api.exchange.Bundle.Asset.Extension): com.histmersion.api.exchange.Bundle.Asset.MimeText =
     (name).value.toLowerCase.reverse.takeWhile(_ != '.').reverse match

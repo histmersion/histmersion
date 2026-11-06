@@ -48,5 +48,5 @@ object ArticleEventLead:
       ("### Catalogue events in this article's period and region that it never names" :: "" ::
         leads.map { l =>
           s"- ${l.label} (`${l.eventId}`, ${l.kind}${l.size.fold("")(s => s", $s")}, ${l.years}) — " +
-            s"${Plural.count(l.findingsNear, _root_.com.histmersion.api.Plural.Noun.Singular("finding"))} of the filter's sources near it; from ${l.provider} (a lead, not evidence)"
+            s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(l.findingsNear.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("finding"))} of the filter's sources near it; from ${l.provider} (a lead, not evidence)"
         }).mkString("\n")

@@ -96,7 +96,7 @@ object AcquireMarkdown:
     else ("re-run with `--apply` to write the `references` edges")
 
   def assessment(a: Assessment): String =
-    val icon = a.verdict.value match
+    val icon = a.verdict match
       case Acquire.Verdicts.Retracted => "⛔"
       case Acquire.Verdicts.Corrected => "⚠"
       case Acquire.Verdicts.LowImpact => "·"

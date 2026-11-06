@@ -8,16 +8,16 @@ object ApprovalDigestMarkdown:
 
   import ApprovalDigest.*
 
-  private def decider(decidedBy: com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderDecidedBy): String = decidedBy match
-    case refactorPattern if (refactorPattern.value == "checked") && (refactorPattern2.value == "checked") => ("the autopilot's checks (within the day's cap); a person may decide them first")
+  private def decider(decidedBy: com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderDecidedBy): String = (decidedBy.value: String) match
+    case "checked" => ("the autopilot's checks (within the day's cap); a person may decide them first")
     case Waits     => ("nobody now: they wait (see above); a person may still decide one")
     case _         => ("a person")
 
   def digest(d: Digest): String =
-    val head = s"# Waiting for a person (${d.at.take(16).replace('T', ' ')} UTC)\n\n" +
-      s"- ${Plural.count(d.total, "open approval")}" +
-      (if d.heldForPerson > 0 then
-         s"\n- ${Plural.count(d.heldForPerson, "manager item")} held for a person, or with a run waiting for one"
+    val head = s"# Waiting for a person (${d.at.value.take(16).replace('T', ' ')} UTC)\n\n" +
+      s"- ${Plural.count(_root_.com.histmersion.api.Plural.CountN(d.total.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("open approval"))}" +
+      (if d.heldForPerson.value > 0 then
+         s"\n- ${Plural.count(_root_.com.histmersion.api.Plural.CountN(d.heldForPerson.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("manager item"))} held for a person, or with a run waiting for one"
        else "") +
       d.lastWritten.fold("")(t => s"\n- the daily digest was last written to the worklog at $t") +
       d.goalPlansWait.fold("")(w => s"\n- **$w**; a person may still approve one")
@@ -32,11 +32,11 @@ object ApprovalDigestMarkdown:
     ((head :: kinds).mkString("\n\n"))
 
   def bulk(r: BulkResult): String =
-    val verb = if r.dryRun then s"would ${r.decision}" else if r.decision == "approve" then "approved" else "rejected"
-    s"# ${Plural.count(r.matched, _root_.com.histmersion.api.Plural.CountSingular("open approval"))} matched: $verb ${r.decided.size}" + (if r.dryRun then
+    val verb = if r.dryRun.value then s"would ${r.decision}" else if r.decision.value == "approve" then "approved" else "rejected"
+    s"# ${Plural.count(_root_.com.histmersion.api.Plural.CountN(r.matched.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("open approval"))} matched: $verb ${r.decided.size}" + (if r.dryRun.value then
                                                                                            " (dry run: nothing decided)"
                                                                                          else "") +
       (if r.decided.isEmpty then "" else s"\n\n- ${r.decided.map(i => s"#$i").mkString(", ")}") +
       (if r.failed.isEmpty then ""
        else "\n\n## Not decided\n\n" + r.failed.map(f => s"- #${f.id}: ${f.error}").mkString("\n")) +
-      s"\n\n${Plural.count(r.left, "open approval")} left."
+      s"\n\n${Plural.count(_root_.com.histmersion.api.Plural.CountN(r.left.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("open approval"))} left."

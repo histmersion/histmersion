@@ -29,10 +29,10 @@ object Wording:
 
   def capitalize(s: String): String = if (s).isEmpty then ((s)) else ((s).substring(0, 1).toUpperCase + (s).substring(1))
 
-  def value(s: String): String = Label.display(s)
+  def value(s: String): String = Label.display(Label.Text(s)).value
 
   def heading(s: String): String =
-    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s))))) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).trim)))
+    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s))))) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).trim)).value)
 
   def status(s: Source.Status): String = s match
     case Source.Status.Foundational => ("Foundational")
@@ -43,7 +43,7 @@ object Wording:
     case Source.Status.Retracted    => ("Retracted")
     case Source.Status.Unassessed   => ("Not assessed")
 
-  def statusOf(wire: com.histmersion.api.Api.GoalQuery.Status.Wire): String =
+  def statusOf(wire: com.histmersion.api.Api.GoalQuery.Status): String =
     Source.Status.values.find(_.wire == _root_.com.histmersion.api.library.Source.Status.Wire((wire).value.trim.toLowerCase)).fold(humanize(_root_.com.histmersion.api.Wording.Id((wire).value)))(status)
 
   def pipeline(p: Pipeline): String = p match
@@ -118,13 +118,13 @@ object Wording:
     case "chatgpt-plan" => ("ChatGPT plan")
     case other          => ((humanize(_root_.com.histmersion.api.Wording.Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
 
-  def allowanceWindow(kind: com.histmersion.api.Api.ArticleQuery.Kind.Wire): String =
+  def allowanceWindow(kind: com.histmersion.api.automation.PlanQuota.WindowStatus.Kind): String =
     val k = (kind).value.trim.toLowerCase.split('/').last
-    def span(minutes: com.histmersion.api.AllowanceWindow.Minutes): String = minutes match
+    def span(minutes: com.histmersion.api.AllowanceWindow.Minutes): String = (minutes.value: Long) match
       case 10080              => ("This week's limit")
       case 1440               => ("Today's limit")
-      case m if (m).value % 1440 == 0 => (s"${(m).value / 1440}-day limit")
-      case m if (m).value % 60 == 0   => (s"${(m).value / 60}-hour limit")
+      case m if m % 1440 == 0 => (s"${m / 1440}-day limit")
+      case m if m % 60 == 0   => (s"${m / 60}-hour limit")
       case m                  => (s"$m-minute limit")
     val minutes = """^(\d+)m$""".r
     k match
@@ -149,9 +149,9 @@ object Wording:
   val Drain = "Finish current work, then pause"
   val Undrain = "Resume"
 
-  def jobKind(k: JobInfo.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(k.value))(_.name.value)
+  def jobKind(k: JobInfo.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(Id(k.value)))(_.name.value)
 
-  def jobKindOf(wire: com.histmersion.api.jobs.JobKinds.Wire): String = RegisteredJobKinds.all.parse(wire).fold(humanize(wire))(_.name.value)
+  def jobKindOf(wire: com.histmersion.api.jobs.JobKinds.Wire): String = RegisteredJobKinds.all.parse(wire).fold(humanize(Id(wire.value)))(_.name.value)
 
   def jobState(s: JobState): String = s match
     case JobState.Queued    => ("Queued")

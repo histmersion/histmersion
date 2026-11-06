@@ -7,12 +7,12 @@ object PluginsMarkdown:
 
 
   def line(p: PluginStatus): String =
-    val what = PluginState.parse(p.state) match
+    val what = PluginState.parse(_root_.com.histmersion.api.plugins.PluginState.Wire(p.state.value)) match
       case Some(PluginState.Registered) =>
         "registered" + (if p.provides.isEmpty then "" else p.provides.mkString(" (", ", ", ")"))
       case Some(PluginState.Failed)  => s"FAILED: ${p.error.getOrElse("no reason given")}"
       case Some(PluginState.Refused) => s"REFUSED: ${p.error.getOrElse("no reason given")}"
-      case _                         => p.state
+      case _                         => p.state.value
     (s"${p.id} ${p.version} — $what")
 
   def summary(r: PluginsReport): List[String] =

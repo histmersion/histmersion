@@ -9,14 +9,6 @@ import com.histmersion.api.given
   * renders them), so they compare as strings.
   */
 object UiNotices:
-  type Held = Held.T
-  object Held extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type CounterLatest = _root_.com.histmersion.api.instance.UiNotices.Counter.Latest
-  val CounterLatest: _root_.com.histmersion.api.instance.UiNotices.Counter.Latest.type = _root_.com.histmersion.api.instance.UiNotices.Counter.Latest
-  type CounterSeen = _root_.com.histmersion.api.instance.UiNotices.Counter.Seen
-  val CounterSeen: _root_.com.histmersion.api.instance.UiNotices.Counter.Seen.type = _root_.com.histmersion.api.instance.UiNotices.Counter.Seen
-
   enum Board(val wire: Board.Wire, val counted: Board.Counted):
     case Goals extends Board(_root_.com.histmersion.api.instance.UiNotices.Board.Wire("goals"), counted = _root_.com.histmersion.api.instance.UiNotices.Board.Counted(false))
     case Tasks extends Board(_root_.com.histmersion.api.instance.UiNotices.Board.Wire("tasks"), counted = _root_.com.histmersion.api.instance.UiNotices.Board.Counted(true))
@@ -37,7 +29,7 @@ object UiNotices:
     def wires: List[com.histmersion.api.instance.UiNotices.Board.WiresResult] = values.toList.map(_.wire)
 
   final case class Counter(
-      key: Counter.Key,
+      key: Board.Wire,
       count: Option[Counter.Count] = None,
       latest: Option[Counter.Latest] = None,
       seen: Option[Counter.Seen] = None,
@@ -46,8 +38,6 @@ object UiNotices:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Counter:
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Count = Count.T
     object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Latest = Latest.T
@@ -92,17 +82,17 @@ object UiNotices:
   final case class SeenMark(at: Option[SeenMark.At] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object SeenMark:
-    type At = At.T
-    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type At = com.histmersion.api.instance.UiNotices.Counter.Seen
+    val At: _root_.com.histmersion.api.instance.UiNotices.Counter.Seen.type = _root_.com.histmersion.api.instance.UiNotices.Counter.Seen
 
 
   def fresh(latest: Option[com.histmersion.api.instance.UiNotices.Counter.Latest], seen: Option[com.histmersion.api.instance.UiNotices.Counter.Seen]): Boolean =
     (latest.exists(l => seen.forall(s => (l).value > (s).value)))
 
-  def counter(board: Board, count: Option[com.histmersion.api.instance.UiNotices.Counter.Count], latest: Option[com.histmersion.api.instance.UiNotices.CounterLatest], seen: Option[com.histmersion.api.instance.UiNotices.CounterSeen]): Counter =
-    Counter(board.wire, count.filter(_ => ((board.counted) == _root_.com.histmersion.api.instance.UiNotices.Board.Counted(true))), latest, seen, fresh(latest, seen))
+  def counter(board: Board, count: Option[com.histmersion.api.instance.UiNotices.Counter.Count], latest: Option[com.histmersion.api.instance.UiNotices.Counter.Latest], seen: Option[com.histmersion.api.instance.UiNotices.Counter.Seen]): Counter =
+    Counter(board.wire, count.filter(_ => ((board.counted) == _root_.com.histmersion.api.instance.UiNotices.Board.Counted(true))), latest, seen, _root_.com.histmersion.api.instance.UiNotices.Counter.Fresh(fresh(latest, seen)))
 
-  def advance(held: Option[com.histmersion.api.instance.UiNotices.Held], at: com.histmersion.api.instance.UiNotices.SeenMark.At): com.histmersion.api.instance.UiNotices.Held = held.filter((_).value > (at).value).getOrElse(at)
+  def advance(held: Option[com.histmersion.api.instance.UiNotices.Counter.Seen], at: com.histmersion.api.instance.UiNotices.SeenMark.At): com.histmersion.api.instance.UiNotices.Counter.Seen = held.filter((_).value > (at).value).getOrElse(at)
 
   def badge(count: Option[com.histmersion.api.instance.UiNotices.Counter.Count]): Option[String] =
     count.filter((_).value > 0).map(n => if (n).value > 99 then ("99+") else (n.toString))

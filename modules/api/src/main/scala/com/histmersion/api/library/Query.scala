@@ -178,24 +178,24 @@ object Query:
     val text = (sql).value.trim
     if text.isEmpty then Left(_root_.com.histmersion.api.library.Query.Problem("empty statement"))
     else
-      statements(_root_.com.histmersion.api.library.Query.StatementsSql(text)) match
+      statements(text) match
         case Nil        => Left(_root_.com.histmersion.api.library.Query.Problem("empty statement"))
         case one :: Nil =>
-          val kw = leadingKeyword(_root_.com.histmersion.api.library.Query.Statement((one).value))
+          val kw = leadingKeyword(one)
           if Forbidden.contains((kw)) then
             Left(
               _root_.com.histmersion.api.library.Query.Problem(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
                 "WITH that only reads); transaction and session control are refused")
             )
-          else Right(_root_.com.histmersion.api.library.Query.Statement((one).value))
+          else Right(one)
         case many =>
           Left(
             _root_.com.histmersion.api.library.Query.Problem(s"${many.size} statements were given — `query` runs exactly ONE; " +
               "drop the ';'-separated batch and ask again")
           )
 
-  private def cell(v: Option[String]): String =
-    v.getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
+  private def cell(v: Option[com.histmersion.api.library.Query.MarkdownTableRows]): String =
+    v.map(_.value).getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
 
   def markdownTable(columns: List[com.histmersion.api.library.Query.MarkdownTableColumns], rows: List[List[Option[com.histmersion.api.library.Query.MarkdownTableRows]]]): String =
     if columns.isEmpty then ("_(no columns)_")
@@ -255,7 +255,7 @@ object Query:
       else
         s.tables
           .map { t =>
-            val keys = t.columns.map(_.name).filter(Key.contains)
+            val keys = t.columns.map(_.name).filter(n => Key.contains(n.value))
             val cols = (if keys.isEmpty then t.columns.map(_.name).take(6) else keys).mkString(", ")
             s"${t.name}($cols)"
           }

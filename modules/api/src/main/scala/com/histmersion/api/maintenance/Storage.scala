@@ -75,12 +75,12 @@ object Storage:
   def withHints(r: Storage.Report): Storage.Report = r.modify(_.hints).setTo(hints(r))
 
   def details(r: Storage.Report, e: Storage.Entry): List[com.histmersion.api.maintenance.Storage.Entry.Detail] =
-    val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Entry.Detail(Plural.count(_root_.com.histmersion.api.Plural.Count(n), _root_.com.histmersion.api.Plural.Noun.Singular("file")))).toList
+    val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Entry.Detail(Plural.count(_root_.com.histmersion.api.Plural.Count(n), _root_.com.histmersion.api.Plural.Noun.Singular("file")).value)).toList
     val extra = e.key.value match
       case "backups" =>
         r.backups
           .map(b =>
-            Entry.Detail(Plural.count(_root_.com.histmersion.api.Plural.Count(b.count.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("archive")) + b.newest.fold("")(n => s", newest $n") +
+            Entry.Detail(Plural.count(_root_.com.histmersion.api.Plural.Count(b.count.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("archive")).value + b.newest.fold("")(n => s", newest $n") +
               s", keeps ${if b.keep > 0 then b.keep.toString else "every one"}")
           )
           .toList
@@ -182,7 +182,7 @@ object Storage:
       tables: List[TableSize] = Nil,
       volumes: List[Volume] = Nil,
       backups: Option[BackupsUsage] = None,
-      lowFreeBytes: com.histmersion.api.ByteCount = com.histmersion.api.ByteCount(Storage.DefaultLowFreeBytes),
+      lowFreeBytes: com.histmersion.api.ByteCount = Storage.DefaultLowFreeBytes,
       hints: List[Report.Hints] = Nil,
       problems: List[Report.Problems] = Nil
   ) derives KindlingsCodecAsObject,

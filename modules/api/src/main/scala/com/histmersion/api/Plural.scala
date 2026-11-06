@@ -21,6 +21,6 @@ object Plural:
   val CountPlural: _root_.com.histmersion.api.Plural.Noun.Plural.type = _root_.com.histmersion.api.Plural.Noun.Plural
 
   def noun(n: com.histmersion.api.Plural.Count, singular: com.histmersion.api.Plural.Noun.Singular, plural: com.histmersion.api.Plural.Noun.Plural = _root_.com.histmersion.api.Plural.Noun.Plural("")): com.histmersion.api.Plural.Noun.Form =
-    if n == 1 then _root_.com.histmersion.api.Plural.Noun.Form((singular).value) else if (plural).value.nonEmpty then _root_.com.histmersion.api.Plural.Noun.Form((plural).value) else _root_.com.histmersion.api.Plural.Noun.Form((singular).value + "s")
+    if n.value == 1 then _root_.com.histmersion.api.Plural.Noun.Form((singular).value) else if (plural).value.nonEmpty then _root_.com.histmersion.api.Plural.Noun.Form((plural).value) else _root_.com.histmersion.api.Plural.Noun.Form((singular).value + "s")
 
   def count(n: com.histmersion.api.Plural.CountN, singular: com.histmersion.api.Plural.CountSingular, plural: com.histmersion.api.Plural.CountPlural = _root_.com.histmersion.api.Plural.CountPlural("")): com.histmersion.api.Plural.Phrase = _root_.com.histmersion.api.Plural.Phrase(s"$n ${noun(n, singular, plural)}")

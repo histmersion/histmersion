@@ -40,15 +40,15 @@ object PeriodsMarkdown:
     ((head ++ kids).mkString("\n"))
 
   def imported(r: Period.ImportResult): String =
-    val head = s"imported ${Plural.count(r.periods, _root_.com.histmersion.api.Plural.CountSingular("period"))}" +
-      (if r.roots > 0 then s", ${r.roots} of them ${Plural.noun(r.roots, "authority node")}" else "") +
-      s" — ${Plural.count(r.presets, "timeline preset")} in the store" +
-      (if r.removed > 0 then s"; removed ${Plural.count(r.removed, "earlier seed period")} the seed no longer has"
+    val head = s"imported ${Plural.count(Plural.CountN(r.periods.value.toLong), Plural.CountSingular("period"))}" +
+      (if r.roots.value > 0 then s", ${r.roots} of them ${Plural.noun(Plural.CountN(r.roots.value.toLong), Plural.CountSingular("authority node"))}" else "") +
+      s" — ${Plural.count(Plural.CountN(r.presets.value.toLong), Plural.CountSingular("timeline preset"))} in the store" +
+      (if r.removed.value > 0 then s"; removed ${Plural.count(Plural.CountN(r.removed.value.toLong), Plural.CountSingular("earlier seed period"))} the seed no longer has"
        else "")
     if r.skippedCount == _root_.com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(0) then head
     else
       val more = (r.skippedCount).value - r.skipped.size
-      s"$head\n\nskipped ${Plural.count(r.skippedCount, _root_.com.histmersion.api.Plural.CountSingular("definition"))} (not imported):\n" +
+      s"$head\n\nskipped ${Plural.count(Plural.CountN(r.skippedCount.value.toLong), Plural.CountSingular("definition"))} (not imported):\n" +
         skippedList(r.skipped) + (if more > 0 then s"\n- …and $more more" else "")
 
   def skippedList(ss: List[SkippedPeriod]): String =

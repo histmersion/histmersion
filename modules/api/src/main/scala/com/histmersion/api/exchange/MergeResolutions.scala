@@ -40,11 +40,11 @@ object MergeResolutions:
 
     def flag(s: com.histmersion.api.exchange.MergeResolutions.Text.Flag): Either[com.histmersion.api.exchange.MergeResolutions.Text.Problem, MergeResolution] =
       (s).value.indexOf('=') match
-        case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(_root_.com.histmersion.api.exchange.MergeIssue.Id((s).value.take(i).trim), _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire((s).value.drop(i + 1).trim)))
+        case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(_root_.com.histmersion.api.exchange.MergeResolution.Issue((s).value.take(i).trim), _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire((s).value.drop(i + 1).trim)))
         case _                              => Left(_root_.com.histmersion.api.exchange.MergeResolutions.Text.Problem(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
 
     def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.Template =
-      val chosen = current.resolve.map(r => r.issue -> r.decision).toMap
+      val chosen = current.resolve.map(r => r.issue.value -> r.decision).toMap
       def opts(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateOptions =
         i.options
           .map { k =>
@@ -53,13 +53,13 @@ object MergeResolutions:
               case (MergeDecision.Kind.Map, _) => s":${i.left.map(_.label).getOrElse("<citekey>")}"
               case _ if ((k.takesArgument) == (true))        => ":<value>"
               case _                           => ""
-            MergeDecision.Kind.wireOf(k) + arg
+            MergeDecision.Kind.wireOf(k).value + arg
           }
           .mkString(" | ")
       def line(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine =
         val what = s"${i.entity.wire} — ${i.title}".replace("\n", " ")
         val cond = i.condition.fold("")(c => s"if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)}: ")
-        (chosen.get(i.id), i.condition, i.severity) match
+        (chosen.get(i.id.value), i.condition, i.severity) match
           case (Some(d), _, _)    => s"  ${i.id}: $d    # $cond$what"
           case (None, Some(_), _) =>
             _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}")
@@ -94,8 +94,8 @@ object MergeResolutions:
       if withText.isEmpty then Nil
       else
         _root_.com.histmersion.api.exchange.MergeResolutions.Text.Resolution("texts:") :: withText.flatMap { (id, t) =>
-          val chomp = if !t.endsWith("\n") then "-" else if t.endsWith("\n\n") then "+" else ""
-          val lines = t.stripSuffix("\n").split("\n", -1).toList
+          val chomp = if !t.value.endsWith("\n") then "-" else if t.value.endsWith("\n\n") then "+" else ""
+          val lines = t.value.stripSuffix("\n").split("\n", -1).toList
           // with `|+` the empty last lines are the text's own trailing breaks
           s"  $id: |2$chomp" :: lines.map(l => if l.isEmpty then "" else s"    $l")
         }

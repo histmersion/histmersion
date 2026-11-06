@@ -44,7 +44,7 @@ object ConfigEdit:
       default: Option[Field.Default] = None,
       value: Option[Field.Value] = None,
       effective: Option[Field.Effective] = None,
-      source: Field.Source = Source.Default.wire,
+      source: Field.Source = _root_.com.histmersion.api.settings.ConfigEdit.Source.Default.wire,
       envVar: Option[Field.EnvVar] = None,
       restart: Option[Field.Restart] = None,
       credential: Option[Credential] = None,

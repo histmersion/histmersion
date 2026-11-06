@@ -16,16 +16,14 @@ final case class PeriodODataset(
   def curated: Boolean = (parents.nonEmpty || presets.nonEmpty)
 
   /** A PeriodO period id begins with its authority's id. */
-  def only(ids: Set[com.histmersion.api.PeriodODataset.Id]): PeriodODataset =
+  def only(ids: Set[com.histmersion.api.catalogue.HistoricalPeriod.Id]): PeriodODataset =
     if ids.isEmpty then this
     else
       this.modify(
-        _.authorities).setTo(authorities.filter(a => ids.contains(a.id))).modify(_.skipped).setTo(skipped.filter(s => ids.exists(s.id.startsWith))
+        _.authorities).setTo(authorities.filter(a => ids.contains(a.id))).modify(_.skipped).setTo(skipped.filter(s => ids.exists(i => s.id.value.startsWith(i.value)))
       )
 
 object PeriodODataset:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PeriodCount = PeriodCount.T
   object PeriodCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

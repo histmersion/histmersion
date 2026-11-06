@@ -44,7 +44,7 @@ object PluginSet:
 
   def describe(s: Option[PluginSet]): com.histmersion.api.plugins.PluginSet.Description = s match
     case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
-      s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest).take(12)}…)"
+      _root_.com.histmersion.api.plugins.PluginSet.Description(s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest.value).take(12)}…)")
     case Some(set) =>
       _root_.com.histmersion.api.plugins.PluginSet.Description(s"${(set.digest).value.take(12)}… · ${Plural.count(_root_.com.histmersion.api.Plural.CountN((set.jars.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("jar"))} (${set.mode}): " +
         set.jars.map(j => j.file).mkString(", "))

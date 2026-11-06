@@ -18,7 +18,7 @@ object ConfigEditMarkdown:
     val lines = List(
       Some(s"## ${f.relative}"),
       Some(""),
-      Option.when(f.doc.nonEmpty)(f.doc + "\n"),
+      Option.when(f.doc.value.nonEmpty)(f.doc.value + "\n"),
       Some(s"- value: ${shown(f)} — from $from"),
       Option.when(f.credential.isEmpty)(f.value.map(v => s"- in the settings file: `$v`")).flatten,
       Option.when(f.credential.isEmpty)(f.default.map(v => s"- default: `$v`")).flatten,
@@ -49,10 +49,10 @@ object ConfigEditMarkdown:
       if w.changed.isEmpty then "# Settings unchanged — the file already says so"
       else s"# Settings changed — ${Plural.count(_root_.com.histmersion.api.Plural.CountN((w.changed.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("setting"))}"
     (List(head, "", s"File: `${w.file}`") ++ w.backup.map(b => s"Previous version kept as `$b`").toList ++
-      list(("Changed"), w.changed.map(_.stripPrefix("histmersion."))) ++
-      list(("Already so"), w.unchanged.map(_.stripPrefix("histmersion."))) ++
-      list(("Takes effect after a restart"), w.restart.map(r => s"${r.key.stripPrefix("histmersion.")} — ${r.why}")) ++
-      list(("Warnings"), w.warnings) ++
+      list(("Changed"), w.changed.map(_.value.stripPrefix("histmersion."))) ++
+      list(("Already so"), w.unchanged.map(_.value.stripPrefix("histmersion."))) ++
+      list(("Takes effect after a restart"), w.restart.map(r => s"${r.key.value.stripPrefix("histmersion.")} — ${r.why}")) ++
+      list(("Warnings"), w.warnings.map(_.value)) ++
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
   def restart(r: Restart): String =

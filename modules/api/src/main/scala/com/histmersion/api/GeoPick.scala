@@ -45,7 +45,7 @@ object GeoPick:
 
   def resolve(asOf: Option[com.histmersion.api.catalogue.Year], from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year], pick: GeoPick): GeoTime =
     val span = (from, to) match
-      case (Some(a), Some(b)) => Some(((a).value.min((b).value), (a).value.max((b).value)))
+      case (Some(a), Some(b)) => Some((_root_.com.histmersion.api.catalogue.Year(a.value.min(b.value)), _root_.com.histmersion.api.catalogue.Year(a.value.max(b.value))))
       case (Some(a), None)    => Some((a, a))
       case (None, Some(b))    => Some((b, b))
       case (None, None)       => None

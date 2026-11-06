@@ -37,7 +37,7 @@ object MediaCoversReport:
       (a.skipped ++ b.skipped)
         .groupBy(_.key)
         .toList
-        .map((k, cs) => MediaCount(k, cs.map(_.n).sum))
+        .map((k, cs) => MediaCount(k, _root_.com.histmersion.api.media.MediaCount.N(cs.map(c => c.n.value: Int).sum)))
         .sortBy(c => (-(c.n).value, c.key)),
       a.failed ++ b.failed
     )

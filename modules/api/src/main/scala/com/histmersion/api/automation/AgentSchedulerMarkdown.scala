@@ -6,7 +6,7 @@ object AgentSchedulerMarkdown:
 
   import AgentScheduler.*
 
-  private def goal(g: Option[com.histmersion.api.research.ReviewGoal.Slug]) = g.fold("library work")(x => s"goal $x")
+  private def goal(g: Option[com.histmersion.api.automation.Goal.Slug]) = g.fold("library work")(x => s"goal $x")
 
   def waiting(w: Waiting): String =
     val place = if (w.position).value > 0 then s"${w.position}. " else "- "
@@ -35,7 +35,7 @@ object AgentSchedulerMarkdown:
         "- plan pools: " + s.pools.map(p => s"${p.pool} ${p.used} of ${p.cap}").mkString(", ")
       ),
       Option.when((s.forPerson).value > 0)(
-        s"- ${Plural.count(s.forPerson, _root_.com.histmersion.api.Plural.Noun.Singular("item"))} wait for a person (an approval or a hold): they hold no place"
+        s"- ${Plural.count(Plural.Count(s.forPerson.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("item"))} wait for a person (an approval or a hold): they hold no place"
       ),
       Option.when(s.settings.nonEmpty)("- " + s.settings.mkString(" · "))
     ).flatten
@@ -62,7 +62,7 @@ object AgentSchedulerMarkdown:
 
   def why(w: WhyInfo): String =
     s"# #${w.item} ${w.kind} ${w.target}\n\n- manager: ${w.manager}\n- status: ${w.status}" +
-      w.run.fold("")(r => s" (run ${r.take(8)})") + w.approval.fold("")(a => s"\n- waits for approval #$a") +
-      s"\n- ${if w.code.nonEmpty then s"_${w.code}_: " else ""}${w.why}" +
+      w.run.fold("")(r => s" (run ${r.value.take(8)})") + w.approval.fold("")(a => s"\n- waits for approval #$a") +
+      s"\n- ${if w.code.value.nonEmpty then s"_${w.code}_: " else ""}${w.why}" +
       (if (w.position).value > 0 then s"\n- place in the order: ${w.position}" else "") +
       (if w.behind.isEmpty then "" else s"\n- behind: ${w.behind.mkString(", ")}")

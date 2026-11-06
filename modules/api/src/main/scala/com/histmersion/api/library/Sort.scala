@@ -27,10 +27,10 @@ object Sort:
     case "title"                           => Some(Title)
     case _                                 => None
 
-  val all: List[com.histmersion.api.library.Sort.Wire] = values.toList.map(_root_.com.histmersion.api.library.Sort.Wire((label)))
+  val all: List[com.histmersion.api.library.Sort.Wire] = values.toList.map(label)
 
   given CirceCodec[Sort] = CirceCodec.from(
     Decoder.decodeString.emap(s => parse(_root_.com.histmersion.api.library.Sort.Wire(s)).toRight(s"unknown sort '$s' (${all.mkString("|")})")),
-    Encoder.encodeString.contramap((label))
+    Encoder.encodeString.contramap[Sort](s => label(s).value)
   )
   given Schema[Sort] = Schema.string[Sort]

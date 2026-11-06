@@ -18,4 +18,4 @@ object EventCount:
   def of(keys: List[com.histmersion.api.catalogue.EventCount.Key]): List[EventCount] =
     keys.groupBy(identity).toList.map((k, v) => EventCount(_root_.com.histmersion.api.catalogue.EventCount.Key((k).value), _root_.com.histmersion.api.catalogue.EventCount.N(v.size))).sortBy(c => (-(c.n).value, c.key))
   def add(a: List[EventCount], b: List[EventCount]): List[EventCount] =
-    (a ++ b).groupBy(_.key).toList.map((k, cs) => EventCount(k, cs.map(_.n).sum)).sortBy(c => (-(c.n).value, c.key))
+    (a ++ b).groupBy(_.key).toList.map((k, cs) => EventCount(k, _root_.com.histmersion.api.catalogue.EventCount.N(cs.map(c => (c.n.value: Int)).sum))).sortBy(c => (-(c.n).value, c.key))

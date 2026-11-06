@@ -135,8 +135,8 @@ object Agents:
             else if dec.exists(_.isEmpty) then Left(s"'$e': prices must be non-negative numbers")
             else
               dec.flatten match
-                case List(in, out)         => Right(model -> Price(in, out))
-                case List(in, out, cr, cw) => Right(model -> Price(in, out, Some(cr), Some(cw)))
+                case List(in, out)         => Right(_root_.com.histmersion.api.automation.Agents.ModelRef.Model(model) -> Price(in, out))
+                case List(in, out, cr, cw) => Right(_root_.com.histmersion.api.automation.Agents.ModelRef.Model(model) -> Price(in, out, Some(cr), Some(cw)))
                 case _ => Left(s"'$e': give 2 prices (input/output) or 4 (input/output/cache-read/cache-write)")
       }
       parsed.collect { case Left(m) => m } match

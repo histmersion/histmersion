@@ -280,13 +280,13 @@ object Geocode:
       (
         if ((isPlaceholder(c, placeholderMin)) == (true)) || ((c.gridCell) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.GridCell(true)) then 1 else 0,
         if ((c.byLabel) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.ByLabel(true)) then 0 else 1,
-        c.tier.value,
-        kindRank(c.kind, hint).value,
+        c.tier.value: Int,
+        kindRank(c.kind, hint).value: Int,
         if broad(c.kind) && c.dimension.value == 0 then 1 else 0,
-        t.value,
-        gap.value,
-        c.area.value,
-        c.id.value
+        t.value: Int,
+        gap.value: Long,
+        c.area.value: Double,
+        c.id.value: String
       )
     }
 

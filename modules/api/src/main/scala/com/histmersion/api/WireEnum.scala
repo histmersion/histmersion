@@ -5,7 +5,7 @@ import sttp.tapir.{Schema, Validator}
 
 object WireEnum:
   def encoder[E <: reflect.Enum](using values: WireEnumValues[E]): Encoder[E] =
-    Encoder.encodeString.contramap(values.wire)
+    Encoder.encodeString.contramap[E](e => values.wire(e).value)
   def decoder[E <: reflect.Enum](using values: WireEnumValues[E]): Decoder[E] =
     Decoder.decodeString.emap(s => values.fromWire(_root_.com.histmersion.api.WireEnumValues.Wire(s)).toRight(s"unknown value: $s"))
   def schema[E](using values: WireEnumValues[E]): Schema[E] =

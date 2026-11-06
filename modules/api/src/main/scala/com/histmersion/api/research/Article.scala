@@ -913,7 +913,7 @@ object Article:
         articles: scala.List[(com.histmersion.api.research.Article.Slug, com.histmersion.api.research.Article.Body)],
         resolve: com.histmersion.api.research.CritiquePairing.Mention.Key => Option[com.histmersion.api.library.Citekey],
         edges: scala.List[com.histmersion.api.research.Coverage.Edge],
-        work: com.histmersion.api.research.CritiquePairing.Work.Names => Option[CritiquePairing.Work]
+        work: com.histmersion.api.library.Citekey => Option[CritiquePairing.Work]
     ): scala.List[LintItem] =
       articles
         .flatMap((slug, body) => CritiquePairing.hits(body, resolve, edges, work).map(h => LintItem(_root_.com.histmersion.api.library.Citekey((slug).value), _root_.com.histmersion.api.checks.Lint.LintItem.Detail(h.line))))

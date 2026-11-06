@@ -98,7 +98,7 @@ object AutopilotMarkdown:
         }" + ingestedBy
     ) ++
       beforeBacklog ++ List(
-        s"- ${ManagersMarkdown.backlog(s.backlog, s.backlogDays)}"
+        s"- ${ManagersMarkdown.backlog(_root_.com.histmersion.api.automation.Managers.ManagerInfo.Backlog(s.backlog.value), s.backlogDays.map(d => _root_.com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays(d.value)))}"
       ) ++
       afterBacklog ++ List(
         s"- runs at once: at most ${s.maxConcurrentRuns} (agents.max-concurrent-runs)",

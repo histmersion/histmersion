@@ -735,8 +735,8 @@ object Bundle:
     val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = com.histmersion.api.Api.GoalQuery.Status.Wire
-    val Status: _root_.com.histmersion.api.Api.GoalQuery.Status.Wire.type = _root_.com.histmersion.api.Api.GoalQuery.Status.Wire
+    type Status = com.histmersion.api.automation.Goal.StatusValue
+    val Status: _root_.com.histmersion.api.automation.Goal.StatusValue.type = _root_.com.histmersion.api.automation.Goal.StatusValue
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Tags = Tags.T
@@ -808,7 +808,7 @@ object Bundle:
       planHash: Option[ImportResult.PlanHash] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: com.histmersion.api.exchange.Bundle.ChangedCount = counts.map(_.changed).sum
+    def changed: com.histmersion.api.exchange.Bundle.ChangedCount = _root_.com.histmersion.api.exchange.Bundle.ChangedCount(counts.map(c => (c.changed.value: Int)).sum)
 
   object ImportResult:
 

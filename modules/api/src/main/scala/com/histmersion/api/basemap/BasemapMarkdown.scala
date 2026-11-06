@@ -44,12 +44,12 @@ object BasemapMarkdown:
           .mkString(", ") + "."
       ),
       Some(
-        s"Files: `${s.dir}` (${Backup.humanBytes(s.freeBytes)} free). The next fetch downloads `${s.bbox}` (basemap.bbox)."
+        s"Files: `${s.dir}` (${Backup.humanBytes(_root_.com.histmersion.api.ByteCount(s.freeBytes.value))} free). The next fetch downloads `${s.bbox}` (basemap.bbox)."
       ),
       s.running.map(r => s"A fetch is running ($r) — `histmersion jobs`."),
       Option.when(s.hints.nonEmpty)(s.hints.mkString(" ")),
       Option.when(s.layers.exists((refactorCallback => ((refactorCallback.present) == _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Present(true)))))(
-        "Credits: " + s.layers.filter((refactorCallback => ((refactorCallback.present) == _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Present(true)))).map(l => plain(l.attribution)).distinct.mkString(" · ")
+        "Credits: " + s.layers.filter((refactorCallback => ((refactorCallback.present) == _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Present(true)))).map(l => plain(l.attribution.value)).distinct.mkString(" · ")
       )
     ).flatten
     (head :: "" :: table :: "" :: notes).mkString("\n")
@@ -58,14 +58,14 @@ object BasemapMarkdown:
     if !((o.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)) then ("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
     else
       s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
-        s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
+        s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(_root_.com.histmersion.api.ByteCount(o.maxBytes.value))} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
   def outside(what: String, key: com.histmersion.api.basemap.Basemap.Layer.Wire, o: Basemap.OnDemand): String =
     if !((o.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)) then (s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
     else
       s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +
-        s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
+        s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(_root_.com.histmersion.api.ByteCount(o.maxBytes.value))} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
   def plain(html: String): String = ((html).replaceAll("<[^>]+>", ""))

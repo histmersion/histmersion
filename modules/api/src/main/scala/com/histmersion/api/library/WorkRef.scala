@@ -31,8 +31,8 @@ final case class WorkRef(
 object WorkRef:
   type OpenalexId = OpenalexId.T
   object OpenalexId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArxivId = com.histmersion.api.library.WorkRef.ArxivId
-  val ArxivId: _root_.com.histmersion.api.library.WorkRef.ArxivId.type = _root_.com.histmersion.api.library.WorkRef.ArxivId
+  type ArxivId = com.histmersion.api.library.Source.Candidate.ArxivId
+  val ArxivId: _root_.com.histmersion.api.library.Source.Candidate.ArxivId.type = _root_.com.histmersion.api.library.Source.Candidate.ArxivId
   type CitedByCount = com.histmersion.api.library.Source.CitedByCount
   val CitedByCount: _root_.com.histmersion.api.library.Source.CitedByCount.type = _root_.com.histmersion.api.library.Source.CitedByCount
   type IsOa = com.histmersion.api.library.Source.Candidate.IsOa

@@ -175,7 +175,7 @@ object Managers:
       inferFilter: Option[ManagerConfig.InferFilter] = None,
       minSources: Option[ManagerConfig.MinSources] = None,
       maxArticles: Option[ManagerConfig.MaxArticles] = None,
-      sweeps: Option[List[ManagerConfig.Sweeps]] = None,
+      sweeps: Option[List[Sweep.Wire]] = None,
       autoIngest: Option[ManagerConfig.AutoIngest] = None,
       autoIngestPerDay: Option[ManagerConfig.AutoIngestPerDay] = None,
       dailyUsd: Option[ManagerConfig.DailyUsd] = None,
@@ -251,8 +251,6 @@ object Managers:
     object MinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MaxArticles = MaxArticles.T
     object MaxArticles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Sweeps = Sweeps.T
-    object Sweeps extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AutoIngest = AutoIngest.T
     object AutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AutoIngestPerDay = AutoIngestPerDay.T
@@ -418,7 +416,7 @@ object Managers:
       id: ManagerInfo.Id,
       kind: ManagerInfo.Kind,
       goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
-      state: ManagerInfo.State = State.Active.wire,
+      state: ManagerInfo.State = _root_.com.histmersion.api.automation.Manager.State.Active.wire,
       pauseRuns: ManagerInfo.PauseRuns = _root_.com.histmersion.api.automation.Managers.ManagerInfo.PauseRuns(false),
       config: ManagerConfig = ManagerConfig(),
       effective: ManagerConfig = ManagerConfig(),
@@ -430,7 +428,7 @@ object Managers:
       counts: ItemCounts = ItemCounts(),
       inFlight: ManagerInfo.InFlight = _root_.com.histmersion.api.automation.Managers.ManagerInfo.InFlight(0),
       lastEvent: Option[ManagerEvent] = None,
-      spentTodayUsd: ManagerInfo.SpentTodayUsd = 0,
+      spentTodayUsd: ManagerInfo.SpentTodayUsd = _root_.com.histmersion.api.automation.Managers.ManagerInfo.SpentTodayUsd(0.0),
       tokensToday: ManagerInfo.TokensToday = _root_.com.histmersion.api.automation.Managers.ManagerInfo.TokensToday((0).toLong),
       backlog: ManagerInfo.Backlog = _root_.com.histmersion.api.automation.Managers.ManagerInfo.Backlog(0),
       backlogDays: Option[ManagerInfo.BacklogDays] = None

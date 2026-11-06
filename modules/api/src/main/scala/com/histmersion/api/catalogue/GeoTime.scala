@@ -3,11 +3,11 @@ import com.histmersion.api.given
 enum GeoTime:
   case Always
 
-  case At(year: GeoTime.At.Year)
+  case At(year: Year)
 
-  case Within(from: GeoTime.Within.From, to: GeoTime.Within.To, latest: GeoTime.Within.Latest)
+  case Within(from: Year, to: Year, latest: GeoTime.Within.Latest)
 
-  def window: Option[(com.histmersion.api.catalogue.GeoTime.Within.From, com.histmersion.api.catalogue.GeoTime.Within.To)] = this match
+  def window: Option[(Year, Year)] = this match
     case Always            => None
     case At(y)             => Some((y, y))
     case Within(lo, hi, _) => Some((lo, hi))
@@ -15,10 +15,6 @@ enum GeoTime:
 object GeoTime:
 
   object Within:
-    type From = From.T
-    object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type To = To.T
-    object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Latest = Latest.T
     object Latest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -106,7 +106,7 @@ object Critiques:
           else CritiqueState.Open
         CritiquePair(
           side(src),
-          es.map(_.kind).distinct.sortBy(Kinds.indexOf),
+          es.map(_.kind).distinct.sortBy(Kinds.indexOf).map(k => CritiquePair.Kinds(k.value)),
           side(dst),
           state,
           stored.map(_.reason),

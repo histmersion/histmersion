@@ -121,13 +121,13 @@ object Iiif:
           t.dropRight(1)
             .toIntOption
             .filter(_ > 0)
-            .map(Width(_root_.com.histmersion.api.media.Iiif.Size.Width.W(_)))
+            .map(w => Width(_root_.com.histmersion.api.media.Iiif.Size.Width.W(w)))
             .toRight(_root_.com.histmersion.api.media.Iiif.Size.Problem(s"invalid width size: '$s'"))
         case _ if t.startsWith(",") =>
           t.drop(1)
             .toIntOption
             .filter(_ > 0)
-            .map(Height(_root_.com.histmersion.api.media.Iiif.Size.Height.H(_)))
+            .map(h => Height(_root_.com.histmersion.api.media.Iiif.Size.Height.H(h)))
             .toRight(_root_.com.histmersion.api.media.Iiif.Size.Problem(s"invalid height size: '$s'"))
         case _ =>
           t.split(",").toList match
@@ -142,9 +142,9 @@ object Iiif:
     case "png"          => Right(_root_.com.histmersion.api.media.Iiif.Format("png"))
     case other          => Left(_root_.com.histmersion.api.library.ArchiveFile.Format.Problem(s"unsupported format: '$other' (use jpg or png)"))
 
-  def contentType(format: com.histmersion.api.media.Iiif.Format): com.histmersion.api.catalogue.TilesApi.TileAnswer.ContentType.Wire = format match
-    case refactorPattern2 if (refactorPattern.value == "png") && (refactorPattern2.value == "png") => _root_.com.histmersion.api.catalogue.TilesApi.TileAnswer.ContentType.Wire("image/png")
-    case _     => _root_.com.histmersion.api.catalogue.TilesApi.TileAnswer.ContentType.Wire("image/jpeg")
+  def contentType(format: com.histmersion.api.media.Iiif.Format): com.histmersion.api.Api.ContentType = format.value match
+    case "png" => _root_.com.histmersion.api.Api.ContentType("image/png")
+    case _     => _root_.com.histmersion.api.Api.ContentType("image/jpeg")
 
   /** Built as `Json` by hand: the IIIF document's `@`-prefixed keys are beyond circe derivation. */
   def infoJson(id: com.histmersion.api.media.Iiif.ImageId, width: com.histmersion.api.media.ImageSize.Width, height: com.histmersion.api.media.ImageSize.Height): io.circe.Json =

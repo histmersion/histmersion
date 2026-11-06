@@ -6,7 +6,7 @@ enum Confidence:
   case High, Medium, Low, Contested
 
   /** The wire / storage spelling (`high`). */
-  def wire: com.histmersion.api.library.Confidence.Wire = Ascii.lower((toString))
+  def wire: com.histmersion.api.library.Confidence.Wire = _root_.com.histmersion.api.library.Confidence.Wire(Ascii.lower((toString)))
 
 object Confidence:
   type Wire = Wire.T

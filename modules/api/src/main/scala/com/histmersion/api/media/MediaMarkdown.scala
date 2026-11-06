@@ -59,20 +59,20 @@ object MediaMarkdown:
     else "\n\n**Licence no longer allowed (kept — review):**\n" + r.revoked.map(x => s"- $x").mkString("\n")
     val failed = if r.failed.isEmpty then "" else "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
     val pending = s"\n\n**Not asked yet:** ${Plural.count(Plural.Count(r.pending.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("place/event"), _root_.com.histmersion.api.Plural.CountPlural("places/events"))}" +
-      (if r.batches.value > 0 then s" · ${Plural.count(Plural.Count(r.batches.value.toLong), "batch", "batches")} run" else "")
+      (if r.batches.value > 0 then s" · ${Plural.count(Plural.Count(r.batches.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("batch"), _root_.com.histmersion.api.Plural.CountPlural("batches"))} run" else "")
     // assembled line by line, not with stripMargin: the table's rows start with `|` themselves
     List(
       s"# Media import · ${providerTitle(r.provider)} ($mode)",
       "",
       (if MediaProvider.all.contains(r.provider) && r.provider != _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Commons) then
          s"**Asked about:** ${Plural.count(Plural.Count(r.targets.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("place"))} · ${Plural.count(Plural.Count(r.items.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("record"))} read · " +
-           s"${Plural.count(Plural.Count(r.statements.value.toLong), "match", "matches")} · ${Plural.count(Plural.Count(r.files.value.toLong), "picture")}  "
+           s"${Plural.count(Plural.Count(r.statements.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("match"), _root_.com.histmersion.api.Plural.CountPlural("matches"))} · ${Plural.count(Plural.Count(r.files.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("picture"))}  "
        else if r.provider == _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Pleiades) then
          s"**Asked about:** ${Plural.count(Plural.Count(r.targets.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("place"))} · ${Plural.count(Plural.Count(r.items.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("Pleiades record"))} read · " +
-           s"${Plural.count(Plural.Count(r.statements.value.toLong), "linked Commons file")} · ${Plural.count(Plural.Count(r.files.value.toLong), "file")}  "
+           s"${Plural.count(Plural.Count(r.statements.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("linked Commons file"))} · ${Plural.count(Plural.Count(r.files.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("file"))}  "
        else
          s"**Asked about:** ${Plural.count(Plural.Count(r.targets.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("place/event"), _root_.com.histmersion.api.Plural.Noun.Plural("places/events"))} · ${Plural.count(Plural.Count(r.items.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("Wikidata item"))} · " +
-           s"${Plural.count(Plural.Count(r.statements.value.toLong), "picture statement")} · ${Plural.count(Plural.Count(r.files.value.toLong), "file")}  "
+           s"${Plural.count(Plural.Count(r.statements.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("picture statement"))} · ${Plural.count(Plural.Count(r.files.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("file"))}  "
       ) ,
       s"**By provider:** ${providerTitle(r.provider)} ${r.files}  ",
       s"**By role:** ${countsLine(r.byRole)}",
@@ -100,7 +100,7 @@ object MediaMarkdown:
       if r.skipped.isEmpty then "" else "\n\n**None for**\n" + r.skipped.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
     val failed = if r.failed.isEmpty then "" else "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
     s"# Source pictures ($mode)\n\n${Plural.count(Plural.Count(r.sources.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("source"))} looked at · $verb " +
-      s"${Plural.count(Plural.Count(r.covers.value.toLong), "cover")} and ${Plural.count(Plural.Count(r.illustrations.value.toLong), "illustration")}" +
+      s"${Plural.count(Plural.Count(r.covers.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("cover"))} and ${Plural.count(Plural.Count(r.illustrations.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("illustration"))}" +
       lines + skipped + failed
 
   def mediaItemLine(m: MediaItem): String =
@@ -114,7 +114,7 @@ object MediaMarkdown:
     (s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets")
 
   def mediaList(l: MediaList): String =
-    OffsetPage.markdown(l.page, Plural.noun(Plural.Count(l.total.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("picture")), ("_No pictures._"), l.items)(mediaItemLine).value
+    OffsetPage.markdown(l.page, Plural.noun(Plural.Count(l.total.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("picture")).value, ("_No pictures._"), l.items)(mediaItemLine).value
 
   def mediaItem(m: MediaItem): String =
     val origin = m.citekey

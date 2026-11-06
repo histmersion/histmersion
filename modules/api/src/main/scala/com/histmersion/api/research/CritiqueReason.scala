@@ -13,7 +13,6 @@ final case class CritiqueReason(src: com.histmersion.api.library.Citekey, dst: c
 object CritiqueReason:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxChars = MaxCharsValue
 
   type Reason = Reason.T
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -37,12 +36,12 @@ object CritiqueReason:
     )
     .modify(_.by)(_.description("Who set it (filled by the server when left out)"))
 
-  val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = _root_.com.histmersion.api.research.Coverage.Reason.MaxChars(Coverage.Reason.MaxChars)
+  val MaxChars: Int = Coverage.Reason.MaxChars
 
   def parse(s: com.histmersion.api.research.CritiqueReason.Reason): Either[com.histmersion.api.research.CritiqueReason.Problem, CritiqueReason] =
     val i = (s).value.indexOf('=')
     if i < 0 then Left(_root_.com.histmersion.api.research.CritiqueReason.Problem(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
-    else CritiqueRef.parse(_root_.com.histmersion.api.research.CritiqueRef.Wire((s).value.take(i))).map(r => CritiqueReason(r.src, r.dst, _root_.com.histmersion.api.research.CritiqueReason.Reason((s).value.drop(i + 1).trim)))
+    else CritiqueRef.parse(_root_.com.histmersion.api.research.CritiqueRef.Wire((s).value.take(i))).left.map(p => _root_.com.histmersion.api.research.CritiqueReason.Problem(p.value)).map(r => CritiqueReason(r.src, r.dst, _root_.com.histmersion.api.research.CritiqueReason.Reason((s).value.drop(i + 1).trim)))
 
   def tidy(r: CritiqueReason): Either[com.histmersion.api.research.CritiqueReason.Problem, CritiqueReason] =
     val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
@@ -51,6 +50,6 @@ object CritiqueReason:
     else
       Right(
         r.modify(
-          _.src).setTo(r.src.trim.toLowerCase(java.util.Locale.ROOT)).modify(_.dst).setTo(r.dst.trim.toLowerCase(java.util.Locale.ROOT)).modify(_.reason).setTo(text
+          _.src).setTo(com.histmersion.api.library.Citekey(r.src.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.dst).setTo(com.histmersion.api.library.Citekey(r.dst.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.reason).setTo(text
         )
       )

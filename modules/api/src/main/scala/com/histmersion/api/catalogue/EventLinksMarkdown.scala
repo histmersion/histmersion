@@ -1,11 +1,7 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
 object EventLinksMarkdown:
-  type Distance = Distance.T
-  object Distance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  private def km(d: com.histmersion.api.catalogue.EventLinksMarkdown.Distance): String = (s"${math.round((d).value)} km")
+  private def km(d: Double): String = s"${math.round(d)} km"
 
   def context(d: com.histmersion.api.catalogue.EventCard): String =
     val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == _root_.com.histmersion.api.catalogue.EventGeo.Tier(EventTier.Catalogue) then
@@ -38,7 +34,7 @@ object EventLinksMarkdown:
     else
       "\n\n**Findings near it**\n" + d.findings
         .map(f =>
-          s"- [[${f.citekey}]] `${f.id}` — ${km(f.km)}, " +
+          s"- [[${f.citekey}]] `${f.id}` — ${km(f.km.value)}, " +
             s"${if f.yearGap == 0 then "overlapping in time" else s"${f.yearGap} years apart"}: ${f.claim.take(140)}"
         )
         .mkString("\n")

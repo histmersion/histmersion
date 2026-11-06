@@ -14,7 +14,7 @@ final case class CatalogRecord(
     timeSpan: TimeSpan,
     lat: Option[com.histmersion.api.catalogue.Latitude],
     lon: Option[com.histmersion.api.catalogue.Longitude],
-    historicity: CatalogRecord.Historicity = Historicity.Attested,
+    historicity: CatalogRecord.Historicity = CatalogRecord.Historicity(com.histmersion.api.catalogue.Historicity.Attested),
     vei: Option[CatalogRecord.Vei] = None,
     magnitude: Option[CatalogRecord.Magnitude] = None,
     deaths: Option[CatalogRecord.Deaths] = None,
@@ -40,9 +40,6 @@ object CatalogRecord:
     object ImportClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type P31Json = P31Json.T
     object P31Json extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  object Group:
-    type Label = Label.T
-    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventId = EventId.T
   object EventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -74,13 +71,14 @@ object CatalogRecord:
   type Deaths = com.histmersion.api.catalogue.EventCatalogueRef.Deaths
   val Deaths: _root_.com.histmersion.api.catalogue.EventCatalogueRef.Deaths.type = _root_.com.histmersion.api.catalogue.EventCatalogueRef.Deaths
   type Wikidata = com.histmersion.api.catalogue.EventEntry.Wikidata
-  val Wikidata: _root_.com.histmersion.api.catalogue.EventEntry.Wikidata.type = _root_.com.histmersion.api.catalogue.EventEntry.Wikidata
   type Names = com.histmersion.api.catalogue.EventEntry.Names
   val Names: _root_.com.histmersion.api.catalogue.EventEntry.Names.type = _root_.com.histmersion.api.catalogue.EventEntry.Names
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Group = Group.T
-  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    type Label = Label.T
+    object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Central = Central.T
   object Central extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlusMinus = PlusMinus.T
@@ -96,5 +94,5 @@ object CatalogRecord:
     _root_.com.histmersion.api.catalogue.CatalogRecord.EventId(((provider).value + "_" + providerId).toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").stripSuffix("_"))
 
   def owner(eventId: com.histmersion.api.catalogue.CatalogRecord.EventId, catalogue: com.histmersion.api.catalogue.CatalogRecord.Provider, keys: Iterable[(com.histmersion.api.catalogue.CatalogRecord.Provider, com.histmersion.api.catalogue.EventCatalogueRef.ProviderId)]): Option[(com.histmersion.api.catalogue.CatalogRecord.Provider, com.histmersion.api.catalogue.EventCatalogueRef.ProviderId)] =
-    val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2)
+    val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2.value)
     (own.find(k => CatalogRecord.eventId(_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((k._1).value), _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId((k._2).value)) == eventId).orElse(own.headOption)).map(refactorValue2 => { val refactorTuple2 = refactorValue2; (_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((refactorTuple2._1).value), _root_.com.histmersion.api.catalogue.EventCatalogueRef.ProviderId((refactorTuple2._2).value)) })

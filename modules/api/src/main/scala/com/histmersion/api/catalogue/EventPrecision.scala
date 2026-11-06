@@ -46,7 +46,7 @@ object EventPrecision:
   def note(central: Option[com.histmersion.api.catalogue.EventSummary.Central], plusMinus: Option[com.histmersion.api.catalogue.EventSummary.PlusMinus], method: Option[com.histmersion.api.catalogue.EventSummary.DatingMethod]): Option[String] =
     val m = method.map((_).value.trim).filter(_.nonEmpty).map({ val refactorFunction = lowerFirst; (refactorValue2) => refactorFunction((refactorValue2)) })
     central match
-      case Some(c) => Some(YearFmt(c) + plusMinus.filter(p => (p).value > 0).fold("")(u => s" ± $u") + m.fold("")(x => s" ($x)"))
+      case Some(c) => Some(YearFmt(_root_.com.histmersion.api.catalogue.Year(c.value)) + plusMinus.filter(p => (p).value > 0).fold("")(u => s" ± $u") + m.fold("")(x => s" ($x)"))
       case None    => m.map(x => (s"dated by $x"))
 
   private def lowerFirst(s: String): String =

@@ -65,7 +65,7 @@ object PlanQuota:
   def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
     case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == _root_.com.histmersion.api.automation.PlanQuota.Logins.ClaudeCodeApiKey(true))                              => Some(PoolId.ClaudePlan)
     case ProviderKind.Codex if !((logins.codexApiKey) == _root_.com.histmersion.api.automation.PlanQuota.Logins.CodexApiKey(true))                                        => Some(PoolId.ChatgptPlan)
-    case ProviderKind.Opencode if ((logins.opencodeChatgpt) == _root_.com.histmersion.api.automation.PlanQuota.Logins.OpencodeChatgpt(true)) && m.model.startsWith("openai/") => Some(PoolId.ChatgptPlan)
+    case ProviderKind.Opencode if ((logins.opencodeChatgpt) == _root_.com.histmersion.api.automation.PlanQuota.Logins.OpencodeChatgpt(true)) && m.model.value.startsWith("openai/") => Some(PoolId.ChatgptPlan)
     case _                                                                                => None
 
   def paid(m: ModelRef, logins: Logins): Boolean =

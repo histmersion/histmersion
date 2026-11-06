@@ -5,7 +5,7 @@ object PlacesMarkdown:
 
 
   private[api] def kindOf(kind: com.histmersion.api.catalogue.Place.Summary.Kind, ps: Option[com.histmersion.api.catalogue.Year], pe: Option[com.histmersion.api.catalogue.Year]): String =
-    val p = period(ps, pe)
+    val p = com.histmersion.api.YearFmt.period(ps, pe)
     if p.isEmpty then kind.value else (s"$kind · $p")
 
   private[api] def kindWhen(s: Place.Summary): String =
@@ -151,7 +151,7 @@ object PlacesMarkdown:
       "\n\n**Footprints (" + d.footprints.size + ")**\n" +
         d.footprints
           .map { f =>
-            val per = f.period.map(p => s" · ${periodLabel(Some(p.start), Some(p.end))}").getOrElse("")
+            val per = f.period.map(p => s" · ${com.histmersion.api.YearFmt.period(Some(p.start), Some(p.end))}").getOrElse("")
             val cert = f.certainty.map(c => s" · _${c}_").getOrElse("")
             val ck = f.citekey.map(c => s" [[$c]]").getOrElse("")
             s"- ${f.role}$per$cert$ck"
@@ -171,7 +171,7 @@ object PlacesMarkdown:
       "\n\n**Types**\n" +
         d.types
           .map { t =>
-            val per = t.period.map(p => s" · ${periodLabel(Some(p.start), Some(p.end))}").getOrElse("")
+            val per = t.period.map(p => s" · ${com.histmersion.api.YearFmt.period(Some(p.start), Some(p.end))}").getOrElse("")
             s"- ${t.typeLabel}$per"
           }
           .mkString("\n")

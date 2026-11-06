@@ -8,7 +8,7 @@ object AgentStateMarkdown:
     else
       val body = entries
         .map { e =>
-          val short = if e.value.length > 80 then e.value.take(77) + "…" else e.value
+          val short = if e.value.value.length > 80 then e.value.value.take(77) + "…" else e.value.value
           s"- `${e.key}` = $short"
         }
         .mkString("\n")

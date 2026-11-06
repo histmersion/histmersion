@@ -241,4 +241,4 @@ object FormatRule:
   given Decoder[FormatRule] = WireEnum.decoder
   given Schema[FormatRule] = WireEnum.schema
 
-  def fromWire(s: com.histmersion.api.checks.FormatRule.Wire): Option[FormatRule] = summon[WireEnumValues[FormatRule]].fromWire(s)
+  def fromWire(s: com.histmersion.api.checks.FormatRule.Wire): Option[FormatRule] = summon[WireEnumValues[FormatRule]].fromWire(_root_.com.histmersion.api.WireEnumValues.Wire(s.value))

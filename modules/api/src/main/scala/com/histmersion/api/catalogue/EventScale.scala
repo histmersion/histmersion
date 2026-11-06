@@ -91,9 +91,9 @@ object EventScale:
       geometryType: Option[com.histmersion.api.catalogue.EventScale.GeometryType]
   ): com.histmersion.api.catalogue.EventSummary.Scale =
     stated
-      .flatMap(s => parse(_root_.com.histmersion.api.catalogue.EventSummary.Scale((s).value)).flatten)
+      .flatMap(s => parse(s).flatten)
       .orElse(ofKind(kind))
-      .orElse(geometryType.flatMap({ val refactorFunction2 = ofGeometry; (refactorValue2) => refactorFunction2(_root_.com.histmersion.api.catalogue.EventScale.GeometryType((refactorValue2).value)) }))
-      .orElse(placeKind.flatMap({ val refactorFunction3 = ofPlaceKind; (refactorValue3) => refactorFunction3(_root_.com.histmersion.api.catalogue.Place.Kind.Wire((refactorValue3).value)) }))
-      .orElse(Option.when(((hasParent) == (true)))(Local))
-      .getOrElse(Local)
+      .orElse(geometryType.flatMap(ofGeometry))
+      .orElse(placeKind.flatMap(ofPlaceKind))
+      .orElse(Option.when(hasParent)(_root_.com.histmersion.api.catalogue.EventSummary.Scale(Local)))
+      .getOrElse(_root_.com.histmersion.api.catalogue.EventSummary.Scale(Local))

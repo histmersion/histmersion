@@ -9,11 +9,7 @@ import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
 
 object AboutMarkdown:
-  type Age = Age.T
-  object Age extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-  def age(seconds: com.histmersion.api.instance.AboutMarkdown.Age): String =
+  def age(seconds: com.histmersion.api.instance.About.LastBackupAgeSeconds): String =
     val s = math.max(0L, (seconds).value)
     if s < 60 then (s"$s s")
     else if s < 3600 then (s"${s / 60} min")
@@ -38,8 +34,8 @@ object AboutMarkdown:
       s"- schema version: ${a.health.schemaVersion.getOrElse("unknown")}",
       s"- status: ${a.health.status}",
       s"- database: ${a.health.db}",
-      s"- converter: ${ServiceState.of(conv).label}" + conv
-        .filterNot(_.trim.equalsIgnoreCase("ok"))
+      s"- converter: ${ServiceState.of(conv.map(c => ServiceState.Wire(c.value))).label}" + conv
+        .filterNot(_.value.trim.equalsIgnoreCase("ok"))
         .fold("")(t => s" ($t)"),
       s"- jobs: ${j.queued} queued · ${j.running} running · ${j.done} done · ${j.failed} failed",
       s"- last backup: $backup",
@@ -50,9 +46,9 @@ object AboutMarkdown:
         a.plugins
       ) ++ a.counts.toList.flatMap(c =>
         List(
-          s"- corpus: ${Plural.count(c.sources, _root_.com.histmersion.api.Plural.CountSingular("source"))} · ${Plural.count(c.findings, _root_.com.histmersion.api.Plural.CountSingular("finding"))} · " +
-            s"${Plural.count(c.articles, "article")} · ${Plural.count(c.events, "event")}",
-          s"- reference data: ${Plural.count(c.places, _root_.com.histmersion.api.Plural.CountSingular("place"))} · ${Plural.count(c.periods, _root_.com.histmersion.api.Plural.CountSingular("period"))} · ${Plural.count(c.presets, _root_.com.histmersion.api.Plural.CountSingular("preset"))}"
+          s"- corpus: ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.sources.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("source"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.findings.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("finding"))} · " +
+            s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.articles.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("article"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.events.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("event"))}",
+          s"- reference data: ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.places.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("place"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.periods.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("period"))} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(c.presets.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("preset"))}"
         )
       ) ++ StorageMarkdown.render(a.storage) ++
       (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))

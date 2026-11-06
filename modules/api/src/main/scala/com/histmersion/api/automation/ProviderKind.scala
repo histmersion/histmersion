@@ -14,7 +14,7 @@ enum ProviderKind(val wire: ProviderKind.Wire):
   /** A provider a PLUGIN registered under this name (docs/research-plugins.md §22): metered, served through the host's
     * tool loop. Parsed only while such a provider is registered (`known`).
     */
-  case Plugin(name: ProviderKind.Plugin.Name) extends ProviderKind(name)
+  case Plugin(name: ProviderKind.Plugin.Name) extends ProviderKind(_root_.com.histmersion.api.automation.ProviderKind.Wire(name.value))
 
   /** Runs a local command-line agent (one process per step attempt) rather than an HTTP API. */
   def isCli: Boolean = (this == ClaudeCode || this == Codex || this == Opencode)
@@ -45,4 +45,4 @@ object ProviderKind:
 
   /** The names a reference may use, for an error message: the host's, then the plugins'. */
   def names(known: Set[com.histmersion.api.automation.ProviderKind.Plugin.Name] = Set.empty): String =
-    ((values.map(_.wire) ++ known.toList.sorted.filterNot(k => values.exists(_.wire == k))).mkString(", "))
+    ((values.map(_.wire.value: String) ++ known.toList.map(n => n.value: String).sorted.filterNot(k => values.exists(_.wire.value == k))).mkString(", "))
