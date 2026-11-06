@@ -6,7 +6,7 @@ import com.histmersion.api.jobs.JobKindEntry
 object CoversJobKinds:
   val MediaCovers: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("media-covers"),
-    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Fetch source covers"),
+    _root_.com.histmersion.api.jobs.JobKinds.Wire("Fetch source covers"),
     _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Pictures of sources: Open Library covers by ISBN, and an illustration picked from a source's own figures."),
     stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
     subject = com.histmersion.api.media.ImportJobKinds.Media.of

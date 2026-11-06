@@ -53,18 +53,14 @@ object Correction:
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Counts): Counts =
       Counts(_root_.com.histmersion.api.catalogue.Correction.Counts.Kept((kept).value + (o.kept).value), _root_.com.histmersion.api.catalogue.Correction.Counts.Retired((retired).value + (o.retired).value), _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts((conflicts).value + (o.conflicts).value))
-    def isEmpty: com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult = _root_.com.histmersion.api.catalogue.Correction.Counts.IsEmptyResult(kept == _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0) && retired == _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(0) && conflicts == _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(0))
+    def isEmpty: Boolean = (kept == _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0) && retired == _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(0) && conflicts == _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(0))
 
-    def summary: Option[com.histmersion.api.catalogue.Correction.Counts.SummaryResult] =
+    def summary: Option[String] =
       Option.when(!(isEmpty).value)(
-        _root_.com.histmersion.api.catalogue.Correction.Counts.SummaryResult(s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict")
+        (s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict")
       )
 
   object Counts:
-    type IsEmptyResult = IsEmptyResult.T
-    object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SummaryResult = SummaryResult.T
-    object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Kept = Kept.T
     object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -82,8 +78,6 @@ object Correction:
 
 
   object Status:
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Applied = Applied.T
     object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -95,9 +89,7 @@ object Correction:
     val applied: Set[com.histmersion.api.catalogue.Correction.Status.Applied] = Set(_root_.com.histmersion.api.catalogue.Correction.Status.Applied(Active), _root_.com.histmersion.api.catalogue.Correction.Status.Applied(Conflict))
 
   object Target:
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Event = "event"
     val Place = "place"
-    val all: scala.List[com.histmersion.api.catalogue.Correction.Target.All] = scala.List(_root_.com.histmersion.api.catalogue.Correction.Target.All(Event), _root_.com.histmersion.api.catalogue.Correction.Target.All(Place))
+    val all: scala.List[com.histmersion.api.catalogue.Correction.TargetKind] = scala.List(_root_.com.histmersion.api.catalogue.Correction.TargetKind(Event), _root_.com.histmersion.api.catalogue.Correction.TargetKind(Place))

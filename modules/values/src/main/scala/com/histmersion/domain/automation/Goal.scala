@@ -19,15 +19,15 @@ object Goal:
 
   /** The stages of a research goal, as the store and the wire spell them. */
   object Status:
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Planned = "planned"
     val Seeding = "seeding"
     val Compiled = "compiled"
     val Reviewed = "reviewed"
     val Done = "done"
-    val all: List[com.histmersion.domain.automation.Goal.Status.All] = List(_root_.com.histmersion.domain.automation.Goal.Status.All(Planned), _root_.com.histmersion.domain.automation.Goal.Status.All(Seeding), _root_.com.histmersion.domain.automation.Goal.Status.All(Compiled), _root_.com.histmersion.domain.automation.Goal.Status.All(Reviewed), _root_.com.histmersion.domain.automation.Goal.Status.All(Done))
+    val all: List[com.histmersion.domain.automation.Goal.Status.Wire] = List(_root_.com.histmersion.domain.automation.Goal.Status.Wire(Planned), _root_.com.histmersion.domain.automation.Goal.Status.Wire(Seeding), _root_.com.histmersion.domain.automation.Goal.Status.Wire(Compiled), _root_.com.histmersion.domain.automation.Goal.Status.Wire(Reviewed), _root_.com.histmersion.domain.automation.Goal.Status.Wire(Done))
 
   /** What a goal is linked to. */
   enum LinkKind(val wire: LinkKind.Wire):
@@ -42,17 +42,11 @@ object Goal:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WireResult = WireResult.T
-    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromWireS = FromWireS.T
-    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val SearchQuery: LinkKind = Query
 
-    def parse(s: com.histmersion.domain.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == _root_.com.histmersion.domain.automation.Goal.LinkKind.Wire((s).value.trim.toLowerCase))
+    def parse(s: com.histmersion.domain.automation.Goal.LinkKind.Wire): Option[LinkKind] = values.find(_.wire == _root_.com.histmersion.domain.automation.Goal.LinkKind.Wire((s).value.trim.toLowerCase))
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = LinkKind.values
-      def wire(e: LinkKind): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((e.wire).value)
-      def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[LinkKind] = parse(_root_.com.histmersion.domain.automation.Goal.LinkKind.ParseS((s).value))
+      def wire(e: LinkKind): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[LinkKind] = parse(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire((s).value))

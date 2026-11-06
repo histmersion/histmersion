@@ -24,7 +24,7 @@ final case class MergePlan(
     changes: MergePlan.Changes = _root_.com.histmersion.api.exchange.MergePlan.Changes(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def open: List[MergeIssue] = issues.filter((refactorCallback => ((refactorCallback.open) == _root_.com.histmersion.api.exchange.MergeIssue.OpenResult(true))))
+  def open: List[MergeIssue] = issues.filter((refactorCallback => ((refactorCallback.open) == (true))))
   def blocking: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Blocking)
   def defaults: List[MergeIssue] = issues.filter(_.severity == MergeIssue.Severity.Default)
 object MergePlan:

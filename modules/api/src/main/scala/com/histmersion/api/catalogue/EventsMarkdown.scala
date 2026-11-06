@@ -3,36 +3,26 @@ import com.histmersion.api.{OffsetPage, TimeSpan, YearFmt}
 import com.histmersion.api.Markdown.*
 
 object EventsMarkdown:
+  type Picture = Picture.T
+  object Picture extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type TimeSpanResult = TimeSpanResult.T
-  object TimeSpanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventLineResult = EventLineResult.T
-  object EventLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventListResult = EventListResult.T
-  object EventListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventScaleResult = EventScaleResult.T
-  object EventScaleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventResult = EventResult.T
-  object EventResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventPictures = EventPictures.T
-  object EventPictures extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private[api] def timeSpan(ts: TimeSpan): com.histmersion.api.catalogue.EventsMarkdown.TimeSpanResult = YearFmt.spanLong(ts)
+  private[api] def timeSpan(ts: TimeSpan): String = YearFmt.spanLong(ts)
 
-  private[api] def eventLine(e: EventSummary): com.histmersion.api.catalogue.EventsMarkdown.EventLineResult =
+  private[api] def eventLine(e: EventSummary): String =
     val ts = timeSpan(e.timeSpan)
     val ck = e.citekey.map(c => s" [[$c]]").getOrElse("")
     val prec = EventPrecision.label(e.precision).fold("")(l => s" · $l")
-    _root_.com.histmersion.api.catalogue.EventsMarkdown.EventLineResult(s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts$prec)_$ck")
+    (s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts$prec)_$ck")
 
-  def eventList(result: EventList): com.histmersion.api.catalogue.EventsMarkdown.EventListResult =
-    OffsetPage.markdown(result.page, _root_.com.histmersion.api.OffsetPage.MarkdownNoun("event(s)"), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No matching events._"), result.events)(eventLine)
+  def eventList(result: EventList): com.histmersion.api.Markdown.Text =
+    OffsetPage.markdown(result.page, ("event(s)"), ("_No matching events._"), result.events)(eventLine)
 
-  private[api] def eventScale(e: EventSummary): com.histmersion.api.catalogue.EventsMarkdown.EventScaleResult =
-    _root_.com.histmersion.api.catalogue.EventsMarkdown.EventScaleResult(s"${e.scale} (${if ((e.scaleStated) == _root_.com.histmersion.api.catalogue.EventSummary.ScaleStated(true)) then "stated" else "derived"})")
+  private[api] def eventScale(e: EventSummary): String =
+    (s"${e.scale} (${if ((e.scaleStated) == _root_.com.histmersion.api.catalogue.EventSummary.ScaleStated(true)) then "stated" else "derived"})")
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
-  def event(d: EventCard, pictures: List[com.histmersion.api.catalogue.EventsMarkdown.EventPictures] = Nil): com.histmersion.api.catalogue.EventsMarkdown.EventResult =
+  def event(d: EventCard, pictures: List[com.histmersion.api.catalogue.EventsMarkdown.Picture] = Nil): com.histmersion.api.Markdown.Text =
     val e = d.event
     val header = s"# ${e.label}\n\n_`${e.id}` · ${e.kind} · ${e.historicity} · ${timeSpan(e.timeSpan)}_"
     val desc = e.description.map(d => s"\n\n$d").getOrElse("")
@@ -80,6 +70,6 @@ object EventsMarkdown:
         .mkString("\n")
     val wd = d.wikidata.map(q => s"  \n**Wikidata:** $q").getOrElse("")
     val media = if pictures.isEmpty then "" else "\n\n**Pictures**\n" + pictures.mkString("\n")
-    _root_.com.histmersion.api.catalogue.EventsMarkdown.EventResult(header + desc + ck + place + scale + datingLine + wd + geom + parent + children + datings + edges + parts + media +
+    _root_.com.histmersion.api.Markdown.Text(header + desc + ck + place + scale + datingLine + wd + geom + parent + children + datings + edges + parts + media +
       corrections +
       EventLinksMarkdown.context(d))

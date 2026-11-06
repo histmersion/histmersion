@@ -23,7 +23,7 @@ for f, ls in text.items():
             for w in set(re.findall(r'[A-Z]\w+', l)):
                 sigs[w].append((f, i + 1, l.strip()))
 def base(b):
-    return b.replace('_root_.', '').split('.')[-1]
+    return re.sub(r'(?:\w+\.)+', '', b.replace('_root_.', ''))
 rows = []
 for n in nt:
     if n['module'] not in mods:

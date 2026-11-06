@@ -2,13 +2,9 @@ package com.histmersion.api.automation
 
 object AgentStateMarkdown:
 
-  type AgentStateListResult = AgentStateListResult.T
-  object AgentStateListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgentStateResult = AgentStateResult.T
-  object AgentStateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def agentStateList(entries: List[AgentStateEntry]): com.histmersion.api.automation.AgentStateMarkdown.AgentStateListResult =
-    if entries.isEmpty then _root_.com.histmersion.api.automation.AgentStateMarkdown.AgentStateListResult("_No agent state entries._")
+  def agentStateList(entries: List[AgentStateEntry]): com.histmersion.api.Markdown.Text =
+    if entries.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No agent state entries._")
     else
       val body = entries
         .map { e =>
@@ -16,8 +12,8 @@ object AgentStateMarkdown:
           s"- `${e.key}` = $short"
         }
         .mkString("\n")
-      _root_.com.histmersion.api.automation.AgentStateMarkdown.AgentStateListResult(s"### ${entries.size} key(s)\n\n$body")
+      _root_.com.histmersion.api.Markdown.Text(s"### ${entries.size} key(s)\n\n$body")
 
-  def agentState(e: AgentStateEntry): com.histmersion.api.automation.AgentStateMarkdown.AgentStateResult =
+  def agentState(e: AgentStateEntry): com.histmersion.api.Markdown.Text =
     val upd = e.updatedAt.map(u => s"  \n_Updated: ${u}_").getOrElse("")
-    _root_.com.histmersion.api.automation.AgentStateMarkdown.AgentStateResult(s"# `${e.key}`\n\n```json\n${e.value}\n```$upd")
+    _root_.com.histmersion.api.Markdown.Text(s"# `${e.key}`\n\n```json\n${e.value}\n```$upd")

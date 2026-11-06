@@ -13,7 +13,7 @@ import sttp.tapir.{FieldName, Schema}
   * value or the field's default; a detail holds only the values that differ from their default.
   */
 final case class JobDetail private (values: Map[JobDetail.ValuesKey, Json]):
-  def json(name: com.histmersion.api.jobs.JobDetail.JsonName): Option[Json] = values.get(_root_.com.histmersion.api.jobs.JobDetail.ValuesKey((name).value))
+  def json(name: com.histmersion.api.jobs.JobDetail.Field.Name): Option[Json] = values.get(_root_.com.histmersion.api.jobs.JobDetail.ValuesKey((name).value))
 
   /** The detail with `field` set to `a`. */
   def set[A](field: com.histmersion.api.jobs.JobDetail.Field[A], a: A): JobDetail =
@@ -24,8 +24,6 @@ final case class JobDetail private (values: Map[JobDetail.ValuesKey, Json]):
     set(field, f(field.of(this)))
 
 object JobDetail:
-  type JsonName = JsonName.T
-  object JsonName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Purpose = PurposeValue
   type PurposeValue = PurposeValue.T
   object PurposeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

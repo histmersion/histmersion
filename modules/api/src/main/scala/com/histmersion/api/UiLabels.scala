@@ -12,17 +12,13 @@ import com.histmersion.api.library.Source
   * approval kinds, pipelines, manager kinds, statuses and states — else the identifier humanised.
   */
 object UiLabels:
+  type Key = Key.T
+  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type KnownPart1 = KnownPart1.T
-  object KnownPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownPart2 = KnownPart2.T
-  object KnownPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelResult = LabelResult.T
-  object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelId = LabelId.T
-  object LabelId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  lazy val known: Map[com.histmersion.api.UiLabels.KnownPart1, com.histmersion.api.UiLabels.KnownPart2] =
+  lazy val known: Map[com.histmersion.api.UiLabels.Key, com.histmersion.api.UiLabels.Text] =
     Wording.schedulerJobTypes ++ AgentScheduler.waitCodes ++ Wording.strategies ++
       RegisteredJobKinds.all.entries.map(e => e.kind.value -> e.name.value) ++
       Approval.Kind.values.map(k => k.wire -> Wording.approvalKind(k)) ++
@@ -33,4 +29,4 @@ object UiLabels:
       JobState.values.map(s => s.wire -> Wording.jobState(s)) ++
       Run.State.values.map(s => s.wire -> Wording.runState(s))
 
-  def label(id: com.histmersion.api.UiLabels.LabelId): com.histmersion.api.UiLabels.LabelResult = known.getOrElse(_root_.com.histmersion.api.UiLabels.KnownPart1((id).value.trim), Wording.humanize(id))
+  def label(id: com.histmersion.api.UiLabels.Key): com.histmersion.api.UiLabels.Text = known.getOrElse(_root_.com.histmersion.api.UiLabels.Key((id).value.trim), Wording.humanize(id))

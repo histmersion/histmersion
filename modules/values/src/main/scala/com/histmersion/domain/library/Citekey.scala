@@ -12,26 +12,21 @@ type CitekeyRule = Match["(?!.*\\.\\.)[a-z][a-z0-9_.-]{1,120}"]
 type Citekey = Citekey.T
 
 object Citekey extends RefinedType[String, CitekeyRule]:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A citekey from what a person or a client typed (trimmed), or why it is none. */
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseRaw = ParseRaw.T
-  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidResult = ValidResult.T
-  object ValidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidRaw = _root_.com.histmersion.domain.library.Citekey.ParseRaw
-  val ValidRaw: _root_.com.histmersion.domain.library.Citekey.ParseRaw.type = _root_.com.histmersion.domain.library.Citekey.ParseRaw
+  type ValidRaw = String
 
-  def parse(raw: com.histmersion.domain.library.Citekey.ParseRaw): Either[com.histmersion.domain.library.Citekey.ParseResultPart1, Citekey] =
-    val s = Option(raw).map((_).value.trim).getOrElse("")
-    if s.isEmpty then Left(_root_.com.histmersion.domain.library.Citekey.ParseResultPart1("citekey is required"))
-    else if s.contains("..") then Left(_root_.com.histmersion.domain.library.Citekey.ParseResultPart1(s"invalid citekey '$raw' — it may not contain '..'"))
+  def parse(raw: String): Either[com.histmersion.domain.library.Citekey.Problem, Citekey] =
+    val s = Option(raw).map((_).trim).getOrElse("")
+    if s.isEmpty then Left(_root_.com.histmersion.domain.library.Citekey.Problem("citekey is required"))
+    else if s.contains("..") then Left(_root_.com.histmersion.domain.library.Citekey.Problem(s"invalid citekey '$raw' — it may not contain '..'"))
     else
       either(s).left.map(_ =>
-        _root_.com.histmersion.domain.library.Citekey.ParseResultPart1(s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
+        _root_.com.histmersion.domain.library.Citekey.Problem(s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
           "'_', '.' or '-' (2-121 characters), e.g. anthony2007_horse")
       )
 
   /** Is `raw` a citekey as it stands — for the places that classify rather than reject (a `[[link]]` target). */
-  def valid(raw: com.histmersion.domain.library.Citekey.ValidRaw): com.histmersion.domain.library.Citekey.ValidResult = _root_.com.histmersion.domain.library.Citekey.ValidResult(parse(raw).isRight)
+  def valid(raw: com.histmersion.domain.library.Citekey.ValidRaw): Boolean = (parse(raw).isRight)

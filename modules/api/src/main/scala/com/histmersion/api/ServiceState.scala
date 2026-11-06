@@ -8,17 +8,15 @@ import scala.annotation.tailrec
 enum ServiceState:
   case Ok, Busy, Down, Unknown
 
-  def label: com.histmersion.api.ServiceState.LabelResult = this match
-    case Ok      => _root_.com.histmersion.api.ServiceState.LabelResult("ok")
-    case Busy    => _root_.com.histmersion.api.ServiceState.LabelResult("busy")
-    case Down    => _root_.com.histmersion.api.ServiceState.LabelResult("down")
-    case Unknown => _root_.com.histmersion.api.ServiceState.LabelResult("unknown")
+  def label: com.histmersion.api.ServiceState.Wire = this match
+    case Ok      => _root_.com.histmersion.api.ServiceState.Wire("ok")
+    case Busy    => _root_.com.histmersion.api.ServiceState.Wire("busy")
+    case Down    => _root_.com.histmersion.api.ServiceState.Wire("down")
+    case Unknown => _root_.com.histmersion.api.ServiceState.Wire("unknown")
 
 object ServiceState:
-  type LabelResult = LabelResult.T
-  object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfText = OfText.T
-  object OfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val DownWords = List(
     "degraded",
@@ -34,7 +32,7 @@ object ServiceState:
     "answered"
   )
 
-  def of(text: Option[com.histmersion.api.ServiceState.OfText]): ServiceState =
+  def of(text: Option[com.histmersion.api.ServiceState.Wire]): ServiceState =
     text.map((_).value.trim.toLowerCase).filter(_.nonEmpty) match
       case None                                                               => Unknown
       case Some(t) if t == "ok" || t.startsWith("ok ") || t.startsWith("ok:") => Ok

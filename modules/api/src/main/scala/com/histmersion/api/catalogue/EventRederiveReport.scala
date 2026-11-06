@@ -19,13 +19,11 @@ final case class EventRederiveReport(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object EventRederiveReport:
+  type Report = Report.T
+  object Report extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   /** An events re-dating job's report, in its detail. */
-  type SummaryResult = SummaryResult.T
-  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type DryRun = DryRun.T
   object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -47,9 +45,9 @@ object EventRederiveReport:
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventRederiveReport]] =
     com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("eventRederive"), None)
 
-  def summary(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.SummaryResult =
+  def summary(r: EventRederiveReport): String =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")
-    _root_.com.histmersion.api.catalogue.EventRederiveReport.SummaryResult(List(
+    (List(
       Some(
         s"${r.providers.mkString(", ")}: ${r.records} record(s) re-derived (${r.fromRaw} from the catalogue's own record)"
       ),
@@ -61,7 +59,7 @@ object EventRederiveReport:
       r.corrections.summary
     ).flatten.mkString(" · "))
 
-  def markdown(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.MarkdownResult =
+  def markdown(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.Report =
     val head =
       s"## Event re-derivation — ${r.providers.mkString(", ")}${if (r.dryRun).value then " (dry run: nothing stored)" else ""}"
-    _root_.com.histmersion.api.catalogue.EventRederiveReport.MarkdownResult((head :: "" :: (summary(r)).value.split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n"))
+    _root_.com.histmersion.api.catalogue.EventRederiveReport.Report((head :: "" :: (summary(r)).value.split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n"))

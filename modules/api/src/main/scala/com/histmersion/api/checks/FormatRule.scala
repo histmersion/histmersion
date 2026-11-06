@@ -232,17 +232,13 @@ object FormatRule:
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WireResult = WireResult.T
-  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromWireS = FromWireS.T
-  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   given WireEnumValues[FormatRule]:
     def all: Array[FormatRule] = FormatRule.values
-    def wire(e: FormatRule): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[FormatRule] = FormatRule.values.find(_.wire == _root_.com.histmersion.api.checks.FormatRule.Wire((s).value.trim.toLowerCase))
+    def wire(e: FormatRule): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[FormatRule] = FormatRule.values.find(_.wire == _root_.com.histmersion.api.checks.FormatRule.Wire((s).value.trim.toLowerCase))
   given Encoder[FormatRule] = WireEnum.encoder
   given Decoder[FormatRule] = WireEnum.decoder
   given Schema[FormatRule] = WireEnum.schema
 
-  def fromWire(s: com.histmersion.api.checks.FormatRule.FromWireS): Option[FormatRule] = summon[WireEnumValues[FormatRule]].fromWire(s)
+  def fromWire(s: com.histmersion.api.checks.FormatRule.Wire): Option[FormatRule] = summon[WireEnumValues[FormatRule]].fromWire(s)

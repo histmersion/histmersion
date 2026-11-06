@@ -11,14 +11,16 @@ final case class FormatReport(
     text: Option[FormatReport.Text] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def errors: com.histmersion.api.checks.FormatReport.ErrorsResult = _root_.com.histmersion.api.checks.FormatReport.ErrorsResult(issues.count(_.severity == FormatSeverity.Error))
-  def warnings: com.histmersion.api.checks.FormatReport.WarningsResult = _root_.com.histmersion.api.checks.FormatReport.WarningsResult(issues.count(_.severity == FormatSeverity.Warning))
+  def errors: com.histmersion.api.checks.FormatReport.ErrorCount = _root_.com.histmersion.api.checks.FormatReport.ErrorCount(issues.count(_.severity == FormatSeverity.Error))
+  def warnings: com.histmersion.api.checks.FormatReport.WarningCount = _root_.com.histmersion.api.checks.FormatReport.WarningCount(issues.count(_.severity == FormatSeverity.Warning))
 
 object FormatReport:
-  type ErrorsResult = ErrorsResult.T
-  object ErrorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WarningsResult = WarningsResult.T
-  object WarningsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ErrorCount = ErrorCount.T
+  object ErrorCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssueCount = IssueCount.T
+  object IssueCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WarningCount = WarningCount.T
+  object WarningCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Subject = Subject.T
   object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
