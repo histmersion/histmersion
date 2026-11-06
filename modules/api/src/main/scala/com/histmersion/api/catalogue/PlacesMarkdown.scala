@@ -4,12 +4,9 @@ import com.histmersion.api.Markdown.*
 object PlacesMarkdown:
 
 
-  type KindOfKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
-  val KindOfKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
-
-  private[api] def kindOf(kind: com.histmersion.api.catalogue.PlacesMarkdown.KindOfKind, ps: Option[com.histmersion.api.catalogue.Period.Start], pe: Option[com.histmersion.api.catalogue.Period.End]): String =
+  private[api] def kindOf(kind: com.histmersion.api.catalogue.Place.Summary.Kind, ps: Option[com.histmersion.api.catalogue.Year], pe: Option[com.histmersion.api.catalogue.Year]): String =
     val p = period(ps, pe)
-    if p.isEmpty then kind else (s"$kind · $p")
+    if p.isEmpty then kind.value else (s"$kind · $p")
 
   private[api] def kindWhen(s: Place.Summary): String =
     if s.dating == Place.Dating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else (s"${s.kind} · ${s.when}")
@@ -18,10 +15,10 @@ object PlacesMarkdown:
     if rows.isEmpty then ("_No matching places._")
     else
       val items = rows.map { h =>
-        val alt = h.matchedName.filter(!_.equalsIgnoreCase(h.label)).map(n => s" (matched “$n”)").getOrElse("")
+        val alt = h.matchedName.filter(!_.value.equalsIgnoreCase(h.label.value)).map(n => s" (matched “$n”)").getOrElse("")
         val src = h.source.map(s => s" · $s").getOrElse("")
         val meta = s"${kindWhen(h.toSummary)} · ${h.findings} finding(s)$src"
-        s"- **${h.label}**${contestedMark(h.contested, h.label)}$alt — `${h.id}`  \n  _${meta}_"
+        s"- **${h.label}**${contestedMark(h.contested.value, h.label.value)}$alt — `${h.id}`  \n  _${meta}_"
       }
       s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}"
 
@@ -30,7 +27,7 @@ object PlacesMarkdown:
     else
       rows
         .map { r =>
-          s"${"  " * r.depth}- **${r.label}**${contestedMark(r.contested, r.label)} `${r.id}`" +
+          s"${"  " * r.depth.value}- **${r.label}**${contestedMark(r.contested.value, r.label.value)} `${r.id}`" +
             s" _(${r.kind}${if r.findings > 0 then s", ${r.findings} finding(s)" else ""})_"
         }
         .mkString("\n")
@@ -49,15 +46,15 @@ object PlacesMarkdown:
         "| source | file | pinned | imported | places | names | links | licence |\n|---|---|---|---|---:|---:|---:|---|"
       val body = rows.map { r =>
         val file = r.file.fold("—")(f => s"`$f`" + (if ((r.present) == _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present(true)) then "" else " (missing)"))
-        val imported = r.importedVersion.fold("—")(v => s"$v (${r.importedAt.getOrElse("").take(10)})")
+        val imported = r.importedVersion.fold("—")(v => s"$v (${r.importedAt.fold("")(_.value.take(10))})")
         val n = (x: Option[Int]) => x.fold("—")(_.toString)
-        s"| ${r.key} — ${r.title} | $file | ${r.pinnedVersion.getOrElse("—")} | $imported | ${n(r.places)} | " +
-          s"${n(r.names)} | ${n(r.links)} | ${r.licence.getOrElse("—")} |"
+        s"| ${r.key} — ${r.title} | $file | ${r.pinnedVersion.getOrElse("—")} | $imported | ${n(r.places.map(_.value))} | " +
+          s"${n(r.names.map(_.value))} | ${n(r.links.map(_.value))} | ${r.licence.getOrElse("—")} |"
       }
       ((head :: body).mkString("\n"))
 
   def placeNameChanged(r: Place.NameChanged): String =
-    val lang = if r.lang.isEmpty then "" else s" (${r.lang})"
+    val lang = if r.lang.value.isEmpty then "" else s" (${r.lang})"
     val what =
       if !((r.added) == _root_.com.histmersion.api.catalogue.Place.NameChanged.Added(true)) then s"removed the name **${r.name}**$lang from"
       else if !((r.changed) == _root_.com.histmersion.api.catalogue.Place.NameChanged.Changed(true)) then s"**${r.name}**$lang was already a name added by hand to"
@@ -70,7 +67,7 @@ object PlacesMarkdown:
     else
       s"${rows.size} name(s) added by hand:\n\n" + rows
         .map { r =>
-          s"- **${r.name}**${if r.lang.isEmpty then "" else s" (${r.lang})"} → ${r.label} `${r.placeId}`"
+          s"- **${r.name}**${if r.lang.value.isEmpty then "" else s" (${r.lang})"} → ${r.label} `${r.placeId}`"
         }
         .mkString("\n")
 
@@ -130,7 +127,7 @@ object PlacesMarkdown:
 
   def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): String =
     val p = d.place
-    val header = s"# ${p.label}${contestedMark((((d.contested) == (true)) || ((p.contested) == _root_.com.histmersion.api.catalogue.Place.Summary.Contested(true))), p.label)}" +
+    val header = s"# ${p.label}${contestedMark((((d.contested) == (true)) || ((p.contested) == _root_.com.histmersion.api.catalogue.Place.Summary.Contested(true))), p.label.value)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
@@ -139,15 +136,15 @@ object PlacesMarkdown:
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +
       d.locationNote.map(n => s"  \n**Location:** $n").getOrElse("")
     val dating = if ((d.datedByFindings) == (true)) then s"  \n**Dating:** ${Place.TimeBasis.FindingsNote}" else ""
-    val names = if p.names.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
+    val names = if p.names.value.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
     val geom = d.geometry
-      .map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
+      .map(g => s"  \n**Geometry:** ${g.value.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("  \n**Geometry:** _none_")
     def list(title: String, xs: List[Place.Summary]) =
       if xs.isEmpty then ""
       else
         s"\n\n**$title**\n" +
-          xs.map(x => s"- ${x.label}${contestedMark(x.contested, x.label)} `${x.id}` _(${x.kind})_")
+          xs.map(x => s"- ${x.label}${contestedMark(x.contested.value, x.label.value)} `${x.id}` _(${x.kind})_")
             .mkString("\n")
     val fps = if d.footprints.isEmpty then ""
     else

@@ -22,9 +22,6 @@ import com.histmersion.api.given
   * `kind` the caller passed in.
   */
 object Lpf:
-  object Feature:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   object Bound:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -32,18 +29,13 @@ object Lpf:
   object Document extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Histmersion uses historical reckoning (no year zero: 1 BCE = -1, 2 BCE = -2). ISO 8601 / astronomical year
     * numbering has a year zero (1 BCE = 0, 2 BCE = -1). These convert between the two for LPF interop.
     */
 
-  type ParseDefaultKind = _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire
-  val ParseDefaultKind: _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire.type = _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire
-
-  def toIso(historicalYear: com.histmersion.api.catalogue.Year): com.histmersion.api.catalogue.Period.IsoYear = Years.toAstronomical(historicalYear)
-  def fromIso(isoYear: com.histmersion.api.catalogue.Period.IsoYear): com.histmersion.api.catalogue.Year = Years.fromAstronomical(isoYear)
+  def toIso(historicalYear: com.histmersion.api.catalogue.Year): Years.Astronomical = Years.toAstronomical(historicalYear)
+  def fromIso(isoYear: Years.Astronomical): com.histmersion.api.catalogue.Year = Years.fromAstronomical(isoYear)
 
   val Context = "https://raw.githubusercontent.com/LinkedPasts/linked-places/master/linkedplaces-context-v1.1.jsonld"
 
@@ -82,12 +74,12 @@ object Lpf:
         else 0
       Digits.findFirstIn(t).flatMap(_.toLongOption).map { n =>
         val y = if n < 0 then n else if era < 0 then -n else n
-        if isIso then _root_.com.histmersion.api.catalogue.Year((fromIso(_root_.com.histmersion.api.catalogue.Period.IsoYear(y))).value) else _root_.com.histmersion.api.catalogue.Year(y)
+        if isIso then fromIso(Years.Astronomical(y)) else _root_.com.histmersion.api.catalogue.Year(y)
       }
 
   /** LPF mixes `"-1400"` and `-1400`. */
   private def yearOf(j: Json): Option[com.histmersion.api.catalogue.Year] =
-    Years.fromJson(j, parseYear)
+    Years.fromJson(j, t => parseYear(t.value))
 
   /** LPF puts the certain value in `in` and the fuzzy bounds in `earliest`/`latest`. */
   private def bound(j: Json, wide: com.histmersion.api.catalogue.Lpf.Bound.Wire, narrow: com.histmersion.api.catalogue.Lpf.Bound.Wire): Option[com.histmersion.api.catalogue.Year] =
@@ -104,7 +96,7 @@ object Lpf:
       val s = o("start").flatMap(bound(_, _root_.com.histmersion.api.catalogue.Lpf.Bound.Wire("earliest"), _root_.com.histmersion.api.catalogue.Lpf.Bound.Wire("latest")))
       val e = o("end").flatMap(bound(_, _root_.com.histmersion.api.catalogue.Lpf.Bound.Wire("latest"), _root_.com.histmersion.api.catalogue.Lpf.Bound.Wire("earliest")))
       (s, e) match
-        case (Some(a), Some(b)) => Some(if a <= b then Span(s, e) else Span(e, s))
+        case (Some(a), Some(b)) => Some(if a.value <= b.value then Span(s, e) else Span(e, s))
         case (None, None)       => None
         case _                  => Some(Span(s, e))
     j.asObject match
@@ -121,8 +113,8 @@ object Lpf:
           case ps  =>
             Some(
               Span(
-                if ps.forall(_.from.isDefined) then Some(ps.flatMap(_.from).min) else None,
-                if ps.forall(_.to.isDefined) then Some(ps.flatMap(_.to).max) else None
+                if ps.forall(_.from.isDefined) then Some(ps.flatMap(_.from).minBy(_.value)) else None,
+                if ps.forall(_.to.isDefined) then Some(ps.flatMap(_.to).maxBy(_.value)) else None
               )
             )
 
@@ -138,15 +130,18 @@ object Lpf:
       )
     )
 
+  private def parseKind(s: String): Option[Place.KindValue] =
+    Place.Kind.parse(Place.Kind.ParseS(s)).map(k => Place.KindValue(k.value))
+
   private def str(o: JsonObject, keys: String*): Option[String] =
     (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue25 => (refactorValue25))
 
-  private def slug(s: String): com.histmersion.api.research.ReviewGoal.Slug =
-    _root_.com.histmersion.api.research.ReviewGoal.Slug((s).value.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
+  private def slug(s: String): String =
+    s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
 
   private def propertyPeriod(o: JsonObject): Option[Span] =
     def fromPair(a: Option[com.histmersion.api.catalogue.Year], b: Option[com.histmersion.api.catalogue.Year]): Option[Span] = (a, b) match
-      case (Some(x), Some(y)) => Some(if x <= y then Span(a, b) else Span(b, a))
+      case (Some(x), Some(y)) => Some(if x.value <= y.value then Span(a, b) else Span(b, a))
       case (None, None)       => None
       case _                  => Some(Span(a, b))
     o("period")
@@ -176,7 +171,7 @@ object Lpf:
         )
       )
 
-  private def readNames(f: JsonObject, props: JsonObject, label: com.histmersion.api.catalogue.Lpf.Wire): List[Place.Name] =
+  private def readNames(f: JsonObject, props: JsonObject, label: String): List[Place.Name] =
     val declared = f("names").orElse(props("names")).flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { n =>
       n.asString
         .map(s => Place.Name(_root_.com.histmersion.api.catalogue.Place.Name.Value(s.trim)))
@@ -184,7 +179,7 @@ object Lpf:
           str(o, "toponym", "name", "title", "label").map { t =>
             val (period, open) =
               OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
-            Place.Name(t, str(o, "lang", "language").getOrElse(""), period, open)
+            Place.Name(Place.Name.Value(t), Place.Name.Lang(str(o, "lang", "language").getOrElse("")), period, open)
           }
         })
     }
@@ -192,25 +187,25 @@ object Lpf:
       .flatMap((_).split("[|;]").toList)
       .map(_.trim)
       .filter(_.nonEmpty)
-      .map(Place.Name(_root_.com.histmersion.api.catalogue.Place.Name.Value(_)))
+      .map(a => Place.Name(Place.Name.Value(a)))
     val given_ = (declared ++ alts)
-      .filter(_.name.nonEmpty)
-      .distinctBy(n => (n.name.toLowerCase, n.lang.toLowerCase))
-    val spelled = given_.map(_.name.toLowerCase).toSet
-    val all = given_ ++ Option(Place.Name(label))
-      .filter(n => n.name.nonEmpty && !spelled.contains(n.name.toLowerCase))
-    all.sortBy(n => (n.name.toLowerCase, n.lang.toLowerCase))
+      .filter(_.name.value.nonEmpty)
+      .distinctBy(n => (n.name.value.toLowerCase, n.lang.value.toLowerCase))
+    val spelled = given_.map(_.name.value.toLowerCase).toSet
+    val all = given_ ++ Option(Place.Name(Place.Name.Value(label)))
+      .filter(n => n.name.value.nonEmpty && !spelled.contains(n.name.value.toLowerCase))
+    all.sortBy(n => (n.name.value.toLowerCase, n.lang.value.toLowerCase))
 
   /** Relation arrays come in two dialects: LPF's `relations: [{relationType, relationTo, when}]` and the plain
     * `part_of: [{parent_id, period_start, period_end}]` of hand-traced polygons.
     */
-  private def readRelations(id: com.histmersion.api.catalogue.Lpf.Feature.Id, f: JsonObject, props: JsonObject): List[Place.Relation] =
+  private def readRelations(id: String, f: JsonObject, props: JsonObject): List[Place.Relation] =
     val arrays = List(f("relations"), props("relations"), props("part_of"), props("partOf"), props("parents")).flatten
       .flatMap(_.asArray)
       .flatMap(_.toList)
     val declared = arrays.flatMap { j =>
       j.asString
-        .map(p => Place.Relation(id, _root_.com.histmersion.api.catalogue.Place.Relation.ParentId(p.trim), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf), None))
+        .map(p => Place.Relation(Place.Relation.ChildId(id), Place.Relation.ParentId(p.trim), Place.Relation.Kind(Place.Relation.PartOf), None))
         .orElse(j.asObject.flatMap { o =>
           val pred = str(o, "relationType", "relation_type", "kind", "type").getOrElse("gvp:broaderPartitive")
           val kind = if PartOfPredicates.contains(pred.toLowerCase) then Place.Relation.PartOf else pred
@@ -218,19 +213,19 @@ object Lpf:
             .map { p =>
               val (period, open) =
                 OpenSide.split(o("when").flatMap(parseWhen).orElse(propertyPeriod(o)).getOrElse(Span.always))
-              Place.Relation(id, p, kind, period, open)
+              Place.Relation(Place.Relation.ChildId(id), Place.Relation.ParentId(p), Place.Relation.Kind(kind), period, open)
             }
         })
     }
     val flat = str(props, "parent", "part_of", "partOf", "parentId")
-      .map(p => Place.Relation(id, p, _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf), None))
+      .map(p => Place.Relation(Place.Relation.ChildId(id), Place.Relation.ParentId(p), Place.Relation.Kind(Place.Relation.PartOf), None))
     (declared ++ flat)
-      .filter(_.parentId.nonEmpty)
+      .filter(_.parentId.value.nonEmpty)
       .distinctBy(r => (r.parentId, r.kind))
-      .sortBy(r => (r.parentId, r.kind))
+      .sortBy(r => (r.parentId.value, r.kind.value))
 
-  def readFeature(j: Json, defaultKind: com.histmersion.api.Api.ArticleQuery.Kind.Wire, ordinal: Int): Either[com.histmersion.api.catalogue.Lpf.Problem, Place.Input] =
-    j.asObject.toRight(s"feature #$ordinal is not a JSON object").flatMap { f =>
+  def readFeature(j: Json, defaultKind: Place.KindValue, ordinal: Int): Either[com.histmersion.api.catalogue.Lpf.Problem, Place.Input] =
+    j.asObject.toRight(Problem(s"feature #$ordinal is not a JSON object")).flatMap { f =>
       val props = f("properties").flatMap(_.asObject).getOrElse(JsonObject.empty)
       val label = str(props, "title", "name", "NAME", "label", "ADMIN", "NAME_LONG", "toponym")
         .orElse(str(f, "title", "label"))
@@ -244,10 +239,10 @@ object Lpf:
       val id = str(f, "@id", "id")
         .orElse(str(props, "@id", "id", "pid"))
         .getOrElse(if label.nonEmpty then slug(label) else s"feature_$ordinal")
-      if id.isEmpty then Left(s"feature #$ordinal has no id and no title")
+      if id.isEmpty then Left(Problem(s"feature #$ordinal has no id and no title"))
       else
         val kind = str(props, "kind")
-          .flatMap(com.histmersion.api.catalogue.Place.Kind.parse)
+          .flatMap(parseKind)
           .orElse(
             f("types")
               .orElse(props("types"))
@@ -255,11 +250,11 @@ object Lpf:
               .map(_.toList)
               .getOrElse(Nil)
               .flatMap(t => t.asString.orElse(t.asObject.flatMap(str(_, "label", "identifier", "sourceLabel"))))
-              .flatMap(com.histmersion.api.catalogue.Place.Kind.parse)
+              .flatMap(parseKind)
               .headOption
           )
           .orElse(
-            str(props, "featureType", "feature_type", "TYPE").flatMap(com.histmersion.api.catalogue.Place.Kind.parse)
+            str(props, "featureType", "feature_type", "TYPE").flatMap(parseKind)
           )
           .getOrElse(defaultKind)
         val (period, open) = OpenSide.split(
@@ -274,12 +269,12 @@ object Lpf:
           Place.Input(
             Place(
               id = com.histmersion.api.catalogue.Place.Id(id),
-              label = if label.nonEmpty then label else id,
+              label = Place.Label(if label.nonEmpty then label else id),
               kind = kind,
-              geometry = f("geometry").filterNot(_.isNull).map(_root_.com.histmersion.api.catalogue.Place.Geometry(_.noSpaces)),
+              geometry = f("geometry").filterNot(_.isNull).map(g => Place.Geometry(g.noSpaces)),
               period = period,
-              source = str(props, "source", "citation").orElse(str(f, "source")),
-              properties = Some(leftover).filter(_.nonEmpty).map(_root_.com.histmersion.api.catalogue.Place.Properties(Json.fromJsonObject(_).noSpaces)),
+              source = str(props, "source", "citation").orElse(str(f, "source")).map(Place.Source(_)),
+              properties = Some(leftover).filter(_.nonEmpty).map(o => Place.Properties(Json.fromJsonObject(o).noSpaces)),
               open = open
             ),
             readNames(f, props, if label.nonEmpty then label else id),
@@ -290,9 +285,9 @@ object Lpf:
 
   def parse(
       json: String,
-      defaultKind: com.histmersion.api.catalogue.Lpf.ParseDefaultKind = _root_.com.histmersion.api.catalogue.Lpf.ParseDefaultKind(com.histmersion.api.catalogue.Place.Kind.Region)
+      defaultKind: Place.KindValue = Place.KindValue(Place.Kind.Region)
   ): Either[com.histmersion.api.catalogue.Lpf.Problem, List[Place.Input]] =
-    io.circe.parser.parse((json)).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+    io.circe.parser.parse((json)).left.map(e => Problem(s"invalid JSON: ${e.getMessage}")).flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray
           .map(_.toList)
@@ -314,25 +309,25 @@ object Lpf:
 
   private def renderFeature(in: Place.Input): Json =
     val leftover = in.place.properties
-      .flatMap(io.circe.parser.parse(_).toOption)
+      .flatMap(p => io.circe.parser.parse(p.value).toOption)
       .flatMap(_.asObject)
       .getOrElse(JsonObject.empty)
     val props = JsonObject.fromIterable(
-      List("title" -> Json.fromString(in.place.label), "kind" -> Json.fromString(in.place.kind)) ++
-        in.place.source.map(s => "source" -> Json.fromString(s)).toList ++
+      List("title" -> Json.fromString(in.place.label.value), "kind" -> Json.fromString(in.place.kind.value)) ++
+        in.place.source.map(s => "source" -> Json.fromString(s.value)).toList ++
         leftover.toList
     )
     val fields = List.newBuilder[(String, Json)]
     fields += "@id" -> Json.fromString(in.place.id.value)
     fields += "type" -> Json.fromString("Feature")
     fields += "properties" -> Json.fromJsonObject(props)
-    fields += "types" -> Json.arr(Json.obj("label" -> Json.fromString(in.place.kind)))
+    fields += "types" -> Json.arr(Json.obj("label" -> Json.fromString(in.place.kind.value)))
     in.place.period.foreach(p => fields += "when" -> renderWhen(p, in.place.open))
     if in.names.nonEmpty then
       fields += "names" -> Json.arr(in.names.map { n =>
         Json.fromFields(
-          List("toponym" -> Json.fromString(n.name)) ++
-            (if n.lang.isEmpty then Nil else List("lang" -> Json.fromString(n.lang))) ++
+          List("toponym" -> Json.fromString(n.name.value)) ++
+            (if n.lang.value.isEmpty then Nil else List("lang" -> Json.fromString(n.lang.value))) ++
             n.period.map(p => "when" -> renderWhen(p, n.open)).toList
         )
       }*)
@@ -340,15 +335,15 @@ object Lpf:
       fields += "relations" -> Json.arr(in.relations.map { r =>
         Json.fromFields(
           List(
-            "relationType" -> Json.fromString(if r.kind == _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf) then "gvp:broaderPartitive"
-            else r.kind),
-            "relationTo" -> Json.fromString(r.parentId)
+            "relationType" -> Json.fromString(if r.kind == Place.Relation.Kind(Place.Relation.PartOf) then "gvp:broaderPartitive"
+            else r.kind.value),
+            "relationTo" -> Json.fromString(r.parentId.value)
           ) ++
             r.period.map(p => "when" -> renderWhen(p, r.open)).toList
         )
       }*)
     fields += "geometry" -> in.place.geometry
-      .flatMap(io.circe.parser.parse(_).toOption)
+      .flatMap(g => io.circe.parser.parse(g.value).toOption)
       .getOrElse(Json.Null)
     Json.fromFields(fields.result())
 

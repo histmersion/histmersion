@@ -8,22 +8,29 @@ object SearchMarkdown:
   type TreeUnit = _root_.com.histmersion.api.library.Histogram.Unit
   val TreeUnit: _root_.com.histmersion.api.library.Histogram.Unit.type = _root_.com.histmersion.api.library.Histogram.Unit
 
+  private def yearLabel(v: Long): String = fmtYear(com.histmersion.api.catalogue.Year(v))
+
+  private def located(region: Option[String], lat: Option[com.histmersion.api.catalogue.Latitude], lon: Option[com.histmersion.api.catalogue.Longitude]): String =
+    (lat, lon) match
+      case (Some(la), Some(lo)) => s"${region.map(_ + " ").getOrElse("")}($la, $lo)"
+      case _                    => region.getOrElse("")
+
   private[api] def snippet(h: SearchHit): String =
-    h.snippet.map(_.replaceAll("\\s+", " ").trim).filter(_.nonEmpty) match
+    h.snippet.map(_.value.replaceAll("\\s+", " ").trim).filter(_.nonEmpty) match
       case None    => ("")
       case Some(s) =>
-        val head = h.matchedHeading.map(_.trim).filter(_.nonEmpty).map(x => s"_${x}_ — ").getOrElse("")
+        val head = h.matchedHeading.map(_.value.trim).filter(_.nonEmpty).map(x => s"_${x}_ — ").getOrElse("")
         (s"\n  > $head$s")
 
   def searchResults(hits: Vector[SearchHit]): String =
     if hits.isEmpty then ("_No matching sources._")
     else
       val body = hits.map { h =>
-        val reg = h.regions.map(Label.display).mkString(", ")
-        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
-        val per = period(h.periodStart, h.periodEnd)
+        val reg = h.regions.map(r => Label.display(Label.Text(r.value))).mkString(", ")
+        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire.value, reg).filter(_.nonEmpty).mkString(" · ")
+        val per = com.histmersion.api.YearFmt.period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
-        val summary = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
+        val summary = h.summary.map(s => s"\n  ${s.value.trim.take(240)}").getOrElse("")
         s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_${snippet(h)}$summary"
       }
       (s"### ${hits.size} result(s)\n\n${body.mkString("\n")}")
@@ -33,20 +40,20 @@ object SearchMarkdown:
     else
       val body = result.hits.map { hit =>
         val h = hit.source
-        val reg = h.regions.map(Label.display).mkString(", ")
-        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
-        val per = period(h.periodStart, h.periodEnd)
+        val reg = h.regions.map(r => Label.display(Label.Text(r.value))).mkString(", ")
+        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire.value, reg).filter(_.nonEmpty).mkString(" · ")
+        val per = com.histmersion.api.YearFmt.period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val why = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
-        val summary = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
+        val summary = h.summary.map(s => s"\n  ${s.value.trim.take(240)}").getOrElse("")
         val matched =
           if hit.matched.isEmpty then ""
           else
             val items = hit.matched.map { m =>
-              val loc = place(m.regionName, m.lat, m.lon)
-              val p = period(m.periodStart, m.periodEnd)
+              val loc = located(m.regionName.map(_.value), m.lat, m.lon)
+              val p = com.histmersion.api.YearFmt.period(m.periodStart, m.periodEnd)
               val tail = List(loc, p, m.why.mkString(", ")).filter(_.nonEmpty).mkString(" · ")
-              s"\n    - ${m.claim.trim}${if tail.nonEmpty then s"  \n      _${tail}_" else ""}"
+              s"\n    - ${m.claim.value.trim}${if tail.nonEmpty then s"  \n      _${tail}_" else ""}"
             }
             s"\n  matches:${items.mkString}"
         s"- **${h.citekey}** — ${h.title}\n  _${metaLine}_$why${snippet(h)}$summary$matched"
@@ -60,8 +67,8 @@ object SearchMarkdown:
     else
       val body = result.hits.map { hit =>
         val h = hit.source
-        val per = period(h.periodStart, h.periodEnd)
-        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire, per).filter(_.nonEmpty).mkString(" · ")
+        val per = com.histmersion.api.YearFmt.period(h.periodStart, h.periodEnd)
+        val meta = List(year(h.year.map((refactorCallback => (refactorCallback.value.toInt)))), h.status.wire.value, per).filter(_.nonEmpty).mkString(" · ")
         val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
         s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
       }
@@ -73,14 +80,14 @@ object SearchMarkdown:
     if rows.isEmpty then (s"_No $field in the current filter._")
     else
       val items = rows.map(f =>
-        s"- ${f.value}${contestedMark(f.contested, f.value)} (${f.count})" +
+        s"- ${f.value}${contestedMark(f.contested.value, f.value.value)} (${f.count})" +
           f.id.map(i => s" · `$i`").getOrElse("")
       )
       (s"### $field (${rows.size})\n\n${items.mkString("\n")}")
 
   def geoPage(p: GeoHitPage): String =
     if p.hits.isEmpty then
-      OffsetPage.markdown(p.page, ("finding(s)"), ("_No findings match that place/time._"), Nil)(_ => (""))
+      OffsetPage.markdown(p.page, ("finding(s)"), ("_No findings match that place/time._"), Nil)(_ => ("")).value
     else
       val body = geoResults(p.hits.toVector)
       OffsetPage.header(p.page, ("finding(s)")) + (body).dropWhile(_ != '\n') + OffsetPage.footer(p.page)
@@ -91,12 +98,12 @@ object SearchMarkdown:
       val blocks = hits
         .groupBy(h => (h.citekey, h.title))
         .toList
-        .sortBy(_._1._1)
+        .sortBy(_._1._1.value)
         .map { case ((ck, title), hs) =>
           val items = hs
             .map { h =>
-              val loc = place(h.regionName, h.lat, h.lon)
-              val p = period(h.periodStart, h.periodEnd)
+              val loc = located(h.regionName.map(_.value), h.lat, h.lon)
+              val p = com.histmersion.api.YearFmt.period(h.periodStart, h.periodEnd)
               s"  - ${h.claim} — _${List(loc, p).filter(_.nonEmpty).mkString(", ")}_"
             }
             .mkString("\n")
@@ -105,16 +112,16 @@ object SearchMarkdown:
       s"### ${hits.size} finding(s)\n\n${blocks.mkString("\n")}"
 
   def histogram(h: TimeHistogram, unit: com.histmersion.api.library.Histogram.Unit): String =
-    val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
+    val span = s"${yearLabel(h.from.value)} → ${yearLabel(h.to.value)}"
     if h.buckets.isEmpty then (s"_No time buckets for $span._")
     else
       val collapsed = collapseHistogram(h.buckets)
-      val max = collapsed.map(_.count).max
+      val max = collapsed.map(_.count.value).max
       val bar = (n: Int) => if n == 0 then "" else "█" * math.max(1, (n.toDouble / max * 24).round.toInt)
       val rows = collapsed.map { b =>
-        val periodLabel = s"${fmtYear(b.start)}–${fmtYear(b.end)}"
+        val periodLabel = s"${yearLabel(b.start.value)}–${yearLabel(b.end.value)}"
         val suffix = if (b.merged).value > 1 then s" _(${b.merged} buckets)_" else ""
-        s"| $periodLabel | ${b.count} | ${bar(b.count)} |$suffix"
+        s"| $periodLabel | ${b.count} | ${bar(b.count.value)} |$suffix"
       }
       val starts = unit == _root_.com.histmersion.api.library.Histogram.Unit(Aggregate.UnitStarts)
       val head = if starts then s"### sources starting per ${h.bucket} yrs · $span"
@@ -122,10 +129,10 @@ object SearchMarkdown:
       val one = if (unit).value.endsWith("s") then (unit).value.dropRight(1) else unit
       val note =
         if starts then
-          s"_${h.buckets.count((_.count).value > 0)} non-empty bucket(s); each source is counted " +
+          s"_${h.buckets.count(_.count.value > 0)} non-empty bucket(s); each source is counted " +
             "ONCE, in the bucket its period starts in, so the bars do sum to the total._"
         else
-          s"_${h.buckets.count((_.count).value > 0)} non-empty bucket(s); each $one is counted in " +
+          s"_${h.buckets.count(_.count.value > 0)} non-empty bucket(s); each $one is counted in " +
             "every bucket its period overlaps, so the bars do not sum to a total._"
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
       val col = if starts then "sources" else unit
@@ -138,9 +145,8 @@ object SearchMarkdown:
     val Start: _root_.com.histmersion.api.library.TimeBucket.Start.type = _root_.com.histmersion.api.library.TimeBucket.Start
     type End = com.histmersion.api.library.TimeBucket.End
     val End: _root_.com.histmersion.api.library.TimeBucket.End.type = _root_.com.histmersion.api.library.TimeBucket.End
-    type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
+    type Count = com.histmersion.api.library.TimeBucket.Count
+    val Count: _root_.com.histmersion.api.library.TimeBucket.Count.type = _root_.com.histmersion.api.library.TimeBucket.Count
     type Merged = Merged.T
     object Merged extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -151,7 +157,7 @@ object SearchMarkdown:
         .foldLeft(List.empty[CollapsedBucket]) { (acc, b) =>
           acc match
             case head :: tail if head.count == b.count =>
-              head.copy(end = b.end, merged = (head.merged).value + 1) :: tail
+              head.copy(end = b.end, merged = CollapsedBucket.Merged(head.merged.value + 1)) :: tail
             case _ =>
               CollapsedBucket(b.start, b.end, b.count, _root_.com.histmersion.api.library.SearchMarkdown.CollapsedBucket.Merged(1)) :: acc
         }
@@ -159,7 +165,7 @@ object SearchMarkdown:
       runs
 
   def tree(h: TimeHistogram, unit: com.histmersion.api.library.SearchMarkdown.TreeUnit): String =
-    val span = s"${fmtYear(h.from)} → ${fmtYear(h.to)}"
+    val span = s"${yearLabel(h.from.value)} → ${yearLabel(h.to.value)}"
     if h.tree.isEmpty then (s"_No $unit to group for $span._")
     else
       val one = if (unit).value.endsWith("s") then (unit).value.dropRight(1) else unit
@@ -175,7 +181,7 @@ object SearchMarkdown:
       val when = if b.kind == _root_.com.histmersion.api.library.Bucket.Kind(Tree.KindTime) then ""
       else Option(periodLabel(b.start, b.end)).filter(_.nonEmpty).map(p => s" · $p").getOrElse("")
       val id = b.placeId.map(i => s" `$i`").getOrElse("")
-      val line = s"$pad- **${b.label}**${contestedMark(b.contested, b.label)}$id — " +
+      val line = s"$pad- **${b.label}**${contestedMark(b.contested.value, b.label.value)}$id — " +
         s"${b.count} $unit$over$when"
       val kids = treeLines(b.children, unit, ((depth) + 1))
       val samps = b.samples.map(x => s"$pad  - ${x.citekey} — ${x.title}")

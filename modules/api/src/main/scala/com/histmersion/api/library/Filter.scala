@@ -35,16 +35,8 @@ final case class Filter(
   def hasFindingCriteria: Boolean = (period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty)
 
 object Filter:
-  type EarliestYear = EarliestYear.T
-  object EarliestYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Last = Last.T
   object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LatestYear = LatestYear.T
-  object LatestYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Latitude = Latitude.T
-  object Latitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Longitude = Longitude.T
-  object Longitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type YearFrom = YearFrom.T
   object YearFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type YearTo = YearTo.T
@@ -52,25 +44,6 @@ object Filter:
 
 
   /** Open-ended bounds, far enough inside bigint that `int8range(..,'[]')` cannot overflow. */
-
-  type Earliest = EarliestValue
-  type EarliestValue = com.histmersion.api.library.Filter.EarliestYear
-  val EarliestValue: _root_.com.histmersion.api.library.Filter.EarliestYear.type = _root_.com.histmersion.api.library.Filter.EarliestYear
-  type Latest = LatestValue
-  type LatestValue = com.histmersion.api.library.Filter.LatestYear
-  val LatestValue: _root_.com.histmersion.api.library.Filter.LatestYear.type = _root_.com.histmersion.api.library.Filter.LatestYear
-  type OfFrom = _root_.com.histmersion.api.library.Filter.YearFrom
-  val OfFrom: _root_.com.histmersion.api.library.Filter.YearFrom.type = _root_.com.histmersion.api.library.Filter.YearFrom
-  type OfTo = _root_.com.histmersion.api.library.Filter.YearTo
-  val OfTo: _root_.com.histmersion.api.library.Filter.YearTo.type = _root_.com.histmersion.api.library.Filter.YearTo
-  type OfMinLon = _root_.com.histmersion.api.library.Filter.Longitude
-  val OfMinLon: _root_.com.histmersion.api.library.Filter.Longitude.type = _root_.com.histmersion.api.library.Filter.Longitude
-  type OfMinLat = _root_.com.histmersion.api.library.Filter.Latitude
-  val OfMinLat: _root_.com.histmersion.api.library.Filter.Latitude.type = _root_.com.histmersion.api.library.Filter.Latitude
-  type OfMaxLon = _root_.com.histmersion.api.library.Filter.Longitude
-  val OfMaxLon: _root_.com.histmersion.api.library.Filter.Longitude.type = _root_.com.histmersion.api.library.Filter.Longitude
-  type OfMaxLat = _root_.com.histmersion.api.library.Filter.Latitude
-  val OfMaxLat: _root_.com.histmersion.api.library.Filter.Latitude.type = _root_.com.histmersion.api.library.Filter.Latitude
 
   type Q = Q.T
   object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -93,30 +66,30 @@ object Filter:
   type Goal = com.histmersion.api.research.ReviewGoal.Slug
   val Goal: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
 
-  val Earliest: com.histmersion.api.library.Filter.Earliest = _root_.com.histmersion.api.library.Filter.EarliestYear(-1000000000L)
-  val Latest: com.histmersion.api.library.Filter.Latest = _root_.com.histmersion.api.library.Filter.LatestYear(1000000000L)
+  val Earliest: com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(-1000000000L)
+  val Latest: com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(1000000000L)
 
   /** Postgres rejects an inverted range (`range lower bound must be less than or equal to range upper bound`), so a
     * nonsense bound is clamped before it can build one.
     */
-  def clamp(v: com.histmersion.api.catalogue.Year): com.histmersion.api.catalogue.Year = math.max(Earliest, math.min(Latest, (v).value))
+  def clamp(v: com.histmersion.api.catalogue.Year): com.histmersion.api.catalogue.Year = com.histmersion.api.catalogue.Year(math.max(Earliest.value, math.min(Latest.value, v.value)))
 
-  def periodOf(from: Option[com.histmersion.api.library.Filter.YearFrom], to: Option[com.histmersion.api.library.Filter.YearTo]): Option[Period] =
-    (from.map({ val refactorFunction4 = clamp; (refactorValue36) => refactorFunction4(_root_.com.histmersion.api.catalogue.Year((refactorValue36).value)) }), to.map({ val refactorFunction5 = clamp; (refactorValue37) => refactorFunction5(_root_.com.histmersion.api.catalogue.Year((refactorValue37).value)) })) match
+  def periodOf(from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year]): Option[Period] =
+    (from.map(clamp), to.map(clamp)) match
       case (None, None)       => None
-      case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
+      case (Some(a), Some(b)) => Some(if a.value <= b.value then Period(a, b) else Period(b, a))
       case (Some(a), None)    => Some(Period(a, Latest))
       case (None, Some(b))    => Some(Period(Earliest, b))
 
-  def lowerGiven(p: Option[Period]): Option[com.histmersion.api.library.Filter.YearFrom] = p.map(_.start).filter(_ != Earliest)
+  def lowerGiven(p: Option[Period]): Option[com.histmersion.api.catalogue.Year] = p.map(_.start).filter(_ != Earliest)
 
-  def upperGiven(p: Option[Period]): Option[com.histmersion.api.library.Filter.YearTo] = p.map(_.end).filter(_ != Latest)
+  def upperGiven(p: Option[Period]): Option[com.histmersion.api.catalogue.Year] = p.map(_.end).filter(_ != Latest)
 
   def bboxOf(
-      minLon: Option[com.histmersion.api.library.Filter.Longitude],
-      minLat: Option[com.histmersion.api.library.Filter.Latitude],
-      maxLon: Option[com.histmersion.api.library.Filter.Longitude],
-      maxLat: Option[com.histmersion.api.library.Filter.Latitude]
+      minLon: Option[com.histmersion.api.catalogue.Longitude],
+      minLat: Option[com.histmersion.api.catalogue.Latitude],
+      maxLon: Option[com.histmersion.api.catalogue.Longitude],
+      maxLat: Option[com.histmersion.api.catalogue.Latitude]
   ): Option[BBox] =
     (minLon, minLat, maxLon, maxLat) match
       case (Some(a), Some(b), Some(c), Some(d)) => Some(BBox(a, b, c, d))
@@ -129,44 +102,41 @@ object Filter:
       places: List[com.histmersion.api.library.Filter.Places] = Nil,
       topics: List[com.histmersion.api.library.Filter.Topics] = Nil,
       status: List[com.histmersion.api.library.Filter.Status] = Nil,
-      yearFrom: Option[com.histmersion.api.library.Filter.YearFrom] = None,
-      yearTo: Option[com.histmersion.api.library.Filter.YearTo] = None,
-      from: Option[com.histmersion.api.library.Filter.OfFrom] = None,
-      to: Option[com.histmersion.api.library.Filter.OfTo] = None,
-      minLon: Option[com.histmersion.api.library.Filter.OfMinLon] = None,
-      minLat: Option[com.histmersion.api.library.Filter.OfMinLat] = None,
-      maxLon: Option[com.histmersion.api.library.Filter.OfMaxLon] = None,
-      maxLat: Option[com.histmersion.api.library.Filter.OfMaxLat] = None,
-      sort: Option[com.histmersion.api.library.Filter.Query.Sort] = None,
+      yearFrom: Option[com.histmersion.api.catalogue.Year] = None,
+      yearTo: Option[com.histmersion.api.catalogue.Year] = None,
+      from: Option[com.histmersion.api.catalogue.Year] = None,
+      to: Option[com.histmersion.api.catalogue.Year] = None,
+      minLon: Option[com.histmersion.api.catalogue.Longitude] = None,
+      minLat: Option[com.histmersion.api.catalogue.Latitude] = None,
+      maxLon: Option[com.histmersion.api.catalogue.Longitude] = None,
+      maxLat: Option[com.histmersion.api.catalogue.Latitude] = None,
+      sort: Option[com.histmersion.api.library.Sort.Wire] = None,
       limit: Option[com.histmersion.api.library.Filter.Limit] = None,
-      offset: Option[com.histmersion.api.personal.UnreadPage.Offset] = None,
+      offset: Option[com.histmersion.api.library.Filter.Offset] = None,
       title: Option[com.histmersion.api.library.Filter.Title] = None,
       goal: Option[com.histmersion.api.research.ReviewGoal.Slug] = None
   ): Filter =
-    def clean(xs: List[String]) = xs.flatMap((_).split(",")).map(_.trim).filter(_.nonEmpty)
+    def clean[A](xs: List[A])(unwrap: A => String)(wrap: String => A): List[A] =
+      xs.flatMap(x => unwrap(x).split(",")).map(_.trim).filter(_.nonEmpty).map(wrap)
     Filter(
-      q = q.map((_).value.trim).filter((_).nonEmpty),
-      tags = clean(tags),
-      authors = clean(authors),
-      places = clean(places),
-      topics = clean(topics),
-      status = clean(status),
-      years = periodOf((yearFrom).map(refactorValue10 => _root_.com.histmersion.api.library.Filter.YearFrom((refactorValue10).value)), (yearTo).map(refactorValue46 => _root_.com.histmersion.api.library.Filter.YearTo((refactorValue46).value))),
+      q = q.map(v => Q(v.value.trim)).filter(_.value.nonEmpty),
+      tags = clean(tags)(_.value)(Tags(_)),
+      authors = clean(authors)(_.value)(Authors(_)),
+      places = clean(places)(_.value)(Places(_)),
+      topics = clean(topics)(_.value)(Topics(_)),
+      status = clean(status)(_.value)(Status(_)),
+      years = periodOf(yearFrom, yearTo),
       period = periodOf(from, to),
       bbox = bboxOf(minLon, minLat, maxLon, maxLat),
       sort = sort.flatMap(Sort.parse).getOrElse(Sort.Relevance),
-      limit = limit.getOrElse(0),
-      offset = offset.getOrElse(0).max(0),
-      title = title.map((_).value.trim).filter((_).nonEmpty),
-      goal = goal.map((_).value.trim).filter((_).value.nonEmpty)
+      limit = limit.getOrElse(Limit(0)),
+      offset = Offset(offset.fold(0)(_.value).max(0)),
+      title = title.map(v => Title(v.value.trim)).filter(_.value.nonEmpty),
+      goal = goal.map(v => Goal(v.value.trim)).filter(_.value.nonEmpty)
     )
 
   /** [[Param.brief]] is the agents' wording, a few words: every turn of an agent step re-sends a tool's schema. */
   object Docs:
-    type Description = Description.T
-    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
     final case class Param(rest: Param.Rest, mcp: Param.Mcp, doc: Param.Doc, brief: Param.Brief)
 
     object Param:
@@ -265,12 +235,12 @@ object Filter:
         goal
       )
 
-    def describe[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.doc)
+    def describe[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.doc.value)
 
-    def describeBrief[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.brief)
+    def describeBrief[T](schema: Schema[T]): Schema[T] = describeWith(schema)(_.brief.value)
 
-    private def describeWith[T](schema: Schema[T])(text: Param => com.histmersion.api.library.Filter.Docs.Description): Schema[T] =
-      all.foldLeft(schema)((s, p) => s.modifyUnsafe[Any](p.mcp)(_.description(text(p))))
+    private def describeWith[T](schema: Schema[T])(text: Param => String): Schema[T] =
+      all.foldLeft(schema)((s, p) => s.modifyUnsafe[Any](p.mcp.value)(_.description(text(p))))
 
   /** One case class so Tapir can `mapInTo` it. The parameter names are fixed: callers send them as REST query
     * parameters.
@@ -290,7 +260,7 @@ object Filter:
       minLat: Option[com.histmersion.api.catalogue.Latitude],
       maxLon: Option[com.histmersion.api.catalogue.Longitude],
       maxLat: Option[com.histmersion.api.catalogue.Latitude],
-      sort: Option[Query.Sort],
+      sort: Option[com.histmersion.api.library.Sort.Wire],
       limit: Option[com.histmersion.api.library.Filter.Limit],
       offset: Option[com.histmersion.api.library.Filter.Offset],
       title: Option[com.histmersion.api.library.Filter.Title] = None,
@@ -320,9 +290,6 @@ object Filter:
       )
 
   object Query:
-    type Sort = Sort.T
-    object Sort extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     def from(f: Filter): Query =
       def lo(p: Option[Period]) = Filter.lowerGiven(p)
       def hi(p: Option[Period]) = Filter.upperGiven(p)
