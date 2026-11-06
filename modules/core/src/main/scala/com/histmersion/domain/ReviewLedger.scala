@@ -63,23 +63,19 @@ object ReviewLedger:
   type ArticleTaskSlug = _root_.com.histmersion.domain.research.Slug
   val ArticleTaskSlug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 
-  enum Status(val wire: Status.Wire):
-    case Open extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("open"))
-    case Fixed extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("fixed"))
-    case Rejected extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("rejected"))
-    case WontFix extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("wont-fix"))
+  enum Status(val wire: WireEnumValues.Wire):
+    case Open extends Status(WireEnumValues.Wire("open"))
+    case Fixed extends Status(WireEnumValues.Wire("fixed"))
+    case Rejected extends Status(WireEnumValues.Wire("rejected"))
+    case WontFix extends Status(WireEnumValues.Wire("wont-fix"))
 
     /** A missing-critique finding the fixer answered with a stored critique reason (§6.8): the critique exists, and
       * does not bear on what the article cites the source for.
       */
-    case SetAside extends Status(com.histmersion.domain.ReviewLedger.Status.Wire("set-aside"))
+    case SetAside extends Status(WireEnumValues.Wire("set-aside"))
 
   object Status:
-    type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-    def parse(s: com.histmersion.domain.ReviewLedger.Status.Wire): Option[Status] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: WireEnumValues.Wire): Option[Status] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[Status]:
       def all: Array[Status] = Status.values
       def wire(e: Status): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
@@ -88,16 +84,12 @@ object ReviewLedger:
     given Decoder[Status] = WireEnum.decoder
 
   /** Where a lesson came from: a rejection the fixer proved, or a reviewer's re-check. */
-  enum LessonSource(val wire: LessonSource.Wire):
-    case Rejection extends LessonSource(com.histmersion.domain.ReviewLedger.LessonSource.Wire("rejection"))
-    case Recheck extends LessonSource(com.histmersion.domain.ReviewLedger.LessonSource.Wire("recheck"))
+  enum LessonSource(val wire: WireEnumValues.Wire):
+    case Rejection extends LessonSource(WireEnumValues.Wire("rejection"))
+    case Recheck extends LessonSource(WireEnumValues.Wire("recheck"))
 
   object LessonSource:
-    type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-
-    def parse(s: com.histmersion.domain.ReviewLedger.LessonSource.Wire): Option[LessonSource] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: WireEnumValues.Wire): Option[LessonSource] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[LessonSource]:
       def all: Array[LessonSource] = LessonSource.values
       def wire(e: LessonSource): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
@@ -119,16 +111,16 @@ object ReviewLedger:
   ) derives KindlingsCodecAsObject
 
   object Closure:
-    type By = By.T
-    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Round = Round.T
-    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type By = com.histmersion.domain.ReviewArticle.Reviewer.Wire
+    val By: _root_.com.histmersion.domain.ReviewArticle.Reviewer.Wire.type = _root_.com.histmersion.domain.ReviewArticle.Reviewer.Wire
+    type Round = com.histmersion.domain.ReviewArticle.Merged.Round
+    val Round: _root_.com.histmersion.domain.ReviewArticle.Merged.Round.type = _root_.com.histmersion.domain.ReviewArticle.Merged.Round
     type Run = com.histmersion.domain.automation.Run.Id
     val Run: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
     type Note = Note.T
     object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = com.histmersion.domain.ReviewArticle.Evidence.Quote
+    val Quote: _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote.type = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
 
   /** One finding in the ledger. `claimed`: the fixer lists it as applied, and its reviewer has not checked it yet.
     * `notFixed`: the last check's word that it is not (or the rejection it was raised again after); `notFixedCount`:
@@ -171,14 +163,14 @@ object ReviewLedger:
     object Reopened extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NotFixedCount = NotFixedCount.T
     object NotFixedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Deferred = Deferred.T
-    object Deferred extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Deferred = com.histmersion.domain.automation.Run.Id
+    val Deferred: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
 
   final case class Lesson(text: Lesson.Text, source: LessonSource, run: Lesson.Run, round: Lesson.Round) derives KindlingsCodecAsObject
 
   object Lesson:
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Text = com.histmersion.domain.ReviewArticle.Recheck.Lessons
+    val Text: _root_.com.histmersion.domain.ReviewArticle.Recheck.Lessons.type = _root_.com.histmersion.domain.ReviewArticle.Recheck.Lessons
     type Run = com.histmersion.domain.automation.Run.Id
     val Run: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
     type Round = com.histmersion.domain.ReviewLedger.Closure.Round
@@ -196,7 +188,7 @@ object ReviewLedger:
     def entry(id: com.histmersion.domain.ReviewArticle.Finding.Id): Option[Entry] = entries.find(_.id == id)
 
     /** The open findings the fixer claims, of one reviewer: what its re-check verifies. */
-    def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed && e.reviewer == r)
+    def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed.value && e.reviewer == r)
     def verdict: Verdict = Verdict.of(open.map(_.finding))
 
   object Ledger:
@@ -217,11 +209,13 @@ object ReviewLedger:
     */
   private def mechanicalKey(f: Finding): (String, String, String, String) =
     (
-      f.kind,
-      AgentVerify.normalise(f.where),
-      AgentVerify.normalise(f.problem.takeWhile(_ != ':')),
-      AgentVerify.normalise(f.quote)
+      f.kind.value,
+      normalised(f.where.value).value,
+      normalised(f.problem.value.takeWhile(_ != ':')).value,
+      normalised(f.quote.value).value
     )
+
+  private def normalised(s: String): AgentVerify.NormalisedText = AgentVerify.normalise(AgentVerify.Text(s))
 
   /** Is `b` the finding `a` again? The same reviewer, and the same passage (quotes equal, or one inside the other when
     * both are at least 20 characters), or the same `where` and a problem that shares at least half its words
@@ -233,17 +227,17 @@ object ReviewLedger:
       if a.reviewer == Reviewer.Mechanical then mechanicalKey(a) == mechanicalKey(b)
       else if TermCount.is(a) || TermCount.is(b) then TermCount.is(a) && TermCount.is(b)
       else
-        val (qa, qb) = (AgentVerify.normalise(a.quote), AgentVerify.normalise(b.quote))
+        val (qa, qb) = (normalised(a.quote.value).value, normalised(b.quote.value).value)
         val quoted = qa.nonEmpty && qb.nonEmpty &&
           (qa == qb || (math.min(qa.length, qb.length) >= 20 && (qa.contains(qb) || qb.contains(qa))))
-        quoted || (AgentVerify.normalise(a.where) == AgentVerify.normalise(b.where) &&
-          CompareRuns.similarity(a.problem, b.problem) >= ReviewComparison.ProblemSimilarity)
+        quoted || (normalised(a.where.value) == normalised(b.where.value) &&
+          CompareRuns.similarity(CompareRuns.Text(a.problem.value), CompareRuns.Text(b.problem.value)).value >= ReviewComparison.ProblemSimilarity)
     }
 
   /** The next ledger id of a reviewer: its letter and one more than the highest number it used. */
   def nextId(l: Ledger, r: Reviewer): com.histmersion.domain.ReviewArticle.Finding.Id =
-    val used = l.entries.map(_.id).filter(_.startsWith(r.prefix)).flatMap(_.drop(r.prefix.length).toIntOption)
-    s"${r.prefix}${used.maxOption.getOrElse(0) + 1}"
+    val used = l.entries.map(_.id.value).filter(_.startsWith(r.prefix.value)).flatMap(_.drop(r.prefix.value.length).toIntOption)
+    Finding.Id(s"${r.prefix}${used.maxOption.getOrElse(0) + 1}")
 
   // ── transitions ────────────────────────────────────────────────────────────────────────────────
 
@@ -261,7 +255,7 @@ object ReviewLedger:
         rest: List[Finding],
         led: Ledger,
         out: Vector[Finding],
-        seen: Set[String]
+        seen: Set[Finding.Id]
     ): (Ledger, List[Finding]) =
       rest match
         case Nil       => (led, out.toList)
@@ -271,23 +265,23 @@ object ReviewLedger:
               val id = e.id
               val next: Entry = e.status match
                 case Status.Open =>
-                  e.copy(finding = f.copy(id = id, escalated = f.escalated || e.finding.escalated), claimed = false)
+                  e.copy(finding = f.copy(id = id, escalated = Finding.Escalated(f.escalated.value || e.finding.escalated.value)), claimed = Entry.Claimed(false))
                 case Status.Fixed =>
                   e.copy(
                     finding = f.copy(id = id),
                     status = Status.Open,
                     claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
-                    notFixed = Some(s"fixed in pass ${e.closed.fold(0)(_.round)}, raised again in pass $round"),
-                    reopened = e.reopened + 1,
+                    notFixed = Some(Entry.NotFixed(s"fixed in pass ${e.closed.fold(0)(_.round.value)}, raised again in pass $round")),
+                    reopened = Entry.Reopened(e.reopened.value + 1),
                     closed = None
                   )
                 case Status.Rejected =>
                   e.copy(
                     finding = f.copy(id = id, escalated = com.histmersion.domain.ReviewArticle.Finding.Escalated(true)),
                     status = Status.Open,
-                    claimed = false,
+                    claimed = Entry.Claimed(false),
                     notFixed = e.closed.map(c =>
-                      s"rejected before${c.citekey.fold("")(ck => s" ([[$ck]])")}: ${c.note}".take(300)
+                      Entry.NotFixed(s"rejected before${c.citekey.fold("")(ck => s" ([[$ck]])")}: ${c.note}".take(300))
                     ),
                     closed = None
                   )
@@ -298,7 +292,7 @@ object ReviewLedger:
                     claimed = com.histmersion.domain.ReviewLedger.Entry.Claimed(false),
                     notFixed = e.closed
                       .filter(_ => e.status == Status.SetAside)
-                      .map(c => s"set aside before: ${c.note}".take(300)),
+                      .map(c => Entry.NotFixed(s"set aside before: ${c.note}".take(300))),
                     closed = None
                   )
                 case Status.WontFix | Status.SetAside => e
@@ -317,18 +311,18 @@ object ReviewLedger:
     checks.foldLeft(l) { (led, c) =>
       led.entry(c.id).filter(e => e.open && e.reviewer == r).fold(led) { _ =>
         update(led, c.id) { e =>
-          if c.fixed then
+          if c.fixed.value then
             e.copy(
               status = Status.Fixed,
-              claimed = false,
+              claimed = Entry.Claimed(false),
               notFixed = None,
-              closed = Some(Closure(r.wire, round, run, c.note, c.quote))
+              closed = Some(Closure(r.wire, round, run, Closure.Note(c.note.value), c.quote))
             )
           else
             e.copy(
-              claimed = false,
-              notFixed = Some(Option(c.note).filter(_.nonEmpty).getOrElse("not fixed")),
-              notFixedCount = e.notFixedCount + 1
+              claimed = Entry.Claimed(false),
+              notFixed = Some(Entry.NotFixed(Option(c.note.value).filter(_.nonEmpty).getOrElse("not fixed"))),
+              notFixedCount = Entry.NotFixedCount(e.notFixedCount.value + 1)
             )
         }
       }
@@ -371,7 +365,7 @@ object ReviewLedger:
                   Reviewer.Mechanical.wire,
                   round,
                   run,
-                  "the cold reader's count is no longer above the threshold"
+                  Closure.Note("the cold reader's count is no longer above the threshold")
                 )
               )
             )
@@ -384,16 +378,16 @@ object ReviewLedger:
   def applyFix(l: Ledger, f: Fix, run: com.histmersion.domain.ReviewLedger.ApplyFixRun, round: com.histmersion.domain.ReviewLedger.ApplyFixRound): Ledger =
     // what the fixer applied, and what code's pairing repair answered (§6.9): both re-checked by the reviewer
     val claimed = (f.applied ++ f.repaired).distinct.foldLeft(l)((led, id) =>
-      led.entry(id).filter(_.open).fold(led)(_ => update(led, id)(_.copy(claimed = true)))
+      led.entry(id).filter(_.open).fold(led)(_ => update(led, id)(_.copy(claimed = Entry.Claimed(true))))
     )
     // what the fixer neither applied nor rejected, or claimed without the change: not fixed, with why
     val unanswered = f.notFixed.foldLeft(claimed)((led, w) =>
       led
         .entry(w.id)
-        .filter(e => e.open && !e.claimed)
+        .filter(e => e.open && !e.claimed.value)
         .fold(led)(_ =>
           update(led, w.id)(e =>
-            e.copy(notFixed = Some(s"pass $round: ${w.reason}".take(300)), notFixedCount = e.notFixedCount + 1)
+            e.copy(notFixed = Some(Entry.NotFixed(s"pass $round: ${w.reason}".take(300))), notFixedCount = Entry.NotFixedCount(e.notFixedCount.value + 1))
           )
         )
     )
@@ -405,8 +399,8 @@ object ReviewLedger:
           update(led, r.id)(
             _.copy(
               status = Status.Rejected,
-              claimed = false,
-              closed = Some(Closure("fixer", round, run, r.reason, r.quote, Some(r.citekey)))
+              claimed = Entry.Claimed(false),
+              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(r.reason.value), r.quote, Some(r.citekey)))
             )
           )
         )
@@ -417,7 +411,7 @@ object ReviewLedger:
         .filter(e => e.open && !e.major)
         .fold(led)(_ =>
           update(led, w.id)(
-            _.copy(status = Status.WontFix, claimed = false, closed = Some(Closure("fixer", round, run, w.reason)))
+            _.copy(status = Status.WontFix, claimed = Entry.Claimed(false), closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(w.reason.value))))
           )
         )
     )
@@ -431,22 +425,22 @@ object ReviewLedger:
             e.copy(
               finding = e.finding.copy(pair = Some(a.pair)),
               status = Status.SetAside,
-              claimed = false,
-              closed = Some(Closure("fixer", round, run, a.reason, a.pair.wire))
+              claimed = Entry.Claimed(false),
+              closed = Some(Closure(Reviewer.Wire("fixer"), round, run, Closure.Note(a.reason.value), Closure.Quote(a.pair.wire.value)))
             )
           )
         )
     )
-    learn(setAside, f.rejected.map(r => s"[[${r.citekey}]]: ${r.reason}"), LessonSource.Rejection, run, round)
+    learn(setAside, f.rejected.map(r => Lesson.Text(s"[[${r.citekey}]]: ${r.reason}")), LessonSource.Rejection, run, round)
 
   /** Add lessons: trimmed, at most [[LessonChars]] each, a lesson already held (normalised) not twice, the newest
     * [[MaxLessons]] kept.
     */
   def learn(l: Ledger, texts: List[com.histmersion.domain.ReviewLedger.Lesson.Text], source: LessonSource, run: com.histmersion.domain.ReviewLedger.LearnRun, round: com.histmersion.domain.ReviewLedger.LearnRound): Ledger =
-    val fresh = texts.map(_.trim.replaceAll("\\s+", " ").take(LessonChars)).filter(_.nonEmpty)
+    val fresh = texts.map(_.value.trim.replaceAll("\\s+", " ").take(LessonChars)).filter(_.nonEmpty)
     val all = fresh.foldLeft(l.lessons.toVector) { (acc, t) =>
-      if acc.exists(x => AgentVerify.normalise(x.text) == AgentVerify.normalise(t)) then acc
-      else acc :+ Lesson(t, source, run, round)
+      if acc.exists(x => normalised(x.text.value) == normalised(t)) then acc
+      else acc :+ Lesson(Lesson.Text(t), source, run, round)
     }
     l.modify(_.lessons).setTo(all.takeRight(MaxLessons).toList)
 
@@ -471,7 +465,7 @@ object ReviewLedger:
   ): Merged =
     val fs = l.open
       .map(_.finding)
-      .sortBy(f => (f.reviewer.ordinal, f.id.drop(f.reviewer.prefix.length).toIntOption.getOrElse(0)))
+      .sortBy(f => (f.reviewer.ordinal, f.id.value.drop(f.reviewer.prefix.value.length).toIntOption.getOrElse(0)))
     // a MAJOR the run's final pass deferred is the next run's: it counts as minor in this verdict
     val deferred = run.toList.flatMap(r => l.open.filter(e => e.major && e.deferredIn(r)).map(_.id))
     val counted = fs.map(f => if deferred.contains(f.id) then f.modify(_.severity).setTo(Severity.Minor) else f)
@@ -480,24 +474,24 @@ object ReviewLedger:
   /** The notes the fixer reads under an open finding: a fix claimed before that its reviewer found wanting, a
     * regression, a rejection it was raised again after.
     */
-  def notes(l: Ledger): Map[String, String] =
+  def notes(l: Ledger): Map[com.histmersion.domain.ReviewArticle.Finding.Id, String] =
     l.open
       .flatMap(e =>
         e.notFixed
-          .map(n => e.id -> s"not fixed yet${if e.notFixedCount > 1 then s" (${e.notFixedCount} times)" else ""} — $n")
+          .map(n => e.id -> s"not fixed yet${if e.notFixedCount.value > 1 then s" (${e.notFixedCount} times)" else ""} — $n")
       )
       .toMap
 
   /** One line of a closed finding. */
   def closedLine(e: Entry): String =
-    val at = Option(e.finding.where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
+    val at = Option(e.finding.where.value).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
     val how = (e.status, e.closed) match
       case (Status.Fixed, Some(c))    => s"fixed, verified by ${c.by} in pass ${c.round}"
-      case (Status.Rejected, Some(c)) => s"rejected${c.citekey.fold("")(ck => s" — [[$ck]]: \"${c.quote.take(120)}\"")}"
-      case (Status.WontFix, Some(c))  => s"won't fix — ${c.note.take(120)}"
-      case (Status.SetAside, Some(c)) => s"set aside as not material (${c.quote}) — ${c.note.take(160)}"
-      case (s, _)                     => s.wire
-    s"${e.id} ${e.finding.severity.wire}$at: ${e.finding.problem.trim.take(140)} → $how"
+      case (Status.Rejected, Some(c)) => s"rejected${c.citekey.fold("")(ck => s" — [[$ck]]: \"${c.quote.value.take(120)}\"")}"
+      case (Status.WontFix, Some(c))  => s"won't fix — ${c.note.value.take(120)}"
+      case (Status.SetAside, Some(c)) => s"set aside as not material (${c.quote}) — ${c.note.value.take(160)}"
+      case (s, _)                     => s.wire.value
+    s"${e.id} ${e.finding.severity.wire}$at: ${e.finding.problem.value.trim.take(140)} → $how"
 
   /** How much of the open findings a prompt shows: in full, one line each, or not at all. */
   enum OpenStyle:
@@ -510,18 +504,18 @@ object ReviewLedger:
   def promptText(l: Ledger, style: OpenStyle, closedMax: com.histmersion.domain.ReviewLedger.ClosedLimit, only: Option[Reviewer] = None): String =
     val mine = (e: Entry) => only.forall(_ == e.reviewer)
     val open = l.open.filter(mine)
-    val closed = l.entries.filterNot(_.open).filter(mine).takeRight(math.max(0, closedMax))
+    val closed = l.entries.filterNot(_.open).filter(mine).takeRight(math.max(0, closedMax.value))
     val openPart = style match
       case OpenStyle.Omit    => ""
       case _ if open.isEmpty => ""
       case OpenStyle.Lines   =>
         "Open findings:\n" + open
-          .map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.trim.take(160)}")
+          .map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.value.trim.take(160)}")
           .mkString("\n")
       case OpenStyle.Full =>
         "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), com.histmersion.domain.ReviewLedger.Closure.Round(0)), notes(l)) +
-          (if open.exists(_.claimed) then
-             "\n(The fixer claims to have fixed: " + open.filter(_.claimed).map(_.id).mkString(", ") + ".)"
+          (if open.exists(_.claimed.value) then
+             "\n(The fixer claims to have fixed: " + open.filter(_.claimed.value).map(_.id).mkString(", ") + ".)"
            else "")
     val closedPart =
       if closed.isEmpty then ""
@@ -545,13 +539,13 @@ object ReviewLedger:
     def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
     /** The text a finding's quote is looked up in (to scope it). */
-    def text: com.histmersion.domain.ReviewArticle.Fix.Body = passages.map(_.text).mkString("\n\n")
+    def text: com.histmersion.domain.ReviewArticle.Fix.Body = com.histmersion.domain.ReviewArticle.Fix.Body(passages.map(_.text.value).mkString("\n\n"))
 
     /** As a prompt shows it. */
     def render: String =
       val ps = passages.map(p => p.heading.fold("")(h => s"[under: $h]\n") + p.text).mkString("\n\n---\n\n")
       val rs =
-        if removed.isEmpty then "" else "\n\n---\n\nRemoved:\n" + removed.map(r => s"- ${r.take(300)}").mkString("\n")
+        if removed.isEmpty then "" else "\n\n---\n\nRemoved:\n" + removed.map(r => s"- ${r.value.take(300)}").mkString("\n")
       ps + rs
 
   object Edited:
@@ -559,8 +553,8 @@ object ReviewLedger:
     type Removed = Removed.T
     object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def paragraphs(body: com.histmersion.domain.ReviewArticle.Fix.Body): Vector[com.histmersion.domain.ReviewLedger.Passage.Text] =
-    body.replace("\r\n", "\n").split("\n[ \t]*\n").map(_.trim).filter(_.nonEmpty).toVector
+  private def paragraphs(body: com.histmersion.domain.ReviewArticle.Fix.Body): Vector[String] =
+    body.value.replace("\r\n", "\n").split("\n[ \t]*\n").map(_.trim).filter(_.nonEmpty).toVector
 
   private val Heading = "^#{1,6}\\s+(.+?)\\s*#*\\s*$".r
 
@@ -585,7 +579,7 @@ object ReviewLedger:
       else walk(i, j + 1, keptA, keptB)
     val (keptA, keptB) = walk(0, 0, Set.empty, Set.empty)
     val changed = b.indices.filterNot(keptB)
-    val m = math.max(0, margin)
+    val m = math.max(0, margin.value)
     val shown = changed.flatMap(i => (i - m) to (i + m)).filter(b.indices.contains).distinct.sorted
     val runs = shown
       .foldLeft(List.empty[List[Int]]) {
@@ -597,11 +591,11 @@ object ReviewLedger:
     def headingOf(i: Int): Option[com.histmersion.domain.ReviewLedger.Passage.Heading] =
       (i to 0 by -1).iterator.map(b(_)).collectFirst {
         case p if p.linesIterator.nextOption().exists(Heading.matches) =>
-          p.linesIterator.next() match { case Heading(h) => h.trim; case h => h }
+          Passage.Heading(p.linesIterator.next() match { case Heading(h) => h.trim; case h => h })
       }
     Edited(
-      runs.map(r => Passage(headingOf(r.head), r.map(b(_)).mkString("\n\n"))),
-      a.indices.filterNot(keptA).map(a(_)).toList
+      runs.map(r => Passage(headingOf(r.head), Passage.Text(r.map(b(_)).mkString("\n\n")))),
+      a.indices.filterNot(keptA).map(i => Edited.Removed(a(i))).toList
     )
 
   // ── convergence (docs/research-review-convergence.md §6.9) ──────────────────────────────────────
@@ -614,7 +608,7 @@ object ReviewLedger:
     * MAJOR — logged, in the backlog item, and the next run's pass 1 hands them to the fixer — but this run's verdict
     * ([[merged]] with the run) counts them as minor. Returns the ledger and the deferred ids.
     */
-  def deferFinal(before: Ledger, after: Ledger, run: com.histmersion.domain.automation.Run.Id, regression: Finding => Boolean): (Ledger, List[String]) =
+  def deferFinal(before: Ledger, after: Ledger, run: com.histmersion.domain.automation.Run.Id, regression: Finding => Boolean): (Ledger, List[com.histmersion.domain.ReviewArticle.Finding.Id]) =
     val fresh = after.open
       .filter(e => e.major && before.entry(e.id).forall(b => b.open && !b.major))
       .filterNot(e => regression(e.finding))
@@ -650,29 +644,31 @@ object ReviewLedger:
       l: Ledger,
       before: com.histmersion.domain.ReviewArticle.Fix.Body,
       after: com.histmersion.domain.ReviewArticle.Fix.Body,
-      answered: (String, CritiqueRef) => Boolean,
+      answered: (com.histmersion.domain.ReviewArticle.Fix.Body, CritiqueRef) => Boolean,
       cites: (com.histmersion.domain.ReviewArticle.Fix.Body, com.histmersion.domain.library.Citekey) => Boolean,
       minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio
   ): List[Regression] =
-    def in(q: com.histmersion.domain.ReviewArticle.Evidence.Quote, body: com.histmersion.domain.ReviewArticle.Fix.Body) = AgentVerify.findQuote(q, body, minRatio).accepted
+    def in(q: String, body: com.histmersion.domain.ReviewArticle.Fix.Body) =
+      AgentVerify.findQuote(AgentProposals.Proposal.Quote(q), AgentVerify.SourceBody(body.value), AgentVerify.MinRatio(minRatio.value)).accepted
     l.entries.filter(_.status == Status.Fixed).flatMap { e =>
       val pair = e.finding.pair
         .filter(r => answered(before, r) && !answered(after, r))
         .map(r =>
           Regression(
             e.id,
-            s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again"
+            Regression.Why(s"[[${r.src}]] and [[${r.dst}]] are no longer cited in one paragraph — the critique it answered is open again")
           )
         )
-      val q = Option(e.finding.quote).map(_.trim).getOrElse("")
+      val q = Option(e.finding.quote.value).map(_.trim).getOrElse("")
       val back = Option.when(q.length >= 12 && !in(q, before) && in(q, after))(
-        Regression(e.id, s"the text it fixed is back: \"${q.take(100)}\"")
+        Regression(e.id, Regression.Why(s"the text it fixed is back: \"${q.take(100)}\""))
       )
       val lost = e.closed.toList
-        .flatMap(c => AgentVerify.wikilinks(c.quote))
+        .flatMap(c => AgentVerify.wikilinks(AgentVerify.Text(c.quote.value)))
         .distinct
+        .flatMap(ck => com.histmersion.domain.library.Citekey.parse(ck.value).toOption)
         .filter(ck => cites(before, ck) && !cites(after, ck))
-        .map(ck => Regression(e.id, s"[[$ck]], which its fix cites, is cited nowhere any more"))
+        .map(ck => Regression(e.id, Regression.Why(s"[[$ck]], which its fix cites, is cited nowhere any more")))
       (pair.toList ++ back.toList ++ lost).take(1)
     }
 
@@ -680,7 +676,7 @@ object ReviewLedger:
     * code's pairing repair, else a precise instruction (§6.9).
     */
   def stubborn(l: Ledger, times: com.histmersion.domain.ReviewLedger.StubbornLimit = com.histmersion.domain.ReviewLedger.StubbornLimit(2)): List[Entry] =
-    l.open.filter(e => e.finding.pair.isDefined && e.notFixedCount >= times)
+    l.open.filter(e => e.finding.pair.isDefined && e.notFixedCount.value >= times.value)
 
   // ── the backlog item (#934) ────────────────────────────────────────────────────────────────────
 
@@ -689,16 +685,16 @@ object ReviewLedger:
     val majors = l.openMajors
     Option.when(majors.nonEmpty) {
       val lines = majors.map { e =>
-        val esc = (if e.finding.escalated then " [raised again after a rejection]" else "") +
+        val esc = (if e.finding.escalated.value then " [raised again after a rejection]" else "") +
           (if e.deferredIn(runId) then " [new in the final pass: deferred to the next run]" else "")
-        val at = Option(e.finding.where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
-        s"${e.id}$at: ${e.finding.problem.trim.take(160)}$esc"
+        val at = Option(e.finding.where.value).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
+        s"${e.id}$at: ${e.finding.problem.value.trim.take(160)}$esc"
       }
-      val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(majors.size, com.histmersion.api.Plural.Noun.Singular("MAJOR"))} — "
-      val tail = s" (agent run ${runId.take(8)})"
+      val head = s"review-article [[${l.slug}]]: ${majors.size} open ${Plural.noun(Plural.Count(majors.size.toLong), com.histmersion.api.Plural.Noun.Singular("MAJOR"))} — "
+      val tail = s" (agent run ${runId.value.take(8)})"
       val body = lines.mkString("; ")
-      val room = math.max(40, maxChars - head.length - tail.length)
-      head + (if body.length <= room then body else body.take(room - 1) + "…") + tail
+      val room = math.max(40, maxChars.value - head.length - tail.length)
+      TaskText(head + (if body.length <= room then body else body.take(room - 1) + "…") + tail)
     }
 
   /** The text of the article's one collapsed item — as [[taskText]] writes it, or as the interactive skill does
@@ -706,11 +702,11 @@ object ReviewLedger:
     * instead of adding a second. Not a [[legacyTask]] (those are closed).
     */
   def articleTask(slug: com.histmersion.domain.ReviewLedger.ArticleTaskSlug, text: com.histmersion.domain.ReviewLedger.TaskText): Boolean =
-    val t = text.trim
-    !legacyTask(slug, t) &&
+    val t = text.value.trim
+    !legacyTask(slug, TaskText(t)) &&
     (t.startsWith(s"review-article [[$slug]]: ") || t.startsWith(s"review-article $slug: ")) &&
     "^review-article \\S+: \\d+ open MAJORs?\\b".r.findPrefixOf(t).isDefined
 
   /** The text of the per-finding items earlier runs left for the article (before #934). */
   def legacyTask(slug: com.histmersion.domain.research.Slug, text: com.histmersion.domain.ReviewLedger.TaskText): Boolean =
-    text.startsWith(s"review-article [[$slug]]: MAJOR ")
+    text.value.startsWith(s"review-article [[$slug]]: MAJOR ")
