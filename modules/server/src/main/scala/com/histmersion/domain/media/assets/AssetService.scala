@@ -883,26 +883,26 @@ object AssetService:
     object LinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LinkUid = LinkUid.T
     object LinkUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkTargetType = LinkTargetType.T
-    object LinkTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkTargetId = LinkTargetId.T
-    object LinkTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkRole = LinkRole.T
-    object LinkRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkProperty = LinkProperty.T
-    object LinkProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkItem = LinkItem.T
-    object LinkItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkRank = LinkRank.T
-    object LinkRank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkBasis = LinkBasis.T
-    object LinkBasis extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinkTargetType = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType
+    val LinkTargetType: _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetType
+    type LinkTargetId = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId
+    val LinkTargetId: _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.TargetId
+    type LinkRole = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
+    val LinkRole: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
+    type LinkProperty = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
+    val LinkProperty: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
+    type LinkItem = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item
+    val LinkItem: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Item
+    type LinkRank = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank
+    val LinkRank: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Rank
+    type LinkBasis = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis
+    val LinkBasis: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Basis
     type SetSourcePictureUid = SetSourcePictureUid.T
     object SetSourcePictureUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetSourcePictureRole = SetSourcePictureRole.T
-    object SetSourcePictureRole extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetSourcePictureProperty = SetSourcePictureProperty.T
-    object SetSourcePictureProperty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetSourcePictureRole = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
+    val SetSourcePictureRole: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Role
+    type SetSourcePictureProperty = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
+    val SetSourcePictureProperty: _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property.type = _root_.com.histmersion.domain.media.assets.HeldMediaLink.Property
     type SourcePictureResultPart1 = SourcePictureResultPart1.T
     object SourcePictureResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SourcePictureResultPart2 = SourcePictureResultPart2.T

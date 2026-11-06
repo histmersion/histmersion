@@ -27,7 +27,7 @@ object ConfigEdit:
   final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def isSet: com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult = form != _root_.com.histmersion.api.settings.ConfigEdit.Credential.Form("unset")
+    def isSet: com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult = _root_.com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult(form != _root_.com.histmersion.api.settings.ConfigEdit.Credential.Form("unset"))
 
   object Credential:
     type IsSetResult = IsSetResult.T

@@ -20,10 +20,10 @@ object Stalls:
   object ClassifyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ClassifyResultPart3 = ClassifyResultPart3.T
   object ClassifyResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReportDays = ReportDays.T
-  object ReportDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReportAt = ReportAt.T
-  object ReportAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReportDays = _root_.com.histmersion.api.automation.Stalls.StallReport.Days
+  val ReportDays: _root_.com.histmersion.api.automation.Stalls.StallReport.Days.type = _root_.com.histmersion.api.automation.Stalls.StallReport.Days
+  type ReportAt = _root_.com.histmersion.api.automation.Stalls.StallReport.At
+  val ReportAt: _root_.com.histmersion.api.automation.Stalls.StallReport.At.type = _root_.com.histmersion.api.automation.Stalls.StallReport.At
 
   final case class Stall(
       slug: Stall.Slug,
@@ -187,7 +187,7 @@ object Stalls:
         _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent manager ${f.paused.head} resume")
       )
     else
-      waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked") && w.why.startsWith("budget")).orElse(waitOf(_.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("budget"))) match
+      waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked") && w.why.startsWith("budget")).orElse(waitOf((refactorCallback => _root_.com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult(refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("budget"))))) match
         case Some(w) =>
           (
             _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Budget),
@@ -195,7 +195,7 @@ object Stalls:
             _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
           )
         case None =>
-          waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked") && w.why.startsWith("starved")).orElse(waitOf(_.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("pool"))) match
+          waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked") && w.why.startsWith("starved")).orElse(waitOf((refactorCallback => _root_.com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult(refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("pool"))))) match
             case Some(w) =>
               (
                 _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Quota),
@@ -203,7 +203,7 @@ object Stalls:
                 _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models")
               )
             case None =>
-              waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("capacity")) match
+              waitOf(w => _root_.com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult(w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("capacity"))) match
                 case Some(w) =>
                   (
                     _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Queue),
@@ -211,7 +211,7 @@ object Stalls:
                     _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs")
                   )
                 case None =>
-                  waitOf(_.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked")) match
+                  waitOf((refactorCallback => _root_.com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult(refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked")))) match
                     case Some(w) =>
                       (
                         _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Blocked),

@@ -85,12 +85,12 @@ object PlacesInput:
   object PreviewAsOfYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RememberId = RememberId.T
   object RememberId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RememberLabel = RememberLabel.T
-  object RememberLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RememberKind = RememberKind.T
-  object RememberKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RememberContested = RememberContested.T
-  object RememberContested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RememberLabel = _root_.com.histmersion.web.PlacesInput.KnownPlace.Label
+  val RememberLabel: _root_.com.histmersion.web.PlacesInput.KnownPlace.Label.type = _root_.com.histmersion.web.PlacesInput.KnownPlace.Label
+  type RememberKind = _root_.com.histmersion.web.PlacesInput.KnownPlace.Kind
+  val RememberKind: _root_.com.histmersion.web.PlacesInput.KnownPlace.Kind.type = _root_.com.histmersion.web.PlacesInput.KnownPlace.Kind
+  type RememberContested = _root_.com.histmersion.web.PlacesInput.KnownPlace.Contested
+  val RememberContested: _root_.com.histmersion.web.PlacesInput.KnownPlace.Contested.type = _root_.com.histmersion.web.PlacesInput.KnownPlace.Contested
   type ToggleFromMapResult = ToggleFromMapResult.T
   object ToggleFromMapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToggleFromMapId = ToggleFromMapId.T

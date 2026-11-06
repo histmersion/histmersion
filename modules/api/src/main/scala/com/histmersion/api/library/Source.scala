@@ -656,8 +656,8 @@ object Source:
     object AllocateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ToFindingResultPart1 = ToFindingResultPart1.T
     object ToFindingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ToFindingId = ToFindingId.T
-    object ToFindingId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ToFindingId = _root_.com.histmersion.api.library.Finding.Id
+    val ToFindingId: _root_.com.histmersion.api.library.Finding.Id.type = _root_.com.histmersion.api.library.Finding.Id
     type ConfidenceOfResultPart1 = ConfidenceOfResultPart1.T
     object ConfidenceOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ConfidenceOfRaw = ConfidenceOfRaw.T

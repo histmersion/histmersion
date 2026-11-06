@@ -24,14 +24,14 @@ object ItemRef:
   object ReadableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceCk = SourceCk.T
   object SourceCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceTitle = SourceTitle.T
-  object SourceTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceTitle = _root_.com.histmersion.web.marks.ItemRef.Title
+  val SourceTitle: _root_.com.histmersion.web.marks.ItemRef.Title.type = _root_.com.histmersion.web.marks.ItemRef.Title
   type ArticleSlug = ArticleSlug.T
   object ArticleSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleTitle = ArticleTitle.T
-  object ArticleTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfTitle = OfTitle.T
-  object OfTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleTitle = _root_.com.histmersion.web.marks.ItemRef.Title
+  val ArticleTitle: _root_.com.histmersion.web.marks.ItemRef.Title.type = _root_.com.histmersion.web.marks.ItemRef.Title
+  type OfTitle = _root_.com.histmersion.web.marks.ItemRef.Title
+  val OfTitle: _root_.com.histmersion.web.marks.ItemRef.Title.type = _root_.com.histmersion.web.marks.ItemRef.Title
   type PageResult = PageResult.T
   object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BackResult = BackResult.T

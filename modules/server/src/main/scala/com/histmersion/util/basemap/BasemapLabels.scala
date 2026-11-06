@@ -174,8 +174,8 @@ object BasemapLabels:
   object WriteResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WriteResultPart2 = WriteResultPart2.T
   object WriteResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteMaxZoom = WriteMaxZoom.T
-  object WriteMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteMaxZoom = _root_.com.histmersion.util.basemap.PmTiles.Header.MaxZoom
+  val WriteMaxZoom: _root_.com.histmersion.util.basemap.PmTiles.Header.MaxZoom.type = _root_.com.histmersion.util.basemap.PmTiles.Header.MaxZoom
 
   final case class Label(
       kind: Label.Kind,

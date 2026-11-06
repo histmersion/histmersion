@@ -427,13 +427,13 @@ object ImportService:
     object CommonsCategoryCategory extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CommonsCategoryQid = CommonsCategoryQid.T
     object CommonsCategoryQid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CheckedProvider = CheckedProvider.T
-    object CheckedProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CheckedTargetType = CheckedTargetType.T
-    object CheckedTargetType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CheckedTargetId = CheckedTargetId.T
-    object CheckedTargetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CheckedFound = CheckedFound.T
-    object CheckedFound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CheckedQid = CheckedQid.T
-    object CheckedQid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CheckedProvider = _root_.com.histmersion.domain.media.imports.HeldCheck.Provider
+    val CheckedProvider: _root_.com.histmersion.domain.media.imports.HeldCheck.Provider.type = _root_.com.histmersion.domain.media.imports.HeldCheck.Provider
+    type CheckedTargetType = _root_.com.histmersion.domain.media.imports.HeldCheck.TargetType
+    val CheckedTargetType: _root_.com.histmersion.domain.media.imports.HeldCheck.TargetType.type = _root_.com.histmersion.domain.media.imports.HeldCheck.TargetType
+    type CheckedTargetId = _root_.com.histmersion.domain.media.imports.HeldCheck.TargetId
+    val CheckedTargetId: _root_.com.histmersion.domain.media.imports.HeldCheck.TargetId.type = _root_.com.histmersion.domain.media.imports.HeldCheck.TargetId
+    type CheckedFound = _root_.com.histmersion.domain.media.imports.HeldCheck.Found
+    val CheckedFound: _root_.com.histmersion.domain.media.imports.HeldCheck.Found.type = _root_.com.histmersion.domain.media.imports.HeldCheck.Found
+    type CheckedQid = _root_.com.histmersion.domain.media.imports.HeldCheck.Qid
+    val CheckedQid: _root_.com.histmersion.domain.media.imports.HeldCheck.Qid.type = _root_.com.histmersion.domain.media.imports.HeldCheck.Qid

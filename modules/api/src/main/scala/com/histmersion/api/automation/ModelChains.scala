@@ -251,8 +251,8 @@ object ModelChains:
     object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfResultPart1 = OfResultPart1.T
     object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfReservePct = OfReservePct.T
-    object OfReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfReservePct = _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct
+    val OfReservePct: _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct.type = _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct
 
     type ReservePct = ReservePct.T
     object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

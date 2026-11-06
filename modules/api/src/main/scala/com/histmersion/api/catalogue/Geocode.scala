@@ -66,8 +66,8 @@ object Geocode:
   object BroadKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TierOfResult = TierOfResult.T
   object TierOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TierOfImportSource = TierOfImportSource.T
-  object TierOfImportSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TierOfImportSource = _root_.com.histmersion.api.catalogue.Place.Match.ImportSource
+  val TierOfImportSource: _root_.com.histmersion.api.catalogue.Place.Match.ImportSource.type = _root_.com.histmersion.api.catalogue.Place.Match.ImportSource
   type IsPlaceholderResult = IsPlaceholderResult.T
   object IsPlaceholderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsPlaceholderPlaceholderMin = IsPlaceholderPlaceholderMin.T
@@ -82,8 +82,8 @@ object Geocode:
   object TimeRankResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RankPlaceholderMin = RankPlaceholderMin.T
   object RankPlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChooseAsked = ChooseAsked.T
-  object ChooseAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChooseAsked = _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked
+  val ChooseAsked: _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked.type = _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked
   type ChoosePlaceholderMin = ChoosePlaceholderMin.T
   object ChoosePlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DistanceKmResult = DistanceKmResult.T

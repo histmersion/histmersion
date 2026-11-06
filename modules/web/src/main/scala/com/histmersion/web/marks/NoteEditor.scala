@@ -16,8 +16,8 @@ object NoteEditor:
 
   type IsOpenResult = IsOpenResult.T
   object IsOpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteTitle = WriteTitle.T
-  object WriteTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteTitle = _root_.com.histmersion.web.marks.NoteEditor.Session.Title
+  val WriteTitle: _root_.com.histmersion.web.marks.NoteEditor.Session.Title.type = _root_.com.histmersion.web.marks.NoteEditor.Session.Title
 
   final private case class Session(target: Target, title: Session.Title, note: Option[Note], back: Option[dom.HTMLElement])
 

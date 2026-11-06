@@ -1141,13 +1141,13 @@ object Place:
     object PeopleNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def isArea(kind: com.histmersion.api.catalogue.Place.Shape.IsAreaKind): com.histmersion.api.catalogue.Place.Shape.IsAreaResult =
-      kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Polity)
+      _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Polity))
 
     def pointOnlyArea(kind: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind, hasBoundary: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary): com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult = isArea(kind) && !hasBoundary
 
     val NoBoundaryNote: com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote = "point only — boundary not yet available"
 
-    def isPeople(kind: com.histmersion.api.catalogue.Place.Shape.IsPeopleKind): com.histmersion.api.catalogue.Place.Shape.IsPeopleResult = kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleKind(com.histmersion.api.catalogue.Place.Kind.People)
+    def isPeople(kind: com.histmersion.api.catalogue.Place.Shape.IsPeopleKind): com.histmersion.api.catalogue.Place.Shape.IsPeopleResult = _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleResult(kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleKind(com.histmersion.api.catalogue.Place.Kind.People))
 
     val PeopleNote: com.histmersion.api.catalogue.Place.Shape.PeopleNote = _root_.com.histmersion.api.catalogue.Place.Shape.PeopleNote("a people or tribe — placed at a representative point, not an area")
 

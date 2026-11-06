@@ -39,10 +39,10 @@ object Sql:
   object WrapPre extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WrapPost = WrapPost.T
   object WrapPost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RawText = RawText.T
-  object RawText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfText = OfText.T
-  object OfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RawText = _root_.com.histmersion.util.database.Sql.Text
+  val RawText: _root_.com.histmersion.util.database.Sql.Text.type = _root_.com.histmersion.util.database.Sql.Text
+  type OfText = _root_.com.histmersion.util.database.Sql.Text
+  val OfText: _root_.com.histmersion.util.database.Sql.Text.type = _root_.com.histmersion.util.database.Sql.Text
   type BindResult = BindResult.T
   object BindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BindPos = BindPos.T

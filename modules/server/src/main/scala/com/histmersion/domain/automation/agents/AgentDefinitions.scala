@@ -75,8 +75,8 @@ object AgentDefinitions:
   object ParseMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseSkillResultPart1 = ParseSkillResultPart1.T
   object ParseSkillResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseSkillName = ParseSkillName.T
-  object ParseSkillName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseSkillName = _root_.com.histmersion.domain.automation.agents.SkillDef.Name
+  val ParseSkillName: _root_.com.histmersion.domain.automation.agents.SkillDef.Name.type = _root_.com.histmersion.domain.automation.agents.SkillDef.Name
   type ParseSkillMd = ParseSkillMd.T
   object ParseSkillMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SystemResultPart1 = SystemResultPart1.T

@@ -31,8 +31,8 @@ final class ScriptedAiHttp(answers: Either[String, AiHttp.Response]*) extends Ai
 object ScriptedAiHttp:
   type PostResultPart1 = PostResultPart1.T
   object PostResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PostUrl = PostUrl.T
-  object PostUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PostUrl = _root_.com.histmersion.plugin.testkit.AiHttpRequest.Url
+  val PostUrl: _root_.com.histmersion.plugin.testkit.AiHttpRequest.Url.type = _root_.com.histmersion.plugin.testkit.AiHttpRequest.Url
   type PostHeadersPart1 = PostHeadersPart1.T
   object PostHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PostHeadersPart2 = PostHeadersPart2.T
@@ -43,8 +43,8 @@ object ScriptedAiHttp:
   object PostTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetResultPart1 = GetResultPart1.T
   object GetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GetUrl = GetUrl.T
-  object GetUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GetUrl = _root_.com.histmersion.plugin.testkit.AiHttpRequest.Url
+  val GetUrl: _root_.com.histmersion.plugin.testkit.AiHttpRequest.Url.type = _root_.com.histmersion.plugin.testkit.AiHttpRequest.Url
   type GetHeadersPart1 = GetHeadersPart1.T
   object GetHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetHeadersPart2 = GetHeadersPart2.T

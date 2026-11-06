@@ -999,12 +999,12 @@ object ManagerService:
     object ItemsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreateResult = CreateResult.T
     object CreateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CreateId = CreateId.T
-    object CreateId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CreateGoal = CreateGoal.T
-    object CreateGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CreateCron = CreateCron.T
-    object CreateCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CreateId = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Id
+    val CreateId: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Id.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Id
+    type CreateGoal = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Goal
+    val CreateGoal: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Goal.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Goal
+    type CreateCron = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Cron
+    val CreateCron: _root_.com.histmersion.domain.automation.managers.ManagerRecord.Cron.type = _root_.com.histmersion.domain.automation.managers.ManagerRecord.Cron
     type ChangeManagerResult = ChangeManagerResult.T
     object ChangeManagerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ChangeManagerId = ChangeManagerId.T
@@ -1025,14 +1025,14 @@ object ManagerService:
     object UpsertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpsertResultPart2 = UpsertResultPart2.T
     object UpsertResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpsertManagerId = UpsertManagerId.T
-    object UpsertManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpsertKind = UpsertKind.T
-    object UpsertKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpsertTarget = UpsertTarget.T
-    object UpsertTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpsertPriority = UpsertPriority.T
-    object UpsertPriority extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UpsertManagerId = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.ManagerId
+    val UpsertManagerId: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.ManagerId.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.ManagerId
+    type UpsertKind = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Kind
+    val UpsertKind: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Kind.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Kind
+    type UpsertTarget = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Target
+    val UpsertTarget: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Target.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Target
+    type UpsertPriority = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Priority
+    val UpsertPriority: _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Priority.type = _root_.com.histmersion.domain.automation.managers.ManagerItemRecord.Priority
     type UpsertReopen = UpsertReopen.T
     object UpsertReopen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ItemId = ItemId.T
@@ -1061,12 +1061,12 @@ object ManagerService:
     object OpenOfStatuses extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OpenOfFocusHeld = OpenOfFocusHeld.T
     object OpenOfFocusHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EventManagerId = EventManagerId.T
-    object EventManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EventItemId = EventItemId.T
-    object EventItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EventKind = EventKind.T
-    object EventKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EventManagerId = _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.ManagerId
+    val EventManagerId: _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.ManagerId.type = _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.ManagerId
+    type EventItemId = _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.ItemId
+    val EventItemId: _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.ItemId.type = _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.ItemId
+    type EventKind = _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.Kind
+    val EventKind: _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.Kind.type = _root_.com.histmersion.domain.automation.managers.ManagerEventRecord.Kind
     type EventText = EventText.T
     object EventText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LastEventOfManagerId = LastEventOfManagerId.T

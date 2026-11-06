@@ -6,14 +6,14 @@ package com.histmersion.domain
 final case class Attribution(licence: Licence, licenceUrl: Option[Attribution.LicenceUrl], author: Option[Attribution.Author], credit: Attribution.Credit)
 
 object Attribution:
-  type Cc0Author = Cc0Author.T
-  object Cc0Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Cc0Credit = Cc0Credit.T
-  object Cc0Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PublicDomainAuthor = PublicDomainAuthor.T
-  object PublicDomainAuthor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PublicDomainCredit = PublicDomainCredit.T
-  object PublicDomainCredit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Cc0Author = _root_.com.histmersion.domain.Attribution.Author
+  val Cc0Author: _root_.com.histmersion.domain.Attribution.Author.type = _root_.com.histmersion.domain.Attribution.Author
+  type Cc0Credit = _root_.com.histmersion.domain.Attribution.Credit
+  val Cc0Credit: _root_.com.histmersion.domain.Attribution.Credit.type = _root_.com.histmersion.domain.Attribution.Credit
+  type PublicDomainAuthor = _root_.com.histmersion.domain.Attribution.Author
+  val PublicDomainAuthor: _root_.com.histmersion.domain.Attribution.Author.type = _root_.com.histmersion.domain.Attribution.Author
+  type PublicDomainCredit = _root_.com.histmersion.domain.Attribution.Credit
+  val PublicDomainCredit: _root_.com.histmersion.domain.Attribution.Credit.type = _root_.com.histmersion.domain.Attribution.Credit
   type PublicDomainUrl = PublicDomainUrl.T
   object PublicDomainUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

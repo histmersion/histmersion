@@ -14,8 +14,8 @@ object Write:
   object BlankToNoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BlankToNoneV = BlankToNoneV.T
   object BlankToNoneV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InvalidMessage = InvalidMessage.T
-  object InvalidMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InvalidMessage = _root_.com.histmersion.api.Api.Error.Message
+  val InvalidMessage: _root_.com.histmersion.api.Api.Error.Message.type = _root_.com.histmersion.api.Api.Error.Message
   type NotFoundCitekey = NotFoundCitekey.T
   object NotFoundCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyListResult = ApplyListResult.T

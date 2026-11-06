@@ -616,18 +616,18 @@ object Api:
   )
 
   object AggregateQuery:
-    type TimeUnit = TimeUnit.T
-    object TimeUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TimeUnit = _root_.com.histmersion.api.Api.AggregateQuery.Unit
+    val TimeUnit: _root_.com.histmersion.api.Api.AggregateQuery.Unit.type = _root_.com.histmersion.api.Api.AggregateQuery.Unit
     type TreeBy = TreeBy.T
     object TreeBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TreeUnit = TreeUnit.T
-    object TreeUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TreeUnit = _root_.com.histmersion.api.Api.AggregateQuery.Unit
+    val TreeUnit: _root_.com.histmersion.api.Api.AggregateQuery.Unit.type = _root_.com.histmersion.api.Api.AggregateQuery.Unit
     type TreeDepth = TreeDepth.T
     object TreeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TreeAsOf = TreeAsOf.T
-    object TreeAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TreeSamples = TreeSamples.T
-    object TreeSamples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type TreeAsOf = _root_.com.histmersion.api.Api.AggregateQuery.AsOf
+    val TreeAsOf: _root_.com.histmersion.api.Api.AggregateQuery.AsOf.type = _root_.com.histmersion.api.Api.AggregateQuery.AsOf
+    type TreeSamples = _root_.com.histmersion.api.Api.AggregateQuery.Samples
+    val TreeSamples: _root_.com.histmersion.api.Api.AggregateQuery.Samples.type = _root_.com.histmersion.api.Api.AggregateQuery.Samples
 
     type By = By.T
     object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

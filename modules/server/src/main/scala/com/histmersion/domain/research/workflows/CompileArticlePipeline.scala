@@ -361,8 +361,8 @@ object CompileArticlePipeline:
   object CompileResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SnapshotResultPart1 = SnapshotResultPart1.T
   object SnapshotResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnapshotSlug = SnapshotSlug.T
-  object SnapshotSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotSlug = _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug
+  val SnapshotSlug: _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug.type = _root_.com.histmersion.domain.research.workflows.CompileArticlePipeline.Snap.Slug
   type IsCitekeyResult = IsCitekeyResult.T
   object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IsCitekeyCk = IsCitekeyCk.T

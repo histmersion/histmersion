@@ -77,8 +77,8 @@ object MarkdownLint:
   object LookupsTexts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolvingLinksArg1 = ResolvingLinksArg1.T
   object ResolvingLinksArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolvingArticle = ResolvingArticle.T
-  object ResolvingArticle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolvingArticle = _root_.com.histmersion.server.MarkdownLint.Context.Article
+  val ResolvingArticle: _root_.com.histmersion.server.MarkdownLint.Context.Article.type = _root_.com.histmersion.server.MarkdownLint.Context.Article
   type OfArticleBody = OfArticleBody.T
   object OfArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfArticleSummary = OfArticleSummary.T

@@ -68,28 +68,28 @@ object ReviewLedger:
   object AbsorbRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AbsorbRound = AbsorbRound.T
   object AbsorbRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyChecksRun = ApplyChecksRun.T
-  object ApplyChecksRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyChecksRound = ApplyChecksRound.T
-  object ApplyChecksRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecheckMechanicalRun = RecheckMechanicalRun.T
-  object RecheckMechanicalRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecheckMechanicalRound = RecheckMechanicalRound.T
-  object RecheckMechanicalRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecheckTermCountRun = RecheckTermCountRun.T
-  object RecheckTermCountRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecheckTermCountRound = RecheckTermCountRound.T
-  object RecheckTermCountRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyFixRun = ApplyFixRun.T
-  object ApplyFixRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyFixRound = ApplyFixRound.T
-  object ApplyFixRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyChecksRun = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  val ApplyChecksRun: _root_.com.histmersion.domain.ReviewLedger.Closure.Run.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  type ApplyChecksRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  val ApplyChecksRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  type RecheckMechanicalRun = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  val RecheckMechanicalRun: _root_.com.histmersion.domain.ReviewLedger.Closure.Run.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  type RecheckMechanicalRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  val RecheckMechanicalRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  type RecheckTermCountRun = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  val RecheckTermCountRun: _root_.com.histmersion.domain.ReviewLedger.Closure.Run.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  type RecheckTermCountRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  val RecheckTermCountRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  type ApplyFixRun = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  val ApplyFixRun: _root_.com.histmersion.domain.ReviewLedger.Closure.Run.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  type ApplyFixRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  val ApplyFixRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
   type LearnTexts = LearnTexts.T
   object LearnTexts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LearnRun = LearnRun.T
-  object LearnRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LearnRound = LearnRound.T
-  object LearnRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LearnRun = _root_.com.histmersion.domain.ReviewLedger.Lesson.Run
+  val LearnRun: _root_.com.histmersion.domain.ReviewLedger.Lesson.Run.type = _root_.com.histmersion.domain.ReviewLedger.Lesson.Run
+  type LearnRound = _root_.com.histmersion.domain.ReviewLedger.Lesson.Round
+  val LearnRound: _root_.com.histmersion.domain.ReviewLedger.Lesson.Round.type = _root_.com.histmersion.domain.ReviewLedger.Lesson.Round
   type ApplyRecheckRun = ApplyRecheckRun.T
   object ApplyRecheckRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ApplyRecheckRound = ApplyRecheckRound.T

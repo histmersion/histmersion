@@ -85,10 +85,10 @@ object Paging:
     object OfState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfLast = OfLast.T
     object OfLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FilteredCountsPart1 = FilteredCountsPart1.T
-    object FilteredCountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FilteredCountsPart2 = FilteredCountsPart2.T
-    object FilteredCountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FilteredCountsPart1 = _root_.com.histmersion.api.Paging.Page.CountsPart1
+    val FilteredCountsPart1: _root_.com.histmersion.api.Paging.Page.CountsPart1.type = _root_.com.histmersion.api.Paging.Page.CountsPart1
+    type FilteredCountsPart2 = _root_.com.histmersion.api.Paging.Page.CountsPart2
+    val FilteredCountsPart2: _root_.com.histmersion.api.Paging.Page.CountsPart2.type = _root_.com.histmersion.api.Paging.Page.CountsPart2
     type FilteredStates = FilteredStates.T
     object FilteredStates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FilteredLast = FilteredLast.T

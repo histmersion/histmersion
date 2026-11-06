@@ -76,10 +76,10 @@ object GoalsView:
   object NewAreaNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NewAreaTags = NewAreaTags.T
   object NewAreaTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaPlan = NewAreaPlan.T
-  object NewAreaPlan extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NewAreaSeed = NewAreaSeed.T
-  object NewAreaSeed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NewAreaPlan = _root_.com.histmersion.web.GoalsView.NewArea.Plan
+  val NewAreaPlan: _root_.com.histmersion.web.GoalsView.NewArea.Plan.type = _root_.com.histmersion.web.GoalsView.NewArea.Plan
+  type NewAreaSeed = _root_.com.histmersion.web.GoalsView.NewArea.Seed
+  val NewAreaSeed: _root_.com.histmersion.web.GoalsView.NewArea.Seed.type = _root_.com.histmersion.web.GoalsView.NewArea.Seed
   type NewAreaWatch = NewAreaWatch.T
   object NewAreaWatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NewAreaAutoIngest = NewAreaAutoIngest.T

@@ -49,12 +49,12 @@ object PeriodsControllers:
   object PeriodId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchQ = SearchQ.T
   object SearchQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchRegion = SearchRegion.T
-  object SearchRegion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchFrom = SearchFrom.T
-  object SearchFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchTo = SearchTo.T
-  object SearchTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchRegion = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.Region
+  val SearchRegion: _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.Region.type = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.Region
+  type SearchFrom = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.From
+  val SearchFrom: _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.From.type = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.From
+  type SearchTo = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.To
+  val SearchTo: _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.To.type = _root_.com.histmersion.domain.catalogue.periods.PeriodSearch.To
   type SeedReplace = SeedReplace.T
   object SeedReplace extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ImportDatasetCollections = ImportDatasetCollections.T

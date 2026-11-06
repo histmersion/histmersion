@@ -1,6 +1,10 @@
 package consolidationfixture
 
 object Contract:
+  summon[Forward.Builders.MakeTitle =:= Forward.Item.Title]
+  summon[Forward.Builders.MakeCount =:= Forward.Item.Count]
+  summon[Forward.Builders.NamedTitle =:= Forward.Item.Title]
+  summon[Forward.Builders.NamedCount =:= Forward.Item.Count]
   summon[Client.Seconds =:= Shared.Seconds]
   summon[Run.Step.Seconds =:= Run.Seconds]
   summon[Run.Summary.Seconds =:= Run.Seconds]
@@ -9,6 +13,10 @@ object Contract:
   summon[scala.util.NotGiven[Run.OtherUnit.Milliseconds =:= Run.Seconds]]
 
   @main def verifyConsolidation(): Unit =
+    val made = Forward.Builders.make(Forward.Builders.MakeTitle("first"), Forward.Builders.MakeCount(7))
+    assert(made.title.value == "first" && made.count.value == 7)
+    val named = Forward.Builders.named(Forward.Builders.NamedTitle("second"), Forward.Builders.NamedCount(9))
+    assert(named.title.value == "second" && named.count.value == 9)
     val shared: Shared.Seconds = Client.Seconds(13L)
     assert(shared.value == 13L)
     assert(Client.Seconds.either(17L).map(_.value) == Right(17L))

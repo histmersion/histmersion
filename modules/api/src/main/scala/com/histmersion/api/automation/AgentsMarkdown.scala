@@ -564,7 +564,7 @@ object AgentsMarkdown:
     else _root_.com.histmersion.api.automation.AgentsMarkdown.PaidResult(plan.mkString(", "))
 
   private def ratio(n: com.histmersion.api.automation.AgentsMarkdown.RatioN, of: com.histmersion.api.automation.AgentsMarkdown.RatioOf): com.histmersion.api.automation.AgentsMarkdown.RatioResult =
-    if of == _root_.com.histmersion.api.automation.AgentsMarkdown.RatioOf(0) then _root_.com.histmersion.api.automation.AgentsMarkdown.RatioResult("—") else s"$n/$of (${BigDecimal(((100.0 * (n).value / of).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
+    if of == _root_.com.histmersion.api.automation.AgentsMarkdown.RatioOf(0) then _root_.com.histmersion.api.automation.AgentsMarkdown.RatioResult("—") else s"$n/$of (${BigDecimal(((100.0 * (n).value / (of).value).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
   def compare(c: RunCompare.Comparison): com.histmersion.api.automation.AgentsMarkdown.CompareResult =
     import RunCompare.*

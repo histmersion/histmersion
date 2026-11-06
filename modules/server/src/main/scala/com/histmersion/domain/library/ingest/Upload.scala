@@ -9,8 +9,8 @@ final case class Upload(name: Upload.Name, size: Upload.Size, bytes: ByteSource)
 
 object Upload:
   /** The file the HTTP layer streamed a request body into, where it put it. */
-  type InlineName = InlineName.T
-  object InlineName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InlineName = _root_.com.histmersion.domain.library.ingest.Upload.Name
+  val InlineName: _root_.com.histmersion.domain.library.ingest.Upload.Name.type = _root_.com.histmersion.domain.library.ingest.Upload.Name
   type InlineBytes = InlineBytes.T
   object InlineBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 

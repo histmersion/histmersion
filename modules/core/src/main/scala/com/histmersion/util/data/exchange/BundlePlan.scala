@@ -53,8 +53,8 @@ object BundlePlan:
   object EntityLocalizedRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TombstoneOwnBundle = TombstoneOwnBundle.T
   object TombstoneOwnBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerAfterForeignRev = LedgerAfterForeignRev.T
-  object LedgerAfterForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgerAfterForeignRev = _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
+  val LedgerAfterForeignRev: _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev.type = _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
   type LedgerAfterTombstone = LedgerAfterTombstone.T
   object LedgerAfterTombstone extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LedgerAfterLocalizedRev = LedgerAfterLocalizedRev.T

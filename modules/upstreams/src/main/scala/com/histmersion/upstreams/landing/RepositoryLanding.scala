@@ -237,13 +237,13 @@ object RepositoryLanding:
     * (`pure` is not `purepharma`, `press` is not `pressreader`).
     */
   def wordLabel(label: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelLabel, w: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelW): com.histmersion.upstreams.landing.RepositoryLanding.WordLabelResult =
-    (w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith(w)) ||
+    (w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
       (label.startsWith(w) && label.length > w.length && { val c = label.charAt(w.length); c == '-' || c.isDigit }))
 
   /** A host entry matches the host itself or any subdomain of it. */
   def matchesHost(host: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost, entry: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostEntry): com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostResult =
     val e = (entry).value.trim.toLowerCase.stripPrefix(".")
-    e.nonEmpty && (host == _root_.com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost(e) || (host).value.endsWith("." + e))
+    _root_.com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostResult(e.nonEmpty && (host == _root_.com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost(e) || (host).value.endsWith("." + e)))
 
   /** Pure: the lower-case host of an absolute http(s) URL. */
   /** The host of `url` when it is one of `hosts` or a subdomain of one. */

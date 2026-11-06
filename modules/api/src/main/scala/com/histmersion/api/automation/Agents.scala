@@ -59,7 +59,7 @@ object Agents:
     def total: com.histmersion.api.automation.Agents.Usage.TotalResult = _root_.com.histmersion.api.automation.Agents.Usage.TotalResult((input).value + (output).value)
 
     def budgeted(cacheReadWeight: com.histmersion.api.automation.Agents.Usage.BudgetedCacheReadWeight): com.histmersion.api.automation.Agents.Usage.BudgetedResult =
-      math.max(0L, (input).value - (cacheRead).value) + output + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
+      math.max(0L, (input).value - (cacheRead).value) + (output).value + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
 
   object Usage:
     type TotalResult = TotalResult.T

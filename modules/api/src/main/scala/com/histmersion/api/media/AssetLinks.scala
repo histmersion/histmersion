@@ -158,7 +158,7 @@ object AssetLinks:
       if !l.startsWith("#") then false
       else
         val text = flatten(_root_.com.histmersion.api.media.AssetLinks.FlattenS(l.dropWhile(_ == '#')))
-        (text).value.nonEmpty && (BoilerplateHeading.matches(text) || (want.nonEmpty && text == want))
+        (text).value.nonEmpty && (BoilerplateHeading.matches((text).value) || (want.nonEmpty && text == want))
     }
     _root_.com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsResult(kept.mkString("\n"))
 

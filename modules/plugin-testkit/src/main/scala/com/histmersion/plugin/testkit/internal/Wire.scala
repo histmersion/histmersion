@@ -274,8 +274,8 @@ private[testkit] object Wire:
   object RequestsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnrecordedResult = UnrecordedResult.T
   object UnrecordedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordUrl = RecordUrl.T
-  object RecordUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordUrl = _root_.com.histmersion.plugin.testkit.internal.RecordedExchange.Url
+  val RecordUrl: _root_.com.histmersion.plugin.testkit.internal.RecordedExchange.Url.type = _root_.com.histmersion.plugin.testkit.internal.RecordedExchange.Url
   type RecordAnswerPart1 = RecordAnswerPart1.T
   object RecordAnswerPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReplayResultPart1 = ReplayResultPart1.T

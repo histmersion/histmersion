@@ -26,14 +26,14 @@ object MergeApplyJob:
   object InterruptedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfId = OfId.T
   object OfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfBundle = OfBundle.T
-  object OfBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfPlanHash = OfPlanHash.T
-  object OfPlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfElapsedMs = OfElapsedMs.T
-  object OfElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfError = OfError.T
-  object OfError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfBundle = _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle
+  val OfBundle: _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle.type = _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle
+  type OfPlanHash = _root_.com.histmersion.api.exchange.MergeApplyJob.PlanHash
+  val OfPlanHash: _root_.com.histmersion.api.exchange.MergeApplyJob.PlanHash.type = _root_.com.histmersion.api.exchange.MergeApplyJob.PlanHash
+  type OfElapsedMs = _root_.com.histmersion.api.exchange.MergeApplyJob.ElapsedMs
+  val OfElapsedMs: _root_.com.histmersion.api.exchange.MergeApplyJob.ElapsedMs.type = _root_.com.histmersion.api.exchange.MergeApplyJob.ElapsedMs
+  type OfError = _root_.com.histmersion.api.exchange.MergeApplyJob.Error
+  val OfError: _root_.com.histmersion.api.exchange.MergeApplyJob.Error.type = _root_.com.histmersion.api.exchange.MergeApplyJob.Error
 
   type Job = Job.T
   object Job extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

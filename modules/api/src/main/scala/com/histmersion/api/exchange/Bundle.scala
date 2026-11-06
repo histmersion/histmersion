@@ -865,7 +865,7 @@ object Bundle:
       held: KindCounts.Held = _root_.com.histmersion.api.exchange.Bundle.KindCounts.Held(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = (inserted).value + (updated).value + deleted
+    def changed: com.histmersion.api.exchange.Bundle.KindCounts.ChangedResult = (inserted).value + (updated).value + (deleted).value
 
   object KindCounts:
     type ChangedResult = ChangedResult.T

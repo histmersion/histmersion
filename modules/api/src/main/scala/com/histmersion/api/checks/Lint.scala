@@ -344,7 +344,7 @@ object Lint:
           else None
         }
         .toList
-      scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take(max)
+      scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take((max).value)
 
   def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget): com.histmersion.api.checks.Lint.LooksLikeCitekeyResult = """\d{4}""".r.findFirstIn(target).isDefined
 
@@ -437,7 +437,7 @@ object Lint:
 
   def isListLeadIn(text: com.histmersion.api.checks.Lint.IsListLeadInText): com.histmersion.api.checks.Lint.IsListLeadInResult =
     val t = (text).value.trim
-    t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(_root_.com.histmersion.api.checks.Lint.SentenceCountText(t)) == _root_.com.histmersion.api.checks.Lint.SentenceCountResult(1)
+    _root_.com.histmersion.api.checks.Lint.IsListLeadInResult(t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(_root_.com.histmersion.api.checks.Lint.SentenceCountText(t)) == _root_.com.histmersion.api.checks.Lint.SentenceCountResult(1))
 
   def extractParagraphs(body: com.histmersion.api.checks.Lint.ExtractParagraphsBody): List[com.histmersion.api.checks.Lint.ExtractParagraphsResult] =
     val lines = (body).value.linesIterator.toList

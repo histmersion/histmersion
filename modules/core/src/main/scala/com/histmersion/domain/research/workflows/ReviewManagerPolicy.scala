@@ -126,8 +126,8 @@ object ReviewManagerPolicy:
 
   object ReviewFacts:
     /** The facts of `l`, with the checklist's open pairs counted by the caller. */
-    type OfOpenPairs = OfOpenPairs.T
-    object OfOpenPairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfOpenPairs = _root_.com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenPairs
+    val OfOpenPairs: _root_.com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenPairs.type = _root_.com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.OpenPairs
 
     type OpenMajors = OpenMajors.T
     object OpenMajors extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

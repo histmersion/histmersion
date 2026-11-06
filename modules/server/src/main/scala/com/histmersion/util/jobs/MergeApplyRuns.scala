@@ -111,10 +111,10 @@ object MergeApplyRuns:
     object RunningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type StartResult = StartResult.T
     object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartBundle = StartBundle.T
-    object StartBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type StartPlanHash = StartPlanHash.T
-    object StartPlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartBundle = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle
+    val StartBundle: _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle.type = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.Bundle
+    type StartPlanHash = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash
+    val StartPlanHash: _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash.type = _root_.com.histmersion.util.jobs.MergeApplyRuns.Run.PlanHash
     type FinishId = FinishId.T
     object FinishId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FinishOutcomePart1 = FinishOutcomePart1.T

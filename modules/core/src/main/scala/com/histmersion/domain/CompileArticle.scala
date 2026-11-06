@@ -42,8 +42,8 @@ object CompileArticle:
   object CheckExtractLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DisagreementKinds = DisagreementKinds.T
   object DisagreementKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EvidenceFilter = EvidenceFilter.T
-  object EvidenceFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EvidenceFilter = _root_.com.histmersion.domain.CompileArticle.Evidence.Filter
+  val EvidenceFilter: _root_.com.histmersion.domain.CompileArticle.Evidence.Filter.type = _root_.com.histmersion.domain.CompileArticle.Evidence.Filter
   type EvidenceTextResult = EvidenceTextResult.T
   object EvidenceTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BlocksResult = BlocksResult.T

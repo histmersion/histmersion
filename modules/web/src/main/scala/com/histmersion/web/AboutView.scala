@@ -20,8 +20,8 @@ object AboutView:
   /** One line of the panel. `state` marks a health check with its badge; `depth` > 0 is a location inside the one above
     * it (the Storage section); `href` makes the value a link.
     */
-  type CheckLabel = CheckLabel.T
-  object CheckLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckLabel = _root_.com.histmersion.web.AboutView.Row.Label
+  val CheckLabel: _root_.com.histmersion.web.AboutView.Row.Label.type = _root_.com.histmersion.web.AboutView.Row.Label
   type CheckText = CheckText.T
   object CheckText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
