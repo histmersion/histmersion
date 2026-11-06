@@ -19,8 +19,8 @@ object AgentsMarkdown:
   import Agents.*
 
   def usd(d: Double): String =
-    val scale = if d != 0 && math.abs((d).value) < 0.0001 then 6 else 4
-    (BigDecimal((d).value).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString)
+    val scale = if d != 0 && math.abs((d)) < 0.0001 then 6 else 4
+    (BigDecimal((d)).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString)
 
   def callShape(firstCallTokens: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeFirstCallTokens], turns: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeTurns]): String =
     (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, _root_.com.histmersion.api.Plural.Noun.Singular("turn")))).mkString(" · ")
@@ -75,8 +75,8 @@ object AgentsMarkdown:
 
   private def amount(v: Double, m: ModelChains.Measure): String = m match
     case ModelChains.Measure.Tokens =>
-      ModelChains.Limit.compact(BigDecimal((v).value).setScale(0, BigDecimal.RoundingMode.HALF_UP))
-    case ModelChains.Measure.Usd => ((usd(((v).value))).value)
+      ModelChains.Limit.compact(BigDecimal((v)).setScale(0, BigDecimal.RoundingMode.HALF_UP))
+    case ModelChains.Measure.Usd => ((usd(((v)))).value)
 
   private def allowanceBlock(a: ModelChains.AllowanceStatus): String =
     val state = if ((a.usable) == _root_.com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(true)) then "has headroom"
@@ -89,16 +89,16 @@ object AgentsMarkdown:
     ((s"- `${a.target}` (${a.source}${if (a.reservePct).value > 0 then s", reserve ${a.reservePct}%" else ""}) — $state" +
       a.note.fold("")(n => s" · $n") :: limits).mkString("\n"))
 
-  def allowance(a: ModelChains.AllowanceStatus): String = ((allowanceBlock(a)).value)
+  def allowance(a: ModelChains.AllowanceStatus): String = ((allowanceBlock(a)))
 
   private def pct(d: Double): String =
-    (java.math.BigDecimal((d).value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString)
+    (java.math.BigDecimal((d)).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString)
 
   private def age(s: Long): String =
-    if (s).value < 120 then (s"$s s")
-    else if (s).value < 7200 then (s"${(s).value / 60} min")
-    else if (s).value < 172800 then (s"${(s).value / 3600} h")
-    else (s"${(s).value / 86400} d")
+    if (s) < 120 then (s"$s s")
+    else if (s) < 7200 then (s"${(s) / 60} min")
+    else if (s) < 172800 then (s"${(s) / 3600} h")
+    else (s"${(s) / 86400} d")
 
   def pool(p: PlanQuota.PoolStatus): String =
     val state =
@@ -211,7 +211,7 @@ object AgentsMarkdown:
 
   def runLine(r: RunInfo): String =
     val budget = s"${usd(r.costUsd)}/${usd(r.budgetUsd)} USD"
-    val opts = Option(options(r)).filter((_).value.nonEmpty).fold("")(o => s" ($o)")
+    val opts = Option(options(r)).filter((_).nonEmpty).fold("")(o => s" ($o)")
     val goal = r.goal.fold("")(g => s" · goal $g")
     s"${r.id} · ${r.status} · ${r.pipeline} ${r.target}$opts$goal · ${tokens(r.usage)} · $budget" +
       r.progress.filter(_.nonEmpty).fold("")(p => s" · $p") + r.error.filter(_.nonEmpty).fold("")(e => s" · $e")
@@ -224,7 +224,7 @@ object AgentsMarkdown:
   ): String =
     if rs.isEmpty then (status.fold("_No agent runs._")(s => s"_No $s agent runs._"))
     else
-      ("# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.Paging.Shown(rs.size), page, ("run"), (status).map(refactorValue15 => ((refactorValue15).value))) + facetLines(page, (RunFacets).map(refactorValue17 => { val refactorTuple14 = refactorValue17; (((refactorTuple14._1).value), ((refactorTuple14._2).value)) })) +
+      ("# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.Paging.Shown(rs.size), page, ("run"), (status).map(refactorValue15 => ((refactorValue15).value))) + facetLines(page, (RunFacets).map(refactorValue17 => { val refactorTuple14 = refactorValue17; (((refactorTuple14._1)), ((refactorTuple14._2))) })) +
         rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o"))
 
   private def pageLine(shown: com.histmersion.api.Paging.Shown, page: Paging.Page, singular: String, qualifier: Option[String]): String =
@@ -249,7 +249,7 @@ object AgentsMarkdown:
     val r = d.run
     val head = s"# Agent run ${r.id}${if ((r.dryRun) == _root_.com.histmersion.api.automation.Agents.RunInfo.DryRun(true)) then " (dry run)" else ""}\n\n" +
       s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
-      Option(options(r)).filter((_).value.nonEmpty).fold("")(o => s" · $o") + "\n" +
+      Option(options(r)).filter((_).nonEmpty).fold("")(o => s" · $o") + "\n" +
       s"- status: **${r.status}**${r.error.filter(_.nonEmpty).fold("")(e => s" — $e")}\n" +
       r.progress.filter(_.nonEmpty).fold("")(p => s"- last: $p\n") +
       s"- spent: ${tokens(r.usage)} · ${usd(r.costUsd)} of ${usd(r.budgetUsd)} USD · budget ${r.budgetTokens} tokens\n" +
@@ -265,7 +265,7 @@ object AgentsMarkdown:
               .mkString("; ")
             val shape = callShape(s.firstCallTokens, s.turns)
             s"| ${s.seq} | ${s.name} | ${s.kind} | ${s.attempt} | ${s.status} | ${s.modelText} | " +
-              s"${s.usage.input}/${s.usage.output}${if (shape).value.isEmpty then "" else s" · $shape"} | ${usd(s.costUsd)} | $note |"
+              s"${s.usage.input}/${s.usage.output}${if (shape).isEmpty then "" else s" · $shape"} | ${usd(s.costUsd)} | $note |"
           }
           .mkString("\n")
     val skipped = d.steps.filter(_.wouldWrite.nonEmpty)
@@ -280,7 +280,7 @@ object AgentsMarkdown:
           )
           .mkString("\n\n")
     val msgs =
-      if !(withMessages).value then ""
+      if !(withMessages) then ""
       else
         "\n\n## Messages\n\n" + d.messages
           .map { m =>
@@ -333,7 +333,7 @@ object AgentsMarkdown:
   ): String =
     if as.isEmpty then ("_No approvals._")
     else
-      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.Paging.Shown(as.size), page, ("approval"), (state).map(refactorValue16 => ((refactorValue16).value))) + facetLines(page, (ApprovalFacets).map(refactorValue2 => { val refactorTuple7 = refactorValue2; (((refactorTuple7._1).value), ((refactorTuple7._2).value)) })) + as
+      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.Paging.Shown(as.size), page, ("approval"), (state).map(refactorValue16 => ((refactorValue16).value))) + facetLines(page, (ApprovalFacets).map(refactorValue2 => { val refactorTuple7 = refactorValue2; (((refactorTuple7._1)), ((refactorTuple7._2))) })) + as
         .map { a =>
           val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
           val note = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
@@ -349,7 +349,7 @@ object AgentsMarkdown:
         }
         .mkString("\n") + older.fold("")(o => s"\n\n$o")
 
-  private def indent(b: String): String = ((b).value.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n"))
+  private def indent(b: String): String = ((b).linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n"))
 
   def planBlock(p: Goal.Plans.Plan): String =
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
@@ -412,9 +412,9 @@ object AgentsMarkdown:
     val plan = v.plan.fold("")(p => s"\n\n## Approved plan\n\n${planBlock(p)}")
     GoalsMarkdown.goal(v.goal) + budget + children + links + sch + plan
 
-  private def cell(s: String): String = ((s).value.replace("|", "\\|").replace("\n", " "))
+  private def cell(s: String): String = ((s).replace("|", "\\|").replace("\n", " "))
 
-  private def secs(n: Long): String = if (n).value < 120 then (s"$n s") else (s"${(n).value / 60} min ${(n).value % 60} s")
+  private def secs(n: Long): String = if (n) < 120 then (s"$n s") else (s"${(n) / 60} min ${(n) % 60} s")
 
   private def models(configured: List[com.histmersion.api.automation.Agents.ModelRef.Wire], actual: List[com.histmersion.api.automation.AgentsMarkdown.ModelsActual]): String =
     val conf = configured.mkString(", ")
@@ -430,7 +430,7 @@ object AgentsMarkdown:
     else (plan.mkString(", "))
 
   private def ratio(n: Int, of: Int): String =
-    if of == (0) then ("—") else s"$n/$of (${BigDecimal(((100.0 * (n).value / (of).value).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
+    if of == (0) then ("—") else s"$n/$of (${BigDecimal(((100.0 * (n) / (of).value).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
   def compare(c: RunCompare.Comparison): String =
     import RunCompare.*

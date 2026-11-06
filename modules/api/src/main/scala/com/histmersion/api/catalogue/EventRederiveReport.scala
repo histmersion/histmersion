@@ -62,4 +62,4 @@ object EventRederiveReport:
   def markdown(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.Report =
     val head =
       s"## Event re-derivation — ${r.providers.mkString(", ")}${if (r.dryRun).value then " (dry run: nothing stored)" else ""}"
-    _root_.com.histmersion.api.catalogue.EventRederiveReport.Report((head :: "" :: (summary(r)).value.split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n"))
+    _root_.com.histmersion.api.catalogue.EventRederiveReport.Report((head :: "" :: (summary(r)).split(" · ").toList.map("- " + _) ++ r.examples.map("  - " + _)).mkString("\n"))

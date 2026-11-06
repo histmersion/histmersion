@@ -35,18 +35,18 @@ object MergeMarkdown:
     val sections = List(
       section(("Problems (no decision fixes these)"), p.problems.map(x => (s"- $x"))),
       section(("Resolutions not used (errors)"), p.resolutionErrors.map(x => (s"- $x"))),
-      section(("Blocking"), open.map(((issue).value))),
-      section(("Decided"), decided.map(((issue).value))),
-      section(("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(((issue).value))),
+      section(("Blocking"), open.map(((issue)))),
+      section(("Decided"), decided.map(((issue)))),
+      section(("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(((issue)))),
       section(
         ("Defaults (applied unless overridden with --resolve)"),
         (if ((all) == (true)) then defaults else defaults.take(5)).map(issue) ++
-          Option.when(!(all).value && defaults.size > 5)(s"- … ${defaults.size - 5} more (--all)").toList
+          Option.when(!(all) && defaults.size > 5)(s"- … ${defaults.size - 5} more (--all)").toList
       ),
       section(
         ("Info"),
         ((if ((all) == (true)) then p.info else p.info.take(8)).map(x => s"- $x") ++
-          Option.when(!(all).value && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList).map(refactorValue5 => (refactorValue5))
+          Option.when(!(all) && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList).map(refactorValue5 => (refactorValue5))
       ),
       section(
         ("Matches"),
@@ -101,7 +101,7 @@ object MergeMarkdown:
       .toList
     val sections = List(
       section(("Problems (nothing was written)"), r.problems.map(x => (s"- $x"))),
-      section(("Open"), r.issues.map(((issue).value))),
+      section(("Open"), r.issues.map(((issue)))),
       section(("Notes"), r.notes.map(x => (s"- $x")))
     ).flatten
     ((head :: body ++ sections).mkString("\n\n"))

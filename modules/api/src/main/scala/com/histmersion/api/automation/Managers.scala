@@ -286,9 +286,9 @@ object Managers:
                 case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MinSources(n))))
                 case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles(n))))
                 case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(n))))
-                case "inferFilter" | "infer-filter"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b).value))))).left.map(refactorError4 => (refactorError4).value)
-                case "autoIngest" | "auto-ingest"                 => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b).value))))).left.map(refactorError5 => (refactorError5).value)
-                case "autoApprove" | "auto-approve"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b).value))))).left.map(refactorError6 => (refactorError6).value)
+                case "inferFilter" | "infer-filter"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b)))))).left.map(refactorError4 => (refactorError4).value)
+                case "autoIngest" | "auto-ingest"                 => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b)))))).left.map(refactorError5 => (refactorError5).value)
+                case "autoApprove" | "auto-approve"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b)))))).left.map(refactorError6 => (refactorError6).value)
                 case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(n))))
                 case "sweeps"                                     =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
@@ -324,7 +324,7 @@ object Managers:
         }
       }
 
-    private def bool(k: com.histmersion.api.automation.AgentStateDeleted.Key.Wire, v: String): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, Boolean] = (v).value.toLowerCase match
+    private def bool(k: com.histmersion.api.automation.AgentStateDeleted.Key.Wire, v: String): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, Boolean] = (v).toLowerCase match
       case "true" | "on" | "yes"  => Right((true))
       case "false" | "off" | "no" => Right((false))
       case _                      => Left(_root_.com.histmersion.api.automation.Managers.ManagerConfig.Problem(s"$k: '$v' is not true or false"))

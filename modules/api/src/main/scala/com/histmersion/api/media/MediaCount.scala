@@ -23,5 +23,5 @@ object MediaCount:
     keys
       .groupBy(identity)
       .toList
-      .map((k, v) => MediaCount(_root_.com.histmersion.api.media.MediaCount.Key((k).value), _root_.com.histmersion.api.media.MediaCount.N(v.size), _root_.com.histmersion.api.media.MediaCount.Allowed((allowed(_root_.com.histmersion.api.media.MediaCount.Key((k).value))).value)))
+      .map((k, v) => MediaCount(_root_.com.histmersion.api.media.MediaCount.Key((k).value), _root_.com.histmersion.api.media.MediaCount.N(v.size), _root_.com.histmersion.api.media.MediaCount.Allowed((allowed(_root_.com.histmersion.api.media.MediaCount.Key((k).value))))))
       .sortBy(c => (-(c.n).value, c.key))
