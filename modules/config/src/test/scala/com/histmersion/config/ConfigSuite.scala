@@ -339,13 +339,13 @@ class ConfigSuite extends munit.FunSuite:
     assertEquals(c.places.geoMaxLimit, 2000)
     assert(c.places.geoMaxLimit > c.limits.maxPage)
     val p = c.places.copy(geoMaxLimit = com.histmersion.config.PlacesConfig.GeoLimit(2000))
-    assertEquals(p.geoLimit(Some(400), 100), 400)
-    assertEquals(p.geoLimit(Some(1744), 100), 1744) // past limits.max-page
-    assertEquals(p.geoLimit(Some(5000), 100), 2000)
-    assertEquals(p.geoLimit(None, 100), 100)
-    assertEquals(p.geoLimit(Some(0), 100), 100)
-    assertEquals(p.geoLimit(Some(-3), 100), 100)
-    assertEquals(c.places.copy(geoMaxLimit = com.histmersion.config.PlacesConfig.GeoLimit(0)).geoLimit(Some(50), 100), 1)
+    assertEquals(p.geoLimit(Some(com.histmersion.config.PlacesConfig.GeoLimit(400)), com.histmersion.config.PlacesConfig.GeoLimit(100)), 400)
+    assertEquals(p.geoLimit(Some(com.histmersion.config.PlacesConfig.GeoLimit(1744)), com.histmersion.config.PlacesConfig.GeoLimit(100)), 1744) // past limits.max-page
+    assertEquals(p.geoLimit(Some(com.histmersion.config.PlacesConfig.GeoLimit(5000)), com.histmersion.config.PlacesConfig.GeoLimit(100)), 2000)
+    assertEquals(p.geoLimit(None, com.histmersion.config.PlacesConfig.GeoLimit(100)), 100)
+    assertEquals(p.geoLimit(Some(com.histmersion.config.PlacesConfig.GeoLimit(0)), com.histmersion.config.PlacesConfig.GeoLimit(100)), 100)
+    assertEquals(p.geoLimit(Some(com.histmersion.config.PlacesConfig.GeoLimit(-3)), com.histmersion.config.PlacesConfig.GeoLimit(100)), 100)
+    assertEquals(c.places.copy(geoMaxLimit = com.histmersion.config.PlacesConfig.GeoLimit(0)).geoLimit(Some(com.histmersion.config.PlacesConfig.GeoLimit(50)), com.histmersion.config.PlacesConfig.GeoLimit(100)), 1)
 
   /** Guard for plan §1.9: no port numbers / service URLs hardcoded anywhere in main sources. */
   test("no hardcoded ports or CDN hosts in src/main (only reference.conf may carry them)"):

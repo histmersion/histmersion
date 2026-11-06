@@ -18,6 +18,6 @@ class SettingKeySuite extends munit.FunSuite:
     assertEquals(k.relative, "plugins.1password.enabled")
     assertEquals(k.leaf, "enabled")
     assertEquals(k.parent.map(p => p.value: String), Some("histmersion.plugins.1password"))
-    assert(k.within(SettingKey.parse("plugins").toOption.get))
-    assert(!k.within(SettingKey.parse("plugin").toOption.get))
+    assert(k.within(SettingKey.parse(com.histmersion.config.edit.SettingKey.ParseRaw("plugins")).toOption.get))
+    assert(!k.within(SettingKey.parse(com.histmersion.config.edit.SettingKey.ParseRaw("plugin")).toOption.get))
     assertEquals(SettingKey.fromHocon(k.hoconPath).map(p => p.value: String), Some(k.value: String))
