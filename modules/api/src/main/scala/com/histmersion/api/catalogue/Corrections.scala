@@ -49,7 +49,7 @@ object Corrections:
 
   private object Fmt:
 
-    def clip(s: String): String = if (s).value.length > 80 then ((s).value.take(79) + "…") else ((s).value)
+    def clip(s: String): String = if (s).length > 80 then ((s).take(79) + "…") else ((s))
 
   def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.Markdown =
     if l.corrections.isEmpty then _root_.com.histmersion.api.catalogue.Corrections.Markdown("_No corrections by hand._")

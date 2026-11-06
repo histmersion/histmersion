@@ -15,7 +15,7 @@ object Write:
   type InvalidMessage = _root_.com.histmersion.api.Api.Error.Problem
   val InvalidMessage: _root_.com.histmersion.api.Api.Error.Problem.type = _root_.com.histmersion.api.Api.Error.Problem
 
-  private[api] def blankToNone(v: Option[String]): Option[String] = (v.map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))
+  private[api] def blankToNone(v: Option[String]): Option[String] = (v.map((_).trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))
 
   val CodeNotFound = "not_found"
   val CodePrecondition = "precondition_failed"

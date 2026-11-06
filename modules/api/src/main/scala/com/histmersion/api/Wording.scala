@@ -25,14 +25,14 @@ object Wording:
   def humanize(id: com.histmersion.api.Wording.Id): String =
     val words =
       (id).value.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
-    ((capitalize((words))).value)
+    ((capitalize((words))))
 
-  def capitalize(s: String): String = if (s).value.isEmpty then ((s).value) else ((s).value.substring(0, 1).toUpperCase + (s).value.substring(1))
+  def capitalize(s: String): String = if (s).isEmpty then ((s)) else ((s).substring(0, 1).toUpperCase + (s).value.substring(1))
 
   def value(s: String): String = Label.display(s)
 
   def heading(s: String): String =
-    if (s).value.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s).value))).value) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).value.trim)))
+    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s)))).value) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).trim)))
 
   def status(s: Source.Status): String = s match
     case Source.Status.Foundational => ("Foundational")
@@ -92,7 +92,7 @@ object Wording:
     Manager.Kind
       .parse(_root_.com.histmersion.api.automation.Manager.Kind.Wire(kind))
       .fold(humanize(id))(k =>
-        (managerKind(k)).value + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(_root_.com.histmersion.api.Wording.Id(g))}")
+        (managerKind(k)) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(_root_.com.histmersion.api.Wording.Id(g))}")
       )
 
   val schedulerJobTypes: Map[com.histmersion.api.jobs.JobKinds.Wire, String] = Map(
@@ -116,7 +116,7 @@ object Wording:
   def pool(id: com.histmersion.api.automation.AgentScheduler.PoolUse.Pool): String = (id).value.trim.toLowerCase match
     case "claude-plan"  => ("Claude plan")
     case "chatgpt-plan" => ("ChatGPT plan")
-    case other          => ((humanize(_root_.com.histmersion.api.Wording.Id(other.stripSuffix("-plan")))).value + (if other.endsWith("-plan") then " plan" else ""))
+    case other          => ((humanize(_root_.com.histmersion.api.Wording.Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
 
   def allowanceWindow(kind: com.histmersion.api.Api.ArticleQuery.Kind.Wire): String =
     val k = (kind).value.trim.toLowerCase.split('/').last
@@ -134,7 +134,7 @@ object Wording:
       case "one_day" | "daily"             => ("Today's limit")
       case s if s.startsWith("seven_day_") => (s"This week's limit (${humanize(_root_.com.histmersion.api.Wording.Id(s.stripPrefix("seven_day_")))})")
       case s if s.startsWith("five_hour_") => (s"5-hour limit (${humanize(_root_.com.histmersion.api.Wording.Id(s.stripPrefix("five_hour_")))})")
-      case other                           => ((humanize(_root_.com.histmersion.api.Wording.Id(other))).value)
+      case other                           => ((humanize(_root_.com.histmersion.api.Wording.Id(other))))
 
   def agentsState(autopilotOn: com.histmersion.api.automation.AgentMode.Step.Autopilot.On, draining: com.histmersion.api.automation.AgentMode.Step.Drain.On): String =
     if (draining).value then ("Agents: finishing current work, then pausing")

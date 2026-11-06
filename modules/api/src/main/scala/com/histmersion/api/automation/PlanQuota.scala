@@ -331,9 +331,9 @@ object PlanQuota:
       force: Boolean = (false)
   ): Either[com.histmersion.api.automation.PlanQuota.Problem, Option[RefreshNeed]] =
     login match
-      case _ if !(enabled).value                              => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("refresh is off for this pool"))
+      case _ if !(enabled)                              => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("refresh is off for this pool"))
       case Login.Missing(why)                         => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem(s"no login: $why"))
-      case _ if (force).value                                 => Right(need)
+      case _ if (force)                                 => Right(need)
       case _ if need.isEmpty                          => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("the reading decides by itself"))
       case _ if ((throttled(lastAttempt, minGapMs, now)) == (true)) =>
         Left(_root_.com.histmersion.api.automation.PlanQuota.Problem("a fresh reading was taken (or tried) less than stale-minutes ago"))

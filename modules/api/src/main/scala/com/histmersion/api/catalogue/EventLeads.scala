@@ -23,7 +23,7 @@ object EventLeads:
       .map(v => s"VEI $v")
       .orElse(magnitude.map(m => s"M ${BigDecimal((m).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)}"))).map(refactorValue2 => (refactorValue2))
 
-  private def q(s: String): String = ("\"" + (s).value.replace("\"", "'") + "\"")
+  private def q(s: String): String = ("\"" + (s).replace("\"", "'") + "\"")
 
   def actions(eventId: com.histmersion.api.catalogue.Event.Id, label: com.histmersion.api.catalogue.EventLeads.ActionsLabel, yrs: String, proposed: com.histmersion.api.catalogue.EventLeads.ActionsProposed): List[EventLead.Action] =
     List(
@@ -67,7 +67,7 @@ object EventLeads:
           f.tier,
           yrs,
           text,
-          actions(f.eventId, f.label, ((yrs).value), f.proposed),
+          actions(f.eventId, f.label, ((yrs)), f.proposed),
           f.findingsNear,
           f.proposed
         )
