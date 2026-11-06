@@ -1,0 +1,170 @@
+## modules/api/src/main/scala/com/histmersion/api/catalogue/PlacesMarkdown.scala
+8:19 [E007] 8 |    val p = period(ps, pe) / |               Found:    (ps : Option[com.histmersion.api.catalogue.Year]) / |               Required: Option[com.histmersion.api.Markdown.PeriodStart]
+8:23 [E007] 8 |    val p = period(ps, pe) / |               Found:    (pe : Option[com.histmersion.api.catalogue.Year]) / |               Required: Option[com.histmersion.api.Markdown.PeriodEnd]
+23:44 [E007] 23 |      s"### ${rows.size} place(s)${asOfNote(asOf)}\n\n${items.mkString("\n")}" / |Found:    (asOf : Option[com.histmersion.api.catalogue.Place.Entry.AsOf]) / |Required: Option[com.histmersion.api.Markdown.AsOfNoteAsOf]
+80:46 [E007] 80 |        s", point ${Place.Overrides.pointText(a, b)} → ${Place.Overrides.pointText(c, d)} (" + / |Found:    (a : com.histmersion.api.catalogue.Place.OverrideChanged.LatBefore.T) / |Required: com.histmersion.api.catalogue.Latitude
+80:49 [E007] 80 |        s", point ${Place.Overrides.pointText(a, b)} → ${Place.Overrides.pointText(c, d)} (" + / |Found:    (b : com.histmersion.api.catalogue.Place.OverrideChanged.LonBefore.T) / |Required: com.histmersion.api.catalogue.Longitude
+80:83 [E007] 80 |        s", point ${Place.Overrides.pointText(a, b)} → ${Place.Overrides.pointText(c, d)} (" + / |Found:    (c : com.histmersion.api.catalogue.Place.OverrideChanged.LatAfter.T) / |Required: com.histmersion.api.catalogue.Latitude
+80:86 [E007] 80 |        s", point ${Place.Overrides.pointText(a, b)} → ${Place.Overrides.pointText(c, d)} (" + / |Found:    (d : com.histmersion.api.catalogue.Place.OverrideChanged.LonAfter.T) / |Required: com.histmersion.api.catalogue.Longitude
+82:77 [E007] 82 |      case (_, _, Some(c), Some(d)) => s", point ${Place.Overrides.pointText(c, d)}" / |Found:    (c : com.histmersion.api.catalogue.Place.OverrideChanged.LatAfter.T) / |Required: com.histmersion.api.catalogue.Latitude
+82:80 [E007] 82 |      case (_, _, Some(c), Some(d)) => s", point ${Place.Overrides.pointText(c, d)}" / |Found:    (d : com.histmersion.api.catalogue.Place.OverrideChanged.LonAfter.T) / |Required: com.histmersion.api.catalogue.Longitude
+110:56 [E007] 110 |            yield s", point ${Place.Overrides.pointText(la, lo)}").getOrElse(", no point") / |Found:    (la : com.histmersion.api.catalogue.Place.Override.SourceLat) / |Required: com.histmersion.api.catalogue.Latitude
+110:60 [E007] 110 |            yield s", point ${Place.Overrides.pointText(la, lo)}").getOrElse(", no point") / |Found:    (lo : com.histmersion.api.catalogue.Place.Override.SourceLon) / |Required: com.histmersion.api.catalogue.Longitude
+111:70 [E007] 111 |          val src = s"${r.sourceKind}, ${Place.Overrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}$srcPt" / |Found:    (r.sourcePeriodStart : / |  Option[com.histmersion.api.catalogue.Place.Override.SourcePeriodStart]) / |Required: Option[com.histmersion.api.catalogue.Year]
+111:91 [E007] 111 |          val src = s"${r.sourceKind}, ${Place.Overrides.periodText(r.sourcePeriodStart, r.sourcePeriodEnd)}$srcPt" / |Found:    (r.sourcePeriodEnd : / |  Option[com.histmersion.api.catalogue.Place.Override.SourcePeriodEnd]) / |Required: Option[com.histmersion.api.catalogue.Year]
+132:48 [E007] 132 |      s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_" / |      Found:    Option[com.histmersion.api.catalogue.Place.Entry.AsOf] / |      Required: Option[com.histmersion.api.Markdown.AsOfNoteAsOf]
+154:66 [E007] 154 |            val per = f.period.map(p => s" · ${periodLabel(Some(p.start), Some(p.end))}").getOrElse("") / |              Found:    (p.start : com.histmersion.api.catalogue.Year) / |              Required: com.histmersion.api.library.Bucket.Start.T
+154:81 [E007] 154 |            val per = f.period.map(p => s" · ${periodLabel(Some(p.start), Some(p.end))}").getOrElse("") / |                Found:    (p.end : com.histmersion.api.catalogue.Year) / |                Required: com.histmersion.api.library.Bucket.End.T
+174:66 [E007] 174 |            val per = t.period.map(p => s" · ${periodLabel(Some(p.start), Some(p.end))}").getOrElse("") / |              Found:    (p.start : com.histmersion.api.catalogue.Year) / |              Required: com.histmersion.api.library.Bucket.Start.T
+174:81 [E007] 174 |            val per = t.period.map(p => s" · ${periodLabel(Some(p.start), Some(p.end))}").getOrElse("") / |                Found:    (p.end : com.histmersion.api.catalogue.Year) / |                Required: com.histmersion.api.library.Bucket.End.T
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/Place.scala
+126:72 [E008] 126 |    type OfLon = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon / |type PointLon is not a member of object com.histmersion.api.catalogue.Place.OverrideSet
+127:70 [E008] 127 |    val OfLon: _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon.type = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon / |value PointLon is not a member of object com.histmersion.api.catalogue.Place.OverrideSet
+127:141 [E008] 127 |    val OfLon: _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon.type = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon / |value PointLon is not a member of object com.histmersion.api.catalogue.Place.OverrideSet
+128:72 [E008] 128 |    type OfLat = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat / |type PointLat is not a member of object com.histmersion.api.catalogue.Place.OverrideSet
+129:70 [E008] 129 |    val OfLat: _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat.type = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat / |value PointLat is not a member of object com.histmersion.api.catalogue.Place.OverrideSet
+129:141 [E008] 129 |    val OfLat: _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat.type = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat / |value PointLat is not a member of object com.histmersion.api.catalogue.Place.OverrideSet
+136:72 [E008] 136 |    def gridCentre(lon: com.histmersion.api.catalogue.Place.OverrideSet.PointLon, lat: com.histmersion.api.catalogue.Place.OverrideSet.PointLat): Boolean = / |type PointLon is not a member of object com.histmersion.api.catalogue.Place.OverrideSet
+136:135 [E008] 136 |    def gridCentre(lon: com.histmersion.api.catalogue.Place.OverrideSet.PointLon, lat: com.histmersion.api.catalogue.Place.OverrideSet.PointLat): Boolean = / |type PointLat is not a member of object com.histmersion.api.catalogue.Place.OverrideSet
+
+## modules/api/src/main/scala/com/histmersion/api/personal/Target.scala
+23:125 [E172] 23 |  def itemKey: Option[com.histmersion.api.personal.ItemKey] = Option.when(((kind.isItem) == (true)))(id.map(_.value)).flatten / |Cannot prove that Option[ / |  io.github.iltotore.iron.IronType[String, / |    io.github.iltotore.iron.constraint.any.Pure] / |] <:< Option[B]. / |where:    B is a type variable with constraint <: com.histmersion.api.personal.ItemKey.T
+63:34 [E134] 63 |        Left(s"the period ends (${YearFmt(b.value.toLong)}) before it starts (${YearFmt(a.value.toLong)})") / |None of the overloaded alternatives of method apply in object YearFmt with types / | (v: Option[com.histmersion.api.catalogue.Year]): String / | (v: com.histmersion.api.catalogue.Year): String / |match arguments ((io.github.iltotore.iron.IronType[Long, / |  io.github.iltotore.iron.constraint.any.Pure]#toLong : => Long))
+63:80 [E134] 63 |        Left(s"the period ends (${YearFmt(b.value.toLong)}) before it starts (${YearFmt(a.value.toLong)})") / |None of the overloaded alternatives of method apply in object YearFmt with types / | (v: Option[com.histmersion.api.catalogue.Year]): String / | (v: com.histmersion.api.catalogue.Year): String / |match arguments ((io.github.iltotore.iron.IronType[Long, / |  io.github.iltotore.iron.constraint.any.Pure]#toLong : => Long))
+67:53 [E008] 67 |        s"a $what cannot be left on a ${t.kind.label.toLowerCase}; it can be on: ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}" / | value toLowerCase is not a member of com.histmersion.api.ItemKind.Label
+103:83 [E081] 103 |    val span = YearFmt.period(t.from.map(_root_.com.histmersion.api.catalogue.Year(_.value.toLong)), t.to.map(_root_.com.histmersion.api.catalogue.Year(_.value.toLon / |               Missing parameter type / |               I could not infer the type of the parameter _$9 / |               in expanded function: / |                 _$9 => _$9.value.toLong / |               Expected type for the whole anonymous function:
+103:152 [E081] 103 |    val span = YearFmt.period(t.from.map(_root_.com.histmersion.api.catalogue.Year(_.value.toLong)), t.to.map(_root_.com.histmersion.api.catalogue.Year(_.value.toLon / |               Missing parameter type / |               I could not infer the type of the parameter _$10 / |               in expanded function: / |                 _$10 => _$10.value.toLong / |               Expected type for the whole anonymous function:
+108:100 [E007] 108 |        List(at, t.zoom.fold("")(z => s"zoom ${round1(z.value)}"), span).filter(_.nonEmpty).mkString(" · ") / |        Found:    String / |        Required: com.histmersion.api.personal.Target.Where
+
+## modules/api/src/main/scala/com/histmersion/api/exchange/BundleMarkdown.scala
+25:15 [E081] 25 |      .filter((_.lines).value > 0) / |               Missing parameter type / |               I could not infer the type of the parameter _$1 / |               in expanded function: / |                 _$1 => _$1.lines / |               Expected type for the whole anonymous function:
+30:73 [E007] 30 |      s"$scope · as of ${m.asOf.getOrElse("—")} · ${Plural.count(m.blobs.count, _root_.com.histmersion.api.Plural.Noun.Singular("blob"))} (${bytes(m.blobs.bytes)})", / |Found:    (m.blobs.count : com.histmersion.api.exchange.Bundle.Blobs.Count) / |Required: com.histmersion.api.Plural.CountN
+35:155 [E007] 35 |    val head = if ((r.ok) == _root_.com.histmersion.api.exchange.Bundle.VerifyResult.Ok(true)) then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecke / |Found:    (r.blobsChecked : com.histmersion.api.exchange.Bundle.VerifyResult.BlobsChecked) / |Required: com.histmersion.api.Plural.CountN
+37:73 [E007] 37 |    (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems)).mkString("\n\n") / |Found:    (r.problems : List[com.histmersion.api.exchange.Bundle.VerifyResult.Problems]) / |Required: List[com.histmersion.api.exchange.Bundle.Problem]
+45:42 [E007] 45 |        s"**Imported** — ${Plural.count(r.changed, _root_.com.histmersion.api.Plural.CountSingular("row"))} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("" / |              Found:    com.histmersion.api.exchange.Bundle.ChangedCount / |              Required: com.histmersion.api.Plural.CountN
+66:62 [E007] 66 |      problems(("Problems (fix these, then import again)"), r.problems) ++ issues ++ / |Found:    (r.problems : List[com.histmersion.api.exchange.Bundle.ImportResult.Problems]) / |Required: List[com.histmersion.api.exchange.Bundle.Problem]
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/CatalogRecord.scala
+83:9 [E161] 83 |  object Group extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure] / |  Group is already defined as object Group
+82:21 [E008] 82 |  type Group = Group.T / |type T is not a member of object com.histmersion.api.catalogue.CatalogRecord.Group
+17:57 [E008] 17 |    historicity: CatalogRecord.Historicity = Historicity.Attested, / |value Attested is not a member of object com.histmersion.api.catalogue.CatalogRecord.Historicity
+99:64 [E172] 99 |    val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2) / |No given instance of type Ordering[com.histmersion.api.catalogue.EventCatalogueRef.ProviderId.T] was found for parameter ord of method sortBy in trait SeqOps. / |I found: / |    scala.math.Ordering.comparatorToOrdering[ / |      com.histmersion.api.catalogue.EventCatalogueRef.ProviderId.T]( / |      /* missing */
+77:6 [E120] 77 |  val Wikidata: _root_.com.histmersion.api.catalogue.EventEntry.Wikidata.type = _root_.com.histmersion.api.catalogue.EventEntry.Wikidata / |Conflicting definitions: / |final lazy module object Wikidata: object / |  com.histmersion.api.catalogue.CatalogRecord.Wikidata in object CatalogRecord at line 36 and / |val Wikidata: com.histmersion.api.catalogue.EventEntry.Wikidata.type in object CatalogRecord at line 77
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/SiteTypes.scala
+204:17 [E007] 204 |        .flatMap(pleiadesTypes.get) / |Found:    com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType => / |  IterableOnce[com.histmersion.api.catalogue.SiteTypes.SiteType.Id.T] / |Required: String => IterableOnce[com.histmersion.api.catalogue.SiteTypes.SiteType.Id.T]
+255:129 [E007] 255 |      geonamesCodes.get(_root_.com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode(c)).orElse(Option.when(c.startsWith("P."))(Settlement)) / |Found:    (com.histmersion.api.catalogue.SiteTypes.Settlement : String) / |Required: com.histmersion.api.catalogue.SiteTypes.SiteType.Id.T
+346:189 [E007] 346 |  def wikidataOwn(p31: List[com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class]): Option[com.histmersion.api.catalogue.SiteTypes.SiteType.Id] = best(p31.map( / |Found:    com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class => / |  IterableOnce[com.histmersion.api.catalogue.SiteTypes.SiteType.Id.T] / |Required: String => IterableOnce[com.histmersion.api.catalogue.SiteTypes.SiteType.Id.T]
+349:62 [E007] 349 |    json.toList.flatMap(s => "Q[0-9]+".r.findAllIn((s).value).toList) / |Found:    List[String] / |Required: IterableOnce[com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class.T]
+364:74 [E007] 364 |        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId)).contains) / |             Found:    (com.histmersion.api.catalogue.SiteTypes.byId : / |               Map[com.histmersion.api.catalogue.SiteTypes.ByIdPart1, / |                 com.histmersion.api.catalogue.SiteTypes.SiteType] / |             ) / |             Required: String
+
+## modules/api/src/main/scala/com/histmersion/api/media/MediaRole.scala
+33:79 [E007] 33 |  val all: List[com.histmersion.api.media.MediaRole.Role] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration) / |      Found:    (com.histmersion.api.media.MediaRole.Depiction : String) / |      Required: com.histmersion.api.media.MediaRole.Role.T
+33:90 [E007] 33 |  val all: List[com.histmersion.api.media.MediaRole.Role] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration) / |         Found:    (com.histmersion.api.media.MediaRole.Object : String) / |         Required: com.histmersion.api.media.MediaRole.Role.T
+33:98 [E007] 33 |  val all: List[com.histmersion.api.media.MediaRole.Role] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration) / |            Found:    (com.histmersion.api.media.MediaRole.Map : String) / |            Required: com.histmersion.api.media.MediaRole.Role.T
+33:103 [E007] 33 |  val all: List[com.histmersion.api.media.MediaRole.Role] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration) / |          Found:    (com.histmersion.api.media.MediaRole.Cover : String) / |          Required: com.histmersion.api.media.MediaRole.Role.T
+33:110 [E007] 33 |  val all: List[com.histmersion.api.media.MediaRole.Role] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration) / |   Found:    (com.histmersion.api.media.MediaRole.Illustration : String) / |   Required: com.histmersion.api.media.MediaRole.Role.T
+
+## modules/api/src/main/scala/com/histmersion/api/basemap/BaseStyles.scala
+22:38 [E007] 22 |    all.map(s => Basemap.StyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d)))) / |      Found:    (s.id : com.histmersion.api.basemap.BaseStyles.Style.Id) / |      Required: com.histmersion.api.basemap.Basemap.StyleState.Id
+22:44 [E007] 22 |    all.map(s => Basemap.StyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d)))) / |  Found:    (s.name : com.histmersion.api.basemap.BaseStyles.Style.Name) / |  Required: com.histmersion.api.basemap.Basemap.StyleState.Name
+22:94 [E007] 22 |    all.map(s => Basemap.StyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d)))) / |Found:    (s.needs : List[com.histmersion.api.basemap.BaseStyles.Style.Needs]) / |Required: List[com.histmersion.api.basemap.Basemap.LayerInfo.Dropped]
+22:101 [E007] 22 |    all.map(s => Basemap.StyleState(s.id, s.name, dropped.fold(Nil)(d => Basemap.missingFor(s.needs, d)))) / |   Found:    (d : List[com.histmersion.api.basemap.BaseStyles.Style.Id]) / |   Required: List[com.histmersion.api.basemap.Basemap.LayerInfo.Dropped]
+
+## modules/api/src/main/scala/com/histmersion/api/exchange/MergeIssue.scala
+244:34 [E007] 244 |        place = Some(IssuePlace(l.geom, r.geom, eventSpan(l), eventSpan(r))) / |Found:    (l.geom : Option[com.histmersion.api.exchange.Bundle.Event.Geom]) / |Required: Option[com.histmersion.api.exchange.IssuePlace.LeftGeometry]
+244:42 [E007] 244 |        place = Some(IssuePlace(l.geom, r.geom, eventSpan(l), eventSpan(r))) / |Found:    (r.geom : Option[com.histmersion.api.exchange.Bundle.Event.Geom]) / |Required: Option[com.histmersion.api.exchange.IssuePlace.RightGeometry]
+259:34 [E007] 259 |        place = Some(IssuePlace(l.geom, r.geom, l.period.map(span), r.period.map(span))) / |Found:    (l.geom : Option[com.histmersion.api.exchange.Bundle.Place.Geom]) / |Required: Option[com.histmersion.api.exchange.IssuePlace.LeftGeometry]
+259:42 [E007] 259 |        place = Some(IssuePlace(l.geom, r.geom, l.period.map(span), r.period.map(span))) / |Found:    (r.geom : Option[com.histmersion.api.exchange.Bundle.Place.Geom]) / |Required: Option[com.histmersion.api.exchange.IssuePlace.RightGeometry]
+
+## modules/api/src/main/scala/com/histmersion/api/library/RepairAcquire.scala
+87:39 [E007] 87 |      s"- ${verb}move ${Plural.count(r.moved, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" + / |Found:    (r.moved : com.histmersion.api.library.RepairAcquire.RepairResult.Moved) / |Required: com.histmersion.api.Plural.CountN
+94:13 [E172] 94 |        case Move   => s"${verb}move to ${row.watcher}" + row.backlogItem.fold("")(i => s" (backlog item #$i)") / |Values of types String and com.histmersion.api.library.RepairAcquire.RepairRow.Action cannot be compared with == or !=
+95:13 [E172] 95 |        case Remove => s"${verb}remove" / |Values of types String and com.histmersion.api.library.RepairAcquire.RepairRow.Action cannot be compared with == or !=
+98:23 [E008] 98 |        (if row.detail.nonEmpty then s": ${row.detail}" else "") / |value nonEmpty is not a member of com.histmersion.api.library.RepairAcquire.RepairRow.Detail
+
+## modules/api/src/main/scala/com/histmersion/api/research/CritiqueReason.scala
+16:18 [E006] 16 |  type MaxChars = MaxCharsValue / |                  Not found: type MaxCharsValue
+45:103 [E007] 45 |    else CritiqueRef.parse(_root_.com.histmersion.api.research.CritiqueRef.Wire((s).value.take(i))).map(r => CritiqueReason(r.src, r.dst, _root_.com.histmersion.api.r / |   Found:    Either[com.histmersion.api.research.CritiqueRef.Problem, / |     com.histmersion.api.research.CritiqueReason] / |   Required: Either[com.histmersion.api.research.CritiqueReason.Problem, / |     com.histmersion.api.research.CritiqueReason]
+49:19 [E051] 49 |    if text.length > MaxChars then / |Ambiguous overload. The overloaded alternatives of method > in class Int with types / | (x: Double): Boolean / | (x: Float): Boolean / | (x: Long): Boolean / | (x: Int): Boolean
+54:29 [E008] 54 |          _.src).setTo(r.src.trim.toLowerCase(java.util.Locale.ROOT)).modify(_.dst).setTo(r.dst.trim.toLowerCase(java.util.Locale.ROOT)).modify(_.reason).setTo(text / |       value trim is not a member of com.histmersion.api.library.Citekey
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/EventsMarkdown.scala
+19:92 [E007] 19 |    OffsetPage.markdown(result.page, ("event(s)"), ("_No matching events._"), result.events)(eventLine) / |    Found:    com.histmersion.api.OffsetPage.MarkdownResult / |    Required: String
+34:19 [E172] 34 |      .map(l => if e.precision == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l)) / |Values of types com.histmersion.api.catalogue.EventSummary.Precision and String cannot be compared with == or !=
+42:40 [E008] 42 |      .map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)") / |value take is not a member of com.histmersion.api.catalogue.EventGeometry.Geojson
+
+## modules/api/src/main/scala/com/histmersion/api/library/AcquireMarkdown.scala
+100:11 [E172] 100 |      case Acquire.Verdicts.Retracted => "⛔" / |Values of types com.histmersion.api.library.Acquire.Verdicts.Wire and io.github.iltotore.iron.IronType[String, / |  io.github.iltotore.iron.constraint.any.Pure] cannot be compared with == or !=
+101:11 [E172] 101 |      case Acquire.Verdicts.Corrected => "⚠" / |Values of types com.histmersion.api.library.Acquire.Verdicts.Wire and io.github.iltotore.iron.IronType[String, / |  io.github.iltotore.iron.constraint.any.Pure] cannot be compared with == or !=
+102:11 [E172] 102 |      case Acquire.Verdicts.LowImpact => "·" / |Values of types com.histmersion.api.library.Acquire.Verdicts.Wire and io.github.iltotore.iron.IronType[String, / |  io.github.iltotore.iron.constraint.any.Pure] cannot be compared with == or !=
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/EventGeo.scala
+61:9 [E161] 61 |  object Dating extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure] / |  Dating is already defined as object Dating
+60:23 [E008] 60 |  type Dating = Dating.T / |type T is not a member of object com.histmersion.api.catalogue.EventGeo.Dating
+
+## modules/api/src/main/scala/com/histmersion/api/research/ReviewFinding.scala
+33:9 [E161] 33 |  object Reviewer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure] / |  Reviewer is already defined as object Reviewer
+32:27 [E008] 32 |  type Reviewer = Reviewer.T / |type T is not a member of object com.histmersion.api.research.ReviewFinding.Reviewer
+
+## modules/api/src/main/scala/com/histmersion/api/PeriodODataset.scala
+23:68 [E007] 23 |        _.authorities).setTo(authorities.filter(a => ids.contains(a.id))).modify(_.skipped).setTo(skipped.filter(s => ids.exists(s.id.startsWith)) / |    Found:    (a.id : com.histmersion.api.catalogue.HistoricalPeriod.Id) / |    Required: com.histmersion.api.PeriodODataset.Id
+23:134 [E008] 23 |        _.authorities).setTo(authorities.filter(a => ids.contains(a.id))).modify(_.skipped).setTo(skipped.filter(s => ids.exists(s.id.startsWith)) / |value startsWith is not a member of com.histmersion.api.catalogue.SkippedPeriod.Id
+
+## modules/api/src/main/scala/com/histmersion/api/automation/AgentStateMarkdown.scala
+11:33 [E008] 11 |          val short = if e.value.length > 80 then e.value.take(77) + "…" else e.value / |value length is not a member of com.histmersion.api.automation.AgentStateEntry.Value
+11:58 [E008] 11 |          val short = if e.value.length > 80 then e.value.take(77) + "…" else e.value / |value take is not a member of com.histmersion.api.automation.AgentStateEntry.Value
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/PeriodO.scala
+214:107 [E172] 214 |            Period(a.periods.map(_.period.start).minBy(_.value), a.periods.map(_.period.end).maxBy(_.value)), / |No given instance of type Ordering[ / |  io.github.iltotore.iron.IronType[Long, / |    io.github.iltotore.iron.constraint.any.Pure] / |] was found for parameter ord of method maxBy in trait IterableOnceOps. / |I found:
+214:63 [E172] 214 |            Period(a.periods.map(_.period.start).minBy(_.value), a.periods.map(_.period.end).maxBy(_.value)), / |No given instance of type Ordering[ / |  io.github.iltotore.iron.IronType[Long, / |    io.github.iltotore.iron.constraint.any.Pure] / |] was found for parameter ord of method minBy in trait IterableOnceOps. / |I found:
+
+## modules/api/src/main/scala/com/histmersion/api/instance/MapStartConfig.scala
+7:50 [E007] 7 |    mode: MapStartConfig.Mode = MapStartMode.Last.wire, / |          Found:    (com.histmersion.api.instance.MapStartMode.Last.wire : / |            com.histmersion.api.instance.MapStartMode.Wire) / |          Required: com.histmersion.api.instance.MapStartConfig.Mode
+10:32 [E007] 10 |    zoom: MapStartConfig.Zoom = 5, / |              Found:    (5 : Int) / |              Required: com.histmersion.api.instance.MapStartConfig.Zoom
+
+## modules/api/src/main/scala/com/histmersion/api/library/CitationLint.scala
+13:194 [E172] 13 |      .sortBy(e => (if ((looksLikeCitekey(_root_.com.histmersion.api.checks.Lint.LinkTarget(e.dst.value.toString))) == (true)) then 0 else 1, e.src.value.toString, e. / |No given instance of type Ordering[(Int, String, com.histmersion.api.library.Edge.Kind, String)] was found for parameter ord of method sortBy in trait SeqOps. / |I found: / |    scala.math.Ordering.Tuple4[Int, String, com.histmersion.api.library.Edge.Kind, / |      String](scala.math.Ordering.Int, scala.math.Ordering.String, / |      scala.math.Ordering.comparatorToOrdering[com.histmersion.api.library.Edge.Kind
+37:41 [E172] 37 |      .sortBy(i => (i.citekey, i.detail)) / |No given instance of type Ordering[ / |  (com.histmersion.api.library.Citekey, / |    com.histmersion.api.checks.Lint.LintItem.Detail) / |] was found for parameter ord of method sortBy in trait SeqOps. / |I found:
+
+## modules/api/src/main/scala/com/histmersion/api/research/Articles.scala
+93:16 [E007] 93 |      reasons = reasons / |Found:    (reasons : / |  Map[com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part1, / |    com.histmersion.api.research.Coverage.Reason.By] / |) / |Required: Map[com.histmersion.api.library.Citekey,
+120:48 [E007] 120 |      reasons <- Coverage.Reason.merge(existing.reasons, patch.reasons) / |     Found:    (existing.reasons : / |       Map[com.histmersion.api.library.Citekey, / |         com.histmersion.api.research.Article.ReasonsValue] / |     ) / |     Required: Map[com.histmersion.api.library.Citekey,
+
+## modules/api/src/main/scala/com/histmersion/api/Plural.scala
+24:7 [E172] 24 |    if n == 1 then _root_.com.histmersion.api.Plural.Noun.Form((singular).value) else if (plural).value.nonEmpty then _root_.com.histmersion.api.Plural.Noun.Form((plu / |Values of types com.histmersion.api.Plural.Count and Int cannot be compared with == or !=
+
+## modules/api/src/main/scala/com/histmersion/api/automation/Agents.scala
+143:72 [E172] 143 |        case Nil  => Right(parsed.collect { case Right(kv) => kv }.toMap) / |Cannot prove that (String, com.histmersion.api.automation.Agents.Price) <:< (com.histmersion.api.automation.Agents.ModelRef.Model.T, V). / |where:    V is a type variable with constraint <: com.histmersion.api.automation.Agents.Price
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/ArticleEventLead.scala
+51:31 [E007] 51 |            s"${Plural.count(l.findingsNear, _root_.com.histmersion.api.Plural.Noun.Singular("finding"))} of the filter's sources near it; from ${l.provider} (a lead, / |Found:    (l.findingsNear : com.histmersion.api.catalogue.ArticleEventLead.FindingsNear) / |Required: com.histmersion.api.Plural.CountN
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/EventSourceRef.scala
+10:32 [E008] 10 |    year: Option[EventSourceRef.Year] = None, / |type Year is not a member of object com.histmersion.api.catalogue.EventSourceRef
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/PresetMenu.scala
+32:107 [E172] 32 |          .map(rows => Group(r, rows.sortBy(p => (p.period.start.value, p.period.end.value, p.label.value)), cover(r).value >= MinShare.value)) / | No given instance of type Ordering[ / |   ( / |     io.github.iltotore.iron.IronType[Long, / |       io.github.iltotore.iron.constraint.any.Pure], / |     io.github.iltotore.iron.IronType[Long,
+
+## modules/api/src/main/scala/com/histmersion/api/checks/FormatRule.scala
+244:128 [E007] 244 |  def fromWire(s: com.histmersion.api.checks.FormatRule.Wire): Option[FormatRule] = summon[WireEnumValues[FormatRule]].fromWire(s) / |            Found:    (s : com.histmersion.api.checks.FormatRule.Wire) / |            Required: com.histmersion.api.WireEnumValues.Wire
+
+## modules/api/src/main/scala/com/histmersion/api/jobs/JobActions.scala
+17:93 [E007] 17 |  val Stoppable: Set[com.histmersion.api.jobs.JobActions.Stoppable] = RegisteredJobKinds.all.stoppableKinds / |            Found:    Set[com.histmersion.api.jobs.JobKinds.Wire] / |            Required: Set[com.histmersion.api.jobs.JobActions.Stoppable]
+
+## modules/api/src/main/scala/com/histmersion/api/library/Confidence.scala
+9:69 [E007] 9 |  def wire: com.histmersion.api.library.Confidence.Wire = Ascii.lower((toString)) / |                     Found:    String / |                     Required: com.histmersion.api.library.Confidence.Wire
+
+## modules/api/src/main/scala/com/histmersion/api/maintenance/MaintenanceJobKinds.scala
+12:66 [E007] 12 |      com.histmersion.api.maintenance.VacuumPlan.Detail.of(_).map(com.histmersion.api.maintenance.Vacuum.describe) / |                   Found:    String / |                   Required: com.histmersion.api.jobs.JobKinds.Subject.T
+
+## modules/api/src/main/scala/com/histmersion/api/personal/Bookmark.scala
+21:109 [E007] 21 |  def name: com.histmersion.api.personal.Bookmark.Name = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title) / |                    Found:    io.github.iltotore.iron.IronType[String, / |                      io.github.iltotore.iron.constraint.any.Pure] | / |                      com.histmersion.api.library.Title / |                    Required: com.histmersion.api.personal.Bookmark.Name
+
+## modules/api/src/main/scala/com/histmersion/api/research/Critiques.scala
+109:10 [E007] 109 |          es.map(_.kind).distinct.sortBy(Kinds.indexOf), / |       Found:    List[com.histmersion.api.library.Edge.Kind.Wire.T] / |       Required: List[com.histmersion.api.research.CritiquePair.Kinds]
+
+## modules/api/src/main/scala/com/histmersion/api/views/EventDetail.scala
+45:140 [E007] 45 |  def markdown: com.histmersion.api.views.EventDetail.MarkdownResult = com.histmersion.api.catalogue.EventsMarkdown.event(this, media.map(_.markdownLine)) / |        Found:    com.histmersion.api.media.MediaThumb.MarkdownLine / |        Required: com.histmersion.api.catalogue.EventsMarkdown.Picture.T
+
