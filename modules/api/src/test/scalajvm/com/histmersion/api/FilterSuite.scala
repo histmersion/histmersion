@@ -61,11 +61,11 @@ class FilterSuite extends munit.FunSuite:
   test("BBox.contains honours the antimeridian split"):
     val pacific = BBox(com.histmersion.api.catalogue.Longitude(170), com.histmersion.api.catalogue.Latitude(-20), com.histmersion.api.catalogue.Longitude(-170), com.histmersion.api.catalogue.Latitude(-5))
     assert(pacific.crossesAntimeridian)
-    assert(pacific.contains(178, -17))
-    assert(pacific.contains(-172, -13))
-    assert(!pacific.contains(0, -13))
-    assert(!pacific.contains(178, 10))
-    assert(BBox(com.histmersion.api.catalogue.Longitude(25), com.histmersion.api.catalogue.Latitude(30), com.histmersion.api.catalogue.Longitude(45), com.histmersion.api.catalogue.Latitude(42)).contains(35, 39))
+    assert(pacific.contains(com.histmersion.api.catalogue.Longitude(178), com.histmersion.api.catalogue.Latitude(-17)))
+    assert(pacific.contains(com.histmersion.api.catalogue.Longitude(-172), com.histmersion.api.catalogue.Latitude(-13)))
+    assert(!pacific.contains(com.histmersion.api.catalogue.Longitude(0), com.histmersion.api.catalogue.Latitude(-13)))
+    assert(!pacific.contains(com.histmersion.api.catalogue.Longitude(178), com.histmersion.api.catalogue.Latitude(10)))
+    assert(BBox(com.histmersion.api.catalogue.Longitude(25), com.histmersion.api.catalogue.Latitude(30), com.histmersion.api.catalogue.Longitude(45), com.histmersion.api.catalogue.Latitude(42)).contains(com.histmersion.api.catalogue.Longitude(35), com.histmersion.api.catalogue.Latitude(39)))
 
   test("FilterQuery round-trips a Filter (so the CLI's derived client cannot drift)"):
     val f = Filter.of(
@@ -109,8 +109,8 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Filter.of(title = Some(com.histmersion.api.library.Filter.Title("  Troy "))).title, Some("Troy"))
     assertEquals(Filter.of(title = Some(com.histmersion.api.library.Filter.Title("   "))).title, None)
     assert(!Filter(title = Some(com.histmersion.api.library.Filter.Title("troy"))).isEmpty)
-    assert(Filter(title = Some("troy"), sort = Sort.Year, limit = com.histmersion.api.library.Filter.Limit(2)).sourceSet.isEmpty)
-    assertEquals(Filter(status = List(com.histmersion.api.library.Filter.Status("current")), title = Some("t")).sourceSet, Filter(status = List(com.histmersion.api.library.Filter.Status("current"))))
+    assert(Filter(title = Some(com.histmersion.api.library.Filter.Title("troy")), sort = Sort.Year, limit = com.histmersion.api.library.Filter.Limit(2)).sourceSet.isEmpty)
+    assertEquals(Filter(status = List(com.histmersion.api.library.Filter.Status("current")), title = Some(com.histmersion.api.library.Filter.Title("t"))).sourceSet, Filter(status = List(com.histmersion.api.library.Filter.Status("current"))))
 
   // ── Markdown: every hit must show the evidence ─────────────────────────────────────────────
   private val hit = Hit(
@@ -175,7 +175,7 @@ class FilterSuite extends munit.FunSuite:
   // ── /api/findings + /api/aggregate inputs (they carry the SAME filter) ───────────────────────
 
   test("FindingsQuery folds the legacy `region` parameter in as one more place"):
-    val f = Filter(places = List("Levant"), tags = List(com.histmersion.api.library.Filter.Tags("sea-peoples")))
+    val f = Filter(places = List(com.histmersion.api.library.Filter.Places("Levant")), tags = List(com.histmersion.api.library.Filter.Tags("sea-peoples")))
     assertEquals(Api.FindingsQuery(f, Some(com.histmersion.api.Api.FindingsQuery.Region(" Anatolia "))).toFilter.places, List("Levant", "Anatolia"))
     assertEquals(Api.FindingsQuery(f, None).toFilter, f)
     assertEquals(Api.FindingsQuery(f, Some(com.histmersion.api.Api.FindingsQuery.Region("  "))).toFilter, f)
@@ -184,7 +184,7 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Api.FindingsQuery(Filter(), Some(com.histmersion.api.Api.FindingsQuery.Region("Anatolia"))).toFilter.places, List("Anatolia"))
 
   test("AggregateQuery.time defaults `by` to time and keeps the filter as given"):
-    val f = Filter(tags = List(com.histmersion.api.library.Filter.Tags("steppe")), period = Some(Period(-3300, -2600)))
+    val f = Filter(tags = List(com.histmersion.api.library.Filter.Tags("steppe")), period = Some(Period(com.histmersion.api.catalogue.Year(-3300), com.histmersion.api.catalogue.Year(-2600))))
     assertEquals(Api.AggregateQuery.time(f), Api.AggregateQuery(Some(com.histmersion.api.Api.AggregateQuery.By("time")), None, f))
     assertEquals(Api.AggregateQuery.time(f, Some(com.histmersion.api.Api.AggregateQuery.Unit("findings"))).unit, Some("findings"))
 
@@ -194,8 +194,8 @@ class FilterSuite extends munit.FunSuite:
     assertEquals(Api.AggregateQuery.time(f).depth, None)
     // `.tree` always asks for one; depth 0 means "the server's configured ui.tree-depth"
     assertEquals(Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("time"), f).depth, Some(0))
-    assertEquals(Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("time,region"), f, depth = Some(3)).depth, Some(3))
-    assertEquals(Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("region"), f, asOf = Some(-1400L)).asOf, Some(-1400L))
+    assertEquals(Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("time,region"), f, depth = Some(com.histmersion.api.Api.AggregateQuery.Depth(3))).depth, Some(3))
+    assertEquals(Api.AggregateQuery.tree(com.histmersion.api.Api.AggregateQuery.By("region"), f, asOf = Some(com.histmersion.api.Api.AggregateQuery.AsOf(-1400L))).asOf, Some(-1400L))
 
   // ── half-open ranges must never build an INVERTED period ─────────────────────────────────────
 

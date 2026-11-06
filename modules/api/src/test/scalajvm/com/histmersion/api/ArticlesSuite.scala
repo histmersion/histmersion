@@ -42,7 +42,7 @@ class ArticlesSuite extends munit.FunSuite:
     assert(Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("  "), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"))).isLeft)
     assertEquals(
       Articles
-        .applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"), periodStart = Some(-100), periodEnd = Some(-900)))
+        .applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"), periodStart = Some(com.histmersion.api.catalogue.Year(-100)), periodEnd = Some(com.histmersion.api.catalogue.Year(-900))))
         .left
         .toOption
         .get
@@ -51,7 +51,7 @@ class ArticlesSuite extends munit.FunSuite:
     )
 
   test("put needs both period bounds or neither"):
-    assert(Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"), periodStart = Some(-100))).isLeft)
+    assert(Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"), periodStart = Some(com.histmersion.api.catalogue.Year(-100)))).isLeft)
     assertEquals(Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"))).toOption.get.period, None)
 
   // ── patch ────────────────────────────────────────────────────────────────────────────────────

@@ -138,7 +138,7 @@ class PlaceEditsSuite extends munit.FunSuite:
   test("an override: a kind (lower-cased), a period with one or both sides, a reason; or a reset alone"):
     assertEquals(
       com.histmersion.api.catalogue.Place.Overrides.edit(
-        com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind(" Region ")), reason = Some("  one of   14 "))
+        com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind(" Region ")), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("  one of   14 ")))
       ),
       Right(com.histmersion.api.catalogue.Place.OverrideEdit.Put(Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Kind("region")), None, Some(com.histmersion.api.catalogue.Place.OverrideEdit.Put.Reason("one of 14"))))
     )
@@ -164,7 +164,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       com.histmersion.api.catalogue.Place.Overrides.edit(in).left.map(_.code)
     assertEquals(refused(com.histmersion.api.catalogue.Place.OverrideSet()), Left(Some(Write.CodeInvalid)))
     assertEquals(
-      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("  ")), reason = Some("why"))),
+      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("  ")), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("why")))),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
@@ -176,7 +176,7 @@ class PlaceEditsSuite extends munit.FunSuite:
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
-      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")), reset = true)),
+      refused(com.histmersion.api.catalogue.Place.OverrideSet(kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")), reset = com.histmersion.api.catalogue.Place.OverrideSet.Reset(true))),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
@@ -269,7 +269,7 @@ class PlaceEditsSuite extends munit.FunSuite:
           kind = Some(com.histmersion.api.catalogue.Place.OverrideSet.Kind("region")),
           pointLat = Some(-16.1),
           pointLon = Some(31.4),
-          reason = Some("Wikidata P625")
+          reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("Wikidata P625"))
         )
       ),
       Right(
@@ -290,20 +290,20 @@ class PlaceEditsSuite extends munit.FunSuite:
     )
     assertEquals(
       refused(
-        com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(91), pointLon = Some(0), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
+        com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(com.histmersion.api.catalogue.Latitude(91)), pointLon = Some(com.histmersion.api.catalogue.Longitude(0)), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
       ),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
-        com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(0), pointLon = Some(-181), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
+        com.histmersion.api.catalogue.Place.OverrideSet(pointLat = Some(com.histmersion.api.catalogue.Latitude(0)), pointLon = Some(com.histmersion.api.catalogue.Longitude(-181)), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
       ),
       Left(Some(Write.CodeInvalid))
     )
     assertEquals(
       refused(
         com.histmersion.api.catalogue.Place
-          .OverrideSet(pointLat = Some(Double.NaN), pointLon = Some(0), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
+          .OverrideSet(pointLat = Some(Double.NaN), pointLon = Some(com.histmersion.api.catalogue.Longitude(0)), reason = Some(com.histmersion.api.catalogue.Place.OverrideSet.Reason("x")))
       ),
       Left(Some(Write.CodeInvalid))
     )

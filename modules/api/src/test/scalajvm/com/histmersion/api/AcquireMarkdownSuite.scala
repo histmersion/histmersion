@@ -121,11 +121,11 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       title = Some(com.histmersion.api.library.Title("A critique")),
       year = Some(com.histmersion.api.catalogue.Year(2021)),
       doi = Some(com.histmersion.api.library.Doi("10.1/x")),
-      isInfluential = true,
-      intents = List("result"),
-      contexts = List("these data contradict it"),
+      isInfluential = com.histmersion.api.library.FollowupRow.IsInfluential(true),
+      intents = List(com.histmersion.api.library.FollowupRow.Intents("result")),
+      contexts = List(com.histmersion.api.library.FollowupRow.Contexts("these data contradict it")),
       proposedKind = Acquire.EdgeKinds.Refutes,
-      citekey = Some("critic2021_x")
+      citekey = Some(com.histmersion.api.library.Citekey("critic2021_x"))
     )
     val md = AcquireMarkdown.followups(FollowupsResult(com.histmersion.api.library.FollowupsResult.Target("haak2015_massive"), None, com.histmersion.api.library.FollowupsResult.Backend("semantic-scholar"), com.histmersion.api.library.FollowupsResult.Count(1), com.histmersion.api.library.FollowupsResult.EdgesAdded(0), List(f)))
     assert(md.contains("**refutes**"))
@@ -134,7 +134,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(md.contains("`critic2021_x`"))
 
   test("a lending-only archive item renders the refusal prominently"):
-    val md = AcquireMarkdown.archiveItem(ArchiveItem(com.histmersion.api.library.ArchiveItem.Identifier("x"), title = Some(com.histmersion.api.library.ArchiveItem.Title("Black Athena")), lendingOnly = true))
+    val md = AcquireMarkdown.archiveItem(ArchiveItem(com.histmersion.api.library.ArchiveItem.Identifier("x"), title = Some(com.histmersion.api.library.ArchiveItem.Title("Black Athena")), lendingOnly = com.histmersion.api.library.ArchiveItem.LendingOnly(true)))
     assert(md.contains("Lending-only item"))
     assert(md.contains("borrowed") || md.contains("BORROWED"))
 
@@ -162,7 +162,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       title = Some(com.histmersion.api.library.ArchiveItem.Title("A Book")),
       creator = List(com.histmersion.api.library.ArchiveItem.Creator("C")),
       year = Some(com.histmersion.api.catalogue.Year(1939)),
-      files = List(ArchiveFile("a.pdf", Some("Text PDF"), 12.0))
+      files = List(ArchiveFile(com.histmersion.api.library.ArchiveFile.Name("a.pdf"), Some(com.histmersion.api.library.ArchiveFile.Format("Text PDF")), 12.0))
     )
     val lines = AcquireMarkdown.archiveItem(item).linesIterator.toList
     val sep = lines.filter(_.contains("---"))

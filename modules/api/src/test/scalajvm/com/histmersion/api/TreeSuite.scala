@@ -290,7 +290,7 @@ class TreeSuite extends munit.FunSuite:
     val t = Tree.regionTree(List(dig, frontier, floating), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3), com.histmersion.api.library.Tree.RegionTreeSamples(1))
     val md =
       SearchMarkdown.tree(
-        TimeHistogram(com.histmersion.api.library.TimeHistogram.From(-1600), com.histmersion.api.library.TimeHistogram.To(-1200), com.histmersion.api.library.TimeHistogram.Bucket(100), Nil, by = com.histmersion.api.library.TimeHistogram.By("region"), total = 3, depth = 3, tree = t),
+        TimeHistogram(com.histmersion.api.library.TimeHistogram.From(-1600), com.histmersion.api.library.TimeHistogram.To(-1200), com.histmersion.api.library.TimeHistogram.Bucket(100), Nil, by = com.histmersion.api.library.TimeHistogram.By("region"), total = com.histmersion.api.library.TimeHistogram.Total(3), depth = com.histmersion.api.library.TimeHistogram.Depth(3), tree = t),
         com.histmersion.api.library.SearchMarkdown.TreeUnit("sources")
       )
     assert(md.contains("### sources by region"), md)

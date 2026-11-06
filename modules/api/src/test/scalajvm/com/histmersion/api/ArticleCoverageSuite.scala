@@ -230,9 +230,9 @@ class ArticleCoverageSuite extends munit.FunSuite:
   test("filter: normalised, statuses checked, an empty one clears, extra queries need a filter"):
     assertEquals(
       Article.Filter.normalise(
-        Article.Filter(query = Some(com.histmersion.api.library.Filter.Q(" tin ")), topics = List(com.histmersion.api.library.Filter.Topics("a, b"), com.histmersion.api.library.Filter.Topics(" "), com.histmersion.api.library.Filter.Topics("a")), status = List("Current"))
+        Article.Filter(query = Some(com.histmersion.api.library.Filter.Q(" tin ")), topics = List(com.histmersion.api.library.Filter.Topics("a, b"), com.histmersion.api.library.Filter.Topics(" "), com.histmersion.api.library.Filter.Topics("a")), status = List(com.histmersion.api.library.Filter.Status("Current")))
       ),
-      Right(Some(Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("tin")), topics = List(com.histmersion.api.library.Filter.Topics("a"), com.histmersion.api.library.Filter.Topics("b")), status = List("current"))))
+      Right(Some(Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("tin")), topics = List(com.histmersion.api.library.Filter.Topics("a"), com.histmersion.api.library.Filter.Topics("b")), status = List(com.histmersion.api.library.Filter.Status("current")))))
     )
     assert(
       Article.Filter
@@ -240,11 +240,11 @@ class ArticleCoverageSuite extends munit.FunSuite:
         .left
         .exists(_.contains("'famous'"))
     )
-    assert(Article.Filter.normalise(Article.Filter(tags = List(com.histmersion.api.library.Filter.Tags("x")), from = Some(-100), to = Some(-200))).isLeft)
+    assert(Article.Filter.normalise(Article.Filter(tags = List(com.histmersion.api.library.Filter.Tags("x")), from = Some(com.histmersion.api.catalogue.Year(-100)), to = Some(com.histmersion.api.catalogue.Year(-200)))).isLeft)
     assertEquals(Article.Filter.normalise(Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("  ")))), Right(None))
     assert(Article.Filter.normalise(Article.Filter(extraQueries = List(com.histmersion.api.research.Article.Filter.ExtraQueries("synoikism")))).isLeft)
     assertEquals(
-      Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("tin")), from = Some(-1300), to = Some(-1100)).toFilter.period,
+      Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("tin")), from = Some(com.histmersion.api.catalogue.Year(-1300)), to = Some(com.histmersion.api.catalogue.Year(-1100))).toFilter.period,
       Some(Period(com.histmersion.api.catalogue.Year(-1300), com.histmersion.api.catalogue.Year(-1100)))
     )
 

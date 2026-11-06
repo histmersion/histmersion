@@ -26,10 +26,10 @@ class PlanQuotaSuite extends munit.FunSuite:
 
   test("floors: per window kind, limit-qualified first, a default for the rest; typos reported"):
     val f = Floors.parse(com.histmersion.api.automation.PlanQuota.Floors.Wire("five_hour=30, seven_day = 25%, codex/10080m=20")).toOption.get
-    assertEquals(f.of("claude", "five_hour", 10), 30)
-    assertEquals(f.of("codex", "10080m", 10), 20)
-    assertEquals(f.of("gpt-reserve", "10080m", 10), 10)
-    assert(Floors.parse(com.histmersion.api.automation.PlanQuota.Floors.Wire("five_hour=130")).isLeft && Floors.parse("five_hour").isLeft && Floors.parse("=3").isLeft)
+    assertEquals(f.of(com.histmersion.api.automation.PlanQuota.Floors.OfLimit("claude"), com.histmersion.api.automation.PlanQuota.Floors.OfKind("five_hour"), com.histmersion.api.automation.PlanQuota.Rules.DefaultFloor(10)), 30)
+    assertEquals(f.of(com.histmersion.api.automation.PlanQuota.Floors.OfLimit("codex"), com.histmersion.api.automation.PlanQuota.Floors.OfKind("10080m"), com.histmersion.api.automation.PlanQuota.Rules.DefaultFloor(10)), 20)
+    assertEquals(f.of(com.histmersion.api.automation.PlanQuota.Floors.OfLimit("gpt-reserve"), com.histmersion.api.automation.PlanQuota.Floors.OfKind("10080m"), com.histmersion.api.automation.PlanQuota.Rules.DefaultFloor(10)), 10)
+    assert(Floors.parse(com.histmersion.api.automation.PlanQuota.Floors.Wire("five_hour=130")).isLeft && Floors.parse(com.histmersion.api.automation.PlanQuota.Floors.Wire("five_hour")).isLeft && Floors.parse(com.histmersion.api.automation.PlanQuota.Floors.Wire("=3")).isLeft)
     assertEquals(Floors.parse(com.histmersion.api.automation.PlanQuota.Floors.Wire("")).map(_.byKind), Right(Map.empty))
     assertEquals(f.text, "codex/10080m=20, five_hour=30, seven_day=25")
 
@@ -99,14 +99,14 @@ class PlanQuotaSuite extends munit.FunSuite:
     assertEquals(poolOf(ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("openai/gpt-5")), oc), Some(PoolId.ChatgptPlan))
     assertEquals(poolOf(ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("openai/gpt-5")), plain), None)
     assertEquals(poolOf(ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("claude-x")), oc), None)
-    assert(paid(ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("x")), plain) && paid(ModelRef(ProviderKind.Opencode, "zen/x"), oc))
-    assert(!paid(ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("x")), plain) && !paid(ModelRef(ProviderKind.ClaudeCode, "x"), plain))
+    assert(paid(ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("x")), plain) && paid(ModelRef(ProviderKind.Opencode, com.histmersion.api.automation.Agents.ModelRef.Model("zen/x")), oc))
+    assert(!paid(ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("x")), plain) && !paid(ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("x")), plain))
 
   test("pools: a CLI set to use an API key draws on no plan — it bills the API, so it is paid"):
     val keyed = Logins(claudeCodeApiKey = com.histmersion.api.automation.PlanQuota.Logins.ClaudeCodeApiKey(true), codexApiKey = com.histmersion.api.automation.PlanQuota.Logins.CodexApiKey(true))
     assertEquals(poolOf(ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("opus")), keyed), None)
     assertEquals(poolOf(ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5")), keyed), None)
-    assert(paid(ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("opus")), keyed) && paid(ModelRef(ProviderKind.Codex, "gpt-5"), keyed))
+    assert(paid(ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("opus")), keyed) && paid(ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5")), keyed))
     // the other CLI keeps its plan
     assertEquals(
       poolOf(ModelRef(ProviderKind.Codex, com.histmersion.api.automation.Agents.ModelRef.Model("gpt-5")), Logins(claudeCodeApiKey = com.histmersion.api.automation.PlanQuota.Logins.ClaudeCodeApiKey(true))),

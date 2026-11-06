@@ -54,7 +54,7 @@ class BasemapSuite extends munit.FunSuite:
       minZoom = Some(com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom(0)),
       maxZoom = Some(com.histmersion.api.basemap.Basemap.Focus.MaxZoom(10)),
       bbox = Some(com.histmersion.api.BBox.Text("-12,20,90,62")),
-      source = Some("20261019.pmtiles"),
+      source = Some(com.histmersion.api.basemap.Basemap.LayerInfo.Source("20261019.pmtiles")),
       attribution = """© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>"""
     )
     val t = Basemap.LayerInfo(com.histmersion.api.basemap.Basemap.LayerInfo.Layer("terrain"), present = com.histmersion.api.basemap.Basemap.LayerInfo.Present(false), file = com.histmersion.api.basemap.Basemap.LayerInfo.File("/c/terrain.pmtiles"))
@@ -99,7 +99,7 @@ class BasemapSuite extends munit.FunSuite:
       present = com.histmersion.api.basemap.Basemap.LayerInfo.Present(true),
       com.histmersion.api.basemap.Basemap.LayerInfo.File("/c/terrain.pmtiles"),
       bytes = com.histmersion.api.ByteCount(1),
-      maxZoom = Some(8),
+      maxZoom = Some(com.histmersion.api.basemap.Basemap.Focus.MaxZoom(8)),
       onDemand = Some(Basemap.OnDemand(com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true), com.histmersion.api.basemap.Basemap.OnDemand.MaxZoom(12), com.histmersion.api.basemap.Basemap.OnDemand.Dir("/c/terrain-cache"), com.histmersion.api.basemap.Basemap.OnDemand.Tiles(3), com.histmersion.api.ByteCount(300000), com.histmersion.api.basemap.Basemap.OnDemand.MaxBytes(3000000000L))),
       focus =
         List(Basemap.Focus(com.histmersion.api.basemap.Basemap.Focus.Name("aegean"), com.histmersion.api.basemap.Basemap.Focus.File("/c/terrain-focus/aegean.pmtiles"), com.histmersion.api.ByteCount(430000000), com.histmersion.api.basemap.Basemap.Focus.Bbox("21.5,35,28.5,41.5"), com.histmersion.api.basemap.Basemap.Focus.MinZoom(9), com.histmersion.api.basemap.Basemap.Focus.MaxZoom(12), com.histmersion.api.basemap.Basemap.Focus.Tiles(10299)))
@@ -157,7 +157,7 @@ class BasemapSuite extends munit.FunSuite:
     assertEquals(BaseMapSource.resolve(com.histmersion.api.basemap.BaseMapSource.Wire("whatever"), st(true, Nil)), "local", "anything else is auto")
 
   test("the status says which styles lack layers"):
-    val v = Basemap.LayerInfo(com.histmersion.api.basemap.Basemap.LayerInfo.Layer("vector"), present = com.histmersion.api.basemap.Basemap.LayerInfo.Present(true), file = com.histmersion.api.basemap.Basemap.LayerInfo.File("/c/vector.pmtiles"), dropped = List("places", "roads"))
+    val v = Basemap.LayerInfo(com.histmersion.api.basemap.Basemap.LayerInfo.Layer("vector"), present = com.histmersion.api.basemap.Basemap.LayerInfo.Present(true), file = com.histmersion.api.basemap.Basemap.LayerInfo.File("/c/vector.pmtiles"), dropped = List(com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("places"), com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("roads")))
     val md = BasemapMarkdown.status(
       Basemap.Status(
         available = com.histmersion.api.basemap.Basemap.Status.Available(true),

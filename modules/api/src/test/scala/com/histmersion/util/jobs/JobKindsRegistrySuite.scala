@@ -25,7 +25,7 @@ class JobKindsRegistrySuite extends munit.FunSuite:
     assertEquals(kinds.parse(com.histmersion.api.jobs.JobKinds.Wire("gamma")), None)
 
   test("which kinds a person may stop"):
-    assert(kinds.stoppable(com.histmersion.api.jobs.JobKinds.Wire("alpha")) && !kinds.stoppable("beta-run") && !kinds.stoppable("gamma"))
+    assert(kinds.stoppable(com.histmersion.api.jobs.JobKinds.Wire("alpha")) && !kinds.stoppable(com.histmersion.api.jobs.JobKinds.Wire("beta-run")) && !kinds.stoppable(com.histmersion.api.jobs.JobKinds.Wire("gamma")))
     assertEquals(kinds.stoppableKinds, Set("alpha"))
 
   test("what a job is about: its source first, else the first registered reading of its detail"):

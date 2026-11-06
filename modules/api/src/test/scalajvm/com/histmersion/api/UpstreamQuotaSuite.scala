@@ -11,7 +11,7 @@ import com.histmersion.api.views.AutopilotStatus
 class UpstreamQuotaSuite extends munit.FunSuite:
 
   private val q =
-    UpstreamQuota(com.histmersion.api.library.UpstreamQuota.Upstream("core"), com.histmersion.api.library.UpstreamQuota.Day("2026-10-26"), com.histmersion.api.library.UpstreamQuota.LookupTokens(10), com.histmersion.api.library.UpstreamQuota.SearchTokens(4), com.histmersion.api.library.UpstreamQuota.DailyTokens(900), com.histmersion.api.library.UpstreamQuota.SearchDailyTokens(600), com.histmersion.api.library.UpstreamQuota.PerMinute(20), rateLimit = Some(25), rateRemaining = Some(18))
+    UpstreamQuota(com.histmersion.api.library.UpstreamQuota.Upstream("core"), com.histmersion.api.library.UpstreamQuota.Day("2026-10-26"), com.histmersion.api.library.UpstreamQuota.LookupTokens(10), com.histmersion.api.library.UpstreamQuota.SearchTokens(4), com.histmersion.api.library.UpstreamQuota.DailyTokens(900), com.histmersion.api.library.UpstreamQuota.SearchDailyTokens(600), com.histmersion.api.library.UpstreamQuota.PerMinute(20), rateLimit = Some(com.histmersion.api.library.UpstreamQuota.RateLimit(25)), rateRemaining = Some(com.histmersion.api.library.UpstreamQuota.RateRemaining(18)))
 
   test("one line: today's tokens against the budget, the searches' share, the pace and CORE's window"):
     assertEquals(
@@ -35,6 +35,6 @@ class UpstreamQuotaSuite extends munit.FunSuite:
 
   test("a sweep says which index it did not ask, and why"):
     val sw = CandidatesMarkdown.sweep(
-      CandidateSweep(com.histmersion.api.library.CandidateSweep.Goal("g"), Nil, com.histmersion.api.library.CandidateSweep.Found(0), com.histmersion.api.library.CandidateSweep.Added(0), com.histmersion.api.library.CandidateSweep.Again(0), Map.empty, com.histmersion.api.library.CandidateSweep.Unseen(0), notes = List("core not asked this sweep: CORE asked to wait"))
+      CandidateSweep(com.histmersion.api.library.CandidateSweep.Goal("g"), Nil, com.histmersion.api.library.CandidateSweep.Found(0), com.histmersion.api.library.CandidateSweep.Added(0), com.histmersion.api.library.CandidateSweep.Again(0), Map.empty, com.histmersion.api.library.CandidateSweep.Unseen(0), notes = List(com.histmersion.api.library.CandidateSweep.Notes("core not asked this sweep: CORE asked to wait")))
     )
     assert(sw.contains("- **core not asked this sweep: CORE asked to wait**"), sw)

@@ -185,9 +185,9 @@ class WireSnapshotSuite extends munit.FunSuite:
     kind = Some(com.histmersion.api.media.MediaItem.Kind("photo")),
     caption = Some(com.histmersion.api.media.MediaItem.Caption("A zq vase")),
     license = Some(com.histmersion.api.media.MediaItem.License("CC-BY-4.0")),
-    author = Some("Zq Author"),
-    credit = Some("Zq Museum"),
-    sourceUrl = Some("https://example.org/zq"),
+    author = Some(com.histmersion.api.media.MediaItem.Author("Zq Author")),
+    credit = Some(com.histmersion.api.media.MediaItem.Credit("Zq Museum")),
+    sourceUrl = Some(com.histmersion.api.media.MediaItem.SourceUrl("https://example.org/zq")),
     thumbUrl = Some("/api/media/zq/thumb"),
     fileUrl = "/api/media/zq",
     targets = List(MediaTarget("place", "zq_tell", "depicts", property = Some("P180")))
@@ -200,8 +200,8 @@ class WireSnapshotSuite extends munit.FunSuite:
       TimeSpan(Some(com.histmersion.api.catalogue.Year(-1620)), Some(com.histmersion.api.catalogue.Year(-1610)), Some(com.histmersion.api.catalogue.Year(-1600)), Some(com.histmersion.api.catalogue.Year(-1590))),
       com.histmersion.api.catalogue.EventSummary.Historicity("attested"),
       placeId = Some(com.histmersion.api.catalogue.Place.Id("zq_tell")),
-      description = Some("A zq eruption."),
-      citekey = Some("zq_alpha_2001")
+      description = Some(com.histmersion.api.catalogue.EventSummary.Description("A zq eruption.")),
+      citekey = Some(com.histmersion.api.library.Citekey("zq_alpha_2001"))
     ),
     geometry = Some(com.histmersion.api.catalogue.EventGeometry.Geojson("POINT(30.5 40.25)")),
     children = List(EventSummary("zq-child", "Zq ash fall", "ashfall", TimeSpan(notBefore = Some(-1610)), "inferred")),
@@ -218,7 +218,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     Nil,
     findings = com.histmersion.api.catalogue.Place.Counts.Findings(3),
     asOf = Some(com.histmersion.api.catalogue.Year(-1500)),
-    links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("zq_tell"), "wikidata", "Q2")),
+    links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("zq_tell"), com.histmersion.api.catalogue.Place.Link.Scheme("wikidata"), com.histmersion.api.catalogue.Place.Link.ExternalId("Q2"))),
     locationPrecision = Place.Precision.Stated,
     media = List(thumb),
     siteType = Some("tell")
@@ -262,7 +262,7 @@ class WireSnapshotSuite extends munit.FunSuite:
           suffix = Some(com.histmersion.api.catalogue.Attestation.Suffix("after")),
           charStart = Some(com.histmersion.api.catalogue.Attestation.CharStart(10)),
           charEnd = Some(com.histmersion.api.catalogue.Attestation.CharEnd(22)),
-          page = Some("12"),
+          page = Some(com.histmersion.api.catalogue.Attestation.Page("12")),
           note = Some("a zq note")
         )
       ),
@@ -308,7 +308,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       "backupStatus" -> Markdown.backupStatus(
         Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("done"), com.histmersion.api.backup.Backup.Status.DurationMs(1500), Some(com.histmersion.api.ByteCount(4096)), Some("cd" * 32), None, List(com.histmersion.api.backup.Backup.Result.Pruned("old.dump")))
       ),
-      "backupStatus failed" -> Markdown.backupStatus(Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("failed"), com.histmersion.api.backup.Backup.Status.DurationMs(10), error = Some("zq error"))),
+      "backupStatus failed" -> Markdown.backupStatus(Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("failed"), com.histmersion.api.backup.Backup.Status.DurationMs(10), error = Some(com.histmersion.api.backup.Backup.Status.Error("zq error")))),
       "event" -> event.markdown,
       "place" -> PlacesMarkdown.place(place),
       "event json" -> event.asJson.spaces2,
@@ -325,7 +325,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       ).asJson.spaces2,
       "resolved none json" -> ResolvedId(com.histmersion.api.views.ResolvedId.Id("zq-nothing")).asJson.spaces2,
       "job detail json" -> InitPlan
-        .Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List("zq-gaz"))))
+        .Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List(com.histmersion.api.exchange.InitPlan.Fetch("zq-gaz")))))
         .set(SkippedPeriod.SkippedCount, 2)
         .set(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash, Some("zq-hash"))
         .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = true, List("sources"))))
