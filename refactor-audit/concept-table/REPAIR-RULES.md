@@ -39,3 +39,11 @@ If two types in different files are one concept, list it in your reply rather th
 The master version is the reference for what code computes, not for how it is written. Keep lens updates (`.modify`): never turn
 them back into `.copy`. Keep newtypes on public signatures: never revert a concept to a primitive because the old file had one.
 Predicate results are the only signatures that go back to Boolean. Plain Boolean fields of a record keep their types.
+
+## Test files
+
+A test's helper takes the concept, not a primitive: `def candidate(id: String...)` becomes `def candidate(id: Place.Id...)`, and its callers pass the concept.
+Keep what is asserted exactly as it is: never change an expected value, drop a check or loosen an assertion. To read text out of a newtype, use `.value`
+(`md.value.contains("x")`) rather than changing what the code under test returns. If a test expects an API that no longer exists, or that disagrees
+with the code under test, do not guess: compare with the behaviour reference and report it. `assertEquals` between a newtype and a literal works through
+`import com.histmersion.testsupport.ComparedByValue.given`, which you may add.
