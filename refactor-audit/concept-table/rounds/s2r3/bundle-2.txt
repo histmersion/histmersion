@@ -1,0 +1,11 @@
+## modules/files/src/main/scala/com/histmersion/domain/library/sources/SourceNote.scala
+32:42 [E008] 32 |  def frontmatter(s: Source): Frontmatter.YamlResult = frontmatterOf(s).yaml / |type YamlResult is not a member of object com.histmersion.util.data.mirror.Frontmatter, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+61:59 [E008] 61 |  private def field(key: String, value: Any): (Frontmatter.FieldsPart1, Any) = (Frontmatter.FieldsPart1(key), value) / |type FieldsPart1 is not a member of object com.histmersion.util.data.mirror.Frontmatter, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+61:92 [E008] 61 |  private def field(key: String, value: Any): (Frontmatter.FieldsPart1, Any) = (Frontmatter.FieldsPart1(key), value) / |value FieldsPart1 is not a member of object com.histmersion.util.data.mirror.Frontmatter, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/files/src/main/scala/com/histmersion/domain/research/articles/ArticleNote.scala
+45:22 [E007] 45 |    MirrorFrontmatter(fields).note(Option.when(body.nonEmpty)(body)) / |Found:    (fields : / |  List[(String, / |    io.github.iltotore.iron.IronType[String, / |      io.github.iltotore.iron.constraint.any.Pure] / |    java.util.List²[
+
+## modules/config/src/main/scala/com/histmersion/config/edit/SettingsReader.scala
+51:85 [E007] 51 |    val credential = Option.when(field.secret != SecretRule.NotSecret)(SecretForm.of(text, field.secret)) / |Found:    (text : com.histmersion.config.edit.SettingValue.Text.Value.T | String) / |Required: String
+
