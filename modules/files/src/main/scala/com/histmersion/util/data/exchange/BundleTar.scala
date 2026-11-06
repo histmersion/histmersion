@@ -151,7 +151,6 @@ object BundleTar:
     override def write(b: Array[Byte], off: Int, len: Int): Unit = { underlying.write(b, off, len); count += len }
     override def close(): Unit = ()
 
-  object Counting:
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────
 

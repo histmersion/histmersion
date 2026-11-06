@@ -162,7 +162,7 @@ object RepositoryLanding:
     * (`pure` is not `purepharma`, `press` is not `pressreader`).
     */
   def wordLabel(label: String, w: String): Boolean =
-    ((w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
+    ((w).nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
       ((label).value.startsWith((w).value) && (label).value.length > (w).value.length && { val c = (label).value.charAt((w).value.length); c == '-' || c.isDigit })))
 
   /** A host entry matches the host itself or any subdomain of it. */
@@ -184,7 +184,7 @@ object RepositoryLanding:
   private def arr(c: ACursor, keys: String*): List[Json] =
     keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
 
-  private def notPdfPath(u: String) = !(u).value.toLowerCase.split("[?#]").head.endsWith(".pdf")
+  private def notPdfPath(u: String) = !(u).toLowerCase.split("[?#]").head.endsWith(".pdf")
 
   /** Pure: the landing pages an OpenAlex work names — each location's landing page, and a `pdf_url` that is a record
     * page (no `.pdf`: the direct step already tried it as a file) — best location first, repositories marked.
@@ -194,7 +194,7 @@ object RepositoryLanding:
     val locs = c.downField("best_oa_location").focus.filterNot(_.isNull).toList ++ arr(c, "locations")
     distinct(locs.flatMap { l =>
       val h = l.hcursor
-      val kind = str(h, "source", "type").map((_).value.toLowerCase)
+      val kind = str(h, "source", "type").map((_).toLowerCase)
       val repo = kind.contains("repository")
       val pub = kind.exists(PublisherSourceTypes)
       val open = h.downField("is_oa").as[Boolean].contains(true)
@@ -215,7 +215,7 @@ object RepositoryLanding:
     })
 
   /** Pure: where a DataCite DOI resolves (`data.attributes.url` of `api.datacite.org/dois/<doi>`). */
-  def dataciteUrl(json: Json): Option[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url] = (str(json.hcursor, "data", "attributes", "url")).map(refactorValue2 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue2).value))
+  def dataciteUrl(json: Json): Option[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url] = (str(json.hcursor, "data", "attributes", "url")).map(refactorValue2 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue2)))
 
   /** Candidates by URL, the first of each kept; repository if any index says so, publisher only if one says so and none
     * says repository, open if any says so.
@@ -244,7 +244,7 @@ object RepositoryLanding:
       .map(_.hcursor)
       .filter(v => str(v, "type").contains("URL"))
       .flatMap(v => str(v, "data", "value"))
-      .nextOption()).map(refactorValue3 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue3).value))
+      .nextOption()).map(refactorValue3 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue3)))
 
   // ── Zenodo ─────────────────────────────────────────────────────────────────────────────────
 
@@ -263,8 +263,8 @@ object RepositoryLanding:
     */
   def zenodoFiles(json: Json): List[ZenodoFile] =
     val c = json.hcursor
-    val right = str(c, "metadata", "access_right").map((_).value.toLowerCase)
-    val files = str(c, "access", "files").map((_).value.toLowerCase)
+    val right = str(c, "metadata", "access_right").map((_).toLowerCase)
+    val files = str(c, "access", "files").map((_).toLowerCase)
     val open = right.forall(_ == "open") && files.forall(_ == "public") && (right.isDefined || files.isDefined)
     if !open then Nil
     else
@@ -273,7 +273,7 @@ object RepositoryLanding:
         val name = str(h, "key").orElse(str(h, "filename")).getOrElse("")
         val mime = str(h, "mimetype").getOrElse("")
         val url = str(h, "links", "self").orElse(str(h, "links", "content")).orElse(str(h, "links", "download"))
-        val md5 = str(h, "checksum").filter((_).value.toLowerCase.startsWith("md5:")).map((_).value.drop(4).toLowerCase)
+        val md5 = str(h, "checksum").filter((_).toLowerCase.startsWith("md5:")).map((_).drop(4).toLowerCase)
         url
           .filter(_ => name.toLowerCase.endsWith(".pdf") || mime.equalsIgnoreCase("application/pdf"))
           .map(ZenodoFile(_, (md5).map(refactorValue4 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.ZenodoFile.Md5(refactorValue4))))
@@ -298,7 +298,7 @@ object RepositoryLanding:
         .toMap
       for
         key <- attrs.get("name").orElse(attrs.get("property")).map(_.trim.toLowerCase).filter(_.nonEmpty)
-        content <- attrs.get("content").map({ val refactorFunction = decode; (refactorValue5) => refactorFunction((refactorValue5)) }).map((_).value.trim)
+        content <- attrs.get("content").map({ val refactorFunction = decode; (refactorValue5) => refactorFunction((refactorValue5)) }).map((_).trim)
       yield { val refactorTuple = key -> content; (_root_.com.histmersion.upstreams.landing.RepositoryLanding.MetaName(refactorTuple._1), _root_.com.histmersion.upstreams.landing.RepositoryLanding.MetaContent(refactorTuple._2)) }
     }
 
@@ -306,7 +306,7 @@ object RepositoryLanding:
   val MaxHead = 400000
 
   private def decode(s: String): String =
-    ((s).value.replace("&amp;", "&")
+    ((s).replace("&amp;", "&")
       .replace("&quot;", "\"")
       .replace("&#39;", "'")
       .replace("&apos;", "'")

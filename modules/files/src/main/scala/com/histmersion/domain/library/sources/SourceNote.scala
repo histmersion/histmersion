@@ -45,7 +45,6 @@ object SourceNote:
   type YamlMapText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
   val YamlMapText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
   type EdgesOfMPart1 = String
-  val EdgesOfMPart1: String.type = String
   type EdgesOfNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
   val EdgesOfNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
   type WithLinkedTopicsNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
@@ -55,31 +54,18 @@ object SourceNote:
   type BodyOfText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
   val BodyOfText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
   type StrMPart1 = String
-  val StrMPart1: String.type = String
   type StrK = String
-  val StrK: String.type = String
   type ListMPart1 = String
-  val ListMPart1: String.type = String
   type ListK = String
-  val ListK: String.type = String
   type IntMPart1 = String
-  val IntMPart1: String.type = String
   type IntK = String
-  val IntK: String.type = String
   type LongMPart1 = String
-  val LongMPart1: String.type = String
   type LongK = String
-  val LongK: String.type = String
   type DoubleMPart1 = String
-  val DoubleMPart1: String.type = String
   type DoubleK = String
-  val DoubleK: String.type = String
   type PeriodMPart1 = String
-  val PeriodMPart1: String.type = String
   type ToSourceMPart1 = String
-  val ToSourceMPart1: String.type = String
   type FindingsMPart1 = String
-  val FindingsMPart1: String.type = String
 
   def note(s: Source): com.histmersion.domain.library.sources.SourceNote.Text =
     frontmatterOf(s).note(s.notes.map(_.trim).filter(_.nonEmpty))

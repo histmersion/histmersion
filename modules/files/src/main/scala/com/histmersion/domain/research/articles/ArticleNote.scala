@@ -34,17 +34,11 @@ object ArticleNote:
   type ParseText = _root_.com.histmersion.domain.research.articles.ArticleNote.Text
   val ParseText: _root_.com.histmersion.domain.research.articles.ArticleNote.Text.type = _root_.com.histmersion.domain.research.articles.ArticleNote.Text
   type StrMPart1 = String
-  val StrMPart1: String.type = String
   type StrK = String
-  val StrK: String.type = String
   type ListMPart1 = String
-  val ListMPart1: String.type = String
   type ListK = String
-  val ListK: String.type = String
   type LongMPart1 = String
-  val LongMPart1: String.type = String
   type LongK = String
-  val LongK: String.type = String
 
   def render(a: Article, generated: Option[com.histmersion.domain.research.articles.ArticleNote.Generated] = None): com.histmersion.domain.research.articles.ArticleNote.Text =
     val reasons = Option.when(a.reasons.nonEmpty) {

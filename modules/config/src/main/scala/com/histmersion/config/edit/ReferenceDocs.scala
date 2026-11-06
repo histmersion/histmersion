@@ -57,15 +57,10 @@ object ReferenceDocs:
   object Lines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ContentL = String
-  val ContentL: String.type = String
   type IsCommentOnlyL = String
-  val IsCommentOnlyL: String.type = String
   type CommentColumnL = String
-  val CommentColumnL: String.type = String
   type CommentTextL = String
-  val CommentTextL: String.type = String
   type TrailingCommentL = String
-  val TrailingCommentL: String.type = String
 
   def apply(text: com.histmersion.config.edit.ReferenceDocs.Text): ReferenceDocs = new ReferenceDocs(text.split("\n", -1).toIndexedSeq)
 

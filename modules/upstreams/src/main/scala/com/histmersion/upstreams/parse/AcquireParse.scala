@@ -43,7 +43,7 @@ object AcquireParse:
     (arr(c, keys*).flatMap(_.asString).map(_.trim).filter(_.nonEmpty)).map(refactorValue3 => (refactorValue3))
 
   /** The trailing path segment of an OpenAlex URI (`https://openalex.org/W123` → `W123`). */
-  private def tail(uri: String): String = (uri).value.split("/").lastOption.getOrElse(uri)
+  private def tail(uri: String): String = (uri).split("/").lastOption.getOrElse(uri)
 
   // ── OpenAlex ────────────────────────────────────────────────────────────────────────────────
 
@@ -66,7 +66,7 @@ object AcquireParse:
     val c = json.hcursor
     val authors = arr(c, "authorships").flatMap(a => str(a.hcursor, "author", "display_name"))
     val doi = str(c, "doi").flatMap(Identifiers.doi)
-    val title = str(c, "display_name").map({ val refactorFunction2 = inlineMarkup; (refactorValue6) => refactorFunction2(((refactorValue6).value)) })
+    val title = str(c, "display_name").map({ val refactorFunction2 = inlineMarkup; (refactorValue6) => refactorFunction2(((refactorValue6))) })
     val year = int(c, "publication_year")
     WorkRef(
       doi = doi,
@@ -75,7 +75,7 @@ object AcquireParse:
       arxivId = (str(c.downField("best_oa_location"), "landing_page_url").toList ++
         str(c, "open_access", "oa_url").toList ++
         arr(c, "locations").flatMap(l => str(l.hcursor, "landing_page_url")))
-        .flatMap({ val refactorFunction3 = arxivIdFromUrl; (refactorValue7) => refactorFunction3(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue7).value)) })
+        .flatMap({ val refactorFunction3 = arxivIdFromUrl; (refactorValue7) => refactorFunction3(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue7))) })
         .headOption,
       title = title,
       year = year,
@@ -98,9 +98,9 @@ object AcquireParse:
   /** The open locations' landing pages and PDFs, the best location first. */
   private def openalexOaLocations(c: ACursor): List[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url] =
     val best = c.downField("best_oa_location")
-    val open = arr(c, "locations").filter(l => (bool(l.hcursor, "is_oa")).value)
+    val open = arr(c, "locations").filter(l => (bool(l.hcursor, "is_oa")))
     ((List(str(best, "landing_page_url"), str(best, "pdf_url")).flatten ++
-      open.flatMap(l => List(str(l.hcursor, "landing_page_url"), str(l.hcursor, "pdf_url")).flatten)).distinct).map(refactorValue17 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue17).value))
+      open.flatMap(l => List(str(l.hcursor, "landing_page_url"), str(l.hcursor, "pdf_url")).flatten)).distinct).map(refactorValue17 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue17)))
 
   /** An OpenAlex `/works` search page. */
   def openalexWorks(json: Json): List[WorkRef] =
@@ -114,7 +114,7 @@ object AcquireParse:
     val oa = str(c, "open_access", "oa_url").toList
     val best = str(c.downField("best_oa_location"), "pdf_url").toList
     val rest = arr(c, "locations").flatMap(l => str(l.hcursor, "pdf_url"))
-    ((best ++ oa ++ rest).distinct).map(refactorValue18 => _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls((refactorValue18).value))
+    ((best ++ oa ++ rest).distinct).map(refactorValue18 => _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls((refactorValue18)))
 
   private def arxivIdFromUrl(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): Option[com.histmersion.domain.library.ArxivId] =
     if !(url).value.toLowerCase.contains("arxiv.org") then None
@@ -149,7 +149,7 @@ object AcquireParse:
         List(str(h, "given"), str(h, "family")).flatten.mkString(" ").trim
       }
       .filter(_.nonEmpty)
-    val title = strings(c, "title").headOption.map({ val refactorFunction4 = inlineMarkup; (refactorValue23) => refactorFunction4(((refactorValue23).value)) }).map({ val refactorFunction5 = gluedPageNumber; (refactorValue26) => refactorFunction5(((refactorValue26).value)) })
+    val title = strings(c, "title").headOption.map({ val refactorFunction4 = inlineMarkup; (refactorValue23) => refactorFunction4(((refactorValue23))) }).map({ val refactorFunction5 = gluedPageNumber; (refactorValue26) => refactorFunction5(((refactorValue26).value)) })
     val year = arr(c, "issued", "date-parts").headOption
       .flatMap(_.asArray)
       .flatMap(_.headOption)
@@ -170,13 +170,13 @@ object AcquireParse:
     * inside words — and collapse what is left.
     */
   private[upstreams] def inlineMarkup(s: String): com.histmersion.domain.Title =
-    _root_.com.histmersion.domain.Title((s).value.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim)
+    _root_.com.histmersion.domain.Title((s).replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim)
 
   /** Some publishers deposit a chapter title with its first page glued on: "109Writing and Religion in …". Digits
     * running straight into a capitalised word are that page; "1177 B.C." (a space) and "3.2 ka" are left alone.
     */
   private[upstreams] def gluedPageNumber(s: String): com.histmersion.domain.Title =
-    _root_.com.histmersion.domain.Title((s).value.replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", ""))
+    _root_.com.histmersion.domain.Title((s).replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", ""))
 
   /** A Crossref `works?query=` page → the works on it (the search fallback when OpenAlex is down). */
   def crossrefWorks(json: Json): List[WorkRef] =
@@ -184,7 +184,7 @@ object AcquireParse:
 
   /** Crossref abstracts are JATS XML fragments. */
   private def stripTags(s: String): String =
-    ((s).value.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim)
+    ((s).replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim)
 
   /** The deposited `reference[]` array — structured, often carrying DOIs, and free of tokens. */
   def crossrefReferences(json: Json): List[RefRow] =
@@ -195,7 +195,7 @@ object AcquireParse:
       RefRow(
         title = str(h, "article-title").orElse(str(h, "volume-title")),
         authors = str(h, "author").toList,
-        year = str(h, "year").filter((_).value.forall(_.isDigit)).map((_).value.toInt),
+        year = str(h, "year").filter((_).forall(_.isDigit)).map((_).toInt),
         doi = str(h, "DOI").flatMap(Identifiers.doi),
         raw = str(h, "unstructured").map(_root_.com.histmersion.domain.library.acquisition.RefRow.Raw((_).value.take(300)))
       )
@@ -218,7 +218,7 @@ object AcquireParse:
     val c = json.hcursor
     val best = str(c.downField("best_oa_location"), "url_for_pdf").toList
     val rest = arr(c, "oa_locations").flatMap(l => str(l.hcursor, "url_for_pdf"))
-    (((best ++ rest).distinct).map(refactorValue32 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue32).value)), (str(c, "oa_status")).map(refactorValue33 => _root_.com.histmersion.upstreams.unpaywall.OaAccess.Status((refactorValue33).value)))
+    (((best ++ rest).distinct).map(refactorValue32 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue32))), (str(c, "oa_status")).map(refactorValue33 => _root_.com.histmersion.upstreams.unpaywall.OaAccess.Status((refactorValue33))))
 
   /** Unpaywall's verdict on one DOI: whether a free copy exists, its `oa_status` (`gold`, `green`, …, `closed`) and the
     * best location — the PDF when there is one, else its landing page.
@@ -248,12 +248,12 @@ object AcquireParse:
         val c = r.hcursor
         val pdfs = arr(c, "fullTextUrlList", "fullTextUrl").flatMap { u =>
           val h = u.hcursor
-          val isPdf = str(h, "documentStyle").exists((_).value.equalsIgnoreCase("pdf"))
-          val free = str(h, "availabilityCode").exists(a => EuropePmcFree(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFreeValue((a).value.toUpperCase))))
-          if isPdf && free then str(h, "url").filter((_).value.startsWith("http")) else None
+          val isPdf = str(h, "documentStyle").exists((_).equalsIgnoreCase("pdf"))
+          val free = str(h, "availabilityCode").exists(a => EuropePmcFree(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFree(_root_.com.histmersion.upstreams.parse.AcquireParse.EuropePmcFreeValue((a).toUpperCase))))
+          if isPdf && free then str(h, "url").filter((_).startsWith("http")) else None
         }.distinct
         EuropePmcHit(
-          (str(c, "pmcid").map((_).value.toUpperCase).filter(PmcId.matches)).map(refactorValue31 => _root_.com.histmersion.domain.library.Pmcid(refactorValue31)),
+          (str(c, "pmcid").map((_).toUpperCase).filter(PmcId.matches)).map(refactorValue31 => _root_.com.histmersion.domain.library.Pmcid(refactorValue31)),
           _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.IsOpenAccess(str(c, "isOpenAccess").contains("Y")),
           pdfs
         )
@@ -273,14 +273,14 @@ object AcquireParse:
   /** A dataset metadata record (`metadata/<pmcid>.<v>.json`). */
   def pmcRecord(json: Json): Option[PmcRecord] =
     val c = json.hcursor
-    str(c, "pmcid").filter((PmcId).value.matches).map { id =>
+    str(c, "pmcid").filter((PmcId).matches).map { id =>
       PmcRecord(
         id,
         bool(c, "is_pmc_openaccess"),
         bool(c, "is_manuscript"),
         str(c, "license_code"),
-        str(c, "pdf_url").flatMap({ val refactorFunction8 = pmcObject; (refactorValue39) => refactorFunction8(_root_.com.histmersion.upstreams.pmc.PmcObject.Key((refactorValue39).value)) }),
-        str(c, "xml_url").flatMap({ val refactorFunction9 = pmcObject; (refactorValue40) => refactorFunction9(_root_.com.histmersion.upstreams.pmc.PmcObject.Key((refactorValue40).value)) })
+        str(c, "pdf_url").flatMap({ val refactorFunction8 = pmcObject; (refactorValue39) => refactorFunction8(_root_.com.histmersion.upstreams.pmc.PmcObject.Key((refactorValue39))) }),
+        str(c, "xml_url").flatMap({ val refactorFunction9 = pmcObject; (refactorValue40) => refactorFunction9(_root_.com.histmersion.upstreams.pmc.PmcObject.Key((refactorValue40))) })
       )
     }
 
@@ -312,12 +312,12 @@ object AcquireParse:
         citedBy = int(cp, "citationCount"),
         isInfluential = bool(h, "isInfluential"),
         intents = strings(h, "intents"),
-        contexts = (strings(h, "contexts").map((_).value.replaceAll("\\s+", " ").take(400)).take(3)).map(refactorValue41 => _root_.com.histmersion.domain.library.acquisition.FollowupRow.Contexts(refactorValue41))
+        contexts = (strings(h, "contexts").map((_).replaceAll("\\s+", " ").take(400)).take(3)).map(refactorValue41 => _root_.com.histmersion.domain.library.acquisition.FollowupRow.Contexts(refactorValue41))
       )
     }
 
   /** `next` offset of an S2 page, absent on the last page. */
-  def s2Next(json: Json): Option[com.histmersion.Offset] = (int(json.hcursor, "next")).map(refactorValue49 => _root_.com.histmersion.Offset((refactorValue49).value))
+  def s2Next(json: Json): Option[com.histmersion.Offset] = (int(json.hcursor, "next")).map(refactorValue49 => _root_.com.histmersion.Offset((refactorValue49)))
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
@@ -330,7 +330,7 @@ object AcquireParse:
   def archiveItem(identifier: com.histmersion.domain.library.ArchiveId, json: Json): ArchiveItem =
     val c = json.hcursor
     val m = c.downField("metadata")
-    val yr = str(m, "year").orElse(str(m, "date")).map((_).value.take(4)).filter(_.forall(_.isDigit)).map(_.toInt)
+    val yr = str(m, "year").orElse(str(m, "date")).map((_).take(4)).filter(_.forall(_.isDigit)).map(_.toInt)
     val creators =
       (str(m, "creator").toList ++ strings(m, "creator")).distinct.filterNot(_.startsWith("http"))
     val files = arr(c, "files").flatMap { f =>
@@ -338,7 +338,7 @@ object AcquireParse:
       val name = str(h, "name").getOrElse("")
       val ext = name.toLowerCase.split("\\.").lastOption.getOrElse("")
       Option.when(ext == "pdf" || ext == "epub") {
-        val size = str(h, "size").flatMap((_).value.toLongOption).getOrElse(0L)
+        val size = str(h, "size").flatMap((_).toLongOption).getOrElse(0L)
         ArchiveFile(name, str(h, "format"), _root_.com.histmersion.upstreams.archiveorg.ArchiveFile.Megabytes(math.round(size / 1e5) / 10.0))
       }
     }
@@ -348,9 +348,9 @@ object AcquireParse:
       creator = creators,
       year = (yr).map(refactorValue46 => _root_.com.histmersion.Year(refactorValue46)),
       publisher = str(m, "publisher"),
-      description = str(m, "description").map({ val refactorFunction11 = stripTags; (refactorValue55) => refactorFunction11(((refactorValue55).value)) }).map((refactorCallback => _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Description((refactorCallback).value.take(500)))),
-      _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly(lendingOnly = str(m, "access-restricted-item").exists((_).value.equalsIgnoreCase("true")) ||
-        (bool(c, "is_dark")).value),
+      description = str(m, "description").map({ val refactorFunction11 = stripTags; (refactorValue55) => refactorFunction11(((refactorValue55))) }).map((refactorCallback => _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Description((refactorCallback).take(500)))),
+      _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly(lendingOnly = str(m, "access-restricted-item").exists((_).equalsIgnoreCase("true")) ||
+        (bool(c, "is_dark"))),
       files = files
     )
 
@@ -363,7 +363,7 @@ object AcquireParse:
           identifier = id,
           title = str(h, "title"),
           creator = (str(h, "creator").toList ++ strings(h, "creator")).distinct,
-          year = str(h, "year").map((_).value.take(4)).filter(_.forall(_.isDigit)).map(_root_.com.histmersion.Year(_.toInt))
+          year = str(h, "year").map((_).take(4)).filter(_.forall(_.isDigit)).map(_root_.com.histmersion.Year(_.toInt))
         )
       }
     }
@@ -388,7 +388,7 @@ object AcquireParse:
   private val ArxivInText = """(?i)arxiv\s*[:=]\s*([0-9]{4}\.[0-9]{4,5})""".r
 
   /** The article title from `action=parse&prop=wikitext` (after redirects). */
-  def wikiTitle(json: Json): Option[com.histmersion.domain.Title] = (str(json.hcursor.downField("parse"), "title")).map(refactorValue58 => _root_.com.histmersion.domain.Title((refactorValue58).value))
+  def wikiTitle(json: Json): Option[com.histmersion.domain.Title] = (str(json.hcursor.downField("parse"), "title")).map(refactorValue58 => _root_.com.histmersion.domain.Title((refactorValue58)))
 
   def wikiText(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.Wikitext] =
     (json.hcursor.downField("parse").downField("wikitext").downField("*").as[String].toOption).map(refactorValue48 => _root_.com.histmersion.upstreams.parse.AcquireParse.Wikitext(refactorValue48))
