@@ -27,7 +27,7 @@ class SourcePlanSuite extends munit.FunSuite:
       Some(1997),
       notes = Some("home's"),
       origin = home
-    ).copy(tags = List("hittites", "Storm-God"), topics = List(com.histmersion.api.exchange.Bundle.Source.Topics("Anatolia")))
+    ).copy(tags = List(com.histmersion.api.exchange.Bundle.Source.Tags("hittites"), com.histmersion.api.exchange.Bundle.Source.Tags("Storm-God")), topics = List(com.histmersion.api.exchange.Bundle.Source.Topics("Anatolia")))
     val r = src(
       "w",
       "guterbock1997_perspectives",
@@ -38,7 +38,7 @@ class SourcePlanSuite extends munit.FunSuite:
       notes = Some("work's")
     )
       .copy(
-        tags = List("storm_god", "religion"),
+        tags = List(com.histmersion.api.exchange.Bundle.Source.Tags("storm_god"), com.histmersion.api.exchange.Bundle.Source.Tags("religion")),
         topics = List(com.histmersion.api.exchange.Bundle.Source.Topics("anatolia"), com.histmersion.api.exchange.Bundle.Source.Topics("Religion")),
         status = Source.Status.Contested
       )

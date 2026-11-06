@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.workflows
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -61,7 +63,7 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
   ):
     val picks = List("a" -> true, "b" -> false, "c" -> true, "d" -> true, "e" -> true)
     val (ok, ko) = AcquisitionSweepRules.ingestOa(picks, (_: (String, Boolean))._2, com.histmersion.domain.library.workflows.AcquisitionSweepRules.Allowance(2)) { (n, _) =>
-      if n == "c" then Left("no legal open-access copy of c") else Right(n.toUpperCase)
+      if n == "c" then Left(com.histmersion.domain.library.workflows.AcquisitionSweepRules.IngestFailure("no legal open-access copy of c")) else Right(n.toUpperCase)
     }
     assertEquals(ok.map(_._2), List("A", "D"))
     assertEquals(ko.map((p, why) => (p._1, why)), List("c" -> "no legal open-access copy of c"))

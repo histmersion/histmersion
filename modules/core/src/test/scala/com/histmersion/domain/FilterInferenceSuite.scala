@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -18,7 +20,7 @@ class FilterInferenceSuite extends munit.FunSuite:
 
   test("filterOf: an empty filter, a blank rationale and an unknown status are refused; a filter is tidied"):
     assert(filterOf(FilterAnswer(com.histmersion.domain.FilterInference.FilterAnswer.Rationale("why"))).left.exists(_.head.contains("selects nothing")))
-    assert(filterOf(FilterAnswer(com.histmersion.domain.FilterInference.FilterAnswer.Rationale(" "), topics = List("tin"))).left.exists(_.head.contains("rationale")))
+    assert(filterOf(FilterAnswer(com.histmersion.domain.FilterInference.FilterAnswer.Rationale(" "), topics = List(com.histmersion.api.library.Filter.Topics("tin")))).left.exists(_.head.contains("rationale")))
     assertEquals(filterOf(FilterAnswer(com.histmersion.domain.FilterInference.FilterAnswer.Rationale("why"), query = Some(com.histmersion.api.library.Filter.Q("  ")), topics = List(com.histmersion.api.library.Filter.Topics("tin"), com.histmersion.api.library.Filter.Topics("tin"), com.histmersion.api.library.Filter.Topics(" ")))), Right(f))
 
   test("judge: within the bounds and covering the cited sources → a proposal with what code measured"):

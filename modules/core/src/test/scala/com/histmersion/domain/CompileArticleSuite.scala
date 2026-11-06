@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given
@@ -340,7 +342,7 @@ class CompileArticleSuite extends munit.FunSuite:
     assertEquals(statusesSilent(com.histmersion.api.research.Article.Body("[[a2019_tin]] says X."), st), Nil)
 
   test("the run's filter: its own, else the article's recorded one, else the title; and the log line"):
-    val stored = Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("tin")), status = List("current"))
+    val stored = Article.Filter(topics = List(com.histmersion.api.library.Filter.Topics("tin")), status = List(com.histmersion.api.library.Filter.Status("current")))
     assertEquals(
       runFilter(Some(com.histmersion.api.library.Filter.Q("tin")), List(com.histmersion.api.library.Filter.Topics("trade")), Nil, Some(stored), Some(com.histmersion.domain.Title("Tin"))),
       Some(Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("tin")), topics = List(com.histmersion.api.library.Filter.Topics("trade"))))
@@ -352,7 +354,7 @@ class CompileArticleSuite extends munit.FunSuite:
       Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("tin")), topics = List(com.histmersion.api.library.Filter.Topics("trade"))).line,
       "search {query: \"tin\", topics: [\"trade\"]}"
     )
-    val d = Goal.Plans.ArticleDraft(com.histmersion.api.research.Article.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Title("Tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text("x"), cited = List("a", "b"))
+    val d = Goal.Plans.ArticleDraft(com.histmersion.api.research.Article.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Title("Tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text("x"), cited = List(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b")))
     assert(
       logLine(d, written = com.histmersion.domain.CompileArticle.Written(true), com.histmersion.domain.CompileArticle.Reason("created"), Some(com.histmersion.domain.automation.Run.Id("abcdef123")), com.histmersion.domain.automation.Run.Id("run12345xyz")).contains(
         "compiled a new article from 2 source(s); review run abcdef12 started"

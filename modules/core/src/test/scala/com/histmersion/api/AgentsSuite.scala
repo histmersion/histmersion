@@ -56,8 +56,8 @@ class AgentsSuite extends munit.FunSuite:
 
   test("Prices: two or four numbers per model, ; separated"):
     val p = Prices.parse(com.histmersion.api.automation.Agents.Prices.Wire("qwen2.5-coder:32b=0/0; claude-x=3/15/0.3/3.75")).toOption.get
-    assertEquals(p("qwen2.5-coder:32b"), Price(BigDecimal(0), BigDecimal(0)))
-    assertEquals(p("claude-x"), Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75"))))
+    assertEquals(p(com.histmersion.api.automation.Agents.ModelRef.Model("qwen2.5-coder:32b")), Price(BigDecimal(0), BigDecimal(0)))
+    assertEquals(p(com.histmersion.api.automation.Agents.ModelRef.Model("claude-x")), Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75"))))
     assertEquals(Prices.parse(com.histmersion.api.automation.Agents.Prices.Wire("  ")), Right(Map.empty))
 
   test("Prices: every malformed entry is reported, none silently skipped"):
@@ -169,11 +169,11 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.automation.Goal.Plans.Plan.Rationale("covers it"),
       List(PlannedGoal(com.histmersion.api.automation.Goal.Slug("g-sub"), com.histmersion.api.automation.Goal.Title("Sub"))),
       List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("tin isotopes")),
-      List(PlannedWork(com.histmersion.api.library.Doi("10.1000/x"), Some(com.histmersion.api.library.Title("X")), Some(com.histmersion.api.catalogue.Year(2020)), citekey = Some("x2020_y"), inCorpus = true, why = "core")),
+      List(PlannedWork(com.histmersion.api.library.Doi("10.1000/x"), Some(com.histmersion.api.library.Title("X")), Some(com.histmersion.api.catalogue.Year(2020)), citekey = Some(com.histmersion.api.library.Citekey("x2020_y")), inCorpus = com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus(true), why = "core")),
       List(com.histmersion.api.automation.Goal.Plans.Plan.Dropped("10.1000/z: not verified upstream"))
     )
     val a =
-      ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(7), Some(com.histmersion.api.automation.Agents.RunInfo.Id("run12345")), com.histmersion.api.automation.Agents.ApprovalInfo.Kind("goal-plan"), com.histmersion.api.library.Citekey(""), evidence = "covers it", subject = Some("g"), plan = Some(plan))
+      ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(7), Some(com.histmersion.api.automation.Agents.RunInfo.Id("run12345")), com.histmersion.api.automation.Agents.ApprovalInfo.Kind("goal-plan"), com.histmersion.api.library.Citekey(""), evidence = com.histmersion.api.automation.Agents.ApprovalInfo.Evidence("covers it"), subject = Some("g"), plan = Some(plan))
     val md = AgentsMarkdown.approvals(List(a))
     assert(md.contains("plan for goal **g**: 1 sub-goal(s), 1 query(ies), 1 work(s)"), md)
     assert(md.contains("in the corpus as [[x2020_y]]: core") && md.contains("dropped: 10.1000/z"), md)
@@ -184,10 +184,10 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.research.Article.Title("Tin"),
       com.histmersion.api.research.Article.Kind.Wire("concept"),
       com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text("New text [[x2020_y]]."),
-      section = Some("## Disagreements"),
+      section = Some(com.histmersion.api.automation.Goal.Plans.ArticleDraft.Section("## Disagreements")),
       problems = List("a paragraph with no [[citekey]]")
     )
-    val pub = ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(8), None, com.histmersion.api.automation.Agents.ApprovalInfo.Kind("article-publish"), com.histmersion.api.library.Citekey(""), subject = Some("tin"), article = Some(d))
+    val pub = ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(8), None, com.histmersion.api.automation.Agents.ApprovalInfo.Kind("article-publish"), com.histmersion.api.library.Citekey(""), subject = Some(com.histmersion.api.automation.Agents.ApprovalInfo.Subject("tin")), article = Some(d))
     val md2 = AgentsMarkdown.approvals(List(pub))
     assert(
       md2.contains("publish a section appended to [[tin]]") && md2.contains("under '## Disagreements'") &&
@@ -211,7 +211,7 @@ class AgentsSuite extends munit.FunSuite:
     )
     val v = GoalView(
       Goal(com.histmersion.api.automation.Goal.Slug("g"), com.histmersion.api.automation.Goal.Title("G"), com.histmersion.api.automation.Goal.StatusValue("planned")),
-      links = List(GoalLink(LinkKind.Source, "gone2020_x"), GoalLink(LinkKind.Query, "q")),
+      links = List(GoalLink(LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("gone2020_x")), GoalLink(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("q"))),
       schedules = List(s)
     )
     val md3 = AgentsMarkdown.goalView(v)
@@ -243,7 +243,7 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.automation.Agents.RunInfo.Pipeline("review-article"),
       com.histmersion.api.automation.Agents.RunInfo.Target("x"),
       com.histmersion.api.automation.Agents.RunInfo.Status("queued"),
-      model = Some("anthropic:all"),
+      model = Some(com.histmersion.api.automation.Agents.RunInfo.Model("anthropic:all")),
       params = RunParams(modelFor = Some(List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("skeptic"), com.histmersion.api.automation.Agents.ModelOverride.Model("claude-code:haiku")))))
     )
     assertEquals(r.modelFor(Role.Skeptic), Some("claude-code:haiku"))
@@ -258,7 +258,7 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.automation.Agents.StepInfo.Attempt(1),
       com.histmersion.api.automation.Agents.StepInfo.Status("done"),
       model = Some(com.histmersion.api.automation.Agents.StepInfo.Model("claude-code:haiku")),
-      actualModel = Some("claude-haiku-5-5")
+      actualModel = Some(com.histmersion.api.automation.Agents.StepInfo.ActualModel("claude-haiku-5-5"))
     )
     assertEquals(s.modelText, "claude-code:haiku → claude-haiku-5-5")
     assertEquals(s.modify(_.actualModel).setTo(Some("haiku")).modelText, "claude-code:haiku")
@@ -274,7 +274,7 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.automation.Agents.StepInfo.Attempt(1),
       com.histmersion.api.automation.Agents.StepInfo.Status("done"),
       model = Some(com.histmersion.api.automation.Agents.StepInfo.Model("claude-code:sonnet")),
-      usage = Usage(41000, 900),
+      usage = Usage(com.histmersion.api.automation.Agents.Usage.Input(41000), com.histmersion.api.automation.Agents.Usage.Output(900)),
       firstCallTokens = Some(6963),
       turns = Some(9)
     )
@@ -296,7 +296,7 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.automation.Agents.RunInfo.Pipeline("enrich-source"),
       com.histmersion.api.automation.Agents.RunInfo.Target("x2020"),
       com.histmersion.api.automation.Agents.RunInfo.Status("done"),
-      dryRun = true,
+      dryRun = com.histmersion.api.automation.Agents.RunInfo.DryRun(true),
       params = RunParams(modelFor = Some(List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("extractor"), com.histmersion.api.automation.Agents.ModelOverride.Model("local:h")))))
     )
     assert(

@@ -28,8 +28,8 @@ class BrowserDownloadSuite extends munit.FunSuite:
     isOa = com.histmersion.api.library.WorkRef.IsOa(true),
     oaStatus = Some(com.histmersion.api.library.WorkRef.OaStatus("gold")),
     oaUrl = Some(com.histmersion.api.library.WorkRef.OaUrl("https://www.mdpi.com/2077-1444/10/4/258/pdf")),
-    oaLocations = List("https://www.mdpi.com/2077-1444/10/4/258", "https://www.mdpi.com/2077-1444/10/4/258/pdf"),
-    oaLicence = Some("cc-by")
+    oaLocations = List(com.histmersion.api.library.WorkRef.OaLocations("https://www.mdpi.com/2077-1444/10/4/258"), com.histmersion.api.library.WorkRef.OaLocations("https://www.mdpi.com/2077-1444/10/4/258/pdf")),
+    oaLicence = Some(com.histmersion.api.library.WorkRef.OaLicence("cc-by"))
   )
 
   test("a gold work on a refusing host: the landing page, the DOI, the licence and the ingest command"):
@@ -83,7 +83,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
       title = (Some("Book")).map(com.histmersion.api.library.Title.apply),
       oaStatus = Some(com.histmersion.api.library.WorkRef.OaStatus("gold")),
       oaLocations =
-        List("https://doi.org/10.16993/bbk", "https://www.stockholmuniversitypress.se/site/books/m/10.16993/bbk/")
+        List(com.histmersion.api.library.WorkRef.OaLocations("https://doi.org/10.16993/bbk"), com.histmersion.api.library.WorkRef.OaLocations("https://www.stockholmuniversitypress.se/site/books/m/10.16993/bbk/"))
     )
     assertEquals(
       BrowserDownload.of(sup, ck, Refusing).map(b => b.landing.value: String),

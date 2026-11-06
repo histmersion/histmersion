@@ -366,20 +366,20 @@ class GoalFocusSuite extends munit.FunSuite:
       active = List(
         FocusGoal(
           com.histmersion.api.automation.Autopilot.FocusGoal.Slug("a"),
-          status = "seeding",
-          stage = "reviewing",
-          why = "reviewing: 1 of 2",
+          status = com.histmersion.api.automation.Autopilot.FocusGoal.Status("seeding"),
+          stage = com.histmersion.api.automation.Autopilot.FocusGoal.Stage("reviewing"),
+          why = com.histmersion.api.automation.Autopilot.FocusGoal.Why("reviewing: 1 of 2"),
           doing = Some("running article-review x"),
           open = 3,
           doneLast7 = 7,
           etaDays = Some(3)
         ),
-        FocusGoal(com.histmersion.api.automation.Autopilot.FocusGoal.Slug("b"), status = "seeding", stage = "gathering", why = "pinned by a person", pinned = true)
+        FocusGoal(com.histmersion.api.automation.Autopilot.FocusGoal.Slug("b"), status = com.histmersion.api.automation.Autopilot.FocusGoal.Status("seeding"), stage = com.histmersion.api.automation.Autopilot.FocusGoal.Stage("gathering"), why = com.histmersion.api.automation.Autopilot.FocusGoal.Why("pinned by a person"), pinned = com.histmersion.api.automation.Autopilot.FocusGoal.Pinned(true))
       ),
-      queue = List(FocusGoal(com.histmersion.api.automation.Autopilot.FocusGoal.Slug("c"), stage = "ready", why = "ready: 5 sources")),
-      queued = 4,
+      queue = List(FocusGoal(com.histmersion.api.automation.Autopilot.FocusGoal.Slug("c"), stage = com.histmersion.api.automation.Autopilot.FocusGoal.Stage("ready"), why = com.histmersion.api.automation.Autopilot.FocusGoal.Why("ready: 5 sources"))),
+      queued = com.histmersion.api.automation.Autopilot.FocusInfo.Queued(4),
       waiting = List(FocusWaiting(com.histmersion.api.automation.Autopilot.FocusWaiting.Slug("d"), com.histmersion.api.automation.Autopilot.FocusWaiting.Code("person"), com.histmersion.api.automation.Autopilot.FocusWaiting.Why("waits for a person: approval #1")), FocusWaiting(com.histmersion.api.automation.Autopilot.FocusWaiting.Slug("e"), com.histmersion.api.automation.Autopilot.FocusWaiting.Code("person"), com.histmersion.api.automation.Autopilot.FocusWaiting.Why("x"))),
-      held = 12
+      held = com.histmersion.api.automation.Autopilot.FocusInfo.Held(12)
     )
     val md = AutopilotMarkdown.focus(f)
     assert(md.contains("## Focus: at most 2 active goals (agents.autopilot.max-active-goals)"), md)
@@ -406,7 +406,7 @@ class GoalFocusSuite extends munit.FunSuite:
     val why =
       "goal plans wait until the unfinished goals drop to 10: 60 goals with an approved plan are not reviewed yet"
     val st =
-      Autopilot.EngineStatus(on = com.histmersion.api.automation.Autopilot.EngineStatus.On(true), agentsEnabled = true, managersEnabled = true, goalPlansWait = Some(why))
+      Autopilot.EngineStatus(on = com.histmersion.api.automation.Autopilot.EngineStatus.On(true), agentsEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true), managersEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled(true), goalPlansWait = Some(why))
     assert(
       AutopilotMarkdown.status(st).contains(s"- **$why; a person may still approve a plan**"),
       AutopilotMarkdown.status(st)

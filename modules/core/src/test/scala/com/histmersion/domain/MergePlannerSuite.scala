@@ -58,7 +58,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(p.issues.size, expected.size, p.issues.mkString("\n"))
     assertEquals(
       p.matches,
-      MatchCounts(sources = com.histmersion.api.exchange.MatchCounts.Sources(10), byUid = com.histmersion.api.exchange.MatchCounts.ByUid(1), byStrongKey = 2, byScore = 4, undecided = 1, unmatched = 2)
+      MatchCounts(sources = com.histmersion.api.exchange.MatchCounts.Sources(10), byUid = com.histmersion.api.exchange.MatchCounts.ByUid(1), byStrongKey = com.histmersion.api.exchange.MatchCounts.ByStrongKey(2), byScore = com.histmersion.api.exchange.MatchCounts.ByScore(4), undecided = com.histmersion.api.exchange.MatchCounts.Undecided(1), unmatched = com.histmersion.api.exchange.MatchCounts.Unmatched(2))
     )
     assertEquals(p.problems, Nil)
     assertEquals(p.resolutionErrors, Nil)

@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -171,7 +173,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       com.histmersion.domain.ReviewArticle.Finding.Fix("define each on first use, and add a Glossary")
     )
     assert(TermCount.is(legacy))
-    assert(TermCount.is(legacy.modify(_.kind).setTo("term-count").modify(_.problem).setTo(TermCount.problem(12))))
+    assert(TermCount.is(legacy.modify(_.kind).setTo("term-count").modify(_.problem).setTo(TermCount.problem(com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined(12)))))
     assert(!TermCount.is(legacy.modify(_.reviewer).setTo(Reviewer.Rules)))
     assert(!TermCount.is(legacy.modify(_.problem).setTo("Hittite is undefined")))
     assert(!TermCount.is(legacy.modify(_.where).setTo("Intro")))
@@ -569,7 +571,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     )
     // a duplicate's evidence joins the kept finding, and the fixer reads it under the finding
     val e2 = Evidence(com.histmersion.domain.library.Citekey("knapp2016_tin"), None, com.histmersion.domain.ReviewArticle.Evidence.Quote("one ton of tin"), 1.0)
-    val dup = rr.findings.head.copy(id = "R9", evidence = List(e2))
+    val dup = rr.findings.head.copy(id = com.histmersion.domain.ReviewArticle.Finding.Id("R9"), evidence = List(e2))
     val m = merge(com.histmersion.domain.ReviewArticle.MergeRound(1), Nil, List(rr, rr.modify(_.findings).setTo(List(dup))), Nil)
     assertEquals(m.findings.map(_.id), List("R1"))
     assertEquals(
@@ -590,12 +592,12 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(fixerTurns(12, merged, 10, com.histmersion.domain.ReviewArticle.TurnCap(20)), 20, "capped")
     assertEquals(fixerTurns(12, merged, 1, com.histmersion.domain.ReviewArticle.TurnCap(5)), 12, "a cap below the agent's own turns never cuts them")
     val readerMinor =
-      merged.modify(_.findings).setTo(List(Finding("C2", Reviewer.ColdReader, Severity.Minor, "term", "x", "", "p", "")))
+      merged.modify(_.findings).setTo(List(Finding(com.histmersion.domain.ReviewArticle.Finding.Id("C2"), Reviewer.ColdReader, Severity.Minor, com.histmersion.domain.ReviewArticle.Finding.Kind("term"), com.histmersion.domain.ReviewArticle.Finding.Where("x"), com.histmersion.domain.ReviewArticle.Finding.Quote(""), com.histmersion.domain.ReviewArticle.Finding.Problem("p"), com.histmersion.domain.ReviewArticle.Finding.Fix(""))))
     assertEquals(fixerTurns(12, readerMinor, 1, com.histmersion.domain.ReviewArticle.TurnCap(40)), 12, "a reader's minor needs no lookup")
 
   test("bookkeeping: the log line"):
     val open = List(
-      Finding(com.histmersion.domain.ReviewArticle.Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, com.histmersion.domain.ReviewArticle.Finding.Kind("date"), com.histmersion.domain.ReviewArticle.Finding.Where("Dates"), com.histmersion.domain.ReviewArticle.Finding.Quote(""), com.histmersion.domain.ReviewArticle.Finding.Problem("the date is wrong"), com.histmersion.domain.ReviewArticle.Finding.Fix(""), escalated = true)
+      Finding(com.histmersion.domain.ReviewArticle.Finding.Id("S1"), Reviewer.Skeptic, Severity.Major, com.histmersion.domain.ReviewArticle.Finding.Kind("date"), com.histmersion.domain.ReviewArticle.Finding.Where("Dates"), com.histmersion.domain.ReviewArticle.Finding.Quote(""), com.histmersion.domain.ReviewArticle.Finding.Problem("the date is wrong"), com.histmersion.domain.ReviewArticle.Finding.Fix(""), escalated = com.histmersion.domain.ReviewArticle.Finding.Escalated(true))
     )
     val m = Merged(com.histmersion.domain.ReviewArticle.Merged.Round(2), Verdict.Major, open, None, Nil, Nil)
     val o = Outcome(com.histmersion.domain.ReviewArticle.Outcome.Slug("sea_peoples"), com.histmersion.domain.ReviewArticle.Outcome.Rounds(2), Verdict.Major, open, com.histmersion.domain.ReviewArticle.Outcome.Applied(3), com.histmersion.domain.ReviewArticle.Outcome.Rejected(1), fixed = com.histmersion.domain.ReviewArticle.Outcome.Fixed(true), com.histmersion.domain.ReviewArticle.Outcome.Approvals(0))
@@ -801,7 +803,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       ),
       Nil,
       com.histmersion.domain.ReviewArticle.FixerAnswer.Notes(""),
-      wontFix = List(WontFixAnswer("R1", "wordy, but exact"))
+      wontFix = List(WontFixAnswer(com.histmersion.domain.ReviewArticle.WontFixAnswer.Id("R1"), com.histmersion.domain.ReviewArticle.WontFixAnswer.Reason("wordy, but exact")))
     )
     assertEquals(fix(ok, last = false).map(_._1.wontFix), Right(List(WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("R1"), com.histmersion.domain.ReviewArticle.WontFix.Reason("wordy, but exact")))))
     val bad = ok.modify(_.wontFix).setTo(List(WontFixAnswer("S1", "no"), WontFixAnswer("R9", "x"), WontFixAnswer("R1", " ")))
@@ -842,13 +844,13 @@ class ReviewArticleSuite extends munit.FunSuite:
       ),
       missing
     )
-    val declined = base.modify(_.wontFix).setTo(List(WontFixAnswer("R8", "recording the filter is not an edit")))
+    val declined = base.modify(_.wontFix).setTo(List(WontFixAnswer(com.histmersion.domain.ReviewArticle.WontFixAnswer.Id("R8"), com.histmersion.domain.ReviewArticle.WontFixAnswer.Reason("recording the filter is not an edit"))))
     assertEquals(run(declined, None).map(_._1.wontFix.map(_.id)), Right(List("R8")))
     assert(needsFilter(cover, None) && !needsFilter(cover, Some(cov)) && !needsFilter(merged.findings.head, None))
     // the ledger keeps a declined MAJOR open, and not claimed
-    val led = ReviewLedger.Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin"), m.findings.map(ReviewLedger.Entry(_, "run1", 1)))
+    val led = ReviewLedger.Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin"), m.findings.map(ReviewLedger.Entry(_, com.histmersion.domain.ReviewLedger.Entry.Run("run1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))))
     val after = ReviewLedger.applyFix(led, run(declined, None).toOption.get._1, com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
-    assert(after.entry("R8").exists(e => e.open && !e.claimed), after.entries)
+    assert(after.entry(com.histmersion.domain.ReviewArticle.Finding.Id("R8")).exists(e => e.open && !e.claimed), after.entries)
     // with a recorded filter the article's Not used list is generated: the finding is answered in `reasons`
     val withFilter = run(declined, Some(cov)).left.toOption.get
     assert(withFilter.exists(_.startsWith("R8 is MAJOR: apply it or reject it")), withFilter)

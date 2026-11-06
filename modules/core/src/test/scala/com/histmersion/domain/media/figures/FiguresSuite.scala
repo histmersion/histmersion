@@ -1,5 +1,7 @@
 package com.histmersion.domain.media.figures
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 /** Which files of a figures folder are figures, and what a note says of where they are (plan §1.8). */
 class FiguresSuite extends munit.FunSuite:
 

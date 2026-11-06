@@ -21,8 +21,8 @@ class UndatedCellsSuite extends munit.FunSuite:
 
   test("kept counts answer only for the writes and the grid they were built from"):
     val b = UndatedBuild(com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version(7), com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(6))
-    assert(b.answers(7, 16, 6))
-    assert(b.answers(7, 16, 4))
-    assert(!b.answers(8, 16, 6))
-    assert(!b.answers(7, 8, 6))
-    assert(!b.answers(7, 16, 8))
+    assert(b.answers(com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version(7), com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(6)))
+    assert(b.answers(com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version(7), com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(4)))
+    assert(!b.answers(com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version(8), com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(6)))
+    assert(!b.answers(com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version(7), com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(8), com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(6)))
+    assert(!b.answers(com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version(7), com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide(16), com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom(8)))

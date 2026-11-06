@@ -90,8 +90,8 @@ class ModelChainsSuite extends munit.FunSuite:
     )
     assert(parseAllowances(com.histmersion.api.automation.ModelChains.Allowance.Spec("gemini:* = 1 usd/day")).left.exists(_.contains("unknown provider 'gemini'")))
     val a = parseAllowances(com.histmersion.api.automation.ModelChains.Allowance.Spec("gemini:* = 1 usd/day"), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))).toOption.get.head
-    assert(a.target.covers(ModelRef(ProviderKind.Plugin("gemini"), "pro")))
-    assert(!a.target.covers(ModelRef(ProviderKind.Local, "pro")))
+    assert(a.target.covers(ModelRef(ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")), com.histmersion.api.automation.Agents.ModelRef.Model("pro"))))
+    assert(!a.target.covers(ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("pro"))))
     assertEquals(Target.parse(com.histmersion.api.automation.ModelChains.Target.Spec("gemini:pro"), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))).map(_.wire), Right("gemini:pro"))
 
   private val H = 3600L * 1000L
@@ -204,7 +204,7 @@ class ModelChainsSuite extends munit.FunSuite:
     assert(md.contains("`claude-code:*` (config, reserve 20%) — **below its reserve** until 2026-10-05T14:00:00Z"), md)
     assert(md.contains("2M tokens/5h: 1900k used, 100k left, reserve 400k — frees 2026-10-05T14:00:00Z"), md)
     val none = AgentsMarkdown.models(
-      m.modify(_.chains).setTo(List(RoleChain("writer", "config", Nil, None, Some("no model")))).modify(_.allowances).setTo(Nil)
+      m.modify(_.chains).setTo(List(RoleChain(com.histmersion.api.automation.ModelChains.RoleChain.Role("writer"), com.histmersion.api.automation.ModelChains.RoleChain.Source("config"), Nil, None, Some(com.histmersion.api.automation.ModelChains.RoleChain.Problem("no model"))))).modify(_.allowances).setTo(Nil)
     )
     assert(none.contains("| writer | — | no model | config |") && none.contains("No allowance"), none)
     val d = DoctorReport(

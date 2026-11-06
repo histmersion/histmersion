@@ -51,7 +51,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     val (l2, ids) = absorb(l, List(other, again), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(2))
     assertEquals(ids.map(_.id), List("R2", "R1"))
     assertEquals(l2.entries.size, 4)
-    assertEquals(l2.entry("R1").map(_.finding.problem), Some("tin is still not defined"))
+    assertEquals(l2.entry(com.histmersion.domain.ReviewArticle.Finding.Id("R1")).map(_.finding.problem), Some("tin is still not defined"))
     assertEquals(nextId(l2, Reviewer.Rules), "R3")
     assertEquals(nextId(l2, Reviewer.Mechanical), "M1")
 
@@ -86,7 +86,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     val checked =
       applyChecks(l, Reviewer.Rules, List(Check(com.histmersion.domain.ReviewArticle.Check.Id("R1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("Tin, a metal"), com.histmersion.domain.ReviewArticle.Check.Note("defined now"))), com.histmersion.domain.ReviewLedger.ApplyChecksRun("run1"), com.histmersion.domain.ReviewLedger.ApplyChecksRound(2))
     assertEquals(
-      checked.entry("R1").map(e => (e.status, e.claimed, e.closed)),
+      checked.entry(com.histmersion.domain.ReviewArticle.Finding.Id("R1")).map(e => (e.status, e.claimed, e.closed)),
       Some((Status.Fixed, false, Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("rules"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("run1"), com.histmersion.domain.ReviewLedger.Closure.Note("defined now"), com.histmersion.domain.ReviewLedger.Closure.Quote("Tin, a metal")))))
     )
     val notYet = applyChecks(
@@ -97,13 +97,13 @@ class ReviewLedgerSuite extends munit.FunSuite:
       com.histmersion.domain.ReviewLedger.ApplyChecksRound(2)
     )
     assertEquals(
-      notYet.entry("S1").map(e => (e.status, e.claimed, e.notFixed)),
+      notYet.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).map(e => (e.status, e.claimed, e.notFixed)),
       Some((Status.Open, false, Some("still no year")))
     )
     assertEquals(notes(notYet), Map("S1" -> "not fixed yet — still no year"))
     // a reviewer cannot close another's finding, nor a closed one
     val foreign = applyChecks(notYet, Reviewer.Rules, List(Check(com.histmersion.domain.ReviewArticle.Check.Id("S1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("x"), com.histmersion.domain.ReviewArticle.Check.Note(""))), com.histmersion.domain.ReviewLedger.ApplyChecksRun("run1"), com.histmersion.domain.ReviewLedger.ApplyChecksRound(2))
-    assertEquals(foreign.entry("S1").map(_.status), Some(Status.Open))
+    assertEquals(foreign.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).map(_.status), Some(Status.Open))
     assertEquals(notYet.verdict, Verdict.Major)
 
   test(
@@ -123,11 +123,11 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     val l = applyFix(fresh, fix, com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     assertEquals(
-      l.entry("S1").map(e => (e.status, e.closed.flatMap(_.citekey), e.closed.map(_.quote))),
+      l.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).map(e => (e.status, e.closed.flatMap(_.citekey), e.closed.map(_.quote))),
       Some((Status.Rejected, Some("ck2019"), Some("Its cargo dates to 1320 BCE.")))
     )
-    assertEquals(l.entry("C1").map(_.status), Some(Status.WontFix))
-    assertEquals(l.entry("R1").map(_.status), Some(Status.Open), "a MAJOR is never declined")
+    assertEquals(l.entry(com.histmersion.domain.ReviewArticle.Finding.Id("C1")).map(_.status), Some(Status.WontFix))
+    assertEquals(l.entry(com.histmersion.domain.ReviewArticle.Finding.Id("R1")).map(_.status), Some(Status.Open), "a MAJOR is never declined")
     assertEquals(
       l.lessons.map(x => (x.text, x.source)),
       List(("[[ck2019]]: the record dates it", LessonSource.Rejection))
@@ -152,7 +152,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     // a declined minor raised again stays declined; raised as MAJOR it opens
     val declined =
       applyFix(fresh, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, Nil, Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1), wontFix = List(WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("C1"), com.histmersion.domain.ReviewArticle.WontFix.Reason("fine")))), com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
-    assertEquals(absorb(declined, List(readerMin), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("C1").map(_.status), Some(Status.WontFix))
+    assertEquals(absorb(declined, List(readerMin), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("C1")).map(_.status), Some(Status.WontFix))
     assertEquals(
       absorb(declined, List(readerMin.modify(_.severity).setTo(Severity.Major)), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("C1").map(_.status),
       Some(Status.Open)
@@ -199,7 +199,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     assertEquals(ids.map(_.id), List("C2"))
     assertEquals(l.entries.size, stored.entries.size)
     assertEquals(
-      l.entry("C2").map(e => (e.status, e.finding.severity, e.finding.problem)),
+      l.entry(com.histmersion.domain.ReviewArticle.Finding.Id("C2")).map(e => (e.status, e.finding.severity, e.finding.problem)),
       Some((Status.Open, Severity.Minor, TermCount.problem(com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined(12))))
     )
     assertEquals(l.openMajors.map(_.id), List("R1", "S1"))
@@ -213,10 +213,10 @@ class ReviewLedgerSuite extends munit.FunSuite:
     val stored = absorb(fresh, List(legacy), com.histmersion.domain.automation.Run.Id("run1"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     val closed = recheckTermCount(stored, List(readerMin), com.histmersion.domain.ReviewLedger.RecheckTermCountRun("run2"), com.histmersion.domain.ReviewLedger.RecheckTermCountRound(3))
     assertEquals(
-      closed.entry("C2").map(e => (e.status, e.closed.map(c => (c.by, c.round)))),
+      closed.entry(com.histmersion.domain.ReviewArticle.Finding.Id("C2")).map(e => (e.status, e.closed.map(c => (c.by, c.round)))),
       Some((Status.Fixed, Some(("mechanical", 3))))
     )
-    assertEquals(closed.entry("C1").map(_.status), Some(Status.Open))
+    assertEquals(closed.entry(com.histmersion.domain.ReviewArticle.Finding.Id("C1")).map(_.status), Some(Status.Open))
     // a minor count the fixer declined is not re-opened by the next pass's minor count
     val count = Finding(
       com.histmersion.domain.ReviewArticle.Finding.Id("C1"),
@@ -235,9 +235,9 @@ class ReviewLedgerSuite extends munit.FunSuite:
       com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"),
       com.histmersion.domain.ReviewLedger.ApplyFixRound(1)
     )
-    assertEquals(declined.entry("C1").map(_.status), Some(Status.WontFix))
+    assertEquals(declined.entry(com.histmersion.domain.ReviewArticle.Finding.Id("C1")).map(_.status), Some(Status.WontFix))
     assertEquals(
-      absorb(declined, List(count.modify(_.problem).setTo(TermCount.problem(11))), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("C1").map(_.status),
+      absorb(declined, List(count.modify(_.problem).setTo(TermCount.problem(com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined(11)))), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("C1").map(_.status),
       Some(Status.WontFix)
     )
 
@@ -371,7 +371,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     // the collapsed item, as a run or the interactive skill writes it, is found again by its article
     assert(articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin"), t))
     assert(articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin"), com.histmersion.domain.ReviewLedger.TaskText("review-article tin: 2 open MAJORs — R4 (Intro): x; S2: y")))
-    assert(!articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin2"), t) && !articleTask("ti", t))
+    assert(!articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin2"), t) && !articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("ti"), t))
     assert(
       !articleTask(com.histmersion.domain.ReviewLedger.ArticleTaskSlug("tin"), com.histmersion.domain.ReviewLedger.TaskText("review-article [[tin]]: MAJOR open — S1 major: x")),
       "a legacy item is closed, not reused"

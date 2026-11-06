@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.config.*
 import com.histmersion.api.given
 import com.histmersion.config.given

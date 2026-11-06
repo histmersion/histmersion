@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.workflows
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -22,9 +24,9 @@ class CurrencyCheckRulesSuite extends munit.FunSuite:
       title = Some(com.histmersion.api.library.Title("New")),
       year = Some(com.histmersion.api.catalogue.Year(2024)),
       doi = Some(com.histmersion.api.library.Doi("10.1000/new")),
-      contexts = List("we refute X"),
-      proposedKind = "refutes",
-      citekey = Some("new2024_x")
+      contexts = List(com.histmersion.api.library.FollowupRow.Contexts("we refute X")),
+      proposedKind = com.histmersion.api.library.FollowupRow.ProposedKind("refutes"),
+      citekey = Some(com.histmersion.api.library.Citekey("new2024_x"))
     )
     currencyAction(com.histmersion.domain.library.Citekey("old2000_y"), row) match
       case CurrencyAction.Propose(p) =>

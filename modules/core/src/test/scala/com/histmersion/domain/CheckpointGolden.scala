@@ -102,17 +102,17 @@ object CheckpointGolden:
       Approval.Kind.StatusChange,
       com.histmersion.domain.library.Citekey("smith1987_tin"),
       status = Some(Source.Status.Superseded),
-      evidence = "Doe shows the route is later.",
-      quote = Some("the route is later")
+      evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence("Doe shows the route is later."),
+      quote = Some(com.histmersion.domain.AgentProposals.Proposal.Quote("the route is later"))
     ) ::
       AgentProposals.EdgeKinds.map(k =>
         Proposal(
           Approval.Kind.Edge,
           com.histmersion.domain.library.Citekey("doe2001_tin"),
           edgeKind = Some(k),
-          target = Some("smith1987_tin"),
-          evidence = "It argues against.",
-          quote = Some("we disagree")
+          target = Some(com.histmersion.domain.library.Citekey("smith1987_tin")),
+          evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence("It argues against."),
+          quote = Some(com.histmersion.domain.AgentProposals.Proposal.Quote("we disagree"))
         )
       ) ++
       Approval.Kind.values.toList.map(k => Proposal(k, com.histmersion.domain.library.Citekey("smith1987_tin")))

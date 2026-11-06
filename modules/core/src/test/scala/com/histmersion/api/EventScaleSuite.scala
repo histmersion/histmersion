@@ -135,7 +135,7 @@ class EventScaleSuite extends munit.FunSuite:
     assertEquals((TimeSpan(notAfter = Some(com.histmersion.api.catalogue.Year(-1100)))).outer, Some((-1100L, -1100L)))
     assertEquals((TimeSpan(endFrom = Some(com.histmersion.api.catalogue.Year(-1110)), notAfter = Some(com.histmersion.api.catalogue.Year(-1100)))).outer, Some((-1110L, -1100L)))
     // points recorded out of order are ordered, not inverted
-    assertEquals((TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1000)), notAfter = Some(-1100))).outer, Some((-1100L, -1000L)))
+    assertEquals((TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1000)), notAfter = Some(com.histmersion.api.catalogue.Year(-1100)))).outer, Some((-1100L, -1000L)))
     assertEquals(EventGeo.missingEnd(TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1200)))), Some("end not recorded"))
     assertEquals(EventGeo.missingEnd(TimeSpan(endFrom = Some(com.histmersion.api.catalogue.Year(-1200)))), Some("start not recorded"))
     assertEquals(EventGeo.missingEnd(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), None, None, Some(com.histmersion.api.catalogue.Year(-1250)))), None)
@@ -144,7 +144,7 @@ class EventScaleSuite extends munit.FunSuite:
   test("the wire: a patch and a put take scale; a summary carries it with whether it is stated"):
     assertEquals(decode[EventPatch]("""{"scale":"regional"}"""), Right(EventPatch(scale = Some(com.histmersion.api.catalogue.EventSummary.Scale("regional")))))
     assertEquals(decode[EventPut]("""{"label":"x","scale":"local"}""").map(_.scale), Right(Some("local")))
-    val s = EventSummary(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventSummary.Label("E"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(), com.histmersion.api.catalogue.EventSummary.Historicity("attested"), scale = "local", scaleStated = true)
+    val s = EventSummary(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventSummary.Label("E"), com.histmersion.api.catalogue.EventSummary.Kind("battle"), TimeSpan(), com.histmersion.api.catalogue.EventSummary.Historicity("attested"), scale = com.histmersion.api.catalogue.EventSummary.Scale("local"), scaleStated = com.histmersion.api.catalogue.EventSummary.ScaleStated(true))
     assertEquals(decode[EventSummary](s.asJson.noSpaces), Right(s))
     // an older client's summary without the fields still reads
     assertEquals(
@@ -160,8 +160,8 @@ class EventScaleSuite extends munit.FunSuite:
       com.histmersion.api.catalogue.EventSummary.Kind("battle"),
       TimeSpan(Some(com.histmersion.api.catalogue.Year(-1274)), None, None, Some(com.histmersion.api.catalogue.Year(-1274))),
       com.histmersion.api.catalogue.EventSummary.Historicity("attested"),
-      scale = "local",
-      scaleStated = false
+      scale = com.histmersion.api.catalogue.EventSummary.Scale("local"),
+      scaleStated = com.histmersion.api.catalogue.EventSummary.ScaleStated(false)
     )
     assert(EventsMarkdown.eventList(EventList(com.histmersion.api.RowCount(1), List(e))).contains("_(battle · local · attested ·"))
     assert(EventsMarkdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))

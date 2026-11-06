@@ -472,9 +472,9 @@ class MergeExtrasSuite extends munit.FunSuite with Bounded:
     assertEquals(
       t.hunks,
       List(
-        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(false), left = List("a")),
+        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(false), left = List(com.histmersion.api.exchange.IssueHunk.Left("a"))),
         IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(true), List(com.histmersion.api.exchange.IssueHunk.Base("b")), List(com.histmersion.api.exchange.IssueHunk.Left("B")), List(com.histmersion.api.exchange.IssueHunk.Right("β"))),
-        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(false), left = List("c"))
+        IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(false), left = List(com.histmersion.api.exchange.IssueHunk.Left("c")))
       )
     )
     assertEquals(MergePlanner.articleText(None, com.histmersion.api.exchange.Bundle.Article.Body("x"), com.histmersion.api.exchange.Bundle.Article.Body("y")).hunks, List(IssueHunk(com.histmersion.api.exchange.IssueHunk.Conflict(true), Nil, List(com.histmersion.api.exchange.IssueHunk.Left("x")), List(com.histmersion.api.exchange.IssueHunk.Right("y")))))

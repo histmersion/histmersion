@@ -200,7 +200,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     )
     assertEquals(Gazetteer.ImportedSources, List("wikidata", "geonames", "tgn"))
     assert(
-      Gazetteer.unknownWhenSilent(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("tgn")) && !Gazetteer.unknownWhenSilent("lpf:x") && !Gazetteer.unknownWhenSilent("")
+      Gazetteer.unknownWhenSilent(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("tgn")) && !Gazetteer.unknownWhenSilent(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("lpf:x")) && !Gazetteer.unknownWhenSilent(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key(""))
     )
     assert(Gazetteer.PointAreaSources.contains("tgn"))
     val r = Gazetteer.fromFeature(
@@ -239,9 +239,9 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     )
 
   test("load counts: a re-run of the same version is unchanged"):
-    assert(Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), records = com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records(10), joined = 4).unchanged)
-    assert(!Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), namesAdded = 1).unchanged)
-    assert(!Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), linksChanged = 1).unchanged, "a link's item facts changed")
+    assert(Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), records = com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records(10), joined = com.histmersion.api.catalogue.Gazetteer.LoadCounts.Joined(4)).unchanged)
+    assert(!Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), namesAdded = com.histmersion.api.catalogue.Gazetteer.LoadCounts.NamesAdded(1)).unchanged)
+    assert(!Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("geonames"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), linksChanged = com.histmersion.api.catalogue.Gazetteer.LoadCounts.LinksChanged(1)).unchanged, "a link's item facts changed")
 
   // ── what an imported place's silence about time means (V074, 2026-10-09) ─────────────────────
 
@@ -375,7 +375,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(com.histmersion.api.catalogue.Place.Link.schemeTitle(com.histmersion.api.catalogue.Place.Link.Scheme("geonames")), "GeoNames")
 
   test("load counts: descriptions count as a change, and add up"):
-    val a = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2"), descriptionsChanged = 2)
+    val a = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2"), descriptionsChanged = com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsChanged(2))
     assert(!a.unchanged)
     assert(a.describe.contains("descriptions +0 −0 ~2"), a.describe)
     assertEquals((a + Gazetteer.LoadCounts("wikidata", "v2", descriptionsAdded = 1)).descriptionsAdded, 1L)
@@ -430,7 +430,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assert(AppConfig.load().places.sources.pointAreaFixSeconds <= 50, "well inside netty's 60 s idle timeout")
 
   test("load counts: a dropped point-only area is reported, and is no change by itself"):
-    val c = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), records = com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records(3), pointAreasSkipped = 2)
+    val c = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), records = com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records(3), pointAreasSkipped = com.histmersion.api.catalogue.Gazetteer.LoadCounts.PointAreasSkipped(2))
     assert(c.unchanged)
     assert(c.describe.contains("2 point-only region(s)/polity(ies) not kept as places"), c.describe)
     assertEquals((c + c).pointAreasSkipped, 4L)

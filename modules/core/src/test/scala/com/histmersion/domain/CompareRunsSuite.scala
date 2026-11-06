@@ -224,7 +224,7 @@ class CompareRunsSuite extends munit.FunSuite:
     val a = enrich(
       "a",
       List(
-        com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("Tin came by sea."), periodStart = Some(-1300)),
+        com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("Tin came by sea."), periodStart = Some(com.histmersion.api.catalogue.Year(-1300))),
         com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("Copper came from Cyprus."))
       ),
       List(

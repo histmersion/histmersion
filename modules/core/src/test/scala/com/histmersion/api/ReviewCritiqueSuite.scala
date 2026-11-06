@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -320,7 +322,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
           com.histmersion.domain.ReviewArticle.FindingAnswer.Quote("the dying god is a universal type (S3)"),
           com.histmersion.domain.ReviewArticle.FindingAnswer.Problem("omits Smith"),
           com.histmersion.domain.ReviewArticle.FindingAnswer.Fix("cite Smith"),
-          pair = Some("smith1987_dying>frazer1922_golden")
+          pair = Some(com.histmersion.api.research.CritiqueRef.Wire("smith1987_dying>frazer1922_golden"))
         )
       ),
       Nil,
@@ -353,7 +355,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
           com.histmersion.domain.ReviewArticle.FindingAnswer.Quote(""),
           com.histmersion.domain.ReviewArticle.FindingAnswer.Problem("omits Lee"),
           com.histmersion.domain.ReviewArticle.FindingAnswer.Fix("cite Lee"),
-          pair = Some("lee1990_ritual>frazer1922_golden")
+          pair = Some(com.histmersion.api.research.CritiqueRef.Wire("lee1990_ritual>frazer1922_golden"))
         )
       )
     )
@@ -453,7 +455,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     val l = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("run-1"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     val closed = applyFix(l, fix, com.histmersion.domain.ReviewLedger.ApplyFixRun("run-1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
-    val e = closed.entry("S1").get
+    val e = closed.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get
     assertEquals(
       (e.status, e.closed.map(c => (c.by, c.note, c.quote))),
       (Status.SetAside, Some(("fixer", "Cited for the date only.", "smith1987_dying>frazer1922_golden")))
@@ -470,7 +472,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
       absorb(closed, List(e.finding.modify(_.severity).setTo(Severity.Minor)), com.histmersion.domain.automation.Run.Id("run-2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("S1").get.status,
       Status.SetAside
     )
-    val again = absorb(closed, List(e.finding), com.histmersion.domain.automation.Run.Id("run-2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("S1").get
+    val again = absorb(closed, List(e.finding), com.histmersion.domain.automation.Run.Id("run-2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get
     assertEquals((again.status, again.notFixed), (Status.Open, Some("set aside before: Cited for the date only.")))
 
   test("a ledger written before the checklist still decodes (no pair, no set-aside)"):
