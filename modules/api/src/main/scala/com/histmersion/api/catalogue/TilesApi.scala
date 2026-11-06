@@ -26,11 +26,9 @@ object TilesApi:
       undated: Option[TileQuery.Undated] = None,
       ifNoneMatch: Option[TileQuery.IfNoneMatch] = None
   ):
-    def withUndated: com.histmersion.api.catalogue.TilesApi.TileQuery.WithUndatedResult = _root_.com.histmersion.api.catalogue.TilesApi.TileQuery.WithUndatedResult(undated.contains(true))
+    def withUndated: Boolean = (undated.contains(true))
 
   object TileQuery:
-    type WithUndatedResult = WithUndatedResult.T
-    object WithUndatedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Layer = Layer.T
     object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

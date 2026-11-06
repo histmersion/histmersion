@@ -12,12 +12,12 @@ object Asset:
 
   /** What a picture's link points at: the kinds of record it depicts. */
   object LinkTarget:
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Event = "event"
     val Finding = "finding"
     val Place = "place"
     val Source = "source"
     val Article = "article"
-    val all: List[com.histmersion.domain.media.Asset.LinkTarget.All] = List(_root_.com.histmersion.domain.media.Asset.LinkTarget.All(Event), _root_.com.histmersion.domain.media.Asset.LinkTarget.All(Finding), _root_.com.histmersion.domain.media.Asset.LinkTarget.All(Place), _root_.com.histmersion.domain.media.Asset.LinkTarget.All(Source), _root_.com.histmersion.domain.media.Asset.LinkTarget.All(Article))
+    val all: List[com.histmersion.domain.media.Asset.LinkTarget.Wire] = List(_root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Event), _root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Finding), _root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Place), _root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Source), _root_.com.histmersion.domain.media.Asset.LinkTarget.Wire(Article))

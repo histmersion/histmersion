@@ -9,22 +9,18 @@ import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
 
 object AboutMarkdown:
+  type Age = Age.T
+  object Age extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type AgeResult = AgeResult.T
-  object AgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AgeSeconds = AgeSeconds.T
-  object AgeSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderResult = RenderResult.T
-  object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def age(seconds: com.histmersion.api.instance.AboutMarkdown.AgeSeconds): com.histmersion.api.instance.AboutMarkdown.AgeResult =
+  def age(seconds: com.histmersion.api.instance.AboutMarkdown.Age): String =
     val s = math.max(0L, (seconds).value)
-    if s < 60 then _root_.com.histmersion.api.instance.AboutMarkdown.AgeResult(s"$s s")
-    else if s < 3600 then _root_.com.histmersion.api.instance.AboutMarkdown.AgeResult(s"${s / 60} min")
-    else if s < 86400 then _root_.com.histmersion.api.instance.AboutMarkdown.AgeResult(s"${s / 3600} h")
-    else _root_.com.histmersion.api.instance.AboutMarkdown.AgeResult(s"${s / 86400} d")
+    if s < 60 then (s"$s s")
+    else if s < 3600 then (s"${s / 60} min")
+    else if s < 86400 then (s"${s / 3600} h")
+    else (s"${s / 86400} d")
 
-  def render(a: About): com.histmersion.api.instance.AboutMarkdown.RenderResult =
+  def render(a: About): com.histmersion.api.Markdown.Text =
     val b = a.build
     val commit = b.gitCommit.fold("unknown")(c => if ((b.dirty) == _root_.com.histmersion.api.instance.BuildStamp.Dirty(true)) then s"$c (with uncommitted changes)" else c)
     val conv = a.health.converter
@@ -60,4 +56,4 @@ object AboutMarkdown:
         )
       ) ++ StorageMarkdown.render(a.storage) ++
       (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))
-    _root_.com.histmersion.api.instance.AboutMarkdown.RenderResult(lines.mkString("\n"))
+    _root_.com.histmersion.api.Markdown.Text(lines.mkString("\n"))

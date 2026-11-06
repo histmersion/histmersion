@@ -7,7 +7,7 @@ enum GeoTime:
 
   case Within(from: GeoTime.Within.From, to: GeoTime.Within.To, latest: GeoTime.Within.Latest)
 
-  def window: Option[(com.histmersion.api.catalogue.GeoTime.WindowResultPart1, com.histmersion.api.catalogue.GeoTime.WindowResultPart2)] = this match
+  def window: Option[(com.histmersion.api.catalogue.GeoTime.Within.From, com.histmersion.api.catalogue.GeoTime.Within.To)] = this match
     case Always            => None
     case At(y)             => Some((y, y))
     case Within(lo, hi, _) => Some((lo, hi))
@@ -25,7 +25,3 @@ object GeoTime:
     type Latest = Latest.T
     object Latest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type WindowResultPart1 = WindowResultPart1.T
-  object WindowResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WindowResultPart2 = WindowResultPart2.T
-  object WindowResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

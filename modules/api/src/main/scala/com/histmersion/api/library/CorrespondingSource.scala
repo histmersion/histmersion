@@ -7,13 +7,13 @@ import com.histmersion.api.given
   * `/tree/<commit>` form is the one GitHub, GitLab and Forgejo share.
   */
 object CorrespondingSource:
-  type UrlResult = UrlResult.T
-  object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlRepository = UrlRepository.T
-  object UrlRepository extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlCommit = UrlCommit.T
-  object UrlCommit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Commit = Commit.T
+  object Commit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Repository = Repository.T
+  object Repository extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = Url.T
+  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def url(repository: com.histmersion.api.library.CorrespondingSource.UrlRepository, commit: Option[com.histmersion.api.library.CorrespondingSource.UrlCommit]): com.histmersion.api.library.CorrespondingSource.UrlResult =
+  def url(repository: com.histmersion.api.library.CorrespondingSource.Repository, commit: Option[com.histmersion.api.library.CorrespondingSource.Commit]): com.histmersion.api.library.CorrespondingSource.Url =
     val repo = (repository).value.trim.stripSuffix("/").stripSuffix(".git")
-    commit.map((_).value.trim).filter(_.nonEmpty).fold(repo)(c => _root_.com.histmersion.api.library.CorrespondingSource.UrlResult(s"$repo/tree/$c"))
+    commit.map((_).value.trim).filter(_.nonEmpty).fold(repo)(c => _root_.com.histmersion.api.library.CorrespondingSource.Url(s"$repo/tree/$c"))

@@ -5,32 +5,24 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class CritiqueRef(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
-  def wire: com.histmersion.api.research.CritiqueRef.WireResult = _root_.com.histmersion.api.research.CritiqueRef.WireResult(s"$src>$dst")
+  def wire: com.histmersion.api.research.CritiqueRef.Wire = _root_.com.histmersion.api.research.CritiqueRef.Wire(s"$src>$dst")
 
-  def same(o: CritiqueRef): com.histmersion.api.research.CritiqueRef.SameResult = _root_.com.histmersion.api.research.CritiqueRef.SameResult((src == o.src && dst == o.dst) || (src == o.dst && dst == o.src))
+  def same(o: CritiqueRef): Boolean = ((src == o.src && dst == o.dst) || (src == o.dst && dst == o.src))
 
 object CritiqueRef:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type WireResult = WireResult.T
-  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameResult = SameResult.T
-  object SameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyResult = KeyResult.T
-  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyS = KeyS.T
-  object KeyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def key(s: com.histmersion.api.research.CritiqueRef.KeyS): com.histmersion.api.research.CritiqueRef.KeyResult =
-    _root_.com.histmersion.api.research.CritiqueRef.KeyResult((s).value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT))
+  private def key(s: String): String =
+    ((s).value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT))
 
-  def parse(s: com.histmersion.api.research.CritiqueRef.ParseS): Either[com.histmersion.api.research.CritiqueRef.ParseResultPart1, CritiqueRef] =
+  def parse(s: com.histmersion.api.research.CritiqueRef.Wire): Either[com.histmersion.api.research.CritiqueRef.Problem, CritiqueRef] =
     val t = Option((s).value).getOrElse("").replace("->", ">").replace("→", ">")
     t.split(">", -1).toList match
-      case a :: b :: Nil if (key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a))).value.nonEmpty && (key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b))).value.nonEmpty && key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a)) != key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b)) => Right(CritiqueRef(key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a)), key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b))))
+      case a :: b :: Nil if (key((a))).value.nonEmpty && (key((b))).value.nonEmpty && key((a)) != key((b)) => Right(CritiqueRef(key((a)), key((b))))
       case _                                                                       =>
-        Left(_root_.com.histmersion.api.research.CritiqueRef.ParseResultPart1(s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"))
+        Left(_root_.com.histmersion.api.research.CritiqueRef.Problem(s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"))

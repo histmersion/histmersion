@@ -7,15 +7,13 @@ import com.histmersion.api.given
 enum TileLayer:
   case Sites, Events, Media
 
-  def wire: com.histmersion.api.catalogue.TileLayer.WireResult = this match
-    case Sites  => _root_.com.histmersion.api.catalogue.TileLayer.WireResult("sites")
-    case Events => _root_.com.histmersion.api.catalogue.TileLayer.WireResult("events")
-    case Media  => _root_.com.histmersion.api.catalogue.TileLayer.WireResult("media")
+  def wire: com.histmersion.api.catalogue.TileLayer.Wire = this match
+    case Sites  => _root_.com.histmersion.api.catalogue.TileLayer.Wire("sites")
+    case Events => _root_.com.histmersion.api.catalogue.TileLayer.Wire("events")
+    case Media  => _root_.com.histmersion.api.catalogue.TileLayer.Wire("media")
 
 object TileLayer:
-  type WireResult = WireResult.T
-  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.catalogue.TileLayer.ParseS): Option[TileLayer] = values.find(_.wire == _root_.com.histmersion.api.catalogue.TileLayer.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+  def parse(s: com.histmersion.api.catalogue.TileLayer.Wire): Option[TileLayer] = values.find(_.wire == _root_.com.histmersion.api.catalogue.TileLayer.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))

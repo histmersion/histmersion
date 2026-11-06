@@ -18,12 +18,10 @@ enum MatchMethod:
   case Unmatched
 
 object MatchMethod:
-  type WireResult = WireResult.T
-  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromWireS = FromWireS.T
-  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   given WireEnumValues[MatchMethod]:
     def all: Array[MatchMethod] = MatchMethod.values
-    def wire(e: MatchMethod): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii.LowerS(e.toString))).value)
-    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+    def wire(e: MatchMethod): _root_.com.histmersion.WireEnumValues.Wire = _root_.com.histmersion.WireEnumValues.Wire((Ascii.lower((e.toString))).value)
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.Wire): _root_.scala.Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase((s).value.trim))

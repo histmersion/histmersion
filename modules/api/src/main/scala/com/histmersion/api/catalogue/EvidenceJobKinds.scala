@@ -6,7 +6,7 @@ import com.histmersion.api.jobs.JobKindEntry
 object EvidenceJobKinds:
   val EventsCandidates: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("events-candidates"),
-    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Find sources for events"),
+    _root_.com.histmersion.api.jobs.JobKinds.Wire("Find sources for events"),
     _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Looks for the sources that may attest each catalogue event: candidate links for you to confirm or reject."),
     subject = com.histmersion.api.catalogue.EventsJobKinds.Catalogue.of
   )

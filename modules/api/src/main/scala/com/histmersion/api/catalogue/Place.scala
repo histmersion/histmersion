@@ -27,19 +27,20 @@ final case class Place(
     properties: Option[Place.Properties] = None,
     open: Option[OpenSide] = None
 ):
-  def bounds: (Option[com.histmersion.api.catalogue.Place.BoundsResultPart1], Option[com.histmersion.api.catalogue.Place.BoundsResultPart2]) = OpenSide.bounds(period, open)
+  def bounds: (Option[com.histmersion.api.catalogue.Place.Period.Start], Option[com.histmersion.api.catalogue.Place.Period.End]) = OpenSide.bounds(period, open)
 
 object Place:
+  object Period:
+    type End = End.T
+    object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Start = Start.T
+    object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but
     * these are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a
     * people or a civic tribe — the Ubii, the Athenian tribe Aiantis: a group of persons that a gazetteer places at a
     * representative point, never an area (Pleiades files them as regions; `lint --rule place-kind` moves them).
     */
-  type BoundsResultPart1 = BoundsResultPart1.T
-  object BoundsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoundsResultPart2 = BoundsResultPart2.T
-  object BoundsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Label = Label.T
   object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -53,12 +54,10 @@ object Place:
   object Properties extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Kind:
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseResult = ParseResult.T
     object ParseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Region = "region"
     val Polity = "polity"
@@ -104,60 +103,48 @@ object Place:
   enum Precision:
     case Stated, GridCell
 
-    def wire: com.histmersion.api.catalogue.Place.Precision.WireResult = this match
-      case Stated   => _root_.com.histmersion.api.catalogue.Place.Precision.WireResult("stated")
-      case GridCell => _root_.com.histmersion.api.catalogue.Place.Precision.WireResult("grid-cell")
+    def wire: com.histmersion.api.catalogue.Place.Precision.Wire = this match
+      case Stated   => _root_.com.histmersion.api.catalogue.Place.Precision.Wire("stated")
+      case GridCell => _root_.com.histmersion.api.catalogue.Place.Precision.Wire("grid-cell")
 
   object Precision:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     /** The atlas grids, as cell sizes in micro-degrees: 5°, 1° and ½°. */
-    type WireResult = WireResult.T
-    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CellsMicro = CellsMicroValue
     type CellsMicroValue = CellsMicroValue.T
     object CellsMicroValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GridCentreResult = GridCentreResult.T
-    object GridCentreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GridCentreLon = GridCentreLon.T
-    object GridCentreLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type GridCentreLat = GridCentreLat.T
-    object GridCentreLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfPlaceId = OfPlaceId.T
-    object OfPlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLon = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLon
-    val OfLon: _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLon.type = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLon
-    type OfLat = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat
-    val OfLat: _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat.type = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat
+    type OfLon = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon
+    val OfLon: _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon.type = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon
+    type OfLat = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat
+    val OfLat: _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat.type = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat
     type Approximate = ApproximateValue
     type ApproximateValue = ApproximateValue.T
     object ApproximateValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromWireS = FromWireS.T
-    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val CellsMicro: List[com.histmersion.api.catalogue.Place.Precision.CellsMicro] = List(_root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroValue(5000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroValue(1000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroValue(500000L))
 
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.
       */
-    def gridCentre(lon: com.histmersion.api.catalogue.Place.Precision.GridCentreLon, lat: com.histmersion.api.catalogue.Place.Precision.GridCentreLat): com.histmersion.api.catalogue.Place.Precision.GridCentreResult =
+    def gridCentre(lon: com.histmersion.api.catalogue.Place.OverrideSet.PointLon, lat: com.histmersion.api.catalogue.Place.OverrideSet.PointLat): Boolean =
       val x = math.round((lon).value * 1e6)
       val y = math.round((lat).value * 1e6)
-      _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(CellsMicro.exists(c => Math.floorMod(x, (c).value) == (c).value / 2 && Math.floorMod(y, c) == c / 2))
+      (CellsMicro.exists(c => Math.floorMod(x, (c).value) == (c).value / 2 && Math.floorMod(y, c) == c / 2))
 
     /** The precision of the point of place `placeId`. */
-    def of(placeId: com.histmersion.api.catalogue.Place.Precision.OfPlaceId, lon: com.histmersion.api.catalogue.Place.Precision.OfLon, lat: com.histmersion.api.catalogue.Place.Precision.OfLat): Precision =
-      if (placeId).value.startsWith("pleiades_") && ((gridCentre(lon, lat)) == _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(true)) then GridCell else Stated
+    def of(placeId: com.histmersion.api.catalogue.Place.Id, lon: com.histmersion.api.catalogue.Place.Precision.OfLon, lat: com.histmersion.api.catalogue.Place.Precision.OfLat): Precision =
+      if (placeId).value.startsWith("pleiades_") && ((gridCentre(lon, lat)) == (true)) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
     val Approximate: com.histmersion.api.catalogue.Place.Precision.Approximate = _root_.com.histmersion.api.catalogue.Place.Precision.ApproximateValue("approximate (atlas grid square)")
 
-    def parse(s: com.histmersion.api.catalogue.Place.Precision.ParseS): Option[Precision] = values.find(_.wire == Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS((s).value.trim)))
+    def parse(s: com.histmersion.api.catalogue.Place.Precision.Wire): Option[Precision] = values.find(_.wire == Ascii.lower(((s).value.trim)))
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = Precision.values
-      def wire(e: Precision): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Precision] = parse(_root_.com.histmersion.api.catalogue.Place.Precision.ParseS((s).value))
+      def wire(e: Precision): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Precision] = parse(_root_.com.histmersion.api.catalogue.Place.Precision.Wire((s).value))
 
   final case class Add(
       label: Add.Label,
@@ -196,29 +183,29 @@ object Place:
     */
   trait Card:
     def place: Summary
-    def geometry: Option[com.histmersion.api.catalogue.Place.Card.GeometryResult]
+    def geometry: Option[com.histmersion.api.catalogue.Place.Geometry]
     def parents: List[Summary]
     def children: List[Summary]
-    def findings: com.histmersion.api.catalogue.Place.Card.FindingsResult
-    def asOf: Option[com.histmersion.api.catalogue.Place.Card.AsOfResult]
-    def contested: com.histmersion.api.catalogue.Place.Card.ContestedResult
+    def findings: com.histmersion.api.catalogue.Place.Counts.Findings
+    def asOf: Option[com.histmersion.api.catalogue.Place.Entry.AsOf]
+    def contested: Boolean
     def footprints: List[Footprint]
     def links: List[Link]
     def types: List[Type]
     def counts: Option[Counts]
-    def hasBoundary: com.histmersion.api.catalogue.Place.Card.HasBoundaryResult
+    def hasBoundary: Boolean
     def descriptions: List[Description]
     def timeBasis: TimeBasis
     def locationPrecision: com.histmersion.api.catalogue.Place.Precision
-    def siteType: Option[com.histmersion.api.catalogue.Place.Card.SiteTypeResult]
+    def siteType: Option[com.histmersion.api.catalogue.Place.Entry.SiteType]
     def record: Record
 
-    def pointOnlyArea: com.histmersion.api.catalogue.Place.Card.PointOnlyAreaResult = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary)
+    def pointOnlyArea: Boolean = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary)
 
     def shapeNote: Option[com.histmersion.api.catalogue.Place.Card.ShapeNoteResult] =
       Option
-        .when(((pointOnlyArea) == _root_.com.histmersion.api.catalogue.Place.Card.PointOnlyAreaResult(true)))(Shape.NoBoundaryNote)
-        .orElse(Option.when(geometry.isDefined && ((Shape.isPeople(place.kind)) == _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleResult(true)))(Shape.PeopleNote))
+        .when(((pointOnlyArea) == (true)))(Shape.NoBoundaryNote)
+        .orElse(Option.when(geometry.isDefined && ((Shape.isPeople(place.kind)) == (true)))(Shape.PeopleNote))
 
     def locationNote: Option[com.histmersion.api.catalogue.Place.Card.LocationNoteResult] =
       Option.when(locationPrecision == com.histmersion.api.catalogue.Place.Precision.GridCell)(
@@ -227,31 +214,15 @@ object Place:
 
     def shapeNotes: List[com.histmersion.api.catalogue.Place.Card.ShapeNotesResult] = shapeNote.toList ++ locationNote.map(n => s"location: $n").toList
 
-    def datedByFindings: com.histmersion.api.catalogue.Place.Card.DatedByFindingsResult = _root_.com.histmersion.api.catalogue.Place.Card.DatedByFindingsResult(asOf.isDefined && timeBasis == TimeBasis.Findings)
+    def datedByFindings: Boolean = (asOf.isDefined && timeBasis == TimeBasis.Findings)
 
   object Card:
-    type GeometryResult = GeometryResult.T
-    object GeometryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FindingsResult = FindingsResult.T
-    object FindingsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AsOfResult = AsOfResult.T
-    object AsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ContestedResult = ContestedResult.T
-    object ContestedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type HasBoundaryResult = HasBoundaryResult.T
-    object HasBoundaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SiteTypeResult = SiteTypeResult.T
-    object SiteTypeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PointOnlyAreaResult = PointOnlyAreaResult.T
-    object PointOnlyAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ShapeNoteResult = ShapeNoteResult.T
     object ShapeNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LocationNoteResult = LocationNoteResult.T
     object LocationNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ShapeNotesResult = ShapeNotesResult.T
     object ShapeNotesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DatedByFindingsResult = DatedByFindingsResult.T
-    object DatedByFindingsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Counts(sources: Counts.Sources, findings: Counts.Findings, articles: Counts.Articles, events: Counts.Events)
       derives KindlingsCodecAsObject,
@@ -271,39 +242,31 @@ object Place:
   enum Dating:
     case Stated, EndOnly, Unknown
 
-    def wire: com.histmersion.api.catalogue.Place.Dating.WireResult = this match
-      case Stated  => _root_.com.histmersion.api.catalogue.Place.Dating.WireResult("stated")
-      case EndOnly => _root_.com.histmersion.api.catalogue.Place.Dating.WireResult("end-only")
-      case Unknown => _root_.com.histmersion.api.catalogue.Place.Dating.WireResult("unknown")
+    def wire: com.histmersion.api.catalogue.Place.Dating.Wire = this match
+      case Stated  => _root_.com.histmersion.api.catalogue.Place.Dating.Wire("stated")
+      case EndOnly => _root_.com.histmersion.api.catalogue.Place.Dating.Wire("end-only")
+      case Unknown => _root_.com.histmersion.api.catalogue.Place.Dating.Wire("unknown")
 
   object Dating:
-    type WireResult = WireResult.T
-    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromWireS = FromWireS.T
-    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DescribeResult = DescribeResult.T
     object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DescribeStart = DescribeStart.T
-    object DescribeStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DescribeEnd = DescribeEnd.T
-    object DescribeEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.catalogue.Place.Dating.ParseS): Option[Dating] = values.find(_.wire == _root_.com.histmersion.api.catalogue.Place.Dating.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+    def parse(s: com.histmersion.api.catalogue.Place.Dating.Wire): Option[Dating] = values.find(_.wire == _root_.com.histmersion.api.catalogue.Place.Dating.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
     given WireEnumValues[Dating]:
       def all: Array[Dating] = Dating.values
-      def wire(e: Dating): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Dating] = parse(_root_.com.histmersion.api.catalogue.Place.Dating.ParseS((s).value))
+      def wire(e: Dating): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Dating] = parse(_root_.com.histmersion.api.catalogue.Place.Dating.Wire((s).value))
     given io.circe.Encoder[Dating] = WireEnum.encoder
     given io.circe.Decoder[Dating] = WireEnum.decoder
     given Schema[Dating] = WireEnum.schema
 
-    def describe(dating: Dating, start: Option[com.histmersion.api.catalogue.Place.Dating.DescribeStart], end: Option[com.histmersion.api.catalogue.Place.Dating.DescribeEnd]): com.histmersion.api.catalogue.Place.Dating.DescribeResult = dating match
+    def describe(dating: Dating, start: Option[com.histmersion.api.catalogue.Place.Period.Start], end: Option[com.histmersion.api.catalogue.Place.Period.End]): com.histmersion.api.catalogue.Place.Dating.DescribeResult = dating match
       case Unknown => _root_.com.histmersion.api.catalogue.Place.Dating.DescribeResult("date unknown")
       case EndOnly => end.fold("date unknown")(e => s"end ${YearFmt(e)}, start unknown")
-      case Stated  => YearFmt.openPeriod(start, end, none = _root_.com.histmersion.api.YearFmt.OpenPeriodNone(""))
+      case Stated  => YearFmt.openPeriod(start, end, none = (""))
 
   final case class Description(text: Description.Text, lang: Description.Lang = _root_.com.histmersion.api.catalogue.Place.Description.Lang(""), source: Description.Source = _root_.com.histmersion.api.catalogue.Place.Description.Source(""))
       derives KindlingsCodecAsObject,
@@ -338,8 +301,6 @@ object Place:
 
   object Edits:
 
-    type CsvCellS = CsvCellS.T
-    object CsvCellS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type InvalidMsg = InvalidMsg.T
     object InvalidMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -347,14 +308,6 @@ object Place:
     object NameResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NameRaw = NameRaw.T
     object NameRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LangResultPart2 = LangResultPart2.T
-    object LangResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LangRaw = LangRaw.T
-    object LangRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DefaultIdResult = DefaultIdResult.T
-    object DefaultIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DefaultIdLabel = DefaultIdLabel.T
-    object DefaultIdLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CsvResult = CsvResult.T
     object CsvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -373,13 +326,13 @@ object Place:
 
     val MaxName = 200
 
-    def lang(raw: Option[com.histmersion.api.catalogue.Place.Edits.LangRaw]): Either[Api.Error, com.histmersion.api.catalogue.Place.Edits.LangResultPart2] =
+    def lang(raw: Option[com.histmersion.api.catalogue.Place.Name.Lang]): Either[Api.Error, com.histmersion.api.catalogue.Place.Name.Lang] =
       raw.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty) match
-        case None                            => Right(_root_.com.histmersion.api.catalogue.Place.Edits.LangResultPart2(""))
-        case Some(l) if LangShape.matches(l) => Right(_root_.com.histmersion.api.catalogue.Place.Edits.LangResultPart2(l))
+        case None                            => Right(_root_.com.histmersion.api.catalogue.Place.Name.Lang(""))
+        case Some(l) if LangShape.matches(l) => Right(_root_.com.histmersion.api.catalogue.Place.Name.Lang(l))
         case Some(l)                         => Left(invalid(_root_.com.histmersion.api.catalogue.Place.Edits.InvalidMsg(s"'$l' is not a language tag (e.g. en, grc, pl, sr-latn)")))
 
-    def defaultId(label: com.histmersion.api.catalogue.Place.Edits.DefaultIdLabel): com.histmersion.api.catalogue.Place.Edits.DefaultIdResult =
+    def defaultId(label: com.histmersion.api.catalogue.Place.Label): com.histmersion.api.catalogue.Place.Id =
       LocalPrefix + Geocode.key(label).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
 
     def toInput(in: Add): Either[Api.Error, Input] =
@@ -442,7 +395,7 @@ object Place:
         )
 
     def csv(rows: List[ManualPlaceName]): com.histmersion.api.catalogue.Place.Edits.CsvResult =
-      def cell(s: com.histmersion.api.catalogue.Place.Edits.CsvCellS) =
+      def cell(s: String) =
         if (s).value.exists(c => c == ',' || c == '"' || c == '\n') then "\"" + (s).value.replace("\"", "\"\"") + "\"" else s
       ("place_id,name,lang,why" :: rows.map(r =>
         List(r.placeId, r.name, r.lang, s"added by hand to ${r.label}").map(cell).mkString(",")
@@ -612,6 +565,8 @@ object Place:
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
   object Link:
+    type Url = Url.T
+    object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Schemes = SchemesValue
     type SchemesValue = SchemesValue.T
@@ -619,16 +574,12 @@ object Place:
     type Relations = RelationsValue
     type RelationsValue = RelationsValue.T
     object RelationsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UrlResult = UrlResult.T
-    object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UrlScheme = _root_.com.histmersion.api.catalogue.Place.Link.Scheme
     val UrlScheme: _root_.com.histmersion.api.catalogue.Place.Link.Scheme.type = _root_.com.histmersion.api.catalogue.Place.Link.Scheme
     type UrlExternalId = _root_.com.histmersion.api.catalogue.Place.Link.ExternalId
     val UrlExternalId: _root_.com.histmersion.api.catalogue.Place.Link.ExternalId.type = _root_.com.histmersion.api.catalogue.Place.Link.ExternalId
     type SchemeTitleResult = SchemeTitleResult.T
     object SchemeTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SchemeTitleScheme = SchemeTitleScheme.T
-    object SchemeTitleScheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Scheme = Scheme.T
     object Scheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -640,20 +591,20 @@ object Place:
     val Schemes: List[com.histmersion.api.catalogue.Place.Link.Schemes] = List(_root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("pleiades"), _root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("wikidata"), _root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("tgn"), _root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("geonames"), _root_.com.histmersion.api.catalogue.Place.Link.SchemesValue("whg"))
     val Relations: List[com.histmersion.api.catalogue.Place.Link.Relations] = List(_root_.com.histmersion.api.catalogue.Place.Link.RelationsValue("close_match"), _root_.com.histmersion.api.catalogue.Place.Link.RelationsValue("exact_match"), _root_.com.histmersion.api.catalogue.Place.Link.RelationsValue("broad_match"), _root_.com.histmersion.api.catalogue.Place.Link.RelationsValue("see_also"))
 
-    def url(scheme: com.histmersion.api.catalogue.Place.Link.UrlScheme, externalId: com.histmersion.api.catalogue.Place.Link.UrlExternalId): Option[com.histmersion.api.catalogue.Place.Link.UrlResult] =
+    def url(scheme: com.histmersion.api.catalogue.Place.Link.UrlScheme, externalId: com.histmersion.api.catalogue.Place.Link.UrlExternalId): Option[com.histmersion.api.catalogue.Place.Link.Url] =
       val id = (externalId).value.trim
       if id.isEmpty then None
       else
         (scheme).value.trim.toLowerCase(java.util.Locale.ROOT) match
-          case "wikidata" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://www.wikidata.org/wiki/$id"))
-          case "geonames" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://www.geonames.org/$id"))
-          case "pleiades" => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://pleiades.stoa.org/places/$id"))
-          case "tgn"      => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"http://vocab.getty.edu/page/tgn/$id"))
-          case "whg"      => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://whgazetteer.org/places/$id/portal"))
-          case "commons"  => Some(_root_.com.histmersion.api.catalogue.Place.Link.UrlResult(s"https://commons.wikimedia.org/wiki/Category:${id.replace(' ', '_')}"))
+          case "wikidata" => Some(_root_.com.histmersion.api.catalogue.Place.Link.Url(s"https://www.wikidata.org/wiki/$id"))
+          case "geonames" => Some(_root_.com.histmersion.api.catalogue.Place.Link.Url(s"https://www.geonames.org/$id"))
+          case "pleiades" => Some(_root_.com.histmersion.api.catalogue.Place.Link.Url(s"https://pleiades.stoa.org/places/$id"))
+          case "tgn"      => Some(_root_.com.histmersion.api.catalogue.Place.Link.Url(s"http://vocab.getty.edu/page/tgn/$id"))
+          case "whg"      => Some(_root_.com.histmersion.api.catalogue.Place.Link.Url(s"https://whgazetteer.org/places/$id/portal"))
+          case "commons"  => Some(_root_.com.histmersion.api.catalogue.Place.Link.Url(s"https://commons.wikimedia.org/wiki/Category:${id.replace(' ', '_')}"))
           case _          => None
 
-    def schemeTitle(scheme: com.histmersion.api.catalogue.Place.Link.SchemeTitleScheme): com.histmersion.api.catalogue.Place.Link.SchemeTitleResult = (scheme).value.trim.toLowerCase(java.util.Locale.ROOT) match
+    def schemeTitle(scheme: com.histmersion.api.catalogue.Place.Link.Scheme): com.histmersion.api.catalogue.Place.Link.SchemeTitleResult = (scheme).value.trim.toLowerCase(java.util.Locale.ROOT) match
       case "wikidata" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Wikidata")
       case "geonames" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("GeoNames")
       case "pleiades" => _root_.com.histmersion.api.catalogue.Place.Link.SchemeTitleResult("Pleiades")
@@ -687,13 +638,9 @@ object Place:
       period: Option[Period] = None,
       open: Option[OpenSide] = None
   ):
-    def bounds: (Option[com.histmersion.api.catalogue.Place.Name.BoundsResultPart1], Option[com.histmersion.api.catalogue.Place.Name.BoundsResultPart2]) = OpenSide.bounds(period, open)
+    def bounds: (Option[com.histmersion.api.catalogue.Place.Period.Start], Option[com.histmersion.api.catalogue.Place.Period.End]) = OpenSide.bounds(period, open)
 
   object Name:
-    type BoundsResultPart1 = BoundsResultPart1.T
-    object BoundsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BoundsResultPart2 = BoundsResultPart2.T
-    object BoundsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -891,32 +838,16 @@ object Place:
     given Codec.AsObject[OverrideSet] = StrictJson.codec(KindlingsCodecAsObject.derived[OverrideSet])
 
   object Overrides:
+    type PointText = PointText.T
+    object PointText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type InvalidMsg = InvalidMsg.T
     object InvalidMsg extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReasonResultPart2 = ReasonResultPart2.T
-    object ReasonResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ReasonRaw = ReasonRaw.T
-    object ReasonRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParsePointResultPart1 = ParsePointResultPart1.T
     object ParsePointResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParsePointResultPart2Part1 = ParsePointResultPart2Part1.T
-    object ParsePointResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParsePointResultPart2Part2 = ParsePointResultPart2Part2.T
-    object ParsePointResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParsePointRaw = ParsePointRaw.T
-    object ParsePointRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PointTextResult = PointTextResult.T
     object PointTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PointTextLat = PointTextLat.T
-    object PointTextLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PointTextLon = PointTextLon.T
-    object PointTextLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodTextResult = PeriodTextResult.T
     object PeriodTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PeriodTextStart = PeriodTextStart.T
-    object PeriodTextStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PeriodTextEnd = PeriodTextEnd.T
-    object PeriodTextEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val MaxReason = 500
 
@@ -971,23 +902,23 @@ object Place:
           )
         yield OverrideEdit.Put(kind, period, reason, point)
 
-    def reason(raw: Option[com.histmersion.api.catalogue.Place.Overrides.ReasonRaw]): Either[Api.Error, Option[com.histmersion.api.catalogue.Place.Overrides.ReasonResultPart2]] =
+    def reason(raw: Option[com.histmersion.api.catalogue.Place.Override.Reason]): Either[Api.Error, Option[com.histmersion.api.catalogue.Place.Override.Reason]] =
       val r = raw.map((_).value.trim.replaceAll("\\s+", " ")).filter(_.nonEmpty)
-      Either.cond(r.forall(_.length <= MaxReason), (r).map(refactorValue10 => _root_.com.histmersion.api.catalogue.Place.Overrides.ReasonResultPart2(refactorValue10)), invalid(_root_.com.histmersion.api.catalogue.Place.Overrides.InvalidMsg(s"a reason is at most $MaxReason characters")))
+      Either.cond(r.forall(_.length <= MaxReason), (r).map(refactorValue10 => _root_.com.histmersion.api.catalogue.Place.Override.Reason(refactorValue10)), invalid(_root_.com.histmersion.api.catalogue.Place.Overrides.InvalidMsg(s"a reason is at most $MaxReason characters")))
 
-    def parsePoint(raw: com.histmersion.api.catalogue.Place.Overrides.ParsePointRaw): Either[com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1, (com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part1, com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part2)] =
+    def parsePoint(raw: com.histmersion.api.catalogue.Place.Overrides.PointText): Either[com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1, (com.histmersion.api.catalogue.Place.OverrideSet.PointLat, com.histmersion.api.catalogue.Place.OverrideSet.PointLon)] =
       (raw).value.split(",", -1).map(_.trim).toList match
         case List(a, b) =>
           (a.toDoubleOption, b.toDoubleOption) match
             case (Some(lat), Some(lon))
                 if !lat.isNaN && !lon.isNaN && lat >= -90 && lat <= 90 && lon >= -180 && lon <= 180 =>
-              Right((_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part1(lat), _root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart2Part2(lon)))
+              Right((_root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat(lat), _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon(lon)))
             case (Some(_), Some(_)) =>
               Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not a latitude,longitude (latitude −90..90, longitude −180..180)"))
             case _ => Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not a latitude,longitude pair of numbers, e.g. 37.95,58.21"))
         case _ => Left(_root_.com.histmersion.api.catalogue.Place.Overrides.ParsePointResultPart1(s"'$raw' is not latitude,longitude, e.g. 37.95,58.21"))
 
-    def pointText(lat: com.histmersion.api.catalogue.Place.Overrides.PointTextLat, lon: com.histmersion.api.catalogue.Place.Overrides.PointTextLon): com.histmersion.api.catalogue.Place.Overrides.PointTextResult =
+    def pointText(lat: com.histmersion.api.catalogue.Place.OverrideSet.PointLat, lon: com.histmersion.api.catalogue.Place.OverrideSet.PointLon): com.histmersion.api.catalogue.Place.Overrides.PointTextResult =
       _root_.com.histmersion.api.catalogue.Place.Overrides.PointTextResult(String.format(
         java.util.Locale.ROOT,
         "%.4f %s %.4f %s",
@@ -997,7 +928,7 @@ object Place:
         if (lon).value < 0 then "W" else "E"
       ))
 
-    def periodText(start: Option[com.histmersion.api.catalogue.Place.Overrides.PeriodTextStart], end: Option[com.histmersion.api.catalogue.Place.Overrides.PeriodTextEnd]): com.histmersion.api.catalogue.Place.Overrides.PeriodTextResult = YearFmt.openPeriod(start, end)
+    def periodText(start: Option[com.histmersion.api.catalogue.Place.Period.Start], end: Option[com.histmersion.api.catalogue.Place.Period.End]): com.histmersion.api.catalogue.Place.Overrides.PeriodTextResult = YearFmt.openPeriod(start, end)
 
   final case class RebuildResult(
       links: RebuildResult.Links,
@@ -1031,22 +962,18 @@ object Place:
       registers: List[Register] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema:
-    def isEmpty: com.histmersion.api.catalogue.Place.Record.IsEmptyResult = _root_.com.histmersion.api.catalogue.Place.Record.IsEmptyResult(dateSource.isEmpty && periods.isEmpty && designations.isEmpty && registers.isEmpty)
+    def isEmpty: Boolean = (dateSource.isEmpty && periods.isEmpty && designations.isEmpty && registers.isEmpty)
 
   object Record:
-    type IsEmptyResult = IsEmptyResult.T
-    object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DateSourceTextResult = DateSourceTextResult.T
     object DateSourceTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DateSourceTextS = DateSourceTextS.T
-    object DateSourceTextS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type DateSource = DateSource.T
     object DateSource extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Periods = Periods.T
     object Periods extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def dateSourceText(s: com.histmersion.api.catalogue.Place.Record.DateSourceTextS): com.histmersion.api.catalogue.Place.Record.DateSourceTextResult = (s).value.trim.toLowerCase match
+    def dateSourceText(s: com.histmersion.api.catalogue.Place.Record.DateSource): com.histmersion.api.catalogue.Place.Record.DateSourceTextResult = (s).value.trim.toLowerCase match
       case "wikidata-p580"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: its start and end time")
       case "wikidata-p571"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: its inception")
       case "wikidata-p576"                    => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult("Wikidata: when it was dissolved or destroyed")
@@ -1054,13 +981,11 @@ object Place:
       case other                              => _root_.com.histmersion.api.catalogue.Place.Record.DateSourceTextResult(other)
 
   final case class Register(property: Register.Property, id: Register.Id) derives KindlingsCodecAsObject, KindlingsSchema:
-    def name: com.histmersion.api.catalogue.Place.Register.NameResult = Register.names.getOrElse(_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1((property).value), property)
+    def name: com.histmersion.api.catalogue.Place.Register.NameResult = Register.names.getOrElse(_root_.com.histmersion.api.catalogue.Place.Register.Property((property).value), property)
 
   object Register:
     type NameResult = NameResult.T
     object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NamesPart1 = NamesPart1.T
-    object NamesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NamesPart2 = NamesPart2.T
     object NamesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1069,13 +994,13 @@ object Place:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val names: Map[com.histmersion.api.catalogue.Place.Register.NamesPart1, com.histmersion.api.catalogue.Place.Register.NamesPart2] = Map(
-      { val refactorTuple12 = "P13741" -> "Archaeological Cadastre (Greece)"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple12._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple12._2)) },
-      { val refactorTuple13 = "P2186" -> "Wiki Loves Monuments"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple13._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple13._2)) },
-      { val refactorTuple14 = "P9951" -> "Greek Castles"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple14._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple14._2)) },
-      { val refactorTuple6 = "P8218" -> "Archaeology in Greece Online"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple6._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple6._2)) },
-      { val refactorTuple7 = "P8068" -> "ToposText"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple7._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple7._2)) },
-      { val refactorTuple8 = "P1936" -> "DARE (Digital Atlas of the Roman Empire)"; (_root_.com.histmersion.api.catalogue.Place.Register.NamesPart1(refactorTuple8._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple8._2)) }
+    val names: Map[com.histmersion.api.catalogue.Place.Register.Property, com.histmersion.api.catalogue.Place.Register.NamesPart2] = Map(
+      { val refactorTuple12 = "P13741" -> "Archaeological Cadastre (Greece)"; (_root_.com.histmersion.api.catalogue.Place.Register.Property(refactorTuple12._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple12._2)) },
+      { val refactorTuple13 = "P2186" -> "Wiki Loves Monuments"; (_root_.com.histmersion.api.catalogue.Place.Register.Property(refactorTuple13._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple13._2)) },
+      { val refactorTuple14 = "P9951" -> "Greek Castles"; (_root_.com.histmersion.api.catalogue.Place.Register.Property(refactorTuple14._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple14._2)) },
+      { val refactorTuple6 = "P8218" -> "Archaeology in Greece Online"; (_root_.com.histmersion.api.catalogue.Place.Register.Property(refactorTuple6._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple6._2)) },
+      { val refactorTuple7 = "P8068" -> "ToposText"; (_root_.com.histmersion.api.catalogue.Place.Register.Property(refactorTuple7._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple7._2)) },
+      { val refactorTuple8 = "P1936" -> "DARE (Digital Atlas of the Roman Empire)"; (_root_.com.histmersion.api.catalogue.Place.Register.Property(refactorTuple8._1), _root_.com.histmersion.api.catalogue.Place.Register.NamesPart2(refactorTuple8._2)) }
     )
 
   final case class Relation(
@@ -1085,17 +1010,9 @@ object Place:
       period: Option[Period] = None,
       open: Option[OpenSide] = None
   ):
-    def bounds: (Option[com.histmersion.api.catalogue.Place.Relation.BoundsResultPart1], Option[com.histmersion.api.catalogue.Place.Relation.BoundsResultPart2]) = OpenSide.bounds(period, open)
+    def bounds: (Option[com.histmersion.api.catalogue.Place.Period.Start], Option[com.histmersion.api.catalogue.Place.Period.End]) = OpenSide.bounds(period, open)
 
   object Relation:
-    type BoundsResultPart1 = BoundsResultPart1.T
-    object BoundsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BoundsResultPart2 = BoundsResultPart2.T
-    object BoundsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PartOfKinds = PartOfKinds.T
-    object PartOfKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type ChildId = ChildId.T
     object ChildId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -1114,9 +1031,9 @@ object Place:
     val SameAs = "same_as"
     val VersionOf = "version_of"
     val CapitalOf = "capital_of"
-    val all: List[com.histmersion.api.catalogue.Place.Relation.All] =
-      List(_root_.com.histmersion.api.catalogue.Place.Relation.All(PartOf), _root_.com.histmersion.api.catalogue.Place.Relation.All(PartOfAdmin), _root_.com.histmersion.api.catalogue.Place.Relation.All(PartOfRegional), _root_.com.histmersion.api.catalogue.Place.Relation.All(PartOfPhysical), _root_.com.histmersion.api.catalogue.Place.Relation.All(Succeeds), _root_.com.histmersion.api.catalogue.Place.Relation.All(SameAs), _root_.com.histmersion.api.catalogue.Place.Relation.All(VersionOf), _root_.com.histmersion.api.catalogue.Place.Relation.All(CapitalOf))
-    val partOfKinds: Set[com.histmersion.api.catalogue.Place.Relation.PartOfKinds] = Set(_root_.com.histmersion.api.catalogue.Place.Relation.PartOfKinds(PartOf), _root_.com.histmersion.api.catalogue.Place.Relation.PartOfKinds(PartOfAdmin), _root_.com.histmersion.api.catalogue.Place.Relation.PartOfKinds(PartOfRegional), _root_.com.histmersion.api.catalogue.Place.Relation.PartOfKinds(PartOfPhysical))
+    val all: List[com.histmersion.api.catalogue.Place.Relation.Kind] =
+      List(_root_.com.histmersion.api.catalogue.Place.Relation.Kind(PartOf), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(PartOfAdmin), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(PartOfRegional), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(PartOfPhysical), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Succeeds), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(SameAs), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(VersionOf), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(CapitalOf))
+    val partOfKinds: Set[com.histmersion.api.catalogue.Place.Relation.Kind] = Set(_root_.com.histmersion.api.catalogue.Place.Relation.Kind(PartOf), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(PartOfAdmin), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(PartOfRegional), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(PartOfPhysical))
 
   final case class RemoveIn(reason: Option[RemoveIn.Reason] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
   object RemoveIn:
@@ -1127,35 +1044,27 @@ object Place:
     given Codec.AsObject[RemoveIn] = StrictJson.codec(KindlingsCodecAsObject.derived[RemoveIn])
 
   object Shape:
-    type IsAreaResult = IsAreaResult.T
-    object IsAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsAreaKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
     val IsAreaKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
-    type PointOnlyAreaResult = PointOnlyAreaResult.T
-    object PointOnlyAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PointOnlyAreaKind = _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind
     val PointOnlyAreaKind: _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind.type = _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind
-    type PointOnlyAreaHasBoundary = PointOnlyAreaHasBoundary.T
-    object PointOnlyAreaHasBoundary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NoBoundaryNote = NoBoundaryNoteValue
     type NoBoundaryNoteValue = NoBoundaryNoteValue.T
     object NoBoundaryNoteValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IsPeopleResult = IsPeopleResult.T
-    object IsPeopleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsPeopleKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
     val IsPeopleKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
     type PeopleNote = PeopleNoteValue
     type PeopleNoteValue = PeopleNoteValue.T
     object PeopleNoteValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def isArea(kind: com.histmersion.api.catalogue.Place.Shape.IsAreaKind): com.histmersion.api.catalogue.Place.Shape.IsAreaResult =
-      _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Polity))
+    def isArea(kind: com.histmersion.api.catalogue.Place.Shape.IsAreaKind): Boolean =
+      (kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Polity))
 
-    def pointOnlyArea(kind: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind, hasBoundary: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary): com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult = _root_.com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult(((isArea(kind)) == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(true)) && !((hasBoundary) == _root_.com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary(true)))
+    def pointOnlyArea(kind: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind, hasBoundary: com.histmersion.api.catalogue.Place.Entry.HasBoundary): Boolean = (((isArea(kind)) == (true)) && !((hasBoundary) == _root_.com.histmersion.api.catalogue.Place.Entry.HasBoundary(true)))
 
     val NoBoundaryNote: com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote = _root_.com.histmersion.api.catalogue.Place.Shape.NoBoundaryNoteValue("point only — boundary not yet available")
 
-    def isPeople(kind: com.histmersion.api.catalogue.Place.Shape.IsPeopleKind): com.histmersion.api.catalogue.Place.Shape.IsPeopleResult = _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleResult(kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleKind(com.histmersion.api.catalogue.Place.Kind.People))
+    def isPeople(kind: com.histmersion.api.catalogue.Place.Shape.IsPeopleKind): Boolean = (kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsPeopleKind(com.histmersion.api.catalogue.Place.Kind.People))
 
     val PeopleNote: com.histmersion.api.catalogue.Place.Shape.PeopleNote = _root_.com.histmersion.api.catalogue.Place.Shape.PeopleNoteValue("a people or tribe — placed at a representative point, not an area")
 
@@ -1195,64 +1104,58 @@ object Place:
   enum TimeBasis:
     case Dated, Timeless, Modern, Grouping, Findings
 
-    def wire: com.histmersion.api.catalogue.Place.TimeBasis.WireResult = this match
-      case Dated    => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("dated")
-      case Timeless => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("timeless")
-      case Modern   => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("modern")
-      case Grouping => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("grouping")
-      case Findings => _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult("findings")
+    def wire: com.histmersion.api.catalogue.Place.TimeBasis.Wire = this match
+      case Dated    => _root_.com.histmersion.api.catalogue.Place.TimeBasis.Wire("dated")
+      case Timeless => _root_.com.histmersion.api.catalogue.Place.TimeBasis.Wire("timeless")
+      case Modern   => _root_.com.histmersion.api.catalogue.Place.TimeBasis.Wire("modern")
+      case Grouping => _root_.com.histmersion.api.catalogue.Place.TimeBasis.Wire("grouping")
+      case Findings => _root_.com.histmersion.api.catalogue.Place.TimeBasis.Wire("findings")
 
   object TimeBasis:
-    type WireResult = WireResult.T
-    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromWireS = FromWireS.T
-    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type HasGeometry = HasGeometry.T
+    object HasGeometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Imported = Imported.T
+    object Imported extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Modern = Modern.T
+    object Modern extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ModernFrom = ModernFrom.T
+    object ModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Undated = Undated.T
+    object Undated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type VisibleEnd = VisibleEnd.T
+    object VisibleEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfKind = OfKind.T
     object OfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfModern = OfModern.T
-    object OfModern extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfImported = OfImported.T
-    object OfImported extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfUndated = OfUndated.T
-    object OfUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfHasGeometry = OfHasGeometry.T
-    object OfHasGeometry extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type VisibleResult = VisibleResult.T
-    object VisibleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type VisibleHi = VisibleHi.T
-    object VisibleHi extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type VisibleModernFrom = VisibleModernFrom.T
-    object VisibleModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FindingsNote = FindingsNoteValue
     type FindingsNoteValue = FindingsNoteValue.T
     object FindingsNoteValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.catalogue.Place.TimeBasis.ParseS): Option[TimeBasis] = values.find(_.wire == _root_.com.histmersion.api.catalogue.Place.TimeBasis.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
+    def parse(s: com.histmersion.api.catalogue.Place.TimeBasis.Wire): Option[TimeBasis] = values.find(_.wire == _root_.com.histmersion.api.catalogue.Place.TimeBasis.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
     given WireEnumValues[TimeBasis]:
       def all: Array[TimeBasis] = TimeBasis.values
-      def wire(e: TimeBasis): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[TimeBasis] = parse(_root_.com.histmersion.api.catalogue.Place.TimeBasis.ParseS((s).value))
+      def wire(e: TimeBasis): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[TimeBasis] = parse(_root_.com.histmersion.api.catalogue.Place.TimeBasis.Wire((s).value))
     given io.circe.Encoder[TimeBasis] = WireEnum.encoder
     given io.circe.Decoder[TimeBasis] = WireEnum.decoder
     given Schema[TimeBasis] = WireEnum.schema
 
-    def of(kind: com.histmersion.api.catalogue.Place.TimeBasis.OfKind, modern: com.histmersion.api.catalogue.Place.TimeBasis.OfModern, imported: com.histmersion.api.catalogue.Place.TimeBasis.OfImported, undated: com.histmersion.api.catalogue.Place.TimeBasis.OfUndated, hasGeometry: com.histmersion.api.catalogue.Place.TimeBasis.OfHasGeometry): TimeBasis =
-      if !(imported).value && (kind == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfKind(com.histmersion.api.catalogue.Place.Kind.Feature) || (((modern) == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfModern(true)) && kind == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfKind(com.histmersion.api.catalogue.Place.Kind.Region)))
+    def of(kind: com.histmersion.api.catalogue.Place.TimeBasis.OfKind, modern: com.histmersion.api.catalogue.Place.TimeBasis.Modern, imported: com.histmersion.api.catalogue.Place.TimeBasis.Imported, undated: com.histmersion.api.catalogue.Place.TimeBasis.Undated, hasGeometry: com.histmersion.api.catalogue.Place.TimeBasis.HasGeometry): TimeBasis =
+      if !(imported).value && (kind == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfKind(com.histmersion.api.catalogue.Place.Kind.Feature) || (((modern) == _root_.com.histmersion.api.catalogue.Place.TimeBasis.Modern(true)) && kind == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfKind(com.histmersion.api.catalogue.Place.Kind.Region)))
       then Timeless
       else if (modern).value then Modern
-      else if ((undated) == _root_.com.histmersion.api.catalogue.Place.TimeBasis.OfUndated(true)) && !(hasGeometry).value then Grouping
+      else if ((undated) == _root_.com.histmersion.api.catalogue.Place.TimeBasis.Undated(true)) && !(hasGeometry).value then Grouping
       else if (undated).value then Findings
       else Dated
 
-    def visible(basis: TimeBasis, hi: com.histmersion.api.catalogue.Place.TimeBasis.VisibleHi, modernFrom: com.histmersion.api.catalogue.Place.TimeBasis.VisibleModernFrom, overlaps: => Boolean, evidence: => Boolean): com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult =
+    def visible(basis: TimeBasis, hi: com.histmersion.api.catalogue.Place.TimeBasis.VisibleEnd, modernFrom: com.histmersion.api.catalogue.Place.TimeBasis.ModernFrom, overlaps: => Boolean, evidence: => Boolean): Boolean =
       basis match
-        case Timeless | Grouping => _root_.com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult(true)
+        case Timeless | Grouping => (true)
         case Modern              => hi >= modernFrom
-        case Dated               => _root_.com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult(overlaps)
-        case Findings            => _root_.com.histmersion.api.catalogue.Place.TimeBasis.VisibleResult(evidence)
+        case Dated               => (overlaps)
+        case Findings            => (evidence)
 
     val FindingsNote: com.histmersion.api.catalogue.Place.TimeBasis.FindingsNote = _root_.com.histmersion.api.catalogue.Place.TimeBasis.FindingsNoteValue("dated by its findings — the place has no date of its own")
 

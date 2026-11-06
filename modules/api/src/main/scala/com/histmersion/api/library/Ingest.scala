@@ -4,16 +4,16 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 object Ingest:
-  type OriginalDispositionResult = OriginalDispositionResult.T
-  object OriginalDispositionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginalDispositionCitekey = OriginalDispositionCitekey.T
-  object OriginalDispositionCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OriginalDispositionStoredName = OriginalDispositionStoredName.T
-  object OriginalDispositionStoredName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispositionExtensionResult = DispositionExtensionResult.T
-  object DispositionExtensionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DispositionExtensionDisposition = DispositionExtensionDisposition.T
-  object DispositionExtensionDisposition extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Disposition = Disposition.T
+  object Disposition extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Extension = Extension.T
+  object Extension extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobAge = JobAge.T
+  object JobAge extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type JobStatus = JobStatus.T
+  object JobStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StoredName = StoredName.T
+  object StoredName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val CodeConflict = "conflict"
 
@@ -24,16 +24,16 @@ object Ingest:
   val KindIngest = com.histmersion.api.library.IngestJobKinds.Ingest.kind.value
   val KindReocr = com.histmersion.api.library.IngestJobKinds.Reocr.kind.value
 
-  def originalDisposition(citekey: com.histmersion.api.library.Ingest.OriginalDispositionCitekey, storedName: com.histmersion.api.library.Ingest.OriginalDispositionStoredName): com.histmersion.api.library.Ingest.OriginalDispositionResult =
+  def originalDisposition(citekey: com.histmersion.api.library.Citekey, storedName: com.histmersion.api.library.Ingest.StoredName): com.histmersion.api.library.Ingest.Disposition =
     val ext = (storedName).value.reverse.takeWhile(_ != '.').reverse
-    _root_.com.histmersion.api.library.Ingest.OriginalDispositionResult(s"""attachment; filename="$citekey.${if ext == (storedName).value then "bin" else ext}"""")
+    _root_.com.histmersion.api.library.Ingest.Disposition(s"""attachment; filename="$citekey.${if ext == (storedName).value then "bin" else ext}"""")
 
-  def dispositionExtension(disposition: com.histmersion.api.library.Ingest.DispositionExtensionDisposition): Option[com.histmersion.api.library.Ingest.DispositionExtensionResult] =
+  def dispositionExtension(disposition: com.histmersion.api.library.Ingest.Disposition): Option[com.histmersion.api.library.Ingest.Extension] =
     ("""filename="?([^";]+)"?""".r
       .findFirstMatchIn((disposition).value)
       .map(_.group(1).trim)
       .map(_.reverse.takeWhile(_ != '.').reverse.toLowerCase)
-      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))).map(refactorValue => _root_.com.histmersion.api.library.Ingest.DispositionExtensionResult(refactorValue))
+      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))).map(refactorValue => _root_.com.histmersion.api.library.Ingest.Extension(refactorValue))
 
   final case class Accepted(jobId: com.histmersion.api.jobs.JobInfo.Id, citekey: com.histmersion.api.library.Citekey, status: Accepted.Status, sha256: Option[com.histmersion.api.Sha256] = None)
       derives KindlingsCodecAsObject,

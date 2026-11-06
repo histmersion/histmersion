@@ -10,20 +10,8 @@ import com.histmersion.api.media.{AssetInfo, AssetsMarkdown}
 import com.histmersion.api.given
 object IngestMarkdown:
 
-  type JobResult = JobResult.T
-  object JobResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsResult = JobsResult.T
-  object JobsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsStatus = JobsStatus.T
-  object JobsStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JobsOlder = JobsOlder.T
-  object JobsOlder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AssetsResult = AssetsResult.T
-  object AssetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AssetsCitekey = AssetsCitekey.T
-  object AssetsCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def job(j: JobInfo): com.histmersion.api.library.IngestMarkdown.JobResult =
+  def job(j: JobInfo): com.histmersion.api.Markdown.Text =
     val lines = List(
       Some(s"- **status:** ${j.status}"),
       j.citekey.map(_.value.toString).map(c => s"- **citekey:** $c"),
@@ -42,7 +30,7 @@ object IngestMarkdown:
       j.detail
         .filter((SkippedPeriod.SkippedCount.of(_)).value > 0)
         .map(d =>
-          s"- **skipped:** ${Plural.count(SkippedPeriod.SkippedCount.of(d), _root_.com.histmersion.api.Plural.NounSingular("period definition"))} (not imported)" +
+          s"- **skipped:** ${Plural.count(SkippedPeriod.SkippedCount.of(d), _root_.com.histmersion.api.Plural.Noun.Singular("period definition"))} (not imported)" +
             (if SkippedPeriod.Skipped.of(d).isEmpty then ""
              else
                "\n" + PeriodsMarkdown
@@ -53,26 +41,26 @@ object IngestMarkdown:
         ),
       Some(s"- **updated:** ${j.updatedAt}")
     ).flatten
-    _root_.com.histmersion.api.library.IngestMarkdown.JobResult(s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}")
+    _root_.com.histmersion.api.Markdown.Text(s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}")
 
   def jobs(
       js: Vector[JobInfo],
       page: Paging.Page = Paging.Page.empty,
-      status: Option[com.histmersion.api.library.IngestMarkdown.JobsStatus] = None,
-      older: Option[com.histmersion.api.library.IngestMarkdown.JobsOlder] = None
-  ): com.histmersion.api.library.IngestMarkdown.JobsResult =
-    if js.isEmpty then _root_.com.histmersion.api.library.IngestMarkdown.JobsResult(status.fold("_No jobs._")(s => s"_No $s jobs._"))
+      status: Option[com.histmersion.api.library.Ingest.JobStatus] = None,
+      older: Option[com.histmersion.api.library.Ingest.JobAge] = None
+  ): com.histmersion.api.Markdown.Text =
+    if js.isEmpty then _root_.com.histmersion.api.Markdown.Text(status.fold("_No jobs._")(s => s"_No $s jobs._"))
     else
       val rows = js.map(j =>
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |"
       )
-      val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetLineLabel("By kind"), page.facet(_root_.com.histmersion.api.Paging.Page.FacetName("kind")))
-      (List(s"### ${Paging.heading(_root_.com.histmersion.api.Paging.HeadingShown(js.size), page.total, _root_.com.histmersion.api.Paging.HeadingSingular("job"), qualifier = status)}", "") ++
+      val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetName("By kind"), page.facet(_root_.com.histmersion.api.Paging.Page.Facet.Name("kind")))
+      (List(s"### ${Paging.heading(_root_.com.histmersion.api.Paging.ShownCount(js.size), page.total, _root_.com.histmersion.api.Plural.Noun.Singular("job"), qualifier = status)}", "") ++
         Option.when(kinds.nonEmpty)(List(kinds, "")).toList.flatten ++
         List("| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o =>
           List("", o)
         ))
         .mkString("\n")
 
-  def assets(citekey: com.histmersion.api.library.IngestMarkdown.AssetsCitekey, as: Vector[AssetInfo]): com.histmersion.api.library.IngestMarkdown.AssetsResult = AssetsMarkdown.assets(citekey, as)
+  def assets(citekey: com.histmersion.api.library.Citekey, as: Vector[AssetInfo]): com.histmersion.api.Markdown.Text = AssetsMarkdown.assets(citekey, as)
