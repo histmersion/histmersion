@@ -7,21 +7,21 @@ package com.histmersion.plugin
 class SpiAdditionsSuite extends munit.FunSuite:
 
   private object Bodies extends Plugin.Http:
-    def get(url: String, headers: Map[String, String]) =
-      if url.endsWith("/missing") then Left(s"$url: HTTP 404") else Right(s"body of $url".getBytes("UTF-8"))
+    def get(url: _root_.com.histmersion.plugin.Plugin.Http.GetUrl, headers: Map[_root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1, _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2]): Either[_root_.com.histmersion.plugin.Plugin.Http.GetResultPart1, _root_.com.histmersion.plugin.Plugin.HttpResponse.Body] =
+      if (url).value.endsWith("/missing") then Left(_root_.com.histmersion.plugin.Plugin.Http.GetResultPart1(s"$url: HTTP 404")) else Right(_root_.com.histmersion.plugin.Plugin.HttpResponse.Body(s"body of $url".getBytes("UTF-8")))
 
   test("Plugin.Http.fetch from a host that has only bodies: status 200, no headers, or the same Left"):
     val r = Bodies.fetch(_root_.com.histmersion.plugin.Plugin.Http.GetUrl("https://x.example/a")).fold(e => fail((e).value), identity)
     assertEquals(
-      (r.status, r.headers, String(r.body, "UTF-8")),
+      ({ val refactorTuple7 = (r.status, r.headers, String((r.body).value, "UTF-8")); ((refactorTuple7._1).value, (refactorTuple7._2).iterator.map { case (refactorKey, refactorItem) => ((refactorKey).value, (refactorItem).value) }.toMap, refactorTuple7._3) }: (Int, Map[String, String], String)),
       (200, Map.empty[String, String], "body of https://x.example/a")
     )
     assertEquals((((Bodies.fetch(_root_.com.histmersion.plugin.Plugin.Http.GetUrl("https://x.example/missing")).map(_.status)).left.map(refactorError => (refactorError).value)).map(refactorValue => (refactorValue).value): Either[String, Int]), Left("https://x.example/missing: HTTP 404"))
 
   test("a response's header is found in any case"):
-    val r = Plugin.HttpResponse(_root_.com.histmersion.plugin.Plugin.HttpResponse.Status(429), Map({ val refactorTuple = "x-ratelimit-remaining" -> "0"; (_root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey(refactorTuple._1), _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue(refactorTuple._2)) }), Array.emptyByteArray)
-    assertEquals(r.header("X-RateLimit-Remaining"), Some("0"))
-    assertEquals(r.header("Retry-After"), None)
+    val r = Plugin.HttpResponse(_root_.com.histmersion.plugin.Plugin.HttpResponse.Status(429), Map({ val refactorTuple = "x-ratelimit-remaining" -> "0"; (_root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey(refactorTuple._1), _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue(refactorTuple._2)) }), _root_.com.histmersion.plugin.Plugin.HttpResponse.Body(Array.emptyByteArray))
+    assertEquals(((r.header(_root_.com.histmersion.plugin.Plugin.HttpResponse.HeaderName("X-RateLimit-Remaining"))).map(refactorValue7 => (refactorValue7).value): Option[String]), Some("0"))
+    assertEquals(r.header(_root_.com.histmersion.plugin.Plugin.HttpResponse.HeaderName("Retry-After")), None)
 
   test("the unlimited quota lets every call go and keeps nothing"):
     val q = UpstreamQuota.Unlimited
@@ -33,9 +33,9 @@ class SpiAdditionsSuite extends munit.FunSuite:
   /** A context as a plugin of SPI 2's first release wrote it: no quota of its own. */
   private object EarlyContext extends Plugin.Context:
     def http = Bodies
-    def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
-    def env(name: String) = None
-    def secret(s: Secret) = Left(_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1("none"))
+    def log = new Plugin.Log { def info(m: _root_.com.histmersion.plugin.Plugin.Log.InfoMessage): Unit = (); def warn(m: _root_.com.histmersion.plugin.Plugin.Log.WarnMessage): Unit = () }
+    def env(name: _root_.com.histmersion.plugin.Plugin.Context.EnvName): _root_.scala.Option[_root_.com.histmersion.plugin.Plugin.Context.EnvResult] = None
+    def secret(s: Secret): Either[_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1, _root_.com.histmersion.plugin.Plugin.Context.SecretResultPart2] = Left(_root_.com.histmersion.plugin.Plugin.Context.SecretResultPart1("none"))
     def secretVaults = Registry.refusing(_root_.com.histmersion.plugin.Registry.RefusingWhy("no vaults"))
 
   test("a context written before budgets existed lends the unlimited quota for any upstream"):
@@ -44,18 +44,18 @@ class SpiAdditionsSuite extends munit.FunSuite:
 
   test("a fetch context written before peers were told says no plugin is registered"):
     val ctx = new Fetch.Context:
-      def memo[A](key: String)(compute: => A): A = compute
-      val log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
+      def memo[A](key: _root_.com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A = compute
+      val log = new Plugin.Log { def info(m: _root_.com.histmersion.plugin.Plugin.Log.InfoMessage): Unit = (); def warn(m: _root_.com.histmersion.plugin.Plugin.Log.WarnMessage): Unit = () }
     assert(!(ctx.registered(_root_.com.histmersion.plugin.Fetch.Context.RegisteredPluginId("oa-unpaywall"))).value)
 
   /** A catalogue as one written before re-reading existed: it re-reads nothing, and its parts stay read. */
   private object Floods extends EventCatalogue:
-    def title = _root_.com.histmersion.plugin.EventCatalogue.TitleResult("Floods")
+    def title: _root_.com.histmersion.plugin.EventCatalogue.TitleResult = _root_.com.histmersion.plugin.EventCatalogue.TitleResult("Floods")
     def licence = Licence("CC0-1.0")
-    def citation = _root_.com.histmersion.plugin.EventCatalogue.CitationResult("Floods")
-    def home = _root_.com.histmersion.plugin.EventCatalogue.HomeResult("https://floods.example")
-    def parts(query: CatalogueQuery) = List(_root_.com.histmersion.plugin.EventCatalogue.PartsResult("all"))
-    def read(part: String, query: CatalogueQuery, http: Plugin.Http) = Right(CataloguePage(Nil))
+    def citation: _root_.com.histmersion.plugin.EventCatalogue.CitationResult = _root_.com.histmersion.plugin.EventCatalogue.CitationResult("Floods")
+    def home: _root_.com.histmersion.plugin.EventCatalogue.HomeResult = _root_.com.histmersion.plugin.EventCatalogue.HomeResult("https://floods.example")
+    def parts(query: CatalogueQuery): List[_root_.com.histmersion.plugin.EventCatalogue.PartsResult] = List(_root_.com.histmersion.plugin.EventCatalogue.PartsResult("all"))
+    def read(part: _root_.com.histmersion.plugin.EventCatalogue.ReadPart, query: CatalogueQuery, http: Plugin.Http): Either[_root_.com.histmersion.plugin.EventCatalogue.ReadResultPart1, CataloguePage] = Right(CataloguePage(Nil))
 
   test("a catalogue re-reads nothing by default, and a part read once stays read"):
     val stored = CatalogueEvent(_root_.com.histmersion.plugin.CatalogueEvent.Id("f1"), _root_.com.histmersion.plugin.CatalogueEvent.Url("https://floods.example/f1"), _root_.com.histmersion.plugin.CatalogueEvent.Label("Flood"), _root_.com.histmersion.plugin.CatalogueEvent.Kind("flood"), Some(Year(-500)), Some(Year(-500)))
@@ -70,19 +70,19 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val early = new AiProvider:
       def title = _root_.com.histmersion.plugin.AiProvider.TitleResult("Early")
       def turn(request: AiTurn.Request, http: AiHttp) = Left(AiFailure.Error(_root_.com.histmersion.plugin.AiFailure.Error.Message("none")))
-    assertEquals(early.capabilities, AiCapabilities(tools = true, structuredOutput = false))
+    assertEquals(early.capabilities, AiCapabilities(tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true), structuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(false)))
 
   test("the members a provider or host compiled before them used still exist, with their old shapes"):
     val longs = Array.fill(4)(classOf[Long])
     assertEquals(new AiUsage(1, 2, 3, 4), AiUsage(_root_.com.histmersion.plugin.AiUsage.Input((1).toLong), _root_.com.histmersion.plugin.AiUsage.Output((2).toLong), _root_.com.histmersion.plugin.AiUsage.CacheRead((3).toLong), _root_.com.histmersion.plugin.AiUsage.CacheWrite((4).toLong), _root_.com.histmersion.plugin.AiUsage.Reasoning((0).toLong)))
-    assertEquals(AiUsage(1, 2, 3, 4).reasoning, 0L)
+    assertEquals(((AiUsage(_root_.com.histmersion.plugin.AiUsage.Input((1).toLong), _root_.com.histmersion.plugin.AiUsage.Output((2).toLong), _root_.com.histmersion.plugin.AiUsage.CacheRead((3).toLong), _root_.com.histmersion.plugin.AiUsage.CacheWrite((4).toLong)).reasoning).value: Long), 0L)
     assert(classOf[AiUsage].getConstructor(longs*) != null)
     assert(AiUsage.getClass.getMethod("apply", longs*) != null)
     val bools = Array.fill(2)(classOf[Boolean])
     assertEquals(new AiCapabilities(false, true), AiCapabilities(_root_.com.histmersion.plugin.AiCapabilities.Tools(false), _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(true), _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(false), _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(false)))
     assert(classOf[AiCapabilities].getConstructor(bools*) != null)
     assert(AiCapabilities.getClass.getMethod("apply", bools*) != null)
-    val old = AiTurn.Request("m", "s", Nil, Nil, Some("{}"), 10, 1, 2)
+    val old = AiTurn.Request(_root_.com.histmersion.plugin.AiTurn.Request.Model("m"), _root_.com.histmersion.plugin.AiTurn.Request.System("s"), Nil, Nil, (Some("{}")).map(refactorValue4 => _root_.com.histmersion.plugin.AiTurn.Request.AnswerSchema(refactorValue4)), _root_.com.histmersion.plugin.AiTurn.Request.MaxTokens(10), _root_.com.histmersion.plugin.AiTurn.Request.Iteration(1), _root_.com.histmersion.plugin.AiTurn.Request.MaxIterations(2))
     assertEquals((old.answerSchemaRendered, old.answerDescription), (None, None))
     assertEquals(new AiTurn.Request("m", "s", Nil, Nil, Some("{}"), 10, 1, 2), old)
     val request = Array[Class[?]](
@@ -105,31 +105,31 @@ class SpiAdditionsSuite extends munit.FunSuite:
     val title = _root_.com.histmersion.plugin.MediaCollection.TitleResult("Portal objects")
     val role = _root_.com.histmersion.plugin.MediaItem.Role(MediaCollection.Object)
     def search(place: MediaPlace, http: Plugin.Http) =
-      if place.label == "Nowhere" then Left(_root_.com.histmersion.plugin.MediaCollection.SearchResultPart1("offline"))
+      if place.label == _root_.com.histmersion.plugin.MediaPlace.Label("Nowhere") then Left(_root_.com.histmersion.plugin.MediaCollection.SearchResultPart1("offline"))
       else
         Right(
           List(
-            Right(MediaItem(_root_.com.histmersion.plugin.MediaItem.Key(s"${place.id}-1"), place.label, _root_.com.histmersion.plugin.MediaItem.PageUrl("https://portal.example/1"), None, Left(_root_.com.histmersion.plugin.MediaItem.RightsPart1("closed")))),
+            Right(MediaItem(_root_.com.histmersion.plugin.MediaItem.Key(s"${place.id}-1"), _root_.com.histmersion.plugin.MediaItem.Title((place.label).value), _root_.com.histmersion.plugin.MediaItem.PageUrl("https://portal.example/1"), None, Left(_root_.com.histmersion.plugin.MediaItem.RightsPart1("closed")))),
             Left(_root_.com.histmersion.plugin.MediaCollection.SearchResultPart2Part1("one record unreadable"))
           )
         )
 
   test("an item built as SPI 2's first release built it has no role of its own and no rendition"):
     val rights = Left("not open access")
-    val applied = MediaItem("k", "t", "https://p", None, rights, None, None, Nil, None, Nil, None)
+    val applied = MediaItem(_root_.com.histmersion.plugin.MediaItem.Key("k"), _root_.com.histmersion.plugin.MediaItem.Title("t"), _root_.com.histmersion.plugin.MediaItem.PageUrl("https://p"), None, (rights).left.map(refactorError2 => _root_.com.histmersion.plugin.MediaItem.RightsPart1(refactorError2)), None, None, Nil, None, Nil, None)
     val constructed = new MediaItem("k", "t", "https://p", None, rights, None, None, Nil, None, Nil, Some("withheld"))
     assertEquals((applied.role, applied.rendition), (None, None))
-    assertEquals((constructed.role, constructed.rendition, constructed.withheld), (None, None, Some("withheld")))
-    assertEquals(applied, MediaItem(_root_.com.histmersion.plugin.MediaItem.Key("k"), _root_.com.histmersion.plugin.MediaItem.Title("t"), _root_.com.histmersion.plugin.MediaItem.PageUrl("https://p"), None, rights))
+    assertEquals(({ val refactorTuple6 = (constructed.role, constructed.rendition, constructed.withheld); ((refactorTuple6._1).map(refactorValue5 => (refactorValue5).value), refactorTuple6._2, (refactorTuple6._3).map(refactorValue6 => (refactorValue6).value)) }: (Option[String], Option[com.histmersion.plugin.MediaRendition], Option[String])), (None, None, Some("withheld")))
+    assertEquals(applied, MediaItem(_root_.com.histmersion.plugin.MediaItem.Key("k"), _root_.com.histmersion.plugin.MediaItem.Title("t"), _root_.com.histmersion.plugin.MediaItem.PageUrl("https://p"), None, (rights).left.map(refactorError3 => _root_.com.histmersion.plugin.MediaItem.RightsPart1(refactorError3))))
 
   test("a place described as SPI 2's first release described it carries no gazetteer ids"):
-    val applied = MediaPlace("p", "Mycenae", None, None, None, None)
+    val applied = MediaPlace(_root_.com.histmersion.plugin.MediaPlace.Id("p"), _root_.com.histmersion.plugin.MediaPlace.Label("Mycenae"), None, None, None, None)
     val constructed = new MediaPlace("p", "Mycenae", None, None, None, None)
     assertEquals((applied.ids, constructed.ids), (Nil, Nil))
     assertEquals(applied, MediaPlace(_root_.com.histmersion.plugin.MediaPlace.Id("p"), _root_.com.histmersion.plugin.MediaPlace.Label("Mycenae")))
 
   test("a collection's new members by default: its role alone, places, no events, always asked, refusals final"):
-    assertEquals(Portal.roles, Set(MediaCollection.Object))
+    assertEquals(((Portal.roles).map(refactorValue8 => (refactorValue8).value): Set[String]), Set(MediaCollection.Object))
     assertEquals(Portal.asks, Set(MediaTarget.Places))
     assertEquals(Portal.searchEvent(MediaEvent(_root_.com.histmersion.plugin.MediaEvent.Id("e"), _root_.com.histmersion.plugin.MediaEvent.Label("Fall of X")), Bodies), Right(Nil))
     assertEquals(Portal.check, Right(()))
@@ -165,12 +165,12 @@ class SpiAdditionsSuite extends munit.FunSuite:
       val role = _root_.com.histmersion.plugin.MediaItem.Role(MediaCollection.Map)
       def search(place: MediaPlace, http: Plugin.Http) = Right(Nil)
       override def complete(item: MediaItem, http: Plugin.Http) =
-        if item.key == "k1" then Left(_root_.com.histmersion.plugin.MediaCollection.CompleteResultPart1("gone")) else Right(item)
+        if item.key == _root_.com.histmersion.plugin.MediaItem.Key("k1") then Left(_root_.com.histmersion.plugin.MediaCollection.CompleteResultPart1("gone")) else Right(item)
     assertEquals(failing.completeAll(items, Bodies), MediaCompleted(Map({ val refactorTuple5 = "k2" -> items(1); (_root_.com.histmersion.plugin.MediaItem.Key(refactorTuple5._1), refactorTuple5._2) }), List(_root_.com.histmersion.plugin.MediaCompleted.Failed("k1: gone"))))
 
   test("the roles a collection's pictures may play are the ones the host stores"):
     assertEquals(
-      MediaCollection.Roles,
+      ((MediaCollection.Roles).map(refactorValue9 => (refactorValue9).value): Set[String]),
       Set("object", "map", "image", "locator-map", "plan", "aerial-view", "route-map", "depiction")
     )
 

@@ -10,3 +10,17 @@ object Comparisons extends munit.Assertions:
   def mismatch(): Unit = assertEquals(Values.Text("one"), "two")
   def leftError(value: Either[Values.Other, Int]): Unit = assertEquals(value, Left("bad"))
   def refinedTuple(value: Values.Text): Unit = assertEquals((value.value, Values.Count(7)), ("one", 7))
+  def texts(values: Set[Values.Text]): Unit = assertEquals(values, Set("one", "two"))
+  def empties(text: Values.Text): Unit = assertEquals((text, List.empty[Int], Option.empty[Int]), ("one", Nil, None))
+  def equalField(record: Record): Boolean = record.text == "one"
+  def unequalField(record: Record): Boolean = record.text != "one"
+  def emptyMap(text: Values.Text): Unit = assertEquals((text, Map.empty[Values.Text, Values.Text]), ("one", Map.empty))
+  def nonemptyMap(text: Values.Text): Unit = assertEquals((text, Map(Values.Text("key") -> Values.Text("one"))), ("one", Map.empty))
+  def multiline(): Unit =
+    assertEquals(
+      Record(
+        text = Values.Text("one"),
+        count = Values.Count(7)
+      ).text,
+      "one"
+    )

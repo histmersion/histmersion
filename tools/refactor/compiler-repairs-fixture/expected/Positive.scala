@@ -24,7 +24,7 @@ object Positive:
   def mixed(value: (String, Int)): (Values.Text, Int) = { val refactorTuple = value; (_root_.compilerfixture.Values.Text(refactorTuple._1), refactorTuple._2) }
   def adapted(factory: () => Values.Text => Int): String => Int = { val refactorFunction = factory(); (refactorValue4) => refactorFunction(_root_.compilerfixture.Values.Text(refactorValue4)) }
   def path(text: Values.Text): java.nio.file.Path = java.nio.file.Path.of((text).value)
-  def same(text: Values.Text): Boolean = "one" == (text).value
+  def same(text: Values.Text): Boolean = _root_.compilerfixture.Values.Text("one") == text
   def attempted(raw: String): Option[Values.Text] = (scala.util.Try(Some(raw)).toOption.flatten[_root_.java.lang.String]).map(refactorValue5 => _root_.compilerfixture.Values.Text(refactorValue5))
   def paths(texts: List[Values.Text]): List[java.nio.file.Path] = texts.map((refactorValue6 => java.nio.file.Path.of(refactorValue6.value)))
   def failure: Either[Values.Other, Int] = scala.util.Try(throw new IllegalStateException()).toEither.left.map(e => _root_.compilerfixture.Values.Other(Option(e.getMessage).getOrElse(e.getClass.getSimpleName)))

@@ -1,0 +1,287 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35873 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / maxErrors
+[info] The new value will be used by Compile / compile / compileOptions, Compile / compile / compilerReporter and 237 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 8 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-api/test-classes ...
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/AiProviderSpiSuite.scala:36:17 
+[error] 36 |      def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
+[error]    |                 ^
+[error]    |object creation impossible, since def get
+[error]    |  (url: com.histmersion.plugin.Plugin.Http.GetUrl, headers:
+[error]    |    Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1,
+[error]    |      com.histmersion.plugin.Plugin.Http.GetHeadersPart2]
+[error]    |  ):
+[error]    |    Either[com.histmersion.plugin.Plugin.Http.GetResultPart1,
+[error]    |      com.histmersion.plugin.Plugin.Http.GetResultPart2] in trait Http in object Plugin is not defined 
+[error]    |(The class implements a member with a different type: def get(url: String, headers: Map[String, String]): Left[String, Nothing] in anonymous class Object with com.histmersion.plugin.Plugin.Http {...})
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/AiProviderSpiSuite.scala:37:16 
+[error] 37 |      def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
+[error]    |                ^
+[error]    |object creation impossible, since it has 2 unimplemented members.
+[error]    |
+[error]    |Members declared in com.histmersion.plugin.Plugin$.Log:
+[error]    |- def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit
+[error]    |- def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/AiProviderSpiSuite.scala:35:14 
+[error] 35 |    val ctx = new Plugin.Context:
+[error]    |              ^
+[error]    |object creation impossible, since def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin is not defined 
+[error]    |(Note that
+[error]    | parameter com.histmersion.plugin.Plugin.Context.EnvName in def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin does not match
+[error]    | parameter String in def env(name: String): None.type in anonymous class Object with com.histmersion.plugin.Plugin.Context {...}
+[error]    | )
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/GazetteerSpiSuite.scala:10:15 
+[error] 10 |    def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
+[error]    |               ^
+[error]    |object creation impossible, since def get
+[error]    |  (url: com.histmersion.plugin.Plugin.Http.GetUrl, headers:
+[error]    |    Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1,
+[error]    |      com.histmersion.plugin.Plugin.Http.GetHeadersPart2]
+[error]    |  ):
+[error]    |    Either[com.histmersion.plugin.Plugin.Http.GetResultPart1,
+[error]    |      com.histmersion.plugin.Plugin.Http.GetResultPart2] in trait Http in object Plugin is not defined 
+[error]    |(The class implements a member with a different type: def get(url: String, headers: Map[String, String]): Left[String, Nothing] in anonymous class Object with com.histmersion.plugin.Plugin.Http {...})
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/GazetteerSpiSuite.scala:11:14 
+[error] 11 |    def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
+[error]    |              ^
+[error]    |object creation impossible, since it has 2 unimplemented members.
+[error]    |
+[error]    |Members declared in com.histmersion.plugin.Plugin$.Log:
+[error]    |- def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit
+[error]    |- def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/GazetteerSpiSuite.scala:9:17 
+[error] 9 |  private object EarlyContext extends Plugin.Context:
+[error]   |                 ^^^^^^^^^^^^
+[error]   |object creation impossible, since def env
+[error]   |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]   |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin is not defined 
+[error]   |(Note that
+[error]   | parameter com.histmersion.plugin.Plugin.Context.EnvName in def env
+[error]   |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]   |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin does not match
+[error]   | parameter String in def env(name: String): None.type in object EarlyContext in class GazetteerSpiSuite
+[error]   | )
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/ProviderSpiSuite.scala:6:24 
+[error] 6 |  private val offline = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
+[error]   |                        ^
+[error]   |object creation impossible, since def get
+[error]   |  (url: com.histmersion.plugin.Plugin.Http.GetUrl, headers:
+[error]   |    Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1,
+[error]   |      com.histmersion.plugin.Plugin.Http.GetHeadersPart2]
+[error]   |  ):
+[error]   |    Either[com.histmersion.plugin.Plugin.Http.GetResultPart1,
+[error]   |      com.histmersion.plugin.Plugin.Http.GetResultPart2] in trait Http in object Plugin is not defined 
+[error]   |(The class implements a member with a different type: def get(url: String, headers: Map[String, String]): Left[String, Nothing] in anonymous class Object with com.histmersion.plugin.Plugin.Http {...} in
+[error]   |  class ProviderSpiSuite)
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/ProviderSpiSuite.scala:14:17 
+[error] 14 |  private object Quakes extends EventCatalogue:
+[error]    |                 ^^^^^^
+[error]    |object creation impossible, since def read
+[error]    |  (part: com.histmersion.plugin.EventCatalogue.ReadPart,
+[error]    |    query: com.histmersion.plugin.CatalogueQuery, http:
+[error]    |    com.histmersion.plugin.Plugin.Http):
+[error]    |    Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1,
+[error]    |      com.histmersion.plugin.CataloguePage] in trait EventCatalogue in package com.histmersion.plugin is not defined 
+[error]    |(Note that
+[error]    | parameter com.histmersion.plugin.EventCatalogue.ReadPart in def read
+[error]    |  (part: com.histmersion.plugin.EventCatalogue.ReadPart,
+[error]    |    query: com.histmersion.plugin.CatalogueQuery, http:
+[error]    |    com.histmersion.plugin.Plugin.Http):
+[error]    |    Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1,
+[error]    |      com.histmersion.plugin.CataloguePage] in trait EventCatalogue in package com.histmersion.plugin does not match
+[error]    | parameter String in def read
+[error]    |  (part: String, q: com.histmersion.plugin.CatalogueQuery, http:
+[error]    |    com.histmersion.plugin.Plugin.Http):
+[error]    |    Right[Nothing, com.histmersion.plugin.CataloguePage] in object Quakes in class ProviderSpiSuite
+[error]    | )
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/ProviderSpiSuite.scala:42:16 
+[error] 42 |      def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
+[error]    |                ^
+[error]    |object creation impossible, since it has 2 unimplemented members.
+[error]    |
+[error]    |Members declared in com.histmersion.plugin.Plugin$.Log:
+[error]    |- def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit
+[error]    |- def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/ProviderSpiSuite.scala:40:14 
+[error] 40 |    val ctx = new Plugin.Context:
+[error]    |              ^
+[error]    |object creation impossible, since def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin is not defined 
+[error]    |(Note that
+[error]    | parameter com.histmersion.plugin.Plugin.Context.EnvName in def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin does not match
+[error]    | parameter String in def env(name: String): None.type in anonymous class Object with com.histmersion.plugin.Plugin.Context {...}
+[error]    | )
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceCollectionSpiSuite.scala:8:17 
+[error] 8 |  private object Bodies extends Plugin.Http:
+[error]   |                 ^^^^^^
+[error]   |object creation impossible, since def get
+[error]   |  (url: com.histmersion.plugin.Plugin.Http.GetUrl, headers:
+[error]   |    Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1,
+[error]   |      com.histmersion.plugin.Plugin.Http.GetHeadersPart2]
+[error]   |  ):
+[error]   |    Either[com.histmersion.plugin.Plugin.Http.GetResultPart1,
+[error]   |      com.histmersion.plugin.Plugin.Http.GetResultPart2] in trait Http in object Plugin is not defined 
+[error]   |(The class implements a member with a different type: def get(url: String, headers: Map[String, String]): Left[String, Nothing] in object Bodies in class SourceCollectionSpiSuite)
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceCollectionSpiSuite.scala:13:14 
+[error] 13 |    def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
+[error]    |              ^
+[error]    |object creation impossible, since it has 2 unimplemented members.
+[error]    |
+[error]    |Members declared in com.histmersion.plugin.Plugin$.Log:
+[error]    |- def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit
+[error]    |- def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceCollectionSpiSuite.scala:11:17 
+[error] 11 |  private object EarlyContext extends Plugin.Context:
+[error]    |                 ^^^^^^^^^^^^
+[error]    |object creation impossible, since def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin is not defined 
+[error]    |(Note that
+[error]    | parameter com.histmersion.plugin.Plugin.Context.EnvName in def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin does not match
+[error]    | parameter String in def env(name: String): None.type in object EarlyContext in class SourceCollectionSpiSuite
+[error]    | )
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceCollectionSpiSuite.scala:19:17 
+[error] 19 |  private object Shelf extends SourceCollection:
+[error]    |                 ^^^^^
+[error]    |object creation impossible, since def file
+[error]    |  (item: com.histmersion.plugin.CollectionItem, format:
+[error]    |    Option[com.histmersion.plugin.SourceCollection.FileFormat]):
+[error]    |    Either[com.histmersion.plugin.SourceCollection.FileResultPart1,
+[error]    |      com.histmersion.plugin.CollectionFile] in trait SourceCollection in package com.histmersion.plugin is not defined 
+[error]    |(Note that
+[error]    | parameter Option[com.histmersion.plugin.SourceCollection.FileFormat] in def file
+[error]    |  (item: com.histmersion.plugin.CollectionItem, format:
+[error]    |    Option[com.histmersion.plugin.SourceCollection.FileFormat]):
+[error]    |    Either[com.histmersion.plugin.SourceCollection.FileResultPart1,
+[error]    |      com.histmersion.plugin.CollectionFile] in trait SourceCollection in package com.histmersion.plugin does not match
+[error]    | parameter Option[String] in def file
+[error]    |  (item: com.histmersion.plugin.CollectionItem, format: Option[String]):
+[error]    |    Left[String, Nothing] in object Shelf in class SourceCollectionSpiSuite
+[error]    | their type parameters differ)
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceFetcherSuite.scala:29:17 
+[error] 29 |      def http = new Plugin.Http { def get(url: String, headers: Map[String, String]) = Left("offline") }
+[error]    |                 ^
+[error]    |object creation impossible, since def get
+[error]    |  (url: com.histmersion.plugin.Plugin.Http.GetUrl, headers:
+[error]    |    Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1,
+[error]    |      com.histmersion.plugin.Plugin.Http.GetHeadersPart2]
+[error]    |  ):
+[error]    |    Either[com.histmersion.plugin.Plugin.Http.GetResultPart1,
+[error]    |      com.histmersion.plugin.Plugin.Http.GetResultPart2] in trait Http in object Plugin is not defined 
+[error]    |(The class implements a member with a different type: def get(url: String, headers: Map[String, String]): Left[String, Nothing] in anonymous class Object with com.histmersion.plugin.Plugin.Http {...})
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceFetcherSuite.scala:30:16 
+[error] 30 |      def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
+[error]    |                ^
+[error]    |object creation impossible, since it has 2 unimplemented members.
+[error]    |
+[error]    |Members declared in com.histmersion.plugin.Plugin$.Log:
+[error]    |- def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit
+[error]    |- def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SourceFetcherSuite.scala:28:14 
+[error] 28 |    val ctx = new Plugin.Context:
+[error]    |              ^
+[error]    |object creation impossible, since def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin is not defined 
+[error]    |(Note that
+[error]    | parameter com.histmersion.plugin.Plugin.Context.EnvName in def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin does not match
+[error]    | parameter String in def env(name: String): None.type in anonymous class Object with com.histmersion.plugin.Plugin.Context {...}
+[error]    | )
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:9:17 
+[error] 9 |  private object Bodies extends Plugin.Http:
+[error]   |                 ^^^^^^
+[error]   |object creation impossible, since def get
+[error]   |  (url: com.histmersion.plugin.Plugin.Http.GetUrl, headers:
+[error]   |    Map[com.histmersion.plugin.Plugin.Http.GetHeadersPart1,
+[error]   |      com.histmersion.plugin.Plugin.Http.GetHeadersPart2]
+[error]   |  ):
+[error]   |    Either[com.histmersion.plugin.Plugin.Http.GetResultPart1,
+[error]   |      com.histmersion.plugin.Plugin.Http.GetResultPart2] in trait Http in object Plugin is not defined 
+[error]   |(The class implements a member with a different type: def get(url: String, headers: Map[String, String]): Either[String, Array[Byte]] in object Bodies in class SpiAdditionsSuite)
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:36:14 
+[error] 36 |    def log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
+[error]    |              ^
+[error]    |object creation impossible, since it has 2 unimplemented members.
+[error]    |
+[error]    |Members declared in com.histmersion.plugin.Plugin$.Log:
+[error]    |- def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit
+[error]    |- def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:34:17 
+[error] 34 |  private object EarlyContext extends Plugin.Context:
+[error]    |                 ^^^^^^^^^^^^
+[error]    |object creation impossible, since def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin is not defined 
+[error]    |(Note that
+[error]    | parameter com.histmersion.plugin.Plugin.Context.EnvName in def env
+[error]    |  (name: com.histmersion.plugin.Plugin.Context.EnvName):
+[error]    |    Option[com.histmersion.plugin.Plugin.Context.EnvResult] in trait Context in object Plugin does not match
+[error]    | parameter String in def env(name: String): None.type in object EarlyContext in class SpiAdditionsSuite
+[error]    | )
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:48:16 
+[error] 48 |      val log = new Plugin.Log { def info(m: String) = (); def warn(m: String) = () }
+[error]    |                ^
+[error]    |object creation impossible, since it has 2 unimplemented members.
+[error]    |
+[error]    |Members declared in com.histmersion.plugin.Plugin$.Log:
+[error]    |- def info(message: com.histmersion.plugin.Plugin.Log.InfoMessage): Unit
+[error]    |- def warn(message: com.histmersion.plugin.Plugin.Log.WarnMessage): Unit
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:46:14 
+[error] 46 |    val ctx = new Fetch.Context:
+[error]    |              ^
+[error]    |object creation impossible, since def memo[A](key: com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A in trait Context in object Fetch is not defined 
+[error]    |(Note that
+[error]    | parameter com.histmersion.plugin.Fetch.Context.MemoKey in def memo[A](key: com.histmersion.plugin.Fetch.Context.MemoKey)(compute: => A): A in trait Context in object Fetch does not match
+[error]    | parameter String in def memo[A](key: String)(compute: => A): A in anonymous class Object with com.histmersion.plugin.Fetch.Context {...}
+[error]    | )
+[error] -- [E231] Declaration Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-api/src/test/scala/com/histmersion/plugin/SpiAdditionsSuite.scala:52:17 
+[error] 52 |  private object Floods extends EventCatalogue:
+[error]    |                 ^^^^^^
+[error]    |object creation impossible, since def read
+[error]    |  (part: com.histmersion.plugin.EventCatalogue.ReadPart,
+[error]    |    query: com.histmersion.plugin.CatalogueQuery, http:
+[error]    |    com.histmersion.plugin.Plugin.Http):
+[error]    |    Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1,
+[error]    |      com.histmersion.plugin.CataloguePage] in trait EventCatalogue in package com.histmersion.plugin is not defined 
+[error]    |(Note that
+[error]    | parameter com.histmersion.plugin.EventCatalogue.ReadPart in def read
+[error]    |  (part: com.histmersion.plugin.EventCatalogue.ReadPart,
+[error]    |    query: com.histmersion.plugin.CatalogueQuery, http:
+[error]    |    com.histmersion.plugin.Plugin.Http):
+[error]    |    Either[com.histmersion.plugin.EventCatalogue.ReadResultPart1,
+[error]    |      com.histmersion.plugin.CataloguePage] in trait EventCatalogue in package com.histmersion.plugin does not match
+[error]    | parameter String in def read
+[error]    |  (part: String, query: com.histmersion.plugin.CatalogueQuery, http:
+[error]    |    com.histmersion.plugin.Plugin.Http):
+[error]    |    Right[Nothing, com.histmersion.plugin.CataloguePage] in object Floods in class SpiAdditionsSuite
+[error]    | )
+[error] 23 errors found
+[error] (pluginApi / Test / compileIncremental) Compilation failed
+[error] elapsed time: 4 s, cache 95%, 20 disk cache hits, 1 onsite task
