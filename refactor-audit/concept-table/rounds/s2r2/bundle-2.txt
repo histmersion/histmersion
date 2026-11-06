@@ -1,0 +1,173 @@
+## modules/files/src/main/scala/com/histmersion/domain/library/sources/SourceNote.scala
+38:8 [E007] 38 |        "citekey" -> s.citekey.value, / |Found:    (String, / |  io.github.iltotore.iron.IronType[String, / |    io.github.iltotore.iron.constraint.any.Pure] / |) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+39:8 [E007] 39 |        "doi" -> s.doi.map(_.value).orNull, / |Found:    (String, / |  io.github.iltotore.iron.IronType[String, / |    io.github.iltotore.iron.constraint.any.Pure] / | | Null) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+40:8 [E007] 40 |        "title" -> s.title.value, / |Found:    (String, / |  io.github.iltotore.iron.IronType[String, / |    io.github.iltotore.iron.constraint.any.Pure] / |) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+41:8 [E007] 41 |        "authors" -> s.authors.map(_.value).asJava, / |Found:    (String, / |  java.util.List[ / |    io.github.iltotore.iron.IronType[String, / |      io.github.iltotore.iron.constraint.any.Pure] / |  ]
+42:8 [E007] 42 |        "year" -> s.year.map(_.value.toInt).map(Int.box).orNull, / |Found:    (String, Integer) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+43:8 [E007] 43 |        "venue" -> s.venue.map(_.value).orNull, / |Found:    (String, / |  io.github.iltotore.iron.IronType[String, / |    io.github.iltotore.iron.constraint.any.Pure] / | | Null) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+44:8 [E007] 44 |        "source" -> s.provenance.orNull, / |Found:    (String, com.histmersion.api.library.Source.Provenance | Null) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+45:8 [E007] 45 |        "calibre_id" -> s.calibreId.orNull, / |Found:    (String, com.histmersion.api.library.Source.CalibreId | Null) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+46:8 [E007] 46 |        "status" -> s.status.toString.toLowerCase, / |Found:    (String, String) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+48:8 [E007] 48 |        "superseded_by" -> s.edges.find(_.kind == Edge.Kind.SupersededBy).map(_.dst.value).orNull, / |Found:    (String, / |  io.github.iltotore.iron.IronType[String, / |    io.github.iltotore.iron.constraint.any.Pure] / | | Null) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+49:8 [E007] 49 |        "topics" -> s.topics.asJava, / |Found:    (String, java.util.List[com.histmersion.api.library.Source.Topics.T]) / |Required: (com.histmersion.util².data.mirror.Frontmatter.FieldsPart1, Any) / |where:    util  is a package in package java / |          util² is a package in package com.histmersion
+50:8 [E007] 50 |        "regions" -> s.regions.asJava, / |Found:    (String, java.util.List[com.histmersion.api.library.Source.Regions.T]) / |Required: (com.histmersion.util².data.mirror.Frontmatter.FieldsPart1, Any) / |where:    util  is a package in package java / |          util² is a package in package com.histmersion
+51:8 [E007] 51 |        "tags" -> s.tags.asJava, / |Found:    (String, java.util.List[com.histmersion.api.library.Source.Tags.T]) / |Required: (com.histmersion.util².data.mirror.Frontmatter.FieldsPart1, Any) / |where:    util  is a package in package java / |          util² is a package in package com.histmersion
+52:8 [E007] 52 |        "period_start" -> s.period.map(p => Long.box(p.start.value)).orNull, / |Found:    (String, Long) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+53:8 [E007] 53 |        "period_end" -> s.period.map(p => Long.box(p.end.value)).orNull, / |Found:    (String, Long) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+54:8 [E007] 54 |        "cited_by_count" -> s.citedByCount.map(c => Int.box(c.value)).orNull, / |Found:    (String, Integer) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+55:8 [E007] 55 |        "influential_citations" -> s.influentialCitations.map(c => Int.box(c.value)).orNull, / |Found:    (String, Integer) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+56:8 [E007] 56 |        "summary" -> s.summary.orNull, / |Found:    (String, com.histmersion.api.library.Source.Summary | Null) / |Required: (com.histmersion.util.data.mirror.Frontmatter.FieldsPart1, Any)
+57:8 [E007] 57 |        "findings" -> s.findings.map(finding).asJava / |Found:    (String, java.util.List[java.util.Map[String, Any]]) / |Required: (com.histmersion.util².data.mirror.Frontmatter.FieldsPart1, Any) / |where:    util  is a package in package java / |          util² is a package in package com.histmersion
+
+## modules/config/src/main/scala/com/histmersion/config/edit/SettingValue.scala
+24:52 [E007] 24 |    case Text(t)   => ConfigValueFactory.fromAnyRef(t) / |Found:    (t : com.histmersion.config.edit.SettingValue.Text.Value) / |Required: Object / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than Object
+28:70 [E134] 28 |    case Flag(b)   => ConfigValueFactory.fromAnyRef(java.lang.Boolean.valueOf(b)) / |None of the overloaded alternatives of method valueOf in object Boolean with types / | (x$0: String): Boolean / | (x$0: Boolean²): Boolean / |match arguments ((b : com.histmersion.config.edit.SettingValue.Flag.Value)) / |where:    Boolean  is a class in package java.lang
+32:77 [E007] 32 |  def hocon: com.histmersion.config.edit.SettingValue.Hocon = toConfig.render(ConfigRenderOptions.concise) / |                Found:    String / |                Required: com.histmersion.config.edit.SettingValue.Hocon
+72:44 [E007] 72 |      case SettingKind.Text   => Right(Text(t)) / |Found:    (t : com.histmersion.config.edit.SettingValue.ParseRaw.T | String) / |Required: com.histmersion.config.edit.SettingValue.Text.Value
+73:40 [E007] 73 |      case SettingKind.Number => number(t).toRight(s"'${t.trim}' is not a number") / |Found:    (t : com.histmersion.config.edit.SettingValue.ParseRaw.T | String) / |Required: com.histmersion.config.edit.SettingValue.NumberT
+74:38 [E007] 74 |      case SettingKind.Flag   => flag(t).toRight(s"'${t.trim}' is not true or false") / |Found:    (t : com.histmersion.config.edit.SettingValue.ParseRaw.T | String) / |Required: com.histmersion.config.edit.SettingValue.FlagT
+75:39 [E007] 75 |      case SettingKind.Items  => items(t) / |Found:    (t : com.histmersion.config.edit.SettingValue.ParseRaw.T | String) / |Required: com.histmersion.config.edit.SettingValue.ItemsT
+76:38 [E007] 76 |      case SettingKind.Block  => Left("this is a block of settings: set one of the keys inside it") / |Found:    ("this is a block of settings: set one of the keys inside it" : String) / |Required: com.histmersion.config.edit.SettingValue.Problem.T
+79:15 [E007] 79 |          flag(t) / |Found:    (t : com.histmersion.config.edit.SettingValue.ParseRaw.T | String) / |Required: com.histmersion.config.edit.SettingValue.FlagT
+86:13 [E008] 86 |    Option(t.trim).filter(_.matches("-?[0-9]+(\\.[0-9]+)?([eE][-+]?[0-9]+)?")).map(s => Number(BigDecimal(s))) / |value trim is not a member of com.histmersion.config.edit.SettingValue.NumberT
+89:6 [E008] 89 |    t.trim.toLowerCase(java.util.Locale.ROOT) match / |value trim is not a member of com.histmersion.config.edit.SettingValue.FlagT
+90:39 [E007] 90 |      case s if Truthy(s) => Some(Flag(true)) / |           Found:    (true : Boolean) / |           Required: com.histmersion.config.edit.SettingValue.Flag.Value
+91:39 [E007] 91 |      case s if Falsy(s)  => Some(Flag(false)) / |           Found:    (false : Boolean) / |           Required: com.histmersion.config.edit.SettingValue.Flag.Value
+96:14 [E008] 96 |    val s = t.trim / |value trim is not a member of com.histmersion.config.edit.SettingValue.ItemsT
+101:54 [E007] 101 |          case l: ConfigList => fromConfig(l).toRight(s"'$s' holds something other than plain values") / |          Found:    String / |          Required: com.histmersion.config.edit.SettingValue.Problem.T
+102:37 [E007] 102 |          case _             => Left(s"'$s' is not a list") / |          Found:    String / |          Required: com.histmersion.config.edit.SettingValue.Problem.T
+103:44 [E007] 103 |      catch case e: ConfigException => Left(s"'$s' is not a list: ${e.getMessage.replaceFirst("^String: \\d+: ", "")}") / |          Found:    String / |          Required: com.histmersion.config.edit.SettingValue.Problem.T
+108:46 [E007] 108 |    case ConfigValueType.STRING  => Some(Text(v.unwrapped.toString)) / |         Found:    String / |         Required: com.histmersion.config.edit.SettingValue.Text.Value
+110:46 [E007] 110 |    case ConfigValueType.BOOLEAN => Some(Flag(v.unwrapped.asInstanceOf[java.lang.Boolean].booleanValue)) / |         Found:    Boolean / |         Required: com.histmersion.config.edit.SettingValue.Flag.Value
+
+## modules/config/src/main/scala/com/histmersion/config/edit/ConfigTextEdit.scala
+36:60 [E007] 36 |        case Nil          => Right(EditedText(endsLikeAFile(text, doc.render), changed.reverse, unchanged.reverse)) / |     Found:    (text : com.histmersion.config.edit.ConfigFileState.Text) / |     Required: String
+48:60 [E007] 48 |                inFileStyle(doc.render, doc.withValueText(k.hoconPath, want.hocon).render) / |              Found:    com.histmersion.config.edit.SettingKey.HoconPath / |              Required: String
+48:76 [E007] 48 |                inFileStyle(doc.render, doc.withValueText(k.hoconPath, want.hocon).render) / |                Found:    com.histmersion.config.edit.SettingValue.Hocon / |                Required: String
+53:62 [E007] 53 |              val next = withoutEmptyBlocks(doc.withoutPath(k.hoconPath), k) / |              Found:    com.histmersion.config.edit.SettingKey.HoconPath / |              Required: String
+57:50 [E007] 57 |      val doc = ConfigDocumentFactory.parseString(text) / |     Found:    (text : com.histmersion.config.edit.ConfigFileState.Text) / |     Required: String
+61:66 [E007] 61 |    catch case e: ConfigException => Left(SettingError.Unreadable(e.getMessage)) / |       Found:    String / |       Required: com.histmersion.config.edit.SettingError.Unreadable.Why
+103:79 [E007] 103 |            scala.util.Try(ConfigFactory.parseString(d.render).getObject(block.hoconPath).isEmpty).getOrElse(false) / |            Found:    com.histmersion.config.edit.SettingKey.HoconPath / |            Required: String
+104:57 [E007] 104 |          val pruned = if empty then d.withoutPath(block.hoconPath) else d / |            Found:    com.histmersion.config.edit.SettingKey.HoconPath / |            Required: String
+127:11 [E172] 127 |    }.toMap / |Cannot prove that ( / |  io.github.iltotore.iron.IronType[String, / |    com.histmersion.config.edit.SettingKeyRule], / |  Some[com.histmersion.config.edit.SettingValue] | None.type) <:< (com.histmersion.config.edit.ConfigTextEdit.IntendedResultPart1.T, V). / |where:    V is a type variable with constraint <: Option[com.histmersion.config.edit.SettingValue]
+140:60 [E007] 140 |        (written(parsed, key, here), intended.getOrElse(key.value, None)) match / |Found:    io.github.iltotore.iron.IronType[String, / |  com.histmersion.config.edit.SettingKeyRule] / |Required: com.histmersion.config.edit.ConfigTextEdit.VerifyIntendedPart1
+142:81 [E006] 142 |          case (Written.Elsewhere(f), _)   => Left(SettingError.FromInclude(key, f)) / |                                                          Not found: f
+143:69 [E006] 143 |          case (Written.Here(v), Some(w)) if SettingValue.fromConfig(v).exists(SettingValue.same(_, w)) => Right(()) / |                                                          Not found: v
+145:46 [E007] 145 |          case _ => Left(SettingError.Invalid(s"${key.relative} did not read back as it was written")) / |        Found:    String / |        Required: com.histmersion.config.edit.SettingError.Invalid.Why
+182:91 [E007] 182 |                  case o: ConfigObject if Try(o.keySet).isSuccess => down(o, rest, seen :+ word) / |   Found:    (word : com.histmersion.config.edit.SettingKey.Segment.T) / |   Required: String
+189:70 [E007] 189 |    Option(o.filename).orElse(Option(o.url).map(_.toString)).getOrElse(o.description) / |    Found:    String / |    Required: com.histmersion.config.edit.SettingsFile.Path
+
+## modules/config/src/main/scala/com/histmersion/config/edit/ReferenceDocs.scala
+17:33 [E007] 17 |      val indent = indentOf(lines(i)) / |               Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |               Required: String
+18:80 [E007] 18 |      val trailing = (i :: envLines(i, leaf)).flatMap(j => trailingComment(lines(j)).toList ++ continuations(j, indent)) / |    Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |    Required: com.histmersion.config.edit.ReferenceDocs.TrailingCommentL
+23:80 [E007] 23 |    envLines(line - 1, leaf).flatMap(j => EnvLine.findFirstMatchIn(content(lines(j))).map(_.group(2))).headOption / |            Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |            Required: com.histmersion.config.edit.ReferenceDocs.ContentL
+30:46 [E007] 30 |        EnvLine.findFirstMatchIn(content(lines(j))) match / |            Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |            Required: com.histmersion.config.edit.ReferenceDocs.ContentL
+31:26 [E006] 31 |          case Some(m) if m.group(1) == leaf => loop(j + 1, j :: acc) / |                          Not found: m
+32:39 [E007] 32 |          case _ if isCommentOnly(lines(j)) && commentColumn(lines(j)) > indentOf(lines(i)) + ContinuationIndent => / |      Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |      Required: com.histmersion.config.edit.ReferenceDocs.IsCommentOnlyL
+40:38 [E007] 40 |      if j < 0 || !isCommentOnly(lines(j)) || commentColumn(lines(j)) > indent + ContinuationIndent then acc / |      Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |      Required: com.histmersion.config.edit.ReferenceDocs.IsCommentOnlyL
+40:65 [E007] 40 |      if j < 0 || !isCommentOnly(lines(j)) || commentColumn(lines(j)) > indent + ContinuationIndent then acc / |      Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |      Required: com.histmersion.config.edit.ReferenceDocs.CommentColumnL
+41:40 [E007] 41 |      else loop(j - 1, commentText(lines(j)) :: acc) / |        Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |        Required: com.histmersion.config.edit.ReferenceDocs.CommentTextL
+47:48 [E007] 47 |      if j >= lines.size || !isCommentOnly(lines(j)) || commentColumn(lines(j)) <= indent + ContinuationIndent then / |      Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |      Required: com.histmersion.config.edit.ReferenceDocs.IsCommentOnlyL
+47:75 [E007] 47 |      if j >= lines.size || !isCommentOnly(lines(j)) || commentColumn(lines(j)) <= indent + ContinuationIndent then / |      Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |      Required: com.histmersion.config.edit.ReferenceDocs.CommentColumnL
+49:40 [E007] 49 |      else loop(j + 1, commentText(lines(j)) :: acc) / |        Found:    com.histmersion.config.edit.ReferenceDocs.Lines / |        Required: com.histmersion.config.edit.ReferenceDocs.CommentTextL
+65:106 [E008] 65 |  def apply(text: com.histmersion.config.edit.ReferenceDocs.Text): ReferenceDocs = new ReferenceDocs(text.split("\n", -1).toIndexedSeq) / |value split is not a member of com.histmersion.config.edit.ReferenceDocs.Text
+
+## modules/files/src/main/scala/com/histmersion/util/storage/SafePath.scala
+35:26 [E008] 35 |    val root = base.map(_.trim).filter(_.nonEmpty) / |value trim is not a member of com.histmersion.util.storage.SafePath.ConfineBase
+35:39 [E007] 35 |    val root = base.map(_.trim).filter(_.nonEmpty) / |Found:    (_$2 : Nothing) / |Required: ?{ nonEmpty: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ nonEmpty: Boolean }
+36:38 [E008] 36 |    val raw = Option(candidate).map(_.trim).getOrElse("") / |value trim is not a member of com.histmersion.util.storage.SafePath.ConfineCandidate.T
+37:29 [E007] 37 |    if raw.isEmpty then Left("no path given") / |               Found:    ("no path given" : String) / |               Required: com.histmersion.util.storage.SafePath.Problem.T
+42:24 [E051] 42 |          val b = Paths.get(dir).toAbsolutePath.normalize / |Ambiguous overload. The overloaded alternatives of method get in object Paths with types / | (x$0: java.net.URI): java.nio.file.Path / | (x$0: String, x$1: String*): java.nio.file.Path / |both match arguments ((dir : Nothing))
+47:20 [E007] 47 |          else Left(s"'$candidate' is outside the configured corpus directory ($dir)") / |               Found:    String / |               Required: com.histmersion.util.storage.SafePath.Problem.T
+51:15 [E008] 51 |    base.map(_.trim).filter(_.nonEmpty) match / |value trim is not a member of com.histmersion.util.storage.SafePath.WithinBase
+51:28 [E007] 51 |    base.map(_.trim).filter(_.nonEmpty) match / |Found:    (_$5 : Nothing) / |Required: ?{ nonEmpty: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ nonEmpty: Boolean }
+54:60 [E051] 54 |        candidate.toAbsolutePath.normalize.startsWith(Paths.get(dir).toAbsolutePath.normalize) / |Ambiguous overload. The overloaded alternatives of method get in object Paths with types / | (x$0: java.net.URI): java.nio.file.Path / | (x$0: String, x$1: String*): java.nio.file.Path / |both match arguments ((dir : Nothing))
+57:110 [E008] 57 |  def configured(base: Option[com.histmersion.util.storage.SafePath.ConfiguredBase]): Boolean = base.exists(_.trim.nonEmpty) / |value trim is not a member of com.histmersion.util.storage.SafePath.ConfiguredBase / sbt.util.CachedCompileFailure$$anon$1: Compilation failed / at sbt.util.CachedCompileFailure.toException(CachedCompileFailure.scala:23) / at sbt.util.ActionCache$.cache(ActionCache.scala:185) / at sbt.Defaults$.$init$$$anonfun$1(Defaults.scala:2377)
+
+## modules/upstreams/src/main/scala/com/histmersion/domain/library/acquisition/LandingSettings.scala
+23:29 [E007] 23 |      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((allowHosts).value)), / |Found:    List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] / |Required: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowHosts]
+24:260 [E007] 24 |      (LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHosts).value)) ++ LandingSettings.entries(_root_.com / |Found:    List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult.T] / |Required: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.DenyHosts]
+25:29 [E007] 25 |      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((academicHostWords).value)), / |Found:    List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] / |Required: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.AcademicHostWords / |  ]
+26:29 [E007] 26 |      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((generators).value)), / |Found:    List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] / |Required: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.Generators]
+27:29 [E007] 27 |      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyGenerators).value)), / |Found:    List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] / |Required: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.DenyGenerators]
+28:29 [E007] 28 |      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHostWords).value)), / |Found:    List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] / |Required: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.DenyHostWords]
+29:29 [E007] 29 |      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((oaPublisherHosts).value)) / |Found:    List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] / |Required: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.OaPublisherHosts]
+61:31 [E008] 61 |    Option(list).getOrElse("").split(",").toList.map(_.trim.toLowerCase).filter(_.nonEmpty) / |value split is not a member of com.histmersion.domain.library.acquisition.LandingSettings.EntriesList.T | / |  String, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/config/src/main/scala/com/histmersion/config/CodexConfig.scala
+36:44 [E008] 36 |  def leanBase: Boolean = !baseInstructions.trim.equalsIgnoreCase("builtin") / |value trim is not a member of com.histmersion.config.CodexConfig.BaseInstructions, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+24:53 [E007] 24 |    toolOutputTokens: CodexConfig.ToolOutputTokens = 0, / |           Found:    (0 : Int) / |           Required: com.histmersion.config.CodexConfig.ToolOutputTokens
+25:53 [E007] 25 |    baseInstructions: CodexConfig.BaseInstructions = "lean", / |           Found:    ("lean" : String) / |           Required: com.histmersion.config.CodexConfig.BaseInstructions
+27:53 [E007] 27 |    keepSessionsDays: CodexConfig.KeepSessionsDays = 14, / |           Found:    (14 : Int) / |           Required: com.histmersion.config.CodexConfig.KeepSessionsDays
+29:33 [E007] 29 |    vacuum: CodexConfig.Vacuum = true, / |                     Found:    (true : Boolean) / |                     Required: com.histmersion.config.CodexConfig.Vacuum
+31:59 [E007] 31 |    retentionEveryHours: CodexConfig.RetentionEveryHours = 24, / |        Found:    (24 : Int) / |        Required: com.histmersion.config.CodexConfig.RetentionEveryHours
+33:33 [E007] 33 |    sqlite: CodexConfig.Sqlite = "sqlite3" / |                     Found:    ("sqlite3" : String) / |                     Required: com.histmersion.config.CodexConfig.Sqlite
+
+## modules/upstreams/src/main/scala/com/histmersion/upstreams/openalex/OpenAlexCrossref.scala
+28:23 [E007] 28 |          cfg.openalex.url, / |Found:    (OpenAlexCrossref.this.cfg.openalex.url : / |  com.histmersion.domain.library.acquisition.Endpoint.Url) / |Required: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+60:23 [E007] 60 |          cfg.crossref.url, / |Found:    (OpenAlexCrossref.this.cfg.crossref.url : / |  com.histmersion.domain.library.acquisition.Endpoint.Url) / |Required: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+74:112 [E007] 74 |  def meta(doi: com.histmersion.plugin.Doi): Either[WorkLookup.Problem, WorkRef] = WorkLookup.meta(cfg, getJson(_), log)(doi) / |Found:    (_$4 : com.histmersion.domain.library.acquisition.WorkLookup.MetaJsonArg1) / |Required: String
+76:126 [E007] 76 |  private def crossrefWork(doi: com.histmersion.plugin.Doi): Either[WorkLookup.Problem, Json] = getJson(WorkLookup.crossrefUrl(cfg, doi)) / |Found:    com.histmersion.domain.library.acquisition.WorkLookup.CrossrefUrlResult / |Required: String
+88:34 [E007] 88 |    getJson(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.UrlPath(""), "select" -> "referenced_works", mailto)) / |Found:    com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult / |Required: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+114:34 [E007] 114 |    getJson(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.UrlPath(""), "select" -> WorkLookup.WorkFields.value, mailto)) / |Found:    com.histmersion.domain.library.acquisition.WorkLookup.WorkUrlResult / |Required: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+
+## modules/files/src/main/scala/com/histmersion/util/data/mirror/MirrorPlacement.scala
+20:32 [E007] 20 |    case InDirectory(d) => Some(d) / |Found:    (d : com.histmersion.util.data.mirror.MirrorPlacement.InDirectory.Name) / |Required: com.histmersion.util.data.mirror.MirrorPlacement.DirectoryResult.T
+21:32 [E007] 21 |    case Named(d)       => Some(d) / |Found:    (d : com.histmersion.util.data.mirror.MirrorPlacement.Named.Name) / |Required: com.histmersion.util.data.mirror.MirrorPlacement.DirectoryResult.T
+43:49 [E007] 43 |  val SourceFiles: MirrorPlacement = InDirectory(SourcesDirectory) / |Found:    (com.histmersion.util.data.mirror.MirrorPlacement.SourcesDirectory : String) / |Required: com.histmersion.util.data.mirror.MirrorPlacement.InDirectory.Name
+45:41 [E007] 45 |  val MetaFiles: MirrorPlacement = Named(MetaDirectory) / |Found:    (com.histmersion.util.data.mirror.MirrorPlacement.MetaDirectory : String) / |Required: com.histmersion.util.data.mirror.MirrorPlacement.Named.Name
+48:147 [E007] 48 |  def noteFile(id: com.histmersion.util.data.mirror.MirrorPlacement.NoteFileId): com.histmersion.util.data.mirror.MirrorPlacement.NoteFileResult = s"$id.md" / |Found:    String / |Required: com.histmersion.util.data.mirror.MirrorPlacement.NoteFileResult
+
+## modules/config/src/main/scala/com/histmersion/config/TlsConfig.scala
+17:13 [E008] 17 |      .map(_.trim) / |value trim is not a member of com.histmersion.config.TlsConfig.ExtraCaFile.T
+18:14 [E007] 18 |      .filter(_.nonEmpty) / |Found:    (_$2 : Nothing) / |Required: ?{ nonEmpty: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ nonEmpty: Boolean }
+19:19 [E007] 19 |      .map(p => if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p) / |Found:    (p : Nothing) / |Required: ?{ startsWith: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ startsWith: [applied to ("~") returning Boolean] }
+19:76 [E007] 19 |      .map(p => if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p) / |Found:    (p : Nothing) / |Required: ?{ drop: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ drop: [applied to (1) returning <?>] }
+22:36 [E008] 22 |  def custom: Boolean = systemTrust || extraCa.isDefined / |value || is not a member of com.histmersion.config.TlsConfig.SystemTrust
+
+## modules/config/src/main/scala/com/histmersion/config/edit/WriteOutcome.scala
+71:33 [E007] 71 |        .filter(v => env.hasPath(v)) / |         Found:    (v : com.histmersion.config.edit.SettingField.EnvVar) / |         Required: String
+83:59 [E007] 83 |      restart = fields.flatMap(f => f.restart.map(f.key -> _)), / |      Found:    (_$1 : com.histmersion.config.edit.SettingField.Restart) / |      Required: com.histmersion.config.edit.WriteOutcome.RestartPart2.T
+84:17 [E007] 84 |      warnings = notes ++ shadowed / |  Found:    List[com.histmersion.config.edit.WriteOutcome.Note | String] / |  Required: List[com.histmersion.config.edit.WriteOutcome.Warnings]
+66:68 [E007] 66 |      created: com.histmersion.config.edit.WriteOutcome.OfCreated = false / |            Found:    (false : Boolean) / |            Required: com.histmersion.config.edit.WriteOutcome.OfCreated
+
+## modules/config/src/main/scala/com/histmersion/config/AgentBudgetsConfig.scala
+11:62 [E007] 11 |    pipelineRunTokens: AgentBudgetsConfig.PipelineRunTokens = "", / |   Found:    ("" : String) / |   Required: com.histmersion.config.AgentBudgetsConfig.PipelineRunTokens
+12:58 [E007] 12 |    cacheReadWeight: AgentBudgetsConfig.CacheReadWeight = 1.0 / |     Found:    (1.0d : Double) / |     Required: com.histmersion.config.AgentBudgetsConfig.CacheReadWeight
+37:6 [E008] 37 |    s.split(",") / |value split is not a member of com.histmersion.config.AgentBudgetsConfig.PipelineRunTokens, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/config/src/main/scala/com/histmersion/config/PeriodsConfig.scala
+23:31 [E008] 23 |    Option(s).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct / |value split is not a member of com.histmersion.config.PeriodsConfig.PeriodoCollections.T
+23:54 [E007] 23 |    Option(s).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct / |Found:    (_$2 : Nothing) / |Required: ?{ trim: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ trim: B } / |where:    B is a type variable
+23:69 [E007] 23 |    Option(s).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct / |Found:    (_$3 : Nothing) / |Required: ?{ nonEmpty: ? } / |Note that implicit conversions were not tried because the result of an implicit conversion / |must be more specific than ?{ nonEmpty: Boolean }
+
+## modules/config/src/main/scala/com/histmersion/config/AppConfig.scala
+59:53 [E007] 59 |    loadWithUserFile(env, UserPaths.configFile(lookup(env))) / |          Found:    String => Option[String] / |          Required: com.histmersion.config.UserPaths.EnvVar => / |            Option[com.histmersion.config.UserPaths.ConfigFileEnvResult]
+129:89 [E007] 129 |    yield LoadedConfig(cfg, UserConfigFile(p, loaded = UserConfigFile.Loaded(true), keys.unknown), user, env, ConfigReload.settings(merged)) / |Found:    (keys.unknown : List[com.histmersion.config.ConfigLayers.Keys.Unknown]) / |Required: List[com.histmersion.config.UserConfigFile.UnknownKeys]
+
+## modules/config/src/main/scala/com/histmersion/config/PassageLimits.scala
+19:23 [E008] 19 |    requested.filter(_ > 0).getOrElse(limit).max(1).min(math.max(1, maxLimit)) / |   value > is not a member of com.histmersion.config.PassageLimits.Limit
+23:23 [E008] 23 |    requested.filter(_ >= 0).getOrElse(context).max(0).min(math.max(0, maxContext)) / |value >= is not a member of com.histmersion.config.PassageLimits.Context - did you mean _$2.!=? or perhaps _$2.==?
+
+## modules/config/src/main/scala/com/histmersion/config/edit/SecretRule.scala
+26:10 [E007] 26 |    Names(leaf) || leaf.endsWith("-api-key") || leaf.endsWith("-password") || leaf.endsWith("-token") / |          Found:    (leaf : com.histmersion.config.edit.SecretRule.Leaf) / |          Required: String
+30:24 [E007] 30 |    if !looksSecret(key.leaf) then NotSecret / |                Found:    com.histmersion.config.edit.SettingKey.Segment / |                Required: com.histmersion.config.edit.SecretRule.Leaf
+
+## modules/config/src/main/scala/com/histmersion/config/AgentManagersConfig.scala
+19:45 [E007] 19 |    dailyUsd: AgentManagersConfig.DailyUsd = 0 / |           Found:    (0 : Int) / |           Required: com.histmersion.config.AgentManagersConfig.DailyUsd
+
+## modules/config/src/main/scala/com/histmersion/config/CliPluginsConfig.scala
+11:82 [E008] 11 |  def repos: List[com.histmersion.config.CliPluginsConfig.MavenRepo] = mavenRepos.split(",").toList.map(_.trim).filter(_.nonEmpty) / |value split is not a member of com.histmersion.config.CliPluginsConfig.MavenRepos, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/config/src/main/scala/com/histmersion/config/EventsWikidataConfig.scala
+14:91 [E008] 14 |  def languageList: List[com.histmersion.config.EventsWikidataConfig.Language] = languages.split(",").map(_.trim).filter(_.nonEmpty).toList / |value split is not a member of com.histmersion.config.EventsWikidataConfig.Languages
+
+## modules/config/src/main/scala/com/histmersion/config/MediaPluginCollectionsConfig.scala
+13:187 [E007] 13 |  def licencesFor(collection: com.histmersion.config.MediaPluginCollectionsConfig.PerCollectionKey): com.histmersion.config.MediaPluginCollectionsConfig.Licences = pe / |Found:    com.histmersion.config.MediaPluginCollectionsConfig.PerCollectionValue | / |  com.histmersion.config.MediaPluginCollectionsConfig.Licences / |Required: com.histmersion.config.MediaPluginCollectionsConfig.Licences
+
+## modules/config/src/main/scala/com/histmersion/config/WatchManagerConfig.scala
+11:207 [E007] 11 |final case class WatchManagerConfig(maxRuns: WatchManagerConfig.MaxRuns, cron: WatchManagerConfig.Cron, autoIngestPerDay: WatchManagerConfig.AutoIngestPerDay, drainPe / |        Found:    (3 : Int) / |        Required: com.histmersion.config.WatchManagerConfig.DrainPerTick
+
+## modules/config/src/main/scala/com/histmersion/config/edit/SettingPolicy.scala
+52:35 [E007] 52 |              SecretForm.reference(t).left.map(SettingError.NotAReference(key, _)).flatMap { / |     Found:    (t : com.histmersion.config.edit.SettingValue.Text.Value) / |     Required: String
+
