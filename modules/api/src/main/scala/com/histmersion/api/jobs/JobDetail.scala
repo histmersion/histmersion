@@ -29,7 +29,7 @@ object JobDetail:
 
   /** What a job is about, in a person's words (a places or base-map job's). */
   val Purpose: com.histmersion.api.jobs.JobDetail.Field[Option[com.histmersion.api.jobs.JobKinds.Subject]] =
-    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("about"), None)
+    new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("about"), None)
 
   private def fields: List[com.histmersion.api.jobs.JobDetail.Field[?]] = RegisteredJobKinds.all.details
 

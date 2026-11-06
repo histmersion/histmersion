@@ -407,7 +407,7 @@ object Acquire:
       object Resumes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[RecheckJob]] =
-        com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("recheck"), None)
+        new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("recheck"), None)
 
       val JobKind = com.histmersion.api.library.AcquisitionJobKinds.AcquireRecheck.kind.value
 

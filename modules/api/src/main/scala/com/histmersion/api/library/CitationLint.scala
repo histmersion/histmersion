@@ -14,7 +14,7 @@ object CitationLint:
           if looksLikeCitekey(e.dst) then "no such source"
           else "no such source — looks like a concept/article link, not a citekey"
         val tail = if near.isEmpty then "" else s" — closest: ${near.mkString(", ")}"
-        LintItem(e.src, LintItem.Detail(s"${e.kind} → ${e.dst.value.toString} ($what)$tail"))
+        LintItem(e.src, LintItem.Detail(s"${Edge.Kind.wireOf(e.kind)} → ${e.dst.value.toString} ($what)$tail"))
       }
 
   def unresolvedShortCitekeys(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: com.histmersion.api.checks.Lint.ItemLimit): List[LintItem] =
@@ -29,6 +29,6 @@ object CitationLint:
           val verdict =
             if near.sizeIs == 1 then s"resolves to ${near.head} (fixable: lint --fix)"
             else s"ambiguous between ${shown.mkString(", ")}$more"
-          Some(LintItem(_root_.com.histmersion.api.library.Citekey(e.src.value.toString), _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"${e.kind} → ${e.dst.value.toString} $verdict")))
+          Some(LintItem(_root_.com.histmersion.api.library.Citekey(e.src.value.toString), _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"${Edge.Kind.wireOf(e.kind)} → ${e.dst.value.toString} $verdict")))
       }
       .sortBy(i => (i.citekey.value: String, i.detail.value: String))

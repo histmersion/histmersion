@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 /** The media's imports, as it registers them: pictures asked of a provider. */
 object ImportJobKinds:
   /** What a media job does, as a person reads it, in the job's detail. */
-  val Media: JobDetail.Field[Option[com.histmersion.api.jobs.JobKinds.Subject]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("media"), None)
+  val Media: JobDetail.Field[Option[com.histmersion.api.jobs.JobKinds.Subject]] = new JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("media"), None)
 
   val MediaImport: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("media-import"),

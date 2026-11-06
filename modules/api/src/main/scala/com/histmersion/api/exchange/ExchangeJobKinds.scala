@@ -28,4 +28,4 @@ object ExchangeJobKinds:
   )
 
   /** The plan a merge apply carries out, by its hash, in the job's detail. */
-  val PlanHash: JobDetail.Field[Option[com.histmersion.api.exchange.ExchangeJobKinds.PlanHash]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("planHash"), None)
+  val PlanHash: JobDetail.Field[Option[com.histmersion.api.exchange.ExchangeJobKinds.PlanHash]] = new JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("planHash"), None)

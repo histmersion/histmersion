@@ -8,6 +8,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
+import io.circe.Decoder
 
 final case class Target(
     kind: ItemKind,
@@ -25,6 +26,8 @@ final case class Target(
   def identity: Option[com.histmersion.api.personal.Target.Identity] = itemKey.map(k => _root_.com.histmersion.api.personal.Target.Identity(s"${kind.wire}:$k"))
 
 object Target:
+  given Decoder[com.histmersion.api.personal.ItemKey] = com.histmersion.api.personal.ItemKey.given_Decoder_ItemKey
+
   type Identity = Identity.T
   object Identity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T

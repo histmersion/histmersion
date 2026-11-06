@@ -29,7 +29,7 @@ object InitPlan:
   object Check extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[InitPlan]] =
-    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("init"), None)
+    new com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("init"), None)
 
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.Init.kind.value
 
