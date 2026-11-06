@@ -162,7 +162,7 @@ object RepositoryLanding:
     * (`pure` is not `purepharma`, `press` is not `pressreader`).
     */
   def wordLabel(label: String, w: String): Boolean =
-    ((w).nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
+    ((w).nonEmpty && (label == w || ((w).endsWith("-") && (label).value.startsWith((w).value)) ||
       ((label).value.startsWith((w).value) && (label).value.length > (w).value.length && { val c = (label).value.charAt((w).value.length); c == '-' || c.isDigit })))
 
   /** A host entry matches the host itself or any subdomain of it. */
@@ -198,7 +198,7 @@ object RepositoryLanding:
       val repo = kind.contains("repository")
       val pub = kind.exists(PublisherSourceTypes)
       val open = h.downField("is_oa").as[Boolean].contains(true)
-      (str(h, "pdf_url").filter(((notPdfPath).value)).toList ++ str(h, "landing_page_url").toList)
+      (str(h, "pdf_url").filter(((notPdfPath))).toList ++ str(h, "landing_page_url").toList)
         .map(Candidate(_, _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(repo), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(pub), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(open)))
     })
 
@@ -210,7 +210,7 @@ object RepositoryLanding:
       val h = l.hcursor
       val repo = str(h, "host_type").contains("repository")
       val pub = str(h, "host_type").contains("publisher")
-      (str(h, "url_for_pdf").filter(((notPdfPath).value)).toList ++ str(h, "url_for_landing_page").toList)
+      (str(h, "url_for_pdf").filter(((notPdfPath))).toList ++ str(h, "url_for_landing_page").toList)
         .map(Candidate(_, _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(repo), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(pub), open = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(true)))
     })
 
