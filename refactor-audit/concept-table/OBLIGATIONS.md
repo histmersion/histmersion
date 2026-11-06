@@ -47,3 +47,12 @@ More in core, from round 2, to compare with 7e197c2b:
 - `SourceMatcher.sha` uses `Sha256.option`: a malformed original sha no longer counts as a strong key.
 - `seed:`/`watch:` manager-id format now exists twice (`ManagerRow.Id` and api `Goal.Ref`).
 - `MergeFold.hull` picks min or max year instead of `math.min`/`max`.
+
+More in core, from round 3, to compare with 7e197c2b:
+- `Citekey.option` drops invalid citekeys: `SourcePlan` aliases can vanish; `CurrencyCheckRules` gives `Ignore` for an invalid citing key.
+- `AcquireMatch.doiKeyOf`: a DOI trimmed to an empty suffix becomes `None`. `AgentVerify.linkProblems`: an invalid wikilink counts as unknown without asking `isCitekey`/`isSlug`.
+- `CandidateDedupe` builds the arXiv key with `Doi.option`, so an id failing the DOI pattern is skipped.
+- `AttestationPlan` lines 95-96: a `Local.Rev` passed as `ForeignRev` and a body sha as `leftRev`; check these against master rather than wrapping.
+- Positional types kept because other files name them: `EntityOwnBundle`, `TombstoneOwnBundle`, `ChunkMarkdown`, `ChunkMaxChars`, `FoldS`, `TokensS`, `OfS`, `ValidCk`, `NormaliseS`, `NormaliseResult`.
+
+Model-answer fields done right so far: `AcquisitionSweepRules.Pick.doi`, `AgentProposals.ProposalAnswer.citekey` (raw, parsed at the check). Found and fixed, generic-call class: `ActivityRules` `e.goal.contains(g)`, `e.by.contains(...)`.
