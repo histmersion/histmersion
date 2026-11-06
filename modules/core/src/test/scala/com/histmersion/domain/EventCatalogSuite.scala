@@ -220,7 +220,7 @@ class EventCatalogSuite extends munit.FunSuite:
       parts = com.histmersion.api.catalogue.EventImportReport.Parts(1)
     )
     val b =
-      a.modify(_.records).setTo(5).modify(_.kept).setTo(5).modify(_.created).setTo(5).modify(_.merged).setTo(0).modify(_.byKind).setTo(List(EventCount("eruption", 5))).modify(_.skipped).setTo(Nil)
+      a.modify(_.records).setTo(5).modify(_.kept).setTo(5).modify(_.created).setTo(5).modify(_.merged).setTo(0).modify(_.byKind).setTo(List(EventCount(com.histmersion.api.catalogue.EventCount.Key("eruption"), com.histmersion.api.catalogue.EventCount.N(5)))).modify(_.skipped).setTo(Nil)
     val c = EventImportReport.combine(a, b)
     assertEquals((c.records, c.kept, c.created, c.merged, c.parts), (15, 9, 8, 1, 2))
     assertEquals(c.byKind, List(EventCount(com.histmersion.api.catalogue.EventCount.Key("eruption"), com.histmersion.api.catalogue.EventCount.N(9))))

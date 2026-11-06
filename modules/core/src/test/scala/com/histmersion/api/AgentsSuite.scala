@@ -169,11 +169,11 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.automation.Goal.Plans.Plan.Rationale("covers it"),
       List(PlannedGoal(com.histmersion.api.automation.Goal.Slug("g-sub"), com.histmersion.api.automation.Goal.Title("Sub"))),
       List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("tin isotopes")),
-      List(PlannedWork(com.histmersion.api.library.Doi("10.1000/x"), Some(com.histmersion.api.library.Title("X")), Some(com.histmersion.api.catalogue.Year(2020)), citekey = Some(com.histmersion.api.library.Citekey("x2020_y")), inCorpus = com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus(true), why = "core")),
+      List(PlannedWork(com.histmersion.api.library.Doi("10.1000/x"), Some(com.histmersion.api.library.Title("X")), Some(com.histmersion.api.catalogue.Year(2020)), citekey = Some(com.histmersion.api.library.Citekey("x2020_y")), inCorpus = com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus(true), why = com.histmersion.api.automation.Goal.Plans.PlannedWork.Why("core"))),
       List(com.histmersion.api.automation.Goal.Plans.Plan.Dropped("10.1000/z: not verified upstream"))
     )
     val a =
-      ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(7), Some(com.histmersion.api.automation.Agents.RunInfo.Id("run12345")), com.histmersion.api.automation.Agents.ApprovalInfo.Kind("goal-plan"), com.histmersion.api.library.Citekey(""), evidence = com.histmersion.api.automation.Agents.ApprovalInfo.Evidence("covers it"), subject = Some("g"), plan = Some(plan))
+      ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(7), Some(com.histmersion.api.automation.Agents.RunInfo.Id("run12345")), com.histmersion.api.automation.Agents.ApprovalInfo.Kind("goal-plan"), com.histmersion.api.library.Citekey(""), evidence = com.histmersion.api.automation.Agents.ApprovalInfo.Evidence("covers it"), subject = Some(com.histmersion.api.automation.Agents.ApprovalInfo.Subject("g")), plan = Some(plan))
     val md = AgentsMarkdown.approvals(List(a))
     assert(md.contains("plan for goal **g**: 1 sub-goal(s), 1 query(ies), 1 work(s)"), md)
     assert(md.contains("in the corpus as [[x2020_y]]: core") && md.contains("dropped: 10.1000/z"), md)
@@ -185,7 +185,7 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.research.Article.Kind.Wire("concept"),
       com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text("New text [[x2020_y]]."),
       section = Some(com.histmersion.api.automation.Goal.Plans.ArticleDraft.Section("## Disagreements")),
-      problems = List("a paragraph with no [[citekey]]")
+      problems = List(com.histmersion.api.automation.Goal.Plans.ArticleDraft.Problems("a paragraph with no [[citekey]]"))
     )
     val pub = ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(8), None, com.histmersion.api.automation.Agents.ApprovalInfo.Kind("article-publish"), com.histmersion.api.library.Citekey(""), subject = Some(com.histmersion.api.automation.Agents.ApprovalInfo.Subject("tin")), article = Some(d))
     val md2 = AgentsMarkdown.approvals(List(pub))
@@ -275,8 +275,8 @@ class AgentsSuite extends munit.FunSuite:
       com.histmersion.api.automation.Agents.StepInfo.Status("done"),
       model = Some(com.histmersion.api.automation.Agents.StepInfo.Model("claude-code:sonnet")),
       usage = Usage(com.histmersion.api.automation.Agents.Usage.Input(41000), com.histmersion.api.automation.Agents.Usage.Output(900)),
-      firstCallTokens = Some(6963),
-      turns = Some(9)
+      firstCallTokens = Some(com.histmersion.api.automation.Agents.StepInfo.FirstCallTokens(6963)),
+      turns = Some(com.histmersion.api.automation.Agents.StepInfo.Turns(9))
     )
     val d = RunDetail(
       RunInfo(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), com.histmersion.api.automation.Agents.RunInfo.Pipeline("enrich-source"), com.histmersion.api.automation.Agents.RunInfo.Target("x2020"), com.histmersion.api.automation.Agents.RunInfo.Status("done")),

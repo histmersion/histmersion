@@ -82,7 +82,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val stalled = ItemState(
       history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(5)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(5)))),
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)),
-      pairsBefore = Some(5)
+      pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(5))
     )
     eval(st = stalled, attempts = 2, fs = facts(2, onlyMissing = true, pairs = Some(5))) match
       case Next.Stop(o, Some(t), st) =>
@@ -100,7 +100,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val going = ItemState(
       history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(9)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(6)))),
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)),
-      pairsBefore = Some(6)
+      pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(6))
     )
     eval(st = going, attempts = 2, fs = facts(2, onlyMissing = true, pairs = Some(3))) match
       case Next.Again(_, st, note) =>
@@ -118,7 +118,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     val flat = ItemState(
       history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(3)), com.histmersion.api.automation.Managers.RunMark.After(3), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(9)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(6)))),
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(3)),
-      pairsBefore = Some(6)
+      pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(6))
     )
     assert(eval(st = flat, attempts = 2, fs = facts(3, pairs = Some(3))).isInstanceOf[Next.Stop])
     // max runs per article still stops it

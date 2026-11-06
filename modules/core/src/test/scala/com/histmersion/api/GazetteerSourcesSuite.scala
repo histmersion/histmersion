@@ -378,7 +378,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     val a = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2"), descriptionsChanged = com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsChanged(2))
     assert(!a.unchanged)
     assert(a.describe.contains("descriptions +0 −0 ~2"), a.describe)
-    assertEquals((a + Gazetteer.LoadCounts("wikidata", "v2", descriptionsAdded = 1)).descriptionsAdded, 1L)
+    assertEquals((a + Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2"), descriptionsAdded = 1)).descriptionsAdded, 1L)
     assert(Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2")).unchanged)
 
   // ── an area known only by a point (2026-10-09) ────────────────────────────────────────────────

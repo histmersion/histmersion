@@ -469,7 +469,7 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     // raised again as a MINOR (its pair now reasoned): stays set aside; raised again MAJOR: re-opened, with why
     assertEquals(
-      absorb(closed, List(e.finding.modify(_.severity).setTo(Severity.Minor)), com.histmersion.domain.automation.Run.Id("run-2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("S1").get.status,
+      absorb(closed, List(e.finding.modify(_.severity).setTo(Severity.Minor)), com.histmersion.domain.automation.Run.Id("run-2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get.status,
       Status.SetAside
     )
     val again = absorb(closed, List(e.finding), com.histmersion.domain.automation.Run.Id("run-2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get
