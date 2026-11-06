@@ -20,4 +20,4 @@ object PeriodsConfig:
   object SeedFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private[config] def split(s: com.histmersion.config.PeriodsConfig.PeriodoCollections): List[com.histmersion.config.PeriodsConfig.Collection] =
-    Option(s).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct
+    Option(s).toList.flatMap(_.value.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct.map(Collection(_))

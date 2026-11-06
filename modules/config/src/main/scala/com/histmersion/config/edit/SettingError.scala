@@ -36,8 +36,10 @@ enum SettingError:
   case NoFile(why: SettingError.NoFile.Why)
   case Io(why: SettingError.Io.Why)
 
-  def message: com.histmersion.config.edit.SettingError.Problem = this match
-    case BadKey(why)            => why
+  def message: com.histmersion.config.edit.SettingError.Problem = SettingError.Problem(text)
+
+  private def text: String = this match
+    case BadKey(why)            => why.value
     case UnknownKey(k, closest) =>
       s"There is no setting called ${k.relative}." +
         (if closest.isEmpty then "" else s" Did you mean ${closest.map(_.relative).mkString(" or ")}?")
@@ -61,7 +63,7 @@ enum SettingError:
       s"The settings file does not read, so it is not changed: $why. Fix it in a text editor first."
     case Invalid(why) => s"That change would leave settings the server cannot start with, so it was not made: $why"
     case Changed      => "The settings file changed since it was read. Look at it again, then make the change."
-    case NoFile(why)  => why
+    case NoFile(why)  => why.value
     case Io(why)      => s"The settings file could not be written: $why"
 
 object SettingError:

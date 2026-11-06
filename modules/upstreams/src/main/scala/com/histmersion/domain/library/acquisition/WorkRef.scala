@@ -48,5 +48,5 @@ object WorkRef:
   object ReferencedWorks extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OaLocations = OaLocations.T
   object OaLocations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OaLicence = com.histmersion.domain.Licence.Id
-  val OaLicence: _root_.com.histmersion.domain.Licence.Id.type = _root_.com.histmersion.domain.Licence.Id
+  type OaLicence = com.histmersion.plugin.Licence
+  val OaLicence: _root_.com.histmersion.plugin.Licence.type = _root_.com.histmersion.plugin.Licence

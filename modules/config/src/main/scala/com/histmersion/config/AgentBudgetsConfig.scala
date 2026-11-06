@@ -8,8 +8,8 @@ final case class AgentBudgetsConfig(
     runTokens: AgentBudgetsConfig.RunTokens,
     dailyUsd: AgentBudgetsConfig.DailyUsd,
     monthlyUsd: AgentBudgetsConfig.MonthlyUsd,
-    pipelineRunTokens: AgentBudgetsConfig.PipelineRunTokens = "",
-    cacheReadWeight: AgentBudgetsConfig.CacheReadWeight = 1.0
+    pipelineRunTokens: AgentBudgetsConfig.PipelineRunTokens = AgentBudgetsConfig.PipelineRunTokens(""),
+    cacheReadWeight: AgentBudgetsConfig.CacheReadWeight = AgentBudgetsConfig.CacheReadWeight(1.0)
 ) derives ConfigReader:
   /** `run-tokens` for a run of `pipeline` that asks for none: its `pipeline-run-tokens` entry, else `run-tokens`. An
     * entry that does not parse (or is not positive) is ignored.
@@ -34,13 +34,13 @@ object AgentBudgetsConfig:
   object CacheReadWeight extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parsePipelineTokens(s: com.histmersion.config.AgentBudgetsConfig.PipelineRunTokens): Map[com.histmersion.domain.automation.Pipeline.Wire, com.histmersion.config.AgentBudgetsConfig.RunTokens] =
-    s.split(",")
+    s.value.split(",")
       .toList
       .map(_.trim)
       .filter(_.nonEmpty)
       .flatMap(e =>
         e.split("=", 2) match
-          case Array(k, v) => v.trim.replace("_", "").toLongOption.filter(_ > 0).map(k.trim -> _)
+          case Array(k, v) => v.trim.replace("_", "").toLongOption.filter(_ > 0).map(n => com.histmersion.domain.automation.Pipeline.Wire(k.trim) -> RunTokens(n))
           case _           => None
       )
       .toMap

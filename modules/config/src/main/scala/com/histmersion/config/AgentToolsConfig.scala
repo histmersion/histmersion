@@ -17,4 +17,4 @@ object AgentToolsConfig:
   type QueryMaxRows = QueryMaxRows.T
   object QueryMaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Off: AgentToolsConfig = AgentToolsConfig(0, 0, 0)
+  val Off: AgentToolsConfig = AgentToolsConfig(ResultMaxChars(0), BodyChars(0), QueryMaxRows(0))

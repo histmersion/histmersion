@@ -28,25 +28,13 @@ import com.histmersion.api.exchange.{MergePlan, MergePolicy, MergeResolution, Me
   * carries it and no separate file is needed.
   */
 object MergeResolutionsFile:
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ParseTextsPart1 = ParseTextsPart1.T
-  object ParseTextsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseTextsPart2 = ParseTextsPart2.T
-  object ParseTextsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type ParseText = ParseText.T
-  object ParseText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FlagS = FlagS.T
-  object FlagS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TemplateResult = TemplateResult.T
-  object TemplateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def yaml = Yaml(SafeConstructor(LoaderOptions()))
 
-  def parse(text: com.histmersion.util.data.exchange.MergeResolutionsFile.ParseText): Either[List[com.histmersion.util.data.exchange.MergeResolutionsFile.Problem], MergeResolutions] =
-    scala.util.Try(Option(yaml.load[AnyRef](text))).toEither.left.map(e => List(s"not YAML: ${e.getMessage}")).flatMap {
+  def parse(text: Text): Either[List[MergeResolutions.Text.Problem], MergeResolutions] =
+    scala.util.Try(Option(yaml.load[AnyRef](text.value))).toEither.left.map(e => List(MergeResolutions.Text.Problem(s"not YAML: ${e.getMessage}"))).flatMap {
       case None                         => Right(MergeResolutions())
       case Some(m: java.util.Map[?, ?]) =>
         val top = m.asScala.toMap.map((k, v) => String.valueOf(k) -> v.asInstanceOf[AnyRef])
@@ -81,15 +69,15 @@ object MergeResolutionsFile:
                   .map(String.valueOf)
                   .map(_.trim)
                   .filter(_.nonEmpty)
-                  .map(d => MergeResolution(String.valueOf(k).trim, d))
+                  .map(d => MergeResolution(MergeResolution.Issue(String.valueOf(k).trim), MergeResolution.Decision(d)))
               }
               .sortBy(_.issue)
           case Some(other) => errors += s"resolve: expected a map of issue id → decision, found '$other'"; Nil
         // the merged texts of `file:` decisions made on the review screen, kept in the file itself
-        val texts: Map[com.histmersion.util.data.exchange.MergeResolutionsFile.ParseTextsPart1, com.histmersion.util.data.exchange.MergeResolutionsFile.ParseTextsPart2] = top.get("texts").flatMap(Option(_)) match
+        val texts: Map[MergeResolution.Issue, MergeResolution.Text] = top.get("texts").flatMap(Option(_)) match
           case None                         => Map.empty
           case Some(t: java.util.Map[?, ?]) =>
-            t.asScala.toList.flatMap((k, v) => Option(v).map(x => String.valueOf(k).trim -> String.valueOf(x))).toMap
+            t.asScala.toList.flatMap((k, v) => Option(v).map(x => MergeResolution.Issue(String.valueOf(k).trim) -> MergeResolution.Text(String.valueOf(x)))).toMap
           case Some(other) => errors += s"texts: expected a map of issue id → text, found '$other'"; Map.empty
         texts.keySet
           .diff(resolve.map(_.issue).toSet)
@@ -97,7 +85,7 @@ object MergeResolutionsFile:
           .sorted
           .foreach(k => errors += s"texts: $k has a text but no decision under resolve")
         val es = errors.result()
-        if es.nonEmpty then Left(es)
+        if es.nonEmpty then Left(es.map(MergeResolutions.Text.Problem(_)))
         else
           Right(
             MergeResolutions(
@@ -106,11 +94,11 @@ object MergeResolutionsFile:
               bundle
             )
           )
-      case Some(other) => Left(List(s"expected a map at the top, found '$other'"))
+      case Some(other) => Left(List(MergeResolutions.Text.Problem(s"expected a map at the top, found '$other'")))
     }
 
   /** `ID=decision` of a `--resolve` flag. */
-  def flag(s: com.histmersion.util.data.exchange.MergeResolutionsFile.FlagS): Either[com.histmersion.util.data.exchange.MergeResolutionsFile.Problem, MergeResolution] = MergeResolutions.Text.flag(s)
+  def flag(s: MergeResolutions.Text.Flag): Either[MergeResolutions.Text.Problem, MergeResolution] = MergeResolutions.Text.flag(s)
 
   /** The template (written by [[MergeResolutionsText]], shared with the web review screen). */
-  def template(p: MergePlan, current: MergeResolutions): com.histmersion.util.data.exchange.MergeResolutionsFile.TemplateResult = MergeResolutions.Text.template(p, current)
+  def template(p: MergePlan, current: MergeResolutions): MergeResolutions.Text.Template = MergeResolutions.Text.template(p, current)

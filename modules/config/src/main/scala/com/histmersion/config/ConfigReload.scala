@@ -17,8 +17,8 @@ object ConfigReload:
   type Reason = Reason.T
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LeavesResultPart2 = LeavesResultPart2.T
-  object LeavesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rendered = Rendered.T
+  object Rendered extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Root = "histmersion"
 
@@ -32,28 +32,28 @@ object ConfigReload:
     * [[effective]]), and the reload report lists them.
     */
   val RestartOnly: List[(com.histmersion.config.ConfigReload.Key, com.histmersion.config.ConfigReload.Reason)] = List(
-    "histmersion.server.host" -> "the listener is bound once",
-    "histmersion.server.port" -> "the listener is bound once",
-    "histmersion.server.request-timeout-seconds" -> "the listener's request timeout is set when it is bound",
-    "histmersion.server.shutdown-grace-seconds" -> "the listener's shutdown grace is set when it is bound",
-    "histmersion.runtime" -> "the bundled PostgreSQL and converter are started once",
-    "histmersion.agents.enabled" -> "the agent pool is started (or not) at startup",
-    "histmersion.agents.max-concurrent-runs" -> "the size of the agent pool, started once",
-    "histmersion.agents.max-llm-calls-in-flight" -> "the LLM-call semaphore, sized once",
-    "histmersion.converter.parallelism" -> "the size of the OCR worker pool, started once"
+    Key("histmersion.server.host") -> Reason("the listener is bound once"),
+    Key("histmersion.server.port") -> Reason("the listener is bound once"),
+    Key("histmersion.server.request-timeout-seconds") -> Reason("the listener's request timeout is set when it is bound"),
+    Key("histmersion.server.shutdown-grace-seconds") -> Reason("the listener's shutdown grace is set when it is bound"),
+    Key("histmersion.runtime") -> Reason("the bundled PostgreSQL and converter are started once"),
+    Key("histmersion.agents.enabled") -> Reason("the agent pool is started (or not) at startup"),
+    Key("histmersion.agents.max-concurrent-runs") -> Reason("the size of the agent pool, started once"),
+    Key("histmersion.agents.max-llm-calls-in-flight") -> Reason("the LLM-call semaphore, sized once"),
+    Key("histmersion.converter.parallelism") -> Reason("the size of the OCR worker pool, started once")
   )
 
-  def restartOnly(key: com.histmersion.config.ConfigReload.Key): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))
+  def restartOnly(key: com.histmersion.config.ConfigReload.ChangedKey): Boolean = RestartOnly.exists((k, _) => HotPlan.keyMatches(key, k))
 
   /** Every leaf setting (a value or a list; `null` leaves none) with its value rendered. */
-  def leaves(c: org.ekrich.config.Config): Map[com.histmersion.config.ConfigReload.Key, com.histmersion.config.ConfigReload.LeavesResultPart2] =
-    c.entrySet.asScala.iterator.map(e => e.getKey -> e.getValue.render(ConfigRenderOptions.concise)).toMap
+  def leaves(c: org.ekrich.config.Config): Map[com.histmersion.config.ConfigReload.ChangedKey, com.histmersion.config.ConfigReload.Rendered] =
+    c.entrySet.asScala.iterator.map(e => ChangedKey(e.getKey) -> Rendered(e.getValue.render(ConfigRenderOptions.concise))).toMap
 
   /** The settings that differ — set in one and not the other, or set to another value — sorted. */
   def changed(before: org.ekrich.config.Config, after: org.ekrich.config.Config): List[com.histmersion.config.ConfigReload.ChangedKey] =
     val a = leaves(settings(before))
     val b = leaves(settings(after))
-    (a.keySet ++ b.keySet).filter(k => a.get(k) != b.get(k)).toList.sorted
+    (a.keySet ++ b.keySet).filter(k => a.get(k) != b.get(k)).toList.sortBy(_.value)
 
   /** `changed`, split into what a running server applies and what waits for a restart. */
   def split(changed: List[com.histmersion.config.ConfigReload.ChangedKey]): (List[com.histmersion.config.ConfigReload.ChangedKey], List[com.histmersion.config.ConfigReload.ChangedKey]) = changed.partition(k => !restartOnly(k))
@@ -67,7 +67,7 @@ object ConfigReload:
       changed: List[com.histmersion.config.ConfigReload.ChangedKey]
   ): org.ekrich.config.Config =
     changed.filter(restartOnly).foldLeft(settings(next)) { (c, k) =>
-      if running.hasPath(k) then c.withValue(k, running.getValue(k)) else c.withoutPath(k)
+      if running.hasPath(k.value) then c.withValue(k.value, running.getValue(k.value)) else c.withoutPath(k.value)
     }
 
   final case class Config(watch: Config.Watch, watchDebounceMs: Config.WatchDebounceMs, drainSeconds: Config.DrainSeconds) derives ConfigReader

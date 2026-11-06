@@ -14,8 +14,8 @@ final case class UserConfigFile(path: Option[Path], loaded: UserConfigFile.Loade
     val where = path.fold("the config file")(_.toString)
     unknownKeys.map { k =>
       val hint =
-        if k == "histmersion" || k.startsWith("histmersion.") then "" else " (settings go under histmersion { … })"
-      s"$where: unknown setting '$k' is ignored$hint"
+        if k.value == "histmersion" || k.value.startsWith("histmersion.") then "" else " (settings go under histmersion { … })"
+      UserConfigFile.Problem(s"$where: unknown setting '${k.value}' is ignored$hint")
     }
 
 object UserConfigFile:

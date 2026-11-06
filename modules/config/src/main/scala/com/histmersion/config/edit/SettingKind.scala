@@ -4,16 +4,16 @@ import org.ekrich.config.{ConfigValue, ConfigValueType}
 
 /** What kind of value a setting holds, as its default in reference.conf has it. */
 enum SettingKind(val wire: SettingKind.Wire, val describe: SettingKind.Describe):
-  case Text extends SettingKind("text", "text")
-  case Number extends SettingKind("number", "a number")
-  case Flag extends SettingKind("flag", "true or false")
-  case Items extends SettingKind("list", "a list [ … ]")
+  case Text extends SettingKind(SettingKind.Wire("text"), SettingKind.Describe("text"))
+  case Number extends SettingKind(SettingKind.Wire("number"), SettingKind.Describe("a number"))
+  case Flag extends SettingKind(SettingKind.Wire("flag"), SettingKind.Describe("true or false"))
+  case Items extends SettingKind(SettingKind.Wire("list"), SettingKind.Describe("a list [ … ]"))
 
   /** A block of settings (`backups { … }`): never one value. */
-  case Block extends SettingKind("block", "a block of settings")
+  case Block extends SettingKind(SettingKind.Wire("block"), SettingKind.Describe("a block of settings"))
 
   /** A key of an open block (a plugin's own settings): any single value. */
-  case Any extends SettingKind("any", "a value")
+  case Any extends SettingKind(SettingKind.Wire("any"), SettingKind.Describe("a value"))
 
 object SettingKind:
   type Wire = Wire.T
@@ -30,4 +30,4 @@ object SettingKind:
     case ConfigValueType.OBJECT  => Block
     case _                       => Any
 
-  def parse(s: com.histmersion.config.edit.SettingKind.Wire): Option[SettingKind] = values.find(_.wire == s.trim.toLowerCase)
+  def parse(s: com.histmersion.config.edit.SettingKind.Wire): Option[SettingKind] = values.find(_.wire.value == s.value.trim.toLowerCase)

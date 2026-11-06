@@ -53,9 +53,9 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
   private def commit(
       current: ConfigFileState,
       edited: EditedText,
-      intended: Map[com.histmersion.config.edit.EditedText.Text, Option[SettingValue]]
-  ): Either[SettingError, Option[com.histmersion.config.edit.EditedText.Text]] =
-    file.replace(edited.text, existed = current.text.isDefined) { staged =>
+      intended: Map[SettingKey, Option[SettingValue]]
+  ): Either[SettingError, Option[ConfigFileState.Text]] =
+    file.replace(ConfigFileState.Text(edited.text.value), existed = SettingsFile.Existed(current.text.isDefined)) { staged =>
       for
         parsed <- staged.parsed.left.map(e => SettingError.Invalid(e.message))
         _ <- ConfigTextEdit.verify(parsed, staged.own, edited, intended)
@@ -65,14 +65,10 @@ final class ConfigFileWriter(val file: SettingsFile, env: Config, schema: Config
 
 object ConfigFileWriter:
   /** One write at a time in this process: two at once would each read the same old text. */
-  type NewFileHeader = NewFileHeaderValue
-  type NewFileHeaderValue = NewFileHeaderValue.T
-  object NewFileHeaderValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   private val lock = new Object
 
   /** The first lines of a config file Settings creates. */
-  val NewFileHeader: com.histmersion.config.edit.ConfigFileWriter.NewFileHeader =
-    """# Histmersion's settings. Settings in the web UI and `histmersion config set` change this file and keep
+  val NewFileHeader: ConfigFileState.Text =
+    ConfigFileState.Text("""# Histmersion's settings. Settings in the web UI and `histmersion config set` change this file and keep
       |# everything else in it as it is: comments, order, and anything written by hand.
-      |""".stripMargin
+      |""".stripMargin)

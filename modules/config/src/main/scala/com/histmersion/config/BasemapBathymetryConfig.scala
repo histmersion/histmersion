@@ -8,14 +8,14 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final case class BasemapBathymetryConfig(
     url: BasemapBathymetryConfig.Url,
-    maxZoom: BasemapBathymetryConfig.MaxZoom,
+    maxZoom: BasemapGebcoConfig.MaxZoom,
     requestGapMs: BasemapBathymetryConfig.RequestGapMs,
     attribution: BasemapBathymetryConfig.Attribution,
     onDemand: BasemapOnDemandConfig,
     source: SeaFloorSource,
     gebco: BasemapGebcoConfig
 ) derives ConfigReader:
-  def extractMaxZoom: com.histmersion.config.BasemapBathymetryConfig.MaxZoom = source match
+  def extractMaxZoom: BasemapGebcoConfig.MaxZoom = source match
     case SeaFloorSource.Etopo1 => maxZoom
     case SeaFloorSource.Gebco  => gebco.maxZoom
 
@@ -23,8 +23,6 @@ object BasemapBathymetryConfig:
 
   type Url = Url.T
   object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxZoom = MaxZoom.T
-  object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RequestGapMs = RequestGapMs.T
   object RequestGapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Attribution = Attribution.T

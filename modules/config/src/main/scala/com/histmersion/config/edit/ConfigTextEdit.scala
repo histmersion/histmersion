@@ -15,11 +15,6 @@ import scala.util.Try
 object ConfigTextEdit:
 
 
-  type IntendedResultPart1 = IntendedResultPart1.T
-  object IntendedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerifyIntendedPart1 = VerifyIntendedPart1.T
-  object VerifyIntendedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def apply(
       text: com.histmersion.config.edit.ConfigFileState.Text,
       current: Config,
@@ -33,7 +28,7 @@ object ConfigTextEdit:
         unchanged: List[SettingKey]
     ): Either[SettingError, EditedText] =
       rest match
-        case Nil          => Right(EditedText(endsLikeAFile(text, doc.render), changed.reverse, unchanged.reverse))
+        case Nil          => Right(EditedText(EditedText.Text(endsLikeAFile(text.value, doc.render)), changed.reverse, unchanged.reverse))
         case edit :: tail =>
           (written(current, edit.key, here), edit) match
             case (Written.Substituted(_), _) => Left(SettingError.Substitution(edit.key))
@@ -45,20 +40,20 @@ object ConfigTextEdit:
               loop(tail, doc, changed, k :: unchanged)
             case (_, SettingEdit.Set(k, want)) =>
               val next = ConfigDocumentFactory.parseString(
-                inFileStyle(doc.render, doc.withValueText(k.hoconPath, want.hocon).render)
+                inFileStyle(doc.render, doc.withValueText(k.hoconPath.value, want.hocon.value).render)
               )
               if dropsVerbatim(doc.render, next.render) then Left(SettingError.Substitution(k))
               else loop(tail, next, k :: changed, unchanged)
             case (_, SettingEdit.Unset(k)) =>
-              val next = withoutEmptyBlocks(doc.withoutPath(k.hoconPath), k)
+              val next = withoutEmptyBlocks(doc.withoutPath(k.hoconPath.value), k)
               if dropsVerbatim(doc.render, next.render) then Left(SettingError.Substitution(k))
               else loop(tail, next, k :: changed, unchanged)
     try
-      val doc = ConfigDocumentFactory.parseString(text)
+      val doc = ConfigDocumentFactory.parseString(text.value)
       // a key changed twice in one write: the last change wins, the first is not written at all
       val last = edits.reverse.distinctBy(_.key.value).reverse
       loop(last, doc, Nil, Nil)
-    catch case e: ConfigException => Left(SettingError.Unreadable(e.getMessage))
+    catch case e: ConfigException => Left(SettingError.Unreadable(SettingError.Unreadable.Why(e.getMessage)))
 
   private val AddedBlock = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : \{\s*$""".r
   private val AddedValue = """^(\s*)("[^"]*"|[A-Za-z0-9_-]+) : (.*)$""".r
@@ -100,8 +95,8 @@ object ConfigTextEdit:
         case None        => d
         case Some(block) =>
           val empty =
-            scala.util.Try(ConfigFactory.parseString(d.render).getObject(block.hoconPath).isEmpty).getOrElse(false)
-          val pruned = if empty then d.withoutPath(block.hoconPath) else d
+            scala.util.Try(ConfigFactory.parseString(d.render).getObject(block.hoconPath.value).isEmpty).getOrElse(false)
+          val pruned = if empty then d.withoutPath(block.hoconPath.value) else d
           if !empty || comments(pruned.render) < comments(d.render) then d
           else loop(pruned, block.parent)
     val root = loop(doc, key.parent)
@@ -120,10 +115,10 @@ object ConfigTextEdit:
     if after.nonEmpty && !after.endsWith("\n") && (before.isEmpty || before.endsWith("\n")) then after + "\n" else after
 
   /** What each key is to hold after `edits` (`None`: taken out); the last change of a key wins. */
-  def intended(edits: List[SettingEdit]): Map[com.histmersion.config.edit.ConfigTextEdit.IntendedResultPart1, Option[SettingValue]] =
-    edits.map {
-      case SettingEdit.Set(k, v) => k.value -> Some(v)
-      case SettingEdit.Unset(k)  => k.value -> None
+  def intended(edits: List[SettingEdit]): Map[SettingKey, Option[SettingValue]] =
+    edits.map[(SettingKey, Option[SettingValue])] {
+      case SettingEdit.Set(k, v) => k -> Some(v)
+      case SettingEdit.Unset(k)  => k -> None
     }.toMap
 
   /** The new file, read back (with its includes, unresolved; `here` its own origins), says what each change wrote — an
@@ -133,16 +128,16 @@ object ConfigTextEdit:
       parsed: Config,
       here: ConfigOrigin => Boolean,
       edited: EditedText,
-      intended: Map[com.histmersion.config.edit.ConfigTextEdit.VerifyIntendedPart1, Option[SettingValue]]
+      intended: Map[SettingKey, Option[SettingValue]]
   ): Either[SettingError, Unit] =
     edited.changed.iterator
       .map { key =>
-        (written(parsed, key, here), intended.getOrElse(key.value, None)) match
+        (written(parsed, key, here), intended.getOrElse(key, None)) match
           case (Written.Substituted(_), _) => Left(SettingError.Substitution(key))
           case (Written.Elsewhere(f), _)   => Left(SettingError.FromInclude(key, f))
           case (Written.Here(v), Some(w)) if SettingValue.fromConfig(v).exists(SettingValue.same(_, w)) => Right(())
           case (Written.Nowhere, None)                                                                  => Right(())
-          case _ => Left(SettingError.Invalid(s"${key.relative} did not read back as it was written"))
+          case _ => Left(SettingError.Invalid(SettingError.Invalid.Why(s"${key.relative} did not read back as it was written")))
       }
       .find(_.isLeft)
       .getOrElse(Right(()))
@@ -168,8 +163,8 @@ object ConfigTextEdit:
       path match
         case Nil          => Written.Nowhere
         case word :: rest =>
-          val at = SettingKey.either((seen :+ word).mkString(".")).toOption
-          Try(Option(obj.get(word))) match
+          val at = SettingKey.either((seen :+ word.value).mkString(".")).toOption
+          Try(Option(obj.get(word.value))) match
             case scala.util.Failure(_)       => Written.Substituted(at.getOrElse(key))
             case scala.util.Success(None)    => Written.Nowhere
             case scala.util.Success(Some(v)) =>
@@ -179,11 +174,11 @@ object ConfigTextEdit:
               )
               else
                 v match
-                  case o: ConfigObject if Try(o.keySet).isSuccess => down(o, rest, seen :+ word)
+                  case o: ConfigObject if Try(o.keySet).isSuccess => down(o, rest, seen :+ word.value)
                   case o: ConfigObject                            => Written.Substituted(at.getOrElse(key))
                   // a single value where the block of `key` belongs: setting `key` replaces it
                   case other => if here(other.origin) then Written.Nowhere else Written.Elsewhere(fileOf(other.origin))
     down(current.root, key.segments, Nil)
 
   private def fileOf(o: ConfigOrigin): com.histmersion.config.edit.SettingsFile.Path =
-    Option(o.filename).orElse(Option(o.url).map(_.toString)).getOrElse(o.description)
+    SettingsFile.Path(Option(o.filename).orElse(Option(o.url).map(_.toString)).getOrElse(o.description))

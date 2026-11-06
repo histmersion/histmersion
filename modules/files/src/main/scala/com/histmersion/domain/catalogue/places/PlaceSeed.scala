@@ -7,10 +7,6 @@ package com.histmersion.domain.catalogue.places
   */
 import com.histmersion.domain.catalogue.Place
 object PlaceSeed:
-  type DirKind = DirKind.T
-  object DirKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileName = FileName.T
-  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One entry of a seed directory: its name, whether it is a directory, and the caller's handle to it. */
 
@@ -19,7 +15,8 @@ object PlaceSeed:
 
   object Entry:
     type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given Ordering[T] = Ordering.by[T, String](_.value)
     type Directory = Directory.T
     object Directory extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -28,17 +25,18 @@ object PlaceSeed:
     * a file comes from its directory — `polities/` → `polity` — and a feature that declares its own `kind` always wins
     * over it. `top` is what the seed directory holds, `list` what a subdirectory holds.
     */
-  def files[K](top: List[Entry[K]], list: K => List[Entry[K]]): List[(K, Option[com.histmersion.domain.catalogue.places.PlaceSeed.FileName])] =
-    def isSeed(e: Entry[K]) = !e.directory && (e.name.endsWith(".json") || e.name.endsWith(".geojson"))
+  def files[K](top: List[Entry[K]], list: K => List[Entry[K]]): List[(K, Option[com.histmersion.domain.catalogue.Place.Kind.Wire])] =
+    def isSeed(e: Entry[K]) = !e.directory.value && (e.name.value.endsWith(".json") || e.name.value.endsWith(".geojson"))
 
     /** `polities` → `polity`, `sites` → `site`, `regions` → `region`; anything else → no override. */
-    def dirKind(name: com.histmersion.domain.catalogue.places.PlaceSeed.DirKind) =
-      val singular = if name.endsWith("ies") then name.dropRight(3) + "y"
-      else if name.endsWith("s") then name.dropRight(1)
-      else name
-      Place.Kind.parse(singular)
+    def dirKind(name: com.histmersion.domain.catalogue.places.PlaceSeed.Entry.Name) =
+      val n = name.value
+      val singular = if n.endsWith("ies") then n.dropRight(3) + "y"
+      else if n.endsWith("s") then n.dropRight(1)
+      else n
+      Place.Kind.parse(Place.Kind.Wire(singular))
     val entries = top.sortBy(_.name)
     entries.filter(isSeed).map(_.at -> None) ++
-      entries.filter(_.directory).flatMap { sub =>
+      entries.filter(_.directory.value).flatMap { sub =>
         list(sub.at).sortBy(_.name).filter(isSeed).map(_.at -> dirKind(sub.name))
       }

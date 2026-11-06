@@ -9,19 +9,19 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * for a goal less than `maxGoalDepth` levels below a root goal (0 = a root).
   */
 final case class AutoApprovalsConfig(
-    articlesPerGoalPerDay: AutoApprovalsConfig.ArticlesPerGoalPerDay = 6,
-    publishPerDay: AutoApprovalsConfig.PublishPerDay = 10,
-    goalPlansPerDay: AutoApprovalsConfig.GoalPlansPerDay = 5,
-    publishMinSources: AutoApprovalsConfig.PublishMinSources = 3,
-    maxGoalDepth: AutoApprovalsConfig.MaxGoalDepth = 2,
+    articlesPerGoalPerDay: AutoApprovalsConfig.ArticlesPerGoalPerDay = AutoApprovalsConfig.ArticlesPerGoalPerDay(6),
+    publishPerDay: AutoApprovalsConfig.PublishPerDay = AutoApprovalsConfig.PublishPerDay(10),
+    goalPlansPerDay: AutoApprovalsConfig.GoalPlansPerDay = AutoApprovalsConfig.GoalPlansPerDay(5),
+    publishMinSources: AutoApprovalsConfig.PublishMinSources = AutoApprovalsConfig.PublishMinSources(3),
+    maxGoalDepth: AutoApprovalsConfig.MaxGoalDepth = AutoApprovalsConfig.MaxGoalDepth(2),
     /** The daily caps scaled to the backlog (#3762 proposal 3): with a share above 0 a day's cap is
       * `max(cap, ⌈open approvals of the kind × share⌉)`, at most the ceiling ([[AutopilotPolicy.scaledCap]]); 0 keeps
       * the fixed cap.
       */
-    goalPlansBacklogShare: AutoApprovalsConfig.GoalPlansBacklogShare = 0,
-    goalPlansCeiling: AutoApprovalsConfig.GoalPlansCeiling = 50,
-    publishBacklogShare: AutoApprovalsConfig.PublishBacklogShare = 0,
-    publishCeiling: AutoApprovalsConfig.PublishCeiling = 50
+    goalPlansBacklogShare: AutoApprovalsConfig.GoalPlansBacklogShare = AutoApprovalsConfig.GoalPlansBacklogShare(0.0),
+    goalPlansCeiling: AutoApprovalsConfig.GoalPlansCeiling = AutoApprovalsConfig.GoalPlansCeiling(50),
+    publishBacklogShare: AutoApprovalsConfig.PublishBacklogShare = AutoApprovalsConfig.PublishBacklogShare(0.0),
+    publishCeiling: AutoApprovalsConfig.PublishCeiling = AutoApprovalsConfig.PublishCeiling(50)
 ) derives ConfigReader
 
 object AutoApprovalsConfig:

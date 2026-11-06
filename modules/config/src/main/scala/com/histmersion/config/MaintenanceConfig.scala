@@ -5,7 +5,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 /** `histmersion maintenance vacuum` (#1445): the tables it vacuums when none is named. */
 final case class MaintenanceConfig(vacuumTables: MaintenanceConfig.VacuumTables) derives ConfigReader:
   def tables: List[com.histmersion.config.MaintenanceConfig.Table] =
-    Option(vacuumTables).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct
+    Option(vacuumTables).toList.flatMap(_.value.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct.map(MaintenanceConfig.Table(_))
 
 object MaintenanceConfig:
   type Table = Table.T

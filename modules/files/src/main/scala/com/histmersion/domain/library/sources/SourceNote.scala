@@ -35,28 +35,30 @@ object SourceNote:
   private def frontmatterOf(s: Source): Frontmatter =
     Frontmatter(
       List(
-        "citekey" -> s.citekey.value,
-        "doi" -> s.doi.map(_.value).orNull,
-        "title" -> s.title.value,
-        "authors" -> s.authors.map(_.value).asJava,
-        "year" -> s.year.map(_.value.toInt).map(Int.box).orNull,
-        "venue" -> s.venue.map(_.value).orNull,
-        "source" -> s.provenance.orNull,
-        "calibre_id" -> s.calibreId.orNull,
-        "status" -> s.status.toString.toLowerCase,
+        field("citekey", s.citekey.value),
+        field("doi", s.doi.map(_.value).orNull),
+        field("title", s.title.value),
+        field("authors", s.authors.map(_.value).asJava),
+        field("year", s.year.map(_.value.toInt).map(Int.box).orNull),
+        field("venue", s.venue.map(_.value).orNull),
+        field("source", s.provenance.orNull),
+        field("calibre_id", s.calibreId.orNull),
+        field("status", s.status.toString.toLowerCase),
         // `superseded_by` is stored as an edge; Frontmatter turns this key back into that edge.
-        "superseded_by" -> s.edges.find(_.kind == Edge.Kind.SupersededBy).map(_.dst.value).orNull,
-        "topics" -> s.topics.asJava,
-        "regions" -> s.regions.asJava,
-        "tags" -> s.tags.asJava,
-        "period_start" -> s.period.map(p => Long.box(p.start.value)).orNull,
-        "period_end" -> s.period.map(p => Long.box(p.end.value)).orNull,
-        "cited_by_count" -> s.citedByCount.map(c => Int.box(c.value)).orNull,
-        "influential_citations" -> s.influentialCitations.map(c => Int.box(c.value)).orNull,
-        "summary" -> s.summary.orNull,
-        "findings" -> s.findings.map(finding).asJava
+        field("superseded_by", s.edges.find(_.kind == Edge.Kind.SupersededBy).map(_.dst.value).orNull),
+        field("topics", s.topics.asJava),
+        field("regions", s.regions.asJava),
+        field("tags", s.tags.asJava),
+        field("period_start", s.period.map(p => Long.box(p.start.value)).orNull),
+        field("period_end", s.period.map(p => Long.box(p.end.value)).orNull),
+        field("cited_by_count", s.citedByCount.map(c => Int.box(c.value)).orNull),
+        field("influential_citations", s.influentialCitations.map(c => Int.box(c.value)).orNull),
+        field("summary", s.summary.orNull),
+        field("findings", s.findings.map(finding).asJava)
       )
     )
+
+  private def field(key: String, value: Any): (Frontmatter.FieldsPart1, Any) = (Frontmatter.FieldsPart1(key), value)
 
   private def finding(f: Finding): java.util.Map[String, Any] =
     val m = new java.util.LinkedHashMap[String, Any]()
@@ -78,7 +80,7 @@ object SourceNote:
     * AGENT writes — and it used to be resolved and read with no bound at all. `None` keeps the old behaviour, for the
     * host-side workflow where the server legitimately sees the user's own tree.
     */
-  def parseFile(p: Path, confineTo: Option[SafePath.WithinBase])(using files: com.histmersion.util.storage.TextFiles): Option[Source] =
+  def parseFile(p: Path, confineTo: Option[SafePath.Base])(using files: com.histmersion.util.storage.TextFiles): Option[Source] =
     val text = Text(files.read(p).value)
     val fallbackCitekey = com.histmersion.api.library.Citekey(p.getFileName.toString.stripSuffix(".md"))
     parseNote(text, fallbackCitekey).map(src => src.modify(_.ocrMarkdown).setTo(fullText(p, yamlMap(text), confineTo)))
@@ -134,7 +136,7 @@ object SourceNote:
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root = three parents up
     * from `wiki/sources/<ck>.md`). None if absent.
     */
-  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[SafePath.WithinBase])(using files: com.histmersion.util.storage.TextFiles): Option[Source.OcrMarkdown] =
+  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[SafePath.Base])(using files: com.histmersion.util.storage.TextFiles): Option[Source.OcrMarkdown] =
     str(m, "md_path").flatMap { rel =>
       Option(notePath.getParent)
         .flatMap(a => Option(a.getParent))

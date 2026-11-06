@@ -13,6 +13,7 @@ object Identifiers:
   /** DOIs are case-insensitive, so they are kept lower-case. */
   def doi(raw: com.histmersion.upstreams.identifiers.Identifiers.DoiText): Option[com.histmersion.plugin.Doi] =
     val s = Option(raw)
+      .map(_.value)
       .getOrElse("")
       .trim
       .replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", "")
@@ -20,14 +21,16 @@ object Identifiers:
       .trim
     DoiCore
       .findFirstIn(s)
-      .map(
-        _root_.com.histmersion.plugin.Doi(_.stripSuffix(".")
-          .stripSuffix(",")
-          .stripSuffix(";")
-          .stripSuffix(")")
-          .stripSuffix("}")
-          .stripSuffix("|")
-          .toLowerCase)
+      .map(d =>
+        _root_.com.histmersion.plugin.Doi(
+          d.stripSuffix(".")
+            .stripSuffix(",")
+            .stripSuffix(";")
+            .stripSuffix(")")
+            .stripSuffix("}")
+            .stripSuffix("|")
+            .toLowerCase
+        )
       )
 
   def arxiv(raw: com.histmersion.upstreams.identifiers.Identifiers.ArxivText): Option[com.histmersion.upstreams.ArxivId] =

@@ -4,9 +4,9 @@ package com.histmersion.config
   * default), after every fix (`always`), or never.
   */
 enum FinalPanel(val wire: FinalPanel.Wire):
-  case Clear extends FinalPanel("clear")
-  case Always extends FinalPanel("always")
-  case Never extends FinalPanel("never")
+  case Clear extends FinalPanel(FinalPanel.Wire("clear"))
+  case Always extends FinalPanel(FinalPanel.Wire("always"))
+  case Never extends FinalPanel(FinalPanel.Wire("never"))
 
 object FinalPanel:
   type Wire = Wire.T
@@ -14,4 +14,4 @@ object FinalPanel:
 
 
   def parse(s: com.histmersion.config.AgentReviewConfig.FinalPanel): Option[FinalPanel] =
-    values.find(_.wire == Option(s).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT))
+    values.find(_.wire.value == Option(s).map(_.value).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT))

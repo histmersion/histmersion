@@ -4,20 +4,14 @@ import org.ekrich.config.Config
 
 /** The process environment, read once by the entry point and passed to whatever needs a variable. */
 final case class Environment(variables: Map[Environment.VariablesKey, Environment.VariablesValue]):
-  def get(name: com.histmersion.config.Environment.VariablesKey): Option[com.histmersion.config.Environment.GetResult] = variables.get(name)
+  def get(name: com.histmersion.config.Environment.VariablesKey): Option[com.histmersion.config.Environment.VariablesValue] = variables.get(name)
 
   /** A non-blank value, trimmed. */
-  def nonBlank(name: com.histmersion.config.Environment.VariablesKey): Option[com.histmersion.config.Environment.NonBlankResult] = get(name).map(_.trim).filter(_.nonEmpty)
+  def nonBlank(name: com.histmersion.config.Environment.VariablesKey): Option[com.histmersion.config.Environment.VariablesValue] = get(name).map(v => Environment.VariablesValue(v.value.trim)).filter(_.value.nonEmpty)
 
-  def lookup: com.histmersion.config.Environment.VariablesKey => Option[com.histmersion.config.Environment.LookupResultResult] = get
+  def lookup: com.histmersion.config.Environment.VariablesKey => Option[com.histmersion.config.Environment.VariablesValue] = get
 
 object Environment:
-  type GetResult = GetResult.T
-  object GetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NonBlankResult = NonBlankResult.T
-  object NonBlankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LookupResultResult = LookupResultResult.T
-  object LookupResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type VariablesKey = VariablesKey.T
   object VariablesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -29,4 +23,4 @@ object Environment:
   /** The environment as the settings were loaded with it ([[LoadedConfig.env]]). */
   def of(env: Config): Environment =
     val read = AppConfig.lookup(env)
-    Environment(env.root.keySet.toArray(Array.empty[String]).toList.flatMap(k => read(k).map(k -> _)).toMap)
+    Environment(env.root.keySet.toArray(Array.empty[String]).toList.flatMap(k => read(k).map(v => VariablesKey(k) -> VariablesValue(v))).toMap)

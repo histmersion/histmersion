@@ -24,7 +24,7 @@ final case class LandingConfig(
       */
     browserDownloadHosts: CommaList = CommaList("")
 ) derives ConfigReader:
-  def refusingHosts: List[com.histmersion.config.LandingConfig.RefusingHost] = browserDownloadHosts.entries
+  def refusingHosts: List[com.histmersion.config.LandingConfig.RefusingHost] = browserDownloadHosts.entries.map(e => LandingConfig.RefusingHost(e.value))
 
 object LandingConfig:
   type RefusingHost = RefusingHost.T

@@ -11,8 +11,8 @@ final case class MediaConfig(
     requestIntervalMs: MediaConfig.RequestIntervalMs,
     maxRetries: MediaConfig.MaxRetries,
     maxRetryAfterSeconds: MediaConfig.MaxRetryAfterSeconds,
-    defaultLimit: MediaConfig.DefaultLimit,
-    maxLimit: MediaConfig.MaxLimit,
+    defaultLimit: MediaConfig.Limit,
+    maxLimit: MediaConfig.Limit,
     displayPx: MediaConfig.DisplayPx,
     thumbPx: MediaConfig.ThumbPx,
     maxBytes: MediaConfig.MaxBytes,
@@ -37,7 +37,7 @@ final case class MediaConfig(
 ) derives ConfigReader:
   /** `--limit`, clamped to `1 … max-limit`; absent or ≤ 0 = `default-limit`. */
   def limit(asked: Option[com.histmersion.config.MediaConfig.Limit]): com.histmersion.config.MediaConfig.Limit =
-    asked.filter(_ > 0).getOrElse(defaultLimit).max(1).min(maxLimit.max(1))
+    MediaConfig.Limit(asked.filter(_.value > 0).getOrElse(defaultLimit).value.max(1).min(maxLimit.value.max(1)))
 
 object MediaConfig:
   type Limit = Limit.T
@@ -53,10 +53,6 @@ object MediaConfig:
   object MaxRetries extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxRetryAfterSeconds = MaxRetryAfterSeconds.T
   object MaxRetryAfterSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultLimit = DefaultLimit.T
-  object DefaultLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxLimit = MaxLimit.T
-  object MaxLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DisplayPx = DisplayPx.T
   object DisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThumbPx = ThumbPx.T

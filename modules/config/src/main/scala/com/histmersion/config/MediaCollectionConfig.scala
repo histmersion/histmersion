@@ -19,24 +19,24 @@ final case class MediaCollectionConfig(
     maxYear: MediaCollectionConfig.MaxYear,
     licences: MediaCollectionConfig.Licences,
     /** Seconds to wait, one step per 403 of a request, before asking again (#2561); "" = a 403 is final. */
-    refusalBackoffSeconds: MediaCollectionConfig.RefusalBackoffSeconds = "",
+    refusalBackoffSeconds: MediaCollectionConfig.RefusalBackoffSeconds = MediaCollectionConfig.RefusalBackoffSeconds(""),
     /** Comma-separated providers whose records are refused: Europeana's aggregators (`PROVIDER`, exact names), the
       * Smithsonian's units (`unit_code`).
       */
-    excludeProviders: MediaCollectionConfig.ExcludeProviders = "",
+    excludeProviders: MediaCollectionConfig.ExcludeProviders = MediaCollectionConfig.ExcludeProviders(""),
     /** Comma-separated fragments of Europeana institution names (`DATA_PROVIDER`) whose records are refused. */
-    excludeDataProviders: MediaCollectionConfig.ExcludeDataProviders = "",
+    excludeDataProviders: MediaCollectionConfig.ExcludeDataProviders = MediaCollectionConfig.ExcludeDataProviders(""),
     /** Comma-separated Europeana `dc:type` values whose records are refused. */
-    excludeTypes: MediaCollectionConfig.ExcludeTypes = ""
+    excludeTypes: MediaCollectionConfig.ExcludeTypes = MediaCollectionConfig.ExcludeTypes("")
 ) derives ConfigReader:
   /** [[refusalBackoffSeconds]] as milliseconds; an entry that is not a positive number is dropped. */
   def refusalBackoffMs: List[com.histmersion.config.MediaCollectionConfig.RefusalBackoffMs] =
     Option(refusalBackoffSeconds).toList
-      .flatMap(_.split(","))
+      .flatMap(_.value.split(","))
       .map(_.trim)
       .flatMap(_.toLongOption)
       .filter(_ > 0)
-      .map(_ * 1000)
+      .map(ms => MediaCollectionConfig.RefusalBackoffMs(ms * 1000))
 
 object MediaCollectionConfig:
   type RefusalBackoffMs = RefusalBackoffMs.T

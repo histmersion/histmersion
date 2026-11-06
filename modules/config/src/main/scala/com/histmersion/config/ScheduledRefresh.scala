@@ -13,10 +13,10 @@ object ScheduledRefresh:
   /** The configured minutes: 0 = off. */
 
   def fromMinutes(minutes: com.histmersion.config.Minutes): Either[com.histmersion.config.ScheduledRefresh.Problem, ScheduledRefresh] =
-    if minutes == 0 then Right(Off)
+    if minutes.value == 0 then Right(Off)
     else
       RefreshIntervalMinutes
-        .either(minutes)
+        .either(minutes.value)
         .map(Every(_))
         .left
-        .map(_ => s"$minutes is not 0 (off) or a positive number of minutes")
+        .map(_ => Problem(s"$minutes is not 0 (off) or a positive number of minutes"))

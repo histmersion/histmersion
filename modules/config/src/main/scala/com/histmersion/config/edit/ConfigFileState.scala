@@ -10,7 +10,7 @@ final case class ConfigFileState(
     text: Option[ConfigFileState.Text],
     version: FileVersion,
     parsed: Config,
-    own: ConfigOrigin => ConfigFileState.OwnResult
+    own: ConfigOrigin => Boolean
 ):
   /** Is `o` the file itself (not a file it includes)? */
   def here(o: ConfigOrigin): Boolean = own(o)
@@ -22,9 +22,6 @@ final case class ConfigFileState(
       case _               => None
 
 object ConfigFileState:
-  type OwnResult = OwnResult.T
-  object OwnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -13,17 +13,17 @@ final case class AgentWatchdogConfig(
     interruptedResumeMinutes: AgentWatchdogConfig.InterruptedResumeMinutes
 ) derives ConfigReader:
   def stallMinutesFor(p: AgentProvidersConfig): com.histmersion.config.AgentWatchdogConfig.StallMinutes =
-    if stallMinutes > 0 then stallMinutes
+    if stallMinutes.value > 0 then stallMinutes
     else
       val longest = List(
-        p.anthropic.timeoutSeconds,
-        p.openai.timeoutSeconds,
-        p.local.timeoutSeconds,
-        p.claudeCode.timeoutSeconds,
-        p.codex.timeoutSeconds,
-        p.opencode.timeoutSeconds
+        p.anthropic.timeoutSeconds.value,
+        p.openai.timeoutSeconds.value,
+        p.local.timeoutSeconds.value,
+        p.claudeCode.timeoutSeconds.value,
+        p.codex.timeoutSeconds.value,
+        p.opencode.timeoutSeconds.value
       ).max
-      (longest + 59) / 60 + 5
+      AgentWatchdogConfig.StallMinutes((longest + 59) / 60 + 5)
 
 object AgentWatchdogConfig:
 

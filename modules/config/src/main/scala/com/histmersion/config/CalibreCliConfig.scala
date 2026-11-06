@@ -21,8 +21,8 @@ final case class CalibreCliConfig(libraryDir: CalibreCliConfig.LibraryDir, calib
   private def expand(p: String): String =
     if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p
 
-  def library: com.histmersion.config.CalibreCliConfig.LibraryDir = expand(libraryDir)
-  def originals: Option[com.histmersion.config.CalibreCliConfig.OriginalsDir] = Option(originalsDir).map(expand).map(_.trim).filter(_.nonEmpty)
+  def library: com.histmersion.config.CalibreCliConfig.LibraryDir = CalibreCliConfig.LibraryDir(expand(libraryDir.value))
+  def originals: Option[com.histmersion.config.CalibreCliConfig.OriginalsDir] = Option(originalsDir).map(d => expand(d.value).trim).filter(_.nonEmpty).map(CalibreCliConfig.OriginalsDir(_))
 
 object CalibreCliConfig:
 

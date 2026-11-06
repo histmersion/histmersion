@@ -18,6 +18,6 @@ object FileVersion extends RefinedType[String, FileVersionRule]:
   val Missing: FileVersion = applyUnsafe("none")
 
   def of(text: Option[com.histmersion.config.edit.ConfigFileState.Text]): FileVersion = text.fold(Missing) { t =>
-    val d = MessageDigest.getInstance("SHA-256").digest(t.getBytes(StandardCharsets.UTF_8))
+    val d = MessageDigest.getInstance("SHA-256").digest(t.value.getBytes(StandardCharsets.UTF_8))
     applyUnsafe(d.map(b => f"${b & 0xff}%02x").mkString)
   }

@@ -24,14 +24,16 @@ final case class Limits(
     passages: PassageLimits
 ) derives ConfigReader:
   /** `ts_headline` counts words, not characters; ~6 chars per word is the usual English average. */
-  def snippetWords: com.histmersion.config.Limits.SnippetWords = math.max(1, snippetChars / 6)
+  def snippetWords: com.histmersion.config.Limits.SnippetWords = Limits.SnippetWords(math.max(1, snippetChars.value / 6))
 
   /** Clamp a caller's `limit` into `[1, maxPage]`; `<= 0` means "the caller gave none" and yields `dflt` (itself
     * capped). ONE definition, so no surface can forget the cap.
     */
   def page(limit: Option[com.histmersion.PageSize], dflt: com.histmersion.PageSize): com.histmersion.PageSize =
-    val cap = math.max(1, maxPage)
-    limit.filter(_ > 0).map(_.min(cap)).getOrElse(math.max(1, dflt).min(cap))
+    val cap = math.max(1, maxPage.value)
+    com.histmersion.PageSize.applyUnsafe(
+      limit.map(_.value).filter(_ > 0).map(_.min(cap)).getOrElse(math.max(1, dflt.value).min(cap))
+    )
 
 object Limits:
   type SnippetWords = SnippetWords.T

@@ -18,10 +18,10 @@ final case class ReviewManagerConfig(
     lowWater: ReviewManagerConfig.LowWater,
     refillBatch: ReviewManagerConfig.RefillBatch,
     staleAfterDays: ReviewManagerConfig.StaleAfterDays,
-    inferFilter: ReviewManagerConfig.InferFilter = true,
-    staleScanMinutes: ReviewManagerConfig.StaleScanMinutes = 60,
-    extendMinNew: ReviewManagerConfig.ExtendMinNew = 0,
-    extendCooldownDays: ReviewManagerConfig.ExtendCooldownDays = 14
+    inferFilter: ReviewManagerConfig.InferFilter = ReviewManagerConfig.InferFilter(true),
+    staleScanMinutes: ReviewManagerConfig.StaleScanMinutes = ReviewManagerConfig.StaleScanMinutes(60),
+    extendMinNew: ReviewManagerConfig.ExtendMinNew = ReviewManagerConfig.ExtendMinNew(0),
+    extendCooldownDays: ReviewManagerConfig.ExtendCooldownDays = ReviewManagerConfig.ExtendCooldownDays(14)
 ) derives ConfigReader
 
 object ReviewManagerConfig:

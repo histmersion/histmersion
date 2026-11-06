@@ -14,6 +14,7 @@ import org.ekrich.config.{
   ConfigValueFactory,
   ConfigValueType
 }
+import com.histmersion.config.edit.SettingKey
 import hearth.kindlings.sconfigderivation.ConfigDecodingError
 
 import java.nio.file.{Files, Path}
@@ -39,12 +40,6 @@ private[config] object ConfigLayers:
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type OpenBlocks = OpenBlocksValue
-  type OpenBlocksValue = OpenBlocksValue.T
-  object OpenBlocksValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InOpenBlockKeys = InOpenBlockKeys.T
-  object InOpenBlockKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   def reference: Config = ConfigFactory.parseResources("reference.conf")
 
   /** The env-override layer: `histmersion.<key> = <value of its variable>` for every key of `reference` whose `${?VAR}`
@@ -58,9 +53,9 @@ private[config] object ConfigLayers:
   /** Every key the user file sets (full paths, sorted), each with whether its value is a block. Unresolved values are
     * leaves; an object that cannot be listed (a delayed merge) is one too.
     */
-  private def leaves(obj: ConfigObject, prefix: List[String]): List[(List[String], Boolean)] =
+  private def leaves(obj: ConfigObject, prefix: List[SettingKey.Segment]): List[(List[SettingKey.Segment], Boolean)] =
     obj.keySet.asScala.toList.sorted.flatMap { k =>
-      val p = prefix :+ k
+      val p = prefix :+ SettingKey.Segment(k)
       obj.get(k) match
         case o: ConfigObject =>
           Try(leaves(o, p)).toOption match
@@ -84,21 +79,23 @@ private[config] object ConfigLayers:
   /** Blocks whose keys are the user's own (a map, e.g. the variables of the `claude` CLI's environment), not a fixed
     * set of settings: any key under one is known, and its value — any string, or null — is left to the reader.
     */
-  val OpenBlocks: List[List[com.histmersion.config.ConfigLayers.OpenBlocks]] = List(
-    List("histmersion", "agents", "providers", "claude-code", "env"),
+  val OpenBlocks: List[List[SettingKey.Segment]] = List(
+    words("histmersion", "agents", "providers", "claude-code", "env"),
     // each plugin's block is checked by the plugin host against THAT plugin's defaults resource
     // (com.histmersion.pluginhost.PluginHost.typeCheck), so `order` and every `<id> { … }` are open here
-    List("histmersion", "plugins"),
+    words("histmersion", "plugins"),
     // one allowlist per media collection a plugin registers, by the collection's id
-    List("histmersion", "media", "collections", "per-collection")
+    words("histmersion", "media", "collections", "per-collection")
   )
 
-  private def inOpenBlock(keys: List[com.histmersion.config.ConfigLayers.InOpenBlockKeys]): Boolean =
+  private def words(ws: String*): List[SettingKey.Segment] = ws.toList.map(SettingKey.Segment(_))
+
+  private def inOpenBlock(keys: List[SettingKey.Segment]): Boolean =
     OpenBlocks.exists(b => keys.length > b.length && keys.startsWith(b))
 
   def check(user: Config, known: Config): Either[com.histmersion.config.ConfigLayers.Problem, Keys] =
     @tailrec def loop(
-        rest: List[(List[String], Boolean)],
+        rest: List[(List[SettingKey.Segment], Boolean)],
         settings: List[com.histmersion.config.ConfigLayers.Keys.Settings],
         unknown: List[com.histmersion.config.ConfigLayers.Keys.Unknown]
     ): Either[com.histmersion.config.ConfigLayers.Problem, Keys] =
@@ -106,12 +103,12 @@ private[config] object ConfigLayers:
         case Nil                                    => Right(Keys(settings, unknown))
         case (keys, _) :: tail if inOpenBlock(keys) => loop(tail, settings, unknown)
         case (keys, isBlock) :: tail                =>
-          val path = ConfigUtil.joinPath(keys.asJava)
-          if !Try(known.hasPathOrNull(path)).getOrElse(false) then loop(tail, settings, unknown :+ path)
+          val path = ConfigUtil.joinPath(keys.map(_.value).asJava)
+          if !Try(known.hasPathOrNull(path)).getOrElse(false) then loop(tail, settings, unknown :+ Keys.Unknown(path))
           else if Try(known.getValue(path).valueType == ConfigValueType.OBJECT).getOrElse(false) then
             if isBlock then loop(tail, settings, unknown)
-            else Left(s"'$path' is a block of settings ($path { … }), not a single value")
-          else loop(tail, settings :+ path, unknown)
+            else Left(Problem(s"'$path' is a block of settings ($path { … }), not a single value"))
+          else loop(tail, settings :+ Keys.Settings(path), unknown)
     loop(leaves(user.root, Nil), Nil, Nil)
 
   /** Each setting the user file sets against the KIND of value reference.conf has there. The derived readers do not say
@@ -122,14 +119,14 @@ private[config] object ConfigLayers:
   def typeCheck(settings: List[com.histmersion.config.ConfigLayers.Keys.Settings], merged: Config, known: Config): Either[com.histmersion.config.ConfigLayers.Problem, Unit] =
     settings.iterator
       .flatMap(path =>
-        (Try(known.getValue(path)).toOption, Try(merged.getValue(path)).toOption) match
+        (Try(known.getValue(path.value)).toOption, Try(merged.getValue(path.value)).toOption) match
           case (Some(k), Some(v)) => mismatch(path, k, v)
           case _                  => None
       )
       .nextOption()
       .toLeft(())
 
-  private def mismatch(path: String, k: ConfigValue, v: ConfigValue): Option[com.histmersion.config.ConfigLayers.Problem] =
+  private def mismatch(path: Keys.Settings, k: ConfigValue, v: ConfigValue): Option[com.histmersion.config.ConfigLayers.Problem] =
     import ConfigValueType.*
     def text = Option(v.unwrapped).map(_.toString.trim).getOrElse("")
     def shown = v.render(ConfigRenderOptions.concise)
@@ -140,15 +137,15 @@ private[config] object ConfigLayers:
       case STRING => (v.valueType == STRING || v.valueType == NUMBER || v.valueType == BOOLEAN, "a string")
       case LIST   => (v.valueType == LIST, "a list [ … ]")
       case _      => (true, "")
-    Option.unless(ok)(s"'$path' must be $want, not $shown")
+    Option.unless(ok)(Problem(s"'$path' must be $want, not $shown"))
 
   /** `file` as HOCON; `None` when there is no such file. */
   def parse(file: Path): Either[com.histmersion.config.ConfigLayers.Problem, Option[Config]] =
     if !Files.exists(file) then Right(None)
-    else if !Files.isRegularFile(file) then Left(s"$file is not a file")
+    else if !Files.isRegularFile(file) then Left(Problem(s"$file is not a file"))
     else
       try Right(Some(ConfigFactory.parseFile(file.toFile, ConfigParseOptions.defaults.setAllowMissing(false))))
-      catch case e: ConfigException => Left(e.getMessage)
+      catch case e: ConfigException => Left(Problem(e.getMessage))
 
   /** Is `o` the origin of `file` itself, not of a file it includes? */
   def sameFile(o: ConfigOrigin, file: Path): Boolean =
@@ -159,10 +156,10 @@ private[config] object ConfigLayers:
   /** A decoding error as `<key>: <what is wrong>`, the key spelled as it is in the file. */
   def describe(err: ConfigDecodingError): com.histmersion.config.ConfigLayers.Problem =
     err match
-      case ConfigDecodingError.Multiple(errs) => errs.toList.map(describe).mkString("; ")
+      case ConfigDecodingError.Multiple(errs) => Problem(errs.toList.map(describe).mkString("; "))
       case e                                  =>
         val key = ("histmersion" :: e.path).mkString(".")
-        s"$key: ${e.message}"
+        Problem(s"$key: ${e.message}")
 
   /** The three layers resolved: env overrides > `user` > reference.conf, with the environment also available to
     * substitutions (`${?VAR}`) in the user file.
