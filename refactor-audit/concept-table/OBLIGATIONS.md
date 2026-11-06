@@ -32,3 +32,11 @@ Review too: `StorageConfig.lowFreeBytes` uses `ByteCount.option(...).getOrElse(z
 5. `X.option` / `X.either` on a type that lost its constraint now always succeeds, silently dropping validation (decision #8868's side effect). Found: `WorkLookup.key` with plugin-api's `Doi`; restored at the call. Check every such call against 7e197c2b: a check it relied on must move to the boundary.
 
 Test input to review: `BundleTar.header(..., ByteCount.assume(-1L))` keeps the old `isLeft` assertion past the constraint; compare with the `parseHeader` behaviour note above.
+
+## Regressions to restore in core
+
+- Model answers (`EvidenceAnswer`, `SpotCheckAnswer`, `RejectionAnswer`): citekey fields became refined `Citekey`, so stripping `[[x]]`, trimming and lower-casing are gone and a bracketed citekey fails decoding. These answers are a boundary: accept raw text, normalise, then produce the `Citekey`. Check against 7e197c2b.
+- `ArticleDraft.notUsed` holds `"ck: reason"` lines typed as `Citekey`, and `problems`, `section`, `text`, `filter` are wrapped the same way: give them real concepts.
+- `MergePlanner` `matched0` went to `List[String]`; `AgentVerify` is reached through private String helpers in `ReviewArticle` (G3 will move these onto types).
+
+Found and fixed, generic-call class: `Merged.deferred.contains(f.id)` was always false.
