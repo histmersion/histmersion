@@ -36,4 +36,3 @@ trait EventCard:
   def leads: List[EventLead]
   def corrections: List[Correction]
 
-object EventCard:

@@ -19,4 +19,3 @@ object Period:
     def message: com.histmersion.Period.Problem = this match
       case EndsBeforeStart(s, e) => _root_.com.histmersion.Period.Problem(s"the period ends (${e.value}) before it starts (${s.value})")
 
-  object Error:

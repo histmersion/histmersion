@@ -15,4 +15,3 @@ object Version:
 
   final case class Info(name: Info.Name, version: Info.Version) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Info:

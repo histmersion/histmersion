@@ -10,7 +10,6 @@ object LatinFold:
   type PairsValue = PairsValue.T
   object PairsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldCharC = Char
-  val FoldCharC: Char.type = Char
 
   private val Pairs: com.histmersion.api.LatinFold.Pairs =
     // Latin-1 Supplement

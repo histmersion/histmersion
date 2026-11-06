@@ -17,7 +17,6 @@ object Citekey extends RefinedType[String, CitekeyRule]:
 
   /** A citekey from what a person or a client typed (trimmed), or why it is none. */
   type ValidRaw = String
-  val ValidRaw: String.type = String
 
   def parse(raw: String): Either[com.histmersion.domain.library.Citekey.Problem, Citekey] =
     val s = Option(raw).map((_).value.trim).getOrElse("")

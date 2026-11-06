@@ -92,7 +92,6 @@ object Agents:
       val n = (d: BigDecimal) => d.bigDecimal.stripTrailingZeros.toPlainString
       ((List(input, output) ++ cacheRead.zip(cacheWrite).toList.flatMap((r, w) => List(r, w))).map(n).mkString("/"))
 
-  object Price:
 
   enum Billing:
     case Plan(pool: PlanQuota.PoolId)
@@ -106,7 +105,6 @@ object Agents:
       case Plan(p)    => (s"plan pool: ${p.wire}")
       case Metered(p) => (s"price: ${p.text} USD per million tokens")
 
-  object Billing:
 
   object Prices:
     type Problem = Problem.T

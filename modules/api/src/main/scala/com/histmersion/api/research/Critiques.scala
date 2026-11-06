@@ -27,11 +27,8 @@ object Critiques:
   type ParagraphsResult = _root_.com.histmersion.api.research.Critiques.Block.Text
   val ParagraphsResult: _root_.com.histmersion.api.research.Critiques.Block.Text.type = _root_.com.histmersion.api.research.Critiques.Block.Text
   type ParagraphsBody = String
-  val ParagraphsBody: String.type = String
   type BuildBody = String
-  val BuildBody: String.type = String
   type TogetherBody = String
-  val TogetherBody: String.type = String
   type MethodPartResult = MethodPartResult.T
   object MethodPartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkdownResult = MarkdownResult.T
