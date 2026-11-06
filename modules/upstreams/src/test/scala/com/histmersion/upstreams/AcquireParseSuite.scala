@@ -104,10 +104,10 @@ class AcquireParseSuite extends munit.FunSuite:
 
   test("Unpaywall → whether a free copy exists, its status and the best location (#599)"):
     val a = AcquireParse.unpaywallAccess(fixture("unpaywall.json"))
-    assertEquals(a, OaAccess(isOa = true, status = Some("green"), url = Some("https://arxiv.org/pdf/1502.02783")))
+    assertEquals(a, OaAccess(isOa = com.histmersion.upstreams.unpaywall.OaAccess.IsOa(true), status = Some(com.histmersion.upstreams.unpaywall.OaAccess.Status("green")), url = Some(com.histmersion.upstreams.unpaywall.OaAccess.Url("https://arxiv.org/pdf/1502.02783"))))
     val closed =
       io.circe.parser.parse("""{"is_oa": false, "oa_status": "closed", "best_oa_location": null}""").toOption.get
-    assertEquals(AcquireParse.unpaywallAccess(closed), OaAccess(isOa = false, status = Some("closed"), url = None))
+    assertEquals(AcquireParse.unpaywallAccess(closed), OaAccess(isOa = com.histmersion.upstreams.unpaywall.OaAccess.IsOa(false), status = Some(com.histmersion.upstreams.unpaywall.OaAccess.Status("closed")), url = None))
 
   // ── Semantic Scholar ────────────────────────────────────────────────────────────────────────
   test("S2 citations carry intents, influence and contexts"):
@@ -121,14 +121,14 @@ class AcquireParseSuite extends munit.FunSuite:
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
   test("a public archive.org item lists its downloadable files"):
-    val i = AcquireParse.archiveItem("racesofeurope031695mbp", fixture("archive_metadata.json"))
+    val i = AcquireParse.archiveItem(com.histmersion.upstreams.ArchiveId("racesofeurope031695mbp"), fixture("archive_metadata.json"))
     assertEquals(i.title, Some("The Races Of Europe"))
     assertEquals(i.year, Some(1939))
     assert(!i.lendingOnly)
     assertEquals(i.files.map(_.name).sorted, List("racesofeurope031695mbp.epub", "racesofeurope031695mbp.pdf"))
 
   test("a lending-only item is detected — it is NEVER downloaded"):
-    val i = AcquireParse.archiveItem("blackathenaafroa00bern", fixture("archive_lending.json"))
+    val i = AcquireParse.archiveItem(com.histmersion.upstreams.ArchiveId("blackathenaafroa00bern"), fixture("archive_lending.json"))
     assert(i.lendingOnly, "access-restricted-item=true must set lendingOnly")
 
   test("archive.org search docs → items"):
@@ -138,12 +138,12 @@ class AcquireParseSuite extends munit.FunSuite:
 
   test("file choice prefers clean text (epub / OCR _text.pdf) over the raw image scan"):
     val files = List(
-      ArchiveFile("book.pdf", Some("Image Container PDF"), 400.0),
-      ArchiveFile("book_text.pdf", Some("Text PDF"), 12.0),
-      ArchiveFile("book.epub", Some("EPUB"), 3.0)
+      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book.pdf"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("Image Container PDF")), 400.0),
+      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book_text.pdf"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("Text PDF")), 12.0),
+      ArchiveFile(com.histmersion.upstreams.archiveorg.ArchiveFile.Name("book.epub"), Some(com.histmersion.upstreams.archiveorg.ArchiveFile.Format("EPUB")), 3.0)
     )
     assertEquals(AcquireParse.pickArchiveFile(files, None).map(_.name), Some("book.epub"))
-    assertEquals(AcquireParse.pickArchiveFile(files, Some("pdf")).map(_.name), Some("book_text.pdf"))
+    assertEquals(AcquireParse.pickArchiveFile(files, Some(com.histmersion.upstreams.parse.AcquireParse.WantedFileKind("pdf"))).map(_.name), Some("book_text.pdf"))
     assertEquals(AcquireParse.pickArchiveFile(Nil, None), None)
 
   // ── Wikipedia ───────────────────────────────────────────────────────────────────────────────
@@ -190,8 +190,8 @@ class AcquireParseSuite extends munit.FunSuite:
 
   test("the page title is taken from an article URL"):
     assertEquals(
-      AcquireParse.wikiPageTitle("https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse"),
+      AcquireParse.wikiPageTitle(com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url("https://en.wikipedia.org/wiki/Late_Bronze_Age_collapse")),
       Some("Late_Bronze_Age_collapse")
     )
-    assertEquals(AcquireParse.wikiPageTitle("https://en.wikipedia.org/wiki/Hittites#History"), Some("Hittites"))
-    assertEquals(AcquireParse.wikiPageTitle("Hittites"), Some("Hittites"))
+    assertEquals(AcquireParse.wikiPageTitle(com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url("https://en.wikipedia.org/wiki/Hittites#History")), Some("Hittites"))
+    assertEquals(AcquireParse.wikiPageTitle(com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url("Hittites")), Some("Hittites"))
