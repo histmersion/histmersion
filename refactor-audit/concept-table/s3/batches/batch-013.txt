@@ -1,0 +1,343 @@
+## CONCEPTS NEARBY
+com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Kind (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Descriptions (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.End (Long)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.FeatureTypes (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Kind (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Start (Long)
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.TimePeriods (String)
+com.histmersion.domain.catalogue.places.PlaceReview.ExtantYearValue (Long)
+com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.ItemClass (String)
+com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.Ref (String)
+com.histmersion.domain.catalogue.places.PlaceReview.PeopleTypesValue (String)
+com.histmersion.domain.catalogue.places.PlaceReview.PolityTypesValue (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Evidence (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Id (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Into (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.IntoLabel (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Label (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Reason (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.Evidence (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.From (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.Id (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.Label (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.Reason (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.To (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Evidence (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Id (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Label (String)
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Reason (String)
+com.histmersion.domain.catalogue.places.PlaceReview.SiteTypesValue (String)
+com.histmersion.domain.catalogue.places.PlaceReview.WikidataPolityValue (String)
+com.histmersion.domain.catalogue.places.PointAreas.Group.Kind (String)
+com.histmersion.domain.catalogue.places.PointAreas.Group.Places (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Group.Source (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Alone (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Findings (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Id (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Kind (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Label (String)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Pinned (Int)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Source (String)
+com.histmersion.domain.library.acquisition.Ident.Arxiv.Value (String)
+com.histmersion.domain.library.acquisition.Ident.Citekey.Value (String)
+com.histmersion.domain.library.acquisition.Ident.Doi.Value (String)
+com.histmersion.domain.library.findings.FindingPlan.Match.Near.Jaccard (Double)
+
+## TYPES TO DECIDE
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName | base String | generated | method-parameter
+    def layer(name: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName, points: Seq[TilePoint]): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerResult | base Array[Byte] | generated | method-result
+    def layer(name: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName, points: Seq[TilePoint]): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.MessageNumber | base Int | generated | method-parameter
+    private def message(out: ByteArrayOutputStream, number: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.MessageNumber, payload: com.histmersion.domain.catalogu
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.MessagePayload | base Array[Byte] | generated | method-parameter
+    private def message(out: ByteArrayOutputStream, number: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.MessageNumber, payload: com.histmersion.domain.catalogu
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.TileLayersPart1 | base String | generated | method-parameter
+    def tile(layers: Seq[(com.histmersion.domain.catalogue.maptiles.VectorTileWriter.TileLayersPart1, Seq[TilePoint])]): com.histmersion.domain.catalogue.maptiles.VectorTileW
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.TileResult | base Array[Byte] | generated | method-result
+    def tile(layers: Seq[(com.histmersion.domain.catalogue.maptiles.VectorTileWriter.TileLayersPart1, Seq[TilePoint])]): com.histmersion.domain.catalogue.maptiles.VectorTileW
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ValueResult | base Array[Byte] | generated | method-result
+    private def value(v: TileValue): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ValueResult =
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintFieldNumber | base Int | generated | method-parameter
+    private def varintField(out: ByteArrayOutputStream, number: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintFieldNumber, v: com.histmersion.domain.catalo
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV | base Long | generated | alias,method-parameter
+    val VarintFieldV: _root_.com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV.type = _root_.com.histmersion.domain.catalogue.maptiles.VectorTileWriter.Varin
+    private def varint(out: ByteArrayOutputStream, v: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV): Unit =
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ZigzagN | base Long | generated | method-parameter
+    def zigzag(n: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ZigzagN): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ZigzagResult = (n << 1) ^ (n
+com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ZigzagResult | base Long | generated | method-result
+    def zigzag(n: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ZigzagN): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ZigzagResult = (n << 1) ^ (n
+com.histmersion.domain.catalogue.periods.PeriodPlan.InfoBundleLabel | base String | generated | method-parameter
+    def info(label: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoBundleLabel): com.hist
+com.histmersion.domain.catalogue.periods.PeriodPlan.InfoLabel | base String | generated | method-parameter
+    def info(label: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoBundleLabel): com.hist
+com.histmersion.domain.catalogue.periods.PeriodPlan.InfoResult | base String | generated | method-result
+    def info(label: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoBundleLabel): com.hist
+com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdMapPart1 | base String | generated | value
+    val periodIdMap: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdMapPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdM
+com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdMapPart2 | base String | generated | value
+    val periodIdMap: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdMapPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdM
+com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart1 | base String | generated | method-parameter
+    def repoint(es: BundleEntities, periods: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.
+com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart2 | base String | generated | method-parameter
+    def repoint(es: BundleEntities, periods: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.
+com.histmersion.domain.catalogue.periods.PeriodPlan.SamePeriodResult | base Boolean | generated | method-result
+com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdNumPrefix | base String | generated | method-parameter
+    def num(prefix: com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdNumPrefix) = Option.when(s.startsWith(prefix))(s.drop(prefix.length)).filter(_.matches("[0-9]
+com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdResultPart1 | base String | generated | method-result
+    def ofPlaceId(placeId: com.histmersion.domain.catalogue.Place.Id): Option[(com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdResultPart1, com.histmersion.domai
+com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdResultPart2 | base String | generated | method-result
+    def ofPlaceId(placeId: com.histmersion.domain.catalogue.Place.Id): Option[(com.histmersion.domain.catalogue.places.ExternalIds.OfPlaceIdResultPart1, com.histmersion.domai
+com.histmersion.domain.catalogue.places.ExternalIds.OfResultPart1 | base String | generated | method-result
+    def of(uri: com.histmersion.domain.catalogue.places.ExternalIds.OfUri): Option[(com.histmersion.domain.catalogue.places.ExternalIds.OfResultPart1, com.histmersion.domain.
+com.histmersion.domain.catalogue.places.ExternalIds.OfResultPart2 | base String | generated | method-result
+    def of(uri: com.histmersion.domain.catalogue.places.ExternalIds.OfUri): Option[(com.histmersion.domain.catalogue.places.ExternalIds.OfResultPart1, com.histmersion.domain.
+com.histmersion.domain.catalogue.places.ExternalIds.OfUri | base String | generated | method-parameter
+    def of(uri: com.histmersion.domain.catalogue.places.ExternalIds.OfUri): Option[(com.histmersion.domain.catalogue.places.ExternalIds.OfResultPart1, com.histmersion.domain.
+com.histmersion.domain.catalogue.places.ExternalIds.ShowIdPart1 | base String | generated | method-parameter
+    def show(id: (com.histmersion.domain.catalogue.places.ExternalIds.ShowIdPart1, com.histmersion.domain.catalogue.places.ExternalIds.ShowIdPart2)): com.histmersion.domain.c
+com.histmersion.domain.catalogue.places.ExternalIds.ShowIdPart2 | base String | generated | method-parameter
+    def show(id: (com.histmersion.domain.catalogue.places.ExternalIds.ShowIdPart1, com.histmersion.domain.catalogue.places.ExternalIds.ShowIdPart2)): com.histmersion.domain.c
+com.histmersion.domain.catalogue.places.ExternalIds.ShowResult | base String | generated | method-result
+    def show(id: (com.histmersion.domain.catalogue.places.ExternalIds.ShowIdPart1, com.histmersion.domain.catalogue.places.ExternalIds.ShowIdPart2)): com.histmersion.domain.c
+com.histmersion.domain.catalogue.places.PlacePlan.InfoBundleLabel | base String | generated | method-parameter
+    def info(label: com.histmersion.domain.catalogue.places.PlacePlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.places.PlacePlan.InfoBundleLabel): com.histmers
+com.histmersion.domain.catalogue.places.PlacePlan.InfoLabel | base String | generated | method-parameter
+    def info(label: com.histmersion.domain.catalogue.places.PlacePlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.places.PlacePlan.InfoBundleLabel): com.histmers
+com.histmersion.domain.catalogue.places.PlacePlan.InfoResult | base String | generated | method-result
+    def info(label: com.histmersion.domain.catalogue.places.PlacePlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.places.PlacePlan.InfoBundleLabel): com.histmers
+com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart1 | base String | generated | value
+    val placeIdMap: Map[com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart1, com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart2
+com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart2 | base String | generated | value
+    val placeIdMap: Map[com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart1, com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart2
+com.histmersion.domain.catalogue.places.PlacePlan.LocalizedRenameKeptPart2 | base String | generated | value
+    val renameKept: Map[UUID, com.histmersion.domain.catalogue.places.PlacePlan.LocalizedRenameKeptPart2] = renames.collect { case (p, ours, true) => p.uid -> ours }.toMap
+com.histmersion.domain.catalogue.places.PlacePlan.RenamedPlacesResultPart2 | base String | generated | method-result
+com.histmersion.domain.catalogue.places.PlacePlan.RenamedPlacesResultPart3 | base Boolean | generated | method-result
+com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart1 | base String | generated | method-parameter
+    def repoint(es: BundleEntities, places: Map[com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart1, com.histmersion.domain.catalogue.places.PlacePlan.Repoin
+com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart2 | base String | generated | method-parameter
+    def repoint(es: BundleEntities, places: Map[com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart1, com.histmersion.domain.catalogue.places.PlacePlan.Repoin
+com.histmersion.domain.catalogue.places.PlacePlan.SamePlaceResult | base Boolean | generated | method-result
+    def samePlace(l: com.histmersion.api.exchange.Bundle.Place, r: com.histmersion.api.exchange.Bundle.Place): com.histmersion.domain.catalogue.places.PlacePlan.SamePlaceResu
+com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Id | base String | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Kind | base String | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case None if e.kind == Place.Kind.Feature => None
+com.histmersion.domain.catalogue.places.PlaceReview.Candidate.Label | base String | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.DuplicateKeysName | base String | generated | method-parameter
+    def duplicateKeys(name: com.histmersion.domain.catalogue.places.PlaceReview.DuplicateKeysName): List[com.histmersion.domain.catalogue.places.PlaceReview.DuplicateKeysResu
+com.histmersion.domain.catalogue.places.PlaceReview.DuplicateKeysResult | base String | generated | method-result
+    def duplicateKeys(name: com.histmersion.domain.catalogue.places.PlaceReview.DuplicateKeysName): List[com.histmersion.domain.catalogue.places.PlaceReview.DuplicateKeysResu
+com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfLabel | base String | generated | method-parameter
+    def duplicateOf(label: com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfLabel): Option[com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfResult
+com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfResult | base String | generated | method-result
+    def duplicateOf(label: com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfLabel): Option[com.histmersion.domain.catalogue.places.PlaceReview.DuplicateOfResult
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Descriptions | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.End | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.FeatureTypes | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id | base String | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Kind | base String | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case None if e.kind == Place.Kind.Feature => None
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label | base String | original | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Start | base Long | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceReview.Evidence.TimePeriods | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceReview.EvidenceOfResult | base String | generated | method-result
+    def evidenceOf(e: Evidence): List[com.histmersion.domain.catalogue.places.PlaceReview.EvidenceOfResult] =
+com.histmersion.domain.catalogue.places.PlaceReview.ExtantYearValue | base Long | original | alias
+com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.ItemClass | base String | original | constructor-parameter
+    final case class LinkedItem(ref: LinkedItem.Ref, itemClass: Option[LinkedItem.ItemClass], period: Option[Period])
+com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.Ref | base String | original | constructor-parameter
+    final case class LinkedItem(ref: LinkedItem.Ref, itemClass: Option[LinkedItem.ItemClass], period: Option[Period])
+com.histmersion.domain.catalogue.places.PlaceReview.PeopleTypesValue | base String | original | alias
+com.histmersion.domain.catalogue.places.PlaceReview.PolityTypesValue | base String | original | alias
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DescribeResult | base String | generated | method-result
+    def describe: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DescribeResult = s"$id $detail"
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DetailEvE | base String | generated | method-parameter
+    def ev(e: List[com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DetailEvE]) = if e.isEmpty then "" else e.mkString(" [", "; ", "]")
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DetailResult | base String | generated | method-result
+    def detail: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.DetailResult =
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.FixableResult | base Boolean | generated | method-result
+    def fixable: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.FixableResult = this match
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.IdResult | base String | generated | method-result
+    def id: com.histmersion.domain.catalogue.places.PlaceReview.Proposal.IdResult
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Evidence | base String | generated | constructor-parameter
+    final case class Evidence(
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Id | base String | generated | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Into | base String | generated | constructor-parameter
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.IntoLabel | base String | generated | constructor-parameter
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Label | base String | generated | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Merge.Reason | base String | generated | constructor-parameter
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+    case Review(id: Proposal.Review.Id, label: Proposal.Review.Label, reason: Proposal.Review.Reason, evidence: List[Proposal.Review.Evidence])
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.Evidence | base String | generated | constructor-parameter
+    final case class Evidence(
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.From | base String | generated | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.Id | base String | generated | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.Label | base String | generated | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.Reason | base String | generated | constructor-parameter
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+    case Review(id: Proposal.Review.Id, label: Proposal.Review.Label, reason: Proposal.Review.Reason, evidence: List[Proposal.Review.Evidence])
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Reclassify.To | base String | generated | constructor-parameter
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Evidence | base String | generated | constructor-parameter
+    final case class Evidence(
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Id | base String | generated | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Label | base String | generated | constructor-parameter
+    final case class Candidate(id: Candidate.Id, label: Candidate.Label, kind: Candidate.Kind)
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+com.histmersion.domain.catalogue.places.PlaceReview.Proposal.Review.Reason | base String | generated | constructor-parameter
+    case Merge(id: Proposal.Merge.Id, label: Proposal.Merge.Label, into: Proposal.Merge.Into, intoLabel: Proposal.Merge.IntoLabel, reason: Proposal.Merge.Reason, evidence: Li
+    case Review(id: Proposal.Review.Id, label: Proposal.Review.Label, reason: Proposal.Review.Reason, evidence: List[Proposal.Review.Evidence])
+com.histmersion.domain.catalogue.places.PlaceReview.ProposeToKind | base String | generated | method-parameter
+    def to(kind: com.histmersion.domain.catalogue.places.PlaceReview.ProposeToKind, reason: com.histmersion.domain.catalogue.places.PlaceReview.ProposeToReason, period: Optio
+com.histmersion.domain.catalogue.places.PlaceReview.ProposeToReason | base String | generated | method-parameter
+    def to(kind: com.histmersion.domain.catalogue.places.PlaceReview.ProposeToKind, reason: com.histmersion.domain.catalogue.places.PlaceReview.ProposeToReason, period: Optio
+com.histmersion.domain.catalogue.places.PlaceReview.SiteTypesValue | base String | original | alias
+com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart1 | base String | generated | value
+    val WikidataClasses: Map[com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart1, com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart
+com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart2 | base String | generated | value
+    val WikidataClasses: Map[com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart1, com.histmersion.domain.catalogue.places.PlaceReview.WikidataClassesPart
+com.histmersion.domain.catalogue.places.PlaceReview.WikidataPolityValue | base String | original | alias
+com.histmersion.domain.catalogue.places.PointAreas.Dating.OfLowerInf | base Boolean | generated | method-parameter
+    def of(startUnknown: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfStartUnknown, lowerInf: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfLower
+com.histmersion.domain.catalogue.places.PointAreas.Dating.OfStartUnknown | base Boolean | generated | method-parameter
+    def of(startUnknown: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfStartUnknown, lowerInf: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfLower
+com.histmersion.domain.catalogue.places.PointAreas.Dating.OfUpperInf | base Boolean | generated | method-parameter
+    def of(startUnknown: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfStartUnknown, lowerInf: com.histmersion.domain.catalogue.places.PointAreas.Dating.OfLower
+com.histmersion.domain.catalogue.places.PointAreas.Dating.WireResult | base String | generated | method-result
+    def wire: com.histmersion.domain.catalogue.places.PointAreas.Dating.WireResult = this match
+com.histmersion.domain.catalogue.places.PointAreas.FixedFindings | base Int | generated | method-parameter
+    def fixed(removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, remaining: com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, findings
+com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining | base Int | generated | method-parameter
+    def fixed(removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, remaining: com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, findings
+com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved | base Int | generated | method-parameter
+    def fixed(removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, remaining: com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, findings
+com.histmersion.domain.catalogue.places.PointAreas.FixedResult | base String | generated | method-result
+    def fixed(removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, remaining: com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, findings
+com.histmersion.domain.catalogue.places.PointAreas.FixedSources | base Int | generated | method-parameter
+    def fixed(removed: com.histmersion.domain.catalogue.places.PointAreas.FixedRemoved, remaining: com.histmersion.domain.catalogue.places.PointAreas.FixedRemaining, findings
+com.histmersion.domain.catalogue.places.PointAreas.Group.Kind | base String | original | constructor-parameter
+    final case class Group(source: Group.Source, kind: Group.Kind, dating: Dating, places: Group.Places)
+com.histmersion.domain.catalogue.places.PointAreas.Group.Places | base Int | original | constructor-parameter
+    final case class Group(source: Group.Source, kind: Group.Kind, dating: Dating, places: Group.Places)
+com.histmersion.domain.catalogue.places.PointAreas.Group.Source | base String | original | constructor-parameter
+    final case class Group(source: Group.Source, kind: Group.Kind, dating: Dating, places: Group.Places)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Alone | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PointAreas.Listed.DetailResult | base String | generated | method-result
+    def detail: com.histmersion.domain.catalogue.places.PointAreas.Listed.DetailResult =
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Findings | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Id | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Kind | base String | original | constructor-parameter
+    final case class Group(source: Group.Source, kind: Group.Kind, dating: Dating, places: Group.Places)
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Label | base String | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Pinned | base Int | original | constructor-parameter
+com.histmersion.domain.catalogue.places.PointAreas.Listed.Source | base String | original | constructor-parameter
+    final case class Group(source: Group.Source, kind: Group.Kind, dating: Dating, places: Group.Places)
+com.histmersion.domain.catalogue.places.PointAreas.ReportMaxItems | base Int | generated | method-parameter
+com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeFoundPart1 | base String | generated | method-parameter
+com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeKnown | base String | generated | method-parameter
+com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeResultPart1Part1 | base String | generated | method-result
+com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeResultPart1Part3 | base String | generated | method-result
+com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeResultPart2Part1 | base String | generated | method-result
+com.histmersion.domain.library.acquisition.CandidateDedupe.DedupeResultPart2Part2 | base Int | generated | method-result
+com.histmersion.domain.library.acquisition.CandidateDedupe.KeyOfResult | base String | generated | method-result
+    def keyOf(w: WorkRef): Option[com.histmersion.domain.library.acquisition.CandidateDedupe.KeyOfResult] =
+com.histmersion.domain.library.acquisition.Ident.Arxiv.Value | base String | generated | constructor-parameter
+    case Doi(value: Ident.Doi.Value)
+    case Arxiv(value: Ident.Arxiv.Value)
+com.histmersion.domain.library.acquisition.Ident.ArxivRaw | base String | generated | method-parameter
+    def arxiv(raw: com.histmersion.domain.library.acquisition.Ident.ArxivRaw): Option[com.histmersion.domain.library.acquisition.Ident.ArxivResult] =
+com.histmersion.domain.library.acquisition.Ident.ArxivResult | base String | generated | method-result
+    def arxiv(raw: com.histmersion.domain.library.acquisition.Ident.ArxivRaw): Option[com.histmersion.domain.library.acquisition.Ident.ArxivResult] =
+com.histmersion.domain.library.acquisition.Ident.Citekey.Value | base String | generated | constructor-parameter
+    case Doi(value: Ident.Doi.Value)
+    case Arxiv(value: Ident.Arxiv.Value)
+com.histmersion.domain.library.acquisition.Ident.Doi.Value | base String | generated | constructor-parameter
+    case Doi(value: Ident.Doi.Value)
+    case Arxiv(value: Ident.Arxiv.Value)
+com.histmersion.domain.library.acquisition.Ident.DoiRaw | base String | generated | method-parameter
+    def doi(raw: com.histmersion.domain.library.acquisition.Ident.DoiRaw): Option[com.histmersion.domain.library.Doi] = DoiValue.normalize(raw)
+com.histmersion.domain.library.acquisition.Ident.IsCitekeyResult | base Boolean | generated | method-result
+    def isCitekey(s: com.histmersion.domain.library.acquisition.Ident.IsCitekeyS): com.histmersion.domain.library.acquisition.Ident.IsCitekeyResult =
+com.histmersion.domain.library.acquisition.Ident.IsCitekeyS | base String | generated | method-parameter
+    def isCitekey(s: com.histmersion.domain.library.acquisition.Ident.IsCitekeyS): com.histmersion.domain.library.acquisition.Ident.IsCitekeyResult =
+com.histmersion.domain.library.acquisition.Ident.ParseRaw | base String | generated | method-parameter
+    def parse(raw: com.histmersion.domain.library.acquisition.Ident.ParseRaw): Either[com.histmersion.domain.library.acquisition.Ident.ParseResultPart1, Ident] =
+com.histmersion.domain.library.acquisition.Ident.ParseResultPart1 | base String | generated | method-result
+    def parse(raw: com.histmersion.domain.library.acquisition.Ident.ParseRaw): Either[com.histmersion.domain.library.acquisition.Ident.ParseResultPart1, Ident] =
+com.histmersion.domain.library.findings.FindingPlan.CautionResult | base Int | generated | method-result
+    private def caution(c: Confidence): com.histmersion.domain.library.findings.FindingPlan.CautionResult = c match
+com.histmersion.domain.library.findings.FindingPlan.ClaimKeyClaim | base String | generated | method-parameter
+    def claimKey(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimKeyClaim): com.histmersion.domain.library.findings.FindingPlan.ClaimKeyResult = MergeText.sig
+com.histmersion.domain.library.findings.FindingPlan.ClaimKeyResult | base String | generated | method-result
+    def claimKey(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimKeyClaim): com.histmersion.domain.library.findings.FindingPlan.ClaimKeyResult = MergeText.sig
+com.histmersion.domain.library.findings.FindingPlan.ClaimWordsClaim | base String | generated | method-parameter
+    private def claimWords(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimWordsClaim): Set[com.histmersion.domain.library.findings.FindingPlan.ClaimWordsResu
+com.histmersion.domain.library.findings.FindingPlan.ClaimWordsResult | base String | generated | method-result
+    private def claimWords(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimWordsClaim): Set[com.histmersion.domain.library.findings.FindingPlan.ClaimWordsResu
+com.histmersion.domain.library.findings.FindingPlan.KmLat1 | base Double | generated | method-parameter
+    def km(lon1: com.histmersion.domain.library.findings.FindingPlan.KmLon1, lat1: com.histmersion.domain.library.findings.FindingPlan.KmLat1, lon2: com.histmersion.domain.li
+com.histmersion.domain.library.findings.FindingPlan.KmLat2 | base Double | generated | method-parameter
+    def km(lon1: com.histmersion.domain.library.findings.FindingPlan.KmLon1, lat1: com.histmersion.domain.library.findings.FindingPlan.KmLat1, lon2: com.histmersion.domain.li
+com.histmersion.domain.library.findings.FindingPlan.KmLon1 | base Double | generated | method-parameter
+    def km(lon1: com.histmersion.domain.library.findings.FindingPlan.KmLon1, lat1: com.histmersion.domain.library.findings.FindingPlan.KmLat1, lon2: com.histmersion.domain.li
+com.histmersion.domain.library.findings.FindingPlan.KmLon2 | base Double | generated | method-parameter
+    def km(lon1: com.histmersion.domain.library.findings.FindingPlan.KmLon1, lat1: com.histmersion.domain.library.findings.FindingPlan.KmLat1, lon2: com.histmersion.domain.li
+com.histmersion.domain.library.findings.FindingPlan.KmResult | base Double | generated | method-result
+    def km(lon1: com.histmersion.domain.library.findings.FindingPlan.KmLon1, lat1: com.histmersion.domain.library.findings.FindingPlan.KmLat1, lon2: com.histmersion.domain.li
+com.histmersion.domain.library.findings.FindingPlan.Match.Near.Jaccard | base Double | generated | constructor-parameter
+com.histmersion.domain.library.findings.FindingPlan.MatchesNearAtLeast | base Double | generated | method-parameter
+com.histmersion.domain.library.findings.FindingPlan.MatchesPairNearAccPart2Part2 | base Double | generated | method-parameter
+com.histmersion.domain.library.findings.FindingPlan.MatchesPairNearResultPart2Part2 | base Double | generated | method-result
+com.histmersion.domain.library.findings.FindingPlan.MatchesWithinKm | base Double | generated | method-parameter
+com.histmersion.domain.library.findings.FindingPlan.NextIdsCount | base Int | generated | method-parameter
+    def nextIds(citekey: com.histmersion.domain.library.Citekey, taken: Set[com.histmersion.domain.library.findings.FindingPlan.NextIdsTaken], count: com.histmersion.domain.l
+com.histmersion.domain.library.findings.FindingPlan.NextIdsResult | base String | generated | method-result
+    def nextIds(citekey: com.histmersion.domain.library.Citekey, taken: Set[com.histmersion.domain.library.findings.FindingPlan.NextIdsTaken], count: com.histmersion.domain.l
+com.histmersion.domain.library.findings.FindingPlan.NextIdsTaken | base String | generated | method-parameter
+    def nextIds(citekey: com.histmersion.domain.library.Citekey, taken: Set[com.histmersion.domain.library.findings.FindingPlan.NextIdsTaken], count: com.histmersion.domain.l
+com.histmersion.domain.library.findings.FindingPlan.SamePlaceResult | base Boolean | generated | method-result
+com.histmersion.domain.library.findings.FindingPlan.SamePlaceWithinKm | base Double | generated | method-parameter
+com.histmersion.domain.library.findings.FindingPlan.TextO | base String | generated | method-parameter
+    private def text(o: Option[com.histmersion.domain.library.findings.FindingPlan.TextO]): Option[com.histmersion.domain.library.findings.FindingPlan.TextResult] = o.map(_.t
+com.histmersion.domain.library.findings.FindingPlan.TextResult | base String | generated | method-result
+    private def text(o: Option[com.histmersion.domain.library.findings.FindingPlan.TextO]): Option[com.histmersion.domain.library.findings.FindingPlan.TextResult] = o.map(_.t
+com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw | base String | generated | method-parameter
+    def renameTo(oldCk: com.histmersion.domain.library.sources.Citekeys.RenameToOldCk, newRaw: com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw): Either[com.his
+com.histmersion.domain.library.sources.Citekeys.RenameToOldCk | base String | generated | method-parameter
+    def renameTo(oldCk: com.histmersion.domain.library.sources.Citekeys.RenameToOldCk, newRaw: com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw): Either[com.his
+com.histmersion.domain.library.sources.Citekeys.RenameToResultPart1 | base String | generated | method-result
+    def renameTo(oldCk: com.histmersion.domain.library.sources.Citekeys.RenameToOldCk, newRaw: com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw): Either[com.his
+com.histmersion.domain.library.sources.Citekeys.ValidCk | base String | generated | method-parameter
+    def valid(ck: com.histmersion.domain.library.sources.Citekeys.ValidCk): com.histmersion.domain.library.sources.Citekeys.ValidResult = Shape.matches(ck)
+com.histmersion.domain.library.sources.Citekeys.ValidResult | base Boolean | generated | method-result
+    def valid(ck: com.histmersion.domain.library.sources.Citekeys.ValidCk): com.histmersion.domain.library.sources.Citekeys.ValidResult = Shape.matches(ck)
