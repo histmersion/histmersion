@@ -18,16 +18,6 @@ object Diff3:
   object MergeLinesChunkCa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeLinesChunkCb = MergeLinesChunkCb.T
   object MergeLinesChunkCb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeLinesWalkIo = MergeLinesWalkIo.T
-  object MergeLinesWalkIo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeLinesWalkIa = MergeLinesWalkIa.T
-  object MergeLinesWalkIa extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeLinesWalkIb = MergeLinesWalkIb.T
-  object MergeLinesWalkIb extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchingTraceI = MatchingTraceI.T
-  object MatchingTraceI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchingTraceJ = MatchingTraceJ.T
-  object MatchingTraceJ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type MatchingResult = MatchingResult.T
   object MatchingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -71,7 +61,7 @@ object Diff3:
 
   final case class Result(hunks: List[Hunk]):
     def conflicts: com.histmersion.util.data.exchange.Diff3.Result.ConflictsResult = hunks.count(_.isInstanceOf[Hunk.Conflict])
-    def clean: com.histmersion.util.data.exchange.Diff3.Result.CleanResult = conflicts == 0
+    def clean: Boolean = conflicts == 0
 
     /** The merged text — only meaningful when [[clean]]. */
     def text: com.histmersion.util.data.exchange.Diff3.Result.TextResult = render(_ => Vector.empty)
@@ -93,8 +83,6 @@ object Diff3:
   object Result:
     type ConflictsResult = ConflictsResult.T
     object ConflictsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CleanResult = CleanResult.T
-    object CleanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type TextResult = TextResult.T
     object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MarkedResult = MarkedResult.T
@@ -135,7 +123,7 @@ object Diff3:
         out += Hunk.Conflict(co, ca, cb)
     // positions in base, left, right; each round consumes at least one line of one of them
     @annotation.tailrec
-    def walk(io: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIo, ia: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIa, ib: com.histmersion.util.data.exchange.Diff3.MergeLinesWalkIb): Unit =
+    def walk(io: Int, ia: Int, ib: Int): Unit =
       // the next base line matched on both sides
       val next = (io until o.length).find(j => ma(j) >= 0 && mb(j) >= 0)
       next match
@@ -178,7 +166,7 @@ object Diff3:
           j -= 1
         i -= 1
       @annotation.tailrec
-      def trace(i: com.histmersion.util.data.exchange.Diff3.MatchingTraceI, j: com.histmersion.util.data.exchange.Diff3.MatchingTraceJ): Unit =
+      def trace(i: Int, j: Int): Unit =
         if i < n && j < k then
           if o(o0 + i) == x(x0 + j) then
             m(o0 + i) = x0 + j

@@ -31,69 +31,15 @@ import java.time.{Duration, Instant}
   * weight; inside a type the highest-priority goals first). A third is one more [[Strategy]] in [[Strategies]].
   */
 object SchedulerPolicy:
+  type StartedNote = StartedNote.T
+  object StartedNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrategyName = StrategyName.T
+  object StrategyName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A pin is worth this many priority levels. */
-  type RunPoolFullResult = RunPoolFullResult.T
-  object RunPoolFullResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunMgrFullResult = RunMgrFullResult.T
-  object RunMgrFullResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderGoResultPart2 = OrderGoResultPart2.T
-  object OrderGoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderGoGathering = OrderGoGathering.T
-  object OrderGoGathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderGoAccPart2 = OrderGoAccPart2.T
-  object OrderGoAccPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ParseTypeMapResultPart2 = ParseTypeMapResultPart2.T
   object ParseTypeMapResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseTypeMapS = ParseTypeMapS.T
-  object ParseTypeMapS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PoolsWantedResult = PoolsWantedResult.T
-  object PoolsWantedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PoolsWantedChainPoolsResult = PoolsWantedChainPoolsResult.T
-  object PoolsWantedChainPoolsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalKeyResultPart1 = GoalKeyResultPart1.T
-  object GoalKeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalKeyResultPart2 = GoalKeyResultPart2.T
-  object GoalKeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalKeyResultPart3 = GoalKeyResultPart3.T
-  object GoalKeyResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalKeyResultPart4 = GoalKeyResultPart4.T
-  object GoalKeyResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalKeyResultPart5 = GoalKeyResultPart5.T
-  object GoalKeyResultPart5 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalKeyResultPart6 = GoalKeyResultPart6.T
-  object GoalKeyResultPart6 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalKeyResultPart7 = GoalKeyResultPart7.T
-  object GoalKeyResultPart7 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalNameResult = GoalNameResult.T
-  object GoalNameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalFactsResult = GoalFactsResult.T
-  object GoalFactsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShareDueResult = ShareDueResult.T
-  object ShareDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShareDueMinShare = ShareDueMinShare.T
-  object ShareDueMinShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunStartResultPart1 = RunStartResultPart1.T
-  object RunStartResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFlightOnResult = InFlightOnResult.T
-  object InFlightOnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFlightOnP = InFlightOnP.T
-  object InFlightOnP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFlightOnStartedPart2 = InFlightOnStartedPart2.T
-  object InFlightOnStartedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PickResultPart2 = PickResultPart2.T
-  object PickResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PickGathering = PickGathering.T
-  object PickGathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderResultPart2 = OrderResultPart2.T
-  object OrderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HoursResult = HoursResult.T
-  object HoursResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HoursMinutes = HoursMinutes.T
-  object HoursMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettingsStrategy = SettingsStrategy.T
-  object SettingsStrategy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val PinBoost = 1000
 
@@ -117,15 +63,11 @@ object SchedulerPolicy:
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfItemKind = OfItemKind.T
-    object OfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.domain.SchedulerPolicy.JobType.ParseS): Option[JobType] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.domain.SchedulerPolicy.JobType.Wire): Option[JobType] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
 
     /** The job type of a manager item kind. */
-    def of(itemKind: com.histmersion.domain.SchedulerPolicy.JobType.OfItemKind): JobType = itemKind match
+    def of(itemKind: com.histmersion.domain.SchedulerPolicy.Candidate.Kind): JobType = itemKind match
       case PlanGoalItem     => GoalPlan
       case ProposeArticles  => Propose
       case AcquisitionSweep => Sweep
@@ -137,7 +79,7 @@ object SchedulerPolicy:
       case _                => Review
 
   /** `"review=9, compile=8"` → per job type (unknown types and malformed entries dropped). */
-  def parseTypeMap(s: com.histmersion.domain.SchedulerPolicy.ParseTypeMapS): Map[JobType, com.histmersion.domain.SchedulerPolicy.ParseTypeMapResultPart2] =
+  def parseTypeMap(s: String): Map[JobType, com.histmersion.domain.SchedulerPolicy.ParseTypeMapResultPart2] =
     Option(s)
       .getOrElse("")
       .split(",")
@@ -175,11 +117,9 @@ object SchedulerPolicy:
       person: Candidate.Person = false
   ):
     def jobType: JobType = JobType.of(kind)
-    def label: com.histmersion.domain.SchedulerPolicy.Candidate.LabelResult = s"#$id $kind $target"
+    def label: String = s"#$id $kind $target"
 
   object Candidate:
-    type LabelResult = LabelResult.T
-    object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -218,7 +158,7 @@ object SchedulerPolicy:
     * its plans' floors, the pools its role chains draw on (`chainPools`), since a fresh reading may show the window has
     * reset. A candidate blocked for any other reason wants none.
     */
-  def poolsWanted(waiting: List[Candidate], chainPools: Candidate => List[com.histmersion.domain.SchedulerPolicy.PoolsWantedChainPoolsResult]): Set[com.histmersion.domain.SchedulerPolicy.PoolsWantedResult] =
+  def poolsWanted(waiting: List[Candidate], chainPools: Candidate => List[com.histmersion.domain.SchedulerPolicy.Candidate.Pools]): Set[com.histmersion.domain.SchedulerPolicy.Candidate.Pools] =
     waiting.flatMap { c =>
       c.block match
         case None                            => c.pools
@@ -242,11 +182,9 @@ object SchedulerPolicy:
       stop: Option[Block] = None,
       recent: List[JobType] = Nil
   ):
-    def room: com.histmersion.domain.SchedulerPolicy.Resources.RoomResult = math.max(0, maxRuns - occupied)
+    def room: com.histmersion.domain.SchedulerPolicy.run.Acc.Room = math.max(0, maxRuns - occupied)
 
   object Resources:
-    type RoomResult = RoomResult.T
-    object RoomResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type MaxRuns = MaxRuns.T
     object MaxRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -328,7 +266,7 @@ object SchedulerPolicy:
   /** The order inside one class of work: effective goal priority (highest first), the goal's age (oldest first; library
     * work after every goal), the job type's priority, the item's, how long it waited, its id.
     */
-  def goalKey(x: Scored, s: Settings): (com.histmersion.domain.SchedulerPolicy.GoalKeyResultPart1, com.histmersion.domain.SchedulerPolicy.GoalKeyResultPart2, com.histmersion.domain.SchedulerPolicy.GoalKeyResultPart3, com.histmersion.domain.SchedulerPolicy.GoalKeyResultPart4, com.histmersion.domain.SchedulerPolicy.GoalKeyResultPart5, com.histmersion.domain.SchedulerPolicy.GoalKeyResultPart6, com.histmersion.domain.SchedulerPolicy.GoalKeyResultPart7) =
+  def goalKey(x: Scored, s: Settings): (Int, Long, String, Int, Int, Long, Long) =
     (
       -x.effective,
       x.c.goalCreated.fold(Long.MaxValue)(_.toEpochMilli),
@@ -355,26 +293,18 @@ object SchedulerPolicy:
     * strategy.
     */
   trait Strategy:
-    def name: com.histmersion.domain.SchedulerPolicy.Strategy.NameResult
-    def describe: com.histmersion.domain.SchedulerPolicy.Strategy.DescribeResult
-    def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, com.histmersion.domain.SchedulerPolicy.Strategy.NextResultPart2)]
+    def name: com.histmersion.domain.SchedulerPolicy.StrategyName
+    def describe: String
+    def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, String)]
 
     /** Why `x` stands behind `ahead` (the first candidate before it in the order), in a sentence. */
-    def behindWhy(x: Scored, ahead: Scored, s: Settings): com.histmersion.domain.SchedulerPolicy.Strategy.BehindWhyResult
+    def behindWhy(x: Scored, ahead: Scored, s: Settings): String
 
   object Strategy:
-    type NameResult = NameResult.T
-    object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DescribeResult = DescribeResult.T
-    object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NextResultPart2 = NextResultPart2.T
-    object NextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BehindWhyResult = BehindWhyResult.T
-    object BehindWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def goalName(x: Scored): com.histmersion.domain.SchedulerPolicy.GoalNameResult = x.c.goal.fold("library work")(g => s"goal $g")
+  private def goalName(x: Scored): com.histmersion.domain.SchedulerPolicy.Candidate.Goal = x.c.goal.fold("library work")(g => s"goal $g")
 
-  private def goalFacts(x: Scored): com.histmersion.domain.SchedulerPolicy.GoalFactsResult =
+  private def goalFacts(x: Scored): String =
     s"priority ${x.c.goalPriority}" + (if x.aging > 0 then s" +${x.aging} aged" else "") +
       x.c.goalCreated.fold("")(t => s", created ${t.toString.take(10)}")
 
@@ -382,18 +312,14 @@ object SchedulerPolicy:
     * inside a goal the job type's priority.
     */
   object GoalFirst extends Strategy:
-    type NextResultPart2 = NextResultPart2.T
-    object NextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BehindWhyResult = BehindWhyResult.T
-    object BehindWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val name = "goal-first"
     val describe =
       "depth first: the highest-priority goals, oldest first, take the allowance; newer goals of the same " +
         "priority wait until the older ones have nothing to run (aging and max-wait bound the wait)"
-    def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, com.histmersion.domain.SchedulerPolicy.GoalFirst.NextResultPart2)] =
+    def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, String)] =
       pool.minByOption(goalKey(_, s)).map(x => x -> s"goal-first: ${goalName(x)} (${goalFacts(x)}) is first in line")
-    def behindWhy(x: Scored, ahead: Scored, s: Settings): com.histmersion.domain.SchedulerPolicy.GoalFirst.BehindWhyResult =
+    def behindWhy(x: Scored, ahead: Scored, s: Settings): String =
       if ahead.c.goal == x.c.goal then s"goal-first: its goal's ${ahead.c.jobType.label} come first (${ahead.c.label})"
       else s"goal-first: ${goalName(ahead)} (${goalFacts(ahead)}) goes before ${goalName(x)} (${goalFacts(x)})"
 
@@ -401,10 +327,6 @@ object SchedulerPolicy:
     * scheduling over the recent starts and this pass's); inside the type the best goal first.
     */
   object TypeBalanced extends Strategy:
-    type NextResultPart2 = NextResultPart2.T
-    object NextResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BehindWhyResult = BehindWhyResult.T
-    object BehindWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val name = "type-balanced"
     val describe = "breadth: the allowance is spread over the job types by weight (agents.scheduler.type-weights); " +
@@ -417,7 +339,7 @@ object SchedulerPolicy:
       types
         .filter(s.weight(_) > 0)
         .minByOption(t => ((st.started.getOrElse(t, 0) + 1).toDouble / s.weight(t), -s.priorityOf(t), t.ordinal))
-    def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, com.histmersion.domain.SchedulerPolicy.TypeBalanced.NextResultPart2)] =
+    def next(pool: List[Scored], st: PassState, s: Settings): Option[(Scored, String)] =
       pickType(pool.map(_.c.jobType).distinct, st, s).flatMap { t =>
         pool
           .filter(_.c.jobType == t)
@@ -428,7 +350,7 @@ object SchedulerPolicy:
                 s"${st.started.getOrElse(t, 0)} of the recent starts); inside the type ${goalName(x)} is first (${goalFacts(x)})")
           )
       }
-    def behindWhy(x: Scored, ahead: Scored, s: Settings): com.histmersion.domain.SchedulerPolicy.TypeBalanced.BehindWhyResult =
+    def behindWhy(x: Scored, ahead: Scored, s: Settings): String =
       if ahead.c.jobType != x.c.jobType then
         s"type-balanced: ${ahead.c.jobType.label} are further below their share than ${x.c.jobType.label}"
       else
@@ -436,15 +358,11 @@ object SchedulerPolicy:
 
   /** Every strategy by name; the first is the default when a name does not parse. */
   object Strategies:
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NamesResult = NamesResult.T
-    object NamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val all: List[Strategy] = List(TypeBalanced, GoalFirst)
-    def parse(s: com.histmersion.domain.SchedulerPolicy.Strategies.ParseS): Option[Strategy] =
+    def parse(s: com.histmersion.domain.SchedulerPolicy.StrategyName): Option[Strategy] =
       all.find(_.name == Option(s).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT))
-    def names: List[com.histmersion.domain.SchedulerPolicy.Strategies.NamesResult] = all.map(_.name)
+    def names: List[com.histmersion.domain.SchedulerPolicy.StrategyName] = all.map(_.name)
 
   // ── the pass ───────────────────────────────────────────────────────────────────────────────────
 
@@ -475,19 +393,17 @@ object SchedulerPolicy:
     * waiting ones would start in.
     */
   final case class Decision(started: List[(Scored, Decision.StartedPart2)], waiting: List[(Scored, Wait)]):
-    def waitOf(id: com.histmersion.domain.SchedulerPolicy.Decision.WaitOfId): Option[Wait] = waiting.find(_._1.c.id == id).map(_._2)
+    def waitOf(id: com.histmersion.domain.SchedulerPolicy.Candidate.Id): Option[Wait] = waiting.find(_._1.c.id == id).map(_._2)
 
   object Decision:
-    type WaitOfId = WaitOfId.T
-    object WaitOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type StartedPart2 = StartedPart2.T
-    object StartedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type StartedPart2 = com.histmersion.domain.SchedulerPolicy.StartedNote
+    val StartedPart2: _root_.com.histmersion.domain.SchedulerPolicy.StartedNote.type = _root_.com.histmersion.domain.SchedulerPolicy.StartedNote
 
   /** Does a job type with work need its minimum share now: among the last ⌈1/minShare⌉ starts (the recent ones, newest
     * first, and this pass's) none was of type `t` — and that many starts have been made.
     */
-  def shareDue(t: JobType, started: List[JobType], minShare: com.histmersion.domain.SchedulerPolicy.ShareDueMinShare): com.histmersion.domain.SchedulerPolicy.ShareDueResult =
+  def shareDue(t: JobType, started: List[JobType], minShare: com.histmersion.domain.SchedulerPolicy.Settings.MinShare): Boolean =
     minShare > 0 && {
       val n = math.ceil(1.0 / math.min(1.0, minShare)).toInt
       started.size >= n && !started.take(n).contains(t)
@@ -499,7 +415,7 @@ object SchedulerPolicy:
     * decision.
     */
   def run(cands: List[Candidate], res: Resources, s: Settings, now: Instant)(
-      start: Candidate => Either[com.histmersion.domain.SchedulerPolicy.RunStartResultPart1, Unit]
+      start: Candidate => Either[String, Unit]
   ): Decision =
     val scored = cands.map(score(_, s, now))
     val (blocked, open) = scored.partition(_.c.block.isDefined)
@@ -538,9 +454,9 @@ object SchedulerPolicy:
           object Gathering extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
           type StartedPart2 = StartedPart2.T
           object StartedPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-        def poolFull(x: Scored, a: Acc): Option[com.histmersion.domain.SchedulerPolicy.RunPoolFullResult] =
+        def poolFull(x: Scored, a: Acc): Option[com.histmersion.domain.SchedulerPolicy.Resources.PoolUsedKey] =
           x.c.pools.find(p => res.poolCap.get(p).exists(cap => a.poolUsed.getOrElse(p, 0) >= cap))
-        def mgrFull(x: Scored, a: Acc): com.histmersion.domain.SchedulerPolicy.RunMgrFullResult =
+        def mgrFull(x: Scored, a: Acc): Boolean =
           res.managerCap.get(x.c.managerId).exists(cap => a.mgrUsed.getOrElse(x.c.managerId, 0) >= cap)
         @annotation.tailrec
         def go(a: Acc): Acc =
@@ -608,7 +524,7 @@ object SchedulerPolicy:
         Decision(done.started, blockedWaits ++ done.waits ++ capacity)
 
   /** The labels of this pass's starts on pool `p` (what an item waiting for the pool stands behind). */
-  private def inFlightOn(p: com.histmersion.domain.SchedulerPolicy.InFlightOnP, started: List[(Scored, com.histmersion.domain.SchedulerPolicy.InFlightOnStartedPart2)]): List[com.histmersion.domain.SchedulerPolicy.InFlightOnResult] =
+  private def inFlightOn(p: com.histmersion.domain.SchedulerPolicy.JobType.Wire, started: List[(Scored, com.histmersion.domain.SchedulerPolicy.StartedNote)]): List[String] =
     started.filter(_._1.c.pools.contains(p)).map(_._1.c.label).takeRight(3)
 
   /** The next pick: overdue first, then a type's minimum share, then the gathering places, then the strategy. Never
@@ -618,9 +534,9 @@ object SchedulerPolicy:
       pool: List[Scored],
       st: PassState,
       recent: List[JobType],
-      gathering: com.histmersion.domain.SchedulerPolicy.PickGathering,
+      gathering: com.histmersion.domain.SchedulerPolicy.Resources.GatheringUsed,
       s: Settings
-  ): (Scored, com.histmersion.domain.SchedulerPolicy.PickResultPart2) =
+  ): (Scored, String) =
     val overdue = pool.filter(_.overdue)
     lazy val starved = pool
       .map(_.c.jobType)
@@ -643,14 +559,14 @@ object SchedulerPolicy:
   /** The order the candidates would start in with unlimited room (resources aside) — for the queue view and for what
     * waits for room. The anti-starvation rules apply as in the pass (the gathering places as if free).
     */
-  def order(cands: List[Scored], res: Resources, s: Settings): List[(Scored, com.histmersion.domain.SchedulerPolicy.OrderResultPart2)] =
+  def order(cands: List[Scored], res: Resources, s: Settings): List[(Scored, String)] =
     @annotation.tailrec
     def go(
         pool: List[Scored],
         recent: List[JobType],
-        gathering: com.histmersion.domain.SchedulerPolicy.OrderGoGathering,
-        acc: Vector[(Scored, com.histmersion.domain.SchedulerPolicy.OrderGoAccPart2)]
-    ): Vector[(Scored, com.histmersion.domain.SchedulerPolicy.OrderGoResultPart2)] =
+        gathering: com.histmersion.domain.SchedulerPolicy.Resources.GatheringUsed,
+        acc: Vector[(Scored, String)]
+    ): Vector[(Scored, String)] =
       if pool.isEmpty then acc
       else
         val st = PassState(recent.groupMapReduce(identity)(_ => 1)(_ + _), acc.map(_._1).toList)
@@ -664,12 +580,12 @@ object SchedulerPolicy:
     go(cands, res.recent, res.gatheringUsed, Vector.empty).toList
 
   /** `95` minutes → `1 h 35 min`. */
-  def hours(minutes: com.histmersion.domain.SchedulerPolicy.HoursMinutes): com.histmersion.domain.SchedulerPolicy.HoursResult =
+  def hours(minutes: com.histmersion.domain.SchedulerPolicy.Scored.WaitedMinutes): String =
     if minutes < 60 then s"$minutes min"
     else s"${minutes / 60} h" + (if minutes % 60 != 0 then s" ${minutes % 60} min" else "")
 
   /** The settings in effect: `strategy` (a person's choice) over the config's; an unknown name is the default. */
-  def settings(d: SchedulerDefaults, strategy: Option[com.histmersion.domain.SchedulerPolicy.SettingsStrategy] = None): Settings =
+  def settings(d: SchedulerDefaults, strategy: Option[com.histmersion.domain.SchedulerPolicy.StrategyName] = None): Settings =
     Settings(
       strategy.flatMap(Strategies.parse).orElse(Strategies.parse(d.strategy)).getOrElse(Strategies.all.head),
       math.max(0, d.agingHours),

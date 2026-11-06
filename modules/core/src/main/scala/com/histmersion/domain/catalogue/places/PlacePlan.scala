@@ -149,10 +149,6 @@ object PlacePlan:
   object RepointPlacesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RenamedPlacesResultPart2 = RenamedPlacesResultPart2.T
   object RenamedPlacesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamedPlacesResultPart3 = RenamedPlacesResultPart3.T
-  object RenamedPlacesResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SamePlaceResult = SamePlaceResult.T
-  object SamePlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def repoint(es: BundleEntities, places: Map[com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart1, com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart2]): BundleEntities =
     if places.isEmpty then es
@@ -174,7 +170,7 @@ object PlacePlan:
       bundle: List[com.histmersion.api.exchange.Bundle.Place],
       here: List[com.histmersion.api.exchange.Bundle.Place],
       mapped: Set[UUID]
-  ): List[(com.histmersion.api.exchange.Bundle.Place, com.histmersion.domain.catalogue.places.PlacePlan.RenamedPlacesResultPart2, com.histmersion.domain.catalogue.places.PlacePlan.RenamedPlacesResultPart3)] =
+  ): List[(com.histmersion.api.exchange.Bundle.Place, com.histmersion.domain.catalogue.places.PlacePlan.RenamedPlacesResultPart2, Boolean)] =
     val ourId = here.map(p => p.uid -> p.id).toMap
     val owner = here.map(p => p.id -> p.uid).toMap
     bundle
@@ -186,7 +182,7 @@ object PlacePlan:
       )
 
   /** What decides whether two records of one place id are the same place: where and when. */
-  def samePlace(l: com.histmersion.api.exchange.Bundle.Place, r: com.histmersion.api.exchange.Bundle.Place): com.histmersion.domain.catalogue.places.PlacePlan.SamePlaceResult =
+  def samePlace(l: com.histmersion.api.exchange.Bundle.Place, r: com.histmersion.api.exchange.Bundle.Place): Boolean =
     l.geom == r.geom && l.period == r.period
 
   /** One place out of two that are the same place: ours, with the bundle's names, parents, external ids and types that

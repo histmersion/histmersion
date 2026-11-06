@@ -19,20 +19,10 @@ object VectorTileWriter:
   object LayerName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValueResult = ValueResult.T
   object ValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZigzagResult = ZigzagResult.T
-  object ZigzagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZigzagN = ZigzagN.T
-  object ZigzagN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MessageNumber = MessageNumber.T
-  object MessageNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MessagePayload = MessagePayload.T
   object MessagePayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VarintFieldNumber = VarintFieldNumber.T
-  object VarintFieldNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VarintFieldV = _root_.com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV
-  val VarintFieldV: _root_.com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV.type = _root_.com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV
-  type VarintV = VarintV.T
-  object VarintV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VarintFieldV = Long
+  val VarintFieldV: Long.type = Long
 
   def tile(layers: Seq[(com.histmersion.domain.catalogue.maptiles.VectorTileWriter.TileLayersPart1, Seq[TilePoint])]): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.TileResult =
     val out = ByteArrayOutputStream()
@@ -81,18 +71,18 @@ object VectorTileWriter:
     out.toByteArray
 
   /** Protobuf's zig-zag encoding of a signed number. Pure. */
-  def zigzag(n: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ZigzagN): com.histmersion.domain.catalogue.maptiles.VectorTileWriter.ZigzagResult = (n << 1) ^ (n >> 63)
+  def zigzag(n: Long): Long = (n << 1) ^ (n >> 63)
 
-  private def message(out: ByteArrayOutputStream, number: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.MessageNumber, payload: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.MessagePayload): Unit =
+  private def message(out: ByteArrayOutputStream, number: Int, payload: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.MessagePayload): Unit =
     varint(out, (number.toLong << 3) | 2)
     varint(out, payload.length.toLong)
     out.write(payload)
 
-  private def varintField(out: ByteArrayOutputStream, number: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintFieldNumber, v: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintFieldV): Unit =
+  private def varintField(out: ByteArrayOutputStream, number: Int, v: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintFieldV): Unit =
     varint(out, number.toLong << 3)
     varint(out, v)
 
-  private def varint(out: ByteArrayOutputStream, v: com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV): Unit =
+  private def varint(out: ByteArrayOutputStream, v: Long): Unit =
     // `var`: the value's next seven bits
     var rest = v
     while (rest & ~0x7fL) != 0 do

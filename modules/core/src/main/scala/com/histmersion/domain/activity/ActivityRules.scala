@@ -13,12 +13,6 @@ import com.histmersion.api.Api
 object ActivityRules:
 
   /** The statuses of a run or job that is going now. */
-  type CountsLoopRunning = CountsLoopRunning.T
-  object CountsLoopRunning extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountsLoopProblems = CountsLoopProblems.T
-  object CountsLoopProblems extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryBadM = QueryBadM.T
-  object QueryBadM extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type RunningStates = RunningStatesValue
   type RunningStatesValue = RunningStatesValue.T
@@ -26,24 +20,6 @@ object ActivityRules:
   type ProblemStates = ProblemStatesValue
   type ProblemStatesValue = ProblemStatesValue.T
   object ProblemStatesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowsResult = ShowsResult.T
-  object ShowsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsRunOrJobResult = IsRunOrJobResult.T
-  object IsRunOrJobResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesResult = MatchesResult.T
-  object MatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AfterResult = AfterResult.T
-  object AfterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryShow = QueryShow.T
-  object QueryShow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QuerySince = QuerySince.T
-  object QuerySince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryGoal = QueryGoal.T
-  object QueryGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryLimit = QueryLimit.T
-  object QueryLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueryBefore = QueryBefore.T
-  object QueryBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val RunningStates: Set[com.histmersion.domain.activity.ActivityRules.RunningStates] = Set("running")
 
@@ -51,7 +27,7 @@ object ActivityRules:
   val ProblemStates: Set[com.histmersion.domain.activity.ActivityRules.ProblemStates] = Set("failed")
 
   /** Does `e` belong to what `show` shows? */
-  def shows(show: Show, e: Entry): com.histmersion.domain.activity.ActivityRules.ShowsResult =
+  def shows(show: Show, e: Entry): Boolean =
     val kind = e.entryKind
     show match
       case Show.Everything => true
@@ -62,10 +38,10 @@ object ActivityRules:
       case Show.Yours    => kind.contains(EntryKind.Decision)
       case Show.Problems => isRunOrJob(e) && ProblemStates.contains(e.state)
 
-  private def isRunOrJob(e: Entry): com.histmersion.domain.activity.ActivityRules.IsRunOrJobResult = e.entryKind.exists(k => k == EntryKind.Run || k == EntryKind.Job)
+  private def isRunOrJob(e: Entry): Boolean = e.entryKind.exists(k => k == EntryKind.Run || k == EntryKind.Job)
 
   /** Does `e` pass every filter of `q` but the page's place? */
-  def matches(q: ActivityQuery, e: Entry): com.histmersion.domain.activity.ActivityRules.MatchesResult =
+  def matches(q: ActivityQuery, e: Entry): Boolean =
     shows(q.show, e) && q.goal.forall(g => e.goal.contains(g)) && q.since.forall(s => !instantOf(e).isBefore(s))
 
   private def instantOf(e: Entry): Instant = Instant.parse(e.at)
@@ -75,7 +51,7 @@ object ActivityRules:
     Ordering.by[Entry, (Instant, String)](e => (instantOf(e), e.key)).reverse
 
   /** Is `e` older than the cursor (after it in the list)? */
-  def after(c: ActivityCursor, e: Entry): com.histmersion.domain.activity.ActivityRules.AfterResult =
+  def after(c: ActivityCursor, e: Entry): Boolean =
     val at = instantOf(e)
     at.isBefore(c.at) || (at == c.at && e.key < c.key)
 
@@ -89,7 +65,7 @@ object ActivityRules:
 
   /** The chips' counts over `entries`: running now, and failed since `weekAgo`. */
   def counts(entries: List[Entry], weekAgo: Instant): Activity.Counts =
-    @tailrec def loop(rest: List[Entry], running: com.histmersion.domain.activity.ActivityRules.CountsLoopRunning, problems: com.histmersion.domain.activity.ActivityRules.CountsLoopProblems): Activity.Counts = rest match
+    @tailrec def loop(rest: List[Entry], running: Int, problems: Int): Activity.Counts = rest match
       case e :: tail =>
         val run = isRunOrJob(e) && RunningStates.contains(e.state)
         val fail = isRunOrJob(e) && ProblemStates.contains(e.state) && !instantOf(e).isBefore(weekAgo)
@@ -101,14 +77,14 @@ object ActivityRules:
     * (against `now`), `limit` within 1 … [[Activity.MaxLimit]], `before` a cursor this list gave.
     */
   def query(
-      show: Option[com.histmersion.domain.activity.ActivityRules.QueryShow],
-      since: Option[com.histmersion.domain.activity.ActivityRules.QuerySince],
-      goal: Option[com.histmersion.domain.activity.ActivityRules.QueryGoal],
-      limit: Option[com.histmersion.domain.activity.ActivityRules.QueryLimit],
-      before: Option[com.histmersion.domain.activity.ActivityRules.QueryBefore],
+      show: Option[com.histmersion.domain.activity.ActivityQuery.Show],
+      since: Option[com.histmersion.domain.activity.ActivityQuery.Since],
+      goal: Option[com.histmersion.domain.activity.ActivityQuery.Goal],
+      limit: Option[com.histmersion.domain.activity.ActivityQuery.Limit],
+      before: Option[com.histmersion.domain.activity.ActivityQuery.Before],
       now: Instant
   ): Either[Api.Error, ActivityQuery] =
-    def bad(m: com.histmersion.domain.activity.ActivityRules.QueryBadM) = Api.Error(m)
+    def bad(m: com.histmersion.domain.activity.ActivityQuery.Problem) = Api.Error(m)
     for
       s <- show
         .map(_.trim)

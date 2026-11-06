@@ -6,21 +6,19 @@ package com.histmersion.domain
 final case class Attribution(licence: Licence, licenceUrl: Option[Attribution.LicenceUrl], author: Option[Attribution.Author], credit: Attribution.Credit)
 
 object Attribution:
-  type Cc0Author = _root_.com.histmersion.domain.Attribution.Author
-  val Cc0Author: _root_.com.histmersion.domain.Attribution.Author.type = _root_.com.histmersion.domain.Attribution.Author
+  type Cc0Author = _root_.com.histmersion.domain.AuthorName
+  val Cc0Author: _root_.com.histmersion.domain.AuthorName.type = _root_.com.histmersion.domain.AuthorName
   type Cc0Credit = _root_.com.histmersion.domain.Attribution.Credit
   val Cc0Credit: _root_.com.histmersion.domain.Attribution.Credit.type = _root_.com.histmersion.domain.Attribution.Credit
-  type PublicDomainAuthor = _root_.com.histmersion.domain.Attribution.Author
-  val PublicDomainAuthor: _root_.com.histmersion.domain.Attribution.Author.type = _root_.com.histmersion.domain.Attribution.Author
+  type PublicDomainAuthor = _root_.com.histmersion.domain.AuthorName
+  val PublicDomainAuthor: _root_.com.histmersion.domain.AuthorName.type = _root_.com.histmersion.domain.AuthorName
   type PublicDomainCredit = _root_.com.histmersion.domain.Attribution.Credit
   val PublicDomainCredit: _root_.com.histmersion.domain.Attribution.Credit.type = _root_.com.histmersion.domain.Attribution.Credit
-  type PublicDomainUrl = PublicDomainUrl.T
-  object PublicDomainUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LicenceUrl = LicenceUrl.T
-  object LicenceUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Author = Author.T
-  object Author extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LicenceUrl = com.histmersion.domain.Licence.Url
+  val LicenceUrl: _root_.com.histmersion.domain.Licence.Url.type = _root_.com.histmersion.domain.Licence.Url
+  type Author = com.histmersion.domain.AuthorName
+  val Author: _root_.com.histmersion.domain.AuthorName.type = _root_.com.histmersion.domain.AuthorName
   type Credit = Credit.T
   object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -30,7 +28,7 @@ object Attribution:
   def cc0(author: Option[com.histmersion.domain.Attribution.Cc0Author], credit: com.histmersion.domain.Attribution.Cc0Credit): Attribution =
     Attribution(Licence(Licence.Id("CC0-1.0"), Licence.Family.Cc0), Some(Cc0Url), author, credit)
 
-  def publicDomain(author: Option[com.histmersion.domain.Attribution.PublicDomainAuthor], credit: com.histmersion.domain.Attribution.PublicDomainCredit, url: Option[com.histmersion.domain.Attribution.PublicDomainUrl] = Some(PdmUrl)): Attribution =
+  def publicDomain(author: Option[com.histmersion.domain.Attribution.PublicDomainAuthor], credit: com.histmersion.domain.Attribution.PublicDomainCredit, url: Option[com.histmersion.domain.Licence.Url] = Some(PdmUrl)): Attribution =
     Attribution(Licence(Licence.Id("public-domain"), Licence.Family.PublicDomain), url, author, credit)
 
   /** A dataset's credit as the reuse it allows (Q26): its stated licence classified as it is read — a Creative Commons

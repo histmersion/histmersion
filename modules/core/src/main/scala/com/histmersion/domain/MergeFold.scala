@@ -22,105 +22,77 @@ import com.histmersion.api.exchange.Bundle
   * Left is this collection, right the bundle — as everywhere in the merge.
   */
 object MergeFold:
+  type ArticleBody = ArticleBody.T
+  object ArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleHistory = ArticleHistory.T
+  object ArticleHistory extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConflictCount = ConflictCount.T
+  object ConflictCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Difference = Difference.T
+  object Difference extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Member = Member.T
+  object Member extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Name = Name.T
+  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueKey = QueueKey.T
+  object QueueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type QueueText = QueueText.T
+  object QueueText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RangeWidth = RangeWidth.T
+  object RangeWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Tag = Tag.T
+  object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionKey = UnionKey.T
+  object UnionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── small rules ─────────────────────────────────────────────────────────────────────────────
 
   /** The richer of two spellings of one value: more words (a subtitle), then more letters outside ASCII (diacritics
     * kept), then more capitals (title case); a tie keeps the left.
     */
-  type RicherScoreS = RicherScoreS.T
-  object RicherScoreS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NarrowerWidthResult = NarrowerWidthResult.T
-  object NarrowerWidthResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldGoalRankS = FoldGoalRankS.T
-  object FoldGoalRankS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RicherResult = RicherResult.T
-  object RicherResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RicherL = RicherL.T
-  object RicherL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RicherR = RicherR.T
-  object RicherR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionResult = UnionResult.T
-  object UnionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionL = UnionL.T
-  object UnionL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionR = UnionR.T
-  object UnionR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionKeyArg1 = UnionKeyArg1.T
-  object UnionKeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionKeyResult = UnionKeyResult.T
-  object UnionKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionTagsResult = UnionTagsResult.T
-  object UnionTagsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionTagsL = _root_.com.histmersion.domain.MergeFold.UnionL
-  val UnionTagsL: _root_.com.histmersion.domain.MergeFold.UnionL.type = _root_.com.histmersion.domain.MergeFold.UnionL
-  type UnionTagsR = _root_.com.histmersion.domain.MergeFold.UnionR
-  val UnionTagsR: _root_.com.histmersion.domain.MergeFold.UnionR.type = _root_.com.histmersion.domain.MergeFold.UnionR
-  type UnionNamesResult = UnionNamesResult.T
-  object UnionNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionNamesL = _root_.com.histmersion.domain.MergeFold.UnionL
-  val UnionNamesL: _root_.com.histmersion.domain.MergeFold.UnionL.type = _root_.com.histmersion.domain.MergeFold.UnionL
-  type UnionNamesR = _root_.com.histmersion.domain.MergeFold.UnionR
-  val UnionNamesR: _root_.com.histmersion.domain.MergeFold.UnionR.type = _root_.com.histmersion.domain.MergeFold.UnionR
-  type TextResult = TextResult.T
-  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextO = TextO.T
-  object TextO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OverlapResult = OverlapResult.T
-  object OverlapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldGoalFrom = FoldGoalFrom.T
-  object FoldGoalFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScheduleDifferencesResultPart1 = ScheduleDifferencesResultPart1.T
-  object ScheduleDifferencesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueueKeyResult = QueueKeyResult.T
-  object QueueKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueueKeyT = QueueKeyT.T
-  object QueueKeyT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleOutcomeLocalBody = ArticleOutcomeLocalBody.T
-  object ArticleOutcomeLocalBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleOutcomeLocalHistoryPart1 = ArticleOutcomeLocalHistoryPart1.T
-  object ArticleOutcomeLocalHistoryPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleOutcomeLocalHistoryPart2 = ArticleOutcomeLocalHistoryPart2.T
-  object ArticleOutcomeLocalHistoryPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleOutcomeForeignBody = ArticleOutcomeForeignBody.T
-  object ArticleOutcomeForeignBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleOutcomeForeignHistory = ArticleOutcomeForeignHistory.T
-  object ArticleOutcomeForeignHistory extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldArticleBody = FoldArticleBody.T
-  object FoldArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionTagsL = _root_.com.histmersion.domain.MergeFold.Member
+  val UnionTagsL: _root_.com.histmersion.domain.MergeFold.Member.type = _root_.com.histmersion.domain.MergeFold.Member
+  type UnionTagsR = _root_.com.histmersion.domain.MergeFold.Member
+  val UnionTagsR: _root_.com.histmersion.domain.MergeFold.Member.type = _root_.com.histmersion.domain.MergeFold.Member
+  type UnionNamesL = _root_.com.histmersion.domain.MergeFold.Member
+  val UnionNamesL: _root_.com.histmersion.domain.MergeFold.Member.type = _root_.com.histmersion.domain.MergeFold.Member
+  type UnionNamesR = _root_.com.histmersion.domain.MergeFold.Member
+  val UnionNamesR: _root_.com.histmersion.domain.MergeFold.Member.type = _root_.com.histmersion.domain.MergeFold.Member
 
-  def richer(l: com.histmersion.domain.MergeFold.RicherL, r: com.histmersion.domain.MergeFold.RicherR): com.histmersion.domain.MergeFold.RicherResult =
-    def score(s: com.histmersion.domain.MergeFold.RicherScoreS) =
+  def richer(l: com.histmersion.domain.MergeFold.Text, r: com.histmersion.domain.MergeFold.Text): com.histmersion.domain.MergeFold.Text =
+    def score(s: com.histmersion.domain.MergeFold.Text) =
       (Fingerprint.tokens(s).size, s.count(c => c.isLetter && c > 127), s.count(_.isUpper), s.length)
     if summon[Ordering[(Int, Int, Int, Int)]].gt(score(r), score(l)) then r else l
 
   /** Left's values, then right's that are not already there (compared after `key`). */
-  def union(l: List[com.histmersion.domain.MergeFold.UnionL], r: List[com.histmersion.domain.MergeFold.UnionR], key: com.histmersion.domain.MergeFold.UnionKeyArg1 => com.histmersion.domain.MergeFold.UnionKeyResult): List[com.histmersion.domain.MergeFold.UnionResult] =
+  def union(l: List[com.histmersion.domain.MergeFold.Member], r: List[com.histmersion.domain.MergeFold.Member], key: com.histmersion.domain.MergeFold.UnionKey => com.histmersion.domain.MergeFold.UnionKey): List[com.histmersion.domain.MergeFold.Member] =
     val seen = l.map(key).toSet
     (l ++ r.filterNot(x => seen(key(x)))).distinctBy(key)
 
   /** Tags compared after the canonical-tag normaliser (`non-canonical-tag`). */
-  def unionTags(l: List[com.histmersion.domain.MergeFold.UnionTagsL], r: List[com.histmersion.domain.MergeFold.UnionTagsR]): List[com.histmersion.domain.MergeFold.UnionTagsResult] = union(l, r, Lint.normaliseTag)
+  def unionTags(l: List[com.histmersion.domain.MergeFold.UnionTagsL], r: List[com.histmersion.domain.MergeFold.UnionTagsR]): List[com.histmersion.domain.MergeFold.Tag] = union(l, r, Lint.normaliseTag)
 
   /** Topics and regions compared folded. */
-  def unionNames(l: List[com.histmersion.domain.MergeFold.UnionNamesL], r: List[com.histmersion.domain.MergeFold.UnionNamesR]): List[com.histmersion.domain.MergeFold.UnionNamesResult] = union(l, r, s => Fingerprint.fold(s.trim))
+  def unionNames(l: List[com.histmersion.domain.MergeFold.UnionNamesL], r: List[com.histmersion.domain.MergeFold.UnionNamesR]): List[com.histmersion.domain.MergeFold.Name] = union(l, r, s => Fingerprint.fold(s.trim))
 
-  private def text(o: Option[com.histmersion.domain.MergeFold.TextO]): Option[com.histmersion.domain.MergeFold.TextResult] = o.map(_.trim).filter(_.nonEmpty)
+  private def text(o: Option[com.histmersion.domain.MergeFold.Text]): Option[com.histmersion.domain.MergeFold.Text] = o.map(_.trim).filter(_.nonEmpty)
 
   /** The smallest range covering both; an open bound stays open. */
   def hull(a: Bundle.Range, b: Bundle.Range): Bundle.Range =
     Bundle.Range(a.start.zip(b.start).map((x, y) => math.min(x, y)), a.end.zip(b.end).map((x, y) => math.max(x, y)))
 
   /** Two ranges share a year (an open bound reaches any year; no range is compatible with any). */
-  def overlap(a: Option[Bundle.Range], b: Option[Bundle.Range]): com.histmersion.domain.MergeFold.OverlapResult =
+  def overlap(a: Option[Bundle.Range], b: Option[Bundle.Range]): Boolean =
     a.zip(b).forall { (x, y) =>
       x.start.zip(y.end).forall((s, e) => s <= e) && y.start.zip(x.end).forall((s, e) => s <= e)
     }
 
   /** The narrower of two ranges (an open one is the widest); a missing one is no choice. */
   def narrower(a: Option[Bundle.Range], b: Option[Bundle.Range]): Option[Bundle.Range] =
-    def width(r: Bundle.Range): com.histmersion.domain.MergeFold.NarrowerWidthResult = r.start.zip(r.end).map((s, e) => e - s).getOrElse(Long.MaxValue)
+    def width(r: Bundle.Range): com.histmersion.domain.MergeFold.RangeWidth = r.start.zip(r.end).map((s, e) => e - s).getOrElse(Long.MaxValue)
     (a, b) match
       case (Some(x), Some(y)) => Some(if width(y) < width(x) then y else x)
       case _                  => a.orElse(b)
@@ -135,10 +107,10 @@ object MergeFold:
   def foldGoal(
       l: Bundle.Goal,
       r: Bundle.Goal,
-      from: com.histmersion.domain.MergeFold.FoldGoalFrom,
+      from: com.histmersion.domain.automation.Goal.Status.Wire,
       planDecision: Option[MergeDecision.Kind] = None
   ): Bundle.Goal =
-    def rank(s: com.histmersion.domain.MergeFold.FoldGoalRankS) = Goal.Status.all.indexOf(s)
+    def rank(s: com.histmersion.domain.automation.Goal.Status.Wire) = Goal.Status.all.indexOf(s)
     val notes = (text(l.notes), text(r.notes)) match
       case (Some(a), Some(b)) if a == b || a.contains(b) => Some(a)
       case (Some(a), Some(b))                            => Some(s"$a\n\n### From $from\n\n$b")
@@ -193,7 +165,7 @@ object MergeFold:
     l.modify(_.links).setTo(Option(links).filter(_.nonEmpty)).modify(_.schedules).setTo(Option(schedules).filter(_.nonEmpty))
 
   /** The schedules of one kind that both goals have and that differ: (kind, ours, theirs). */
-  def scheduleDifferences(l: Bundle.Goal, r: Bundle.Goal): List[(com.histmersion.domain.MergeFold.ScheduleDifferencesResultPart1, Bundle.GoalSchedule, Bundle.GoalSchedule)] =
+  def scheduleDifferences(l: Bundle.Goal, r: Bundle.Goal): List[(com.histmersion.domain.MergeFold.Difference, Bundle.GoalSchedule, Bundle.GoalSchedule)] =
     l.schedules
       .getOrElse(Nil)
       .flatMap(a => r.schedules.getOrElse(Nil).find(_.kind == a.kind).filter(_ != a).map(b => (a.kind, a, b)))
@@ -201,7 +173,7 @@ object MergeFold:
   // ── queue items ─────────────────────────────────────────────────────────────────────────────
 
   /** A queue item's text as compared: folded, whitespace collapsed. */
-  def queueKey(t: com.histmersion.domain.MergeFold.QueueKeyT): com.histmersion.domain.MergeFold.QueueKeyResult = Fingerprint.fold(t).trim.replaceAll("\\s+", " ")
+  def queueKey(t: com.histmersion.domain.MergeFold.QueueText): com.histmersion.domain.MergeFold.QueueKey = Fingerprint.fold(t).trim.replaceAll("\\s+", " ")
 
   /** One queue item out of two: `done` anywhere is done. */
   def foldQueue(l: Bundle.QueueItem, r: Bundle.QueueItem): Bundle.QueueItem =
@@ -234,24 +206,24 @@ object MergeFold:
 
   object ArticleOutcome:
     object Merged:
-      type Body = Body.T
-      object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type BaseSha = BaseSha.T
-      object BaseSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Body = com.histmersion.domain.MergeFold.ArticleBody
+      val Body: _root_.com.histmersion.domain.MergeFold.ArticleBody.type = _root_.com.histmersion.domain.MergeFold.ArticleBody
+      type BaseSha = com.histmersion.Sha256
+      val BaseSha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
     object Conflict:
-      type Conflicts = Conflicts.T
-      object Conflicts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type BaseSha = BaseSha.T
-      object BaseSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Conflicts = com.histmersion.domain.MergeFold.ConflictCount
+      val Conflicts: _root_.com.histmersion.domain.MergeFold.ConflictCount.type = _root_.com.histmersion.domain.MergeFold.ConflictCount
+      type BaseSha = com.histmersion.Sha256
+      val BaseSha: _root_.com.histmersion.Sha256.type = _root_.com.histmersion.Sha256
 
   /** `localHistory` is this collection's recorded versions of the article (sha256 of the body, the body), newest first;
     * `foreignHistory` the sha256s of the bundle's. The common base is the newest of ours the bundle's history also has.
     */
   def articleOutcome(
-      localBody: com.histmersion.domain.MergeFold.ArticleOutcomeLocalBody,
-      localHistory: List[(com.histmersion.domain.MergeFold.ArticleOutcomeLocalHistoryPart1, com.histmersion.domain.MergeFold.ArticleOutcomeLocalHistoryPart2)],
-      foreignBody: com.histmersion.domain.MergeFold.ArticleOutcomeForeignBody,
-      foreignHistory: Set[com.histmersion.domain.MergeFold.ArticleOutcomeForeignHistory]
+      localBody: com.histmersion.domain.MergeFold.ArticleBody,
+      localHistory: List[(com.histmersion.domain.MergeFold.ArticleHistory, com.histmersion.domain.MergeFold.ArticleHistory)],
+      foreignBody: com.histmersion.domain.MergeFold.ArticleBody,
+      foreignHistory: Set[com.histmersion.domain.MergeFold.ArticleHistory]
   ): ArticleOutcome =
     val (ls, fs) = (BundleFormat.sha256Hex(localBody), BundleFormat.sha256Hex(foreignBody))
     if ls == fs then ArticleOutcome.Same
@@ -267,7 +239,7 @@ object MergeFold:
   /** The fields of an article folded around a chosen body: left's title and kind, the summary that is there, tags and
     * regions unioned.
     */
-  def foldArticle(l: Bundle.Article, r: Bundle.Article, body: com.histmersion.domain.MergeFold.FoldArticleBody): Bundle.Article =
+  def foldArticle(l: Bundle.Article, r: Bundle.Article, body: com.histmersion.domain.MergeFold.ArticleBody): Bundle.Article =
     l.modify(
       _.body).setTo(body).modify(_.summary).setTo(if text(l.summary).isDefined then l.summary else r.summary.orElse(l.summary)).modify(_.tags).setTo(unionTags(l.tags, r.tags)).modify(_.regions).setTo(unionNames(l.regions, r.regions)).modify(_.period).setTo(l.period.orElse(r.period)).modify(_.rev).setTo(""
     )

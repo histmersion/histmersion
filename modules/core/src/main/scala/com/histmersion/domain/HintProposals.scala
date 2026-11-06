@@ -15,23 +15,17 @@ import com.histmersion.api.automation.Managers.{HintEffect, ManagerConfig}
   * becomes a `hint-effect` approval, applied when a person approves it. Pure.
   */
 object HintProposals:
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Item = Item.T
+  object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Last = Last.T
+  object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The `hint-effect` step's typed answer. `action` "none" = the hint asks for no structured action. */
-  type CheckFailPs = CheckFailPs.T
-  object CheckFailPs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckResultPart2Part2 = CheckResultPart2Part2.T
-  object CheckResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckKnownArg1 = CheckKnownArg1.T
-  object CheckKnownArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckKnownResult = CheckKnownResult.T
-  object CheckKnownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckItem = CheckItem.T
-  object CheckItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckLast = CheckLast.T
-  object CheckLast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class HintAnswer(
       action: HintAnswer.Action,
@@ -89,15 +83,15 @@ object HintProposals:
     */
   def check(
       a: HintAnswer,
-      known: com.histmersion.domain.HintProposals.CheckKnownArg1 => com.histmersion.domain.HintProposals.CheckKnownResult,
-      item: Option[com.histmersion.domain.HintProposals.CheckItem],
-      last: com.histmersion.domain.HintProposals.CheckLast
-  ): Either[List[com.histmersion.domain.HintProposals.CheckResultPart1], (Option[HintEffect], List[com.histmersion.domain.HintProposals.CheckResultPart2Part2])] =
+      known: com.histmersion.domain.HintProposals.Item => Boolean,
+      item: Option[com.histmersion.domain.HintProposals.Item],
+      last: com.histmersion.domain.HintProposals.Last
+  ): Either[List[com.histmersion.domain.HintProposals.Problem], (Option[HintEffect], List[com.histmersion.domain.HintProposals.Description])] =
     val action = Option(a.action).map(_.trim.toLowerCase).getOrElse("")
     val targets = a.targets.map(_.trim).filter(_.nonEmpty).distinct
     val (good, unknown) = targets.partition(known)
     val tag = a.tag.map(_.trim).filter(_.nonEmpty)
-    def fail(ps: List[com.histmersion.domain.HintProposals.CheckFailPs]) = if last then Right((None, ps.map(p => s"nothing proposed: $p"))) else Left(ps)
+    def fail(ps: List[com.histmersion.domain.HintProposals.Proposed.Problems]) = if last then Right((None, ps.map(p => s"nothing proposed: $p"))) else Left(ps)
     if action == "none" || action.isEmpty then Right((None, Nil))
     else if !HintEffect.Proposable.contains(action) then
       fail(List(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})"))

@@ -13,10 +13,6 @@ type Fingerprint = Fingerprint.T
 object Fingerprint extends RefinedType[String, Pure]:
 
   /** Typographic quotes, folded to the ASCII apostrophe. */
-  type QuotesPart1 = QuotesPart1.T
-  object QuotesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Char, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QuotesPart2 = QuotesPart2.T
-  object QuotesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldResult = FoldResult.T
   object FoldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldS = FoldS.T
@@ -28,7 +24,7 @@ object Fingerprint extends RefinedType[String, Pure]:
   type OfS = _root_.com.histmersion.util.text.Fingerprint.FoldS
   val OfS: _root_.com.histmersion.util.text.Fingerprint.FoldS.type = _root_.com.histmersion.util.text.Fingerprint.FoldS
 
-  private val quotes: Map[com.histmersion.util.text.Fingerprint.QuotesPart1, com.histmersion.util.text.Fingerprint.QuotesPart2] = Map('’' -> "'", '‘' -> "'")
+  private val quotes: Map[Char, String] = Map('’' -> "'", '‘' -> "'")
 
   /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): the shared [[LatinFold]] table
     * first (it also maps the letters NFD does not decompose — `ß`, `ł`, `ø`, `þ`), then NFD for every other script.

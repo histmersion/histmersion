@@ -9,46 +9,28 @@ package com.histmersion.domain
   * the web bundle's `InPage.nextMatch` steps through.
   */
 object Highlight:
+  type Html = Html.T
+  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkCount = MarkCount.T
+  object MarkCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Term = Term.T
+  object Term extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Terms worth highlighting, from a `websearch_to_tsquery` style query: `"quoted phrases"` stay phrases, `-excluded`
     * terms and the `or`/`and` operators are dropped. Longest first, so a phrase wins over its own words.
     */
-  type TermsResult = TermsResult.T
-  object TermsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TermsQ = TermsQ.T
-  object TermsQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyResultPart1 = ApplyResultPart1.T
-  object ApplyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyResultPart2 = ApplyResultPart2.T
-  object ApplyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyHtml = _root_.com.histmersion.domain.Highlight.VerbatimEndHtml
-  val ApplyHtml: _root_.com.histmersion.domain.Highlight.VerbatimEndHtml.type = _root_.com.histmersion.domain.Highlight.VerbatimEndHtml
-  type ApplyQ = _root_.com.histmersion.domain.Highlight.TermsQ
-  val ApplyQ: _root_.com.histmersion.domain.Highlight.TermsQ.type = _root_.com.histmersion.domain.Highlight.TermsQ
-  type MarksResultPart1 = MarksResultPart1.T
-  object MarksResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarksResultPart2 = MarksResultPart2.T
-  object MarksResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarksHtml = _root_.com.histmersion.domain.Highlight.VerbatimEndHtml
-  val MarksHtml: _root_.com.histmersion.domain.Highlight.VerbatimEndHtml.type = _root_.com.histmersion.domain.Highlight.VerbatimEndHtml
-  type MarksTerms = _root_.com.histmersion.domain.Highlight.PatternTerms
-  val MarksTerms: _root_.com.histmersion.domain.Highlight.PatternTerms.type = _root_.com.histmersion.domain.Highlight.PatternTerms
-  type PatternTerms = PatternTerms.T
-  object PatternTerms extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkTextResult = MarkTextResult.T
-  object MarkTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkTextText = MarkTextText.T
-  object MarkTextText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkTextSoFar = MarkTextSoFar.T
-  object MarkTextSoFar extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerbatimEndResult = VerbatimEndResult.T
-  object VerbatimEndResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerbatimEndHtml = VerbatimEndHtml.T
-  object VerbatimEndHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerbatimEndAt = VerbatimEndAt.T
-  object VerbatimEndAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyHtml = _root_.com.histmersion.domain.Highlight.Html
+  val ApplyHtml: _root_.com.histmersion.domain.Highlight.Html.type = _root_.com.histmersion.domain.Highlight.Html
+  type ApplyQ = _root_.com.histmersion.domain.Highlight.Term
+  val ApplyQ: _root_.com.histmersion.domain.Highlight.Term.type = _root_.com.histmersion.domain.Highlight.Term
+  type MarksHtml = _root_.com.histmersion.domain.Highlight.Html
+  val MarksHtml: _root_.com.histmersion.domain.Highlight.Html.type = _root_.com.histmersion.domain.Highlight.Html
+  type MarksTerms = _root_.com.histmersion.domain.Highlight.Term
+  val MarksTerms: _root_.com.histmersion.domain.Highlight.Term.type = _root_.com.histmersion.domain.Highlight.Term
 
-  def terms(q: com.histmersion.domain.Highlight.TermsQ): List[com.histmersion.domain.Highlight.TermsResult] =
+  def terms(q: com.histmersion.domain.Highlight.Term): List[com.histmersion.domain.Highlight.Term] =
     val phrase = """(-?)"([^"]*)"""".r
     val src = Option(q).getOrElse("")
     val phrases = phrase.findAllMatchIn(src).filter(_.group(1).isEmpty).map(_.group(2)).toList
@@ -63,10 +45,10 @@ object Highlight:
   private val Operators = Set("or", "and", "not")
 
   /** Convenience: parse `q` and highlight in one step. Returns `(html, matchCount)`. */
-  def apply(html: com.histmersion.domain.Highlight.ApplyHtml, q: com.histmersion.domain.Highlight.ApplyQ): (com.histmersion.domain.Highlight.ApplyResultPart1, com.histmersion.domain.Highlight.ApplyResultPart2) = marks(html, terms(q))
+  def apply(html: com.histmersion.domain.Highlight.ApplyHtml, q: com.histmersion.domain.Highlight.ApplyQ): (com.histmersion.domain.Highlight.Html, com.histmersion.domain.Highlight.MarkCount) = marks(html, terms(q))
 
   /** Wrap each occurrence of `terms` in the text of `html` in `<mark id="hl<n>">`. */
-  def marks(html: com.histmersion.domain.Highlight.MarksHtml, terms: List[com.histmersion.domain.Highlight.MarksTerms]): (com.histmersion.domain.Highlight.MarksResultPart1, com.histmersion.domain.Highlight.MarksResultPart2) =
+  def marks(html: com.histmersion.domain.Highlight.MarksHtml, terms: List[com.histmersion.domain.Highlight.MarksTerms]): (com.histmersion.domain.Highlight.Html, com.histmersion.domain.Highlight.MarkCount) =
     if html.isEmpty || terms.isEmpty then (html, 0)
     else
       val re = pattern(terms)
@@ -92,7 +74,7 @@ object Highlight:
   /** Case-insensitive match of any term at a word start, extended over the rest of the word so a stemmed hit ("egypt" →
     * "Egyptian") is highlighted whole. Phrases allow any run of whitespace.
     */
-  private def pattern(terms: List[com.histmersion.domain.Highlight.PatternTerms]): scala.util.matching.Regex =
+  private def pattern(terms: List[com.histmersion.domain.Highlight.Term]): scala.util.matching.Regex =
     val alts = terms
       .map(t => java.util.regex.Pattern.quote(t))
       .map(_.replaceAll("""\s+""", """\\E\\s+\\Q"""))
@@ -102,7 +84,7 @@ object Highlight:
   /** Append `text` to `sb` with matches wrapped; entities are left alone. `soFar` is the number of marks already
     * emitted (ids continue from there). Returns how many marks this call added.
     */
-  private def markText(text: com.histmersion.domain.Highlight.MarkTextText, re: scala.util.matching.Regex, sb: java.lang.StringBuilder, soFar: com.histmersion.domain.Highlight.MarkTextSoFar): com.histmersion.domain.Highlight.MarkTextResult =
+  private def markText(text: com.histmersion.domain.Highlight.Text, re: scala.util.matching.Regex, sb: java.lang.StringBuilder, soFar: Int): Int =
     var n = 0
     Entity.split(text).foreach {
       case Left(entity) => sb.append(entity)
@@ -126,7 +108,7 @@ object Highlight:
   /** End index (exclusive) of the verbatim run starting at `<` — a whole tag, or a whole `<script>`/`<style>` element
     * including its content.
     */
-  private def verbatimEnd(html: com.histmersion.domain.Highlight.VerbatimEndHtml, at: com.histmersion.domain.Highlight.VerbatimEndAt): com.histmersion.domain.Highlight.VerbatimEndResult =
+  private def verbatimEnd(html: com.histmersion.domain.Highlight.Html, at: com.histmersion.domain.Offset): com.histmersion.domain.Offset =
     val lower = html.regionMatches(true, at, "<script", 0, 7) -> html.regionMatches(true, at, "<style", 0, 6)
     val close = lower match
       case (true, _) => Some("</script>")
@@ -143,17 +125,11 @@ object Highlight:
           case k  => k + 1
 
   private object Entity:
-    type SplitResultPart1 = SplitResultPart1.T
-    object SplitResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SplitResultPart2 = SplitResultPart2.T
-    object SplitResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SplitText = SplitText.T
-    object SplitText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     private val Re = """&(?:#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]{1,31});""".r
 
     /** Split text into `Left(entity)` (copy verbatim) and `Right(plain)` (highlightable) pieces. */
-    def split(text: com.histmersion.domain.Highlight.Entity.SplitText): List[Either[com.histmersion.domain.Highlight.Entity.SplitResultPart1, com.histmersion.domain.Highlight.Entity.SplitResultPart2]] =
+    def split(text: com.histmersion.domain.Highlight.Text): List[Either[com.histmersion.domain.Highlight.Text, com.histmersion.domain.Highlight.Text]] =
       val out = List.newBuilder[Either[String, String]]
       var last = 0
       Re.findAllMatchIn(text).foreach { m =>

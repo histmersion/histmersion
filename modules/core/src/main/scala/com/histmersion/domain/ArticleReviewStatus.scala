@@ -10,36 +10,28 @@ import com.histmersion.domain.automation.ItemStatus
   * article's history).
   */
 object ArticleReviewStatus:
+  type EntryKey = EntryKey.T
+  object EntryKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutcomeSuffix = OutcomeSuffix.T
+  object OutcomeSuffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Progress = Progress.T
+  object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunKey = RunKey.T
+  object RunKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunOrder = RunOrder.T
+  object RunOrder extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunStart = RunStart.T
+  object RunStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusLine = StatusLine.T
+  object StatusLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The review manager's `article-review` item for the article: its status, its last outcome line and how many runs it
     * started.
     */
-  type SoFarResult = SoFarResult.T
-  object SoFarResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MajorsLineResult = MajorsLineResult.T
-  object MajorsLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutcomeSuffixResult = OutcomeSuffixResult.T
-  object OutcomeSuffixResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutcomeSuffixOutcome = OutcomeSuffixOutcome.T
-  object OutcomeSuffixOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutcomeSuffixLead = OutcomeSuffixLead.T
-  object OutcomeSuffixLead extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutcomeSuffixNone = OutcomeSuffixNone.T
-  object OutcomeSuffixNone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunOrderResult = RunOrderResult.T
-  object RunOrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunOrderRunStartsPart1 = RunOrderRunStartsPart1.T
-  object RunOrderRunStartsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunOrderRunStartsPart2 = RunOrderRunStartsPart2.T
-  object RunOrderRunStartsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HistoryRunStartsPart1 = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1
-  val HistoryRunStartsPart1: _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1
-  type HistoryRunStartsPart2 = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2
-  val HistoryRunStartsPart2: _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2
-  type FindingNumberPart1 = FindingNumberPart1.T
-  object FindingNumberPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindingNumberPart2 = FindingNumberPart2.T
-  object FindingNumberPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistoryRunStartsPart1 = _root_.com.histmersion.domain.ArticleReviewStatus.RunKey
+  val HistoryRunStartsPart1: _root_.com.histmersion.domain.ArticleReviewStatus.RunKey.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunKey
+  type HistoryRunStartsPart2 = _root_.com.histmersion.domain.ArticleReviewStatus.RunStart
+  val HistoryRunStartsPart2: _root_.com.histmersion.domain.ArticleReviewStatus.RunStart.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunStart
 
   final case class ItemFacts(status: ItemStatus, outcome: Option[ItemFacts.Outcome] = None, attempts: ItemFacts.Attempts = 0)
 
@@ -147,16 +139,16 @@ object ArticleReviewStatus:
       f.round.filter(_ => state == ReviewState.InReview)
     )
 
-  private def soFar(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.SoFarResult =
+  private def soFar(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.Progress =
     if c.findings == 0 then "" else s" Open so far: ${c.openMajors} MAJOR, ${c.openMinors} minor."
 
-  private def majorsLine(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.MajorsLineResult =
+  private def majorsLine(c: LedgerFacts): com.histmersion.domain.ArticleReviewStatus.StatusLine =
     s"${Plural.count(c.openMajors.toLong, "MAJOR finding")} ${if c.openMajors == 1 then "is" else "are"} still open."
 
   /** `: <outcome>.` after a sentence still open, or ` <lead><outcome>.` after a finished one; `none` when the manager
     * recorded no outcome. The manager's own leading `stopped:`/`failed:` is dropped.
     */
-  private def outcomeSuffix(outcome: Option[com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixOutcome], lead: com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixLead = "", none: com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixNone = "."): com.histmersion.domain.ArticleReviewStatus.OutcomeSuffixResult =
+  private def outcomeSuffix(outcome: Option[com.histmersion.domain.ArticleReviewStatus.ItemFacts.Outcome], lead: String = "", none: String = "."): com.histmersion.domain.ArticleReviewStatus.OutcomeSuffix =
     outcome
       .map(_.trim.stripPrefix("stopped:").stripPrefix("failed:").trim)
       .filter(_.nonEmpty)
@@ -168,7 +160,7 @@ object ArticleReviewStatus:
     * (`runStarts`, run id → UTC time), a run whose record is gone before those, and otherwise in the order the ledger
     * first names them (it only ever appends).
     */
-  def runOrder(l: Ledger, runStarts: Map[com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1, com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2]): List[com.histmersion.domain.ArticleReviewStatus.RunOrderResult] =
+  def runOrder(l: Ledger, runStarts: Map[com.histmersion.domain.ArticleReviewStatus.RunKey, com.histmersion.domain.ArticleReviewStatus.RunStart]): List[com.histmersion.domain.ArticleReviewStatus.RunOrder] =
     val named = l.entries.flatMap(e => e.run :: e.closed.map(_.run).toList).filter(_.nonEmpty).distinct
     named.zipWithIndex.sortBy((run, i) => (runStarts.get(run), i)).map(_._1)
 
@@ -186,7 +178,7 @@ object ArticleReviewStatus:
         ReviewRound(run, number.getOrElse(run, 0), round, runStarts.get(run), es.map(finding(_, number)))
       }
 
-  private def finding(e: Entry, number: Map[com.histmersion.domain.ArticleReviewStatus.FindingNumberPart1, com.histmersion.domain.ArticleReviewStatus.FindingNumberPart2]): ReviewFinding =
+  private def finding(e: Entry, number: Map[com.histmersion.domain.ArticleReviewStatus.EntryKey, Int]): ReviewFinding =
     val f = e.finding
     ReviewFinding(
       id = f.id,

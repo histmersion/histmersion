@@ -24,144 +24,44 @@ import com.histmersion.domain.research.workflows.ReviewComparison
   * ledger is a checkpointed step output) and writes it back through the run's gate.
   */
 object ReviewLedger:
+  type ClosedLimit = ClosedLimit.T
+  object ClosedLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PassageMargin = PassageMargin.T
+  object PassageMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StubbornLimit = StubbornLimit.T
+  object StubbornLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TaskText = TaskText.T
+  object TaskText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TaskTextLimit = TaskTextLimit.T
+  object TaskTextLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type AbsorbAbsorbAllSeen = AbsorbAbsorbAllSeen.T
-  object AbsorbAbsorbAllSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesKeyP = EditedPassagesKeyP.T
-  object EditedPassagesKeyP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesWalkResultPart1 = EditedPassagesWalkResultPart1.T
-  object EditedPassagesWalkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesWalkResultPart2 = EditedPassagesWalkResultPart2.T
-  object EditedPassagesWalkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesWalkI = EditedPassagesWalkI.T
-  object EditedPassagesWalkI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesWalkJ = EditedPassagesWalkJ.T
-  object EditedPassagesWalkJ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesWalkKeptA = EditedPassagesWalkKeptA.T
-  object EditedPassagesWalkKeptA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesWalkKeptB = EditedPassagesWalkKeptB.T
-  object EditedPassagesWalkKeptB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesHeadingOfResult = EditedPassagesHeadingOfResult.T
-  object EditedPassagesHeadingOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesHeadingOfI = EditedPassagesHeadingOfI.T
-  object EditedPassagesHeadingOfI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardInQ = GuardInQ.T
-  object GuardInQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardInBody = GuardInBody.T
-  object GuardInBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MechanicalKeyResultPart1 = MechanicalKeyResultPart1.T
-  object MechanicalKeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MechanicalKeyResultPart2 = MechanicalKeyResultPart2.T
-  object MechanicalKeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MechanicalKeyResultPart3 = MechanicalKeyResultPart3.T
-  object MechanicalKeyResultPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MechanicalKeyResultPart4 = MechanicalKeyResultPart4.T
-  object MechanicalKeyResultPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameResult = SameResult.T
-  object SameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextIdResult = NextIdResult.T
-  object NextIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdateId = UpdateId.T
-  object UpdateId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AbsorbRun = AbsorbRun.T
-  object AbsorbRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AbsorbRound = AbsorbRound.T
-  object AbsorbRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyChecksRun = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
-  val ApplyChecksRun: _root_.com.histmersion.domain.ReviewLedger.Closure.Run.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  type ApplyChecksRun = _root_.com.histmersion.domain.automation.Run.Id
+  val ApplyChecksRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
   type ApplyChecksRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
   val ApplyChecksRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type RecheckMechanicalRun = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
-  val RecheckMechanicalRun: _root_.com.histmersion.domain.ReviewLedger.Closure.Run.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  type RecheckMechanicalRun = _root_.com.histmersion.domain.automation.Run.Id
+  val RecheckMechanicalRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
   type RecheckMechanicalRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
   val RecheckMechanicalRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type RecheckTermCountRun = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
-  val RecheckTermCountRun: _root_.com.histmersion.domain.ReviewLedger.Closure.Run.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  type RecheckTermCountRun = _root_.com.histmersion.domain.automation.Run.Id
+  val RecheckTermCountRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
   type RecheckTermCountRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
   val RecheckTermCountRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type ApplyFixRun = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
-  val ApplyFixRun: _root_.com.histmersion.domain.ReviewLedger.Closure.Run.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Run
+  type ApplyFixRun = _root_.com.histmersion.domain.automation.Run.Id
+  val ApplyFixRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
   type ApplyFixRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
   val ApplyFixRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
-  type LearnTexts = LearnTexts.T
-  object LearnTexts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LearnRun = _root_.com.histmersion.domain.ReviewLedger.Lesson.Run
-  val LearnRun: _root_.com.histmersion.domain.ReviewLedger.Lesson.Run.type = _root_.com.histmersion.domain.ReviewLedger.Lesson.Run
-  type LearnRound = _root_.com.histmersion.domain.ReviewLedger.Lesson.Round
-  val LearnRound: _root_.com.histmersion.domain.ReviewLedger.Lesson.Round.type = _root_.com.histmersion.domain.ReviewLedger.Lesson.Round
-  type ApplyRecheckRun = _root_.com.histmersion.domain.ReviewLedger.AbsorbRun
-  val ApplyRecheckRun: _root_.com.histmersion.domain.ReviewLedger.AbsorbRun.type = _root_.com.histmersion.domain.ReviewLedger.AbsorbRun
-  type ApplyRecheckRound = _root_.com.histmersion.domain.ReviewLedger.AbsorbRound
-  val ApplyRecheckRound: _root_.com.histmersion.domain.ReviewLedger.AbsorbRound.type = _root_.com.histmersion.domain.ReviewLedger.AbsorbRound
-  type MergedRound = MergedRound.T
-  object MergedRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergedExplainBack = MergedExplainBack.T
-  object MergedExplainBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergedEmptySlots = MergedEmptySlots.T
-  object MergedEmptySlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergedRun = MergedRun.T
-  object MergedRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotesResultPart1 = NotesResultPart1.T
-  object NotesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotesResultPart2 = NotesResultPart2.T
-  object NotesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClosedLineResult = ClosedLineResult.T
-  object ClosedLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PromptTextResult = PromptTextResult.T
-  object PromptTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PromptTextClosedMax = PromptTextClosedMax.T
-  object PromptTextClosedMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParagraphsResult = ParagraphsResult.T
-  object ParagraphsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParagraphsBody = ParagraphsBody.T
-  object ParagraphsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesBefore = EditedPassagesBefore.T
-  object EditedPassagesBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesAfter = EditedPassagesAfter.T
-  object EditedPassagesAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EditedPassagesMargin = EditedPassagesMargin.T
-  object EditedPassagesMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeferFinalResultPart2 = DeferFinalResultPart2.T
-  object DeferFinalResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeferFinalRun = DeferFinalRun.T
-  object DeferFinalRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeferFinalRegressionResult = DeferFinalRegressionResult.T
-  object DeferFinalRegressionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardBefore = GuardBefore.T
-  object GuardBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardAfter = GuardAfter.T
-  object GuardAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardAnsweredArg1 = GuardAnsweredArg1.T
-  object GuardAnsweredArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardAnsweredResult = GuardAnsweredResult.T
-  object GuardAnsweredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardCitesArg1 = GuardCitesArg1.T
-  object GuardCitesArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardCitesArg2 = GuardCitesArg2.T
-  object GuardCitesArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardCitesResult = GuardCitesResult.T
-  object GuardCitesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardMinRatio = GuardMinRatio.T
-  object GuardMinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StubbornTimes = StubbornTimes.T
-  object StubbornTimes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TaskTextResult = TaskTextResult.T
-  object TaskTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TaskTextMaxChars = TaskTextMaxChars.T
-  object TaskTextMaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleTaskResult = ArticleTaskResult.T
-  object ArticleTaskResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleTaskSlug = _root_.com.histmersion.domain.ReviewLedger.LegacyTaskSlug
-  val ArticleTaskSlug: _root_.com.histmersion.domain.ReviewLedger.LegacyTaskSlug.type = _root_.com.histmersion.domain.ReviewLedger.LegacyTaskSlug
-  type ArticleTaskText = ArticleTaskText.T
-  object ArticleTaskText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegacyTaskResult = LegacyTaskResult.T
-  object LegacyTaskResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegacyTaskSlug = LegacyTaskSlug.T
-  object LegacyTaskSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LegacyTaskText = LegacyTaskText.T
-  object LegacyTaskText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LearnRun = _root_.com.histmersion.domain.automation.Run.Id
+  val LearnRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
+  type LearnRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  val LearnRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  type ApplyRecheckRun = _root_.com.histmersion.domain.automation.Run.Id
+  val ApplyRecheckRun: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
+  type ApplyRecheckRound = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  val ApplyRecheckRound: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
+  type ArticleTaskSlug = _root_.com.histmersion.domain.research.Slug
+  val ArticleTaskSlug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
 
   enum Status(val wire: Status.Wire):
     case Open extends Status("open")
@@ -178,14 +78,8 @@ object ReviewLedger:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WireResult = WireResult.T
-    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromWireS = FromWireS.T
-    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.domain.ReviewLedger.Status.ParseS): Option[Status] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.ReviewLedger.Status.Wire): Option[Status] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[Status]:
       def all: Array[Status] = Status.values
       def wire(e: Status): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
@@ -202,14 +96,8 @@ object ReviewLedger:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ParseS = ParseS.T
-    object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WireResult = WireResult.T
-    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromWireS = FromWireS.T
-    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.domain.ReviewLedger.LessonSource.ParseS): Option[LessonSource] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.ReviewLedger.LessonSource.Wire): Option[LessonSource] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[LessonSource]:
       def all: Array[LessonSource] = LessonSource.values
       def wire(e: LessonSource): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
@@ -235,8 +123,8 @@ object ReviewLedger:
     object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Round = Round.T
     object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Run = Run.T
-    object Run extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Run = com.histmersion.domain.automation.Run.Id
+    val Run: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
     type Note = Note.T
     object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Quote = Quote.T
@@ -261,30 +149,20 @@ object ReviewLedger:
       notFixedCount: Entry.NotFixedCount = 0,
       deferred: Option[Entry.Deferred] = None
   ) derives KindlingsCodecAsObject:
-    def id: com.histmersion.domain.ReviewLedger.Entry.IdResult = finding.id
-    def open: com.histmersion.domain.ReviewLedger.Entry.OpenResult = status == Status.Open
-    def major: com.histmersion.domain.ReviewLedger.Entry.MajorResult = finding.major
+    def id: com.histmersion.domain.ReviewArticle.Finding.Id = finding.id
+    def open: Boolean = status == Status.Open
+    def major: Boolean = finding.major
     def reviewer: Reviewer = finding.reviewer
 
     /** Deferred by `run`'s final pass: not part of that run's verdict. */
-    def deferredIn(run: com.histmersion.domain.ReviewLedger.Entry.DeferredInRun): com.histmersion.domain.ReviewLedger.Entry.DeferredInResult = open && deferred.contains(run)
+    def deferredIn(run: com.histmersion.domain.automation.Run.Id): Boolean = open && deferred.contains(run)
 
   object Entry:
-    type IdResult = IdResult.T
-    object IdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OpenResult = OpenResult.T
-    object OpenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MajorResult = MajorResult.T
-    object MajorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeferredInResult = DeferredInResult.T
-    object DeferredInResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeferredInRun = DeferredInRun.T
-    object DeferredInRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Run = Run.T
-    object Run extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Round = Round.T
-    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Run = com.histmersion.domain.automation.Run.Id
+    val Run: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
+    type Round = com.histmersion.domain.ReviewLedger.Closure.Round
+    val Round: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
     type Claimed = Claimed.T
     object Claimed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NotFixed = NotFixed.T
@@ -301,10 +179,10 @@ object ReviewLedger:
   object Lesson:
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Run = Run.T
-    object Run extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Round = Round.T
-    object Round extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Run = com.histmersion.domain.automation.Run.Id
+    val Run: _root_.com.histmersion.domain.automation.Run.Id.type = _root_.com.histmersion.domain.automation.Run.Id
+    type Round = com.histmersion.domain.ReviewLedger.Closure.Round
+    val Round: _root_.com.histmersion.domain.ReviewLedger.Closure.Round.type = _root_.com.histmersion.domain.ReviewLedger.Closure.Round
 
   /** `task`: the article's one backlog item (#934), while it has one. */
   final case class Ledger(
@@ -315,18 +193,16 @@ object ReviewLedger:
   ) derives KindlingsCodecAsObject:
     def open: List[Entry] = entries.filter(_.open)
     def openMajors: List[Entry] = open.filter(_.major)
-    def entry(id: com.histmersion.domain.ReviewLedger.Ledger.EntryId): Option[Entry] = entries.find(_.id == id)
+    def entry(id: com.histmersion.domain.ReviewArticle.Finding.Id): Option[Entry] = entries.find(_.id == id)
 
     /** The open findings the fixer claims, of one reviewer: what its re-check verifies. */
     def claimed(r: Reviewer): List[Entry] = open.filter(e => e.claimed && e.reviewer == r)
     def verdict: Verdict = Verdict.of(open.map(_.finding))
 
   object Ledger:
-    type EntryId = EntryId.T
-    object EntryId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.domain.research.Slug
+    val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
     type Task = Task.T
     object Task extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -339,7 +215,7 @@ object ReviewLedger:
     * its problem up to the first colon (a coverage count changes as reasons are given; the passage does not) and its
     * quote.
     */
-  private def mechanicalKey(f: Finding): (com.histmersion.domain.ReviewLedger.MechanicalKeyResultPart1, com.histmersion.domain.ReviewLedger.MechanicalKeyResultPart2, com.histmersion.domain.ReviewLedger.MechanicalKeyResultPart3, com.histmersion.domain.ReviewLedger.MechanicalKeyResultPart4) =
+  private def mechanicalKey(f: Finding): (String, String, String, String) =
     (
       f.kind,
       AgentVerify.normalise(f.where),
@@ -352,7 +228,7 @@ object ReviewLedger:
     * ([[CompareRuns.similarity]]). Mechanical findings compare by [[mechanicalKey]]; the cold reader's term-count
     * findings ([[TermCount]]) are one finding whatever the count or wording.
     */
-  def same(a: Finding, b: Finding): com.histmersion.domain.ReviewLedger.SameResult =
+  def same(a: Finding, b: Finding): Boolean =
     a.reviewer == b.reviewer && {
       if a.reviewer == Reviewer.Mechanical then mechanicalKey(a) == mechanicalKey(b)
       else if TermCount.is(a) || TermCount.is(b) then TermCount.is(a) && TermCount.is(b)
@@ -365,13 +241,13 @@ object ReviewLedger:
     }
 
   /** The next ledger id of a reviewer: its letter and one more than the highest number it used. */
-  def nextId(l: Ledger, r: Reviewer): com.histmersion.domain.ReviewLedger.NextIdResult =
+  def nextId(l: Ledger, r: Reviewer): com.histmersion.domain.ReviewArticle.Finding.Id =
     val used = l.entries.map(_.id).filter(_.startsWith(r.prefix)).flatMap(_.drop(r.prefix.length).toIntOption)
     s"${r.prefix}${used.maxOption.getOrElse(0) + 1}"
 
   // ── transitions ────────────────────────────────────────────────────────────────────────────────
 
-  private def update(l: Ledger, id: com.histmersion.domain.ReviewLedger.UpdateId)(f: Entry => Entry): Ledger =
+  private def update(l: Ledger, id: com.histmersion.domain.ReviewArticle.Finding.Id)(f: Entry => Entry): Ledger =
     l.modify(_.entries).setTo(l.entries.map(e => if e.id == id then f(e) else e))
 
   /** Record a pass's findings (ids per pass, as the reviewers' answers were numbered). A finding the ledger has
@@ -380,12 +256,12 @@ object ReviewLedger:
     * back MAJOR. Anything else is a new entry with the next id. Returns the ledger and the findings under their ledger
     * ids, in the order given.
     */
-  def absorb(l: Ledger, fs: List[Finding], run: com.histmersion.domain.ReviewLedger.AbsorbRun, round: com.histmersion.domain.ReviewLedger.AbsorbRound): (Ledger, List[Finding]) =
+  def absorb(l: Ledger, fs: List[Finding], run: com.histmersion.domain.automation.Run.Id, round: com.histmersion.domain.ReviewLedger.Closure.Round): (Ledger, List[Finding]) =
     @tailrec def absorbAll(
         rest: List[Finding],
         led: Ledger,
         out: Vector[Finding],
-        seen: Set[com.histmersion.domain.ReviewLedger.AbsorbAbsorbAllSeen]
+        seen: Set[String]
     ): (Ledger, List[Finding]) =
       rest match
         case Nil       => (led, out.toList)
@@ -566,7 +442,7 @@ object ReviewLedger:
   /** Add lessons: trimmed, at most [[LessonChars]] each, a lesson already held (normalised) not twice, the newest
     * [[MaxLessons]] kept.
     */
-  def learn(l: Ledger, texts: List[com.histmersion.domain.ReviewLedger.LearnTexts], source: LessonSource, run: com.histmersion.domain.ReviewLedger.LearnRun, round: com.histmersion.domain.ReviewLedger.LearnRound): Ledger =
+  def learn(l: Ledger, texts: List[com.histmersion.domain.ReviewLedger.Lesson.Text], source: LessonSource, run: com.histmersion.domain.ReviewLedger.LearnRun, round: com.histmersion.domain.ReviewLedger.LearnRound): Ledger =
     val fresh = texts.map(_.trim.replaceAll("\\s+", " ").take(LessonChars)).filter(_.nonEmpty)
     val all = fresh.foldLeft(l.lessons.toVector) { (acc, t) =>
       if acc.exists(x => AgentVerify.normalise(x.text) == AgentVerify.normalise(t)) then acc
@@ -587,11 +463,11 @@ object ReviewLedger:
     */
   def merged(
       l: Ledger,
-      round: com.histmersion.domain.ReviewLedger.MergedRound,
-      explainBack: Option[com.histmersion.domain.ReviewLedger.MergedExplainBack] = None,
-      emptySlots: List[com.histmersion.domain.ReviewLedger.MergedEmptySlots] = Nil,
+      round: com.histmersion.domain.ReviewLedger.Closure.Round,
+      explainBack: Option[com.histmersion.domain.ReviewArticle.ColdReaderAnswer.ExplainBack] = None,
+      emptySlots: List[com.histmersion.domain.ReviewArticle.ColdReaderAnswer.EmptySlots] = Nil,
       proposals: List[AgentProposals.Proposal] = Nil,
-      run: Option[com.histmersion.domain.ReviewLedger.MergedRun] = None
+      run: Option[com.histmersion.domain.automation.Run.Id] = None
   ): Merged =
     val fs = l.open
       .map(_.finding)
@@ -604,7 +480,7 @@ object ReviewLedger:
   /** The notes the fixer reads under an open finding: a fix claimed before that its reviewer found wanting, a
     * regression, a rejection it was raised again after.
     */
-  def notes(l: Ledger): Map[com.histmersion.domain.ReviewLedger.NotesResultPart1, com.histmersion.domain.ReviewLedger.NotesResultPart2] =
+  def notes(l: Ledger): Map[String, String] =
     l.open
       .flatMap(e =>
         e.notFixed
@@ -613,7 +489,7 @@ object ReviewLedger:
       .toMap
 
   /** One line of a closed finding. */
-  def closedLine(e: Entry): com.histmersion.domain.ReviewLedger.ClosedLineResult =
+  def closedLine(e: Entry): String =
     val at = Option(e.finding.where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" (${w.take(60)})")
     val how = (e.status, e.closed) match
       case (Status.Fixed, Some(c))    => s"fixed, verified by ${c.by} in pass ${c.round}"
@@ -631,7 +507,7 @@ object ReviewLedger:
     * reviewer's), the newest `closedMax` closed ones as one line each, and the lessons. Empty when there is nothing to
     * show.
     */
-  def promptText(l: Ledger, style: OpenStyle, closedMax: com.histmersion.domain.ReviewLedger.PromptTextClosedMax, only: Option[Reviewer] = None): com.histmersion.domain.ReviewLedger.PromptTextResult =
+  def promptText(l: Ledger, style: OpenStyle, closedMax: com.histmersion.domain.ReviewLedger.ClosedLimit, only: Option[Reviewer] = None): String =
     val mine = (e: Entry) => only.forall(_ == e.reviewer)
     val open = l.open.filter(mine)
     val closed = l.entries.filterNot(_.open).filter(mine).takeRight(math.max(0, closedMax))
@@ -666,30 +542,24 @@ object ReviewLedger:
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   final case class Edited(passages: List[Passage], removed: List[Edited.Removed]) derives KindlingsCodecAsObject:
-    def isEmpty: com.histmersion.domain.ReviewLedger.Edited.IsEmptyResult = passages.isEmpty && removed.isEmpty
+    def isEmpty: Boolean = passages.isEmpty && removed.isEmpty
 
     /** The text a finding's quote is looked up in (to scope it). */
-    def text: com.histmersion.domain.ReviewLedger.Edited.TextResult = passages.map(_.text).mkString("\n\n")
+    def text: com.histmersion.domain.ReviewArticle.Fix.Body = passages.map(_.text).mkString("\n\n")
 
     /** As a prompt shows it. */
-    def render: com.histmersion.domain.ReviewLedger.Edited.RenderResult =
+    def render: String =
       val ps = passages.map(p => p.heading.fold("")(h => s"[under: $h]\n") + p.text).mkString("\n\n---\n\n")
       val rs =
         if removed.isEmpty then "" else "\n\n---\n\nRemoved:\n" + removed.map(r => s"- ${r.take(300)}").mkString("\n")
       ps + rs
 
   object Edited:
-    type IsEmptyResult = IsEmptyResult.T
-    object IsEmptyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TextResult = TextResult.T
-    object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenderResult = RenderResult.T
-    object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Removed = Removed.T
     object Removed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def paragraphs(body: com.histmersion.domain.ReviewLedger.ParagraphsBody): Vector[com.histmersion.domain.ReviewLedger.ParagraphsResult] =
+  private def paragraphs(body: com.histmersion.domain.ReviewArticle.Fix.Body): Vector[com.histmersion.domain.ReviewLedger.Passage.Text] =
     body.replace("\r\n", "\n").split("\n[ \t]*\n").map(_.trim).filter(_.nonEmpty).toVector
 
   private val Heading = "^#{1,6}\\s+(.+?)\\s*#*\\s*$".r
@@ -698,17 +568,17 @@ object ReviewLedger:
     * whitespace-normalised paragraphs), each changed paragraph of `after` widened by `margin` paragraphs on each side,
     * adjacent ones joined; plus the paragraphs of `before` that are gone.
     */
-  def editedPassages(before: com.histmersion.domain.ReviewLedger.EditedPassagesBefore, after: com.histmersion.domain.ReviewLedger.EditedPassagesAfter, margin: com.histmersion.domain.ReviewLedger.EditedPassagesMargin = 1): Edited =
+  def editedPassages(before: com.histmersion.domain.ReviewArticle.Fix.Body, after: com.histmersion.domain.ReviewArticle.Fix.Body, margin: com.histmersion.domain.ReviewLedger.PassageMargin = 1): Edited =
     val a = paragraphs(before)
     val b = paragraphs(after)
-    def key(p: com.histmersion.domain.ReviewLedger.EditedPassagesKeyP) = p.replaceAll("\\s+", " ")
+    def key(p: String) = p.replaceAll("\\s+", " ")
     val (ka, kb) = (a.map(key), b.map(key))
     // LCS table, suffix form: t(i)(j) = LCS of a.drop(i), b.drop(j)
     val t = Array.ofDim[Int](a.size + 1, b.size + 1)
     for i <- a.indices.reverse; j <- b.indices.reverse do
       t(i)(j) = if ka(i) == kb(j) then t(i + 1)(j + 1) + 1 else math.max(t(i + 1)(j), t(i)(j + 1))
     @annotation.tailrec
-    def walk(i: com.histmersion.domain.ReviewLedger.EditedPassagesWalkI, j: com.histmersion.domain.ReviewLedger.EditedPassagesWalkJ, keptA: Set[com.histmersion.domain.ReviewLedger.EditedPassagesWalkKeptA], keptB: Set[com.histmersion.domain.ReviewLedger.EditedPassagesWalkKeptB]): (Set[com.histmersion.domain.ReviewLedger.EditedPassagesWalkResultPart1], Set[com.histmersion.domain.ReviewLedger.EditedPassagesWalkResultPart2]) =
+    def walk(i: Int, j: Int, keptA: Set[Int], keptB: Set[Int]): (Set[Int], Set[Int]) =
       if i >= a.size || j >= b.size then (keptA, keptB)
       else if ka(i) == kb(j) then walk(i + 1, j + 1, keptA + i, keptB + j)
       else if t(i + 1)(j) >= t(i)(j + 1) then walk(i + 1, j, keptA, keptB)
@@ -724,7 +594,7 @@ object ReviewLedger:
       }
       .reverse
       .map(_.reverse)
-    def headingOf(i: com.histmersion.domain.ReviewLedger.EditedPassagesHeadingOfI): Option[com.histmersion.domain.ReviewLedger.EditedPassagesHeadingOfResult] =
+    def headingOf(i: Int): Option[com.histmersion.domain.ReviewLedger.Passage.Heading] =
       (i to 0 by -1).iterator.map(b(_)).collectFirst {
         case p if p.linesIterator.nextOption().exists(Heading.matches) =>
           p.linesIterator.next() match { case Heading(h) => h.trim; case h => h }
@@ -744,7 +614,7 @@ object ReviewLedger:
     * MAJOR — logged, in the backlog item, and the next run's pass 1 hands them to the fixer — but this run's verdict
     * ([[merged]] with the run) counts them as minor. Returns the ledger and the deferred ids.
     */
-  def deferFinal(before: Ledger, after: Ledger, run: com.histmersion.domain.ReviewLedger.DeferFinalRun, regression: Finding => com.histmersion.domain.ReviewLedger.DeferFinalRegressionResult): (Ledger, List[com.histmersion.domain.ReviewLedger.DeferFinalResultPart2]) =
+  def deferFinal(before: Ledger, after: Ledger, run: com.histmersion.domain.automation.Run.Id, regression: Finding => Boolean): (Ledger, List[String]) =
     val fresh = after.open
       .filter(e => e.major && before.entry(e.id).forall(b => b.open && !b.major))
       .filterNot(e => regression(e.finding))
@@ -758,14 +628,12 @@ object ReviewLedger:
 
   /** One closed finding a revision would reopen, and why. */
   final case class Regression(id: Regression.Id, why: Regression.Why) derives KindlingsCodecAsObject:
-    def line: com.histmersion.domain.ReviewLedger.Regression.LineResult = s"$id (closed): $why"
+    def line: String = s"$id (closed): $why"
 
   object Regression:
-    type LineResult = LineResult.T
-    object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Id: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
     type Why = Why.T
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -780,13 +648,13 @@ object ReviewLedger:
     */
   def guard(
       l: Ledger,
-      before: com.histmersion.domain.ReviewLedger.GuardBefore,
-      after: com.histmersion.domain.ReviewLedger.GuardAfter,
-      answered: (com.histmersion.domain.ReviewLedger.GuardAnsweredArg1, CritiqueRef) => com.histmersion.domain.ReviewLedger.GuardAnsweredResult,
-      cites: (com.histmersion.domain.ReviewLedger.GuardCitesArg1, com.histmersion.domain.ReviewLedger.GuardCitesArg2) => com.histmersion.domain.ReviewLedger.GuardCitesResult,
-      minRatio: com.histmersion.domain.ReviewLedger.GuardMinRatio
+      before: com.histmersion.domain.ReviewArticle.Fix.Body,
+      after: com.histmersion.domain.ReviewArticle.Fix.Body,
+      answered: (String, CritiqueRef) => Boolean,
+      cites: (com.histmersion.domain.ReviewArticle.Fix.Body, com.histmersion.domain.library.Citekey) => Boolean,
+      minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio
   ): List[Regression] =
-    def in(q: com.histmersion.domain.ReviewLedger.GuardInQ, body: com.histmersion.domain.ReviewLedger.GuardInBody) = AgentVerify.findQuote(q, body, minRatio).accepted
+    def in(q: com.histmersion.domain.ReviewArticle.Evidence.Quote, body: com.histmersion.domain.ReviewArticle.Fix.Body) = AgentVerify.findQuote(q, body, minRatio).accepted
     l.entries.filter(_.status == Status.Fixed).flatMap { e =>
       val pair = e.finding.pair
         .filter(r => answered(before, r) && !answered(after, r))
@@ -811,13 +679,13 @@ object ReviewLedger:
   /** Open missing-critique findings found not fixed at least `times` times whose pair is still open: the ones that get
     * code's pairing repair, else a precise instruction (§6.9).
     */
-  def stubborn(l: Ledger, times: com.histmersion.domain.ReviewLedger.StubbornTimes = 2): List[Entry] =
+  def stubborn(l: Ledger, times: com.histmersion.domain.ReviewLedger.StubbornLimit = 2): List[Entry] =
     l.open.filter(e => e.finding.pair.isDefined && e.notFixedCount >= times)
 
   // ── the backlog item (#934) ────────────────────────────────────────────────────────────────────
 
   /** The article's one backlog item while a MAJOR is open: how many, and each one's line. */
-  def taskText(l: Ledger, runId: com.histmersion.domain.automation.Run.Id, maxChars: com.histmersion.domain.ReviewLedger.TaskTextMaxChars = 1500): Option[com.histmersion.domain.ReviewLedger.TaskTextResult] =
+  def taskText(l: Ledger, runId: com.histmersion.domain.automation.Run.Id, maxChars: com.histmersion.domain.ReviewLedger.TaskTextLimit = 1500): Option[com.histmersion.domain.ReviewLedger.TaskText] =
     val majors = l.openMajors
     Option.when(majors.nonEmpty) {
       val lines = majors.map { e =>
@@ -837,12 +705,12 @@ object ReviewLedger:
     * (`review-article <slug>: 2 open MAJORs — …`) — so a run whose ledger lost the item's id rewrites the open one
     * instead of adding a second. Not a [[legacyTask]] (those are closed).
     */
-  def articleTask(slug: com.histmersion.domain.ReviewLedger.ArticleTaskSlug, text: com.histmersion.domain.ReviewLedger.ArticleTaskText): com.histmersion.domain.ReviewLedger.ArticleTaskResult =
+  def articleTask(slug: com.histmersion.domain.ReviewLedger.ArticleTaskSlug, text: com.histmersion.domain.ReviewLedger.TaskText): Boolean =
     val t = text.trim
     !legacyTask(slug, t) &&
     (t.startsWith(s"review-article [[$slug]]: ") || t.startsWith(s"review-article $slug: ")) &&
     "^review-article \\S+: \\d+ open MAJORs?\\b".r.findPrefixOf(t).isDefined
 
   /** The text of the per-finding items earlier runs left for the article (before #934). */
-  def legacyTask(slug: com.histmersion.domain.ReviewLedger.LegacyTaskSlug, text: com.histmersion.domain.ReviewLedger.LegacyTaskText): com.histmersion.domain.ReviewLedger.LegacyTaskResult =
+  def legacyTask(slug: com.histmersion.domain.research.Slug, text: com.histmersion.domain.ReviewLedger.TaskText): Boolean =
     text.startsWith(s"review-article [[$slug]]: MAJOR ")

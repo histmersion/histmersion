@@ -70,12 +70,12 @@ trait PlanRun:
   def foldSources(
       right: com.histmersion.api.exchange.Bundle.Source,
       left: com.histmersion.api.exchange.Bundle.Source,
-      citekey: com.histmersion.util.data.exchange.PlanRun.FoldSourcesCitekey,
+      citekey: com.histmersion.domain.library.Citekey,
       folds: PlanFolds
-  ): com.histmersion.util.data.exchange.PlanRun.FoldSourcesResult = false
+  ): Boolean = false
 
   /** A source of the bundle that arrives under another citekey (a collision decided `rename-right`). */
-  def renamed(source: UUID, citekey: com.histmersion.util.data.exchange.PlanRun.RenamedCitekey): Unit = ()
+  def renamed(source: UUID, citekey: com.histmersion.domain.library.Citekey): Unit = ()
 
   /** The bundle's source that a line of this kind belongs to (its fate decides whether the line is held). */
   def ownerSource(foreign: UUID, kind: Bundle.Kind): Option[UUID] = None
@@ -114,7 +114,7 @@ trait PlanRun:
   def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[com.histmersion.util.data.exchange.PlanRun.ArgumentResultPart1, Unit]] = None
 
   /** An issue of a pair: its decision is carried out with the pair's fold. */
-  def pairIssue(kind: MergeIssue.Kind): com.histmersion.util.data.exchange.PlanRun.PairIssueResult = false
+  def pairIssue(kind: MergeIssue.Kind): Boolean = false
 
   /** What a pair that folds does with the kind's lines before every kind's [[foldPair]]: `keepsBundleBody` is whether
     * the folded source takes the bundle's body.
@@ -149,7 +149,7 @@ trait PlanRun:
   def lines(es: BundleEntities, es0: BundleEntities): BundleEntities = es
 
   /** What cannot be imported whatever is decided: the written lines (`writes`) that need what is not coming. */
-  def problems(finalEs: BundleEntities, live: UUID => com.histmersion.util.data.exchange.PlanRun.ProblemsLiveResult, writes: UUID => com.histmersion.util.data.exchange.PlanRun.ProblemsWritesResult): List[com.histmersion.util.data.exchange.PlanRun.ProblemsResult] = Nil
+  def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[com.histmersion.util.data.exchange.PlanRun.ProblemsResult] = Nil
 
   /** Bundle records left out for good: recorded as deleted here. */
   def dropped: Set[UUID] = Set.empty
@@ -184,28 +184,16 @@ object PlanRun:
   object BodyIssueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitekeyArgumentResultPart1 = CitekeyArgumentResultPart1.T
   object CitekeyArgumentResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldSourcesResult = FoldSourcesResult.T
-  object FoldSourcesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldSourcesCitekey = FoldSourcesCitekey.T
-  object FoldSourcesCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamedCitekey = RenamedCitekey.T
-  object RenamedCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BodiesWantedResult = BodiesWantedResult.T
   object BodiesWantedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PairBodyIssue = PairBodyIssue.T
   object PairBodyIssue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArgumentResultPart1 = ArgumentResultPart1.T
   object ArgumentResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairIssueResult = PairIssueResult.T
-  object PairIssueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FoldPairFirstKeepsBundleBody = FoldPairFirstKeepsBundleBody.T
   object FoldPairFirstKeepsBundleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProblemsResult = ProblemsResult.T
   object ProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProblemsLiveResult = ProblemsLiveResult.T
-  object ProblemsLiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProblemsWritesResult = ProblemsWritesResult.T
-  object ProblemsWritesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BodyRenamesResultPart2Part1 = BodyRenamesResultPart2Part1.T
   object BodyRenamesResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BodyRenamesResultPart2Part2 = BodyRenamesResultPart2Part2.T

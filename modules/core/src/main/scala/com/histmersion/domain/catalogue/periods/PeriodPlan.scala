@@ -137,8 +137,6 @@ object PeriodPlan:
   object RepointPeriodsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RepointPeriodsPart2 = RepointPeriodsPart2.T
   object RepointPeriodsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SamePeriodResult = SamePeriodResult.T
-  object SamePeriodResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def repoint(es: BundleEntities, periods: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart2]): BundleEntities =
     if periods.isEmpty then es
@@ -150,5 +148,5 @@ object PeriodPlan:
   def samePeriod(
       l: com.histmersion.api.exchange.Bundle.Period,
       r: com.histmersion.api.exchange.Bundle.Period
-  ): com.histmersion.domain.catalogue.periods.PeriodPlan.SamePeriodResult =
+  ): Boolean =
     l.period == r.period && Fingerprint.of(l.label) == Fingerprint.of(r.label)

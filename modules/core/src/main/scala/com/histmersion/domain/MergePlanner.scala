@@ -80,163 +80,57 @@ import com.histmersion.api.exchange.Bundle
   * records do not change, and a resolution whose id is no longer in the plan is reported, never re-applied.
   */
 object MergePlanner:
+  type Alias = Alias.T
+  object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AliasNote = AliasNote.T
+  object AliasNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AliasRecord = AliasRecord.T
+  object AliasRecord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleBody = ArticleBody.T
+  object ArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockingBase = BlockingBase.T
+  object BlockingBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeletedHereCount = DeletedHereCount.T
+  object DeletedHereCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IssueId = IssueId.T
+  object IssueId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelField = LabelField.T
+  object LabelField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LedgerMatchCount = LedgerMatchCount.T
+  object LedgerMatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MappedTo = MappedTo.T
+  object MappedTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NeedsReview = NeedsReview.T
+  object NeedsReview extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rename = Rename.T
+  object Rename extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReplacedKeep = ReplacedKeep.T
+  object ReplacedKeep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolvedText = ResolvedText.T
+  object ResolvedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScoreMatchCount = ScoreMatchCount.T
+  object ScoreMatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Sketch = Sketch.T
+  object Sketch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrongKeyMatchCount = StrongKeyMatchCount.T
+  object StrongKeyMatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Subject = Subject.T
+  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TheirsWins = TheirsWins.T
+  object TheirsWins extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UidMatchCount = UidMatchCount.T
+  object UidMatchCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UndecidedCount = UndecidedCount.T
+  object UndecidedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnmatchedCount = UnmatchedCount.T
+  object UnmatchedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WantedBody = WantedBody.T
+  object WantedBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One row of `merge_ledger`: the foreign rev merged, the local uid it maps to, the local rev left. */
-  type LocalizeGoLabelField = LocalizeGoLabelField.T
-  object LocalizeGoLabelField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelinkGoalsLabelResult = RelinkGoalsLabelResult.T
-  object RelinkGoalsLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanLiveHereResult = PlanLiveHereResult.T
-  object PlanLiveHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanRightRevResult = PlanRightRevResult.T
-  object PlanRightRevResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanLocalRevResult = PlanLocalRevResult.T
-  object PlanLocalRevResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanHereResult = PlanHereResult.T
-  object PlanHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanInfoLine = PlanInfoLine.T
-  object PlanInfoLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanHeldByResult = PlanHeldByResult.T
-  object PlanHeldByResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanForeignHistoryResult = PlanForeignHistoryResult.T
-  object PlanForeignHistoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanBaseOfResult = PlanBaseOfResult.T
-  object PlanBaseOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanBaseOfSha = PlanBaseOfSha.T
-  object PlanBaseOfSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanArticleMergeResult = PlanArticleMergeResult.T
-  object PlanArticleMergeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanConflictIssueTitle = PlanConflictIssueTitle.T
-  object PlanConflictIssueTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanLabelTakenLabelResult = PlanLabelTakenLabelResult.T
-  object PlanLabelTakenLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanLabelTakenWhat = PlanLabelTakenWhat.T
-  object PlanLabelTakenWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanWrittenBeforeResult = PlanWrittenBeforeResult.T
-  object PlanWrittenBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanLabelTakenOfLabelResult = PlanLabelTakenOfLabelResult.T
-  object PlanLabelTakenOfLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanLabelTakenOfWhat = PlanLabelTakenOfWhat.T
-  object PlanLabelTakenOfWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanInLocalizedResult = PlanInLocalizedResult.T
-  object PlanInLocalizedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanWritesInitiallyResult = PlanWritesInitiallyResult.T
-  object PlanWritesInitiallyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanMergedResult = PlanMergedResult.T
-  object PlanMergedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanBothSlugResult = PlanBothSlugResult.T
-  object PlanBothSlugResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanBothSlugSlug = PlanBothSlugSlug.T
-  object PlanBothSlugSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanBlockingTitle = PlanBlockingTitle.T
-  object PlanBlockingTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanBlockingBase = PlanBlockingBase.T
-  object PlanBlockingBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanByIdPart1 = PlanByIdPart1.T
-  object PlanByIdPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanTextsPart1 = PlanTextsPart1.T
-  object PlanTextsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanTextsPart2 = PlanTextsPart2.T
-  object PlanTextsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanChosenPart1 = PlanChosenPart1.T
-  object PlanChosenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanArgOkPart1 = PlanArgOkPart1.T
-  object PlanArgOkPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanStandingOfId = PlanStandingOfId.T
-  object PlanStandingOfId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanStandingOfSeen = PlanStandingOfSeen.T
-  object PlanStandingOfSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanUnconditionalPart1 = PlanUnconditionalPart1.T
-  object PlanUnconditionalPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanDecisionInId = PlanDecisionInId.T
-  object PlanDecisionInId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanGateDecisionPart1 = PlanGateDecisionPart1.T
-  object PlanGateDecisionPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanDecisionInIssue = PlanDecisionInIssue.T
-  object PlanDecisionInIssue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanRenameRightPart2 = PlanRenameRightPart2.T
-  object PlanRenameRightPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanMapTo = PlanMapTo.T
-  object PlanMapTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanRelabelledLine = PlanRelabelledLine.T
-  object PlanRelabelledLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCkMapPart1 = PlanCkMapPart1.T
-  object PlanCkMapPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCkMapPart2 = PlanCkMapPart2.T
-  object PlanCkMapPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanRewriteResult = PlanRewriteResult.T
-  object PlanRewriteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanRewriteBody = PlanRewriteBody.T
-  object PlanRewriteBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanArticleFoldBody = PlanArticleFoldBody.T
-  object PlanArticleFoldBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanArticleFoldTheirsWins = PlanArticleFoldTheirsWins.T
-  object PlanArticleFoldTheirsWins extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanArticleFoldReview = PlanArticleFoldReview.T
-  object PlanArticleFoldReview extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanKeptAliasesAliasResult = PlanKeptAliasesAliasResult.T
-  object PlanKeptAliasesAliasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanKeptAliasesLivePart1 = PlanKeptAliasesLivePart1.T
-  object PlanKeptAliasesLivePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanKeptAliasesOldPart1 = PlanKeptAliasesOldPart1.T
-  object PlanKeptAliasesOldPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanKeptAliasesWhat = PlanKeptAliasesWhat.T
-  object PlanKeptAliasesWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanKeptAliasesRecord = PlanKeptAliasesRecord.T
-  object PlanKeptAliasesRecord extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanWritesResult = PlanWritesResult.T
-  object PlanWritesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanInBundleLiveResult = PlanInBundleLiveResult.T
-  object PlanInBundleLiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCountMatchesByUid = PlanCountMatchesByUid.T
-  object PlanCountMatchesByUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCountMatchesByLedger = PlanCountMatchesByLedger.T
-  object PlanCountMatchesByLedger extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCountMatchesByStrongKey = PlanCountMatchesByStrongKey.T
-  object PlanCountMatchesByStrongKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCountMatchesByScore = PlanCountMatchesByScore.T
-  object PlanCountMatchesByScore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCountMatchesUndecided = PlanCountMatchesUndecided.T
-  object PlanCountMatchesUndecided extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCountMatchesUnmatched = PlanCountMatchesUnmatched.T
-  object PlanCountMatchesUnmatched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanCountMatchesDeletedHere = PlanCountMatchesDeletedHere.T
-  object PlanCountMatchesDeletedHere extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanMatched0 = PlanMatched0.T
-  object PlanMatched0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MapJsonMPart1 = MapJsonMPart1.T
-  object MapJsonMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MapJsonMPart2 = MapJsonMPart2.T
-  object MapJsonMPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LocalizeLocalLabelPart2 = LocalizeLocalLabelPart2.T
-  object LocalizeLocalLabelPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LetterResult = LetterResult.T
-  object LetterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IssueIdResult = IssueIdResult.T
-  object IssueIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IssueIdRightRev = IssueIdRightRev.T
-  object IssueIdRightRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IssueIdLeftRev = IssueIdLeftRev.T
-  object IssueIdLeftRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IssueIdExtra = IssueIdExtra.T
-  object IssueIdExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleTextBase = ArticleTextBase.T
-  object ArticleTextBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleTextLeft = ArticleTextLeft.T
-  object ArticleTextLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleTextRight = ArticleTextRight.T
-  object ArticleTextRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SketchesWantedResult = SketchesWantedResult.T
-  object SketchesWantedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodiesWantedResult = BodiesWantedResult.T
-  object BodiesWantedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodiesWantedSketchesPart1 = BodiesWantedSketchesPart1.T
-  object BodiesWantedSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanSketchesPart1 = PlanSketchesPart1.T
-  object PlanSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplacedKeepResult = ReplacedKeepResult.T
-  object ReplacedKeepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class LedgerEntry(foreignRev: LedgerEntry.ForeignRev, localUid: UUID, localRevAfter: Option[LedgerEntry.LocalRevAfter])
 
@@ -341,17 +235,13 @@ object MergePlanner:
       /** Likewise for a named period: the same label and an overlapping span. */
       periodMatches: Map[UUID, Input.PeriodMatchesValue] = Map.empty
   ):
-    def ownBundle: com.histmersion.domain.MergePlanner.Input.OwnBundleResult = manifest.instance.id == here.id
+    def ownBundle: Boolean = manifest.instance.id == here.id
 
     /** How the other collection is named in what the merge writes ("work"). */
-    def fromLabel: com.histmersion.domain.MergePlanner.Input.FromLabelResult =
+    def fromLabel: com.histmersion.domain.MergePlanner.Row.Label =
       manifest.instance.label.map(_.trim).filter(_.nonEmpty).getOrElse(manifest.instance.id.toString.take(8))
 
   object Input:
-    type OwnBundleResult = OwnBundleResult.T
-    object OwnBundleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromLabelResult = FromLabelResult.T
-    object FromLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Compat = Compat.T
     object Compat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -513,7 +403,7 @@ object MergePlanner:
 
   // ── localization ────────────────────────────────────────────────────────────────────────────
 
-  private def mapJson(m: Map[com.histmersion.domain.MergePlanner.MapJsonMPart1, com.histmersion.domain.MergePlanner.MapJsonMPart2])(j: Json): Json =
+  private def mapJson(m: Map[com.histmersion.domain.MergePlanner.Row.Label, com.histmersion.domain.MergePlanner.Row.Label])(j: Json): Json =
     j.fold(
       j,
       _ => j,
@@ -527,11 +417,11 @@ object MergePlanner:
     * replaced by the local one, and a mapped row's label by its local label — after a merge the local citekey (slug,
     * id) wins. Lines with no mapping are left as they are.
     */
-  def localize(es: BundleEntities, mapped: Map[UUID, UUID], localLabel: Map[UUID, com.histmersion.domain.MergePlanner.LocalizeLocalLabelPart2]): BundleEntities =
+  def localize(es: BundleEntities, mapped: Map[UUID, UUID], localLabel: Map[UUID, com.histmersion.domain.MergePlanner.Row.Label]): BundleEntities =
     if mapped.isEmpty then es
     else
       val m = mapped.map((f, l) => f.toString -> l.toString)
-      def go[A](as: List[A], labelField: Option[com.histmersion.domain.MergePlanner.LocalizeGoLabelField])(using enc: Encoder.AsObject[A], dec: Decoder[A]): List[A] =
+      def go[A](as: List[A], labelField: Option[com.histmersion.domain.MergePlanner.LabelField])(using enc: Encoder.AsObject[A], dec: Decoder[A]): List[A] =
         as.map { a =>
           val obj = enc.encodeObject(a)
           val own = obj("uid").flatMap(_.asString).flatMap(u => scala.util.Try(UUID.fromString(u)).toOption)
@@ -574,7 +464,7 @@ object MergePlanner:
   // ── issue ids ───────────────────────────────────────────────────────────────────────────────
 
   /** The letter of an issue id: the entity it is about (O for an OCR body, L for an alias). */
-  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): com.histmersion.domain.MergePlanner.LetterResult = kind match
+  def letter(kind: MergeIssue.Kind, entity: Bundle.Kind): com.histmersion.util.data.exchange.Bundle.Kind.IssueLetter = kind match
     case MergeIssue.Kind.BodyDiffers   => "O"
     case MergeIssue.Kind.AliasConflict => "L"
     case _                             => entity.issueLetter
@@ -588,10 +478,10 @@ object MergePlanner:
       entity: Bundle.Kind,
       right: List[UUID],
       left: List[UUID],
-      rightRev: com.histmersion.domain.MergePlanner.IssueIdRightRev,
-      leftRev: com.histmersion.domain.MergePlanner.IssueIdLeftRev,
-      extra: com.histmersion.domain.MergePlanner.IssueIdExtra = ""
-  ): com.histmersion.domain.MergePlanner.IssueIdResult =
+      rightRev: com.histmersion.domain.MergePlanner.Row.ForeignRev,
+      leftRev: com.histmersion.domain.MergePlanner.Row.LocalRev,
+      extra: com.histmersion.domain.MergePlanner.IssueId = ""
+  ): com.histmersion.domain.MergePlanner.IssueId =
     val text = List(
       MergeIssue.Kind.wireOf(kind),
       right.map(_.toString).sorted.mkString(","),
@@ -605,7 +495,7 @@ object MergePlanner:
   /** Two versions of an article, with the three-way merge's regions over their common version (or the whole text as one
     * region when there is none).
     */
-  private[domain] def articleText(base: Option[com.histmersion.domain.MergePlanner.ArticleTextBase], left: com.histmersion.domain.MergePlanner.ArticleTextLeft, right: com.histmersion.domain.MergePlanner.ArticleTextRight): IssueText =
+  private[domain] def articleText(base: Option[com.histmersion.domain.MergePlanner.ArticleBody], left: com.histmersion.domain.MergePlanner.ArticleBody, right: com.histmersion.domain.MergePlanner.ArticleBody): IssueText =
     val hunks = base match
       case Some(b) =>
         Diff3.merge(b, left, right).hunks.map {
@@ -621,7 +511,7 @@ object MergePlanner:
   private def relinkGoals(es: BundleEntities, in: Input): BundleEntities =
     val citekeys = in.sources.map(s => s.uid -> s.citekey).toMap ++ es.sources.map(s => s.uid -> s.citekey)
     val slugs = in.local.articles.map(a => a.uid -> a.slug).toMap ++ es.articles.map(a => a.uid -> a.slug)
-    def label(k: com.histmersion.api.exchange.Bundle.GoalLink): Option[com.histmersion.domain.MergePlanner.RelinkGoalsLabelResult] = k.kind match
+    def label(k: com.histmersion.api.exchange.Bundle.GoalLink): Option[com.histmersion.domain.MergePlanner.Row.Label] = k.kind match
       case "source"  => k.refUid.flatMap(citekeys.get)
       case "article" => k.refUid.flatMap(slugs.get)
       case _         => None
@@ -636,7 +526,7 @@ object MergePlanner:
   /** The OCR bodies (by sha256) whose MinHash could decide whether two sources are one, as the kinds' rules say: the
     * database computes them before [[plan]].
     */
-  def sketchesWanted(in: Input, cfg: MergeSettings, rules: List[PlanRules]): Set[com.histmersion.domain.MergePlanner.SketchesWantedResult] =
+  def sketchesWanted(in: Input, cfg: MergeSettings, rules: List[PlanRules]): Set[com.histmersion.domain.MergePlanner.Sketch] =
     PlanRuns(rules.map(_.start(in))).sketchesWanted(cfg)
 
   /** The OCR bodies (by sha256) the plan must read for the kinds' rules (re-anchoring attestations): of the matched
@@ -644,11 +534,11 @@ object MergePlanner:
     */
   def bodiesWanted(
       in: Input,
-      sketches: Map[com.histmersion.domain.MergePlanner.BodiesWantedSketchesPart1, MinHash],
+      sketches: Map[com.histmersion.domain.MergePlanner.Sketch, MinHash],
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       rules: List[PlanRules]
-  ): Set[com.histmersion.domain.MergePlanner.BodiesWantedResult] =
+  ): Set[com.histmersion.domain.MergePlanner.WantedBody] =
     val run = PlanRuns(rules.map(_.start(in)))
     val pairs = run.matchSources(sketches, cfg, resolutions.policy.editions)
     run.bodiesWanted(pairs.map(p => (p.right, p.left)))
@@ -684,7 +574,7 @@ object MergePlanner:
 
   def plan(
       in: Input,
-      sketches: Map[com.histmersion.domain.MergePlanner.PlanSketchesPart1, MinHash],
+      sketches: Map[com.histmersion.domain.MergePlanner.Sketch, MinHash],
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       rules: List[PlanRules]
@@ -707,13 +597,13 @@ object MergePlanner:
     val own = in.ownBundle
     val policy = resolutions.policy
     val from = in.fromLabel
-    def liveHere(u: UUID): com.histmersion.domain.MergePlanner.PlanLiveHereResult = in.live(u) || (localRevs.contains(u) && !in.tombstoned(u))
+    def liveHere(u: UUID): Boolean = in.live(u) || (localRevs.contains(u) && !in.tombstoned(u))
 
     // ── 2. sources ──
     val matched: List[SourcePair] = run.matchSources(sketches, cfg, policy.editions)
     val sourcesByUid = in.sources.map(s => s.uid -> s).toMap
-    def rightRev(u: UUID): com.histmersion.domain.MergePlanner.PlanRightRevResult = rawRevs.get(u).map(_.rev).getOrElse("")
-    def localRev(u: UUID): com.histmersion.domain.MergePlanner.PlanLocalRevResult = localRevs.get(u).map(_.rev).getOrElse("")
+    def rightRev(u: UUID): com.histmersion.domain.MergePlanner.Row.ForeignRev = rawRevs.get(u).map(_.rev).getOrElse("")
+    def localRev(u: UUID): com.histmersion.domain.MergePlanner.Row.LocalRev = localRevs.get(u).map(_.rev).getOrElse("")
 
     val fates: Map[UUID, SourceFate] = fes.sources.map { s =>
       val l = idOf(s.uid)
@@ -743,10 +633,10 @@ object MergePlanner:
       def input: Input = in
       def rightRev(u: UUID): String = rawRevs.get(u).map(_.rev).getOrElse("")
       def localRev(u: UUID): String = localRevs.get(u).map(_.rev).getOrElse("")
-      def here(u: UUID): com.histmersion.domain.MergePlanner.PlanHereResult = localRevs.contains(u)
+      def here(u: UUID): Boolean = localRevs.contains(u)
       def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
       def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit = add(Draft(issue, importable))
-      def info(line: com.histmersion.domain.MergePlanner.PlanInfoLine): Unit = noted += line
+      def info(line: com.histmersion.domain.MergePlanner.Result.Notes): Unit = noted += line
 
     // whether a pair is one work, the fields of a pair, a citekey taken: as the sources' rules ask
     run.sourceQuestions(fates, sketches, cfg, pairQuestions)
@@ -816,7 +706,7 @@ object MergePlanner:
     def ownerSource(f: UUID, kind: Bundle.Kind): Option[UUID] = kind match
       case Bundle.Kind.Source => Some(f)
       case _                  => run.ownerSource(f, kind)
-    def heldBy(f: UUID, kind: Bundle.Kind): com.histmersion.domain.MergePlanner.PlanHeldByResult =
+    def heldBy(f: UUID, kind: Bundle.Kind): Boolean =
       ownerSource(f, kind).flatMap(fates.get).exists {
         case SourceFate.Auto(_) | SourceFate.Gate(_, _) => true
         case _                                          => false
@@ -852,7 +742,7 @@ object MergePlanner:
     val localGoal = in.local.goals.map(g => g.uid -> g).toMap
     val localQueue = in.local.queue.map(q => q.uid -> q).toMap
     val rawArticle = fes.articles.map(a => a.uid -> a).toMap
-    def foreignHistory(f: UUID): Set[com.histmersion.domain.MergePlanner.PlanForeignHistoryResult] = fes.versions.filter(_.articleUid == f).map(_.bodySha256).toSet
+    def foreignHistory(f: UUID): Set[com.histmersion.Sha256] = fes.versions.filter(_.articleUid == f).map(_.bodySha256).toSet
     def outcome(local: com.histmersion.api.exchange.Bundle.Article, foreignUid: UUID): ArticleOutcome =
       MergeFold.articleOutcome(
         local.body,
@@ -860,14 +750,14 @@ object MergePlanner:
         rawArticle(foreignUid).body,
         foreignHistory(foreignUid)
       )
-    def baseOf(local: UUID, sha: com.histmersion.domain.MergePlanner.PlanBaseOfSha): Option[com.histmersion.domain.MergePlanner.PlanBaseOfResult] =
+    def baseOf(local: UUID, sha: com.histmersion.Sha256): Option[com.histmersion.Sha256] =
       in.articleHistory.getOrElse(local, Nil).find(_._1 == sha).map(_._2)
 
     /** The two records of a row question side by side, where the screen can show more than labels. */
     def rowDetail(kind: Bundle.Kind, u: UUID): Option[IssueDetail] = run.rowDetail(kind, u, localized)
     // a bundle uid → (the uid here, what M4 does)
     val merges = scala.collection.mutable.LinkedHashMap.empty[UUID, (UUID, Merges)]
-    def articleMerge(f: UUID, o: UUID, oc: ArticleOutcome): com.histmersion.domain.MergePlanner.PlanArticleMergeResult = oc match
+    def articleMerge(f: UUID, o: UUID, oc: ArticleOutcome): Boolean = oc match
       case ArticleOutcome.Same | ArticleOutcome.Ours => merges(f) = o -> Merges.ArticleKeep; true
       case ArticleOutcome.Theirs                     => merges(f) = o -> Merges.ArticleTheirs; true
       case ArticleOutcome.Merged(b, _)               => merges(f) = o -> Merges.ArticleMerged(b); true
@@ -879,7 +769,7 @@ object MergePlanner:
       val right =
         Option.when(!r.tombstone)(IssueSide(rawRevs.get(r.foreignUid).map(_.label).getOrElse(r.label), r.foreignUid))
       def conflictIssue(
-          title: com.histmersion.domain.MergePlanner.PlanConflictIssueTitle,
+          title: com.histmersion.domain.Title,
           opts: List[MergeDecision.Kind],
           importable: Set[MergeDecision.Kind],
           detail: Option[IssueDetail] = None
@@ -954,9 +844,9 @@ object MergePlanner:
         kind: Bundle.Kind,
         rows: List[A],
         uid: A => UUID,
-        label: A => com.histmersion.domain.MergePlanner.PlanLabelTakenLabelResult,
+        label: A => com.histmersion.domain.MergePlanner.Row.Label,
         owner: A => Option[UUID],
-        what: com.histmersion.domain.MergePlanner.PlanLabelTakenWhat,
+        what: com.histmersion.domain.MergePlanner.Subject,
         options: List[MergeDecision.Kind] = lr,
         merge: (A, UUID) => Option[Merges] = (_: A, _: UUID) => None,
         detailOf: (A, UUID) => Option[IssueDetail] = (_: A, _: UUID) => None
@@ -1002,14 +892,14 @@ object MergePlanner:
       }
     // the names the kinds' rules see, under the planner's own
     val linesHere = localized
-    val writtenBefore: UUID => com.histmersion.domain.MergePlanner.PlanWrittenBeforeResult = writesInitially
+    val writtenBefore: UUID => Boolean = writesInitially
     def labelTakenOf[A](
         kind: Bundle.Kind,
         rows: List[A],
         uid: A => UUID,
-        label: A => com.histmersion.domain.MergePlanner.PlanLabelTakenOfLabelResult,
+        label: A => com.histmersion.domain.MergePlanner.Row.Label,
         owner: A => Option[UUID],
-        what: com.histmersion.domain.MergePlanner.PlanLabelTakenOfWhat,
+        what: com.histmersion.domain.MergePlanner.Subject,
         options: List[MergeDecision.Kind],
         merge: (A, UUID) => Option[Merges],
         detailOf: (A, UUID) => Option[IssueDetail]
@@ -1021,11 +911,11 @@ object MergePlanner:
       def rightRev(u: UUID): String = pairQuestions.rightRev(u)
       def localRev(u: UUID): String = pairQuestions.localRev(u)
       def here(u: UUID): Boolean = localRevs.contains(u)
-      def inLocalized(u: UUID): com.histmersion.domain.MergePlanner.PlanInLocalizedResult = locRevs.contains(u)
+      def inLocalized(u: UUID): Boolean = locRevs.contains(u)
       def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
       def bundleUidOf(u: UUID): UUID = mapped.collectFirst { case (k, v) if v == u => k }.getOrElse(u)
-      def writesInitially(u: UUID): com.histmersion.domain.MergePlanner.PlanWritesInitiallyResult = writtenBefore(u)
-      def merged(foreign: UUID): com.histmersion.domain.MergePlanner.PlanMergedResult = merges.contains(foreign)
+      def writesInitially(u: UUID): Boolean = writtenBefore(u)
+      def merged(foreign: UUID): Boolean = merges.contains(foreign)
       def merge(foreign: UUID, here: UUID, how: PlanMerge): Unit = merges(foreign) = here -> Merges.Contributed(how)
       def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit = add(Draft(issue, importable))
       def info(line: String): Unit = noted += line
@@ -1084,7 +974,7 @@ object MergePlanner:
     val slugsUsed = scala.collection.mutable.Set
       .from(in.labels.slugs.keySet ++ in.local.articles.map(_.slug) ++ fes.articles.map(_.slug))
     val bothSlugs = scala.collection.mutable.Map.empty[UUID, String]
-    def bothSlug(f: UUID, slug: com.histmersion.domain.MergePlanner.PlanBothSlugSlug): com.histmersion.domain.MergePlanner.PlanBothSlugResult =
+    def bothSlug(f: UUID, slug: com.histmersion.domain.research.Slug): com.histmersion.domain.research.Slug =
       bothSlugs.getOrElseUpdate(
         f, {
           val tag = SafeName.of(from).toLowerCase(java.util.Locale.ROOT)
@@ -1099,7 +989,7 @@ object MergePlanner:
         val mine = localArticle.get(o)
         val same = mine.exists(m => m.body == a.body && m.title == a.title)
         val f = bundleUidOf(a.uid)
-        def blocking(title: com.histmersion.domain.MergePlanner.PlanBlockingTitle, base: Option[com.histmersion.domain.MergePlanner.PlanBlockingBase]) =
+        def blocking(title: com.histmersion.domain.Title, base: Option[com.histmersion.domain.MergePlanner.BlockingBase]) =
           MergeIssue(
             issueId(MergeIssue.Kind.ArticleDiverged, Bundle.Kind.Article, List(f), List(o), rightRev(f), localRev(o)),
             MergeIssue.Kind.ArticleDiverged,
@@ -1211,9 +1101,9 @@ object MergePlanner:
 
     // ── resolutions ──
     val all = drafts.result().distinctBy(_.issue.id)
-    val byId: Map[com.histmersion.domain.MergePlanner.PlanByIdPart1, Draft] = all.map(d => d.issue.id -> d).toMap
+    val byId: Map[com.histmersion.domain.MergePlanner.IssueId, Draft] = all.map(d => d.issue.id -> d).toMap
     val errors = List.newBuilder[String]
-    val texts: Map[com.histmersion.domain.MergePlanner.PlanTextsPart1, com.histmersion.domain.MergePlanner.PlanTextsPart2] = resolutions.resolve.flatMap(r => r.text.map(r.issue.trim -> _)).toMap
+    val texts: Map[com.histmersion.domain.MergePlanner.IssueId, com.histmersion.domain.MergePlanner.ResolvedText] = resolutions.resolve.flatMap(r => r.text.map(r.issue.trim -> _)).toMap
     // a resolution an earlier apply carried out answers an issue that is gone because of it: done, not stale
     val carriedOut = resolutions.resolve.filter(r =>
       !byId.contains(r.issue.trim) &&
@@ -1221,7 +1111,7 @@ object MergePlanner:
     )
     if carriedOut.nonEmpty then
       info += s"${Plural.count(carriedOut.size, "resolution")} carried out by an earlier `merge apply` (the issues are gone)"
-    val chosen: Map[com.histmersion.domain.MergePlanner.PlanChosenPart1, MergeDecision] = resolutions.resolve
+    val chosen: Map[com.histmersion.domain.MergePlanner.IssueId, MergeDecision] = resolutions.resolve
       .filterNot(carriedOut.contains)
       .flatMap { r =>
         val id = r.issue.trim
@@ -1232,7 +1122,7 @@ object MergePlanner:
           case (_, Left(e))          => errors += s"$id: $e"; None
           case (Some(d), Right(dec)) =>
             val i = d.issue
-            val argOk: Either[com.histmersion.domain.MergePlanner.PlanArgOkPart1, Unit] = dec.kind match
+            val argOk: Either[com.histmersion.domain.MergePlanner.Problem, Unit] = dec.kind match
               case km.Map => run.citekeyArgument(i, dec).getOrElse(Right(()))
               case km.RenameRight | km.RenameLeft if run.argument(i, dec).isDefined => run.argument(i, dec).get
               case km.RenameRight | km.RenameLeft => run.citekeyArgument(i, dec).getOrElse(Right(()))
@@ -1270,7 +1160,7 @@ object MergePlanner:
     // an issue conditional on another applies when that one is decided its way; conditions chain (an
     // attestation's question under the body question under the same-work question)
     val standings = scala.collection.mutable.Map.empty[String, Standing]
-    def standingOf(id: com.histmersion.domain.MergePlanner.PlanStandingOfId, seen: Set[com.histmersion.domain.MergePlanner.PlanStandingOfSeen]): Standing =
+    def standingOf(id: com.histmersion.domain.MergePlanner.IssueId, seen: Set[com.histmersion.domain.MergePlanner.IssueId]): Standing =
       standings.get(id) match
         case Some(s) => s
         case None    =>
@@ -1310,11 +1200,11 @@ object MergePlanner:
       d.modify(_.issue).setTo(i.modify(_.decision).setTo(dec.map(_._1)).modify(_.decidedBy).setTo(dec.map(_._2)))
     }
     val issues = decided.map(_.issue)
-    val unconditional: Map[com.histmersion.domain.MergePlanner.PlanUnconditionalPart1, MergeIssue] = issues.filter(_.condition.isEmpty).map(i => i.id -> i).toMap
+    val unconditional: Map[com.histmersion.domain.MergePlanner.IssueId, MergeIssue] = issues.filter(_.condition.isEmpty).map(i => i.id -> i).toMap
 
     /** The decision in force for an issue that applies. */
-    def decisionIn(id: com.histmersion.domain.MergePlanner.PlanDecisionInId): Option[MergeDecision] = unconditional.get(id).flatMap(_.decision)
-    val gateDecision: Map[com.histmersion.domain.MergePlanner.PlanGateDecisionPart1, MergeDecision] =
+    def decisionIn(id: com.histmersion.domain.MergePlanner.IssueId): Option[MergeDecision] = unconditional.get(id).flatMap(_.decision)
+    val gateDecision: Map[com.histmersion.domain.MergePlanner.IssueId, MergeDecision] =
       issues.filter(_.kind == MergeIssue.Kind.SameWork).flatMap(i => i.decision.map(i.id -> _)).toMap
 
     // ── the folds: what merge apply writes, as decided now ──
@@ -1344,14 +1234,14 @@ object MergePlanner:
       def foldedTo(foreign: UUID): Option[UUID] = foldMap.get(foreign).map(_._1)
       def here(u: UUID): Boolean = localRevs.contains(u)
       def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
-      def decisionIn(issue: com.histmersion.domain.MergePlanner.PlanDecisionInIssue): Option[MergeDecision] = unconditional.get(issue).flatMap(_.decision)
+      def decisionIn(issue: com.histmersion.domain.MergePlanner.IssueId): Option[MergeDecision] = unconditional.get(issue).flatMap(_.decision)
       def count(f: MergeTally => MergeTally): Unit = tally = f(tally)
       def keepLocal(foreign: UUID): Unit = overrides(foreign) = Decision.Kept
 
     // the citekey each source of the bundle will have here (`[[citekey]]` links follow it)
     val finalCitekey = scala.collection.mutable.Map.empty[UUID, String]
     val collisionDecided = issues.filter(i => i.kind == MergeIssue.Kind.CitekeyCollision && i.condition.isEmpty)
-    val renameRight: Map[UUID, com.histmersion.domain.MergePlanner.PlanRenameRightPart2] = collisionDecided
+    val renameRight: Map[UUID, com.histmersion.domain.MergePlanner.Rename] = collisionDecided
       .flatMap(i => i.decision.filter(_.kind == km.RenameRight).flatMap(_.argument).zip(i.right.map(_.uid)).map(_.swap))
       .toMap
     collisionDecided.foreach { i =>
@@ -1365,7 +1255,7 @@ object MergePlanner:
     // the pairs that fold: every auto-merge, and a gate decided map
     pairs.foreach { (p, _) =>
       val (r, l) = (p.right, p.left)
-      val mapTo: Option[com.histmersion.domain.MergePlanner.PlanMapTo] = fates(r.uid) match
+      val mapTo: Option[com.histmersion.domain.MergePlanner.MappedTo] = fates(r.uid) match
         case SourceFate.Auto(_)    => Some(l.citekey)
         case SourceFate.Gate(_, g) => decisionIn(g).filter(_.kind == km.Map).flatMap(_.argument)
         case _                     => None
@@ -1408,15 +1298,15 @@ object MergePlanner:
       def localized: BundleEntities = linesHere
       def writesInitially(foreign: UUID): Boolean = initialOf.get(foreign).exists(_.decision.writes)
       def info(line: String): Unit = notes0 += line
-      def relabelled(line: com.histmersion.domain.MergePlanner.PlanRelabelledLine): Unit = relabelled0 += line
+      def relabelled(line: com.histmersion.domain.MergePlanner.Result.Notes): Unit = relabelled0 += line
     run.relabelFirst(fates, relabels)
     run.relabel(relabels)
-    val ckMap: Map[com.histmersion.domain.MergePlanner.PlanCkMapPart1, com.histmersion.domain.MergePlanner.PlanCkMapPart2] =
+    val ckMap: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey] =
       fes.sources.flatMap(s => finalCitekey.get(s.uid).filter(_ != s.citekey).map(s.citekey -> _)).toMap
-    def rewrite(body: com.histmersion.domain.MergePlanner.PlanRewriteBody): com.histmersion.domain.MergePlanner.PlanRewriteResult = if ckMap.isEmpty then body else run.relinked(body, ckMap)
+    def rewrite(body: com.histmersion.domain.MergePlanner.ArticleBody): com.histmersion.domain.MergePlanner.ArticleBody = if ckMap.isEmpty then body else run.relinked(body, ckMap)
 
     // articles, goals, queue items and events M4 merges by itself, and the decisions about the rest
-    def articleFold(f: UUID, o: UUID, body: Option[com.histmersion.domain.MergePlanner.PlanArticleFoldBody], theirsWins: com.histmersion.domain.MergePlanner.PlanArticleFoldTheirsWins, review: com.histmersion.domain.MergePlanner.PlanArticleFoldReview): Unit =
+    def articleFold(f: UUID, o: UUID, body: Option[com.histmersion.domain.MergePlanner.ArticleBody], theirsWins: com.histmersion.domain.MergePlanner.TheirsWins, review: com.histmersion.domain.MergePlanner.NeedsReview): Unit =
       val raw = rawArticle(f)
       if f != o then fold(f, o, Bundle.Kind.Article)
       val loc = localArticle(o)
@@ -1548,12 +1438,12 @@ object MergePlanner:
       */
     def keptAliases[A](
         as: List[A],
-        alias: A => com.histmersion.domain.MergePlanner.PlanKeptAliasesAliasResult,
+        alias: A => com.histmersion.domain.MergePlanner.Alias,
         owner: A => UUID,
-        live: Map[com.histmersion.domain.MergePlanner.PlanKeptAliasesLivePart1, UUID],
-        old: Map[com.histmersion.domain.MergePlanner.PlanKeptAliasesOldPart1, UUID],
-        what: com.histmersion.domain.MergePlanner.PlanKeptAliasesWhat,
-        record: com.histmersion.domain.MergePlanner.PlanKeptAliasesRecord
+        live: Map[com.histmersion.domain.MergePlanner.Alias, UUID],
+        old: Map[com.histmersion.domain.MergePlanner.Alias, UUID],
+        what: com.histmersion.domain.MergePlanner.AliasNote,
+        record: com.histmersion.domain.MergePlanner.AliasRecord
     ): List[A] =
       as.filter { a =>
         val here = live.get(alias(a)).orElse(old.get(alias(a))).filterNot(in.tombstoned)
@@ -1676,11 +1566,11 @@ object MergePlanner:
     val cascaded = BundlePlan.cascade(decisionOf0, refs, u => in.tombstoned(u) && !liveHere(u))
     val rows = resolvedRows.map(r => r.modify(_.decision).setTo(cascaded.getOrElse(r.uid, r.decision)))
     val decisionOfRow = rows.map(r => r.uid -> r.decision).toMap
-    def writes(u: UUID): com.histmersion.domain.MergePlanner.PlanWritesResult = decisionOfRow.get(u).exists(d => d == Decision.Insert || d == Decision.FastForward)
+    def writes(u: UUID): Boolean = decisionOfRow.get(u).exists(d => d == Decision.Insert || d == Decision.FastForward)
     val deletingNow = rows.filter(r => r.tombstone && r.decision == Decision.Delete).map(_.uid).toSet
 
     // references a written line makes
-    val inBundleLive: UUID => com.histmersion.domain.MergePlanner.PlanInBundleLiveResult = u =>
+    val inBundleLive: UUID => Boolean = u =>
       decisionOfRow.get(u).exists {
         case Decision.Insert | Decision.FastForward | Decision.Unchanged | Decision.KeepLocal | Decision.Kept |
             Decision.Conflict =>
@@ -1758,13 +1648,13 @@ object MergePlanner:
     @annotation.tailrec
     def countMatches(
         rest: List[com.histmersion.api.exchange.Bundle.Source],
-        byUid: com.histmersion.domain.MergePlanner.PlanCountMatchesByUid,
-        byLedger: com.histmersion.domain.MergePlanner.PlanCountMatchesByLedger,
-        byStrongKey: com.histmersion.domain.MergePlanner.PlanCountMatchesByStrongKey,
-        byScore: com.histmersion.domain.MergePlanner.PlanCountMatchesByScore,
-        undecided: com.histmersion.domain.MergePlanner.PlanCountMatchesUndecided,
-        unmatched: com.histmersion.domain.MergePlanner.PlanCountMatchesUnmatched,
-        deletedHere: com.histmersion.domain.MergePlanner.PlanCountMatchesDeletedHere
+        byUid: com.histmersion.domain.MergePlanner.UidMatchCount,
+        byLedger: com.histmersion.domain.MergePlanner.LedgerMatchCount,
+        byStrongKey: com.histmersion.domain.MergePlanner.StrongKeyMatchCount,
+        byScore: com.histmersion.domain.MergePlanner.ScoreMatchCount,
+        undecided: com.histmersion.domain.MergePlanner.UndecidedCount,
+        unmatched: com.histmersion.domain.MergePlanner.UnmatchedCount,
+        deletedHere: com.histmersion.domain.MergePlanner.DeletedHereCount
     ): MatchCounts =
       rest match
         case Nil =>
@@ -1787,7 +1677,7 @@ object MergePlanner:
               countMatches(tail, byUid, byLedger, byStrongKey, byScore, undecided, unmatched + 1, deletedHere)
     val counts = countMatches(fes.sources, 0, 0, 0, 0, 0, 0, 0)
     // how each of the bundle's sources was matched, by citekey, as the plan's hash reads it
-    val matched0: List[com.histmersion.domain.MergePlanner.PlanMatched0] = fes.sources.sortBy(_.citekey).flatMap { s =>
+    val matched0: List[com.histmersion.domain.library.Citekey] = fes.sources.sortBy(_.citekey).flatMap { s =>
       def line(left: Option[UUID], o: MatchOutcome) = s"${s.uid}>${left.fold("")(_.toString)}:${MatchOutcome.wireOf(o)}"
       fates(s.uid) match
         case SourceFate.Same(_, _) => None
@@ -1899,7 +1789,7 @@ object MergePlanner:
       uid: A => UUID,
       repl: scala.collection.Map[UUID, BundleEntities => A],
       es0: BundleEntities,
-      keep: A => com.histmersion.domain.MergePlanner.ReplacedKeepResult
+      keep: A => com.histmersion.domain.MergePlanner.ReplacedKeep
   ): List[A] =
     val base = as.filter(keep).map(a => repl.get(uid(a)).fold(a)(_(es0)))
     val extra = repl.keySet.diff(as.map(uid).toSet).toList.sortBy(_.toString).map(u => repl(u)(es0))

@@ -22,8 +22,6 @@ object ReviewComparison extends OutputComparison:
   object RoundName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RoundPrefix = RoundPrefix.T
   object RoundPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SameMajorResult = SameMajorResult.T
-  object SameMajorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val ProblemSimilarity = 0.5
 
@@ -60,7 +58,7 @@ object ReviewComparison extends OutputComparison:
   /** The same major finding, as two runs' reviewers worded it: the same `where` (normalised) and a similar problem, or
     * the same quoted passage.
     */
-  def sameMajor(a: Finding, b: Finding): com.histmersion.domain.research.workflows.ReviewComparison.SameMajorResult =
+  def sameMajor(a: Finding, b: Finding): Boolean =
     val (qa, qb) =
       (ComparedText.normalise(Option(a.quote).getOrElse("")), ComparedText.normalise(Option(b.quote).getOrElse("")))
     val sameWhere =

@@ -12,32 +12,26 @@ import com.histmersion.domain.automation.Run
   * (`AcquisitionSweepRules`, `CurrencyCheckRules`).
   */
 object Scheduling:
+  type ActiveCount = ActiveCount.T
+  object ActiveCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Budget = Budget.T
+  object Budget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DailyBudget = DailyBudget.T
+  object DailyBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultBudget = DefaultBudget.T
+  object DefaultBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalBudget = GoalBudget.T
+  object GoalBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MaxConcurrent = MaxConcurrent.T
+  object MaxConcurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MonthlyBudget = MonthlyBudget.T
+  object MonthlyBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScheduleBudget = ScheduleBudget.T
+  object ScheduleBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the scheduler does with a due schedule. `Skip` moves the schedule on to its next time; `Defer` leaves it due,
     * for the next tick.
     */
-  type UnsettledResult = UnsettledResult.T
-  object UnsettledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideDailyUsd = DecideDailyUsd.T
-  object DecideDailyUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideMonthlyUsd = DecideMonthlyUsd.T
-  object DecideMonthlyUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideActive = DecideActive.T
-  object DecideActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideMaxConcurrent = DecideMaxConcurrent.T
-  object DecideMaxConcurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BudgetResult = BudgetResult.T
-  object BudgetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BudgetSchedule = BudgetSchedule.T
-  object BudgetSchedule extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BudgetGoal = BudgetGoal.T
-  object BudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BudgetDefault = BudgetDefault.T
-  object BudgetDefault extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoisResult = DoisResult.T
-  object DoisResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoisText = DoisText.T
-  object DoisText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Decision:
     case Start
@@ -53,7 +47,7 @@ object Scheduling:
       object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A run that has not settled: a schedule does not start another beside it. */
-  def unsettled(s: Run.State): com.histmersion.domain.Scheduling.UnsettledResult = !s.isTerminal
+  def unsettled(s: Run.State): Boolean = !s.isTerminal
 
   /** Before a scheduled run starts: its previous run must have settled, today's and this month's agent spend must be
     * under the caps (checked BEFORE the start, so a scheduled run never begins past a cap), and fewer than
@@ -63,10 +57,10 @@ object Scheduling:
       previous: Option[Run.State],
       spentDay: BigDecimal,
       spentMonth: BigDecimal,
-      dailyUsd: com.histmersion.domain.Scheduling.DecideDailyUsd,
-      monthlyUsd: com.histmersion.domain.Scheduling.DecideMonthlyUsd,
-      active: com.histmersion.domain.Scheduling.DecideActive,
-      maxConcurrent: com.histmersion.domain.Scheduling.DecideMaxConcurrent
+      dailyUsd: com.histmersion.domain.Scheduling.DailyBudget,
+      monthlyUsd: com.histmersion.domain.Scheduling.MonthlyBudget,
+      active: com.histmersion.domain.Scheduling.ActiveCount,
+      maxConcurrent: com.histmersion.domain.Scheduling.MaxConcurrent
   ): Decision =
     previous.filter(unsettled) match
       case Some(s) => Decision.Skip(s"its previous run is still ${s.wire}")
@@ -84,7 +78,7 @@ object Scheduling:
         else Decision.Start
 
   /** The cost cap of a scheduled run: the schedule's own, else the goal's, else the server default. */
-  def budget(schedule: Option[com.histmersion.domain.Scheduling.BudgetSchedule], goal: Option[com.histmersion.domain.Scheduling.BudgetGoal], default: com.histmersion.domain.Scheduling.BudgetDefault): com.histmersion.domain.Scheduling.BudgetResult =
+  def budget(schedule: Option[com.histmersion.domain.Scheduling.ScheduleBudget], goal: Option[com.histmersion.domain.Scheduling.GoalBudget], default: com.histmersion.domain.Scheduling.DefaultBudget): com.histmersion.domain.Scheduling.Budget =
     schedule.orElse(goal).filter(_ > 0).getOrElse(default)
 
   // ── the acquisition items ───────────────────────────────────────────────────────────────────────
@@ -92,5 +86,5 @@ object Scheduling:
   private val DoiIn = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
 
   /** Every DOI written in a text (an acquisition item), normalised — how the queue is deduplicated. */
-  def dois(text: com.histmersion.domain.Scheduling.DoisText): Set[com.histmersion.domain.Scheduling.DoisResult] =
+  def dois(text: String): Set[com.histmersion.domain.library.Doi] =
     DoiIn.findAllIn(Option(text).getOrElse("")).flatMap(Doi.normalize).toSet
