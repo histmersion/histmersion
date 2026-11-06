@@ -188,9 +188,9 @@ class WireSnapshotSuite extends munit.FunSuite:
     author = Some(com.histmersion.api.media.MediaItem.Author("Zq Author")),
     credit = Some(com.histmersion.api.media.MediaItem.Credit("Zq Museum")),
     sourceUrl = Some(com.histmersion.api.media.MediaItem.SourceUrl("https://example.org/zq")),
-    thumbUrl = Some("/api/media/zq/thumb"),
-    fileUrl = "/api/media/zq",
-    targets = List(MediaTarget("place", "zq_tell", "depicts", property = Some("P180")))
+    thumbUrl = Some(com.histmersion.api.media.MediaItem.ThumbUrl("/api/media/zq/thumb")),
+    fileUrl = com.histmersion.api.media.MediaItem.FileUrl("/api/media/zq"),
+    targets = List(MediaTarget(com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("zq_tell"), com.histmersion.api.media.MediaTarget.Role("depicts"), property = Some(com.histmersion.api.media.MediaTarget.Property("P180"))))
   )
   private val event = EventDetail(
     EventSummary(
@@ -204,9 +204,9 @@ class WireSnapshotSuite extends munit.FunSuite:
       citekey = Some(com.histmersion.api.library.Citekey("zq_alpha_2001"))
     ),
     geometry = Some(com.histmersion.api.catalogue.EventGeometry.Geojson("POINT(30.5 40.25)")),
-    children = List(EventSummary("zq-child", "Zq ash fall", "ashfall", TimeSpan(notBefore = Some(-1610)), "inferred")),
+    children = List(EventSummary(com.histmersion.api.catalogue.Event.Id("zq-child"), com.histmersion.api.catalogue.EventSummary.Label("Zq ash fall"), com.histmersion.api.catalogue.EventSummary.Kind("ashfall"), TimeSpan(notBefore = Some(com.histmersion.api.catalogue.Year(-1610))), com.histmersion.api.catalogue.EventSummary.Historicity("inferred"))),
     datings =
-      List(EventDating(com.histmersion.api.catalogue.Event.Id("zq-event"), com.histmersion.api.library.Citekey("zq_alpha_2001"), TimeSpan(Some(-1620), None, None, Some(-1590)), Some("c14"))),
+      List(EventDating(com.histmersion.api.catalogue.Event.Id("zq-event"), com.histmersion.api.library.Citekey("zq_alpha_2001"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1620)), None, None, Some(com.histmersion.api.catalogue.Year(-1590))), Some(com.histmersion.api.catalogue.EventDating.Method("c14")))),
     wikidata = Some("Q1"),
     media = List(thumb),
     names = List("Zq eruption", "Zq event")
@@ -221,7 +221,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("zq_tell"), com.histmersion.api.catalogue.Place.Link.Scheme("wikidata"), com.histmersion.api.catalogue.Place.Link.ExternalId("Q2"))),
     locationPrecision = Place.Precision.Stated,
     media = List(thumb),
-    siteType = Some("tell")
+    siteType = Some(com.histmersion.api.catalogue.Place.Entry.SiteType("tell"))
   )
 
   private def rendered: String =
@@ -263,7 +263,7 @@ class WireSnapshotSuite extends munit.FunSuite:
           charStart = Some(com.histmersion.api.catalogue.Attestation.CharStart(10)),
           charEnd = Some(com.histmersion.api.catalogue.Attestation.CharEnd(22)),
           page = Some(com.histmersion.api.catalogue.Attestation.Page("12")),
-          note = Some("a zq note")
+          note = Some(com.histmersion.api.catalogue.Attestation.Note("a zq note"))
         )
       ),
       "agentStateList" -> AgentStateMarkdown.agentStateList(
@@ -326,7 +326,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       "resolved none json" -> ResolvedId(com.histmersion.api.views.ResolvedId.Id("zq-nothing")).asJson.spaces2,
       "job detail json" -> InitPlan
         .Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List(com.histmersion.api.exchange.InitPlan.Fetch("zq-gaz")))))
-        .set(SkippedPeriod.SkippedCount, 2)
+        .set(SkippedPeriod.SkippedCount, com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(2))
         .set(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash, Some("zq-hash"))
         .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = true, List("sources"))))
         .set(com.histmersion.api.media.ImportJobKinds.Media, Some("a media run"))

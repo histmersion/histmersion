@@ -451,7 +451,7 @@ class WriteSuite extends munit.FunSuite:
     val p = Source.Patch(
       metadata = Some(MetadataPatch(title = (Some("T")).map(com.histmersion.api.library.Title.apply), clear = List(MetadataField.Doi))),
       summary = Some(com.histmersion.api.library.Source.Summary("s")),
-      tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("a")), replace = Some(List("b")))),
+      tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("a")), replace = Some(List(com.histmersion.api.Write.ListItem("b"))))),
       findings = Some(FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("c"), lat = Some(1.0), lon = Some(2.0))))),
       edges = Some(EdgesPatch(add = List(Edge.Input(com.histmersion.api.library.Citekey("d"), com.histmersion.api.library.Edge.Kind.Refutes)))),
       period = Some(Period.Input(com.histmersion.api.catalogue.Year(-10), com.histmersion.api.catalogue.Year(10))),
@@ -461,7 +461,7 @@ class WriteSuite extends munit.FunSuite:
     val put = Source.Put.of(existing)
     assertEquals(decode[Source.Put](put.asJson.noSpaces), Right(put))
     val ap =
-      Article.Patch(append = Some(com.histmersion.api.research.Article.Patch.Append("x")), tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("t")))), period = Some(Period.Input(1, 2)))
+      Article.Patch(append = Some(com.histmersion.api.research.Article.Patch.Append("x")), tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("t")))), period = Some(Period.Input(com.histmersion.api.catalogue.Year(1), com.histmersion.api.catalogue.Year(2))))
     assertEquals(decode[Article.Patch](ap.asJson.noSpaces), Right(ap))
 
   test("strict: metadata null-clears still work alongside the key check"):
