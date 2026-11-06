@@ -115,7 +115,7 @@ class CandidatesSuite extends munit.FunSuite:
           authors = (List("Ann Lee", "Bo Ng")).map(com.histmersion.api.library.AuthorName.apply),
           venue = (Some("arXiv")).map(com.histmersion.api.library.Source.Venue.apply),
           isOa = com.histmersion.api.library.WorkRef.IsOa(true),
-          abstractText = Some("About it.")
+          abstractText = Some(com.histmersion.api.library.Source.Candidate.AbstractText("About it."))
         )
       )
     )
@@ -138,7 +138,7 @@ class CandidatesSuite extends munit.FunSuite:
       Some(com.histmersion.api.library.Source.Candidate.AbstractText("abs")),
       isOa = com.histmersion.api.library.Source.Candidate.IsOa(true),
       foundBy = List(com.histmersion.api.library.Source.Candidate.FoundBy("openalex query \"x\"")),
-      firstSeen = "2026-10-24T10:00:00Z"
+      firstSeen = com.histmersion.api.library.Source.Candidate.FirstSeen("2026-10-24T10:00:00Z")
     )
     val md = CandidatesMarkdown.list(
       CandidateList(

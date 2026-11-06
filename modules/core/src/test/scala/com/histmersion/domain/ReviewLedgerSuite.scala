@@ -237,7 +237,7 @@ class ReviewLedgerSuite extends munit.FunSuite:
     )
     assertEquals(declined.entry(com.histmersion.domain.ReviewArticle.Finding.Id("C1")).map(_.status), Some(Status.WontFix))
     assertEquals(
-      absorb(declined, List(count.modify(_.problem).setTo(TermCount.problem(com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined(11)))), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry("C1").map(_.status),
+      absorb(declined, List(count.modify(_.problem).setTo(TermCount.problem(com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined(11)))), com.histmersion.domain.automation.Run.Id("run2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("C1")).map(_.status),
       Some(Status.WontFix)
     )
 

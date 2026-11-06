@@ -806,7 +806,7 @@ class ReviewArticleSuite extends munit.FunSuite:
       wontFix = List(WontFixAnswer(com.histmersion.domain.ReviewArticle.WontFixAnswer.Id("R1"), com.histmersion.domain.ReviewArticle.WontFixAnswer.Reason("wordy, but exact")))
     )
     assertEquals(fix(ok, last = false).map(_._1.wontFix), Right(List(WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("R1"), com.histmersion.domain.ReviewArticle.WontFix.Reason("wordy, but exact")))))
-    val bad = ok.modify(_.wontFix).setTo(List(WontFixAnswer("S1", "no"), WontFixAnswer("R9", "x"), WontFixAnswer("R1", " ")))
+    val bad = ok.modify(_.wontFix).setTo(List(WontFixAnswer(com.histmersion.domain.ReviewArticle.WontFixAnswer.Id("S1"), com.histmersion.domain.ReviewArticle.WontFixAnswer.Reason("no")), WontFixAnswer(com.histmersion.domain.ReviewArticle.WontFixAnswer.Id("R9"), com.histmersion.domain.ReviewArticle.WontFixAnswer.Reason("x")), WontFixAnswer(com.histmersion.domain.ReviewArticle.WontFixAnswer.Id("R1"), com.histmersion.domain.ReviewArticle.WontFixAnswer.Reason(" "))))
     val ps = fix(bad, last = false).left.toOption.get
     assert(ps.contains("S1 is MAJOR: apply it or reject it — only a minor finding can be declined"), ps)
     assert(ps.contains("won't fix 'R9': there is no such finding") && ps.contains("won't fix R1: give the reason"), ps)

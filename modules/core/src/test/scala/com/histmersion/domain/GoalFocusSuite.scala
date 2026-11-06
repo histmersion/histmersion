@@ -369,10 +369,10 @@ class GoalFocusSuite extends munit.FunSuite:
           status = com.histmersion.api.automation.Autopilot.FocusGoal.Status("seeding"),
           stage = com.histmersion.api.automation.Autopilot.FocusGoal.Stage("reviewing"),
           why = com.histmersion.api.automation.Autopilot.FocusGoal.Why("reviewing: 1 of 2"),
-          doing = Some("running article-review x"),
-          open = 3,
-          doneLast7 = 7,
-          etaDays = Some(3)
+          doing = Some(com.histmersion.api.automation.Autopilot.FocusGoal.Doing("running article-review x")),
+          open = com.histmersion.api.automation.Autopilot.FocusGoal.Open(3),
+          doneLast7 = com.histmersion.api.automation.Autopilot.FocusGoal.DoneLast7(7),
+          etaDays = Some(com.histmersion.api.automation.Autopilot.FocusGoal.EtaDays(3))
         ),
         FocusGoal(com.histmersion.api.automation.Autopilot.FocusGoal.Slug("b"), status = com.histmersion.api.automation.Autopilot.FocusGoal.Status("seeding"), stage = com.histmersion.api.automation.Autopilot.FocusGoal.Stage("gathering"), why = com.histmersion.api.automation.Autopilot.FocusGoal.Why("pinned by a person"), pinned = com.histmersion.api.automation.Autopilot.FocusGoal.Pinned(true))
       ),
