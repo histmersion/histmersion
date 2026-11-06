@@ -26,7 +26,7 @@ class ListFiltersSuite extends munit.FunSuite:
       pipeline = List(com.histmersion.api.automation.ListFilters.RunFilter.Pipeline("Review-Article")),
       manager = List(com.histmersion.api.automation.ListFilters.RunFilter.Manager("seed:Tin")),
       model = List(com.histmersion.api.automation.ListFilters.RunFilter.Model("codex:GPT-6")),
-      subject = Some("  ")
+      subject = Some(com.histmersion.api.automation.ListFilters.RunFilter.Subject("  "))
     )
     val n = f.normalized
     assertEquals(

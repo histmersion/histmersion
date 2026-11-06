@@ -160,7 +160,7 @@ class StorageSuite extends munit.FunSuite:
           (Some(600_000_000L)).map(com.histmersion.api.ByteCount.apply),
           (Some(3L)).map(com.histmersion.api.maintenance.Storage.FileCount.apply),
           partial = com.histmersion.api.maintenance.Storage.Entry.Partial(true),
-          detail = Some("vector 410.0 MB · terrain 190.0 MB"),
+          detail = Some(com.histmersion.api.maintenance.Storage.Entry.Detail("vector 410.0 MB · terrain 190.0 MB")),
           volume = Some(vol)
         )
       )
