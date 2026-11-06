@@ -8,7 +8,5 @@ import com.histmersion.api.given
 final case class RestoreRequest(file: RestoreRequest.File, force: RestoreRequest.Force = _root_.com.histmersion.api.backup.RestoreRequest.Force(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 object RestoreRequest:
-  type File = File.T
-  object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Force = Force.T
   object Force extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -20,35 +20,23 @@ final case class Target(
     view: Option[ViewState] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def itemKey: Option[com.histmersion.api.personal.Target.ItemKey] = Option.when(((kind.isItem) == (true)))(id.map(_.value)).flatten
+  def itemKey: Option[com.histmersion.api.personal.ItemKey] = Option.when(((kind.isItem) == (true)))(id.map(_.value)).flatten
 
   def identity: Option[com.histmersion.api.personal.Target.Identity] = itemKey.map(k => _root_.com.histmersion.api.personal.Target.Identity(s"${kind.wire}:$k"))
 
 object Target:
   type Identity = Identity.T
   object Identity extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Where = Where.T
+  object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type ItemKey = ItemKey.T
-  object ItemKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckResultPart1 = CheckResultPart1.T
-  object CheckResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckWhat = CheckWhat.T
-  object CheckWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WhereResult = WhereResult.T
-  object WhereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Round1Result = Round1Result.T
-  object Round1Result extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DegreesResult = DegreesResult.T
-  object DegreesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DegreesPlus = DegreesPlus.T
-  object DegreesPlus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DegreesMinus = DegreesMinus.T
-  object DegreesMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def item(kind: ItemKind, key: com.histmersion.api.personal.Target.ItemKey): Target = Target(kind, Some(ItemKey((key).value.trim)))
+  def item(kind: ItemKind, key: com.histmersion.api.personal.ItemKey): Target = Target(kind, Some(ItemKey((key).value.trim)))
 
-  def check(t: Target, allowed: Set[ItemKind], what: com.histmersion.api.personal.Target.CheckWhat): Either[com.histmersion.api.personal.Target.CheckResultPart1, Target] =
+  def check(t: Target, allowed: Set[ItemKind], what: String): Either[com.histmersion.api.personal.Target.Problem, Target] =
     val years = (t.from, t.to) match
       case (Some(a), Some(b)) if a.value > b.value =>
         Left(s"the period ends (${YearFmt(b.value.toLong)}) before it starts (${YearFmt(a.value.toLong)})")
@@ -90,19 +78,19 @@ object Target:
             else Right(Target(ItemKind.Period, from = t.from, to = t.to))
       }
 
-  def where(t: Target): com.histmersion.api.personal.Target.WhereResult =
-    val span = YearFmt.period(t.from.map(_root_.com.histmersion.api.library.Tree.Year(_.value.toLong)), t.to.map(_root_.com.histmersion.api.library.Tree.Year(_.value.toLong)))
-    val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, _root_.com.histmersion.api.personal.Target.DegreesPlus("N"), _root_.com.histmersion.api.personal.Target.DegreesMinus("S"))}, ${degrees(lo.value, _root_.com.histmersion.api.personal.Target.DegreesPlus("E"), _root_.com.histmersion.api.personal.Target.DegreesMinus("W"))}")
+  def where(t: Target): com.histmersion.api.personal.Target.Where =
+    val span = YearFmt.period(t.from.map(_root_.com.histmersion.api.catalogue.Year(_.value.toLong)), t.to.map(_root_.com.histmersion.api.catalogue.Year(_.value.toLong)))
+    val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, ("N"), ("S"))}, ${degrees(lo.value, ("E"), ("W"))}")
     t.kind match
-      case ItemKind.Point => _root_.com.histmersion.api.personal.Target.WhereResult(List(at, span).filter(_.nonEmpty).mkString(" · "))
+      case ItemKind.Point => _root_.com.histmersion.api.personal.Target.Where(List(at, span).filter(_.nonEmpty).mkString(" · "))
       case ItemKind.View  =>
         List(at, t.zoom.fold("")(z => s"zoom ${round1(z.value)}"), span).filter(_.nonEmpty).mkString(" · ")
       case ItemKind.Period => span
-      case _               => _root_.com.histmersion.api.personal.Target.WhereResult("")
+      case _               => _root_.com.histmersion.api.personal.Target.Where("")
 
-  private def round1(v: Double): com.histmersion.api.personal.Target.Round1Result =
-    _root_.com.histmersion.api.personal.Target.Round1Result(BigDecimal((v)).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString)
+  private def round1(v: Double): String =
+    (BigDecimal((v).value).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString)
 
-  private def degrees(v: Double, plus: com.histmersion.api.personal.Target.DegreesPlus, minus: com.histmersion.api.personal.Target.DegreesMinus): com.histmersion.api.personal.Target.DegreesResult =
-    val a = BigDecimal(math.abs((v))).setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
+  private def degrees(v: Double, plus: String, minus: String): String =
+    val a = BigDecimal(math.abs((v).value)).setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
     s"$a° ${if v >= 0 then plus else minus}"

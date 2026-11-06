@@ -7,11 +7,7 @@ import com.histmersion.api.given
 import com.histmersion.api.Api
 
 object AgentsApi:
-  type ControlPart1Part2 = ControlPart1Part2.T
-  object ControlPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Actions = ActionsValue
-  type ActionsValue = ActionsValue.T
-  object ActionsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   import Agents.*
 
@@ -31,14 +27,14 @@ object AgentsApi:
   lazy val models: PublicEndpoint[Unit, Api.Error, ModelsInfo, Any] =
     base.get.in("models").out(jsonBody[ModelsInfo])
 
-  lazy val setChain: PublicEndpoint[(com.histmersion.api.automation.Agents.RoleModel.Role, ModelChains.ChainSet), Api.Error, ModelChains.RoleChain, Any] =
+  lazy val setChain: PublicEndpoint[(com.histmersion.api.automation.AgentRole.Wire, ModelChains.ChainSet), Api.Error, ModelChains.RoleChain, Any] =
     (writeBase.put
       .in("models" / path[String]("role"))
       .in(jsonBody[ModelChains.ChainSet])
-      .out(jsonBody[ModelChains.RoleChain])).mapIn[(_root_.com.histmersion.api.automation.Agents.RoleModel.Role, _root_.com.histmersion.api.automation.ModelChains.ChainSet)]((refactorDecoded: (_root_.java.lang.String, _root_.com.histmersion.api.automation.ModelChains.ChainSet)) => (_root_.com.histmersion.api.automation.Agents.RoleModel.Role((refactorDecoded)._1), (refactorDecoded)._2))((refactorEncoded: (_root_.com.histmersion.api.automation.Agents.RoleModel.Role, _root_.com.histmersion.api.automation.ModelChains.ChainSet)) => (((refactorEncoded)._1).value, (refactorEncoded)._2))
+      .out(jsonBody[ModelChains.RoleChain])).mapIn[(_root_.com.histmersion.api.automation.AgentRole.Wire, _root_.com.histmersion.api.automation.ModelChains.ChainSet)]((refactorDecoded: (_root_.java.lang.String, _root_.com.histmersion.api.automation.ModelChains.ChainSet)) => (_root_.com.histmersion.api.automation.AgentRole.Wire((refactorDecoded)._1), (refactorDecoded)._2))((refactorEncoded: (_root_.com.histmersion.api.automation.AgentRole.Wire, _root_.com.histmersion.api.automation.ModelChains.ChainSet)) => (((refactorEncoded)._1).value, (refactorEncoded)._2))
 
-  lazy val resetChain: PublicEndpoint[com.histmersion.api.automation.Agents.RoleModel.Role, Api.Error, ModelChains.RoleChain, Any] =
-    (writeBase.delete.in("models" / path[String]("role")).out(jsonBody[ModelChains.RoleChain])).mapIn[_root_.com.histmersion.api.automation.Agents.RoleModel.Role]((refactorDecoded19: _root_.java.lang.String) => _root_.com.histmersion.api.automation.Agents.RoleModel.Role(refactorDecoded19))((refactorEncoded19: _root_.com.histmersion.api.automation.Agents.RoleModel.Role) => (refactorEncoded19).value)
+  lazy val resetChain: PublicEndpoint[com.histmersion.api.automation.AgentRole.Wire, Api.Error, ModelChains.RoleChain, Any] =
+    (writeBase.delete.in("models" / path[String]("role")).out(jsonBody[ModelChains.RoleChain])).mapIn[_root_.com.histmersion.api.automation.AgentRole.Wire]((refactorDecoded19: _root_.java.lang.String) => _root_.com.histmersion.api.automation.AgentRole.Wire(refactorDecoded19))((refactorEncoded19: _root_.com.histmersion.api.automation.AgentRole.Wire) => (refactorEncoded19).value)
 
   lazy val setAllowance: PublicEndpoint[ModelChains.AllowanceSet, Api.Error, ModelChains.AllowanceStatus, Any] =
     writeBase.put.in("allowances").in(jsonBody[ModelChains.AllowanceSet]).out(jsonBody[ModelChains.AllowanceStatus])
@@ -80,17 +76,17 @@ object AgentsApi:
       .errorOut(agentErrors)
       .out(jsonBody[RunCompare.Comparison])).mapIn[_root_.scala.List[_root_.com.histmersion.api.automation.Agents.RunInfo.Id]]((refactorDecoded24: _root_.scala.List[_root_.java.lang.String]) => (refactorDecoded24).map(refactorElement29 => _root_.com.histmersion.api.automation.Agents.RunInfo.Id(refactorElement29)))((refactorEncoded24: _root_.scala.List[_root_.com.histmersion.api.automation.Agents.RunInfo.Id]) => (refactorEncoded24).map(refactorElement30 => (refactorElement30).value))
 
-  lazy val control: PublicEndpoint[(com.histmersion.api.automation.Agents.RunInfo.Id, com.histmersion.api.automation.AgentsApi.ControlPart1Part2, Option[com.histmersion.api.automation.Agents.RunRequest.BudgetUsd], Option[com.histmersion.api.automation.Agents.RunRequest.BudgetTokens]), Api.Error, RunInfo, Any] =
+  lazy val control: PublicEndpoint[(com.histmersion.api.automation.Agents.RunInfo.Id, com.histmersion.api.automation.Agents.Action, Option[com.histmersion.api.automation.Agents.RunRequest.BudgetUsd], Option[com.histmersion.api.automation.Agents.RunRequest.BudgetTokens]), Api.Error, RunInfo, Any] =
     (writeBase.post
       .in("runs" / path[String]("id") / path[String]("action"))
       .in(query[Option[Double]]("budgetUsd"))
       .in(query[Option[Long]]("budgetTokens"))
-      .out(jsonBody[RunInfo])).mapIn[(_root_.com.histmersion.api.automation.Agents.RunInfo.Id, _root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part2, _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.RunRequest.BudgetUsd], _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.RunRequest.BudgetTokens])]((refactorDecoded25: (_root_.java.lang.String, _root_.java.lang.String, _root_.scala.Option[_root_.scala.Double], _root_.scala.Option[_root_.scala.Long])) => (_root_.com.histmersion.api.automation.Agents.RunInfo.Id((refactorDecoded25)._1), _root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part2((refactorDecoded25)._2), ((refactorDecoded25)._3).map(refactorElement31 => _root_.com.histmersion.api.automation.Agents.RunRequest.BudgetUsd(refactorElement31)), ((refactorDecoded25)._4).map(refactorElement32 => _root_.com.histmersion.api.automation.Agents.RunRequest.BudgetTokens(refactorElement32))))((refactorEncoded25: (_root_.com.histmersion.api.automation.Agents.RunInfo.Id, _root_.com.histmersion.api.automation.AgentsApi.ControlPart1Part2, _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.RunRequest.BudgetUsd], _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.RunRequest.BudgetTokens])) => (((refactorEncoded25)._1).value, ((refactorEncoded25)._2).value, ((refactorEncoded25)._3).map(refactorElement33 => (refactorElement33).value), ((refactorEncoded25)._4).map(refactorElement34 => (refactorElement34).value)))
+      .out(jsonBody[RunInfo])).mapIn[(_root_.com.histmersion.api.automation.Agents.RunInfo.Id, _root_.com.histmersion.api.automation.Agents.Action, _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.RunRequest.BudgetUsd], _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.RunRequest.BudgetTokens])]((refactorDecoded25: (_root_.java.lang.String, _root_.java.lang.String, _root_.scala.Option[_root_.scala.Double], _root_.scala.Option[_root_.scala.Long])) => (_root_.com.histmersion.api.automation.Agents.RunInfo.Id((refactorDecoded25)._1), _root_.com.histmersion.api.automation.Agents.Action((refactorDecoded25)._2), ((refactorDecoded25)._3).map(refactorElement31 => _root_.com.histmersion.api.automation.Agents.RunRequest.BudgetUsd(refactorElement31)), ((refactorDecoded25)._4).map(refactorElement32 => _root_.com.histmersion.api.automation.Agents.RunRequest.BudgetTokens(refactorElement32))))((refactorEncoded25: (_root_.com.histmersion.api.automation.Agents.RunInfo.Id, _root_.com.histmersion.api.automation.Agents.Action, _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.RunRequest.BudgetUsd], _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.RunRequest.BudgetTokens])) => (((refactorEncoded25)._1).value, ((refactorEncoded25)._2).value, ((refactorEncoded25)._3).map(refactorElement33 => (refactorElement33).value), ((refactorEncoded25)._4).map(refactorElement34 => (refactorElement34).value)))
 
-  val Actions: List[com.histmersion.api.automation.AgentsApi.Actions] = List(_root_.com.histmersion.api.automation.AgentsApi.ActionsValue("pause"), _root_.com.histmersion.api.automation.AgentsApi.ActionsValue("resume"), _root_.com.histmersion.api.automation.AgentsApi.ActionsValue("cancel"))
+  val Actions: List[com.histmersion.api.automation.AgentsApi.Actions] = List(_root_.com.histmersion.api.automation.Agents.Action("pause"), _root_.com.histmersion.api.automation.Agents.Action("resume"), _root_.com.histmersion.api.automation.Agents.Action("cancel"))
 
   lazy val approvals: PublicEndpoint[
-    (ListFilters.ApprovalFilter, Option[com.histmersion.api.Paging.Limit], Option[com.histmersion.api.automation.Agents.ApprovalInfo.State], Option[com.histmersion.api.automation.Agents.ApprovalInfo.Kind]),
+    (ListFilters.ApprovalFilter, Option[com.histmersion.api.Paging.Limit], Option[com.histmersion.api.automation.Approval.State.Wire], Option[com.histmersion.api.automation.Approval.Kind.Wire]),
     Api.Error,
     (List[ApprovalInfo], Paging.Page),
     Any
@@ -103,7 +99,7 @@ object AgentsApi:
       .in(query[Option[String]]("upTo"))
       .errorOut(agentErrors)
       .out(jsonBody[List[ApprovalInfo]])
-      .out(Paging.headers)).mapIn[(_root_.com.histmersion.api.automation.ListFilters.ApprovalFilter, _root_.scala.Option[_root_.com.histmersion.api.Paging.Limit], _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.ApprovalInfo.State], _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.ApprovalInfo.Kind])]((refactorDecoded26: (_root_.com.histmersion.api.automation.ListFilters.ApprovalFilter, _root_.scala.Option[_root_.scala.Int], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String])) => ((refactorDecoded26)._1, ((refactorDecoded26)._2).map(refactorElement35 => _root_.com.histmersion.api.Paging.Limit(refactorElement35)), ((refactorDecoded26)._3).map(refactorElement36 => _root_.com.histmersion.api.automation.Agents.ApprovalInfo.State(refactorElement36)), ((refactorDecoded26)._4).map(refactorElement37 => _root_.com.histmersion.api.automation.Agents.ApprovalInfo.Kind(refactorElement37))))((refactorEncoded26: (_root_.com.histmersion.api.automation.ListFilters.ApprovalFilter, _root_.scala.Option[_root_.com.histmersion.api.Paging.Limit], _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.ApprovalInfo.State], _root_.scala.Option[_root_.com.histmersion.api.automation.Agents.ApprovalInfo.Kind])) => ((refactorEncoded26)._1, ((refactorEncoded26)._2).map(refactorElement38 => (refactorElement38).value), ((refactorEncoded26)._3).map(refactorElement39 => (refactorElement39).value), ((refactorEncoded26)._4).map(refactorElement40 => (refactorElement40).value)))
+      .out(Paging.headers)).mapIn[(_root_.com.histmersion.api.automation.ListFilters.ApprovalFilter, _root_.scala.Option[_root_.com.histmersion.api.Paging.Limit], _root_.scala.Option[_root_.com.histmersion.api.automation.Approval.State.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Approval.Kind.Wire])]((refactorDecoded26: (_root_.com.histmersion.api.automation.ListFilters.ApprovalFilter, _root_.scala.Option[_root_.scala.Int], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String])) => ((refactorDecoded26)._1, ((refactorDecoded26)._2).map(refactorElement35 => _root_.com.histmersion.api.Paging.Limit(refactorElement35)), ((refactorDecoded26)._3).map(refactorElement36 => _root_.com.histmersion.api.automation.Approval.State.Wire(refactorElement36)), ((refactorDecoded26)._4).map(refactorElement37 => _root_.com.histmersion.api.automation.Approval.Kind.Wire(refactorElement37))))((refactorEncoded26: (_root_.com.histmersion.api.automation.ListFilters.ApprovalFilter, _root_.scala.Option[_root_.com.histmersion.api.Paging.Limit], _root_.scala.Option[_root_.com.histmersion.api.automation.Approval.State.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Approval.Kind.Wire])) => ((refactorEncoded26)._1, ((refactorEncoded26)._2).map(refactorElement38 => (refactorElement38).value), ((refactorEncoded26)._3).map(refactorElement39 => (refactorElement39).value), ((refactorEncoded26)._4).map(refactorElement40 => (refactorElement40).value)))
 
   lazy val decide: PublicEndpoint[(com.histmersion.api.automation.Agents.ApprovalInfo.Id, com.histmersion.api.automation.Agents.Decision.Wire, DecisionRequest), Api.Error, ApprovalInfo, Any] =
     (writeBase.post
@@ -139,14 +135,14 @@ object AgentsApi:
   lazy val quota: PublicEndpoint[Unit, Api.Error, PlanQuota.QuotaInfo, Any] =
     base.get.in("quota").out(jsonBody[PlanQuota.QuotaInfo])
 
-  lazy val setPool: PublicEndpoint[(com.histmersion.api.automation.PlanQuota.PoolId, PlanQuota.PoolSet), Api.Error, PlanQuota.PoolStatus, Any] =
-    (writeBase.put.in("quota" / path[String]("pool")).in(jsonBody[PlanQuota.PoolSet]).out(jsonBody[PlanQuota.PoolStatus])).mapIn[(_root_.com.histmersion.api.automation.PlanQuota.PoolId, _root_.com.histmersion.api.automation.PlanQuota.PoolSet)]((refactorDecoded33: (_root_.java.lang.String, _root_.com.histmersion.api.automation.PlanQuota.PoolSet)) => (_root_.com.histmersion.api.automation.PlanQuota.PoolId((refactorDecoded33)._1), (refactorDecoded33)._2))((refactorEncoded33: (_root_.com.histmersion.api.automation.PlanQuota.PoolId, _root_.com.histmersion.api.automation.PlanQuota.PoolSet)) => (((refactorEncoded33)._1).value, (refactorEncoded33)._2))
+  lazy val setPool: PublicEndpoint[(com.histmersion.api.automation.PlanQuota.PoolIdText, PlanQuota.PoolSet), Api.Error, PlanQuota.PoolStatus, Any] =
+    (writeBase.put.in("quota" / path[String]("pool")).in(jsonBody[PlanQuota.PoolSet]).out(jsonBody[PlanQuota.PoolStatus])).mapIn[(_root_.com.histmersion.api.automation.PlanQuota.PoolIdText, _root_.com.histmersion.api.automation.PlanQuota.PoolSet)]((refactorDecoded33: (_root_.java.lang.String, _root_.com.histmersion.api.automation.PlanQuota.PoolSet)) => (_root_.com.histmersion.api.automation.PlanQuota.PoolIdText((refactorDecoded33)._1), (refactorDecoded33)._2))((refactorEncoded33: (_root_.com.histmersion.api.automation.PlanQuota.PoolIdText, _root_.com.histmersion.api.automation.PlanQuota.PoolSet)) => (((refactorEncoded33)._1).value, (refactorEncoded33)._2))
 
-  lazy val setFallthrough: PublicEndpoint[(com.histmersion.api.automation.PlanQuota.PoolId, PlanQuota.FallthroughSet), Api.Error, PlanQuota.QuotaInfo, Any] =
+  lazy val setFallthrough: PublicEndpoint[(com.histmersion.api.automation.PlanQuota.PoolIdText, PlanQuota.FallthroughSet), Api.Error, PlanQuota.QuotaInfo, Any] =
     (writeBase.put
       .in("quota" / "fallthrough" / path[String]("role"))
       .in(jsonBody[PlanQuota.FallthroughSet])
-      .out(jsonBody[PlanQuota.QuotaInfo])).mapIn[(_root_.com.histmersion.api.automation.PlanQuota.PoolId, _root_.com.histmersion.api.automation.PlanQuota.FallthroughSet)]((refactorDecoded34: (_root_.java.lang.String, _root_.com.histmersion.api.automation.PlanQuota.FallthroughSet)) => (_root_.com.histmersion.api.automation.PlanQuota.PoolId((refactorDecoded34)._1), (refactorDecoded34)._2))((refactorEncoded34: (_root_.com.histmersion.api.automation.PlanQuota.PoolId, _root_.com.histmersion.api.automation.PlanQuota.FallthroughSet)) => (((refactorEncoded34)._1).value, (refactorEncoded34)._2))
+      .out(jsonBody[PlanQuota.QuotaInfo])).mapIn[(_root_.com.histmersion.api.automation.PlanQuota.PoolIdText, _root_.com.histmersion.api.automation.PlanQuota.FallthroughSet)]((refactorDecoded34: (_root_.java.lang.String, _root_.com.histmersion.api.automation.PlanQuota.FallthroughSet)) => (_root_.com.histmersion.api.automation.PlanQuota.PoolIdText((refactorDecoded34)._1), (refactorDecoded34)._2))((refactorEncoded34: (_root_.com.histmersion.api.automation.PlanQuota.PoolIdText, _root_.com.histmersion.api.automation.PlanQuota.FallthroughSet)) => (((refactorEncoded34)._1).value, (refactorEncoded34)._2))
 
   lazy val refreshQuota: PublicEndpoint[PlanQuota.QuotaRefresh, Api.Error, PlanQuota.QuotaRefreshed, Any] =
     writeBase.post.in("quota" / "refresh").in(jsonBody[PlanQuota.QuotaRefresh]).out(jsonBody[PlanQuota.QuotaRefreshed])

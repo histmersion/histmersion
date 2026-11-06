@@ -6,7 +6,7 @@ enum OpenSide:
 
 object OpenSide:
 
-  def bounds(period: Option[Period], open: Option[OpenSide]): (Option[com.histmersion.api.library.Tree.Year], Option[com.histmersion.api.library.Tree.Year]) =
+  def bounds(period: Option[Period], open: Option[OpenSide]): (Option[com.histmersion.api.catalogue.Year], Option[com.histmersion.api.catalogue.Year]) =
     (period.map(_.start).filterNot(_ => open.contains(Start)), period.map(_.end).filterNot(_ => open.contains(End)))
 
   def split(s: Span): (Option[Period], Option[OpenSide]) = s match

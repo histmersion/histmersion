@@ -5,11 +5,11 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class AssetInput(
-    name: com.histmersion.api.media.AssetInfo.Name,
-    mime: com.histmersion.api.media.AssetInfo.Mime,
+    name: com.histmersion.api.exchange.Bundle.Asset.FileName,
+    mime: com.histmersion.api.exchange.Bundle.Asset.MimeText,
     base64: AssetInput.Base64,
-    width: Option[com.histmersion.api.media.AssetInfo.Width] = None,
-    height: Option[com.histmersion.api.media.AssetInfo.Height] = None,
+    width: Option[com.histmersion.api.media.ImageSize.Width] = None,
+    height: Option[com.histmersion.api.media.ImageSize.Height] = None,
     sha256: Option[com.histmersion.api.Sha256] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

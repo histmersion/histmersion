@@ -21,8 +21,6 @@ final case class GeoHit(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object GeoHit:
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Claim = Claim.T
   object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegionName = RegionName.T

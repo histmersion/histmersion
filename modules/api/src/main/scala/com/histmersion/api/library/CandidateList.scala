@@ -15,8 +15,6 @@ final case class CandidateList(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object CandidateList:
-  type Goal = Goal.T
-  object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type State = State.T
   object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Offset = Offset.T

@@ -22,7 +22,7 @@ class SourceNoteSuite extends munit.FunSuite:
     authors = (List("Wolfgang Haak", "David Reich")).map(com.histmersion.api.library.AuthorName.apply),
     doi = (Some("10.1038/nature14317")).map(com.histmersion.api.library.Doi.apply),
     year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
-    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Source.Venue.apply),
     status = com.histmersion.api.library.Source.Status.Foundational,
     topics = List("ancient_dna", "yamnaya_culture"),
     regions = List("Eurasian Steppe", "Central Europe"),

@@ -6,7 +6,7 @@ import com.histmersion.api.given
 object StorageMarkdown:
 
 
-  def render(r: Storage.Report): List[com.histmersion.api.Markdown.Text] =
+  def render(r: Storage.Report): List[String] =
     if r.entries.isEmpty && !((r.measuring) == _root_.com.histmersion.api.maintenance.Storage.Report.Measuring(true)) && r.problems.isEmpty then Nil
     else
       val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(_root_.com.histmersion.api.instance.AboutMarkdown.Age(s))} ago") ++

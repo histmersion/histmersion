@@ -26,11 +26,11 @@ final case class EventImportReport(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object EventImportReport:
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   /** An events import job's report, in its detail. */
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -102,7 +102,7 @@ object EventImportReport:
       r.corrections.summary
     ).flatten.mkString(" · "))
 
-  def markdown(r: EventImportReport): com.histmersion.api.catalogue.EventImportReport.MarkdownResult =
+  def markdown(r: EventImportReport): com.histmersion.api.catalogue.EventImportReport.Markdown =
     def counts(cs: List[EventCount]) = if cs.isEmpty then "none" else cs.map(c => s"${c.key} ${c.n}").mkString(" · ")
     val head = s"## Event import — ${r.provider}${if (r.dryRun).value then " (dry run: nothing stored)" else ""}"
     val lines = List(
@@ -119,4 +119,4 @@ object EventImportReport:
       r.corrections.summary.map(c => s"- $c (`histmersion events corrections`)").toList ++
       Option.when((r.licence).value.nonEmpty)(s"- licence: ${r.licence}").toList ++
       Option.when((r.citation).value.nonEmpty)(s"- cite as: ${r.citation}").toList
-    _root_.com.histmersion.api.catalogue.EventImportReport.MarkdownResult((head :: "" :: lines).mkString("\n"))
+    _root_.com.histmersion.api.catalogue.EventImportReport.Markdown((head :: "" :: lines).mkString("\n"))

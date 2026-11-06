@@ -8,12 +8,12 @@ final case class SkippedPeriod(id: SkippedPeriod.Id, label: SkippedPeriod.Label,
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object SkippedPeriod:
+  type SkippedCountCount = SkippedCountCount.T
+  object SkippedCountCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   /** The period presets an init job skipped (the first of them), in its detail. */
   type SkippedCount = SkippedCountValue
-  type SkippedCountValue = SkippedCountValue.T
-  object SkippedCountValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -27,4 +27,4 @@ object SkippedPeriod:
 
   /** How many period presets an init job skipped, in its detail. */
   val SkippedCount: com.histmersion.api.jobs.JobDetail.Field[com.histmersion.api.catalogue.SkippedPeriod.SkippedCount] =
-    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("skippedPeriodCount"), _root_.com.histmersion.api.catalogue.SkippedPeriod.SkippedCountValue(0))
+    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("skippedPeriodCount"), _root_.com.histmersion.api.catalogue.SkippedPeriod.SkippedCountCount(0))

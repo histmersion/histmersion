@@ -366,7 +366,7 @@ final class Client(val serverUrl: Client.ServerUrl, token: Option[Client.Token] 
   def ingest(p: Ingest.Params, file: java.io.File): Either[Cli.Error, Ingest.Accepted] =
     call(Api.ingest)((p, file))
   def reocr(ck: com.histmersion.cli.Client.ReocrCk, quality: com.histmersion.cli.Client.ReocrQuality): Either[Cli.Error, Ingest.Accepted] = call(Api.reocr)((ck, quality))
-  def job(id: com.histmersion.api.jobs.JobInfo.Id): Either[Cli.Error, JobInfo] = call(Api.job)(id.value)
+  def job(id: com.histmersion.api.SpatialHierarchyResult.Job.Id): Either[Cli.Error, JobInfo] = call(Api.job)(id.value)
   def basemapStatus(): Either[Cli.Error, Basemap.Status] = call(BasemapApi.status)(())
   def basemapFetch(q: Basemap.FetchQuery): Either[Cli.Error, JobInfo] = call(BasemapApi.fetch)(q)
   def basemapRemove(q: Basemap.RemoveQuery): Either[Cli.Error, Basemap.Removed] = call(BasemapApi.remove)(q)

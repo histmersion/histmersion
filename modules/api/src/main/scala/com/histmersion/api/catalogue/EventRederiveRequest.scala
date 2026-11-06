@@ -9,7 +9,5 @@ final case class EventRederiveRequest(provider: Option[EventRederiveRequest.Prov
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object EventRederiveRequest:
-  type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DryRun = DryRun.T
   object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

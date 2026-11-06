@@ -17,7 +17,7 @@ class PolledListSuite extends munit.FunSuite:
 
   private given ExecutionContext = ExecutionContext.parasitic
 
-  private def job(id: String, state: JobState = JobState.Done) = JobInfo(com.histmersion.api.jobs.JobInfo.Id(id), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), state.wire)
+  private def job(id: String, state: JobState = JobState.Done) = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id(id), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), state.wire)
   private def page(total: Int, next: Option[String], counts: (String, Int)*) = Paging.Page(total, next, counts.toList)
 
   /** A fake server: each request waits for the test to answer it; a fake clock holds the next poll. */
@@ -39,7 +39,7 @@ class PolledListSuite extends munit.FunSuite:
     f.list.open()
     assertEquals(f.asked.map(a => (a._1, a._2)).toList, List((None, None)))
     f.answer(0, List(job("b"), job("a")), page(2, None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
     assert(f.list.loaded.now())
     assertEquals(f.timers.map(_._1).toList, List(Poll.FirstMs))
 
@@ -56,11 +56,11 @@ class PolledListSuite extends munit.FunSuite:
     f.list.showOlder()
     assertEquals((f.asked(1)._1, f.asked(1)._2), (None, Some("b")))
     f.answer(1, List(job("a")), page(4, None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("c", "b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("c", "b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
     f.list.refresh()
     assertEquals(f.asked(2)._1, Some("a"), "the poll reaches the last row shown")
     f.answer(2, List(job("d"), job("c"), job("b"), job("a")), page(4, None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("d", "c", "b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("d", "c", "b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
 
   test("the last row shown is gone: the poll starts over from the newest page"):
     val f = Fixture(liveRows = true)
@@ -89,7 +89,7 @@ class PolledListSuite extends munit.FunSuite:
     f.list.restart()
     f.answer(2, List(job("new")), page(1, None))
     f.answer(1, List(job("old")), page(1, None))
-    assertEquals(f.list.listing.now().rows.map(_.id), List("new").map(com.histmersion.api.jobs.JobInfo.Id.apply))
+    assertEquals(f.list.listing.now().rows.map(_.id), List("new").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
 
   /** One polled item (the agent run's window), on the same fake server and clock. */
   final private class Single:

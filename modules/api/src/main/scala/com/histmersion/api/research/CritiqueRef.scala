@@ -18,11 +18,11 @@ object CritiqueRef:
 
 
   private def key(s: String): String =
-    ((s).trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT))
+    ((s).value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT))
 
   def parse(s: com.histmersion.api.research.CritiqueRef.Wire): Either[com.histmersion.api.research.CritiqueRef.Problem, CritiqueRef] =
     val t = Option((s).value).getOrElse("").replace("->", ">").replace("→", ">")
     t.split(">", -1).toList match
-      case a :: b :: Nil if (key((a))).nonEmpty && (key((b))).value.nonEmpty && key((a)) != key((b)) => Right(CritiqueRef(key((a)), key((b))))
+      case a :: b :: Nil if (key((a))).value.nonEmpty && (key((b))).value.nonEmpty && key((a)) != key((b)) => Right(CritiqueRef(key((a)), key((b))))
       case _                                                                       =>
         Left(_root_.com.histmersion.api.research.CritiqueRef.Problem(s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"))

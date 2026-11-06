@@ -10,6 +10,8 @@ object Paging:
     object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Cursor = Cursor.T
   object Cursor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GroupSize = GroupSize.T
@@ -23,12 +25,10 @@ object Paging:
 
   type EncodeCountsCountsPart1 = _root_.com.histmersion.api.Paging.Page.CountsPart1
   val EncodeCountsCountsPart1: _root_.com.histmersion.api.Paging.Page.CountsPart1.type = _root_.com.histmersion.api.Paging.Page.CountsPart1
-  type EncodeCountsCountsPart2 = _root_.com.histmersion.api.Paging.Page.CountsPart2
-  val EncodeCountsCountsPart2: _root_.com.histmersion.api.Paging.Page.CountsPart2.type = _root_.com.histmersion.api.Paging.Page.CountsPart2
+  type EncodeCountsCountsPart2 = _root_.com.histmersion.api.Paging.Count
+  val EncodeCountsCountsPart2: _root_.com.histmersion.api.Paging.Count.type = _root_.com.histmersion.api.Paging.Count
   type DecodeCountsResultPart1 = DecodeCountsResultPart1.T
   object DecodeCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeCountsResultPart2 = DecodeCountsResultPart2.T
-  object DecodeCountsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeadingTotal = _root_.com.histmersion.api.Paging.Page.Total
   val HeadingTotal: _root_.com.histmersion.api.Paging.Page.Total.type = _root_.com.histmersion.api.Paging.Page.Total
 
@@ -43,31 +43,27 @@ object Paging:
       facets: List[(Page.FacetsPart1, List[(Page.FacetsPart2Part1, Page.FacetsPart2Part2)])] = Nil
   ):
     def hasMore: Boolean = (next.isDefined)
-    def count(state: com.histmersion.api.Paging.Page.CountState): com.histmersion.api.Paging.Page.CountResult = counts.collectFirst { case (s, n) if s == state => n }.getOrElse(0)
+    def count(state: com.histmersion.api.Paging.Page.CountState): com.histmersion.api.Paging.Count = counts.collectFirst { case (s, n) if s == state => n }.getOrElse(0)
 
     def all: com.histmersion.api.Paging.Page.Total = counts.map(_._2).sum
 
     def facet(name: com.histmersion.api.library.Facet.Name): List[(com.histmersion.api.Paging.Page.FacetResultPart1, com.histmersion.api.library.Facet.Count)] = (facets.collectFirst { case (`name`, vs) => vs }.getOrElse(Nil)).map(refactorValue10 => { val refactorTuple7 = refactorValue10; (_root_.com.histmersion.api.Paging.Page.FacetResultPart1((refactorTuple7._1).value), _root_.com.histmersion.api.library.Facet.Count((refactorTuple7._2).value)) })
 
   object Page:
-    type CountResult = CountResult.T
-    object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CountState = CountState.T
     object CountState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FacetResultPart1 = FacetResultPart1.T
     object FacetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfCountsPart1 = OfCountsPart1.T
     object OfCountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfCountsPart2 = OfCountsPart2.T
-    object OfCountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfState = OfState.T
     object OfState extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfLast = _root_.com.histmersion.api.library.Filter.Last
     val OfLast: _root_.com.histmersion.api.library.Filter.Last.type = _root_.com.histmersion.api.library.Filter.Last
     type FilteredCountsPart1 = _root_.com.histmersion.api.Paging.Page.CountsPart1
     val FilteredCountsPart1: _root_.com.histmersion.api.Paging.Page.CountsPart1.type = _root_.com.histmersion.api.Paging.Page.CountsPart1
-    type FilteredCountsPart2 = _root_.com.histmersion.api.Paging.Page.CountsPart2
-    val FilteredCountsPart2: _root_.com.histmersion.api.Paging.Page.CountsPart2.type = _root_.com.histmersion.api.Paging.Page.CountsPart2
+    type FilteredCountsPart2 = _root_.com.histmersion.api.Paging.Count
+    val FilteredCountsPart2: _root_.com.histmersion.api.Paging.Count.type = _root_.com.histmersion.api.Paging.Count
     type FilteredStates = FilteredStates.T
     object FilteredStates extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FilteredFacetsPart2Part1 = FilteredFacetsPart2Part1.T
@@ -75,23 +71,15 @@ object Paging:
 
     type Total = Total.T
     object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Next = Next.T
-    object Next extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CountsPart1 = CountsPart1.T
     object CountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CountsPart2 = CountsPart2.T
-    object CountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FacetsPart1 = FacetsPart1.T
-    object FacetsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FacetsPart2Part1 = FacetsPart2Part1.T
     object FacetsPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FacetsPart2Part2 = FacetsPart2Part2.T
-    object FacetsPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val empty: Page = Page(_root_.com.histmersion.api.Paging.Page.Total(0), None, Nil)
 
-    def of(counts: List[(com.histmersion.api.Paging.Page.OfCountsPart1, com.histmersion.api.Paging.Page.OfCountsPart2)], state: Option[com.histmersion.api.Paging.Page.OfState], last: Option[com.histmersion.api.Paging.Page.OfLast]): Page =
-      filtered((counts).map(refactorValue2 => { val refactorTuple2 = refactorValue2; (_root_.com.histmersion.api.Paging.Page.CountsPart1((refactorTuple2._1).value), _root_.com.histmersion.api.Paging.Page.CountsPart2((refactorTuple2._2).value)) }), (state.toList).map(refactorValue12 => _root_.com.histmersion.api.Paging.Page.FilteredStates((refactorValue12).value)), last)
+    def of(counts: List[(com.histmersion.api.Paging.Page.OfCountsPart1, com.histmersion.api.Paging.Count)], state: Option[com.histmersion.api.Paging.Page.OfState], last: Option[com.histmersion.api.Paging.Page.OfLast]): Page =
+      filtered((counts).map(refactorValue2 => { val refactorTuple2 = refactorValue2; (_root_.com.histmersion.api.Paging.Page.CountsPart1((refactorTuple2._1).value), _root_.com.histmersion.api.Paging.Count((refactorTuple2._2).value)) }), (state.toList).map(refactorValue12 => _root_.com.histmersion.api.Paging.Page.FilteredStates((refactorValue12).value)), last)
 
     def filtered(
         counts: List[(com.histmersion.api.Paging.Page.FilteredCountsPart1, com.histmersion.api.Paging.Page.FilteredCountsPart2)],
@@ -101,15 +89,15 @@ object Paging:
     ): Page =
       val total =
         if states.isEmpty then counts.map(_._2).sum else counts.collect { case (k, n) if states.contains(k) => n }.sum
-      Page(total, (last).map(refactorValue4 => _root_.com.histmersion.api.Paging.Page.Next((refactorValue4).value)), counts, (facets.filter(_._2.nonEmpty)).map(refactorValue14 => { val refactorTuple9 = refactorValue14; (_root_.com.histmersion.api.Paging.Page.FacetsPart1((refactorTuple9._1).value), (refactorTuple9._2).map(refactorValue15 => { val refactorTuple10 = refactorValue15; (_root_.com.histmersion.api.Paging.Page.FacetsPart2Part1((refactorTuple10._1).value), _root_.com.histmersion.api.Paging.Page.FacetsPart2Part2((refactorTuple10._2).value)) })) }))
+      Page(total, (last).map(refactorValue4 => _root_.com.histmersion.api.Paging.Cursor((refactorValue4).value)), counts, (facets.filter(_._2.nonEmpty)).map(refactorValue14 => { val refactorTuple9 = refactorValue14; (_root_.com.histmersion.api.library.Facet.Name((refactorTuple9._1).value), (refactorTuple9._2).map(refactorValue15 => { val refactorTuple10 = refactorValue15; (_root_.com.histmersion.api.Paging.Page.FacetsPart2Part1((refactorTuple10._1).value), _root_.com.histmersion.api.library.Facet.Count((refactorTuple10._2).value)) })) }))
 
   def encodeCounts(counts: List[(com.histmersion.api.Paging.EncodeCountsCountsPart1, com.histmersion.api.Paging.EncodeCountsCountsPart2)]): com.histmersion.api.automation.Activity.Counts.Wire =
     _root_.com.histmersion.api.automation.Activity.Counts.Wire(counts.map((s, n) => s"$s=$n").mkString(","))
 
-  def decodeCounts(s: com.histmersion.api.automation.Activity.Counts.Wire): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.DecodeCountsResultPart2)] =
+  def decodeCounts(s: com.histmersion.api.automation.Activity.Counts.Wire): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.Count)] =
     (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { pair =>
       pair.split('=') match
-        case Array(k, v) => v.trim.toIntOption.map({ val refactorTuple12 = k.trim -> _; (_root_.com.histmersion.api.Paging.DecodeCountsResultPart1(refactorTuple12._1), _root_.com.histmersion.api.Paging.DecodeCountsResultPart2(refactorTuple12._2)) })
+        case Array(k, v) => v.trim.toIntOption.map({ val refactorTuple12 = k.trim -> _; (_root_.com.histmersion.api.Paging.DecodeCountsResultPart1(refactorTuple12._1), _root_.com.histmersion.api.Paging.Count(refactorTuple12._2)) })
         case _           => None
     }
 
@@ -122,7 +110,7 @@ object Paging:
       .map((t, n, c, f) =>
         Page(
           _root_.com.histmersion.api.Paging.Page.Total(t.getOrElse(0)),
-          (n.map(_.trim).filter(_.nonEmpty)).map(refactorValue19 => _root_.com.histmersion.api.Paging.Page.Next(refactorValue19)),
+          (n.map(_.trim).filter(_.nonEmpty)).map(refactorValue19 => _root_.com.histmersion.api.Paging.Cursor(refactorValue19)),
           c.fold(Nil)(decodeCounts),
           f.fold(Nil)(ListFilters.decodeFacets)
         )

@@ -5,7 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MediaCoversReport(
-    dryRun: com.histmersion.api.media.MediaImportRequest.DryRun,
+    dryRun: com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun,
     sources: MediaCoversReport.Sources = _root_.com.histmersion.api.media.MediaCoversReport.Sources(0),
     covers: MediaCoversReport.Covers = _root_.com.histmersion.api.media.MediaCoversReport.Covers(0),
     illustrations: MediaCoversReport.Illustrations = _root_.com.histmersion.api.media.MediaCoversReport.Illustrations(0),
@@ -29,7 +29,7 @@ object MediaCoversReport:
 
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(
-      _root_.com.histmersion.api.media.MediaImportRequest.DryRun(((a.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) && ((b.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true))),
+      _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(((a.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true)) && ((b.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true))),
       _root_.com.histmersion.api.media.MediaCoversReport.Sources((a.sources).value + (b.sources).value),
       _root_.com.histmersion.api.media.MediaCoversReport.Covers((a.covers).value + (b.covers).value),
       _root_.com.histmersion.api.media.MediaCoversReport.Illustrations((a.illustrations).value + (b.illustrations).value),

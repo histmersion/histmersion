@@ -40,6 +40,8 @@ final case class Article(
 )
 
 object Article:
+  type Export = Export.T
+  object Export extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FullText = FullText.T
   object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Heading = Heading.T
@@ -54,8 +56,6 @@ object Article:
   object Prose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Section = Section.T
   object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Summary = Summary.T
-  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VersionId = VersionId.T
   object VersionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -63,26 +63,26 @@ object Article:
   object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindValue = KindValue.T
-  object KindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Body = Body.T
   object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SummaryText = SummaryText.T
-  object SummaryText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Regions = Regions.T
-  object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UpdatedAt = UpdatedAt.T
-  object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReasonsValue = ReasonsValue.T
   object ReasonsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Coverage:
+    type DisagreementKind = DisagreementKind.T
+    object DisagreementKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Export = Export.T
+    object Export extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Markdown = Markdown.T
+    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Method = Method.T
+    object Method extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NotUsed = NotUsed.T
+    object NotUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Sections = Sections.T
+    object Sections extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type DisagreementKinds = DisagreementKindsValue
-    type DisagreementKindsValue = DisagreementKindsValue.T
-    object DisagreementKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ComputeSlug = _root_.com.histmersion.api.research.Article.Slug
     val ComputeSlug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
     type ComputeTotal = _root_.com.histmersion.api.research.Coverage.Total
@@ -94,18 +94,8 @@ object Article:
     object ComputeReasonsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UnplacedAfterReasonsPart2 = UnplacedAfterReasonsPart2.T
     object UnplacedAfterReasonsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SectionsResult = SectionsResult.T
-    object SectionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ExportedResult = ExportedResult.T
-    object ExportedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NotUsedResult = NotUsedResult.T
-    object NotUsedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MethodResult = MethodResult.T
-    object MethodResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MarkdownResult = MarkdownResult.T
-    object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val DisagreementKinds: scala.List[com.histmersion.api.research.Article.Coverage.DisagreementKinds] = scala.List(_root_.com.histmersion.api.research.Article.Coverage.DisagreementKindsValue("challenges"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKindsValue("refutes"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKindsValue("updates"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKindsValue("superseded_by"))
+    val DisagreementKinds: scala.List[com.histmersion.api.research.Article.Coverage.DisagreementKinds] = scala.List(_root_.com.histmersion.api.research.Article.Coverage.DisagreementKind("challenges"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKind("refutes"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKind("updates"), _root_.com.histmersion.api.research.Article.Coverage.DisagreementKind("superseded_by"))
 
     private val Stated: Set[Source.Status] = Set(
       Source.Status.Contested,
@@ -186,12 +176,12 @@ object Article:
 
     val NotUsedHeading = "Not used"
 
-    def sections(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.SectionsResult = _root_.com.histmersion.api.research.Article.Coverage.SectionsResult(s"${notUsed(c)}\n\n${method(c)}")
+    def sections(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.Sections = _root_.com.histmersion.api.research.Article.Coverage.Sections(s"${notUsed(c)}\n\n${method(c)}")
 
-    def exported(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.ExportedResult =
-      _root_.com.histmersion.api.research.Article.Coverage.ExportedResult(s"$GeneratedStart\n\n${sections(c)}\n\n$GeneratedEnd")
+    def exported(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.Export =
+      _root_.com.histmersion.api.research.Article.Coverage.Export(s"$GeneratedStart\n\n${sections(c)}\n\n$GeneratedEnd")
 
-    def notUsed(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.NotUsedResult =
+    def notUsed(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.NotUsed =
       val src = Plural.noun(c.total, _root_.com.histmersion.api.Plural.Noun.Singular("source"))
       val citedN = c.cited.size
       val n = c.notUsed.size
@@ -221,9 +211,9 @@ object Article:
     private def statusNote(s: Source.Status): String = if Stated(s) then (s" (${s.wire})") else ("")
 
     private def endSentence(s: String): String =
-      if (s).endsWith(".") || (s).value.endsWith("?") || (s).value.endsWith("!") then ((s)) else (s"$s.")
+      if (s).value.endsWith(".") || (s).value.endsWith("?") || (s).value.endsWith("!") then ((s).value) else (s"$s.")
 
-    def method(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MethodResult =
+    def method(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.Method =
       val statuses =
         if c.statuses.isEmpty then Nil
         else
@@ -252,14 +242,14 @@ object Article:
 
     private def orList(xs: scala.List[String]): String = xs match
       case Nil        => ("")
-      case one :: Nil => ((one))
+      case one :: Nil => ((one).value)
       case _          => (s"${xs.init.mkString(", ")} or ${xs.last}")
 
     /** An `_` or `*` of a user's query would end the Method line's Markdown emphasis. */
-    private def escape(s: String): String = ((s).replace("*", "\\*").replace("_", "\\_"))
+    private def escape(s: String): String = ((s).value.replace("*", "\\*").replace("_", "\\_"))
 
-    private def isHeading(l: String) = (l).trim.startsWith("#")
-    private def level(l: String) = (l).trim.takeWhile(_ == '#').length
+    private def isHeading(l: String) = (l).value.trim.startsWith("#")
+    private def level(l: String) = (l).value.trim.takeWhile(_ == '#').length
 
     def withoutNotUsed(text: com.histmersion.api.research.Article.Body): com.histmersion.api.research.Article.Body =
       val lines = (text).value.split("\n", -1).toList
@@ -273,7 +263,7 @@ object Article:
           val end = rest.indexWhere(l => isHeading((l)) && level((l)) <= lv)
           _root_.com.histmersion.api.research.Article.Body((lines.take(i) ++ (if end < 0 then Nil else rest.drop(end))).mkString("\n"))
 
-    def hasMethodLine(text: String): Boolean = ((text).linesIterator.exists(_.trim.startsWith("_Method")))
+    def hasMethodLine(text: String): Boolean = ((text).value.linesIterator.exists(_.trim.startsWith("_Method")))
 
     def stripGenerated(body: com.histmersion.api.research.Article.Body): com.histmersion.api.research.Article.Body =
       val s = (body).value.indexOf(GeneratedStart)
@@ -284,7 +274,7 @@ object Article:
         _root_.com.histmersion.api.research.Article.Body(((body).value.substring(0, s).stripTrailing + (if tail.trim.isEmpty then ""
                                                else "\n\n" + tail.dropWhile(_.isWhitespace))).trim)
 
-    def markdown(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MarkdownResult =
+    def markdown(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.Markdown =
       val drift =
         if c.drift.isEmpty then "No drift: every source the filter returns is cited or has a reason."
         else
@@ -311,21 +301,33 @@ object Article:
 
 
   object Edits:
+    type Anchor = Anchor.T
+    object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type HeadLimit = HeadLimit.T
     object HeadLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Markdown = Markdown.T
+    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type NewText = NewText.T
+    object NewText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Occurrences = Occurrences.T
     object Occurrences extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
+    type ParseResultPart1 = ParseResultPart1.T
+    object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OccurrencesText = _root_.com.histmersion.api.research.Article.Body
     val OccurrencesText: _root_.com.histmersion.api.research.Article.Body.type = _root_.com.histmersion.api.research.Article.Body
+    type LocateResultPart1 = LocateResultPart1.T
+    object LocateResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LocateText = _root_.com.histmersion.api.research.Article.Body
     val LocateText: _root_.com.histmersion.api.research.Article.Body.type = _root_.com.histmersion.api.research.Article.Body
+    type ApplyOneResultPart1 = ApplyOneResultPart1.T
+    object ApplyOneResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ApplyOneText = _root_.com.histmersion.api.research.Article.Body
     val ApplyOneText: _root_.com.histmersion.api.research.Article.Body.type = _root_.com.histmersion.api.research.Article.Body
-    type MarkdownResult = MarkdownResult.T
-    object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApplyAllRefuseResult = ApplyAllRefuseResult.T
+    object ApplyAllRefuseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     enum Op(val wire: Op.Wire):
       case Replace extends Op(_root_.com.histmersion.api.research.Article.Edits.Op.Wire("replace"))
@@ -352,10 +354,6 @@ object Article:
 
     final case class EditAnswer(op: Op, anchor: EditAnswer.Anchor, text: Option[EditAnswer.Text] = None) derives KindlingsCodecAsObject
     object EditAnswer:
-      type Anchor = Anchor.T
-      object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Text = Text.T
-      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       given Schema[EditAnswer] = KindlingsSchema
         .derived[EditAnswer]
@@ -376,50 +374,31 @@ object Article:
         )
 
     enum Edit:
-      def anchor: com.histmersion.api.research.Article.Edits.EditAnswer.Anchor
+      def anchor: com.histmersion.api.research.Article.Edits.Anchor
       case Replace(anchor: Edit.Replace.Anchor, text: Edit.Replace.Text)
       case InsertAfter(anchor: Edit.InsertAfter.Anchor, text: Edit.InsertAfter.Text)
       case InsertBefore(anchor: Edit.InsertBefore.Anchor, text: Edit.InsertBefore.Text)
       case Delete(anchor: Edit.Delete.Anchor)
 
-    object Edit:
-      object Replace:
-        type Anchor = Anchor.T
-        object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-        type Text = Text.T
-        object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-      object InsertAfter:
-        type Anchor = Anchor.T
-        object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-        type Text = Text.T
-        object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-      object InsertBefore:
-        type Anchor = Anchor.T
-        object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-        type Text = Text.T
-        object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-      object Delete:
-        type Anchor = Anchor.T
-        object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     /** A replace whose text is empty or null is not read as a delete: a strict-schema provider sends `null` (or `""`)
       * for a field it left out.
       */
-    def parse(a: EditAnswer): Either[com.histmersion.api.research.Article.Edits.EditResult.Problem, Edit] =
+    def parse(a: EditAnswer): Either[com.histmersion.api.research.Article.Edits.ParseResultPart1, Edit] =
       val anchor = Option(a.anchor).getOrElse("")
       val text = Option(a.text).flatten.getOrElse("")
-      if anchor.trim.isEmpty then Left(_root_.com.histmersion.api.research.Article.Edits.EditResult.Problem("no anchor — copy the passage the edit is about from the body"))
+      if anchor.trim.isEmpty then Left(_root_.com.histmersion.api.research.Article.Edits.ParseResultPart1("no anchor — copy the passage the edit is about from the body"))
       else
         a.op match
           case Op.Delete                       => Right(Edit.Delete(anchor))
           case Op.Replace if text.trim.isEmpty =>
-            Left(_root_.com.histmersion.api.research.Article.Edits.EditResult.Problem("a replace with no new text — give the text, or use delete to remove the passage"))
+            Left(_root_.com.histmersion.api.research.Article.Edits.ParseResultPart1("a replace with no new text — give the text, or use delete to remove the passage"))
           case Op.Replace             => Right(Edit.Replace(anchor, text))
-          case _ if text.trim.isEmpty => Left(_root_.com.histmersion.api.research.Article.Edits.EditResult.Problem("no text to insert"))
+          case _ if text.trim.isEmpty => Left(_root_.com.histmersion.api.research.Article.Edits.ParseResultPart1("no text to insert"))
           case Op.InsertAfter         => Right(Edit.InsertAfter(anchor, text))
           case Op.InsertBefore        => Right(Edit.InsertBefore(anchor, text))
 
@@ -433,23 +412,21 @@ object Article:
 
       type Index = Index.T
       object Index extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Anchor = Anchor.T
-      object Anchor extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Text = Text.T
-      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Problem = Problem.T
       object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     final case class Applied(body: com.histmersion.api.research.Article.Body, results: scala.List[EditResult]):
-      def problems: scala.List[com.histmersion.api.research.Article.Edits.EditResult.Problem] = results.flatMap(r => r.problem.map(p => _root_.com.histmersion.api.research.Article.Edits.EditResult.Problem(s"${r.label}: $p")))
+      def problems: scala.List[com.histmersion.api.research.Article.Edits.Applied.ProblemsResult] = results.flatMap(r => r.problem.map(p => _root_.com.histmersion.api.research.Article.Edits.Applied.ProblemsResult(s"${r.label}: $p")))
       def appliedCount: com.histmersion.api.research.Article.Edits.Applied.Count = _root_.com.histmersion.api.research.Article.Edits.Applied.Count(results.count((refactorCallback => ((refactorCallback.applied) == (true)))))
 
     object Applied:
       type Count = Count.T
       object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type ProblemsResult = ProblemsResult.T
+      object ProblemsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def head(anchor: com.histmersion.api.research.Article.Edits.EditAnswer.Anchor, max: com.histmersion.api.research.Article.Edits.HeadLimit = _root_.com.histmersion.api.research.Article.Edits.HeadLimit(48)): String =
+    def head(anchor: com.histmersion.api.research.Article.Edits.Anchor, max: com.histmersion.api.research.Article.Edits.HeadLimit = _root_.com.histmersion.api.research.Article.Edits.HeadLimit(48)): String =
       val one = (anchor).value.trim.replaceAll("\\s+", " ")
       if one.length <= (max).value then (one) else (one.take((max).value).trim + "…")
 
@@ -457,10 +434,10 @@ object Article:
       val out = StringBuilder()
       val pos = Array.newBuilder[Int]
       var i = 0
-      while i < (s).length do
+      while i < (s).value.length do
         if s(i).isWhitespace then
           val from = i
-          while i < (s).length && s(i).isWhitespace do i += 1
+          while i < (s).value.length && s(i).isWhitespace do i += 1
           out.append(' '); pos += from
         else
           out.append(s(i)); pos += i; i += 1
@@ -469,22 +446,22 @@ object Article:
     private def occurrences(text: com.histmersion.api.research.Article.Edits.OccurrencesText, needle: String): scala.List[com.histmersion.api.research.Article.Edits.Occurrences] =
       (Iterator.iterate((text).value.indexOf(needle))(i => (text).value.indexOf(needle, i + 1)).takeWhile(_ >= 0).toList).map(refactorValue14 => _root_.com.histmersion.api.research.Article.Edits.Occurrences(refactorValue14))
 
-    def locate(text: com.histmersion.api.research.Article.Edits.LocateText, anchor: com.histmersion.api.research.Article.Edits.EditAnswer.Anchor): Either[com.histmersion.api.research.Article.Edits.EditResult.Problem, (com.histmersion.api.personal.UnreadPage.Offset, com.histmersion.api.personal.UnreadPage.Offset)] =
+    def locate(text: com.histmersion.api.research.Article.Edits.LocateText, anchor: com.histmersion.api.research.Article.Edits.Anchor): Either[com.histmersion.api.research.Article.Edits.LocateResultPart1, (com.histmersion.api.personal.UnreadPage.Offset, com.histmersion.api.personal.UnreadPage.Offset)] =
       val a = (anchor).value.trim
       occurrences(text, (a)) match
         case scala.List(i) => Right((_root_.com.histmersion.api.personal.UnreadPage.Offset((i).value), _root_.com.histmersion.api.personal.UnreadPage.Offset((i).value + a.length)))
         case _ :: _ :: _   =>
-          Left(_root_.com.histmersion.api.research.Article.Edits.EditResult.Problem(s"the anchor occurs ${occurrences(text, (a)).size} times — quote more of the passage so it occurs once"))
+          Left(_root_.com.histmersion.api.research.Article.Edits.LocateResultPart1(s"the anchor occurs ${occurrences(text, (a)).size} times — quote more of the passage so it occurs once"))
         case Nil =>
           val (sq, pos) = squeeze(((text).value))
           val na = a.replaceAll("\\s+", " ")
-          occurrences(_root_.com.histmersion.api.research.Article.Body((sq)), (na)) match
+          occurrences(_root_.com.histmersion.api.research.Article.Body((sq).value), (na)) match
             case scala.List(i) =>
               val last = (i).value + na.length - 1
               Right((pos(i), pos(last) + 1))
             case Nil =>
-              Left(_root_.com.histmersion.api.research.Article.Edits.EditResult.Problem("the anchor is not in the article — copy it exactly from the current body (earlier edits included)"))
-            case more => Left(_root_.com.histmersion.api.research.Article.Edits.EditResult.Problem(s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once"))
+              Left(_root_.com.histmersion.api.research.Article.Edits.LocateResultPart1("the anchor is not in the article — copy it exactly from the current body (earlier edits included)"))
+            case more => Left(_root_.com.histmersion.api.research.Article.Edits.LocateResultPart1(s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once"))
 
     private def cut(text: com.histmersion.api.research.Article.Body, s: com.histmersion.api.personal.UnreadPage.Offset, e: com.histmersion.api.personal.UnreadPage.Offset): com.histmersion.api.research.Article.Body =
       val before = (text).value.substring(0, (s).value)
@@ -502,7 +479,7 @@ object Article:
         else ""
       _root_.com.histmersion.api.research.Article.Body(head + joint + tail + (if tail.isEmpty then post.filter(_ == '\n').take(1) else ""))
 
-    def applyOne(text: com.histmersion.api.research.Article.Edits.ApplyOneText, e: Edit): Either[com.histmersion.api.research.Article.Edits.EditResult.Problem, com.histmersion.api.research.Article.Body] =
+    def applyOne(text: com.histmersion.api.research.Article.Edits.ApplyOneText, e: Edit): Either[com.histmersion.api.research.Article.Edits.ApplyOneResultPart1, com.histmersion.api.research.Article.Body] =
       locate(text, e.anchor).map { (s, end) =>
         e match
           case Edit.Replace(_, t)      => text.substring(0, s) + t + text.substring(end)
@@ -514,7 +491,7 @@ object Article:
     def applyAll(
         body: com.histmersion.api.research.Article.Body,
         edits: scala.List[EditAnswer],
-        refuse: EditAnswer => Option[com.histmersion.api.research.Article.Edits.EditResult.Problem] = _ => None
+        refuse: EditAnswer => Option[com.histmersion.api.research.Article.Edits.ApplyAllRefuseResult] = _ => None
     ): Applied =
       @tailrec def loop(rest: scala.List[EditAnswer], number: Int, cur: com.histmersion.api.research.Article.Body, acc: Vector[EditResult]): Applied =
         rest match
@@ -522,31 +499,29 @@ object Article:
           case a :: tail =>
             val base = EditResult(number, a.op, head(Option(a.anchor).getOrElse("")), a.text.getOrElse(""))
             parse(a).flatMap(e => refuse(a).toLeft(e)).flatMap(applyOne(cur, _)) match
-              case Right(t) => loop(tail, ((number) + 1), t, acc :+ base)
-              case Left(p)  => loop(tail, ((number) + 1), cur, acc :+ base.copy(problem = Some(p)))
+              case Right(t) => loop(tail, ((number).value + 1), t, acc :+ base)
+              case Left(p)  => loop(tail, ((number).value + 1), cur, acc :+ base.copy(problem = Some(p)))
       loop(edits, (1), body, Vector.empty)
 
     enum Draft:
       case Edits(edits: scala.List[EditAnswer])
       case Body(text: Draft.Body.Text)
 
-    object Draft:
-      object Body:
-        type Text = Text.T
-        object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     final case class ArticleCheckRequest(
         edits: scala.List[EditAnswer] = Nil,
         body: Option[com.histmersion.api.research.Article.Body] = None,
-        kind: Option[com.histmersion.api.research.Article.KindValue] = None
+        kind: Option[com.histmersion.api.research.Article.Kind.Wire] = None
     ) derives KindlingsCodecAsObject:
-      def draft: Either[com.histmersion.api.research.Article.Edits.EditResult.Problem, Draft] =
+      def draft: Either[com.histmersion.api.research.Article.Edits.ArticleCheckRequest.DraftResultPart1, Draft] =
         (edits, body.filter(_.trim.nonEmpty)) match
           case (Nil, None)       => Left("give `edits` (against the stored body) or `body` (a whole draft)")
           case (_ :: _, Some(_)) => Left("give `edits` or `body`, not both")
           case (es, None)        => Right(Draft.Edits(es))
           case (Nil, Some(b))    => Right(Draft.Body(b))
     object ArticleCheckRequest:
+      type DraftResultPart1 = DraftResultPart1.T
+      object DraftResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
       given Schema[ArticleCheckRequest] = KindlingsSchema
         .derived[ArticleCheckRequest]
@@ -559,7 +534,7 @@ object Article:
 
     final case class ArticleCheck(
         slug: com.histmersion.api.research.Article.Slug,
-        kind: com.histmersion.api.research.Article.KindValue,
+        kind: com.histmersion.api.research.Article.Kind.Wire,
         edits: scala.List[EditResult],
         problems: scala.List[ArticleCheck.Problems],
         fatal: ArticleCheck.Fatal,
@@ -571,9 +546,9 @@ object Article:
       def clean: Boolean = (problems.isEmpty)
 
     object ArticleCheck:
+      type Problem = Problem.T
+      object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-      type Problems = Problems.T
-      object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Fatal = Fatal.T
       object Fatal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type WordsBefore = WordsBefore.T
@@ -582,7 +557,7 @@ object Article:
       object WordsAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def markdown(c: ArticleCheck): com.histmersion.api.research.Article.Edits.MarkdownResult =
+    def markdown(c: ArticleCheck): com.histmersion.api.research.Article.Edits.Markdown =
       val edits =
         if c.edits.isEmpty then ""
         else "\n\n### Edits\n\n" + c.edits.map(r => s"- ${r.label}: ${r.problem.getOrElse("applies")}").mkString("\n")
@@ -591,7 +566,7 @@ object Article:
         else if ((c.fatal) == _root_.com.histmersion.api.research.Article.Edits.ArticleCheck.Fatal(true)) then s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((c.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}, at least one FATAL (never written):"
         else s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((c.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}:"
       val problems = if ((c.clean) == (true)) then "" else "\n\n" + c.problems.map(p => s"- $p").mkString("\n")
-      _root_.com.histmersion.api.research.Article.Edits.MarkdownResult(s"## Check of [[${c.slug}]] (${c.kind})\n\n${c.wordsBefore} → ${c.wordsAfter} words.$edits\n\n### Result\n\n$verdict$problems")
+      _root_.com.histmersion.api.research.Article.Edits.Markdown(s"## Check of [[${c.slug}]] (${c.kind})\n\n${c.wordsBefore} → ${c.wordsAfter} words.$edits\n\n### Result\n\n$verdict$problems")
 
   final case class Filter(
       query: Option[Filter.Query] = None,
@@ -636,12 +611,8 @@ object Article:
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topics = Topics.T
     object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Places = Places.T
@@ -675,14 +646,14 @@ object Article:
 
     given Codec.AsObject[Filter] = StrictJson.codec(KindlingsCodecAsObject.derived[Filter])
 
-    private[api] def quoted(s: String): String = ("\"" + (s).replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
+    private[api] def quoted(s: String): String = ("\"" + (s).value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
 
     def normalise(f: Filter): Either[com.histmersion.api.research.Article.Filter.Problem, Option[Filter]] =
-      def clean(xs: scala.List[String]) = xs.flatMap((_).split(",")).map(_.trim).filter(_.nonEmpty).distinct
+      def clean(xs: scala.List[String]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty).distinct
       val status = clean(f.status).map(_.toLowerCase(java.util.Locale.ROOT))
       val unknown = status.filterNot(s => Source.Status.values.exists(_.wire == s))
       val tidy = Filter(
-        f.query.map((_).value.trim).filter((_).nonEmpty),
+        f.query.map((_).value.trim).filter((_).value.nonEmpty),
         clean(f.topics),
         clean(f.tags),
         status,
@@ -705,7 +676,7 @@ object Article:
   final case class Import(
       text: Import.Text,
       slug: Option[com.histmersion.api.research.Article.Slug] = None,
-      kind: Option[com.histmersion.api.research.Article.KindValue] = None,
+      kind: Option[com.histmersion.api.research.Article.Kind.Wire] = None,
       mtime: Option[Import.Mtime] = None,
       force: Import.Force = _root_.com.histmersion.api.research.Article.Import.Force(false),
       strict: Import.Strict = _root_.com.histmersion.api.research.Article.Import.Strict(false)
@@ -713,8 +684,6 @@ object Article:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Import:
-    type Text = Text.T
-    object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Mtime = Mtime.T
     object Mtime extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Force = Force.T
@@ -729,10 +698,8 @@ object Article:
   object Kind:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromStringS = FromStringS.T
-    object FromStringS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def fromString(s: com.histmersion.api.research.Article.Kind.FromStringS): Option[Kind] =
+    def fromString(s: com.histmersion.api.research.Article.Kind.Wire): Option[Kind] =
       values.find(_.toString.equalsIgnoreCase((s).value))
 
     given WireEnumValues[Kind]:
@@ -745,7 +712,7 @@ object Article:
     given Decoder[Kind] = WireEnum.decoder
     given Schema[Kind] = WireEnum.schema
 
-  final case class KindCount(kind: com.histmersion.api.research.Article.KindValue, count: KindCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class KindCount(kind: com.histmersion.api.research.Article.Kind.Wire, count: KindCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object KindCount:
     type Count = Count.T
@@ -761,9 +728,9 @@ object Article:
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   object Links:
+    type Markdown = Markdown.T
+    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type ResolveMarkdownResult = ResolveMarkdownResult.T
-    object ResolveMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResolveMarkdownMd = _root_.com.histmersion.api.research.Article.Body
     val ResolveMarkdownMd: _root_.com.histmersion.api.research.Article.Body.type = _root_.com.histmersion.api.research.Article.Body
 
@@ -779,7 +746,7 @@ object Article:
       }
 
     def links(body: com.histmersion.api.research.Article.Body, isSource: com.histmersion.api.research.Article.Link.Target => Boolean): scala.List[Link] =
-      classify(targets(body), { val refactorFunction2 = isSource; (refactorValue11) => ((refactorFunction2(_root_.com.histmersion.api.research.Article.Link.Target((refactorValue11).value)))) })
+      classify(targets(body), { val refactorFunction2 = isSource; (refactorValue11) => ((refactorFunction2(_root_.com.histmersion.api.research.Article.Link.Target((refactorValue11).value))).value) })
 
     def hrefFor(target: com.histmersion.api.research.Article.Link.Target, citekeyOf: com.histmersion.api.research.Article.Link.Target => Option[com.histmersion.api.library.Citekey], isArticle: com.histmersion.api.research.Article.Link.Target => Boolean): Option[String] =
       (citekeyOf(_root_.com.histmersion.api.research.Article.Link.Target((target).value))
@@ -801,42 +768,42 @@ object Article:
 
     export com.histmersion.api.text.WikiLinks.{retarget, rewriteLinks}
 
-    def resolveMarkdown(md: com.histmersion.api.research.Article.Links.ResolveMarkdownMd, isSource: com.histmersion.api.research.Article.Link.Target => Boolean): com.histmersion.api.research.Article.Links.ResolveMarkdownResult =
+    def resolveMarkdown(md: com.histmersion.api.research.Article.Links.ResolveMarkdownMd, isSource: com.histmersion.api.research.Article.Link.Target => Boolean): com.histmersion.api.research.Article.Links.Markdown =
       linkMarkdown(md, t => Some(if isCitekeyShaped(t) && isSource(t) then (s"/source/$t") else (s"/article/$t")))
 
   /** The articles' lint rules: a thin or stand-in summary, filler phrases, uncited paragraphs, unpaired critiques. */
   object Lint:
+    type FillerPhrasesText = FillerPhrasesText.T
+    object FillerPhrasesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type FillerPhrases = FillerPhrasesValue
-    type FillerPhrasesValue = FillerPhrasesValue.T
-    object FillerPhrasesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val FillerPhrases: scala.List[com.histmersion.api.research.Article.Lint.FillerPhrases] = scala.List(
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it is worth noting"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it should be noted"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it is important to note"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("interestingly"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("notably"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("significantly"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it is clear that"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("needless to say"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("of course"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("as is well known"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it goes without saying"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("in conclusion"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("to summarize"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("in summary"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("broadly speaking"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("generally speaking"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it must be emphasized"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("it cannot be overstated"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("plays a crucial role"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("rich tapestry"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("sheds light on"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("shed new light"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("paved the way"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("remains to be seen"),
-      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesValue("further research is needed")
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("it is worth noting"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("it should be noted"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("it is important to note"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("interestingly"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("notably"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("significantly"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("it is clear that"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("needless to say"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("of course"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("as is well known"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("it goes without saying"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("in conclusion"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("to summarize"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("in summary"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("broadly speaking"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("generally speaking"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("it must be emphasized"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("it cannot be overstated"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("plays a crucial role"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("rich tapestry"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("sheds light on"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("shed new light"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("paved the way"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("remains to be seen"),
+      _root_.com.histmersion.api.research.Article.Lint.FillerPhrasesText("further research is needed")
     )
 
     private[api] val FillerPattern: scala.util.matching.Regex =
@@ -850,7 +817,7 @@ object Article:
             if s.isEmpty then Some("no summary")
             else
               Articles
-                .summaryOf(Some(_root_.com.histmersion.api.research.Article.Summary(s)))
+                .summaryOf(Some(_root_.com.histmersion.api.research.Article.SummaryText(s)))
                 .left
                 .toOption
                 .map(_ => s"stand-in summary: \"$s\"")
@@ -928,7 +895,7 @@ object Article:
       tags: Option[ListPatch] = None,
       regions: Option[scala.List[Patch.Regions]] = None,
       period: Option[Period.Input] = None,
-      kind: Option[com.histmersion.api.research.Article.KindValue] = None,
+      kind: Option[com.histmersion.api.research.Article.Kind.Wire] = None,
       ifUpdatedAt: Option[Patch.IfUpdatedAt] = None,
       filter: Option[Filter] = None,
       reasons: scala.List[com.histmersion.api.research.Coverage.Reason] = Nil,
@@ -944,19 +911,13 @@ object Article:
     object Append extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Section = Section.T
     object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IfUpdatedAt = IfUpdatedAt.T
-    object IfUpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Codec.AsObject[Patch] = StrictJson.codec(KindlingsCodecAsObject.derived[Patch])
 
   object Plans:
+    type Markdown = Markdown.T
+    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type FilterBlockResult = FilterBlockResult.T
-    object FilterBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlanBlockResult = PlanBlockResult.T
-    object PlanBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     final case class FilterProposal(
         slug: com.histmersion.api.research.Article.Slug,
@@ -992,7 +953,7 @@ object Article:
     final case class ProposedArticle(
         slug: com.histmersion.api.research.Article.Slug,
         title: com.histmersion.api.research.Article.Title,
-        kind: com.histmersion.api.research.Article.KindValue,
+        kind: com.histmersion.api.research.Article.Kind.Wire,
         filter: Filter,
         why: ProposedArticle.Why = _root_.com.histmersion.api.research.Article.Plans.ProposedArticle.Why(""),
         hits: ProposedArticle.Hits = _root_.com.histmersion.api.research.Article.Plans.ProposedArticle.Hits(0),
@@ -1023,8 +984,6 @@ object Article:
 
     object ArticlePlan:
 
-      type Goal = Goal.T
-      object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Rationale = Rationale.T
       object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Dropped = Dropped.T
@@ -1033,7 +992,7 @@ object Article:
 
     def filterLine(f: Filter): String = f.line
 
-    def filterBlock(p: FilterProposal): com.histmersion.api.research.Article.Plans.FilterBlockResult =
+    def filterBlock(p: FilterProposal): com.histmersion.api.research.Article.Plans.Markdown =
       val missed =
         if p.missed.isEmpty then "" else s"\n- cited but not returned: ${p.missed.map(c => s"[[$c]]").mkString(", ")}"
       val sample = if p.sample.isEmpty then ""
@@ -1041,7 +1000,7 @@ object Article:
       s"${p.filter.line} → ${Plural.count(p.total, _root_.com.histmersion.api.Plural.CountSingular("source"))}; returns ${p.citedIn} of the ${Plural.count(p.cited, _root_.com.histmersion.api.Plural.CountSingular("cited source"))}" +
         missed + sample
 
-    def planBlock(p: ArticlePlan): com.histmersion.api.research.Article.Plans.PlanBlockResult =
+    def planBlock(p: ArticlePlan): com.histmersion.api.research.Article.Plans.Markdown =
       val as = p.articles.map { a =>
         val ov = a.overlapWith.fold("")(o => f" · overlaps [[$o]] ${(a.overlap).value * 100}%.0f%%")
         s"- `${a.slug}` — ${a.title} (${a.kind}) · ${a.filter.line} → ${Plural.count(a.hits, _root_.com.histmersion.api.Plural.CountSingular("source"))}$ov" +
@@ -1054,7 +1013,7 @@ object Article:
 
   final case class Put(
       title: com.histmersion.api.research.Article.Title,
-      kind: com.histmersion.api.research.Article.KindValue,
+      kind: com.histmersion.api.research.Article.Kind.Wire,
       body: com.histmersion.api.research.Article.Body,
       summary: Option[com.histmersion.api.research.Article.SummaryText] = None,
       tags: scala.List[Put.Tags] = Nil,
@@ -1067,10 +1026,6 @@ object Article:
   object Put:
 
 
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodStart = PeriodStart.T
     object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodEnd = PeriodEnd.T
@@ -1104,15 +1059,13 @@ object Article:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
   object ReviewView:
+    type Markdown = Markdown.T
+    object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    type MarkdownResult = MarkdownResult.T
-    object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Outcome = Outcome.T
     object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def reviewerName(wire: com.histmersion.api.research.ReviewFinding.Reviewer.Wire): String = wire match
       case refactorPattern if (refactorPattern.value == "rules") && (refactorPattern5.value == "rules")       => ("rules reviewer")
@@ -1133,7 +1086,7 @@ object Article:
       val back = if (f.reopened).value > 0 then s" (reopened ${Plural.count(f.reopened, _root_.com.histmersion.api.Plural.CountSingular("time"))})" else ""
       (s"$base$by$when$back$note")
 
-    def markdown(r: ReviewView): com.histmersion.api.research.Article.ReviewView.MarkdownResult =
+    def markdown(r: ReviewView): com.histmersion.api.research.Article.ReviewView.Markdown =
       val head = s"## Review of [[${r.slug}]]\n\n**${r.badge.label}** — ${r.badge.detail}" +
         r.outcome.filter((_).value.nonEmpty).fold("")(o => s"\n\nReview manager: $o" + r.updatedAt.fold("")(t => s" ($t)"))
       val goals =
@@ -1159,12 +1112,12 @@ object Article:
                   .mkString("\n")
             }
             .mkString("\n\n")
-      _root_.com.histmersion.api.research.Article.ReviewView.MarkdownResult(head + goals + approvals + history)
+      _root_.com.histmersion.api.research.Article.ReviewView.Markdown(head + goals + approvals + history)
 
   final case class Row(
       slug: com.histmersion.api.research.Article.Slug,
       title: com.histmersion.api.research.Article.Title,
-      kind: com.histmersion.api.research.Article.KindValue,
+      kind: com.histmersion.api.research.Article.Kind.Wire,
       body: com.histmersion.api.research.Article.Body,
       summary: Option[com.histmersion.api.research.Article.SummaryText],
       tags: scala.List[Row.Tags],
@@ -1177,22 +1130,16 @@ object Article:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Row:
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodStart = PeriodStart.T
     object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodEnd = PeriodEnd.T
     object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Summary(
       slug: com.histmersion.api.research.Article.Slug,
       title: com.histmersion.api.research.Article.Title,
-      kind: com.histmersion.api.research.Article.KindValue,
+      kind: com.histmersion.api.research.Article.Kind.Wire,
       summary: Option[com.histmersion.api.research.Article.SummaryText],
       tags: scala.List[Summary.Tags],
       regions: scala.List[Summary.Regions],
@@ -1204,16 +1151,10 @@ object Article:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Summary:
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Regions = Regions.T
-    object Regions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodStart = PeriodStart.T
     object PeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PeriodEnd = PeriodEnd.T
     object PeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Version(
@@ -1227,12 +1168,6 @@ object Article:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Version:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WordCount = WordCount.T
     object WordCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1247,13 +1182,6 @@ object Article:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
-  object VersionFull:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UpdatedAt = UpdatedAt.T
-    object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class View(

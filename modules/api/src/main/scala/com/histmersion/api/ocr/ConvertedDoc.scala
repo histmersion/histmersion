@@ -13,8 +13,6 @@ final case class ConvertedDoc(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ConvertedDoc:
-  type Markdown = Markdown.T
-  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Pages = Pages.T
   object Pages extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Filename = Filename.T

@@ -10,6 +10,8 @@ final case class ArchiveFile(name: ArchiveFile.Name, format: Option[ArchiveFile.
 
 object ArchiveFile:
   object Format:
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Name = Name.T

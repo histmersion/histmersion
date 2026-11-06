@@ -25,14 +25,14 @@ object Wording:
   def humanize(id: com.histmersion.api.Wording.Id): String =
     val words =
       (id).value.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
-    ((capitalize((words))))
+    ((capitalize((words))).value)
 
-  def capitalize(s: String): String = if (s).isEmpty then ((s)) else ((s).substring(0, 1).toUpperCase + (s).value.substring(1))
+  def capitalize(s: String): String = if (s).value.isEmpty then ((s).value) else ((s).value.substring(0, 1).toUpperCase + (s).value.substring(1))
 
   def value(s: String): String = Label.display(s)
 
   def heading(s: String): String =
-    if (s).trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s)))).value) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).trim)))
+    if (s).value.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then ((humanize(_root_.com.histmersion.api.Wording.Id((s).value))).value) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.Text((s).value.trim)))
 
   def status(s: Source.Status): String = s match
     case Source.Status.Foundational => ("Foundational")
@@ -92,19 +92,19 @@ object Wording:
     Manager.Kind
       .parse(_root_.com.histmersion.api.automation.Manager.Kind.Wire(kind))
       .fold(humanize(id))(k =>
-        (managerKind(k)) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(_root_.com.histmersion.api.Wording.Id(g))}")
+        (managerKind(k)).value + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(_root_.com.histmersion.api.Wording.Id(g))}")
       )
 
-  val schedulerJobTypes: Map[com.histmersion.api.automation.AgentScheduler.TypeLine.JobType, String] = Map(
-    { val refactorTuple23 = "goal-plan" -> "Plan a goal"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple23._1), (refactorTuple23._2)) },
-    { val refactorTuple2 = "propose" -> "Propose articles"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple2._1), (refactorTuple2._2)) },
-    { val refactorTuple25 = "sweep" -> "Look for copies to fetch"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple25._1), (refactorTuple25._2)) },
-    { val refactorTuple26 = "currency" -> "Check sources are current"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple26._1), (refactorTuple26._2)) },
-    { val refactorTuple5 = "enrich" -> "Enrich a source"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple5._1), (refactorTuple5._2)) },
-    { val refactorTuple6 = "compile" -> "Write an article"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple6._1), (refactorTuple6._2)) },
-    { val refactorTuple29 = "extend" -> "Extend an article"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple29._1), (refactorTuple29._2)) },
-    { val refactorTuple8 = "filter" -> "Work out an article's filter"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple8._1), (refactorTuple8._2)) },
-    { val refactorTuple9 = "review" -> "Review an article"; (_root_.com.histmersion.api.automation.AgentScheduler.TypeLine.JobType(refactorTuple9._1), (refactorTuple9._2)) }
+  val schedulerJobTypes: Map[com.histmersion.api.jobs.JobKinds.Wire, String] = Map(
+    { val refactorTuple23 = "goal-plan" -> "Plan a goal"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple23._1), (refactorTuple23._2)) },
+    { val refactorTuple2 = "propose" -> "Propose articles"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple2._1), (refactorTuple2._2)) },
+    { val refactorTuple25 = "sweep" -> "Look for copies to fetch"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple25._1), (refactorTuple25._2)) },
+    { val refactorTuple26 = "currency" -> "Check sources are current"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple26._1), (refactorTuple26._2)) },
+    { val refactorTuple5 = "enrich" -> "Enrich a source"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple5._1), (refactorTuple5._2)) },
+    { val refactorTuple6 = "compile" -> "Write an article"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple6._1), (refactorTuple6._2)) },
+    { val refactorTuple29 = "extend" -> "Extend an article"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple29._1), (refactorTuple29._2)) },
+    { val refactorTuple8 = "filter" -> "Work out an article's filter"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple8._1), (refactorTuple8._2)) },
+    { val refactorTuple9 = "review" -> "Review an article"; (_root_.com.histmersion.api.jobs.JobKinds.Wire(refactorTuple9._1), (refactorTuple9._2)) }
   )
 
   val strategies: Map[com.histmersion.api.automation.AgentScheduler.StrategyLine.Name, String] = Map(
@@ -116,7 +116,7 @@ object Wording:
   def pool(id: com.histmersion.api.automation.AgentScheduler.PoolUse.Pool): String = (id).value.trim.toLowerCase match
     case "claude-plan"  => ("Claude plan")
     case "chatgpt-plan" => ("ChatGPT plan")
-    case other          => ((humanize(_root_.com.histmersion.api.Wording.Id(other.stripSuffix("-plan")))) + (if other.endsWith("-plan") then " plan" else ""))
+    case other          => ((humanize(_root_.com.histmersion.api.Wording.Id(other.stripSuffix("-plan")))).value + (if other.endsWith("-plan") then " plan" else ""))
 
   def allowanceWindow(kind: com.histmersion.api.Api.ArticleQuery.Kind.Wire): String =
     val k = (kind).value.trim.toLowerCase.split('/').last
@@ -134,7 +134,7 @@ object Wording:
       case "one_day" | "daily"             => ("Today's limit")
       case s if s.startsWith("seven_day_") => (s"This week's limit (${humanize(_root_.com.histmersion.api.Wording.Id(s.stripPrefix("seven_day_")))})")
       case s if s.startsWith("five_hour_") => (s"5-hour limit (${humanize(_root_.com.histmersion.api.Wording.Id(s.stripPrefix("five_hour_")))})")
-      case other                           => ((humanize(_root_.com.histmersion.api.Wording.Id(other))))
+      case other                           => ((humanize(_root_.com.histmersion.api.Wording.Id(other))).value)
 
   def agentsState(autopilotOn: com.histmersion.api.automation.AgentMode.Step.Autopilot.On, draining: com.histmersion.api.automation.AgentMode.Step.Drain.On): String =
     if (draining).value then ("Agents: finishing current work, then pausing")
@@ -151,7 +151,7 @@ object Wording:
 
   def jobKind(k: JobInfo.Kind): String = RegisteredJobKinds.all.get(k).fold(humanize(k.value))(_.name.value)
 
-  def jobKindOf(wire: com.histmersion.api.automation.AgentScheduler.TypeLine.JobType): String = RegisteredJobKinds.all.parse(wire).fold(humanize(wire))(_.name.value)
+  def jobKindOf(wire: com.histmersion.api.jobs.JobKinds.Wire): String = RegisteredJobKinds.all.parse(wire).fold(humanize(wire))(_.name.value)
 
   def jobState(s: JobState): String = s match
     case JobState.Queued    => ("Queued")

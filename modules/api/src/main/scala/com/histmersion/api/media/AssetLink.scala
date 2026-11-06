@@ -9,7 +9,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 final case class AssetLink(
     id: AssetLink.Id,
     citekey: com.histmersion.api.library.Citekey,
-    assetName: com.histmersion.api.media.AssetInfo.Name,
+    assetName: com.histmersion.api.exchange.Bundle.Asset.FileName,
     relation: AssetLink.Relation,
     targetType: com.histmersion.api.media.MediaTarget.TargetType,
     targetId: com.histmersion.api.media.MediaTarget.TargetId,
@@ -19,14 +19,10 @@ final case class AssetLink(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object AssetLink:
-  type Id = Id.T
-  object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Relation = Relation.T
-  object Relation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Xywh = Xywh.T
   object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Notes = Notes.T
@@ -61,8 +57,8 @@ object AssetLink:
 
   final case class Put(
       citekey: com.histmersion.api.library.Citekey,
-      assetName: com.histmersion.api.media.AssetInfo.Name,
-      relation: com.histmersion.api.media.AssetLink.Relation,
+      assetName: com.histmersion.api.exchange.Bundle.Asset.FileName,
+      relation: com.histmersion.api.media.AssetRelation.Wire,
       targetType: com.histmersion.api.media.MediaTarget.TargetType,
       targetId: com.histmersion.api.media.MediaTarget.TargetId,
       xywh: Option[com.histmersion.api.media.AssetLink.Xywh] = None,

@@ -18,8 +18,12 @@ object Gazetteer:
   object DatasetField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DatasetName = DatasetName.T
   object DatasetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenStartWindowYears = OpenStartWindowYears.T
+  object OpenStartWindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceRef = PlaceRef.T
   object PlaceRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointAreaKinds = PointAreaKinds.T
+  object PointAreaKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Rank = Rank.T
@@ -27,21 +31,13 @@ object Gazetteer:
 
 
   type ImportedSources = ImportedSourcesValue
-  type ImportedSourcesValue = ImportedSourcesValue.T
-  object ImportedSourcesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultOpenStartWindowYears = DefaultOpenStartWindowYearsValue
-  type DefaultOpenStartWindowYearsValue = DefaultOpenStartWindowYearsValue.T
-  object DefaultOpenStartWindowYearsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ValiditySourceKey = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
   val ValiditySourceKey: _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key.type = _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key
   type ValidityWindowYears = ValidityWindowYears.T
   object ValidityWindowYears extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultPointAreaKinds = DefaultPointAreaKindsValue
-  type DefaultPointAreaKindsValue = DefaultPointAreaKindsValue.T
-  object DefaultPointAreaKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointAreaSources = PointAreaSourcesValue
-  type PointAreaSourcesValue = PointAreaSourcesValue.T
-  object PointAreaSourcesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromFeatureDataset = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
   val FromFeatureDataset: _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName.type = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
   type FromTsvRowDataset = _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName
@@ -55,10 +51,10 @@ object Gazetteer:
     val base = fileName
       .replaceAll("(?i)(\\.meta)?\\.(jsonld|json|geojson|ndjson|jsonl|tsv)(\\.gz)?$", "")
       .replaceAll("(?i)\\.lpf$", "")
-    _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName((slug(base)).take(48))
+    _root_.com.histmersion.api.catalogue.Gazetteer.DatasetName((slug(base)).value.take(48))
 
   private def slug(s: String): String =
-    ((s).trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
+    ((s).value.trim.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", ""))
 
   def rank(m: Place.Match): com.histmersion.api.catalogue.Gazetteer.Rank = m.importSource.flatMap(com.histmersion.api.catalogue.Gazetteer.Kind.ofKey) match
     case None                                                        => if m.importSource.isEmpty then _root_.com.histmersion.api.catalogue.Gazetteer.Rank(0) else _root_.com.histmersion.api.catalogue.Gazetteer.Rank(5)
@@ -72,7 +68,7 @@ object Gazetteer:
       com.histmersion.api.catalogue.Gazetteer.Kind.Wikidata,
       com.histmersion.api.catalogue.Gazetteer.Kind.Geonames,
       com.histmersion.api.catalogue.Gazetteer.Kind.Tgn
-    ).map(k => _root_.com.histmersion.api.catalogue.Gazetteer.ImportedSourcesValue((sourceKey(k)).value))
+    ).map(k => _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key((sourceKey(k)).value))
 
   def canonical(byOwn: List[Place.Match], byLinks: List[Place.Match] = Nil): Option[com.histmersion.api.catalogue.Place.Id] =
     (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
@@ -84,7 +80,7 @@ object Gazetteer:
       .headOption
       .map(_._1.placeId)
 
-  val DefaultOpenStartWindowYears: com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYears = _root_.com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYearsValue(300)
+  val DefaultOpenStartWindowYears: com.histmersion.api.catalogue.Gazetteer.DefaultOpenStartWindowYears = _root_.com.histmersion.api.catalogue.Gazetteer.OpenStartWindowYears(300)
 
   /** GeoNames, Wikidata and TGN leave most items undated, and their silence means unknown: an item with no inception
     * was not there since forever.
@@ -100,13 +96,13 @@ object Gazetteer:
     case Span(from, to) => Validity(from, to, startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(false))
 
   val DefaultPointAreaKinds: List[com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKinds] = List(
-    _root_.com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKindsValue(com.histmersion.api.catalogue.Place.Kind.Region),
-    _root_.com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKindsValue(com.histmersion.api.catalogue.Place.Kind.Polity),
-    _root_.com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKindsValue(com.histmersion.api.catalogue.Place.Kind.People)
+    _root_.com.histmersion.api.catalogue.Gazetteer.PointAreaKinds(com.histmersion.api.catalogue.Place.Kind.Region),
+    _root_.com.histmersion.api.catalogue.Gazetteer.PointAreaKinds(com.histmersion.api.catalogue.Place.Kind.Polity),
+    _root_.com.histmersion.api.catalogue.Gazetteer.PointAreaKinds(com.histmersion.api.catalogue.Place.Kind.People)
   )
 
   /** GeoNames, Wikidata and TGN give every item a coordinate and no boundary. */
-  val PointAreaSources: List[com.histmersion.api.catalogue.Gazetteer.PointAreaSources] = (ImportedSources).map(refactorValue16 => _root_.com.histmersion.api.catalogue.Gazetteer.PointAreaSourcesValue((refactorValue16).value))
+  val PointAreaSources: List[com.histmersion.api.catalogue.Gazetteer.PointAreaSources] = (ImportedSources).map(refactorValue16 => _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key((refactorValue16).value))
 
   def pointOnly(g: Option[GazGeometry]): Boolean = g match
     case None                     => (true)
@@ -271,39 +267,39 @@ object Gazetteer:
       defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key] = None
   ): Either[com.histmersion.api.catalogue.Gazetteer.Problem, GazRecord] =
     val row =
-      header.map((_).trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).trim) ++ List.fill(header.size)("")).toMap
-    def get(k: String): Option[String] = (row.get((k)).filter(_.nonEmpty)).map(refactorValue19 => (refactorValue19))
+      header.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).value.trim) ++ List.fill(header.size)("")).toMap
+    def get(k: String): Option[String] = (row.get((k).value).filter(_.nonEmpty)).map(refactorValue19 => (refactorValue19))
     (get(("id")), get(("title"))) match
       case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.Problem(s"line $line: no id"))
       case (_, None)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.Problem(s"line $line: no title"))
       case (Some(ref), Some(title)) =>
         val own = ExternalId.parse(ref)
-        val variants = get(("variants")).toList.flatMap((_).split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
+        val variants = get(("variants")).toList.flatMap((_).value.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
           val at = v.lastIndexOf('@')
           if at > 0 && v.drop(at + 1).matches("[A-Za-z]{2,3}(-[A-Za-z0-9]+)?") then
             GazName(_root_.com.histmersion.api.catalogue.GazName.Name(v.take(at).trim), _root_.com.histmersion.api.catalogue.GazName.Lang(v.drop(at + 1)))
           else GazName(_root_.com.histmersion.api.catalogue.GazName.Name(v))
         }
         val links = get(("matches")).toList
-          .flatMap((_).split(";").toList)
+          .flatMap((_).value.split(";").toList)
           .flatMap({ val refactorFunction3 = ExternalId.parse; (refactorValue8) => refactorFunction3(_root_.com.histmersion.api.library.ExternalId.Reference(refactorValue8)) })
           .filterNot(own.contains)
           .distinct
           .map(GazLink(_, LinkMatch.Close))
         val point = for
-          lon <- get(("lon")).flatMap((_).toDoubleOption)
-          lat <- get(("lat")).flatMap((_).toDoubleOption)
+          lon <- get(("lon")).flatMap((_).value.toDoubleOption)
+          lat <- get(("lat")).flatMap((_).value.toDoubleOption)
         yield GazGeometry.GeoJson(_root_.com.histmersion.api.catalogue.GazGeometry.GeoJson.Text(s"""{"type":"Point","coordinates":[$lon,$lat]}"""))
         val kind =
           get(("types"))
-            .flatMap(t => (t).split(";").toList.flatMap({ val refactorFunction4 = com.histmersion.api.catalogue.Place.Kind.parse; (refactorValue10) => refactorFunction4(_root_.com.histmersion.api.catalogue.Place.Kind.ParseS(refactorValue10)) }).headOption)
+            .flatMap(t => (t).value.split(";").toList.flatMap({ val refactorFunction4 = com.histmersion.api.catalogue.Place.Kind.parse; (refactorValue10) => refactorFunction4(_root_.com.histmersion.api.catalogue.Place.Kind.ParseS(refactorValue10)) }).headOption)
             .getOrElse(com.histmersion.api.catalogue.Place.Kind.Site)
         val sp = Span(get(("start")).flatMap(Lpf.parseYear), get(("end")).flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
           get(("ccodes"))
-            .map(c => "ccodes" -> Json.arr((c).split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
+            .map(c => "ccodes" -> Json.arr((c).value.split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
             .toList ++
-            get(("types")).map(t => "types" -> Json.fromString((t))).toList
+            get(("types")).map(t => "types" -> Json.fromString((t).value)).toList
         )
         Right(
           GazRecord(
@@ -323,7 +319,7 @@ object Gazetteer:
         )
 
   /** LP-TSV has no quoting: a tab separates, nothing escapes. */
-  def tsvCells(line: String): List[String] = ((line).split("\t", -1).toList).map(refactorValue7 => (refactorValue7))
+  def tsvCells(line: String): List[String] = ((line).value.split("\t", -1).toList).map(refactorValue7 => (refactorValue7))
 
   final case class Extract(
       name: Extract.Name,
@@ -344,20 +340,12 @@ object Gazetteer:
   object Extract:
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Sha256 = Sha256.T
     object Sha256 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Bytes = Bytes.T
     object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Features = Features.T
     object Features extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Version = Version.T
-    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Licence = Licence.T
-    object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Attribution = Attribution.T
     object Attribution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Url = Url.T
@@ -411,7 +399,7 @@ object Gazetteer:
         com.histmersion.api.json.Schema:
     def +(o: LoadCounts): LoadCounts =
       this.modify(
-        _.records).setTo(((records).value + (o.records).value)).modify(_.created).setTo((created).value + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
+        _.records).setTo(((records).value + (o.records).value).value).modify(_.created).setTo((created).value + o.created).modify(_.joined).setTo(joined + o.joined).modify(_.placesChanged).setTo(placesChanged + o.placesChanged).modify(_.namesAdded).setTo(namesAdded + o.namesAdded).modify(_.namesRemoved).setTo(namesRemoved + o.namesRemoved).modify(_.namesChanged).setTo(namesChanged + o.namesChanged).modify(_.linksAdded).setTo(linksAdded + o.linksAdded).modify(_.linksRemoved).setTo(linksRemoved + o.linksRemoved).modify(_.placesRemoved).setTo(placesRemoved + o.placesRemoved).modify(_.skipped).setTo((skipped ++ o.skipped).take(20)).modify(_.descriptionsAdded).setTo(descriptionsAdded + o.descriptionsAdded).modify(_.descriptionsRemoved).setTo(descriptionsRemoved + o.descriptionsRemoved).modify(_.descriptionsChanged).setTo(descriptionsChanged + o.descriptionsChanged).modify(_.linksChanged).setTo(linksChanged + o.linksChanged).modify(_.pointAreasSkipped).setTo(pointAreasSkipped + o.pointAreasSkipped
       )
 
     def unchanged: Boolean =
@@ -433,10 +421,6 @@ object Gazetteer:
 
   object LoadCounts:
 
-    type Source = Source.T
-    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Version = Version.T
-    object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Records = Records.T
     object Records extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Created = Created.T
@@ -498,10 +482,6 @@ object Gazetteer:
   object SourceInfo:
     type Key = Key.T
     object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Present = Present.T
     object Present extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PinnedVersion = PinnedVersion.T
@@ -516,7 +496,5 @@ object Gazetteer:
     object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Links = Links.T
     object Links extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Licence = Licence.T
-    object Licence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Citation = Citation.T
     object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

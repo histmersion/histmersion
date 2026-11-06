@@ -15,15 +15,15 @@ object AcquireChecksMarkdown:
         s"${s.closedWeek} closed and ${s.fetchedWeek} found this week, ${s.triedToday} of ${s.perDay} tried today" +
         s.nextPass.fold("")(n => s" — next pass $n") + s.note.fold("")(n => s" ($n)") + job
 
-  def result(r: RecheckResult): com.histmersion.api.Markdown.Text = r.job.fold(pass(r))(j => started(r, j))
+  def result(r: RecheckResult): String = r.job.fold(pass(r))(j => started(r, j))
 
-  private def started(r: RecheckResult, j: JobInfo): com.histmersion.api.Markdown.Text =
+  private def started(r: RecheckResult, j: JobInfo): String =
     s"# Acquisition list re-check\n\n" +
       s"- ${Plural.count(r.open, _root_.com.histmersion.api.Plural.CountSingular("open item"))}, ${r.withDoi} with a DOI; ${r.allowance} to try\n" +
       s"- started as job `${j.id}`: ${j.detail.flatMap(RecheckJob.Detail.of).fold("the acquisition list's legal re-check")(RecheckJob.describe)} " +
       s"— `histmersion jobs ${j.id}` follows it" + r.note.fold("")(n => s"\n- _${n}_")
 
-  private def pass(r: RecheckResult): com.histmersion.api.Markdown.Text =
+  private def pass(r: RecheckResult): String =
     val verb = if ((r.dryRun) == _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(true)) then "would " else ""
     val head =
       s"# Acquisition list re-check${if ((r.dryRun) == _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(true)) then " (dry run: no fetcher asked, nothing stored)" else ""}\n\n" +

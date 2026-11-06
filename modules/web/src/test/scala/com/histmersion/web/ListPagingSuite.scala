@@ -11,7 +11,7 @@ import com.histmersion.api.library.Ingest
   */
 class ListPagingSuite extends munit.FunSuite:
 
-  private def job(id: String, state: JobState = JobState.Done) = JobInfo(com.histmersion.api.jobs.JobInfo.Id(id), com.histmersion.api.jobs.JobInfo.Kind(Ingest.KindIngest), state.wire)
+  private def job(id: String, state: JobState = JobState.Done) = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id(id), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), state.wire)
   private def page(total: Int, next: Option[String], counts: (String, Int)*) = Paging.Page(total, next, counts.toList)
 
   test("the heading: every row shown, or the latest N of the total, with the filter's word"):
@@ -48,7 +48,7 @@ class ListPagingSuite extends munit.FunSuite:
   test("an older page is appended, a row already shown left out, and the listing is extended"):
     val cur = ListPaging.first(List(job("c"), job("b")), page(5, Some("b")))
     val more = ListPaging.appended(cur, List(job("b"), job("a")), page(5, None), _.id.value)
-    assertEquals(more.rows.map(_.id), List("c", "b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
+    assertEquals(more.rows.map(_.id), List("c", "b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
     assert(more.extended && !more.hasOlder)
     assertEquals(ListPaging.heading(more, "job", None, _.status), "3 jobs") // no counts: the rows count
 
@@ -59,7 +59,7 @@ class ListPagingSuite extends munit.FunSuite:
     assertEquals(ListPaging.pollUpTo(ext, _.id.value), Some("a"))
     // its answer replaces the rows: a new one on top, every loaded one kept, still extended
     val polled = ListPaging.polled(ext, List(job("d"), job("c"), job("b"), job("a")), page(6, Some("a")))
-    assertEquals(polled.rows.map(_.id), List("d", "c", "b", "a").map(com.histmersion.api.jobs.JobInfo.Id.apply))
+    assertEquals(polled.rows.map(_.id), List("d", "c", "b", "a").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
     assert(polled.extended)
     assertEquals(ListPaging.pollUpTo(polled, _.id.value), Some("a"))
 

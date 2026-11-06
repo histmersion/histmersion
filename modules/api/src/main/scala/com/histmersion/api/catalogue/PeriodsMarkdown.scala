@@ -7,21 +7,21 @@ object PeriodsMarkdown:
 
   private def years(p: Period): String = YearFmt.period(Some(p.start), Some(p.end))
 
-  def list(ps: Vector[HistoricalPeriod]): com.histmersion.api.Markdown.Text =
-    if ps.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No periods._")
+  def list(ps: Vector[HistoricalPeriod]): String =
+    if ps.isEmpty then ("_No periods._")
     else
       val rows = ps.map(p =>
         s"| `${p.id}` | ${p.label} | ${years(p.period)} | ${p.region.getOrElse("")} | " +
           s"${p.parentId.fold("")(x => s"`$x`")} | ${p.preset.fold("")(_.label)} |"
       )
-      _root_.com.histmersion.api.Markdown.Text((List(
+      ((List(
         s"### ${ps.size} period(s)",
         "",
         "| id | label | years | region | part of | timeline preset |",
         "|---|---|---|---|---|---|"
       ) ++ rows).mkString("\n"))
 
-  def detail(d: Period.Detail): com.histmersion.api.Markdown.Text =
+  def detail(d: Period.Detail): String =
     val p = d.period
     val head = List(
       Some(s"### ${p.label} `${p.id}`"),
@@ -37,9 +37,9 @@ object PeriodsMarkdown:
       else
         "" :: "**Divided into:**" :: "" ::
           d.children.map(c => s"- ${c.label} `${c.id}` — ${years(c.period)}${c.region.fold("")(r => s" · $r")}")
-    _root_.com.histmersion.api.Markdown.Text((head ++ kids).mkString("\n"))
+    ((head ++ kids).mkString("\n"))
 
-  def imported(r: Period.ImportResult): com.histmersion.api.Markdown.Text =
+  def imported(r: Period.ImportResult): String =
     val head = s"imported ${Plural.count(r.periods, _root_.com.histmersion.api.Plural.CountSingular("period"))}" +
       (if r.roots > 0 then s", ${r.roots} of them ${Plural.noun(r.roots, "authority node")}" else "") +
       s" — ${Plural.count(r.presets, "timeline preset")} in the store" +
@@ -51,5 +51,5 @@ object PeriodsMarkdown:
       s"$head\n\nskipped ${Plural.count(r.skippedCount, _root_.com.histmersion.api.Plural.CountSingular("definition"))} (not imported):\n" +
         skippedList(r.skipped) + (if more > 0 then s"\n- …and $more more" else "")
 
-  def skippedList(ss: List[SkippedPeriod]): com.histmersion.api.Markdown.Text =
-    _root_.com.histmersion.api.Markdown.Text(ss.map(s => s"- `${s.id}` ${s.label}: ${s.detail}").mkString("\n"))
+  def skippedList(ss: List[SkippedPeriod]): String =
+    (ss.map(s => s"- `${s.id}` ${s.label}: ${s.detail}").mkString("\n"))

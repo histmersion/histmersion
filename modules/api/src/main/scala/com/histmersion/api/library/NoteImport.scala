@@ -17,10 +17,6 @@ final case class NoteImport(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object NoteImport:
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Body = Body.T
-  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Mtime = Mtime.T
   object Mtime extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Force = Force.T

@@ -40,7 +40,7 @@ object MergeResolutions:
 
     def flag(s: com.histmersion.api.exchange.MergeResolutions.Text.Flag): Either[com.histmersion.api.exchange.MergeResolutions.Text.Problem, MergeResolution] =
       (s).value.indexOf('=') match
-        case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(_root_.com.histmersion.api.exchange.MergeResolution.Issue((s).value.take(i).trim), _root_.com.histmersion.api.exchange.MergeResolution.Decision((s).value.drop(i + 1).trim)))
+        case i if i > 0 && i < (s).value.length - 1 => Right(MergeResolution(_root_.com.histmersion.api.exchange.MergeIssue.Id((s).value.take(i).trim), _root_.com.histmersion.api.exchange.MergeDecision.Kind.Wire((s).value.drop(i + 1).trim)))
         case _                              => Left(_root_.com.histmersion.api.exchange.MergeResolutions.Text.Problem(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
 
     def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.Template =

@@ -19,15 +19,13 @@ final case class PluginSet(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object PluginSet:
+  type Description = Description.T
+  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type DescribeResult = DescribeResult.T
-  object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Digest = Digest.T
   object Digest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SpiVersion = SpiVersion.T
-  object SpiVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Mode = Mode.T
   object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Kit = Kit.T
@@ -40,9 +38,9 @@ object PluginSet:
   /** SHA-256 of no bytes. */
   val EmptyDigest = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
 
-  def describe(s: Option[PluginSet]): com.histmersion.api.plugins.PluginSet.DescribeResult = s match
+  def describe(s: Option[PluginSet]): com.histmersion.api.plugins.PluginSet.Description = s match
     case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
       s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest).take(12)}…)"
     case Some(set) =>
-      _root_.com.histmersion.api.plugins.PluginSet.DescribeResult(s"${(set.digest).value.take(12)}… · ${Plural.count(_root_.com.histmersion.api.Plural.CountN((set.jars.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("jar"))} (${set.mode}): " +
+      _root_.com.histmersion.api.plugins.PluginSet.Description(s"${(set.digest).value.take(12)}… · ${Plural.count(_root_.com.histmersion.api.Plural.CountN((set.jars.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("jar"))} (${set.mode}): " +
         set.jars.map(j => j.file).mkString(", "))

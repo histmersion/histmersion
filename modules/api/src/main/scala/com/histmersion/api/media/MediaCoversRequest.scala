@@ -5,7 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MediaCoversRequest(
-    dryRun: com.histmersion.api.media.MediaImportRequest.DryRun = _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true),
+    dryRun: com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true),
     limit: Option[MediaCoversRequest.Limit] = None,
     citekey: Option[com.histmersion.api.library.Citekey] = None,
     refresh: com.histmersion.api.media.MediaImportRequest.Refresh = _root_.com.histmersion.api.media.MediaImportRequest.Refresh(false),

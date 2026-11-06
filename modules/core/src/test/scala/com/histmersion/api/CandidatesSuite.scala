@@ -71,7 +71,7 @@ class CandidatesSuite extends munit.FunSuite:
         title = (Some("Bronze")).map(com.histmersion.api.library.Title.apply),
         year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
         authors = (List("Doe J", "Roe K")).map(com.histmersion.api.library.AuthorName.apply),
-        venue = (Some("J Arch")).map(com.histmersion.api.library.Venue.apply),
+        venue = (Some("J Arch")).map(com.histmersion.api.library.Source.Venue.apply),
         isOa = true,
         abstractText = Some("Text")
       )
@@ -89,7 +89,7 @@ class CandidatesSuite extends munit.FunSuite:
           title = (Some("T")).map(com.histmersion.api.library.Title.apply),
           year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
           authors = (List("A B")).map(com.histmersion.api.library.AuthorName.apply),
-          venue = (Some("P")).map(com.histmersion.api.library.Venue.apply),
+          venue = (Some("P")).map(com.histmersion.api.library.Source.Venue.apply),
           isOa = true
         )
       )
@@ -111,7 +111,7 @@ class CandidatesSuite extends munit.FunSuite:
           title = (Some("Late Bronze Age & climate")).map(com.histmersion.api.library.Title.apply),
           year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
           authors = (List("Ann Lee", "Bo Ng")).map(com.histmersion.api.library.AuthorName.apply),
-          venue = (Some("arXiv")).map(com.histmersion.api.library.Venue.apply),
+          venue = (Some("arXiv")).map(com.histmersion.api.library.Source.Venue.apply),
           isOa = true,
           abstractText = Some("About it.")
         )
@@ -132,7 +132,7 @@ class CandidatesSuite extends munit.FunSuite:
       com.histmersion.api.library.Title("A title"),
       (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
       (List("Ann", "Bo")).map(com.histmersion.api.library.AuthorName.apply),
-      (Some("J")).map(com.histmersion.api.library.Venue.apply),
+      (Some("J")).map(com.histmersion.api.library.Source.Venue.apply),
       Some("abs"),
       isOa = true,
       foundBy = List("openalex query \"x\""),

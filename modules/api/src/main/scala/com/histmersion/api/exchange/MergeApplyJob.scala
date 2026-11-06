@@ -20,26 +20,20 @@ final case class MergeApplyJob(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object MergeApplyJob:
+  type InterruptedMessage = InterruptedMessage.T
+  object InterruptedMessage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type InterruptedText = InterruptedTextValue
-  type InterruptedTextValue = InterruptedTextValue.T
-  object InterruptedTextValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfBundle = _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle
-  val OfBundle: _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle.type = _root_.com.histmersion.api.exchange.MergeApplyJob.Bundle
-  type OfPlanHash = _root_.com.histmersion.api.exchange.MergeApplyJob.PlanHash
-  val OfPlanHash: _root_.com.histmersion.api.exchange.MergeApplyJob.PlanHash.type = _root_.com.histmersion.api.exchange.MergeApplyJob.PlanHash
+  type OfBundle = _root_.com.histmersion.api.exchange.Bundle.Name
+  val OfBundle: _root_.com.histmersion.api.exchange.Bundle.Name.type = _root_.com.histmersion.api.exchange.Bundle.Name
+  type OfPlanHash = _root_.com.histmersion.api.exchange.MergePlan.PlanHash
+  val OfPlanHash: _root_.com.histmersion.api.exchange.MergePlan.PlanHash.type = _root_.com.histmersion.api.exchange.MergePlan.PlanHash
   type OfElapsedMs = _root_.com.histmersion.api.exchange.MergeApplyJob.ElapsedMs
   val OfElapsedMs: _root_.com.histmersion.api.exchange.MergeApplyJob.ElapsedMs.type = _root_.com.histmersion.api.exchange.MergeApplyJob.ElapsedMs
   type OfError = _root_.com.histmersion.api.exchange.MergeApplyJob.Error
   val OfError: _root_.com.histmersion.api.exchange.MergeApplyJob.Error.type = _root_.com.histmersion.api.exchange.MergeApplyJob.Error
 
-  type Job = Job.T
-  object Job extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Bundle = Bundle.T
-  object Bundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanHash = PlanHash.T
-  object PlanHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ElapsedMs = ElapsedMs.T
   object ElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Error = Error.T
@@ -48,7 +42,7 @@ object MergeApplyJob:
   val JobKind = com.histmersion.api.exchange.ExchangeJobKinds.MergeApply.kind.value
 
   val InterruptedText: com.histmersion.api.exchange.MergeApplyJob.InterruptedText =
-    _root_.com.histmersion.api.exchange.MergeApplyJob.InterruptedTextValue("the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
+    _root_.com.histmersion.api.exchange.MergeApplyJob.InterruptedMessage("the server stopped while this merge apply ran — its transaction was committed or rolled back as a whole, " +
       "never half applied; `histmersion merge list` shows whether it was applied, and planning the bundle again " +
       "shows what is left")
 
@@ -62,11 +56,11 @@ object MergeApplyJob:
       result: Option[MergeApplyResult]
   ): MergeApplyJob =
     status match
-      case JobState.Queued | JobState.Running => MergeApplyJob(_root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value), MergeJobState.Running, bundle, planHash, elapsedMs)
+      case JobState.Queued | JobState.Running => MergeApplyJob(_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id((id).value), MergeJobState.Running, bundle, planHash, elapsedMs)
       case JobState.Done                      =>
         result.fold(
           MergeApplyJob(
-            _root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value),
+            _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id((id).value),
             MergeJobState.Failed,
             bundle,
             planHash,
@@ -75,8 +69,8 @@ object MergeApplyJob:
               _root_.com.histmersion.api.exchange.MergeApplyJob.Error("the merge apply finished but its result was not recorded — `histmersion merge list` shows what was applied")
             )
           )
-        )(r => MergeApplyJob(_root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value), MergeJobState.Done, bundle, planHash, elapsedMs, result = Some(r)))
+        )(r => MergeApplyJob(_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id((id).value), MergeJobState.Done, bundle, planHash, elapsedMs, result = Some(r)))
       case JobState.Failed if error.contains(JobState.Interrupted) =>
-        MergeApplyJob(_root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value), MergeJobState.Interrupted, bundle, planHash, elapsedMs, error = Some(_root_.com.histmersion.api.exchange.MergeApplyJob.Error((InterruptedText).value)))
+        MergeApplyJob(_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id((id).value), MergeJobState.Interrupted, bundle, planHash, elapsedMs, error = Some(_root_.com.histmersion.api.exchange.MergeApplyJob.Error((InterruptedText).value)))
       case JobState.Failed | JobState.Paused | JobState.Cancelled =>
-        MergeApplyJob(_root_.com.histmersion.api.exchange.MergeApplyJob.Job((id).value), MergeJobState.Failed, bundle, planHash, elapsedMs, error = error)
+        MergeApplyJob(_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id((id).value), MergeJobState.Failed, bundle, planHash, elapsedMs, error = error)

@@ -4,13 +4,13 @@ import io.circe.syntax.*
 import com.histmersion.api.given
 
 object Corrections:
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type StatusResult = StatusResult.T
   object StatusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShowJson = ShowJson.T
   object ShowJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Outcome:
     case Keep
@@ -49,11 +49,11 @@ object Corrections:
 
   private object Fmt:
 
-    def clip(s: String): String = if (s).length > 80 then ((s).take(79) + "…") else ((s))
+    def clip(s: String): String = if (s).value.length > 80 then ((s).value.take(79) + "…") else ((s).value)
 
-  def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.MarkdownResult =
-    if l.corrections.isEmpty then _root_.com.histmersion.api.catalogue.Corrections.MarkdownResult("_No corrections by hand._")
+  def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.Markdown =
+    if l.corrections.isEmpty then _root_.com.histmersion.api.catalogue.Corrections.Markdown("_No corrections by hand._")
     else
       val lines =
         l.corrections.map(c => s"- **${c.targetId}**${c.label.fold("")(t => s" ($t)")} · ${c.status} · ${describe(c)}")
-      _root_.com.histmersion.api.catalogue.Corrections.MarkdownResult((s"### ${l.total} correction(s) by hand" :: "" :: lines).mkString("\n"))
+      _root_.com.histmersion.api.catalogue.Corrections.Markdown((s"### ${l.total} correction(s) by hand" :: "" :: lines).mkString("\n"))

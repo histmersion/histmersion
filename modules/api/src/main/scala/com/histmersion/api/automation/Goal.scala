@@ -27,10 +27,16 @@ final case class Goal(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object Goal:
+  type Export = Export.T
+  object Export extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkSectionKey = LinkSectionKey.T
   object LinkSectionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Ref = Ref.T
   object Ref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Stage = Stage.T
+  object Stage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StageMeaning = StageMeaning.T
+  object StageMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Uid = Uid.T
   object Uid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -194,7 +200,7 @@ object Goal:
         slug: com.histmersion.api.research.Article.Slug,
         mode: DraftMode,
         title: com.histmersion.api.research.Article.Title,
-        kind: com.histmersion.api.research.Article.KindValue,
+        kind: com.histmersion.api.research.Article.Kind.Wire,
         text: ArticleDraft.Text,
         summary: Option[com.histmersion.api.research.Article.SummaryText] = None,
         section: Option[ArticleDraft.Section] = None,
@@ -337,21 +343,13 @@ object Goal:
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
   object Stages:
-    type AllPart1 = AllPart1.T
-    object AllPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AllPart2 = AllPart2.T
-    object AllPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MeaningResult = MeaningResult.T
-    object MeaningResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MeaningStatus = MeaningStatus.T
-    object MeaningStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val all: scala.List[(com.histmersion.api.automation.Goal.Stages.AllPart1, com.histmersion.api.automation.Goal.Stages.AllPart2)] = scala.List(
-      { val refactorTuple6 = com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple6._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple6._2)) },
-      { val refactorTuple7 = com.histmersion.api.automation.Goal.Status.Seeding -> "finding and reading sources, writing its articles"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple7._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple7._2)) },
-      { val refactorTuple3 = com.histmersion.api.automation.Goal.Status.Compiled -> "its articles are written; not all have passed review yet"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple3._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple3._2)) },
-      { val refactorTuple9 = com.histmersion.api.automation.Goal.Status.Reviewed -> "every article (and sub-goal) passed the review panel"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple9._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple9._2)) },
-      { val refactorTuple10 = com.histmersion.api.automation.Goal.Status.Done -> "finished: only you set this, the autopilot never does"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple10._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple10._2)) }
+    val all: scala.List[(com.histmersion.api.automation.Goal.Stage, com.histmersion.api.automation.Goal.StageMeaning)] = scala.List(
+      { val refactorTuple6 = com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet"; (_root_.com.histmersion.api.automation.Goal.Stage(refactorTuple6._1), _root_.com.histmersion.api.automation.Goal.StageMeaning(refactorTuple6._2)) },
+      { val refactorTuple7 = com.histmersion.api.automation.Goal.Status.Seeding -> "finding and reading sources, writing its articles"; (_root_.com.histmersion.api.automation.Goal.Stage(refactorTuple7._1), _root_.com.histmersion.api.automation.Goal.StageMeaning(refactorTuple7._2)) },
+      { val refactorTuple3 = com.histmersion.api.automation.Goal.Status.Compiled -> "its articles are written; not all have passed review yet"; (_root_.com.histmersion.api.automation.Goal.Stage(refactorTuple3._1), _root_.com.histmersion.api.automation.Goal.StageMeaning(refactorTuple3._2)) },
+      { val refactorTuple9 = com.histmersion.api.automation.Goal.Status.Reviewed -> "every article (and sub-goal) passed the review panel"; (_root_.com.histmersion.api.automation.Goal.Stage(refactorTuple9._1), _root_.com.histmersion.api.automation.Goal.StageMeaning(refactorTuple9._2)) },
+      { val refactorTuple10 = com.histmersion.api.automation.Goal.Status.Done -> "finished: only you set this, the autopilot never does"; (_root_.com.histmersion.api.automation.Goal.Stage(refactorTuple10._1), _root_.com.histmersion.api.automation.Goal.StageMeaning(refactorTuple10._2)) }
     )
 
-    def meaning(status: com.histmersion.api.automation.Goal.Stages.MeaningStatus): Option[com.histmersion.api.automation.Goal.Stages.MeaningResult] = all.collectFirst { case (s, m) if s == status => _root_.com.histmersion.api.automation.Goal.Stages.MeaningResult((m).value) }
+    def meaning(status: com.histmersion.api.automation.Goal.Stage): Option[com.histmersion.api.automation.Goal.StageMeaning] = all.collectFirst { case (s, m) if s == status => _root_.com.histmersion.api.automation.Goal.StageMeaning((m).value) }

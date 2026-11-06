@@ -54,8 +54,8 @@ object JobFollow:
   /** Poll job `id` until it is done or failed; `Right(job)` only when it succeeded. */
   @annotation.tailrec
   def job(using console: Console)(
-      fetch: com.histmersion.api.jobs.JobInfo.Id => Either[Cli.Error, JobInfo],
-      id: com.histmersion.api.jobs.JobInfo.Id,
+      fetch: com.histmersion.api.SpatialHierarchyResult.Job.Id => Either[Cli.Error, JobInfo],
+      id: com.histmersion.api.SpatialHierarchyResult.Job.Id,
       waited: com.histmersion.cli.JobFollow.JobWaited = 0,
       sleep: com.histmersion.cli.JobFollow.JobSleepArg1 => Unit = Thread.sleep,
       progress: com.histmersion.cli.JobFollow.JobProgressArg1 => Unit = Progress.line,

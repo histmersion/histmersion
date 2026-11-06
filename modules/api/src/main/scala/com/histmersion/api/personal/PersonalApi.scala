@@ -9,14 +9,6 @@ object PersonalApi:
   type Search = Search.T
   object Search extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type BookmarksPart1Part3 = BookmarksPart1Part3.T
-  object BookmarksPart1Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotesPart1Part4 = NotesPart1Part4.T
-  object NotesPart1Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadingPart1Part3 = ReadingPart1Part3.T
-  object ReadingPart1Part3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnreadPart1Part2 = UnreadPart1Part2.T
-  object UnreadPart1Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def errors = Api.writeErrors
   private def kindQuery =
@@ -25,14 +17,14 @@ object PersonalApi:
   private def limitQuery = query[Option[Int]]("limit")
     .description(s"how many (default ${PersonalIds.DefaultLimit}, at most ${PersonalIds.MaxLimit})")
 
-  lazy val bookmarks: PublicEndpoint[(Option[com.histmersion.api.ItemKind.Wire], Option[com.histmersion.api.personal.PersonalApi.Search], Option[com.histmersion.api.personal.PersonalApi.BookmarksPart1Part3]), Api.Error, List[Bookmark], Any] =
+  lazy val bookmarks: PublicEndpoint[(Option[com.histmersion.api.ItemKind.Wire], Option[com.histmersion.api.personal.PersonalApi.Search], Option[Int]), Api.Error, List[Bookmark], Any] =
     (endpoint.get
       .in("api" / "bookmarks")
       .in(kindQuery)
       .in(wordsQuery)
       .in(limitQuery)
       .errorOut(errors)
-      .out(jsonBody[List[Bookmark]])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.Search], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.BookmarksPart1Part3])]((refactorDecoded10: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded10)._1).map(refactorElement27 => _root_.com.histmersion.api.ItemKind.Wire(refactorElement27)), ((refactorDecoded10)._2).map(refactorElement28 => _root_.com.histmersion.api.personal.PersonalApi.Search(refactorElement28)), ((refactorDecoded10)._3).map(refactorElement29 => _root_.com.histmersion.api.personal.PersonalApi.BookmarksPart1Part3(refactorElement29))))((refactorEncoded10: (_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.Search], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.BookmarksPart1Part3])) => (((refactorEncoded10)._1).map(refactorElement30 => (refactorElement30).value), ((refactorEncoded10)._2).map(refactorElement31 => (refactorElement31).value), ((refactorEncoded10)._3).map(refactorElement32 => (refactorElement32).value)))
+      .out(jsonBody[List[Bookmark]])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.Search], _root_.scala.Option[Int])]((refactorDecoded10: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded10)._1).map(refactorElement27 => _root_.com.histmersion.api.ItemKind.Wire(refactorElement27)), ((refactorDecoded10)._2).map(refactorElement28 => _root_.com.histmersion.api.personal.PersonalApi.Search(refactorElement28)), ((refactorDecoded10)._3).map(refactorElement29 => (refactorElement29))))((refactorEncoded10: (_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.Search], _root_.scala.Option[Int])) => (((refactorEncoded10)._1).map(refactorElement30 => (refactorElement30).value), ((refactorEncoded10)._2).map(refactorElement31 => (refactorElement31).value), ((refactorEncoded10)._3).map(refactorElement32 => (refactorElement32).value)))
 
   lazy val addBookmark: PublicEndpoint[Bookmark.New, Api.Error, Bookmark, Any] =
     endpoint.post.in("api" / "bookmarks").in(jsonBody[Bookmark.New]).errorOut(errors).out(jsonBody[Bookmark])
@@ -48,7 +40,7 @@ object PersonalApi:
     (endpoint.delete.in("api" / "bookmarks" / path[String]("id")).errorOut(errors).out(jsonBody[Bookmark])).mapIn[_root_.com.histmersion.api.personal.Bookmark.Id]((refactorDecoded12: _root_.java.lang.String) => _root_.com.histmersion.api.personal.Bookmark.Id(refactorDecoded12))((refactorEncoded12: _root_.com.histmersion.api.personal.Bookmark.Id) => (refactorEncoded12).value)
 
   lazy val notes
-      : PublicEndpoint[(Option[com.histmersion.api.ItemKind.Wire], Option[com.histmersion.api.personal.Target.ItemKey], Option[com.histmersion.api.personal.PersonalApi.Search], Option[com.histmersion.api.personal.PersonalApi.NotesPart1Part4]), Api.Error, List[Note], Any] =
+      : PublicEndpoint[(Option[com.histmersion.api.ItemKind.Wire], Option[com.histmersion.api.personal.ItemKey], Option[com.histmersion.api.personal.PersonalApi.Search], Option[Int]), Api.Error, List[Note], Any] =
     (endpoint.get
       .in("api" / "notes")
       .in(kindQuery)
@@ -56,7 +48,7 @@ object PersonalApi:
       .in(wordsQuery)
       .in(limitQuery)
       .errorOut(errors)
-      .out(jsonBody[List[Note]])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.Target.ItemKey], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.Search], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.NotesPart1Part4])]((refactorDecoded4: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded4)._1).map(refactorElement7 => _root_.com.histmersion.api.ItemKind.Wire(refactorElement7)), ((refactorDecoded4)._2).map(refactorElement8 => _root_.com.histmersion.api.personal.Target.ItemKey(refactorElement8)), ((refactorDecoded4)._3).map(refactorElement9 => _root_.com.histmersion.api.personal.PersonalApi.Search(refactorElement9)), ((refactorDecoded4)._4).map(refactorElement10 => _root_.com.histmersion.api.personal.PersonalApi.NotesPart1Part4(refactorElement10))))((refactorEncoded4: (_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.Target.ItemKey], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.Search], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.NotesPart1Part4])) => (((refactorEncoded4)._1).map(refactorElement11 => (refactorElement11).value), ((refactorEncoded4)._2).map(refactorElement12 => (refactorElement12).value), ((refactorEncoded4)._3).map(refactorElement13 => (refactorElement13).value), ((refactorEncoded4)._4).map(refactorElement14 => (refactorElement14).value)))
+      .out(jsonBody[List[Note]])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.ItemKey], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.Search], _root_.scala.Option[Int])]((refactorDecoded4: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded4)._1).map(refactorElement7 => _root_.com.histmersion.api.ItemKind.Wire(refactorElement7)), ((refactorDecoded4)._2).map(refactorElement8 => _root_.com.histmersion.api.personal.ItemKey(refactorElement8)), ((refactorDecoded4)._3).map(refactorElement9 => _root_.com.histmersion.api.personal.PersonalApi.Search(refactorElement9)), ((refactorDecoded4)._4).map(refactorElement10 => (refactorElement10))))((refactorEncoded4: (_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.ItemKey], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.Search], _root_.scala.Option[Int])) => (((refactorEncoded4)._1).map(refactorElement11 => (refactorElement11).value), ((refactorEncoded4)._2).map(refactorElement12 => (refactorElement12).value), ((refactorEncoded4)._3).map(refactorElement13 => (refactorElement13).value), ((refactorEncoded4)._4).map(refactorElement14 => (refactorElement14).value)))
 
   lazy val note: PublicEndpoint[com.histmersion.api.personal.Note.Id, Api.Error, Note, Any] =
     (endpoint.get.in("api" / "notes" / path[String]("id")).errorOut(errors).out(jsonBody[Note])).mapIn[_root_.com.histmersion.api.personal.Note.Id]((refactorDecoded5: _root_.java.lang.String) => _root_.com.histmersion.api.personal.Note.Id(refactorDecoded5))((refactorEncoded5: _root_.com.histmersion.api.personal.Note.Id) => (refactorEncoded5).value)
@@ -70,14 +62,14 @@ object PersonalApi:
   lazy val removeNote: PublicEndpoint[com.histmersion.api.personal.Note.Id, Api.Error, Note, Any] =
     (endpoint.delete.in("api" / "notes" / path[String]("id")).errorOut(errors).out(jsonBody[Note])).mapIn[_root_.com.histmersion.api.personal.Note.Id]((refactorDecoded7: _root_.java.lang.String) => _root_.com.histmersion.api.personal.Note.Id(refactorDecoded7))((refactorEncoded7: _root_.com.histmersion.api.personal.Note.Id) => (refactorEncoded7).value)
 
-  lazy val reading: PublicEndpoint[(Option[com.histmersion.api.ItemKind.Wire], Option[com.histmersion.api.automation.Activity.Show.Wire], Option[com.histmersion.api.personal.PersonalApi.ReadingPart1Part3]), Api.Error, List[ReadMark], Any] =
+  lazy val reading: PublicEndpoint[(Option[com.histmersion.api.ItemKind.Wire], Option[com.histmersion.api.automation.Activity.Show.Wire], Option[Int]), Api.Error, List[ReadMark], Any] =
     (endpoint.get
       .in("api" / "reading")
       .in(kindQuery)
       .in(query[Option[String]]("show").description("read (default), opened or all"))
       .in(limitQuery)
       .errorOut(errors)
-      .out(jsonBody[List[ReadMark]])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Show.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.ReadingPart1Part3])]((refactorDecoded17: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded17)._1).map(refactorElement41 => _root_.com.histmersion.api.ItemKind.Wire(refactorElement41)), ((refactorDecoded17)._2).map(refactorElement42 => _root_.com.histmersion.api.automation.Activity.Show.Wire(refactorElement42)), ((refactorDecoded17)._3).map(refactorElement43 => _root_.com.histmersion.api.personal.PersonalApi.ReadingPart1Part3(refactorElement43))))((refactorEncoded17: (_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Show.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.ReadingPart1Part3])) => (((refactorEncoded17)._1).map(refactorElement44 => (refactorElement44).value), ((refactorEncoded17)._2).map(refactorElement45 => (refactorElement45).value), ((refactorEncoded17)._3).map(refactorElement46 => (refactorElement46).value)))
+      .out(jsonBody[List[ReadMark]])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Show.Wire], _root_.scala.Option[Int])]((refactorDecoded17: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded17)._1).map(refactorElement41 => _root_.com.histmersion.api.ItemKind.Wire(refactorElement41)), ((refactorDecoded17)._2).map(refactorElement42 => _root_.com.histmersion.api.automation.Activity.Show.Wire(refactorElement42)), ((refactorDecoded17)._3).map(refactorElement43 => (refactorElement43))))((refactorEncoded17: (_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.automation.Activity.Show.Wire], _root_.scala.Option[Int])) => (((refactorEncoded17)._1).map(refactorElement44 => (refactorElement44).value), ((refactorEncoded17)._2).map(refactorElement45 => (refactorElement45).value), ((refactorEncoded17)._3).map(refactorElement46 => (refactorElement46).value)))
 
   lazy val setRead: PublicEndpoint[ReadMark.Set, Api.Error, ReadMark, Any] =
     endpoint.put.in("api" / "reading").in(jsonBody[ReadMark.Set]).errorOut(errors).out(jsonBody[ReadMark])
@@ -85,14 +77,14 @@ object PersonalApi:
   lazy val opened: PublicEndpoint[ReadOpened, Api.Error, ReadMark, Any] =
     endpoint.post.in("api" / "reading" / "opened").in(jsonBody[ReadOpened]).errorOut(errors).out(jsonBody[ReadMark])
 
-  lazy val unread: PublicEndpoint[(Option[com.histmersion.api.ItemKind.Wire], Option[com.histmersion.api.personal.PersonalApi.UnreadPart1Part2], Option[com.histmersion.api.personal.UnreadPage.Offset]), Api.Error, UnreadPage, Any] =
+  lazy val unread: PublicEndpoint[(Option[com.histmersion.api.ItemKind.Wire], Option[Int], Option[com.histmersion.api.personal.UnreadPage.Offset]), Api.Error, UnreadPage, Any] =
     (endpoint.get
       .in("api" / "reading" / "unread")
       .in(kindQuery)
       .in(limitQuery)
       .in(query[Option[Int]]("offset").description("the first row of the page"))
       .errorOut(errors)
-      .out(jsonBody[UnreadPage])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.UnreadPart1Part2], _root_.scala.Option[_root_.com.histmersion.api.personal.UnreadPage.Offset])]((refactorDecoded18: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded18)._1).map(refactorElement47 => _root_.com.histmersion.api.ItemKind.Wire(refactorElement47)), ((refactorDecoded18)._2).map(refactorElement48 => _root_.com.histmersion.api.personal.PersonalApi.UnreadPart1Part2(refactorElement48)), ((refactorDecoded18)._3).map(refactorElement49 => _root_.com.histmersion.api.personal.UnreadPage.Offset(refactorElement49))))((refactorEncoded18: (_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[_root_.com.histmersion.api.personal.PersonalApi.UnreadPart1Part2], _root_.scala.Option[_root_.com.histmersion.api.personal.UnreadPage.Offset])) => (((refactorEncoded18)._1).map(refactorElement50 => (refactorElement50).value), ((refactorEncoded18)._2).map(refactorElement51 => (refactorElement51).value), ((refactorEncoded18)._3).map(refactorElement52 => (refactorElement52).value)))
+      .out(jsonBody[UnreadPage])).mapIn[(_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[Int], _root_.scala.Option[_root_.com.histmersion.api.personal.UnreadPage.Offset])]((refactorDecoded18: (_root_.scala.Option[_root_.java.lang.String], _root_.scala.Option[_root_.scala.Int], _root_.scala.Option[_root_.scala.Int])) => (((refactorDecoded18)._1).map(refactorElement47 => _root_.com.histmersion.api.ItemKind.Wire(refactorElement47)), ((refactorDecoded18)._2).map(refactorElement48 => (refactorElement48)), ((refactorDecoded18)._3).map(refactorElement49 => _root_.com.histmersion.api.personal.UnreadPage.Offset(refactorElement49))))((refactorEncoded18: (_root_.scala.Option[_root_.com.histmersion.api.ItemKind.Wire], _root_.scala.Option[Int], _root_.scala.Option[_root_.com.histmersion.api.personal.UnreadPage.Offset])) => (((refactorEncoded18)._1).map(refactorElement50 => (refactorElement50).value), ((refactorEncoded18)._2).map(refactorElement51 => (refactorElement51).value), ((refactorEncoded18)._3).map(refactorElement52 => (refactorElement52).value)))
 
   lazy val all: List[AnyEndpoint] =
     List(

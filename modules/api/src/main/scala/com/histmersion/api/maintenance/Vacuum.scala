@@ -34,14 +34,14 @@ object Vacuum:
     if tables.isEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.Problem("no table to vacuum: name one, or set maintenance.vacuum-tables")))
     else if shape.nonEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.Problem(s"not a table name: ${shape.mkString(", ")}")))
     else if absent.nonEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.Problem(s"no such table: ${absent.mkString(", ")}")))
-    else Right(VacuumPlan(in.analyze, (tables).map(refactorValue2 => _root_.com.histmersion.api.maintenance.VacuumPlan.Tables(refactorValue2))))
+    else Right(VacuumPlan(in.analyze, (tables).map(refactorValue2 => _root_.com.histmersion.api.maintenance.Vacuum.Request.Tables(refactorValue2))))
 
   def statement(table: com.histmersion.api.maintenance.Vacuum.Table, analyze: com.histmersion.api.maintenance.Vacuum.Request.Analyze): String =
     val q = "\"" + (table).value.replace("\"", "\"\"") + "\""
     if (analyze).value then (s"VACUUM (ANALYZE) $q") else (s"VACUUM $q")
 
   def describe(p: VacuumPlan): String =
-    (s"${if ((p.analyze) == _root_.com.histmersion.api.maintenance.VacuumPlan.Analyze(true)) then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}")
+    (s"${if ((p.analyze) == _root_.com.histmersion.api.maintenance.Vacuum.Request.Analyze(true)) then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}")
 
   def tableLine(
       table: com.histmersion.api.maintenance.Vacuum.Table,

@@ -16,7 +16,7 @@ object EventsJobKinds:
   val EventsImport: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("events-import"),
     _root_.com.histmersion.api.jobs.JobKinds.Wire("Import events"),
-    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Imports the events of an external event catalogue."),
+    _root_.com.histmersion.api.jobs.JobKindMeaning("Imports the events of an external event catalogue."),
     stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
     subject = Catalogue.of
   )
@@ -24,6 +24,6 @@ object EventsJobKinds:
   val EventsRederive: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("events-rederive"),
     _root_.com.histmersion.api.jobs.JobKinds.Wire("Re-date events"),
-    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Recomputes the dating of catalogue events from their stored records; nothing is downloaded."),
+    _root_.com.histmersion.api.jobs.JobKindMeaning("Recomputes the dating of catalogue events from their stored records; nothing is downloaded."),
     subject = Catalogue.of
   )

@@ -10,7 +10,7 @@ final case class CalibreGap(
     authors: List[CalibreGap.Authors],
     doi: Option[com.histmersion.api.library.Doi],
     year: Option[com.histmersion.api.catalogue.Year],
-    venue: Option[com.histmersion.api.library.Venue],
+    venue: Option[com.histmersion.api.library.Source.Venue],
     summary: Option[CalibreGap.Summary],
     topics: List[CalibreGap.Topics],
     provenance: Option[CalibreGap.Provenance],
@@ -22,8 +22,6 @@ final case class CalibreGap(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object CalibreGap:
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Authors = Authors.T
   object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Summary = Summary.T

@@ -156,7 +156,7 @@ class MergeSuite extends com.histmersion.db.DbSuite with Bounded:
       (authors).map(com.histmersion.api.library.AuthorName.apply),
       (doi).map(com.histmersion.api.library.Doi.apply),
       (Some(year)).map(com.histmersion.api.catalogue.Year.apply),
-      (venue).map(com.histmersion.api.library.Venue.apply),
+      (venue).map(com.histmersion.api.library.Source.Venue.apply),
       status,
       Nil,
       Nil,

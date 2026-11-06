@@ -31,7 +31,7 @@ class CardIconsSuite extends munit.FunSuite:
       com.histmersion.api.library.Title("Zz"),
       (Nil).map(com.histmersion.api.library.AuthorName.apply),
       (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
-      (venue).map(com.histmersion.api.library.Venue.apply),
+      (venue).map(com.histmersion.api.library.Source.Venue.apply),
       Source.Status.Current,
       Nil,
       Nil,

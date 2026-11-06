@@ -98,8 +98,8 @@ object JobRecords:
     def create(kind: com.histmersion.util.jobs.JobRecords.InMemory.CreateKind, citekey: Option[com.histmersion.util.jobs.JobRecords.InMemory.CreateCitekey], sha256: Option[com.histmersion.util.jobs.JobRecords.InMemory.CreateSha256], acquireItem: Option[com.histmersion.util.jobs.JobRecords.InMemory.CreateAcquireItem]): JobInfo =
       val now = clock.instant().toString
       val job = JobInfo(
-        com.histmersion.api.jobs.JobInfo.Id(UUID.randomUUID().toString),
-        com.histmersion.api.jobs.JobInfo.Kind(kind),
+        com.histmersion.api.SpatialHierarchyResult.Job.Id(UUID.randomUUID().toString),
+        com.histmersion.api.jobs.JobKinds.Wire(kind),
         JobState.Queued.wire,
         (citekey).map(com.histmersion.api.library.Citekey.apply),
         None,

@@ -254,7 +254,7 @@ object PlacesCmd:
   /** A places job started on the server (#1946): say so, and follow it unless `noWait`. */
   private def started(c: Client, id: com.histmersion.cli.PlacesCmd.StartedId, noWait: com.histmersion.cli.PlacesCmd.StartedNoWait)(using console: Console) : Either[Cli.Error, Unit] =
     Cli.out.println(s"job `$id` started (`histmersion jobs $id` follows it)")
-    if noWait then Right(()) else IngestCmd.pollJob(c, com.histmersion.api.jobs.JobInfo.Id(id), 0)
+    if noWait then Right(()) else IngestCmd.pollJob(c, com.histmersion.api.SpatialHierarchyResult.Job.Id(id), 0)
 
   private def buildHierarchy (using console: Console) = Opts.subcommand(
     "build-hierarchy",

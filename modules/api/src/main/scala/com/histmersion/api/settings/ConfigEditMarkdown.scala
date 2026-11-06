@@ -13,7 +13,7 @@ object ConfigEditMarkdown:
       case Some(c)             => ("set" + c.shown.fold("")(s => s" (`$s`)"))
       case None                => (f.effective.fold("(nothing)")(v => s"`$v`"))
 
-  def field(f: Field): com.histmersion.api.Markdown.Text =
+  def field(f: Field): String =
     val from = Source.parse(f.source).fold(f.source)(_.label)
     val lines = List(
       Some(s"## ${f.relative}"),
@@ -28,7 +28,7 @@ object ConfigEditMarkdown:
     )
     lines.flatten.mkString("\n")
 
-  def page(p: Page): com.histmersion.api.Markdown.Text =
+  def page(p: Page): String =
     val head = List(
       s"# Settings",
       "",
@@ -41,9 +41,9 @@ object ConfigEditMarkdown:
           (if f.source == Source.Default.wire then "" else s" (${Source.parse(f.source).fold(f.source)(_.label)})")
       )
     }
-    _root_.com.histmersion.api.Markdown.Text((head ++ problems ++ body).mkString("\n"))
+    ((head ++ problems ++ body).mkString("\n"))
 
-  def written(w: Written): com.histmersion.api.Markdown.Text =
+  def written(w: Written): String =
     def list(title: String, xs: List[String]) = if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
     val head =
       if w.changed.isEmpty then "# Settings unchanged — the file already says so"
@@ -55,5 +55,5 @@ object ConfigEditMarkdown:
       list(("Warnings"), w.warnings) ++
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
-  def restart(r: Restart): com.histmersion.api.Markdown.Text =
-    if ((r.accepted) == _root_.com.histmersion.api.settings.ConfigEdit.Restart.Accepted(true)) then _root_.com.histmersion.api.Markdown.Text(s"# Restarting\n\n${r.message}") else _root_.com.histmersion.api.Markdown.Text(s"# Not restarted\n\n${r.message}")
+  def restart(r: Restart): String =
+    if ((r.accepted) == _root_.com.histmersion.api.settings.ConfigEdit.Restart.Accepted(true)) then (s"# Restarting\n\n${r.message}") else (s"# Not restarted\n\n${r.message}")

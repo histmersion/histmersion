@@ -20,8 +20,6 @@ final case class ArchiveItem(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object ArchiveItem:
-  type Identifier = Identifier.T
-  object Identifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Title = Title.T
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Creator = Creator.T

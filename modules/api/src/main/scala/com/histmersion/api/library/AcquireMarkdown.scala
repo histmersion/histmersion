@@ -5,7 +5,7 @@ import com.histmersion.api.given
 object AcquireMarkdown:
 
 
-  private def esc(s: String): String = ((s).replace("|", "\\|").replace("\n", " ").trim)
+  private def esc(s: String): String = ((s).value.replace("|", "\\|").replace("\n", " ").trim)
   private def cell(s: Option[String]): String = esc(s.getOrElse("—"))
   private def num(n: Option[Int]): String = (n.map(_.toString).getOrElse("—"))
 
@@ -16,7 +16,7 @@ object AcquireMarkdown:
     val sep = header.map(_ => "---")
     ((List(header, sep) ++ rows).map(_.mkString("| ", " | ", " |")).mkString("\n"))
 
-  def discover(r: DiscoverResult): com.histmersion.api.Markdown.Text =
+  def discover(r: DiscoverResult): String =
     if r.works.isEmpty then s"_No works found for **${esc(r.query)}**._"
     else
       val rows = r.works.map { w =>
@@ -35,11 +35,11 @@ object AcquireMarkdown:
           if flag.isEmpty then "—" else flag
         )
       }
-      s"### ${(r).count} work(s) for “${esc(r.query)}”\n\n" +
+      s"### ${(r).value.count} work(s) for “${esc(r.query)}”\n\n" +
         table(List("citekey", "title", "year", "authors", "cited", "doi", "notes"), rows) +
         "\n\n_Ingest one with `histmersion ingest <doi>`; `in db` means the corpus already has it._"
 
-  def work(w: WorkRef): com.histmersion.api.Markdown.Text =
+  def work(w: WorkRef): String =
     val meta = List(
       w.authors.map(_.value).mkString(", "),
       w.year.map(_.value.toInt).map(_.toString).getOrElse(""),
@@ -48,7 +48,7 @@ object AcquireMarkdown:
     ).filter(_.nonEmpty).mkString(" · ")
     // OpenAlex and Unpaywall set `oaStatus` (`closed` when there is no copy); Crossref records no access at all.
     val oa =
-      if ((w.isOa) == _root_.com.histmersion.api.library.WorkRef.IsOa(true)) then s"open access (${w.oaStatus.getOrElse("?")})"
+      if ((w.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true)) then s"open access (${w.oaStatus.getOrElse("?")})"
       else if w.oaStatus.isEmpty then "OA status unknown (the metadata came from Crossref, which records none)"
       else "no OA copy known"
     val lines = List(
@@ -66,7 +66,7 @@ object AcquireMarkdown:
     )
     lines.filter(_.nonEmpty).mkString("\n")
 
-  def wikirefs(r: WikirefsResult): com.histmersion.api.Markdown.Text =
+  def wikirefs(r: WikirefsResult): String =
     if r.dois.isEmpty && r.arxiv.isEmpty then s"_No DOIs cited by **${esc(r.article)}**._"
     else
       val known = r.known.toSet
@@ -76,7 +76,7 @@ object AcquireMarkdown:
         (if r.arxiv.isEmpty then "" else s"\n\n**arXiv:** ${r.arxiv.mkString(", ")}") +
         "\n\n_A trailhead, not a reading list: assess before ingesting (`histmersion assess <doi>`)._"
 
-  def refs(r: RefsResult): com.histmersion.api.Markdown.Text =
+  def refs(r: RefsResult): String =
     if r.references.isEmpty then s"_No reference list deposited for **${esc(r.target)}** (backend: ${r.backend})._"
     else
       val rows = r.references.map { x =>
@@ -87,7 +87,7 @@ object AcquireMarkdown:
           x.citekey.map(_.value.toString).map(k => s"`$k`").getOrElse("—")
         )
       }
-      s"### ${(r).count} reference(s) of ${esc(r.target)} · backend ${r.backend}\n\n" +
+      s"### ${(r).value.count} reference(s) of ${esc(r.target)} · backend ${r.backend}\n\n" +
         table(List("reference", "year", "doi", "in corpus"), rows) +
         s"\n\n_${r.resolved} of ${r.count} resolve to stored sources; ${edgeNote(r)}._"
 
@@ -95,7 +95,7 @@ object AcquireMarkdown:
     if r.edgesAdded > 0 then s"${r.edgesAdded} `references` edge(s) written"
     else ("re-run with `--apply` to write the `references` edges")
 
-  def assessment(a: Assessment): com.histmersion.api.Markdown.Text =
+  def assessment(a: Assessment): String =
     val icon = a.verdict match
       case Acquire.Verdicts.Retracted => "⛔"
       case Acquire.Verdicts.Corrected => "⚠"
@@ -143,15 +143,15 @@ object AcquireMarkdown:
       else "")
     head + rw + cr + applied
 
-  def retractionsUpdate(r: RetractionsUpdate): com.histmersion.api.Markdown.Text =
+  def retractionsUpdate(r: RetractionsUpdate): String =
     r.error match
-      case Some(e)           => _root_.com.histmersion.api.Markdown.Text(s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
+      case Some(e)           => (s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
       case None if ((r.running) == _root_.com.histmersion.api.library.RetractionsUpdate.Running(true)) =>
-        _root_.com.histmersion.api.Markdown.Text(s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
+        (s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
           "so far. Ask again to see whether it has finished.")
-      case None => _root_.com.histmersion.api.Markdown.Text(s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
+      case None => (s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
 
-  def followups(r: FollowupsResult): com.histmersion.api.Markdown.Text =
+  def followups(r: FollowupsResult): String =
     if r.followups.isEmpty then s"_Nothing cites **${esc(r.target)}** in that window._"
     else
       val rows = r.followups.map { f =>
@@ -176,12 +176,12 @@ object AcquireMarkdown:
       val caveat = "\n\n_Proposed edge kinds are **proposed — verify by reading** the citing paper. " +
         "The classification is based on citation contexts and intents from Semantic Scholar, which " +
         "can be wrong (e.g. a paper that cites another to disagree may still be classified as `cites`)._"
-      s"### ${(r).count} paper(s) citing ${esc(r.target)} · via ${r.backend}\n\n" +
+      s"### ${(r).value.count} paper(s) citing ${esc(r.target)} · via ${r.backend}\n\n" +
         table(List("★", "title", "year", "intents", "proposed edge", "doi", "in corpus"), rows) +
         (if ctx.isEmpty then "" else "\n\n**Citation contexts**\n" + ctx.mkString("\n")) +
         applied + caveat
 
-  def archiveSearch(r: ArchiveSearchResult): com.histmersion.api.Markdown.Text =
+  def archiveSearch(r: ArchiveSearchResult): String =
     if r.items.isEmpty then s"_Nothing on archive.org for **${esc(r.query)}**._"
     else
       val rows = r.items.map(i =>
@@ -192,11 +192,11 @@ object AcquireMarkdown:
           esc(i.creator.mkString(", ")).take(40)
         )
       )
-      s"### ${(r).count} archive.org item(s) for “${esc(r.query)}”\n\n" +
+      s"### ${(r).value.count} archive.org item(s) for “${esc(r.query)}”\n\n" +
         table(List("identifier", "title", "year", "creator"), rows) +
         "\n\n_Check one with `histmersion archive info <id>` before importing._"
 
-  def archiveItem(i: ArchiveItem): com.histmersion.api.Markdown.Text =
+  def archiveItem(i: ArchiveItem): String =
     val files =
       if i.files.isEmpty then "_no epub/pdf files_"
       else
@@ -220,12 +220,12 @@ object AcquireMarkdown:
     ) ++ restriction ++ List("", files) ++ i.description.toList.flatMap(d => List("", d)))
       .mkString("\n")
 
-  def ingest(r: Ingest.Report): com.histmersion.api.Markdown.Text =
+  def ingest(r: Ingest.Report): String =
     val steps = r.steps.map(s => s"- ${if ((s.ok) == _root_.com.histmersion.api.library.Ingest.Step.Ok(true)) then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) =>
         s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(p.bytes, _root_.com.histmersion.api.Plural.CountSingular("byte"))})"
-      case None if r.steps.exists(s => s.step == _root_.com.histmersion.api.library.Ingest.Step.Value("fetch") && ((s.ok) == _root_.com.histmersion.api.library.Ingest.Step.Ok(true))) =>
+      case None if r.steps.exists(s => s.step == _root_.com.histmersion.api.library.Ingest.StepName("fetch") && ((s.ok) == _root_.com.histmersion.api.library.Ingest.Step.Ok(true))) =>
         "**PDF:** not fetched — the source already has its original"
       case None => "**PDF:** none found through legal open access"
     // No stripMargin: `assessment` embeds tables, whose rows start with '|'.
@@ -240,8 +240,8 @@ object AcquireMarkdown:
     ) ++ steps ++ r.dropIn.toList.flatMap(d => List("", s"> $d"))
       ++ r.assessment.toList.flatMap(a => List("", assessment(a)))).mkString("\n")
 
-  def calibreGaps(g: CalibreGaps): com.histmersion.api.Markdown.Text =
-    if g.gaps.isEmpty then _root_.com.histmersion.api.Markdown.Text("_Every stored source is in Calibre._")
+  def calibreGaps(g: CalibreGaps): String =
+    if g.gaps.isEmpty then ("_Every stored source is in Calibre._")
     else
       // An older server's listing has no `storedOriginal`: the column only when the server sent it.
       val said = g.gaps.exists(_.storedOriginal.isDefined)
@@ -255,7 +255,7 @@ object AcquireMarkdown:
         ) ++
           Option.when(said)(x.storedOriginal.fold("?")(if _ then "stored" else "none")).toList
       )
-      _root_.com.histmersion.api.Markdown.Text(s"### ${g.count} source(s) not in Calibre\n\n" +
+      (s"### ${g.count} source(s) not in Calibre\n\n" +
         table((List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList).map(refactorValue10 => (refactorValue10)), rows) +
         "\n\n_Push them with `histmersion calibre sync --apply`: the file is the original the server stored " +
         "(or `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host); one with none needs " +

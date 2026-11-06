@@ -147,7 +147,7 @@ class BundleSuite extends com.histmersion.db.DbSuite with Bounded:
     authors = (List("Güterbock, Hans G.", "Jane Harrison")).map(com.histmersion.api.library.AuthorName.apply),
     doi = (Some(s"10.1234/$ck")).map(com.histmersion.api.library.Doi.apply),
     year = (Some(2001)).map(com.histmersion.api.catalogue.Year.apply),
-    venue = (Some("JNES")).map(com.histmersion.api.library.Venue.apply),
+    venue = (Some("JNES")).map(com.histmersion.api.library.Source.Venue.apply),
     status = com.histmersion.api.library.Source.Status.Current,
     topics = List("hittites"),
     regions = List("Anatolia"),

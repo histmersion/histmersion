@@ -6,10 +6,10 @@ object AutopilotMarkdown:
 
   import Autopilot.*
 
-  private def brief(m: ManagerBrief): com.histmersion.api.Markdown.Text =
+  private def brief(m: ManagerBrief): String =
     s"${m.id} ${m.state}" + m.note.filter(n => n.nonEmpty && n != m.state).fold("")(n => s" ($n)")
 
-  def goal(g: GoalProgress): com.histmersion.api.Markdown.Text =
+  def goal(g: GoalProgress): String =
     val mgrs = if g.managers.isEmpty then "no managers" else g.managers.map(brief).mkString("; ")
     val pace = s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace")
     s"**${g.slug}** _(${g.status})_${g.parent.fold("")(p => s" ⊂ $p")} · ${Plural.count(g.sources, _root_.com.histmersion.api.Plural.CountSingular("source"))}, " +
@@ -18,10 +18,10 @@ object AutopilotMarkdown:
                                                    else "") +
       s" · $mgrs · $pace" + g.lastActivity.fold("")(t => s" · last activity $t")
 
-  private def pace(g: FocusGoal): com.histmersion.api.Markdown.Text =
-    _root_.com.histmersion.api.Markdown.Text(s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace"))
+  private def pace(g: FocusGoal): String =
+    (s"${g.doneLast7} done in 7 days, ${g.open} open" + g.etaDays.fold("")(d => s", ~$d day(s) at that pace"))
 
-  def focus(f: FocusInfo): com.histmersion.api.Markdown.Text =
+  def focus(f: FocusInfo): String =
     val head = s"## Focus: ${if ((f.on) == _root_.com.histmersion.api.automation.Autopilot.FocusInfo.On(true)) then s"at most ${f.max} active goals" else "not in force"}" +
       (if f.maxFrom == _root_.com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom("person") then " (set by a person)" else " (agents.autopilot.max-active-goals)")
     val lines = List(
@@ -61,10 +61,10 @@ object AutopilotMarkdown:
     */
   def status(
       s: Autopilot.EngineStatus,
-      ingestedBy: com.histmersion.api.Markdown.Text = _root_.com.histmersion.api.Markdown.Text(""),
-      beforeBacklog: List[com.histmersion.api.Markdown.Text] = Nil,
-      afterBacklog: List[com.histmersion.api.Markdown.Text] = Nil
-  ): com.histmersion.api.Markdown.Text =
+      ingestedBy: String = (""),
+      beforeBacklog: List[String] = Nil,
+      afterBacklog: List[String] = Nil
+  ): String =
     val head = s"# Autopilot: ${if ((s.on) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.On(true)) then "ON" else "off"}" +
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(
@@ -106,5 +106,5 @@ object AutopilotMarkdown:
       )
     val changes = if s.changes.isEmpty then "" else "\n\n## Just now\n\n" + s.changes.map(c => s"- $c").mkString("\n")
     val goals = if s.goals.isEmpty then "_No research goals._" else s.goals.map(g => s"- ${goal(g)}").mkString("\n")
-    _root_.com.histmersion.api.Markdown.Text((List(head, "") ++ warn ++ facts).mkString("\n") + changes + s.focus.fold("")(f => "\n\n" + focus(f)) +
+    ((List(head, "") ++ warn ++ facts).mkString("\n") + changes + s.focus.fold("")(f => "\n\n" + focus(f)) +
       s"\n\n## Goals (${s.goals.size})\n\n" + goals)

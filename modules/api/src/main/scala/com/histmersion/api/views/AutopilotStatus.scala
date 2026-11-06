@@ -28,7 +28,7 @@ final case class AutopilotStatus(
     library: List[ManagerBrief] = Nil,
     goals: List[GoalProgress] = Nil,
     changes: List[AutopilotStatus.Changes] = Nil,
-    backlog: AutopilotStatus.Backlog = _root_.com.histmersion.api.views.AutopilotStatus.Backlog(0),
+    backlog: AutopilotStatus.Backlog = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Backlog(0),
     backlogDays: Option[AutopilotStatus.BacklogDays] = None,
     focus: Option[FocusInfo] = None,
     drain: Option[DrainInfo] = None,
@@ -70,8 +70,8 @@ final case class AutopilotStatus(
       ingestedBy = acquireRecheck
         .filter((_.fetchedToday).value > 0)
         .fold("")(r => s", ${r.fetchedToday} of them by the acquisition list's re-check"),
-      beforeBacklog = upstreams.map(q => _root_.com.histmersion.api.Markdown.Text(s"- ${UpstreamQuotaMarkdown.line(q)}")),
-      afterBacklog = (acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList).map(refactorValue8 => _root_.com.histmersion.api.Markdown.Text(refactorValue8))
+      beforeBacklog = upstreams.map(q => (s"- ${UpstreamQuotaMarkdown.line(q)}")),
+      afterBacklog = (acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList).map(refactorValue8 => (refactorValue8))
     )
 
 object AutopilotStatus:
@@ -82,8 +82,6 @@ object AutopilotStatus:
   object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Since = Since.T
   object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type By = By.T
-  object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AgentsEnabled = AgentsEnabled.T
   object AgentsEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ManagersEnabled = ManagersEnabled.T
@@ -102,9 +100,5 @@ object AutopilotStatus:
   object LastLint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Changes = Changes.T
   object Changes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Backlog = Backlog.T
-  object Backlog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklogDays = BacklogDays.T
-  object BacklogDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalPlansWait = GoalPlansWait.T
   object GoalPlansWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

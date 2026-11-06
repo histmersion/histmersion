@@ -57,10 +57,6 @@ object ConfigEdit:
     type LocalKey = LocalKey.T
     object LocalKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Section = Section.T
-    object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Doc = Doc.T
@@ -71,8 +67,6 @@ object ConfigEdit:
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Effective = Effective.T
     object Effective extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Source = Source.T
-    object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type EnvVar = EnvVar.T
     object EnvVar extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Restart = Restart.T
@@ -127,8 +121,6 @@ object ConfigEdit:
   final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives KindlingsCodecAsObject, KindlingsSchema
 
   object Change:
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -153,8 +145,6 @@ object ConfigEdit:
   final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why) derives KindlingsCodecAsObject, KindlingsSchema
 
   object RestartNote:
-    type Key = Key.T
-    object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -52,8 +52,6 @@ object Finding:
       significance: Option[com.histmersion.api.library.Finding.Significance] = None
   )
   object Input:
-    type Confidence = Confidence.T
-    object Confidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[Input] = KindlingsSchema
       .derived[Input]
@@ -71,7 +69,7 @@ object Finding:
       periodEnd = f.period.map(_.end),
       periodName = f.periodName,
       tags = f.tags,
-      confidence = f.confidence.map(_root_.com.histmersion.api.library.Finding.Input.Confidence(_.toString.toLowerCase)),
+      confidence = f.confidence.map(_root_.com.histmersion.api.library.Confidence.Wire(_.toString.toLowerCase)),
       significance = f.significance
     )
 

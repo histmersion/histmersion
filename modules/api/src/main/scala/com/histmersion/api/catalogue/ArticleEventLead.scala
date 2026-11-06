@@ -18,30 +18,24 @@ final case class ArticleEventLead(
 object ArticleEventLead:
   type Body = Body.T
   object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Markdown = Markdown.T
+  object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Years = Years.T
   object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Size = Size.T
   object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FindingsNear = FindingsNear.T
   object FindingsNear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Provider = Provider.T
-  object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def mentioned(body: com.histmersion.api.catalogue.ArticleEventLead.Body, names: List[com.histmersion.api.catalogue.CatalogRecord.Names]): Boolean =
+  def mentioned(body: com.histmersion.api.catalogue.ArticleEventLead.Body, names: List[com.histmersion.api.catalogue.EventEntry.Names]): Boolean =
     val b = (body).value.toLowerCase(java.util.Locale.ROOT)
     (names.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains))
 
-  def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult =
-    if leads.isEmpty then _root_.com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult("")
+  def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.Markdown =
+    if leads.isEmpty then _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown("")
     else
       ("### Catalogue events in this article's period and region that it never names" :: "" ::
         leads.map { l =>

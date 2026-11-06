@@ -337,7 +337,7 @@ final class OaBacklog(
             com.histmersion.api.library.Title(if w.title.nonEmpty then w.title else doi),
             w.year.map(com.histmersion.api.catalogue.Year.apply),
             w.authors.map(com.histmersion.api.library.AuthorName.apply),
-            w.venue.map(com.histmersion.api.library.Venue.apply),
+            w.venue.map(com.histmersion.api.library.Source.Venue.apply),
             isOa = true, "", None
           ),
           goal,

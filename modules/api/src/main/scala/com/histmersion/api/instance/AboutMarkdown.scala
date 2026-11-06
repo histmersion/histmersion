@@ -20,7 +20,7 @@ object AboutMarkdown:
     else if s < 86400 then (s"${s / 3600} h")
     else (s"${s / 86400} d")
 
-  def render(a: About): com.histmersion.api.Markdown.Text =
+  def render(a: About): String =
     val b = a.build
     val commit = b.gitCommit.fold("unknown")(c => if ((b.dirty) == _root_.com.histmersion.api.instance.BuildStamp.Dirty(true)) then s"$c (with uncommitted changes)" else c)
     val conv = a.health.converter
@@ -56,4 +56,4 @@ object AboutMarkdown:
         )
       ) ++ StorageMarkdown.render(a.storage) ++
       (if a.problems.isEmpty then Nil else "" :: "Problems:" :: a.problems.map(p => s"- $p"))
-    _root_.com.histmersion.api.Markdown.Text(lines.mkString("\n"))
+    (lines.mkString("\n"))

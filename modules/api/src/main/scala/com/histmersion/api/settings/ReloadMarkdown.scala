@@ -3,7 +3,7 @@ import com.histmersion.api.given
 object ReloadMarkdown:
 
 
-  def report(r: ReloadReport): com.histmersion.api.Markdown.Text =
+  def report(r: ReloadReport): String =
     def list(title: String, xs: List[String]): List[String] =
       if xs.isEmpty then Nil else (s"**$title:**" :: xs.map(x => s"- $x")).map(refactorValue => (refactorValue))
     val head =

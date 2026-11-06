@@ -43,9 +43,6 @@ object Coverage:
 
   final case class Edge(from: com.histmersion.api.library.Citekey, kind: Edge.Kind, to: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Edge:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class Entry(source: Source, reason: Option[Entry.Reason]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema

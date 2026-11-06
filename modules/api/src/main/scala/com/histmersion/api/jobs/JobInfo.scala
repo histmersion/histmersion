@@ -8,8 +8,8 @@ import com.histmersion.api.given
 import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class JobInfo(
-    id: com.histmersion.api.jobs.JobInfo.Id,
-    kind: com.histmersion.api.jobs.JobInfo.Kind,
+    id: com.histmersion.api.SpatialHierarchyResult.Job.Id,
+    kind: com.histmersion.api.jobs.JobKinds.Wire,
     status: JobInfo.Status,
     citekey: Option[com.histmersion.api.library.Citekey] = None,
     progress: Option[JobInfo.Progress] = None,
@@ -28,8 +28,6 @@ object JobInfo:
 
   /** A job's kind as the wire names it (`ingest`, `merge-apply`); the server checks it against its registered kinds. */
 
-  type Status = Status.T
-  object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Progress = Progress.T
   object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Error = Error.T
@@ -39,9 +37,5 @@ object JobInfo:
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Kind = Kind.T
-  object Kind extends RefinedType[String, Pure]
 
   /** A job's id as the wire names it; the server checks it is one. */
-  type Id = Id.T
-  object Id extends RefinedType[String, Pure]

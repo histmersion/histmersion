@@ -11,6 +11,8 @@ import com.histmersion.api.given
 object Queue:
   type EntryDate = EntryDate.T
   object EntryDate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Export = Export.T
+  object Export extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FileText = FileText.T
   object FileText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Id = Id.T
@@ -54,8 +56,6 @@ object Queue:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
-    type List = List.T
-    object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Topic = Topic.T
@@ -71,8 +71,6 @@ object Queue:
     object DoneAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreatedBy = CreatedBy.T
     object CreatedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ClosedBy = ClosedBy.T
-    object ClosedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class ItemGoals(item: com.histmersion.api.automation.Queue.QueueItem.Id, goals: List[GoalRef]) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
@@ -88,13 +86,11 @@ object Queue:
       reason: Option[com.histmersion.api.automation.Queue.QueueItem.Reason] = None,
       createdAt: Option[QueueAdd.CreatedAt] = None,
       goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
-      job: Option[com.histmersion.api.jobs.JobInfo.Id] = None
+      job: Option[com.histmersion.api.SpatialHierarchyResult.Job.Id] = None
   ) derives KindlingsSchema, com.histmersion.api.json.Schema
   object QueueAdd:
 
 
-    type CreatedAt = CreatedAt.T
-    object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Codec.AsObject[QueueAdd] = StrictJson.codec(KindlingsCodecAsObject.derived[QueueAdd])
 
@@ -109,8 +105,6 @@ object Queue:
   object QueuePatch:
 
 
-    type ClosedBy = ClosedBy.T
-    object ClosedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
 
@@ -126,8 +120,6 @@ object Queue:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object QueueImported:
-    type List = List.T
-    object List extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Items = Items.T
     object Items extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Notes = Notes.T
@@ -179,7 +171,7 @@ object Queue:
       case Some(p)                    => _root_.com.histmersion.api.automation.Queue.QueueItem.Reason(s"$p · $tag")
       case None                       => _root_.com.histmersion.api.automation.Queue.QueueItem.Reason(tag)
 
-  def fulfil(item: QueueItem, citekey: com.histmersion.api.automation.Queue.FulfilCitekey, by: Option[com.histmersion.api.automation.Queue.QueuePatch.ClosedBy] = None): QueuePatch =
+  def fulfil(item: QueueItem, citekey: com.histmersion.api.automation.Queue.FulfilCitekey, by: Option[com.histmersion.api.automation.Queue.QueueItem.ClosedBy] = None): QueuePatch =
     QueuePatch(status = Some(_root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done)), reason = Some(fulfilledReason(item.reason, citekey)), closedBy = by)
 
   def fulfillable(id: com.histmersion.api.automation.Queue.QueueItem.Id, found: Option[QueueItem]): Either[com.histmersion.api.automation.Queue.Problem, QueueItem] =
@@ -195,7 +187,7 @@ object Queue:
     (own ++ linked).groupBy(_._1).toList.sortBy(_._1).map((id, gs) => ItemGoals(id, gs.map(_._2).distinctBy(_.slug)))
 
   def applyPatch(cur: QueueItem, p: QueuePatch): QueueItem =
-    def clearable(v: Option[com.histmersion.api.automation.Queue.QueuePatch.ClosedBy], old: Option[com.histmersion.api.automation.Queue.QueueItem.ClosedBy]) = v.fold(old)(x => Some((x).value.trim).filter(_.nonEmpty))
+    def clearable(v: Option[com.histmersion.api.automation.Queue.QueueItem.ClosedBy], old: Option[com.histmersion.api.automation.Queue.QueueItem.ClosedBy]) = v.fold(old)(x => Some((x).value.trim).filter(_.nonEmpty))
     val status = p.status.map(_.trim.toLowerCase).filter(_.nonEmpty).getOrElse(cur.status)
     val closedBy =
       if status != _root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done) then None
@@ -204,7 +196,7 @@ object Queue:
       _.status).setTo(status).modify(_.text).setTo(p.text.getOrElse(cur.text)).modify(_.topic).setTo(clearable(p.topic, cur.topic)).modify(_.reason).setTo(clearable(p.reason, cur.reason)).modify(_.goal).setTo(clearable(p.goal, cur.goal)).modify(_.closedBy).setTo(closedBy
     )
 
-  def createdAtOf(raw: Option[com.histmersion.api.automation.Queue.QueueAdd.CreatedAt]): Either[com.histmersion.api.automation.Queue.Problem, Option[com.histmersion.api.automation.Queue.QueueAdd.CreatedAt]] =
+  def createdAtOf(raw: Option[com.histmersion.api.automation.Queue.QueueItem.CreatedAt]): Either[com.histmersion.api.automation.Queue.Problem, Option[com.histmersion.api.automation.Queue.QueueItem.CreatedAt]] =
     raw.map((_).value.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
@@ -213,7 +205,7 @@ object Queue:
           .toEither
           .map(i => Some(i.toString))
           .left
-          .map(_ => s"created_at '$s' is not an ISO-8601 instant (e.g. 2026-08-25T00:00:00Z)")).left.map(refactorError => _root_.com.histmersion.api.automation.Queue.Problem(refactorError))).map(refactorValue2 => (refactorValue2).map(refactorValue3 => _root_.com.histmersion.api.automation.Queue.QueueAdd.CreatedAt(refactorValue3)))
+          .map(_ => s"created_at '$s' is not an ISO-8601 instant (e.g. 2026-08-25T00:00:00Z)")).left.map(refactorError => _root_.com.histmersion.api.automation.Queue.Problem(refactorError))).map(refactorValue2 => (refactorValue2).map(refactorValue3 => _root_.com.histmersion.api.automation.Queue.QueueItem.CreatedAt(refactorValue3)))
 
   val Sep = " > "
 
@@ -247,8 +239,8 @@ object Queue:
     def flush(): Unit = { flushItem(); flushNote() }
 
     def push(segment: String, index: Int): Unit =
-      val i = math.min((index), stack.length)
-      stack = stack.take(i) :+ (segment)
+      val i = math.min((index).value, stack.length)
+      stack = stack.take(i) :+ (segment).value
 
     (text).value.linesIterator.foreach { line =>
       line match
@@ -275,7 +267,7 @@ object Queue:
     flush()
     out.result()
 
-  private def isBold(s: String): Boolean = ((s).startsWith("**") && (s).value.endsWith("**"))
+  private def isBold(s: String): Boolean = ((s).value.startsWith("**") && (s).value.endsWith("**"))
 
   private def entryDate(stack: Vector[String]): Option[com.histmersion.api.automation.Queue.EntryDate] =
     stack.headOption.flatMap (({
@@ -284,7 +276,7 @@ object Queue:
     }).value).value
 
   private def trimBlank(ls: List[String]): List[String] =
-    (ls.dropWhile((_).trim.isEmpty).reverse.dropWhile((_).trim.isEmpty).reverse).map(refactorValue15 => ((refactorValue15)))
+    (ls.dropWhile((_).value.trim.isEmpty).reverse.dropWhile((_).value.trim.isEmpty).reverse).map(refactorValue15 => ((refactorValue15).value))
 
   private def defaultPreamble(kind: Kind): com.histmersion.api.automation.Queue.Preamble = kind match
     case Kind.Acquire =>
@@ -334,7 +326,7 @@ object Queue:
       prev = p
       is.foreach(i => blocks += (if i.status == Note then Block.Note(i.text) else Block.Item(bullet(kind, i))))
     }
-    _root_.com.histmersion.api.automation.Queue.RenderResult((join(blocks.result())))
+    _root_.com.histmersion.api.automation.Queue.RenderResult((join(blocks.result())).value)
 
   private def headingLines(prev: Vector[String], next: Vector[String]): List[Block] =
     if next.isEmpty then Nil
@@ -343,7 +335,7 @@ object Queue:
       val from = firstDiff.getOrElse(next.length - 1)
       (from until next.length).toList.map { i =>
         val seg = next(i)
-        if ((isBold(((seg)))) == (true)) then Block.Heading(seg)
+        if ((isBold(((seg).value))) == (true)) then Block.Heading(seg)
         else Block.Heading(_root_.com.histmersion.api.automation.Queue.Block.Heading.Line(s"${"#" * (i + 2)} $seg"))
       }
 

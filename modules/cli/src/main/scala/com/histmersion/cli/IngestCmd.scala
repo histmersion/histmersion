@@ -50,7 +50,7 @@ object IngestCmd:
   type ControlHelp = ControlHelp.T
   object ControlHelp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def pollJob(c: Client, id: com.histmersion.api.jobs.JobInfo.Id, waited: com.histmersion.cli.IngestCmd.PollJobWaited)(using console: Console) : Either[Cli.Error, Unit] =
+  def pollJob(c: Client, id: com.histmersion.api.SpatialHierarchyResult.Job.Id, waited: com.histmersion.cli.IngestCmd.PollJobWaited)(using console: Console) : Either[Cli.Error, Unit] =
     JobFollow.job(c.job, id, waited * 1000L).map(j => Cli.out.println(IngestMarkdown.job(j)))
 
   /** Upload one document and (unless `noWait`) follow its OCR job to completion. */
@@ -95,7 +95,7 @@ object IngestCmd:
           s"queued job ${a.jobId} for ${a.citekey}" +
             acquireItem.fold("")(i => s" — acquisition item $i is ticked off when it succeeds")
         )
-        if noWait then Right(()) else pollJob(c, com.histmersion.api.jobs.JobInfo.Id(a.jobId), 0)
+        if noWait then Right(()) else pollJob(c, com.histmersion.api.SpatialHierarchyResult.Job.Id(a.jobId), 0)
       }
 
   private def reocr (using console: Console) =
@@ -108,7 +108,7 @@ object IngestCmd:
         .mapN { (ck, quality, noWait) => (c: Client) =>
           c.reocr(ck, quality).flatMap { a =>
             Cli.out.println(s"queued job ${a.jobId} for ${a.citekey}")
-            if noWait then Right(()) else pollJob(c, com.histmersion.api.jobs.JobInfo.Id(a.jobId), 0)
+            if noWait then Right(()) else pollJob(c, com.histmersion.api.SpatialHierarchyResult.Job.Id(a.jobId), 0)
           }
         }
     }
@@ -153,7 +153,7 @@ object IngestCmd:
     )
       .mapN { (id, f, limit, before, json) => (c: Client) =>
         id match
-          case Some(i) => c.job(com.histmersion.api.jobs.JobInfo.Id(i)).map(j => Output.emit(json, j)(IngestMarkdown.job))
+          case Some(i) => c.job(com.histmersion.api.SpatialHierarchyResult.Job.Id(i)).map(j => Output.emit(json, j)(IngestMarkdown.job))
           case None    =>
             c.jobs(f, limit, before).map { (js, page) =>
               Output.emit(json, js)(js =>

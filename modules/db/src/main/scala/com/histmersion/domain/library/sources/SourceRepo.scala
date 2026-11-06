@@ -374,7 +374,7 @@ private[sources] object SourceRepo:
         authors = (r.authors).map(com.histmersion.api.library.AuthorName.apply),
         doi = (r.doi).map(com.histmersion.api.library.Doi.apply),
         year = (r.year).map(com.histmersion.api.catalogue.Year.apply),
-        venue = (r.venue).map(com.histmersion.api.library.Venue.apply),
+        venue = (r.venue).map(com.histmersion.api.library.Source.Venue.apply),
         status = r.status.transformInto[com.histmersion.api.library.Source.Status],
         topics = r.topics,
         regions = r.regions,

@@ -19,8 +19,6 @@ final case class ReadMark(
 object ReadMark:
 
 
-  type Title = Title.T
-  object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Read = Read.T
   object Read extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadAt = ReadAt.T
@@ -28,6 +26,6 @@ object ReadMark:
   type OpenedAt = OpenedAt.T
   object OpenedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Set(kind: ItemKind, id: ItemKey, read: com.histmersion.api.personal.ReadMark.Read, title: Option[com.histmersion.api.personal.ReadMark.Title] = None)
+  final case class Set(kind: ItemKind, id: ItemKey, read: com.histmersion.api.personal.ReadMark.Read, title: Option[com.histmersion.api.library.Title] = None)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema

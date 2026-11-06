@@ -17,6 +17,8 @@ object Acquire:
   object CitationThreshold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitedByCount = CitedByCount.T
   object CitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemNumber = ItemNumber.T
+  object ItemNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Outcome = Outcome.T
   object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Recommendation = Recommendation.T
@@ -134,7 +136,7 @@ object Acquire:
   val BrowserDownloadTopic = "browser download"
 
   def browserDownloadText(work: WorkRef, doi: com.histmersion.api.library.Doi, citekey: com.histmersion.api.library.Citekey, refusals: List[com.histmersion.api.library.Acquire.Refusal] = Nil): Option[com.histmersion.api.library.Acquire.Outcome] =
-    Option.when(((work.isOa) == _root_.com.histmersion.api.library.WorkRef.IsOa(true))) {
+    Option.when(((work.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true))) {
       val who = work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
       val head = List(who, work.year.map(_.value.toInt).map(y => s"($y)")).flatten.mkString(" ")
       val title = work.title.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse(doi)
@@ -469,8 +471,6 @@ object Acquire:
       object NextPass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Note = Note.T
       object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Job = Job.T
-      object Job extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
     val Closed = "closed"

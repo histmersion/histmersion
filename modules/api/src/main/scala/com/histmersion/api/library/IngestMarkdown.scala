@@ -11,7 +11,7 @@ import com.histmersion.api.given
 object IngestMarkdown:
 
 
-  def job(j: JobInfo): com.histmersion.api.Markdown.Text =
+  def job(j: JobInfo): String =
     val lines = List(
       Some(s"- **status:** ${j.status}"),
       j.citekey.map(_.value.toString).map(c => s"- **citekey:** $c"),
@@ -28,7 +28,7 @@ object IngestMarkdown:
       j.detail.flatMap(VacuumPlan.Detail.of).map(p => s"- **vacuums:** ${Vacuum.describe(p)}"),
       j.detail.flatMap(JobDetail.Purpose.of).map(a => s"- **does:** $a"),
       j.detail
-        .filter((SkippedPeriod.SkippedCount.of(_)) > 0)
+        .filter((SkippedPeriod.SkippedCount.of(_)).value > 0)
         .map(d =>
           s"- **skipped:** ${Plural.count(SkippedPeriod.SkippedCount.of(d), _root_.com.histmersion.api.Plural.Noun.Singular("period definition"))} (not imported)" +
             (if SkippedPeriod.Skipped.of(d).isEmpty then ""
@@ -41,15 +41,15 @@ object IngestMarkdown:
         ),
       Some(s"- **updated:** ${j.updatedAt}")
     ).flatten
-    _root_.com.histmersion.api.Markdown.Text(s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}")
+    (s"### job ${j.id} · ${j.kind}\n\n${lines.mkString("\n")}")
 
   def jobs(
       js: Vector[JobInfo],
       page: Paging.Page = Paging.Page.empty,
       status: Option[com.histmersion.api.library.Ingest.JobStatus] = None,
       older: Option[com.histmersion.api.library.Ingest.JobAge] = None
-  ): com.histmersion.api.Markdown.Text =
-    if js.isEmpty then _root_.com.histmersion.api.Markdown.Text(status.fold("_No jobs._")(s => s"_No $s jobs._"))
+  ): String =
+    if js.isEmpty then (status.fold("_No jobs._")(s => s"_No $s jobs._"))
     else
       val rows = js.map(j =>
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
@@ -63,4 +63,4 @@ object IngestMarkdown:
         ))
         .mkString("\n")
 
-  def assets(citekey: com.histmersion.api.library.Citekey, as: Vector[AssetInfo]): com.histmersion.api.Markdown.Text = AssetsMarkdown.assets(citekey, as)
+  def assets(citekey: com.histmersion.api.library.Citekey, as: Vector[AssetInfo]): String = AssetsMarkdown.assets(citekey, as)

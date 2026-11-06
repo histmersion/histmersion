@@ -15,11 +15,6 @@ object RepairAcquire:
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
-  object RepairRequest:
-    type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type By = By.T
-    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class RepairRow(
@@ -34,8 +29,6 @@ object RepairAcquire:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object RepairRow:
-    type Item = Item.T
-    object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Goals = Goals.T
     object Goals extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Watcher = Watcher.T
@@ -61,8 +54,6 @@ object RepairAcquire:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object RepairResult:
-    type DryRun = DryRun.T
-    object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Moved = Moved.T
     object Moved extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Removed = Removed.T
@@ -82,8 +73,8 @@ object RepairAcquire:
   val Keep = "keep"
 
   def markdown(r: RepairResult): com.histmersion.api.library.RepairAcquire.Markdown =
-    val verb = if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true)) then "would " else ""
-    val head = s"# Repair of the acquisition list${if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true)) then " (dry run: nothing changed)" else ""}\n\n" +
+    val verb = if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true)) then "would " else ""
+    val head = s"# Repair of the acquisition list${if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true)) then " (dry run: nothing changed)" else ""}\n\n" +
       s"- ${verb}move ${Plural.count(r.moved, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} into the watchers' ingest backlogs\n" +
       s"- ${verb}remove ${Plural.count(r.removed, "item")} already in the corpus\n" +
       s"- keep ${Plural.count(r.kept, "sweep item")} on the list (no legal open-access copy known, or a watcher that does not ingest)\n" +

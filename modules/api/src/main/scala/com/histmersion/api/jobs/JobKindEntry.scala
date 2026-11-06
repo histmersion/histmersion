@@ -15,15 +15,9 @@ final case class JobKindEntry(
 
 object JobKindEntry:
   /** An entry from its owner's words. */
-  type SubjectResult = SubjectResult.T
-  object SubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type OfMeaning = OfMeaning.T
-  object OfMeaning extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
   val OfStoppable: _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable.type = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable
-  type OfSubjectResult = OfSubjectResult.T
-  object OfSubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfOwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl
   val OfOwnControl: _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl.type = _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl
 
@@ -35,8 +29,8 @@ object JobKindEntry:
   def of(
       kind: JobInfo.Kind,
       name: com.histmersion.api.jobs.JobKinds.Wire,
-      meaning: com.histmersion.api.jobs.JobKindEntry.OfMeaning,
+      meaning: com.histmersion.api.jobs.JobKindMeaning,
       stoppable: com.histmersion.api.jobs.JobKindEntry.OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(false),
-      subject: JobDetail => Option[com.histmersion.api.jobs.JobKindEntry.OfSubjectResult] = _ => None,
+      subject: JobDetail => Option[com.histmersion.api.jobs.JobKinds.Subject] = _ => None,
       ownControl: com.histmersion.api.jobs.JobKindEntry.OfOwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OfOwnControl(false)
-  ): JobKindEntry = JobKindEntry(kind, JobKindName((name).value), JobKindMeaning((meaning).value), stoppable, { val refactorFunction2 = subject; (refactorValue3) => (refactorFunction2(refactorValue3)).map(refactorValue4 => _root_.com.histmersion.api.jobs.JobKindEntry.SubjectResult((refactorValue4).value)) }, ownControl)
+  ): JobKindEntry = JobKindEntry(kind, JobKindName((name).value), JobKindMeaning((meaning).value), stoppable, { val refactorFunction2 = subject; (refactorValue3) => (refactorFunction2(refactorValue3)).map(refactorValue4 => _root_.com.histmersion.api.jobs.JobKinds.Subject((refactorValue4).value)) }, ownControl)

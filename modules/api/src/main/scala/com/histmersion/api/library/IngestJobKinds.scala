@@ -7,12 +7,12 @@ object IngestJobKinds:
   val Ingest: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("ingest"),
     _root_.com.histmersion.api.jobs.JobKinds.Wire("Bring in a source"),
-    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Brings in a source: fetches its open-access file or takes your upload, converts it to text (OCR) and stores it.")
+    _root_.com.histmersion.api.jobs.JobKindMeaning("Brings in a source: fetches its open-access file or takes your upload, converts it to text (OCR) and stores it.")
   )
 
   val Reocr: JobKindEntry =
     JobKindEntry.of(
       JobInfo.Kind("reocr"),
       _root_.com.histmersion.api.jobs.JobKinds.Wire("Read a source's text again"),
-      _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Converts a stored source's original file to text (OCR) again.")
+      _root_.com.histmersion.api.jobs.JobKindMeaning("Converts a stored source's original file to text (OCR) again.")
     )

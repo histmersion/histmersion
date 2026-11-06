@@ -116,7 +116,7 @@ class ToolsSuite extends munit.FunSuite:
   // ── jobs ───────────────────────────────────────────────────────────────────────────────────────
 
   private def job(id: String, s: JobState, kind: String = Ingest.KindIngest) =
-    JobInfo(com.histmersion.api.jobs.JobInfo.Id(id), com.histmersion.api.jobs.JobInfo.Kind(kind), s.wire, (Some(s"ck_$id")).map(com.histmersion.api.library.Citekey.apply))
+    JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id(id), com.histmersion.api.jobs.JobKinds.Wire(kind), s.wire, (Some(s"ck_$id")).map(com.histmersion.api.library.Citekey.apply))
 
   test("polling backs off while nothing moves, restarts on a change, and stops when all jobs finished") {
     val running = List(job("a", JobState.Running), job("b", JobState.Done))
@@ -132,7 +132,7 @@ class ToolsSuite extends munit.FunSuite:
   test("the state filter and its counts") {
     val js = List(job("a", JobState.Running), job("b", JobState.Failed), job("c", JobState.Failed))
     assertEquals(JobsView.visible(js, None), js)
-    assertEquals(JobsView.visible(js, Some(JobState.Failed)).map(_.id), List("b", "c").map(com.histmersion.api.jobs.JobInfo.Id.apply))
+    assertEquals(JobsView.visible(js, Some(JobState.Failed)).map(_.id), List("b", "c").map(com.histmersion.api.SpatialHierarchyResult.Job.Id.apply))
     assertEquals(JobsView.counts(js), Map(JobState.Running -> 1, JobState.Failed -> 2))
   }
 
@@ -217,7 +217,7 @@ class ToolsSuite extends munit.FunSuite:
   // #770: an init job showed as "Init" with no subject
   test("an init job says what it imports; one that skipped periods says which") {
     val plan = InitPlan(gazetteer = true, periodPresets = true, fetch = List("periodo"))
-    val init = JobInfo(com.histmersion.api.jobs.JobInfo.Id("i"), com.histmersion.api.jobs.JobInfo.Kind(InitPlan.JobKind), JobState.Running.wire, detail = Some(InitPlan.Detail(Some(plan))))
+    val init = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("i"), com.histmersion.api.jobs.JobKinds.Wire(InitPlan.JobKind), JobState.Running.wire, detail = Some(InitPlan.Detail(Some(plan))))
     assertEquals(JobsView.kindLabel(InitPlan.JobKind), "Import reference data")
     assertEquals(JobsView.what(init), Some("bundled gazetteer, bundled period presets, fetch periodo"))
     assertEquals(JobsView.what(job("a", JobState.Running)), None) // an OCR job's subject is its citekey
@@ -552,7 +552,7 @@ class ToolsSuite extends munit.FunSuite:
 
   test("a finished job that ticks an item off is noticed once; other jobs are not") {
     def job(id: String, st: JobState, item: Option[Int]) =
-      JobInfo(com.histmersion.api.jobs.JobInfo.Id(id), com.histmersion.api.jobs.JobInfo.Kind("ingest"), st.wire, (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = item)
+      JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id(id), com.histmersion.api.jobs.JobKinds.Wire("ingest"), st.wire, (Some("ck")).map(com.histmersion.api.library.Citekey.apply), acquireItem = item)
     val running = List(job("a", JobState.Running, Some(7)), job("b", JobState.Running, None))
     assert(JobsView.ticksOff(running, List(job("a", JobState.Done, Some(7)), running(1))))
     assert(!JobsView.ticksOff(running, List(running(0), job("b", JobState.Done, None))), "no item, nothing to reload")

@@ -38,20 +38,20 @@ object Backup:
 
   def timestamp(at: Instant): String = (Stamp.format(at.truncatedTo(ChronoUnit.SECONDS)))
 
-  def fileName(at: Instant): com.histmersion.api.backup.Backup.Info.File = _root_.com.histmersion.api.backup.Backup.Info.File(s"$Prefix${timestamp(at)}$Extension")
+  def fileName(at: Instant): com.histmersion.api.backup.Backup.Result.File = _root_.com.histmersion.api.backup.Backup.Result.File(s"$Prefix${timestamp(at)}$Extension")
 
-  def uniqueName(name: com.histmersion.api.backup.Backup.Name, taken: com.histmersion.api.backup.Backup.Info.File => Boolean): com.histmersion.api.backup.Backup.Info.File =
-    if !((taken(_root_.com.histmersion.api.backup.Backup.Info.File((name).value))) == (true)) then _root_.com.histmersion.api.backup.Backup.Info.File((name).value)
+  def uniqueName(name: com.histmersion.api.backup.Backup.Name, taken: com.histmersion.api.backup.Backup.Result.File => Boolean): com.histmersion.api.backup.Backup.Result.File =
+    if !((taken(_root_.com.histmersion.api.backup.Backup.Result.File((name).value))) == (true)) then _root_.com.histmersion.api.backup.Backup.Result.File((name).value)
     else
       val stem = (name).value.dropRight(Extension.length)
-      LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !((taken(_root_.com.histmersion.api.backup.Backup.Info.File(c))) == (true))).getOrElse(name)
+      LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !((taken(_root_.com.histmersion.api.backup.Backup.Result.File(c))) == (true))).getOrElse(name)
 
   private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
 
   /** Only names this service writes count: anything else in the directory is someone's own file. As plain text
     * `…Z-2.dump` sorts before `…Z.dump`, so the order is the stamp, then the same-second suffix.
     */
-  def toPrune(names: List[com.histmersion.api.backup.Backup.Info.File], keep: com.histmersion.api.backup.Backup.Retention): List[com.histmersion.api.backup.Backup.Info.File] =
+  def toPrune(names: List[com.histmersion.api.backup.Backup.Result.File], keep: com.histmersion.api.backup.Backup.Retention): List[com.histmersion.api.backup.Backup.Result.File] =
     if keep <= 0 then Nil
     else
       val ours = names.collect (({ case n @ Written(stamp, suffix) =>
@@ -62,7 +62,7 @@ object Backup:
   private val AnyStamp = """(\d{8}T\d{6}Z)(?:-(\d+))?""".r.unanchored
 
   /** The stamp in the name wins over the mtime: a copied archive keeps its name but not its mtime. */
-  def takenAt(name: com.histmersion.api.backup.Backup.Info.File, mtime: Instant): Instant = name match
+  def takenAt(name: com.histmersion.api.backup.Backup.Result.File, mtime: Instant): Instant = name match
     case AnyStamp(stamp, _) =>
       scala.util.Try(Instant.from(Stamp.parse(stamp))).getOrElse(mtime)
     case _ => mtime
@@ -77,7 +77,7 @@ object Backup:
 
   private val Safe = "[A-Za-z0-9][A-Za-z0-9._-]*".r
 
-  def safeName(raw: com.histmersion.api.backup.Backup.Name): Either[com.histmersion.api.backup.Backup.Problem, com.histmersion.api.backup.Backup.Info.File] =
+  def safeName(raw: com.histmersion.api.backup.Backup.Name): Either[com.histmersion.api.backup.Backup.Problem, com.histmersion.api.backup.Backup.Result.File] =
     val n = Option(raw).map((_).value.trim).getOrElse("")
     if n.isEmpty then Left(_root_.com.histmersion.api.backup.Backup.Problem("no backup file given"))
     else if n.length > 128 then Left(_root_.com.histmersion.api.backup.Backup.Problem(s"backup file name is too long (${n.length} chars)"))
@@ -85,7 +85,7 @@ object Backup:
     else if n.length == Extension.length then Left(_root_.com.histmersion.api.backup.Backup.Problem(s"'$n' has no name before $Extension"))
     else if !Safe.matches(n) then
       Left(_root_.com.histmersion.api.backup.Backup.Problem(s"'$n' is not a plain backup file name — no directories, no '..', letters/digits/._- only"))
-    else Right(_root_.com.histmersion.api.backup.Backup.Info.File(n))
+    else Right(_root_.com.histmersion.api.backup.Backup.Result.File(n))
 
   /** Absent `host`/`port` let libpq decide (its own defaults, `PGHOST`, `PGPORT`). */
   final case class PgTarget(host: Option[PgTarget.Host], port: Option[PgTarget.Port], database: PgTarget.Database):
@@ -151,10 +151,10 @@ object Backup:
   val CodeMaintenance = "maintenance"
 
   def maintenance(op: String): Api.Error =
-    Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"$op is unavailable: a restore is in progress on this server"), Some(_root_.com.histmersion.api.Api.Error.Code(CodeMaintenance)))
+    Api.Error(_root_.com.histmersion.api.Api.Error.Problem(s"$op is unavailable: a restore is in progress on this server"), Some(_root_.com.histmersion.api.Api.Error.Code(CodeMaintenance)))
 
-  def missing(file: com.histmersion.api.backup.Backup.Info.File): Api.Error =
-    Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"no backup named '$file' in the backups directory"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeNotFound)))
+  def missing(file: com.histmersion.api.backup.Backup.Result.File): Api.Error =
+    Api.Error(_root_.com.histmersion.api.Api.Error.Problem(s"no backup named '$file' in the backups directory"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeNotFound)))
 
   /** Formatted against `Locale.ROOT`: the string goes onto the wire, and JDK 25's CLDR renders `%.1f` as `2,5` under
     * locales such as `en_PL`.
@@ -170,8 +170,6 @@ object Backup:
   final case class Info(file: Info.File, bytes: com.histmersion.api.ByteCount, createdAt: Info.CreatedAt) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Info:
-    type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -185,13 +183,6 @@ object Backup:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Result:
-    type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DurationMs = DurationMs.T
-    object DurationMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Pruned = Pruned.T
-    object Pruned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum State:
@@ -220,24 +211,18 @@ object Backup:
 
   object Status:
 
-    type RunningFile = _root_.com.histmersion.api.backup.Backup.Status.File
-    val RunningFile: _root_.com.histmersion.api.backup.Backup.Status.File.type = _root_.com.histmersion.api.backup.Backup.Status.File
-    type FailedFile = _root_.com.histmersion.api.backup.Backup.Status.File
-    val FailedFile: _root_.com.histmersion.api.backup.Backup.Status.File.type = _root_.com.histmersion.api.backup.Backup.Status.File
+    type RunningFile = _root_.com.histmersion.api.backup.Backup.Result.File
+    val RunningFile: _root_.com.histmersion.api.backup.Backup.Result.File.type = _root_.com.histmersion.api.backup.Backup.Result.File
+    type FailedFile = _root_.com.histmersion.api.backup.Backup.Result.File
+    val FailedFile: _root_.com.histmersion.api.backup.Backup.Result.File.type = _root_.com.histmersion.api.backup.Backup.Result.File
 
-    type File = File.T
-    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type State = State.T
     object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DurationMs = DurationMs.T
-    object DurationMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Error = Error.T
     object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Pruned = Pruned.T
-    object Pruned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def running(file: com.histmersion.api.backup.Backup.Status.RunningFile, elapsedMs: com.histmersion.api.backup.Backup.Status.DurationMs): Status = Status(file, State.Running.wire, _root_.com.histmersion.api.backup.Backup.Status.DurationMs((elapsedMs).value))
+    def running(file: com.histmersion.api.backup.Backup.Status.RunningFile, elapsedMs: com.histmersion.api.backup.Backup.Result.DurationMs): Status = Status(file, State.Running.wire, _root_.com.histmersion.api.backup.Backup.Result.DurationMs((elapsedMs).value))
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
-    def failed(file: com.histmersion.api.backup.Backup.Status.FailedFile, elapsedMs: com.histmersion.api.backup.Backup.Status.DurationMs, error: com.histmersion.api.backup.Backup.Status.Error): Status =
-      Status(file, State.Failed.wire, _root_.com.histmersion.api.backup.Backup.Status.DurationMs((elapsedMs).value), error = Some(_root_.com.histmersion.api.backup.Backup.Status.Error((error).value)))
+    def failed(file: com.histmersion.api.backup.Backup.Status.FailedFile, elapsedMs: com.histmersion.api.backup.Backup.Result.DurationMs, error: com.histmersion.api.backup.Backup.Status.Error): Status =
+      Status(file, State.Failed.wire, _root_.com.histmersion.api.backup.Backup.Result.DurationMs((elapsedMs).value), error = Some(_root_.com.histmersion.api.backup.Backup.Status.Error((error).value)))

@@ -5,7 +5,7 @@ import com.histmersion.util.jobs.Job
 
 class JobControlRulesSuite extends munit.FunSuite:
 
-  private def job(kind: JobInfo.Kind, status: String) = JobInfo(com.histmersion.api.jobs.JobInfo.Id("j1"), com.histmersion.api.jobs.JobInfo.Kind(kind.value), status, None)
+  private def job(kind: JobInfo.Kind, status: String) = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"), com.histmersion.api.jobs.JobKinds.Wire(kind.value), status, None)
 
   test("an agent run takes its own control, whatever it is asked"):
     JobAction.values.foreach(a =>

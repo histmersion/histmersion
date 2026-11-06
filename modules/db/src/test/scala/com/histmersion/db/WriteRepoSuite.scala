@@ -36,7 +36,7 @@ class WriteRepoSuite extends com.histmersion.db.DbSuite:
     authors = (List("A", "B")).map(com.histmersion.api.library.AuthorName.apply),
     doi = (Some("10.0/x")).map(com.histmersion.api.library.Doi.apply),
     year = (Some(2020)).map(com.histmersion.api.catalogue.Year.apply),
-    venue = (Some("Nature")).map(com.histmersion.api.library.Venue.apply),
+    venue = (Some("Nature")).map(com.histmersion.api.library.Source.Venue.apply),
     status = com.histmersion.api.library.Source.Status.Current,
     topics = List("t"),
     regions = List("Anatolia"),

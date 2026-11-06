@@ -181,7 +181,7 @@ object SourceEditor:
     val problems = errs.result()
     if problems.nonEmpty then Left(problems)
     else
-      val meta = MetadataPatch(title = (title).map(com.histmersion.api.library.Title.apply), authors = (authors).map(_.map(com.histmersion.api.library.AuthorName.apply)), year = (yr).map(com.histmersion.api.catalogue.Year.apply), venue = (venue).map(com.histmersion.api.library.Venue.apply), doi = (doi).map(com.histmersion.api.library.Doi.apply), status = status)
+      val meta = MetadataPatch(title = (title).map(com.histmersion.api.library.Title.apply), authors = (authors).map(_.map(com.histmersion.api.library.AuthorName.apply)), year = (yr).map(com.histmersion.api.catalogue.Year.apply), venue = (venue).map(com.histmersion.api.library.Source.Venue.apply), doi = (doi).map(com.histmersion.api.library.Doi.apply), status = status)
       val patch = com.histmersion.api.library.Source.Patch(
         metadata = Option.when(meta != MetadataPatch())(meta),
         summary = summary,

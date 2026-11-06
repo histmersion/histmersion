@@ -19,8 +19,8 @@ object Stalls:
 
   final case class Stall(
       slug: Stall.Slug,
-      title: Stall.Title = _root_.com.histmersion.api.automation.Stalls.Stall.Title(""),
-      status: Stall.Status = _root_.com.histmersion.api.automation.Stalls.Stall.Status(""),
+      title: Stall.Title = _root_.com.histmersion.api.automation.Stalls.Facts.Title(""),
+      status: Stall.Status = _root_.com.histmersion.api.automation.Stalls.Facts.Status(""),
       lastProgress: Option[Stall.LastProgress] = None,
       idleDays: Option[Stall.IdleDays] = None,
       code: Stall.Code = _root_.com.histmersion.api.automation.Stalls.Stall.Code(""),
@@ -33,18 +33,6 @@ object Stalls:
     type Slug = Slug.T
     object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastProgress = LastProgress.T
-    object LastProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IdleDays = IdleDays.T
-    object IdleDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Code = Code.T
-    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Action = Action.T
     object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -52,8 +40,6 @@ object Stalls:
   final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ReasonCount:
-    type Code = Code.T
-    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Count = Count.T
     object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -93,10 +79,6 @@ object Stalls:
   final case class SchedWait(code: SchedWait.Code, why: SchedWait.Why, position: SchedWait.Position = _root_.com.histmersion.api.automation.Stalls.SchedWait.Position(0))
 
   object SchedWait:
-    type Code = Code.T
-    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Why = Why.T
-    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Position = Position.T
     object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -119,21 +101,13 @@ object Stalls:
   )
 
   object Facts:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LastProgress = LastProgress.T
-    object LastProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IdleDays = IdleDays.T
-    object IdleDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApprovalsAt = ApprovalsAt.T
+    object ApprovalsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ApprovalsNote = ApprovalsNote.T
+    object ApprovalsNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ApprovalsPart1 = ApprovalsPart1.T
     object ApprovalsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
-    type ApprovalsPart2 = ApprovalsPart2.T
-    object ApprovalsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PersonHeld = PersonHeld.T
     object PersonHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Paused = Paused.T
@@ -155,7 +129,7 @@ object Stalls:
 
   def classify(f: Facts): (com.histmersion.api.automation.Stalls.Stall.Code, com.histmersion.api.automation.Stalls.Stall.Action, com.histmersion.api.automation.Stalls.Stall.Why) =
     val g = f.slug
-    def waitOf(p: SchedWait => Boolean) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)) })
+    def waitOf(p: SchedWait => Boolean) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)).value })
     if ((f.draining) == _root_.com.histmersion.api.automation.Stalls.Facts.Draining(true)) then
       (_root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Drain), _root_.com.histmersion.api.automation.Stalls.Stall.Action("the agents are draining: nothing new starts"), _root_.com.histmersion.api.automation.Stalls.Stall.Why("histmersion agent autopilot undrain"))
     else if f.approvals.nonEmpty then
@@ -179,7 +153,7 @@ object Stalls:
         _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent manager ${f.paused.head} resume")
       )
     else
-      waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked") && w.why.startsWith("budget")).orElse(waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("budget"))))) match
+      waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("blocked") && w.why.startsWith("budget")).orElse(waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("budget"))))) match
         case Some(w) =>
           (
             _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Budget),
@@ -187,7 +161,7 @@ object Stalls:
             _root_.com.histmersion.api.automation.Stalls.Stall.Why("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
           )
         case None =>
-          waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked") && w.why.startsWith("starved")).orElse(waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("pool"))))) match
+          waitOf(w => w.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("blocked") && w.why.startsWith("starved")).orElse(waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("pool"))))) match
             case Some(w) =>
               (
                 _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Quota),
@@ -195,7 +169,7 @@ object Stalls:
                 _root_.com.histmersion.api.automation.Stalls.Stall.Why("histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models")
               )
             case None =>
-              waitOf(w => (w.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("capacity"))) match
+              waitOf(w => (w.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("capacity"))) match
                 case Some(w) =>
                   (
                     _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Queue),
@@ -203,7 +177,7 @@ object Stalls:
                     _root_.com.histmersion.api.automation.Stalls.Stall.Why(s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs")
                   )
                 case None =>
-                  waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.SchedWait.Code("blocked")))) match
+                  waitOf((refactorCallback => (refactorCallback.code == _root_.com.histmersion.api.automation.Stalls.Stall.Code("blocked")))) match
                     case Some(w) =>
                       (
                         _root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Blocked),

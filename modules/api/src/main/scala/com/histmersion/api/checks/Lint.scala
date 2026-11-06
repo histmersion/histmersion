@@ -5,8 +5,12 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 object Lint:
+  type AbbreviationsText = AbbreviationsText.T
+  object AbbreviationsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DuplicateKey = DuplicateKey.T
   object DuplicateKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FormatItemDetail = FormatItemDetail.T
+  object FormatItemDetail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IssueCount = IssueCount.T
   object IssueCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemLimit = ItemLimit.T
@@ -38,13 +42,9 @@ object Lint:
   object DuplicatesRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type Abbreviations = AbbreviationsValue
-  type AbbreviationsValue = AbbreviationsValue.T
-  object AbbreviationsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FormatItemsRowsPart1 = FormatItemsRowsPart1.T
   object FormatItemsRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-  type FormatItemsRowsPart3 = FormatItemsRowsPart3.T
-  object FormatItemsRowsPart3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -271,7 +271,7 @@ object Lint:
         Left(_root_.com.histmersion.api.checks.Lint.Problem(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}"))
       else Right(wanted.flatMap({ val refactorFunction = rule; (refactorValue) => refactorFunction(_root_.com.histmersion.api.checks.Lint.Rule.Name(refactorValue)) }).distinct)
 
-  def blank(s: Option[String]): Boolean = (s.forall((_).trim.isEmpty))
+  def blank(s: Option[String]): Boolean = (s.forall((_).value.trim.isEmpty))
 
   def suggest(target: com.histmersion.api.checks.Lint.LinkTarget, citekeys: Iterable[com.histmersion.api.library.Citekey], max: com.histmersion.api.checks.Lint.ItemLimit): List[com.histmersion.api.checks.Lint.Suggestion] =
     val t = (target).value.trim.toLowerCase
@@ -288,8 +288,8 @@ object Lint:
           val c = (ck).value.toLowerCase
           val p = commonPrefix(_root_.com.histmersion.api.library.Citekey(c), _root_.com.histmersion.api.checks.Lint.LinkTarget(t))
           if c.startsWith(t + "_") then Some((0, c.length, ck))
-          else if c.startsWith(t) || t.startsWith(c) then Some((1, -(p), ck))
-          else if p >= 4 then Some((2, -(p), ck))
+          else if c.startsWith(t) || t.startsWith(c) then Some((1, -(p).value, ck))
+          else if p >= 4 then Some((2, -(p).value, ck))
           else None
         }
         .toList
@@ -319,7 +319,7 @@ object Lint:
   def nonCanonicalTags(rows: List[(com.histmersion.api.library.Citekey, List[com.histmersion.api.checks.Lint.Tag])]): List[LintItem] =
     rows
       .flatMap { (ck, tags) =>
-        tags.filterNot(_root_.com.histmersion.api.checks.Lint.Tag((isCanonicalTag))).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(_root_.com.histmersion.api.checks.Lint.Tag((t).value))}'"))
+        tags.filterNot(_root_.com.histmersion.api.checks.Lint.Tag((isCanonicalTag).value)).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(_root_.com.histmersion.api.checks.Lint.Tag((t).value))}'"))
       }
       .sortBy(i => (i.citekey, i.detail))
 
@@ -349,43 +349,43 @@ object Lint:
 
   private val Abbreviations: Set[com.histmersion.api.checks.Lint.Abbreviations] =
     Set(
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("c"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("ca"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("cf"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("e.g"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("i.e"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("etc"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("vs"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("al"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("fl"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("st"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("mt"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("no"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("vol"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("pp"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("p"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("ed"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("eds"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("dr"),
-      _root_.com.histmersion.api.checks.Lint.AbbreviationsValue("fig")
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("c"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("ca"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("cf"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("e.g"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("i.e"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("etc"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("vs"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("al"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("fl"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("st"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("mt"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("no"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("vol"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("pp"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("p"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("ed"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("eds"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("dr"),
+      _root_.com.histmersion.api.checks.Lint.AbbreviationsText("fig")
     )
 
   private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
 
   def sentenceCount(text: String): com.histmersion.api.checks.Lint.SentenceCount =
-    val t = (text).trim
+    val t = (text).value.trim
     if t.isEmpty then _root_.com.histmersion.api.checks.Lint.SentenceCount(0)
     else
       // No `\p{Lu}` in the pattern: this code is also compiled to Scala.js, so the next char is tested instead.
       val ends = SentenceEnd.findAllMatchIn(t).count { m =>
         val next = m.group(2).head
         val word = m.group(1).replaceAll("^[(\"“]+", "").toLowerCase
-        (next.isUpper || "[“\"(".contains(next)) && !(Abbreviations(_root_.com.histmersion.api.checks.Lint.AbbreviationsValue(word)) || (word.length == 1 && word.head.isLetter))
+        (next.isUpper || "[“\"(".contains(next)) && !(Abbreviations(_root_.com.histmersion.api.checks.Lint.AbbreviationsText(word)) || (word.length == 1 && word.head.isLetter))
       }
       _root_.com.histmersion.api.checks.Lint.SentenceCount(ends + 1)
 
   def isListLeadIn(text: String): Boolean =
-    val t = (text).trim
+    val t = (text).value.trim
     (t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount((t)) == _root_.com.histmersion.api.checks.Lint.SentenceCount(1))
 
   def extractParagraphs(body: com.histmersion.api.checks.Lint.ProseBody): List[com.histmersion.api.checks.Lint.Paragraph] =
@@ -395,13 +395,13 @@ object Lint:
     val current = new StringBuilder()
     var leadIn: Option[String] = None
     def settle(nextIsList: Boolean): Unit =
-      leadIn.foreach(t => if !(nextIsList) then paras += (t))
+      leadIn.foreach(t => if !(nextIsList).value then paras += (t).value)
       leadIn = None
     def flush(): Unit =
       val text = current.toString.trim
-      if text.nonEmpty then if (isListLeadIn((text))) then leadIn = Some((text)) else paras += text
+      if text.nonEmpty then if (isListLeadIn((text))).value then leadIn = Some((text)) else paras += text
       current.clear()
-    def isList(t: String) = (t).startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).value).isDefined
+    def isList(t: String) = (t).value.startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).value).isDefined
     def block(nextIsList: Boolean): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
       val t = line.trim
@@ -423,7 +423,7 @@ object Lint:
 
   type FormatChecker = (String, FormatField, Boolean) => List[FormatIssue]
 
-  def formatItems(rows: List[(com.histmersion.api.library.Citekey, FormatField, com.histmersion.api.checks.Lint.FormatItemsRowsPart3)], check: FormatChecker): List[LintItem] =
+  def formatItems(rows: List[(com.histmersion.api.library.Citekey, FormatField, com.histmersion.api.checks.Lint.FormatItemDetail)], check: FormatChecker): List[LintItem] =
     rows.filter((_._3).value.trim.nonEmpty).sortBy((id, f, _) => (id, f.ordinal)).flatMap { (id, field, text) =>
       check((text).value, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
     }

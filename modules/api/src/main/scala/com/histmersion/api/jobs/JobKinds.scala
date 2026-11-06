@@ -24,11 +24,11 @@ final class JobKinds(val entries: List[JobKindEntry], val details: List[JobDetai
   def stoppableKinds: Set[com.histmersion.api.jobs.JobKinds.Wire] = entries.filter((refactorCallback => ((refactorCallback.stoppable) == _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable(true)))).map(_.kind.value).toSet
 
   /** What a job is about: its source, else what its detail says. */
-  def subject(job: JobInfo): Option[com.histmersion.api.jobs.JobKinds.SubjectResult] =
+  def subject(job: JobInfo): Option[com.histmersion.api.jobs.JobKinds.Subject] =
     job.citekey.map(_.value.toString).orElse(job.detail.flatMap(d => entries.iterator.flatMap(_.subject(d)).nextOption()))
 
 object JobKinds:
+  type Subject = Subject.T
+  object Subject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Wire = Wire.T
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubjectResult = SubjectResult.T
-  object SubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

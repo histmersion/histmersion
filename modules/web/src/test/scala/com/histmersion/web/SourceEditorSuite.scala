@@ -18,7 +18,7 @@ class SourceEditorSuite extends munit.FunSuite:
     title = com.histmersion.api.library.Title("The Horse, the Wheel, and Language"),
     authors = (List("David W. Anthony")).map(com.histmersion.api.library.AuthorName.apply),
     year = (Some(2007)).map(com.histmersion.api.catalogue.Year.apply),
-    venue = (Some("Princeton UP")).map(com.histmersion.api.library.Venue.apply),
+    venue = (Some("Princeton UP")).map(com.histmersion.api.library.Source.Venue.apply),
     status = Source.Status.Current,
     topics = List("pie_origins"),
     regions = List("pontic_caspian_steppe"),

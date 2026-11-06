@@ -22,10 +22,6 @@ object Autopilot:
   object ManagerBrief:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type State = State.T
-    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Note = Note.T
     object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -47,14 +43,8 @@ object Autopilot:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object GoalProgress:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Parent = Parent.T
-    object Parent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Sources = Sources.T
     object Sources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Articles = Articles.T
@@ -76,17 +66,13 @@ object Autopilot:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object ApprovalRule:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Mode = Mode.T
-    object Mode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Cap = Cap.T
     object Cap extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class FocusGoal(
       slug: FocusGoal.Slug,
-      title: FocusGoal.Title = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Title(""),
+      title: FocusGoal.Title = _root_.com.histmersion.api.automation.Goal.Title(""),
       status: FocusGoal.Status = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Status(""),
       stage: FocusGoal.Stage = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Stage(""),
       why: FocusGoal.Why = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Why(""),
@@ -101,10 +87,6 @@ object Autopilot:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object FocusGoal:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Status = Status.T
     object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Stage = Stage.T
@@ -132,8 +114,6 @@ object Autopilot:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object FocusWaiting:
-    type Slug = Slug.T
-    object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Code = Code.T
     object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T

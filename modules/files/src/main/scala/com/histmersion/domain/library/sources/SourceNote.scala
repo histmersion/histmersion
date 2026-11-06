@@ -306,7 +306,7 @@ object SourceNote:
       authors = (list(m, "authors")).map(com.histmersion.api.library.AuthorName.apply),
       doi = (str(m, "doi")).map(com.histmersion.api.library.Doi.apply),
       year = (int(m, "year")).map(com.histmersion.api.catalogue.Year.apply),
-      venue = (str(m, "venue")).map(com.histmersion.api.library.Venue.apply),
+      venue = (str(m, "venue")).map(com.histmersion.api.library.Source.Venue.apply),
       status = com.histmersion.api.library.Source.Status.fromString(str(m, "status").getOrElse("unassessed")),
       topics = list(m, "topics"),
       regions = list(m, "regions"),

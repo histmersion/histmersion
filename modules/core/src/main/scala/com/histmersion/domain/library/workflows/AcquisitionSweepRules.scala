@@ -63,7 +63,7 @@ object AcquisitionSweepRules:
     title: com.histmersion.api.library.Title,
     year: Option[com.histmersion.api.catalogue.Year],
     authors: List[com.histmersion.api.library.AuthorName],
-    venue: Option[com.histmersion.api.library.Venue],
+    venue: Option[com.histmersion.api.library.Source.Venue],
     isOa: Candidate.IsOa,
     query: Candidate.Query,
     abstractText: Option[Candidate.AbstractText]

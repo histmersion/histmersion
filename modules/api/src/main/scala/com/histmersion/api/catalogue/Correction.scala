@@ -41,8 +41,6 @@ object Correction:
   object Upstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpstreamNow = UpstreamNow.T
   object UpstreamNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Label = Label.T
-  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CreatedAt = CreatedAt.T
   object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckedAt = CheckedAt.T
@@ -56,7 +54,7 @@ object Correction:
     def isEmpty: Boolean = (kept == _root_.com.histmersion.api.catalogue.Correction.Counts.Kept(0) && retired == _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(0) && conflicts == _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(0))
 
     def summary: Option[String] =
-      Option.when(!(isEmpty))(
+      Option.when(!(isEmpty).value)(
         (s"corrections by hand: $kept kept, $retired retired (upstream agrees), $conflicts in conflict")
       )
 

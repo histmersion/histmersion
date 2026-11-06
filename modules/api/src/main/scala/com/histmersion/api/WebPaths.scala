@@ -5,25 +5,19 @@ object WebPaths:
   object Segment extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Places = PlacesValue
-  type PlacesValue = PlacesValue.T
-  object PlacesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Items = ItemsValue
-  type ItemsValue = ItemsValue.T
-  object ItemsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Legacy = LegacyValue
-  type LegacyValue = LegacyValue.T
-  object LegacyValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Places: Set[com.histmersion.api.WebPaths.Places] = Set(_root_.com.histmersion.api.WebPaths.PlacesValue("explore"), _root_.com.histmersion.api.WebPaths.PlacesValue("library"), _root_.com.histmersion.api.WebPaths.PlacesValue("research"), _root_.com.histmersion.api.WebPaths.PlacesValue("settings"), _root_.com.histmersion.api.WebPaths.PlacesValue("setup"))
+  val Places: Set[com.histmersion.api.WebPaths.Places] = Set(_root_.com.histmersion.api.WebPaths.Segment("explore"), _root_.com.histmersion.api.WebPaths.Segment("library"), _root_.com.histmersion.api.WebPaths.Segment("research"), _root_.com.histmersion.api.WebPaths.Segment("settings"), _root_.com.histmersion.api.WebPaths.Segment("setup"))
 
-  val Items: Set[com.histmersion.api.WebPaths.Items] = Set(_root_.com.histmersion.api.WebPaths.ItemsValue("place"), _root_.com.histmersion.api.WebPaths.ItemsValue("event"), _root_.com.histmersion.api.WebPaths.ItemsValue("run"), _root_.com.histmersion.api.WebPaths.ItemsValue("manager"), _root_.com.histmersion.api.WebPaths.ItemsValue("job"))
+  val Items: Set[com.histmersion.api.WebPaths.Items] = Set(_root_.com.histmersion.api.WebPaths.Segment("place"), _root_.com.histmersion.api.WebPaths.Segment("event"), _root_.com.histmersion.api.WebPaths.Segment("run"), _root_.com.histmersion.api.WebPaths.Segment("manager"), _root_.com.histmersion.api.WebPaths.Segment("job"))
 
   /** Old addresses that saved links may still use. */
-  val Legacy: Set[com.histmersion.api.WebPaths.Legacy] = Set(_root_.com.histmersion.api.WebPaths.LegacyValue("acquire"), _root_.com.histmersion.api.WebPaths.LegacyValue("tasks"), _root_.com.histmersion.api.WebPaths.LegacyValue("log"), _root_.com.histmersion.api.WebPaths.LegacyValue("merge"), _root_.com.histmersion.api.WebPaths.LegacyValue("about"), _root_.com.histmersion.api.WebPaths.LegacyValue("storage"))
+  val Legacy: Set[com.histmersion.api.WebPaths.Legacy] = Set(_root_.com.histmersion.api.WebPaths.Segment("acquire"), _root_.com.histmersion.api.WebPaths.Segment("tasks"), _root_.com.histmersion.api.WebPaths.Segment("log"), _root_.com.histmersion.api.WebPaths.Segment("merge"), _root_.com.histmersion.api.WebPaths.Segment("about"), _root_.com.histmersion.api.WebPaths.Segment("storage"))
 
   def isApp(segments: List[com.histmersion.api.WebPaths.Segment]): Boolean = segments match
     case Nil                            => (true)
-    case first :: _ if Places(_root_.com.histmersion.api.WebPaths.PlacesValue((first).value))    => (true)
-    case List(first, _) if Items(_root_.com.histmersion.api.WebPaths.ItemsValue((first).value)) => (true)
-    case List(first) if Legacy(_root_.com.histmersion.api.WebPaths.LegacyValue((first).value))   => (true)
+    case first :: _ if Places(_root_.com.histmersion.api.WebPaths.Segment((first).value))    => (true)
+    case List(first, _) if Items(_root_.com.histmersion.api.WebPaths.Segment((first).value)) => (true)
+    case List(first) if Legacy(_root_.com.histmersion.api.WebPaths.Segment((first).value))   => (true)
     case _                              => (false)

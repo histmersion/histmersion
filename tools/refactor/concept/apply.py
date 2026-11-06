@@ -21,8 +21,16 @@ second = {}
 for p in sorted(glob.glob(f'{OUT}/out2/*.tsv')):
     for l in open(p):
         a = l.rstrip('\n').split('\t')
-        if len(a) == 2 and a[0] in rows and rows[a[0]]['pure'] and a[1].strip() != 'keep':
-            second[a[0]] = a[1].strip()
+        if not (len(a) == 2 and a[0] in rows and rows[a[0]]['pure'] and a[1].strip() != 'keep'):
+            continue
+        f, d = a[0], a[1].strip()
+        if d == 'native' and rows[f]['field']:
+            continue  # a record's field keeps its type; only predicate results and private helpers go plain
+        if d != 'native' and not d.removeprefix('new:').startswith('com.histmersion.'):
+            short = d.removeprefix('new:'); head = short.split('.')[0]; parts = f.split('.')
+            prefix = '.'.join(parts[:parts.index(head)]) if head in parts else f.rsplit('.', 1)[0].rsplit('.', 1)[0] if False else '.'.join(p for p in parts if p[0].islower())
+            d = 'new:' + prefix + '.' + short
+        second[f] = d
 raw.update(second)
 for f, r in rows.items():
     if r['rule'] == 'native':

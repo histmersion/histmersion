@@ -19,8 +19,8 @@ object AgentsMarkdown:
   import Agents.*
 
   def usd(d: Double): String =
-    val scale = if d != 0 && math.abs((d)) < 0.0001 then 6 else 4
-    (BigDecimal((d)).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString)
+    val scale = if d != 0 && math.abs((d).value) < 0.0001 then 6 else 4
+    (BigDecimal((d).value).setScale(scale, BigDecimal.RoundingMode.HALF_UP).toString)
 
   def callShape(firstCallTokens: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeFirstCallTokens], turns: Option[com.histmersion.api.automation.AgentsMarkdown.CallShapeTurns]): String =
     (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, _root_.com.histmersion.api.Plural.Noun.Singular("turn")))).mkString(" · ")
@@ -29,7 +29,7 @@ object AgentsMarkdown:
     val cache = if (u.cacheRead).value + u.cacheWrite > 0 then s", cache ${u.cacheRead} read / ${u.cacheWrite} written" else ""
     (s"${u.input} in / ${u.output} out$cache")
 
-  def models(m: ModelsInfo): com.histmersion.api.Markdown.Text =
+  def models(m: ModelsInfo): String =
     val head = s"# Embedded agents — ${if ((m.enabled) == _root_.com.histmersion.api.automation.Agents.ModelsInfo.Enabled(true)) then "enabled" else "OFF"}\n\n" +
       s"Pipelines: ${m.pipelines.mkString(", ")} · at most ${m.maxConcurrentRuns} run(s) at once\n\n"
     val problems = if m.problems.isEmpty then "" else "\n\n" + m.problems.map(p => s"- $p").mkString("\n")
@@ -37,7 +37,7 @@ object AgentsMarkdown:
       val rows = m.roles.map { r =>
         s"| ${r.role} | ${r.model.getOrElse("—")} | ${if ((r.ready) == _root_.com.histmersion.api.automation.Agents.RoleModel.Ready(true)) then "ready" else r.problem.getOrElse("not ready")} |"
       }
-      _root_.com.histmersion.api.Markdown.Text(head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems)
+      (head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems)
     else
       val rows = m.chains.map { c =>
         val chain = if c.models.isEmpty then "—" else c.models.map(chainEntry).mkString(" → ")
@@ -49,7 +49,7 @@ object AgentsMarkdown:
         if m.allowances.isEmpty then
           "\n\n_No allowance: every model may be used until the run's and the day's budgets._"
         else "\n\n## Allowances\n\n" + m.allowances.map(allowanceBlock).mkString("\n")
-      _root_.com.histmersion.api.Markdown.Text(head + "| role | chain (tried in order) | next call uses | from |\n|---|---|---|---|\n" + rows.mkString("\n") +
+      (head + "| role | chain (tried in order) | next call uses | from |\n|---|---|---|---|\n" + rows.mkString("\n") +
         allowances + problems)
 
   private def chainEntry(e: ModelChains.ChainEntry): String =
@@ -61,7 +61,7 @@ object AgentsMarkdown:
       else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
     (s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}")
 
-  def roleChain(c: ModelChains.RoleChain): com.histmersion.api.Markdown.Text =
+  def roleChain(c: ModelChains.RoleChain): String =
     val lines = c.models.zipWithIndex.map { (e, i) =>
       val state = if ((e.usable) == _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Usable(true)) then "usable"
       else if !((e.ready) == _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Ready(true)) then "not ready"
@@ -70,13 +70,13 @@ object AgentsMarkdown:
       s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": $p")}${e.freesAt.fold("")(t => s" (frees $t)")}" +
         e.billing.fold("")(b => s" · $b")
     }
-    _root_.com.histmersion.api.Markdown.Text(s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
+    (s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
       (if lines.isEmpty then c.problem.getOrElse("no model") else lines.mkString("\n")))
 
   private def amount(v: Double, m: ModelChains.Measure): String = m match
     case ModelChains.Measure.Tokens =>
-      ModelChains.Limit.compact(BigDecimal((v)).setScale(0, BigDecimal.RoundingMode.HALF_UP))
-    case ModelChains.Measure.Usd => ((usd(((v)))).value)
+      ModelChains.Limit.compact(BigDecimal((v).value).setScale(0, BigDecimal.RoundingMode.HALF_UP))
+    case ModelChains.Measure.Usd => ((usd(((v).value))).value)
 
   private def allowanceBlock(a: ModelChains.AllowanceStatus): String =
     val state = if ((a.usable) == _root_.com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(true)) then "has headroom"
@@ -89,18 +89,18 @@ object AgentsMarkdown:
     ((s"- `${a.target}` (${a.source}${if (a.reservePct).value > 0 then s", reserve ${a.reservePct}%" else ""}) — $state" +
       a.note.fold("")(n => s" · $n") :: limits).mkString("\n"))
 
-  def allowance(a: ModelChains.AllowanceStatus): com.histmersion.api.Markdown.Text = _root_.com.histmersion.api.Markdown.Text((allowanceBlock(a)))
+  def allowance(a: ModelChains.AllowanceStatus): String = ((allowanceBlock(a)).value)
 
   private def pct(d: Double): String =
-    (java.math.BigDecimal((d)).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString)
+    (java.math.BigDecimal((d).value).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString)
 
   private def age(s: Long): String =
-    if (s) < 120 then (s"$s s")
-    else if (s) < 7200 then (s"${(s) / 60} min")
-    else if (s) < 172800 then (s"${(s) / 3600} h")
-    else (s"${(s) / 86400} d")
+    if (s).value < 120 then (s"$s s")
+    else if (s).value < 7200 then (s"${(s).value / 60} min")
+    else if (s).value < 172800 then (s"${(s).value / 3600} h")
+    else (s"${(s).value / 86400} d")
 
-  def pool(p: PlanQuota.PoolStatus): com.histmersion.api.Markdown.Text =
+  def pool(p: PlanQuota.PoolStatus): String =
     val state =
       if !((p.available) == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Available(true)) then s"**${p.reason.getOrElse("unavailable: no login")}**"
       else if ((p.held) == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Held(true)) then "**held** — no agent use until released"
@@ -112,7 +112,7 @@ object AgentsMarkdown:
         "\n\n| window | used | left | floor | resets | read | from |\n|---|---|---|---|---|---|---|\n" +
           p.windows
             .map { w =>
-              val name = if w.limit == _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("claude") || w.limit == _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Limit("codex") then w.kind else s"${w.limit}/${w.kind}"
+              val name = if w.limit == _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit("claude") || w.limit == _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit("codex") then w.kind else s"${w.limit}/${w.kind}"
               val left = if ((w.usable) == _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.Usable(true)) then s"${pct(w.leftPct)}%" else s"**${pct(w.leftPct)}%**"
               s"| $name | ${pct(w.usedPct)}% | $left | ${w.floor}% | ${w.resetsAt.getOrElse("—")} | " +
                 s"${age(w.ageSeconds)} ago${if w.stale then " (stale)" else ""} | ${w.source} |"
@@ -131,15 +131,15 @@ object AgentsMarkdown:
     )
     (s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last")
 
-  def refreshed(q: PlanQuota.QuotaRefreshed): com.histmersion.api.Markdown.Text =
-    _root_.com.histmersion.api.Markdown.Text(q.pools
+  def refreshed(q: PlanQuota.QuotaRefreshed): String =
+    (q.pools
       .map(r => s"**${r.pool}**: ${if ((r.refreshed) == _root_.com.histmersion.api.automation.PlanQuota.PoolRefreshed.Refreshed(true)) then "read" else "no reading"} — ${r.detail}\n\n${pool(r.status)}")
       .mkString("\n\n") +
       (if q.lifted.isEmpty then ""
        else
          s"\n\nBack in use (the fresh reading lifted the cool-down after a reported limit): ${q.lifted.map(m => s"`$m`").mkString(", ")}"))
 
-  def quota(q: PlanQuota.QuotaInfo): com.histmersion.api.Markdown.Text =
+  def quota(q: PlanQuota.QuotaInfo): String =
     val metered =
       if q.metered.isEmpty then "_No metered allowance: API keys are capped only by the run's and the day's budgets._"
       else q.metered.map(allowanceBlock).mkString("\n")
@@ -156,14 +156,14 @@ object AgentsMarkdown:
               "unless a reading of its plan taken since says it is usable (`histmersion agent quota refresh <pool>`)"
           )
           .mkString("\n")
-    _root_.com.histmersion.api.Markdown.Text(s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") + cooling +
+    (s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") + cooling +
       s"\n\n## Metered\n\n$metered\n\n$fall")
 
-  def generated(r: GenerateResult): com.histmersion.api.Markdown.Text =
+  def generated(r: GenerateResult): String =
     s"Generated ${r.runtimes.mkString(", ")} in ${r.dir}: ${r.files} file(s), ${r.written} written, ${r.removed} removed " +
       s"(definitions ${r.definitions.take(12)})."
 
-  def doctor(d: DoctorReport): com.histmersion.api.Markdown.Text =
+  def doctor(d: DoctorReport): String =
     def mark(l: CheckLevel) = l match
       case CheckLevel.Ok   => "ok"
       case CheckLevel.Warn => "**warn**"
@@ -177,9 +177,9 @@ object AgentsMarkdown:
            s"\n\nUpstream lists: ${p.upstreamModels.take(30).mkString(", ")}" +
              (if p.upstreamModels.size > 30 then s" … (${p.upstreamModels.size})" else ""))
     }
-    _root_.com.histmersion.api.Markdown.Text(s"# Agent doctor${if ((d.online) == _root_.com.histmersion.api.automation.Agents.DoctorReport.Online(true)) then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs.mkString("\n\n"))
+    (s"# Agent doctor${if ((d.online) == _root_.com.histmersion.api.automation.Agents.DoctorReport.Online(true)) then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs.mkString("\n\n"))
 
-  def probe(p: ProbeResult): com.histmersion.api.Markdown.Text =
+  def probe(p: ProbeResult): String =
     val verdict =
       if p.answer.isEmpty then
         "**no typed answer**" + (if p.problems.isEmpty then "" else s": ${p.problems.mkString("; ")}")
@@ -193,7 +193,7 @@ object AgentsMarkdown:
        else p.toolCalls.map(c => s"- tool: `$c`").mkString("", "\n", "\n\n")) +
       s"```json\n${p.rawAnswer}\n```"
 
-  def options(r: RunInfo): com.histmersion.api.Markdown.Text =
+  def options(r: RunInfo): String =
     List(
       Option.when(((r.dryRun) == _root_.com.histmersion.api.automation.Agents.RunInfo.DryRun(true)))("dry run, writes nothing"),
       Option.when(r.params.overrides.nonEmpty)(r.params.overrides.map(_.text).mkString(", ")),
@@ -221,10 +221,10 @@ object AgentsMarkdown:
       page: Paging.Page = Paging.Page.empty,
       status: Option[com.histmersion.api.automation.Agents.RunInfo.Status] = None,
       older: Option[com.histmersion.api.Paging.Cursor] = None
-  ): com.histmersion.api.Markdown.Text =
-    if rs.isEmpty then _root_.com.histmersion.api.Markdown.Text(status.fold("_No agent runs._")(s => s"_No $s agent runs._"))
+  ): String =
+    if rs.isEmpty then (status.fold("_No agent runs._")(s => s"_No $s agent runs._"))
     else
-      _root_.com.histmersion.api.Markdown.Text("# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.Paging.Shown(rs.size), page, ("run"), (status).map(refactorValue15 => ((refactorValue15).value))) + facetLines(page, (RunFacets).map(refactorValue17 => { val refactorTuple14 = refactorValue17; (((refactorTuple14._1)), ((refactorTuple14._2))) })) +
+      ("# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.Paging.Shown(rs.size), page, ("run"), (status).map(refactorValue15 => ((refactorValue15).value))) + facetLines(page, (RunFacets).map(refactorValue17 => { val refactorTuple14 = refactorValue17; (((refactorTuple14._1).value), ((refactorTuple14._2).value)) })) +
         rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o"))
 
   private def pageLine(shown: com.histmersion.api.Paging.Shown, page: Paging.Page, singular: String, qualifier: Option[String]): String =
@@ -241,11 +241,11 @@ object AgentsMarkdown:
 
   val ApprovalFacets: List[(String, String)] = List({ val refactorTuple6 = "kind" -> "By kind"; ((refactorTuple6._1), (refactorTuple6._2)) }, { val refactorTuple21 = "decidedBy" -> "Decided by"; ((refactorTuple21._1), (refactorTuple21._2)) })
 
-  def facetLines(page: Paging.Page, facets: List[(String, String)]): com.histmersion.api.Markdown.Text =
+  def facetLines(page: Paging.Page, facets: List[(String, String)]): String =
     val lines = facets.map((name, label) => ListFilters.facetLine(label, page.facet(name))).filter(_.nonEmpty)
-    if lines.isEmpty then _root_.com.histmersion.api.Markdown.Text("") else _root_.com.histmersion.api.Markdown.Text(lines.mkString("  \n") + "\n\n")
+    if lines.isEmpty then ("") else (lines.mkString("  \n") + "\n\n")
 
-  def run(d: RunDetail, withMessages: Boolean): com.histmersion.api.Markdown.Text =
+  def run(d: RunDetail, withMessages: Boolean): String =
     val r = d.run
     val head = s"# Agent run ${r.id}${if ((r.dryRun) == _root_.com.histmersion.api.automation.Agents.RunInfo.DryRun(true)) then " (dry run)" else ""}\n\n" +
       s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
@@ -265,7 +265,7 @@ object AgentsMarkdown:
               .mkString("; ")
             val shape = callShape(s.firstCallTokens, s.turns)
             s"| ${s.seq} | ${s.name} | ${s.kind} | ${s.attempt} | ${s.status} | ${s.modelText} | " +
-              s"${s.usage.input}/${s.usage.output}${if (shape).isEmpty then "" else s" · $shape"} | ${usd(s.costUsd)} | $note |"
+              s"${s.usage.input}/${s.usage.output}${if (shape).value.isEmpty then "" else s" · $shape"} | ${usd(s.costUsd)} | $note |"
           }
           .mkString("\n")
     val skipped = d.steps.filter(_.wouldWrite.nonEmpty)
@@ -280,7 +280,7 @@ object AgentsMarkdown:
           )
           .mkString("\n\n")
     val msgs =
-      if !(withMessages) then ""
+      if !(withMessages).value then ""
       else
         "\n\n## Messages\n\n" + d.messages
           .map { m =>
@@ -328,12 +328,12 @@ object AgentsMarkdown:
   def approvals(
       as: List[ApprovalInfo],
       page: Paging.Page = Paging.Page.empty,
-      state: Option[com.histmersion.api.automation.Agents.ApprovalInfo.State] = None,
+      state: Option[com.histmersion.api.automation.Approval.State.Wire] = None,
       older: Option[com.histmersion.api.Paging.Cursor] = None
-  ): com.histmersion.api.Markdown.Text =
-    if as.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No approvals._")
+  ): String =
+    if as.isEmpty then ("_No approvals._")
     else
-      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.Paging.Shown(as.size), page, ("approval"), (state).map(refactorValue16 => ((refactorValue16).value))) + facetLines(page, (ApprovalFacets).map(refactorValue2 => { val refactorTuple7 = refactorValue2; (((refactorTuple7._1)), ((refactorTuple7._2))) })) + as
+      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.Paging.Shown(as.size), page, ("approval"), (state).map(refactorValue16 => ((refactorValue16).value))) + facetLines(page, (ApprovalFacets).map(refactorValue2 => { val refactorTuple7 = refactorValue2; (((refactorTuple7._1).value), ((refactorTuple7._2).value)) })) + as
         .map { a =>
           val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
           val note = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
@@ -349,9 +349,9 @@ object AgentsMarkdown:
         }
         .mkString("\n") + older.fold("")(o => s"\n\n$o")
 
-  private def indent(b: String): String = ((b).linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n"))
+  private def indent(b: String): String = ((b).value.linesIterator.map(l => if l.isEmpty then l else s"  $l").mkString("\n"))
 
-  def planBlock(p: Goal.Plans.Plan): com.histmersion.api.Markdown.Text =
+  def planBlock(p: Goal.Plans.Plan): String =
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
     val queries = p.queries.map(q => s"- query: $q")
     val works = p.works.map { w =>
@@ -367,7 +367,7 @@ object AgentsMarkdown:
       .filter(_.nonEmpty)
       .mkString("\n\n")
 
-  def draftBlock(d: Goal.Plans.ArticleDraft, chars: com.histmersion.api.Markdown.CharLimit): com.histmersion.api.Markdown.Text =
+  def draftBlock(d: Goal.Plans.ArticleDraft, chars: com.histmersion.api.Markdown.CharLimit): String =
     val head = s"${d.mode.wire} · ${d.kind} · \"${d.title}\"${d.section.fold("")(s => s" · under '$s'")} · " +
       s"cites ${d.cited.size} source(s) · ${d.filter}"
     val problems =
@@ -375,7 +375,7 @@ object AgentsMarkdown:
     val text = if (chars).value > 0 && d.text.length > chars then
       d.text.take(chars) + s"\n… (${d.text.length - chars} more characters)"
     else d.text
-    _root_.com.histmersion.api.Markdown.Text(s"$head\n\n$problems\n\n```markdown\n$text\n```")
+    (s"$head\n\n$problems\n\n```markdown\n$text\n```")
 
   def scheduleLine(s: Goal.Plans.GoalSchedule): String =
     val state = if ((s.enabled) == _root_.com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true)) then "on" else "off"
@@ -384,8 +384,8 @@ object AgentsMarkdown:
       s.nextRunAt.fold("")(n => s" · next $n") + s.lastRun.fold("")(r => s" · last run ${r.take(8)}") +
       s.lastNote.filter(_.nonEmpty).fold("")(n => s" · $n")
 
-  def schedules(ss: List[Goal.Plans.GoalSchedule]): com.histmersion.api.Markdown.Text =
-    if ss.isEmpty then _root_.com.histmersion.api.Markdown.Text("_No schedules._") else _root_.com.histmersion.api.Markdown.Text("# Schedules\n\n" + ss.map(s => s"- ${scheduleLine(s)}").mkString("\n"))
+  def schedules(ss: List[Goal.Plans.GoalSchedule]): String =
+    if ss.isEmpty then ("_No schedules._") else ("# Schedules\n\n" + ss.map(s => s"- ${scheduleLine(s)}").mkString("\n"))
 
   def linkLine(l: Goal.Plans.GoalLink): String =
     val ref = l.kind match
@@ -395,7 +395,7 @@ object AgentsMarkdown:
     val title = l.title.fold(if l.kind == Goal.Plans.LinkKind.Query then "" else " (missing)")(t => s" — $t")
     s"${l.kind.wire}: $ref$title${l.note.filter(_.nonEmpty).fold("")(n => s" · $n")}"
 
-  def goalView(v: Goal.Plans.GoalView): com.histmersion.api.Markdown.Text =
+  def goalView(v: Goal.Plans.GoalView): String =
     val children = if v.children.isEmpty then ""
     else
       "\n\n## Sub-goals\n\n" +
@@ -412,16 +412,16 @@ object AgentsMarkdown:
     val plan = v.plan.fold("")(p => s"\n\n## Approved plan\n\n${planBlock(p)}")
     GoalsMarkdown.goal(v.goal) + budget + children + links + sch + plan
 
-  private def cell(s: String): String = ((s).replace("|", "\\|").replace("\n", " "))
+  private def cell(s: String): String = ((s).value.replace("|", "\\|").replace("\n", " "))
 
-  private def secs(n: Long): String = if (n) < 120 then (s"$n s") else (s"${(n) / 60} min ${(n) % 60} s")
+  private def secs(n: Long): String = if (n).value < 120 then (s"$n s") else (s"${(n).value / 60} min ${(n).value % 60} s")
 
-  private def models(configured: List[com.histmersion.api.automation.Agents.ModelRef.Wire], actual: List[com.histmersion.api.automation.AgentsMarkdown.ModelsActual]): com.histmersion.api.Markdown.Text =
+  private def models(configured: List[com.histmersion.api.automation.Agents.ModelRef.Wire], actual: List[com.histmersion.api.automation.AgentsMarkdown.ModelsActual]): String =
     val conf = configured.mkString(", ")
     val shown = actual.filterNot(a => configured.exists(c => _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsActual((c).value.drop((c).value.indexOf(':') + 1)) == a))
-    if conf.isEmpty && actual.isEmpty then _root_.com.histmersion.api.Markdown.Text("—")
-    else if shown.isEmpty then _root_.com.histmersion.api.Markdown.Text(conf)
-    else _root_.com.histmersion.api.Markdown.Text(s"$conf → ${shown.mkString(", ")}")
+    if conf.isEmpty && actual.isEmpty then ("—")
+    else if shown.isEmpty then (conf)
+    else (s"$conf → ${shown.mkString(", ")}")
 
   private def paid(costUsd: com.histmersion.api.automation.AgentsMarkdown.PaidCostUsd, billing: List[com.histmersion.api.automation.AgentsMarkdown.PaidBilling]): String =
     val plan = billing.filter((_).value.startsWith("plan pool"))
@@ -430,12 +430,12 @@ object AgentsMarkdown:
     else (plan.mkString(", "))
 
   private def ratio(n: Int, of: Int): String =
-    if of == (0) then ("—") else s"$n/$of (${BigDecimal(((100.0 * (n) / (of).value).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
+    if of == (0) then ("—") else s"$n/$of (${BigDecimal(((100.0 * (n).value / (of).value).value).value).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
-  def compare(c: RunCompare.Comparison): com.histmersion.api.Markdown.Text =
+  def compare(c: RunCompare.Comparison): String =
     import RunCompare.*
     val ids = c.runs.map(_.id.take(8))
-    def table(rows: List[(String, List[String])]): com.histmersion.api.Markdown.Text =
+    def table(rows: List[(String, List[String])]): String =
       s"| | ${ids.mkString(" | ")} |\n|---|${ids.map(_ => "---").mkString("|")}|\n" +
         rows.map((k, vs) => s"| $k | ${vs.map(cell).mkString(" | ")} |").mkString("\n")
     val runs = table(
