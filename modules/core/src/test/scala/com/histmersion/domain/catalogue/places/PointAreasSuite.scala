@@ -18,7 +18,7 @@ import com.histmersion.api.checks.Lint
   */
 class PointAreasSuite extends munit.FunSuite:
 
-  private val rule = Lint.rule(Lint.PlaceImportedPointArea).get
+  private val rule = Lint.rule(Lint.Rule.Name(Lint.PlaceImportedPointArea)).get
 
   test("Dating: an unknown start is end-only, an open range undated, anything else dated"):
     assertEquals(Dating.of(startUnknown = true, lowerInf = false, upperInf = false), Dating.EndOnly)
@@ -42,7 +42,7 @@ class PointAreasSuite extends munit.FunSuite:
       l.modify(_.findings).setTo(1).modify(_.alone).setTo(1).detail,
       "Roman Republic (wikidata polity, dated): 1 finding, at no other place"
     )
-    assert(l.modify(_.pinned).setTo(1).detail.contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)"))
+    assert(l.modify(_.pinned).setTo(1).detail.value.contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)"))
 
   test("report: the true count, the groups and every holder always, the sample fills up to the cap"):
     val groups = List(Group(com.histmersion.domain.catalogue.places.PointAreas.Group.Source("wikidata"), com.histmersion.domain.catalogue.places.PointAreas.Group.Kind("region"), Dating.Undated, com.histmersion.domain.catalogue.places.PointAreas.Group.Places(3)), Group(com.histmersion.domain.catalogue.places.PointAreas.Group.Source("geonames"), com.histmersion.domain.catalogue.places.PointAreas.Group.Kind("region"), Dating.Undated, com.histmersion.domain.catalogue.places.PointAreas.Group.Places(5)))

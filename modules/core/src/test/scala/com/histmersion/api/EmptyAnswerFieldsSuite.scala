@@ -339,7 +339,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
         .contains("sub-goal 'tin-trade' has no title")
     )
     assert(problems(PlanAnswer(com.histmersion.domain.PlanGoal.PlanAnswer.Rationale("why"), Nil, List(com.histmersion.domain.PlanGoal.PlanAnswer.Queries("")), Nil)).contains("an empty query"))
-    assert(problems(PlanAnswer(com.histmersion.domain.PlanGoal.PlanAnswer.Rationale("why"), Nil, Nil, List(WorkAnswer(noWorkDoi, com.histmersion.domain.PlanGoal.WorkAnswer.Why("x"))))).exists(_.contains("is not a DOI")))
+    assert(problems(PlanAnswer(com.histmersion.domain.PlanGoal.PlanAnswer.Rationale("why"), Nil, Nil, List(WorkAnswer(noWorkDoi, com.histmersion.domain.PlanGoal.WorkAnswer.Why("x"))))).exists(_.value.contains("is not a DOI")))
 
   test("ranking: a pick with an empty DOI fails; its reason stays optional"):
     import com.histmersion.domain.library.workflows.AcquisitionSweepRules.*

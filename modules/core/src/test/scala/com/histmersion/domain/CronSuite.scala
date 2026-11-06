@@ -14,7 +14,7 @@ import java.time.Instant
 class CronSuite extends munit.FunSuite:
 
   private def at(s: String) = Instant.parse(s)
-  private def next(expr: String, after: String): Option[Instant] = Cron.parse(expr).toOption.get.next(at(after))
+  private def next(expr: String, after: String): Option[Instant] = Cron.parse(Cron.Text(expr)).toOption.get.next(at(after))
 
   test("the next firing is strictly after the given instant, in UTC"):
     assertEquals(next("30 2 * * *", "2026-10-04T01:00:00Z"), Some(at("2026-10-04T02:30:00Z")))
@@ -47,12 +47,12 @@ class CronSuite extends munit.FunSuite:
     assertEquals(next("0 0 29 2 *", "2026-10-04T12:00:00Z"), Some(at("2028-02-29T00:00:00Z")))
 
   test("refused: the wrong number of fields, out of range, backwards, a bad step, a date that never comes"):
-    assert(Cron.parse(com.histmersion.domain.Cron.Text("* * * *")).left.exists(_.contains("five fields")))
-    assert(Cron.parse(com.histmersion.domain.Cron.Text("60 * * * *")).left.exists(_.contains("minute")))
-    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 24 * * *")).left.exists(_.contains("hour")))
-    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 0 5-2 * *")).left.exists(_.contains("backwards")))
-    assert(Cron.parse(com.histmersion.domain.Cron.Text("*/0 * * * *")).left.exists(_.contains("step")))
-    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 0 30 2 *")).left.exists(_.contains("never fires")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("* * * *")).left.exists(_.value.contains("five fields")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("60 * * * *")).left.exists(_.value.contains("minute")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 24 * * *")).left.exists(_.value.contains("hour")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 0 5-2 * *")).left.exists(_.value.contains("backwards")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("*/0 * * * *")).left.exists(_.value.contains("step")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 0 30 2 *")).left.exists(_.value.contains("never fires")))
     assert(Cron.parse(com.histmersion.domain.Cron.Text("")).isLeft)
 
   test("the shortest gap between firings (how a too-frequent schedule is refused)"):

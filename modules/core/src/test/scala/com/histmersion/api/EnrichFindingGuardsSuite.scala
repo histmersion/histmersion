@@ -22,15 +22,16 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     "The Uluburun ship carried ten tons of copper and one ton of tin. Its cargo dates to about 1320 BCE. " +
       "The town was walled in the 11th century. Vesuvius buried Pompeii in 79 CE. " +
       "Rainfall rose sharply in the next period. The hoard was buried in the 15th c. by its owners."
-  private val window = Window(com.histmersion.domain.EnrichSource.Window.Index(1), None, text)
+  private val window = Window(com.histmersion.domain.EnrichSource.Window.Index(1), None, com.histmersion.domain.EnrichSource.Window.Text(text))
 
   private val known = Set("Uluburun", "Pompeii")
   private def guards(
-      share: Double = 0.5,
-      gap: Long = 500,
-      phrases: List[String] = List("this date", "the next column", "as listed")
+      share: FindingGuards.MinPlacedShare = FindingGuards.MinPlacedShare(0.5),
+      gap: FindingGuards.CenturyGapYears = FindingGuards.CenturyGapYears(500),
+      phrases: List[FindingGuards.PointerPhrases] =
+        List("this date", "the next column", "as listed").map(FindingGuards.PointerPhrases(_))
   ) =
-    FindingGuards(share, gap, phrases, (name, _, _) => known.contains(name))
+    FindingGuards(share, gap, phrases, (name, _, _) => known.contains(name.value))
 
   private def finding(
       claim: String,
@@ -40,7 +41,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       end: Option[StatedYear] = None,
       periodName: Option[String] = None
   ) =
-    FindingProposal(claim, quote, place, None, start, end, periodName, Nil, com.histmersion.domain.library.Confidence.Wire("high"))
+    FindingProposal(FindingProposal.Claim(claim), com.histmersion.domain.AgentProposals.Proposal.Quote(quote), place.map(FindingProposal.Place(_)), None, start, end, periodName.map(FindingProposal.PeriodName(_)), Nil, com.histmersion.domain.library.Confidence.Wire("high"))
 
   private val copper = "The Uluburun ship carried ten tons of copper and one ton of tin."
   private val cargo = "Its cargo dates to about 1320 BCE."
@@ -55,7 +56,7 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
       within: Option[Period] = None,
       last: Boolean = false
   ) =
-    checkFindings(Findings(fs), window, 0.9, com.histmersion.domain.EnrichSource.CheckFindingsMaxAbsYear(3000000), within, Set.empty, g, last)
+    checkFindings(Findings(fs), window, com.histmersion.domain.EnrichSource.MinRatio(0.9), com.histmersion.domain.EnrichSource.CheckFindingsMaxAbsYear(3000000), within, Set.empty, g, com.histmersion.domain.EnrichSource.Last(last))
 
   // ── 1. places the gazetteer knows ─────────────────────────────────────────────────────────────
 
@@ -97,11 +98,11 @@ class EnrichFindingGuardsSuite extends munit.FunSuite:
     // nothing named at all: nothing to place
     assert(check(List(finding("Rainfall rose.", rain))).isRight)
     // share 0 switches the guard off
-    assert(check(List(finding("Rainfall rose.", rain, Some("nowhere"))), guards(share = 0)).isRight)
+    assert(check(List(finding("Rainfall rose.", rain, Some("nowhere"))), guards(share = FindingGuards.MinPlacedShare(0.0))).isRight)
 
   test("placement: the kind hint and the finding's period reach the gazetteer"):
     var asked = List.empty[(String, Geocode.KindHint, Option[Period])] // records the calls for the assertion
-    val g = FindingGuards(0.5, com.histmersion.domain.EnrichSource.FindingGuards.CenturyGapYears(500), Nil, (n, k, at) => { asked = asked :+ (n, k, at); true })
+    val g = FindingGuards(FindingGuards.MinPlacedShare(0.5), com.histmersion.domain.EnrichSource.FindingGuards.CenturyGapYears(500), Nil, (n, k, at) => { asked = asked :+ (n.value, k, at); true })
     val f = finding("A ship carried copper.", cargo, Some(" Uluburun "), Some(StatedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(1320), com.histmersion.domain.AgentVerify.YearUnit.Wire("BCE"))))
       .modify(_.placeKind).setTo(Some("site"))
     assert(check(List(f), g).isRight)

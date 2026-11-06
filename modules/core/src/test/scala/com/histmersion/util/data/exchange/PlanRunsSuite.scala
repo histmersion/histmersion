@@ -21,7 +21,7 @@ class PlanRunsSuite extends munit.FunSuite:
 
   final private class Named(name: String, answers: Boolean) extends PlanRun:
     override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
-      es.modify(_.aliases).setTo(es.aliases :+ com.histmersion.api.exchange.Bundle.Alias(name, uid(name), com.histmersion.api.exchange.Bundle.Alias.CreatedAt("2026-01-01T00:00:00.000000Z"))
+      es.modify(_.aliases).setTo(es.aliases :+ com.histmersion.api.exchange.Bundle.Alias(com.histmersion.api.exchange.Bundle.Alias.Value(name), uid(name), com.histmersion.api.exchange.Bundle.Alias.CreatedAt("2026-01-01T00:00:00.000000Z"))
       )
     override def notices: List[String] = List(s"$name notice")
     override def ownerSource(foreign: UUID, kind: com.histmersion.api.exchange.Bundle.Kind): Option[UUID] = Option.when(answers)(uid(name))

@@ -16,17 +16,17 @@ class FindingPlanSuite extends munit.FunSuite:
 
   private val At = "2026-10-01T09:00:00.000000Z"
   private def finding(
-      id: String,
+      id: Bundle.Finding.Id,
       ck: String,
-      claim: String,
+      claim: Bundle.Finding.Claim,
       period: Option[Bundle.Range] = Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1400)), Some(com.histmersion.api.catalogue.Year(-1200)))),
-      lonLat: Option[(Double, Double)] = Some((34.6, 40.0)),
-      tags: List[String] = Nil,
+      lonLat: Option[(com.histmersion.api.catalogue.Longitude, com.histmersion.api.catalogue.Latitude)] = Some((com.histmersion.api.catalogue.Longitude(34.6), com.histmersion.api.catalogue.Latitude(40.0))),
+      tags: List[Bundle.Finding.Tags] = Nil,
       confidence: Option[Confidence] = Some(Confidence.High),
-      region: Option[String] = Some("Anatolia")
+      region: Option[Bundle.Finding.Region] = Some(Bundle.Finding.Region("Anatolia"))
   ): Bundle.Finding =
     Bundle.Finding(
-      uid(id),
+      uid(id.value),
       work,
       uid(ck),
       id,
@@ -39,21 +39,21 @@ class FindingPlanSuite extends munit.FunSuite:
       tags,
       confidence,
       None,
-      At
+      Bundle.Finding.UpdatedAt(At)
     )
 
   test("findings: the same claim folds, a near duplicate is offered, the rest are new — one to one"):
     val lefts = List(
-      finding("h#1", "h", "Tarhunna is the storm god of Hatti", tags = List("home")),
-      finding("h#2", "h", "The storm god Tarhunna ruled Hatti")
+      finding(Bundle.Finding.Id("h#1"), "h", Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"), tags = List(Bundle.Finding.Tags("home"))),
+      finding(Bundle.Finding.Id("h#2"), "h", Bundle.Finding.Claim("The storm god Tarhunna ruled Hatti"))
     )
     val rights = List(
-      finding("w#1", "w", "the storm god of Hatti is Tarhunna", tags = List("work"), confidence = Some(Confidence.Low)),
-      finding("w#2", "w", "Tarhunna the storm god ruled Hatti and Arinna"),
-      finding("w#3", "w", "Hattusa burned around 1180 BC"),
-      finding("w#4", "w", "Tarhunna is the storm god of Hatti", period = Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-500)), Some(com.histmersion.api.catalogue.Year(-400)))))
+      finding(Bundle.Finding.Id("w#1"), "w", Bundle.Finding.Claim("the storm god of Hatti is Tarhunna"), tags = List(Bundle.Finding.Tags("work")), confidence = Some(Confidence.Low)),
+      finding(Bundle.Finding.Id("w#2"), "w", Bundle.Finding.Claim("Tarhunna the storm god ruled Hatti and Arinna")),
+      finding(Bundle.Finding.Id("w#3"), "w", Bundle.Finding.Claim("Hattusa burned around 1180 BC")),
+      finding(Bundle.Finding.Id("w#4"), "w", Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"), period = Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-500)), Some(com.histmersion.api.catalogue.Year(-400)))))
     )
-    val ms = FindingPlan.matches(lefts, rights, com.histmersion.domain.MergeSettings.FindingWithinKm(50), 0.6)
+    val ms = FindingPlan.matches(lefts, rights, com.histmersion.domain.MergeSettings.FindingWithinKm(50), com.histmersion.domain.MergeSettings.FindingNearAtLeast(0.6))
     assertEquals(ms.collect { case FindingPlan.Match.Same(r, l) => r.id -> l.id }, List("w#1" -> "h#1"))
     assertEquals(ms.collect { case FindingPlan.Match.Near(r, l, _) => r.id -> l.id }, List("w#2" -> "h#2"))
     // a different period is not the same finding
@@ -64,9 +64,9 @@ class FindingPlanSuite extends munit.FunSuite:
     assertEquals(f.confidence, Some(Confidence.Low)) // the more cautious
     // far apart, and in different regions: not the same place
     val far =
-      finding("w#5", "w", "Tarhunna is the storm god of Hatti", lonLat = Some((10.0, 50.0)), region = Some("Bavaria"))
+      finding(Bundle.Finding.Id("w#5"), "w", Bundle.Finding.Claim("Tarhunna is the storm god of Hatti"), lonLat = Some((com.histmersion.api.catalogue.Longitude(10.0), com.histmersion.api.catalogue.Latitude(50.0))), region = Some(Bundle.Finding.Region("Bavaria")))
     assert(!FindingPlan.samePlace(lefts.head, far, com.histmersion.domain.MergeSettings.FindingWithinKm(50)))
-    assert(FindingPlan.samePlace(lefts.head, far.modify(_.region).setTo(Some("anatolia")), com.histmersion.domain.MergeSettings.FindingWithinKm(50)))
+    assert(FindingPlan.samePlace(lefts.head, far.modify(_.region).setTo(Some(Bundle.Finding.Region("anatolia"))), com.histmersion.domain.MergeSettings.FindingWithinKm(50)))
 
   test("finding ids continue after the highest"):
     assertEquals(

@@ -11,7 +11,10 @@ import com.histmersion.config.given
   */
 class Diff3Suite extends munit.FunSuite:
 
-  private val base = "Intro.\n\nMiddle.\n\nEnd."
+  private val baseText = "Intro.\n\nMiddle.\n\nEnd."
+  private val base = Diff3.MergeBase(baseText)
+  private val baseLeft = Diff3.MergeLeft(baseText)
+  private val baseRight = Diff3.MergeRight(baseText)
 
   test("changes in different places merge cleanly, both kept"):
     val r = Diff3.merge(base, com.histmersion.util.data.exchange.Diff3.MergeLeft("Intro (left).\n\nMiddle.\n\nEnd."), com.histmersion.util.data.exchange.Diff3.MergeRight("Intro.\n\nMiddle.\n\nEnd (right)."))
@@ -19,10 +22,10 @@ class Diff3Suite extends munit.FunSuite:
     assertEquals(r.text, "Intro (left).\n\nMiddle.\n\nEnd (right).")
 
   test("one side unchanged takes the other; the same change on both sides is taken once"):
-    assertEquals(Diff3.merge(base, base, com.histmersion.util.data.exchange.Diff3.MergeRight("x")).text, "x")
-    assertEquals(Diff3.merge(base, com.histmersion.util.data.exchange.Diff3.MergeLeft("y"), base).text, "y")
+    assertEquals(Diff3.merge(base, baseLeft, com.histmersion.util.data.exchange.Diff3.MergeRight("x")).text, "x")
+    assertEquals(Diff3.merge(base, com.histmersion.util.data.exchange.Diff3.MergeLeft("y"), baseRight).text, "y")
     val same = "Intro.\n\nMiddle, rewritten.\n\nEnd."
-    assertEquals(Diff3.merge(base, same, same).text, same)
+    assertEquals(Diff3.merge(base, Diff3.MergeLeft(same), Diff3.MergeRight(same)).text, same)
     val both =
       Diff3.merge(base, com.histmersion.util.data.exchange.Diff3.MergeLeft("Intro.\n\nMiddle, rewritten.\n\nEnd (left)."), com.histmersion.util.data.exchange.Diff3.MergeRight("Intro (right).\n\nMiddle, rewritten.\n\nEnd."))
     assert(both.clean)
@@ -32,12 +35,12 @@ class Diff3Suite extends munit.FunSuite:
     val r = Diff3.merge(base, com.histmersion.util.data.exchange.Diff3.MergeLeft("Intro.\n\nMiddle (left).\n\nEnd."), com.histmersion.util.data.exchange.Diff3.MergeRight("Intro.\n\nMiddle (right).\n\nEnd."))
     assert(!r.clean)
     assertEquals(r.conflicts, 1)
-    val m = r.marked("here", "bundle")
+    val m = r.marked(Diff3.Result.MarkedLeftName("here"), Diff3.Result.MarkedRightName("bundle"))
     assert(
-      m.contains("<<<<<<< here\nMiddle (left).\n||||||| base\nMiddle.\n=======\nMiddle (right).\n>>>>>>> bundle"),
-      m
+      m.value.contains("<<<<<<< here\nMiddle (left).\n||||||| base\nMiddle.\n=======\nMiddle (right).\n>>>>>>> bundle"),
+      m.value
     )
-    assert(m.startsWith("Intro.\n"))
+    assert(m.value.startsWith("Intro.\n"))
 
   test("inserted and deleted lines on either side merge; an insertion at one spot from both conflicts"):
     val ins = Diff3.merge(com.histmersion.util.data.exchange.Diff3.MergeBase("a\nb\nc"), com.histmersion.util.data.exchange.Diff3.MergeLeft("a\nx\nb\nc"), com.histmersion.util.data.exchange.Diff3.MergeRight("a\nb\nc\ny"))
@@ -51,7 +54,9 @@ class Diff3Suite extends munit.FunSuite:
     def text = (1 to rnd.nextInt(12)).map(_ => rnd.nextInt(5).toString).mkString("\n")
     (1 to 200).foreach { _ =>
       val (o, a) = (text, text)
-      assertEquals(Diff3.merge(o, a, o).text, a)
-      assertEquals(Diff3.merge(o, o, a).text, a)
-      assertEquals(Diff3.merge(o, a, a).text, a)
+      val (ob, ol, or) = (Diff3.MergeBase(o), Diff3.MergeLeft(o), Diff3.MergeRight(o))
+      val (al, ar) = (Diff3.MergeLeft(a), Diff3.MergeRight(a))
+      assertEquals(Diff3.merge(ob, al, or).text, a)
+      assertEquals(Diff3.merge(ob, ol, ar).text, a)
+      assertEquals(Diff3.merge(ob, al, ar).text, a)
     }

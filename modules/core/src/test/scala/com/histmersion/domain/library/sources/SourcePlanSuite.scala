@@ -59,12 +59,12 @@ class SourcePlanSuite extends munit.FunSuite:
     assertEquals(f.notes, Some("home's\n\nwork's"))
     assertEquals(f.status, l.status) // two verdicts: ours until decided…
     val taken =
-      SourcePlan.fold(l, r, Map(com.histmersion.api.exchange.MergeIssue.Kind.StatusDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.KeepRight)), l.citekey)
+      SourcePlan.fold(l, r, Map(com.histmersion.api.exchange.MergeIssue.Kind.StatusDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.KeepRight)), com.histmersion.domain.library.Citekey("guterbock1997_hittite"))
     assertEquals(taken.status, Source.Status.Contested) // …keep-right takes theirs
     assertEquals(taken.notes, Some("home's")) // no decision on the notes: ours
     // an unassessed side never wins over a verdict
     assertEquals(
-      SourcePlan.fold(l.copy(status = Source.Status.Unassessed), r, Map.empty, l.citekey).status,
+      SourcePlan.fold(l.copy(status = Source.Status.Unassessed), r, Map.empty, com.histmersion.domain.library.Citekey("guterbock1997_hittite")).status,
       Source.Status.Contested
     )
 
@@ -74,12 +74,12 @@ class SourcePlanSuite extends munit.FunSuite:
     val r = src("w", "a2000_y", "X", Nil, Some(2000), body = Some("theirs"), sha = Some("2" * 64))
       .copy(period = Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1400)), Some(com.histmersion.api.catalogue.Year(-1100)))))
     val hull =
-      SourcePlan.fold(l, r, Map(com.histmersion.api.exchange.MergeIssue.Kind.PeriodDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.Hull)), l.citekey)
+      SourcePlan.fold(l, r, Map(com.histmersion.api.exchange.MergeIssue.Kind.PeriodDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.Hull)), com.histmersion.domain.library.Citekey("a2000_x"))
     assertEquals(hull.period, Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1500)), Some(com.histmersion.api.catalogue.Year(-1100)))))
     assertEquals(hull.bodySha256, l.bodySha256)
     val right =
-      SourcePlan.fold(l, r, Map(com.histmersion.api.exchange.MergeIssue.Kind.BodyDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.KeepRight)), l.citekey)
+      SourcePlan.fold(l, r, Map(com.histmersion.api.exchange.MergeIssue.Kind.BodyDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.KeepRight)), com.histmersion.domain.library.Citekey("a2000_x"))
     assertEquals(right.bodySha256, r.bodySha256)
     assertEquals(right.originalSha256, r.originalSha256)
     // one side without a body: the other's
-    assertEquals(SourcePlan.fold(l.copy(bodySha256 = None), r, Map.empty, l.citekey).bodySha256, r.bodySha256)
+    assertEquals(SourcePlan.fold(l.copy(bodySha256 = None), r, Map.empty, com.histmersion.domain.library.Citekey("a2000_x")).bodySha256, r.bodySha256)

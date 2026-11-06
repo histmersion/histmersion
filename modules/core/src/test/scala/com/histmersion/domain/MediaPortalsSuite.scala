@@ -50,33 +50,39 @@ class MediaPortalsSuite extends munit.FunSuite:
 
   private val petra = MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("pleiades_697725"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Petra"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("petra")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-300L), com.histmersion.domain.DeepTime.SignedYear(400L)))
   private def rec(
-      ids: List[(String, String)],
-      geo: List[(String, String)],
+      ids: List[(ExternalIds.Scheme, ExternalIds.ExternalId)],
+      geo: List[(MediaRecord.GeographyPart1, MediaRecord.GeographyPart2)],
       period: Option[com.histmersion.Period] = DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-200L), com.histmersion.domain.DeepTime.SignedYear(360L))
   ) =
     MediaRecord(com.histmersion.domain.media.imports.MediaRecord.Key("k"), com.histmersion.domain.media.imports.MediaRecord.Title("t"), com.histmersion.domain.media.imports.MediaRecord.PageUrl("p"), Some(com.histmersion.domain.media.imports.MediaRecord.ImageUrl("i")), None, None, Left(com.histmersion.domain.media.imports.MediaRecord.RightsPart1("x")), geo, period, ids)
+  private def gp(field: String, value: String) =
+    (MediaRecord.GeographyPart1(field), MediaRecord.GeographyPart2(value))
+  private def ext(scheme: String, id: String) = (ExternalIds.Scheme(scheme), ExternalIds.ExternalId(id))
   private val idsOnMap: MediaMatch.ResolveId = Map(
-    ("pleiades", "697725") -> Set("pleiades_697725"),
-    ("geonames", "248816") -> Set("geonames_248816"), // Jordan
-    ("pleiades", "1") -> Set("pleiades_697725", "elsewhere")
+    ext("pleiades", "697725") -> Set(MediaMatch.PlaceInfo.Id("pleiades_697725")),
+    ext("geonames", "248816") -> Set(MediaMatch.PlaceInfo.Id("geonames_248816")), // Jordan
+    ext("pleiades", "1") -> Set(MediaMatch.PlaceInfo.Id("pleiades_697725"), MediaMatch.PlaceInfo.Id("elsewhere"))
   ).withDefaultValue(Set.empty)
   private val namesOnMap: MediaMatch.Resolve =
-    Map("jordan" -> Set("geonames_248816"), "lion gate" -> Set("lion_gate")).withDefaultValue(Set.empty)
+    Map(
+      MediaMatch.PlaceInfo.Keys("jordan") -> Set(MediaMatch.PlaceInfo.Id("geonames_248816")),
+      MediaMatch.PlaceInfo.Keys("lion gate") -> Set(MediaMatch.PlaceInfo.Id("lion_gate"))
+    ).withDefaultValue(Set.empty)
 
   test("a shared place id ties the record; a finer context naming another place on the map refuses it"):
-    val geo = List("context" -> "Trench 94", "context" -> "Petra Great Temple", "region" -> "Jordan")
+    val geo = List(gp("context", "Trench 94"), gp("context", "Petra Great Temple"), gp("region", "Jordan"))
     assertEquals(
-      MediaMatch.withIds(rec(List("pleiades" -> "697725"), geo), petra, idsOnMap, namesOnMap, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(rec(List(ext("pleiades", "697725")), geo), petra, idsOnMap, namesOnMap, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
       Right("pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–400 CE")
     )
-    val finer = ("context" -> "Lion Gate") :: geo
+    val finer = gp("context", "Lion Gate") :: geo
     assertEquals(
-      MediaMatch.withIds(rec(List("pleiades" -> "697725"), finer), petra, idsOnMap, namesOnMap, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(rec(List(ext("pleiades", "697725")), finer), petra, idsOnMap, namesOnMap, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
       Left("its context names another place on the map")
     )
     assertEquals(
       MediaMatch.withIds(
-        rec(List("pleiades" -> "697725"), geo, DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(800L), com.histmersion.domain.DeepTime.SignedYear(900L))),
+        rec(List(ext("pleiades", "697725")), geo, DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(800L), com.histmersion.domain.DeepTime.SignedYear(900L))),
         petra,
         idsOnMap,
         namesOnMap,
@@ -89,21 +95,21 @@ class MediaPortalsSuite extends munit.FunSuite:
     "an id naming only another place refuses it (not filed under the country); an id naming two places is ambiguous"
   ):
     val jordan = MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("geonames_248816"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Jordan"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("jordan")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(2000L)))
-    val geo = List("context" -> "Petra Great Temple", "region" -> "Jordan")
+    val geo = List(gp("context", "Petra Great Temple"), gp("region", "Jordan"))
     assertEquals(
-      MediaMatch.withIds(rec(List("pleiades" -> "697725"), geo), jordan, idsOnMap, namesOnMap, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(rec(List(ext("pleiades", "697725")), geo), jordan, idsOnMap, namesOnMap, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
       Left("its place id names another place on the map")
     )
     assertEquals(
-      MediaMatch.withIds(rec(List("pleiades" -> "1"), geo), petra, idsOnMap, namesOnMap, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(rec(List(ext("pleiades", "1")), geo), petra, idsOnMap, namesOnMap, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
       Left("its place id is ambiguous on the map")
     )
 
   test("without an id naming a place on the map, the names decide (most specific first), then the dates"):
-    val geo = List("context" -> "Trench 1", "context" -> "Petra", "region" -> "Jordan")
-    val withPetra: MediaMatch.Resolve = k => if k == "petra" then Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("pleiades_697725")) else namesOnMap(k)
+    val geo = List(gp("context", "Trench 1"), gp("context", "Petra"), gp("region", "Jordan"))
+    val withPetra: MediaMatch.Resolve = k => if k.value == "petra" then Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("pleiades_697725")) else namesOnMap(k)
     assertEquals(
-      MediaMatch.withIds(rec(List("geonames" -> "999"), geo), petra, idsOnMap, withPetra, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(rec(List(ext("geonames", "999")), geo), petra, idsOnMap, withPetra, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
       Right("context = Petra; 200 BCE–360 CE within 300 BCE–400 CE")
     )
     assertEquals(
@@ -113,10 +119,10 @@ class MediaPortalsSuite extends munit.FunSuite:
 
   test("a context name shared by two places is settled by an id naming the target alone, else ambiguous"):
     val twoNames: MediaMatch.Resolve =
-      k => if k == "petra great temple" then Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("pleiades_697725"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("other")) else namesOnMap(k)
-    val geo = List("context" -> "Petra Great Temple", "region" -> "Jordan")
+      k => if k.value == "petra great temple" then Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("pleiades_697725"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("other")) else namesOnMap(k)
+    val geo = List(gp("context", "Petra Great Temple"), gp("region", "Jordan"))
     assertEquals(
-      MediaMatch.withIds(rec(List("pleiades" -> "697725"), geo), petra, idsOnMap, twoNames, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
+      MediaMatch.withIds(rec(List(ext("pleiades", "697725")), geo), petra, idsOnMap, twoNames, Set(com.histmersion.domain.media.imports.MediaRecord.GeographyPart1("context"))),
       Right("pleiades:697725 (the record's place id); 200 BCE–360 CE within 300 BCE–400 CE")
     )
     assertEquals(

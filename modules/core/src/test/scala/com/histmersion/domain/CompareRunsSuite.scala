@@ -243,7 +243,7 @@ class CompareRunsSuite extends munit.FunSuite:
       Nil,
       "N."
     )
-    val cmp = compare(List(a, b)).fold(fail(_), identity)
+    val cmp = compare(List(a, b)).fold(p => fail(p.value), identity)
     assertEquals(
       cmp.enrich,
       List(
@@ -259,7 +259,7 @@ class CompareRunsSuite extends munit.FunSuite:
   test("a run that did not finish is compared with a note saying so"):
     val a = run(RunHead.Id("aaaaaaaa1"), RunHead.Pipeline("enrich-source"), RunHead.Target("x2020"), List(step(1, Step.Name("load"))))
     val b = run(RunHead.Id("bbbbbbbb2"), RunHead.Pipeline("enrich-source"), RunHead.Target("x2020"), List(step(1, Step.Name("load"))), status = RunHead.Status("paused"))
-    val cmp = compare(List(a, b)).fold(fail(_), identity)
+    val cmp = compare(List(a, b)).fold(p => fail(p.value), identity)
     assertEquals(cmp.notes, List("run bbbbbbbb is paused, not done: its outputs are what it had so far"))
     assertEquals(
       cmp.steps,
@@ -359,7 +359,7 @@ class CompareRunsSuite extends munit.FunSuite:
       List(Merged(com.histmersion.domain.ReviewArticle.Merged.Round(1), Verdict.Major, List(r1b), None, Nil, Nil)),
       List(Report(Reviewer.Rules, Verdict.Major, List(r1b)))
     )
-    val cmp = compare(List(a, b)).fold(fail(_), identity)
+    val cmp = compare(List(a, b)).fold(p => fail(p.value), identity)
     assertEquals(cmp.review.map(r => (r.verdict, r.rounds)), List((Some("PASS"), 2), (Some("MAJOR"), 1)))
     assertEquals(
       cmp.review.head.reviewers.map(r => (r.reviewer, r.verdict, r.majors, r.minors)),

@@ -27,7 +27,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       None,
       None,
       Right(Attribution.cc0(None, com.histmersion.domain.Attribution.Cc0Credit("t"))),
-      geo,
+      geo.map((k, v) => (com.histmersion.domain.media.imports.MediaRecord.GeographyPart1(k), com.histmersion.domain.media.imports.MediaRecord.GeographyPart2(v))),
       period
     )
 
@@ -35,10 +35,10 @@ class MediaCollectionsSuite extends munit.FunSuite:
     MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("pleiades_570491"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Mycenae"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("mycenae"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("mykenai")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1600L), com.histmersion.domain.DeepTime.SignedYear(-1100L)))
   private val greece = MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("geonames_390903"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Greece"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("greece")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-3000L), com.histmersion.domain.DeepTime.SignedYear(-100L)))
   private val onMap: MediaMatch.Resolve = Map(
-    "mycenae" -> Set("pleiades_570491"),
-    "mykenai" -> Set("pleiades_570491"),
-    "greece" -> Set("geonames_390903"),
-    "thebes" -> Set("thebes_egypt", "thebes_greece")
+    MediaMatch.PlaceInfo.Keys("mycenae") -> Set(MediaMatch.PlaceInfo.Id("pleiades_570491")),
+    MediaMatch.PlaceInfo.Keys("mykenai") -> Set(MediaMatch.PlaceInfo.Id("pleiades_570491")),
+    MediaMatch.PlaceInfo.Keys("greece") -> Set(MediaMatch.PlaceInfo.Id("geonames_390903")),
+    MediaMatch.PlaceInfo.Keys("thebes") -> Set(MediaMatch.PlaceInfo.Id("thebes_egypt"), MediaMatch.PlaceInfo.Id("thebes_greece"))
   ).withDefaultValue(Set.empty)
 
   test("museum rule: the most specific place field that names a place on the map decides, by name key, with the dates"):
@@ -53,7 +53,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
       "an object from Mycenae is not filed under Greece too"
     )
     assertEquals(
-      MediaMatch.museum(rec(List("city" -> "Atlantis", "country" -> "Greece")), greece, onMap).map(_.take(17)),
+      MediaMatch.museum(rec(List("city" -> "Atlantis", "country" -> "Greece")), greece, onMap).map(_.value.take(17)),
       Right("country = Greece;"),
       "a field that names nothing on the map is passed over"
     )
@@ -92,7 +92,7 @@ class MediaCollectionsSuite extends munit.FunSuite:
     assertEquals(MediaMatch.map(m, mycenae, onMap, com.histmersion.Year(1928)), Right("location = mycenae; map of 1880–1880 CE"))
     assertEquals(MediaMatch.map(m, greece, onMap, com.histmersion.Year(1928)), Right("location = greece; map of 1880–1880 CE"))
     assertEquals(
-      MediaMatch.map(m.modify(_.period).setTo(DeepTime.span(1950L, 1950L)), greece, onMap, com.histmersion.Year(1928)),
+      MediaMatch.map(m.modify(_.period).setTo(DeepTime.span(DeepTime.SignedYear(1950L), DeepTime.SignedYear(1950L))), greece, onMap, com.histmersion.Year(1928)),
       Left("made after 1928")
     )
     assertEquals(
@@ -106,14 +106,14 @@ class MediaCollectionsSuite extends munit.FunSuite:
     )
 
   test("year ranges read as a person reads them; overlap is inclusive"):
-    def p(a: Long, b: Long) = DeepTime.span(a, b).get
-    assertEquals(MediaMatch.years(p(-200L, 100L)), "200 BCE–100 CE")
-    assert(MediaMatch.overlaps(p(-1200L, -1100L), p(-1100L, -1000L)))
-    assert(!MediaMatch.overlaps(p(-1200L, -1101L), p(-1100L, -1000L)))
+    def p(a: DeepTime.SignedYear, b: DeepTime.SignedYear) = DeepTime.span(a, b).get
+    assertEquals(MediaMatch.years(p(DeepTime.SignedYear(-200L), DeepTime.SignedYear(100L))), "200 BCE–100 CE")
+    assert(MediaMatch.overlaps(p(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1100L)), p(DeepTime.SignedYear(-1100L), DeepTime.SignedYear(-1000L))))
+    assert(!MediaMatch.overlaps(p(DeepTime.SignedYear(-1200L), DeepTime.SignedYear(-1101L)), p(DeepTime.SignedYear(-1100L), DeepTime.SignedYear(-1000L))))
 
   test("deep time: two years in either order make a period; a year no Year holds makes none"):
     assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1100L), com.histmersion.domain.DeepTime.SignedYear(-1200L)), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1200L), com.histmersion.domain.DeepTime.SignedYear(-1100L)))
     assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1200L), com.histmersion.domain.DeepTime.SignedYear(-1100L)).map(q => (q.start.value: Int, q.end.value: Int)), Some((-1200, -1100)))
     assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(5L), com.histmersion.domain.DeepTime.SignedYear(5L)).map(_.isPoint), Some(true))
-    assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1L), Int.MaxValue.toLong + 1), None)
-    assertEquals(DeepTime.year(Int.MinValue.toLong - 1), None)
+    assertEquals(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-1L), com.histmersion.domain.DeepTime.SignedYear(Int.MaxValue.toLong + 1)), None)
+    assertEquals(DeepTime.year(DeepTime.SignedYear(Int.MinValue.toLong - 1)), None)

@@ -152,5 +152,5 @@ class AcquireMatchSuite extends munit.FunSuite:
     assertEquals(AcquireMatch.describe(Decision.Close(Brill)), "ticked off acquisition item #1 (same DOI)")
     assert(AcquireMatch.describe(Decision.Close(Brill), _ => Left(com.histmersion.domain.AcquireMatch.Problem("gone"))).value.contains("NOT ticked off: gone"))
     val line = AcquireMatch.describe(Decision.Propose(item(QueueItem.Id(4), QueueItem.Text("Anthony — The Horse")), Decision.Propose.Score(0.83), None))
-    assert(line.startsWith("possible acquisition item #4 (similarity 0.83)"), line)
-    assert(line.contains("histmersion queue done 4"), line)
+    assert(line.value.startsWith("possible acquisition item #4 (similarity 0.83)"), line)
+    assert(line.value.contains("histmersion queue done 4"), line)

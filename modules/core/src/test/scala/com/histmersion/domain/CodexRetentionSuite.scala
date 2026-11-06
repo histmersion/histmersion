@@ -13,17 +13,18 @@ import com.histmersion.api.maintenance.Storage
 class CodexRetentionSuite extends munit.FunSuite:
 
   private val Day = 24L * 60 * 60 * 1000
-  private val now = 100 * Day
+  private val nowMs = 100 * Day
+  private val now = CodexRetention.NowMs(nowMs)
 
   test("only transcripts under sessions/ or archived_sessions/ older than keep-days, oldest first"):
     val files = List(
-      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("sessions/2026/09/01/rollout-a.jsonl"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(10), now - 40 * Day),
-      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("sessions/2026/10/20/rollout-b.jsonl"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(10), now - 3 * Day),
-      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("archived_sessions/rollout-c.jsonl"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(10), now - 60 * Day),
-      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("auth.json"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(1), now - 400 * Day),
-      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("state_5.sqlite"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(1), now - 400 * Day),
-      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("extractor.config.toml"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(1), now - 400 * Day),
-      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("sessions"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(1), now - 400 * Day)
+      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("sessions/2026/09/01/rollout-a.jsonl"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(10), com.histmersion.domain.CodexRetention.FileInfo.ModifiedMs(nowMs - 40 * Day)),
+      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("sessions/2026/10/20/rollout-b.jsonl"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(10), com.histmersion.domain.CodexRetention.FileInfo.ModifiedMs(nowMs - 3 * Day)),
+      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("archived_sessions/rollout-c.jsonl"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(10), com.histmersion.domain.CodexRetention.FileInfo.ModifiedMs(nowMs - 60 * Day)),
+      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("auth.json"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(1), com.histmersion.domain.CodexRetention.FileInfo.ModifiedMs(nowMs - 400 * Day)),
+      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("state_5.sqlite"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(1), com.histmersion.domain.CodexRetention.FileInfo.ModifiedMs(nowMs - 400 * Day)),
+      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("extractor.config.toml"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(1), com.histmersion.domain.CodexRetention.FileInfo.ModifiedMs(nowMs - 400 * Day)),
+      FileInfo(com.histmersion.domain.CodexRetention.FileInfo.Rel("sessions"), com.histmersion.domain.CodexRetention.FileInfo.Bytes(1), com.histmersion.domain.CodexRetention.FileInfo.ModifiedMs(nowMs - 400 * Day))
     )
     assertEquals(
       CodexRetention.stale(files, now, com.histmersion.domain.CodexRetention.KeepDays(14)).map(_.rel),
@@ -38,11 +39,11 @@ class CodexRetentionSuite extends munit.FunSuite:
       List("state_5.sqlite", "thread_history_1.sqlite")
     )
     assert(CodexRetention.due(None, now, com.histmersion.domain.CodexRetention.EveryHours(24)))
-    assert(!CodexRetention.due(Some(now - Day + 1), now, com.histmersion.domain.CodexRetention.EveryHours(24)))
-    assert(CodexRetention.due(Some(now - Day), now, com.histmersion.domain.CodexRetention.EveryHours(24)))
+    assert(!CodexRetention.due(Some(CodexRetention.LastMs(nowMs - Day + 1)), now, com.histmersion.domain.CodexRetention.EveryHours(24)))
+    assert(CodexRetention.due(Some(CodexRetention.LastMs(nowMs - Day)), now, com.histmersion.domain.CodexRetention.EveryHours(24)))
     assert(!CodexRetention.due(None, now, com.histmersion.domain.CodexRetention.EveryHours(0)), "0 = no automatic pass")
 
   test("the configured defaults, and About's shrink hint"):
     val c = AppConfig.load().agents.providers.codex
     assertEquals((c.keepSessionsDays, c.vacuum, c.retentionEveryHours, c.sqlite), (14, true, 24, "sqlite3"))
-    assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("codex-home"), com.histmersion.api.maintenance.Storage.Advice.Keep(0)).exists(_.contains("keep-sessions-days")))
+    assert(Storage.Advice.shrink(com.histmersion.api.maintenance.Storage.Entry.Key("codex-home"), com.histmersion.api.maintenance.Storage.Advice.Keep(0)).exists(_.value.contains("keep-sessions-days")))

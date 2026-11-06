@@ -12,12 +12,17 @@ import com.histmersion.api.library.Source
 
 class AgentProposalsSuite extends munit.FunSuite:
 
-  private val cks = Set("knapp2016_tin", "jones2021_tin")
-  private val text = Map(
-    "knapp2016_tin" -> "The Uluburun ship carried ten tons of copper and one ton of tin.",
-    "jones2021_tin" -> "We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia."
+  private val cks = Set(
+    com.histmersion.domain.library.Citekey("knapp2016_tin"),
+    com.histmersion.domain.library.Citekey("jones2021_tin")
   )
-  private def check(a: ProposalAnswer) = AgentProposals.check(a, cks, text.get, 0.9)
+  private val text = Map(
+    com.histmersion.domain.library.Citekey("knapp2016_tin") ->
+      AgentVerify.SourceBody("The Uluburun ship carried ten tons of copper and one ton of tin."),
+    com.histmersion.domain.library.Citekey("jones2021_tin") ->
+      AgentVerify.SourceBody("We show that the tin of the Uluburun cargo came from Central Asia, not Anatolia.")
+  )
+  private def check(a: ProposalAnswer) = AgentProposals.check(a, cks, text.get, AgentVerify.MinRatio(0.9))
 
   test("a status change: a known citekey, a status in the vocabulary, a quote in its record"):
     val p = check(
@@ -53,26 +58,26 @@ class AgentProposalsSuite extends munit.FunSuite:
       p.patch.edges.map(_.add),
       Some(List(com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey("jones2021_tin"), Edge.Kind.SupersededBy)))
     )
-    assert(p.describe.contains("superseded_by"))
+    assert(p.describe.value.contains("superseded_by"))
     assert(
       check(
         ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("edge"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), None, Some(com.histmersion.api.library.Edge.Kind.Wire("references")), Some(com.histmersion.domain.AgentProposals.ProposalAnswer.Target("jones2021_tin")), com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))
-      ).left.exists(_.contains("edge kind"))
+      ).left.exists(_.value.contains("edge kind"))
     )
     assert(
       check(
         ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("edge"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), None, Some(com.histmersion.api.library.Edge.Kind.Wire("refutes")), Some(com.histmersion.domain.AgentProposals.ProposalAnswer.Target("knapp2016_tin")), com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))
-      ).left.exists(_.contains("itself"))
+      ).left.exists(_.value.contains("itself"))
     )
 
   test("refused: unknown citekey, no evidence, an invented quote, unassessed, an unknown kind"):
     assert(
       check(ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("status"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("ghost"), Some(com.histmersion.domain.library.Source.Status.Wire("contested")), None, None, com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("q"))).left
-        .exists(_.contains("not a citekey"))
+        .exists(_.value.contains("not a citekey"))
     )
     assert(
       check(ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("status"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), Some(com.histmersion.domain.library.Source.Status.Wire("contested")), None, None, com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence(" "), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))).left
-        .exists(_.contains("no evidence"))
+        .exists(_.value.contains("no evidence"))
     )
     assert(
       check(
@@ -85,14 +90,14 @@ class AgentProposalsSuite extends munit.FunSuite:
           com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"),
           com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("the ship was a Phoenician trader from Tyre")
         )
-      ).left.exists(_.contains("not in the record"))
+      ).left.exists(_.value.contains("not in the record"))
     )
     assert(
       check(ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("status"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), Some(com.histmersion.domain.library.Source.Status.Wire("unassessed")), None, None, com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))).isLeft
     )
     assert(
       check(ProposalAnswer(com.histmersion.domain.AgentProposals.ProposalAnswer.Kind("rename"), com.histmersion.domain.AgentProposals.ProposalAnswer.Citekey("knapp2016_tin"), None, None, None, com.histmersion.domain.AgentProposals.ProposalAnswer.Evidence("e"), com.histmersion.domain.AgentProposals.ProposalAnswer.Quote("one ton of tin"))).left
-        .exists(_.contains("neither"))
+        .exists(_.value.contains("neither"))
     )
 
   test("route: the fill rule applies, anything else waits for a person unless configured auto"):

@@ -10,8 +10,8 @@ class PlanReadScheduleSuite extends munit.FunSuite:
     val every3h = ReadSchedule.Every(java.time.Duration.ofMinutes(180))
     def read(
         schedule: ReadSchedule = every3h,
-        autopilotOn: Boolean = true,
-        wanted: Boolean = true,
+        autopilotOn: PlanReadSchedule.AutopilotOn = PlanReadSchedule.AutopilotOn(true),
+        wanted: PlanReadSchedule.Wanted = PlanReadSchedule.Wanted(true),
         newest: Option[java.time.Instant] = minutesAgo(200),
         attempt: Option[java.time.Instant] = None
     ) =
@@ -26,5 +26,5 @@ class PlanReadScheduleSuite extends munit.FunSuite:
       "a failed attempt counts like a reading: no retry before the interval"
     )
     assertEquals(read(schedule = ReadSchedule.Off), ScheduledRead.NotDue(com.histmersion.domain.ScheduledRead.NotDue.Why("the schedule is off")))
-    assertEquals(read(autopilotOn = false), ScheduledRead.NotDue(com.histmersion.domain.ScheduledRead.NotDue.Why("the autopilot is off")))
-    assertEquals(read(wanted = false), ScheduledRead.NotDue(com.histmersion.domain.ScheduledRead.NotDue.Why("no queued work wants the pool")))
+    assertEquals(read(autopilotOn = PlanReadSchedule.AutopilotOn(false)), ScheduledRead.NotDue(com.histmersion.domain.ScheduledRead.NotDue.Why("the autopilot is off")))
+    assertEquals(read(wanted = PlanReadSchedule.Wanted(false)), ScheduledRead.NotDue(com.histmersion.domain.ScheduledRead.NotDue.Why("no queued work wants the pool")))

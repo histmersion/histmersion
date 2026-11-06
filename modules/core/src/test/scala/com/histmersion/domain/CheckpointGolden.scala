@@ -36,8 +36,8 @@ object CheckpointGolden:
     Finding.Input(
       com.histmersion.api.library.Finding.Claim("Tin reached the Aegean from Afghanistan."),
       Some(com.histmersion.api.library.Finding.Region("Aegean")),
-      Some(25.1),
-      Some(37.9),
+      Some(com.histmersion.api.catalogue.Longitude(25.1)),
+      Some(com.histmersion.api.catalogue.Latitude(37.9)),
       Some(com.histmersion.api.catalogue.Year(-2500)),
       Some(com.histmersion.api.catalogue.Year(-2000)),
       Some(com.histmersion.api.library.Finding.PeriodName("Early Bronze Age")),
@@ -164,12 +164,12 @@ object CheckpointGolden:
     "enrich-verified-findings.ndjson",
     List(
       VerifiedFindings(
-        VerifiedFinding(com.histmersion.domain.EnrichSource.VerifiedFinding.Claim("A bare claim."), com.histmersion.domain.EnrichSource.VerifiedFinding.Quote("a bare claim"), 0.91, None, None, None, None, Nil, com.histmersion.domain.EnrichSource.VerifiedFinding.Confidence("low")) ::
+        VerifiedFinding(com.histmersion.domain.EnrichSource.VerifiedFinding.Claim("A bare claim."), com.histmersion.domain.EnrichSource.VerifiedFinding.Quote("a bare claim"), com.histmersion.domain.AgentVerify.Ratio(0.91), None, None, None, None, Nil, com.histmersion.domain.EnrichSource.VerifiedFinding.Confidence("low")) ::
           Geocode.KindHint.values.toList.map(k =>
             VerifiedFinding(
               com.histmersion.domain.EnrichSource.VerifiedFinding.Claim("Tin came from the east."),
               com.histmersion.domain.EnrichSource.VerifiedFinding.Quote("tin came from the east"),
-              1.0,
+              com.histmersion.domain.AgentVerify.Ratio(1.0),
               Some(com.histmersion.domain.EnrichSource.VerifiedFinding.Place("Troy")),
               Some(com.histmersion.api.catalogue.Year(-2500)),
               Some(com.histmersion.api.catalogue.Year(-2000)),
@@ -201,7 +201,7 @@ object CheckpointGolden:
   )
 
   private val evidence =
-    List(Evidence(com.histmersion.domain.library.Citekey("smith1987_tin"), Some(com.histmersion.Offset(120)), com.histmersion.domain.ReviewArticle.Evidence.Quote("the route is later"), 0.97), Evidence(com.histmersion.domain.library.Citekey("doe2001_tin"), None, com.histmersion.domain.ReviewArticle.Evidence.Quote("q"), 1.0))
+    List(Evidence(com.histmersion.domain.library.Citekey("smith1987_tin"), Some(com.histmersion.Offset(120)), com.histmersion.domain.ReviewArticle.Evidence.Quote("the route is later"), com.histmersion.domain.ReviewArticle.Evidence.Ratio(0.97)), Evidence(com.histmersion.domain.library.Citekey("doe2001_tin"), None, com.histmersion.domain.ReviewArticle.Evidence.Quote("q"), com.histmersion.domain.ReviewArticle.Evidence.Ratio(1.0)))
 
   val reviewFindings: Golden[ReviewArticle.Finding] = Golden(
     "review-finding.ndjson",
@@ -219,7 +219,7 @@ object CheckpointGolden:
       pair = Some(CritiqueRef(com.histmersion.api.library.Citekey("doe2001_tin"), com.histmersion.api.library.Citekey("smith1987_tin")))
     ) ::
       (for r <- Reviewer.values.toList; s <- Severity.values.toList
-      yield ReviewArticle.Finding(s"${r.prefix}1", r, s, com.histmersion.domain.ReviewArticle.Finding.Kind("style"), com.histmersion.domain.ReviewArticle.Finding.Where(""), com.histmersion.domain.ReviewArticle.Finding.Quote(""), com.histmersion.domain.ReviewArticle.Finding.Problem("A problem."), com.histmersion.domain.ReviewArticle.Finding.Fix("")))
+      yield ReviewArticle.Finding(com.histmersion.domain.ReviewArticle.Finding.Id(s"${r.prefix}1"), r, s, com.histmersion.domain.ReviewArticle.Finding.Kind("style"), com.histmersion.domain.ReviewArticle.Finding.Where(""), com.histmersion.domain.ReviewArticle.Finding.Quote(""), com.histmersion.domain.ReviewArticle.Finding.Problem("A problem."), com.histmersion.domain.ReviewArticle.Finding.Fix("")))
   )
 
   val reports: Golden[Report] = Golden(
@@ -232,7 +232,7 @@ object CheckpointGolden:
       List(com.histmersion.domain.ReviewArticle.ExplainSlotsValue("disagreement")),
       proposals.values.take(2),
       List(Check(com.histmersion.domain.ReviewArticle.Check.Id("R1"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("a quote"), com.histmersion.domain.ReviewArticle.Check.Note("fixed in ## Origins"))),
-      List(SpotCheck(com.histmersion.domain.library.Citekey("smith1987_tin"), com.histmersion.domain.ReviewArticle.SpotCheck.Claim("tin came"), com.histmersion.domain.ReviewArticle.SpotCheck.Verdict("attributable"), com.histmersion.domain.ReviewArticle.SpotCheck.RecordQuote("the route is later"), 0.98, com.histmersion.domain.ReviewArticle.SpotCheck.Tool("get_source"))),
+      List(SpotCheck(com.histmersion.domain.library.Citekey("smith1987_tin"), com.histmersion.domain.ReviewArticle.SpotCheck.Claim("tin came"), com.histmersion.domain.ReviewArticle.SpotCheck.Verdict("attributable"), com.histmersion.domain.ReviewArticle.SpotCheck.RecordQuote("the route is later"), com.histmersion.domain.ReviewArticle.SpotCheck.Ratio(0.98), com.histmersion.domain.ReviewArticle.SpotCheck.Tool("get_source"))),
       List(
         CritiqueReason(com.histmersion.api.library.Citekey("doe2001_tin"), com.histmersion.api.library.Citekey("smith1987_tin"), com.histmersion.api.research.CritiqueReason.Reason("Not about the route."), Some(com.histmersion.api.automation.Activity.Actor("skeptic (agent run 1234abcd)"))),
         CritiqueReason(com.histmersion.api.library.Citekey("roe1990_tin"), com.histmersion.api.library.Citekey("smith1987_tin"), com.histmersion.api.research.CritiqueReason.Reason("Not material."))
@@ -331,7 +331,7 @@ private object EnrichSourceSamples:
 
   val patches: List[com.histmersion.api.library.Source.Patch] = List(
     EnrichSource
-      .patch(loaded, classified, List(Finding.Input(com.histmersion.api.library.Finding.Claim("A claim."), lon = Some(1.0), lat = Some(2.0))), Some(com.histmersion.domain.EnrichSource.PatchNotes("Notes.")))
+      .patch(loaded, classified, List(Finding.Input(com.histmersion.api.library.Finding.Claim("A claim."), lon = Some(com.histmersion.api.catalogue.Longitude(1.0)), lat = Some(com.histmersion.api.catalogue.Latitude(2.0)))), Some(com.histmersion.domain.EnrichSource.PatchNotes("Notes.")))
       ._1,
     EnrichSource
       .patch(

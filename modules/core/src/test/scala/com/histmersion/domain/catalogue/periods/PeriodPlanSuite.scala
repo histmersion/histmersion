@@ -1,17 +1,26 @@
 package com.histmersion.domain.catalogue.periods
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.util.data.exchange.BundleEntities
 
 import java.util.UUID
+import com.histmersion.api.catalogue.Year
 import com.histmersion.api.exchange.Bundle
 
 class PeriodPlanSuite extends munit.FunSuite:
 
-  private def period(id: String, label: String, from: Long, to: Long, parent: Option[String] = None) =
+  private def period(
+      id: Bundle.Period.Id,
+      label: Bundle.Period.Label,
+      from: Year,
+      to: Year,
+      parent: Option[Bundle.Period.ParentId] = None
+  ) =
     Bundle.Period(
-      UUID.nameUUIDFromBytes(id.getBytes),
+      UUID.nameUUIDFromBytes(id.value.getBytes),
       UUID.nameUUIDFromBytes("origin".getBytes),
       id,
       label,
@@ -26,13 +35,22 @@ class PeriodPlanSuite extends munit.FunSuite:
     "a period matched to one here under another id is its children's parent under that id; no match changes nothing"
   ):
     val es = BundleEntities(periods =
-      List(period("b_child", "Child", -1500, -1400, Some("b_age")), period("b_age", "Age", -2000, -1000))
+      List(
+        period(
+          Bundle.Period.Id("b_child"),
+          Bundle.Period.Label("Child"),
+          Year(-1500),
+          Year(-1400),
+          Some(Bundle.Period.ParentId("b_age"))
+        ),
+        period(Bundle.Period.Id("b_age"), Bundle.Period.Label("Age"), Year(-2000), Year(-1000))
+      )
     )
-    assertEquals(PeriodPlan.repoint(es, Map("b_age" -> "h_age")).periods.map(_.parentId), List(Some("h_age"), None))
+    assertEquals(PeriodPlan.repoint(es, Map(Bundle.Period.ParentId("b_age") -> Bundle.Period.ParentId("h_age"))).periods.map(_.parentId), List(Some("h_age"), None))
     assertEquals(PeriodPlan.repoint(es, Map.empty), es)
 
   test("two records of one period id are the same period when the span and the label's fingerprint agree"):
-    val a = period("zz_age", "The Zz Age", -1500, -1000)
-    assert(PeriodPlan.samePeriod(a, a.modify(_.label).setTo("zz age, the")))
-    assert(!PeriodPlan.samePeriod(a, a.modify(_.label).setTo("The Zz Era")))
-    assert(!PeriodPlan.samePeriod(a, a.modify(_.period).setTo(Some(Bundle.Range(Some(-1600), Some(-1000))))))
+    val a = period(Bundle.Period.Id("zz_age"), Bundle.Period.Label("The Zz Age"), Year(-1500), Year(-1000))
+    assert(PeriodPlan.samePeriod(a, a.modify(_.label).setTo(Bundle.Period.Label("zz age, the"))))
+    assert(!PeriodPlan.samePeriod(a, a.modify(_.label).setTo(Bundle.Period.Label("The Zz Era"))))
+    assert(!PeriodPlan.samePeriod(a, a.modify(_.period).setTo(Some(Bundle.Range(Some(Year(-1600)), Some(Year(-1000)))))))
