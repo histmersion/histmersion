@@ -156,7 +156,7 @@ object MergeMarkdown:
           l.entries.map(e =>
             s"| ${e.kind} | `${e.foreignUid}` | ${e.label.fold(s"`${e.localUid}`")(x => s"`$x`")} | " +
               s"`${e.foreignRev.value.take(8)}` | ${e.localRevAfter.fold("—")(r => s"`${r.value.take(8)}`")} | ${e.decision} | " +
-              s"`${e.mergeId.toString.take(8)}` | ${e.recordedAt.take(19).replace('T', ' ')} |"
+              s"`${e.mergeId.toString.take(8)}` | ${e.recordedAt.value.take(19).replace('T', ' ')} |"
           )
     val redirects = Option.when(l.redirects.nonEmpty)(
       "**Redirects** (merged-away uid → the record here)\n" +

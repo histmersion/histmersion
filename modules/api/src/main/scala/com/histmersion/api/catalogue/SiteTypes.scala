@@ -16,8 +16,6 @@ object SiteTypes:
   type ReportSummary = ReportSummary.T
   object ReportSummary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ByIdPart1 = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
-  val ByIdPart1: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
   type IconResult = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon
   val IconResult: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon
   type IconId = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
@@ -77,9 +75,9 @@ object SiteTypes:
     SiteType(_root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id(Shipwreck), _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Label("shipwreck"), _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon("ship"))
   )
 
-  private val byId: Map[com.histmersion.api.catalogue.SiteTypes.ByIdPart1, SiteType] = all.map(t => t.id -> t).toMap
+  private val byId: Map[SiteType.Id, SiteType] = all.map(t => t.id -> t).toMap
 
-  def get(id: com.histmersion.api.catalogue.SiteTypes.SiteType.Id): Option[SiteType] = byId.get(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((id).value.trim.toLowerCase(java.util.Locale.ROOT)))
+  def get(id: com.histmersion.api.catalogue.SiteTypes.SiteType.Id): Option[SiteType] = byId.get(_root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id((id).value.trim.toLowerCase(java.util.Locale.ROOT)))
   def icon(id: com.histmersion.api.catalogue.SiteTypes.IconId): Option[com.histmersion.api.catalogue.SiteTypes.IconResult] = get(id).map(_.icon)
 
   val pleiadesTypes: Map[com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType, com.histmersion.api.catalogue.SiteTypes.SiteType.Id] = Map(
@@ -201,7 +199,7 @@ object SiteTypes:
         .map(_.trim.toLowerCase(java.util.Locale.ROOT))
         .filter(_.nonEmpty)
         .map(_.replaceAll("-\\d+$", ""))
-        .flatMap(pleiadesTypes.get)
+        .flatMap(t => pleiadesTypes.get(_root_.com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType(t)))
     )
 
   val geonamesCodes: Map[com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode, com.histmersion.api.catalogue.SiteTypes.SiteType.Id] = Map(
@@ -252,7 +250,7 @@ object SiteTypes:
 
   def geonames(fcode: com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode): Option[com.histmersion.api.catalogue.SiteTypes.SiteType.Id] =
     Option(fcode).map((_).value.trim.toUpperCase(java.util.Locale.ROOT)).filter(_.nonEmpty).flatMap { c =>
-      geonamesCodes.get(_root_.com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode(c)).orElse(Option.when(c.startsWith("P."))(Settlement))
+      geonamesCodes.get(_root_.com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode(c)).orElse(Option.when(c.startsWith("P."))(_root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id(Settlement)))
     }
 
   val ArchaeologicalSite = "Q839954"
@@ -343,10 +341,10 @@ object SiteTypes:
       .orElse(superclasses.flatMap({ val refactorFunction4 = wikidataClasses.get; (refactorValue8) => refactorFunction4(_root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class((refactorValue8).value)) }).headOption)
       .orElse(importClass.flatMap({ val refactorFunction5 = wikidataClasses.get; (refactorValue9) => refactorFunction5(_root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class((refactorValue9).value)) }))
 
-  def wikidataOwn(p31: List[com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class]): Option[com.histmersion.api.catalogue.SiteTypes.SiteType.Id] = best(p31.map((_).value.trim).flatMap(wikidataClasses.get))
+  def wikidataOwn(p31: List[com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class]): Option[com.histmersion.api.catalogue.SiteTypes.SiteType.Id] = best(p31.map(c => _root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class(c.value.trim)).flatMap(wikidataClasses.get))
 
   def p31Of(json: Option[com.histmersion.api.catalogue.CatalogRecord.Wikidata.P31Json]): List[com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class] =
-    json.toList.flatMap(s => "Q[0-9]+".r.findAllIn((s).value).toList)
+    json.toList.flatMap(s => "Q[0-9]+".r.findAllIn((s).value).toList.map(_root_.com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class(_)))
 
   def of(
       placeId: com.histmersion.api.catalogue.Place.Id,
@@ -361,7 +359,7 @@ object SiteTypes:
     then None
     else
       stored
-        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId)).contains)
+        .filter(byId.contains)
         .orElse(featureTypes.flatMap({ val refactorFunction3 = pleiades; (refactorValue5) => refactorFunction3(_root_.com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType((refactorValue5).value)) }))
         .orElse(fcode.flatMap({ val refactorFunction2 = geonames; (refactorValue10) => refactorFunction2(_root_.com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode((refactorValue10).value)) }))
         .orElse(wikidataOwn(p31))

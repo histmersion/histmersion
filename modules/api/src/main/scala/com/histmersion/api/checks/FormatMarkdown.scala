@@ -8,7 +8,7 @@ object FormatMarkdown:
   object IssueLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  def problems(n: com.histmersion.api.checks.FormatReport.IssueCount): String = Plural.count(n, _root_.com.histmersion.api.Plural.CountSingular("formatting problem"))
+  def problems(n: com.histmersion.api.checks.FormatReport.IssueCount): String = Plural.count(Plural.CountN(n.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("formatting problem")).value
 
   def line(i: FormatIssue): com.histmersion.api.checks.FormatMarkdown.IssueLine =
     val sev = summon[WireEnumValues[FormatSeverity]].wire(i.severity)

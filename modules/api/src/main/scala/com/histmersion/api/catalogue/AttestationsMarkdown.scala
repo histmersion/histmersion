@@ -14,14 +14,14 @@ object AttestationsMarkdown:
       a.canvas.map(c => s"canvas ${a.xywh.fold(c)(r => s"$c#xywh=$r")}")
     ).flatten
     val locStr = if loc.isEmpty then "" else s" (${loc.mkString("; ")})"
-    val q = a.quote.map(t => s""" "${if t.length > 80 then t.take(77) + "…" else t}"""").getOrElse("")
+    val q = a.quote.map(t => s""" "${if t.value.length > 80 then t.value.take(77) + "…" else t.value}"""").getOrElse("")
     val n = a.note.map(n => s" — $n").getOrElse("")
     (s"- `#${a.id}` [[${a.citekey}]] → ${a.targetType}:`${a.targetId}`$locStr$q$n")
 
   def attestationList(result: Attestation.List): String =
     OffsetPage.markdown(result.page, ("attestation(s)"), ("_No matching attestations._"), result.attestations)(
       attestationLine
-    )
+    ).value
 
   def attestation(a: Attestation): String =
     val header = s"# Attestation #${a.id}\n\n_[[${a.citekey}]] → ${a.targetType}:`${a.targetId}`_"

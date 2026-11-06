@@ -22,11 +22,11 @@ object Aliases:
   def rule(k: AliasKind): com.histmersion.api.aliases.Aliases.RuleText =
     _root_.com.histmersion.api.aliases.Aliases.RuleText((Rule).value.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}"))
 
-  def followed(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.Id, now: com.histmersion.api.aliases.Aliases.Id): Option[com.histmersion.api.aliases.Aliases.Id] =
+  def followed(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.Id, now: com.histmersion.api.aliases.Aliases.Id): Option[com.histmersion.api.aliases.Aliases.Note] =
     val a = (asked).value.trim
     Option.when(a.nonEmpty && a != (now).value)(
-      _root_.com.histmersion.api.aliases.Aliases.Id(s"_`$a` is an old ${k.idWord.value} of this ${k.noun.value} — it went to `$now`._")
+      _root_.com.histmersion.api.aliases.Aliases.Note(s"_`$a` is an old ${k.idWord.value} of this ${k.noun.value} — it went to `$now`._")
     )
 
   def note(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.Id, now: com.histmersion.api.aliases.Aliases.Id)(md: com.histmersion.api.aliases.Aliases.Note): com.histmersion.api.aliases.Aliases.Note =
-    followed(k, _root_.com.histmersion.api.aliases.Aliases.Id((asked).value), _root_.com.histmersion.api.aliases.Aliases.Id((now).value)).fold(md)(n => s"$n\n\n$md")
+    followed(k, asked, now).fold(md)(n => _root_.com.histmersion.api.aliases.Aliases.Note(s"$n\n\n$md"))

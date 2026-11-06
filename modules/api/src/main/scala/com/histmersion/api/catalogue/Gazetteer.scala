@@ -84,7 +84,7 @@ object Gazetteer:
       .values
       .map(_.minBy((m, via) => (if ((m.native) == _root_.com.histmersion.api.catalogue.Place.Match.Native(true)) then 0 else 1, via)))
       .toList
-      .sortBy((m, via) => (if ((m.native) == _root_.com.histmersion.api.catalogue.Place.Match.Native(true)) then 0 else 1, via, rank(m).value, m.placeId.value))
+      .sortBy((m, via) => (if ((m.native) == _root_.com.histmersion.api.catalogue.Place.Match.Native(true)) then 0 else 1, via, rank(m).value: Int, m.placeId.value: String))
       .headOption
       .map(_._1.placeId)
 
@@ -143,8 +143,8 @@ object Gazetteer:
           if dated.isEmpty then Span.always
           else
             Span(
-              if dated.forall(_.span.from.isDefined) then Some(dated.flatMap(_.span.from).minBy(_.value)) else None,
-              if dated.forall(_.span.to.isDefined) then Some(dated.flatMap(_.span.to).maxBy(_.value)) else None
+              if dated.forall(_.span.from.isDefined) then Some(dated.flatMap(_.span.from).minBy(y => y.value: Long)) else None,
+              if dated.forall(_.span.to.isDefined) then Some(dated.flatMap(_.span.to).maxBy(y => y.value: Long)) else None
             )
         val cites =
           group.flatMap(_.citation).flatMap(_.value.split("; ").toList).map(_.trim).filter(_.nonEmpty).distinct.sorted
@@ -227,7 +227,7 @@ object Gazetteer:
       ordinal: Int,
       defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key] = None
   ): Either[com.histmersion.api.catalogue.Gazetteer.Problem, GazRecord] =
-    Lpf.readFeature(j, _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).left.map(p => Problem(p.value)).flatMap { in =>
+    Lpf.readFeature(j, _root_.com.histmersion.api.catalogue.Place.KindValue(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).left.map(p => Problem(p.value)).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
       raw.toRight(Problem(s"feature #$ordinal has no @id")).map { ref =>

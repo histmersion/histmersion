@@ -144,4 +144,4 @@ object ArticleMarkdown:
         .mkString(" · ")
       val sum = a.summary.map(s => s"\n  ${s.value.trim}").getOrElse("")
       (s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum")
-    }
+    }.value

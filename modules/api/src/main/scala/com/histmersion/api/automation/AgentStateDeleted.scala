@@ -15,6 +15,5 @@ object AgentStateDeleted:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Key = com.histmersion.api.Api.AgentState.Key
-  val Key: _root_.com.histmersion.api.Api.AgentState.Key.type = _root_.com.histmersion.api.Api.AgentState.Key
   type Deleted = Deleted.T
   object Deleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

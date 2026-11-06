@@ -13,13 +13,9 @@ final case class TimeSpan(
       KindlingsSchema, com.histmersion.api.json.Schema:
 
   /** The outer span: the earliest and latest years stated, one known end standing for both; `None` when undated. */
-  def outer: Option[(com.histmersion.api.TimeSpan.Start, com.histmersion.api.TimeSpan.End)] =
+  def outer: Option[(catalogue.Year, catalogue.Year)] =
     val start = notBefore.orElse(beginBy).orElse(endFrom).orElse(notAfter)
     val end = notAfter.orElse(endFrom).orElse(beginBy).orElse(notBefore)
-    for a <- start; b <- end yield ((a).value.min(b), (a).value.max(b))
+    for a <- start; b <- end yield (catalogue.Year(a.value.min(b.value)), catalogue.Year(a.value.max(b.value)))
 
-object TimeSpan:
-  type End = End.T
-  object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Start = Start.T
-  object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+object TimeSpan

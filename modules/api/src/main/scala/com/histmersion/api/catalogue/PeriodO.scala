@@ -211,7 +211,7 @@ object PeriodO:
             a.id,
             a.title,
             Some(_root_.com.histmersion.api.catalogue.HistoricalPeriod.Authority(s"PeriodO ${a.id}")),
-            Period(a.periods.map(_.period.start).minBy(_.value), a.periods.map(_.period.end).maxBy(_.value)),
+            Period(a.periods.map(_.period.start).minBy(y => (y.value: Long)), a.periods.map(_.period.end).maxBy(y => (y.value: Long))),
             parentId = existing.get(a.id).flatten.map(p => HistoricalPeriod.ParentId(p.value))
           )
         }

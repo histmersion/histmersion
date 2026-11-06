@@ -22,19 +22,19 @@ object BundleMarkdown:
 
   def manifest(m: Bundle.Manifest): String =
     val files = m.files
-      .filter((_.lines).value > 0)
+      .filter(_.lines.value > 0)
       .map(f => s"| ${f.path.stripPrefix("entities/").stripSuffix(".ndjson")} | ${f.lines} |")
     val scope = m.since.fold("everything")(s => s"changes after $s")
     List(
       s"**Bundle** ${m.bundleId} · from ${who(m.instance)} · format ${m.formatVersion} · schema V${m.schemaVersion}",
-      s"$scope · as of ${m.asOf.getOrElse("—")} · ${Plural.count(m.blobs.count, _root_.com.histmersion.api.Plural.Noun.Singular("blob"))} (${bytes(m.blobs.bytes)})",
+      s"$scope · as of ${m.asOf.getOrElse("—")} · ${Plural.count(_root_.com.histmersion.api.Plural.CountN(m.blobs.count.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("blob"))} (${bytes(m.blobs.bytes)})",
       if files.isEmpty then "_(no records)_" else ("| records | lines |" :: "|---|---:|" :: files).mkString("\n")
     ).mkString("\n\n")
 
   def verify(r: Bundle.VerifyResult): String =
-    val head = if ((r.ok) == _root_.com.histmersion.api.exchange.Bundle.VerifyResult.Ok(true)) then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, _root_.com.histmersion.api.Plural.CountSingular("blob"))} verified"
+    val head = if ((r.ok) == _root_.com.histmersion.api.exchange.Bundle.VerifyResult.Ok(true)) then s"**OK** — every checksum, record and ${Plural.count(_root_.com.histmersion.api.Plural.CountN(r.blobsChecked.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("blob"))} verified"
     else s"**NOT OK** — ${Plural.count(_root_.com.histmersion.api.Plural.CountN((r.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}"
-    (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems)).mkString("\n\n")
+    (head :: r.manifest.map(manifest).toList ++ problems(("Problems"), r.problems.map(_.value))).mkString("\n\n")
 
   def importResult(r: Bundle.ImportResult): String =
     val verb =
@@ -42,7 +42,7 @@ object BundleMarkdown:
       else if ((r.dryRun) == _root_.com.histmersion.api.exchange.Bundle.ImportResult.DryRun(true)) then "**Dry run** — nothing was written; this is what an import would do"
       else if r.changed == _root_.com.histmersion.api.exchange.Bundle.ChangedCount(0) then "**Nothing to change** — this instance already has everything in the bundle"
       else
-        s"**Imported** — ${Plural.count(r.changed, _root_.com.histmersion.api.Plural.CountSingular("row"))} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("")
+        s"**Imported** — ${Plural.count(_root_.com.histmersion.api.Plural.CountN(r.changed.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("row"))} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("")
     val rows = r.counts.map(c =>
       s"| ${c.kind.wire} | ${c.inserted} | ${c.updated} | ${c.deleted} | ${c.unchanged} | ${c.keptLocal} | ${c.conflicts} | ${c.skippedDeleted} | ${c.held} |"
     )
@@ -63,9 +63,9 @@ object BundleMarkdown:
               .mkString("\n")
         )
     (s"$verb · bundle ${r.bundleId} from ${who(r.from)}" :: table ++
-      problems(("Problems (fix these, then import again)"), r.problems) ++ issues ++
-      problems("Conflicts (changed on both sides; decided by a resolution)", r.conflicts) ++
-      problems("Notes", r.notes)).mkString("\n\n")
+      problems(("Problems (fix these, then import again)"), r.problems.map(_.value)) ++ issues ++
+      problems("Conflicts (changed on both sides; decided by a resolution)", r.conflicts.map(_.value)) ++
+      problems("Notes", r.notes.map(_.value))).mkString("\n\n")
 
-  private def problems(title: String, ps: List[com.histmersion.api.exchange.Bundle.Problem]): List[String] =
+  private def problems(title: String, ps: List[String]): List[String] =
     if ps.isEmpty then Nil else List((s"**$title**\n" + ps.map(p => s"- $p").mkString("\n")))

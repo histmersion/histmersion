@@ -2,6 +2,7 @@ package com.histmersion.api.exchange
 import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobDetail
+import com.histmersion.api.given
 
 /** Data management's exchange jobs, as it registers them: the first-run import of reference data, and a merge apply.
   */
@@ -15,7 +16,7 @@ object ExchangeJobKinds:
     _root_.com.histmersion.api.jobs.JobKinds.Wire("Import reference data"),
     _root_.com.histmersion.api.jobs.JobKindMeaning("The first-run import of reference data: the bundled gazetteer and period presets, and the sources it fetches."),
     stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
-    subject = InitPlan.Detail.of(_).map(InitPlan.describe)
+    subject = InitPlan.Detail.of(_).map(p => _root_.com.histmersion.api.jobs.JobKinds.Subject(InitPlan.describe(p)))
   )
 
   val MergeApply: JobKindEntry = JobKindEntry.of(

@@ -113,8 +113,8 @@ object Lpf:
           case ps  =>
             Some(
               Span(
-                if ps.forall(_.from.isDefined) then Some(ps.flatMap(_.from).minBy(_.value)) else None,
-                if ps.forall(_.to.isDefined) then Some(ps.flatMap(_.to).maxBy(_.value)) else None
+                if ps.forall(_.from.isDefined) then Some(ps.flatMap(_.from).minBy[Long](_.value)) else None,
+                if ps.forall(_.to.isDefined) then Some(ps.flatMap(_.to).maxBy[Long](_.value)) else None
               )
             )
 

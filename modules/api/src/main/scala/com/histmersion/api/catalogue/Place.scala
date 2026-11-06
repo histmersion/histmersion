@@ -123,23 +123,19 @@ object Place:
     type CellsMicro = CellsMicroValue
     type CellsMicroValue = com.histmersion.api.catalogue.Place.Precision.CellsMicroNumber
     val CellsMicroValue: _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroNumber.type = _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroNumber
-    type OfLon = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon
-    val OfLon: _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon.type = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLon
-    type OfLat = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat
-    val OfLat: _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat.type = _root_.com.histmersion.api.catalogue.Place.OverrideSet.PointLat
 
     val CellsMicro: List[com.histmersion.api.catalogue.Place.Precision.CellsMicro] = List(_root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroNumber(5000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroNumber(1000000L), _root_.com.histmersion.api.catalogue.Place.Precision.CellsMicroNumber(500000L))
 
     /** Is (`lon`, `lat`) — rounded to a micro-degree — the centre of a cell of one of the grids, in both coordinates?
       * Pure.
       */
-    def gridCentre(lon: com.histmersion.api.catalogue.Place.OverrideSet.PointLon, lat: com.histmersion.api.catalogue.Place.OverrideSet.PointLat): Boolean =
+    def gridCentre(lon: com.histmersion.api.catalogue.Longitude, lat: com.histmersion.api.catalogue.Latitude): Boolean =
       val x = math.round((lon).value * 1e6)
       val y = math.round((lat).value * 1e6)
       (CellsMicro.exists(c => Math.floorMod(x, (c).value) == (c).value / 2 && Math.floorMod(y, (c).value) == (c).value / 2))
 
     /** The precision of the point of place `placeId`. */
-    def of(placeId: com.histmersion.api.catalogue.Place.Id, lon: com.histmersion.api.catalogue.Place.Precision.OfLon, lat: com.histmersion.api.catalogue.Place.Precision.OfLat): Precision =
+    def of(placeId: com.histmersion.api.catalogue.Place.Id, lon: com.histmersion.api.catalogue.Longitude, lat: com.histmersion.api.catalogue.Latitude): Precision =
       if placeId.isPleiades && ((gridCentre(lon, lat)) == (true)) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
@@ -704,13 +700,13 @@ object Place:
       periodSet: Override.PeriodSet,
       reason: Option[Override.Reason],
       sourceKind: Override.SourceKind,
-      sourcePeriodStart: Option[Override.SourcePeriodStart],
-      sourcePeriodEnd: Option[Override.SourcePeriodEnd],
+      sourcePeriodStart: Option[com.histmersion.api.catalogue.Year],
+      sourcePeriodEnd: Option[com.histmersion.api.catalogue.Year],
       updatedAt: Override.UpdatedAt,
       lat: Option[com.histmersion.api.catalogue.Latitude] = None,
       lon: Option[com.histmersion.api.catalogue.Longitude] = None,
-      sourceLat: Option[Override.SourceLat] = None,
-      sourceLon: Option[Override.SourceLon] = None
+      sourceLat: Option[com.histmersion.api.catalogue.Latitude] = None,
+      sourceLon: Option[com.histmersion.api.catalogue.Longitude] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -725,16 +721,8 @@ object Place:
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SourceKind = SourceKind.T
     object SourceKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourcePeriodStart = SourcePeriodStart.T
-    object SourcePeriodStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourcePeriodEnd = SourcePeriodEnd.T
-    object SourcePeriodEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UpdatedAt = UpdatedAt.T
     object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourceLat = SourceLat.T
-    object SourceLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SourceLon = SourceLon.T
-    object SourceLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class OverrideChanged(
@@ -748,10 +736,10 @@ object Place:
       findingsBefore: OverrideChanged.FindingsBefore,
       findingsAfter: OverrideChanged.FindingsAfter,
       unlocated: OverrideChanged.Unlocated,
-      latBefore: Option[OverrideChanged.LatBefore] = None,
-      lonBefore: Option[OverrideChanged.LonBefore] = None,
-      latAfter: Option[OverrideChanged.LatAfter] = None,
-      lonAfter: Option[OverrideChanged.LonAfter] = None
+      latBefore: Option[com.histmersion.api.catalogue.Latitude] = None,
+      lonBefore: Option[com.histmersion.api.catalogue.Longitude] = None,
+      latAfter: Option[com.histmersion.api.catalogue.Latitude] = None,
+      lonAfter: Option[com.histmersion.api.catalogue.Longitude] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -774,14 +762,6 @@ object Place:
     object FindingsAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Unlocated = Unlocated.T
     object Unlocated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LatBefore = LatBefore.T
-    object LatBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LonBefore = LonBefore.T
-    object LonBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LatAfter = LatAfter.T
-    object LatAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LonAfter = LonAfter.T
-    object LonAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   enum OverrideEdit:

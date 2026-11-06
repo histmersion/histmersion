@@ -85,9 +85,9 @@ object SourcesMarkdown:
         block(("Outgoing (this → other)"), sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out")))(sourceItem) +
         block("Incoming (other → this)", sources(_root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("in")))(sourceItem) +
         block("Articles", rows.filter(_.target == NeighborTarget.Article))(r =>
-          s"[${r.title.getOrElse(Label.display(r.citekey))}](/article/${r.citekey})"
+          Source.Neighbor.Line(s"[${r.title.getOrElse(Label.display(Label.Text(r.citekey.value)))}](/article/${r.citekey})")
         ) +
-        block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r => s"**${r.citekey}**")
+        block("Not in the corpus yet", rows.filter(_.target == NeighborTarget.Unresolved))(r => Source.Neighbor.Line(s"**${r.citekey}**"))
 
   def graph(g: Source.Graph): String =
     if g.nodes.isEmpty then (s"_No graph data for **${g.root}**._")
@@ -95,7 +95,7 @@ object SourcesMarkdown:
       val header =
         s"### Source graph · ${g.root} (depth ${g.depth}, ${Plural.count(_root_.com.histmersion.api.Plural.CountN((g.nodes.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("node"))}, ${Plural.count(_root_.com.histmersion.api.Plural.CountN((g.links.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("link"))})"
       val nodeLines = g.nodes
-        .sortBy(n => (n.depth.value, n.id.value))
+        .sortBy(n => ((n.depth.value: Int), (n.id.value: String)))
         .map { n =>
           val year = n.year.map(y => s" ($y)").getOrElse("")
           val st = n.status.map(s => s" _[${s.wire}]_").getOrElse("")

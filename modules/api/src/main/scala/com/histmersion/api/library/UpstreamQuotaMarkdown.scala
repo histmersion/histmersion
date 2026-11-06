@@ -5,10 +5,10 @@ object UpstreamQuotaMarkdown:
   type NameUpstream = _root_.com.histmersion.api.library.UpstreamQuota.Upstream
   val NameUpstream: _root_.com.histmersion.api.library.UpstreamQuota.Upstream.type = _root_.com.histmersion.api.library.UpstreamQuota.Upstream
 
-  private def name(upstream: com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream): String = if upstream == _root_.com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream("core") then ("CORE") else upstream
+  private def name(upstream: com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream): String = if upstream == _root_.com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream("core") then ("CORE") else upstream.value
 
   def line(q: UpstreamQuota): String =
-    val spent = (q.lookupTokens).value + q.searchTokens
+    val spent = (q.lookupTokens).value + q.searchTokens.value
     val window = q.rateRemaining.fold("")(r => s" · CORE's window $r of ${q.rateLimit.fold("?")(_.toString)} left")
     val block =
       q.blockedUntil.fold("")(u => s" · **not asked until $u** (${q.blockedWhy.getOrElse("CORE asked to wait")})")

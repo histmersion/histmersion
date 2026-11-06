@@ -1491,8 +1491,8 @@ object Api:
   )
 
   object MediaGeoQuery:
-    type Kind = com.histmersion.api.Api.ArticleQuery.Kind.Wire
-    val Kind: _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire.type = _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire
+    type Kind = com.histmersion.api.media.MediaItem.Kind
+    val Kind: _root_.com.histmersion.api.media.MediaItem.Kind.type = _root_.com.histmersion.api.media.MediaItem.Kind
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T

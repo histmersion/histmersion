@@ -3,9 +3,6 @@ import com.histmersion.api.{OffsetPage, TimeSpan, YearFmt}
 import com.histmersion.api.Markdown.*
 
 object EventsMarkdown:
-  type Picture = Picture.T
-  object Picture extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   private[api] def timeSpan(ts: TimeSpan): String = YearFmt.spanLong(ts)
 
@@ -16,13 +13,13 @@ object EventsMarkdown:
     (s"- **${e.label}** `${e.id}` _(${e.kind} · ${e.scale} · ${e.historicity} · $ts$prec)_$ck")
 
   def eventList(result: EventList): String =
-    OffsetPage.markdown(result.page, ("event(s)"), ("_No matching events._"), result.events)(eventLine)
+    OffsetPage.markdown(result.page, ("event(s)"), ("_No matching events._"), result.events)(eventLine).value
 
   private[api] def eventScale(e: EventSummary): String =
     (s"${e.scale} (${if ((e.scaleStated) == _root_.com.histmersion.api.catalogue.EventSummary.ScaleStated(true)) then "stated" else "derived"})")
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
-  def event(d: EventCard, pictures: List[com.histmersion.api.catalogue.EventsMarkdown.Picture] = Nil): String =
+  def event(d: EventCard, pictures: List[String] = Nil): String =
     val e = d.event
     val header = s"# ${e.label}\n\n_`${e.id}` · ${e.kind} · ${e.historicity} · ${timeSpan(e.timeSpan)}_"
     val desc = e.description.map(d => s"\n\n$d").getOrElse("")
@@ -31,7 +28,7 @@ object EventsMarkdown:
     val scale = s"  \n**Scale:** ${eventScale(e)}"
     val dating = (e.datingNote.toList ++ EventPrecision
       .label(e.precision)
-      .map(l => if e.precision == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l))
+      .map(l => if e.precision.value == EventPrecision.Imprecise then s"$l — listed, not drawn on the map at a year" else l))
       .mkString(" · ")
     val datingLine = if dating.isEmpty then "" else s"  \n**Dating:** $dating"
     val corrections = if d.corrections.isEmpty then ""
@@ -39,7 +36,7 @@ object EventsMarkdown:
       "\n\n**Corrected by hand** (kept over the catalogue on a re-import)\n" +
         d.corrections.map(c => s"- ${Corrections.describe(c)}").mkString("\n")
     val geom = d.geometry
-      .map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")
+      .map(g => s"  \n**Geometry:** ${g.value.take(40).takeWhile(_ != ',')}… (GeoJSON)")
       .getOrElse("")
     val parent = d.parent.map(p => s"\n\n**Part of:** ${p.label} `${p.id}`").getOrElse("")
     val children = if d.children.isEmpty then "" else "\n\n**Sub-events**\n" + d.children.map(eventLine).mkString("\n")

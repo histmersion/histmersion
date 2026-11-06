@@ -6,26 +6,15 @@ object Markdown:
   type CharLimit = CharLimit.T
   object CharLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PeriodStart = _root_.com.histmersion.api.Markdown.PeriodLabelStart
-  val PeriodStart: _root_.com.histmersion.api.Markdown.PeriodLabelStart.type = _root_.com.histmersion.api.Markdown.PeriodLabelStart
-  type PeriodEnd = _root_.com.histmersion.api.Markdown.PeriodLabelEnd
-  val PeriodEnd: _root_.com.histmersion.api.Markdown.PeriodLabelEnd.type = _root_.com.histmersion.api.Markdown.PeriodLabelEnd
-  type PeriodLabelStart = _root_.com.histmersion.api.library.Bucket.Start
-  val PeriodLabelStart: _root_.com.histmersion.api.library.Bucket.Start.type = _root_.com.histmersion.api.library.Bucket.Start
-  type PeriodLabelEnd = _root_.com.histmersion.api.library.Bucket.End
-  val PeriodLabelEnd: _root_.com.histmersion.api.library.Bucket.End.type = _root_.com.histmersion.api.library.Bucket.End
-  type AsOfNoteAsOf = _root_.com.histmersion.api.library.Time.AsOf
-  val AsOfNoteAsOf: _root_.com.histmersion.api.library.Time.AsOf.type = _root_.com.histmersion.api.library.Time.AsOf
-
   private[api] def year(y: Option[Int]): String = (y.map(_.toString).getOrElse("n.d."))
   private[api] def fmtYear(v: com.histmersion.api.catalogue.Year): String = YearFmt(v)
-  private[api] def period(start: Option[com.histmersion.api.Markdown.PeriodStart], end: Option[com.histmersion.api.Markdown.PeriodEnd]): String = ((periodLabel(start, end)))
+  private[api] def period(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year]): String = ((periodLabel(start, end)))
 
-  def periodLabel(start: Option[com.histmersion.api.Markdown.PeriodLabelStart], end: Option[com.histmersion.api.Markdown.PeriodLabelEnd]): String = YearFmt.period(start, end)
-  private[api] def place(region: Option[com.histmersion.api.catalogue.Place.Region], lat: Option[com.histmersion.api.Geo.Latitude], lon: Option[com.histmersion.api.Geo.Longitude]): String =
+  def periodLabel(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year]): String = YearFmt.period(start, end)
+  private[api] def place(region: Option[com.histmersion.api.catalogue.Place.Region], lat: Option[com.histmersion.api.catalogue.Latitude], lon: Option[com.histmersion.api.catalogue.Longitude]): String =
     (lat, lon) match
       case (Some(la), Some(lo)) => (s"${region.map((_).value + " ").getOrElse("")}($la, $lo)")
-      case _                    => region.getOrElse("")
+      case _                    => region.map(_.value).getOrElse("")
 
   def pagingFooter(p: OffsetPage): String = OffsetPage.footer(p)
 
@@ -35,7 +24,7 @@ object Markdown:
   def chipLinks(values: List[String], hashKey: String): String =
     values
       .filter((_).nonEmpty)
-      .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(((v)))})")
+      .map(v => s"[${Label.display(Label.Text(v)).value.replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(((v)))})")
       .mkString(", ")
 
   private[api] def enc(s: String): String = (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))
@@ -85,5 +74,5 @@ object Markdown:
   def contestedMark(contested: Boolean, label: String = ("")): String =
     if ((contested) == (true)) && !(label).toLowerCase.contains("contested") then (" (contested)") else ("")
 
-  private[api] def asOfNote(asOf: Option[com.histmersion.api.Markdown.AsOfNoteAsOf]): String =
+  private[api] def asOfNote(asOf: Option[com.histmersion.api.catalogue.Place.Entry.AsOf]): String =
     asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")

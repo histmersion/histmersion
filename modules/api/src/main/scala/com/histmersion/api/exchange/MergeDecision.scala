@@ -6,7 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MergeDecision(kind: MergeDecision.Kind, argument: Option[MergeDecision.Argument] = None):
-  def wire: com.histmersion.api.exchange.MergeDecision.Wire = MergeDecision.Kind.wireOf(kind) + argument.fold("")(a => s":$a")
+  def wire: com.histmersion.api.exchange.MergeDecision.Wire = _root_.com.histmersion.api.exchange.MergeDecision.Wire(MergeDecision.Kind.wireOf(kind).value + argument.fold("")(a => s":${a.value}"))
 
 object MergeDecision:
   type Problem = Problem.T
@@ -100,5 +100,5 @@ object MergeDecision:
       case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.exchange.MergeDecision.Argument(refactorValue))))
 
   given Encoder[MergeDecision] = Encoder.encodeString.contramap((refactorCallback => (refactorCallback.wire).value))
-  given Decoder[MergeDecision] = Decoder.decodeString.emap(_root_.com.histmersion.api.exchange.MergeDecision.Wire(parse))
+  given Decoder[MergeDecision] = Decoder.decodeString.emap(s => parse(_root_.com.histmersion.api.exchange.MergeDecision.Wire(s)).left.map(_.value))
   given Schema[MergeDecision] = Schema.string[MergeDecision]

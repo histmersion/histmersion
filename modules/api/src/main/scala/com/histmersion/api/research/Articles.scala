@@ -79,7 +79,7 @@ object Articles:
       period <- periodOf(p.periodStart, p.periodEnd)
       summary <- summaryOf(p.summary)
       filter <- p.filter.fold[Either[Problem, Option[Article.Filter]]](Right(None))(f => Article.Filter.normalise(f).left.map(e => Problem(e.value)))
-      reasons <- Coverage.Reason.merge(Map.empty, p.reasons)
+      reasons <- Coverage.Reason.merge(Map.empty, p.reasons).left.map(e => Problem(e))
     yield Article(
       slug = s,
       title = Article.Title(p.title.value.trim),
@@ -117,7 +117,7 @@ object Articles:
       filter <- patch.filter.fold[Either[Problem, Option[Article.Filter]]](Right(existing.filter))(f =>
         Article.Filter.normalise(f).left.map(e => Problem(e.value))
       )
-      reasons <- Coverage.Reason.merge(existing.reasons, patch.reasons)
+      reasons <- Coverage.Reason.merge(existing.reasons, patch.reasons).left.map(e => Problem(e))
     yield existing.modify(
       _.title).setTo(patch.title.map(t => Article.Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title)).modify(_.kind).setTo(kind).modify(_.body).setTo(body).modify(_.summary).setTo(summary.orElse(existing.summary)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(Write.applyList(existing.tags, _))).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions).map(r => Article.Regions(r.value.trim)).filter(_.value.nonEmpty).distinct).modify(_.period).setTo(period).modify(_.filter).setTo(filter).modify(_.reasons).setTo(reasons
     )

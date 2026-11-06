@@ -18,7 +18,7 @@ final case class Bookmark(
     updatedAt: Bookmark.UpdatedAt = _root_.com.histmersion.api.personal.Bookmark.UpdatedAt("")
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def name: com.histmersion.api.personal.Bookmark.Name = label.map(_.value).filter(_.trim.nonEmpty).getOrElse(title)
+  def name: com.histmersion.api.personal.Bookmark.Name = _root_.com.histmersion.api.personal.Bookmark.Name(label.map(_.value: String).filter(_.trim.nonEmpty).getOrElse(title.value: String))
 
 object Bookmark:
   type Name = Name.T

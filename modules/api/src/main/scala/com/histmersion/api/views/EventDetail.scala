@@ -42,7 +42,7 @@ final case class EventDetail(
     corrections: List[Correction] = Nil
 ) extends EventCard derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
   /** The page in Markdown, with its pictures. */
-  def markdown: com.histmersion.api.views.EventDetail.MarkdownResult = com.histmersion.api.catalogue.EventsMarkdown.event(this, media.map(_.markdownLine))
+  def markdown: com.histmersion.api.views.EventDetail.MarkdownResult = _root_.com.histmersion.api.views.EventDetail.MarkdownResult(com.histmersion.api.catalogue.EventsMarkdown.event(this, media.map(_.markdownLine.value)))
 
 object EventDetail:
   type MarkdownResult = MarkdownResult.T

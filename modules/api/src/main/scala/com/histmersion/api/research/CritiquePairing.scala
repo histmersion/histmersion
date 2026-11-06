@@ -110,7 +110,7 @@ object CritiquePairing:
       work: com.histmersion.api.library.Citekey => Option[Work]
   ): List[Hit] =
     val es = edges.filter(e => Critiques.Kinds.contains(e.kind) && e.from != e.to)
-    val blocks = Critiques.units(body.value)
+    val blocks = Critiques.units(body)
     val citedAnywhere = blocks.flatMap(u => targetsOf(u).flatMap(resolve)).toSet
     blocks.zipWithIndex.flatMap { (u, i) =>
       val cited = targetsOf(u).flatMap(resolve).distinct
@@ -173,7 +173,7 @@ object CritiquePairing:
                 val at = l.lastIndexOf("]]") + 2
                 val ins = add.map(ck => s" [[$ck]]").mkString
                 insert(tail, ls.updated(j, l.substring(0, at) + ins + l.substring(at)), acc ++ xs.distinctBy(_.missing))
-      val (out, done) = insert(todo.toList.sortBy { case ((f, t), _) => (f.value, t.value) }, lines, Nil)
+      val (out, done) = insert(todo.toList.sortBy { case ((f, t), _) => ((f.value: Int), (t.value: Int)) }, lines, Nil)
       val text = out.mkString("\n")
       (_root_.com.histmersion.api.research.Article.Body(if crlf then text.replace("\n", "\r\n") else text), done.sortBy(h => (h.unit.value, h.missing.value)))
 
@@ -185,7 +185,7 @@ object CritiquePairing:
   ): Option[com.histmersion.api.research.CritiquePairing.Instruction.Text] =
     val crit = p.criticised.citekey
     val critic = p.critic.citekey
-    val us = Critiques.units(body.value).zipWithIndex
+    val us = Critiques.units(body).zipWithIndex
     def cites(u: Critiques.Block) = targetsOf(u).flatMap(resolve).contains(crit)
     near.flatMap(n => us.find((u, i) => i == n.value && cites(u))).orElse(us.find((u, _) => cites(u))).map { (u, _) =>
       val head = words(prose(u.text)).take(10).mkString(" ")
@@ -201,6 +201,6 @@ object CritiquePairing:
       if citekeys(_root_.com.histmersion.api.library.Citekey(k)) then Some(_root_.com.histmersion.api.library.Citekey(k))
       else
         aliases.get(_root_.com.histmersion.api.library.Citekey(k)).filter(citekeys).orElse {
-          val pre = sorted.filter(_.startsWith(k + "_"))
+          val pre = sorted.filter(_.value.startsWith(k + "_"))
           Option.when(pre.size == 1)(pre.head)
         }

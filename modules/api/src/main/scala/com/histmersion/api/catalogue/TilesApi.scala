@@ -68,9 +68,6 @@ object TilesApi:
   )
 
   object TileAnswer:
-    object ContentType:
-      type Wire = Wire.T
-      object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Bytes = Bytes.T
     object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ContentType = com.histmersion.api.Api.ContentType

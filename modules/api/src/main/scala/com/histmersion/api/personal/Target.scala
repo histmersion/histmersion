@@ -20,7 +20,7 @@ final case class Target(
     view: Option[ViewState] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def itemKey: Option[com.histmersion.api.personal.ItemKey] = Option.when(((kind.isItem) == (true)))(id.map(_.value)).flatten
+  def itemKey: Option[com.histmersion.api.personal.ItemKey] = Option.when(kind.isItem)(id).flatten
 
   def identity: Option[com.histmersion.api.personal.Target.Identity] = itemKey.map(k => _root_.com.histmersion.api.personal.Target.Identity(s"${kind.wire}:$k"))
 
@@ -60,18 +60,18 @@ object Target:
   def check(t: Target, allowed: Set[ItemKind], what: String): Either[com.histmersion.api.personal.Target.Problem, Target] =
     val years = (t.from, t.to) match
       case (Some(a), Some(b)) if a.value > b.value =>
-        Left(s"the period ends (${YearFmt(b.value.toLong)}) before it starts (${YearFmt(a.value.toLong)})")
+        Left(s"the period ends (${YearFmt(b)}) before it starts (${YearFmt(a)})")
       case _ => Right(())
     if !allowed.contains(t.kind) then
       Left(
-        s"a $what cannot be left on a ${t.kind.label.toLowerCase}; it can be on: ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}"
+        s"a $what cannot be left on a ${t.kind.label.value.toLowerCase}; it can be on: ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}"
       )
     else
       years.flatMap { _ =>
         t.kind match
           case k if k.isItem =>
             t.id.map(_.value.trim).filter(_.nonEmpty) match
-              case None      => Left(s"a $what on a ${k.label.toLowerCase} names it (its id)")
+              case None      => Left(s"a $what on a ${k.label.value.toLowerCase} names it (its id)")
               case Some(key) => Right(Target(k, Some(ItemKey(key))))
           case ItemKind.Point =>
             if t.lat.isEmpty || t.lon.isEmpty then Left(s"a $what on the map names the point (lat and lon)")
@@ -100,13 +100,13 @@ object Target:
       }
 
   def where(t: Target): com.histmersion.api.personal.Target.Where =
-    val span = YearFmt.period(t.from.map(_root_.com.histmersion.api.catalogue.Year(_.value.toLong)), t.to.map(_root_.com.histmersion.api.catalogue.Year(_.value.toLong)))
+    val span = YearFmt.period(t.from, t.to)
     val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, ("N"), ("S"))}, ${degrees(lo.value, ("E"), ("W"))}")
     t.kind match
       case ItemKind.Point => _root_.com.histmersion.api.personal.Target.Where(List(at, span).filter(_.nonEmpty).mkString(" · "))
       case ItemKind.View  =>
-        List(at, t.zoom.fold("")(z => s"zoom ${round1(z.value)}"), span).filter(_.nonEmpty).mkString(" · ")
-      case ItemKind.Period => span
+        _root_.com.histmersion.api.personal.Target.Where(List(at, t.zoom.fold("")(z => s"zoom ${round1(z.value)}"), span).filter(_.nonEmpty).mkString(" · "))
+      case ItemKind.Period => _root_.com.histmersion.api.personal.Target.Where(span)
       case _               => _root_.com.histmersion.api.personal.Target.Where("")
 
   private def round1(v: Double): String =

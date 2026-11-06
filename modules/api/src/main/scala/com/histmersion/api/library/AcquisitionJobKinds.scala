@@ -9,5 +9,5 @@ object AcquisitionJobKinds:
     _root_.com.histmersion.api.jobs.JobKinds.Wire("Check what to acquire again"),
     _root_.com.histmersion.api.jobs.JobKindMeaning("Checks the to-acquire list again: which items have a legal open copy or are in the library now."),
     stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
-    subject = Acquire.Checks.RecheckJob.Detail.of(_).map(Acquire.Checks.RecheckJob.describe)
+    subject = Acquire.Checks.RecheckJob.Detail.of(_).map(j => _root_.com.histmersion.api.jobs.JobKinds.Subject(Acquire.Checks.RecheckJob.describe(j)))
   )

@@ -15,8 +15,8 @@ object IngestMarkdown:
     val lines = List(
       Some(s"- **status:** ${j.status}"),
       j.citekey.map(_.value.toString).map(c => s"- **citekey:** $c"),
-      j.progress.filter(_.nonEmpty).map(p => s"- **progress:** $p"),
-      j.error.filter(_.nonEmpty).map(e => s"- **error:** $e"),
+      j.progress.filter(_.value.nonEmpty).map(p => s"- **progress:** $p"),
+      j.error.filter(_.value.nonEmpty).map(e => s"- **error:** $e"),
       j.sha256.map(_.value).map(s => s"- **sha256:** ${s.take(12)}…"),
       j.acquireItem.map(i =>
         s"- **acquisition item:** $i" + (j.state match
@@ -28,9 +28,9 @@ object IngestMarkdown:
       j.detail.flatMap(VacuumPlan.Detail.of).map(p => s"- **vacuums:** ${Vacuum.describe(p)}"),
       j.detail.flatMap(JobDetail.Purpose.of).map(a => s"- **does:** $a"),
       j.detail
-        .filter((SkippedPeriod.SkippedCount.of(_)) > 0)
+        .filter(d => SkippedPeriod.SkippedCount.of(d).value > 0)
         .map(d =>
-          s"- **skipped:** ${Plural.count(SkippedPeriod.SkippedCount.of(d), _root_.com.histmersion.api.Plural.Noun.Singular("period definition"))} (not imported)" +
+          s"- **skipped:** ${Plural.count(_root_.com.histmersion.api.Plural.CountN(SkippedPeriod.SkippedCount.of(d).value.toLong), _root_.com.histmersion.api.Plural.CountSingular("period definition"))} (not imported)" +
             (if SkippedPeriod.Skipped.of(d).isEmpty then ""
              else
                "\n" + PeriodsMarkdown
@@ -55,8 +55,8 @@ object IngestMarkdown:
         s"| ${j.id} | ${j.kind} | ${JobDetail.subject(j).getOrElse("")} | ${j.status} | " +
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |"
       )
-      val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetName("By kind"), page.facet(_root_.com.histmersion.api.library.Facet.Name("kind")))
-      (List(s"### ${Paging.heading(_root_.com.histmersion.api.Paging.ShownCount(js.size), page.total, _root_.com.histmersion.api.Plural.Noun.Singular("job"), qualifier = status)}", "") ++
+      val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetName("By kind"), page.facet(_root_.com.histmersion.api.library.Facet.Name("kind")).map((t, n) => (ListFilters.Term(t.value), _root_.com.histmersion.api.RowCount(n.value))))
+      (List(s"### ${Paging.heading(_root_.com.histmersion.api.Paging.ShownCount(js.size), page.total, _root_.com.histmersion.api.Plural.Noun.Singular("job"), qualifier = status.map(_.value))}", "") ++
         Option.when(kinds.nonEmpty)(List(kinds, "")).toList.flatten ++
         List("| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o =>
           List("", o)

@@ -70,7 +70,7 @@ object CollectionsMarkdown:
       else
         val lines = counted.map { g =>
           s"| `${g.citekey}` | ${esc(g.title.value).take(70)} | ${g.year.fold("—")(_.toString)} " +
-            s"| ${esc(g.authors.take(2).mkString(", "))} | ${esc(g.provenance.getOrElse("—"))} | ${g.original} |"
+            s"| ${esc(g.authors.take(2).mkString(", "))} | ${esc(g.provenance.map(_.value).getOrElse("—"))} | ${g.original} |"
         }
         (List(
           s"### ${counted.size} source(s) not in Calibre",

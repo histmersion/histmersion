@@ -23,7 +23,7 @@ final case class MergeApplyResult(
     notes: List[MergeApplyResult.Notes] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def changed: com.histmersion.api.exchange.Bundle.ChangedCount = counts.map(_.changed).sum
+  def changed: com.histmersion.api.exchange.Bundle.ChangedCount = _root_.com.histmersion.api.exchange.Bundle.ChangedCount(counts.map(c => c.changed.value: Int).sum)
 
 object MergeApplyResult:
 

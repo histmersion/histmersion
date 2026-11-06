@@ -86,5 +86,5 @@ object LatinFold:
         Table.get((c)) match
           case Some(r) => b ++= r
           case None    => b += c
-    }).value
+    })
     (b.result())

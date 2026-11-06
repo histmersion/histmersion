@@ -59,8 +59,8 @@ object MediaImportReport:
       (x ++ y)
         .groupBy(_.key)
         .toList
-        .map((k, cs) => MediaCount(k, cs.map(_.n).sum, _root_.com.histmersion.api.media.MediaCount.Allowed(cs.forall((refactorCallback => ((refactorCallback.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true)))))))
-        .sortBy(c => (-(c.n).value, c.key))
+        .map((k, cs) => MediaCount(k, _root_.com.histmersion.api.media.MediaCount.N(cs.map(_.n.value).sum), _root_.com.histmersion.api.media.MediaCount.Allowed(cs.forall((refactorCallback => ((refactorCallback.allowed) == _root_.com.histmersion.api.media.MediaCount.Allowed(true)))))))
+        .sortBy[(Int, String)](c => (-c.n.value, c.key.value))
     MediaImportReport(
       b.provider,
       b.dryRun,

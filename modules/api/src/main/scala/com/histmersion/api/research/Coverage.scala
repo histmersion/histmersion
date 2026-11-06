@@ -55,25 +55,8 @@ object Coverage:
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class Reason(citekey: com.histmersion.api.library.Citekey, reason: Reason.Value) derives KindlingsCodecAsObject
+  final case class Reason(citekey: com.histmersion.api.library.Citekey, reason: Entry.Reason) derives KindlingsCodecAsObject
   object Reason:
-    type By = By.T
-    object By extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MaxChars = MaxChars.T
-    object MaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MergeResultPart2Part1 = MergeResultPart2Part1.T
-    object MergeResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MergeCurrentPart2 = MergeCurrentPart2.T
-    object MergeCurrentPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ListMPart1 = ListMPart1.T
-    object ListMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-    type ListMPart2 = ListMPart2.T
-    object ListMPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[Reason] = KindlingsSchema
       .derived[Reason]
       .schema
@@ -87,20 +70,20 @@ object Coverage:
 
     val MaxChars = 500
 
-    def merge(current: Map[com.histmersion.api.library.Citekey, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reason]): Either[com.histmersion.api.library.Citekey, Map[com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part1, com.histmersion.api.research.Coverage.Reason.By]] =
-      stated.foldLeft[Either[String, Map[String, String]]](Right((current).iterator.map { case (refactorKey2, refactorItem2) => ((refactorKey2).value, (refactorItem2).value) }.toMap)) { (acc, r) =>
+    def merge(current: Map[com.histmersion.api.library.Citekey, Entry.Reason], stated: List[Reason]): Either[String, Map[com.histmersion.api.library.Citekey, Entry.Reason]] =
+      stated.foldLeft[Either[String, Map[com.histmersion.api.library.Citekey, Entry.Reason]]](Right(current)) { (acc, r) =>
         acc.flatMap { m =>
-          val ck = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
+          val ck = Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
           val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
           if !((Article.Links.isCitekeyShaped((ck))) == (true)) then Left(s"reason for '${r.citekey}': not a citekey")
           else if text.length > MaxChars then
             Left(s"reason for $ck: ${text.length} characters (at most $MaxChars — one sentence)")
-          else if text.isEmpty then Right(m - ck)
-          else Right(m.updated(ck, text))
+          else if text.isEmpty then Right(m - com.histmersion.api.library.Citekey(ck))
+          else Right(m.updated(com.histmersion.api.library.Citekey(ck), Entry.Reason(text)))
         }
       }
 
-    def list(m: Map[com.histmersion.api.library.Citekey, com.histmersion.api.research.Coverage.Reason.ListMPart2]): List[Reason] = m.toList.sortBy(_._1).map(Reason(_, _root_.com.histmersion.api.research.Coverage.Reason.Value((_).value)))
+    def list(m: Map[com.histmersion.api.library.Citekey, Entry.Reason]): List[Reason] = m.toList.sortBy[String](_._1.value).map(Reason(_, _))
 
   final case class Source(
       citekey: com.histmersion.api.library.Citekey,

@@ -89,9 +89,9 @@ object Candidates:
         year = (c.get[Int]("yearPublished").toOption).map(com.histmersion.api.catalogue.Year.apply),
         authors = (c.downField("authors").values.toList.flatten.flatMap(a => str(a.hcursor, ("name")))).map((com).histmersion.api.library.AuthorName.apply),
         venue = (str(c, ("publisher"))).map((com).histmersion.api.library.Venue.apply),
-        isOa = str(c, "downloadUrl").isDefined,
-        abstractText = str(c, "abstract"),
-        arxivId = str(c, ("arxivId"))
+        isOa = WorkRef.IsOa(str(c, "downloadUrl").isDefined),
+        abstractText = str(c, "abstract").map(WorkRef.AbstractText(_)),
+        arxivId = str(c, ("arxivId")).map(WorkRef.ArxivId(_))
       )
     }
 
@@ -109,8 +109,8 @@ object Candidates:
         authors = ("(?s)<author>\\s*<name>(.*?)</name>".r.findAllMatchIn(e).map(m => unescape((m.group(1).trim))).toList).map(com.histmersion.api.library.AuthorName.apply),
         doi = (tag((e), ("arxiv:doi"))).map((com).histmersion.api.library.Doi.apply),
         venue = (Some("arXiv")).map(com.histmersion.api.library.Source.Venue.apply),
-        isOa = true,
-        abstractText = tag(e, "summary").map(unescape)
+        isOa = WorkRef.IsOa(true),
+        abstractText = tag(e, "summary").map(unescape).map(WorkRef.AbstractText(_))
       )
     }
 

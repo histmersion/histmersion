@@ -46,4 +46,4 @@ object Facet:
     def parse(s: com.histmersion.api.library.Facet.Field.Wire): Option[Field] =
       values.find(f => label(f) == _root_.com.histmersion.api.library.Facet.Field.Wire((s).value.trim.toLowerCase) || f.toString.equalsIgnoreCase((s).value.trim))
 
-    val all: List[com.histmersion.api.library.Facet.Field.Wire] = values.toList.map(_root_.com.histmersion.api.library.Facet.Field.Wire((label)))
+    val all: List[com.histmersion.api.library.Facet.Field.Wire] = values.toList.map(label)

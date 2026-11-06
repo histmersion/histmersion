@@ -241,7 +241,7 @@ object MergeIssue:
           field("historicity", Some(l.historicity.value), Some(r.historicity.value)),
           field("description", clip(l.description.map(_.value)), clip(r.description.map(_.value)))
         ),
-        place = Some(IssuePlace(l.geom, r.geom, eventSpan(l), eventSpan(r)))
+        place = Some(IssuePlace(l.geom.map(g => IssuePlace.LeftGeometry(g.value)), r.geom.map(g => IssuePlace.RightGeometry(g.value)), eventSpan(l), eventSpan(r)))
       )
 
     def placeDetail(l: Bundle.Place, r: Bundle.Place): IssueDetail =
@@ -256,7 +256,7 @@ object MergeIssue:
             Option(r.names.map(_.name).mkString("; ")).filter(_.nonEmpty)
           )
         ),
-        place = Some(IssuePlace(l.geom, r.geom, l.period.map(span), r.period.map(span)))
+        place = Some(IssuePlace(l.geom.map(g => IssuePlace.LeftGeometry(g.value)), r.geom.map(g => IssuePlace.RightGeometry(g.value)), l.period.map(span), r.period.map(span)))
       )
 
     def planText(j: Json): String =

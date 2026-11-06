@@ -7,7 +7,7 @@ import com.histmersion.api.given
 final case class EventSourceRef(
     citekey: com.histmersion.api.library.Citekey,
     title: Option[EventSourceRef.Title] = None,
-    year: Option[EventSourceRef.Year] = None,
+    year: Option[com.histmersion.api.catalogue.Year] = None,
     via: EventSourceRef.Via = _root_.com.histmersion.api.catalogue.EventSourceRef.Via("citekey"),
     quote: Option[EventSourceRef.Quote] = None
 ) derives KindlingsCodecAsObject,

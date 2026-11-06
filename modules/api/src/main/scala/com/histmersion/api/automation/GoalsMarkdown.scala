@@ -13,7 +13,7 @@ object GoalsMarkdown:
     (s"- **${g.title}** `${g.slug}` _(${g.status})_$period$parent")
 
   def goalList(result: Goal.List): String =
-    OffsetPage.markdown(result.page, ("goal(s)"), ("_No matching goals._"), result.goals)(goalLine)
+    OffsetPage.markdown(result.page, ("goal(s)"), ("_No matching goals._"), result.goals)(goalLine).value
 
   def goal(g: Goal): String =
     val header = s"# ${g.title}\n\n_`${g.slug}` · ${g.status}_"

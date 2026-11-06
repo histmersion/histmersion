@@ -12,8 +12,8 @@ import sttp.tapir.{FieldName, Schema}
   * ([[JobDetailField]]), kept as JSON. The wire shows every field the kinds' registry lists, in its order, each job's
   * value or the field's default; a detail holds only the values that differ from their default.
   */
-final case class JobDetail private (values: Map[JobDetail.ValuesKey, Json]):
-  def json(name: com.histmersion.api.jobs.JobDetail.Field.Name): Option[Json] = values.get(_root_.com.histmersion.api.jobs.JobDetail.ValuesKey((name).value))
+final case class JobDetail private (values: Map[JobDetail.Field.Name, Json]):
+  def json(name: com.histmersion.api.jobs.JobDetail.Field.Name): Option[Json] = values.get(name)
 
   /** The detail with `field` set to `a`. */
   def set[A](field: com.histmersion.api.jobs.JobDetail.Field[A], a: A): JobDetail =
@@ -24,33 +24,22 @@ final case class JobDetail private (values: Map[JobDetail.ValuesKey, Json]):
     set(field, f(field.of(this)))
 
 object JobDetail:
-  type PurposeText = PurposeText.T
-  object PurposeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Purpose = PurposeValue
-  type PurposeValue = com.histmersion.api.jobs.JobDetail.PurposeText
-  val PurposeValue: _root_.com.histmersion.api.jobs.JobDetail.PurposeText.type = _root_.com.histmersion.api.jobs.JobDetail.PurposeText
-  type SubjectResult = com.histmersion.api.jobs.JobKinds.Subject
-  val SubjectResult: _root_.com.histmersion.api.jobs.JobKinds.Subject.type = _root_.com.histmersion.api.jobs.JobKinds.Subject
-
-  type ValuesKey = ValuesKey.T
-  object ValuesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   val empty: JobDetail = JobDetail(Map.empty)
 
   /** What a job is about, in a person's words (a places or base-map job's). */
-  val Purpose: com.histmersion.api.jobs.JobDetail.Field[Option[com.histmersion.api.jobs.JobDetail.Purpose]] =
+  val Purpose: com.histmersion.api.jobs.JobDetail.Field[Option[com.histmersion.api.jobs.JobKinds.Subject]] =
     com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("about"), None)
 
   private def fields: List[com.histmersion.api.jobs.JobDetail.Field[?]] = RegisteredJobKinds.all.details
 
   given Codec.AsObject[JobDetail] = new Codec.AsObject[JobDetail]:
     def encodeObject(d: JobDetail): JsonObject =
-      JsonObject.fromIterable(fields.map(f => f.name -> d.values.getOrElse(f.name, f.defaultJson)))
+      JsonObject.fromIterable(fields.map(f => f.name.value -> d.values.getOrElse(f.name, f.defaultJson)))
     def apply(c: HCursor): Decoder.Result[JobDetail] =
       if !c.value.isObject then Left(DecodingFailure("JobDetail", c.history))
       else
         val read = fields.map(f =>
-          c.downField(f.name).focus.filterNot(_.isNull).fold(Right(None))(j => f.canonical(j)).map(f.name -> _)
+          c.downField(f.name.value).focus.filterNot(_.isNull).fold(Right(None))(j => f.canonical(j)).map(f.name -> _)
         )
         read
           .collectFirst { case Left(e) => e }

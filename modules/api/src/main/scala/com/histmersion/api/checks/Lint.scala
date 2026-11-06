@@ -413,7 +413,7 @@ object Lint:
 
   def formatItems(rows: List[(com.histmersion.api.library.Citekey, FormatField, com.histmersion.api.checks.Lint.FormatItemDetail)], check: FormatChecker): List[LintItem] =
     rows.filter(r => (r._3).value.trim.nonEmpty).sortBy((id, f, _) => ((id).value, f.ordinal)).flatMap { (id, field, text) =>
-      check((text).value, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
+      check((text).value, field, field == FormatField.Body).map(i => LintItem(id, LintItem.Detail(FormatMarkdown.line(i).value)))
     }
 
   def report(r: Rule, items: List[LintItem], maxItems: com.histmersion.api.checks.Lint.ItemLimit): LintRuleReport =

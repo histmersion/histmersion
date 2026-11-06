@@ -13,15 +13,11 @@ object Wcag:
   type Ratio = Ratio.T
   object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type AaText = AaTextValue
-  type AaTextValue = com.histmersion.api.Wcag.Ratio
-  val AaTextValue: _root_.com.histmersion.api.Wcag.Ratio.type = _root_.com.histmersion.api.Wcag.Ratio
-
   def luminance(r: com.histmersion.api.Wcag.Channel, g: com.histmersion.api.Wcag.Channel, b: com.histmersion.api.Wcag.Channel): com.histmersion.api.Wcag.Luminance =
     def lin(c: com.histmersion.api.Wcag.Channel): com.histmersion.api.Wcag.LinearChannel =
       val v = (c).value / 255.0
       if v <= 0.03928 then _root_.com.histmersion.api.Wcag.LinearChannel(v / 12.92) else _root_.com.histmersion.api.Wcag.LinearChannel(math.pow((v + 0.055) / 1.055, 2.4))
-    0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
+    _root_.com.histmersion.api.Wcag.Luminance(0.2126 * lin(r).value + 0.7152 * lin(g).value + 0.0722 * lin(b).value)
 
   def hex(s: com.histmersion.api.Wcag.Hex): Option[(com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel)] =
     val h = (s).value.trim.stripPrefix("#")
@@ -31,9 +27,9 @@ object Wcag:
     )
 
   def contrast(a: (com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel), b: (com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel, com.histmersion.api.Wcag.Channel)): com.histmersion.api.Wcag.Ratio =
-    val la = luminance(_root_.com.histmersion.api.Wcag.Channel((a._1).value), _root_.com.histmersion.api.Wcag.Channel((a._2).value), _root_.com.histmersion.api.Wcag.Channel((a._3).value))
-    val lb = luminance(_root_.com.histmersion.api.Wcag.Channel((b._1).value), _root_.com.histmersion.api.Wcag.Channel((b._2).value), _root_.com.histmersion.api.Wcag.Channel((b._3).value))
-    (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05)
+    val la = luminance(a._1, a._2, a._3).value
+    val lb = luminance(b._1, b._2, b._3).value
+    _root_.com.histmersion.api.Wcag.Ratio((math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05))
 
   /** AA for normal text; large text (≥ 18.66 px bold) needs 3. */
-  val AaText: com.histmersion.api.Wcag.AaText = _root_.com.histmersion.api.Wcag.Ratio(4.5)
+  val AaText: com.histmersion.api.Wcag.Ratio = _root_.com.histmersion.api.Wcag.Ratio(4.5)

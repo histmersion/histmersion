@@ -24,7 +24,7 @@ object OffsetPage:
     if ((p.isAll) == (true)) || p.shown.value == 0 then ("")
     else
       val next = p.next.fold("")(n => s" — next: offset=$n")
-      val full = if p.total.value <= FullSetMax then s" — full set: limit=${p.total.value}" else ""
+      val full = if p.total.value <= FullSetMax.value then s" — full set: limit=${p.total.value}" else ""
       (s"\n\n_showing ${p.offset.value + 1}–${p.offset.value + p.shown.value} of ${p.total.value}$next${full}_")
 
   def markdown[A](p: OffsetPage, noun: String, empty: String, items: List[A])(line: A => String): com.histmersion.api.OffsetPage.MarkdownResult =
