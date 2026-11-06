@@ -22,7 +22,7 @@ class JobDetailSuite extends munit.FunSuite:
   test("a value read back in another key order (as jsonb keeps it) is written in its field's order"):
     val stored = """{"vacuum": {"tables": ["sources"], "analyze": true}, "skippedPeriodCount": 0, "init": null}"""
     val d = decode[JobDetail](stored).fold(e => fail(e.getMessage), identity)
-    assertEquals(d, VacuumPlan.Detail(Some(VacuumPlan(analyze = true, List("sources")))))
+    assertEquals(d, VacuumPlan.Detail(Some(VacuumPlan(analyze = com.histmersion.api.maintenance.VacuumPlan.Analyze(true), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("sources"))))))
     assert(d.asJson.noSpaces.contains(""""vacuum":{"analyze":true,"tables":["sources"]}"""), d.asJson.noSpaces)
 
   test("defaults and unknown keys are not held, so a detail of defaults is the empty one"):
@@ -30,7 +30,7 @@ class JobDetailSuite extends munit.FunSuite:
     assertEquals(d, Some(JobDetail.empty))
 
   test("a field set, changed and read; a value of the wrong shape fails the whole detail"):
-    val d = InitPlan.Detail(Some(InitPlan(gazetteer = true))).change(SkippedPeriod.SkippedCount)(_ + 2)
+    val d = InitPlan.Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true)))).change(SkippedPeriod.SkippedCount)(_ + 2)
     assertEquals(SkippedPeriod.SkippedCount.of(d), 2)
     assertEquals(InitPlan.Detail.of(d).map(_.gazetteer), Some(true))
     assertEquals(SkippedPeriod.Skipped.of(d), Nil)

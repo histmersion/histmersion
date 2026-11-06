@@ -11,7 +11,7 @@ import com.histmersion.api.views.AutopilotStatus
 class UpstreamQuotaSuite extends munit.FunSuite:
 
   private val q =
-    UpstreamQuota("core", "2026-10-26", 10, 4, 900, 600, 20, rateLimit = Some(25), rateRemaining = Some(18))
+    UpstreamQuota(com.histmersion.api.library.UpstreamQuota.Upstream("core"), com.histmersion.api.library.UpstreamQuota.Day("2026-10-26"), com.histmersion.api.library.UpstreamQuota.LookupTokens(10), com.histmersion.api.library.UpstreamQuota.SearchTokens(4), com.histmersion.api.library.UpstreamQuota.DailyTokens(900), com.histmersion.api.library.UpstreamQuota.SearchDailyTokens(600), com.histmersion.api.library.UpstreamQuota.PerMinute(20), rateLimit = Some(25), rateRemaining = Some(18))
 
   test("one line: today's tokens against the budget, the searches' share, the pace and CORE's window"):
     assertEquals(
@@ -23,18 +23,18 @@ class UpstreamQuotaSuite extends munit.FunSuite:
     assert(UpstreamQuotaMarkdown.line(blocked).endsWith("· **not asked until 2026-10-26T18:52:11Z** (HTTP 429)"))
 
   test("about and the autopilot status carry the line; without a budget yet, neither does"):
-    val about = About("Histmersion", BuildStamp("0.1"), Health("ok", "ok", None, None), JobCounts(), None, None, None)
+    val about = About(com.histmersion.api.instance.About.Name("Histmersion"), BuildStamp(com.histmersion.api.instance.BuildStamp.Version("0.1")), Health(com.histmersion.api.instance.Health.Status("ok"), com.histmersion.api.instance.Health.Db("ok"), None, None), JobCounts(), None, None, None)
     assert(!AboutMarkdown.render(about).contains("CORE today"))
     assert(
       AboutMarkdown.render(about.modify(_.upstreams).setTo(List(q))).contains("- CORE today (UTC 2026-10-26): 14 of 900 tokens")
     )
-    val st = AutopilotStatus(on = true)
+    val st = AutopilotStatus(on = com.histmersion.api.views.AutopilotStatus.On(true))
     assert(!st.markdown.contains("CORE today"))
     val md = st.modify(_.upstreams).setTo(List(q)).markdown
     assert(md.contains("- legal open-access ingests today: 0\n- CORE today (UTC 2026-10-26)"), md)
 
   test("a sweep says which index it did not ask, and why"):
     val sw = CandidatesMarkdown.sweep(
-      CandidateSweep("g", Nil, 0, 0, 0, Map.empty, 0, notes = List("core not asked this sweep: CORE asked to wait"))
+      CandidateSweep(com.histmersion.api.library.CandidateSweep.Goal("g"), Nil, com.histmersion.api.library.CandidateSweep.Found(0), com.histmersion.api.library.CandidateSweep.Added(0), com.histmersion.api.library.CandidateSweep.Again(0), Map.empty, com.histmersion.api.library.CandidateSweep.Unseen(0), notes = List("core not asked this sweep: CORE asked to wait"))
     )
     assert(sw.contains("- **core not asked this sweep: CORE asked to wait**"), sw)

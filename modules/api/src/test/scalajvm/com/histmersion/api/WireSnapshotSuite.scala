@@ -67,124 +67,124 @@ class WireSnapshotSuite extends munit.FunSuite:
     com.histmersion.api.library.Title("Zq Alpha"),
     (Some(2001)).map(com.histmersion.api.catalogue.Year.apply),
     Source.Status.Contested,
-    List("zq-topic"),
-    List("zq-region"),
-    Some(-1450),
-    Some(-1350),
-    Some("A summary  with   spaces."),
-    snippet = Some("the **zq** hit"),
-    matchedHeading = Some("Zq heading")
+    List(com.histmersion.api.library.Source.Topics("zq-topic")),
+    List(com.histmersion.api.library.Source.Regions("zq-region")),
+    Some(com.histmersion.api.catalogue.Year(-1450)),
+    Some(com.histmersion.api.catalogue.Year(-1350)),
+    Some(com.histmersion.api.library.Source.Summary("A summary  with   spaces.")),
+    snippet = Some(com.histmersion.api.library.Search.Snippet("the **zq** hit")),
+    matchedHeading = Some(com.histmersion.api.library.SearchHit.MatchedHeading("Zq heading"))
   )
   private val result = SearchResult(
     com.histmersion.api.RowCount(3),
     List(
-      Hit(hit, Nil, List("tag zq")),
+      Hit(hit, Nil, List(com.histmersion.api.library.Hit.Why("tag zq"))),
       Hit(hit.modify(_.citekey).setTo(com.histmersion.api.library.Citekey("zq_beta_1999")).modify(_.year).setTo(None), Nil, Nil)
     ),
     offset = com.histmersion.api.Offset(0),
     next = (Some(2)).map(com.histmersion.api.Offset.apply)
   )
   private val finding = Finding.Row(
-    "Zq claim one.",
-    Some("Zqland"),
+    com.histmersion.api.library.Finding.Claim("Zq claim one."),
+    Some(com.histmersion.api.catalogue.Place.Region("Zqland")),
     Some(30.5),
     Some(40.25),
-    Some(-1300),
-    Some(-1200),
-    Some("Zq period"),
-    List("zq-tag"),
+    Some(com.histmersion.api.catalogue.Year(-1300)),
+    Some(com.histmersion.api.catalogue.Year(-1200)),
+    Some(com.histmersion.api.library.Finding.PeriodName("Zq period")),
+    List(com.histmersion.api.library.Finding.Tags("zq-tag")),
     Some(Confidence.High),
-    significance = Some("key")
+    significance = Some(com.histmersion.api.library.Finding.Significance("key"))
   )
   private val graph = com.histmersion.api.library.Source.Graph(
-    "zq_alpha_2001",
-    2,
-    List(GraphNode("zq_alpha_2001", Some("Zq Alpha"), Some(2001), Some(Source.Status.Current)), GraphNode("zq_gamma")),
-    List(GraphLink("zq_alpha_2001", "zq_gamma", "challenges"))
+    com.histmersion.api.library.Source.Graph.Root("zq_alpha_2001"),
+    com.histmersion.api.library.Source.Graph.Depth(2),
+    List(GraphNode(com.histmersion.api.library.Citekey("zq_alpha_2001"), Some(com.histmersion.api.library.Title("Zq Alpha")), Some(com.histmersion.api.catalogue.Year(2001)), Some(Source.Status.Current)), GraphNode(com.histmersion.api.library.Citekey("zq_gamma"))),
+    List(GraphLink(com.histmersion.api.library.Citekey("zq_alpha_2001"), com.histmersion.api.library.Citekey("zq_gamma"), com.histmersion.api.library.Edge.Kind("challenges")))
   )
   private val contradictions = ContradictionsResult(
     List(
       ContradictionRow(
-        "zq_alpha_2001",
-        "Zq Alpha",
-        Some(2001),
+        com.histmersion.api.library.Citekey("zq_alpha_2001"),
+        com.histmersion.api.library.Title("Zq Alpha"),
+        Some(com.histmersion.api.catalogue.Year(2001)),
         Source.Status.Current,
-        Some("out"),
-        Some("refutes"),
-        Some("zq_gamma"),
-        Some("Zq Gamma"),
-        Some(1990),
+        Some(com.histmersion.api.library.ContradictionRow.Direction.Wire("out")),
+        Some(com.histmersion.api.library.Edge.Kind("refutes")),
+        Some(com.histmersion.api.library.Citekey("zq_gamma")),
+        Some(com.histmersion.api.library.Title("Zq Gamma")),
+        Some(com.histmersion.api.catalogue.Year(1990)),
         Some(Source.Status.Debunked)
       ),
-      ContradictionRow("zq_beta_1999", "Zq Beta", None, Source.Status.Contested, None, None, None, None)
+      ContradictionRow(com.histmersion.api.library.Citekey("zq_beta_1999"), com.histmersion.api.library.Title("Zq Beta"), None, Source.Status.Contested, None, None, None, None)
     ),
-    2
+    com.histmersion.api.library.ContradictionsResult.Total(2)
   )
   private val geo = GeoHit(
-    "zq_alpha_2001",
-    "Zq Alpha",
-    "Zq claim.",
-    Some("Zqland"),
+    com.histmersion.api.library.Citekey("zq_alpha_2001"),
+    com.histmersion.api.library.GeoHit.Title("Zq Alpha"),
+    com.histmersion.api.library.GeoHit.Claim("Zq claim."),
+    Some(com.histmersion.api.catalogue.Place.Region("Zqland")),
     Some(30.5),
     Some(40.25),
-    Some(-1300),
+    Some(com.histmersion.api.catalogue.Year(-1300)),
     None,
     Some(Confidence.Low)
   )
   private val gazetteers = List(
     Gazetteer.SourceInfo(
-      "zq-gaz",
+      com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("zq-gaz"),
       Gazetteer.Kind.Lpf,
-      "Zq gazetteer",
-      Some("zq.lpf.json"),
-      present = true,
-      Some("1.0"),
-      importedVersion = Some("0.9"),
-      importedAt = Some("2026-01-02T03:04:05Z"),
-      places = Some(12),
-      names = Some(30),
-      links = Some(4),
-      licence = Some("CC-BY-4.0"),
-      citation = Some("Zq et al."),
-      periodStart = Some(-3000),
-      periodEnd = Some(-500)
+      com.histmersion.api.catalogue.Gazetteer.SourceInfo.Title("Zq gazetteer"),
+      Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.File("zq.lpf.json")),
+      present = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present(true),
+      Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.PinnedVersion("1.0")),
+      importedVersion = Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedVersion("0.9")),
+      importedAt = Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.ImportedAt("2026-01-02T03:04:05Z")),
+      places = Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Places(12)),
+      names = Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Names(30)),
+      links = Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Links(4)),
+      licence = Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Licence("CC-BY-4.0")),
+      citation = Some(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Citation("Zq et al.")),
+      periodStart = Some(com.histmersion.api.catalogue.Year(-3000)),
+      periodEnd = Some(com.histmersion.api.catalogue.Year(-500))
     ),
-    Gazetteer.SourceInfo("zq-missing", Gazetteer.Kind.Geonames, "Zq missing", None, present = false, None)
+    Gazetteer.SourceInfo(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("zq-missing"), Gazetteer.Kind.Geonames, com.histmersion.api.catalogue.Gazetteer.SourceInfo.Title("Zq missing"), None, present = com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present(false), None)
   )
   private val summary =
     com.histmersion.api.catalogue.Place.Summary(
       com.histmersion.api.catalogue.Place.Id("zq_tell"),
-      "Zq Tell",
-      "settlement",
-      Some(-2000),
-      Some(-1200),
-      Some("zq-gaz"),
-      "Zq Tell; Tell Zq"
+      com.histmersion.api.catalogue.Place.Summary.Label("Zq Tell"),
+      com.histmersion.api.catalogue.Place.Summary.Kind("settlement"),
+      Some(com.histmersion.api.catalogue.Year(-2000)),
+      Some(com.histmersion.api.catalogue.Year(-1200)),
+      Some(com.histmersion.api.catalogue.Place.Source("zq-gaz")),
+      com.histmersion.api.catalogue.Place.Summary.Names("Zq Tell; Tell Zq")
     )
   private val thumb = MediaThumb(
-    "00000000-0000-4000-8000-000000000001",
-    "depiction",
-    "/api/media/zq/thumb",
-    "Zq Museum",
-    license = Some("CC0-1.0"),
-    licenseUrl = Some("https://example.org/cc0"),
-    sourceUrl = Some("https://example.org/zq"),
-    width = Some(640),
-    height = Some(480)
+    com.histmersion.api.media.MediaItem.Uid("00000000-0000-4000-8000-000000000001"),
+    com.histmersion.api.media.MediaThumb.Role("depiction"),
+    com.histmersion.api.media.MediaThumb.Url("/api/media/zq/thumb"),
+    com.histmersion.api.media.MediaItem.Credit("Zq Museum"),
+    license = Some(com.histmersion.api.media.MediaItem.License("CC0-1.0")),
+    licenseUrl = Some(com.histmersion.api.media.MediaItem.LicenseUrl("https://example.org/cc0")),
+    sourceUrl = Some(com.histmersion.api.media.MediaItem.SourceUrl("https://example.org/zq")),
+    width = Some(com.histmersion.api.media.ImageSize.Width(640)),
+    height = Some(com.histmersion.api.media.ImageSize.Height(480))
   )
   private val item = MediaItem(
-    "00000000-0000-4000-8000-000000000002",
-    "zq.jpg",
-    "image/jpeg",
-    2048,
-    citekey = Some("zq_alpha_2001"),
-    provider = Some("zq-provider"),
-    providerKey = Some("zq-1"),
-    width = Some(800),
-    height = Some(600),
-    kind = Some("photo"),
-    caption = Some("A zq vase"),
-    license = Some("CC-BY-4.0"),
+    com.histmersion.api.media.MediaItem.Uid("00000000-0000-4000-8000-000000000002"),
+    com.histmersion.api.exchange.Bundle.Asset.FileName("zq.jpg"),
+    com.histmersion.api.exchange.Bundle.Asset.MimeText("image/jpeg"),
+    com.histmersion.api.ByteCount(2048),
+    citekey = Some(com.histmersion.api.library.Citekey("zq_alpha_2001")),
+    provider = Some(com.histmersion.api.media.MediaItem.Provider("zq-provider")),
+    providerKey = Some(com.histmersion.api.media.MediaItem.ProviderKey("zq-1")),
+    width = Some(com.histmersion.api.media.ImageSize.Width(800)),
+    height = Some(com.histmersion.api.media.ImageSize.Height(600)),
+    kind = Some(com.histmersion.api.media.MediaItem.Kind("photo")),
+    caption = Some(com.histmersion.api.media.MediaItem.Caption("A zq vase")),
+    license = Some(com.histmersion.api.media.MediaItem.License("CC-BY-4.0")),
     author = Some("Zq Author"),
     credit = Some("Zq Museum"),
     sourceUrl = Some("https://example.org/zq"),
@@ -194,16 +194,16 @@ class WireSnapshotSuite extends munit.FunSuite:
   )
   private val event = EventDetail(
     EventSummary(
-      "zq-event",
-      "Zq eruption",
-      "eruption",
-      TimeSpan(Some(-1620), Some(-1610), Some(-1600), Some(-1590)),
-      "attested",
-      placeId = Some("zq_tell"),
+      com.histmersion.api.catalogue.Event.Id("zq-event"),
+      com.histmersion.api.catalogue.EventSummary.Label("Zq eruption"),
+      com.histmersion.api.catalogue.EventSummary.Kind("eruption"),
+      TimeSpan(Some(com.histmersion.api.catalogue.Year(-1620)), Some(com.histmersion.api.catalogue.Year(-1610)), Some(com.histmersion.api.catalogue.Year(-1600)), Some(com.histmersion.api.catalogue.Year(-1590))),
+      com.histmersion.api.catalogue.EventSummary.Historicity("attested"),
+      placeId = Some(com.histmersion.api.catalogue.Place.Id("zq_tell")),
       description = Some("A zq eruption."),
       citekey = Some("zq_alpha_2001")
     ),
-    geometry = Some("POINT(30.5 40.25)"),
+    geometry = Some(com.histmersion.api.catalogue.EventGeometry.Geojson("POINT(30.5 40.25)")),
     children = List(EventSummary("zq-child", "Zq ash fall", "ashfall", TimeSpan(notBefore = Some(-1610)), "inferred")),
     datings =
       List(EventDating(com.histmersion.api.catalogue.Event.Id("zq-event"), com.histmersion.api.library.Citekey("zq_alpha_2001"), TimeSpan(Some(-1620), None, None, Some(-1590)), Some("c14"))),
@@ -213,11 +213,11 @@ class WireSnapshotSuite extends munit.FunSuite:
   )
   private val place = PlaceDetail(
     summary,
-    Some("POINT(30.5 40.25)"),
-    List(com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("zq_land"), "Zqland", "region", None, None, None, "Zqland")),
+    Some(com.histmersion.api.catalogue.Place.Geometry("POINT(30.5 40.25)")),
+    List(com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("zq_land"), com.histmersion.api.catalogue.Place.Summary.Label("Zqland"), com.histmersion.api.catalogue.Place.Summary.Kind("region"), None, None, None, com.histmersion.api.catalogue.Place.Summary.Names("Zqland"))),
     Nil,
-    findings = 3,
-    asOf = Some(-1500),
+    findings = com.histmersion.api.catalogue.Place.Counts.Findings(3),
+    asOf = Some(com.histmersion.api.catalogue.Year(-1500)),
     links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("zq_tell"), "wikidata", "Q2")),
     locationPrecision = Place.Precision.Stated,
     media = List(thumb),
@@ -233,60 +233,60 @@ class WireSnapshotSuite extends munit.FunSuite:
       ),
       "sourceFindingsOnly empty" -> SourcesMarkdown.sourceFindingsOnly(Vector.empty),
       "graph" -> SourcesMarkdown.graph(graph),
-      "contradictions" -> SourcesMarkdown.contradictions(contradictions, Some("zq_alpha_2001")),
+      "contradictions" -> SourcesMarkdown.contradictions(contradictions, Some(com.histmersion.api.library.Citekey("zq_alpha_2001"))),
       "contradictions all" -> SourcesMarkdown.contradictions(contradictions, None),
       "geoPage" -> SearchMarkdown.geoPage(
         GeoHitPage(com.histmersion.api.RowCount(2), List(geo, geo.modify(_.lat).setTo(None).modify(_.lon).setTo(None)), next = None)
       ),
       "geoResults empty" -> SearchMarkdown.geoResults(Vector.empty),
-      "bodySlice" -> Markdown.bodySlice("Zq body text.", 10, 40),
+      "bodySlice" -> Markdown.bodySlice(com.histmersion.api.library.Source.Body("Zq body text."), com.histmersion.api.personal.UnreadPage.Offset(10), 40),
       "gazetteerSources" -> PlacesMarkdown.gazetteerSources(gazetteers),
       "placeGone" -> PlacesMarkdown.placeGone(
-        com.histmersion.api.catalogue.Place.Gone("zq_tell", "Zq Tell", Some("zq_land"), Some("Zqland"), 3, 2, 1)
+        com.histmersion.api.catalogue.Place.Gone(com.histmersion.api.catalogue.Place.Id("zq_tell"), com.histmersion.api.catalogue.Place.Gone.Label("Zq Tell"), Some(com.histmersion.api.catalogue.Place.Gone.Into("zq_land")), Some(com.histmersion.api.catalogue.Place.Gone.IntoLabel("Zqland")), com.histmersion.api.catalogue.Place.Gone.FindingsBefore(3), com.histmersion.api.catalogue.Place.Gone.FindingsAfter(2), com.histmersion.api.catalogue.Place.Gone.Unlocated(1))
       ),
       "placeGone none" -> PlacesMarkdown.placeGone(
-        com.histmersion.api.catalogue.Place.Gone("zq_tell", "Zq Tell", None, None, 0, 0, 0)
+        com.histmersion.api.catalogue.Place.Gone(com.histmersion.api.catalogue.Place.Id("zq_tell"), com.histmersion.api.catalogue.Place.Gone.Label("Zq Tell"), None, None, com.histmersion.api.catalogue.Place.Gone.FindingsBefore(0), com.histmersion.api.catalogue.Place.Gone.FindingsAfter(0), com.histmersion.api.catalogue.Place.Gone.Unlocated(0))
       ),
       "placeAdded" -> PlacesMarkdown.placeAdded(summary),
       "placeRebuild" -> PlacesMarkdown.placeRebuild(
-        com.histmersion.api.catalogue.Place.RebuildResult(10, 4, 5, 9, 1, 7)
+        com.histmersion.api.catalogue.Place.RebuildResult(com.histmersion.api.catalogue.Place.RebuildResult.Links(10), com.histmersion.api.catalogue.Place.RebuildResult.ByGeometry(4), com.histmersion.api.catalogue.Place.RebuildResult.ByName(5), com.histmersion.api.catalogue.Place.RebuildResult.Located(9), com.histmersion.api.catalogue.Place.RebuildResult.Unlocated(1), com.histmersion.api.catalogue.Place.RebuildResult.Places(7))
       ),
       "attestation" -> AttestationsMarkdown.attestation(
         Attestation(
-          7,
-          "zq_alpha_2001",
-          "event",
-          "zq-event",
-          quote = Some("the zq quote"),
-          prefix = Some("before"),
-          suffix = Some("after"),
-          charStart = Some(10),
-          charEnd = Some(22),
+          com.histmersion.api.catalogue.Attestation.Id(7),
+          com.histmersion.api.library.Citekey("zq_alpha_2001"),
+          com.histmersion.api.catalogue.Attestation.TargetType("event"),
+          com.histmersion.api.catalogue.Attestation.TargetId("zq-event"),
+          quote = Some(com.histmersion.api.catalogue.Attestation.Quote("the zq quote")),
+          prefix = Some(com.histmersion.api.catalogue.Attestation.Prefix("before")),
+          suffix = Some(com.histmersion.api.catalogue.Attestation.Suffix("after")),
+          charStart = Some(com.histmersion.api.catalogue.Attestation.CharStart(10)),
+          charEnd = Some(com.histmersion.api.catalogue.Attestation.CharEnd(22)),
           page = Some("12"),
           note = Some("a zq note")
         )
       ),
       "agentStateList" -> AgentStateMarkdown.agentStateList(
-        List(AgentStateEntry("zq-key", "zq value", Some("2026-01-02T03:04:05Z")), AgentStateEntry("zq-other", "x"))
+        List(AgentStateEntry(com.histmersion.api.automation.AgentStateEntry.Key("zq-key"), com.histmersion.api.automation.AgentStateEntry.Value("zq value"), Some(com.histmersion.api.automation.AgentStateEntry.UpdatedAt("2026-01-02T03:04:05Z"))), AgentStateEntry(com.histmersion.api.automation.AgentStateEntry.Key("zq-other"), com.histmersion.api.automation.AgentStateEntry.Value("x")))
       ),
       "agentStateList empty" -> AgentStateMarkdown.agentStateList(Nil),
-      "agentState" -> AgentStateMarkdown.agentState(AgentStateEntry("zq-key", "zq value")),
+      "agentState" -> AgentStateMarkdown.agentState(AgentStateEntry(com.histmersion.api.automation.AgentStateEntry.Key("zq-key"), com.histmersion.api.automation.AgentStateEntry.Value("zq value"))),
       "assetDetail" -> MediaMarkdown.assetDetail(
-        "zq_alpha_2001",
+        com.histmersion.api.library.Citekey("zq_alpha_2001"),
         AssetDetail(
-          "zq.png",
-          "image/png",
-          1024,
+          com.histmersion.api.exchange.Bundle.Asset.FileName("zq.png"),
+          com.histmersion.api.exchange.Bundle.Asset.MimeText("image/png"),
+          com.histmersion.api.ByteCount(1024),
           "ab" * 32,
-          width = Some(10),
-          height = Some(20),
-          kind = Some("figure"),
-          caption = Some("Zq figure"),
-          license = Some("CC-BY-4.0"),
+          width = Some(com.histmersion.api.media.ImageSize.Width(10)),
+          height = Some(com.histmersion.api.media.ImageSize.Height(20)),
+          kind = Some(com.histmersion.api.media.MediaItem.Kind("figure")),
+          caption = Some(com.histmersion.api.media.MediaItem.Caption("Zq figure")),
+          license = Some(com.histmersion.api.media.MediaItem.License("CC-BY-4.0")),
           lat = Some(40.25),
           lon = Some(30.5),
-          periodStart = Some(-1500),
-          periodEnd = Some(-1400)
+          periodStart = Some(com.histmersion.api.catalogue.Year(-1500)),
+          periodEnd = Some(com.histmersion.api.catalogue.Year(-1400))
         )
       ),
       "mediaThumbLine" -> thumb.markdownLine,
@@ -294,38 +294,38 @@ class WireSnapshotSuite extends munit.FunSuite:
         MediaList(com.histmersion.api.RowCount(2), List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)), next = (Some(2)).map(com.histmersion.api.Offset.apply))
       ),
       "mediaFacets" -> MediaMarkdown.mediaFacets(
-        MediaFacets(List(MediaCount("zq-provider", 3)), List(MediaCount("CC0-1.0", 2), MediaCount("zq", 1, false)))
+        MediaFacets(List(MediaCount(com.histmersion.api.media.MediaCount.Key("zq-provider"), com.histmersion.api.media.MediaCount.N(3))), List(MediaCount(com.histmersion.api.media.MediaCount.Key("CC0-1.0"), com.histmersion.api.media.MediaCount.N(2)), MediaCount(com.histmersion.api.media.MediaCount.Key("zq"), com.histmersion.api.media.MediaCount.N(1), com.histmersion.api.media.MediaCount.Allowed(false))))
       ),
       "figureLicenceFill" -> MediaMarkdown.figureLicenceFill(
-        FigureLicenceFill(5, 3, applied = false, List(MediaCount("zq_alpha_2001", 3)))
+        FigureLicenceFill(com.histmersion.api.media.FigureLicenceFill.Candidates(5), com.histmersion.api.media.FigureLicenceFill.Updated(3), applied = com.histmersion.api.media.FigureLicenceFill.Applied(false), List(MediaCount(com.histmersion.api.media.MediaCount.Key("zq_alpha_2001"), com.histmersion.api.media.MediaCount.N(3))))
       ),
       "assetLink" -> MediaMarkdown.assetLink(
-        AssetLink(3, "zq_alpha_2001", "zq.png", "depicts", "place", "zq_tell", Some("0,0,10,10"), Some("zq notes"))
+        AssetLink(com.histmersion.api.media.AssetLink.Id(3), com.histmersion.api.library.Citekey("zq_alpha_2001"), com.histmersion.api.exchange.Bundle.Asset.FileName("zq.png"), com.histmersion.api.media.AssetLink.Relation("depicts"), com.histmersion.api.media.MediaTarget.TargetType("place"), com.histmersion.api.media.MediaTarget.TargetId("zq_tell"), Some(com.histmersion.api.media.AssetLink.Xywh("0,0,10,10")), Some(com.histmersion.api.media.AssetLink.Notes("zq notes")))
       ),
       "assetLinkLine" -> MediaMarkdown.assetLinkLine(
-        AssetLink(4, "zq_alpha_2001", "zq.png", "shows", "event", "zq-event")
+        AssetLink(com.histmersion.api.media.AssetLink.Id(4), com.histmersion.api.library.Citekey("zq_alpha_2001"), com.histmersion.api.exchange.Bundle.Asset.FileName("zq.png"), com.histmersion.api.media.AssetLink.Relation("shows"), com.histmersion.api.media.MediaTarget.TargetType("event"), com.histmersion.api.media.MediaTarget.TargetId("zq-event"))
       ),
       "backupStatus" -> Markdown.backupStatus(
-        Backup.Status("zq.dump", "done", 1500, Some(4096), Some("cd" * 32), None, List("old.dump"))
+        Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("done"), com.histmersion.api.backup.Backup.Status.DurationMs(1500), Some(com.histmersion.api.ByteCount(4096)), Some("cd" * 32), None, List(com.histmersion.api.backup.Backup.Result.Pruned("old.dump")))
       ),
-      "backupStatus failed" -> Markdown.backupStatus(Backup.Status("zq.dump", "failed", 10, error = Some("zq error"))),
+      "backupStatus failed" -> Markdown.backupStatus(Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("failed"), com.histmersion.api.backup.Backup.Status.DurationMs(10), error = Some("zq error"))),
       "event" -> event.markdown,
       "place" -> PlacesMarkdown.place(place),
       "event json" -> event.asJson.spaces2,
       "place json" -> place.asJson.spaces2,
       "resolved source json" -> ResolvedId(
-        "zq_alpha_2001",
+        com.histmersion.api.views.ResolvedId.Id("zq_alpha_2001"),
         source = Some(
-          ResolvedSource("zq_alpha_2001", Some("10.0/zq"), List("Zq A"), Some(2001), "Zq Alpha", Source.Status.Current)
+          ResolvedSource(com.histmersion.api.library.Citekey("zq_alpha_2001"), Some(com.histmersion.api.library.Doi("10.0/zq")), List(com.histmersion.api.library.AuthorName("Zq A")), Some(com.histmersion.api.catalogue.Year(2001)), com.histmersion.api.library.ResolvedSource.Title("Zq Alpha"), Source.Status.Current)
         )
       ).asJson.spaces2,
       "resolved article json" -> ResolvedId(
-        "zq-article",
-        article = Some(ResolvedArticle("zq-article", "Zq article"))
+        com.histmersion.api.views.ResolvedId.Id("zq-article"),
+        article = Some(ResolvedArticle(com.histmersion.api.research.Article.Slug("zq-article"), com.histmersion.api.research.Article.Title("Zq article")))
       ).asJson.spaces2,
-      "resolved none json" -> ResolvedId("zq-nothing").asJson.spaces2,
+      "resolved none json" -> ResolvedId(com.histmersion.api.views.ResolvedId.Id("zq-nothing")).asJson.spaces2,
       "job detail json" -> InitPlan
-        .Detail(Some(InitPlan(gazetteer = true, fetch = List("zq-gaz"))))
+        .Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List("zq-gaz"))))
         .set(SkippedPeriod.SkippedCount, 2)
         .set(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash, Some("zq-hash"))
         .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = true, List("sources"))))

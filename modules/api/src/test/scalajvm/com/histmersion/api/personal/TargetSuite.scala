@@ -19,7 +19,7 @@ class TargetSuite extends munit.FunSuite:
 
   test("check keeps the fields a kind uses and drops the rest"):
     val messy = Target(ItemKind.Source, Some(ItemKey("  zz_a ")), lat = Some(Latitude(1)), view = Some(ViewState("x")))
-    assertEquals(Target.check(messy, ItemKind.Bookmarkable, "bookmark"), Right(Target.item(ItemKind.Source, "zz_a")))
+    assertEquals(Target.check(messy, ItemKind.Bookmarkable, "bookmark"), Right(Target.item(ItemKind.Source, com.histmersion.api.personal.ItemKey("zz_a"))))
     assertEquals(Target.check(point.modify(_.id).setTo(Some(ItemKey("x"))), ItemKind.Notable, "note").map(_.id), Right(None))
     assert(Target.check(Target(ItemKind.Period, from = Some(Year(-1))), ItemKind.Bookmarkable, "bookmark").isLeft)
     assert(Target.check(Target(ItemKind.View), ItemKind.Bookmarkable, "bookmark").isLeft)
@@ -40,7 +40,7 @@ class TargetSuite extends munit.FunSuite:
       Target.where(Target(ItemKind.Period, from = Some(Year(-1200)), to = Some(Year(-1150)))),
       "1200 BCE–1150 BCE"
     )
-    assertEquals(Target.where(Target.item(ItemKind.Source, "x")), "")
+    assertEquals(Target.where(Target.item(ItemKind.Source, com.histmersion.api.personal.ItemKey("x"))), "")
     assertEquals(
       Target.where(
         Target(ItemKind.View, lat = Some(Latitude(1)), lon = Some(Longitude(2)), zoom = Some(MapZoom(6.25)))
@@ -49,7 +49,7 @@ class TargetSuite extends munit.FunSuite:
     )
 
   test("identity: an item is one; a point, a view and a period are each their own"):
-    assertEquals(Target.item(ItemKind.Article, "a").identity, Some("article:a"))
+    assertEquals(Target.item(ItemKind.Article, com.histmersion.api.personal.ItemKey("a")).identity, Some("article:a"))
     assertEquals(point.identity, None)
 
   test("the wire: kinds by name, out-of-range coordinates and unknown kinds refused"):
@@ -63,10 +63,10 @@ class TargetSuite extends munit.FunSuite:
     )
 
   test("kinds parse with a plural and in any case"):
-    assertEquals(ItemKind.parse("Sources"), Some(ItemKind.Source))
-    assertEquals(ItemKind.parse("view"), Some(ItemKind.View))
-    assertEquals(ItemKind.parse("x"), None)
+    assertEquals(ItemKind.parse(com.histmersion.api.ItemKind.Wire("Sources")), Some(ItemKind.Source))
+    assertEquals(ItemKind.parse(com.histmersion.api.ItemKind.Wire("view")), Some(ItemKind.View))
+    assertEquals(ItemKind.parse(com.histmersion.api.ItemKind.Wire("x")), None)
 
   test("the page size asked for is bounded"):
     assertEquals(PersonalIds.limit(None), PersonalIds.DefaultLimit)
-    assertEquals(PersonalIds.limit(Some(99999)), PersonalIds.MaxLimit)
+    assertEquals(PersonalIds.limit(Some(com.histmersion.api.Paging.Limit(99999))), PersonalIds.MaxLimit)

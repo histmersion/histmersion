@@ -32,14 +32,14 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     year = (Some(2015)).map(com.histmersion.api.catalogue.Year.apply),
     authors = (List("Wolfgang Haak", "Iosif Lazaridis", "Nick Patterson")).map(com.histmersion.api.library.AuthorName.apply),
     venue = (Some("Nature")).map(com.histmersion.api.library.Source.Venue.apply),
-    citedByCount = Some(2065),
-    isOa = true,
-    oaStatus = Some("green"),
+    citedByCount = Some(com.histmersion.api.library.Source.CitedByCount(2065)),
+    isOa = com.histmersion.api.library.WorkRef.IsOa(true),
+    oaStatus = Some(com.histmersion.api.library.WorkRef.OaStatus("green")),
     citekey = (Some("haak2015_massive")).map(com.histmersion.api.library.Citekey.apply)
   )
 
   test("discover renders a table and flags what is already stored"):
-    val md = AcquireMarkdown.discover(DiscoverResult("steppe", 2, List(work, work.modify(_.inDb).setTo(true))))
+    val md = AcquireMarkdown.discover(DiscoverResult(com.histmersion.api.library.DiscoverResult.Query("steppe"), com.histmersion.api.library.DiscoverResult.Count(2), List(work, work.modify(_.inDb).setTo(true))))
     assert(md.contains("| citekey | title | year | authors | cited | doi | notes |"))
     assert(md.contains("haak2015_massive"))
     assert(md.contains("in db"))
@@ -47,18 +47,18 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(md.contains("[10.1038/nature14317](https://doi.org/10.1038/nature14317)"))
 
   test("empty results say so instead of rendering an empty table"):
-    assert(AcquireMarkdown.discover(DiscoverResult("nothing", 0, Nil)).contains("_No works found"))
-    assert(AcquireMarkdown.followups(FollowupsResult("x", None, "s2", 0, 0, Nil)).contains("_Nothing cites"))
-    assert(AcquireMarkdown.refs(RefsResult("x", None, "crossref", 0, 0, 0, Nil)).contains("_No reference list"))
-    assert(AcquireMarkdown.calibreGaps(CalibreGaps(0, Nil)).contains("_Every stored source is in Calibre._"))
+    assert(AcquireMarkdown.discover(DiscoverResult(com.histmersion.api.library.DiscoverResult.Query("nothing"), com.histmersion.api.library.DiscoverResult.Count(0), Nil)).contains("_No works found"))
+    assert(AcquireMarkdown.followups(FollowupsResult(com.histmersion.api.library.FollowupsResult.Target("x"), None, com.histmersion.api.library.FollowupsResult.Backend("s2"), com.histmersion.api.library.FollowupsResult.Count(0), com.histmersion.api.library.FollowupsResult.EdgesAdded(0), Nil)).contains("_Nothing cites"))
+    assert(AcquireMarkdown.refs(RefsResult(com.histmersion.api.library.RefsResult.Target("x"), None, com.histmersion.api.library.RefsResult.Backend("crossref"), com.histmersion.api.library.RefsResult.Count(0), com.histmersion.api.library.RefsResult.Resolved(0), com.histmersion.api.library.RefsResult.EdgesAdded(0), Nil)).contains("_No reference list"))
+    assert(AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(0), Nil)).contains("_Every stored source is in Calibre._"))
 
   test("calibre gaps show whether the server stores each original, only when the server says"):
     def gap(ck: String, stored: Option[Boolean]) =
-      CalibreGap(ck, "T", List("A"), None, Some(2000), None, None, Nil, Some("unpaywall"), storedOriginal = stored)
-    val md = AcquireMarkdown.calibreGaps(CalibreGaps(2, List(gap("a", Some(true)), gap("b", Some(false)))))
+      CalibreGap(ck, com.histmersion.api.library.CalibreGap.Title("T"), List(com.histmersion.api.library.CalibreGap.Authors("A")), None, Some(com.histmersion.api.catalogue.Year(2000)), None, None, Nil, Some(com.histmersion.api.library.CalibreGap.Provenance("unpaywall")), storedOriginal = stored)
+    val md = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(2), List(gap("a", Some(true)), gap("b", Some(false)))))
     assert(md.contains("| original |") && md.contains("| stored |") && md.contains("| none |"), md)
     assert(md.contains("--file"), md)
-    val old = AcquireMarkdown.calibreGaps(CalibreGaps(1, List(gap("a", None))))
+    val old = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(1), List(gap("a", None))))
     assert(!old.contains("| original |"), old)
 
   test("a retracted work is marked in the single-work view"):
@@ -77,12 +77,12 @@ class AcquireMarkdownSuite extends munit.FunSuite:
 
   test("refs interpolates the edge note (not a function value) and counts resolutions"):
     val r = RefsResult(
-      "haak2015_massive",
-      Some("10.1038/x"),
-      "crossref",
-      2,
-      1,
-      0,
+      com.histmersion.api.library.RefsResult.Target("haak2015_massive"),
+      Some(com.histmersion.api.library.Doi("10.1038/x")),
+      com.histmersion.api.library.RefsResult.Backend("crossref"),
+      com.histmersion.api.library.RefsResult.Count(2),
+      com.histmersion.api.library.RefsResult.Resolved(1),
+      com.histmersion.api.library.RefsResult.EdgesAdded(0),
       List(RefRow(title = (Some("A")).map(com.histmersion.api.library.Title.apply), citekey = (Some("drews1993_bronze")).map(com.histmersion.api.library.Citekey.apply)), RefRow(title = (Some("B")).map(com.histmersion.api.library.Title.apply)))
     )
     val md = AcquireMarkdown.refs(r)
@@ -92,18 +92,18 @@ class AcquireMarkdownSuite extends munit.FunSuite:
 
   test("an assessment shows the verdict, the notices and whether it was applied"):
     val a = Assessment(
-      "haak2015_massive",
-      Some("10.1038/x"),
-      Some("haak2015_massive"),
-      Some(2015),
-      Some(3),
+      com.histmersion.api.library.Assessment.Target("haak2015_massive"),
+      Some(com.histmersion.api.library.Doi("10.1038/x")),
+      Some(com.histmersion.api.library.Citekey("haak2015_massive")),
+      Some(com.histmersion.api.catalogue.Year(2015)),
+      Some(com.histmersion.api.library.Acquire.CitedByCount(3)),
       None,
-      isRetracted = true,
-      retractionWatch = List(RetractionNotice(Some("Retraction"), Some("+Fabrication"), Some("2021-12-15"))),
-      crossrefUpdates = List(UpdateNotice(Some("retraction"), Some("Retraction"), Some("10.1038/y"))),
-      flagged = true,
+      isRetracted = com.histmersion.api.library.Assessment.IsRetracted(true),
+      retractionWatch = List(RetractionNotice(Some(com.histmersion.api.library.RetractionNotice.Nature("Retraction")), Some(com.histmersion.api.library.RetractionNotice.Reason("+Fabrication")), Some(com.histmersion.api.library.RetractionNotice.Date("2021-12-15")))),
+      crossrefUpdates = List(UpdateNotice(Some(com.histmersion.api.library.UpdateNotice.Kind("retraction")), Some(com.histmersion.api.library.UpdateNotice.Label("Retraction")), Some(com.histmersion.api.library.Doi("10.1038/y")))),
+      flagged = com.histmersion.api.library.Assessment.Flagged(true),
       verdict = Acquire.Verdicts.Retracted,
-      recommendation = Acquire.recommendation(Acquire.Verdicts.Retracted, Some(3))
+      recommendation = Acquire.recommendation(Acquire.Verdicts.Retracted, Some(com.histmersion.api.library.Acquire.CitedByCount(3)))
     )
     val md = AcquireMarkdown.assessment(a)
     assert(md.contains("⛔ RETRACTED"))
@@ -118,37 +118,37 @@ class AcquireMarkdownSuite extends munit.FunSuite:
 
   test("followups show the proposed edge kind, the intents and the citation contexts"):
     val f = FollowupRow(
-      title = Some("A critique"),
-      year = Some(2021),
-      doi = Some("10.1/x"),
+      title = Some(com.histmersion.api.library.Title("A critique")),
+      year = Some(com.histmersion.api.catalogue.Year(2021)),
+      doi = Some(com.histmersion.api.library.Doi("10.1/x")),
       isInfluential = true,
       intents = List("result"),
       contexts = List("these data contradict it"),
       proposedKind = Acquire.EdgeKinds.Refutes,
       citekey = Some("critic2021_x")
     )
-    val md = AcquireMarkdown.followups(FollowupsResult("haak2015_massive", None, "semantic-scholar", 1, 0, List(f)))
+    val md = AcquireMarkdown.followups(FollowupsResult(com.histmersion.api.library.FollowupsResult.Target("haak2015_massive"), None, com.histmersion.api.library.FollowupsResult.Backend("semantic-scholar"), com.histmersion.api.library.FollowupsResult.Count(1), com.histmersion.api.library.FollowupsResult.EdgesAdded(0), List(f)))
     assert(md.contains("**refutes**"))
     assert(md.contains("★"))
     assert(md.contains("> these data contradict it"))
     assert(md.contains("`critic2021_x`"))
 
   test("a lending-only archive item renders the refusal prominently"):
-    val md = AcquireMarkdown.archiveItem(ArchiveItem("x", title = Some("Black Athena"), lendingOnly = true))
+    val md = AcquireMarkdown.archiveItem(ArchiveItem(com.histmersion.api.library.ArchiveItem.Identifier("x"), title = Some(com.histmersion.api.library.ArchiveItem.Title("Black Athena")), lendingOnly = true))
     assert(md.contains("Lending-only item"))
     assert(md.contains("borrowed") || md.contains("BORROWED"))
 
   test("an ingest report lists every step and the manual drop-in when there was no PDF"):
     val r = Ingest.Report(
-      "haak2015_massive",
-      Some("10.1038/x"),
-      Some("T"),
-      created = true,
+      com.histmersion.api.library.Citekey("haak2015_massive"),
+      Some(com.histmersion.api.library.Doi("10.1038/x")),
+      Some(com.histmersion.api.library.Title("T")),
+      created = com.histmersion.api.library.Ingest.Report.Created(true),
       pdf = None,
-      edgesAdded = 0,
+      edgesAdded = com.histmersion.api.library.Ingest.Report.EdgesAdded(0),
       assessment = None,
-      steps = List(Ingest.Step("metadata", true, "ok"), Ingest.Step("fetch", false, "no OA copy")),
-      dropIn = Some("Drop it at …")
+      steps = List(Ingest.Step(com.histmersion.api.library.Ingest.Step.Value("metadata"), com.histmersion.api.library.Ingest.Step.Ok(true), com.histmersion.api.library.Ingest.Step.Detail("ok")), Ingest.Step(com.histmersion.api.library.Ingest.Step.Value("fetch"), com.histmersion.api.library.Ingest.Step.Ok(false), com.histmersion.api.library.Ingest.Step.Detail("no OA copy"))),
+      dropIn = Some(com.histmersion.api.library.Ingest.DropInPath("Drop it at …"))
     )
     val md = AcquireMarkdown.ingest(r)
     assert(md.contains("✓ **metadata**"))
@@ -158,10 +158,10 @@ class AcquireMarkdownSuite extends munit.FunSuite:
 
   test("every rendered table keeps its separator row (stripMargin eats a leading '|')"):
     val item = ArchiveItem(
-      "x",
-      title = Some("A Book"),
-      creator = List("C"),
-      year = Some(1939),
+      com.histmersion.api.library.ArchiveItem.Identifier("x"),
+      title = Some(com.histmersion.api.library.ArchiveItem.Title("A Book")),
+      creator = List(com.histmersion.api.library.ArchiveItem.Creator("C")),
+      year = Some(com.histmersion.api.catalogue.Year(1939)),
       files = List(ArchiveFile("a.pdf", Some("Text PDF"), 12.0))
     )
     val lines = AcquireMarkdown.archiveItem(item).linesIterator.toList
@@ -169,21 +169,21 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(sep.nonEmpty && sep.forall(_.startsWith("|")), lines.mkString("\n"))
     val ing = AcquireMarkdown.ingest(
       Ingest.Report(
-        "k",
+        com.histmersion.api.library.Citekey("k"),
         None,
-        Some("T"),
-        true,
+        Some(com.histmersion.api.library.Title("T")),
+        com.histmersion.api.library.Ingest.Report.Created(true),
         None,
-        0,
+        com.histmersion.api.library.Ingest.Report.EdgesAdded(0),
         Some(
-          Assessment("k", None, None, None, Some(9), None, false, Nil, Nil, false, Acquire.Verdicts.Current, "KEEP")
+          Assessment(com.histmersion.api.library.Assessment.Target("k"), None, None, None, Some(com.histmersion.api.library.Acquire.CitedByCount(9)), None, com.histmersion.api.library.Assessment.IsRetracted(false), Nil, Nil, com.histmersion.api.library.Assessment.Flagged(false), Acquire.Verdicts.Current, com.histmersion.api.library.Assessment.Recommendation("KEEP"))
         ),
-        List(Ingest.Step("metadata", true, "ok"))
+        List(Ingest.Step(com.histmersion.api.library.Ingest.Step.Value("metadata"), com.histmersion.api.library.Ingest.Step.Ok(true), com.histmersion.api.library.Ingest.Step.Detail("ok")))
       )
     )
     assert(ing.contains("✓ **metadata**"))
     assert(ing.contains("CURRENT"))
 
   test("pipes in a title cannot break the table"):
-    val md = AcquireMarkdown.discover(DiscoverResult("q", 1, List(work.modify(_.title).setTo(Some(com.histmersion.api.library.Title("A | B"))))))
+    val md = AcquireMarkdown.discover(DiscoverResult(com.histmersion.api.library.DiscoverResult.Query("q"), com.histmersion.api.library.DiscoverResult.Count(1), List(work.modify(_.title).setTo(Some(com.histmersion.api.library.Title("A | B"))))))
     assert(md.contains("A \\| B"), md)

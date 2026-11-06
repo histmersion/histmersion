@@ -12,6 +12,6 @@ class ProvenanceSuite extends munit.FunSuite:
     assertEquals(kind("oa"), Source.Kinds.Unknown)
     assertEquals(kind("unheard-of"), Source.Kinds.Unknown, "an unknown value says nothing about the kind")
     assertEquals(
-      Source.Kinds.of(Some("10.1/x"), None, Some(Provenance.ExternalFile), Nil, Nil, false),
+      Source.Kinds.of(Some(com.histmersion.api.library.Doi("10.1/x")), None, Some(Provenance.ExternalFile), Nil, Nil, false),
       Source.Kinds.Paper
     )

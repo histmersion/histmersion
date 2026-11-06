@@ -32,13 +32,13 @@ class GoalsExportSuite extends munit.FunSuite:
       period.map(_._1),
       period.map(_._2),
       parent,
-      updatedAt = Some("2026-10-05 17:15:24.891961+02")
+      updatedAt = Some(com.histmersion.api.automation.Goal.UpdatedAt("2026-10-05 17:15:24.891961+02"))
     )
 
   private def article(slug: String, title: String) =
-    GoalLink(LinkKind.Article, slug, None, Some(title), "2026-10-05T15:00:00Z")
+    GoalLink(LinkKind.Article, slug, None, Some(title), com.histmersion.api.automation.Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z"))
   private def item(id: Int, text: String) =
-    GoalLink(LinkKind.QueueItem, id.toString, None, Some(text), "2026-10-05T15:00:00Z")
+    GoalLink(LinkKind.QueueItem, id.toString, None, Some(text), com.histmersion.api.automation.Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z"))
 
   private val views: List[GoalView] = List(
     GoalView(
@@ -65,23 +65,23 @@ class GoalsExportSuite extends munit.FunSuite:
         article("sea_peoples", "The Sea Peoples"),
         item(495, "Ingest 10.1007/s10963-021-09163-7 (hybrid OA) — Meyer & Knapp 2021"),
         article("bronze_age_collapse", "Late Bronze Age Collapse (~1200 BCE)"),
-        GoalLink(LinkKind.QueueItem, "9999", None, None, "2026-10-05T15:00:00Z"),
+        GoalLink(LinkKind.QueueItem, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("9999"), None, None, com.histmersion.api.automation.Goal.Plans.GoalLink.CreatedAt("2026-10-05T15:00:00Z")),
         GoalLink(
           LinkKind.Source,
-          "cline2014_year",
-          Some("the anchor narrative"),
-          Some("1177 B.C.: The Year Civilization Collapsed")
+          com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("cline2014_year"),
+          Some(com.histmersion.api.automation.Goal.Plans.GoalLink.Note("the anchor narrative")),
+          Some(com.histmersion.api.automation.Goal.Plans.GoalLink.Title("1177 B.C.: The Year Civilization Collapsed"))
         ),
-        GoalLink(LinkKind.Query, "late bronze age collapse drought")
+        GoalLink(LinkKind.Query, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("late bronze age collapse drought"))
       ),
       schedules = List(
         GoalSchedule(
-          "bronze-age-collapse",
+          com.histmersion.api.automation.Goal.Slug("bronze-age-collapse"),
           ScheduleKind.Currency,
-          "0 6 * * 1",
-          enabled = true,
+          com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("0 6 * * 1"),
+          enabled = com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true),
           budgetUsd = Some(0.5),
-          nextRunAt = Some("2026-10-12T06:00:00Z"),
+          nextRunAt = Some(com.histmersion.api.automation.Goal.Plans.GoalSchedule.NextRunAt("2026-10-12T06:00:00Z")),
           lastNote = Some("started run abc")
         )
       )
@@ -104,10 +104,10 @@ class GoalsExportSuite extends munit.FunSuite:
       goal("mystery-cults", "Mystery cults and the ergot hypothesis", "reviewed", Some("comparative-religion")),
       plan = Some(
         Plan(
-          "mystery-cults",
-          "Eleusis first, then the ergot debate.",
-          subGoals = List(PlannedGoal("eleusis", "Eleusis")),
-          queries = List("kykeon ergot")
+          com.histmersion.api.automation.Goal.Slug("mystery-cults"),
+          com.histmersion.api.automation.Goal.Plans.Plan.Rationale("Eleusis first, then the ergot debate."),
+          subGoals = List(PlannedGoal(com.histmersion.api.automation.Goal.Slug("eleusis"), com.histmersion.api.automation.Goal.Title("Eleusis"))),
+          queries = List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("kykeon ergot"))
         )
       )
     ),
@@ -231,10 +231,10 @@ class GoalsExportSuite extends munit.FunSuite:
       v.modify(
         _.goal).setTo(v.goal.modify(_.updatedAt).setTo(Some("2027-01-01 00:00:00+00"))).modify(_.schedules).setTo(v.schedules.map(
           _.copy(
-            nextRunAt = Some("2027-01-01T06:00:00Z"),
-            lastRunAt = Some("2026-12-31T06:00:00Z"),
-            lastRun = Some("run-xyz"),
-            lastNote = Some("skipped: budget")
+            nextRunAt = Some(com.histmersion.api.automation.Goal.Plans.GoalSchedule.NextRunAt("2027-01-01T06:00:00Z")),
+            lastRunAt = Some(com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRunAt("2026-12-31T06:00:00Z")),
+            lastRun = Some(com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRun("run-xyz")),
+            lastNote = Some(com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastNote("skipped: budget"))
           )
         )
       )
@@ -251,8 +251,8 @@ class GoalsExportSuite extends munit.FunSuite:
       GoalView(
         goal("g", "G", "planned"),
         links = List(
-          GoalLink(LinkKind.Article, "deleted_article", None, None),
-          GoalLink(LinkKind.Source, "gone2020", Some("why"), None)
+          GoalLink(LinkKind.Article, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("deleted_article"), None, None),
+          GoalLink(LinkKind.Source, com.histmersion.api.automation.Goal.Plans.GoalLink.Ref("gone2020"), Some(com.histmersion.api.automation.Goal.Plans.GoalLink.Note("why")), None)
         )
       )
     )

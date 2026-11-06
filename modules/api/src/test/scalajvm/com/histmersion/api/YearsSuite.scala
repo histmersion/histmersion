@@ -52,29 +52,29 @@ class YearsSuite extends munit.FunSuite:
   }
 
   test("parse: year 0 is refused with the convention, not as garbage"):
-    assert(Years.parse("0").left.exists(_.contains(Years.NoYearZero)))
+    assert(Years.parse(com.histmersion.api.Years.Text("0")).left.exists(_.contains(Years.NoYearZero)))
 
   // ── conversion ───────────────────────────────────────────────────────────────────────────────
   test("astronomical ↔ historical: no year 0 on the historical side"):
-    assertEquals(Years.fromAstronomical(0), -1L)
-    assertEquals(Years.fromAstronomical(-51), -52L)
-    assertEquals(Years.fromAstronomical(640), 640L)
-    assertEquals(Years.toAstronomical(-1), 0L)
-    assertEquals(Years.toAstronomical(0), 0L, "a stored 0 reads as 1 BCE")
+    assertEquals(Years.fromAstronomical(com.histmersion.api.Years.Astronomical(0)), -1L)
+    assertEquals(Years.fromAstronomical(com.histmersion.api.Years.Astronomical(-51)), -52L)
+    assertEquals(Years.fromAstronomical(com.histmersion.api.Years.Astronomical(640)), 640L)
+    assertEquals(Years.toAstronomical(com.histmersion.api.catalogue.Year(-1)), 0L)
+    assertEquals(Years.toAstronomical(com.histmersion.api.catalogue.Year(0)), 0L, "a stored 0 reads as 1 BCE")
     (-3000L to 3000L).filter(_ != 0).foreach(h => assertEquals(Years.fromAstronomical(Years.toAstronomical(h)), h))
 
   test("shift crosses the era boundary without a year 0"):
-    assertEquals(Years.shift(-1, 1), 1L)
-    assertEquals(Years.shift(1, -1), -1L)
-    assertEquals(Years.shift(-10, 30), 21L)
+    assertEquals(Years.shift(com.histmersion.api.Years.ShiftH(-1), com.histmersion.api.Years.Shift(1)), 1L)
+    assertEquals(Years.shift(com.histmersion.api.Years.ShiftH(1), com.histmersion.api.Years.Shift(-1)), -1L)
+    assertEquals(Years.shift(com.histmersion.api.Years.ShiftH(-10), com.histmersion.api.Years.Shift(30)), 21L)
 
   test("ISO years are astronomical: parseIso and isoAstronomical"):
-    assertEquals(Years.parseIso("0000"), Some(-1L))
-    assertEquals(Years.parseIso("-2999"), Some(-3000L))
-    assertEquals(Years.parseIso("about 3000 BC"), None)
-    assertEquals(Years.isoAstronomical("-0051-07-01T00:00:00Z"), Some(-51L))
-    assertEquals(Years.isoAstronomical("+2000-01-01"), Some(2000L))
-    assertEquals(Years.isoAstronomical("x"), None)
+    assertEquals(Years.parseIso(com.histmersion.api.Years.Iso.Wire("0000")), Some(-1L))
+    assertEquals(Years.parseIso(com.histmersion.api.Years.Iso.Wire("-2999")), Some(-3000L))
+    assertEquals(Years.parseIso(com.histmersion.api.Years.Iso.Wire("about 3000 BC")), None)
+    assertEquals(Years.isoAstronomical(com.histmersion.api.Years.Iso.Wire("-0051-07-01T00:00:00Z")), Some(-51L))
+    assertEquals(Years.isoAstronomical(com.histmersion.api.Years.Iso.Wire("+2000-01-01")), Some(2000L))
+    assertEquals(Years.isoAstronomical(com.histmersion.api.Years.Iso.Wire("x")), None)
 
   test("fromJson: numbers, decimal numbers and strings through the given reader"):
     import io.circe.Json
@@ -91,23 +91,23 @@ class YearsSuite extends munit.FunSuite:
     assertEquals(YearFmt(None), "?")
 
   test("openPeriod: both, one, neither"):
-    assertEquals(YearFmt.openPeriod(Some(-27), Some(410)), "27 BCE–410 CE")
-    assertEquals(YearFmt.openPeriod(Some(-27), None), "from 27 BCE")
-    assertEquals(YearFmt.openPeriod(None, Some(410)), "until 410 CE")
+    assertEquals(YearFmt.openPeriod(Some(com.histmersion.api.catalogue.Year(-27)), Some(com.histmersion.api.catalogue.Year(410))), "27 BCE–410 CE")
+    assertEquals(YearFmt.openPeriod(Some(com.histmersion.api.catalogue.Year(-27)), None), "from 27 BCE")
+    assertEquals(YearFmt.openPeriod(None, Some(com.histmersion.api.catalogue.Year(410))), "until 410 CE")
     assertEquals(YearFmt.openPeriod(None, None), "undated")
     assertEquals(YearFmt.openPeriod(None, None, ""), "")
-    assertEquals(YearFmt.openPeriod(Some(0), Some(0)), "1 BCE")
+    assertEquals(YearFmt.openPeriod(Some(com.histmersion.api.catalogue.Year(0)), Some(com.histmersion.api.catalogue.Year(0))), "1 BCE")
 
   test("an event's short and long date lines"):
-    val ts = TimeSpan(Some(-1650), Some(-1630), Some(-1600), Some(-1590))
+    val ts = TimeSpan(Some(com.histmersion.api.catalogue.Year(-1650)), Some(com.histmersion.api.catalogue.Year(-1630)), Some(com.histmersion.api.catalogue.Year(-1600)), Some(com.histmersion.api.catalogue.Year(-1590)))
     assertEquals(YearFmt.span(ts), "1650 BCE–1590 BCE")
     assertEquals(YearFmt.span(TimeSpan()), "undated")
-    assertEquals(YearFmt.span(TimeSpan(beginBy = Some(-776))), "776 BCE")
+    assertEquals(YearFmt.span(TimeSpan(beginBy = Some(com.histmersion.api.catalogue.Year(-776)))), "776 BCE")
     assertEquals(YearFmt.spanLong(ts), "not before 1650 BCE, by 1630 BCE, until 1600 BCE, not after 1590 BCE")
     assertEquals(YearFmt.spanLong(TimeSpan()), "undated")
 
   test("goal periods print in BCE/CE, not as raw signed years (#1798)"):
-    val g = Goal("g", "A goal", "active", None, Nil, Nil, Some(-1200), Some(-1000), None, None)
+    val g = Goal(com.histmersion.api.automation.Goal.Slug("g"), com.histmersion.api.automation.Goal.Title("A goal"), com.histmersion.api.automation.Goal.StatusValue("active"), None, Nil, Nil, Some(com.histmersion.api.catalogue.Year(-1200)), Some(com.histmersion.api.catalogue.Year(-1000)), None, None)
     assert(
       GoalsMarkdown.goalList(Goal.List(com.histmersion.api.RowCount(1), List(g))).contains("(1200 BCE–1000 BCE)"),
       GoalsMarkdown.goalList(Goal.List(com.histmersion.api.RowCount(1), List(g)))
@@ -118,7 +118,7 @@ class YearsSuite extends munit.FunSuite:
     assert(GoalsMarkdown.goal(open).contains("**Period:** from 1200 BCE"), GoalsMarkdown.goal(open))
 
   test("the places and periods views use the same formatter"):
-    assertEquals(Place.Overrides.periodText(Some(0), Some(5)), "1 BCE–5 CE")
+    assertEquals(Place.Overrides.periodText(Some(com.histmersion.api.catalogue.Year(0)), Some(com.histmersion.api.catalogue.Year(5))), "1 BCE–5 CE")
     assertEquals(Place.Dating.describe(Place.Dating.Stated, None, None), "")
-    val md = PeriodsMarkdown.list(Vector(HistoricalPeriod("p", "Late Bronze Age", period = Period(-1600, -1100))))
+    val md = PeriodsMarkdown.list(Vector(HistoricalPeriod(com.histmersion.api.catalogue.HistoricalPeriod.Id("p"), com.histmersion.api.catalogue.HistoricalPeriod.Label("Late Bronze Age"), period = Period(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1100)))))
     assert(md.contains("1600 BCE–1100 BCE"), md)

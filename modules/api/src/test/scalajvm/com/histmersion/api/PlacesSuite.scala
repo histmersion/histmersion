@@ -38,7 +38,7 @@ class PlacesSuite extends munit.FunSuite:
     assertEquals(p.place.id, com.histmersion.api.catalogue.Place.Id("pleiades_550595"))
     assertEquals(p.place.label, "Hattusa")
     assertEquals(p.place.kind, Place.Kind.Site, "types[].label 'settlement' maps to site")
-    assertEquals(p.place.period, Some(Period(-1650, -1180)))
+    assertEquals(p.place.period, Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))))
     assert(p.place.geometry.exists(_.contains("\"Point\"")), p.place.geometry.toString)
     assert(p.place.properties.exists(_.contains("ccodes")), "unmodelled properties are kept verbatim")
 
@@ -59,7 +59,7 @@ class PlacesSuite extends munit.FunSuite:
       r.map(x => (x.childId, x.parentId, x.kind)),
       List(("pleiades_550595", "hittite_empire", com.histmersion.api.catalogue.Place.Relation.PartOf))
     )
-    assertEquals(r.head.period, Some(Period(-1650, -1180)))
+    assertEquals(r.head.period, Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))))
 
   test("multipolygon with no `when` is an always-valid place"):
     val json =
@@ -83,7 +83,7 @@ class PlacesSuite extends munit.FunSuite:
     val p = one(json, Place.Kind.Site)
     assertEquals(p.place.id, com.histmersion.api.catalogue.Place.Id("hittite_empire"), "no @id → a slug of the title")
     assertEquals(p.place.kind, Place.Kind.Polity)
-    assertEquals(p.place.period, Some(Period(-1400, -1180)))
+    assertEquals(p.place.period, Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1180))))
     assertEquals(p.place.source, Some("AWMC LBA map"))
     assertEquals(p.relations.map(_.parentId), List("anatolia"))
 
@@ -92,9 +92,9 @@ class PlacesSuite extends munit.FunSuite:
       one(
         s"""{"type":"FeatureCollection","features":[{"type":"Feature","properties":$props,"geometry":null}]}"""
       ).place.period
-    assertEquals(per("""{"title":"a","period":"-3300,-2600"}"""), Some(Period(-3300, -2600)))
-    assertEquals(per("""{"title":"b","periodStart":-1200,"periodEnd":-800}"""), Some(Period(-1200, -800)))
-    assertEquals(per("""{"title":"c","minDate":-750,"maxDate":-330}"""), Some(Period(-750, -330)))
+    assertEquals(per("""{"title":"a","period":"-3300,-2600"}"""), Some(Period(com.histmersion.api.catalogue.Year(-3300), com.histmersion.api.catalogue.Year(-2600))))
+    assertEquals(per("""{"title":"b","periodStart":-1200,"periodEnd":-800}"""), Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-800))))
+    assertEquals(per("""{"title":"c","minDate":-750,"maxDate":-330}"""), Some(Period(com.histmersion.api.catalogue.Year(-750), com.histmersion.api.catalogue.Year(-330))))
     assertEquals(per("""{"title":"d"}"""), None)
 
   test("a feature list and a single feature parse like a FeatureCollection"):
@@ -142,12 +142,12 @@ class PlacesSuite extends munit.FunSuite:
     assertEquals(p.place.id, com.histmersion.api.catalogue.Place.Id("hittite_empire_lba"))
     assertEquals(p.place.label, "Hittite Empire")
     assertEquals(p.place.kind, Place.Kind.Polity)
-    assertEquals(p.place.period, Some(Period(-1400, -1180)))
+    assertEquals(p.place.period, Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1180))))
     assertEquals(p.place.source, Some("traced by hand after Bryce (2005)"))
     assertEquals(p.names.map(n => (n.name, n.lang)).toSet, Set(("Hatti", "hit"), ("Hittite Empire", "en")))
     assertEquals(
       p.relations.map(r => (r.parentId, r.period)),
-      List(("anatolia", Some(Period(-1400, -1180))), ("levant", Some(Period(-1400, -1180)))),
+      List(("anatolia", Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1180)))), ("levant", Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1180))))),
       "part_of is an ARRAY of objects, each with its own validity"
     )
 
@@ -170,7 +170,7 @@ class PlacesSuite extends munit.FunSuite:
       p.relations,
       List(
         com.histmersion.api.catalogue.Place
-          .Relation("anatolia", "continent_asia", com.histmersion.api.catalogue.Place.Relation.PartOf, None)
+          .Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("anatolia"), com.histmersion.api.catalogue.Place.Relation.ParentId("continent_asia"), com.histmersion.api.catalogue.Place.Relation.PartOf, None)
       )
     )
     assertEquals(p.names.map(_.name), List("Anatolia", "Asia Minor"))
@@ -180,45 +180,45 @@ class PlacesSuite extends munit.FunSuite:
     assertEquals(Lpf.parse(Lpf.render(parsed)), Right(parsed))
 
   test("PlaceKind.parse maps foreign vocabularies onto the four kinds"):
-    assertEquals(Place.Kind.parse("settlement"), Some(Place.Kind.Site))
-    assertEquals(Place.Kind.parse("Kingdom"), Some(Place.Kind.Polity))
-    assertEquals(Place.Kind.parse("Sovereign country"), Some(Place.Kind.Polity))
-    assertEquals(Place.Kind.parse("continent"), Some(Place.Kind.Region))
-    assertEquals(Place.Kind.parse("river"), Some(Place.Kind.Feature))
-    assertEquals(Place.Kind.parse("zzz"), None)
-    assertEquals(Place.Kind.parse(""), None)
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("settlement")), Some(Place.Kind.Site))
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("Kingdom")), Some(Place.Kind.Polity))
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("Sovereign country")), Some(Place.Kind.Polity))
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("continent")), Some(Place.Kind.Region))
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("river")), Some(Place.Kind.Feature))
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("zzz")), None)
+    assertEquals(Place.Kind.parse(com.histmersion.api.catalogue.Place.Kind.ParseS("")), None)
 
   // ── rendering ───────────────────────────────────────────────────────────────────────────────
   private val turkey =
     com.histmersion.api.catalogue.Place.Summary(
       com.histmersion.api.catalogue.Place.Id("ne_country_tur"),
-      "Turkey",
+      com.histmersion.api.catalogue.Place.Summary.Label("Turkey"),
       Place.Kind.Region,
       None,
       None,
-      Some("Natural Earth"),
-      "Turkey, Türkiye"
+      Some(com.histmersion.api.catalogue.Place.Source("Natural Earth")),
+      com.histmersion.api.catalogue.Place.Summary.Names("Turkey, Türkiye")
     )
   private val disputed = com.histmersion.api.catalogue.Place.Summary(
     com.histmersion.api.catalogue.Place.Id("israel_united_monarchy_ia1"),
-    "Israel (united monarchy, as narrated) (contested)",
+    com.histmersion.api.catalogue.Place.Summary.Label("Israel (united monarchy, as narrated) (contested)"),
     Place.Kind.Polity,
-    Some(-1030),
-    Some(-930),
-    Some("Carta Bible Atlas"),
-    "Israel, Yisrael",
-    contested = true
+    Some(com.histmersion.api.catalogue.Year(-1030)),
+    Some(com.histmersion.api.catalogue.Year(-930)),
+    Some(com.histmersion.api.catalogue.Place.Source("Carta Bible Atlas")),
+    com.histmersion.api.catalogue.Place.Summary.Names("Israel, Yisrael"),
+    contested = com.histmersion.api.catalogue.Place.Summary.Contested(true)
   )
   private val hatti =
     com.histmersion.api.catalogue.Place.Summary(
       com.histmersion.api.catalogue.Place.Id("hatti_lba"),
-      "Hatti",
+      com.histmersion.api.catalogue.Place.Summary.Label("Hatti"),
       Place.Kind.Polity,
-      Some(-1400),
-      Some(-1180),
+      Some(com.histmersion.api.catalogue.Year(-1400)),
+      Some(com.histmersion.api.catalogue.Year(-1180)),
       None,
-      "Hatti",
-      contested = true
+      com.histmersion.api.catalogue.Place.Summary.Names("Hatti"),
+      contested = com.histmersion.api.catalogue.Place.Summary.Contested(true)
     )
 
   test("a disputed extent is marked wherever its label is drawn"):
@@ -234,7 +234,7 @@ class PlacesSuite extends munit.FunSuite:
     val md = PlacesMarkdown.places(
       Vector(
         com.histmersion.api.catalogue.Place
-          .Hit(turkey.id.value, turkey.label, turkey.kind, None, None, turkey.source, turkey.names, Some("Türkiye"), 122),
+          .Hit(turkey.id.value, turkey.label, turkey.kind, None, None, turkey.source, turkey.names, Some(com.histmersion.api.catalogue.Place.Hit.MatchedName("Türkiye")), com.histmersion.api.catalogue.Place.Hit.Findings(122)),
         com.histmersion.api.catalogue.Place.Hit(
           hatti.id.value,
           hatti.label,
@@ -244,8 +244,8 @@ class PlacesSuite extends munit.FunSuite:
           None,
           hatti.names,
           None,
-          44,
-          contested = true
+          com.histmersion.api.catalogue.Place.Hit.Findings(44),
+          contested = com.histmersion.api.catalogue.Place.Hit.Contested(true)
         )
       )
     )
@@ -259,9 +259,9 @@ class PlacesSuite extends munit.FunSuite:
   test("the hierarchy renders as an indented list, one level of indent per depth"):
     val md = PlacesMarkdown.placeTree(
       Vector(
-        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("continent_asia"), "Asia", Place.Kind.Region, 0, 400),
-        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("ne_country_tur"), "Turkey", Place.Kind.Region, 1, 122),
-        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("hatti_lba"), "Hatti", Place.Kind.Polity, 2, 44, contested = true)
+        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("continent_asia"), com.histmersion.api.catalogue.Place.TreeRow.Label("Asia"), Place.Kind.Region, com.histmersion.api.catalogue.Place.TreeRow.Depth(0), com.histmersion.api.catalogue.Place.TreeRow.Findings(400)),
+        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("ne_country_tur"), com.histmersion.api.catalogue.Place.TreeRow.Label("Turkey"), Place.Kind.Region, com.histmersion.api.catalogue.Place.TreeRow.Depth(1), com.histmersion.api.catalogue.Place.TreeRow.Findings(122)),
+        com.histmersion.api.catalogue.Place.TreeRow(com.histmersion.api.catalogue.Place.Id("hatti_lba"), com.histmersion.api.catalogue.Place.TreeRow.Label("Hatti"), Place.Kind.Polity, com.histmersion.api.catalogue.Place.TreeRow.Depth(2), com.histmersion.api.catalogue.Place.TreeRow.Findings(44), contested = com.histmersion.api.catalogue.Place.TreeRow.Contested(true))
       )
     )
     assertEquals(md.linesIterator.map(_.takeWhile(_ == ' ').length).toList, List(0, 2, 4))
@@ -274,16 +274,16 @@ class PlacesSuite extends munit.FunSuite:
         disputed,
         Some("""{"type":"Polygon","coordinates":[]}"""),
         List(
-          com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("levant"), "Levant", Place.Kind.Region, None, None, None, "Levant")
+          com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("levant"), com.histmersion.api.catalogue.Place.Summary.Label("Levant"), Place.Kind.Region, None, None, None, com.histmersion.api.catalogue.Place.Summary.Names("Levant"))
         ),
         List(turkey),
-        5,
-        Some(-1000),
-        contested = true
+        com.histmersion.api.catalogue.Place.Counts.Findings(5),
+        Some(com.histmersion.api.catalogue.Year(-1000)),
+        contested = com.histmersion.api.catalogue.Place.Entry.Contested(true)
       ),
       Vector(
         com.histmersion.api.catalogue.Place
-          .TreeRow(com.histmersion.api.catalogue.Place.Id("israel_united_monarchy_ia1"), disputed.label, Place.Kind.Polity, 0, 5, true)
+          .TreeRow(com.histmersion.api.catalogue.Place.Id("israel_united_monarchy_ia1"), disputed.label, Place.Kind.Polity, com.histmersion.api.catalogue.Place.TreeRow.Depth(0), com.histmersion.api.catalogue.Place.TreeRow.Findings(5), com.histmersion.api.catalogue.Place.TreeRow.Contested(true))
       )
     )
     assert(md.startsWith("# Israel (united monarchy, as narrated) (contested)\n"), md.take(80))
@@ -300,24 +300,24 @@ class PlacesSuite extends munit.FunSuite:
         Some("""{"type":"Polygon","coordinates":[]}"""),
         Nil,
         Nil,
-        44,
+        com.histmersion.api.catalogue.Place.Counts.Findings(44),
         None,
-        contested = true,
+        contested = com.histmersion.api.catalogue.Place.Entry.Contested(true),
         footprints = List(
           com.histmersion.api.catalogue.Place.Footprint(
-            1,
+            com.histmersion.api.catalogue.Place.Footprint.Id(1),
             com.histmersion.api.catalogue.Place.Id("hatti_lba"),
-            "extent",
-            Some(Period(-1400, -1180)),
-            Some("uncertain"),
+            com.histmersion.api.catalogue.Place.Footprint.Role("extent"),
+            Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1180))),
+            Some(com.histmersion.api.catalogue.Place.Footprint.Certainty("uncertain")),
             None,
-            Some("bryce2005_kingdom")
+            Some(com.histmersion.api.library.Citekey("bryce2005_kingdom"))
           ),
           com.histmersion.api.catalogue.Place
-            .Footprint(2, com.histmersion.api.catalogue.Place.Id("hatti_lba"), "core", Some(Period(-1400, -1200)), Some("approximate"))
+            .Footprint(com.histmersion.api.catalogue.Place.Footprint.Id(2), com.histmersion.api.catalogue.Place.Id("hatti_lba"), com.histmersion.api.catalogue.Place.Footprint.Role("core"), Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1200))), Some(com.histmersion.api.catalogue.Place.Footprint.Certainty("approximate")))
         ),
-        links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("hatti_lba"), "pleiades", "550595", "close_match")),
-        types = List(com.histmersion.api.catalogue.Place.Type(com.histmersion.api.catalogue.Place.Id("hatti_lba"), "polity", Some(Period(-1400, -1180)))),
+        links = List(com.histmersion.api.catalogue.Place.Link(com.histmersion.api.catalogue.Place.Id("hatti_lba"), com.histmersion.api.catalogue.Place.Link.Scheme("pleiades"), com.histmersion.api.catalogue.Place.Link.ExternalId("550595"), com.histmersion.api.catalogue.Place.Link.Relation("close_match"))),
+        types = List(com.histmersion.api.catalogue.Place.Type(com.histmersion.api.catalogue.Place.Id("hatti_lba"), com.histmersion.api.catalogue.Place.Type.TypeLabel("polity"), Some(Period(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1180))))),
         hasBoundary = true
       )
     )
@@ -332,7 +332,7 @@ class PlacesSuite extends munit.FunSuite:
         Some("""{"type":"Point","coordinates":[34,40]}"""),
         Nil,
         Nil,
-        0,
+        com.histmersion.api.catalogue.Place.Counts.Findings(0),
         None,
         descriptions = List(com.histmersion.api.catalogue.Place.Description("former country", "en", "wikidata"))
       )
@@ -344,22 +344,22 @@ class PlacesSuite extends munit.FunSuite:
 
   test("the places facet prints the gazetteer id so a chip can filter by it"):
     assertEquals(
-      SearchMarkdown.facets("places", Vector(Facet("Anatolia", 110, Some("anatolia")), Facet("Aegean", 112))),
+      SearchMarkdown.facets(com.histmersion.api.library.Facet.FieldText("places"), Vector(Facet(com.histmersion.api.library.Facet.Value("Anatolia"), com.histmersion.api.library.Facet.Count(110), Some(com.histmersion.api.library.Facet.Id("anatolia"))), Facet(com.histmersion.api.library.Facet.Value("Aegean"), com.histmersion.api.library.Facet.Count(112)))),
       "### places (2)\n\n- Anatolia (110) · `anatolia`\n- Aegean (112)"
     )
 
   test("import and rebuild report what they did"):
     assertEquals(
-      PlacesMarkdown.placeImport(com.histmersion.api.catalogue.Place.ImportResult(3, 7, 2)),
+      PlacesMarkdown.placeImport(com.histmersion.api.catalogue.Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(3), com.histmersion.api.catalogue.Place.ImportResult.Names(7), com.histmersion.api.catalogue.Place.ImportResult.Relations(2))),
       "imported 3 place(s), 7 name(s), 2 relation(s)"
     )
     assert(
       PlacesMarkdown
-        .placeImport(com.histmersion.api.catalogue.Place.ImportResult(1, 1, 0, List("x: no such parent 'y'")))
+        .placeImport(com.histmersion.api.catalogue.Place.ImportResult(com.histmersion.api.catalogue.Place.ImportResult.Places(1), com.histmersion.api.catalogue.Place.ImportResult.Names(1), com.histmersion.api.catalogue.Place.ImportResult.Relations(0), List("x: no such parent 'y'")))
         .contains("no such parent")
     )
     assert(
       PlacesMarkdown
-        .placeRebuild(com.histmersion.api.catalogue.Place.RebuildResult(9199, 9199, 0, 938, 26, 16779))
+        .placeRebuild(com.histmersion.api.catalogue.Place.RebuildResult(com.histmersion.api.catalogue.Place.RebuildResult.Links(9199), com.histmersion.api.catalogue.Place.RebuildResult.ByGeometry(9199), com.histmersion.api.catalogue.Place.RebuildResult.ByName(0), com.histmersion.api.catalogue.Place.RebuildResult.Located(938), com.histmersion.api.catalogue.Place.RebuildResult.Unlocated(26), com.histmersion.api.catalogue.Place.RebuildResult.Places(16779)))
         .contains("938 finding(s) located, 26 unlocated")
     )

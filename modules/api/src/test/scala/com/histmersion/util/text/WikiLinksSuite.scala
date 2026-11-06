@@ -12,13 +12,13 @@ class WikiLinksSuite extends munit.FunSuite:
     )
 
   test("links: a text links a key in any case"):
-    assert(WikiLinks.links("see [[Beckman2011_ahhiyawa|B]]", "beckman2011_ahhiyawa"))
-    assert(!WikiLinks.links("see beckman2011_ahhiyawa", "beckman2011_ahhiyawa"))
+    assert(WikiLinks.links(com.histmersion.api.text.WikiLinks.Body("see [[Beckman2011_ahhiyawa|B]]"), com.histmersion.api.library.Citekey("beckman2011_ahhiyawa")))
+    assert(!WikiLinks.links(com.histmersion.api.text.WikiLinks.Body("see beckman2011_ahhiyawa"), com.histmersion.api.library.Citekey("beckman2011_ahhiyawa")))
 
   test("retarget: the moved links only, labels and anchors kept, with how many moved"):
     val (out, n) = WikiLinks.retarget(
-      "[[old2000_x|O]] [[ old2000_x #p]] [[keep2001_y]]",
-      t => Option.when(t == "old2000_x")("new2000_x")
+      com.histmersion.api.text.WikiLinks.Body("[[old2000_x|O]] [[ old2000_x #p]] [[keep2001_y]]"),
+      t => Option.when(t == "old2000_x")(com.histmersion.api.text.WikiLinks.Occurrence.Target("new2000_x"))
     )
     assertEquals(out, "[[new2000_x|O]] [[ new2000_x #p]] [[keep2001_y]]")
     assertEquals(n, 2)

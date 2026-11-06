@@ -14,10 +14,10 @@ class VacuumSuite extends munit.FunSuite:
   private val existing = Set("places", "place_names", "finding_places", "findings", "events")
 
   test("no table named: the configured ones; named ones are trimmed, lower-cased, de-duplicated, comma lists split"):
-    assertEquals(Vacuum.plan(Vacuum.Request(), defaults, existing), Right(VacuumPlan(false, defaults)))
+    assertEquals(Vacuum.plan(Vacuum.Request(), defaults, existing), Right(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(false), defaults)))
     assertEquals(
-      Vacuum.plan(Vacuum.Request(analyze = true, tables = List(" Findings ", "events,findings")), defaults, existing),
-      Right(VacuumPlan(true, List("findings", "events")))
+      Vacuum.plan(Vacuum.Request(analyze = com.histmersion.api.maintenance.Vacuum.Request.Analyze(true), tables = List(com.histmersion.api.maintenance.Vacuum.Request.Tables(" Findings "), com.histmersion.api.maintenance.Vacuum.Request.Tables("events,findings"))), defaults, existing),
+      Right(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(true), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("findings"), com.histmersion.api.maintenance.Vacuum.Request.Tables("events"))))
     )
 
   test("a name that is no identifier, or no table of the store, is refused — and so is an empty list"):
@@ -29,30 +29,30 @@ class VacuumSuite extends munit.FunSuite:
     assertEquals(refused(Nil, Nil).left.map(_._1), Left(Some(Write.CodeInvalid)))
 
   test("the statement quotes the table; ANALYZE only when asked"):
-    assertEquals(Vacuum.statement("place_names", analyze = false), "VACUUM \"place_names\"")
-    assertEquals(Vacuum.statement("place_names", analyze = true), "VACUUM (ANALYZE) \"place_names\"")
+    assertEquals(Vacuum.statement(com.histmersion.api.maintenance.Vacuum.Table("place_names"), analyze = com.histmersion.api.maintenance.Vacuum.Request.Analyze(false)), "VACUUM \"place_names\"")
+    assertEquals(Vacuum.statement(com.histmersion.api.maintenance.Vacuum.Table("place_names"), analyze = com.histmersion.api.maintenance.Vacuum.Request.Analyze(true)), "VACUUM (ANALYZE) \"place_names\"")
 
   test("a job says what it vacuums, and each table's line what it reclaimed"):
     assertEquals(
-      Vacuum.describe(VacuumPlan(true, List("places", "place_names"))),
+      Vacuum.describe(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(true), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("places"), com.histmersion.api.maintenance.Vacuum.Request.Tables("place_names")))),
       "VACUUM (ANALYZE) of places, place_names"
     )
-    assertEquals(Vacuum.describe(VacuumPlan(false, List("places"))), "VACUUM of places")
+    assertEquals(Vacuum.describe(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(false), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("places")))), "VACUUM of places")
     assertEquals(
-      Vacuum.tableLine("place_names", 1237921, 0, 3738000000L, 3738000000L, 81234),
+      Vacuum.tableLine(com.histmersion.api.maintenance.Vacuum.Table("place_names"), com.histmersion.api.maintenance.Vacuum.DeadRows(1237921), com.histmersion.api.maintenance.Vacuum.DeadRows(0), com.histmersion.api.ByteCount(3738000000L), com.histmersion.api.ByteCount(3738000000L), com.histmersion.api.maintenance.Storage.Report.DurationMillis(81234)),
       "place_names: 1237921 → 0 dead rows, 3.7 GB → 3.7 GB (81.2 s)"
     )
     val job = JobInfo(
       com.histmersion.api.SpatialHierarchyResult.Job.Id("j1"),
       com.histmersion.api.jobs.JobKinds.Wire(Vacuum.JobKind),
-      "running",
+      com.histmersion.api.jobs.JobInfo.Status("running"),
       None,
       None,
       None,
       None,
-      "t",
-      "t",
-      detail = Some(VacuumPlan.Detail(Some(VacuumPlan(false, List("places")))))
+      com.histmersion.api.jobs.JobInfo.CreatedAt("t"),
+      com.histmersion.api.jobs.JobInfo.UpdatedAt("t"),
+      detail = Some(VacuumPlan.Detail(Some(VacuumPlan(com.histmersion.api.maintenance.VacuumPlan.Analyze(false), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("places"))))))
     )
     assertEquals(JobDetail.subject(job), Some("VACUUM of places"))
     assert(IngestMarkdown.job(job).contains("- **vacuums:** VACUUM of places"))
@@ -61,6 +61,6 @@ class VacuumSuite extends munit.FunSuite:
     assertEquals(parse("""{}""").flatMap(_.as[Vacuum.Request]), Right(Vacuum.Request()))
     assertEquals(
       parse("""{"analyze":true,"tables":["places"]}""").flatMap(_.as[Vacuum.Request]),
-      Right(Vacuum.Request(true, List("places")))
+      Right(Vacuum.Request(com.histmersion.api.maintenance.Vacuum.Request.Analyze(true), List(com.histmersion.api.maintenance.Vacuum.Request.Tables("places"))))
     )
     assert(parse("""{"full":true}""").flatMap(_.as[Vacuum.Request]).isLeft)

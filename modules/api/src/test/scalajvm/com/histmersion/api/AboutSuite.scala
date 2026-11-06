@@ -10,26 +10,26 @@ import com.histmersion.api.backup.Backup
 class AboutSuite extends munit.FunSuite:
 
   test("#718: a converter text maps to ok / busy / down, and wording never seen is unknown, not an error"):
-    assertEquals(ServiceState.of(Some("ok")), ServiceState.Ok)
-    assertEquals(ServiceState.of(Some(" OK ")), ServiceState.Ok)
-    assertEquals(ServiceState.of(Some("busy: 2 jobs converting")), ServiceState.Busy)
-    assertEquals(ServiceState.of(Some("converter busy")), ServiceState.Busy)
-    assertEquals(ServiceState.of(Some("degraded: no answer from the converter within 2000 ms")), ServiceState.Down)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("ok"))), ServiceState.Ok)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire(" OK "))), ServiceState.Ok)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("busy: 2 jobs converting"))), ServiceState.Busy)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("converter busy"))), ServiceState.Busy)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("degraded: no answer from the converter within 2000 ms"))), ServiceState.Down)
     assertEquals(
-      ServiceState.of(Some("converter at http://x is unreachable (ConnectException: refused)")),
+      ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("converter at http://x is unreachable (ConnectException: refused)"))),
       ServiceState.Down
     )
-    assertEquals(ServiceState.of(Some("error: relation does not exist")), ServiceState.Down)
-    assertEquals(ServiceState.of(Some("warming up")), ServiceState.Unknown)
-    assertEquals(ServiceState.of(Some("unknown")), ServiceState.Unknown)
-    assertEquals(ServiceState.of(Some("  ")), ServiceState.Unknown)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("error: relation does not exist"))), ServiceState.Down)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("warming up"))), ServiceState.Unknown)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("unknown"))), ServiceState.Unknown)
+    assertEquals(ServiceState.of(Some(com.histmersion.api.ServiceState.Wire("  "))), ServiceState.Unknown)
     assertEquals(ServiceState.of(None), ServiceState.Unknown)
 
   test("job counts fold the status rows; a status that is no job state is dropped"):
     val c = JobCounts.of(
       List("queued" -> 2, "running" -> 1, "done" -> 40, "failed" -> 3, "weird" -> 9, "paused" -> 1, "cancelled" -> 4)
     )
-    assertEquals(c, JobCounts(2, 1, 40, 3, 1, 4))
+    assertEquals(c, JobCounts(com.histmersion.api.jobs.JobCounts.Queued(2), com.histmersion.api.jobs.JobCounts.Running(1), com.histmersion.api.jobs.JobCounts.Done(40), com.histmersion.api.jobs.JobCounts.Failed(3), com.histmersion.api.jobs.JobCounts.Paused(1), com.histmersion.api.jobs.JobCounts.Cancelled(4)))
     assertEquals(JobState.values.toList.map(c.of), List(2, 1, 40, 3, 1, 4))
     assertEquals(JobCounts.of(Nil), JobCounts())
 
@@ -41,14 +41,14 @@ class AboutSuite extends munit.FunSuite:
     assertEquals(AboutMarkdown.age(3 * 86400 + 5), "3 d")
 
   private val about = About(
-    name = "histmersion",
-    build = BuildStamp("1.2.3", Some("abc123def456"), Some("2026-10-01T10:00:00+02:00"), dirty = true),
-    health = Health("degraded", "ok", Some("28"), Some("busy: 1 job")),
-    jobs = JobCounts(1, 2, 3, 4),
-    counts = Some(CorpusCounts(10, 200, 5, 7, 15000, 40, 12)),
-    lastBackup = Some(Backup.Info("histmersion-20261001.dump", 2_500_000, "2026-10-01T08:00:00Z")),
-    lastBackupAgeSeconds = Some(7200),
-    problems = List("backups: cannot list /x")
+    name = com.histmersion.api.instance.About.Name("histmersion"),
+    build = BuildStamp(com.histmersion.api.instance.BuildStamp.Version("1.2.3"), Some(com.histmersion.api.instance.BuildStamp.GitCommit("abc123def456")), Some(com.histmersion.api.instance.BuildStamp.CommitDate("2026-10-01T10:00:00+02:00")), dirty = com.histmersion.api.instance.BuildStamp.Dirty(true)),
+    health = Health(com.histmersion.api.instance.Health.Status("degraded"), com.histmersion.api.instance.Health.Db("ok"), Some(com.histmersion.api.instance.Health.SchemaVersion("28")), Some(com.histmersion.api.instance.Health.Converter("busy: 1 job"))),
+    jobs = JobCounts(com.histmersion.api.jobs.JobCounts.Queued(1), com.histmersion.api.jobs.JobCounts.Running(2), com.histmersion.api.jobs.JobCounts.Done(3), com.histmersion.api.jobs.JobCounts.Failed(4)),
+    counts = Some(CorpusCounts(com.histmersion.api.instance.CorpusCounts.Sources(10), com.histmersion.api.instance.CorpusCounts.Findings(200), com.histmersion.api.instance.CorpusCounts.Articles(5), com.histmersion.api.instance.CorpusCounts.Events(7), com.histmersion.api.instance.CorpusCounts.Places(15000), com.histmersion.api.instance.CorpusCounts.Periods(40), com.histmersion.api.instance.CorpusCounts.Presets(12))),
+    lastBackup = Some(Backup.Info(com.histmersion.api.backup.Backup.Info.File("histmersion-20261001.dump"), 2_500_000, com.histmersion.api.backup.Backup.Info.CreatedAt("2026-10-01T08:00:00Z"))),
+    lastBackupAgeSeconds = Some(com.histmersion.api.instance.About.LastBackupAgeSeconds(7200)),
+    problems = List(com.histmersion.api.instance.About.Problems("backups: cannot list /x"))
   )
 
   test("histmersion about renders every part, and says what could not be read"):
@@ -74,11 +74,11 @@ class AboutSuite extends munit.FunSuite:
 
   test("the source link points at the running commit, or at the repository when the commit is unknown"):
     val repo = "https://github.com/histmersion/histmersion"
-    assertEquals(CorrespondingSource.url(repo, Some("abc123def456")), s"$repo/tree/abc123def456")
-    assertEquals(CorrespondingSource.url(s"$repo/", Some(" abc123 ")), s"$repo/tree/abc123")
-    assertEquals(CorrespondingSource.url(s"$repo.git", Some("abc123")), s"$repo/tree/abc123")
+    assertEquals(CorrespondingSource.url(repo, Some(com.histmersion.api.library.CorrespondingSource.Commit("abc123def456"))), s"$repo/tree/abc123def456")
+    assertEquals(CorrespondingSource.url(s"$repo/", Some(com.histmersion.api.library.CorrespondingSource.Commit(" abc123 "))), s"$repo/tree/abc123")
+    assertEquals(CorrespondingSource.url(s"$repo.git", Some(com.histmersion.api.library.CorrespondingSource.Commit("abc123"))), s"$repo/tree/abc123")
     assertEquals(CorrespondingSource.url(repo, None), repo)
-    assertEquals(CorrespondingSource.url(repo, Some("")), repo)
+    assertEquals(CorrespondingSource.url(repo, Some(com.histmersion.api.library.CorrespondingSource.Commit(""))), repo)
 
   test("histmersion about names the licence and links the source; an older server says unknown"):
     val src = about.modify(_.build).setTo(about.build.modify(_.licence).setTo(Some("AGPL-3.0-or-later")).modify(_.sourceUrl).setTo(Some("https://example.org/h/tree/abc123def456"))
@@ -108,17 +108,17 @@ class AboutSuite extends munit.FunSuite:
     )
     assert(one.contains("- corpus: 1 source · 0 findings · 1 article · 1 event"), one)
     assert(one.contains("- reference data: 1 place · 1 period · 1 preset"), one)
-    assertEquals(Plural.count(2, "entry", "entries"), "2 entries")
-    assertEquals(Plural.count(1, "entry", "entries"), "1 entry")
+    assertEquals(Plural.count(com.histmersion.api.Plural.CountN(2), com.histmersion.api.Plural.CountSingular("entry"), com.histmersion.api.Plural.CountPlural("entries")), "2 entries")
+    assertEquals(Plural.count(com.histmersion.api.Plural.CountN(1), com.histmersion.api.Plural.CountSingular("entry"), com.histmersion.api.Plural.CountPlural("entries")), "1 entry")
 
   test("About renders the config file line"):
-    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true)), "/c/h.conf (read)")
+    assertEquals(ConfigFileInfo.describe(ConfigFileInfo(Some(com.histmersion.api.settings.ConfigFileInfo.Path("/c/h.conf")), loaded = com.histmersion.api.settings.ConfigFileInfo.Loaded(true))), "/c/h.conf (read)")
     assertEquals(
-      ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"))),
+      ConfigFileInfo.describe(ConfigFileInfo(Some(com.histmersion.api.settings.ConfigFileInfo.Path("/c/h.conf")))),
       "/c/h.conf (not found: defaults and environment only)"
     )
     assertEquals(
-      ConfigFileInfo.describe(ConfigFileInfo(Some("/c/h.conf"), loaded = true, List("histmersion.x"))),
+      ConfigFileInfo.describe(ConfigFileInfo(Some(com.histmersion.api.settings.ConfigFileInfo.Path("/c/h.conf")), loaded = com.histmersion.api.settings.ConfigFileInfo.Loaded(true), List(com.histmersion.api.settings.ConfigFileInfo.UnknownKeys("histmersion.x")))),
       "/c/h.conf (read; ignored unknown key: histmersion.x)"
     )
     assertEquals(ConfigFileInfo.describe(ConfigFileInfo()), "none (no location: HOME is unset)")

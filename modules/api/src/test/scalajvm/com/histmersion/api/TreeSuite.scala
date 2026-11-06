@@ -19,14 +19,14 @@ class TreeSuite extends munit.FunSuite:
   //   asia ─┬─ anatolia ─┬─ hatti    (-1650…-1180) ─┬─ hattusa   (edge -1650…-1180)
   //         │            └─ phrygia  (-1200… -700) ─┘           (edge -1200… -700)
   //         └─ near_east ── mitanni  (-1500…-1300)
-  private val asia = RegionNode("asia", "Asia", Place.Kind.Region)
-  private val anatolia = RegionNode("anatolia", "Anatolia", Place.Kind.Region)
-  private val nearEast = RegionNode("near_east", "Near East", Place.Kind.Region)
-  private val hatti = RegionNode("hatti", "Hittite Empire", Place.Kind.Polity, Some(Period(-1650, -1180)))
-  private val phrygia = RegionNode("phrygia", "Phrygia", Place.Kind.Polity, Some(Period(-1200, -700)))
+  private val asia = RegionNode(com.histmersion.api.catalogue.RegionNode.Id("asia"), com.histmersion.api.catalogue.RegionNode.Label("Asia"), Place.Kind.Region)
+  private val anatolia = RegionNode(com.histmersion.api.catalogue.RegionNode.Id("anatolia"), com.histmersion.api.catalogue.RegionNode.Label("Anatolia"), Place.Kind.Region)
+  private val nearEast = RegionNode(com.histmersion.api.catalogue.RegionNode.Id("near_east"), com.histmersion.api.catalogue.RegionNode.Label("Near East"), Place.Kind.Region)
+  private val hatti = RegionNode(com.histmersion.api.catalogue.RegionNode.Id("hatti"), com.histmersion.api.catalogue.RegionNode.Label("Hittite Empire"), Place.Kind.Polity, Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))))
+  private val phrygia = RegionNode(com.histmersion.api.catalogue.RegionNode.Id("phrygia"), com.histmersion.api.catalogue.RegionNode.Label("Phrygia"), Place.Kind.Polity, Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-700))))
   private val mitanni =
-    RegionNode("mitanni", "Mitanni", Place.Kind.Polity, Some(Period(-1500, -1300)), contested = true)
-  private val hattusa = RegionNode("hattusa", "Hattusa", Place.Kind.Site)
+    RegionNode(com.histmersion.api.catalogue.RegionNode.Id("mitanni"), com.histmersion.api.catalogue.RegionNode.Label("Mitanni"), Place.Kind.Polity, Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1300))), contested = com.histmersion.api.catalogue.RegionNode.Contested(true))
+  private val hattusa = RegionNode(com.histmersion.api.catalogue.RegionNode.Id("hattusa"), com.histmersion.api.catalogue.RegionNode.Label("Hattusa"), Place.Kind.Site)
 
   private val nodes = List(asia, anatolia, nearEast, hatti, phrygia, mitanni, hattusa)
 
@@ -36,12 +36,12 @@ class TreeSuite extends munit.FunSuite:
   private val relations = List(
     part("anatolia", "asia"),
     part("near_east", "asia"),
-    part("hatti", "anatolia", Some(Period(-1650, -1180))),
-    part("phrygia", "anatolia", Some(Period(-1200, -700))),
-    part("mitanni", "near_east", Some(Period(-1500, -1300))),
+    part("hatti", "anatolia", Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180)))),
+    part("phrygia", "anatolia", Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-700)))),
+    part("mitanni", "near_east", Some(Period(com.histmersion.api.catalogue.Year(-1500), com.histmersion.api.catalogue.Year(-1300)))),
     // the SAME site, under a different polity depending on when you look
-    part("hattusa", "hatti", Some(Period(-1650, -1180))),
-    part("hattusa", "phrygia", Some(Period(-1200, -700)))
+    part("hattusa", "hatti", Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180)))),
+    part("hattusa", "phrygia", Some(Period(com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-700))))
   )
 
   private def row(key: String, start: Long, end: Long, places: String*) =
@@ -70,7 +70,7 @@ class TreeSuite extends munit.FunSuite:
   test("timeTree buckets at the adaptive size and nests at the next finer one"):
     // a 3000-year window buckets at 100 (Aggregate.bucketSize), and nests at 10.
     // Two sources, because a finer level is only drawn when it SEPARATES them (Tree.splitWorthShowing).
-    val t = Tree.timeTree(List(row("a", -1550, -1450), row("b", -1520, -1511)), -3500, -500, 2)
+    val t = Tree.timeTree(List(row("a", -1550, -1450), row("b", -1520, -1511)), com.histmersion.api.library.Tree.TimeTreeFrom(-3500), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(2))
     assertEquals(t.map(_.key), List("time:-1600:-1501", "time:-1500:-1401"))
     assertEquals(t.head.start, Some(-1600L))
     assertEquals(t.head.end, Some(-1501L))
@@ -81,16 +81,16 @@ class TreeSuite extends munit.FunSuite:
 
   test("a unit is counted in EVERY bucket it overlaps, so counts do not sum"):
     val rows = List(row("long", -1600, -1200), row("short", -1250, -1240))
-    val t = Tree.timeTree(rows, -3500, -500, 1)
+    val t = Tree.timeTree(rows, com.histmersion.api.library.Tree.TimeTreeFrom(-3500), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(1))
     assertEquals(t.map(_.count), List(1, 1, 1, 2, 1))
     assertEquals(t.map(_.count).sum, 6, "6 > the 2 distinct sources — non-additive by design")
 
   test("empty buckets are dropped from the tree (the strip keeps its gaps, a tree row of 0 is noise)"):
-    val t = Tree.timeTree(List(row("a", -1550, -1540)), -3500, -500, 1)
+    val t = Tree.timeTree(List(row("a", -1550, -1540)), com.histmersion.api.library.Tree.TimeTreeFrom(-3500), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(1))
     assertEquals(t.map(_.key), List("time:-1600:-1501"))
 
   test("undated units never appear in a time level"):
-    assertEquals(Tree.timeTree(List(TreeRow("u", "u", "U")), -3500, -500, 2), Nil)
+    assertEquals(Tree.timeTree(List(TreeRow(com.histmersion.api.library.Tree.TreeRow.Key("u"), com.histmersion.api.library.Citekey("u"), com.histmersion.api.library.Title("U"))), com.histmersion.api.library.Tree.TimeTreeFrom(-3500), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(2)), Nil)
 
   test("depth is clamped to 1..MaxDepth"):
     def levels(b: Bucket): Int = 1 + b.children.map(levels).maxOption.getOrElse(0)
@@ -98,33 +98,33 @@ class TreeSuite extends munit.FunSuite:
     // Sources spread so that each level genuinely splits its parent — otherwise the level is pruned
     // as uninformative (item 7), which the next test covers.
     val rows = List(row("a", -1550, -1541), row("b", -1520, -1511), row("c", -1050, -1041))
-    assertEquals(levels(Tree.timeTree(rows, -12000, -500, 0).head), 1, "depth 0 → one level")
-    assertEquals(levels(Tree.timeTree(rows, -12000, -500, 99).head), Tree.MaxDepth)
+    assertEquals(levels(Tree.timeTree(rows, com.histmersion.api.library.Tree.TimeTreeFrom(-12000), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(0)).head), 1, "depth 0 → one level")
+    assertEquals(levels(Tree.timeTree(rows, com.histmersion.api.library.Tree.TimeTreeFrom(-12000), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(99)).head), Tree.MaxDepth)
     // …and when the finest size is already reached there is simply nothing to nest
     assertEquals(
-      levels(Tree.timeTree(List(row("a", -1550, -1540)), -1600, -1200, 99).head),
+      levels(Tree.timeTree(List(row("a", -1550, -1540)), com.histmersion.api.library.Tree.TimeTreeFrom(-1600), com.histmersion.api.library.Tree.TimeTreeTo(-1200), com.histmersion.api.library.Tree.TimeTreeDepth(99)).head),
       1,
       "a 400-yr window IS 10-yr buckets"
     )
 
   test("samples land on the LEAVES only, deduplicated by citekey, in row order"):
     // the two sources sit in different 10-yr buckets, so the finer level is worth drawing (item 7)
-    val t = Tree.timeTree(List(row("a", -1550, -1541), row("b", -1530, -1521)), -3500, -500, 2, 5)
+    val t = Tree.timeTree(List(row("a", -1550, -1541), row("b", -1530, -1521)), com.histmersion.api.library.Tree.TimeTreeFrom(-3500), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(2), com.histmersion.api.library.Tree.TimeTreeSamples(5))
     assertEquals(t.head.samples, Nil, "an inner node lists no samples")
     val leaf = t.head.children.head
     assertEquals(leaf.samples.map(_.citekey), List("a"))
     assertEquals(leaf.samples.head.title, "Title of a")
-    assertEquals(Tree.timeTree(List(row("a", -1550, -1540)), -3500, -500, 1, 1).head.samples.size, 1)
-    assertEquals(Tree.timeTree(List(row("a", -1550, -1540)), -3500, -500, 1, 0).head.samples, Nil)
+    assertEquals(Tree.timeTree(List(row("a", -1550, -1540)), com.histmersion.api.library.Tree.TimeTreeFrom(-3500), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(1), com.histmersion.api.library.Tree.TimeTreeSamples(1)).head.samples.size, 1)
+    assertEquals(Tree.timeTree(List(row("a", -1550, -1540)), com.histmersion.api.library.Tree.TimeTreeFrom(-3500), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(1), com.histmersion.api.library.Tree.TimeTreeSamples(0)).head.samples, Nil)
 
   test("finer TIME children never report an overlap (spanning two buckets is the normal case)"):
-    val t = Tree.timeTree(List(row("a", -1550, -1450)), -12000, -500, 3)
+    val t = Tree.timeTree(List(row("a", -1550, -1450)), com.histmersion.api.library.Tree.TimeTreeFrom(-12000), com.histmersion.api.library.Tree.TimeTreeTo(-500), com.histmersion.api.library.Tree.TimeTreeDepth(3))
     assert(t.forall(_.overlap == 0))
 
   // ── the region axis ──────────────────────────────────────────────────────────────────────────
 
   test("§1.6a: Hattusa at -1400 sits under Hittite Empire → Anatolia → Asia"):
-    val t = Tree.regionTree(List(dig), nodes, relations, Some(-1400), 3)
+    val t = Tree.regionTree(List(dig), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(t.map(_.key), List("asia"))
     assertEquals(path(t, "asia", "anatolia", "hatti").map(_.label), Some("Hittite Empire"))
     assertEquals(path(t, "asia", "anatolia", "hatti").map(_.count), Some(1))
@@ -133,7 +133,7 @@ class TreeSuite extends munit.FunSuite:
     assertEquals(path(t, "asia", "anatolia", "phrygia"), None, "Phrygia does not exist yet at -1400")
 
   test("§1.6a: the SAME source sits under Phrygia → Anatolia → Asia at -700"):
-    val t = Tree.regionTree(List(dig), nodes, relations, Some(-700), 3)
+    val t = Tree.regionTree(List(dig), nodes, relations, Some(com.histmersion.api.catalogue.Year(-700)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(path(t, "asia", "anatolia", "phrygia").map(_.label), Some("Phrygia"))
     assertEquals(
       path(t, "asia", "anatolia", "hatti"),
@@ -142,7 +142,7 @@ class TreeSuite extends munit.FunSuite:
     )
 
   test("§1.6a: a frontier find counts once at the macro level and once under EACH polity"):
-    val t = Tree.regionTree(List(frontier), nodes, relations, Some(-1400), 3)
+    val t = Tree.regionTree(List(frontier), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(path(t, "asia").map(_.count), Some(1), "one source, counted once at the top")
     assertEquals(path(t, "asia", "anatolia", "hatti").map(_.count), Some(1))
     assertEquals(path(t, "asia", "near_east", "mitanni").map(_.count), Some(1))
@@ -150,78 +150,78 @@ class TreeSuite extends munit.FunSuite:
     assertEquals(path(t, "asia", "anatolia").map(_.overlap), Some(0))
 
   test("counts are distinct units in the whole subtree, never the sum of the children"):
-    val t = Tree.regionTree(List(dig, frontier), nodes, relations, Some(-1400), 3)
+    val t = Tree.regionTree(List(dig, frontier), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(path(t, "asia").map(_.count), Some(2))
     assertEquals(path(t, "asia").map(_.children.map(_.count).sum), Some(3), "2 sources, 3 in children")
 
   test("units with no place — or none valid as of the query — land in the trailing unlocated leaf"):
-    val t = Tree.regionTree(List(dig, floating), nodes, relations, Some(-1400), 3)
+    val t = Tree.regionTree(List(dig, floating), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(t.last.key, Tree.KeyUnlocated)
     assertEquals(t.last.count, 1)
     assertEquals(t.last.placeId, None)
     assertEquals(t.last.kind, Tree.KindRegion)
     // the frontier find is only ever inside two polities; at -700 neither exists any more, so it
     // joins the source that never had a place at all
-    val gone = Tree.regionTree(List(frontier, floating), nodes, relations, Some(-700), 3)
+    val gone = Tree.regionTree(List(frontier, floating), nodes, relations, Some(com.histmersion.api.catalogue.Year(-700)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(gone.map(_.key), List(Tree.KeyUnlocated))
     assertEquals(gone.head.count, 2)
 
   test("everything is unlocated when the gazetteer is empty (a store with no places still answers)"):
-    val t = Tree.regionTree(List(dig), Nil, Nil, Some(-1400), 2)
+    val t = Tree.regionTree(List(dig), Nil, Nil, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(2))
     assertEquals(t.map(b => (b.key, b.count)), List((Tree.KeyUnlocated, 1)))
 
   test("a node no unit reaches is dropped, and children sort by count then label"):
-    val t = Tree.regionTree(List(dig, frontier), nodes, relations, Some(-1400), 2)
+    val t = Tree.regionTree(List(dig, frontier), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(2))
     assertEquals(path(t, "asia").map(_.children.map(_.key)), Some(List("anatolia", "near_east")))
 
   test("truncating at depth does not change what overlap means"):
-    val deep = Tree.regionTree(List(frontier), nodes, relations, Some(-1400), 3)
-    val shallow = Tree.regionTree(List(frontier), nodes, relations, Some(-1400), 1)
+    val deep = Tree.regionTree(List(frontier), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
+    val shallow = Tree.regionTree(List(frontier), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(1))
     assertEquals(shallow.head.children, Nil)
     assertEquals(shallow.head.overlap, deep.head.overlap)
 
   test("a place's own validity is reported as the bucket's period; contested is carried through"):
-    val t = Tree.regionTree(List(frontier), nodes, relations, Some(-1400), 3)
+    val t = Tree.regionTree(List(frontier), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(path(t, "asia", "near_east", "mitanni").map(b => (b.start, b.end)), Some((Some(-1500L), Some(-1300L))))
     assertEquals(path(t, "asia", "near_east", "mitanni").map(_.contested), Some(true))
     assertEquals(path(t, "asia").map(b => (b.start, b.end)), Some((None, None)))
 
   test("a cyclic hierarchy terminates instead of overflowing the stack"):
     val cyc = relations :+ part("anatolia", "hatti", Some(Period(-1650, -1180)))
-    val t = Tree.regionTree(List(dig), nodes, cyc, Some(-1400), 3)
+    val t = Tree.regionTree(List(dig), nodes, cyc, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(path(t, "asia", "anatolia", "hatti").map(_.count), Some(1))
     assertEquals(path(t, "asia", "anatolia", "hatti", "anatolia"), None, "the cycle is cut, not walked")
 
   test("an explicit root returns THAT node's subtree, which is how a client expands lazily"):
-    val t = Tree.regionTree(List(dig, frontier), nodes, relations, Some(-1400), 2, 0, Some("anatolia"))
+    val t = Tree.regionTree(List(dig, frontier), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(2), com.histmersion.api.library.Tree.RegionTreeSamples(0), Some(com.histmersion.api.catalogue.RegionNode.Id("anatolia")))
     assertEquals(t.map(_.key), List("anatolia"), "rooted at the node, not at the continent")
     assertEquals(t.head.count, 2)
     assertEquals(t.head.children.map(_.key), List("hatti"))
     // a root that is not valid as of the query falls back to the ordinary forest
     assertEquals(
       Tree
-        .regionTree(List(dig), nodes, relations, Some(-700), 2, 0, Some("hatti"))
+        .regionTree(List(dig), nodes, relations, Some(com.histmersion.api.catalogue.Year(-700)), com.histmersion.api.library.Tree.RegionTreeDepth(2), com.histmersion.api.library.Tree.RegionTreeSamples(0), Some(com.histmersion.api.catalogue.RegionNode.Id("hatti")))
         .map(_.key),
       List("asia")
     )
 
   test("a parentless SITE is not a top level (Pleiades has ~16 000 of them, all parentless)"):
     // as of -1700 neither polity exists, so Hattusa has no valid parent — it must NOT become a root
-    val t = Tree.regionTree(List(dig), nodes, relations, Some(-1700), 3)
+    val t = Tree.regionTree(List(dig), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1700)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(t.map(_.key), List(Tree.KeyUnlocated))
     // a parentless REGION or POLITY still shows: it is a gazetteer top level, not a gap
-    val loose = RegionNode("loose", "Loose Region", Place.Kind.Region)
-    val t2 = Tree.regionTree(List(row("x", -1400, -1400, "loose")), List(loose), Nil, Some(-1400), 2)
+    val loose = RegionNode(com.histmersion.api.catalogue.RegionNode.Id("loose"), com.histmersion.api.catalogue.RegionNode.Label("Loose Region"), Place.Kind.Region)
+    val t2 = Tree.regionTree(List(row("x", -1400, -1400, "loose")), List(loose), Nil, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(2))
     assertEquals(t2.map(b => (b.key, b.count)), List(("loose", 1)))
 
   test("a gazetteer with NO root at all still reports its units instead of losing them"):
     // every node has a parent, so nothing is reachable from a root — the units must not vanish
     val cyc = relations ++ List(part("asia", "hatti", Some(Period(-1650, -1180))))
-    val t = Tree.regionTree(List(dig), nodes, cyc, Some(-1400), 3)
+    val t = Tree.regionTree(List(dig), nodes, cyc, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assertEquals(t.map(b => (b.key, b.count)), List((Tree.KeyUnlocated, 1)))
 
   test("asOf = None reads every edge, whatever its validity"):
-    val t = Tree.regionTree(List(dig), nodes, relations, None, 3)
+    val t = Tree.regionTree(List(dig), nodes, relations, None, com.histmersion.api.library.Tree.RegionTreeDepth(3))
     assert(path(t, "asia", "anatolia", "hatti").isDefined)
     assert(path(t, "asia", "anatolia", "phrygia").isDefined)
 
@@ -231,29 +231,29 @@ class TreeSuite extends munit.FunSuite:
     // one source in the LBA, one in the Iron Age, both at Hattusa
     val lba = row("lba", -1400, -1400, "hattusa")
     val iron = row("iron", -800, -800, "hattusa")
-    val t = Tree.timeRegionTree(List(lba, iron), -1600, -600, nodes, relations, 3)
+    val t = Tree.timeRegionTree(List(lba, iron), com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-600), nodes, relations, com.histmersion.api.library.Tree.TimeRegionTreeDepth(3))
     val early = t.find(_.start.contains(-1400L)).get
     val late = t.find(_.start.contains(-800L)).get
-    assertEquals(Tree.midpoint(-1400, -1301), -1351L)
+    assertEquals(Tree.midpoint(com.histmersion.api.catalogue.Year(-1400), com.histmersion.api.catalogue.Year(-1301)), -1351L)
     assertEquals(early.kind, Tree.KindTime)
     assert(path(early.children, "asia", "anatolia", "hatti").isDefined, "LBA bucket → Hittite Empire")
     assert(path(late.children, "asia", "anatolia", "phrygia").isDefined, "Iron-Age bucket → Phrygia")
     assert(path(early.children, "asia", "anatolia", "phrygia").isEmpty)
 
   test("timeRegionTree keeps the time level flat: exactly one level of buckets, then regions"):
-    val t = Tree.timeRegionTree(List(dig), -1600, -1200, nodes, relations, 2)
+    val t = Tree.timeRegionTree(List(dig), com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200), nodes, relations, com.histmersion.api.library.Tree.TimeRegionTreeDepth(2))
     assertEquals(t.size, 1)
     assert(t.head.children.forall(_.kind == Tree.KindRegion))
     assertEquals(t.head.children.head.key, "asia")
 
   test("regionTimeTree hangs time buckets under each region LEAF"):
-    val t = Tree.regionTimeTree(List(dig), -1600, -1200, nodes, relations, Some(-1400), 2, 2)
+    val t = Tree.regionTimeTree(List(dig), com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTimeTreeDepth(2), com.histmersion.api.library.Tree.RegionTimeTreeSamples(2))
     val leaf = path(t, "asia", "anatolia").get
     assertEquals(leaf.children.map(_.kind).distinct, List(Tree.KindTime))
     assertEquals(leaf.children.head.samples.map(_.citekey), List("dig"))
 
   test("the unlocated leaf survives both combined axes"):
-    val t = Tree.timeRegionTree(List(floating), -1600, -1200, nodes, relations, 2)
+    val t = Tree.timeRegionTree(List(floating), com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200), nodes, relations, com.histmersion.api.library.Tree.TimeRegionTreeDepth(2))
     assertEquals(t.head.children.map(_.key), List(Tree.KeyUnlocated))
 
   // ── the `by` vocabulary + the wire shape ─────────────────────────────────────────────────────
@@ -268,30 +268,30 @@ class TreeSuite extends munit.FunSuite:
     assertEquals(Tree.parseBy(""), None)
 
   test("coversAsOf: a missing period means always, a missing asOf means whenever"):
-    assert(Tree.coversAsOf(None, Some(-1400)))
-    assert(Tree.coversAsOf(Some(Period(-1650, -1180)), None))
-    assert(Tree.coversAsOf(Some(Period(-1650, -1180)), Some(-1650)), "bounds are inclusive")
-    assert(Tree.coversAsOf(Some(Period(-1650, -1180)), Some(-1180)))
-    assert(!Tree.coversAsOf(Some(Period(-1650, -1180)), Some(-1179)))
+    assert(Tree.coversAsOf(None, Some(com.histmersion.api.catalogue.Year(-1400))))
+    assert(Tree.coversAsOf(Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))), None))
+    assert(Tree.coversAsOf(Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))), Some(com.histmersion.api.catalogue.Year(-1650))), "bounds are inclusive")
+    assert(Tree.coversAsOf(Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))), Some(com.histmersion.api.catalogue.Year(-1180))))
+    assert(!Tree.coversAsOf(Some(Period(com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1180))), Some(com.histmersion.api.catalogue.Year(-1179))))
 
   test("midpoint rounds down, so a bucket always reads the gazetteer at the same year"):
-    assertEquals(Tree.midpoint(-1600, -1501), -1551L)
-    assertEquals(Tree.midpoint(-1600, -1200), -1400L)
-    assertEquals(Tree.midpoint(-10, -10), -10L)
+    assertEquals(Tree.midpoint(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1501)), -1551L)
+    assertEquals(Tree.midpoint(com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Year(-1200)), -1400L)
+    assertEquals(Tree.midpoint(com.histmersion.api.catalogue.Year(-10), com.histmersion.api.catalogue.Year(-10)), -10L)
 
   test("the Bucket tree round-trips through JSON and has a tapir schema (recursion included)"):
-    val b = Tree.regionTree(List(dig, floating), nodes, relations, Some(-1400), 3, 2).head
+    val b = Tree.regionTree(List(dig, floating), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3), com.histmersion.api.library.Tree.RegionTreeSamples(2)).head
     val js = io.circe.syntax.EncoderOps(b).asJson.noSpaces
     assert(js.contains("Hittite Empire"), js)
     assertEquals(io.circe.parser.decode[Bucket](js), Right(b))
     assert(Bucket.schema.toString.nonEmpty)
 
   test("SearchMarkdown.tree renders the indented tree with the non-additive caveat"):
-    val t = Tree.regionTree(List(dig, frontier, floating), nodes, relations, Some(-1400), 3, 1)
+    val t = Tree.regionTree(List(dig, frontier, floating), nodes, relations, Some(com.histmersion.api.catalogue.Year(-1400)), com.histmersion.api.library.Tree.RegionTreeDepth(3), com.histmersion.api.library.Tree.RegionTreeSamples(1))
     val md =
       SearchMarkdown.tree(
-        TimeHistogram(-1600, -1200, 100, Nil, by = "region", total = 3, depth = 3, tree = t),
-        "sources"
+        TimeHistogram(com.histmersion.api.library.TimeHistogram.From(-1600), com.histmersion.api.library.TimeHistogram.To(-1200), com.histmersion.api.library.TimeHistogram.Bucket(100), Nil, by = com.histmersion.api.library.TimeHistogram.By("region"), total = 3, depth = 3, tree = t),
+        com.histmersion.api.library.SearchMarkdown.TreeUnit("sources")
       )
     assert(md.contains("### sources by region"), md)
     assert(md.contains("- **Asia** `asia` — 2 sources · 1 in more than one subregion"), md)
@@ -303,7 +303,7 @@ class TreeSuite extends munit.FunSuite:
   test("SearchMarkdown.tree says so when there is nothing to group"):
     assert(
       SearchMarkdown
-        .tree(TimeHistogram(-1600, -1200, 100, Nil, by = "region"), "sources")
+        .tree(TimeHistogram(com.histmersion.api.library.TimeHistogram.From(-1600), com.histmersion.api.library.TimeHistogram.To(-1200), com.histmersion.api.library.TimeHistogram.Bucket(100), Nil, by = com.histmersion.api.library.TimeHistogram.By("region")), com.histmersion.api.library.SearchMarkdown.TreeUnit("sources"))
         .contains("No sources to group")
     )
 
@@ -311,7 +311,7 @@ class TreeSuite extends munit.FunSuite:
 class TreeRootsSuite extends munit.FunSuite:
 
   private def node(id: String, label: String, kind: String, withdrawn: Boolean = false) =
-    RegionNode(id, label, kind, None, false, withdrawn)
+    RegionNode(id, label, kind, None, com.histmersion.api.catalogue.RegionNode.Contested(false), withdrawn)
 
   test("only a region, polity or continent may head the tree"):
     assert(RegionNode.rootEligible(node("a", "Asia", "region")))
@@ -325,36 +325,36 @@ class TreeRootsSuite extends munit.FunSuite:
     assert(!RegionNode.rootEligible(node("g", "Withdrawn (duplicate): Creta et Cyrene", "region")))
 
   test("an uncertain or reconstructed name is never a root"):
-    assert(RegionNode.uncertainLabel("Theren? (river)"))
-    assert(RegionNode.uncertainLabel("*Granouas (river)"))
-    assert(!RegionNode.uncertainLabel("Anatolia"))
+    assert(RegionNode.uncertainLabel(com.histmersion.api.catalogue.RegionNode.Label("Theren? (river)")))
+    assert(RegionNode.uncertainLabel(com.histmersion.api.catalogue.RegionNode.Label("*Granouas (river)")))
+    assert(!RegionNode.uncertainLabel(com.histmersion.api.catalogue.RegionNode.Label("Anatolia")))
     assert(!RegionNode.rootEligible(node("h", "Kisamon? Pr.", "region")))
 
   test("ineligible nodes are dropped from the ROOTS, not from the tree"):
-    val rows = List(Tree.TreeRow("s1", "s1", "S1", Some(-1500), Some(-1400), List("river")))
+    val rows = List(Tree.TreeRow(com.histmersion.api.library.Tree.TreeRow.Key("s1"), com.histmersion.api.library.Citekey("s1"), com.histmersion.api.library.Title("S1"), Some(com.histmersion.api.catalogue.Year(-1500)), Some(com.histmersion.api.catalogue.Year(-1400)), List(com.histmersion.api.catalogue.RegionNode.Id("river"))))
     val nodes = List(node("asia", "Asia", "region"), node("river", "Asopos (river)", "feature"))
     val rels = List(
       com.histmersion.api.catalogue.Place
-        .Relation("river", "asia", com.histmersion.api.catalogue.Place.Relation.PartOf, None)
+        .Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("river"), com.histmersion.api.catalogue.Place.Relation.ParentId("asia"), com.histmersion.api.catalogue.Place.Relation.PartOf, None)
     )
-    val tree = Tree.regionTree(rows, nodes, rels, None, depth = 2)
+    val tree = Tree.regionTree(rows, nodes, rels, None, depth = com.histmersion.api.library.Tree.RegionTreeDepth(2))
     assertEquals(tree.map(_.label), List("Asia"))
     assertEquals(tree.head.children.map(_.label), List("Asopos (river)"))
 
   test("a place with two parents is drawn once, under the bigger, and says where else it sits"):
     val rows = List(
-      Tree.TreeRow("s1", "s1", "S1", Some(-1500), Some(-1400), List("anatolia")),
-      Tree.TreeRow("s2", "s2", "S2", Some(-1500), Some(-1400), List("asia"))
+      Tree.TreeRow(com.histmersion.api.library.Tree.TreeRow.Key("s1"), com.histmersion.api.library.Citekey("s1"), com.histmersion.api.library.Title("S1"), Some(com.histmersion.api.catalogue.Year(-1500)), Some(com.histmersion.api.catalogue.Year(-1400)), List(com.histmersion.api.catalogue.RegionNode.Id("anatolia"))),
+      Tree.TreeRow(com.histmersion.api.library.Tree.TreeRow.Key("s2"), com.histmersion.api.library.Citekey("s2"), com.histmersion.api.library.Title("S2"), Some(com.histmersion.api.catalogue.Year(-1500)), Some(com.histmersion.api.catalogue.Year(-1400)), List(com.histmersion.api.catalogue.RegionNode.Id("asia")))
     )
     val nodes =
       List(node("asia", "Asia", "region"), node("europe", "Europe", "region"), node("anatolia", "Anatolia", "region"))
     val rels = List(
       com.histmersion.api.catalogue.Place
-        .Relation("anatolia", "asia", com.histmersion.api.catalogue.Place.Relation.PartOf, None),
+        .Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("anatolia"), com.histmersion.api.catalogue.Place.Relation.ParentId("asia"), com.histmersion.api.catalogue.Place.Relation.PartOf, None),
       com.histmersion.api.catalogue.Place
-        .Relation("anatolia", "europe", com.histmersion.api.catalogue.Place.Relation.PartOf, None)
+        .Relation(com.histmersion.api.catalogue.Place.Relation.ChildId("anatolia"), com.histmersion.api.catalogue.Place.Relation.ParentId("europe"), com.histmersion.api.catalogue.Place.Relation.PartOf, None)
     )
-    val tree = Tree.regionTree(rows, nodes, rels, None, depth = 2)
+    val tree = Tree.regionTree(rows, nodes, rels, None, depth = com.histmersion.api.library.Tree.RegionTreeDepth(2))
     val under = tree.flatMap(b => b.children.map(c => (b.label, c.label, c.alsoUnder)))
     assertEquals(under.size, 1, s"Anatolia drawn ${under.size} times: $under")
     assertEquals(under.head._1, "Asia") // the parent with the larger count
@@ -362,15 +362,15 @@ class TreeRootsSuite extends munit.FunSuite:
 
   // ── item 7: finer time levels that say nothing are not drawn ────────────────────────────────
   test("a split is kept only when a child is materially smaller than the parent"):
-    def b(n: Int) = Bucket(label = "x", key = "k" + n, kind = Tree.KindTime, count = n)
-    assertEquals(Tree.splitWorthShowing(100, List(b(99), b(98))), Nil, "all children ≈ the parent")
-    assertEquals(Tree.splitWorthShowing(100, List(b(99), b(20))).size, 2, "one child is much smaller")
-    assertEquals(Tree.splitWorthShowing(100, List(b(10))), Nil, "a single child adds no information")
+    def b(n: Int) = Bucket(label = com.histmersion.api.library.Bucket.Label("x"), key = "k" + n, kind = Tree.KindTime, count = n)
+    assertEquals(Tree.splitWorthShowing(com.histmersion.api.library.Bucket.Count(100), List(b(99), b(98))), Nil, "all children ≈ the parent")
+    assertEquals(Tree.splitWorthShowing(com.histmersion.api.library.Bucket.Count(100), List(b(99), b(20))).size, 2, "one child is much smaller")
+    assertEquals(Tree.splitWorthShowing(com.histmersion.api.library.Bucket.Count(100), List(b(10))), Nil, "a single child adds no information")
 
   test("a window of long-range sources does not nest into near-identical children"):
     // three sources each spanning the whole window: every finer bucket would carry all three
-    val rows = (1 to 3).map(i => Tree.TreeRow(s"s$i", s"s$i", s"S$i", Some(-3000), Some(-1000))).toList
-    val tree = Tree.timeTree(rows, -3000, -1000, depth = 3, samples = 2)
+    val rows = (1 to 3).map(i => Tree.TreeRow(s"s$i", s"s$i", s"S$i", Some(com.histmersion.api.catalogue.Year(-3000)), Some(com.histmersion.api.catalogue.Year(-1000)))).toList
+    val tree = Tree.timeTree(rows, com.histmersion.api.library.Tree.TimeTreeFrom(-3000), com.histmersion.api.library.Tree.TimeTreeTo(-1000), depth = com.histmersion.api.library.Tree.TimeTreeDepth(3), samples = com.histmersion.api.library.Tree.TimeTreeSamples(2))
     assert(tree.forall(_.children.isEmpty), tree.map(b => (b.label, b.children.size)).toString)
     assert(tree.forall(_.samples.nonEmpty), "a leaf shows its samples instead")
 
@@ -381,5 +381,5 @@ class TreeRootsSuite extends munit.FunSuite:
       val s = -3000L + i * 200
       Tree.TreeRow(s"s$i", s"s$i", s"S$i", Some(s), Some(s + 50))
     }
-    val tree = Tree.timeTree(rows, -6000, -1000, depth = 3, samples = 0)
+    val tree = Tree.timeTree(rows, com.histmersion.api.library.Tree.TimeTreeFrom(-6000), com.histmersion.api.library.Tree.TimeTreeTo(-1000), depth = com.histmersion.api.library.Tree.TimeTreeDepth(3), samples = com.histmersion.api.library.Tree.TimeTreeSamples(0))
     assert(tree.exists(_.children.nonEmpty), tree.map(b => (b.label, b.count, b.children.size)).toString)

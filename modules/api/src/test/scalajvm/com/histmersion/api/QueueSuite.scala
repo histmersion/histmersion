@@ -129,14 +129,14 @@ class QueueSuite extends munit.FunSuite:
     }
 
   test("checkbox lists render [ ] / [x]; the log renders plain bullets"):
-    def item(status: String) = QueueItem(1, "x", "a thing", Some("Topic"), status, None, None)
+    def item(status: String) = QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(1), com.histmersion.api.automation.Queue.QueueItem.List("x"), com.histmersion.api.automation.Queue.QueueItem.Text("a thing"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Topic")), status, None, None)
     assert(Queue.render(Kind.Acquire, List(item(Open))).contains("- [ ] a thing"))
     assert(Queue.render(Kind.Acquire, List(item(Done))).contains("- [x] a thing"))
     assert(Queue.render(Kind.Log, List(item(Open))).contains("- a thing"))
     assert(!Queue.render(Kind.Log, List(item(Open))).contains("[ ]"))
 
   test("a topic path renders ## / ### / bold, one level per segment; a heading hugs its content"):
-    val out = Queue.render(Kind.Tasks, List(QueueItem(1, "tasks", "x", Some(s"A${Sep}B$Sep**C**"), Open, None, None)))
+    val out = Queue.render(Kind.Tasks, List(QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(1), com.histmersion.api.automation.Queue.QueueItem.List("tasks"), com.histmersion.api.automation.Queue.QueueItem.Text("x"), Some(s"A${Sep}B$Sep**C**"), Open, None, None)))
     // heading → heading is separated; heading → item hugs
     assert(out.endsWith("\n## A\n\n### B\n\n**C**\n- [ ] x\n"), out)
 
@@ -144,9 +144,9 @@ class QueueSuite extends munit.FunSuite:
     val out = Queue.render(
       Kind.Tasks,
       List(
-        QueueItem(1, "tasks", "first", Some("A"), Open, None, None),
-        QueueItem(2, "tasks", "other", Some("B"), Open, None, None),
-        QueueItem(3, "tasks", "second", Some("A"), Open, None, None)
+        QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(1), com.histmersion.api.automation.Queue.QueueItem.List("tasks"), com.histmersion.api.automation.Queue.QueueItem.Text("first"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("A")), Open, None, None),
+        QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(2), com.histmersion.api.automation.Queue.QueueItem.List("tasks"), com.histmersion.api.automation.Queue.QueueItem.Text("other"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("B")), Open, None, None),
+        QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(3), com.histmersion.api.automation.Queue.QueueItem.List("tasks"), com.histmersion.api.automation.Queue.QueueItem.Text("second"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("A")), Open, None, None)
       )
     )
     assertEquals(out.linesIterator.count(_ == "## A"), 1)
@@ -156,8 +156,8 @@ class QueueSuite extends munit.FunSuite:
     val out = Queue.render(
       Kind.Log,
       List(
-        QueueItem(1, "log", "old", Some("2026-01-01 — old"), Open, None, Some("2026-01-01T00:00:00Z"), None),
-        QueueItem(2, "log", "new", Some("2026-08-25 — new"), Open, None, Some("2026-08-25T00:00:00Z"), None)
+        QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(1), com.histmersion.api.automation.Queue.QueueItem.List("log"), com.histmersion.api.automation.Queue.QueueItem.Text("old"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("2026-01-01 — old")), Open, None, Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("2026-01-01T00:00:00Z")), None),
+        QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(2), com.histmersion.api.automation.Queue.QueueItem.List("log"), com.histmersion.api.automation.Queue.QueueItem.Text("new"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("2026-08-25 — new")), Open, None, Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("2026-08-25T00:00:00Z")), None)
       )
     )
     assert(out.indexOf("## 2026-08-25 — new") < out.indexOf("## 2026-01-01 — old"), out)
@@ -166,8 +166,8 @@ class QueueSuite extends munit.FunSuite:
 
   test("the `queue <list>` listing shows ids and hides note blocks"):
     val items = List(
-      QueueItem(7, "acquire", "buy a book", Some("Books"), Open, None, None),
-      QueueItem(8, "acquire", "# preamble", None, Note, None, None)
+      QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(7), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), com.histmersion.api.automation.Queue.QueueItem.Text("buy a book"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Books")), Open, None, None),
+      QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(8), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), com.histmersion.api.automation.Queue.QueueItem.Text("# preamble"), None, Note, None, None)
     )
     val md = Queue.markdown(Kind.Acquire, items)
     assert(md.contains("`#7`"), md)
@@ -177,7 +177,7 @@ class QueueSuite extends munit.FunSuite:
   test("the listing strips a bold group's own ** so the heading is not doubled"):
     val md = Queue.markdown(
       Kind.Acquire,
-      List(QueueItem(1, "acquire", "x", Some(s"🟡 Outstanding$Sep**Highest value**"), Open, None, None))
+      List(QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(1), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), com.histmersion.api.automation.Queue.QueueItem.Text("x"), Some(s"🟡 Outstanding$Sep**Highest value**"), Open, None, None))
     )
     assert(md.contains("**🟡 Outstanding > Highest value**"), md)
     assert(!md.contains("****"), md)
@@ -187,70 +187,70 @@ class QueueSuite extends munit.FunSuite:
 
   test("Kind.parse accepts exactly the three list names"):
     assertEquals(Kind.all, List("acquire", "tasks", "log"))
-    assertEquals(Kind.parse(" Acquire ").map(_.file), Some("ACQUIRE.md"))
-    assertEquals(Kind.parse("notes"), None)
+    assertEquals(Kind.parse(com.histmersion.api.automation.Queue.Kind.Label(" Acquire ")).map(_.file), Some("ACQUIRE.md"))
+    assertEquals(Kind.parse(com.histmersion.api.automation.Queue.Kind.Label("notes")), None)
 
   // ── input validation (these used to reach the INSERT unchecked) ──────────────────────────────
 
   test("status is whitelisted: open | done | note"):
-    assertEquals(Queue.statusOf(Some("done")), Right(Some("done")))
-    assertEquals(Queue.statusOf(Some("  OPEN ")), Right(Some("open")))
+    assertEquals(Queue.statusOf(Some(com.histmersion.api.automation.Queue.QueueItem.Status("done"))), Right(Some("done")))
+    assertEquals(Queue.statusOf(Some(com.histmersion.api.automation.Queue.QueueItem.Status("  OPEN "))), Right(Some("open")))
     assertEquals(Queue.statusOf(None), Right(None))
-    assertEquals(Queue.statusOf(Some("")), Right(None))
-    val e = Queue.statusOf(Some("pending")).swap.toOption.get
+    assertEquals(Queue.statusOf(Some(com.histmersion.api.automation.Queue.QueueItem.Status(""))), Right(None))
+    val e = Queue.statusOf(Some(com.histmersion.api.automation.Queue.QueueItem.Status("pending"))).swap.toOption.get
     assert(e.contains("unknown status 'pending'"), e)
     assert(e.contains("open, done, note"), e)
 
   test("created_at must be an ISO instant — it is cast to timestamptz in SQL"):
-    assertEquals(Queue.createdAtOf(Some("2026-08-25T00:00:00Z")), Right(Some("2026-08-25T00:00:00Z")))
+    assertEquals(Queue.createdAtOf(Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("2026-08-25T00:00:00Z"))), Right(Some("2026-08-25T00:00:00Z")))
     assertEquals(Queue.createdAtOf(None), Right(None))
-    val e = Queue.createdAtOf(Some("yesterday")).swap.toOption.get
+    val e = Queue.createdAtOf(Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("yesterday"))).swap.toOption.get
     assert(e.contains("not an ISO-8601 instant"), e)
-    assert(Queue.createdAtOf(Some("2026-08-25")).isLeft, "a bare date is not an instant")
+    assert(Queue.createdAtOf(Some(com.histmersion.api.automation.Queue.QueueItem.CreatedAt("2026-08-25"))).isLeft, "a bare date is not an instant")
     assert(Queue.createdAtOf(Some("'); drop table queue_items --")).isLeft)
 
   test("a patch changes only what it carries; a blank topic or reason clears it"):
-    val cur = QueueItem(7, "acquire", "a book", Some("Books"), Open, Some("for the review"), None, None)
+    val cur = QueueItem(com.histmersion.api.automation.Queue.QueueItem.Id(7), com.histmersion.api.automation.Queue.QueueItem.List("acquire"), com.histmersion.api.automation.Queue.QueueItem.Text("a book"), Some(com.histmersion.api.automation.Queue.QueueItem.Topic("Books")), Open, Some(com.histmersion.api.automation.Queue.QueueItem.Reason("for the review")), None, None)
     assertEquals(Queue.applyPatch(cur, QueuePatch()), cur)
-    assertEquals(Queue.applyPatch(cur, QueuePatch(text = Some("a better book"))), cur.modify(_.text).setTo("a better book"))
-    assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some("  Papers "))).topic, Some("Papers"))
-    assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some("  "))).topic, None)
-    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(""))).reason, None)
-    assertEquals(Queue.applyPatch(cur, QueuePatch(status = Some(" DONE "))).status, Done)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(text = Some(com.histmersion.api.automation.Queue.QueueItem.Text("a better book")))), cur.modify(_.text).setTo("a better book"))
+    assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("  Papers ")))).topic, Some("Papers"))
+    assertEquals(Queue.applyPatch(cur, QueuePatch(topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic("  ")))).topic, None)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(reason = Some(com.histmersion.api.automation.Queue.QueueItem.Reason("")))).reason, None)
+    assertEquals(Queue.applyPatch(cur, QueuePatch(status = Some(com.histmersion.api.automation.Queue.QueueItem.Status(" DONE ")))).status, Done)
     // an item edited in the web UI keeps its other fields
-    val edited = Queue.applyPatch(cur, QueuePatch(text = Some("x"), topic = Some("")))
+    val edited = Queue.applyPatch(cur, QueuePatch(text = Some(com.histmersion.api.automation.Queue.QueueItem.Text("x")), topic = Some(com.histmersion.api.automation.Queue.QueueItem.Topic(""))))
     assertEquals((edited.status, edited.reason, edited.id), (Open, Some("for the review"), 7))
 
   test("a patched text may be absent but never blank"):
     assertEquals(Queue.textOf(None), Right(None))
-    assertEquals(Queue.textOf(Some("a thing")), Right(Some("a thing")))
-    assertEquals(Queue.textOf(Some(" \n ")), Left("queue item text is empty"))
+    assertEquals(Queue.textOf(Some(com.histmersion.api.automation.Queue.QueueItem.Text("a thing"))), Right(Some("a thing")))
+    assertEquals(Queue.textOf(Some(com.histmersion.api.automation.Queue.QueueItem.Text(" \n "))), Left("queue item text is empty"))
 
   // ── fulfilling an acquisition item ─────────────────────────────────────────────────────────────
 
   private def item(id: Int, list: String = "acquire", status: String = Open, reason: Option[String] = None) =
-    QueueItem(id, list, s"item $id", Some("linear_b"), status, reason)
+    QueueItem(id, list, s"item $id", Some(com.histmersion.api.automation.Queue.QueueItem.Topic("linear_b")), status, reason)
 
   test("a fulfilled item is ticked off as ingested as [[citekey]], keeping why it was wanted"):
-    assertEquals(Queue.fulfilledReason(None, "lambert2013_babylonian"), "ingested as [[lambert2013_babylonian]]")
-    assertEquals(Queue.fulfilledReason(Some("  "), "a2020_b"), "ingested as [[a2020_b]]")
+    assertEquals(Queue.fulfilledReason(None, com.histmersion.api.library.Citekey("lambert2013_babylonian")), "ingested as [[lambert2013_babylonian]]")
+    assertEquals(Queue.fulfilledReason(Some(com.histmersion.api.automation.Queue.QueueItem.Reason("  ")), com.histmersion.api.library.Citekey("a2020_b")), "ingested as [[a2020_b]]")
     assertEquals(
-      Queue.fulfilledReason(Some("Nagy 2001 argues against it"), "finkelberg2000_cypria"),
+      Queue.fulfilledReason(Some(com.histmersion.api.automation.Queue.QueueItem.Reason("Nagy 2001 argues against it")), com.histmersion.api.library.Citekey("finkelberg2000_cypria")),
       "Nagy 2001 argues against it · ingested as [[finkelberg2000_cypria]]"
     )
     // recording the same source twice adds nothing
-    assertEquals(Queue.fulfilledReason(Some("ingested as [[a2020_b]]"), "a2020_b"), "ingested as [[a2020_b]]")
+    assertEquals(Queue.fulfilledReason(Some(com.histmersion.api.automation.Queue.QueueItem.Reason("ingested as [[a2020_b]]")), com.histmersion.api.library.Citekey("a2020_b")), "ingested as [[a2020_b]]")
     assertEquals(
-      Queue.fulfil(item(567), "lambert2013_babylonian"),
+      Queue.fulfil(item(567), com.histmersion.api.library.Citekey("lambert2013_babylonian")),
       QueuePatch(status = Some(Done), reason = Some("ingested as [[lambert2013_babylonian]]"))
     )
 
   test("an upload may name only an existing, open acquisition item"):
-    assertEquals(Queue.fulfillable(7, Some(item(7))), Right(item(7)))
-    assertEquals(Queue.fulfillable(7, None), Left("no acquisition item 7"))
+    assertEquals(Queue.fulfillable(com.histmersion.api.automation.Queue.QueueItem.Id(7), Some(item(7))), Right(item(7)))
+    assertEquals(Queue.fulfillable(com.histmersion.api.automation.Queue.QueueItem.Id(7), None), Left("no acquisition item 7"))
     assertEquals(
-      Queue.fulfillable(7, Some(item(7, list = "tasks"))),
+      Queue.fulfillable(com.histmersion.api.automation.Queue.QueueItem.Id(7), Some(item(7, list = "tasks"))),
       Left("item 7 is on the tasks list, not the acquisition list")
     )
-    assertEquals(Queue.fulfillable(7, Some(item(7, status = Done))), Left("acquisition item 7 is already done"))
-    assert(Queue.fulfillable(7, Some(item(7, status = Note))).isLeft)
+    assertEquals(Queue.fulfillable(com.histmersion.api.automation.Queue.QueueItem.Id(7), Some(item(7, status = Done))), Left("acquisition item 7 is already done"))
+    assert(Queue.fulfillable(com.histmersion.api.automation.Queue.QueueItem.Id(7), Some(item(7, status = Note))).isLeft)

@@ -22,16 +22,16 @@ class UiNoticesSuite extends munit.FunSuite:
 
   test("a counter carries a count only for a counted board"):
     assertEquals(
-      counter(Board.Tasks, Some(3), Some(t2), Some(t1)),
-      Counter("tasks", Some(3), Some(t2), Some(t1), fresh = true)
+      counter(Board.Tasks, Some(com.histmersion.api.instance.UiNotices.Counter.Count(3)), Some(t2), Some(t1)),
+      Counter(com.histmersion.api.instance.UiNotices.Board.Wire("tasks"), Some(com.histmersion.api.instance.UiNotices.Counter.Count(3)), Some(t2), Some(t1), fresh = com.histmersion.api.instance.UiNotices.Counter.Fresh(true))
     )
-    assertEquals(counter(Board.Goals, Some(26), Some(t1), Some(t1)).count, None)
-    assertEquals(counter(Board.Log, Some(9), None, None), Counter("log", None, None, None, fresh = false))
+    assertEquals(counter(Board.Goals, Some(com.histmersion.api.instance.UiNotices.Counter.Count(26)), Some(t1), Some(t1)).count, None)
+    assertEquals(counter(Board.Log, Some(com.histmersion.api.instance.UiNotices.Counter.Count(9)), None, None), Counter(com.histmersion.api.instance.UiNotices.Board.Wire("log"), None, None, None, fresh = com.histmersion.api.instance.UiNotices.Counter.Fresh(false)))
 
   test("boards parse from their wire keys, which are the windows' own"):
-    assertEquals(Board.parse("approvals"), Some(Board.Approvals))
-    assertEquals(Board.parse(" Acquire "), Some(Board.Acquire))
-    assertEquals(Board.parse("jobs"), None)
+    assertEquals(Board.parse(com.histmersion.api.instance.UiNotices.Board.Wire("approvals")), Some(Board.Approvals))
+    assertEquals(Board.parse(com.histmersion.api.instance.UiNotices.Board.Wire(" Acquire ")), Some(Board.Acquire))
+    assertEquals(Board.parse(com.histmersion.api.instance.UiNotices.Board.Wire("jobs")), None)
     assertEquals(Board.parse(null), None)
     assertEquals(Board.wires, List("goals", "tasks", "approvals", "acquire", "log"))
     assertEquals(Board.values.filter(_.counted).map(_.wire).toList, List("tasks", "approvals", "acquire"))
@@ -43,7 +43,7 @@ class UiNoticesSuite extends munit.FunSuite:
 
   test("a count reads as nothing at zero and 99+ past 99"):
     assertEquals(badge(None), None)
-    assertEquals(badge(Some(0)), None)
-    assertEquals(badge(Some(7)), Some("7"))
-    assertEquals(badge(Some(99)), Some("99"))
-    assertEquals(badge(Some(1291)), Some("99+"))
+    assertEquals(badge(Some(com.histmersion.api.instance.UiNotices.Counter.Count(0))), None)
+    assertEquals(badge(Some(com.histmersion.api.instance.UiNotices.Counter.Count(7))), Some("7"))
+    assertEquals(badge(Some(com.histmersion.api.instance.UiNotices.Counter.Count(99))), Some("99"))
+    assertEquals(badge(Some(com.histmersion.api.instance.UiNotices.Counter.Count(1291))), Some("99+"))

@@ -14,9 +14,9 @@ class StallsSuite extends munit.FunSuite:
   private def f(slug: String = "g", idle: Option[Int] = Some(5)) = Facts(slug, idleDays = idle)
 
   test("stalled: no progress in N days, or never"):
-    assert(stalled(f(idle = Some(3)), 3))
-    assert(!stalled(f(idle = Some(2)), 3))
-    assert(stalled(f(idle = None), 3))
+    assert(stalled(f(idle = Some(3)), com.histmersion.api.automation.Stalls.ReportDays(3)))
+    assert(!stalled(f(idle = Some(2)), com.histmersion.api.automation.Stalls.ReportDays(3)))
+    assert(stalled(f(idle = None), com.histmersion.api.automation.Stalls.ReportDays(3)))
 
   test("the first reason that holds is named, with its action"):
     def code(x: Facts) = classify(x)._1
@@ -55,12 +55,12 @@ class StallsSuite extends munit.FunSuite:
   test("the report: only the stalled, the longest idle first (never first of all), counts per reason"):
     val r = report(
       List(f("a", Some(4)), f("b", None), f("c", Some(9)), f("d", Some(1)), f("e", Some(4)).modify(_.running).setTo(1)),
-      3,
-      "now"
+      com.histmersion.api.automation.Stalls.ReportDays(3),
+      com.histmersion.api.automation.Stalls.ReportAt("now")
     )
     assertEquals(r.stalled.map(_.slug), List("b", "c", "a", "e"))
     assertEquals(r.goals, 5)
-    assertEquals(r.byReason, List(ReasonCount(Code.Idle, 3), ReasonCount(Code.Running, 1)))
+    assertEquals(r.byReason, List(ReasonCount(Code.Idle, com.histmersion.api.automation.Stalls.ReasonCount.Count(3)), ReasonCount(Code.Running, com.histmersion.api.automation.Stalls.ReasonCount.Count(1))))
     val md = StallsMarkdown.report(r)
     assert(
       md.startsWith("# Stalled goals: 4 of 5 with no progress in 3 day(s)") && md.contains("**b**") && md.contains(
@@ -68,4 +68,4 @@ class StallsSuite extends munit.FunSuite:
       ),
       md
     )
-    assert(StallsMarkdown.report(report(Nil, 3, "now")).contains("Every unfinished goal progressed"))
+    assert(StallsMarkdown.report(report(Nil, com.histmersion.api.automation.Stalls.ReportDays(3), com.histmersion.api.automation.Stalls.ReportAt("now"))).contains("Every unfinished goal progressed"))
