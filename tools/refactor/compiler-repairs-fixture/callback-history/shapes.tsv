@@ -1,0 +1,2 @@
+path	line	before-ast	after-ast
+tools/refactor/compiler-repairs-fixture/owner-operations/Owned.scala	4	COMPILER E007 compilerfixture.Owned.Flag -> Boolean Term.AnonymousFunction(Term.Select(Term.Placeholder, Term.Name("flag")))	(_.flag).value

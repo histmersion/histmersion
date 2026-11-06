@@ -37,14 +37,14 @@ object WriteOutcome:
     */
   type WroteResult = WroteResult.T
   object WroteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfFile = OfFile.T
-  object OfFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfBackup = OfBackup.T
-  object OfBackup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfFile = _root_.com.histmersion.config.edit.WriteOutcome.File
+  val OfFile: _root_.com.histmersion.config.edit.WriteOutcome.File.type = _root_.com.histmersion.config.edit.WriteOutcome.File
+  type OfBackup = _root_.com.histmersion.config.edit.WriteOutcome.Backup
+  val OfBackup: _root_.com.histmersion.config.edit.WriteOutcome.Backup.type = _root_.com.histmersion.config.edit.WriteOutcome.Backup
   type OfNotes = OfNotes.T
   object OfNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfCreated = OfCreated.T
-  object OfCreated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfCreated = _root_.com.histmersion.config.edit.WriteOutcome.Created
+  val OfCreated: _root_.com.histmersion.config.edit.WriteOutcome.Created.type = _root_.com.histmersion.config.edit.WriteOutcome.Created
 
   type File = File.T
   object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

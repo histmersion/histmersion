@@ -220,7 +220,7 @@ final class KeePassXcVault(
 
   private def classify(entry: com.histmersion.plugins.vaults.KeePassXcVault.ClassifyEntry)(err: com.histmersion.plugins.vaults.KeePassXcVault.ClassifyErr): Option[com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult] =
     if (err).value.contains("invalid credentials") || (err).value.contains("wrong key") || (err).value.contains("unable to unlock") ||
-      err.contains("enter password")
+      (err).value.contains("enter password")
     then Some(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult(s"$name: the database is locked — set password = \"env:<NAME>\" (or a key-file) for this vault"))
     else if (err).value.contains("could not find entry") || (err).value.contains("not found") then Some(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ClassifyResult(s"$name: no entry '$entry'"))
     else None

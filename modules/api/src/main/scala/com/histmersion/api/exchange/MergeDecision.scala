@@ -109,6 +109,6 @@ object MergeDecision:
         Left(_root_.com.histmersion.api.exchange.MergeDecision.ParseResultPart1(s"'$s': ${MergeDecision.Kind.wireOf(d)} takes no argument"))
       case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.exchange.MergeDecision.Argument(refactorValue))))
 
-  given Encoder[MergeDecision] = Encoder.encodeString.contramap((_.wire).value)
+  given Encoder[MergeDecision] = Encoder.encodeString.contramap((refactorCallback => (refactorCallback.wire).value))
   given Decoder[MergeDecision] = Decoder.decodeString.emap(_root_.com.histmersion.api.exchange.MergeDecision.ParseRaw(parse))
   given Schema[MergeDecision] = Schema.string[MergeDecision]

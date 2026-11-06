@@ -186,7 +186,7 @@ object Acquire:
       citedByCount match
         case None                                                      => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Unassessed)
         case Some(c) if c >= wellCitedAt                               => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Current)
-        case Some(c) if (c).value < (lowCitedAt).value && year.exists(_ < staleBefore) => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.LowImpact)
+        case Some(c) if (c).value < (lowCitedAt).value && year.exists((_).value < staleBefore) => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.LowImpact)
         case Some(_)                                                   => _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Current)
 
   /** Some publishers answer scripts with a 403, an empty file or a challenge, so an open-access work they host is
@@ -211,7 +211,7 @@ object Acquire:
           }, then histmersion ingest <file> --citekey $citekey"
     }
 
-  def flagged(verdict: com.histmersion.api.library.Acquire.FlaggedVerdict): com.histmersion.api.library.Acquire.FlaggedResult = verdict == _root_.com.histmersion.api.library.Acquire.FlaggedVerdict(Verdicts.Retracted) || verdict == _root_.com.histmersion.api.library.Acquire.FlaggedVerdict(Verdicts.Corrected)
+  def flagged(verdict: com.histmersion.api.library.Acquire.FlaggedVerdict): com.histmersion.api.library.Acquire.FlaggedResult = _root_.com.histmersion.api.library.Acquire.FlaggedResult(verdict == _root_.com.histmersion.api.library.Acquire.FlaggedVerdict(Verdicts.Retracted) || verdict == _root_.com.histmersion.api.library.Acquire.FlaggedVerdict(Verdicts.Corrected))
 
   def recommendation(verdict: com.histmersion.api.library.Acquire.RecommendationVerdict, citedByCount: Option[com.histmersion.api.library.Acquire.RecommendationCitedByCount]): com.histmersion.api.library.Acquire.RecommendationResult =
     val cited = citedByCount.fold("no citation data")(c => s"$c citation(s)")
@@ -307,7 +307,7 @@ object Acquire:
     val text = contexts.mkString(" ").toLowerCase
     val strong = intents.map((_).value.toLowerCase).exists(i => i == "result" || i == "methodology")
     val newer = (citingYear, targetYear) match
-      case (Some(c), Some(t)) => (c).value - (t).value >= gapYears
+      case (Some(c), Some(t)) => (c).value - (t).value >= (gapYears).value
       case _                  => false
     def has(cues: List[com.histmersion.api.library.Acquire.ClassifyHasCues]) = cues.exists(text.contains)
 

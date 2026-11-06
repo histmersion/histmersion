@@ -100,10 +100,10 @@ object LatinFold:
 
   def fold(s: com.histmersion.api.LatinFold.FoldS): com.histmersion.api.LatinFold.FoldResult =
     val b = new StringBuilder((s).value.length)
-    (s).value.foreach { c =>
+    (s).value.foreach ({ c =>
       if !(isCombiningMark(_root_.com.histmersion.api.LatinFold.IsCombiningMarkC(c))).value then
         Table.get(_root_.com.histmersion.api.LatinFold.TablePart1(c)) match
           case Some(r) => b ++= r
           case None    => b += c
-    }
+    }).value
     _root_.com.histmersion.api.LatinFold.FoldResult(b.result())

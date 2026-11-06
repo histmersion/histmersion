@@ -41,12 +41,12 @@ object ContextMenu:
   object PlaceVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceMargin = PlaceMargin.T
   object PlaceMargin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowTitle = ShowTitle.T
-  object ShowTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowX = ShowX.T
-  object ShowX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowY = ShowY.T
-  object ShowY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowTitle = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
+  val ShowTitle: _root_.com.histmersion.web.ui.ContextMenu.Open.Title.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Title
+  type ShowX = _root_.com.histmersion.web.ui.ContextMenu.Open.X
+  val ShowX: _root_.com.histmersion.web.ui.ContextMenu.Open.X.type = _root_.com.histmersion.web.ui.ContextMenu.Open.X
+  type ShowY = _root_.com.histmersion.web.ui.ContextMenu.Open.Y
+  val ShowY: _root_.com.histmersion.web.ui.ContextMenu.Open.Y.type = _root_.com.histmersion.web.ui.ContextMenu.Open.Y
   type CloseReturnFocus = CloseReturnFocus.T
   object CloseReturnFocus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ShowUnderTitle = ShowUnderTitle.T

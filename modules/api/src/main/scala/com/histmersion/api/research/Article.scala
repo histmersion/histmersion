@@ -64,10 +64,10 @@ object Article:
 
     type DisagreementKinds = DisagreementKinds.T
     object DisagreementKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ComputeSlug = ComputeSlug.T
-    object ComputeSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ComputeTotal = ComputeTotal.T
-    object ComputeTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ComputeSlug = _root_.com.histmersion.api.research.Article.Slug
+    val ComputeSlug: _root_.com.histmersion.api.research.Article.Slug.type = _root_.com.histmersion.api.research.Article.Slug
+    type ComputeTotal = _root_.com.histmersion.api.research.Coverage.Total
+    val ComputeTotal: _root_.com.histmersion.api.research.Coverage.Total.type = _root_.com.histmersion.api.research.Coverage.Total
     type ComputeCitedInFilter = ComputeCitedInFilter.T
     object ComputeCitedInFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ComputeCited = ComputeCited.T

@@ -305,8 +305,8 @@ object IngestQueue:
   object StartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PausedResult = PausedResult.T
   object PausedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnqueueKind = EnqueueKind.T
-  object EnqueueKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnqueueKind = _root_.com.histmersion.domain.library.ingest.IngestPending.Kind
+  val EnqueueKind: _root_.com.histmersion.domain.library.ingest.IngestPending.Kind.type = _root_.com.histmersion.domain.library.ingest.IngestPending.Kind
   type EnqueueSha = EnqueueSha.T
   object EnqueueSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProbeConverterResult = ProbeConverterResult.T

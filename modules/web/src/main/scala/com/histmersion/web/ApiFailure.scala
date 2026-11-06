@@ -25,8 +25,8 @@ object ApiFailure:
   object ConflictResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DuplicateResult = DuplicateResult.T
   object DuplicateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfStatus = OfStatus.T
-  object OfStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStatus = _root_.com.histmersion.web.ApiFailure.Status
+  val OfStatus: _root_.com.histmersion.web.ApiFailure.Status.type = _root_.com.histmersion.web.ApiFailure.Status
 
   type Status = Status.T
   object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -132,8 +132,8 @@ object GebcoSeaFloor:
 
   type PlanResultPart1 = PlanResultPart1.T
   object PlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanMaxZoom = PlanMaxZoom.T
-  object PlanMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanMaxZoom = _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom
+  val PlanMaxZoom: _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom.type = _root_.com.histmersion.util.basemap.GebcoPlan.MaxZoom
   type DescribeResult = DescribeResult.T
   object DescribeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NeedsResult = NeedsResult.T

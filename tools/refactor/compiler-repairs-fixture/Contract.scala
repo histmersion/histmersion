@@ -2,6 +2,9 @@ package compilerfixture
 
 object Contract:
   @main def verifyCompilerRepairs(): Unit =
+    val flagRows = List(Owned.FlagRecord(Owned.Flag(true)), Owned.FlagRecord(Owned.Flag(false)))
+    assert(Owned.flags(flagRows).map(_.flag.value) == List(false))
+    assert(Owned.brokenFlags(flagRows).map(_.flag.value) == List(false))
     assert(BoundaryImplementation.encode(7).value == "7")
     assert(BoundaryImplementation.decode(Values.Text("7")).contains(7))
     assert(BoundaryImplementation.decode(Values.Text("invalid")).isEmpty)

@@ -43,12 +43,12 @@ object TileCoord:
   object MaxLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfResultPart1 = OfResultPart1.T
   object OfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfZ = OfZ.T
-  object OfZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfX = OfX.T
-  object OfX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfY = OfY.T
-  object OfY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfZ = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z
+  val OfZ: _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z.type = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Z
+  type OfX = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.X
+  val OfX: _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.X.type = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.X
+  type OfY = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Y
+  val OfY: _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Y.type = _root_.com.histmersion.domain.catalogue.maptiles.TileCoord.Y
   type OfMaxZoom = OfMaxZoom.T
   object OfMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MercatorResultPart1 = MercatorResultPart1.T

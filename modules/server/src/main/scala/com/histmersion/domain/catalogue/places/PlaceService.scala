@@ -813,10 +813,10 @@ object PlaceService:
     object RenameTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AddNameId = AddNameId.T
     object AddNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AddNameName = AddNameName.T
-    object AddNameName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AddNameLang = AddNameLang.T
-    object AddNameLang extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AddNameName = _root_.com.histmersion.domain.catalogue.places.HeldPlace.Name.Value
+    val AddNameName: _root_.com.histmersion.domain.catalogue.places.HeldPlace.Name.Value.type = _root_.com.histmersion.domain.catalogue.places.HeldPlace.Name.Value
+    type AddNameLang = _root_.com.histmersion.domain.catalogue.places.HeldPlace.Name.Lang
+    val AddNameLang: _root_.com.histmersion.domain.catalogue.places.HeldPlace.Name.Lang.type = _root_.com.histmersion.domain.catalogue.places.HeldPlace.Name.Lang
     type RemoveNameId = RemoveNameId.T
     object RemoveNameId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RemoveNameName = RemoveNameName.T

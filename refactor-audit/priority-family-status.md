@@ -1,6 +1,89 @@
 # Priority-family status
 
-## Current checkpoint: vocabulary contracts aligned, compilation incomplete
+## Current checkpoint: helper properties consolidated, compilation incomplete
+
+The reusable forwarding transformation consolidates 128 generated helper opaque
+types into entity property types across 56 production files (256 alias/constructor
+patches). Names and constructors remain as stable aliases to the property owner.
+No model property became a primitive and no model was reverted. A compiler-repair
+pass adds 33 expression patches in 24 files: four provenance-backed corrections of
+malformed callbacks and 29 other eligible owner operations/constructions. Together
+these batches change 79 distinct production files. They are applied transformations,
+not a global count of verified policy repairs.
+
+Forwarded properties require a direct parameter-to-primary-constructor argument,
+matching parameter/field names, recorded generated origin, matching indexed Pure
+bases, one target and the same module/source set. Existing constructor-property
+identities are protected, including generic class and enum constructors. Shadowed
+bindings, transformed arguments, conflicting targets, companion apply methods or
+inheritance, secondary constructors, behavior/modifier/alias ambiguities and cross
+module/source-set cases are excluded. Only stable, qualified newtype shapes and
+unambiguous non-generic case-class constructors are supported. This is bounded AST
+data-flow evidence; it does not establish semantic equivalence of unrelated fields.
+No individual type mappings were added to the project configuration.
+
+The callback producer now applies scalar conversion inside the placeholder's body
+and emits an explicit lambda. Corrections of already-malformed callbacks require
+a matching applied history record, before/after snapshot hashes, source path,
+declaration scope, AST and one scalar type witness. Unrecorded, ambiguous or
+ineligible callbacks remain unresolved. Four prior malformed expressions are fixed
+in Licence, WikidataStatement, PluginsMarkdown and MergeDecision. The input fixture
+also verifies the producer and leaves a foreign unrecorded callback unchanged.
+Synthetic provenance inputs are fixture data only; production provenance comes
+from the committed applied owner-operation previews.
+
+| Source module | Before this checkpoint | After forwarding | After compiler repairs |
+|---|---:|---:|---:|
+| api JVM and JS, each | 3079 | 3046 | 3029 |
+| values | 35 | cached failure | 34 |
+| upstreams | 344 (earlier positioned observation) | cached failure | 341 |
+| plugin-vaults | 100 (earlier positioned observation) | cached failure | 99 |
+
+project-compile-frontier-14/-15 retain the actual full builds. All ten previously
+failing tasks still fail; the five remaining tasks retain cached failures in -15.
+Dependent modules and production behavioral tests are still blocked. Source hashes
+are stable during both builds. Compiler checks, stack16m, maxErrors10000 and serial
+compilation are unchanged. Aggregate counts do not prove individual regression
+classification or whole-family completion.
+
+Existing and new consolidation fixture outputs match exactly; the rewritten
+fixture compiles/runs and proves alias identity, positional and reordered named
+arguments and constructor behavior. Conflict, absent provenance, transformed value,
+different purpose, shadowing, existing property identity and custom apply cases
+remain unchanged. The fixture supplies explicit synthetic origin records to exercise
+the real provenance guard. The rewritten compiler fixture also compiles/runs under
+Scala 3.10, -source:future and fatal E165, including both new callback cases and all
+prior runtime assertions. Its five normal outputs and both owner outputs match
+exactly. No expected assertion was weakened. A CLI diagnostic parsing defect was
+found by these fixtures: whitespace matching crossed line boundaries after an
+anonymous-parameter number. Horizontal whitespace now prevents the false source
+display; exact display and snapshot checks remain required.
+
+The final 24 files exactly match their frozen preview. The census checks the full
+accumulated source snapshot, including the other forwarding files.
+type-positions-after-forwarded-properties-1 retains all 3169 Scala files and every
+raw primitive ID: production594/test6009, zero introduced/removed. There are 128
+removed opaque-shape IDs and zero introduced shapes; aliases are retained, not
+128 deleted model concepts. Definitions are production27504/test19; overlap groups
+are now 3010 (previous3014); unresolved candidate references are 16152
+(previous16108). Previous IDs, origins, groups and source universes remain in the
+prior censuses. Reference indexing still does not resolve aliases, so reference
+counts are a bounded subset and are not proof that all callers are repaired.
+
+Applied previews are project-forwarded-properties-2 and project-callbacks-2.
+Their -1 previews were not applied. The first forwarding preview predates the final
+shadow/constructor safeguards; the first callback preview predates diagnostic-parser
+and ambiguity safeguards. Inventory acceptance, confirmed outstanding totals and
+overall automation coverage remain unestablished; other policy families stay frozen
+partial. The prior formatting and client-validation test failures remain open.
+
+Next address native Boolean/control-flow and callback/library contracts without
+globally unwrapping model values, then additional purpose/ownership-proven property
+sharing. Numeric units, rendered text, smart construction, enum/name collisions and
+the remaining candidates and tests still require work. Unsupported cases are not
+accepted exceptions or compliant findings.
+
+## Previous checkpoint: vocabulary contracts aligned, compilation incomplete
 
 The generic interface transformation applies 180 signature patches across 50
 production files for the kernel and API WireEnumValues contracts. The compiler

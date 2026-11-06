@@ -1,0 +1,2 @@
+path	before-sha256	after-sha256
+tools/refactor/compiler-repairs-fixture/owner-operations/Owned.scala	15c5b6faca78061bed8f2b7b1cb4a621edd14314f4dbfc14e9b263d8a395f65e	600b82200302df6edcb59343dc59d9ad499a4d25dea7652c3e2a1e3aed297f79

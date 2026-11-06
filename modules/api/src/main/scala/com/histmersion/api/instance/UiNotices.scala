@@ -18,10 +18,10 @@ object UiNotices:
   object FreshSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CounterCount = CounterCount.T
   object CounterCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CounterLatest = CounterLatest.T
-  object CounterLatest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CounterSeen = CounterSeen.T
-  object CounterSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CounterLatest = _root_.com.histmersion.api.instance.UiNotices.Counter.Latest
+  val CounterLatest: _root_.com.histmersion.api.instance.UiNotices.Counter.Latest.type = _root_.com.histmersion.api.instance.UiNotices.Counter.Latest
+  type CounterSeen = _root_.com.histmersion.api.instance.UiNotices.Counter.Seen
+  val CounterSeen: _root_.com.histmersion.api.instance.UiNotices.Counter.Seen.type = _root_.com.histmersion.api.instance.UiNotices.Counter.Seen
   type AdvanceResult = AdvanceResult.T
   object AdvanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AdvanceHeld = AdvanceHeld.T

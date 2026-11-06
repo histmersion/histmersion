@@ -599,8 +599,8 @@ object EventService:
     object CorrectedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type CorrectedField = CorrectedField.T
     object CorrectedField extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PutId = PutId.T
-    object PutId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PutId = _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id
+    val PutId: _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id.type = _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id
     type PatchId = PatchId.T
     object PatchId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RenameFrom = RenameFrom.T

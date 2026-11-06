@@ -83,8 +83,8 @@ object AgentTrees:
   /** No environment: the trees only where the settings put them (a test's). */
   type ClaudeRoleName = ClaudeRoleName.T
   object ClaudeRoleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SettingsVersion = SettingsVersion.T
-  object SettingsVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SettingsVersion = _root_.com.histmersion.domain.automation.agents.GenSettings.Version
+  val SettingsVersion: _root_.com.histmersion.domain.automation.agents.GenSettings.Version.type = _root_.com.histmersion.domain.automation.agents.GenSettings.Version
   type LoadResultPart1 = LoadResultPart1.T
   object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadKnown = LoadKnown.T

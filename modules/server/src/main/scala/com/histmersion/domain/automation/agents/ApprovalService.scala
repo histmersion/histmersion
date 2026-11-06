@@ -597,14 +597,14 @@ object ApprovalService:
     object OpenForStepSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OpenForStepPayload = OpenForStepPayload.T
     object OpenForStepPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OpenForStepResult = OpenForStepResult.T
-    object OpenForStepResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenForStepResult = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result
+    val OpenForStepResult: _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result.type = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result
     type OpenSubjectSubject = OpenSubjectSubject.T
     object OpenSubjectSubject extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OpenSubjectPayload = OpenSubjectPayload.T
     object OpenSubjectPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OpenSubjectResult = OpenSubjectResult.T
-    object OpenSubjectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OpenSubjectResult = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result
+    val OpenSubjectResult: _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result.type = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result
     type OpenOfKindsLimit = OpenOfKindsLimit.T
     object OpenOfKindsLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OpenCountResult = OpenCountResult.T

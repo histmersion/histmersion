@@ -42,10 +42,10 @@ object PeriodO:
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseJson = ParseJson.T
   object ParseJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorityId = AuthorityId.T
-  object AuthorityId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefinitionId = DefinitionId.T
-  object DefinitionId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AuthorityId = _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id
+  val AuthorityId: _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Authority.Id
+  type DefinitionId = _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id
+  val DefinitionId: _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id.type = _root_.com.histmersion.api.catalogue.PeriodO.Definition.Id
   type BoundResult = BoundResult.T
   object BoundResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BoundOuter = BoundOuter.T

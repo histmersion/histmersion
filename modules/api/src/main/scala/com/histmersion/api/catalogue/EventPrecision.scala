@@ -78,7 +78,7 @@ object EventPrecision:
 
   def of(ts: TimeSpan, plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.OfPlusMinus]): com.histmersion.api.catalogue.EventPrecision.OfResult = of(uncertainty(ts, plusMinus))
 
-  def mapped(precision: com.histmersion.api.catalogue.EventPrecision.MappedPrecision): com.histmersion.api.catalogue.EventPrecision.MappedResult = precision != _root_.com.histmersion.api.catalogue.EventPrecision.MappedPrecision(Imprecise) && precision != _root_.com.histmersion.api.catalogue.EventPrecision.MappedPrecision(Undated)
+  def mapped(precision: com.histmersion.api.catalogue.EventPrecision.MappedPrecision): com.histmersion.api.catalogue.EventPrecision.MappedResult = _root_.com.histmersion.api.catalogue.EventPrecision.MappedResult(precision != _root_.com.histmersion.api.catalogue.EventPrecision.MappedPrecision(Imprecise) && precision != _root_.com.histmersion.api.catalogue.EventPrecision.MappedPrecision(Undated))
 
   def label(precision: com.histmersion.api.catalogue.EventPrecision.LabelPrecision): Option[com.histmersion.api.catalogue.EventPrecision.LabelResult] =
     precision match

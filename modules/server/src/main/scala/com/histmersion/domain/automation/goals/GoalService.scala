@@ -635,12 +635,12 @@ object GoalService:
     object LinksGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type LinkResult = LinkResult.T
     object LinkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkGoal = LinkGoal.T
-    object LinkGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkRef = LinkRef.T
-    object LinkRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LinkNote = LinkNote.T
-    object LinkNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LinkGoal = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal
+    val LinkGoal: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Goal
+    type LinkRef = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref
+    val LinkRef: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Ref
+    type LinkNote = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note
+    val LinkNote: _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note.type = _root_.com.histmersion.domain.automation.goals.GoalLinkRecord.Note
     type RefsResult = RefsResult.T
     object RefsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RefsGoal = RefsGoal.T
@@ -673,12 +673,12 @@ object GoalService:
     object SetBudgetGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SchedulesGoal = SchedulesGoal.T
     object SchedulesGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetScheduleGoal = SetScheduleGoal.T
-    object SetScheduleGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetScheduleCron = SetScheduleCron.T
-    object SetScheduleCron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SetScheduleEnabled = SetScheduleEnabled.T
-    object SetScheduleEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SetScheduleGoal = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal
+    val SetScheduleGoal: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Goal
+    type SetScheduleCron = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron
+    val SetScheduleCron: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Cron
+    type SetScheduleEnabled = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled
+    val SetScheduleEnabled: _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled.type = _root_.com.histmersion.domain.automation.goals.GoalScheduleRecord.Enabled
     type RemoveScheduleResult = RemoveScheduleResult.T
     object RemoveScheduleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RemoveScheduleGoal = RemoveScheduleGoal.T

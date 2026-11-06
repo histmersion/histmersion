@@ -23,6 +23,9 @@ object Owned:
   def not(value: Flag): Boolean = !(value).value
   def length(value: Bytes): Int = (value).value.length
   def path(value: Text): java.nio.file.Path = java.nio.file.Path.of((value).value)
+  final case class FlagRecord(flag: Flag)
+  def flags(rows: List[FlagRecord]): List[FlagRecord] = rows.filterNot((refactorCallback => (refactorCallback.flag).value))
+  def brokenFlags(rows: List[FlagRecord]): List[FlagRecord] = rows.filterNot((refactorCallback => (refactorCallback.flag).value))
 
 final case class OwnedRecord(text: OwnedRecord.Text):
   def trimmed: String = (text).value.trim

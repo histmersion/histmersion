@@ -245,7 +245,7 @@ object Basemap:
         val g = if r.geoms.isEmpty then ""
         else ":" + r.geoms.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
         val k = if r.kinds.isEmpty then "" else "~" + r.kinds.toList.sorted.mkString("|")
-        l + g + k + fromZoom.get(l).filter(_ > 0).fold("")(z => s"@$z")
+        (l).value + g + k + fromZoom.get(l).filter(_ > 0).fold("")(z => s"@$z")
       }
       .mkString(",")
 

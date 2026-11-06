@@ -353,10 +353,10 @@ object EventImportService:
     object RefreshNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RefreshWd = RefreshWd.T
     object RefreshWd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type InsertedId = InsertedId.T
-    object InsertedId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type InsertedNames = InsertedNames.T
-    object InsertedNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type InsertedId = _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id
+    val InsertedId: _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id.type = _root_.com.histmersion.domain.catalogue.events.HeldEvent.Id
+    type InsertedNames = _root_.com.histmersion.domain.catalogue.events.HeldEvent.Names
+    val InsertedNames: _root_.com.histmersion.domain.catalogue.events.HeldEvent.Names.type = _root_.com.histmersion.domain.catalogue.events.HeldEvent.Names
     type InsertedWd = InsertedWd.T
     object InsertedWd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SaveOneResultPart2 = SaveOneResultPart2.T

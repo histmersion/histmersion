@@ -38,8 +38,8 @@ object SettingsService:
   object SnapshotLoadedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SnapshotCompleted = SnapshotCompleted.T
   object SnapshotCompleted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnapshotFile = SnapshotFile.T
-  object SnapshotFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnapshotFile = _root_.com.histmersion.util.settings.SettingsSnapshot.File
+  val SnapshotFile: _root_.com.histmersion.util.settings.SettingsSnapshot.File.type = _root_.com.histmersion.util.settings.SettingsSnapshot.File
 
   def apply(loaded: () => LoadedConfig, file: () => Option[SettingsFile]): SettingsService =
     Implementation(loaded, file, ConfigSchema.reference)

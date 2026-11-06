@@ -140,12 +140,12 @@ object SourceApprovalService:
       )
 
   object InMemory:
-    type RecordTarget = RecordTarget.T
-    object RecordTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordTarget = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Target
+    val RecordTarget: _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Target.type = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Target
     type RecordPayload = RecordPayload.T
     object RecordPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RecordResult = RecordResult.T
-    object RecordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RecordResult = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result
+    val RecordResult: _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result.type = _root_.com.histmersion.domain.automation.agents.ApprovalRecord.Result
     type ProposedBeforeResult = ProposedBeforeResult.T
     object ProposedBeforeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ProposedBeforeTarget = ProposedBeforeTarget.T

@@ -159,7 +159,7 @@ object Licence:
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    val allowable: List[Family] = values.toList.filterNot((_.never).value)
+    val allowable: List[Family] = values.toList.filterNot((refactorCallback => (refactorCallback.never).value))
 
     private val byWire: Map[com.histmersion.domain.Licence.Family.ByWirePart1, Family] = values.map(f => f.wire -> f).toMap
 

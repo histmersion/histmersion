@@ -35,8 +35,8 @@ private[sources] object SourceDeleteRepo:
   object ApplyInFilesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KeysOfCk = KeysOfCk.T
   object KeysOfCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeysOfKeys = KeysOfKeys.T
-  object KeysOfKeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeysOfKeys = _root_.com.histmersion.domain.library.sources.referrers.SourceKeys.Keys
+  val KeysOfKeys: _root_.com.histmersion.domain.library.sources.referrers.SourceKeys.Keys.type = _root_.com.histmersion.domain.library.sources.referrers.SourceKeys.Keys
   type PlanInRequested = PlanInRequested.T
   object PlanInRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NResult = NResult.T

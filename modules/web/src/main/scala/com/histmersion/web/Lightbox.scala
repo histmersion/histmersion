@@ -23,8 +23,8 @@ object Lightbox:
   object FromAttrsAttrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromAttrsSrc = FromAttrsSrc.T
   object FromAttrsSrc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromAttrsAlt = FromAttrsAlt.T
-  object FromAttrsAlt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromAttrsAlt = _root_.com.histmersion.web.Lightbox.Item.Alt
+  val FromAttrsAlt: _root_.com.histmersion.web.Lightbox.Item.Alt.type = _root_.com.histmersion.web.Lightbox.Item.Alt
   type CaptionHtmlResult = CaptionHtmlResult.T
   object CaptionHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OpensResult = OpensResult.T

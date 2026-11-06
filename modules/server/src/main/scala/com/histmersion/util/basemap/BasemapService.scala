@@ -1205,8 +1205,8 @@ object BasemapService:
   object SubsetResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SubsetRulesPart1 = SubsetRulesPart1.T
   object SubsetRulesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SubsetProps = SubsetProps.T
-  object SubsetProps extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SubsetProps = _root_.com.histmersion.util.basemap.Mvt.Rule.Props
+  val SubsetProps: _root_.com.histmersion.util.basemap.Mvt.Rule.Props.type = _root_.com.histmersion.util.basemap.Mvt.Rule.Props
   type MvtRulesResultPart1 = MvtRulesResultPart1.T
   object MvtRulesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThinResultPart1 = ThinResultPart1.T

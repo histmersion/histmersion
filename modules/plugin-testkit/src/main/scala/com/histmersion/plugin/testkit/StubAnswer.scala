@@ -5,8 +5,8 @@ final case class StubAnswer(status: StubAnswer.Status, body: StubAnswer.Body, he
 
 object StubAnswer:
   /** A 200 with this body. */
-  type OkBody = OkBody.T
-  object OkBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OkBody = _root_.com.histmersion.plugin.testkit.StubAnswer.Body
+  val OkBody: _root_.com.histmersion.plugin.testkit.StubAnswer.Body.type = _root_.com.histmersion.plugin.testkit.StubAnswer.Body
 
   type OkContentType = OkContentType.T
   object OkContentType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

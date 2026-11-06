@@ -262,12 +262,12 @@ object Backup:
 
   object Status:
 
-    type RunningFile = RunningFile.T
-    object RunningFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type RunningFile = _root_.com.histmersion.api.backup.Backup.Status.File
+    val RunningFile: _root_.com.histmersion.api.backup.Backup.Status.File.type = _root_.com.histmersion.api.backup.Backup.Status.File
     type RunningElapsedMs = RunningElapsedMs.T
     object RunningElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FailedFile = FailedFile.T
-    object FailedFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FailedFile = _root_.com.histmersion.api.backup.Backup.Status.File
+    val FailedFile: _root_.com.histmersion.api.backup.Backup.Status.File.type = _root_.com.histmersion.api.backup.Backup.Status.File
     type FailedElapsedMs = FailedElapsedMs.T
     object FailedElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FailedError = FailedError.T

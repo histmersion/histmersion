@@ -19,5 +19,5 @@ object WikidataStatement:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
 
   def best(statements: List[WikidataStatement], per: com.histmersion.upstreams.wikidata.WikidataStatement.BestPer): List[WikidataStatement] =
-    val preferred = statements.filter((_.preferred).value)
-    (if preferred.nonEmpty then preferred else statements).sortBy(_.order).take(per.max(0))
+    val preferred = statements.filter((refactorCallback => (refactorCallback.preferred).value))
+    (if preferred.nonEmpty then preferred else statements).sortBy(_.order).take((per).value.max(0))

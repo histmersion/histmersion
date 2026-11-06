@@ -286,8 +286,8 @@ object ReviewArticle:
   object KeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SameFindingResult = SameFindingResult.T
   object SameFindingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeRound = MergeRound.T
-  object MergeRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeRound = _root_.com.histmersion.domain.ReviewArticle.Merged.Round
+  val MergeRound: _root_.com.histmersion.domain.ReviewArticle.Merged.Round.type = _root_.com.histmersion.domain.ReviewArticle.Merged.Round
   type DoneResult = DoneResult.T
   object DoneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DoneRound = DoneRound.T

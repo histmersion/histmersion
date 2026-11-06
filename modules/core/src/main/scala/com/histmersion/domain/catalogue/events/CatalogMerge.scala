@@ -42,8 +42,8 @@ object CatalogMerge:
   object SameKindA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SameKindB = SameKindB.T
   object SameKindB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FitId = FitId.T
-  object FitId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FitId = _root_.com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Id
+  val FitId: _root_.com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Id.type = _root_.com.histmersion.domain.catalogue.events.CatalogMerge.Fit.Id
 
   final case class Tolerance(km: Tolerance.Km, years: Tolerance.Years)
 

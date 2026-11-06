@@ -70,7 +70,7 @@ object Critiques:
 
   val Kinds: List[com.histmersion.api.research.Critiques.Kinds] = Article.Coverage.DisagreementKinds
 
-  def olderFirst(kinds: List[com.histmersion.api.research.Critiques.OlderFirstKinds]): com.histmersion.api.research.Critiques.OlderFirstResult = kinds.nonEmpty && kinds.forall(_ == _root_.com.histmersion.api.research.Critiques.OlderFirstKinds("superseded_by"))
+  def olderFirst(kinds: List[com.histmersion.api.research.Critiques.OlderFirstKinds]): com.histmersion.api.research.Critiques.OlderFirstResult = _root_.com.histmersion.api.research.Critiques.OlderFirstResult(kinds.nonEmpty && kinds.forall(_ == _root_.com.histmersion.api.research.Critiques.OlderFirstKinds("superseded_by")))
 
   private val ListItem = "^([-*+]|\\d+[.)])\\s+.*".r
 
