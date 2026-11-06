@@ -51,14 +51,14 @@ object Licence:
             p.startsWith("pdm") =>
         Licence(Licence.Id("public-domain"), Licence.Family.PublicDomain)
       case CcRe(nc, variant, version, port) =>
-        val wire = Licence.Family.CcBy.wire + Option(nc).getOrElse("") + Option(variant).getOrElse("")
+        val wire = Licence.Family.CcBy.wire.value + Option(nc).getOrElse("") + Option(variant).getOrElse("")
         val v = Option(version).map(x => if x.contains(".") then x else s"$x.0")
         val id = (wire.toUpperCase(Locale.ROOT) :: v.toList ++ Option(port).map(_.toUpperCase(Locale.ROOT)).toList)
           .mkString("-")
-        Licence(Licence.Id(id), Licence.Family.fromWire(wire).getOrElse(Licence.Family.Unknown))
+        Licence(Licence.Id(id), Licence.Family.fromWire(Licence.Family.Wire(wire)).getOrElse(Licence.Family.Unknown))
       case g if g.startsWith("gfdl") => Licence(Licence.Id("GFDL"), Licence.Family.Gfdl)
       case a if a == "arr" || a == "all-rights-reserved" || a == "copyrighted" || a.startsWith("©") =>
-        Licence(Licence.Id(Licence.Family.AllRightsReserved.wire), Licence.Family.AllRightsReserved)
+        Licence(Licence.Id(Licence.Family.AllRightsReserved.wire.value), Licence.Family.AllRightsReserved)
       case other => unknown(_root_.com.histmersion.domain.Licence.Statement(other))
 
   private val CcUrl =
@@ -96,7 +96,7 @@ object Licence:
     cands.iterator
       .map({ val refactorFunction2 = classify; (refactorValue3) => refactorFunction2(_root_.com.histmersion.domain.Licence.Id(refactorValue3)) })
       .find(_.family != Licence.Family.Unknown)
-      .getOrElse(unknown(cands.headOption.getOrElse(_root_.com.histmersion.domain.Licence.Statement(""))))
+      .getOrElse(unknown(_root_.com.histmersion.domain.Licence.Statement(cands.headOption.getOrElse(""))))
 
   /** A licence as it is stored and shown: an SPDX id (`CC-BY-SA-4.0`, `CC0-1.0`), `public-domain`, or — when it reads
     * as no licence known — the statement itself. Classified into its family by the shared `domain.Licence`.

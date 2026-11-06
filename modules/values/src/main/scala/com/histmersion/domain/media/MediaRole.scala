@@ -30,7 +30,7 @@ object MediaRole:
   /** Every role, in card order: a place's own picture before an object found there and a map of it; a source shows its
     * cover before an illustration.
     */
-  val all: List[com.histmersion.domain.media.MediaRole.Wire] = placeRoles ++ List(Depiction, Object, Map, Cover, Illustration)
+  val all: List[com.histmersion.domain.media.MediaRole.Wire] = placeRoles ++ List(Wire(Depiction), Wire(Object), Wire(Map), Wire(Cover), Wire(Illustration))
 
   /** Pure: the rank of a role on a card (unknown roles last). */
   def order(role: com.histmersion.domain.media.MediaRole.Wire): Int = all.indexOf(role) match

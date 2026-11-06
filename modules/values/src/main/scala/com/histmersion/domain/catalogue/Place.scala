@@ -9,7 +9,8 @@ object Place:
   /** A place's id: the gazetteer it comes from, an underscore, that gazetteer's id (`geonames_2911611`). */
   type Id = Id.T
 
-  object Id extends RefinedType[String, Match["[a-z][a-z0-9]*_.+"]]
+  object Id extends RefinedType[String, Match["[a-z][a-z0-9]*_.+"]]:
+    extension (id: T) def isPleiades: Boolean = id.value.startsWith("pleiades_")
 
   /** The five `kind`s the store recognises. Free text in the column (an importer may carry its own vocabulary), but
     * these are what the CLI/UI offer and what api's `Lpf` maps foreign type labels onto. `people` (2026-10-09) is a
@@ -85,18 +86,18 @@ object Place:
       * Pure.
       */
     def gridCentre(lon: com.histmersion.Longitude, lat: com.histmersion.Latitude): Boolean =
-      val x = math.round(lon * 1e6)
-      val y = math.round(lat * 1e6)
-      (CellsMicro.exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2))
+      val x = lon.micro
+      val y = lat.micro
+      (CellsMicro.map(_.value).exists(c => Math.floorMod(x, c) == c / 2 && Math.floorMod(y, c) == c / 2))
 
     /** The precision of the point of place `placeId`. */
     def of(placeId: com.histmersion.domain.catalogue.Place.Id, lon: com.histmersion.Longitude, lat: com.histmersion.Latitude): Precision =
-      if placeId.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
+      if placeId.isPleiades && gridCentre(lon, lat) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
     val Approximate: com.histmersion.domain.catalogue.Place.Precision.Approximate = _root_.com.histmersion.domain.catalogue.Place.Precision.ApproximateValue("approximate (atlas grid square)")
 
-    def parse(s: com.histmersion.domain.catalogue.Place.Precision.Wire): Option[Precision] = values.find(_.wire == Ascii.lower(((s).value.trim)))
+    def parse(s: com.histmersion.domain.catalogue.Place.Precision.Wire): Option[Precision] = values.find(_.wire.value == Ascii.lower(((s).value.trim)))
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = Precision.values
