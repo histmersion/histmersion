@@ -1,5 +1,4 @@
 package com.histmersion.api.library
-import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.{Ascii, WireEnumValues}
@@ -49,8 +48,6 @@ object Source:
   object Neighbor:
     type Line = Line.T
     object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorName = AuthorName.T
-  object AuthorName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AuthorSurname = AuthorSurname.T
   object AuthorSurname extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Body = Body.T
@@ -93,7 +90,7 @@ object Source:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
     /** The wire / storage spelling (`current`), as the JSON codec writes it. */
-    def wire: com.histmersion.api.library.Source.Status.Wire = Ascii.lower((toString))
+    def wire: com.histmersion.api.library.Source.Status.Wire = _root_.com.histmersion.api.library.Source.Status.Wire(Ascii.lower(toString))
 
   object Status:
     type Wire = Wire.T
@@ -130,7 +127,7 @@ object Source:
       isOa: Candidate.IsOa = _root_.com.histmersion.api.library.Source.Candidate.IsOa(false),
       arxivId: Option[Candidate.ArxivId] = None,
       foundBy: List[Candidate.FoundBy] = Nil,
-      state: Candidate.State = Candidates.State.New.wire,
+      state: Candidate.State = Candidate.State(Candidates.State.New.wire.value),
       firstSeen: Candidate.FirstSeen = _root_.com.histmersion.api.library.Source.Candidate.FirstSeen(""),
       lastSeen: Candidate.LastSeen = _root_.com.histmersion.api.library.Source.Candidate.LastSeen("")
   ) derives KindlingsCodecAsObject,
@@ -188,7 +185,7 @@ object Source:
 
     def refusal(ck: com.histmersion.api.library.Citekey, blockers: List[DeleteBlocker]): com.histmersion.api.library.Source.Delete.Problem =
       val groups = blockers.groupBy(_.kind).toList.sortBy(_._1.ordinal).map { (k, bs) =>
-        s"${k.label} ${bs.map(b => b.id + b.title.fold("")(t => s" ($t)")).mkString(", ")}"
+        s"${k.label} ${bs.map(b => b.id.value + b.title.fold("")(t => s" ($t)")).mkString(", ")}"
       }
       _root_.com.histmersion.api.library.Source.Delete.Problem(s"'$ck' cannot be deleted — ${groups.mkString("; ")}. Fix those first (remove the citation from " +
         "each article, re-source the events, let the job finish); there is no override")
@@ -196,8 +193,8 @@ object Source:
     def logText(d: Deletion): com.histmersion.api.library.Source.Delete.LogText =
       def short(p: DeletePart) = p match
         case DeletePart.EdgesIn => "edges in (parked)"
-        case other              => other.wire.replace('-', ' ')
-      val parts = d.counts.filter((_.rows).value > 0).map(c => s"${c.rows} ${short(c.part)}")
+        case other              => other.wire.value.replace('-', ' ')
+      val parts = d.counts.filter(_.rows.value > 0).map(c => s"${c.rows} ${short(c.part)}")
       val files = if d.files.isEmpty then Nil else List(Plural.count(_root_.com.histmersion.api.Plural.CountN((d.files.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("stored original")))
       val calibre = d.calibreId.map(id => s"Calibre entry $id kept").toList
       _root_.com.histmersion.api.library.Source.Delete.LogText(s"deleted ${d.citekey} (${d.title})" +
@@ -283,7 +280,7 @@ object Source:
         KindlingsSchema,
         com.histmersion.api.json.Schema:
     def refused: Boolean = (blockers.nonEmpty)
-    def count(p: DeletePart): com.histmersion.api.RowCount = counts.find(_.part == p).fold(0)(_.rows)
+    def count(p: DeletePart): com.histmersion.api.RowCount = counts.find(_.part == p).fold(com.histmersion.api.RowCount(0))(c => com.histmersion.api.RowCount(c.rows.value))
 
   object Deletion:
 
@@ -369,7 +366,7 @@ object Source:
       */
     private val DataDoiPrefixes = List("10.5061/", "10.6084/", "10.17632/", "10.7910/")
 
-    private val BookProvenance = Set("calibre", Provenance.ExternalFile, "archive", "archive_org")
+    private val BookProvenance = Set("calibre", com.histmersion.api.library.Provenance.ExternalFile, "archive", "archive_org")
 
     def of(
         doi: Option[com.histmersion.api.library.Doi],
@@ -379,8 +376,8 @@ object Source:
         topics: List[com.histmersion.api.library.Source.Topics],
         hasCover: Boolean
     ): com.histmersion.api.library.Source.Kinds.Wire =
-      val words = (tags ++ topics).map(_.toLowerCase(java.util.Locale.ROOT))
-      val where = venue.getOrElse("").toLowerCase(java.util.Locale.ROOT)
+      val words = (tags.map(_.value) ++ topics.map(_.value)).map(_.toLowerCase(java.util.Locale.ROOT))
+      val where = venue.map(_.value).getOrElse("").toLowerCase(java.util.Locale.ROOT)
       val id = doi.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
       def says(w: String*) = words.exists(t => w.exists(t.contains)) || w.exists(where.contains)
       if says("thesis", "dissertation") then _root_.com.histmersion.api.library.Source.Kinds.Wire(Thesis)
@@ -419,8 +416,8 @@ object Source:
         KindlingsSchema,
         com.histmersion.api.json.Schema
   object Match:
-    type Line = Line.T
-    object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Line = com.histmersion.api.exchange.PlanMatchKind.MatchLine
+    val Line: _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine.type = _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine
 
     /** A source's match in a merge plan: the plan's Markdown lists every one but the new sources. */
 
@@ -432,7 +429,7 @@ object Source:
     object Issue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val Matches: com.histmersion.api.exchange.PlanMatchKind[Match] =
-      com.histmersion.api.exchange.PlanMatchKind(_root_.com.histmersion.api.exchange.PlanMatchKind.ListedResult(_.outcome != MatchOutcome.New), line)
+      com.histmersion.api.exchange.PlanMatchKind(m => _root_.com.histmersion.api.exchange.PlanMatchKind.ListedResult(m.outcome != MatchOutcome.New), line)
 
     /** A source's match as the plan's Markdown lists it. */
     def line(s: Match): com.histmersion.api.library.Source.Match.Line =
@@ -505,7 +502,7 @@ object Source:
       provenance = s.provenance,
       calibreId = s.calibreId,
       findings = s.findings.map(Finding.Input.of),
-      edges = s.edges.flatMap(e => com.histmersion.api.library.Edge.Kind.fromWire(e.kind).map(Edge.Input(e.dst.value.toString, _)))
+      edges = s.edges.map(e => Edge.Input(e.dst, e.kind))
     )
 
   /** `idLabel` is the DOI when present, else the citekey: the owner's decision to show DOIs in the UI while keeping the
@@ -522,7 +519,7 @@ object Source:
     def idLabel: com.histmersion.api.library.Source.Ref.Label = _root_.com.histmersion.api.library.Source.Ref.Label(doi.map(_.value).getOrElse(citekey.value.toString))
 
     def shortCite: com.histmersion.api.library.Source.Ref.ShortCite =
-      val auth = Ref.shortAuthors(authors.map(_.value))
+      val auth = Ref.shortAuthors(authors)
       val yr = year.map(_.toString).getOrElse("n.d.")
       if (auth).value.isEmpty then _root_.com.histmersion.api.library.Source.Ref.ShortCite(yr) else _root_.com.histmersion.api.library.Source.Ref.ShortCite(s"$auth $yr")
 
@@ -534,18 +531,18 @@ object Source:
     type ShortCite = ShortCite.T
     object ShortCite extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def surname(full: com.histmersion.api.library.Source.AuthorName): com.histmersion.api.library.Source.AuthorSurname =
+    def surname(full: com.histmersion.api.library.AuthorName): com.histmersion.api.library.Source.AuthorSurname =
       val t = (full).value.trim
       if t.contains(",") then _root_.com.histmersion.api.library.Source.AuthorSurname(t.takeWhile(_ != ',').trim)
       else _root_.com.histmersion.api.library.Source.AuthorSurname(t.split("\\s+").lastOption.getOrElse(t))
 
-    def shortAuthors(authors: List[com.histmersion.api.library.Source.AuthorName]): com.histmersion.api.library.Source.Ref.ShortAuthors =
+    def shortAuthors(authors: List[com.histmersion.api.library.AuthorName]): com.histmersion.api.library.Source.Ref.ShortAuthors =
       val names = authors.map((_).value.trim).filter(_.nonEmpty)
       names match
         case Nil           => _root_.com.histmersion.api.library.Source.Ref.ShortAuthors("")
-        case a :: Nil      => _root_.com.histmersion.api.library.Source.Ref.ShortAuthors((surname(_root_.com.histmersion.api.library.Source.AuthorName(a))).value)
-        case a :: b :: Nil => _root_.com.histmersion.api.library.Source.Ref.ShortAuthors((surname(_root_.com.histmersion.api.library.Source.AuthorName(a))).value + " & " + surname(_root_.com.histmersion.api.library.Source.AuthorName(b)))
-        case a :: _        => _root_.com.histmersion.api.library.Source.Ref.ShortAuthors((surname(_root_.com.histmersion.api.library.Source.AuthorName(a))).value + " et al.")
+        case a :: Nil      => _root_.com.histmersion.api.library.Source.Ref.ShortAuthors((surname(_root_.com.histmersion.api.library.AuthorName(a))).value)
+        case a :: b :: Nil => _root_.com.histmersion.api.library.Source.Ref.ShortAuthors((surname(_root_.com.histmersion.api.library.AuthorName(a))).value + " & " + surname(_root_.com.histmersion.api.library.AuthorName(b)))
+        case a :: _        => _root_.com.histmersion.api.library.Source.Ref.ShortAuthors((surname(_root_.com.histmersion.api.library.AuthorName(a))).value + " et al.")
 
   final case class Renamed(
       oldCitekey: com.histmersion.api.library.Citekey,
@@ -568,7 +565,7 @@ object Source:
     val Toc = "toc"
     val Body = "body"
     val All = "all"
-    val all: List[com.histmersion.api.library.Source.Section.Wire] = List(_root_.com.histmersion.api.library.Source.Section.Wire(Summary), _root_.com.histmersion.api.library.Source.Section.Wire(Findings), _root_.com.histmersion.api.library.Source.Section.Wire(Notes), _root_.com.histmersion.api.library.Source.Section.Wire(Toc), _root_.com.histmersion.api.library.Source.Section.Wire(Body), All)
+    val all: List[com.histmersion.api.library.Source.Section.Wire] = List(_root_.com.histmersion.api.library.Source.Section.Wire(Summary), _root_.com.histmersion.api.library.Source.Section.Wire(Findings), _root_.com.histmersion.api.library.Source.Section.Wire(Notes), _root_.com.histmersion.api.library.Source.Section.Wire(Toc), _root_.com.histmersion.api.library.Source.Section.Wire(Body), _root_.com.histmersion.api.library.Source.Section.Wire(All))
 
     def parse(s: com.histmersion.api.library.Source.Section.Wire): Option[com.histmersion.api.library.Source.Section.Wire] =
       val lower = (s).value.trim.toLowerCase
@@ -590,24 +587,17 @@ object Source:
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
-    type EdgeOfAliases = EdgeOfAliases.T
-    object EdgeOfAliases extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ToFindingId = _root_.com.histmersion.api.library.Finding.Id
-    val ToFindingId: _root_.com.histmersion.api.library.Finding.Id.type = _root_.com.histmersion.api.library.Finding.Id
-    type PeriodOfWhat = String
-
     def findingId(citekey: com.histmersion.api.library.Citekey, n: com.histmersion.api.library.Finding.Ordinal): com.histmersion.api.library.Finding.Id = _root_.com.histmersion.api.library.Finding.Id(s"$citekey#$n")
 
-    def applyPut(citekey: com.histmersion.api.library.Citekey, p: Put, aliases: Set[com.histmersion.api.library.Citekey] = (Set.empty).map(com.histmersion.api.library.Citekey.apply)): Either[com.histmersion.api.library.Source.Write.Problem, Source] =
+    def applyPut(citekey: com.histmersion.api.library.Citekey, p: Put, aliases: Set[com.histmersion.api.library.Citekey] = Set.empty): Either[com.histmersion.api.library.Source.Write.Problem, Source] =
       for
-        period <- periodOf(p.periodStart, p.periodEnd, _root_.com.histmersion.api.library.Source.Write.PeriodOfWhat("source"))
+        period <- periodOf(p.periodStart, p.periodEnd, "source")
         fs <- numbered(citekey, p.findings)
-        edges <- traverse(p.edges)(edgeOf(citekey.value.toString, aliases.map(_.value.toString), "edges", "source being put", _))
+        edges <- traverse(p.edges)(edgeOf(citekey, aliases, EdgePart("edges"), EdgeRole("source being put"), _))
         _ <- edges
           .find(e => e.dst == citekey || aliases.contains(e.dst))
           .fold(Right(()))(e =>
-            Left(s"edges: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source")
+            Left(Problem(s"edges: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source"))
           )
       yield Source(
         citekey = citekey,
@@ -637,74 +627,92 @@ object Source:
       patch.ifUpdatedAt match
         case None       => Right(())
         case Some(want) =>
-          val actual = existing.updatedAt.getOrElse("")
-          if want == actual then Right(())
+          val actual = existing.updatedAt.map(_.value).getOrElse("")
+          if want.value == actual then Right(())
           else
             Left(
-              _root_.com.histmersion.api.library.Source.Write.Problem(s"'${existing.citekey}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
+              Problem(s"'${existing.citekey}' has moved on: you sent ifUpdatedAt='$want' but the stored " +
                 s"updatedAt is '$actual'. Re-read the source and re-apply your patch.")
             )
 
     def applyPatch(existing: Source, patch: Patch): Either[com.histmersion.api.library.Source.Write.Problem, Source] =
       for
         _ <- precondition(existing, patch)
-        period <- patch.period.fold[Either[String, Option[Period]]](Right(existing.period))(p =>
-          periodOf(Some(p.start), Some(p.end), _root_.com.histmersion.api.library.Source.Write.PeriodOfWhat("source"))
+        period <- patch.period.fold[Either[Problem, Option[Period]]](Right(existing.period))(p =>
+          periodOf(Some(p.start), Some(p.end), "source")
         )
-        fs <- patch.findings.fold[Either[String, List[Finding]]](Right(existing.findings))(fp =>
-          (applyFindings(existing.citekey, existing.findings, fp)).left.map(refactorError8 => (refactorError8).value)
+        fs <- patch.findings.fold[Either[Problem, List[Finding]]](Right(existing.findings))(fp =>
+          applyFindings(existing.citekey, existing.findings, fp)
         )
         meta = patch.metadata.getOrElse(MetadataPatch())
         _ <- metadataCheck(meta)
-        newEdges <- patch.edges.fold[Either[String, List[Edge]]](Right(existing.edges))(
-          (applyEdges(existing.citekey, existing.edges, _)).left.map(refactorError9 => (refactorError9).value)
+        newEdges <- patch.edges.fold[Either[Problem, List[Edge]]](Right(existing.edges))(
+          applyEdges(existing.citekey, existing.edges, _)
         )
         newStatus = meta.status.getOrElse(existing.status)
         _ <- supersededEdgeCheck(newStatus, newEdges)
       yield
         def cleared(f: MetadataField) = meta.clear.contains(f)
-        existing.modify(
-          _.title).setTo(meta.title.getOrElse(existing.title)).modify(_.authors).setTo(meta.authors.getOrElse(existing.authors)).modify(_.year).setTo(if cleared(MetadataField.Year) then None else meta.year.orElse(existing.year)).modify(_.venue).setTo(if cleared(MetadataField.Venue) then None
-          else meta.venue.fold(existing.venue)(v => blankToNone(Some(v.value)).map(com.histmersion.api.library.Source.Venue.apply))).modify(_.doi).setTo(if cleared(MetadataField.Doi) then None
-          else meta.doi.fold(existing.doi)(d => blankToNone(Some(d.value)).map(com.histmersion.api.library.Doi.apply))).modify(_.status).setTo(newStatus).modify(_.summary).setTo(patch.summary.orElse(existing.summary)).modify(_.ocrMarkdown).setTo(patch.body.orElse(existing.ocrMarkdown)).modify(_.notes).setTo(patch.notes.orElse(existing.notes)).modify(_.topics).setTo(patch.topics.getOrElse(existing.topics)).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(applyList(existing.tags, _))).modify(_.period).setTo(period).modify(_.findings).setTo(fs).modify(_.edges).setTo(newEdges).modify(_.provenance).setTo(if cleared(MetadataField.Provenance) then None
-          else meta.provenance.orElse(existing.provenance)).modify(_.calibreId).setTo(if cleared(MetadataField.CalibreId) then None
-          else meta.calibreId.map(_.trim).orElse(existing.calibreId)
+        existing.copy(
+          title = meta.title.getOrElse(existing.title),
+          authors = meta.authors.getOrElse(existing.authors),
+          year = if cleared(MetadataField.Year) then None else meta.year.orElse(existing.year),
+          venue = if cleared(MetadataField.Venue) then None
+          else meta.venue.fold(existing.venue)(v => blankToNone(Some(v.value)).map(com.histmersion.api.library.Source.Venue.apply)),
+          doi = if cleared(MetadataField.Doi) then None
+          else meta.doi.fold(existing.doi)(d => blankToNone(Some(d.value)).map(com.histmersion.api.library.Doi.apply)),
+          status = newStatus,
+          summary = patch.summary.orElse(existing.summary),
+          ocrMarkdown = patch.body.orElse(existing.ocrMarkdown),
+          notes = patch.notes.orElse(existing.notes),
+          topics = patch.topics.getOrElse(existing.topics),
+          regions = patch.regions.getOrElse(existing.regions),
+          tags = patch.tags.fold(existing.tags)(lp =>
+            applyList(existing.tags.map(t => com.histmersion.api.Write.ListItem(t.value)), lp).map(i => Tags(i.value))
+          ),
+          period = period,
+          findings = fs,
+          edges = newEdges,
+          provenance = if cleared(MetadataField.Provenance) then None
+          else meta.provenance.orElse(existing.provenance),
+          calibreId = if cleared(MetadataField.CalibreId) then None
+          else meta.calibreId.map(c => CalibreId(c.value.trim)).orElse(existing.calibreId)
         )
 
     def srcAliased(p: Patch, requested: com.histmersion.api.library.Citekey, canonical: com.histmersion.api.library.Citekey): Patch =
       if requested == canonical then p
       else
-        def fix(e: Edge.Input) = if e.src.map(_.trim).contains(requested) then e.modify(_.src).setTo(None) else e
-        p.modify(_.edges).setTo(p.edges.map(ep => EdgesPatch(ep.add.map(fix), ep.remove.map(fix))))
+        def fix(e: Edge.Input) = if e.src.map(_.value.trim).contains(requested.value) then e.copy(src = None) else e
+        p.copy(edges = p.edges.map(ep => EdgesPatch(ep.add.map(fix), ep.remove.map(fix))))
 
     def applyEdges(citekey: com.histmersion.api.library.Citekey, current: List[Edge], p: EdgesPatch): Either[com.histmersion.api.library.Source.Write.Problem, List[Edge]] =
       for
-        removed <- traverse(p.remove)((refactorCallback => (edgeOf(_root_.com.histmersion.api.library.Citekey(citekey.value.toString), Set.empty, _root_.com.histmersion.api.library.Source.EdgePart("edges.remove"), _root_.com.histmersion.api.library.Source.EdgeRole("patched source"), refactorCallback)).left.map(refactorError7 => _root_.com.histmersion.api.library.Source.Write.Problem((refactorError7).value))))
-        added <- traverse(p.add)((refactorCallback => (edgeOf(_root_.com.histmersion.api.library.Citekey(citekey.value.toString), Set.empty, _root_.com.histmersion.api.library.Source.EdgePart("edges.add"), _root_.com.histmersion.api.library.Source.EdgeRole("patched source"), refactorCallback)).left.map(refactorError10 => _root_.com.histmersion.api.library.Source.Write.Problem((refactorError10).value))))
+        removed <- traverse(p.remove)(edgeOf(citekey, Set.empty, EdgePart("edges.remove"), EdgeRole("patched source"), _))
+        added <- traverse(p.add)(edgeOf(citekey, Set.empty, EdgePart("edges.add"), EdgeRole("patched source"), _))
         _ <- added
           .find(_.dst == citekey)
           .fold(Right(()))(e =>
-            Left(s"edges.add: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source")
+            Left(Problem(s"edges.add: '${e.dst}' --${e.kind}--> itself is a self-edge; dst must be another source"))
           )
       yield
         val gone = removed.toSet
-        (current.map(_.modify(_.src).setTo(citekey)).filterNot(gone) ++ added.filterNot(gone)).distinct
+        (current.map(_.copy(src = citekey)).filterNot(gone) ++ added.filterNot(gone)).distinct
 
     private[api] def edgeOf(
         citekey: com.histmersion.api.library.Citekey,
-        aliases: Set[com.histmersion.api.library.Source.Write.EdgeOfAliases],
+        aliases: Set[com.histmersion.api.library.Citekey],
         part: com.histmersion.api.library.Source.EdgePart,
         role: com.histmersion.api.library.Source.EdgeRole,
         in: Edge.Input
     ): Either[com.histmersion.api.library.Source.Write.Problem, Edge] =
-      in.src.map(_.trim).filter(_.nonEmpty) match
+      in.src.map(s => com.histmersion.api.library.Citekey(s.value.trim)).filter(_.value.nonEmpty) match
         case Some(other) if other != citekey && !aliases.contains(other) =>
           Left(
-            _root_.com.histmersion.api.library.Source.Write.Problem(s"$part: src '$other' is not the $role '$citekey'. An edge is stored on its " +
+            Problem(s"$part: src '$other' is not the $role '$citekey'. An edge is stored on its " +
               s"source: patch '$other' to record '$other' --${com.histmersion.api.library.Edge.Kind.wireOf(in.kind)}--> '${in.dst}' " +
               s"(src may be omitted; it defaults to the $role)")
           )
-        case _ => Right(Edge(com.histmersion.api.library.Citekey((citekey).value), com.histmersion.api.library.Citekey(in.dst.trim), com.histmersion.api.library.Edge.Kind.wireOf(in.kind)))
+        case _ => Right(Edge(citekey, com.histmersion.api.library.Citekey(in.dst.value.trim), in.kind))
 
     private[api] def metadataCheck(m: MetadataPatch): Either[com.histmersion.api.library.Source.Write.Problem, Unit] =
       val both = m.clear.filter {
@@ -715,42 +723,43 @@ object Source:
         case MetadataField.CalibreId  => m.calibreId.isDefined
       }
       if both.nonEmpty then
-        Left(_root_.com.histmersion.api.library.Source.Write.Problem(s"metadata: ${both.map(MetadataField.wireOf).mkString(", ")} is both set and cleared in one patch"))
+        Left(Problem(s"metadata: ${both.map(MetadataField.wireOf).mkString(", ")} is both set and cleared in one patch"))
       else
-        m.calibreId.map(_.trim) match
+        m.calibreId.map(_.value.trim) match
           case Some(id) if !id.matches("[0-9]+") =>
-            Left(_root_.com.histmersion.api.library.Source.Write.Problem(s"metadata.calibreId: '$id' is not a Calibre id (the entry's number, e.g. 1805)"))
+            Left(Problem(s"metadata.calibreId: '$id' is not a Calibre id (the entry's number, e.g. 1805)"))
           case _ => Right(())
 
     def applyFindings(citekey: com.histmersion.api.library.Citekey, current: List[Finding], p: FindingsPatch): Either[com.histmersion.api.library.Source.Write.Problem, List[Finding]] =
       for
-        base <- p.replace.fold[Either[String, List[Finding]]](Right(current))((numbered(citekey, _)).left.map(refactorError5 => (refactorError5).value))
-        kept = base.filterNot(f => p.remove.contains(f.id))
+        base <- p.replace.fold[Either[Problem, List[Finding]]](Right(current))(numbered(citekey, _))
+        removing = p.remove.map(_.value).toSet
+        kept = base.filterNot(f => removing.contains(f.id.value))
         added <- allocate(citekey, kept, p.add)
       yield kept ++ added
 
     private[api] def numbered(citekey: com.histmersion.api.library.Citekey, inputs: List[Finding.Input]): Either[com.histmersion.api.library.Source.Write.Problem, List[Finding]] =
-      traverse(inputs.zipWithIndex)((in, i) => toFinding(citekey, findingId(citekey, _root_.com.histmersion.api.library.Finding.Ordinal(i)), in))
+      traverse(inputs.zipWithIndex)((in, i) => toFinding(citekey, findingId(citekey, com.histmersion.api.library.Finding.Ordinal(i)), in))
 
     private[api] def allocate(
         citekey: com.histmersion.api.library.Citekey,
         existing: List[Finding],
         adds: List[Finding.Input]
-    ): Either[com.histmersion.api.library.Citekey, List[Finding]] =
+    ): Either[com.histmersion.api.library.Source.Write.Problem, List[Finding]] =
       @tailrec def loop(
           rest: List[Finding.Input],
-          used: Set[com.histmersion.api.library.Citekey],
-          acc: List[Either[String, Finding]]
-      ): List[Either[com.histmersion.api.library.Citekey, Finding]] =
+          used: Set[com.histmersion.api.library.Finding.Id],
+          acc: List[Either[Problem, Finding]]
+      ): List[Either[Problem, Finding]] =
         rest match
           case Nil        => acc.reverse
           case in :: tail =>
-            val id = Iterator.from(0).map(findingId(citekey, _root_.com.histmersion.api.library.Finding.Ordinal(_))).find(n => !used.contains(n)).get
+            val id = Iterator.from(0).map(n => findingId(citekey, com.histmersion.api.library.Finding.Ordinal(n))).find(n => !used.contains(n)).get
             loop(tail, used + id, toFinding(citekey, id, in) :: acc)
-      traverse(loop(adds, existing.map(_.id).toSet, Nil))(Predef.identity)
+      traverse(loop(adds, existing.map(_.id).toSet, Nil))(identity)
 
-    private[api] def toFinding(citekey: com.histmersion.api.library.Citekey, id: com.histmersion.api.library.Source.Write.ToFindingId, in: Finding.Input): Either[com.histmersion.api.library.Source.Write.Problem, Finding] =
-      val what = s"finding '${in.claim.take(40)}'"
+    private[api] def toFinding(citekey: com.histmersion.api.library.Citekey, id: com.histmersion.api.library.Finding.Id, in: Finding.Input): Either[com.histmersion.api.library.Source.Write.Problem, Finding] =
+      val what = s"finding '${in.claim.value.take(40)}'"
       for
         p <- periodOf(in.periodStart, in.periodEnd, what)
         conf <- confidenceOf(in.confidence, what)
@@ -767,35 +776,35 @@ object Source:
           Confidence
             .fromString(_root_.com.histmersion.api.library.Confidence.Wire(c))
             .map(Some(_))
-            .toRight(_root_.com.histmersion.api.library.Source.Write.Problem(s"$what: confidence '$c' is not one of ${Confidence.values.map(_.wire).mkString("|")}"))
+            .toRight(Problem(s"$what: confidence '$c' is not one of ${Confidence.values.map(_.wire).mkString("|")}"))
 
     /** Postgres rejects an inverted int8range. */
-    private[api] def periodOf(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year], what: com.histmersion.api.library.Source.Write.PeriodOfWhat): Either[com.histmersion.api.library.Source.Write.Problem, Option[Period]] =
-      def sane(v: com.histmersion.api.catalogue.Year) = v >= Filter.Earliest && v <= Filter.Latest
+    private[api] def periodOf(start: Option[com.histmersion.api.catalogue.Year], end: Option[com.histmersion.api.catalogue.Year], what: String): Either[com.histmersion.api.library.Source.Write.Problem, Option[Period]] =
+      def sane(v: com.histmersion.api.catalogue.Year) = v.value >= Filter.Earliest.value && v.value <= Filter.Latest.value
       (start, end) match
-        case (Some(a), _) if !sane(a)     => Left(_root_.com.histmersion.api.library.Source.Write.Problem((outOfRange(what, ("period_start"), _root_.com.histmersion.api.catalogue.Year((a).value))).value))
-        case (_, Some(b)) if !sane(b)     => Left(_root_.com.histmersion.api.library.Source.Write.Problem((outOfRange(what, ("period_end"), _root_.com.histmersion.api.catalogue.Year((b).value))).value))
-        case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
-        case (Some(a), Some(b))           => Left(_root_.com.histmersion.api.library.Source.Write.Problem(s"$what: period_start ($a) must not be after period_end ($b)"))
-        case (None, None)                 => Right(None)
-        case _                            => Left(_root_.com.histmersion.api.library.Source.Write.Problem(s"$what: give both period_start and period_end, or neither"))
+        case (Some(a), _) if !sane(a)             => Left(outOfRange(what, "period_start", a))
+        case (_, Some(b)) if !sane(b)             => Left(outOfRange(what, "period_end", b))
+        case (Some(a), Some(b)) if a.value <= b.value => Right(Some(Period(a, b)))
+        case (Some(a), Some(b))                   => Left(Problem(s"$what: period_start ($a) must not be after period_end ($b)"))
+        case (None, None)                         => Right(None)
+        case _                                    => Left(Problem(s"$what: give both period_start and period_end, or neither"))
 
     private[api] def outOfRange(what: String, field: String, v: com.histmersion.api.catalogue.Year): com.histmersion.api.library.Source.Write.Problem =
-      _root_.com.histmersion.api.library.Source.Write.Problem(s"$what: $field ($v) is outside the representable range " +
+      Problem(s"$what: $field ($v) is outside the representable range " +
         s"[${Filter.Earliest}, ${Filter.Latest}] — deep time is signed YEARS, BCE negative")
 
     private[api] def supersededEdgeCheck(
         status: com.histmersion.api.library.Source.Status,
         edges: List[Edge]
     ): Either[com.histmersion.api.library.Source.Write.Problem, Unit] =
-      if status == com.histmersion.api.library.Source.Status.Superseded && !edges.exists(_.kind == "superseded_by")
+      if status == com.histmersion.api.library.Source.Status.Superseded && !edges.exists(_.kind == com.histmersion.api.library.Edge.Kind.SupersededBy)
       then
         Left(
-          _root_.com.histmersion.api.library.Source.Write.Problem("status=superseded requires a superseded_by edge — add one with edges.add " +
+          Problem("status=superseded requires a superseded_by edge — add one with edges.add " +
             "(e.g. {\"edges\":{\"add\":[{\"dst\":\"newer_source\",\"kind\":\"superseded_by\"}]}}, " +
             "or the CLI flag --add-edge superseded_by:newer_source)")
         )
       else Right(())
 
     private[api] def traverse[A, B](as: List[A])(f: A => Either[com.histmersion.api.library.Source.Write.Problem, B]): Either[com.histmersion.api.library.Source.Write.Problem, List[B]] =
-      (as.foldLeft[Either[String, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => (f(a).map(bs :+ _)).left.map(refactorError14 => (refactorError14).value)))).left.map(refactorError4 => _root_.com.histmersion.api.library.Source.Write.Problem(refactorError4))
+      as.foldLeft[Either[Problem, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))

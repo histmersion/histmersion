@@ -10,37 +10,37 @@ object ManagersMarkdown:
 
   private def counts(c: ItemCounts): String =
     List(
-      "pending" -> c.pending,
-      "held" -> c.held,
-      "active" -> c.active,
-      "done" -> c.done,
-      "stopped" -> c.stopped,
-      "failed" -> c.failed,
-      "cancelled" -> c.cancelled
+      "pending" -> c.pending.value,
+      "held" -> c.held.value,
+      "active" -> c.active.value,
+      "done" -> c.done.value,
+      "stopped" -> c.stopped.value,
+      "failed" -> c.failed.value,
+      "cancelled" -> c.cancelled.value
     ).filter(_._2 > 0).map((k, n) => s"$n $k").mkString(", ") match
       case "" => ("no items")
       case s  => (s)
 
   def today(m: ManagerInfo): String =
     val cap = m.effective.dailyUsd.orElse(m.config.dailyUsd).filter((_).value > 0)
-    s"today ${usd(m.spentTodayUsd)}${cap.fold("")(c => s" of ${usd(c)}")} USD" +
-      (if m.tokensToday > 0 then s", ${tokens(m.tokensToday)} tokens" else "")
+    s"today ${usd(m.spentTodayUsd.value)}${cap.fold("")(c => s" of ${usd(c.value)}")} USD" +
+      (if m.tokensToday.value > 0 then s", ${tokens(m.tokensToday.value)} tokens" else "")
 
-  def usd(d: com.histmersion.api.automation.Managers.Usd.Amount): String =
-    BigDecimal((d).value).setScale(if d != 0 && math.abs((d).value) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
+  def usd(d: Double): String =
+    BigDecimal(d).setScale(if d != 0 && math.abs(d) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
 
   private def tokens(n: Long): String =
     def one(x: Double) = BigDecimal((x)).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
     if n >= 1000000 then (s"${one(((n) / 1e6))}M") else if n >= 1000 then (s"${one(((n) / 1e3))}k") else (n.toString)
 
   def backlog(n: com.histmersion.api.automation.Managers.ManagerInfo.Backlog, days: Option[com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays]): String =
-    s"${Plural.count(n, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n == 0 then ""
+    s"${Plural.count(Plural.CountN(n.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n.value == 0 then ""
                                                                              else
-                                                                               days match
+                                                                               days.map(_.value) match
                                                                                  case Some(0) =>
                                                                                    " (drained today at the current allowance)"
                                                                                  case Some(d) =>
-                                                                                   s" (~${Plural.count(d, "more day")} at the current allowance)"
+                                                                                   s" (~${Plural.count(Plural.CountN(d.toLong), Plural.CountSingular("more day"))} at the current allowance)"
                                                                                  case None =>
                                                                                    " (not draining: auto-ingest off, a cap of 0, or the watcher not active)")
 
@@ -49,26 +49,26 @@ object ManagersMarkdown:
     val runs = if ((m.pauseRuns) == _root_.com.histmersion.api.automation.Managers.ManagerInfo.PauseRuns(true)) then " (its runs paused too)" else ""
     s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
       (if (m.backlog).value > 0 then s" · ${backlog(m.backlog, m.backlogDays)}" else "") +
-      m.statusNote.filter(_.nonEmpty).fold("")(n => s" · $n") +
-      m.lastEvent.fold("")(e => s" · last: ${e.kind} ${e.text.take(120)}")
+      m.statusNote.filter(_.value.nonEmpty).fold("")(n => s" · $n") +
+      m.lastEvent.fold("")(e => s" · last: ${e.kind} ${e.text.value.take(120)}")
 
   def list(ms: List[ManagerInfo]): String =
     if ms.isEmpty then ("_No managers._") else ("# Managers\n\n" + ms.map(m => s"- ${line(m)}").mkString("\n"))
 
   def item(i: ManagerItem): String =
-    val run = i.run.fold(i.runId.fold("")(r => s" · run ${r.take(8)}"))(r =>
-      s" · run ${r.id.take(8)} ${r.status}" + r.progress.filter(_.nonEmpty).fold("")(p => s" (${p.take(80)})")
+    val run = i.run.fold(i.runId.fold("")(r => s" · run ${r.value.take(8)}"))(r =>
+      s" · run ${r.id.value.take(8)} ${r.status}" + r.progress.filter(_.value.nonEmpty).fold("")(p => s" (${p.value.take(80)})")
     )
     val hold = i.hold.fold("")(h =>
       s" · held${h.until.fold("")(u => s" until $u")}${h.untilSource.fold("")(s => s" until $s exists")}" +
         h.untilApproval
-          .fold("")(a => s" until approval #$a is decided") + Option(h.reason).filter(_.nonEmpty).fold("")(r => s": $r")
+          .fold("")(a => s" until approval #$a is decided") + Option(h.reason).filter(_.value.nonEmpty).fold("")(r => s": $r")
     )
     val nb = i.notBefore.fold("")(t => s" · not before $t")
     val kind = if i.kind == _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(ArticleReview) then "" else s" (${i.kind})"
     s"#${i.id} ${i.target}$kind · ${i.status} · priority ${i.priority} · ${i.attempts} run(s)" +
       (if (i.failures).value > 0 then s", ${i.failures} failed" else "") + run + hold + nb +
-      i.outcome.filter(_.nonEmpty).fold("")(o => s" · $o")
+      i.outcome.filter(_.value.nonEmpty).fold("")(o => s" · $o")
 
   def items(p: ItemPage): String =
     if p.items.isEmpty then ("_No items._")
@@ -78,7 +78,7 @@ object ManagersMarkdown:
         .mkString("\n"))
 
   def event(e: ManagerEvent): String =
-    s"${e.at} · ${e.kind}${e.itemId.fold("")(i => s" · item #$i")}${e.runId.fold("")(r => s" · run ${r.take(8)}")} · ${e.text}"
+    s"${e.at} · ${e.kind}${e.itemId.fold("")(i => s" · item #$i")}${e.runId.fold("")(r => s" · run ${r.value.take(8)}")} · ${e.text}"
 
   def events(p: EventPage): String =
     if p.events.isEmpty then ("_No events._") else (p.events.map(e => s"- ${event(e)}").mkString("\n"))
@@ -86,7 +86,7 @@ object ManagersMarkdown:
   def effect(e: HintEffect): String =
     if e.action == _root_.com.histmersion.api.automation.Managers.HintEffect.Action(HintEffect.Config) then (s"settings: ${e.config.fold("none")(configLine)}")
     else
-      e.action + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
+      e.action.value + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
         e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +
         e.untilSource.fold("")(s => s" until $s exists") + e.priority.fold("")(p => s" (priority $p)")
 
@@ -156,7 +156,7 @@ object ManagersMarkdown:
         if ((b) == _root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)) then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
         else "auto-ingest off"
       ),
-      cfg.dailyUsd.filter((_).value > 0).map(u => s"daily cap ${usd(u)} USD (metered spend; plan-billed runs count 0 USD)"),
+      cfg.dailyUsd.filter((_).value > 0).map(u => s"daily cap ${usd(u.value)} USD (metered spend; plan-billed runs count 0 USD)"),
       cfg.autoApprove.map(b => if ((b) == _root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove(true)) then "its approvals decided by code checks" else "its approvals always a person's"),
       cfg.extendMinNew.filter((_).value > 0).map(n => s"extend at $n new sources")
     ).flatten.mkString(" · ")

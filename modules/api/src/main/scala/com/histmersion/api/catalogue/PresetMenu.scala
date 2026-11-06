@@ -9,51 +9,39 @@ object PresetMenu:
   object PeriodoId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Share = Share.T
   object Share extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShareThreshold = ShareThreshold.T
-  object ShareThreshold extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MinShare = MinShareValue
-  type MinShareValue = com.histmersion.api.catalogue.PresetMenu.ShareThreshold
-  val MinShareValue: _root_.com.histmersion.api.catalogue.PresetMenu.ShareThreshold.type = _root_.com.histmersion.api.catalogue.PresetMenu.ShareThreshold
-  type SourceResult = com.histmersion.api.catalogue.PresetMenu.PeriodSource
-  val SourceResult: _root_.com.histmersion.api.catalogue.PresetMenu.PeriodSource.type = _root_.com.histmersion.api.catalogue.PresetMenu.PeriodSource
+  final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Boolean)
 
-  final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Group.InView)
-
-  object Group:
-    type InView = InView.T
-    object InView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = _root_.com.histmersion.api.catalogue.PresetMenu.ShareThreshold(0.5)
+  val MinShare: com.histmersion.api.catalogue.PresetMenu.Share = _root_.com.histmersion.api.catalogue.PresetMenu.Share(0.5)
 
   def share(view: BBox, box: BBox): com.histmersion.api.catalogue.PresetMenu.Share =
-    val area = ((view.maxLon).value - view.minLon) * (view.maxLat - view.minLat)
-    if ((view.crossesAntimeridian) == (true)) || area <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.Share(0.0)
+    val area = (view.maxLon.value - view.minLon.value) * (view.maxLat.value - view.minLat.value)
+    if view.crossesAntimeridian || area <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.Share(0.0)
     else
-      val w = math.min(view.maxLon, box.maxLon) - math.max(view.minLon, box.minLon)
-      val h = math.min(view.maxLat, box.maxLat) - math.max(view.minLat, box.minLat)
-      if w <= 0 || h <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.Share(0.0) else (w * h) / area
+      val w = math.min(view.maxLon.value, box.maxLon.value) - math.max(view.minLon.value, box.minLon.value)
+      val h = math.min(view.maxLat.value, box.maxLat.value) - math.max(view.minLat.value, box.minLat.value)
+      if w <= 0 || h <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.Share(0.0) else _root_.com.histmersion.api.catalogue.PresetMenu.Share((w * h) / area)
 
   def groups(ps: List[HistoricalPeriod], view: Option[BBox] = None): List[Group] =
     val byRegion = ps.flatMap(p => p.preset.map(_ -> p)).groupMap(_._1)(_._2)
-    def cover(r: PresetRegion) = (for v <- view; b <- r.box yield share(v, b)).getOrElse(0.0)
+    def cover(r: PresetRegion) = (for v <- view; b <- r.box yield share(v, b)).getOrElse(Share(0.0))
     PresetRegion.values.toList
       .flatMap { r =>
         byRegion
           .get(r)
-          .map(rows => Group(r, rows.sortBy(p => (p.period.start, p.period.end, p.label)), cover(r) >= MinShare))
+          .map(rows => Group(r, rows.sortBy(p => (p.period.start.value, p.period.end.value, p.label.value)), cover(r).value >= MinShare.value))
       }
-      .sortBy(g => if ((g.inView) == _root_.com.histmersion.api.catalogue.PresetMenu.Group.InView(true)) then (0, -cover(g.region)) else (1, 0.0))
+      .sortBy(g => if g.inView then (0, -cover(g.region).value) else (1, 0.0))
 
   def source(p: HistoricalPeriod): Option[com.histmersion.api.catalogue.PresetMenu.PeriodSource] =
     p.authority.map(a =>
-      a.split(" · ", 2) match
-        case Array(id, rest) if id.startsWith("PeriodO ") => rest
-        case _                                            => a
+      a.value.split(" · ", 2) match
+        case Array(id, rest) if id.startsWith("PeriodO ") => PeriodSource(rest)
+        case _                                            => PeriodSource(a.value)
     )
 
   /** A PeriodO definition can be looked up at `https://n2t.net/ark:/99152/<id>`. */
   def periodoId(p: HistoricalPeriod): Option[com.histmersion.api.catalogue.PresetMenu.PeriodoId] =
     p.authority.flatMap(a =>
-      Option.when(a.startsWith("PeriodO "))(a.drop("PeriodO ".length).takeWhile(!_.isWhitespace))
+      Option.when(a.value.startsWith("PeriodO "))(PeriodoId(a.value.drop("PeriodO ".length).takeWhile(!_.isWhitespace)))
     )
