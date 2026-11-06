@@ -615,10 +615,10 @@ object Place:
     object Relations extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type UrlResult = UrlResult.T
     object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UrlScheme = UrlScheme.T
-    object UrlScheme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type UrlExternalId = UrlExternalId.T
-    object UrlExternalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type UrlScheme = _root_.com.histmersion.api.catalogue.Place.Link.Scheme
+    val UrlScheme: _root_.com.histmersion.api.catalogue.Place.Link.Scheme.type = _root_.com.histmersion.api.catalogue.Place.Link.Scheme
+    type UrlExternalId = _root_.com.histmersion.api.catalogue.Place.Link.ExternalId
+    val UrlExternalId: _root_.com.histmersion.api.catalogue.Place.Link.ExternalId.type = _root_.com.histmersion.api.catalogue.Place.Link.ExternalId
     type SchemeTitleResult = SchemeTitleResult.T
     object SchemeTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SchemeTitleScheme = SchemeTitleScheme.T
@@ -1123,8 +1123,8 @@ object Place:
   object Shape:
     type IsAreaResult = IsAreaResult.T
     object IsAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IsAreaKind = IsAreaKind.T
-    object IsAreaKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsAreaKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
+    val IsAreaKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
     type PointOnlyAreaResult = PointOnlyAreaResult.T
     object PointOnlyAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PointOnlyAreaKind = _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind
@@ -1135,8 +1135,8 @@ object Place:
     object NoBoundaryNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type IsPeopleResult = IsPeopleResult.T
     object IsPeopleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IsPeopleKind = IsPeopleKind.T
-    object IsPeopleKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IsPeopleKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
+    val IsPeopleKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
     type PeopleNote = PeopleNote.T
     object PeopleNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -41,8 +41,8 @@ object ModelChains:
   object ParseReserveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseReserveS = ParseReserveS.T
   object ParseReserveS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LimitStateReservePct = LimitStateReservePct.T
-  object LimitStateReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LimitStateReservePct = _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct
+  val LimitStateReservePct: _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct.type = _root_.com.histmersion.api.automation.ModelChains.Allowance.ReservePct
   type LimitStateNow = LimitStateNow.T
   object LimitStateNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatesNow = _root_.com.histmersion.api.automation.ModelChains.LimitStateNow

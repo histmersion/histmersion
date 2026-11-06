@@ -34,8 +34,8 @@ object EventPrecision:
   object MappedPrecision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelResult = LabelResult.T
   object LabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelPrecision = LabelPrecision.T
-  object LabelPrecision extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelPrecision = _root_.com.histmersion.api.catalogue.EventSummary.Precision
+  val LabelPrecision: _root_.com.histmersion.api.catalogue.EventSummary.Precision.type = _root_.com.histmersion.api.catalogue.EventSummary.Precision
   type NoteResult = NoteResult.T
   object NoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NoteCentral = NoteCentral.T

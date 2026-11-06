@@ -19,8 +19,8 @@ object ChatRequest:
   /** The request for `r`. */
   type BodyResult = BodyResult.T
   object BodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfStrictTools = OfStrictTools.T
-  object OfStrictTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfStrictTools = _root_.com.histmersion.plugins.ai.ProviderSettings.StrictTools
+  val OfStrictTools: _root_.com.histmersion.plugins.ai.ProviderSettings.StrictTools.type = _root_.com.histmersion.plugins.ai.ProviderSettings.StrictTools
 
   def of(r: AiTurn.Request, strictTools: com.histmersion.plugins.ai.ChatRequest.OfStrictTools): ChatRequest =
     val system = Json.obj("content" -> Json.fromString(r.system), "role" -> Json.fromString("system"))

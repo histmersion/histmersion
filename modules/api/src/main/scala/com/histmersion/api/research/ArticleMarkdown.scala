@@ -17,14 +17,14 @@ object ArticleMarkdown:
   object CoverageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MetaLineResult = MetaLineResult.T
   object MetaLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaLineKind = MetaLineKind.T
-  object MetaLineKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaLineRegions = MetaLineRegions.T
-  object MetaLineRegions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaLineKind = _root_.com.histmersion.api.research.Article.KindValue
+  val MetaLineKind: _root_.com.histmersion.api.research.Article.KindValue.type = _root_.com.histmersion.api.research.Article.KindValue
+  type MetaLineRegions = _root_.com.histmersion.api.research.Article.Row.Regions
+  val MetaLineRegions: _root_.com.histmersion.api.research.Article.Row.Regions.type = _root_.com.histmersion.api.research.Article.Row.Regions
   type MetaLinePeriod = MetaLinePeriod.T
   object MetaLinePeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaLineTags = MetaLineTags.T
-  object MetaLineTags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaLineTags = _root_.com.histmersion.api.research.Article.Row.Tags
+  val MetaLineTags: _root_.com.histmersion.api.research.Article.Row.Tags.type = _root_.com.histmersion.api.research.Article.Row.Tags
   type ChipLinksListResult = ChipLinksListResult.T
   object ChipLinksListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChipLinksListValues = ChipLinksListValues.T

@@ -3,6 +3,22 @@
 Detector configurations read application sources; explicitly named repair configurations apply Scalafix patches.
 Run commands from the `contracts3-scalafix` worktree root.
 
+`AstRecipe.propertyFlowsOnly` consumes frozen E007 diagnostics and the existing
+newtype index/history, then delegates patches to TypeConsolidation. It aliases a
+generated helper to a model constructor property's type when the compiler and AST
+show an unchanged property projection: a matching-name parameter, a whole method
+result, or a whole typed value (including supported collection projections). Both
+types must have the same base and qualified Pure constraint, compatible platform,
+module and source set; the helper must be empty, stable, generated with owner-match
+provenance, and unused as a constructor property itself. Conflicting property
+targets veto the entire helper. Custom behavior, transformations, unknown origins,
+different parameter names, real property-to-property merges and unsupported
+diagnostics remain unresolved. Configuration selects the mode and scope, not
+individual application type or expression mappings. Golden and negative fixtures
+are in compiler-repairs-fixture/property-flows; their synthetic provenance is
+documented in property-origins/README.md. The mode uses the existing preview,
+ApplyFrozenPreview, CompileBatch and stable-ID measurement pipeline.
+
 ## Project-wide measurement and bulk rewrite gates
 
 The bounded migration goal uses `refactor-audit/migration-rounds.tsv` to retain every original goal while limiting further detector refinement to two rounds per family. Existing fixtures and source regressions are not independent holdouts. Confirmed violations, unresolved candidates, and evidence relationships remain separate; no overall completion percentage is available until the baseline is established. Historical fixes are not added to the new baseline's numerator. Production and test findings remain visible; a production-first batch does not exempt tests.

@@ -52,8 +52,8 @@ object RepositoryLanding:
   object OnHostHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HostResult = HostResult.T
   object HostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostUrl = HostUrl.T
-  object HostUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  val HostUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
   type StrResult = StrResult.T
   object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NotPdfPathU = NotPdfPathU.T

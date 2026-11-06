@@ -20,10 +20,10 @@ object Markdown:
   val PeriodEnd: _root_.com.histmersion.api.Markdown.PeriodLabelEnd.type = _root_.com.histmersion.api.Markdown.PeriodLabelEnd
   type PeriodLabelResult = PeriodLabelResult.T
   object PeriodLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodLabelStart = PeriodLabelStart.T
-  object PeriodLabelStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodLabelEnd = PeriodLabelEnd.T
-  object PeriodLabelEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PeriodLabelStart = _root_.com.histmersion.api.library.Bucket.Start
+  val PeriodLabelStart: _root_.com.histmersion.api.library.Bucket.Start.type = _root_.com.histmersion.api.library.Bucket.Start
+  type PeriodLabelEnd = _root_.com.histmersion.api.library.Bucket.End
+  val PeriodLabelEnd: _root_.com.histmersion.api.library.Bucket.End.type = _root_.com.histmersion.api.library.Bucket.End
   type PlaceResult = PlaceResult.T
   object PlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceRegion = PlaceRegion.T
@@ -68,8 +68,8 @@ object Markdown:
   object ContestedMarkLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AsOfNoteResult = AsOfNoteResult.T
   object AsOfNoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AsOfNoteAsOf = AsOfNoteAsOf.T
-  object AsOfNoteAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AsOfNoteAsOf = _root_.com.histmersion.api.library.TimeHistogram.AsOf
+  val AsOfNoteAsOf: _root_.com.histmersion.api.library.TimeHistogram.AsOf.type = _root_.com.histmersion.api.library.TimeHistogram.AsOf
 
   private[api] def year(y: Option[com.histmersion.api.Markdown.YearY]): com.histmersion.api.Markdown.YearResult = _root_.com.histmersion.api.Markdown.YearResult(y.map(_.toString).getOrElse("n.d."))
   private[api] def fmtYear(v: com.histmersion.api.Markdown.FmtYearV): com.histmersion.api.Markdown.FmtYearResult = YearFmt(v)

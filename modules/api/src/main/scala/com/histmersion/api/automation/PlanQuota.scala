@@ -162,10 +162,10 @@ object PlanQuota:
     object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfResult = OfResult.T
     object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLimit = OfLimit.T
-    object OfLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfKind = OfKind.T
-    object OfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLimit = _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit
+    val OfLimit: _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.Limit
+    type OfKind = _root_.com.histmersion.api.automation.PlanQuota.Reading.Kind
+    val OfKind: _root_.com.histmersion.api.automation.PlanQuota.Reading.Kind.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.Kind
     type OfDefault = OfDefault.T
     object OfDefault extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseResultPart1 = ParseResultPart1.T

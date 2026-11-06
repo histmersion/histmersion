@@ -22,7 +22,7 @@ object AstRecipe {
     expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty,
     consolidationIndex: String = "", consolidations: List[Consolidation] = Nil, additionalManifest: String = "",
     ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil,
-    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, compilerRepairHistory: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false)
+    compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, compilerRepairHistory: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false, propertyFlowsOnly: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
     implicit val decoder: ConfDecoder[Policy] = generic.deriveDecoder(Policy()).noTypos
@@ -62,7 +62,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     val evidence = scala.collection.mutable.ListBuffer.empty[List[String]]
     val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence,policy.creates)
     val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence,policy.boundaryRoots)
-    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons,policy.constructionOnly,policy.ownerOperationsOnly,policy.orderingsOnly,policy.rawInputSources,policy.nominalBoundaryContracts,policy.compilerRepairHistory,policy.nativeBooleans,policy.tapirEndpointsOnly)
+    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons,policy.constructionOnly,policy.ownerOperationsOnly,policy.orderingsOnly,policy.rawInputSources,policy.nominalBoundaryContracts,policy.compilerRepairHistory,policy.nativeBooleans,policy.tapirEndpointsOnly,policy.propertyFlowsOnly)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
     val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ policy.triviaFiles.toSet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
     def parseSource(s: String,path: String): Source = {
@@ -347,7 +347,7 @@ object InterfaceSignatures {
 }
 
 object CompilerRepairs {
-  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, repairHistory: List[String] = Nil, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false): Map[String,List[(Int,Int,String)]] = {
+  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, repairHistory: List[String] = Nil, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false, propertyFlowsOnly: Boolean = false): Map[String,List[(Int,Int,String)]] = {
     if(observation.isEmpty) return Map.empty
     implicit val dialect: Dialect = dialects.Scala3
     require(roots.nonEmpty,"Compiler repairs need explicit boundary roots")
@@ -358,16 +358,76 @@ object CompilerRepairs {
     require(repairHistory.isEmpty || (!constructionOnly && !orderingsOnly),"Callback repair history cannot enable construction/ordering-only adapters")
     require(!nativeBooleans || ownerOperationsOnly,"Native Boolean comparison requires owner-only mode")
     require(!tapirEndpointsOnly || (!constructionOnly && !ownerOperationsOnly && !orderingsOnly && !nativeBooleans && rawInputs.isEmpty && rawInputSources.isEmpty && errorType.isEmpty && !testComparisons && nominalBoundaryContracts.isEmpty && repairHistory.isEmpty),"Tapir endpoint mode excludes ordinary expression adapters")
+    require(!propertyFlowsOnly || (!tapirEndpointsOnly && !constructionOnly && !ownerOperationsOnly && !orderingsOnly && !nativeBooleans && rawInputs.isEmpty && rawInputSources.isEmpty && errorType.isEmpty && !testComparisons && nominalBoundaryContracts.isEmpty && repairHistory.isEmpty),"Property flow mode only consolidates generated helpers")
     val snapshot = Files.readAllLines(Paths.get(observation,"sources.tsv")).asScala.drop(1).map(_.split("\t",-1)).map(r => r(0) -> r(1)).toMap
     require(snapshot == frozen,"Compiler diagnostics do not describe the current frozen snapshot")
     val text = Files.readString(Paths.get(observation,"build.log")).replaceAll("\u001b\\[[;\\d]*m","")
     val header = "(?m)^.*-- \\[(E[0-9]+)\\].*?: (.+\\.scala):([0-9]+):([0-9]+).*$".r
     val allDiagnostics = header.findAllMatchIn(text).toList
-    val diagnostics = allDiagnostics.filter(d => !tapirEndpointsOnly || Set("E007","E172")(d.group(1)))
+    val diagnostics = allDiagnostics.filter(d => (!tapirEndpointsOnly || Set("E007","E172")(d.group(1))) && (!propertyFlowsOnly || d.group(1) == "E007"))
     val unclassifiedHeaders = "(?m)^.*-- (?:Error|Warning): (.+\\.scala):([0-9]+):([0-9]+).*$".r.findAllMatchIn(text).toList
     val boundaries = (allDiagnostics.map(_.start) ++ unclassifiedHeaders.map(_.start)).sorted
     require(diagnostics.nonEmpty,"No positioned compiler diagnostics parsed; do not infer a clean build")
     val types = new RepairTypes(frozen,index)
+    val propertyRequests = scala.collection.mutable.ListBuffer.empty[(String,String)]
+    val propertyConstraints = scala.collection.mutable.ListBuffer.empty[(String,String)]
+    lazy val propertyDefinitions = Files.readAllLines(Paths.get(index,"newtypes.tsv")).asScala.drop(1).map(_.split("\t",-1).toList).toList.groupBy(_(5))
+    lazy val propertyOrigins = Files.readAllLines(Paths.get(index,"newtype-origins.tsv")).asScala.drop(1).map(_.split("\t",-1).toList).toList.groupBy(_.head)
+    lazy val modelFields = frozen.keys.toList.filter(_.endsWith(".scala")).flatMap(p => types.tree(p).collect {
+      case parameter: Term.Param if types.parents(parameter).exists(_.is[Ctor.Primary]) => parameter.decltpe.toList.flatMap(_.collect {
+        case t: Type => types.pure(t.syntax,t).map(n => n.name -> parameter.name.value)
+      }.flatten)
+    }.flatten).groupBy(_._1).map { case(name,rs) => name -> rs.map(_._2).toSet }
+    def references(t: Type, n: String): Boolean = t.collect { case x: Type if types.pure(x.syntax,x).exists(_.name == n) => true }.nonEmpty
+    val helperRoles = scala.collection.mutable.Map.empty[String,List[(Tree,String,String)]]
+    def roles(n: types.Pure): List[(Tree,String,String)] = helperRoles.getOrElseUpdate(n.name,propertyDefinitions.get(n.name).toList.flatMap {
+      case List(d) if !modelFields.contains(n.name) =>
+        val owner = n.name.substring(0,n.name.lastIndexOf('.'))
+        val origins = propertyOrigins.getOrElse(d.head,Nil).filter(_(3) == "owner-match").map(_(1)).toSet
+        types.tree(d(1)).collect {
+          case m: Defn.Def if types.owner(m) == owner =>
+            val parameters = m.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values).filter(p => p.decltpe.exists(references(_,n.name)) && origins(m.name.value + "." + p.name.value)).map(p => (m: Tree,"parameter",p.name.value))
+            val result = if(origins(m.name.value) && m.decltpe.exists(references(_,n.name))) List((m: Tree,"result",m.name.value)) else Nil
+            parameters ++ result
+          case v: Defn.Val if types.owner(v) == owner && v.decltpe.exists(references(_,n.name)) => v.pats.collect {
+            case Pat.Var(name) if origins(name.value) => (v: Tree,"value",name.value)
+          }
+        }.flatten
+      case _ => Nil
+    })
+    val emptyFlows = scala.collection.mutable.Map.empty[(String,Boolean),Boolean]
+    def flowDefinition(n: types.Pure, canonical: Boolean): Boolean = emptyFlows.getOrElseUpdate(n.name -> canonical,types.definition(n).exists { case(_,o) =>
+      o.mods.isEmpty && o.templ.inits.size == 1 && o.templ.inits.head.argClauses.isEmpty &&
+        (o.templ.stats.isEmpty || (canonical && o.templ.stats.forall(_.is[Defn.GivenAlias]))) &&
+        o.parent.toList.flatMap(_.children).exists { case a: Defn.Type => a.name.value == o.name.value && a.body.syntax == o.name.value + ".T" && a.mods.isEmpty && a.tparamClause.values.isEmpty; case _ => false } &&
+        !o.parent.toList.flatMap(_.children).exists { case v: Defn.Val => v.pats.exists { case Pat.Var(name) => name.value == o.name.value; case _ => false }; case _ => false }
+    })
+    def propertyPairs(from: Type, to: Type): List[(types.Pure,types.Pure)] = (from,to) match {
+      case (a: Type.Apply,b: Type.Apply) if types.clean(a.tpe.syntax) == types.clean(b.tpe.syntax) && a.argClause.values.size == b.argClause.values.size => a.argClause.values.zip(b.argClause.values).flatMap { case(x,y) => propertyPairs(x,y) }
+      case (a: Type.Tuple,b: Type.Tuple) if a.args.size == b.args.size => a.args.zip(b.args).flatMap { case(x,y) => propertyPairs(x,y) }
+      case _ => (for(a <- types.pure(from.syntax,from); b <- types.pure(to.syntax,to) if a.name != b.name && a.base == b.base && modelFields.contains(a.name) && !modelFields.contains(b.name)) yield a -> b).toList
+    }
+    def propertyProjection(t: Term): Set[String] = t match {
+      case s: Term.Select => Set(s.name.value)
+      case b: Term.Block if b.stats.size == 1 && b.stats.head.is[Term] => propertyProjection(b.stats.head.asInstanceOf[Term])
+      case a: Term.AnonymousFunction => propertyProjection(a.body)
+      case f: Term.Function => propertyProjection(f.body)
+      case _ => Set.empty
+    }
+    def collectionProjection(t: Term): Set[String] = t match {
+      case Term.Select(q,n) if Set("toList","toSet","toVector","distinct","reverse","sorted","flatten")(n.value) => collectionProjection(q)
+      case a: Term.Apply => a.fun match {
+        case Term.Select(q,n) if Set("map","flatMap")(n.value) && a.argClause.values.size == 1 => a.argClause.values.head match {
+          case f: Term.Function => propertyProjection(f.body)
+          case f: Term.AnonymousFunction => propertyProjection(f.body)
+          case _ => Set.empty
+        }
+        case Term.Select(q,n) if Set("filter","filterNot","take","drop")(n.value) => collectionProjection(q)
+        case _ => Set.empty
+      }
+      case _ => Set.empty
+    }
+    def flowPlatform(path: String): String = if(path.contains("/scalajs/")) "js" else if(path.contains("/scalajvm/")) "jvm" else "shared"
     val booleanDefinitions = scala.collection.mutable.Map.empty[String,Boolean]
     def nativeBoolean(n: types.Pure, value: String): Option[String] = {
       if(!nativeBooleans || n.base != "Boolean") None else {
@@ -776,6 +836,7 @@ object CompilerRepairs {
             r <- fullDetail("Required").flatMap(s => diagnosticType(s,nullable = true))
           } yield (f,r,Option.empty[Term]) else concatenation
           for((found,required,knownEndpointBody) <- mismatchTypes) {
+            if(propertyFlowsOnly) propertyPairs(found,required).foreach { case(property,helper) => propertyConstraints += helper.name -> property.name }
             val body = tree.collect { case m: Defn.Def if displays.nonEmpty && m.body.pos.startLine + 1 == displays.head.group(1).toInt && m.body.pos.endLine + 1 == displays.last.group(1).toInt && m.decltpe.exists(t => contextual(t) == contextual(required)) => m.body }.headOption
             def endpoint(t: Type): Option[List[Type]] = t match {
               case a: Type.Apply if a.tpe.syntax.stripPrefix("_root_.") == "sttp.tapir.Endpoint" && a.argClause.values.size == 5 => Some(a.argClause.values)
@@ -809,6 +870,30 @@ object CompilerRepairs {
               case _ => false
             }).foreach { t =>
             val original = source.substring(t.pos.start,t.pos.end)
+            if(propertyFlowsOnly) propertyPairs(found,required).foreach { case(property,helper) =>
+              val selected = t.parent match {
+                case Some(s: Term.Select) if s.name eq t => s: Term
+                case _ => t
+              }
+              val fields = modelFields(property.name)
+              val direct = propertyProjection(selected).intersect(fields)
+              def bodyFields(body: Term): Set[String] = (propertyProjection(body) ++ collectionProjection(body)).intersect(fields)
+              val hasRole = roles(helper).exists {
+                case (_,"parameter",name) => direct(name)
+                case (m: Defn.Def,"result",_) if propertyDefinitions(helper.name).head(1) == path => m.body.pos.start <= selected.pos.start && selected.pos.end <= m.body.pos.end && bodyFields(m.body).nonEmpty
+                case (v: Defn.Val,"value",_) if propertyDefinitions(helper.name).head(1) == path => v.rhs.pos.start <= selected.pos.start && selected.pos.end <= v.rhs.pos.end && bodyFields(v.rhs).nonEmpty
+                case _ => false
+              }
+              val compatible = for {
+                List(a) <- propertyDefinitions.get(helper.name)
+                List(b) <- propertyDefinitions.get(property.name)
+              } yield a(2) == b(2) && a(3) == b(3) && (flowPlatform(b(1)) == "shared" || flowPlatform(a(1)) == flowPlatform(b(1)))
+              if(hasRole && compatible.contains(true) && flowDefinition(helper,false) && flowDefinition(property,true)) {
+                propertyRequests += helper.name -> property.name
+                supported = true
+                evidence += List(path,(selected.pos.startLine + 1).toString,"PROPERTY_FLOW " + helper.name + " -> " + property.name,selected.structure)
+              } else evidence += List(path,(selected.pos.startLine + 1).toString,"UNRESOLVED property flow " + helper.name + " -> " + property.name,"Requires a generated non-property helper, direct property projection with matching parameter name or whole result/value projection, same module/source set, compatible platform and behaviorless Pure companions")
+            }
             def wireType(t: Type): String = t match {
               case a: Type.Tuple => a.args.map(wireType).mkString("(",", ",")")
               case a: Type.Apply => wireType(a.tpe) + a.argClause.values.map(wireType).mkString("[",", ","]")
@@ -853,7 +938,7 @@ object CompilerRepairs {
                 next.filter(_ != "(" + original + ")")
               }
             } yield input
-            val converted = if(tapirEndpointsOnly) adaptEndpoint() else t match {
+            val converted = if(propertyFlowsOnly) None else if(tapirEndpointsOnly) adaptEndpoint() else t match {
               case f: Term.AnonymousFunction if !found.is[Type.Function] && !required.is[Type.Function] => callback(f)(body => convert(found,required,body))
               case _ => convert(found,required,original)
             }
@@ -1068,6 +1153,16 @@ object CompilerRepairs {
           "; term=" + terms.headOption.map(_.structure).toString + "; unsupported type, expression, member or diagnostic shape; see " + observation)
         } else evidence += List(path,(line + 1).toString,"UNRESOLVED compiler outside interface body " + d.group(1),"Outside a direct method body matching a configured interface contract's method name and parameter-clause arity; see " + observation)
       }
+    }
+    if(propertyFlowsOnly) {
+      val constraints = propertyConstraints.toList.groupBy(_._1)
+      val selected = propertyRequests.toList.distinct.groupBy(_._1).toList.flatMap { case(helper,requests) =>
+        val allTargets = constraints.getOrElse(helper,Nil).map(_._2).distinct
+        if(allTargets.size != 1) {
+          evidence += List(propertyDefinitions(helper).head(1),"","UNRESOLVED conflicting property flows " + helper,allTargets.sorted.mkString(",")); Nil
+        } else List(AstRecipe.Consolidation(within = helper.substring(0,helper.lastIndexOf('.')),names = List(helper.split('.').last),target = allTargets.head,expected = 1))
+      }
+      return if(selected.isEmpty) Map.empty else TypeConsolidation.patches(frozen,index,selected,evidence)
     }
     def parameterType(n: Term.Name, at: Tree): Option[String] = types.parents(at).collectFirst {
       case m: Defn.Def if m.paramClauseGroups.flatMap(_.paramClauses).flatMap(_.values).exists(_.name.value == n.value) =>

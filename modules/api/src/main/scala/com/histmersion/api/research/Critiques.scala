@@ -19,8 +19,8 @@ object Critiques:
   object OlderFirstResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OlderFirstKinds = OlderFirstKinds.T
   object OlderFirstKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParagraphsResult = ParagraphsResult.T
-  object ParagraphsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParagraphsResult = _root_.com.histmersion.api.research.Critiques.Block.Text
+  val ParagraphsResult: _root_.com.histmersion.api.research.Critiques.Block.Text.type = _root_.com.histmersion.api.research.Critiques.Block.Text
   type ParagraphsBody = _root_.com.histmersion.api.research.Critiques.UnitsBody
   val ParagraphsBody: _root_.com.histmersion.api.research.Critiques.UnitsBody.type = _root_.com.histmersion.api.research.Critiques.UnitsBody
   type UnitsBody = UnitsBody.T

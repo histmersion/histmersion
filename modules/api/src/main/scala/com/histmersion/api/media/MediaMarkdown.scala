@@ -18,8 +18,8 @@ object MediaMarkdown:
   object MediaImportReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MediaSamplesResult = MediaSamplesResult.T
   object MediaSamplesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MediaSamplesDryRun = MediaSamplesDryRun.T
-  object MediaSamplesDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MediaSamplesDryRun = _root_.com.histmersion.api.media.MediaImportRequest.DryRun
+  val MediaSamplesDryRun: _root_.com.histmersion.api.media.MediaImportRequest.DryRun.type = _root_.com.histmersion.api.media.MediaImportRequest.DryRun
   type MediaCoversReportResult = MediaCoversReportResult.T
   object MediaCoversReportResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MediaItemLineResult = MediaItemLineResult.T

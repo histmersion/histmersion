@@ -78,8 +78,8 @@ object Acquire:
   object RecommendationVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecommendationCitedByCount = RecommendationCitedByCount.T
   object RecommendationCitedByCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusForVerdict = StatusForVerdict.T
-  object StatusForVerdict extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusForVerdict = _root_.com.histmersion.api.library.Assessment.Verdict
+  val StatusForVerdict: _root_.com.histmersion.api.library.Assessment.Verdict.type = _root_.com.histmersion.api.library.Assessment.Verdict
   type StatusDecisionVerdict = _root_.com.histmersion.api.library.Acquire.StatusForVerdict
   val StatusDecisionVerdict: _root_.com.histmersion.api.library.Acquire.StatusForVerdict.type = _root_.com.histmersion.api.library.Acquire.StatusForVerdict
   type StatusDecisionForce = StatusDecisionForce.T

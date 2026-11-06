@@ -12,8 +12,8 @@ object SiteTypes:
   object ByIdPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GetId = GetId.T
   object GetId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IconResult = IconResult.T
-  object IconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IconResult = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon
+  val IconResult: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon
   type IconId = _root_.com.histmersion.api.catalogue.SiteTypes.GetId
   val IconId: _root_.com.histmersion.api.catalogue.SiteTypes.GetId.type = _root_.com.histmersion.api.catalogue.SiteTypes.GetId
   type PleiadesTypesPart1 = PleiadesTypesPart1.T

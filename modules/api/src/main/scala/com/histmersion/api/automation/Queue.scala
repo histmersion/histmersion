@@ -216,8 +216,8 @@ object Queue:
     type Checkboxes = Checkboxes.T
     object Checkboxes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type All = All.T
-    object All extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type All = _root_.com.histmersion.api.automation.Queue.Kind.Label
+    val All: _root_.com.histmersion.api.automation.Queue.Kind.Label.type = _root_.com.histmersion.api.automation.Queue.Kind.Label
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

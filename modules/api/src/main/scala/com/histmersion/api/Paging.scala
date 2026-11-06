@@ -8,10 +8,10 @@ object Paging:
 
   type EncodeCountsResult = EncodeCountsResult.T
   object EncodeCountsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeCountsCountsPart1 = EncodeCountsCountsPart1.T
-  object EncodeCountsCountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeCountsCountsPart2 = EncodeCountsCountsPart2.T
-  object EncodeCountsCountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EncodeCountsCountsPart1 = _root_.com.histmersion.api.Paging.Page.CountsPart1
+  val EncodeCountsCountsPart1: _root_.com.histmersion.api.Paging.Page.CountsPart1.type = _root_.com.histmersion.api.Paging.Page.CountsPart1
+  type EncodeCountsCountsPart2 = _root_.com.histmersion.api.Paging.Page.CountsPart2
+  val EncodeCountsCountsPart2: _root_.com.histmersion.api.Paging.Page.CountsPart2.type = _root_.com.histmersion.api.Paging.Page.CountsPart2
   type DecodeCountsResultPart1 = DecodeCountsResultPart1.T
   object DecodeCountsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeCountsResultPart2 = DecodeCountsResultPart2.T
@@ -26,8 +26,8 @@ object Paging:
   object HeadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeadingShown = HeadingShown.T
   object HeadingShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeadingTotal = HeadingTotal.T
-  object HeadingTotal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeadingTotal = _root_.com.histmersion.api.Paging.Page.Total
+  val HeadingTotal: _root_.com.histmersion.api.Paging.Page.Total.type = _root_.com.histmersion.api.Paging.Page.Total
   type HeadingSingular = HeadingSingular.T
   object HeadingSingular extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeadingPlural = HeadingPlural.T

@@ -8,8 +8,8 @@ object ActivityMarkdown:
 
   type MinuteResult = MinuteResult.T
   object MinuteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinuteAt = MinuteAt.T
-  object MinuteAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MinuteAt = _root_.com.histmersion.api.automation.Activity.Entry.At
+  val MinuteAt: _root_.com.histmersion.api.automation.Activity.Entry.At.type = _root_.com.histmersion.api.automation.Activity.Entry.At
   type HeadlineResult = HeadlineResult.T
   object HeadlineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StateOfResult = StateOfResult.T
