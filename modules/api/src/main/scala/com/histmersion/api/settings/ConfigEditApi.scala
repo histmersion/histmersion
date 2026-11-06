@@ -20,11 +20,11 @@ object ConfigEditApi:
     )
 
   lazy val get: PublicEndpoint[Option[com.histmersion.api.settings.ConfigEditApi.GetPart1], Api.Error, ConfigEdit.Page, Any] =
-    endpoint.get
+    (endpoint.get
       .in("api" / "settings")
       .in(query[Option[String]]("prefix"))
       .errorOut(errors)
-      .out(jsonBody[ConfigEdit.Page])
+      .out(jsonBody[ConfigEdit.Page])).mapIn[_root_.scala.Option[_root_.com.histmersion.api.settings.ConfigEditApi.GetPart1]]((refactorDecoded2: _root_.scala.Option[_root_.java.lang.String]) => (refactorDecoded2).map(refactorElement3 => _root_.com.histmersion.api.settings.ConfigEditApi.GetPart1(refactorElement3)))((refactorEncoded2: _root_.scala.Option[_root_.com.histmersion.api.settings.ConfigEditApi.GetPart1]) => (refactorEncoded2).map(refactorElement4 => (refactorElement4).value))
 
   lazy val write: PublicEndpoint[ConfigEdit.Write, Api.Error, ConfigEdit.Written, Any] =
     endpoint.post

@@ -17,11 +17,11 @@ object UiApi:
     endpoint.get.in("api" / "ui" / "counters").errorOut(jsonBody[Api.Error]).out(jsonBody[Counters])
 
   lazy val markSeen: PublicEndpoint[(com.histmersion.api.instance.UiApi.MarkSeenPart1Part1, SeenMark), Api.Error, Counters, Any] =
-    endpoint.post
+    (endpoint.post
       .in("api" / "ui" / "seen" / path[String]("board"))
       .in(jsonBody[SeenMark])
       .errorOut(seenErrors)
-      .out(jsonBody[Counters])
+      .out(jsonBody[Counters])).mapIn[(_root_.com.histmersion.api.instance.UiApi.MarkSeenPart1Part1, _root_.com.histmersion.api.instance.UiNotices.SeenMark)]((refactorDecoded: (_root_.java.lang.String, _root_.com.histmersion.api.instance.UiNotices.SeenMark)) => (_root_.com.histmersion.api.instance.UiApi.MarkSeenPart1Part1((refactorDecoded)._1), (refactorDecoded)._2))((refactorEncoded: (_root_.com.histmersion.api.instance.UiApi.MarkSeenPart1Part1, _root_.com.histmersion.api.instance.UiNotices.SeenMark)) => (((refactorEncoded)._1).value, (refactorEncoded)._2))
 
   private def seenErrors =
     oneOf[Api.Error](
