@@ -162,7 +162,7 @@ object CritiquePairing:
       else if near.forall(_.nonEmpty) then Some(Mention.Conflict)
       else Some(Mention.Weak)
 
-  private def edgeLine(e: Coverage.Edge): com.histmersion.api.research.CritiquePairing.EdgeLineResult = s"[[${e.from}]] ${e.kind} [[${e.to}]]"
+  private def edgeLine(e: Coverage.Edge): com.histmersion.api.research.CritiquePairing.EdgeLineResult = _root_.com.histmersion.api.research.CritiquePairing.EdgeLineResult(s"[[${e.from}]] ${e.kind} [[${e.to}]]")
 
   def hits(
       body: com.histmersion.api.research.CritiquePairing.HitsBody,

@@ -73,17 +73,17 @@ object PeriodO:
     Years.parseIso(raw)
 
   /** The Lower Palaeolithic starts around 3.3 million years ago, and no period ends after 2100. */
-  val MinYear: com.histmersion.api.catalogue.PeriodO.MinYear = -3000000L
-  val MaxYear: com.histmersion.api.catalogue.PeriodO.MaxYear = 2100L
+  val MinYear: com.histmersion.api.catalogue.PeriodO.MinYear = _root_.com.histmersion.api.catalogue.PeriodO.MinYear(-3000000L)
+  val MaxYear: com.histmersion.api.catalogue.PeriodO.MaxYear = _root_.com.histmersion.api.catalogue.PeriodO.MaxYear(2100L)
 
   /** A lost minus sign lands a period across BCE into CE (EAMENA's "Old Kingdom", -2701 → 2150), but long spans alone
     * are normal in deep time (a Lower Palaeolithic of 1.2 million years), so length is judged against the authority's
     * other definitions for the same region.
     */
-  val SpanFactor: com.histmersion.api.catalogue.PeriodO.SpanFactor = 3L
-  val MinImplausibleSpan: com.histmersion.api.catalogue.PeriodO.MinImplausibleSpan = 1000L
+  val SpanFactor: com.histmersion.api.catalogue.PeriodO.SpanFactor = _root_.com.histmersion.api.catalogue.PeriodO.SpanFactor(3L)
+  val MinImplausibleSpan: com.histmersion.api.catalogue.PeriodO.MinImplausibleSpan = _root_.com.histmersion.api.catalogue.PeriodO.MinImplausibleSpan(1000L)
 
-  val MinSiblings: com.histmersion.api.catalogue.PeriodO.MinSiblings = 3
+  val MinSiblings: com.histmersion.api.catalogue.PeriodO.MinSiblings = _root_.com.histmersion.api.catalogue.PeriodO.MinSiblings(3)
 
   def parse(json: com.histmersion.api.catalogue.PeriodO.ParseJson): Either[com.histmersion.api.catalogue.PeriodO.ParseResultPart1, PeriodODataset] =
     io.circe.parser.parse(json).left.map(e => s"not JSON: ${e.getMessage}").flatMap { doc =>
@@ -135,7 +135,7 @@ object PeriodO:
       .flatMap(_.asObject)
       .map(_.toList)
       .getOrElse(Nil)
-      .map((pid, p) => definition(pid, p.hcursor))
+      .map((pid, p) => definition(_root_.com.histmersion.api.catalogue.PeriodO.DefinitionId(pid), p.hcursor))
     val (implausible, kept) = implausibleSpans(defs.flatMap(_.toOption))
     (
       com.histmersion.api.catalogue.PeriodO.Authority(id, title, year, kept),
@@ -187,8 +187,8 @@ object PeriodO:
       )
       .orElse(own)
       .getOrElse(id)
-    val start = bound(c.downField("start").downField("in"), "earliestYear")
-    val stop = bound(c.downField("stop").downField("in"), "latestYear")
+    val start = bound(c.downField("start").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.BoundOuter("earliestYear"))
+    val stop = bound(c.downField("stop").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.BoundOuter("latestYear"))
     val region = str(c, "spatialCoverageDescription").map(_.trim).filter(_.nonEmpty).orElse {
       val labels = c
         .downField("spatialCoverage")
@@ -205,11 +205,11 @@ object PeriodO:
     def outside(y: com.histmersion.api.catalogue.PeriodO.DefinitionOutsideY) = y < MinYear || y > MaxYear
     (start, stop) match
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
-        skip(Period.Skip.OutOfRange, s"$s → $e lies outside $MinYear..$MaxYear")
+        skip(Period.Skip.OutOfRange, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail(s"$s → $e lies outside $MinYear..$MaxYear"))
       case (Some(s), Some(e)) if s <= e =>
-        Right(com.histmersion.api.catalogue.PeriodO.Definition(id, label, Period(s, e), region, str(c, "broader")))
-      case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, s"starts after it ends ($s > $e)")
-      case _                  => skip(Period.Skip.NoSpan, "no readable start or stop year")
+        Right(com.histmersion.api.catalogue.PeriodO.Definition(id, label, Period(s, e), region, str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("broader"))))
+      case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail(s"starts after it ends ($s > $e)"))
+      case _                  => skip(Period.Skip.NoSpan, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail("no readable start or stop year"))
 
   private def bound(in: ACursor, outer: com.histmersion.api.catalogue.PeriodO.BoundOuter): Option[com.histmersion.api.catalogue.PeriodO.BoundResult] =
     yearAt(in, "year").orElse(yearAt(in, outer))
@@ -224,7 +224,7 @@ object PeriodO:
   def toPeriods(
       ds: PeriodODataset,
       existing: Map[com.histmersion.api.catalogue.PeriodO.ToPeriodsExistingPart1, Option[com.histmersion.api.catalogue.PeriodO.ToPeriodsExistingPart2]] = Map.empty,
-      roots: com.histmersion.api.catalogue.PeriodO.ToPeriodsRoots = false
+      roots: com.histmersion.api.catalogue.PeriodO.ToPeriodsRoots = _root_.com.histmersion.api.catalogue.PeriodO.ToPeriodsRoots(false)
   ): List[HistoricalPeriod] =
     val defs = ds.authorities.flatMap(a => a.periods.map(a -> _))
     val ids = defs.map(_._2.id).toSet
@@ -235,7 +235,7 @@ object PeriodO:
           HistoricalPeriod(
             a.id,
             a.title,
-            Some(s"PeriodO ${a.id}"),
+            Some(_root_.com.histmersion.api.catalogue.HistoricalPeriod.Authority(s"PeriodO ${a.id}")),
             Period(a.periods.map(_.period.start).min, a.periods.map(_.period.end).max),
             parentId = existing.get(a.id).flatten
           )
@@ -276,7 +276,7 @@ object PeriodO:
   final case class Authority(id: Authority.Id, title: Authority.Title, year: Option[Authority.Year], periods: List[Definition]):
     /** A PeriodO id resolves as `http://n2t.net/ark:/99152/<id>`. */
     def cite(periodId: com.histmersion.api.catalogue.PeriodO.Authority.CitePeriodId): com.histmersion.api.catalogue.PeriodO.Authority.CiteResult =
-      s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}"
+      _root_.com.histmersion.api.catalogue.PeriodO.Authority.CiteResult(s"PeriodO $periodId · $title${year.fold("")(y => s" ($y)")}")
 
   object Authority:
     type CiteResult = CiteResult.T

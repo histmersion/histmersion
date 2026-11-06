@@ -26,7 +26,7 @@ object UiApi:
   private def seenErrors =
     oneOf[Api.Error](
       oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        Api.Error.hasCode(Backup.CodeMaintenance)
+        Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Backup.CodeMaintenance))
       ),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )

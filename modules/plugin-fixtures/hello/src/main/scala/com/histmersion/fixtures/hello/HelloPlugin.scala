@@ -8,7 +8,7 @@ import com.histmersion.plugin.Plugin.Config.given
   */
 final class HelloPlugin extends Plugin:
   type Config = HelloConfig
-  val info = Plugin.Info("hello", "0.1.0", Spi.Version)
+  val info = Plugin.Info(_root_.com.histmersion.plugin.Plugin.Info.Id("hello"), _root_.com.histmersion.plugin.Plugin.Info.Version("0.1.0"), _root_.com.histmersion.plugin.Plugin.Info.SpiVersion(Spi.Version))
 
   def register(config: HelloConfig, ctx: Plugin.Context): Either[com.histmersion.fixtures.hello.HelloPlugin.RegisterResultPart1, Unit] =
     scala.util
@@ -24,7 +24,7 @@ final class HelloPlugin extends Plugin:
       .map(e => s"greeter '${config.greeter}': ${e.getClass.getSimpleName}: ${e.getMessage}")
       .flatMap { greeter =>
         ctx.log.info(s"hello: ${greeter.greet(config.greeting)} (${config.mirrors.size} mirror(s))")
-        ctx.sourceFetchers.add("hello", HelloFetcher(config.mirrors.size))
+        ctx.sourceFetchers.add(_root_.com.histmersion.plugin.Registry.AddId("hello"), HelloFetcher(_root_.com.histmersion.fixtures.hello.HelloFetcher.Mirrors(config.mirrors.size)))
       }
 
 object HelloPlugin:

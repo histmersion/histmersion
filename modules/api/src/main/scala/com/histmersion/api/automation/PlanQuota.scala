@@ -61,8 +61,8 @@ object PlanQuota:
   import Agents.{ModelRef, ProviderKind}
 
   enum PoolId(val wire: PoolId.Wire, val title: PoolId.Title):
-    case ClaudePlan extends PoolId("claude-plan", "Claude plan")
-    case ChatgptPlan extends PoolId("chatgpt-plan", "ChatGPT plan")
+    case ClaudePlan extends PoolId(_root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire("claude-plan"), _root_.com.histmersion.api.automation.PlanQuota.PoolId.Title("Claude plan"))
+    case ChatgptPlan extends PoolId(_root_.com.histmersion.api.automation.PlanQuota.PoolId.Wire("chatgpt-plan"), _root_.com.histmersion.api.automation.PlanQuota.PoolId.Title("ChatGPT plan"))
 
   object PoolId:
     type Wire = Wire.T
@@ -77,9 +77,9 @@ object PlanQuota:
 
   /** A CLI configured to keep an API key in its environment (`use-api-key`) bills the key, not the plan. */
   final case class Logins(
-      claudeCodeApiKey: Logins.ClaudeCodeApiKey = false,
-      codexApiKey: Logins.CodexApiKey = false,
-      opencodeChatgpt: Logins.OpencodeChatgpt = false
+      claudeCodeApiKey: Logins.ClaudeCodeApiKey = _root_.com.histmersion.api.automation.PlanQuota.Logins.ClaudeCodeApiKey(false),
+      codexApiKey: Logins.CodexApiKey = _root_.com.histmersion.api.automation.PlanQuota.Logins.CodexApiKey(false),
+      opencodeChatgpt: Logins.OpencodeChatgpt = _root_.com.histmersion.api.automation.PlanQuota.Logins.OpencodeChatgpt(false)
   )
 
   object Logins:
@@ -97,20 +97,20 @@ object PlanQuota:
     case _                                                                                => None
 
   def paid(m: ModelRef, logins: Logins): com.histmersion.api.automation.PlanQuota.PaidResult =
-    m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty
+    _root_.com.histmersion.api.automation.PlanQuota.PaidResult(m.provider != ProviderKind.Local && poolOf(m, logins).isEmpty)
 
   enum Source(val wire: Source.Wire):
-    case Run extends Source("run")
+    case Run extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("run"))
 
-    case Mod extends Source("mod")
+    case Mod extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("mod"))
 
-    case Interactive extends Source("interactive")
+    case Interactive extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("interactive"))
 
-    case AppServer extends Source("app-server")
+    case AppServer extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("app-server"))
 
-    case Limit extends Source("limit")
+    case Limit extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("limit"))
 
-    case Probe extends Source("probe")
+    case Probe extends Source(_root_.com.histmersion.api.automation.PlanQuota.Source.Wire("probe"))
 
   object Source:
     type Wire = Wire.T
@@ -228,7 +228,7 @@ object PlanQuota:
 
     case Blocked(reason: Verdict.Blocked.Reason, until: Option[Verdict.Blocked.Until])
 
-    def usable: com.histmersion.api.automation.PlanQuota.Verdict.UsableResult = this.isInstanceOf[Usable]
+    def usable: com.histmersion.api.automation.PlanQuota.Verdict.UsableResult = _root_.com.histmersion.api.automation.PlanQuota.Verdict.UsableResult(this.isInstanceOf[Usable])
 
   object Verdict:
     object Usable:
@@ -268,7 +268,7 @@ object PlanQuota:
           s"${r.kind}: ${pct(left)}% left when last read, floor $floor% (+${rules.marginPct} while the reading is stale)"
         )
       else None
-    WindowState(r, floor, left, stale, why.isEmpty, why)
+    WindowState(r, floor, left, stale, _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => _root_.com.histmersion.api.automation.PlanQuota.WindowState.Why(refactorValue4)))
 
   def verdict(
       readings: List[Reading],
@@ -282,20 +282,20 @@ object PlanQuota:
     val blocking = states.filterNot(_.usable)
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
-      if held then Verdict.Blocked("held: a person paused all agent use of this plan", None)
+      if held then Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
       else
         refusal.filter(_._2.forall(_ > now)) match
           case Some((why, until))             => Verdict.Blocked(why, until)
           case None if blocking.nonEmpty      => Verdict.Blocked(blocking.flatMap(_.why).mkString("; "), earliest)
-          case None if states.isEmpty         => Verdict.Usable(Some("no reading yet: unknown until a run reads it"))
-          case None if states.exists(_.stale) => Verdict.Usable(Some("the last reading is stale"))
+          case None if states.isEmpty         => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
+          case None if states.exists(_.stale) => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("the last reading is stale")))
           case None                           => Verdict.Usable(None)
     (v, states)
 
   enum RefreshMode(val wire: RefreshMode.Wire):
-    case Auto extends RefreshMode("auto")
-    case Probe extends RefreshMode("probe")
-    case Off extends RefreshMode("off")
+    case Auto extends RefreshMode(_root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire("auto"))
+    case Probe extends RefreshMode(_root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire("probe"))
+    case Off extends RefreshMode(_root_.com.histmersion.api.automation.PlanQuota.RefreshMode.Wire("off"))
 
   object RefreshMode:
     type Wire = Wire.T
@@ -323,22 +323,22 @@ object PlanQuota:
       object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum RefreshNeed(val text: RefreshNeed.Text):
-    case StaleOnly extends RefreshNeed("the reading is stale")
+    case StaleOnly extends RefreshNeed(_root_.com.histmersion.api.automation.PlanQuota.RefreshNeed.Text("the reading is stale"))
 
-    case NoReading extends RefreshNeed("no reading yet")
+    case NoReading extends RefreshNeed(_root_.com.histmersion.api.automation.PlanQuota.RefreshNeed.Text("no reading yet"))
 
   object RefreshNeed:
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum RefreshTrigger(val wire: RefreshTrigger.Wire):
-    case Pick extends RefreshTrigger("pick")
+    case Pick extends RefreshTrigger(_root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire("pick"))
 
-    case Paused extends RefreshTrigger("paused-run")
+    case Paused extends RefreshTrigger(_root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire("paused-run"))
 
-    case Command extends RefreshTrigger("command")
+    case Command extends RefreshTrigger(_root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire("command"))
 
-    case Schedule extends RefreshTrigger("schedule")
+    case Schedule extends RefreshTrigger(_root_.com.histmersion.api.automation.PlanQuota.RefreshTrigger.Wire("schedule"))
 
   object RefreshTrigger:
     type Wire = Wire.T
@@ -372,15 +372,15 @@ object PlanQuota:
       lastAttempt: Option[com.histmersion.api.automation.PlanQuota.RefreshDecisionLastAttempt],
       minGapMs: com.histmersion.api.automation.PlanQuota.RefreshDecisionMinGapMs,
       now: com.histmersion.api.automation.PlanQuota.RefreshDecisionNow,
-      force: com.histmersion.api.automation.PlanQuota.RefreshDecisionForce = false
+      force: com.histmersion.api.automation.PlanQuota.RefreshDecisionForce = _root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionForce(false)
   ): Either[com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1, Option[RefreshNeed]] =
     login match
-      case _ if !enabled                              => Left("refresh is off for this pool")
-      case Login.Missing(why)                         => Left(s"no login: $why")
+      case _ if !enabled                              => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("refresh is off for this pool"))
+      case Login.Missing(why)                         => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1(s"no login: $why"))
       case _ if force                                 => Right(need)
-      case _ if need.isEmpty                          => Left("the reading decides by itself")
+      case _ if need.isEmpty                          => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("the reading decides by itself"))
       case _ if throttled(lastAttempt, minGapMs, now) =>
-        Left("a fresh reading was taken (or tried) less than stale-minutes ago")
+        Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("a fresh reading was taken (or tried) less than stale-minutes ago"))
       case _ => Right(need)
 
   final case class WindowStatus(
@@ -441,10 +441,10 @@ object PlanQuota:
       windows: List[WindowStatus],
       planType: Option[PoolStatus.PlanType] = None,
       note: Option[PoolStatus.Note] = None,
-      available: PoolStatus.Available = true,
+      available: PoolStatus.Available = _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Available(true),
       login: Option[PoolStatus.Login] = None,
       refresh: Option[PoolStatus.Refresh] = None,
-      refreshesToday: PoolStatus.RefreshesToday = 0,
+      refreshesToday: PoolStatus.RefreshesToday = _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.RefreshesToday(0),
       lastRefresh: Option[RefreshInfo] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema

@@ -28,11 +28,11 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
 
   // ── reading ─────────────────────────────────────────────────────────────────────────────────
 
-  def search(query: com.histmersion.plugins.calibre.Calibre.SearchQuery, limit: com.histmersion.plugins.calibre.Calibre.SearchLimit = 20): Either[com.histmersion.plugins.calibre.Calibre.SearchResultPart1, List[com.histmersion.plugins.calibre.Calibre.Book]] =
+  def search(query: com.histmersion.plugins.calibre.Calibre.SearchQuery, limit: com.histmersion.plugins.calibre.Calibre.SearchLimit = _root_.com.histmersion.plugins.calibre.Calibre.SearchLimit(20)): Either[com.histmersion.plugins.calibre.Calibre.SearchResultPart1, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     viaCalibredb(Some(query), limit).orElse(viaSqlite(Some(query), None, limit))
 
   /** The whole library (read-only), for the audit: one listing instead of a call per entry. */
-  def all(limit: com.histmersion.plugins.calibre.Calibre.AllLimit = 1000000): Either[com.histmersion.plugins.calibre.Calibre.AllResultPart1, List[com.histmersion.plugins.calibre.Calibre.Book]] =
+  def all(limit: com.histmersion.plugins.calibre.Calibre.AllLimit = _root_.com.histmersion.plugins.calibre.Calibre.AllLimit(1000000)): Either[com.histmersion.plugins.calibre.Calibre.AllResultPart1, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     viaCalibredb(None, limit).orElse(viaSqlite(None, None, limit))
 
   def byId(id: com.histmersion.plugins.calibre.Calibre.ByIdId): Either[com.histmersion.plugins.calibre.Calibre.ByIdResultPart1, Option[com.histmersion.plugins.calibre.Calibre.Book]] =
@@ -62,7 +62,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
     val where = id match
       case Some(n) => s"b.id = ${n.toInt}"
       case None    =>
-        val like = Calibre.sqlLiteral("%" + query.getOrElse("") + "%")
+        val like = Calibre.sqlLiteral(_root_.com.histmersion.plugins.calibre.Calibre.SqlLiteralS("%" + query.getOrElse("") + "%"))
         s"(b.title LIKE $like OR b.author_sort LIKE $like)"
     val sql = Calibre.sqliteQuery(where, limit)
     shell
@@ -398,14 +398,14 @@ object Calibre:
   // ── import: citekeys and where they land ─────────────────────────────────────────────────────
 
   /** The formats `calibre push --replace` puts into an entry: the two the corpus imports. */
-  val ReplaceableFormats: List[com.histmersion.plugins.calibre.Calibre.ReplaceableFormats] = List("pdf", "epub")
+  val ReplaceableFormats: List[com.histmersion.plugins.calibre.Calibre.ReplaceableFormats] = List(_root_.com.histmersion.plugins.calibre.Calibre.ReplaceableFormats("pdf"), _root_.com.histmersion.plugins.calibre.Calibre.ReplaceableFormats("epub"))
 
   def formatOf(file: Path): Either[com.histmersion.plugins.calibre.Calibre.FormatOfResultPart1, com.histmersion.plugins.calibre.Calibre.FormatOfResultPart2] =
     val ext = file.getFileName.toString.reverse.takeWhile(_ != '.').reverse.toLowerCase
     Either.cond(
       ReplaceableFormats.contains(ext),
-      ext,
-      s"'${file.getFileName}' is not a ${ReplaceableFormats.mkString(" or ")} file"
+      _root_.com.histmersion.plugins.calibre.Calibre.FormatOfResultPart2(ext),
+      _root_.com.histmersion.plugins.calibre.Calibre.FormatOfResultPart1(s"'${file.getFileName}' is not a ${ReplaceableFormats.mkString(" or ")} file")
     )
 
   /** `calibredb add_format` replaces the entry's existing format of the same type (that is its default;
@@ -570,7 +570,7 @@ object Calibre:
 
   /** The fields `calibre set` may write. Formats, covers and the file itself are Calibre's business. */
   val SettableFields: List[com.histmersion.plugins.calibre.Calibre.SettableFields] =
-    List("title", "authors", "publisher", "pubdate", "languages", "identifiers", "tags", "comments", "series")
+    List(_root_.com.histmersion.plugins.calibre.Calibre.SettableFields("title"), _root_.com.histmersion.plugins.calibre.Calibre.SettableFields("authors"), _root_.com.histmersion.plugins.calibre.Calibre.SettableFields("publisher"), _root_.com.histmersion.plugins.calibre.Calibre.SettableFields("pubdate"), _root_.com.histmersion.plugins.calibre.Calibre.SettableFields("languages"), _root_.com.histmersion.plugins.calibre.Calibre.SettableFields("identifiers"), _root_.com.histmersion.plugins.calibre.Calibre.SettableFields("tags"), _root_.com.histmersion.plugins.calibre.Calibre.SettableFields("comments"), _root_.com.histmersion.plugins.calibre.Calibre.SettableFields("series"))
 
   /** `calibredb set_metadata` for [[Calibre.set]], or why it is refused: an unknown field, nothing to set, or a
     * blank/"Unknown" title or author (the metadata guard).
@@ -807,8 +807,8 @@ object Calibre:
       .filter(_.forall(_.isDigit))
       .flatMap(_.toIntOption)
       .filter(_ >= Book.FirstYear)
-    def doi: Option[com.histmersion.plugins.calibre.Calibre.Book.DoiResult] = identifiers.get("doi")
-    def isbn: Option[com.histmersion.plugins.calibre.Calibre.Book.IsbnResult] = identifiers.get("isbn")
+    def doi: Option[com.histmersion.plugins.calibre.Calibre.Book.DoiResult] = identifiers.get(_root_.com.histmersion.plugins.calibre.Calibre.Book.IdentifiersKey("doi"))
+    def isbn: Option[com.histmersion.plugins.calibre.Calibre.Book.IsbnResult] = identifiers.get(_root_.com.histmersion.plugins.calibre.Calibre.Book.IdentifiersKey("isbn"))
 
     /** The file to import: the requested format, else PDF, else EPUB (both carry a text layer). */
     def pick(format: Option[com.histmersion.plugins.calibre.Calibre.Book.PickFormat]): Option[com.histmersion.plugins.calibre.Calibre.Book.PickResult] =
@@ -870,13 +870,13 @@ object Calibre:
 
   /** A field `calibre update` writes, by its `calibredb set_metadata --field` name. */
   enum Field(val name: Field.Name):
-    case Title extends Field("title")
-    case Authors extends Field("authors")
-    case Pubdate extends Field("pubdate")
-    case Identifiers extends Field("identifiers")
-    case Tags extends Field("tags")
-    case Publisher extends Field("publisher")
-    case Comments extends Field("comments")
+    case Title extends Field(_root_.com.histmersion.plugins.calibre.Calibre.Field.Name("title"))
+    case Authors extends Field(_root_.com.histmersion.plugins.calibre.Calibre.Field.Name("authors"))
+    case Pubdate extends Field(_root_.com.histmersion.plugins.calibre.Calibre.Field.Name("pubdate"))
+    case Identifiers extends Field(_root_.com.histmersion.plugins.calibre.Calibre.Field.Name("identifiers"))
+    case Tags extends Field(_root_.com.histmersion.plugins.calibre.Calibre.Field.Name("tags"))
+    case Publisher extends Field(_root_.com.histmersion.plugins.calibre.Calibre.Field.Name("publisher"))
+    case Comments extends Field(_root_.com.histmersion.plugins.calibre.Calibre.Field.Name("comments"))
 
   object Field:
     type Name = Name.T
@@ -1002,12 +1002,12 @@ object Calibre:
     object GuiProcess extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val InstallDirs: List[com.histmersion.plugins.calibre.Calibre.Settings.InstallDirs] = List(
-      "/Applications/calibre.app/Contents/MacOS",
-      "~/Applications/calibre.app/Contents/MacOS",
-      "/opt/homebrew/bin",
-      "/usr/local/bin",
-      "/opt/calibre",
-      "/usr/bin"
+      _root_.com.histmersion.plugins.calibre.Calibre.Settings.InstallDirs("/Applications/calibre.app/Contents/MacOS"),
+      _root_.com.histmersion.plugins.calibre.Calibre.Settings.InstallDirs("~/Applications/calibre.app/Contents/MacOS"),
+      _root_.com.histmersion.plugins.calibre.Calibre.Settings.InstallDirs("/opt/homebrew/bin"),
+      _root_.com.histmersion.plugins.calibre.Calibre.Settings.InstallDirs("/usr/local/bin"),
+      _root_.com.histmersion.plugins.calibre.Calibre.Settings.InstallDirs("/opt/calibre"),
+      _root_.com.histmersion.plugins.calibre.Calibre.Settings.InstallDirs("/usr/bin")
     )
 
     /** `name` as configured when it holds a `/`; otherwise the first executable `name` on `searchPath`, then in

@@ -11,31 +11,31 @@ object Approval:
     * decision and the run never waits.
     */
   enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking):
-    case StatusChange extends Kind("status-change", false)
-    case Edge extends Kind("edge", false)
-    case GoalPlan extends Kind("goal-plan", true)
-    case ArticlePublish extends Kind("article-publish", true)
+    case StatusChange extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("status-change"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(false))
+    case Edge extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("edge"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(false))
+    case GoalPlan extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("goal-plan"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(true))
+    case ArticlePublish extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("article-publish"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(true))
 
     /** An article's inferred coverage filter (infer-filter): approving records it on the article. */
-    case ArticleFilter extends Kind("article-filter", false)
+    case ArticleFilter extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("article-filter"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(false))
 
     /** The articles planned for a research area (propose-articles): approving lets its seeding manager compile them.
       */
-    case ArticlePlan extends Kind("article-plan", false)
+    case ArticlePlan extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("article-plan"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(false))
 
     /** A structured action for a process manager (hold, prioritise, skip, a settings change) that a MODEL proposed from
       * a hint (phase 3): applied only when a person approves it. `subject` = the manager.
       */
-    case HintEffect extends Kind("hint-effect", false)
+    case HintEffect extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("hint-effect"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(false))
 
     /** About a goal or an article (`subject`), not a source. */
-    def aboutSubject: com.histmersion.api.automation.Approval.Kind.AboutSubjectResult = this != StatusChange && this != Edge
+    def aboutSubject: com.histmersion.api.automation.Approval.Kind.AboutSubjectResult = _root_.com.histmersion.api.automation.Approval.Kind.AboutSubjectResult(this != StatusChange && this != Edge)
 
     /** Its proposal is an article's coverage filter. */
-    def proposesFilter: com.histmersion.api.automation.Approval.Kind.ProposesFilterResult = this == ArticleFilter
+    def proposesFilter: com.histmersion.api.automation.Approval.Kind.ProposesFilterResult = _root_.com.histmersion.api.automation.Approval.Kind.ProposesFilterResult(this == ArticleFilter)
 
     /** Its proposal is a plan of articles. */
-    def proposesArticles: com.histmersion.api.automation.Approval.Kind.ProposesArticlesResult = this == ArticlePlan
+    def proposesArticles: com.histmersion.api.automation.Approval.Kind.ProposesArticlesResult = _root_.com.histmersion.api.automation.Approval.Kind.ProposesArticlesResult(this == ArticlePlan)
 
   object Kind:
     type Wire = Wire.T
@@ -67,8 +67,8 @@ object Approval:
     * already approved).
     */
   enum Mode(val wire: Mode.Wire):
-    case Manual extends Mode("manual")
-    case Auto extends Mode("auto")
+    case Manual extends Mode(_root_.com.histmersion.api.automation.Approval.Mode.Wire("manual"))
+    case Auto extends Mode(_root_.com.histmersion.api.automation.Approval.Mode.Wire("auto"))
 
   object Mode:
     type Wire = Wire.T
@@ -83,10 +83,10 @@ object Approval:
     * `result`.
     */
   enum State(val wire: State.Wire):
-    case Open extends State("open")
-    case Approved extends State("approved")
-    case Rejected extends State("rejected")
-    case Failed extends State("failed")
+    case Open extends State(_root_.com.histmersion.api.automation.Approval.State.Wire("open"))
+    case Approved extends State(_root_.com.histmersion.api.automation.Approval.State.Wire("approved"))
+    case Rejected extends State(_root_.com.histmersion.api.automation.Approval.State.Wire("rejected"))
+    case Failed extends State(_root_.com.histmersion.api.automation.Approval.State.Wire("failed"))
 
   object State:
     type Wire = Wire.T
@@ -102,9 +102,9 @@ object Approval:
     * `Person` = everything else that is decided.
     */
   enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe):
-    case Person extends DecidedBy("person", "decided by a person")
-    case Autopilot extends DecidedBy("autopilot", "decided by the autopilot's checks")
-    case Auto extends DecidedBy("auto", "applied when proposed (an auto approval mode)")
+    case Person extends DecidedBy(_root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("person"), _root_.com.histmersion.api.automation.Approval.DecidedBy.Describe("decided by a person"))
+    case Autopilot extends DecidedBy(_root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("autopilot"), _root_.com.histmersion.api.automation.Approval.DecidedBy.Describe("decided by the autopilot's checks"))
+    case Auto extends DecidedBy(_root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("auto"), _root_.com.histmersion.api.automation.Approval.DecidedBy.Describe("applied when proposed (an auto approval mode)"))
 
   object DecidedBy:
     /** The note every autopilot decision starts with (`AutopilotPolicy.note`). */

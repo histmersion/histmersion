@@ -2,7 +2,7 @@ package com.histmersion
 
 import com.histmersion.Year
 final case class Period private (start: Year, end: Year):
-  def isPoint: com.histmersion.Period.IsPointResult = start.value == end.value
+  def isPoint: com.histmersion.Period.IsPointResult = _root_.com.histmersion.Period.IsPointResult(start.value == end.value)
 
 object Period:
   type IsPointResult = IsPointResult.T
@@ -17,7 +17,7 @@ object Period:
     case EndsBeforeStart(start: Year, end: Year)
 
     def message: com.histmersion.Period.Error.MessageResult = this match
-      case EndsBeforeStart(s, e) => s"the period ends (${e.value}) before it starts (${s.value})"
+      case EndsBeforeStart(s, e) => _root_.com.histmersion.Period.Error.MessageResult(s"the period ends (${e.value}) before it starts (${s.value})")
 
   object Error:
     type MessageResult = MessageResult.T

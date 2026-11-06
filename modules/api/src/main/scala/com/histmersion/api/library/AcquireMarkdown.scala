@@ -53,14 +53,14 @@ object AcquireMarkdown:
 
   private def esc(s: com.histmersion.api.library.AcquireMarkdown.EscS): com.histmersion.api.library.AcquireMarkdown.EscResult = s.replace("|", "\\|").replace("\n", " ").trim
   private def cell(s: Option[com.histmersion.api.library.AcquireMarkdown.CellS]): com.histmersion.api.library.AcquireMarkdown.CellResult = esc(s.getOrElse("—"))
-  private def num(n: Option[com.histmersion.api.library.AcquireMarkdown.NumN]): com.histmersion.api.library.AcquireMarkdown.NumResult = n.map(_.toString).getOrElse("—")
+  private def num(n: Option[com.histmersion.api.library.AcquireMarkdown.NumN]): com.histmersion.api.library.AcquireMarkdown.NumResult = _root_.com.histmersion.api.library.AcquireMarkdown.NumResult(n.map(_.toString).getOrElse("—"))
 
   private def doiLink(doi: Option[com.histmersion.api.library.AcquireMarkdown.DoiLinkDoi]): com.histmersion.api.library.AcquireMarkdown.DoiLinkResult =
-    doi.map(d => s"[$d](https://doi.org/$d)").getOrElse("—")
+    _root_.com.histmersion.api.library.AcquireMarkdown.DoiLinkResult(doi.map(d => s"[$d](https://doi.org/$d)").getOrElse("—"))
 
   private def table(header: List[com.histmersion.api.library.AcquireMarkdown.TableHeader], rows: List[List[com.histmersion.api.library.AcquireMarkdown.TableRows]]): com.histmersion.api.library.AcquireMarkdown.TableResult =
     val sep = header.map(_ => "---")
-    (List(header, sep) ++ rows).map(_.mkString("| ", " | ", " |")).mkString("\n")
+    _root_.com.histmersion.api.library.AcquireMarkdown.TableResult((List(header, sep) ++ rows).map(_.mkString("| ", " | ", " |")).mkString("\n"))
 
   def discover(r: DiscoverResult): com.histmersion.api.library.AcquireMarkdown.DiscoverResult =
     if r.works.isEmpty then s"_No works found for **${esc(r.query)}**._"
@@ -139,7 +139,7 @@ object AcquireMarkdown:
 
   private def edgeNote(r: RefsResult): com.histmersion.api.library.AcquireMarkdown.EdgeNoteResult =
     if r.edgesAdded > 0 then s"${r.edgesAdded} `references` edge(s) written"
-    else "re-run with `--apply` to write the `references` edges"
+    else _root_.com.histmersion.api.library.AcquireMarkdown.EdgeNoteResult("re-run with `--apply` to write the `references` edges")
 
   def assessment(a: Assessment): com.histmersion.api.library.AcquireMarkdown.AssessmentResult =
     val icon = a.verdict match
@@ -191,11 +191,11 @@ object AcquireMarkdown:
 
   def retractionsUpdate(r: RetractionsUpdate): com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult =
     r.error match
-      case Some(e)           => s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s))."
+      case Some(e)           => _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
       case None if r.running =>
-        s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
-          "so far. Ask again to see whether it has finished."
-      case None => s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}."
+        _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
+          "so far. Ask again to see whether it has finished.")
+      case None => _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
 
   def followups(r: FollowupsResult): com.histmersion.api.library.AcquireMarkdown.FollowupsResult =
     if r.followups.isEmpty then s"_Nothing cites **${esc(r.target)}** in that window._"
@@ -246,7 +246,7 @@ object AcquireMarkdown:
     val files =
       if i.files.isEmpty then "_no epub/pdf files_"
       else
-        table(List("file", "format", "MB"), i.files.map(f => List(esc(f.name), cell(f.format), f.megabytes.toString)))
+        table(List(_root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("file"), _root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("format"), _root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("MB")), i.files.map(f => List(esc(f.name), cell(f.format), _root_.com.histmersion.api.library.AcquireMarkdown.TableRows(f.megabytes.toString))))
     val restriction =
       if i.lendingOnly then
         List(
@@ -270,7 +270,7 @@ object AcquireMarkdown:
     val steps = r.steps.map(s => s"- ${if s.ok then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) =>
-        s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(p.bytes, "byte")})"
+        s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(p.bytes, _root_.com.histmersion.api.Plural.CountSingular("byte"))})"
       case None if r.steps.exists(s => s.step == "fetch" && s.ok) =>
         "**PDF:** not fetched — the source already has its original"
       case None => "**PDF:** none found through legal open access"
@@ -287,7 +287,7 @@ object AcquireMarkdown:
       ++ r.assessment.toList.flatMap(a => List("", assessment(a)))).mkString("\n")
 
   def calibreGaps(g: CalibreGaps): com.histmersion.api.library.AcquireMarkdown.CalibreGapsResult =
-    if g.gaps.isEmpty then "_Every stored source is in Calibre._"
+    if g.gaps.isEmpty then _root_.com.histmersion.api.library.AcquireMarkdown.CalibreGapsResult("_Every stored source is in Calibre._")
     else
       // An older server's listing has no `storedOriginal`: the column only when the server sent it.
       val said = g.gaps.exists(_.storedOriginal.isDefined)
@@ -296,13 +296,13 @@ object AcquireMarkdown:
           s"`${x.citekey}`",
           esc(x.title).take(70),
           num(x.year),
-          esc(x.authors.take(2).mkString(", ")),
+          esc(_root_.com.histmersion.api.library.AcquireMarkdown.EscS(x.authors.take(2).mkString(", "))),
           cell(x.provenance)
         ) ++
           Option.when(said)(x.storedOriginal.fold("?")(if _ then "stored" else "none")).toList
       )
       s"### ${g.count} source(s) not in Calibre\n\n" +
-        table(List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList, rows) +
+        table((List("citekey", "title", "year", "authors", "provenance") ++ Option.when(said)("original").toList).map(refactorValue10 => _root_.com.histmersion.api.library.AcquireMarkdown.TableHeader(refactorValue10)), rows) +
         "\n\n_Push them with `histmersion calibre sync --apply`: the file is the original the server stored " +
         "(or `<cli.calibre.originals-dir>/<citekey>/paper.*` on this host); one with none needs " +
         "`histmersion calibre push <citekey> --file <path>`._"

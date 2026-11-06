@@ -6,4 +6,4 @@ object EventTier:
 
   val Attested = "attested"
   val Catalogue = "catalogue"
-  val all: List[com.histmersion.api.catalogue.EventTier.All] = List(Attested, Catalogue)
+  val all: List[com.histmersion.api.catalogue.EventTier.All] = List(_root_.com.histmersion.api.catalogue.EventTier.All(Attested), _root_.com.histmersion.api.catalogue.EventTier.All(Catalogue))

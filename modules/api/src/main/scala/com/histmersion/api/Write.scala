@@ -30,9 +30,9 @@ object Write:
   val CodeInvalid = "invalid"
 
   /** A request the server refuses for a value it does not accept, with the reason. */
-  def invalid(message: com.histmersion.api.Write.InvalidMessage): Api.Error = Api.Error(message, Some(CodeInvalid))
+  def invalid(message: com.histmersion.api.Write.InvalidMessage): Api.Error = Api.Error(message, Some(_root_.com.histmersion.api.Api.Error.Code(CodeInvalid)))
 
-  def notFound(citekey: com.histmersion.api.Write.NotFoundCitekey): Api.Error = Api.Error(s"No source '$citekey'", Some(CodeNotFound))
+  def notFound(citekey: com.histmersion.api.Write.NotFoundCitekey): Api.Error = Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"No source '$citekey'"), Some(_root_.com.histmersion.api.Api.Error.Code(CodeNotFound)))
 
   def applyList(current: List[com.histmersion.api.Write.ApplyListCurrent], p: ListPatch): List[com.histmersion.api.Write.ApplyListResult] =
     val base = p.replace.getOrElse(current)

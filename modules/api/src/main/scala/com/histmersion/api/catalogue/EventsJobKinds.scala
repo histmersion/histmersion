@@ -10,19 +10,19 @@ object EventsJobKinds:
   type Catalogue = Catalogue.T
   object Catalogue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Catalogue: JobDetail.Field[Option[com.histmersion.api.catalogue.EventsJobKinds.Catalogue]] = JobDetail.Field("events", None)
+  val Catalogue: JobDetail.Field[Option[com.histmersion.api.catalogue.EventsJobKinds.Catalogue]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("events"), None)
 
   val EventsImport: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("events-import"),
-    "Import events",
-    "Imports the events of an external event catalogue.",
-    stoppable = true,
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Import events"),
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Imports the events of an external event catalogue."),
+    stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
     subject = Catalogue.of
   )
 
   val EventsRederive: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("events-rederive"),
-    "Re-date events",
-    "Recomputes the dating of catalogue events from their stored records; nothing is downloaded.",
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Re-date events"),
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Recomputes the dating of catalogue events from their stored records; nothing is downloaded."),
     subject = Catalogue.of
   )

@@ -17,9 +17,9 @@ object AcquireChecksMarkdown:
 
   def line(s: RecheckStatus): com.histmersion.api.library.AcquireChecksMarkdown.LineResult =
     val job = s.job.fold("")(j => s" — $j")
-    if !s.enabled then s"acquire re-check: off (acquire.recheck.enabled = false)$job"
+    if !s.enabled then _root_.com.histmersion.api.library.AcquireChecksMarkdown.LineResult(s"acquire re-check: off (acquire.recheck.enabled = false)$job")
     else
-      s"acquire re-check: ${s.due} of ${Plural.count(s.withDoi, "item")} with a DOI due, " +
+      s"acquire re-check: ${s.due} of ${Plural.count(s.withDoi, _root_.com.histmersion.api.Plural.CountSingular("item"))} with a DOI due, " +
         s"${s.closedWeek} closed and ${s.fetchedWeek} found this week, ${s.triedToday} of ${s.perDay} tried today" +
         s.nextPass.fold("")(n => s" — next pass $n") + s.note.fold("")(n => s" ($n)") + job
 
@@ -27,7 +27,7 @@ object AcquireChecksMarkdown:
 
   private def started(r: RecheckResult, j: JobInfo): com.histmersion.api.library.AcquireChecksMarkdown.StartedResult =
     s"# Acquisition list re-check\n\n" +
-      s"- ${Plural.count(r.open, "open item")}, ${r.withDoi} with a DOI; ${r.allowance} to try\n" +
+      s"- ${Plural.count(r.open, _root_.com.histmersion.api.Plural.CountSingular("open item"))}, ${r.withDoi} with a DOI; ${r.allowance} to try\n" +
       s"- started as job `${j.id}`: ${j.detail.flatMap(RecheckJob.Detail.of).fold("the acquisition list's legal re-check")(RecheckJob.describe)} " +
       s"— `histmersion jobs ${j.id}` follows it" + r.note.fold("")(n => s"\n- _${n}_")
 
@@ -35,7 +35,7 @@ object AcquireChecksMarkdown:
     val verb = if r.dryRun then "would " else ""
     val head =
       s"# Acquisition list re-check${if r.dryRun then " (dry run: no fetcher asked, nothing stored)" else ""}\n\n" +
-        s"- ${Plural.count(r.open, "open item")}, ${r.withDoi} with a DOI; ${r.due} due for a try, ${r.allowance} this pass may try\n" +
+        s"- ${Plural.count(r.open, _root_.com.histmersion.api.Plural.CountSingular("open item"))}, ${r.withDoi} with a DOI; ${r.due} due for a try, ${r.allowance} this pass may try\n" +
         (if r.dryRun then
            s"- ${verb}close ${Plural.count(r.rows.count(_.action == WouldClose), "item")} the corpus holds with its text\n" +
              s"- ${verb}try ${Plural.count(r.rows.count(_.action == WouldTry), "item")} through the legal chain"

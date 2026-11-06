@@ -6,7 +6,7 @@ import com.histmersion.plugin.Plugin.Config.given
 final class HelloFetcher(mirrors: HelloFetcher.Mirrors) extends SourceFetcher:
   val access = Access.Open
   def fetch(work: WorkKey, ctx: Fetch.Context): Fetch =
-    Fetch.Miss(s"hello has no copy (asked $mirrors mirror(s))")
+    Fetch.Miss(_root_.com.histmersion.plugin.Fetch.Miss.Why(s"hello has no copy (asked $mirrors mirror(s))"))
 
 object HelloFetcher:
   type Mirrors = Mirrors.T

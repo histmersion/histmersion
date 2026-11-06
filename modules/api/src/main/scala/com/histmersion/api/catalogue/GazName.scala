@@ -2,7 +2,7 @@ package com.histmersion.api.catalogue
 
 import com.histmersion.api.Span
 import com.histmersion.api.given
-final case class GazName(name: GazName.Name, lang: GazName.Lang = "", span: Span = Span.always, citation: Option[GazName.Citation] = None)
+final case class GazName(name: GazName.Name, lang: GazName.Lang = _root_.com.histmersion.api.catalogue.GazName.Lang(""), span: Span = Span.always, citation: Option[GazName.Citation] = None)
 
 object GazName:
   type Name = Name.T

@@ -20,9 +20,9 @@ final class ChatCompletionsProvider(
 ) extends AiProvider:
 
   override def capabilities: AiCapabilities =
-    AiCapabilities(tools = true, structuredOutput = true, iterationMarkers = true, verbatimFailures = true)
+    AiCapabilities(tools = _root_.com.histmersion.plugin.AiCapabilities.Tools(true), structuredOutput = _root_.com.histmersion.plugin.AiCapabilities.StructuredOutput(true), iterationMarkers = _root_.com.histmersion.plugin.AiCapabilities.IterationMarkers(true), verbatimFailures = _root_.com.histmersion.plugin.AiCapabilities.VerbatimFailures(true))
 
-  private def base: Either[com.histmersion.plugins.ai.ChatCompletionsProvider.BaseResultPart1, BaseUrl] = BaseUrl.parse(settings.baseUrl, s"agents.providers.$name.base-url")
+  private def base: Either[com.histmersion.plugins.ai.ChatCompletionsProvider.BaseResultPart1, BaseUrl] = BaseUrl.parse(settings.baseUrl, _root_.com.histmersion.plugins.ai.BaseUrl.ParseSetting(s"agents.providers.$name.base-url"))
 
   override def check(model: String): Either[String, Unit] =
     base.flatMap(_ =>
@@ -32,7 +32,7 @@ final class ChatCompletionsProvider(
         case _ => Right(())
     )
 
-  private def key: com.histmersion.plugins.ai.ChatCompletionsProvider.KeyResult = if settings.apiKey.isEmpty then "none" else settings.apiKey
+  private def key: com.histmersion.plugins.ai.ChatCompletionsProvider.KeyResult = if settings.apiKey.isEmpty then _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.KeyResult("none") else settings.apiKey
 
   def turn(request: AiTurn.Request, http: AiHttp): Either[AiFailure, AiTurn] =
     val sent = for
@@ -69,12 +69,12 @@ object ChatCompletionsProvider:
   object HeadersKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def headers(key: com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey): Map[com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1, com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2] =
-    Map("Authorization" -> s"Bearer $key", "Content-Type" -> "application/json")
+    Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1(refactorTuple._1), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2(refactorTuple._2)) }, { val refactorTuple2 = "Content-Type" -> "application/json"; (_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart1(refactorTuple2._1), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersResultPart2(refactorTuple2._2)) })
 
   /** The OpenAI API, keyed by `OPENAI_API_KEY`. */
   def openAi(settings: ProviderSettings): ChatCompletionsProvider =
-    ChatCompletionsProvider("openai", "OpenAI API", settings, Some(("OpenAI", "OPENAI_API_KEY")))
+    ChatCompletionsProvider(_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.Name("openai"), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.Title("OpenAI API"), settings, Some((_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.KeyedPart1("OpenAI"), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.KeyedPart2("OPENAI_API_KEY"))))
 
   /** Any OpenAI-compatible local server, with or without a key. */
   def local(settings: ProviderSettings): ChatCompletionsProvider =
-    ChatCompletionsProvider("local", "OpenAI-compatible local server", settings, None)
+    ChatCompletionsProvider(_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.Name("local"), _root_.com.histmersion.plugins.ai.ChatCompletionsProvider.Title("OpenAI-compatible local server"), settings, None)

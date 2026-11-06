@@ -8,7 +8,7 @@ object JobActions:
   type Stoppable = Stoppable.T
   object Stoppable extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val all: List[com.histmersion.api.jobs.JobActions.All] = List("pause", "resume", "cancel")
+  val all: List[com.histmersion.api.jobs.JobActions.All] = List(_root_.com.histmersion.api.jobs.JobActions.All("pause"), _root_.com.histmersion.api.jobs.JobActions.All("resume"), _root_.com.histmersion.api.jobs.JobActions.All("cancel"))
 
   /** The kinds whose jobs a person may pause and cancel. */
   val Stoppable: Set[com.histmersion.api.jobs.JobActions.Stoppable] = RegisteredJobKinds.all.stoppableKinds

@@ -20,9 +20,9 @@ final case class EventGeo(
     placeLabel: Option[EventGeo.PlaceLabel] = None,
     parentId: Option[EventGeo.ParentId] = None,
     outline: Option[EventGeo.Outline] = None,
-    tier: EventGeo.Tier = EventTier.Attested,
+    tier: EventGeo.Tier = _root_.com.histmersion.api.catalogue.EventGeo.Tier(EventTier.Attested),
     size: Option[EventGeo.Size] = None,
-    precision: EventGeo.Precision = EventPrecision.Precise,
+    precision: EventGeo.Precision = _root_.com.histmersion.api.catalogue.EventGeo.Precision(EventPrecision.Precise),
     dating: Option[EventGeo.Dating] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -60,11 +60,11 @@ object EventGeo:
   def missingEnd(ts: TimeSpan): Option[com.histmersion.api.catalogue.EventGeo.MissingEndResult] =
     val hasStart = ts.notBefore.isDefined || ts.beginBy.isDefined
     val hasEnd = ts.endFrom.isDefined || ts.notAfter.isDefined
-    if hasStart && !hasEnd then Some("end not recorded")
-    else if hasEnd && !hasStart then Some("start not recorded")
+    if hasStart && !hasEnd then Some(_root_.com.histmersion.api.catalogue.EventGeo.MissingEndResult("end not recorded"))
+    else if hasEnd && !hasStart then Some(_root_.com.histmersion.api.catalogue.EventGeo.MissingEndResult("start not recorded"))
     else None
 
-  final case class List(events: scala.List[EventGeo], unplaced: List.Unplaced = 0, imprecise: List.Imprecise = 0)
+  final case class List(events: scala.List[EventGeo], unplaced: List.Unplaced = _root_.com.histmersion.api.catalogue.EventGeo.List.Unplaced(0), imprecise: List.Imprecise = _root_.com.histmersion.api.catalogue.EventGeo.List.Imprecise(0))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 

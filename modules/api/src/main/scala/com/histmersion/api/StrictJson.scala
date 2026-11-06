@@ -44,7 +44,7 @@ object StrictJson:
             )
           )
         case Some(o) =>
-          problems(o.keys.toList, s) match
+          problems((o.keys.toList).map(refactorValue => _root_.com.histmersion.api.StrictJson.ProblemsKeys(refactorValue)), s) match
             case None      => d(c)
             case Some(msg) => Left(DecodingFailure(s"${at(c.history)}$msg", c.history))
     }
@@ -60,14 +60,14 @@ object StrictJson:
             s"'$k' belongs under '$path' ($path.$k)"
         }
       )
-      val noun = s"unknown ${Plural.noun(unknown.size, "key")}"
-      s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
+      val noun = s"unknown ${Plural.noun(_root_.com.histmersion.api.Plural.NounN((unknown.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("key"))}"
+      _root_.com.histmersion.api.StrictJson.ProblemsResult(s"$noun ${unknown.map(k => s"'$k'").mkString(", ")}" +
         (if hints.isEmpty then "" else s" — ${hints.mkString("; ")}") +
-        s"; expected only: ${known.mkString(", ")}"
+        s"; expected only: ${known.mkString(", ")}")
     }
 
   def fieldNames(s: Schema[?]): List[com.histmersion.api.StrictJson.FieldNamesResult] = s.schemaType match
-    case p: SchemaType.SProduct[?] => p.fields.map(_.name.encodedName)
+    case p: SchemaType.SProduct[?] => p.fields.map(_root_.com.histmersion.api.StrictJson.FieldNamesResult(_.name.encodedName))
     case SchemaType.SOption(e)     => fieldNames(e)
     case _                         => Nil
 
@@ -78,7 +78,7 @@ object StrictJson:
       case SchemaType.SOption(e) => children(path, e)
       case SchemaType.SArray(e)  => children(path, e)
       case _                     => Nil
-    val level1 = children("", s)
+    val level1 = children(_root_.com.histmersion.api.StrictJson.NestedFieldsChildrenPath(""), s)
     val level2 = level1.flatMap((p, sc) => children(p, sc))
     (level1 ++ level2).flatMap((p, sc) => fieldNames(unwrap(sc)).map(p -> _))
 
@@ -89,8 +89,8 @@ object StrictJson:
 
   private def at(history: List[CursorOp]): com.histmersion.api.StrictJson.AtResult =
     CursorOp.opsToPath(history).stripPrefix(".") match
-      case ""   => ""
-      case path => s"$path: "
+      case ""   => _root_.com.histmersion.api.StrictJson.AtResult("")
+      case path => _root_.com.histmersion.api.StrictJson.AtResult(s"$path: ")
 
   private def jsonKind(j: Json): com.histmersion.api.StrictJson.JsonKindResult =
-    j.fold("null", _ => "a boolean", _ => "a number", _ => "a string", _ => "an array", _ => "an object")
+    j.fold(_root_.com.histmersion.api.StrictJson.JsonKindResult("null"), _ => _root_.com.histmersion.api.StrictJson.JsonKindResult("a boolean"), _ => _root_.com.histmersion.api.StrictJson.JsonKindResult("a number"), _ => _root_.com.histmersion.api.StrictJson.JsonKindResult("a string"), _ => _root_.com.histmersion.api.StrictJson.JsonKindResult("an array"), _ => _root_.com.histmersion.api.StrictJson.JsonKindResult("an object"))

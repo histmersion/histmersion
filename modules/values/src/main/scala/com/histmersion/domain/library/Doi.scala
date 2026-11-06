@@ -26,11 +26,11 @@ object Doi extends RefinedType[String, Match["10\\.[0-9]+/\\S+"]]:
     Core
       .findFirstIn(s)
       .map(
-        _.stripSuffix(".")
+        _root_.com.histmersion.domain.library.Doi.NormalizeResult(_.stripSuffix(".")
           .stripSuffix(",")
           .stripSuffix(";")
           .stripSuffix(")")
           .stripSuffix("}")
           .stripSuffix("|")
-          .toLowerCase
+          .toLowerCase)
       )

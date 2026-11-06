@@ -21,7 +21,7 @@ final case class MediaThumb(
   def markdownLine: com.histmersion.api.media.MediaThumb.MarkdownLineResult =
     val lic = license.fold("no licence")(l => licenseUrl.fold(s"`$l`")(u => s"[`$l`]($u)"))
     val from = sourceUrl.fold("")(u => s" · [source]($u)")
-    s"- _${role}_ — $credit · $lic$from · `$url`"
+    _root_.com.histmersion.api.media.MediaThumb.MarkdownLineResult(s"- _${role}_ — $credit · $lic$from · `$url`")
 
 object MediaThumb:
 
@@ -42,5 +42,5 @@ object MediaThumb:
   type Url = Url.T
   object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def thumbPath(uid: com.histmersion.api.media.MediaThumb.ThumbPathUid): com.histmersion.api.media.MediaThumb.ThumbPathResult = s"/media/$uid/thumb"
-  def filePath(uid: com.histmersion.api.media.MediaThumb.FilePathUid): com.histmersion.api.media.MediaThumb.FilePathResult = s"/media/$uid/file"
+  def thumbPath(uid: com.histmersion.api.media.MediaThumb.ThumbPathUid): com.histmersion.api.media.MediaThumb.ThumbPathResult = _root_.com.histmersion.api.media.MediaThumb.ThumbPathResult(s"/media/$uid/thumb")
+  def filePath(uid: com.histmersion.api.media.MediaThumb.FilePathUid): com.histmersion.api.media.MediaThumb.FilePathResult = _root_.com.histmersion.api.media.MediaThumb.FilePathResult(s"/media/$uid/file")

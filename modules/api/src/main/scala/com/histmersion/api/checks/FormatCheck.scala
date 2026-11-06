@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class FormatCheck(text: FormatCheck.Text, field: FormatField = FormatField.Body, fix: FormatCheck.Fix = false)
+final case class FormatCheck(text: FormatCheck.Text, field: FormatField = FormatField.Body, fix: FormatCheck.Fix = _root_.com.histmersion.api.checks.FormatCheck.Fix(false))
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

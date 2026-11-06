@@ -8,7 +8,7 @@ import com.histmersion.api.json.NewtypeCodecs.given
 final case class EventParticipant(
     eventId: com.histmersion.api.catalogue.Event.Id,
     actor: EventParticipant.Actor,
-    role: EventParticipant.Role = "participant",
+    role: EventParticipant.Role = _root_.com.histmersion.api.catalogue.EventParticipant.Role("participant"),
     citekey: Option[com.histmersion.api.library.Citekey] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

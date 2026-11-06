@@ -31,7 +31,7 @@ object MediaRole:
   val Map = "map"
 
   /** The roles a place's or event's picture can have — what `media.wikidata.*-properties` may name. */
-  val placeRoles: List[com.histmersion.api.media.MediaRole.PlaceRoles] = List(Image, AerialView, Plan, LocatorMap, RouteMap)
+  val placeRoles: List[com.histmersion.api.media.MediaRole.PlaceRoles] = List(_root_.com.histmersion.api.media.MediaRole.PlaceRoles(Image), _root_.com.histmersion.api.media.MediaRole.PlaceRoles(AerialView), _root_.com.histmersion.api.media.MediaRole.PlaceRoles(Plan), _root_.com.histmersion.api.media.MediaRole.PlaceRoles(LocatorMap), _root_.com.histmersion.api.media.MediaRole.PlaceRoles(RouteMap))
 
   /** Every role, in card order: a place's own picture before an object found there and a map of it; a source shows its
     * cover before an illustration.
@@ -40,5 +40,5 @@ object MediaRole:
 
   /** Pure: the rank of a role on a card (unknown roles last). */
   def order(role: com.histmersion.api.media.MediaRole.OrderRole): com.histmersion.api.media.MediaRole.OrderResult = all.indexOf(role) match
-    case -1 => all.size
-    case i  => i
+    case -1 => _root_.com.histmersion.api.media.MediaRole.OrderResult(all.size)
+    case i  => _root_.com.histmersion.api.media.MediaRole.OrderResult(i)

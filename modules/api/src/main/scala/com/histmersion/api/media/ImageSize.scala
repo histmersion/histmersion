@@ -87,12 +87,12 @@ object ImageSize:
     b.length >= 24 && u8(b, 0) == 0x89 && b(1) == 'P' && b(2) == 'N' && b(3) == 'G'
 
   /** IHDR is always the first chunk: 8-byte signature, 4-byte length, "IHDR", width, height. */
-  private def pngSize(b: com.histmersion.api.media.ImageSize.PngSizeB): Option[(com.histmersion.api.media.ImageSize.PngSizeResultPart1, com.histmersion.api.media.ImageSize.PngSizeResultPart2)] = Some((be32(b, 16), be32(b, 20)))
+  private def pngSize(b: com.histmersion.api.media.ImageSize.PngSizeB): Option[(com.histmersion.api.media.ImageSize.PngSizeResultPart1, com.histmersion.api.media.ImageSize.PngSizeResultPart2)] = Some((be32(b, _root_.com.histmersion.api.media.ImageSize.Be32I(16)), be32(b, _root_.com.histmersion.api.media.ImageSize.Be32I(20))))
 
   private def gif(b: com.histmersion.api.media.ImageSize.GifB): com.histmersion.api.media.ImageSize.GifResult =
     b.length >= 10 && b(0) == 'G' && b(1) == 'I' && b(2) == 'F'
 
-  private def gifSize(b: com.histmersion.api.media.ImageSize.GifSizeB): Option[(com.histmersion.api.media.ImageSize.GifSizeResultPart1, com.histmersion.api.media.ImageSize.GifSizeResultPart2)] = Some((le16(b, 6), le16(b, 8)))
+  private def gifSize(b: com.histmersion.api.media.ImageSize.GifSizeB): Option[(com.histmersion.api.media.ImageSize.GifSizeResultPart1, com.histmersion.api.media.ImageSize.GifSizeResultPart2)] = Some((le16(b, _root_.com.histmersion.api.media.ImageSize.Le16I(6)), le16(b, _root_.com.histmersion.api.media.ImageSize.Le16I(8))))
 
   private def jpeg(b: com.histmersion.api.media.ImageSize.JpegB): com.histmersion.api.media.ImageSize.JpegResult =
     b.length >= 4 && u8(b, 0) == 0xff && u8(b, 1) == 0xd8
@@ -111,4 +111,4 @@ object ImageSize:
         else if (marker >= 0xc0 && marker <= 0xcf) && marker != 0xc4 && marker != 0xc8 && marker != 0xcc
         then Some((be16(b, i + 7), be16(b, i + 5)))
         else go(i + 2 + len)
-    go(2)
+    go(_root_.com.histmersion.api.media.ImageSize.JpegSizeGoI(2))

@@ -5,21 +5,21 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 enum AgentMode(val wire: AgentMode.Wire):
-  case Working extends AgentMode("working")
-  case Finishing extends AgentMode("finish")
-  case Paused extends AgentMode("pause")
+  case Working extends AgentMode(_root_.com.histmersion.api.automation.AgentMode.Wire("working"))
+  case Finishing extends AgentMode(_root_.com.histmersion.api.automation.AgentMode.Wire("finish"))
+  case Paused extends AgentMode(_root_.com.histmersion.api.automation.AgentMode.Wire("pause"))
 
   /** The mode as the agents' switch offers it. */
   def wording: com.histmersion.api.automation.AgentMode.WordingResult = this match
-    case Working   => "Working"
-    case Finishing => "Finish current work, then pause"
-    case Paused    => "Pause now"
+    case Working   => _root_.com.histmersion.api.automation.AgentMode.WordingResult("Working")
+    case Finishing => _root_.com.histmersion.api.automation.AgentMode.WordingResult("Finish current work, then pause")
+    case Paused    => _root_.com.histmersion.api.automation.AgentMode.WordingResult("Pause now")
 
   /** The heading of the research overview in this mode. */
   def heading: com.histmersion.api.automation.AgentMode.HeadingResult = this match
-    case Working   => "Research agents are working"
-    case Finishing => "Research agents are finishing current work, then pausing"
-    case Paused    => "Research agents are paused"
+    case Working   => _root_.com.histmersion.api.automation.AgentMode.HeadingResult("Research agents are working")
+    case Finishing => _root_.com.histmersion.api.automation.AgentMode.HeadingResult("Research agents are finishing current work, then pausing")
+    case Paused    => _root_.com.histmersion.api.automation.AgentMode.HeadingResult("Research agents are paused")
 
 object AgentMode:
   type Wire = Wire.T

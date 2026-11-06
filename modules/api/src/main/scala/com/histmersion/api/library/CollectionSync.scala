@@ -36,7 +36,7 @@ object CollectionSync:
 
   /** Push every counted gap into a collection (a dry run unless `apply`), considering at most `limit` gaps. */
   final case class Request(
-      apply: Request.Apply = false,
+      apply: Request.Apply = _root_.com.histmersion.api.library.CollectionSync.Request.Apply(false),
       limit: Option[Request.Limit] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema

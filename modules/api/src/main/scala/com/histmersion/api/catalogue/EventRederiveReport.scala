@@ -7,13 +7,13 @@ import com.histmersion.api.given
 final case class EventRederiveReport(
     dryRun: EventRederiveReport.DryRun,
     providers: List[EventRederiveReport.Providers],
-    records: EventRederiveReport.Records = 0,
-    changed: EventRederiveReport.Changed = 0,
-    fromRaw: EventRederiveReport.FromRaw = 0,
-    updated: EventRederiveReport.Updated = 0,
+    records: EventRederiveReport.Records = _root_.com.histmersion.api.catalogue.EventRederiveReport.Records(0),
+    changed: EventRederiveReport.Changed = _root_.com.histmersion.api.catalogue.EventRederiveReport.Changed(0),
+    fromRaw: EventRederiveReport.FromRaw = _root_.com.histmersion.api.catalogue.EventRederiveReport.FromRaw(0),
+    updated: EventRederiveReport.Updated = _root_.com.histmersion.api.catalogue.EventRederiveReport.Updated(0),
     before: List[EventCount] = Nil,
     after: List[EventCount] = Nil,
-    offMap: EventRederiveReport.OffMap = 0,
+    offMap: EventRederiveReport.OffMap = _root_.com.histmersion.api.catalogue.EventRederiveReport.OffMap(0),
     examples: List[EventRederiveReport.Examples] = Nil,
     corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
@@ -45,7 +45,7 @@ object EventRederiveReport:
   object Examples extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventRederiveReport]] =
-    com.histmersion.api.jobs.JobDetail.Field("eventRederive", None)
+    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("eventRederive"), None)
 
   def summary(r: EventRederiveReport): com.histmersion.api.catalogue.EventRederiveReport.SummaryResult =
     def counts(cs: List[EventCount]) = cs.map(c => s"${c.key} ${c.n}").mkString(", ")

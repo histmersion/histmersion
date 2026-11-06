@@ -60,8 +60,8 @@ object ManagersMarkdown:
       "failed" -> c.failed,
       "cancelled" -> c.cancelled
     ).filter(_._2 > 0).map((k, n) => s"$n $k").mkString(", ") match
-      case "" => "no items"
-      case s  => s
+      case "" => _root_.com.histmersion.api.automation.ManagersMarkdown.CountsResult("no items")
+      case s  => _root_.com.histmersion.api.automation.ManagersMarkdown.CountsResult(s)
 
   def today(m: ManagerInfo): com.histmersion.api.automation.ManagersMarkdown.TodayResult =
     val cap = m.effective.dailyUsd.orElse(m.config.dailyUsd).filter(_ > 0)
@@ -73,10 +73,10 @@ object ManagersMarkdown:
 
   private def tokens(n: com.histmersion.api.automation.ManagersMarkdown.TokensN): com.histmersion.api.automation.ManagersMarkdown.TokensResult =
     def one(x: com.histmersion.api.automation.ManagersMarkdown.TokensOneX) = BigDecimal(x).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
-    if n >= 1000000 then s"${one(n / 1e6)}M" else if n >= 1000 then s"${one(n / 1e3)}k" else n.toString
+    if n >= 1000000 then s"${one(n / 1e6)}M" else if n >= 1000 then s"${one(n / 1e3)}k" else _root_.com.histmersion.api.automation.ManagersMarkdown.TokensResult(n.toString)
 
   def backlog(n: com.histmersion.api.automation.ManagersMarkdown.BacklogN, days: Option[com.histmersion.api.automation.ManagersMarkdown.BacklogDays]): com.histmersion.api.automation.ManagersMarkdown.BacklogResult =
-    s"${Plural.count(n, "legal open-access work")} in the ingest backlog" + (if n == 0 then ""
+    s"${Plural.count(n, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n == 0 then ""
                                                                              else
                                                                                days match
                                                                                  case Some(0) =>
@@ -95,7 +95,7 @@ object ManagersMarkdown:
       m.lastEvent.fold("")(e => s" · last: ${e.kind} ${e.text.take(120)}")
 
   def list(ms: List[ManagerInfo]): com.histmersion.api.automation.ManagersMarkdown.ListResult =
-    if ms.isEmpty then "_No managers._" else "# Managers\n\n" + ms.map(m => s"- ${line(m)}").mkString("\n")
+    if ms.isEmpty then _root_.com.histmersion.api.automation.ManagersMarkdown.ListResult("_No managers._") else _root_.com.histmersion.api.automation.ManagersMarkdown.ListResult("# Managers\n\n" + ms.map(m => s"- ${line(m)}").mkString("\n"))
 
   def item(i: ManagerItem): com.histmersion.api.automation.ManagersMarkdown.ItemResult =
     val run = i.run.fold(i.runId.fold("")(r => s" · run ${r.take(8)}"))(r =>
@@ -113,7 +113,7 @@ object ManagersMarkdown:
       i.outcome.filter(_.nonEmpty).fold("")(o => s" · $o")
 
   def items(p: ItemPage): com.histmersion.api.automation.ManagersMarkdown.ItemsResult =
-    if p.items.isEmpty then "_No items._"
+    if p.items.isEmpty then _root_.com.histmersion.api.automation.ManagersMarkdown.ItemsResult("_No items._")
     else
       s"Items ${p.offset + 1}–${p.offset + p.items.size} of ${p.total}\n\n" + p.items
         .map(i => s"- ${item(i)}")
@@ -123,10 +123,10 @@ object ManagersMarkdown:
     s"${e.at} · ${e.kind}${e.itemId.fold("")(i => s" · item #$i")}${e.runId.fold("")(r => s" · run ${r.take(8)}")} · ${e.text}"
 
   def events(p: EventPage): com.histmersion.api.automation.ManagersMarkdown.EventsResult =
-    if p.events.isEmpty then "_No events._" else p.events.map(e => s"- ${event(e)}").mkString("\n")
+    if p.events.isEmpty then _root_.com.histmersion.api.automation.ManagersMarkdown.EventsResult("_No events._") else _root_.com.histmersion.api.automation.ManagersMarkdown.EventsResult(p.events.map(e => s"- ${event(e)}").mkString("\n"))
 
   def effect(e: HintEffect): com.histmersion.api.automation.ManagersMarkdown.EffectResult =
-    if e.action == HintEffect.Config then s"settings: ${e.config.fold("none")(configLine)}"
+    if e.action == HintEffect.Config then _root_.com.histmersion.api.automation.ManagersMarkdown.EffectResult(s"settings: ${e.config.fold("none")(configLine)}")
     else
       e.action + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
         e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +
@@ -159,8 +159,8 @@ object ManagersMarkdown:
       c.autoApprove.map(b => s"autoApprove=$b"),
       c.extendMinNew.map(n => s"extendMinNew=$n")
     ).flatten.mkString(", ") match
-      case "" => "the defaults"
-      case s  => s
+      case "" => _root_.com.histmersion.api.automation.ManagersMarkdown.ConfigLineResult("the defaults")
+      case s  => _root_.com.histmersion.api.automation.ManagersMarkdown.ConfigLineResult(s)
 
   def hint(h: ManagerHint): com.histmersion.api.automation.ManagersMarkdown.HintResult =
     val scope = h.itemId.fold("manager-wide")(i => s"item #$i")
@@ -173,7 +173,7 @@ object ManagersMarkdown:
 
   def enqueued(r: EnqueueResult): com.histmersion.api.automation.ManagersMarkdown.EnqueuedResult =
     val head = if r.items.isEmpty then s"Nothing queued for **${r.managerId}**." else s"Queued for **${r.managerId}**:"
-    (List(head) ++ r.items.map(i => s"- ${item(i)}") ++ r.skipped.map(x => s"- not queued: $x")).mkString("\n")
+    _root_.com.histmersion.api.automation.ManagersMarkdown.EnqueuedResult((List(head) ++ r.items.map(i => s"- ${item(i)}") ++ r.skipped.map(x => s"- not queued: $x")).mkString("\n"))
 
   def detail(d: ManagerDetail): com.histmersion.api.automation.ManagersMarkdown.DetailResult =
     val m = d.manager
@@ -203,8 +203,8 @@ object ManagersMarkdown:
       cfg.extendMinNew.filter(_ > 0).map(n => s"extend at $n new sources")
     ).flatten.mkString(" · ")
     val cron = m.cron.fold("")(c => s"\n- cron `$c` (UTC)" + m.nextTickAt.fold("")(t => s", next $t"))
-    s"# Manager ${m.id}\n\n- ${line(m)}\n- settings: $settings$cron\n" +
+    _root_.com.histmersion.api.automation.ManagersMarkdown.DetailResult(s"# Manager ${m.id}\n\n- ${line(m)}\n- settings: $settings$cron\n" +
       "\n## In flight\n\n" + (if d.current.isEmpty then "_none_"
                               else d.current.map(i => s"- ${item(i)}").mkString("\n")) +
       "\n\n## Hints\n\n" + (if d.hints.isEmpty then "_none_" else d.hints.map(h => s"- ${hint(h)}").mkString("\n")) +
-      "\n\n## Events\n\n" + (if d.events.isEmpty then "_none_" else d.events.map(e => s"- ${event(e)}").mkString("\n"))
+      "\n\n## Events\n\n" + (if d.events.isEmpty then "_none_" else d.events.map(e => s"- ${event(e)}").mkString("\n")))

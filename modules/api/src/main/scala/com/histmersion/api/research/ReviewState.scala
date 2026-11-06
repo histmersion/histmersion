@@ -6,12 +6,12 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 
 enum ReviewState(val wire: ReviewState.Wire, val meaning: ReviewState.Meaning):
-  case Unreviewed extends ReviewState("unreviewed", "no review of this article is recorded and none is queued")
-  case Queued extends ReviewState("queued", "waiting for the review panel to take it up")
-  case InReview extends ReviewState("in-review", "the review panel is working on it now")
-  case Passed extends ReviewState("passed", "reviewed: no MAJOR finding is open")
-  case MajorsOpen extends ReviewState("majors-open", "reviewed: MAJOR findings are still open")
-  case Stopped extends ReviewState("stopped", "the review manager gave up on it; a person decides what happens next")
+  case Unreviewed extends ReviewState(_root_.com.histmersion.api.research.ReviewState.Wire("unreviewed"), _root_.com.histmersion.api.research.ReviewState.Meaning("no review of this article is recorded and none is queued"))
+  case Queued extends ReviewState(_root_.com.histmersion.api.research.ReviewState.Wire("queued"), _root_.com.histmersion.api.research.ReviewState.Meaning("waiting for the review panel to take it up"))
+  case InReview extends ReviewState(_root_.com.histmersion.api.research.ReviewState.Wire("in-review"), _root_.com.histmersion.api.research.ReviewState.Meaning("the review panel is working on it now"))
+  case Passed extends ReviewState(_root_.com.histmersion.api.research.ReviewState.Wire("passed"), _root_.com.histmersion.api.research.ReviewState.Meaning("reviewed: no MAJOR finding is open"))
+  case MajorsOpen extends ReviewState(_root_.com.histmersion.api.research.ReviewState.Wire("majors-open"), _root_.com.histmersion.api.research.ReviewState.Meaning("reviewed: MAJOR findings are still open"))
+  case Stopped extends ReviewState(_root_.com.histmersion.api.research.ReviewState.Wire("stopped"), _root_.com.histmersion.api.research.ReviewState.Meaning("the review manager gave up on it; a person decides what happens next"))
 
 object ReviewState:
   type Wire = Wire.T

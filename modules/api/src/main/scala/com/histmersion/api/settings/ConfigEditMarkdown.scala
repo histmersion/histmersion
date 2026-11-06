@@ -23,9 +23,9 @@ object ConfigEditMarkdown:
 
   def shown(f: Field): com.histmersion.api.settings.ConfigEditMarkdown.ShownResult =
     f.credential match
-      case Some(c) if !c.isSet => "not set"
-      case Some(c)             => "set" + c.shown.fold("")(s => s" (`$s`)")
-      case None                => f.effective.fold("(nothing)")(v => s"`$v`")
+      case Some(c) if !c.isSet => _root_.com.histmersion.api.settings.ConfigEditMarkdown.ShownResult("not set")
+      case Some(c)             => _root_.com.histmersion.api.settings.ConfigEditMarkdown.ShownResult("set" + c.shown.fold("")(s => s" (`$s`)"))
+      case None                => _root_.com.histmersion.api.settings.ConfigEditMarkdown.ShownResult(f.effective.fold("(nothing)")(v => s"`$v`"))
 
   def field(f: Field): com.histmersion.api.settings.ConfigEditMarkdown.FieldResult =
     val from = Source.parse(f.source).fold(f.source)(_.label)
@@ -55,13 +55,13 @@ object ConfigEditMarkdown:
           (if f.source == Source.Default.wire then "" else s" (${Source.parse(f.source).fold(f.source)(_.label)})")
       )
     }
-    (head ++ problems ++ body).mkString("\n")
+    _root_.com.histmersion.api.settings.ConfigEditMarkdown.PageResult((head ++ problems ++ body).mkString("\n"))
 
   def written(w: Written): com.histmersion.api.settings.ConfigEditMarkdown.WrittenResult =
     def list(title: com.histmersion.api.settings.ConfigEditMarkdown.WrittenListTitle, xs: List[com.histmersion.api.settings.ConfigEditMarkdown.WrittenListXs]) = if xs.isEmpty then Nil else s"**$title:**" :: xs.map(x => s"- $x")
     val head =
       if w.changed.isEmpty then "# Settings unchanged — the file already says so"
-      else s"# Settings changed — ${Plural.count(w.changed.size, "setting")}"
+      else s"# Settings changed — ${Plural.count(_root_.com.histmersion.api.Plural.CountN((w.changed.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("setting"))}"
     (List(head, "", s"File: `${w.file}`") ++ w.backup.map(b => s"Previous version kept as `$b`").toList ++
       list("Changed", w.changed.map(_.stripPrefix("histmersion."))) ++
       list("Already so", w.unchanged.map(_.stripPrefix("histmersion."))) ++
@@ -70,4 +70,4 @@ object ConfigEditMarkdown:
       w.reload.toList.flatMap(r => List("", ReloadMarkdown.report(r).replaceFirst("^# ", "### ")))).mkString("\n")
 
   def restart(r: Restart): com.histmersion.api.settings.ConfigEditMarkdown.RestartResult =
-    if r.accepted then s"# Restarting\n\n${r.message}" else s"# Not restarted\n\n${r.message}"
+    if r.accepted then _root_.com.histmersion.api.settings.ConfigEditMarkdown.RestartResult(s"# Restarting\n\n${r.message}") else _root_.com.histmersion.api.settings.ConfigEditMarkdown.RestartResult(s"# Not restarted\n\n${r.message}")

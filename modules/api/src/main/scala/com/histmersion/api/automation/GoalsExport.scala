@@ -78,7 +78,7 @@ object GoalsExport:
     val known = goals.map(_.slug).toSet
     val body =
       if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, depth, known, itemStatus))
-    (head ++ body).mkString("\n\n") + "\n"
+    _root_.com.histmersion.api.automation.GoalsExport.RenderResult((head ++ body).mkString("\n\n") + "\n")
 
   private[api] def summary(goals: List[Goal]): com.histmersion.api.automation.GoalsExport.SummaryResult =
     val slugs = goals.map(_.slug).toSet
@@ -88,7 +88,7 @@ object GoalsExport:
       .filterNot(com.histmersion.api.automation.Goal.Status.all.contains)
       .sorted
     val byStatus = order.map(s => s" · $s ${counts(s)}").mkString
-    s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus"
+    _root_.com.histmersion.api.automation.GoalsExport.SummaryResult(s"${goals.size} goal(s): $topLevel top-level, ${goals.size - topLevel} sub-goal(s)$byStatus")
 
   private[api] def tree(views: List[GoalView]): List[(GoalView, com.histmersion.api.automation.GoalsExport.TreeResultPart2)] =
     val bySlug = views.map(v => v.goal.slug -> v).toMap
@@ -172,11 +172,11 @@ object GoalsExport:
       case Some(st) =>
         val box = if st == Queue.Done then "[x]" else "[ ]"
         s"$box `#${l.ref}` ${l.title.map(oneLine).getOrElse("")}${noted(l)}"
-      case None => s"`#${l.ref}` (not found)${noted(l)}"
+      case None => _root_.com.histmersion.api.automation.GoalsExport.QueueLineResult(s"`#${l.ref}` (not found)${noted(l)}")
 
   private def scheduleLine(s: GoalSchedule): com.histmersion.api.automation.GoalsExport.ScheduleLineResult =
     val state = if s.enabled then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b)} USD")
-    s"${s.kind.wire} · `${s.cron}` · $state$budget"
+    _root_.com.histmersion.api.automation.GoalsExport.ScheduleLineResult(s"${s.kind.wire} · `${s.cron}` · $state$budget")
 
   private def oneLine(s: com.histmersion.api.automation.GoalsExport.OneLineS): com.histmersion.api.automation.GoalsExport.OneLineResult = s.linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" ")

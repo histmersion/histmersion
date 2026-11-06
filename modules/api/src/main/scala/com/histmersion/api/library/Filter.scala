@@ -18,8 +18,8 @@ final case class Filter(
     period: Option[Period] = None,
     bbox: Option[BBox] = None,
     sort: Sort = Sort.Relevance,
-    limit: Filter.Limit = 0,
-    offset: Filter.Offset = 0,
+    limit: Filter.Limit = _root_.com.histmersion.api.library.Filter.Limit(0),
+    offset: Filter.Offset = _root_.com.histmersion.api.library.Filter.Offset(0),
     title: Option[Filter.Title] = None,
     goal: Option[Filter.Goal] = None
 ) derives KindlingsCodecAsObject,
@@ -32,7 +32,7 @@ final case class Filter(
 
   def sourceSet: Filter = Filter(q, tags, authors, places, topics, status, years, period, bbox, goal = goal)
 
-  def hasFindingCriteria: com.histmersion.api.library.Filter.HasFindingCriteriaResult = period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty
+  def hasFindingCriteria: com.histmersion.api.library.Filter.HasFindingCriteriaResult = _root_.com.histmersion.api.library.Filter.HasFindingCriteriaResult(period.isDefined || bbox.isDefined || places.nonEmpty || tags.nonEmpty)
 
 object Filter:
 
@@ -129,8 +129,8 @@ object Filter:
   type Goal = Goal.T
   object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Earliest: com.histmersion.api.library.Filter.Earliest = -1000000000L
-  val Latest: com.histmersion.api.library.Filter.Latest = 1000000000L
+  val Earliest: com.histmersion.api.library.Filter.Earliest = _root_.com.histmersion.api.library.Filter.Earliest(-1000000000L)
+  val Latest: com.histmersion.api.library.Filter.Latest = _root_.com.histmersion.api.library.Filter.Latest(1000000000L)
 
   /** Postgres rejects an inverted range (`range lower bound must be less than or equal to range upper bound`), so a
     * nonsense bound is clamped before it can build one.
@@ -216,67 +216,67 @@ object Filter:
       object Brief extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     val query = Param(
-      "q",
-      "query",
-      "Full text (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or), evaluated within one ~4 000-char chunk",
-      "Free text: words AND-ed, \"a phrase\", -word, or"
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("q"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("query"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Full text (websearch syntax: bare words AND-ed, \"phrase\", -exclude, or), evaluated within one ~4 000-char chunk"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Free text: words AND-ed, \"a phrase\", -word, or")
     )
     val tags = Param(
-      "tag",
-      "tags",
-      "ALL required — every tag must be present on the source or one of its findings",
-      "Every one required"
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("tag"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("tags"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("ALL required — every tag must be present on the source or one of its findings"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Every one required")
     )
     val authors = Param(
-      "author",
-      "authors",
-      "ANY matches — a case-insensitive substring of an author's name",
-      "Any one, a substring of an author's name"
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("author"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("authors"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("ANY matches — a case-insensitive substring of an author's name"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Any one, a substring of an author's name")
     )
     val places = Param(
-      "place",
-      "places",
-      "ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text",
-      "Any one, a place id or name"
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("place"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("places"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("ANY matches — a place id from `places` matches by geometry and hierarchy, a name matches text"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Any one, a place id or name")
     )
     val topics =
-      Param("topic", "topics", "ALL required — every topic must be present on the source", "Every one required")
+      Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("topic"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("topics"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("ALL required — every topic must be present on the source"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Every one required"))
     val status = Param(
-      "status",
-      "status",
-      s"ANY matches — ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}",
-      s"Any of ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}"
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("status"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("status"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc(s"ANY matches — ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief(s"Any of ${com.histmersion.api.library.Source.Status.values.map(_.wire).mkString("|")}")
     )
-    val yearFrom = Param("yearFrom", "yearFrom", "Earliest publication year (inclusive)", "Earliest publication year")
-    val yearTo = Param("yearTo", "yearTo", "Latest publication year (inclusive)", "Latest publication year")
+    val yearFrom = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("yearFrom"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("yearFrom"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Earliest publication year (inclusive)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Earliest publication year"))
+    val yearTo = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("yearTo"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("yearTo"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Latest publication year (inclusive)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Latest publication year"))
     val from = Param(
-      "from",
-      "from",
-      "Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)",
-      "Period start, a signed year (BCE negative)"
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("from"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("from"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Deep-time start, a signed year (BCE negative: 1200 BCE is -1200)"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Period start, a signed year (BCE negative)")
     )
-    val to = Param("to", "to", "Deep-time end, a signed year (BCE negative)", "Period end, a signed year")
+    val to = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("to"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("to"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Deep-time end, a signed year (BCE negative)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Period end, a signed year"))
     val minLon = Param(
-      "minLon",
-      "minLon",
-      "Bounding box: west longitude (a west above the east crosses the antimeridian)",
-      "Box: west longitude"
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("minLon"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("minLon"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Bounding box: west longitude (a west above the east crosses the antimeridian)"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Box: west longitude")
     )
-    val minLat = Param("minLat", "minLat", "Bounding box: south latitude", "Box: south latitude")
-    val maxLon = Param("maxLon", "maxLon", "Bounding box: east longitude", "Box: east longitude")
-    val maxLat = Param("maxLat", "maxLat", "Bounding box: north latitude", "Box: north latitude")
-    val sort = Param("sort", "sort", s"Ordering: ${Sort.all.mkString("|")}", Sort.all.mkString("|"))
+    val minLat = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("minLat"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("minLat"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Bounding box: south latitude"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Box: south latitude"))
+    val maxLon = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("maxLon"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("maxLon"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Bounding box: east longitude"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Box: east longitude"))
+    val maxLat = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("maxLat"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("maxLat"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Bounding box: north latitude"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Box: north latitude"))
+    val sort = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("sort"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("sort"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc(s"Ordering: ${Sort.all.mkString("|")}"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief(Sort.all.mkString("|")))
     val limit =
-      Param("limit", "limit", "Results per page (default: the configured page size, at most 500)", "Results per page")
+      Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("limit"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("limit"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Results per page (default: the configured page size, at most 500)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("Results per page"))
     val offset = Param(
-      "offset",
-      "offset",
-      "Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)",
-      "The next page's offset, from the listing's footer"
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Rest("offset"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("offset"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Skip this many results — the next page's offset is in the list's footer (`next: offset=N`)"),
+      _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("The next page's offset, from the listing's footer")
     )
     val title =
-      Param("title", "title", "Case-insensitive substring of the listed item's title", "A substring of the title")
-    val goal = Param("goal", "goal", "Only the sources a research goal links (its slug)", "A research goal's slug")
+      Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("title"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("title"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Case-insensitive substring of the listed item's title"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("A substring of the title"))
+    val goal = Param(_root_.com.histmersion.api.library.Filter.Docs.Param.Rest("goal"), _root_.com.histmersion.api.library.Filter.Docs.Param.Mcp("goal"), _root_.com.histmersion.api.library.Filter.Docs.Param.Doc("Only the sources a research goal links (its slug)"), _root_.com.histmersion.api.library.Filter.Docs.Param.Brief("A research goal's slug"))
 
     val all: List[Param] =
       List(

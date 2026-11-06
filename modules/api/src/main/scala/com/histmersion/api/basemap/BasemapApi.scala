@@ -91,15 +91,15 @@ object BasemapApi:
   private def fetchErrors =
     oneOf[Api.Error](
       oneOfVariantValueMatcher(StatusCode.ServiceUnavailable, jsonBody[Api.Error])(
-        Api.Error.hasCode(Backup.CodeMaintenance)
+        Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Backup.CodeMaintenance))
       ),
-      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(Busy)),
+      oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[Api.Error])(Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Busy))),
       oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[Api.Error]))
     )
 
   val Busy = "basemap_busy"
 
   def tileTemplate(layer: Basemap.Layer, version: com.histmersion.api.basemap.BasemapApi.TileTemplateVersion): com.histmersion.api.basemap.BasemapApi.TileTemplateResult =
-    s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version"
+    _root_.com.histmersion.api.basemap.BasemapApi.TileTemplateResult(s"/api/basemap/${layer.wire}/{z}/{x}/{y}?v=$version")
 
   lazy val all: List[AnyEndpoint] = List(status, fetch, remove, tile)

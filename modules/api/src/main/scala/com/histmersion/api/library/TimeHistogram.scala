@@ -10,10 +10,10 @@ final case class TimeHistogram(
     bucket: TimeHistogram.Bucket,
     buckets: List[TimeBucket],
     // Defaults keep the `by=time` JSON byte-identical for older clients.
-    by: TimeHistogram.By = "time",
-    unit: TimeHistogram.Unit = "sources",
-    total: TimeHistogram.Total = 0,
-    depth: TimeHistogram.Depth = 0,
+    by: TimeHistogram.By = _root_.com.histmersion.api.library.TimeHistogram.By("time"),
+    unit: TimeHistogram.Unit = _root_.com.histmersion.api.library.TimeHistogram.Unit("sources"),
+    total: TimeHistogram.Total = _root_.com.histmersion.api.library.TimeHistogram.Total(0),
+    depth: TimeHistogram.Depth = _root_.com.histmersion.api.library.TimeHistogram.Depth(0),
     asOf: Option[TimeHistogram.AsOf] = None,
     tree: List[Bucket] = Nil
 ) derives KindlingsCodecAsObject,

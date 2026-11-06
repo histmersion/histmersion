@@ -7,7 +7,7 @@ final case class DataCredit(
     licenceUrl: Option[DataCredit.LicenceUrl],
     credit: com.histmersion.api.media.MediaItem.Credit,
     url: DataCredit.Url,
-    onMap: DataCredit.OnMap = true
+    onMap: DataCredit.OnMap = _root_.com.histmersion.api.media.DataCredit.OnMap(true)
 )
 
 object DataCredit:

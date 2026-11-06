@@ -14,18 +14,18 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
 
   /** One search for `purpose` (`lookup`: a work's download URLs by its DOI; `search`: a saved query). */
   def searchWorks(key: com.histmersion.upstreams.core.CoreApi.SearchWorksKey, query: com.histmersion.upstreams.core.CoreApi.SearchWorksQuery, limit: com.histmersion.upstreams.core.CoreApi.SearchWorksLimit, purpose: com.histmersion.upstreams.core.CoreApi.SearchWorksPurpose): Either[CoreFailure, Json] =
-    val url = Url(core.url, "/search/works/", "q" -> query, "limit" -> limit.toString)
+    val url = Url(core.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath("/search/works/"), "q" -> query, "limit" -> limit.toString)
     quota.take(purpose) match
       case Left(why) => Left(CoreFailure.Skipped(why))
       case Right(_)  =>
-        http.fetch(url, Map("Authorization" -> s"Bearer $key")) match
+        http.fetch(url, Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (_root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1(refactorTuple._1), _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2(refactorTuple._2)) })) match
           case Left(e)  => Left(CoreFailure.Failed(e))
           case Right(a) =>
             quota.observe(a.status, a.headers)
             if a.status == 429 then
               Left(
                 CoreFailure.Skipped(
-                  quota.waitingUntil.fold("CORE answered HTTP 429")(u => s"CORE answered HTTP 429; not asked until $u")
+                  _root_.com.histmersion.upstreams.core.CoreFailure.Skipped.Why(quota.waitingUntil.fold("CORE answered HTTP 429")(u => s"CORE answered HTTP 429; not asked until $u"))
                 )
               )
             else if a.status >= 400 then
@@ -34,7 +34,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
               io.circe.parser
                 .parse(String(a.body, UTF_8))
                 .left
-                .map(e => CoreFailure.Failed(s"$url returned unparseable JSON: ${e.getMessage}"))
+                .map(e => CoreFailure.Failed(_root_.com.histmersion.upstreams.core.CoreFailure.Failed.Why(s"$url returned unparseable JSON: ${e.getMessage}")))
 
 object CoreApi:
   type SearchWorksKey = SearchWorksKey.T

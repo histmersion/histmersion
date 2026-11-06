@@ -15,15 +15,15 @@ final case class JobInfo(
     progress: Option[JobInfo.Progress] = None,
     error: Option[JobInfo.Error] = None,
     sha256: Option[com.histmersion.api.Sha256] = None,
-    createdAt: JobInfo.CreatedAt = "",
-    updatedAt: JobInfo.UpdatedAt = "",
+    createdAt: JobInfo.CreatedAt = _root_.com.histmersion.api.jobs.JobInfo.CreatedAt(""),
+    updatedAt: JobInfo.UpdatedAt = _root_.com.histmersion.api.jobs.JobInfo.UpdatedAt(""),
     acquireItem: Option[com.histmersion.api.automation.Queue.QueueItem.Id] = None,
     detail: Option[JobDetail] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def state: JobState = JobState.parse(status).getOrElse(JobState.Failed)
   def isTerminal: com.histmersion.api.jobs.JobInfo.IsTerminalResult = state.isTerminal
-  def succeeded: com.histmersion.api.jobs.JobInfo.SucceededResult = state == JobState.Done
+  def succeeded: com.histmersion.api.jobs.JobInfo.SucceededResult = _root_.com.histmersion.api.jobs.JobInfo.SucceededResult(state == JobState.Done)
 object JobInfo:
 
   /** A job's kind as the wire names it (`ingest`, `merge-apply`); the server checks it against its registered kinds. */

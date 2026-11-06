@@ -27,15 +27,15 @@ object BundleMarkdown:
   object ProblemsPs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def instance(i: InstanceInfo): com.histmersion.api.exchange.BundleMarkdown.InstanceResult =
-    s"**Instance** ${i.id}" + i.label
+    _root_.com.histmersion.api.exchange.BundleMarkdown.InstanceResult(s"**Instance** ${i.id}" + i.label
       .map(l => s" · $l")
       .getOrElse(" · _(no label — `histmersion bundle instance --label <name>`)_") +
-      s"  \n_created ${i.createdAt}_"
+      s"  \n_created ${i.createdAt}_")
 
-  private def who(i: Bundle.Instance): com.histmersion.api.exchange.BundleMarkdown.WhoResult = i.label.fold(i.id.toString)(l => s"$l (${i.id})")
+  private def who(i: Bundle.Instance): com.histmersion.api.exchange.BundleMarkdown.WhoResult = _root_.com.histmersion.api.exchange.BundleMarkdown.WhoResult(i.label.fold(i.id.toString)(l => s"$l (${i.id})"))
 
   private def bytes(n: com.histmersion.api.exchange.BundleMarkdown.BytesN): com.histmersion.api.exchange.BundleMarkdown.BytesResult =
-    if n < 1024 then s"$n B"
+    if n < 1024 then _root_.com.histmersion.api.exchange.BundleMarkdown.BytesResult(s"$n B")
     else if n < 1024L * 1024 then s"${n / 1024} KB"
     else if n < 1024L * 1024 * 1024 then s"${n / (1024L * 1024)} MB"
     else s"${n / (1024L * 1024 * 1024)} GB"
@@ -52,8 +52,8 @@ object BundleMarkdown:
     ).mkString("\n\n")
 
   def verify(r: Bundle.VerifyResult): com.histmersion.api.exchange.BundleMarkdown.VerifyResult =
-    val head = if r.ok then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, "blob")} verified"
-    else s"**NOT OK** — ${Plural.count(r.problems.size, "problem")}"
+    val head = if r.ok then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, _root_.com.histmersion.api.Plural.CountSingular("blob"))} verified"
+    else s"**NOT OK** — ${Plural.count(_root_.com.histmersion.api.Plural.CountN((r.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}"
     (head :: r.manifest.map(manifest).toList ++ problems("Problems", r.problems)).mkString("\n\n")
 
   def importResult(r: Bundle.ImportResult): com.histmersion.api.exchange.BundleMarkdown.ImportResultResult =
@@ -62,7 +62,7 @@ object BundleMarkdown:
       else if r.dryRun then "**Dry run** — nothing was written; this is what an import would do"
       else if r.changed == 0 then "**Nothing to change** — this instance already has everything in the bundle"
       else
-        s"**Imported** — ${Plural.count(r.changed, "row")} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("")
+        s"**Imported** — ${Plural.count(r.changed, _root_.com.histmersion.api.Plural.CountSingular("row"))} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("")
     val rows = r.counts.map(c =>
       s"| ${c.kind.wire} | ${c.inserted} | ${c.updated} | ${c.deleted} | ${c.unchanged} | ${c.keptLocal} | ${c.conflicts} | ${c.skippedDeleted} | ${c.held} |"
     )
@@ -88,4 +88,4 @@ object BundleMarkdown:
       problems("Notes", r.notes)).mkString("\n\n")
 
   private def problems(title: com.histmersion.api.exchange.BundleMarkdown.ProblemsTitle, ps: List[com.histmersion.api.exchange.BundleMarkdown.ProblemsPs]): List[com.histmersion.api.exchange.BundleMarkdown.ProblemsResult] =
-    if ps.isEmpty then Nil else List(s"**$title**\n" + ps.map(p => s"- $p").mkString("\n"))
+    if ps.isEmpty then Nil else List(_root_.com.histmersion.api.exchange.BundleMarkdown.ProblemsResult(s"**$title**\n" + ps.map(p => s"- $p").mkString("\n")))

@@ -9,7 +9,7 @@ final case class GraphNode(
     title: Option[com.histmersion.api.library.Title] = None,
     year: Option[com.histmersion.api.catalogue.Year] = None,
     status: Option[com.histmersion.api.library.Source.Status] = None,
-    depth: GraphNode.Depth = 0
+    depth: GraphNode.Depth = _root_.com.histmersion.api.library.GraphNode.Depth(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

@@ -8,10 +8,10 @@ final case class ReviewBadge(
     state: ReviewState,
     label: ReviewBadge.Label,
     detail: ReviewBadge.Detail,
-    openMajors: ReviewBadge.OpenMajors = 0,
-    openMinors: ReviewBadge.OpenMinors = 0,
-    findings: ReviewBadge.Findings = 0,
-    runs: ReviewBadge.Runs = 0,
+    openMajors: ReviewBadge.OpenMajors = _root_.com.histmersion.api.research.ReviewBadge.OpenMajors(0),
+    openMinors: ReviewBadge.OpenMinors = _root_.com.histmersion.api.research.ReviewBadge.OpenMinors(0),
+    findings: ReviewBadge.Findings = _root_.com.histmersion.api.research.ReviewBadge.Findings(0),
+    runs: ReviewBadge.Runs = _root_.com.histmersion.api.research.ReviewBadge.Runs(0),
     round: Option[ReviewBadge.Round] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

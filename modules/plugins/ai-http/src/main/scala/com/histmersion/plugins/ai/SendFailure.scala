@@ -57,7 +57,7 @@ object SendFailure:
 
   /** The kind of transport failure an exception of the host's client is, if it is one. */
   def kind(exception: com.histmersion.plugins.ai.SendFailure.KindException): Option[com.histmersion.plugins.ai.SendFailure.KindResult] =
-    if Connect(exception) then Some("ConnectException")
-    else if Timeout(exception) then Some("TimeoutException")
-    else if exception.endsWith("Exception") && !NotTransport(exception) then Some("ReadException")
+    if Connect(exception) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("ConnectException"))
+    else if Timeout(exception) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("TimeoutException"))
+    else if exception.endsWith("Exception") && !NotTransport(exception) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("ReadException"))
     else None

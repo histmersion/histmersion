@@ -12,7 +12,7 @@ object CandidatesMarkdown:
   object MarkedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def counts(cs: List[CandidateCount]): com.histmersion.api.library.CandidatesMarkdown.CountsResult =
-    if cs.isEmpty then "none yet" else cs.map(c => s"${c.count} ${c.state}").mkString(", ")
+    if cs.isEmpty then _root_.com.histmersion.api.library.CandidatesMarkdown.CountsResult("none yet") else _root_.com.histmersion.api.library.CandidatesMarkdown.CountsResult(cs.map(c => s"${c.count} ${c.state}").mkString(", "))
 
   def list(l: CandidateList): com.histmersion.api.library.CandidatesMarkdown.ListResult =
     val head = s"# Candidates${l.goal.fold(" (every goal)")(g => s" for goal `$g`")} — ${l.state}"
@@ -26,7 +26,7 @@ object CandidatesMarkdown:
     }
     val tail = l.next.map(n => s"More: `--offset $n`.").toList
     val body = if rows.isEmpty then List(s"No ${l.state} candidates.") else rows
-    (head :: "" :: total :: "" :: body ++ (if tail.isEmpty then Nil else "" :: tail)).mkString("\n")
+    _root_.com.histmersion.api.library.CandidatesMarkdown.ListResult((head :: "" :: total :: "" :: body ++ (if tail.isEmpty then Nil else "" :: tail)).mkString("\n"))
 
   def sweep(s: CandidateSweep): com.histmersion.api.library.CandidatesMarkdown.SweepResult =
     val w = s.watches.map { w =>
@@ -40,4 +40,4 @@ object CandidatesMarkdown:
       s"${s.unseen} unseen candidate(s) wait for a decision (`histmersion candidates --goal ${s.goal}`)." :: "" ::
       (s.notes.map(n => s"- **$n**") ++ (if s.notes.isEmpty then Nil else List("")) ++ w)).mkString("\n")
 
-  def marked(m: CandidateMarked): com.histmersion.api.library.CandidatesMarkdown.MarkedResult = s"${m.updated} candidate(s) marked ${m.state}."
+  def marked(m: CandidateMarked): com.histmersion.api.library.CandidatesMarkdown.MarkedResult = _root_.com.histmersion.api.library.CandidatesMarkdown.MarkedResult(s"${m.updated} candidate(s) marked ${m.state}.")

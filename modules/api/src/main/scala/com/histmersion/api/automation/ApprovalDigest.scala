@@ -29,7 +29,7 @@ object ApprovalDigest:
       kind: KindGroup.Kind,
       count: KindGroup.Count,
       oldest: Option[KindGroup.Oldest] = None,
-      decidedBy: KindGroup.DecidedBy = "person",
+      decidedBy: KindGroup.DecidedBy = _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy("person"),
       subjects: List[SubjectCount] = Nil,
       ids: List[KindGroup.Ids] = Nil
   ) derives KindlingsCodecAsObject,
@@ -50,9 +50,9 @@ object ApprovalDigest:
 
   final case class Digest(
       at: Digest.At,
-      total: Digest.Total = 0,
+      total: Digest.Total = _root_.com.histmersion.api.automation.ApprovalDigest.Digest.Total(0),
       kinds: List[KindGroup] = Nil,
-      heldForPerson: Digest.HeldForPerson = 0,
+      heldForPerson: Digest.HeldForPerson = _root_.com.histmersion.api.automation.ApprovalDigest.Digest.HeldForPerson(0),
       lastWritten: Option[Digest.LastWritten] = None,
       goalPlansWait: Option[Digest.GoalPlansWait] = None
   ) derives KindlingsCodecAsObject,
@@ -77,7 +77,7 @@ object ApprovalDigest:
       subject: Option[BulkDecide.Subject] = None,
       ids: List[BulkDecide.Ids] = Nil,
       note: Option[BulkDecide.Note] = None,
-      dryRun: BulkDecide.DryRun = false,
+      dryRun: BulkDecide.DryRun = _root_.com.histmersion.api.automation.ApprovalDigest.BulkDecide.DryRun(false),
       limit: Option[BulkDecide.Limit] = None,
       by: Option[BulkDecide.By] = None
   ) derives KindlingsCodecAsObject,
@@ -113,11 +113,11 @@ object ApprovalDigest:
 
   final case class BulkResult(
       decision: BulkResult.Decision,
-      dryRun: BulkResult.DryRun = false,
-      matched: BulkResult.Matched = 0,
+      dryRun: BulkResult.DryRun = _root_.com.histmersion.api.automation.ApprovalDigest.BulkResult.DryRun(false),
+      matched: BulkResult.Matched = _root_.com.histmersion.api.automation.ApprovalDigest.BulkResult.Matched(0),
       decided: List[BulkResult.Decided] = Nil,
       failed: List[BulkFailed] = Nil,
-      left: BulkResult.Left = 0
+      left: BulkResult.Left = _root_.com.histmersion.api.automation.ApprovalDigest.BulkResult.Left(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -184,9 +184,9 @@ object ApprovalDigest:
       .take(math.max(1, b.limit.getOrElse(Int.MaxValue)))
 
   def line(d: Digest): com.histmersion.api.automation.ApprovalDigest.LineResult =
-    if d.total == 0 && d.heldForPerson == 0 then "approval digest: nothing waits for a person"
+    if d.total == 0 && d.heldForPerson == 0 then _root_.com.histmersion.api.automation.ApprovalDigest.LineResult("approval digest: nothing waits for a person")
     else
-      s"approval digest: ${Plural.count(d.total, "approval")} wait for a person" +
+      s"approval digest: ${Plural.count(d.total, _root_.com.histmersion.api.Plural.CountSingular("approval"))} wait for a person" +
         (if d.kinds.isEmpty then ""
          else
            " — " + d.kinds

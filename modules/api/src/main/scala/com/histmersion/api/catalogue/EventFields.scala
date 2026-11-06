@@ -27,7 +27,7 @@ object EventFields:
   val Historicity = "historicity"
   val Description = "description"
   val Geometry = "geometry"
-  val all: List[com.histmersion.api.catalogue.EventFields.All] = List(Label, Kind, Span, Historicity, Description, Geometry)
+  val all: List[com.histmersion.api.catalogue.EventFields.All] = List(_root_.com.histmersion.api.catalogue.EventFields.All(Label), _root_.com.histmersion.api.catalogue.EventFields.All(Kind), _root_.com.histmersion.api.catalogue.EventFields.All(Span), _root_.com.histmersion.api.catalogue.EventFields.All(Historicity), _root_.com.histmersion.api.catalogue.EventFields.All(Description), _root_.com.histmersion.api.catalogue.EventFields.All(Geometry))
 
   def point(lat: com.histmersion.api.catalogue.EventFields.PointLat, lon: com.histmersion.api.catalogue.EventFields.PointLon): Json =
     Json.obj("type" -> "Point".asJson, "coordinates" -> Json.arr(lon.asJson, lat.asJson))
@@ -39,7 +39,7 @@ object EventFields:
     Map(
       Label -> r.label.asJson,
       Kind -> EventTaxonomy.canonical(r.kind).asJson,
-      Span -> r.timeSpan.asJson,
+      { val refactorTuple3 = Span -> r.timeSpan.asJson; (_root_.com.histmersion.api.catalogue.EventFields.UpstreamResultPart1(refactorTuple3._1), refactorTuple3._2) },
       Historicity -> r.historicity.asJson,
       Description -> r.description.asJson,
       Geometry -> (for la <- r.lat; lo <- r.lon yield point(la, lo)).getOrElse(Json.Null)
@@ -59,7 +59,7 @@ object EventFields:
     Map(
       Label -> p.label.asJson,
       Kind -> EventTaxonomy.canonical(p.kind).asJson,
-      Span -> p.timeSpan.asJson,
+      { val refactorTuple4 = Span -> p.timeSpan.asJson; (_root_.com.histmersion.api.catalogue.EventFields.OfPutResultPart1(refactorTuple4._1), refactorTuple4._2) },
       Historicity -> p.historicity.asJson,
       Description -> p.description.filter(_.nonEmpty).asJson,
       Geometry -> geometry(p.geometry)

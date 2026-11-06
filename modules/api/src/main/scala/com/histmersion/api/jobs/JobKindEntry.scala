@@ -8,9 +8,9 @@ final case class JobKindEntry(
     kind: JobInfo.Kind,
     name: JobKindName,
     meaning: JobKindMeaning,
-    stoppable: JobKindEntry.Stoppable = false,
+    stoppable: JobKindEntry.Stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.Stoppable(false),
     subject: JobDetail => Option[JobKindEntry.SubjectResult] = _ => None,
-    ownControl: JobKindEntry.OwnControl = false
+    ownControl: JobKindEntry.OwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OwnControl(false)
 )
 
 object JobKindEntry:
@@ -38,7 +38,7 @@ object JobKindEntry:
       kind: JobInfo.Kind,
       name: com.histmersion.api.jobs.JobKindEntry.OfName,
       meaning: com.histmersion.api.jobs.JobKindEntry.OfMeaning,
-      stoppable: com.histmersion.api.jobs.JobKindEntry.OfStoppable = false,
+      stoppable: com.histmersion.api.jobs.JobKindEntry.OfStoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(false),
       subject: JobDetail => Option[com.histmersion.api.jobs.JobKindEntry.OfSubjectResult] = _ => None,
-      ownControl: com.histmersion.api.jobs.JobKindEntry.OfOwnControl = false
+      ownControl: com.histmersion.api.jobs.JobKindEntry.OfOwnControl = _root_.com.histmersion.api.jobs.JobKindEntry.OfOwnControl(false)
   ): JobKindEntry = JobKindEntry(kind, JobKindName(name), JobKindMeaning(meaning), stoppable, subject, ownControl)

@@ -4,8 +4,8 @@ enum LinkMatch:
   case Exact, Close
 
   def wire: com.histmersion.api.catalogue.LinkMatch.WireResult = this match
-    case Exact => "exact_match"
-    case Close => "close_match"
+    case Exact => _root_.com.histmersion.api.catalogue.LinkMatch.WireResult("exact_match")
+    case Close => _root_.com.histmersion.api.catalogue.LinkMatch.WireResult("close_match")
 
 object LinkMatch:
   /** LPF `links[].type`; anything else (`primaryTopicOf`, `subjectOf`, `seeAlso`) is no identity. */

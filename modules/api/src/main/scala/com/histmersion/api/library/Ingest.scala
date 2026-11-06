@@ -26,7 +26,7 @@ object Ingest:
 
   def originalDisposition(citekey: com.histmersion.api.library.Ingest.OriginalDispositionCitekey, storedName: com.histmersion.api.library.Ingest.OriginalDispositionStoredName): com.histmersion.api.library.Ingest.OriginalDispositionResult =
     val ext = storedName.reverse.takeWhile(_ != '.').reverse
-    s"""attachment; filename="$citekey.${if ext == storedName then "bin" else ext}""""
+    _root_.com.histmersion.api.library.Ingest.OriginalDispositionResult(s"""attachment; filename="$citekey.${if ext == storedName then "bin" else ext}"""")
 
   def dispositionExtension(disposition: com.histmersion.api.library.Ingest.DispositionExtensionDisposition): Option[com.histmersion.api.library.Ingest.DispositionExtensionResult] =
     """filename="?([^";]+)"?""".r
@@ -47,8 +47,8 @@ object Ingest:
   final case class Params(
       citekey: com.histmersion.api.library.Citekey,
       filename: Option[Params.Filename] = None,
-      quality: Params.Quality = false,
-      force: Params.Force = false,
+      quality: Params.Quality = _root_.com.histmersion.api.library.Ingest.Params.Quality(false),
+      force: Params.Force = _root_.com.histmersion.api.library.Ingest.Params.Force(false),
       title: Option[com.histmersion.api.library.Title] = None,
       authors: List[com.histmersion.api.library.AuthorName] = Nil,
       year: Option[com.histmersion.api.catalogue.Year] = None,
@@ -95,8 +95,8 @@ object Ingest:
       id: Request.Id,
       citekey: Option[com.histmersion.api.library.Citekey] = None,
       arxiv: Option[Request.Arxiv] = None,
-      refetch: Request.Refetch = false,
-      legalOnly: Request.LegalOnly = false
+      refetch: Request.Refetch = _root_.com.histmersion.api.library.Ingest.Request.Refetch(false),
+      legalOnly: Request.LegalOnly = _root_.com.histmersion.api.library.Ingest.Request.LegalOnly(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 

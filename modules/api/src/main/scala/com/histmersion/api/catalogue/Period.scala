@@ -9,7 +9,7 @@ import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 final case class Period(start: com.histmersion.api.catalogue.Year, end: com.histmersion.api.catalogue.Year):
-  def isPoint: com.histmersion.api.catalogue.Period.IsPointResult = start == end
+  def isPoint: com.histmersion.api.catalogue.Period.IsPointResult = _root_.com.histmersion.api.catalogue.Period.IsPointResult(start == end)
 
 object Period:
 
@@ -26,11 +26,11 @@ object Period:
 
   final case class ImportResult(
       periods: ImportResult.Periods,
-      roots: ImportResult.Roots = 0,
-      presets: ImportResult.Presets = 0,
+      roots: ImportResult.Roots = _root_.com.histmersion.api.catalogue.Period.ImportResult.Roots(0),
+      presets: ImportResult.Presets = _root_.com.histmersion.api.catalogue.Period.ImportResult.Presets(0),
       skipped: List[SkippedPeriod] = Nil,
-      skippedCount: ImportResult.SkippedCount = 0,
-      removed: ImportResult.Removed = 0
+      skippedCount: ImportResult.SkippedCount = _root_.com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(0),
+      removed: ImportResult.Removed = _root_.com.histmersion.api.catalogue.Period.ImportResult.Removed(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -73,10 +73,10 @@ object Period:
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def wireOf(p: Skip): com.histmersion.api.catalogue.Period.Skip.WireOfResult = p match
-      case NoSpan          => "no_span"
-      case EndsBeforeStart => "ends_before_start"
-      case OutOfRange      => "out_of_range"
-      case ImplausibleSpan => "implausible_span"
+      case NoSpan          => _root_.com.histmersion.api.catalogue.Period.Skip.WireOfResult("no_span")
+      case EndsBeforeStart => _root_.com.histmersion.api.catalogue.Period.Skip.WireOfResult("ends_before_start")
+      case OutOfRange      => _root_.com.histmersion.api.catalogue.Period.Skip.WireOfResult("out_of_range")
+      case ImplausibleSpan => _root_.com.histmersion.api.catalogue.Period.Skip.WireOfResult("implausible_span")
 
     given WireEnumValues[Skip]:
       def all: Array[Skip] = Skip.values

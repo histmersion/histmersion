@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class AssessRequest(id: AssessRequest.Id, apply: AssessRequest.Apply = false, forceStatus: AssessRequest.ForceStatus = false)
+final case class AssessRequest(id: AssessRequest.Id, apply: AssessRequest.Apply = _root_.com.histmersion.api.library.AssessRequest.Apply(false), forceStatus: AssessRequest.ForceStatus = _root_.com.histmersion.api.library.AssessRequest.ForceStatus(false))
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

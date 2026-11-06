@@ -45,7 +45,7 @@ object ArticleEventLead:
     names.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains)
 
   def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult =
-    if leads.isEmpty then ""
+    if leads.isEmpty then _root_.com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult("")
     else
       ("### Catalogue events in this article's period and region that it never names" :: "" ::
         leads.map { l =>

@@ -8,4 +8,4 @@ object Historicity:
   val Contested = "contested"
   val Legendary = "legendary"
   val Mythic = "mythic"
-  val all: List[com.histmersion.domain.catalogue.Historicity.All] = List(Attested, Inferred, Contested, Legendary, Mythic)
+  val all: List[com.histmersion.domain.catalogue.Historicity.All] = List(_root_.com.histmersion.domain.catalogue.Historicity.All(Attested), _root_.com.histmersion.domain.catalogue.Historicity.All(Inferred), _root_.com.histmersion.domain.catalogue.Historicity.All(Contested), _root_.com.histmersion.domain.catalogue.Historicity.All(Legendary), _root_.com.histmersion.domain.catalogue.Historicity.All(Mythic))

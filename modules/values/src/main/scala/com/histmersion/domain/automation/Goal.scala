@@ -27,14 +27,14 @@ object Goal:
     val Compiled = "compiled"
     val Reviewed = "reviewed"
     val Done = "done"
-    val all: List[com.histmersion.domain.automation.Goal.Status.All] = List(Planned, Seeding, Compiled, Reviewed, Done)
+    val all: List[com.histmersion.domain.automation.Goal.Status.All] = List(_root_.com.histmersion.domain.automation.Goal.Status.All(Planned), _root_.com.histmersion.domain.automation.Goal.Status.All(Seeding), _root_.com.histmersion.domain.automation.Goal.Status.All(Compiled), _root_.com.histmersion.domain.automation.Goal.Status.All(Reviewed), _root_.com.histmersion.domain.automation.Goal.Status.All(Done))
 
   /** What a goal is linked to. */
   enum LinkKind(val wire: LinkKind.Wire):
-    case Source extends LinkKind("source")
-    case Article extends LinkKind("article")
-    case Query extends LinkKind("query")
-    case QueueItem extends LinkKind("queue-item")
+    case Source extends LinkKind(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire("source"))
+    case Article extends LinkKind(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire("article"))
+    case Query extends LinkKind(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire("query"))
+    case QueueItem extends LinkKind(_root_.com.histmersion.domain.automation.Goal.LinkKind.Wire("queue-item"))
 
   object LinkKind:
 

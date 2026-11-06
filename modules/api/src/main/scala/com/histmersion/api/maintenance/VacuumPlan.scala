@@ -15,4 +15,4 @@ object VacuumPlan:
   object Tables extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[VacuumPlan]] =
-    com.histmersion.api.jobs.JobDetail.Field("vacuum", None)
+    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("vacuum"), None)

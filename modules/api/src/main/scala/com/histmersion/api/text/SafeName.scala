@@ -13,4 +13,4 @@ object SafeName:
       .map(c => if c.isLetterOrDigit || c == '.' || c == '_' || c == '-' then c else '-')
       .mkString
       .replaceAll("^-+|-+$", "")
-    if cleaned.isEmpty then "image.png" else cleaned
+    if cleaned.isEmpty then _root_.com.histmersion.api.text.SafeName.OfResult("image.png") else cleaned

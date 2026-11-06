@@ -21,11 +21,11 @@ object DeleteBlocker:
   object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Kind(val wire: Kind.Wire, val label: Kind.Label):
-    case Article extends Kind("article", "cited by article")
-    case Event extends Kind("event", "primary source of event")
-    case EventEdge extends Kind("event-edge", "source of event relation")
-    case EventParticipant extends Kind("event-participant", "source of event participant")
-    case Job extends Kind("job", "still being written by job")
+    case Article extends Kind(_root_.com.histmersion.api.library.DeleteBlocker.Kind.Wire("article"), _root_.com.histmersion.api.library.DeleteBlocker.Kind.Label("cited by article"))
+    case Event extends Kind(_root_.com.histmersion.api.library.DeleteBlocker.Kind.Wire("event"), _root_.com.histmersion.api.library.DeleteBlocker.Kind.Label("primary source of event"))
+    case EventEdge extends Kind(_root_.com.histmersion.api.library.DeleteBlocker.Kind.Wire("event-edge"), _root_.com.histmersion.api.library.DeleteBlocker.Kind.Label("source of event relation"))
+    case EventParticipant extends Kind(_root_.com.histmersion.api.library.DeleteBlocker.Kind.Wire("event-participant"), _root_.com.histmersion.api.library.DeleteBlocker.Kind.Label("source of event participant"))
+    case Job extends Kind(_root_.com.histmersion.api.library.DeleteBlocker.Kind.Wire("job"), _root_.com.histmersion.api.library.DeleteBlocker.Kind.Label("still being written by job"))
 
   object Kind:
     type Wire = Wire.T

@@ -4,7 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
 
-final case class RefsRequest(id: RefsRequest.Id, apply: RefsRequest.Apply = false) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+final case class RefsRequest(id: RefsRequest.Id, apply: RefsRequest.Apply = _root_.com.histmersion.api.library.RefsRequest.Apply(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
 object RefsRequest:
   type Id = Id.T

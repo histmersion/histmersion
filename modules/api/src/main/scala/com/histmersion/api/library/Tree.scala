@@ -152,9 +152,9 @@ object Tree:
   type ParseByS = ParseByS.T
   object ParseByS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val MaxDepth: com.histmersion.api.library.Tree.MaxDepth = 3
+  val MaxDepth: com.histmersion.api.library.Tree.MaxDepth = _root_.com.histmersion.api.library.Tree.MaxDepth(3)
 
-  val MaxSamples: com.histmersion.api.library.Tree.MaxSamples = 5
+  val MaxSamples: com.histmersion.api.library.Tree.MaxSamples = _root_.com.histmersion.api.library.Tree.MaxSamples(5)
 
   val KindTime = "time"
   val KindRegion = "region"
@@ -181,8 +181,8 @@ object Tree:
     object PlaceIds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def coversAsOf(p: Option[Period], asOf: Option[com.histmersion.api.library.Tree.CoversAsOfAsOf]): com.histmersion.api.library.Tree.CoversAsOfResult = (p, asOf) match
-    case (None, _)                     => true
-    case (_, None)                     => true
+    case (None, _)                     => _root_.com.histmersion.api.library.Tree.CoversAsOfResult(true)
+    case (_, None)                     => _root_.com.histmersion.api.library.Tree.CoversAsOfResult(true)
     case (Some(Period(a, b)), Some(y)) => y >= a && y <= b
 
   private def overlaps(row: TreeRow, from: com.histmersion.api.library.Tree.OverlapsFrom, to: com.histmersion.api.library.Tree.OverlapsTo): com.histmersion.api.library.Tree.OverlapsResult =
@@ -190,11 +190,11 @@ object Tree:
 
   def midpoint(start: com.histmersion.api.library.Tree.MidpointStart, end: com.histmersion.api.library.Tree.MidpointEnd): com.histmersion.api.library.Tree.MidpointResult = start + Math.floorDiv(end - start, 2L)
 
-  def timeTime(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTimeFrom, to: com.histmersion.api.library.Tree.TimeTimeTo, depth: com.histmersion.api.library.Tree.TimeTimeDepth, samples: com.histmersion.api.library.Tree.TimeTimeSamples = 0): List[Bucket] =
+  def timeTime(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTimeFrom, to: com.histmersion.api.library.Tree.TimeTimeTo, depth: com.histmersion.api.library.Tree.TimeTimeDepth, samples: com.histmersion.api.library.Tree.TimeTimeSamples = _root_.com.histmersion.api.library.Tree.TimeTimeSamples(0)): List[Bucket] =
     val (lo, hi) = order(from, to)
-    timeLevel(rows, lo, hi, Aggregate.bucketSize(hi - lo), clamp(depth), samples, (_, _, _) => (Nil, 0))
+    timeLevel(rows, lo, hi, Aggregate.bucketSize(hi - lo), clamp(depth), samples, (_, _, _) => (Nil, _root_.com.histmersion.api.library.Tree.TimeLevelNestResultPart2(0)))
 
-  def timeTree(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTreeFrom, to: com.histmersion.api.library.Tree.TimeTreeTo, depth: com.histmersion.api.library.Tree.TimeTreeDepth, samples: com.histmersion.api.library.Tree.TimeTreeSamples = 0): List[Bucket] =
+  def timeTree(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTreeFrom, to: com.histmersion.api.library.Tree.TimeTreeTo, depth: com.histmersion.api.library.Tree.TimeTreeDepth, samples: com.histmersion.api.library.Tree.TimeTreeSamples = _root_.com.histmersion.api.library.Tree.TimeTreeSamples(0)): List[Bucket] =
     timeTime(rows, from, to, depth, samples)
 
   private def timeLevel(
@@ -235,7 +235,7 @@ object Tree:
         )
     }
 
-  val SplitRatio: com.histmersion.api.library.Tree.SplitRatio = 0.8
+  val SplitRatio: com.histmersion.api.library.Tree.SplitRatio = _root_.com.histmersion.api.library.Tree.SplitRatio(0.8)
 
   def splitWorthShowing(parent: com.histmersion.api.library.Tree.SplitWorthShowingParent, kids: List[Bucket]): List[Bucket] =
     if kids.sizeIs > 1 && kids.exists(_.count < parent * SplitRatio) then kids else Nil
@@ -246,7 +246,7 @@ object Tree:
       relations: List[Place.Relation],
       asOf: Option[com.histmersion.api.library.Tree.RegionTreeAsOf],
       depth: com.histmersion.api.library.Tree.RegionTreeDepth,
-      samples: com.histmersion.api.library.Tree.RegionTreeSamples = 0,
+      samples: com.histmersion.api.library.Tree.RegionTreeSamples = _root_.com.histmersion.api.library.Tree.RegionTreeSamples(0),
       root: Option[com.histmersion.api.library.Tree.RegionTreeRoot] = None
   ): List[Bucket] =
     regions(rows, nodes, relations, asOf, clamp(depth), samples, (_, _) => Nil, root)._1
@@ -258,7 +258,7 @@ object Tree:
       nodes: List[RegionNode],
       relations: List[Place.Relation],
       depth: com.histmersion.api.library.Tree.TimeRegionTreeDepth,
-      samples: com.histmersion.api.library.Tree.TimeRegionTreeSamples = 0
+      samples: com.histmersion.api.library.Tree.TimeRegionTreeSamples = _root_.com.histmersion.api.library.Tree.TimeRegionTreeSamples(0)
   ): List[Bucket] =
     val (lo, hi) = order(from, to)
     timeLevel(
@@ -266,7 +266,7 @@ object Tree:
       lo,
       hi,
       Aggregate.bucketSize(hi - lo),
-      2,
+      _root_.com.histmersion.api.library.Tree.TimeLevelDepth(2),
       samples,
       (mine, bStart, bEnd) =>
         regions(mine, nodes, relations, Some(midpoint(bStart, bEnd)), clamp(depth), samples, (_, _) => Nil)
@@ -280,7 +280,7 @@ object Tree:
       relations: List[Place.Relation],
       asOf: Option[com.histmersion.api.library.Tree.RegionTimeTreeAsOf],
       depth: com.histmersion.api.library.Tree.RegionTimeTreeDepth,
-      samples: com.histmersion.api.library.Tree.RegionTimeTreeSamples = 0,
+      samples: com.histmersion.api.library.Tree.RegionTimeTreeSamples = _root_.com.histmersion.api.library.Tree.RegionTimeTreeSamples(0),
       root: Option[com.histmersion.api.library.Tree.RegionTimeTreeRoot] = None
   ): List[Bucket] =
     val (lo, hi) = order(from, to)
@@ -394,12 +394,12 @@ object Tree:
       if next.isEmpty then seen else go(next, seen ++ next)
     go(start, start)
 
-  private def distinct(rows: List[TreeRow]): com.histmersion.api.library.Tree.DistinctResult = rows.iterator.map(_.key).toSet.size
+  private def distinct(rows: List[TreeRow]): com.histmersion.api.library.Tree.DistinctResult = _root_.com.histmersion.api.library.Tree.DistinctResult(rows.iterator.map(_.key).toSet.size)
 
   private def overlapOf(rows: List[TreeRow], groups: List[List[TreeRow]]): com.histmersion.api.library.Tree.OverlapOfResult =
     val sets = groups.map(_.iterator.map(_.key).toSet).filter(_.nonEmpty)
-    if sets.sizeIs < 2 then 0
-    else rows.iterator.map(_.key).toSet.count(k => sets.count(_.contains(k)) > 1)
+    if sets.sizeIs < 2 then _root_.com.histmersion.api.library.Tree.OverlapOfResult(0)
+    else _root_.com.histmersion.api.library.Tree.OverlapOfResult(rows.iterator.map(_.key).toSet.count(k => sets.count(_.contains(k)) > 1))
 
   private def sampleOf(rows: List[TreeRow], n: com.histmersion.api.library.Tree.SampleOfN): List[Bucket.Sample] =
     if n <= 0 then Nil

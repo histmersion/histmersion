@@ -143,7 +143,7 @@ object Query:
     var i = 0
     val n = sql.length
     var depth = 0
-    def at(k: com.histmersion.api.library.Query.StatementsAtK): com.histmersion.api.library.Query.StatementsAtResult = if k >= 0 && k < n then sql.charAt(k) else 0.toChar
+    def at(k: com.histmersion.api.library.Query.StatementsAtK): com.histmersion.api.library.Query.StatementsAtResult = if k >= 0 && k < n then sql.charAt(k) else _root_.com.histmersion.api.library.Query.StatementsAtResult(0.toChar)
     while i < n do
       val c = sql.charAt(i)
       if depth > 0 then
@@ -162,7 +162,7 @@ object Query:
           else if q == c then { cur.append(c); i += 1; closed = true }
           else { cur.append(q); i += 1 }
       else if c == '$' then
-        dollarTag(sql, i) match
+        dollarTag(sql, _root_.com.histmersion.api.library.Query.DollarTagI(i)) match
           case Some(tag) =>
             val end = sql.indexOf(tag, i + tag.length)
             val to = if end < 0 then n else end + tag.length
@@ -171,7 +171,7 @@ object Query:
       else if c == ';' then { out += cur.toString; cur.clear(); i += 1 }
       else { cur.append(c); i += 1 }
     out += cur.toString
-    out.result().map(_.trim).filter(_.nonEmpty)
+    (out.result().map(_.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.library.Query.StatementsResult(refactorValue))
 
   private def dollarTag(sql: com.histmersion.api.library.Query.DollarTagSql, i: com.histmersion.api.library.Query.DollarTagI): Option[com.histmersion.api.library.Query.DollarTagResult] =
     val close = sql.indexOf('$', i + 1)
@@ -194,7 +194,7 @@ object Query:
           depth -= 1
           at += 2
         else at += 1
-      if depth == 0 then text.substring(at).trim else ""
+      if depth == 0 then text.substring(at).trim else _root_.com.histmersion.api.library.Query.LeadingKeywordAfterBlockCommentResult("")
     var s = statement.trim
     var go = true
     while go do
@@ -205,40 +205,40 @@ object Query:
 
   def check(sql: com.histmersion.api.library.Query.CheckSql): Either[com.histmersion.api.library.Query.CheckResultPart1, com.histmersion.api.library.Query.CheckResultPart2] =
     val text = sql.trim
-    if text.isEmpty then Left("empty statement")
+    if text.isEmpty then Left(_root_.com.histmersion.api.library.Query.CheckResultPart1("empty statement"))
     else
       statements(text) match
-        case Nil        => Left("empty statement")
+        case Nil        => Left(_root_.com.histmersion.api.library.Query.CheckResultPart1("empty statement"))
         case one :: Nil =>
           val kw = leadingKeyword(one)
           if Forbidden.contains(kw) then
             Left(
-              s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
-                "WITH that only reads); transaction and session control are refused"
+              _root_.com.histmersion.api.library.Query.CheckResultPart1(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
+                "WITH that only reads); transaction and session control are refused")
             )
           else Right(one)
         case many =>
           Left(
-            s"${many.size} statements were given — `query` runs exactly ONE; " +
-              "drop the ';'-separated batch and ask again"
+            _root_.com.histmersion.api.library.Query.CheckResultPart1(s"${many.size} statements were given — `query` runs exactly ONE; " +
+              "drop the ';'-separated batch and ask again")
           )
 
   private def cell(v: Option[com.histmersion.api.library.Query.CellV]): com.histmersion.api.library.Query.CellResult =
     v.getOrElse("NULL").replace("|", "\\|").linesIterator.mkString(" ").trim
 
   def markdownTable(columns: List[com.histmersion.api.library.Query.MarkdownTableColumns], rows: List[List[Option[com.histmersion.api.library.Query.MarkdownTableRows]]]): com.histmersion.api.library.Query.MarkdownTableResult =
-    if columns.isEmpty then "_(no columns)_"
+    if columns.isEmpty then _root_.com.histmersion.api.library.Query.MarkdownTableResult("_(no columns)_")
     else
       val header = columns.map(_.replace("|", "\\|")).mkString("| ", " | ", " |")
       val rule = columns.map(_ => "---").mkString("|", "|", "|")
       val body = rows.map(r => columns.indices.map(i => cell(r.lift(i).flatten)).mkString("| ", " | ", " |"))
       // No stripMargin: every row starts with '|', which stripMargin would eat.
-      (List(header, rule) ++ body).mkString("\n")
+      _root_.com.histmersion.api.library.Query.MarkdownTableResult((List(header, rule) ++ body).mkString("\n"))
 
   def markdown(r: QueryResult): com.histmersion.api.library.Query.MarkdownResult =
     val head =
       s"### ${r.rowCount} row(s)${if r.truncated then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
-    if r.rows.isEmpty then s"$head\n\n_no rows_"
+    if r.rows.isEmpty then _root_.com.histmersion.api.library.Query.MarkdownResult(s"$head\n\n_no rows_")
     else s"$head\n\n${markdownTable(r.columns, r.rows)}"
 
   private val Key = Set(
@@ -270,13 +270,13 @@ object Query:
   )
 
   def schemaMarkdown(s: SchemaTables): com.histmersion.api.library.Query.SchemaMarkdownResult =
-    if s.tables.isEmpty then "_(no tables)_"
+    if s.tables.isEmpty then _root_.com.histmersion.api.library.Query.SchemaMarkdownResult("_(no tables)_")
     else
       val rows = s.tables.map { t =>
         val cols = t.columns.map(c => s"${c.name} ${c.dataType}").mkString(", ")
         s"- **${t.name}** (${t.kind}) — $cols"
       }
-      s"### ${s.tables.size} table(s)\n\n${rows.mkString("\n")}"
+      _root_.com.histmersion.api.library.Query.SchemaMarkdownResult(s"### ${s.tables.size} table(s)\n\n${rows.mkString("\n")}")
 
   def toolDescription(s: SchemaTables): com.histmersion.api.library.Query.ToolDescriptionResult =
     val tables =
@@ -289,10 +289,10 @@ object Query:
             s"${t.name}($cols)"
           }
           .mkString("; ")
-    "Run ONE read-only SQL statement against the Histmersion Postgres/PostGIS store and get columns + " +
+    _root_.com.histmersion.api.library.Query.ToolDescriptionResult("Run ONE read-only SQL statement against the Histmersion Postgres/PostGIS store and get columns + " +
       "rows back as a Markdown table. Use it for the questions `search`/`facets`/`histogram` cannot " +
       "express — cross-tabulations, counts by two dimensions, set differences. The statement runs " +
       "in a READ ONLY transaction with a statement timeout and a row cap, so INSERT/UPDATE/DELETE/" +
       "CREATE/DROP are refused by Postgres itself; SELECT only. Deep time is an int8range of SIGNED " +
       "years (BCE negative) — read the inclusive upper bound as `upper(period) - 1`. Geometry is " +
-      "PostGIS; use ST_X/ST_Y/ST_AsText. Tables: " + tables + "."
+      "PostGIS; use ST_X/ST_Y/ST_AsText. Tables: " + tables + ".")

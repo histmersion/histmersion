@@ -6,12 +6,12 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class JobCounts(
-    queued: JobCounts.Queued = 0,
-    running: JobCounts.Running = 0,
-    done: JobCounts.Done = 0,
-    failed: JobCounts.Failed = 0,
-    paused: JobCounts.Paused = 0,
-    cancelled: JobCounts.Cancelled = 0
+    queued: JobCounts.Queued = _root_.com.histmersion.api.jobs.JobCounts.Queued(0),
+    running: JobCounts.Running = _root_.com.histmersion.api.jobs.JobCounts.Running(0),
+    done: JobCounts.Done = _root_.com.histmersion.api.jobs.JobCounts.Done(0),
+    failed: JobCounts.Failed = _root_.com.histmersion.api.jobs.JobCounts.Failed(0),
+    paused: JobCounts.Paused = _root_.com.histmersion.api.jobs.JobCounts.Paused(0),
+    cancelled: JobCounts.Cancelled = _root_.com.histmersion.api.jobs.JobCounts.Cancelled(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def of(s: JobState): com.histmersion.api.jobs.JobCounts.OfResult = s match
@@ -82,4 +82,4 @@ object JobCounts:
             case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, paused + n, cancelled)
             case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, cancelled + n)
             case None                     => loop(tail, queued, running, done, failed, paused, cancelled)
-    loop(rows, 0, 0, 0, 0, 0, 0)
+    loop(rows, _root_.com.histmersion.api.jobs.JobCounts.OfLoopQueued(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopRunning(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopDone(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopFailed(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopPaused(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopCancelled(0))

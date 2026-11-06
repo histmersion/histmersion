@@ -71,7 +71,7 @@ object Markdown:
   type AsOfNoteAsOf = AsOfNoteAsOf.T
   object AsOfNoteAsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private[api] def year(y: Option[com.histmersion.api.Markdown.YearY]): com.histmersion.api.Markdown.YearResult = y.map(_.toString).getOrElse("n.d.")
+  private[api] def year(y: Option[com.histmersion.api.Markdown.YearY]): com.histmersion.api.Markdown.YearResult = _root_.com.histmersion.api.Markdown.YearResult(y.map(_.toString).getOrElse("n.d."))
   private[api] def fmtYear(v: com.histmersion.api.Markdown.FmtYearV): com.histmersion.api.Markdown.FmtYearResult = YearFmt(v)
   private[api] def period(start: Option[com.histmersion.api.Markdown.PeriodStart], end: Option[com.histmersion.api.Markdown.PeriodEnd]): com.histmersion.api.Markdown.PeriodResult = periodLabel(start, end)
 
@@ -113,16 +113,16 @@ object Markdown:
     s.stateOf match
       case Some(Backup.State.Done)   => s.result.map(backup).getOrElse(s"### Backup written\n\n- **file:** ${s.file}")
       case Some(Backup.State.Failed) =>
-        s"### Backup failed\n\n- **file:** ${s.file}\n- **error:** ${s.error.getOrElse("unknown")}"
+        _root_.com.histmersion.api.Markdown.BackupStatusResult(s"### Backup failed\n\n- **file:** ${s.file}\n- **error:** ${s.error.getOrElse("unknown")}")
       case _ =>
         s"### Backup running\n\n- **file:** ${s.file}\n- **for:** ${s.durationMs / 1000} s — " +
           "`histmersion backup` waits for it; `GET /api/backup/status` reports when it is written"
 
   def backups(rows: Vector[Backup.Info]): com.histmersion.api.Markdown.BackupsResult =
-    if rows.isEmpty then "_No backups on the server yet._"
+    if rows.isEmpty then _root_.com.histmersion.api.Markdown.BackupsResult("_No backups on the server yet._")
     else
       val items = rows.map(b => s"- **${b.file}** — ${Backup.humanBytes(b.bytes)} · ${b.createdAt}")
-      s"### ${rows.size} backup(s)\n\n${items.mkString("\n")}"
+      _root_.com.histmersion.api.Markdown.BackupsResult(s"### ${rows.size} backup(s)\n\n${items.mkString("\n")}")
 
   def restored(r: RestoreResult): com.histmersion.api.Markdown.RestoredResult =
     val warn =
@@ -130,14 +130,14 @@ object Markdown:
       else
         s"\n\n_pg_restore reported ${r.warnings.size} ignored error(s):_\n" +
           r.warnings.take(10).map(w => s"- $w").mkString("\n")
-    s"""### Restored ${r.file}
+    _root_.com.histmersion.api.Markdown.RestoredResult(s"""### Restored ${r.file}
        |
        |- **schema version:** ${r.schemaVersion} (Flyway validate passed)
        |- **sources:** ${r.sourcesBefore} → ${r.sourcesAfter}
-       |- **took:** ${r.durationMs} ms""".stripMargin + warn
+       |- **took:** ${r.durationMs} ms""".stripMargin + warn)
 
-  def contestedMark(contested: com.histmersion.api.Markdown.ContestedMarkContested, label: com.histmersion.api.Markdown.ContestedMarkLabel = ""): com.histmersion.api.Markdown.ContestedMarkResult =
-    if contested && !label.toLowerCase.contains("contested") then " (contested)" else ""
+  def contestedMark(contested: com.histmersion.api.Markdown.ContestedMarkContested, label: com.histmersion.api.Markdown.ContestedMarkLabel = _root_.com.histmersion.api.Markdown.ContestedMarkLabel("")): com.histmersion.api.Markdown.ContestedMarkResult =
+    if contested && !label.toLowerCase.contains("contested") then _root_.com.histmersion.api.Markdown.ContestedMarkResult(" (contested)") else _root_.com.histmersion.api.Markdown.ContestedMarkResult("")
 
   private[api] def asOfNote(asOf: Option[com.histmersion.api.Markdown.AsOfNoteAsOf]): com.histmersion.api.Markdown.AsOfNoteResult =
     asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")

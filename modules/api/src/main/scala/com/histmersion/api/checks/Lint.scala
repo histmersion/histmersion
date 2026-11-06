@@ -133,13 +133,13 @@ object Lint:
       sourcesReindexed: LintFixResult.SourcesReindexed,
       chunksWritten: LintFixResult.ChunksWritten,
       remaining: LintFixResult.Remaining,
-      findingsRegeocoded: LintFixResult.FindingsRegeocoded = 0,
-      findingsPlaced: LintFixResult.FindingsPlaced = 0,
-      placesReclassified: LintFixResult.PlacesReclassified = 0,
-      placesMerged: LintFixResult.PlacesMerged = 0,
-      placesRelocated: LintFixResult.PlacesRelocated = 0,
-      pointAreasRemoved: LintFixResult.PointAreasRemoved = 0,
-      pointAreasRemaining: LintFixResult.PointAreasRemaining = 0
+      findingsRegeocoded: LintFixResult.FindingsRegeocoded = _root_.com.histmersion.api.checks.Lint.LintFixResult.FindingsRegeocoded(0),
+      findingsPlaced: LintFixResult.FindingsPlaced = _root_.com.histmersion.api.checks.Lint.LintFixResult.FindingsPlaced(0),
+      placesReclassified: LintFixResult.PlacesReclassified = _root_.com.histmersion.api.checks.Lint.LintFixResult.PlacesReclassified(0),
+      placesMerged: LintFixResult.PlacesMerged = _root_.com.histmersion.api.checks.Lint.LintFixResult.PlacesMerged(0),
+      placesRelocated: LintFixResult.PlacesRelocated = _root_.com.histmersion.api.checks.Lint.LintFixResult.PlacesRelocated(0),
+      pointAreasRemoved: LintFixResult.PointAreasRemoved = _root_.com.histmersion.api.checks.Lint.LintFixResult.PointAreasRemoved(0),
+      pointAreasRemaining: LintFixResult.PointAreasRemaining = _root_.com.histmersion.api.checks.Lint.LintFixResult.PointAreasRemaining(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -215,92 +215,92 @@ object Lint:
 
   val all: List[Rule] = List(
     Rule(
-      DanglingEdges,
-      "edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(DanglingEdges),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("edge targets that are not citekeys — dead references and unresolved [[wikilinks]]; the ones SHAPED like a citekey (a four-digit year) are listed first, because the rest are links to concept articles")
     ),
     Rule(
-      UnresolvedShortCitekeys,
-      "dangling edge targets that ARE a prefix of one or more real citekeys — `lint --fix` rewrites the unambiguous ones"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(UnresolvedShortCitekeys),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("dangling edge targets that ARE a prefix of one or more real citekeys — `lint --fix` rewrites the unambiguous ones")
     ),
-    Rule(NoFindings, "sources with no findings mined out of them yet (un-enriched)"),
-    Rule(NoPeriod, "sources with no deep-time period, so they appear on no timeline"),
-    Rule(NoRegions, "sources with no regions, so they appear in no region tree"),
-    Rule(EmptySummary, "sources whose summary is missing or blank"),
-    Rule(UnassessedStatus, "sources still at status=unassessed"),
-    Rule(DuplicateDoi, "the same DOI stored under more than one citekey"),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(NoFindings), _root_.com.histmersion.api.checks.Lint.Rule.Description("sources with no findings mined out of them yet (un-enriched)")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(NoPeriod), _root_.com.histmersion.api.checks.Lint.Rule.Description("sources with no deep-time period, so they appear on no timeline")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(NoRegions), _root_.com.histmersion.api.checks.Lint.Rule.Description("sources with no regions, so they appear in no region tree")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(EmptySummary), _root_.com.histmersion.api.checks.Lint.Rule.Description("sources whose summary is missing or blank")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(UnassessedStatus), _root_.com.histmersion.api.checks.Lint.Rule.Description("sources still at status=unassessed")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(DuplicateDoi), _root_.com.histmersion.api.checks.Lint.Rule.Description("the same DOI stored under more than one citekey")),
     Rule(
-      DuplicateSha256,
-      "the same file hash stored under more than one citekey (skipped while the column is unpopulated)"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(DuplicateSha256),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("the same file hash stored under more than one citekey (skipped while the column is unpopulated)")
     ),
-    Rule(OrphanSources, "sources with no incoming and no outgoing edges — cited by nothing, citing nothing"),
-    Rule(StaleChunks, "sources that have a body but no full-text chunks — `lint --fix` reindexes them"),
-    Rule(UndatedFindings, "findings with no period, so they are invisible to every time filter"),
-    Rule(UnlocatedFindings, "findings with neither coordinates nor a region — invisible on the map"),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(OrphanSources), _root_.com.histmersion.api.checks.Lint.Rule.Description("sources with no incoming and no outgoing edges — cited by nothing, citing nothing")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(StaleChunks), _root_.com.histmersion.api.checks.Lint.Rule.Description("sources that have a body but no full-text chunks — `lint --fix` reindexes them")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(UndatedFindings), _root_.com.histmersion.api.checks.Lint.Rule.Description("findings with no period, so they are invisible to every time filter")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(UnlocatedFindings), _root_.com.histmersion.api.checks.Lint.Rule.Description("findings with neither coordinates nor a region — invisible on the map")),
     Rule(
-      LegacyFigureLinks,
-      "bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histmersion seed --force`) to rewrite them"
-    ),
-    Rule(
-      DanglingArticleLinks,
-      "`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it"
-    ),
-    Rule(NonCanonicalTag, "tags not in lowercase_snake_case (the canonical form)"),
-    Rule(MissingYear, "sources with no publication year — rendered as n.d."),
-    Rule(YearCitekeyMismatch, "the four-digit year in the citekey does not match the stored publication year"),
-    Rule(AuthorPipe, "author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")"),
-    Rule(ArticleFiller, "articles whose body contains banned filler phrases from the writing guide"),
-    Rule(ArticleUncitedParagraph, "article body paragraphs with no [[citekey]] citation"),
-    Rule(
-      ArticleThinSummary,
-      s"article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than $MinSummaryChars characters — the card and the search hit show nothing useful"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(LegacyFigureLinks),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("bodies whose figures still point at a `figures/…` path (usually the converter's own absolute path) instead of the canonical `assets/…` — they render as 0×0 images; re-import the note (`histmersion seed --force`) to rewrite them")
     ),
     Rule(
-      ArticleCritiquePairing,
-      "article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(DanglingArticleLinks),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("`[[wikilinks]]` in an ARTICLE that resolve to nothing — neither a compiled article slug nor a source citekey (nor a unique short form of one); they render as plain text, so the reader sees a name with no page behind it")
+    ),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(NonCanonicalTag), _root_.com.histmersion.api.checks.Lint.Rule.Description("tags not in lowercase_snake_case (the canonical form)")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(MissingYear), _root_.com.histmersion.api.checks.Lint.Rule.Description("sources with no publication year — rendered as n.d.")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(YearCitekeyMismatch), _root_.com.histmersion.api.checks.Lint.Rule.Description("the four-digit year in the citekey does not match the stored publication year")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(AuthorPipe), _root_.com.histmersion.api.checks.Lint.Rule.Description("author names containing a pipe '|' — likely a parse artifact (\"Cline| Eric H.\")")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(ArticleFiller), _root_.com.histmersion.api.checks.Lint.Rule.Description("articles whose body contains banned filler phrases from the writing guide")),
+    Rule(_root_.com.histmersion.api.checks.Lint.Rule.Name(ArticleUncitedParagraph), _root_.com.histmersion.api.checks.Lint.Rule.Description("article body paragraphs with no [[citekey]] citation")),
+    Rule(
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(ArticleThinSummary),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description(s"article summaries that are missing, a stand-in (\"placeholder\", TODO…) or shorter than $MinSummaryChars characters — the card and the search hit show nothing useful")
     ),
     Rule(
-      SupersededWithoutEdge,
-      "sources with status=superseded but no superseded_by edge — set the edge or change the status"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(ArticleCritiquePairing),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("article paragraphs that cite one side of a disagreement edge (challenges, refutes, updates, superseded_by) and name the other side's author without citing it — the critique is written but the pair stays open; `lint --rule article-critique-pairing --fix` appends the missing citekey where the name points at exactly one work")
     ),
     Rule(
-      ArticleFormat,
-      "article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(SupersededWithoutEdge),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("sources with status=superseded but no superseded_by edge — set the edge or change the status")
     ),
     Rule(
-      NoteFormat,
-      "the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(ArticleFormat),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("article bodies and summaries whose Markdown will not display as written — tables shown as pipes, unpaired ** or `, links that are not links, malformed [[wikilinks]], pasted frontmatter, headings without a space, chatter and placeholders; one line per problem (`histmersion article lint <slug> --fix` repairs the safe ones)")
     ),
     Rule(
-      FindingGeocode,
-      "findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(NoteFormat),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("the same formatting check over each source's summary and notes (`histmersion lint --source <citekey> --fix`)")
     ),
     Rule(
-      FindingUnplaced,
-      "findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(FindingGeocode),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("findings whose point the OLD geocoder chose for their place name (before #981 it let an alias, a placeholder point or the wrong dated snapshot win) and that the current ranking puts elsewhere; hand-placed points are never listed — `lint --rule finding-geocode --fix` moves them")
     ),
     Rule(
-      PlaceKindRule,
-      "point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(FindingUnplaced),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("findings that name a place but have no point, where the gazetteer now knows that name (a re-seed added the English names: Dead Sea, Balkans, Kraków…) — `lint --rule finding-unplaced --fix` gives them the geocoder's point; a finding that has a point is never touched")
     ),
     Rule(
-      PlaceGridPoint,
-      "Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(PlaceKindRule),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("point-only seed regions that are something else, by their Pleiades types and linked Wikidata item: a people or civic tribe (→ people), a province or diocese (→ polity, with a period), a settlement (→ site), a place Pleiades withdrew as a duplicate (→ merged into its replacement); one line each: id, label, current → proposed kind, why, evidence — `lint --rule place-kind --fix` applies them and re-matches findings to places")
     ),
     Rule(
-      PlaceImportedPointArea,
-      "GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(PlaceGridPoint),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("Pleiades places whose point is only the centre of an atlas grid square, where a linked record (Wikidata's coordinate) gives a real point — `lint --rule place-grid-point --fix` moves them there and re-matches findings to places")
     ),
     Rule(
-      FindingPlaceholder,
-      "findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(PlaceImportedPointArea),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("GeoNames and Wikidata places of an area kind (region, polity, people: `places.sources.point-area-kinds`) stored with only a point — no shape, so no region; the importer no longer keeps them. Listed: the counts by source, kind and dating, every one that holds a finding (and how many of those findings it is the only place of), then a sample — `lint --rule place-imported-point-area --fix` removes them with their names, links and finding matches, in batches, and matches the affected sources' findings again")
     ),
     Rule(
-      MediaLicenceRule,
-      "stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(FindingPlaceholder),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("findings whose point is a placeholder (an atlas grid square's centre, or the point the geocoder gives a region) and whose place name the gazetteer cannot resolve, or that have none — no site takes them, and the areas that do are only those covering the point; give the finding a place name the gazetteer knows (or the place a name with `places name add`), or a real point")
     ),
     Rule(
-      EventCorrectionConflict,
-      "catalogue events a person corrected by hand whose catalogue has since changed the same field to something else — the person's value is still applied; review each (`histmersion events corrections --status conflict`) and either keep it (patch it again) or take the catalogue's (patch the field to the catalogue's value, which retires the correction)"
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(MediaLicenceRule),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("stored pictures with no licence, or a provider's picture with no credit line — they cannot be shown as their licence requires; a source's figure is listed as `<citekey>/<name>` (it takes its source's licence with `histmersion media fill-licences` once the source records one), a provider's as `media:<uid>` (re-import it with `histmersion media import wikidata --refresh`); a book cover (Calibre, Open Library) needs a credit line only — it is the publisher's picture of the user's own copy, shown locally and never exported")
+    ),
+    Rule(
+      _root_.com.histmersion.api.checks.Lint.Rule.Name(EventCorrectionConflict),
+      _root_.com.histmersion.api.checks.Lint.Rule.Description("catalogue events a person corrected by hand whose catalogue has since changed the same field to something else — the person's value is still applied; review each (`histmersion events corrections --status conflict`) and either keep it (patch it again) or take the catalogue's (patch the field to the catalogue's value, which retires the correction)")
     )
   )
 
@@ -316,7 +316,7 @@ object Lint:
     else
       val unknown = wanted.filter(w => rule(w).isEmpty)
       if unknown.nonEmpty then
-        Left(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}")
+        Left(_root_.com.histmersion.api.checks.Lint.SelectResultPart1(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}"))
       else Right(wanted.flatMap(rule).distinct)
 
   def blank(s: Option[com.histmersion.api.checks.Lint.BlankS]): com.histmersion.api.checks.Lint.BlankResult = s.forall(_.trim.isEmpty)
@@ -329,7 +329,7 @@ object Lint:
         val n = math.min(a.length, b.length)
         var i = 0
         while i < n && a.charAt(i) == b.charAt(i) do i += 1
-        i
+        _root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixResult(i)
       val scored = citekeys.iterator
         .filter(_ != target)
         .flatMap { ck =>
@@ -397,32 +397,32 @@ object Lint:
 
   private val Abbreviations: Set[com.histmersion.api.checks.Lint.Abbreviations] =
     Set(
-      "c",
-      "ca",
-      "cf",
-      "e.g",
-      "i.e",
-      "etc",
-      "vs",
-      "al",
-      "fl",
-      "st",
-      "mt",
-      "no",
-      "vol",
-      "pp",
-      "p",
-      "ed",
-      "eds",
-      "dr",
-      "fig"
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("c"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("ca"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("cf"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("e.g"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("i.e"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("etc"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("vs"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("al"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("fl"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("st"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("mt"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("no"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("vol"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("pp"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("p"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("ed"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("eds"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("dr"),
+      _root_.com.histmersion.api.checks.Lint.Abbreviations("fig")
     )
 
   private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
 
   def sentenceCount(text: com.histmersion.api.checks.Lint.SentenceCountText): com.histmersion.api.checks.Lint.SentenceCountResult =
     val t = text.trim
-    if t.isEmpty then 0
+    if t.isEmpty then _root_.com.histmersion.api.checks.Lint.SentenceCountResult(0)
     else
       // No `\p{Lu}` in the pattern: this code is also compiled to Scala.js, so the next char is tested instead.
       val ends = SentenceEnd.findAllMatchIn(t).count { m =>
@@ -430,7 +430,7 @@ object Lint:
         val word = m.group(1).replaceAll("^[(\"“]+", "").toLowerCase
         (next.isUpper || "[“\"(".contains(next)) && !(Abbreviations(word) || (word.length == 1 && word.head.isLetter))
       }
-      ends + 1
+      _root_.com.histmersion.api.checks.Lint.SentenceCountResult(ends + 1)
 
   def isListLeadIn(text: com.histmersion.api.checks.Lint.IsListLeadInText): com.histmersion.api.checks.Lint.IsListLeadInResult =
     val t = text.trim
@@ -447,7 +447,7 @@ object Lint:
       leadIn = None
     def flush(): Unit =
       val text = current.toString.trim
-      if text.nonEmpty then if isListLeadIn(text) then leadIn = Some(text) else paras += text
+      if text.nonEmpty then if isListLeadIn(_root_.com.histmersion.api.checks.Lint.IsListLeadInText(text)) then leadIn = Some(_root_.com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn(text)) else paras += text
       current.clear()
     def isList(t: com.histmersion.api.checks.Lint.ExtractParagraphsIsListT) = t.startsWith("- ") || t.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
     def block(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList): Unit = { flush(); settle(nextIsList) }
@@ -466,8 +466,8 @@ object Lint:
       else
         if current.isEmpty then settle(nextIsList = false)
         current.append(line).append(" ")
-    block(nextIsList = false)
-    paras.result()
+    block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
+    (paras.result()).map(refactorValue2 => _root_.com.histmersion.api.checks.Lint.ExtractParagraphsResult(refactorValue2))
 
   type FormatChecker = (String, FormatField, Boolean) => List[FormatIssue]
 
@@ -477,7 +477,7 @@ object Lint:
     }
 
   def report(r: Rule, items: List[LintItem], maxItems: com.histmersion.api.checks.Lint.ReportMaxItems): LintRuleReport =
-    LintRuleReport(r.name, r.description, items.size, items.take(math.max(0, maxItems)))
+    LintRuleReport(r.name, r.description, _root_.com.histmersion.api.checks.Lint.LintRuleReport.Count(items.size), items.take(math.max(0, maxItems)))
 
   def markdown(rep: LintReport): com.histmersion.api.checks.Lint.MarkdownResult =
     val fixed = if rep.fixed.isEmpty then "" else rep.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")
@@ -493,4 +493,4 @@ object Lint:
     val cleanLine =
       if clean.isEmpty then ""
       else s"\n\n_clean: ${clean.map(_.rule).mkString(", ")}_"
-    s"$fixed$head${blocks.mkString}$cleanLine"
+    _root_.com.histmersion.api.checks.Lint.MarkdownResult(s"$fixed$head${blocks.mkString}$cleanLine")

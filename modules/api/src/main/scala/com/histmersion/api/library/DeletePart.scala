@@ -8,24 +8,24 @@ import com.histmersion.api.media.AssetLinks
 import com.histmersion.api.given
 
 enum DeletePart(val wire: DeletePart.Wire, val label: DeletePart.Label):
-  case Findings extends DeletePart("findings", "findings")
-  case FindingPlaces extends DeletePart("finding-places", "gazetteer assignments of its findings")
-  case EdgesOut extends DeletePart("edges-out", "edges from it")
-  case ParkedOut extends DeletePart("parked-edges-out", "parked edges from it (to works not in the corpus)")
-  case EdgesIn extends DeletePart("edges-in", "edges from other sources to it — parked, not lost")
-  case Chunks extends DeletePart("chunks", "full-text chunks")
-  case Assets extends DeletePart("assets", "figures")
-  case AssetLinks extends DeletePart("asset-links", "links of its figures")
-  case AssetLinksTo extends DeletePart("asset-links-to", "links of other figures to it or its findings")
-  case Attestations extends DeletePart("attestations", "attestations it makes")
+  case Findings extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("findings"), _root_.com.histmersion.api.library.DeletePart.Label("findings"))
+  case FindingPlaces extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("finding-places"), _root_.com.histmersion.api.library.DeletePart.Label("gazetteer assignments of its findings"))
+  case EdgesOut extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("edges-out"), _root_.com.histmersion.api.library.DeletePart.Label("edges from it"))
+  case ParkedOut extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("parked-edges-out"), _root_.com.histmersion.api.library.DeletePart.Label("parked edges from it (to works not in the corpus)"))
+  case EdgesIn extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("edges-in"), _root_.com.histmersion.api.library.DeletePart.Label("edges from other sources to it — parked, not lost"))
+  case Chunks extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("chunks"), _root_.com.histmersion.api.library.DeletePart.Label("full-text chunks"))
+  case Assets extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("assets"), _root_.com.histmersion.api.library.DeletePart.Label("figures"))
+  case AssetLinks extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("asset-links"), _root_.com.histmersion.api.library.DeletePart.Label("links of its figures"))
+  case AssetLinksTo extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("asset-links-to"), _root_.com.histmersion.api.library.DeletePart.Label("links of other figures to it or its findings"))
+  case Attestations extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("attestations"), _root_.com.histmersion.api.library.DeletePart.Label("attestations it makes"))
   case AttestationsOf
-      extends DeletePart("attestations-of", "other sources' attestations of its findings, edges and datings")
-  case Assessments extends DeletePart("assessments", "assessment")
-  case Aliases extends DeletePart("aliases", "old citekeys")
-  case Identifiers extends DeletePart("identifiers", "identifiers (DOI, file digest)")
-  case EventDatings extends DeletePart("event-datings", "event datings it gives")
-  case GoalLinks extends DeletePart("goal-links", "goal links to it")
-  case CoverageReasons extends DeletePart("coverage-reasons", "articles' reasons for leaving it out")
+      extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("attestations-of"), _root_.com.histmersion.api.library.DeletePart.Label("other sources' attestations of its findings, edges and datings"))
+  case Assessments extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("assessments"), _root_.com.histmersion.api.library.DeletePart.Label("assessment"))
+  case Aliases extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("aliases"), _root_.com.histmersion.api.library.DeletePart.Label("old citekeys"))
+  case Identifiers extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("identifiers"), _root_.com.histmersion.api.library.DeletePart.Label("identifiers (DOI, file digest)"))
+  case EventDatings extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("event-datings"), _root_.com.histmersion.api.library.DeletePart.Label("event datings it gives"))
+  case GoalLinks extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("goal-links"), _root_.com.histmersion.api.library.DeletePart.Label("goal links to it"))
+  case CoverageReasons extends DeletePart(_root_.com.histmersion.api.library.DeletePart.Wire("coverage-reasons"), _root_.com.histmersion.api.library.DeletePart.Label("articles' reasons for leaving it out"))
 
 object DeletePart:
   type Wire = Wire.T

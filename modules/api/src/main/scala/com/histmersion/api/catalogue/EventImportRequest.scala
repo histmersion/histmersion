@@ -6,14 +6,14 @@ import com.histmersion.api.given
 
 final case class EventImportRequest(
     provider: EventImportRequest.Provider,
-    dryRun: EventImportRequest.DryRun = true,
+    dryRun: EventImportRequest.DryRun = _root_.com.histmersion.api.catalogue.EventImportRequest.DryRun(true),
     limit: Option[EventImportRequest.Limit] = None,
     bbox: Option[EventImportRequest.Bbox] = None,
     from: Option[EventImportRequest.From] = None,
     to: Option[EventImportRequest.To] = None,
     minVei: Option[EventImportRequest.MinVei] = None,
     minMagnitude: Option[EventImportRequest.MinMagnitude] = None,
-    refresh: EventImportRequest.Refresh = false
+    refresh: EventImportRequest.Refresh = _root_.com.histmersion.api.catalogue.EventImportRequest.Refresh(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

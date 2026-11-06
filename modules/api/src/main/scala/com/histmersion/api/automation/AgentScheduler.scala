@@ -11,7 +11,7 @@ object AgentScheduler:
   type WaitCodesPart2 = WaitCodesPart2.T
   object WaitCodesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = "") derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class StrategyLine(name: StrategyLine.Name, describe: StrategyLine.Describe = _root_.com.histmersion.api.automation.AgentScheduler.StrategyLine.Describe("")) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object StrategyLine:
     type Name = Name.T
@@ -27,7 +27,7 @@ object AgentScheduler:
       jobType: Started.JobType,
       target: Started.Target,
       goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
-      why: Started.Why = ""
+      why: Started.Why = _root_.com.histmersion.api.automation.AgentScheduler.Started.Why("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -53,12 +53,12 @@ object AgentScheduler:
       jobType: Waiting.JobType,
       target: Waiting.Target,
       goal: Option[com.histmersion.api.automation.Goal.Slug] = None,
-      priority: Waiting.Priority = 0,
-      waitedMinutes: Waiting.WaitedMinutes = 0,
-      code: Waiting.Code = "",
-      why: Waiting.Why = "",
+      priority: Waiting.Priority = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.Priority(0),
+      waitedMinutes: Waiting.WaitedMinutes = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.WaitedMinutes((0).toLong),
+      code: Waiting.Code = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.Code(""),
+      why: Waiting.Why = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.Why(""),
       behind: List[Waiting.Behind] = Nil,
-      position: Waiting.Position = 0
+      position: Waiting.Position = _root_.com.histmersion.api.automation.AgentScheduler.Waiting.Position(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -87,7 +87,7 @@ object AgentScheduler:
     object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = 0, cap: PoolUse.Cap = 0) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class PoolUse(pool: PoolUse.Pool, used: PoolUse.Used = _root_.com.histmersion.api.automation.AgentScheduler.PoolUse.Used(0), cap: PoolUse.Cap = _root_.com.histmersion.api.automation.AgentScheduler.PoolUse.Cap(0)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object PoolUse:
     type Pool = Pool.T
@@ -100,11 +100,11 @@ object AgentScheduler:
 
   final case class TypeLine(
       jobType: TypeLine.JobType,
-      label: TypeLine.Label = "",
-      weight: TypeLine.Weight = 0,
-      priority: TypeLine.Priority = 0,
-      recent: TypeLine.Recent = 0,
-      waiting: TypeLine.Waiting = 0
+      label: TypeLine.Label = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Label(""),
+      weight: TypeLine.Weight = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Weight(0),
+      priority: TypeLine.Priority = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Priority(0),
+      recent: TypeLine.Recent = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Recent(0),
+      waiting: TypeLine.Waiting = _root_.com.histmersion.api.automation.AgentScheduler.TypeLine.Waiting(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -125,18 +125,18 @@ object AgentScheduler:
 
   final case class SchedulerStatus(
       strategy: SchedulerStatus.Strategy,
-      strategyFrom: SchedulerStatus.StrategyFrom = "config",
+      strategyFrom: SchedulerStatus.StrategyFrom = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.StrategyFrom("config"),
       strategies: List[StrategyLine] = Nil,
       at: Option[SchedulerStatus.At] = None,
-      dry: SchedulerStatus.Dry = false,
-      maxRuns: SchedulerStatus.MaxRuns = 0,
-      occupied: SchedulerStatus.Occupied = 0,
+      dry: SchedulerStatus.Dry = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Dry(false),
+      maxRuns: SchedulerStatus.MaxRuns = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.MaxRuns(0),
+      occupied: SchedulerStatus.Occupied = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Occupied(0),
       pools: List[PoolUse] = Nil,
       types: List[TypeLine] = Nil,
       started: List[Started] = Nil,
       waiting: List[Waiting] = Nil,
-      waitingTotal: SchedulerStatus.WaitingTotal = 0,
-      forPerson: SchedulerStatus.ForPerson = 0,
+      waitingTotal: SchedulerStatus.WaitingTotal = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.WaitingTotal(0),
+      forPerson: SchedulerStatus.ForPerson = _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.ForPerson(0),
       stop: Option[SchedulerStatus.Stop] = None,
       settings: List[SchedulerStatus.Settings] = Nil,
       changes: List[SchedulerStatus.Changes] = Nil
@@ -181,14 +181,14 @@ object AgentScheduler:
 
   final case class WhyInfo(
       item: WhyInfo.Item,
-      manager: WhyInfo.Manager = "",
-      kind: WhyInfo.Kind = "",
-      target: WhyInfo.Target = "",
-      status: WhyInfo.Status = "",
-      code: WhyInfo.Code = "",
-      why: WhyInfo.Why = "",
+      manager: WhyInfo.Manager = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Manager(""),
+      kind: WhyInfo.Kind = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Kind(""),
+      target: WhyInfo.Target = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Target(""),
+      status: WhyInfo.Status = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Status(""),
+      code: WhyInfo.Code = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Code(""),
+      why: WhyInfo.Why = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Why(""),
       behind: List[WhyInfo.Behind] = Nil,
-      position: WhyInfo.Position = 0,
+      position: WhyInfo.Position = _root_.com.histmersion.api.automation.AgentScheduler.WhyInfo.Position(0),
       run: Option[WhyInfo.Run] = None,
       approval: Option[WhyInfo.Approval] = None
   ) derives KindlingsCodecAsObject,
@@ -229,17 +229,17 @@ object AgentScheduler:
 
   /** What a scheduler's wait code means, as the managers' view says it. */
   val waitCodes: Map[com.histmersion.api.automation.AgentScheduler.WaitCodesPart1, com.histmersion.api.automation.AgentScheduler.WaitCodesPart2] = Map(
-    "capacity" -> "No free place",
-    "pool" -> "Plan is full",
-    "manager-cap" -> "Manager is full",
-    "blocked" -> "Blocked",
-    "busy" -> "Busy",
-    "budget" -> "Spending cap reached",
-    "drain" -> "Finishing current work, then pausing",
-    Code.Person -> "Needs your decision",
-    Code.Held -> "Held by a person",
-    Code.NotDue -> "Not due yet",
-    Code.Running -> "Running",
-    Code.Settled -> "Settled",
-    Code.Paused -> "Paused"
+    { val refactorTuple14 = "capacity" -> "No free place"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple14._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple14._2)) },
+    { val refactorTuple15 = "pool" -> "Plan is full"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple15._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple15._2)) },
+    { val refactorTuple3 = "manager-cap" -> "Manager is full"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple3._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple3._2)) },
+    { val refactorTuple4 = "blocked" -> "Blocked"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple4._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple4._2)) },
+    { val refactorTuple5 = "busy" -> "Busy"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple5._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple5._2)) },
+    { val refactorTuple6 = "budget" -> "Spending cap reached"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple6._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple6._2)) },
+    { val refactorTuple7 = "drain" -> "Finishing current work, then pausing"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple7._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple7._2)) },
+    { val refactorTuple21 = Code.Person -> "Needs your decision"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple21._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple21._2)) },
+    { val refactorTuple22 = Code.Held -> "Held by a person"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple22._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple22._2)) },
+    { val refactorTuple23 = Code.NotDue -> "Not due yet"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple23._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple23._2)) },
+    { val refactorTuple11 = Code.Running -> "Running"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple11._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple11._2)) },
+    { val refactorTuple12 = Code.Settled -> "Settled"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple12._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple12._2)) },
+    { val refactorTuple13 = Code.Paused -> "Paused"; (_root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart1(refactorTuple13._1), _root_.com.histmersion.api.automation.AgentScheduler.WaitCodesPart2(refactorTuple13._2)) }
   )

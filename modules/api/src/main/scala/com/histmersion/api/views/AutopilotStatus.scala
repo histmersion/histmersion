@@ -16,19 +16,19 @@ final case class AutopilotStatus(
     on: AutopilotStatus.On,
     since: Option[AutopilotStatus.Since] = None,
     by: Option[AutopilotStatus.By] = None,
-    agentsEnabled: AutopilotStatus.AgentsEnabled = false,
-    managersEnabled: AutopilotStatus.ManagersEnabled = false,
-    cronsEnabled: AutopilotStatus.CronsEnabled = true,
+    agentsEnabled: AutopilotStatus.AgentsEnabled = _root_.com.histmersion.api.views.AutopilotStatus.AgentsEnabled(false),
+    managersEnabled: AutopilotStatus.ManagersEnabled = _root_.com.histmersion.api.views.AutopilotStatus.ManagersEnabled(false),
+    cronsEnabled: AutopilotStatus.CronsEnabled = _root_.com.histmersion.api.views.AutopilotStatus.CronsEnabled(true),
     approvals: List[ApprovalRule] = Nil,
-    ingestedToday: AutopilotStatus.IngestedToday = 0,
-    ingestCap: AutopilotStatus.IngestCap = 0,
-    maxConcurrentRuns: AutopilotStatus.MaxConcurrentRuns = 0,
+    ingestedToday: AutopilotStatus.IngestedToday = _root_.com.histmersion.api.views.AutopilotStatus.IngestedToday(0),
+    ingestCap: AutopilotStatus.IngestCap = _root_.com.histmersion.api.views.AutopilotStatus.IngestCap(0),
+    maxConcurrentRuns: AutopilotStatus.MaxConcurrentRuns = _root_.com.histmersion.api.views.AutopilotStatus.MaxConcurrentRuns(0),
     lastBackup: Option[AutopilotStatus.LastBackup] = None,
     lastLint: Option[AutopilotStatus.LastLint] = None,
     library: List[ManagerBrief] = Nil,
     goals: List[GoalProgress] = Nil,
     changes: List[AutopilotStatus.Changes] = Nil,
-    backlog: AutopilotStatus.Backlog = 0,
+    backlog: AutopilotStatus.Backlog = _root_.com.histmersion.api.views.AutopilotStatus.Backlog(0),
     backlogDays: Option[AutopilotStatus.BacklogDays] = None,
     focus: Option[FocusInfo] = None,
     drain: Option[DrainInfo] = None,
@@ -70,8 +70,8 @@ final case class AutopilotStatus(
       ingestedBy = acquireRecheck
         .filter(_.fetchedToday > 0)
         .fold("")(r => s", ${r.fetchedToday} of them by the acquisition list's re-check"),
-      beforeBacklog = upstreams.map(q => s"- ${UpstreamQuotaMarkdown.line(q)}"),
-      afterBacklog = acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList
+      beforeBacklog = upstreams.map(q => _root_.com.histmersion.api.automation.AutopilotMarkdown.StatusBeforeBacklog(s"- ${UpstreamQuotaMarkdown.line(q)}")),
+      afterBacklog = (acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList).map(refactorValue8 => _root_.com.histmersion.api.automation.AutopilotMarkdown.StatusAfterBacklog(refactorValue8))
     )
 
 object AutopilotStatus:

@@ -98,7 +98,7 @@ object AssetLinks:
   private def mapImages(md: com.histmersion.api.media.AssetLinks.MapImagesMd)(f: (com.histmersion.api.media.AssetLinks.MapImagesFArg1, com.histmersion.api.media.AssetLinks.MapImagesFArg2, com.histmersion.api.media.AssetLinks.MapImagesFArg3) => com.histmersion.api.media.AssetLinks.MapImagesFResult): com.histmersion.api.media.AssetLinks.MapImagesResult =
     ImageLink.replaceAllIn(
       md,
-      m => java.util.regex.Matcher.quoteReplacement(f(m.group(1), m.group(2), Option(m.group(3)).getOrElse("")))
+      m => java.util.regex.Matcher.quoteReplacement(f(_root_.com.histmersion.api.media.AssetLinks.MapImagesFArg1(m.group(1)), _root_.com.histmersion.api.media.AssetLinks.MapImagesFArg2(m.group(2)), _root_.com.histmersion.api.media.AssetLinks.MapImagesFArg3(Option(m.group(3)).getOrElse(""))))
     )
 
   private def retarget(md: com.histmersion.api.media.AssetLinks.RetargetMd, from: com.histmersion.api.media.AssetLinks.RetargetFrom, to: com.histmersion.api.media.AssetLinks.RetargetTo): com.histmersion.api.media.AssetLinks.RetargetResult =
@@ -162,13 +162,13 @@ object AssetLinks:
     }
     kept.mkString("\n")
 
-  def normalizeBody(md: com.histmersion.api.media.AssetLinks.NormalizeBodyMd, title: com.histmersion.api.media.AssetLinks.NormalizeBodyTitle = ""): com.histmersion.api.media.AssetLinks.NormalizeBodyResult =
+  def normalizeBody(md: com.histmersion.api.media.AssetLinks.NormalizeBodyMd, title: com.histmersion.api.media.AssetLinks.NormalizeBodyTitle = _root_.com.histmersion.api.media.AssetLinks.NormalizeBodyTitle("")): com.histmersion.api.media.AssetLinks.NormalizeBodyResult =
     dropBoilerplateHeadings(collapsePictureText(fromFigures(md)), title)
 
-  def toWeb(md: com.histmersion.api.media.AssetLinks.ToWebMd, citekey: com.histmersion.api.media.AssetLinks.ToWebCitekey): com.histmersion.api.media.AssetLinks.ToWebResult = retarget(md, Prefix, webBase(citekey))
+  def toWeb(md: com.histmersion.api.media.AssetLinks.ToWebMd, citekey: com.histmersion.api.media.AssetLinks.ToWebCitekey): com.histmersion.api.media.AssetLinks.ToWebResult = retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), webBase(citekey))
 
   def toAbsolute(md: com.histmersion.api.media.AssetLinks.ToAbsoluteMd, citekey: com.histmersion.api.media.AssetLinks.ToAbsoluteCitekey, publicUrl: com.histmersion.api.media.AssetLinks.ToAbsolutePublicUrl): com.histmersion.api.media.AssetLinks.ToAbsoluteResult =
-    retarget(md, Prefix, publicUrl.trim.stripSuffix("/") + webBase(citekey))
+    retarget(md, _root_.com.histmersion.api.media.AssetLinks.RetargetFrom(Prefix), publicUrl.trim.stripSuffix("/") + webBase(citekey))
 
   def webBase(citekey: com.histmersion.api.media.AssetLinks.WebBaseCitekey): com.histmersion.api.media.AssetLinks.WebBaseResult = s"/source/${enc(citekey)}/assets/"
 
@@ -187,9 +187,9 @@ object AssetLinks:
 
   def mimeOf(name: com.histmersion.api.media.AssetLinks.MimeOfName): com.histmersion.api.media.AssetLinks.MimeOfResult =
     name.toLowerCase.reverse.takeWhile(_ != '.').reverse match
-      case "png"          => "image/png"
-      case "jpg" | "jpeg" => "image/jpeg"
-      case "gif"          => "image/gif"
-      case "webp"         => "image/webp"
-      case "svg"          => "image/svg+xml"
-      case _              => "application/octet-stream"
+      case "png"          => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("image/png")
+      case "jpg" | "jpeg" => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("image/jpeg")
+      case "gif"          => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("image/gif")
+      case "webp"         => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("image/webp")
+      case "svg"          => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("image/svg+xml")
+      case _              => _root_.com.histmersion.api.media.AssetLinks.MimeOfResult("application/octet-stream")

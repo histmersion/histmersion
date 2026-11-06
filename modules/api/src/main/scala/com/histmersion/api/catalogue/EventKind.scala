@@ -14,4 +14,4 @@ object EventKind:
   val Reign = "reign"
   val EventPeriod = "period"
   val all: List[com.histmersion.api.catalogue.EventKind.All] =
-    List(Event, Battle, Migration, Construction, Destruction, Founding, Treaty, Reign, EventPeriod)
+    List(_root_.com.histmersion.api.catalogue.EventKind.All(Event), _root_.com.histmersion.api.catalogue.EventKind.All(Battle), _root_.com.histmersion.api.catalogue.EventKind.All(Migration), _root_.com.histmersion.api.catalogue.EventKind.All(Construction), _root_.com.histmersion.api.catalogue.EventKind.All(Destruction), _root_.com.histmersion.api.catalogue.EventKind.All(Founding), _root_.com.histmersion.api.catalogue.EventKind.All(Treaty), _root_.com.histmersion.api.catalogue.EventKind.All(Reign), _root_.com.histmersion.api.catalogue.EventKind.All(EventPeriod))

@@ -36,12 +36,12 @@ object Autopilot:
       status: GoalProgress.Status,
       parent: Option[GoalProgress.Parent] = None,
       managers: List[ManagerBrief] = Nil,
-      sources: GoalProgress.Sources = 0,
-      articles: GoalProgress.Articles = 0,
-      openApprovals: GoalProgress.OpenApprovals = 0,
+      sources: GoalProgress.Sources = _root_.com.histmersion.api.automation.Autopilot.GoalProgress.Sources(0),
+      articles: GoalProgress.Articles = _root_.com.histmersion.api.automation.Autopilot.GoalProgress.Articles(0),
+      openApprovals: GoalProgress.OpenApprovals = _root_.com.histmersion.api.automation.Autopilot.GoalProgress.OpenApprovals(0),
       lastActivity: Option[GoalProgress.LastActivity] = None,
-      doneLast7: GoalProgress.DoneLast7 = 0,
-      open: GoalProgress.Open = 0,
+      doneLast7: GoalProgress.DoneLast7 = _root_.com.histmersion.api.automation.Autopilot.GoalProgress.DoneLast7(0),
+      open: GoalProgress.Open = _root_.com.histmersion.api.automation.Autopilot.GoalProgress.Open(0),
       etaDays: Option[GoalProgress.EtaDays] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
@@ -71,7 +71,7 @@ object Autopilot:
     object EtaDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class ApprovalRule(kind: ApprovalRule.Kind, mode: ApprovalRule.Mode, cap: ApprovalRule.Cap = "")
+  final case class ApprovalRule(kind: ApprovalRule.Kind, mode: ApprovalRule.Mode, cap: ApprovalRule.Cap = _root_.com.histmersion.api.automation.Autopilot.ApprovalRule.Cap(""))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -86,16 +86,16 @@ object Autopilot:
 
   final case class FocusGoal(
       slug: FocusGoal.Slug,
-      title: FocusGoal.Title = "",
-      status: FocusGoal.Status = "",
-      stage: FocusGoal.Stage = "",
-      why: FocusGoal.Why = "",
-      pinned: FocusGoal.Pinned = false,
-      priority: FocusGoal.Priority = 0,
+      title: FocusGoal.Title = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Title(""),
+      status: FocusGoal.Status = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Status(""),
+      stage: FocusGoal.Stage = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Stage(""),
+      why: FocusGoal.Why = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Why(""),
+      pinned: FocusGoal.Pinned = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Pinned(false),
+      priority: FocusGoal.Priority = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Priority(0),
       since: Option[FocusGoal.Since] = None,
       doing: Option[FocusGoal.Doing] = None,
-      open: FocusGoal.Open = 0,
-      doneLast7: FocusGoal.DoneLast7 = 0,
+      open: FocusGoal.Open = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Open(0),
+      doneLast7: FocusGoal.DoneLast7 = _root_.com.histmersion.api.automation.Autopilot.FocusGoal.DoneLast7(0),
       etaDays: Option[FocusGoal.EtaDays] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
@@ -127,7 +127,7 @@ object Autopilot:
     object EtaDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = "", pinned: FocusWaiting.Pinned = false)
+  final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why(""), pinned: FocusWaiting.Pinned = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Pinned(false))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -144,13 +144,13 @@ object Autopilot:
 
   final case class FocusInfo(
       on: FocusInfo.On,
-      max: FocusInfo.Max = 0,
-      maxFrom: FocusInfo.MaxFrom = "config",
+      max: FocusInfo.Max = _root_.com.histmersion.api.automation.Autopilot.FocusInfo.Max(0),
+      maxFrom: FocusInfo.MaxFrom = _root_.com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom("config"),
       active: List[FocusGoal] = Nil,
       queue: List[FocusGoal] = Nil,
-      queued: FocusInfo.Queued = 0,
+      queued: FocusInfo.Queued = _root_.com.histmersion.api.automation.Autopilot.FocusInfo.Queued(0),
       waiting: List[FocusWaiting] = Nil,
-      held: FocusInfo.Held = 0,
+      held: FocusInfo.Held = _root_.com.histmersion.api.automation.Autopilot.FocusInfo.Held(0),
       note: Option[FocusInfo.Note] = None,
       changes: List[FocusInfo.Changes] = Nil
   ) derives KindlingsCodecAsObject,
@@ -193,10 +193,10 @@ object Autopilot:
 
   final case class DrainInfo(
       since: DrainInfo.Since,
-      by: DrainInfo.By = "",
-      drained: DrainInfo.Drained = false,
+      by: DrainInfo.By = _root_.com.histmersion.api.automation.Autopilot.DrainInfo.By(""),
+      drained: DrainInfo.Drained = _root_.com.histmersion.api.automation.Autopilot.DrainInfo.Drained(false),
       drainedAt: Option[DrainInfo.DrainedAt] = None,
-      inFlight: DrainInfo.InFlight = 0
+      inFlight: DrainInfo.InFlight = _root_.com.histmersion.api.automation.Autopilot.DrainInfo.InFlight(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -230,19 +230,19 @@ object Autopilot:
       on: EngineStatus.On,
       since: Option[EngineStatus.Since] = None,
       by: Option[EngineStatus.By] = None,
-      agentsEnabled: EngineStatus.AgentsEnabled = false,
-      managersEnabled: EngineStatus.ManagersEnabled = false,
-      cronsEnabled: EngineStatus.CronsEnabled = true,
+      agentsEnabled: EngineStatus.AgentsEnabled = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(false),
+      managersEnabled: EngineStatus.ManagersEnabled = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled(false),
+      cronsEnabled: EngineStatus.CronsEnabled = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled(true),
       approvals: List[ApprovalRule] = Nil,
-      ingestedToday: EngineStatus.IngestedToday = 0,
-      ingestCap: EngineStatus.IngestCap = 0,
-      maxConcurrentRuns: EngineStatus.MaxConcurrentRuns = 0,
+      ingestedToday: EngineStatus.IngestedToday = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday(0),
+      ingestCap: EngineStatus.IngestCap = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap(0),
+      maxConcurrentRuns: EngineStatus.MaxConcurrentRuns = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns(0),
       lastBackup: Option[EngineStatus.LastBackup] = None,
       lastLint: Option[EngineStatus.LastLint] = None,
       library: List[ManagerBrief] = Nil,
       goals: List[GoalProgress] = Nil,
       changes: List[EngineStatus.Changes] = Nil,
-      backlog: EngineStatus.Backlog = 0,
+      backlog: EngineStatus.Backlog = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Backlog(0),
       backlogDays: Option[EngineStatus.BacklogDays] = None,
       focus: Option[FocusInfo] = None,
       drain: Option[DrainInfo] = None,

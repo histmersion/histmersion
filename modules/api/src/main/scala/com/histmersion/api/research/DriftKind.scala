@@ -6,11 +6,11 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 
 enum DriftKind(val wire: DriftKind.Wire):
-  case Unplaced extends DriftKind("unplaced")
+  case Unplaced extends DriftKind(_root_.com.histmersion.api.research.DriftKind.Wire("unplaced"))
 
-  case ReasonForCited extends DriftKind("reason-for-cited")
+  case ReasonForCited extends DriftKind(_root_.com.histmersion.api.research.DriftKind.Wire("reason-for-cited"))
 
-  case ReasonOutside extends DriftKind("reason-outside-filter")
+  case ReasonOutside extends DriftKind(_root_.com.histmersion.api.research.DriftKind.Wire("reason-outside-filter"))
 
 object DriftKind:
   type Wire = Wire.T

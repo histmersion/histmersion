@@ -23,8 +23,8 @@ object Aliases:
   object NoteMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Rule: com.histmersion.api.aliases.Aliases.Rule =
-    "The old one stays an alias: every read and every write that names it (put, patch, delete, rename, a " +
-      "reference) goes to the record under its new one, and the answer names the new one."
+    _root_.com.histmersion.api.aliases.Aliases.Rule("The old one stays an alias: every read and every write that names it (put, patch, delete, rename, a " +
+      "reference) goes to the record under its new one, and the answer names the new one.")
 
   def rule(k: AliasKind): com.histmersion.api.aliases.Aliases.RuleResult =
     Rule.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}")

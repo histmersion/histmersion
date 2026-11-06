@@ -7,7 +7,7 @@ enum CoreFailure:
   case Failed(why: CoreFailure.Failed.Why)
 
   def message: com.histmersion.upstreams.core.CoreFailure.MessageResult = this match
-    case Skipped(why) => s"CORE not asked: $why"
+    case Skipped(why) => _root_.com.histmersion.upstreams.core.CoreFailure.MessageResult(s"CORE not asked: $why")
     case Failed(why)  => why
 
 object CoreFailure:

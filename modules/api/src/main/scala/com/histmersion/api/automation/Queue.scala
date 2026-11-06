@@ -179,7 +179,7 @@ object Queue:
 
     given Codec.AsObject[QueuePatch] = StrictJson.codec(KindlingsCodecAsObject.derived[QueuePatch])
 
-  final case class QueueImport(text: com.histmersion.api.automation.Queue.QueueItem.Text, replace: QueueImport.Replace = true) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class QueueImport(text: com.histmersion.api.automation.Queue.QueueItem.Text, replace: QueueImport.Replace = _root_.com.histmersion.api.automation.Queue.QueueImport.Replace(true)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object QueueImport:
     type Replace = Replace.T
@@ -202,9 +202,9 @@ object Queue:
 
 
   enum Kind(val label: Kind.Label, val file: Kind.File, val checkboxes: Kind.Checkboxes):
-    case Acquire extends Kind("acquire", "ACQUIRE.md", true)
-    case Tasks extends Kind("tasks", "TASKS.md", true)
-    case Log extends Kind("log", "LOG.md", false)
+    case Acquire extends Kind(_root_.com.histmersion.api.automation.Queue.Kind.Label("acquire"), _root_.com.histmersion.api.automation.Queue.Kind.File("ACQUIRE.md"), _root_.com.histmersion.api.automation.Queue.Kind.Checkboxes(true))
+    case Tasks extends Kind(_root_.com.histmersion.api.automation.Queue.Kind.Label("tasks"), _root_.com.histmersion.api.automation.Queue.Kind.File("TASKS.md"), _root_.com.histmersion.api.automation.Queue.Kind.Checkboxes(true))
+    case Log extends Kind(_root_.com.histmersion.api.automation.Queue.Kind.Label("log"), _root_.com.histmersion.api.automation.Queue.Kind.File("LOG.md"), _root_.com.histmersion.api.automation.Queue.Kind.Checkboxes(false))
 
   object Kind:
     type Label = Label.T
@@ -226,36 +226,36 @@ object Queue:
   val Done = "done"
   val Note = "note"
 
-  val Statuses: List[com.histmersion.api.automation.Queue.Statuses] = List(Open, Done, Note)
+  val Statuses: List[com.histmersion.api.automation.Queue.Statuses] = List(_root_.com.histmersion.api.automation.Queue.Statuses(Open), _root_.com.histmersion.api.automation.Queue.Statuses(Done), _root_.com.histmersion.api.automation.Queue.Statuses(Note))
 
   def statusOf(raw: Option[com.histmersion.api.automation.Queue.StatusOfRaw]): Either[com.histmersion.api.automation.Queue.StatusOfResultPart1, Option[com.histmersion.api.automation.Queue.StatusOfResultPart2]] =
     raw.map(_.trim.toLowerCase).filter(_.nonEmpty) match
       case None                            => Right(None)
       case Some(s) if Statuses.contains(s) => Right(Some(s))
-      case Some(s)                         => Left(s"unknown status '$s' — one of: ${Statuses.mkString(", ")}")
+      case Some(s)                         => Left(_root_.com.histmersion.api.automation.Queue.StatusOfResultPart1(s"unknown status '$s' — one of: ${Statuses.mkString(", ")}"))
 
   def textOf(raw: Option[com.histmersion.api.automation.Queue.TextOfRaw]): Either[com.histmersion.api.automation.Queue.TextOfResultPart1, Option[com.histmersion.api.automation.Queue.TextOfResultPart2]] =
     raw match
-      case Some(t) if t.trim.isEmpty => Left("queue item text is empty")
+      case Some(t) if t.trim.isEmpty => Left(_root_.com.histmersion.api.automation.Queue.TextOfResultPart1("queue item text is empty"))
       case other                     => Right(other)
 
   def fulfilledReason(prev: Option[com.histmersion.api.automation.Queue.FulfilledReasonPrev], citekey: com.histmersion.api.automation.Queue.FulfilledReasonCitekey): com.histmersion.api.automation.Queue.FulfilledReasonResult =
     val tag = s"ingested as [[$citekey]]"
     prev.map(_.trim).filter(_.nonEmpty) match
       case Some(p) if p.contains(tag) => p
-      case Some(p)                    => s"$p · $tag"
-      case None                       => tag
+      case Some(p)                    => _root_.com.histmersion.api.automation.Queue.FulfilledReasonResult(s"$p · $tag")
+      case None                       => _root_.com.histmersion.api.automation.Queue.FulfilledReasonResult(tag)
 
   def fulfil(item: QueueItem, citekey: com.histmersion.api.automation.Queue.FulfilCitekey, by: Option[com.histmersion.api.automation.Queue.FulfilBy] = None): QueuePatch =
-    QueuePatch(status = Some(Done), reason = Some(fulfilledReason(item.reason, citekey)), closedBy = by)
+    QueuePatch(status = Some(_root_.com.histmersion.api.automation.Queue.QueueItem.Status(Done)), reason = Some(fulfilledReason(item.reason, citekey)), closedBy = by)
 
   def fulfillable(id: com.histmersion.api.automation.Queue.FulfillableId, found: Option[QueueItem]): Either[com.histmersion.api.automation.Queue.FulfillableResultPart1, QueueItem] =
     found match
-      case None                                    => Left(s"no acquisition item $id")
+      case None                                    => Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"no acquisition item $id"))
       case Some(i) if i.list != Kind.Acquire.label =>
-        Left(s"item $id is on the ${i.list} list, not the acquisition list")
-      case Some(i) if i.status == Done => Left(s"acquisition item $id is already done")
-      case Some(i) if i.status != Open => Left(s"item $id is not an open acquisition item")
+        Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"item $id is on the ${i.list} list, not the acquisition list"))
+      case Some(i) if i.status == Done => Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"acquisition item $id is already done"))
+      case Some(i) if i.status != Open => Left(_root_.com.histmersion.api.automation.Queue.FulfillableResultPart1(s"item $id is not an open acquisition item"))
       case Some(i)                     => Right(i)
 
   def itemGoals(own: List[(com.histmersion.api.automation.Queue.ItemGoalsOwnPart1, GoalRef)], linked: List[(com.histmersion.api.automation.Queue.ItemGoalsLinkedPart1, GoalRef)]): List[ItemGoals] =
@@ -275,19 +275,19 @@ object Queue:
     raw.map(_.trim).filter(_.nonEmpty) match
       case None    => Right(None)
       case Some(s) =>
-        scala.util
+        ((scala.util
           .Try(java.time.Instant.parse(s))
           .toEither
           .map(i => Some(i.toString))
           .left
-          .map(_ => s"created_at '$s' is not an ISO-8601 instant (e.g. 2026-08-25T00:00:00Z)")
+          .map(_ => s"created_at '$s' is not an ISO-8601 instant (e.g. 2026-08-25T00:00:00Z)")).left.map(refactorError => _root_.com.histmersion.api.automation.Queue.CreatedAtOfResultPart1(refactorError))).map(refactorValue2 => (refactorValue2).map(refactorValue3 => _root_.com.histmersion.api.automation.Queue.CreatedAtOfResultPart2(refactorValue3)))
 
   val Sep = " > "
 
   def path(topic: Option[com.histmersion.api.automation.Queue.PathTopic]): Vector[com.histmersion.api.automation.Queue.PathResult] =
     topic.map(_.split(java.util.regex.Pattern.quote(Sep), -1).toVector.filter(_.nonEmpty)).getOrElse(Vector.empty)
 
-  def topicOf(p: Vector[com.histmersion.api.automation.Queue.TopicOfP]): Option[com.histmersion.api.automation.Queue.TopicOfResult] = if p.isEmpty then None else Some(p.mkString(Sep))
+  def topicOf(p: Vector[com.histmersion.api.automation.Queue.TopicOfP]): Option[com.histmersion.api.automation.Queue.TopicOfResult] = if p.isEmpty then None else Some(_root_.com.histmersion.api.automation.Queue.TopicOfResult(p.mkString(Sep)))
 
   private val HeadingRe = """^(#{2,6})\s+(.*?)\s*$""".r
   private val BoldRe = """^(\*\*.+\*\*)\s*$""".r
@@ -307,9 +307,9 @@ object Queue:
       last = None
 
     def flushNote(): Unit =
-      val lines = trimBlank(note.result())
+      val lines = trimBlank((note.result()).map(refactorValue8 => _root_.com.histmersion.api.automation.Queue.TrimBlankLs(refactorValue8)))
       note.clear()
-      if lines.nonEmpty then out += QueueAdd(lines.mkString("\n"), topicOf(stack), status = Some(Note))
+      if lines.nonEmpty then out += QueueAdd(lines.mkString("\n"), topicOf(stack), status = Some(_root_.com.histmersion.api.automation.Queue.QueueItem.Status(Note)))
 
     def flush(): Unit = { flushItem(); flushNote() }
 
@@ -355,12 +355,12 @@ object Queue:
 
   private def defaultPreamble(kind: Kind): com.histmersion.api.automation.Queue.DefaultPreambleResult = kind match
     case Kind.Acquire =>
-      "# 📥 ACQUIRE — the acquisition queue\n\nWhat to buy / borrow / download → Calibre. " +
-        "`[ ]` = to get · `[x]` = done.\n\n---"
+      _root_.com.histmersion.api.automation.Queue.DefaultPreambleResult("# 📥 ACQUIRE — the acquisition queue\n\nWhat to buy / borrow / download → Calibre. " +
+        "`[ ]` = to get · `[x]` = done.\n\n---")
     case Kind.Tasks =>
-      "# 🛠️ TASKS — the agent's backlog\n\nWhat is left to do. `[ ]` = open · `[x]` = done.\n\n---"
+      _root_.com.histmersion.api.automation.Queue.DefaultPreambleResult("# 🛠️ TASKS — the agent's backlog\n\nWhat is left to do. `[ ]` = open · `[x]` = done.\n\n---")
     case Kind.Log =>
-      "# 📓 LOG — project worklog\n\nWhat was done and when, newest first.\n\n---"
+      _root_.com.histmersion.api.automation.Queue.DefaultPreambleResult("# 📓 LOG — project worklog\n\nWhat was done and when, newest first.\n\n---")
 
   private enum Block:
     case Heading(line: Block.Heading.Line)
@@ -411,7 +411,7 @@ object Queue:
       (from until next.length).toList.map { i =>
         val seg = next(i)
         if isBold(seg) then Block.Heading(seg)
-        else Block.Heading(s"${"#" * (i + 2)} $seg")
+        else Block.Heading(_root_.com.histmersion.api.automation.Queue.Block.Heading.Line(s"${"#" * (i + 2)} $seg"))
       }
 
   private def bullet(kind: Kind, i: QueueItem): com.histmersion.api.automation.Queue.BulletResult =
@@ -434,15 +434,15 @@ object Queue:
         case Block.Note(l)    => l)
     }
     sb.append("\n")
-    sb.result()
+    _root_.com.histmersion.api.automation.Queue.JoinResult(sb.result())
 
   private def instantKey(s: com.histmersion.api.automation.Queue.InstantKeyS): com.histmersion.api.automation.Queue.InstantKeyResult =
-    scala.util.Try(java.time.Instant.parse(s).toEpochMilli).getOrElse(0L)
+    scala.util.Try(java.time.Instant.parse(s).toEpochMilli).getOrElse(_root_.com.histmersion.api.automation.Queue.InstantKeyResult(0L))
 
   /** A list's open items by topic; `notes` is a line under an item, by its id (an ACQUIRE item's last check). */
   def markdown(kind: Kind, items: List[QueueItem], notes: Map[com.histmersion.api.automation.Queue.MarkdownNotesPart1, com.histmersion.api.automation.Queue.MarkdownNotesPart2] = Map.empty): com.histmersion.api.automation.Queue.MarkdownResult =
     val shown = items.filterNot(_.status == Note)
-    if shown.isEmpty then s"_${kind.label}: nothing queued._"
+    if shown.isEmpty then _root_.com.histmersion.api.automation.Queue.MarkdownResult(s"_${kind.label}: nothing queued._")
     else
       val groups = shown.groupBy(_.topic).toList.sortBy((_, is) => is.map(_.id).min)
       val blocks = groups.map { (topic, is) =>
@@ -459,4 +459,4 @@ object Queue:
         }
         s"\n\n**$head**\n${lines.mkString("\n")}"
       }
-      s"### ${kind.label} (${shown.size} item(s))${blocks.mkString}"
+      _root_.com.histmersion.api.automation.Queue.MarkdownResult(s"### ${kind.label} (${shown.size} item(s))${blocks.mkString}")

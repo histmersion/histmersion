@@ -12,7 +12,7 @@ final case class PluginSet(
     digest: PluginSet.Digest,
     spiVersion: PluginSet.SpiVersion,
     jars: List[PluginJar] = Nil,
-    mode: PluginSet.Mode = "native",
+    mode: PluginSet.Mode = _root_.com.histmersion.api.plugins.PluginSet.Mode("native"),
     kit: Option[PluginSet.Kit] = None,
     linkedAt: Option[PluginSet.LinkedAt] = None,
     dependencies: Option[List[PluginFile]] = None
@@ -44,5 +44,5 @@ object PluginSet:
     case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
       s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest).take(12)}…)"
     case Some(set) =>
-      s"${set.digest.take(12)}… · ${Plural.count(set.jars.size, "jar")} (${set.mode}): " +
+      s"${set.digest.take(12)}… · ${Plural.count(_root_.com.histmersion.api.Plural.CountN((set.jars.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("jar"))} (${set.mode}): " +
         set.jars.map(j => j.file).mkString(", ")

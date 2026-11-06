@@ -5,12 +5,12 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MediaImportRequest(
-    provider: com.histmersion.api.media.MediaItem.Provider = "wikidata",
-    dryRun: MediaImportRequest.DryRun = true,
+    provider: com.histmersion.api.media.MediaItem.Provider = _root_.com.histmersion.api.media.MediaItem.Provider("wikidata"),
+    dryRun: MediaImportRequest.DryRun = _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true),
     limit: Option[MediaImportRequest.Limit] = None,
     place: Option[com.histmersion.api.catalogue.Place.Id] = None,
     event: Option[com.histmersion.api.catalogue.Event.Id] = None,
-    refresh: MediaImportRequest.Refresh = false
+    refresh: MediaImportRequest.Refresh = _root_.com.histmersion.api.media.MediaImportRequest.Refresh(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

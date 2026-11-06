@@ -13,7 +13,7 @@ final case class AuditFinding(
   /** What `calibre update` fixes: everything but a missing entry. The year included — Calibre shows the record's year,
     * not the printing on the shelf (the user's decision of 2026-10-03).
     */
-  def fixable: com.histmersion.plugins.calibre.AuditFinding.FixableResult = !issues.contains(AuditIssue.Missing)
+  def fixable: com.histmersion.plugins.calibre.AuditFinding.FixableResult = _root_.com.histmersion.plugins.calibre.AuditFinding.FixableResult(!issues.contains(AuditIssue.Missing))
 
 object AuditFinding:
   type FixableResult = FixableResult.T

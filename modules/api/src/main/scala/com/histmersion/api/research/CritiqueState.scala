@@ -6,9 +6,9 @@ import com.histmersion.api.WireEnum
 import com.histmersion.api.given
 
 enum CritiqueState(val wire: CritiqueState.Wire):
-  case Addressed extends CritiqueState("addressed")
-  case Reasoned extends CritiqueState("reasoned")
-  case Open extends CritiqueState("open")
+  case Addressed extends CritiqueState(_root_.com.histmersion.api.research.CritiqueState.Wire("addressed"))
+  case Reasoned extends CritiqueState(_root_.com.histmersion.api.research.CritiqueState.Wire("reasoned"))
+  case Open extends CritiqueState(_root_.com.histmersion.api.research.CritiqueState.Wire("open"))
 
 object CritiqueState:
   type Wire = Wire.T

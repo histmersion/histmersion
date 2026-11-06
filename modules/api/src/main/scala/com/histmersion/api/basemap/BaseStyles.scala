@@ -15,8 +15,8 @@ object BaseStyles:
     object Needs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Readable: Style =
-    Style("readable", "Readable", List("boundaries", "earth", "landcover", "landuse", "places", "roads", "water"))
-  val Physical: Style = Style("physical", "Physical", List("earth", "landcover", "landuse", "water"))
+    Style(_root_.com.histmersion.api.basemap.BaseStyles.Style.Id("readable"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Name("Readable"), List(_root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("boundaries"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("earth"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("landcover"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("landuse"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("places"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("roads"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("water")))
+  val Physical: Style = Style(_root_.com.histmersion.api.basemap.BaseStyles.Style.Id("physical"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Name("Physical"), List(_root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("earth"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("landcover"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("landuse"), _root_.com.histmersion.api.basemap.BaseStyles.Style.Needs("water")))
 
   val all: List[Style] = List(Readable, Physical)
 

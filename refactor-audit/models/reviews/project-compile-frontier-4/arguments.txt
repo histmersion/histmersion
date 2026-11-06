@@ -1,0 +1,9 @@
+sbt
+-J-Xss16m
+--server
+-batch
+set every scalafmtOnCompile := false
+set ThisBuild / scalacOptions += "-Xsemanticdb"
+set every maxErrors := 1000
+set Global / concurrentRestrictions := Seq(Tags.limitAll(1))
+compile

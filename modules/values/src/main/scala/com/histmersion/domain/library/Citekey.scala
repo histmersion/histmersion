@@ -25,12 +25,12 @@ object Citekey extends RefinedType[String, CitekeyRule]:
 
   def parse(raw: com.histmersion.domain.library.Citekey.ParseRaw): Either[com.histmersion.domain.library.Citekey.ParseResultPart1, Citekey] =
     val s = Option(raw).map(_.trim).getOrElse("")
-    if s.isEmpty then Left("citekey is required")
-    else if s.contains("..") then Left(s"invalid citekey '$raw' — it may not contain '..'")
+    if s.isEmpty then Left(_root_.com.histmersion.domain.library.Citekey.ParseResultPart1("citekey is required"))
+    else if s.contains("..") then Left(_root_.com.histmersion.domain.library.Citekey.ParseResultPart1(s"invalid citekey '$raw' — it may not contain '..'"))
     else
       either(s).left.map(_ =>
-        s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
-          "'_', '.' or '-' (2-121 characters), e.g. anthony2007_horse"
+        _root_.com.histmersion.domain.library.Citekey.ParseResultPart1(s"invalid citekey '$raw' — lower-case, start with a letter, then letters, digits, " +
+          "'_', '.' or '-' (2-121 characters), e.g. anthony2007_horse")
       )
 
   /** Is `raw` a citekey as it stands — for the places that classify rather than reject (a `[[link]]` target). */

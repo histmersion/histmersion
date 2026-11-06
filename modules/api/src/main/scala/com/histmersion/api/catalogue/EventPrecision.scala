@@ -53,10 +53,10 @@ object EventPrecision:
   val Approximate = "approximate"
   val Imprecise = "imprecise"
   val Undated = "undated"
-  val all: List[com.histmersion.api.catalogue.EventPrecision.All] = List(Precise, Approximate, Imprecise, Undated)
+  val all: List[com.histmersion.api.catalogue.EventPrecision.All] = List(_root_.com.histmersion.api.catalogue.EventPrecision.All(Precise), _root_.com.histmersion.api.catalogue.EventPrecision.All(Approximate), _root_.com.histmersion.api.catalogue.EventPrecision.All(Imprecise), _root_.com.histmersion.api.catalogue.EventPrecision.All(Undated))
 
-  val PreciseUpTo: com.histmersion.api.catalogue.EventPrecision.PreciseUpTo = 50
-  val ApproximateUpTo: com.histmersion.api.catalogue.EventPrecision.ApproximateUpTo = 500
+  val PreciseUpTo: com.histmersion.api.catalogue.EventPrecision.PreciseUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.PreciseUpTo((50).toLong)
+  val ApproximateUpTo: com.histmersion.api.catalogue.EventPrecision.ApproximateUpTo = _root_.com.histmersion.api.catalogue.EventPrecision.ApproximateUpTo((500).toLong)
 
   /** Widths are taken in astronomical years: historical years have no year 0. */
   def uncertainty(ts: TimeSpan, plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.UncertaintyPlusMinus]): Option[com.histmersion.api.catalogue.EventPrecision.UncertaintyResult] =
@@ -71,10 +71,10 @@ object EventPrecision:
 
   def of(uncertainty: Option[com.histmersion.api.catalogue.EventPrecision.OfUncertainty]): com.histmersion.api.catalogue.EventPrecision.OfResult =
     uncertainty match
-      case None                            => Undated
-      case Some(u) if u <= PreciseUpTo     => Precise
-      case Some(u) if u <= ApproximateUpTo => Approximate
-      case _                               => Imprecise
+      case None                            => _root_.com.histmersion.api.catalogue.EventPrecision.OfResult(Undated)
+      case Some(u) if u <= PreciseUpTo     => _root_.com.histmersion.api.catalogue.EventPrecision.OfResult(Precise)
+      case Some(u) if u <= ApproximateUpTo => _root_.com.histmersion.api.catalogue.EventPrecision.OfResult(Approximate)
+      case _                               => _root_.com.histmersion.api.catalogue.EventPrecision.OfResult(Imprecise)
 
   def of(ts: TimeSpan, plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.OfPlusMinus]): com.histmersion.api.catalogue.EventPrecision.OfResult = of(uncertainty(ts, plusMinus))
 
@@ -82,15 +82,15 @@ object EventPrecision:
 
   def label(precision: com.histmersion.api.catalogue.EventPrecision.LabelPrecision): Option[com.histmersion.api.catalogue.EventPrecision.LabelResult] =
     precision match
-      case Imprecise   => Some("imprecise date")
-      case Approximate => Some("approximate date")
+      case Imprecise   => Some(_root_.com.histmersion.api.catalogue.EventPrecision.LabelResult("imprecise date"))
+      case Approximate => Some(_root_.com.histmersion.api.catalogue.EventPrecision.LabelResult("approximate date"))
       case _           => None
 
   def note(central: Option[com.histmersion.api.catalogue.EventPrecision.NoteCentral], plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.NotePlusMinus], method: Option[com.histmersion.api.catalogue.EventPrecision.NoteMethod]): Option[com.histmersion.api.catalogue.EventPrecision.NoteResult] =
     val m = method.map(_.trim).filter(_.nonEmpty).map(lowerFirst)
     central match
       case Some(c) => Some(YearFmt(c) + plusMinus.filter(_ > 0).fold("")(u => s" ± $u") + m.fold("")(x => s" ($x)"))
-      case None    => m.map(x => s"dated by $x")
+      case None    => m.map(x => _root_.com.histmersion.api.catalogue.EventPrecision.NoteResult(s"dated by $x"))
 
   private def lowerFirst(s: com.histmersion.api.catalogue.EventPrecision.LowerFirstS): com.histmersion.api.catalogue.EventPrecision.LowerFirstResult =
     s.split(" ", -1)

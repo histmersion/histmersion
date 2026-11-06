@@ -3,8 +3,8 @@ package com.histmersion.api.research
 import com.histmersion.api.WireEnumValues
 
 enum DraftMode(val wire: DraftMode.Wire):
-  case Create extends DraftMode("create")
-  case Extend extends DraftMode("extend")
+  case Create extends DraftMode(_root_.com.histmersion.api.research.DraftMode.Wire("create"))
+  case Extend extends DraftMode(_root_.com.histmersion.api.research.DraftMode.Wire("extend"))
 
 object DraftMode:
   type Wire = Wire.T

@@ -17,7 +17,7 @@ final case class ReloadReport(
     file: Option[ReloadReport.File] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def ok: com.histmersion.api.settings.ReloadReport.OkResult = errors.isEmpty
+  def ok: com.histmersion.api.settings.ReloadReport.OkResult = _root_.com.histmersion.api.settings.ReloadReport.OkResult(errors.isEmpty)
 
 object ReloadReport:
   type OkResult = OkResult.T

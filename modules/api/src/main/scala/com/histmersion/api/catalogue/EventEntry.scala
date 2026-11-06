@@ -27,7 +27,7 @@ final case class EventEntry(
     edges: List[EventEdge] = Nil,
     participants: List[EventParticipant] = Nil,
     wikidata: Option[EventEntry.Wikidata] = None,
-    tier: EventEntry.Tier = EventTier.Attested,
+    tier: EventEntry.Tier = _root_.com.histmersion.api.catalogue.EventEntry.Tier(EventTier.Attested),
     names: List[EventEntry.Names] = Nil,
     catalogue: List[EventCatalogueRef] = Nil,
     sources: List[EventSourceRef] = Nil,

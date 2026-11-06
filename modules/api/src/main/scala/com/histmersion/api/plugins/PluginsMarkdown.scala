@@ -23,15 +23,15 @@ object PluginsMarkdown:
       case Some(PluginState.Failed)  => s"FAILED: ${p.error.getOrElse("no reason given")}"
       case Some(PluginState.Refused) => s"REFUSED: ${p.error.getOrElse("no reason given")}"
       case _                         => p.state
-    s"${p.id} ${p.version} — $what"
+    _root_.com.histmersion.api.plugins.PluginsMarkdown.LineResult(s"${p.id} ${p.version} — $what")
 
   def summary(r: PluginsReport): List[com.histmersion.api.plugins.PluginsMarkdown.SummaryResult] =
     val enabled = r.plugins.count(_.enabled)
-    val head = s"- plugins: ${Plural.count(r.plugins.size, "plugin")} in this binary · $enabled enabled" +
+    val head = s"- plugins: ${Plural.count(_root_.com.histmersion.api.Plural.CountN((r.plugins.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("plugin"))} in this binary · $enabled enabled" +
       (if r.ok then "" else " · PROBLEMS")
-    head :: s"  - plugin set: ${PluginSet.describe(r.set)}" :: (r.plugins.map(p => s"  - ${line(p)}") ++
+    (head :: s"  - plugin set: ${PluginSet.describe(r.set)}" :: (r.plugins.map(p => s"  - ${line(p)}") ++
       r.plugins.flatMap(p => p.warnings.map(w => s"  - warning: $w")) ++
-      r.warnings.map(w => s"  - warning: $w"))
+      r.warnings.map(w => s"  - warning: $w"))).map(refactorValue => _root_.com.histmersion.api.plugins.PluginsMarkdown.SummaryResult(refactorValue))
 
   def selfCheck(file: ConfigFileInfo, r: PluginsReport, checks: List[(com.histmersion.api.plugins.PluginsMarkdown.SelfCheckChecksPart1, com.histmersion.api.plugins.PluginsMarkdown.SelfCheckChecksPart2)] = Nil): com.histmersion.api.plugins.PluginsMarkdown.SelfCheckResult =
     val plugins = r.plugins.flatMap { p =>

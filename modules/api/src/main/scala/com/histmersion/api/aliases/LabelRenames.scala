@@ -22,6 +22,6 @@ object LabelRenames:
       case Bundle.Kind.Place   => "place id"
       case _                   => "goal slug"
     if !Shape.matches(to) then
-      Left(Api.Error(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')", Some(Write.CodeInvalid)))
-    else if to == from.trim then Left(Api.Error(s"'$to' is already that $what", Some(Write.CodeInvalid)))
+      Left(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))
+    else if to == from.trim then Left(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"'$to' is already that $what"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))
     else Right(to)

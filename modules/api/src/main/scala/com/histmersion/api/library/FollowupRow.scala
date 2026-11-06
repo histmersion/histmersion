@@ -10,10 +10,10 @@ final case class FollowupRow(
     doi: Option[com.histmersion.api.library.Doi] = None,
     arxiv: Option[FollowupRow.Arxiv] = None,
     citedBy: Option[FollowupRow.CitedBy] = None,
-    isInfluential: FollowupRow.IsInfluential = false,
+    isInfluential: FollowupRow.IsInfluential = _root_.com.histmersion.api.library.FollowupRow.IsInfluential(false),
     intents: List[FollowupRow.Intents] = Nil,
     contexts: List[FollowupRow.Contexts] = Nil,
-    proposedKind: FollowupRow.ProposedKind = "cites",
+    proposedKind: FollowupRow.ProposedKind = _root_.com.histmersion.api.library.FollowupRow.ProposedKind("cites"),
     citekey: Option[com.histmersion.api.library.Citekey] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

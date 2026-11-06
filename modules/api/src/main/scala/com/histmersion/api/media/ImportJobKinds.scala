@@ -10,12 +10,12 @@ object ImportJobKinds:
   type Media = Media.T
   object Media extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Media: JobDetail.Field[Option[com.histmersion.api.media.ImportJobKinds.Media]] = JobDetail.Field("media", None)
+  val Media: JobDetail.Field[Option[com.histmersion.api.media.ImportJobKinds.Media]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("media"), None)
 
   val MediaImport: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("media-import"),
-    "Fetch pictures",
-    "Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events.",
-    stoppable = true,
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Fetch pictures"),
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Asks a picture provider (Wikidata, museums, the Library of Congress…) for pictures of places and events."),
+    stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
     subject = Media.of
   )

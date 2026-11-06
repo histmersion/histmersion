@@ -23,17 +23,17 @@ final case class UiConfig(
     tabletMaxWidthPx: UiConfig.TabletMaxWidthPx,
     events: EventsUiConfig,
     mapTiles: MapTilesUiConfig = MapTilesUiConfig(),
-    countersPollSeconds: UiConfig.CountersPollSeconds = 30,
-    jobPollMs: UiConfig.JobPollMs = 1000,
-    writeKeyRequired: UiConfig.WriteKeyRequired = false,
-    agentsEnabled: UiConfig.AgentsEnabled = false,
-    tilesTone: UiConfig.TilesTone = "light",
+    countersPollSeconds: UiConfig.CountersPollSeconds = _root_.com.histmersion.api.instance.UiConfig.CountersPollSeconds(30),
+    jobPollMs: UiConfig.JobPollMs = _root_.com.histmersion.api.instance.UiConfig.JobPollMs(1000),
+    writeKeyRequired: UiConfig.WriteKeyRequired = _root_.com.histmersion.api.instance.UiConfig.WriteKeyRequired(false),
+    agentsEnabled: UiConfig.AgentsEnabled = _root_.com.histmersion.api.instance.UiConfig.AgentsEnabled(false),
+    tilesTone: UiConfig.TilesTone = _root_.com.histmersion.api.instance.UiConfig.TilesTone("light"),
     plugins: PluginsReport = PluginsReport(),
-    docsUrl: UiConfig.DocsUrl = "",
-    baseMapSource: UiConfig.BaseMapSource = "auto",
-    mapLanguage: UiConfig.MapLanguage = "en",
+    docsUrl: UiConfig.DocsUrl = _root_.com.histmersion.api.instance.UiConfig.DocsUrl(""),
+    baseMapSource: UiConfig.BaseMapSource = _root_.com.histmersion.api.instance.UiConfig.BaseMapSource("auto"),
+    mapLanguage: UiConfig.MapLanguage = _root_.com.histmersion.api.instance.UiConfig.MapLanguage("en"),
     mapStart: MapStartConfig = MapStartConfig(),
-    setupDue: UiConfig.SetupDue = false
+    setupDue: UiConfig.SetupDue = _root_.com.histmersion.api.instance.UiConfig.SetupDue(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

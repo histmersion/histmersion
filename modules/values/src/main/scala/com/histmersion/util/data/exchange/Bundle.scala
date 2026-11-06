@@ -18,7 +18,7 @@ object Bundle:
     def wire: com.histmersion.util.data.exchange.Bundle.Kind.WireResult = Kind.wireOf(this)
 
     /** The NDJSON file holding this kind's lines. */
-    def file: com.histmersion.util.data.exchange.Bundle.Kind.FileResult = s"entities/${Kind.fileStem(this)}.ndjson"
+    def file: com.histmersion.util.data.exchange.Bundle.Kind.FileResult = _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileResult(s"entities/${Kind.fileStem(this)}.ndjson")
 
     /** The letter a merge issue about this kind of record starts its id with (`P-1a2b3c4d`). */
     def issueLetter: com.histmersion.util.data.exchange.Bundle.Kind.IssueLetterResult = Kind.letterOf(this)
@@ -40,46 +40,46 @@ object Bundle:
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def wireOf(k: Kind): com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult = k match
-      case Source         => "source"
-      case Finding        => "finding"
-      case Article        => "article"
-      case ArticleVersion => "article-version"
-      case Asset          => "asset"
-      case AssetLink      => "asset-link"
-      case Attestation    => "attestation"
-      case Event          => "event"
-      case Goal           => "goal"
-      case QueueItem      => "queue-item"
-      case Place          => "place"
-      case Period         => "period"
+      case Source         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("source")
+      case Finding        => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("finding")
+      case Article        => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("article")
+      case ArticleVersion => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("article-version")
+      case Asset          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("asset")
+      case AssetLink      => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("asset-link")
+      case Attestation    => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("attestation")
+      case Event          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("event")
+      case Goal           => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("goal")
+      case QueueItem      => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("queue-item")
+      case Place          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("place")
+      case Period         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireOfResult("period")
 
     private def fileStem(k: Kind): com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult = k match
-      case Source         => "sources"
-      case Finding        => "findings"
-      case Article        => "articles"
-      case ArticleVersion => "article-versions"
-      case Asset          => "assets"
-      case AssetLink      => "asset-links"
-      case Attestation    => "attestations"
-      case Event          => "events"
-      case Goal           => "goals"
-      case QueueItem      => "queue"
-      case Place          => "places"
-      case Period         => "periods"
+      case Source         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("sources")
+      case Finding        => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("findings")
+      case Article        => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("articles")
+      case ArticleVersion => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("article-versions")
+      case Asset          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("assets")
+      case AssetLink      => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("asset-links")
+      case Attestation    => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("attestations")
+      case Event          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("events")
+      case Goal           => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("goals")
+      case QueueItem      => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("queue")
+      case Place          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("places")
+      case Period         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileStemResult("periods")
 
     private def letterOf(k: Kind): com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult = k match
-      case Source         => "S"
-      case Finding        => "F"
-      case Article        => "A"
-      case ArticleVersion => "V"
-      case Asset          => "X"
-      case AssetLink      => "K"
-      case Attestation    => "T"
-      case Event          => "E"
-      case Goal           => "G"
-      case QueueItem      => "Q"
-      case Place          => "P"
-      case Period         => "N"
+      case Source         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("S")
+      case Finding        => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("F")
+      case Article        => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("A")
+      case ArticleVersion => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("V")
+      case Asset          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("X")
+      case AssetLink      => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("K")
+      case Attestation    => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("T")
+      case Event          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("E")
+      case Goal           => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("G")
+      case QueueItem      => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("Q")
+      case Place          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("P")
+      case Period         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("N")
 
     def fromWire(s: com.histmersion.util.data.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
 

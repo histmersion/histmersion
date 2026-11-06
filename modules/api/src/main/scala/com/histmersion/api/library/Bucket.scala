@@ -11,9 +11,9 @@ final case class Bucket(
     start: Option[Bucket.Start] = None,
     end: Option[Bucket.End] = None,
     placeId: Option[Bucket.PlaceId] = None,
-    count: Bucket.Count = 0,
-    overlap: Bucket.Overlap = 0,
-    contested: Bucket.Contested = false,
+    count: Bucket.Count = _root_.com.histmersion.api.library.Bucket.Count(0),
+    overlap: Bucket.Overlap = _root_.com.histmersion.api.library.Bucket.Overlap(0),
+    contested: Bucket.Contested = _root_.com.histmersion.api.library.Bucket.Contested(false),
     alsoUnder: List[Bucket.AlsoUnder] = Nil,
     children: List[Bucket] = Nil,
     samples: List[Bucket.Sample] = Nil

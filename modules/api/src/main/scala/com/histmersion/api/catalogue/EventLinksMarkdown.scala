@@ -59,21 +59,21 @@ object EventLinksMarkdown:
       "\n\n**Leads**\n" + d.leads
         .map(l => s"- ${l.text}\n" + l.actions.map(a => s"  - ${a.label}: `${a.command}`").mkString("\n"))
         .mkString("\n")
-    tier + names + cat + srcs + arts + near + cands + leads
+    _root_.com.histmersion.api.catalogue.EventLinksMarkdown.ContextResult(tier + names + cat + srcs + arts + near + cands + leads)
 
   private def line(c: EventLinkCandidate): com.histmersion.api.catalogue.EventLinksMarkdown.LineResult =
-    s"- [[${c.citekey}]]${c.title.fold("")(t => s" — $t")} · score ${c.score} · ${c.status}" +
-      (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}")
+    _root_.com.histmersion.api.catalogue.EventLinksMarkdown.LineResult(s"- [[${c.citekey}]]${c.title.fold("")(t => s" — $t")} · score ${c.score} · ${c.status}" +
+      (if c.reasons.isEmpty then "" else s" — ${c.reasons.mkString("; ")}"))
 
   def list(l: EventLinkList): com.histmersion.api.catalogue.EventLinksMarkdown.ListResult =
-    if l.candidates.isEmpty then s"_No source in the corpus is near `${l.eventId}` in time and space or names it._"
+    if l.candidates.isEmpty then _root_.com.histmersion.api.catalogue.EventLinksMarkdown.ListResult(s"_No source in the corpus is near `${l.eventId}` in time and space or names it._")
     else
-      (s"## Sources that may discuss ${l.label} (`${l.eventId}`)" :: "" ::
+      _root_.com.histmersion.api.catalogue.EventLinksMarkdown.ListResult((s"## Sources that may discuss ${l.label} (`${l.eventId}`)" :: "" ::
         "_Proposed from findings near it and passages naming it — unconfirmed until confirmed (an attestation)._" :: "" ::
-        l.candidates.map(line)).mkString("\n")
+        l.candidates.map(line)).mkString("\n"))
 
   def result(r: EventLinksResult): com.histmersion.api.catalogue.EventLinksMarkdown.ResultResult =
-    List(
+    _root_.com.histmersion.api.catalogue.EventLinksMarkdown.ResultResult(List(
       Option.when(r.attested.nonEmpty)(
         "**Attested:** " + r.attested
           .map(a =>
@@ -84,4 +84,4 @@ object EventLinksMarkdown:
       Option.when(r.refused.nonEmpty)("**Not attested:**\n" + r.refused.map("- " + _).mkString("\n")),
       Option.when(r.rejected.nonEmpty)("**Rejected:** " + r.rejected.mkString(", ")),
       Some(list(r.links))
-    ).flatten.mkString("\n\n")
+    ).flatten.mkString("\n\n"))

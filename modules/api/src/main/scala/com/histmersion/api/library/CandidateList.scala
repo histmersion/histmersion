@@ -9,7 +9,7 @@ final case class CandidateList(
     state: CandidateList.State,
     candidates: List[Source.Candidate],
     counts: List[CandidateCount],
-    offset: CandidateList.Offset = 0,
+    offset: CandidateList.Offset = _root_.com.histmersion.api.library.CandidateList.Offset(0),
     next: Option[CandidateList.Next] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

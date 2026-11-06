@@ -42,17 +42,17 @@ object CritiqueReason:
     )
     .modify(_.by)(_.description("Who set it (filled by the server when left out)"))
 
-  val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = Coverage.Reason.MaxChars
+  val MaxChars: com.histmersion.api.research.CritiqueReason.MaxChars = _root_.com.histmersion.api.research.CritiqueReason.MaxChars(Coverage.Reason.MaxChars)
 
   def parse(s: com.histmersion.api.research.CritiqueReason.ParseS): Either[com.histmersion.api.research.CritiqueReason.ParseResultPart1, CritiqueReason] =
     val i = s.indexOf('=')
-    if i < 0 then Left(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)")
+    if i < 0 then Left(_root_.com.histmersion.api.research.CritiqueReason.ParseResultPart1(s"'$s': write it as <src>><dst>=<why> (an empty why removes the reason)"))
     else CritiqueRef.parse(s.take(i)).map(r => CritiqueReason(r.src, r.dst, s.drop(i + 1).trim))
 
   def tidy(r: CritiqueReason): Either[com.histmersion.api.research.CritiqueReason.TidyResultPart1, CritiqueReason] =
     val text = Option(r.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
     if text.length > MaxChars then
-      Left(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)")
+      Left(_root_.com.histmersion.api.research.CritiqueReason.TidyResultPart1(s"reason for ${r.ref.wire}: ${text.length} characters (at most $MaxChars — one sentence)"))
     else
       Right(
         r.modify(

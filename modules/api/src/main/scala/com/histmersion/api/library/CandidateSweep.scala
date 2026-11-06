@@ -12,7 +12,7 @@ final case class CandidateSweep(
     again: CandidateSweep.Again,
     skipped: Map[CandidateSweep.SkippedKey, CandidateSweep.SkippedValue],
     unseen: CandidateSweep.Unseen,
-    dryRun: CandidateSweep.DryRun = false,
+    dryRun: CandidateSweep.DryRun = _root_.com.histmersion.api.library.CandidateSweep.DryRun(false),
     notes: List[CandidateSweep.Notes] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -38,7 +38,7 @@ object CandidateSweep:
   type Notes = Notes.T
   object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  final case class Request(goal: Request.Goal, dryRun: Request.DryRun = false) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+  final case class Request(goal: Request.Goal, dryRun: Request.DryRun = _root_.com.histmersion.api.library.CandidateSweep.Request.DryRun(false)) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object Request:
     type Goal = Goal.T

@@ -96,7 +96,7 @@ object Critiques:
     var last = -1
     def flush(): Unit =
       val t = cur.toString.trim
-      if t.nonEmpty then out += Block(start, last, t)
+      if t.nonEmpty then out += Block(_root_.com.histmersion.api.research.Critiques.Block.From(start), _root_.com.histmersion.api.research.Critiques.Block.To(last), _root_.com.histmersion.api.research.Critiques.Block.Text(t))
       cur.clear()
       start = -1
     lines.indices.foreach { i =>
@@ -125,7 +125,7 @@ object Critiques:
       case i  =>
         val lv = level(lines(i))
         val end = lines.indexWhere(l => heading(l) && level(l) <= lv, i + 1)
-        (i until (if end < 0 then lines.size else end)).toSet
+        ((i until (if end < 0 then lines.size else end)).toSet).map(refactorValue => _root_.com.histmersion.api.research.Critiques.NotUsedLinesResult(refactorValue))
 
   def build(
       body: com.histmersion.api.research.Critiques.BuildBody,
@@ -165,7 +165,7 @@ object Critiques:
 
   def find(pairs: List[CritiquePair], r: CritiqueRef): Option[CritiquePair] = pairs.find(_.ref.same(r))
 
-  def count(pairs: List[CritiquePair], s: CritiqueState): com.histmersion.api.research.Critiques.CountResult = pairs.count(_.state == s)
+  def count(pairs: List[CritiquePair], s: CritiqueState): com.histmersion.api.research.Critiques.CountResult = _root_.com.histmersion.api.research.Critiques.CountResult(pairs.count(_.state == s))
 
   def together(body: com.histmersion.api.research.Critiques.TogetherBody, r: CritiqueRef, resolve: com.histmersion.api.research.Critiques.TogetherResolveArg1 => Option[com.histmersion.api.research.Critiques.TogetherResolveResult]): com.histmersion.api.research.Critiques.TogetherResult =
     units(body).exists { u =>
@@ -189,24 +189,24 @@ object Critiques:
       .sortBy(p => (tier(p), kind(p), -(p.src.mentions + p.dst.mentions), p.src.citekey, p.dst.citekey))
 
   def summary(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.SummaryResult =
-    s"${Plural.count(pairs.size, "pair")} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
+    s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((pairs.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
       s"${count(pairs, CritiqueState.Reasoned)} reasoned, ${count(pairs, CritiqueState.Open)} open"
 
   def methodPart(pairs: List[CritiquePair]): Option[com.histmersion.api.research.Critiques.MethodPartResult] =
-    Option.when(pairs.nonEmpty)(s"disagreements checked: ${summary(pairs)}")
+    Option.when(pairs.nonEmpty)(_root_.com.histmersion.api.research.Critiques.MethodPartResult(s"disagreements checked: ${summary(pairs)}"))
 
   private def sideText(s: CritiqueSide): com.histmersion.api.research.Critiques.SideTextResult =
     val meta = (s.year.map(_.toString).toList ++ s.title
       .map(t => "\"" + (if t.length > 90 then t.take(89).trim + "…" else t) + "\"")
       .toList)
     val cited = if s.cited then "cited" else "not cited"
-    s"[[${s.citekey}]] (${(meta :+ cited).mkString(", ")})"
+    _root_.com.histmersion.api.research.Critiques.SideTextResult(s"[[${s.citekey}]] (${(meta :+ cited).mkString(", ")})")
 
   def pairText(p: CritiquePair): com.histmersion.api.research.Critiques.PairTextResult =
-    s"${p.ref.wire}: ${sideText(p.src)} ${p.kinds.mkString("/")} ${sideText(p.dst)}"
+    _root_.com.histmersion.api.research.Critiques.PairTextResult(s"${p.ref.wire}: ${sideText(p.src)} ${p.kinds.mkString("/")} ${sideText(p.dst)}")
 
   def markdown(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.MarkdownResult =
-    if pairs.isEmpty then ""
+    if pairs.isEmpty then _root_.com.histmersion.api.research.Critiques.MarkdownResult("")
     else
       val open = ranked(pairs)
       val reasoned = pairs.filter(_.state == CritiqueState.Reasoned)
@@ -220,8 +220,8 @@ object Critiques:
           reasoned
             .map(p => s"- ${p.line} — ${p.reason.getOrElse("")}${p.reasonBy.fold("")(b => s" _(by $b)_")}")
             .mkString("\n")
-      s"### Disagreements checked\n\n${summary(pairs)} (a pair is addressed when both sources are cited in one paragraph)." +
-        openPart + reasonPart
+      _root_.com.histmersion.api.research.Critiques.MarkdownResult(s"### Disagreements checked\n\n${summary(pairs)} (a pair is addressed when both sources are cited in one paragraph)." +
+        openPart + reasonPart)
 
   def toRule(pairs: List[CritiquePair]): List[CritiquePair] =
     ranked(pairs)
@@ -235,7 +235,7 @@ object Critiques:
     val rest = open.drop(shown.size)
     val background = ranked(pairs).filterNot(_.bearing)
     val reasoned = pairs.filter(_.state == CritiqueState.Reasoned)
-    if shown.isEmpty && background.isEmpty && reasoned.isEmpty then ("", Nil)
+    if shown.isEmpty && background.isEmpty && reasoned.isEmpty then (_root_.com.histmersion.api.research.Critiques.PromptTextResultPart1(""), Nil)
     else
       def names(ps: List[CritiquePair]) =
         ps.take(40).map(_.ref.wire).mkString(", ") + (if ps.size > 40 then ", …" else "")
@@ -251,7 +251,7 @@ object Critiques:
         ) +
           (if background.isEmpty then ""
            else
-             s"\n(${Plural.count(background.size, "open pair")} on a work the article does not cite — it states none of " +
+             s"\n(${Plural.count(_root_.com.histmersion.api.Plural.CountN((background.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("open pair"))} on a work the article does not cite — it states none of " +
                s"that work's claims, so no ruling is owed: ${names(background)})")
       val reasonPart =
         if reasoned.isEmpty then ""
@@ -262,4 +262,4 @@ object Critiques:
               .map(p => s"- ${p.ref.wire}: ${p.reason.getOrElse("").take(200)}")
               .mkString("\n") +
             (if reasoned.size > maxReasoned then s"\n(+${reasoned.size - maxReasoned} more)" else "")
-      (s"${summary(pairs)}.\n\n$openPart$reasonPart", shown)
+      (_root_.com.histmersion.api.research.Critiques.PromptTextResultPart1(s"${summary(pairs)}.\n\n$openPart$reasonPart"), shown)

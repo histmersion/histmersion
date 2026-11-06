@@ -161,7 +161,7 @@ object AgentsMarkdown:
 
   private def tokens(u: Usage): com.histmersion.api.automation.AgentsMarkdown.TokensResult =
     val cache = if u.cacheRead + u.cacheWrite > 0 then s", cache ${u.cacheRead} read / ${u.cacheWrite} written" else ""
-    s"${u.input} in / ${u.output} out$cache"
+    _root_.com.histmersion.api.automation.AgentsMarkdown.TokensResult(s"${u.input} in / ${u.output} out$cache")
 
   def models(m: ModelsInfo): com.histmersion.api.automation.AgentsMarkdown.ModelsResult =
     val head = s"# Embedded agents — ${if m.enabled then "enabled" else "OFF"}\n\n" +
@@ -171,7 +171,7 @@ object AgentsMarkdown:
       val rows = m.roles.map { r =>
         s"| ${r.role} | ${r.model.getOrElse("—")} | ${if r.ready then "ready" else r.problem.getOrElse("not ready")} |"
       }
-      head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems
+      _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems)
     else
       val rows = m.chains.map { c =>
         val chain = if c.models.isEmpty then "—" else c.models.map(chainEntry).mkString(" → ")
@@ -183,8 +183,8 @@ object AgentsMarkdown:
         if m.allowances.isEmpty then
           "\n\n_No allowance: every model may be used until the run's and the day's budgets._"
         else "\n\n## Allowances\n\n" + m.allowances.map(allowanceBlock).mkString("\n")
-      head + "| role | chain (tried in order) | next call uses | from |\n|---|---|---|---|\n" + rows.mkString("\n") +
-        allowances + problems
+      _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(head + "| role | chain (tried in order) | next call uses | from |\n|---|---|---|---|\n" + rows.mkString("\n") +
+        allowances + problems)
 
   private def chainEntry(e: ModelChains.ChainEntry): com.histmersion.api.automation.AgentsMarkdown.ChainEntryResult =
     val mark =
@@ -193,7 +193,7 @@ object AgentsMarkdown:
       else if e.cooling then
         " (cooling down" + e.freesAt.fold("")(t => s" until $t") + ": its plan reported its usage limit)"
       else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
-    s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}"
+    _root_.com.histmersion.api.automation.AgentsMarkdown.ChainEntryResult(s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}")
 
   def roleChain(c: ModelChains.RoleChain): com.histmersion.api.automation.AgentsMarkdown.RoleChainResult =
     val lines = c.models.zipWithIndex.map { (e, i) =>
@@ -204,8 +204,8 @@ object AgentsMarkdown:
       s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": $p")}${e.freesAt.fold("")(t => s" (frees $t)")}" +
         e.billing.fold("")(b => s" · $b")
     }
-    s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
-      (if lines.isEmpty then c.problem.getOrElse("no model") else lines.mkString("\n"))
+    _root_.com.histmersion.api.automation.AgentsMarkdown.RoleChainResult(s"**${c.role}** (${c.source}) — next call uses ${c.active.fold("none: a run would pause")(m => s"`$m`")}\n\n" +
+      (if lines.isEmpty then c.problem.getOrElse("no model") else lines.mkString("\n")))
 
   private def amount(v: com.histmersion.api.automation.AgentsMarkdown.AmountV, m: ModelChains.Measure): com.histmersion.api.automation.AgentsMarkdown.AmountResult = m match
     case ModelChains.Measure.Tokens =>
@@ -229,7 +229,7 @@ object AgentsMarkdown:
     java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
 
   private def age(s: com.histmersion.api.automation.AgentsMarkdown.AgeS): com.histmersion.api.automation.AgentsMarkdown.AgeResult =
-    if s < 120 then s"$s s"
+    if s < 120 then _root_.com.histmersion.api.automation.AgentsMarkdown.AgeResult(s"$s s")
     else if s < 7200 then s"${s / 60} min"
     else if s < 172800 then s"${s / 3600} h"
     else s"${s / 86400} d"
@@ -263,7 +263,7 @@ object AgentsMarkdown:
     val last = p.lastRefresh.fold("")(r =>
       s"; last ${r.at} (${r.trigger}, ${r.mode}): ${if r.ok then "" else "failed — "}${r.detail}"
     )
-    s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last"
+    _root_.com.histmersion.api.automation.AgentsMarkdown.RefreshLineResult(s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last")
 
   def refreshed(q: PlanQuota.QuotaRefreshed): com.histmersion.api.automation.AgentsMarkdown.RefreshedResult =
     q.pools
@@ -290,8 +290,8 @@ object AgentsMarkdown:
               "unless a reading of its plan taken since says it is usable (`histmersion agent quota refresh <pool>`)"
           )
           .mkString("\n")
-    s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") + cooling +
-      s"\n\n## Metered\n\n$metered\n\n$fall"
+    _root_.com.histmersion.api.automation.AgentsMarkdown.QuotaResult(s"# Agent quota (${q.now})\n\n## Plans\n\n" + q.plans.map(pool).mkString("\n\n") + cooling +
+      s"\n\n## Metered\n\n$metered\n\n$fall")
 
   def generated(r: GenerateResult): com.histmersion.api.automation.AgentsMarkdown.GeneratedResult =
     s"Generated ${r.runtimes.mkString(", ")} in ${r.dir}: ${r.files} file(s), ${r.written} written, ${r.removed} removed " +
@@ -356,28 +356,28 @@ object AgentsMarkdown:
       status: Option[com.histmersion.api.automation.AgentsMarkdown.RunsStatus] = None,
       older: Option[com.histmersion.api.automation.AgentsMarkdown.RunsOlder] = None
   ): com.histmersion.api.automation.AgentsMarkdown.RunsResult =
-    if rs.isEmpty then status.fold("_No agent runs._")(s => s"_No $s agent runs._")
+    if rs.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.RunsResult(status.fold("_No agent runs._")(s => s"_No $s agent runs._"))
     else
-      "# Agent runs\n\n" + pageLine(rs.size, page, "run", status) + facetLines(page, RunFacets) +
+      "# Agent runs\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(rs.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("run"), status) + facetLines(page, RunFacets) +
         rs.map(r => s"- ${runLine(r)}").mkString("\n") + older.fold("")(o => s"\n\n$o")
 
   private def pageLine(shown: com.histmersion.api.automation.AgentsMarkdown.PageLineShown, page: Paging.Page, singular: com.histmersion.api.automation.AgentsMarkdown.PageLineSingular, qualifier: Option[com.histmersion.api.automation.AgentsMarkdown.PageLineQualifier]): com.histmersion.api.automation.AgentsMarkdown.PageLineResult =
-    if page.total <= shown then "" else s"${Paging.heading(shown, page.total, singular, qualifier = qualifier)}.\n\n"
+    if page.total <= shown then _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineResult("") else s"${Paging.heading(shown, page.total, singular, qualifier = qualifier)}.\n\n"
 
   val RunFacets: List[(com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart1, com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart2)] =
     List(
-      "pipeline" -> "By pipeline",
-      "origin" -> "By origin",
-      "manager" -> "By manager",
-      "provider" -> "By provider",
-      "model" -> "By model"
+      { val refactorTuple15 = "pipeline" -> "By pipeline"; (_root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart1(refactorTuple15._1), _root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart2(refactorTuple15._2)) },
+      { val refactorTuple2 = "origin" -> "By origin"; (_root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart1(refactorTuple2._1), _root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart2(refactorTuple2._2)) },
+      { val refactorTuple3 = "manager" -> "By manager"; (_root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart1(refactorTuple3._1), _root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart2(refactorTuple3._2)) },
+      { val refactorTuple4 = "provider" -> "By provider"; (_root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart1(refactorTuple4._1), _root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart2(refactorTuple4._2)) },
+      { val refactorTuple5 = "model" -> "By model"; (_root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart1(refactorTuple5._1), _root_.com.histmersion.api.automation.AgentsMarkdown.RunFacetsPart2(refactorTuple5._2)) }
     )
 
-  val ApprovalFacets: List[(com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart1, com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart2)] = List("kind" -> "By kind", "decidedBy" -> "Decided by")
+  val ApprovalFacets: List[(com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart1, com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart2)] = List({ val refactorTuple6 = "kind" -> "By kind"; (_root_.com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart1(refactorTuple6._1), _root_.com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart2(refactorTuple6._2)) }, { val refactorTuple21 = "decidedBy" -> "Decided by"; (_root_.com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart1(refactorTuple21._1), _root_.com.histmersion.api.automation.AgentsMarkdown.ApprovalFacetsPart2(refactorTuple21._2)) })
 
   def facetLines(page: Paging.Page, facets: List[(com.histmersion.api.automation.AgentsMarkdown.FacetLinesFacetsPart1, com.histmersion.api.automation.AgentsMarkdown.FacetLinesFacetsPart2)]): com.histmersion.api.automation.AgentsMarkdown.FacetLinesResult =
     val lines = facets.map((name, label) => ListFilters.facetLine(label, page.facet(name))).filter(_.nonEmpty)
-    if lines.isEmpty then "" else lines.mkString("  \n") + "\n\n"
+    if lines.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.FacetLinesResult("") else _root_.com.histmersion.api.automation.AgentsMarkdown.FacetLinesResult(lines.mkString("  \n") + "\n\n")
 
   def run(d: RunDetail, withMessages: com.histmersion.api.automation.AgentsMarkdown.RunWithMessages): com.histmersion.api.automation.AgentsMarkdown.RunResult =
     val r = d.run
@@ -429,22 +429,22 @@ object AgentsMarkdown:
   def change(a: ApprovalInfo): com.histmersion.api.automation.AgentsMarkdown.ChangeResult =
     ApprovalKind.parse(a.kind) match
       case Some(ApprovalKind.StatusChange) =>
-        s"[[${a.citekey}]] status ${a.current.getOrElse("?")} → **${a.status.getOrElse("?")}**"
+        _root_.com.histmersion.api.automation.AgentsMarkdown.ChangeResult(s"[[${a.citekey}]] status ${a.current.getOrElse("?")} → **${a.status.getOrElse("?")}**")
       case Some(ApprovalKind.Edge) =>
-        s"edge [[${a.citekey}]] **${a.edgeKind.getOrElse("?")}** [[${a.target.getOrElse("?")}]]"
+        _root_.com.histmersion.api.automation.AgentsMarkdown.ChangeResult(s"edge [[${a.citekey}]] **${a.edgeKind.getOrElse("?")}** [[${a.target.getOrElse("?")}]]")
       case Some(ApprovalKind.GoalPlan) =>
         val p = a.plan
-        s"plan for goal **${a.subject.getOrElse("?")}**: ${p.fold(0)(_.subGoals.size)} sub-goal(s), " +
-          s"${p.fold(0)(_.queries.size)} query(ies), ${p.fold(0)(_.works.size)} work(s)"
+        _root_.com.histmersion.api.automation.AgentsMarkdown.ChangeResult(s"plan for goal **${a.subject.getOrElse("?")}**: ${p.fold(0)(_.subGoals.size)} sub-goal(s), " +
+          s"${p.fold(0)(_.queries.size)} query(ies), ${p.fold(0)(_.works.size)} work(s)")
       case Some(ApprovalKind.ArticlePublish) =>
         val what = a.article.fold("an article")(d =>
           if d.mode == Goal.Plans.DraftMode.Create then s"new article \"${d.title}\"" else "a section appended to"
         )
-        s"publish $what [[${a.subject.getOrElse("?")}]]"
+        _root_.com.histmersion.api.automation.AgentsMarkdown.ChangeResult(s"publish $what [[${a.subject.getOrElse("?")}]]")
       case Some(ApprovalKind.ArticleFilter) =>
-        s"record the coverage filter of [[${a.subject.getOrElse("?")}]]: ${a.filter.fold("?")(_.filter.line)}"
+        _root_.com.histmersion.api.automation.AgentsMarkdown.ChangeResult(s"record the coverage filter of [[${a.subject.getOrElse("?")}]]: ${a.filter.fold("?")(_.filter.line)}")
       case Some(ApprovalKind.ArticlePlan) =>
-        s"compile ${Plural.count(a.articles.fold(0)(_.articles.size), "new article")} for goal **${a.subject.getOrElse("?")}**"
+        s"compile ${Plural.count(_root_.com.histmersion.api.Plural.CountN((a.articles.fold(0)(_.articles.size)).toLong), _root_.com.histmersion.api.Plural.CountSingular("new article"))} for goal **${a.subject.getOrElse("?")}**"
       case Some(ApprovalKind.HintEffect) =>
         s"manager **${a.subject.getOrElse(
             "?"
@@ -452,12 +452,12 @@ object AgentsMarkdown:
           a.hintEffect.fold("")(p =>
             s" (from hint #${p.hint}: \"${p.text.take(160)}\"${Option(p.by).filter(_.nonEmpty).fold("")(b => s", proposed by $b")})"
           )
-      case None => s"${a.kind} on ${a.subject.getOrElse(a.citekey)}"
+      case None => _root_.com.histmersion.api.automation.AgentsMarkdown.ChangeResult(s"${a.kind} on ${a.subject.getOrElse(a.citekey)}")
 
   def approvalLine(a: ApprovalInfo): com.histmersion.api.automation.AgentsMarkdown.ApprovalLineResult =
     val run = a.runId.fold("")(r => s" · run ${r.take(8)}")
     val res = a.result.filter(_.nonEmpty).fold("")(r => s" · $r")
-    s"#${a.id} · ${a.state} · ${change(a)}$run$res"
+    _root_.com.histmersion.api.automation.AgentsMarkdown.ApprovalLineResult(s"#${a.id} · ${a.state} · ${change(a)}$run$res")
 
   def approvals(
       as: List[ApprovalInfo],
@@ -465,9 +465,9 @@ object AgentsMarkdown:
       state: Option[com.histmersion.api.automation.AgentsMarkdown.ApprovalsState] = None,
       older: Option[com.histmersion.api.automation.AgentsMarkdown.ApprovalsOlder] = None
   ): com.histmersion.api.automation.AgentsMarkdown.ApprovalsResult =
-    if as.isEmpty then "_No approvals._"
+    if as.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ApprovalsResult("_No approvals._")
     else
-      "# Approvals\n\n" + pageLine(as.size, page, "approval", state) + facetLines(page, ApprovalFacets) + as
+      "# Approvals\n\n" + pageLine(_root_.com.histmersion.api.automation.AgentsMarkdown.PageLineShown(as.size), page, _root_.com.histmersion.api.automation.AgentsMarkdown.PageLineSingular("approval"), state) + facetLines(page, ApprovalFacets) + as
         .map { a =>
           val quote = a.quote.filter(_.nonEmpty).fold("")(q => s"\n  > ${q.replace("\n", " ").take(400)}")
           val note = a.note.filter(_.nonEmpty).fold("")(n => s"\n  note: $n")
@@ -509,7 +509,7 @@ object AgentsMarkdown:
     val text = if chars > 0 && d.text.length > chars then
       d.text.take(chars) + s"\n… (${d.text.length - chars} more characters)"
     else d.text
-    s"$head\n\n$problems\n\n```markdown\n$text\n```"
+    _root_.com.histmersion.api.automation.AgentsMarkdown.DraftBlockResult(s"$head\n\n$problems\n\n```markdown\n$text\n```")
 
   def scheduleLine(s: Goal.Plans.GoalSchedule): com.histmersion.api.automation.AgentsMarkdown.ScheduleLineResult =
     val state = if s.enabled then "on" else "off"
@@ -519,7 +519,7 @@ object AgentsMarkdown:
       s.lastNote.filter(_.nonEmpty).fold("")(n => s" · $n")
 
   def schedules(ss: List[Goal.Plans.GoalSchedule]): com.histmersion.api.automation.AgentsMarkdown.SchedulesResult =
-    if ss.isEmpty then "_No schedules._" else "# Schedules\n\n" + ss.map(s => s"- ${scheduleLine(s)}").mkString("\n")
+    if ss.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.SchedulesResult("_No schedules._") else _root_.com.histmersion.api.automation.AgentsMarkdown.SchedulesResult("# Schedules\n\n" + ss.map(s => s"- ${scheduleLine(s)}").mkString("\n"))
 
   def linkLine(l: Goal.Plans.GoalLink): com.histmersion.api.automation.AgentsMarkdown.LinkLineResult =
     val ref = l.kind match
@@ -548,23 +548,23 @@ object AgentsMarkdown:
 
   private def cell(s: com.histmersion.api.automation.AgentsMarkdown.CellS): com.histmersion.api.automation.AgentsMarkdown.CellResult = s.replace("|", "\\|").replace("\n", " ")
 
-  private def secs(n: com.histmersion.api.automation.AgentsMarkdown.SecsN): com.histmersion.api.automation.AgentsMarkdown.SecsResult = if n < 120 then s"$n s" else s"${n / 60} min ${n % 60} s"
+  private def secs(n: com.histmersion.api.automation.AgentsMarkdown.SecsN): com.histmersion.api.automation.AgentsMarkdown.SecsResult = if n < 120 then _root_.com.histmersion.api.automation.AgentsMarkdown.SecsResult(s"$n s") else s"${n / 60} min ${n % 60} s"
 
   private def models(configured: List[com.histmersion.api.automation.AgentsMarkdown.ModelsConfigured], actual: List[com.histmersion.api.automation.AgentsMarkdown.ModelsActual]): com.histmersion.api.automation.AgentsMarkdown.ModelsResult =
     val conf = configured.mkString(", ")
     val shown = actual.filterNot(a => configured.exists(c => c.drop(c.indexOf(':') + 1) == a))
-    if conf.isEmpty && actual.isEmpty then "—"
-    else if shown.isEmpty then conf
-    else s"$conf → ${shown.mkString(", ")}"
+    if conf.isEmpty && actual.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult("—")
+    else if shown.isEmpty then _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(conf)
+    else _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(s"$conf → ${shown.mkString(", ")}")
 
   private def paid(costUsd: com.histmersion.api.automation.AgentsMarkdown.PaidCostUsd, billing: List[com.histmersion.api.automation.AgentsMarkdown.PaidBilling]): com.histmersion.api.automation.AgentsMarkdown.PaidResult =
     val plan = billing.filter(_.startsWith("plan pool"))
     if costUsd > 0 || plan.isEmpty then
       s"${usd(costUsd)} USD" + (if plan.nonEmpty then s" + ${plan.mkString(", ")}" else "")
-    else plan.mkString(", ")
+    else _root_.com.histmersion.api.automation.AgentsMarkdown.PaidResult(plan.mkString(", "))
 
   private def ratio(n: com.histmersion.api.automation.AgentsMarkdown.RatioN, of: com.histmersion.api.automation.AgentsMarkdown.RatioOf): com.histmersion.api.automation.AgentsMarkdown.RatioResult =
-    if of == 0 then "—" else s"$n/$of (${BigDecimal(100.0 * n / of).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
+    if of == 0 then _root_.com.histmersion.api.automation.AgentsMarkdown.RatioResult("—") else s"$n/$of (${BigDecimal(100.0 * n / of).setScale(0, BigDecimal.RoundingMode.HALF_UP)}%)"
 
   def compare(c: RunCompare.Comparison): com.histmersion.api.automation.AgentsMarkdown.CompareResult =
     import RunCompare.*
@@ -575,11 +575,11 @@ object AgentsMarkdown:
     val runs = table(
       List(
         "status" -> c.runs.map(r => r.status + (if r.dryRun then " (dry run)" else "")),
-        "model" -> c.runs.map(r =>
+        { val refactorTuple22 = "model" -> c.runs.map(r =>
           (r.model.toList ++ r.modelFor.map(_.text)).mkString(", ") match
             case "" => "the configured roles"
             case m  => m
-        ),
+        ); (_root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart1(refactorTuple22._1), (refactorTuple22._2).map(refactorValue19 => _root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart2(refactorValue19))) },
         "tokens" -> c.runs.map(r => tokens(r.usage)),
         "USD" -> c.runs.map(r => usd(r.costUsd)),
         "time" -> c.runs.map(r => secs(r.seconds)),
@@ -605,7 +605,7 @@ object AgentsMarkdown:
         val e = c.enrich
         "\n\n## Outputs\n\n" + table(
           List(
-            "findings" -> e.map(_.findings.toString),
+            { val refactorTuple10 = "findings" -> e.map(_.findings.toString); (_root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart1(refactorTuple10._1), (refactorTuple10._2).map(refactorValue8 => _root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart2(refactorValue8))) },
             "quote check passed" -> e.map(x => ratio(x.quotesPassed, x.quotesChecked)),
             "places resolved" -> e.map(x => ratio(x.placesResolved, x.placesAsked)),
             "dated findings" -> e.map(x => ratio(x.datedFindings, x.findings)),
@@ -614,8 +614,8 @@ object AgentsMarkdown:
                 case "" => "—"
                 case p  => p
             ),
-            "summary" -> e.map(x => s"${x.summaryChars} chars"),
-            "notes" -> e.map(x => s"${x.notesChars} chars")
+            { val refactorTuple11 = "summary" -> e.map(x => s"${x.summaryChars} chars"); (_root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart1(refactorTuple11._1), (refactorTuple11._2).map(refactorValue11 => _root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart2(refactorValue11))) },
+            { val refactorTuple12 = "notes" -> e.map(x => s"${x.notesChars} chars"); (_root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart1(refactorTuple12._1), (refactorTuple12._2).map(refactorValue12 => _root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart2(refactorValue12))) }
           )
         ) +
           ids

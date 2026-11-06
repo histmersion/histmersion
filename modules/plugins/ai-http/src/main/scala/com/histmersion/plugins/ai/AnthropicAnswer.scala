@@ -56,7 +56,7 @@ object AnthropicAnswer:
       _ <- objectAt(c)
       _ <- c.downField("type").as[String]
       m <- c.downField("message").as[String]
-    yield m
+    yield _root_.com.histmersion.plugins.ai.AnthropicAnswer.ErrorDetail(m)
   }
 
   /** One content block: its text, or its tool call, or neither (a thinking block, an image …); a block of an unknown
@@ -76,7 +76,7 @@ object AnthropicAnswer:
 
   private val block: Decoder[Block] = Decoder.instance { c =>
     c.downField("type").as[Option[String]].flatMap {
-      case Some("text")     => objectAt(c).flatMap(_ => c.downField("text").as[String]).map(Block.Text(_))
+      case Some("text")     => objectAt(c).flatMap(_ => c.downField("text").as[String]).map(Block.Text(_root_.com.histmersion.plugins.ai.AnthropicAnswer.Block.Text.Value(_)))
       case Some("thinking") => objectAt(c).flatMap(_ => c.downField("thinking").as[String]).map(_ => Block.Other)
       case Some(t @ ("tool_use" | "server_tool_use")) =>
         for
@@ -85,7 +85,7 @@ object AnthropicAnswer:
           name <- c.downField("name").as[String]
           input <- c.downField("input").as[Map[String, Json]]
         yield
-          if t == "tool_use" then Block.ToolUse(AiTool.Call(id, name, Json.fromFields(input).noSpaces)) else Block.Other
+          if t == "tool_use" then Block.ToolUse(AiTool.Call(_root_.com.histmersion.plugin.AiTool.Call.Id(id), _root_.com.histmersion.plugin.AiTool.Call.Tool(name), _root_.com.histmersion.plugin.AiTool.Call.Input(Json.fromFields(input).noSpaces))) else Block.Other
       case Some(t) if Known(t) => Right(Block.Other)
       case other               => Left(DecodingFailure(s"no content block of type $other", c.history))
     }
@@ -127,6 +127,6 @@ object AnthropicAnswer:
         case Some(_)                 => AiStop.Other
       ,
       Some(u),
-      Some(model)
+      Some(_root_.com.histmersion.plugin.AiTurn.ServedBy(model))
     )
   }

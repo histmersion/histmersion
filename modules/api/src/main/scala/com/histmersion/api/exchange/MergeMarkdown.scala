@@ -43,9 +43,9 @@ object MergeMarkdown:
   object ArgHintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def who(i: Bundle.Instance): com.histmersion.api.exchange.MergeMarkdown.WhoResult =
-    i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)")
+    _root_.com.histmersion.api.exchange.MergeMarkdown.WhoResult(i.label.fold(i.id.toString.take(8) + "…")(l => s"$l (${i.id.toString.take(8)}…)"))
 
-  def plan(p: MergePlan, all: com.histmersion.api.exchange.MergeMarkdown.PlanAll = false): com.histmersion.api.exchange.MergeMarkdown.PlanResult =
+  def plan(p: MergePlan, all: com.histmersion.api.exchange.MergeMarkdown.PlanAll = _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(false)): com.histmersion.api.exchange.MergeMarkdown.PlanResult =
     val m = p.matches
     val open =
       p.issues.filter(i => i.severity == MergeIssue.Severity.Blocking && i.condition.isEmpty && i.decision.isEmpty)
@@ -92,7 +92,7 @@ object MergeMarkdown:
       else if p.changes == 0 then "_Nothing is open, and nothing to change: the bundle is merged already._"
       else
         s"_Nothing is open: `histmersion merge apply <bundle> --resolutions … --plan ${p.planHash}` carries it out " +
-          s"(${Plural.count(p.changes, "change")}; a backup is taken first)._"
+          s"(${Plural.count(p.changes, _root_.com.histmersion.api.Plural.CountSingular("change"))}; a backup is taken first)._"
     (head :: sections ++ List(next)).mkString("\n\n")
 
   def applied(r: MergeApplyResult): com.histmersion.api.exchange.MergeMarkdown.AppliedResult =
@@ -143,13 +143,13 @@ object MergeMarkdown:
       case MergeJobState.Running =>
         s"**Applying** plan ${j.planHash} — job `${j.job}`, ${j.elapsedMs / 1000} s so far (a backup is taken first)."
       case MergeJobState.Failed =>
-        s"**The merge apply failed** (job `${j.job}`): ${j.error.getOrElse("no reason given")}"
+        _root_.com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult(s"**The merge apply failed** (job `${j.job}`): ${j.error.getOrElse("no reason given")}")
       case MergeJobState.Interrupted =>
-        s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText)}"
+        _root_.com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult(s"**The merge apply was interrupted** (job `${j.job}`): ${j.error.getOrElse(MergeApplyJob.InterruptedText)}")
       case MergeJobState.Done => j.result.fold(s"**Done** (job `${j.job}`).")(applied)
 
   def merges(ms: List[MergeInfo]): com.histmersion.api.exchange.MergeMarkdown.MergesResult =
-    if ms.isEmpty then "_No merges yet: nothing was imported from another collection._"
+    if ms.isEmpty then _root_.com.histmersion.api.exchange.MergeMarkdown.MergesResult("_No merges yet: nothing was imported from another collection._")
     else
       ("| merge | when | from | bundle | plan | ledger | redirects | backup |" ::
         "|---|---|---|---|---|---|---|---|" ::
@@ -180,7 +180,7 @@ object MergeMarkdown:
       "**Remembered decisions**\n" +
         d.remembered.map(x => s"- `${x.issue}` = `${x.decision}`").mkString("\n")
     )
-    (head :: report ++ res.toList ++ rem.toList).mkString("\n\n")
+    _root_.com.histmersion.api.exchange.MergeMarkdown.DetailResult((head :: report ++ res.toList ++ rem.toList).mkString("\n\n"))
 
   def ledger(l: MergeLedger): com.histmersion.api.exchange.MergeMarkdown.LedgerResult =
     val head = l.query.fold("**Merge ledger** (latest)")(q => s"**Merge ledger** of `$q`")
@@ -198,7 +198,7 @@ object MergeMarkdown:
       "**Redirects** (merged-away uid → the record here)\n" +
         l.redirects.map(r => s"- `${r.aliasUid}` → `${r.uid}` (${r.kind})").mkString("\n")
     )
-    ((head :: rows.mkString("\n") :: Nil) ++ redirects.toList).mkString("\n\n")
+    _root_.com.histmersion.api.exchange.MergeMarkdown.LedgerResult(((head :: rows.mkString("\n") :: Nil) ++ redirects.toList).mkString("\n\n"))
 
   def renamed(r: LabelRenamed): com.histmersion.api.exchange.MergeMarkdown.RenamedResult =
     val what = r.entity match
@@ -206,11 +206,11 @@ object MergeMarkdown:
       case com.histmersion.api.exchange.Bundle.Kind.Event   => "Event"
       case com.histmersion.api.exchange.Bundle.Kind.Place   => "Place"
       case _                                                => "Goal"
-    s"**$what renamed** `${r.from}` → `${r.to}`; the old label stays an alias — reads and writes naming it go to `${r.to}`." +
-      (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else "")
+    _root_.com.histmersion.api.exchange.MergeMarkdown.RenamedResult(s"**$what renamed** `${r.from}` → `${r.to}`; the old label stays an alias — reads and writes naming it go to `${r.to}`." +
+      (if r.rewritten.nonEmpty then s" Links rewritten in ${r.rewritten.map(a => s"`$a`").mkString(", ")}." else ""))
 
   private def section(title: com.histmersion.api.exchange.MergeMarkdown.SectionTitle, lines: List[com.histmersion.api.exchange.MergeMarkdown.SectionLines]): Option[com.histmersion.api.exchange.MergeMarkdown.SectionResult] =
-    Option.when(lines.nonEmpty)(s"**$title**\n" + lines.mkString("\n"))
+    Option.when(lines.nonEmpty)(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionResult(s"**$title**\n" + lines.mkString("\n")))
 
   def issue(i: MergeIssue): com.histmersion.api.exchange.MergeMarkdown.IssueResult =
     val cond = i.condition.fold("")(c => s" _(if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)})_")
@@ -224,14 +224,14 @@ object MergeMarkdown:
       ),
       i.decision.map(d => s"decided `${d.wire}`" + i.decidedBy.fold("")(by))
     ).flatten
-    (s"- `${i.id}` ${i.entity.wire} — ${i.title}$cond" :: lines.map(l => s"  - $l")).mkString("\n")
+    _root_.com.histmersion.api.exchange.MergeMarkdown.IssueResult((s"- `${i.id}` ${i.entity.wire} — ${i.title}$cond" :: lines.map(l => s"  - $l")).mkString("\n"))
 
   private def by(b: MergeIssue.DecidedBy): com.histmersion.api.exchange.MergeMarkdown.ByResult = b match
-    case MergeIssue.DecidedBy.Remembered => " as an earlier merge apply did"
-    case other                           => s" by ${other.toString.toLowerCase(java.util.Locale.ROOT)}"
+    case MergeIssue.DecidedBy.Remembered => _root_.com.histmersion.api.exchange.MergeMarkdown.ByResult(" as an earlier merge apply did")
+    case other                           => _root_.com.histmersion.api.exchange.MergeMarkdown.ByResult(s" by ${other.toString.toLowerCase(java.util.Locale.ROOT)}")
 
   private def argHint(i: MergeIssue, k: MergeDecision.Kind): com.histmersion.api.exchange.MergeMarkdown.ArgHintResult = k match
-    case MergeDecision.Kind.Map => ":" + List(i.left, i.right).flatten.map(_.label).mkString("|")
+    case MergeDecision.Kind.Map => _root_.com.histmersion.api.exchange.MergeMarkdown.ArgHintResult(":" + List(i.left, i.right).flatten.map(_.label).mkString("|"))
     case MergeDecision.Kind.RenameRight | MergeDecision.Kind.RenameLeft | MergeDecision.Kind.File =>
-      i.suggested.filter(_.kind == k).flatMap(_.argument).fold(":<value>")(a => s":$a")
-    case _ => ""
+      _root_.com.histmersion.api.exchange.MergeMarkdown.ArgHintResult(i.suggested.filter(_.kind == k).flatMap(_.argument).fold(":<value>")(a => s":$a"))
+    case _ => _root_.com.histmersion.api.exchange.MergeMarkdown.ArgHintResult("")

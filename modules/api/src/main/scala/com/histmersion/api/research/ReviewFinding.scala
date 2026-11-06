@@ -14,12 +14,12 @@ final case class ReviewFinding(
     fix: ReviewFinding.Fix,
     quote: ReviewFinding.Quote,
     outcome: ReviewFinding.Outcome,
-    note: ReviewFinding.Note = "",
+    note: ReviewFinding.Note = _root_.com.histmersion.api.research.ReviewFinding.Note(""),
     closedBy: Option[ReviewFinding.ClosedBy] = None,
     closedRound: Option[ReviewFinding.ClosedRound] = None,
     closedRunNumber: Option[ReviewFinding.ClosedRunNumber] = None,
-    reopened: ReviewFinding.Reopened = 0,
-    deferred: ReviewFinding.Deferred = false
+    reopened: ReviewFinding.Reopened = _root_.com.histmersion.api.research.ReviewFinding.Reopened(0),
+    deferred: ReviewFinding.Deferred = _root_.com.histmersion.api.research.ReviewFinding.Deferred(false)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

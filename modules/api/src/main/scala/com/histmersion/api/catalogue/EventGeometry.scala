@@ -33,21 +33,21 @@ object EventGeometry:
   object FmtD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def point(lat: com.histmersion.api.catalogue.EventGeometry.PointLat, lon: com.histmersion.api.catalogue.EventGeometry.PointLon): Either[com.histmersion.api.catalogue.EventGeometry.PointResultPart1, com.histmersion.api.catalogue.EventGeometry.PointResultPart2] =
-    if lat.isNaN || lat < -90 || lat > 90 then Left(s"lat $lat is not between -90 and 90")
-    else if lon.isNaN || lon < -180 || lon > 180 then Left(s"lon $lon is not between -180 and 180")
+    if lat.isNaN || lat < -90 || lat > 90 then Left(_root_.com.histmersion.api.catalogue.EventGeometry.PointResultPart1(s"lat $lat is not between -90 and 90"))
+    else if lon.isNaN || lon < -180 || lon > 180 then Left(_root_.com.histmersion.api.catalogue.EventGeometry.PointResultPart1(s"lon $lon is not between -180 and 180"))
     else Right(s"""{"type":"Point","coordinates":[${fmt(lon)},${fmt(lat)}]}""")
 
   def of(geometry: Option[com.histmersion.api.catalogue.EventGeometry.OfGeometry], lat: Option[com.histmersion.api.catalogue.EventGeometry.OfLat], lon: Option[com.histmersion.api.catalogue.EventGeometry.OfLon]): Either[com.histmersion.api.catalogue.EventGeometry.OfResultPart1, Option[com.histmersion.api.catalogue.EventGeometry.OfResultPart2]] =
     (geometry.map(_.trim).filter(_.nonEmpty), lat, lon) match
-      case (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Left("give geometry or lat/lon, not both")
+      case (Some(_), Some(_), _) | (Some(_), _, Some(_)) => Left(_root_.com.histmersion.api.catalogue.EventGeometry.OfResultPart1("give geometry or lat/lon, not both"))
       case (g @ Some(_), None, None)                     => Right(g)
       case (None, Some(a), Some(o))                      => point(a, o).map(Some(_))
       case (None, None, None)                            => Right(None)
-      case _                                             => Left("lat and lon go together")
+      case _                                             => Left(_root_.com.histmersion.api.catalogue.EventGeometry.OfResultPart1("lat and lon go together"))
 
   /** The GeoJSON geometry types of RFC 7946 (a Feature is not one). */
   val GeometryTypes: Set[com.histmersion.api.catalogue.EventGeometry.GeometryTypes] =
-    Set("Point", "MultiPoint", "LineString", "MultiLineString", "Polygon", "MultiPolygon", "GeometryCollection")
+    Set(_root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("Point"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("MultiPoint"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("LineString"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("MultiLineString"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("Polygon"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("MultiPolygon"), _root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes("GeometryCollection"))
 
   private val WktShape =
     "(?is)^(SRID=\\d+;\\s*)?(POINT|MULTIPOINT|LINESTRING|MULTILINESTRING|POLYGON|MULTIPOLYGON|GEOMETRYCOLLECTION)\\b.*".r
@@ -56,17 +56,17 @@ object EventGeometry:
 
   def check(g: com.histmersion.api.catalogue.EventGeometry.CheckG): Either[com.histmersion.api.catalogue.EventGeometry.CheckResultPart1, com.histmersion.api.catalogue.EventGeometry.CheckResultPart2] =
     val t = g.trim
-    if WktShape.matches(t) then Left(s"geometry is GeoJSON, not WKT: write $Example (or give lat/lon)")
+    if WktShape.matches(t) then Left(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart1(s"geometry is GeoJSON, not WKT: write $Example (or give lat/lon)"))
     else
       io.circe.parser.parse(t) match
-        case Left(_)  => Left(s"geometry is not GeoJSON: expected an object such as $Example")
+        case Left(_)  => Left(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart1(s"geometry is not GeoJSON: expected an object such as $Example"))
         case Right(j) =>
           j.asObject.flatMap(_("type")).flatMap(_.asString) match
-            case Some(tp) if GeometryTypes(tp)                => Right(t)
+            case Some(tp) if GeometryTypes(_root_.com.histmersion.api.catalogue.EventGeometry.GeometryTypes(tp))                => Right(t)
             case Some(tp @ ("Feature" | "FeatureCollection")) =>
-              Left(s"geometry is a GeoJSON geometry, not a $tp: give its \"geometry\" member")
+              Left(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart1(s"geometry is a GeoJSON geometry, not a $tp: give its \"geometry\" member"))
             case Some(tp) => Left(s"geometry type '$tp' is not one of ${GeometryTypes.toList.sorted.mkString(", ")}")
-            case None     => Left(s"geometry has no \"type\": expected an object such as $Example")
+            case None     => Left(_root_.com.histmersion.api.catalogue.EventGeometry.CheckResultPart1(s"geometry has no \"type\": expected an object such as $Example"))
 
   // a plain decimal, never `1.0E-4`, and never with a locale's comma
   private def fmt(d: com.histmersion.api.catalogue.EventGeometry.FmtD): com.histmersion.api.catalogue.EventGeometry.FmtResult = BigDecimal(d).bigDecimal.stripTrailingZeros.toPlainString

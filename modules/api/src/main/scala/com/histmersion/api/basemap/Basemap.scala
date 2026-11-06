@@ -111,12 +111,12 @@ object Basemap:
 
   def validFocusName(s: com.histmersion.api.basemap.Basemap.ValidFocusNameS): Either[com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart1, com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart2] =
     val n = s.trim.toLowerCase(java.util.Locale.ROOT)
-    Either.cond(n.matches("[a-z0-9][a-z0-9-]{0,40}"), n, s"'$s' is not a focus region name (letters, digits and -)")
+    Either.cond(n.matches("[a-z0-9][a-z0-9-]{0,40}"), n, _root_.com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart1(s"'$s' is not a focus region name (letters, digits and -)"))
 
   def focusRegion(spec: com.histmersion.api.basemap.Basemap.FocusRegionSpec): Either[com.histmersion.api.basemap.Basemap.FocusRegionResultPart1, (com.histmersion.api.basemap.Basemap.FocusRegionResultPart2Part1, BBox)] =
     spec.trim.split("\\s+", 2).toList match
       case n :: b :: Nil => for name <- validFocusName(n); box <- validBBox(b.replace(" ", "")) yield (name, box)
-      case _             => Left(s"'$spec' is not \"name minLon,minLat,maxLon,maxLat\"")
+      case _             => Left(_root_.com.histmersion.api.basemap.Basemap.FocusRegionResultPart1(s"'$spec' is not \"name minLon,minLat,maxLon,maxLat\""))
 
   def focusNameOf(b: BBox): com.histmersion.api.basemap.Basemap.FocusNameOfResult =
     def f(d: com.histmersion.api.basemap.Basemap.FocusNameOfFD) = java.math
@@ -262,7 +262,7 @@ object Basemap:
       }
       .mkString(",")
 
-  val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LegacyLacks] = List("boundaries", "buildings", "landuse", "places", "pois", "roads", "transit")
+  val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LegacyLacks] = List(_root_.com.histmersion.api.basemap.Basemap.LegacyLacks("boundaries"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("buildings"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("landuse"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("places"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("pois"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("roads"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("transit"))
 
   def droppedLayers(keepAll: com.histmersion.api.basemap.Basemap.DroppedLayersKeepAll, drop: Option[com.histmersion.api.basemap.Basemap.DroppedLayersDrop]): List[com.histmersion.api.basemap.Basemap.DroppedLayersResult] =
     if keepAll then Nil
@@ -277,20 +277,20 @@ object Basemap:
   val KeepAllCommand = s"$FetchCommand --layer vector --keep-all"
 
   def keptLine(keepAll: com.histmersion.api.basemap.Basemap.KeptLineKeepAll, drop: Option[com.histmersion.api.basemap.Basemap.KeptLineDrop]): com.histmersion.api.basemap.Basemap.KeptLineResult =
-    if keepAll then "everything (unfiltered)"
+    if keepAll then _root_.com.histmersion.api.basemap.Basemap.KeptLineResult("everything (unfiltered)")
     else
       drop match
-        case Some(d) if d.trim.isEmpty => "everything (nothing dropped)"
-        case Some(d)                   => s"all but: $d"
-        case None                      => "earth, water and land cover only (fetched before the drop list)"
+        case Some(d) if d.trim.isEmpty => _root_.com.histmersion.api.basemap.Basemap.KeptLineResult("everything (nothing dropped)")
+        case Some(d)                   => _root_.com.histmersion.api.basemap.Basemap.KeptLineResult(s"all but: $d")
+        case None                      => _root_.com.histmersion.api.basemap.Basemap.KeptLineResult("earth, water and land cover only (fetched before the drop list)")
 
   final case class FetchQuery(
-      layer: FetchQuery.Layer = "all",
+      layer: FetchQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.FetchQuery.Layer("all"),
       maxZoom: Option[FetchQuery.MaxZoom] = None,
       terrainMaxZoom: Option[FetchQuery.TerrainMaxZoom] = None,
       bbox: Option[FetchQuery.Bbox] = None,
-      dryRun: FetchQuery.DryRun = false,
-      keepAll: FetchQuery.KeepAll = false,
+      dryRun: FetchQuery.DryRun = _root_.com.histmersion.api.basemap.Basemap.FetchQuery.DryRun(false),
+      keepAll: FetchQuery.KeepAll = _root_.com.histmersion.api.basemap.Basemap.FetchQuery.KeepAll(false),
       focus: Option[FetchQuery.Focus] = None
   )
 
@@ -341,16 +341,16 @@ object Basemap:
 
 
   enum Layer(val wire: Layer.Wire, val title: Layer.Title):
-    case Vector extends Layer("vector", "coast, water and land cover")
+    case Vector extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("vector"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("coast, water and land cover"))
 
-    case Terrain extends Layer("terrain", "relief")
+    case Terrain extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("terrain"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("relief"))
 
-    case Labels extends Layer("labels", "physical names")
+    case Labels extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("labels"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("physical names"))
 
     /** The relief's own tiles have the sea flat at 0; these carry its depth (ETOPO1 from NOAA, or the GEBCO grid). */
-    case Bathymetry extends Layer("bathymetry", "sea floor")
+    case Bathymetry extends Layer(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire("bathymetry"), _root_.com.histmersion.api.basemap.Basemap.Layer.Title("sea floor"))
 
-    def file: com.histmersion.api.basemap.Basemap.Layer.FileResult = s"$wire.pmtiles"
+    def file: com.histmersion.api.basemap.Basemap.Layer.FileResult = _root_.com.histmersion.api.basemap.Basemap.Layer.FileResult(s"$wire.pmtiles")
 
   object Layer:
     type Wire = Wire.T
@@ -373,7 +373,7 @@ object Basemap:
       s.trim.toLowerCase(java.util.Locale.ROOT) match
         case "" | "all" => Right(values.toList)
         case other      =>
-          parse(other).map(List(_)).toRight(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)")
+          parse(other).map(List(_)).toRight(_root_.com.histmersion.api.basemap.Basemap.Layer.ParseManyResultPart1(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)"))
 
   final case class LayerInfo(
       layer: LayerInfo.Layer,
@@ -389,7 +389,7 @@ object Basemap:
       fetchedAt: Option[LayerInfo.FetchedAt] = None,
       /** Changes with every fetch: the tile URLs carry it, so a browser never shows a stale cached tile. */
       version: Option[LayerInfo.Version] = None,
-      attribution: LayerInfo.Attribution = "",
+      attribution: LayerInfo.Attribution = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Attribution(""),
       kept: Option[LayerInfo.Kept] = None,
       dropped: List[LayerInfo.Dropped] = Nil,
       error: Option[LayerInfo.Error] = None,
@@ -474,7 +474,7 @@ object Basemap:
 
 
 
-  final case class RemoveQuery(layer: RemoveQuery.Layer = "all", focus: Option[RemoveQuery.Focus] = None, cache: RemoveQuery.Cache = false)
+  final case class RemoveQuery(layer: RemoveQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.RemoveQuery.Layer("all"), focus: Option[RemoveQuery.Focus] = None, cache: RemoveQuery.Cache = _root_.com.histmersion.api.basemap.Basemap.RemoveQuery.Cache(false))
 
   object RemoveQuery:
     type Layer = Layer.T
@@ -498,11 +498,11 @@ object Basemap:
       bbox: Status.Bbox,
       layers: List[LayerInfo],
       fetchCommand: Status.FetchCommand,
-      freeBytes: Status.FreeBytes = 0,
+      freeBytes: Status.FreeBytes = _root_.com.histmersion.api.basemap.Basemap.Status.FreeBytes((0).toLong),
       running: Option[Status.Running] = None,
       hints: List[Status.Hints] = Nil,
       styles: List[StyleState] = Nil,
-      mapMaxZoom: Status.MapMaxZoom = 16,
+      mapMaxZoom: Status.MapMaxZoom = _root_.com.histmersion.api.basemap.Basemap.Status.MapMaxZoom(16),
       regions: List[Region] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:

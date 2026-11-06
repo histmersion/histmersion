@@ -10,7 +10,7 @@ final case class ReadMark(
     kind: ItemKind,
     id: ItemKey,
     title: ReadMark.Title,
-    read: ReadMark.Read = false,
+    read: ReadMark.Read = _root_.com.histmersion.api.personal.ReadMark.Read(false),
     readAt: Option[ReadMark.ReadAt] = None,
     openedAt: Option[ReadMark.OpenedAt] = None
 ) derives KindlingsCodecAsObject,

@@ -11,12 +11,12 @@ object BaseMapSource:
   val Auto = "auto"
   val Local = "local"
   val Online = "online"
-  val All: List[com.histmersion.api.basemap.BaseMapSource.All] = List(Auto, Local, Online)
+  val All: List[com.histmersion.api.basemap.BaseMapSource.All] = List(_root_.com.histmersion.api.basemap.BaseMapSource.All(Auto), _root_.com.histmersion.api.basemap.BaseMapSource.All(Local), _root_.com.histmersion.api.basemap.BaseMapSource.All(Online))
 
   def resolve(setting: com.histmersion.api.basemap.BaseMapSource.ResolveSetting, status: Basemap.Status): com.histmersion.api.basemap.BaseMapSource.ResolveResult =
     setting.trim.toLowerCase(java.util.Locale.ROOT) match
-      case Local  => Local
-      case Online => Online
+      case Local  => _root_.com.histmersion.api.basemap.BaseMapSource.ResolveResult(Local)
+      case Online => _root_.com.histmersion.api.basemap.BaseMapSource.ResolveResult(Online)
       case _      =>
         val whole = status.styles.exists(s => BaseStyles.all.exists(_.id == s.id) && s.missing.isEmpty)
-        if status.available && whole then Local else Online
+        if status.available && whole then _root_.com.histmersion.api.basemap.BaseMapSource.ResolveResult(Local) else _root_.com.histmersion.api.basemap.BaseMapSource.ResolveResult(Online)

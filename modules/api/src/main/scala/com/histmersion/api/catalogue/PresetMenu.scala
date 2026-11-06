@@ -19,15 +19,15 @@ object PresetMenu:
     type InView = InView.T
     object InView extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = 0.5
+  val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = _root_.com.histmersion.api.catalogue.PresetMenu.MinShare(0.5)
 
   def share(view: BBox, box: BBox): com.histmersion.api.catalogue.PresetMenu.ShareResult =
     val area = (view.maxLon - view.minLon) * (view.maxLat - view.minLat)
-    if view.crossesAntimeridian || area <= 0 then 0.0
+    if view.crossesAntimeridian || area <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.ShareResult(0.0)
     else
       val w = math.min(view.maxLon, box.maxLon) - math.max(view.minLon, box.minLon)
       val h = math.min(view.maxLat, box.maxLat) - math.max(view.minLat, box.minLat)
-      if w <= 0 || h <= 0 then 0.0 else (w * h) / area
+      if w <= 0 || h <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.ShareResult(0.0) else (w * h) / area
 
   def groups(ps: List[HistoricalPeriod], view: Option[BBox] = None): List[Group] =
     val byRegion = ps.flatMap(p => p.preset.map(_ -> p)).groupMap(_._1)(_._2)

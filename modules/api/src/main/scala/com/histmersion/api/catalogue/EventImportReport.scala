@@ -7,21 +7,21 @@ import com.histmersion.api.given
 final case class EventImportReport(
     provider: EventImportReport.Provider,
     dryRun: EventImportReport.DryRun,
-    records: EventImportReport.Records = 0,
-    kept: EventImportReport.Kept = 0,
-    created: EventImportReport.Created = 0,
-    merged: EventImportReport.Merged = 0,
-    matched: EventImportReport.Matched = 0,
-    updated: EventImportReport.Updated = 0,
+    records: EventImportReport.Records = _root_.com.histmersion.api.catalogue.EventImportReport.Records(0),
+    kept: EventImportReport.Kept = _root_.com.histmersion.api.catalogue.EventImportReport.Kept(0),
+    created: EventImportReport.Created = _root_.com.histmersion.api.catalogue.EventImportReport.Created(0),
+    merged: EventImportReport.Merged = _root_.com.histmersion.api.catalogue.EventImportReport.Merged(0),
+    matched: EventImportReport.Matched = _root_.com.histmersion.api.catalogue.EventImportReport.Matched(0),
+    updated: EventImportReport.Updated = _root_.com.histmersion.api.catalogue.EventImportReport.Updated(0),
     byKind: List[EventCount] = Nil,
     skipped: List[EventCount] = Nil,
     matchedEvents: List[EventImportReport.MatchedEvents] = Nil,
-    parts: EventImportReport.Parts = 0,
-    pending: EventImportReport.Pending = 0,
-    requests: EventImportReport.Requests = 0,
+    parts: EventImportReport.Parts = _root_.com.histmersion.api.catalogue.EventImportReport.Parts(0),
+    pending: EventImportReport.Pending = _root_.com.histmersion.api.catalogue.EventImportReport.Pending(0),
+    requests: EventImportReport.Requests = _root_.com.histmersion.api.catalogue.EventImportReport.Requests(0),
     failed: List[EventImportReport.Failed] = Nil,
-    licence: EventImportReport.Licence = "",
-    citation: EventImportReport.Citation = "",
+    licence: EventImportReport.Licence = _root_.com.histmersion.api.catalogue.EventImportReport.Licence(""),
+    citation: EventImportReport.Citation = _root_.com.histmersion.api.catalogue.EventImportReport.Citation(""),
     corrections: Correction.Counts = Correction.Counts()
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -66,7 +66,7 @@ object EventImportReport:
   object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Detail: com.histmersion.api.jobs.JobDetail.Field[Option[EventImportReport]] =
-    com.histmersion.api.jobs.JobDetail.Field("eventImport", None)
+    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("eventImport"), None)
 
   def combine(a: EventImportReport, b: EventImportReport): EventImportReport =
     EventImportReport(
@@ -121,4 +121,4 @@ object EventImportReport:
       r.corrections.summary.map(c => s"- $c (`histmersion events corrections`)").toList ++
       Option.when(r.licence.nonEmpty)(s"- licence: ${r.licence}").toList ++
       Option.when(r.citation.nonEmpty)(s"- cite as: ${r.citation}").toList
-    (head :: "" :: lines).mkString("\n")
+    _root_.com.histmersion.api.catalogue.EventImportReport.MarkdownResult((head :: "" :: lines).mkString("\n"))

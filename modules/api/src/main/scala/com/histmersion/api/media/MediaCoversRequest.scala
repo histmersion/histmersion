@@ -5,12 +5,12 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MediaCoversRequest(
-    dryRun: com.histmersion.api.media.MediaImportRequest.DryRun = true,
+    dryRun: com.histmersion.api.media.MediaImportRequest.DryRun = _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true),
     limit: Option[MediaCoversRequest.Limit] = None,
     citekey: Option[com.histmersion.api.library.Citekey] = None,
-    refresh: com.histmersion.api.media.MediaImportRequest.Refresh = false,
-    covers: MediaCoversRequest.Covers = true,
-    illustrations: MediaCoversRequest.Illustrations = true,
+    refresh: com.histmersion.api.media.MediaImportRequest.Refresh = _root_.com.histmersion.api.media.MediaImportRequest.Refresh(false),
+    covers: MediaCoversRequest.Covers = _root_.com.histmersion.api.media.MediaCoversRequest.Covers(true),
+    illustrations: MediaCoversRequest.Illustrations = _root_.com.histmersion.api.media.MediaCoversRequest.Illustrations(true),
     isbn: Option[MediaCoversRequest.Isbn] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

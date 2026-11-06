@@ -12,7 +12,7 @@ final case class CandidateWatch(
     watermark: Option[CandidateWatch.Watermark] = None,
     lastRun: Option[CandidateWatch.LastRun] = None,
     lastError: Option[CandidateWatch.LastError] = None,
-    lastFound: CandidateWatch.LastFound = 0
+    lastFound: CandidateWatch.LastFound = _root_.com.histmersion.api.library.CandidateWatch.LastFound(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

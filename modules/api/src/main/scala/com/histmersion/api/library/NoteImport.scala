@@ -11,7 +11,7 @@ final case class NoteImport(
     citekey: Option[com.histmersion.api.library.Citekey] = None,
     body: Option[NoteImport.Body] = None,
     mtime: Option[NoteImport.Mtime] = None,
-    force: NoteImport.Force = false,
+    force: NoteImport.Force = _root_.com.histmersion.api.library.NoteImport.Force(false),
     assets: List[AssetInput] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

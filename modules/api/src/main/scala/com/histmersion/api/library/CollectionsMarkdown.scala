@@ -51,8 +51,8 @@ object CollectionsMarkdown:
   object SetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def collections(cs: List[CollectionInfo]): com.histmersion.api.library.CollectionsMarkdown.CollectionsResult =
-    if cs.isEmpty then "_No source collection is registered._"
-    else cs.map(collection).mkString("\n\n")
+    if cs.isEmpty then _root_.com.histmersion.api.library.CollectionsMarkdown.CollectionsResult("_No source collection is registered._")
+    else _root_.com.histmersion.api.library.CollectionsMarkdown.CollectionsResult(cs.map(collection).mkString("\n\n"))
 
   def collection(c: CollectionInfo): com.histmersion.api.library.CollectionsMarkdown.CollectionResult =
     s"### ${c.title} (`${c.name}`)\n\n${c.description}\n\n" +
@@ -60,23 +60,23 @@ object CollectionsMarkdown:
       s"- reachable: ${if c.reachable then "yes" else s"no — ${c.problem.getOrElse("unknown")}"}"
 
   private def who(authors: List[com.histmersion.api.library.CollectionsMarkdown.WhoAuthors]): com.histmersion.api.library.CollectionsMarkdown.WhoResult =
-    authors.take(3).mkString(", ") + (if authors.sizeIs > 3 then " et al." else "")
+    _root_.com.histmersion.api.library.CollectionsMarkdown.WhoResult(authors.take(3).mkString(", ") + (if authors.sizeIs > 3 then " et al." else ""))
 
   /** A search as a table: one row per entry, with the formats of its files. */
   def search(entries: List[CollectionEntry]): com.histmersion.api.library.CollectionsMarkdown.SearchResult =
-    if entries.isEmpty then "_No matching books in the Calibre library._"
+    if entries.isEmpty then _root_.com.histmersion.api.library.CollectionsMarkdown.SearchResult("_No matching books in the Calibre library._")
     else
       val rows = entries.map { b =>
         val fmts = b.formats.flatMap(_.split("\\.").lastOption).map(_.toUpperCase).distinct.mkString(", ")
         s"| ${b.id} | ${b.title.replace("|", "\\|")} | ${who(b.authors).replace("|", "\\|")} " +
           s"| ${b.year.map(_.toString).getOrElse("—")} | $fmts |"
       }
-      (List(s"### ${entries.size} book(s)", "", "| id | title | authors | year | formats |", "|---|---|---|---:|---|")
-        ++ rows ++ List("", "_Import one with `histmersion calibre import <id> --citekey <k>`._")).mkString("\n")
+      _root_.com.histmersion.api.library.CollectionsMarkdown.SearchResult((List(s"### ${entries.size} book(s)", "", "| id | title | authors | year | formats |", "|---|---|---|---:|---|")
+        ++ rows ++ List("", "_Import one with `histmersion calibre import <id> --citekey <k>`._")).mkString("\n"))
 
   /** The entries no source links, newest first, with the path of each file. */
   def unlinked(entries: List[CollectionEntry], total: com.histmersion.api.library.CollectionsMarkdown.UnlinkedTotal): com.histmersion.api.library.CollectionsMarkdown.UnlinkedResult =
-    if entries.isEmpty then "_Every Calibre entry is linked to a source._"
+    if entries.isEmpty then _root_.com.histmersion.api.library.CollectionsMarkdown.UnlinkedResult("_Every Calibre entry is linked to a source._")
     else
       val lines = entries.map { b =>
         val year = b.year.fold("")(y => s" ($y)")
@@ -97,7 +97,7 @@ object CollectionsMarkdown:
 
   /** The line for the records with no fetched file — never a gap. */
   def uncountedLine(n: com.histmersion.api.library.CollectionsMarkdown.UncountedLineN): com.histmersion.api.library.CollectionsMarkdown.UncountedLineResult =
-    s"$n ${Plural.noun(n, "record")} without a fetched file — not counted; see the acquire list " +
+    s"$n ${Plural.noun(n, _root_.com.histmersion.api.Plural.NounSingular("record"))} without a fetched file — not counted; see the acquire list " +
       "(`histmersion queue acquire`); `--json` lists them."
 
   /** The counted gaps as a table, then one line for the records with no fetched file. */
@@ -124,13 +124,13 @@ object CollectionsMarkdown:
               "`<cli.calibre.originals-dir>/<citekey>/paper.*` on this host (`local`), else the original the server " +
               "stored (`stored`)._"
           )).mkString("\n")
-    if missing == 0 then head else s"$head\n\n${uncountedLine(missing)}"
+    if missing == 0 then _root_.com.histmersion.api.library.CollectionsMarkdown.GapsResult(head) else s"$head\n\n${uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.UncountedLineN(missing))}"
 
   /** A sync: the gaps pushed (or that would be), each push, and the summary line. */
   def sync(s: CollectionSync): com.histmersion.api.library.CollectionsMarkdown.SyncResult =
     val ready = s.gaps.gaps.filter(_.counted)
     val missing = s.gaps.gaps.count(_.original == "none")
-    val note = if missing == 0 then "" else " · " + uncountedLine(missing)
+    val note = if missing == 0 then "" else " · " + uncountedLine(_root_.com.histmersion.api.library.CollectionsMarkdown.UncountedLineN(missing))
     val table = if ready.nonEmpty then gaps(ready) + "\n\n" else ""
     if !s.applied then
       table + s"Dry run: ${ready.size} source(s) would be pushed$note" +
@@ -176,13 +176,13 @@ object CollectionsMarkdown:
     val tail = if left.isEmpty then "" else s"\n\n**Left alone (${left.size})**\n\n${left.mkString("\n")}"
     val hint =
       if !applied && changing.nonEmpty then "\n\n_Dry run. Re-run with `--apply` (Calibre GUI closed)._" else ""
-    head + tail + hint
+    _root_.com.histmersion.api.library.CollectionsMarkdown.UpdateAllResult(head + tail + hint)
 
   /** An audit: the linked items that disagree with their records. */
   def audit(a: CollectionAudit): com.histmersion.api.library.CollectionsMarkdown.AuditResult =
     def cell(s: com.histmersion.api.library.CollectionsMarkdown.AuditCellS) = s.replace("|", "\\|").replace("\n", " ").take(90)
     def view(v: CollectionRecordView) = s"${v.title} — ${v.authors.mkString("; ")}${v.year.fold("")(y => s" ($y)")}"
-    if a.findings.isEmpty then s"_All ${a.checked} linked Calibre entries agree with the corpus._"
+    if a.findings.isEmpty then _root_.com.histmersion.api.library.CollectionsMarkdown.AuditResult(s"_All ${a.checked} linked Calibre entries agree with the corpus._")
     else
       val table =
         "| id | citekey(s) | issue | corpus | Calibre | fix |\n|---:|---|---|---|---|---|\n" +
@@ -194,8 +194,8 @@ object CollectionsMarkdown:
                 s"${cell(f.entry.fold("—")(view))} | $todo |"
             }
             .mkString("\n")
-      s"### ${a.findings.size} of ${a.checked} linked Calibre entries disagree with the corpus\n\n$table\n\n" +
-        "_`histmersion calibre update --all` lists every change it would make; `--apply` writes them._"
+      _root_.com.histmersion.api.library.CollectionsMarkdown.AuditResult(s"### ${a.findings.size} of ${a.checked} linked Calibre entries disagree with the corpus\n\n$table\n\n" +
+        "_`histmersion calibre update --all` lists every change it would make; `--apply` writes them._")
 
   def imported(i: CollectionImported): com.histmersion.api.library.CollectionsMarkdown.ImportedResult =
     (List(s"Imported Calibre id ${i.id} as `${i.citekey}` — ${i.title}") ++
@@ -205,7 +205,7 @@ object CollectionsMarkdown:
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
       i.jobError.map(e => s"not converted: $e")).mkString("\n")
 
-  def linked(l: CollectionLinked): com.histmersion.api.library.CollectionsMarkdown.LinkedResult = s"linked `${l.citekey}` to Calibre id ${l.id} — ${l.title}"
+  def linked(l: CollectionLinked): com.histmersion.api.library.CollectionsMarkdown.LinkedResult = _root_.com.histmersion.api.library.CollectionsMarkdown.LinkedResult(s"linked `${l.citekey}` to Calibre id ${l.id} — ${l.title}")
 
   def pushed(p: CollectionPushed): com.histmersion.api.library.CollectionsMarkdown.PushedResult =
     p.replaced.fold(s"added `${p.citekey}` to Calibre as id ${p.id} — ${p.title}")(fmt =>
@@ -213,7 +213,7 @@ object CollectionsMarkdown:
     )
 
   def updatedOne(u: CollectionUpdatedOne): com.histmersion.api.library.CollectionsMarkdown.UpdatedOneResult =
-    if u.changed.isEmpty then s"Calibre id ${u.id} already agrees with `${u.citekey}` — nothing written"
-    else s"updated Calibre id ${u.id} from `${u.citekey}` (${u.changed.mkString(", ")}) — ${u.title}"
+    if u.changed.isEmpty then _root_.com.histmersion.api.library.CollectionsMarkdown.UpdatedOneResult(s"Calibre id ${u.id} already agrees with `${u.citekey}` — nothing written")
+    else _root_.com.histmersion.api.library.CollectionsMarkdown.UpdatedOneResult(s"updated Calibre id ${u.id} from `${u.citekey}` (${u.changed.mkString(", ")}) — ${u.title}")
 
-  def set(s: CollectionSetDone): com.histmersion.api.library.CollectionsMarkdown.SetResult = s"set ${s.fields.mkString(", ")} on Calibre id ${s.id}"
+  def set(s: CollectionSetDone): com.histmersion.api.library.CollectionsMarkdown.SetResult = _root_.com.histmersion.api.library.CollectionsMarkdown.SetResult(s"set ${s.fields.mkString(", ")} on Calibre id ${s.id}")

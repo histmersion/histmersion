@@ -12,7 +12,7 @@ import com.histmersion.plugin.AiTurn
   * `max_completion_tokens`. Unset fields and empty lists are left out; the schemas are sent exactly as given.
   */
 final case class ChatRequest(json: Json):
-  def body: com.histmersion.plugins.ai.ChatRequest.BodyResult = json.noSpaces
+  def body: com.histmersion.plugins.ai.ChatRequest.BodyResult = _root_.com.histmersion.plugins.ai.ChatRequest.BodyResult(json.noSpaces)
 
 object ChatRequest:
 

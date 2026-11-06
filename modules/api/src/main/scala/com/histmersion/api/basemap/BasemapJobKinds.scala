@@ -6,8 +6,8 @@ import com.histmersion.api.jobs.JobKindEntry
 object BasemapJobKinds:
   val BasemapFetch: JobKindEntry = JobKindEntry.of(
     JobInfo.Kind("basemap-fetch"),
-    "Download the background map",
-    "Downloads and assembles base-map layers (vector map, terrain relief, sea floor) for an area.",
-    stoppable = true,
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Download the background map"),
+    _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Downloads and assembles base-map layers (vector map, terrain relief, sea floor) for an area."),
+    stoppable = _root_.com.histmersion.api.jobs.JobKindEntry.OfStoppable(true),
     subject = com.histmersion.api.jobs.JobDetail.Purpose.of
   )

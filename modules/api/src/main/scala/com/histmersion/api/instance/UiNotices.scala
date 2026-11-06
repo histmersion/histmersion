@@ -34,11 +34,11 @@ object UiNotices:
   object BadgeCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Board(val wire: Board.Wire, val counted: Board.Counted):
-    case Goals extends Board("goals", counted = false)
-    case Tasks extends Board("tasks", counted = true)
-    case Approvals extends Board("approvals", counted = true)
-    case Acquire extends Board("acquire", counted = true)
-    case Log extends Board("log", counted = false)
+    case Goals extends Board(_root_.com.histmersion.api.instance.UiNotices.Board.Wire("goals"), counted = _root_.com.histmersion.api.instance.UiNotices.Board.Counted(false))
+    case Tasks extends Board(_root_.com.histmersion.api.instance.UiNotices.Board.Wire("tasks"), counted = _root_.com.histmersion.api.instance.UiNotices.Board.Counted(true))
+    case Approvals extends Board(_root_.com.histmersion.api.instance.UiNotices.Board.Wire("approvals"), counted = _root_.com.histmersion.api.instance.UiNotices.Board.Counted(true))
+    case Acquire extends Board(_root_.com.histmersion.api.instance.UiNotices.Board.Wire("acquire"), counted = _root_.com.histmersion.api.instance.UiNotices.Board.Counted(true))
+    case Log extends Board(_root_.com.histmersion.api.instance.UiNotices.Board.Wire("log"), counted = _root_.com.histmersion.api.instance.UiNotices.Board.Counted(false))
 
   object Board:
     type Wire = Wire.T
@@ -59,7 +59,7 @@ object UiNotices:
       count: Option[Counter.Count] = None,
       latest: Option[Counter.Latest] = None,
       seen: Option[Counter.Seen] = None,
-      fresh: Counter.Fresh = false
+      fresh: Counter.Fresh = _root_.com.histmersion.api.instance.UiNotices.Counter.Fresh(false)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -76,18 +76,18 @@ object UiNotices:
     object Fresh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  final case class AgentsGlance(running: AgentsGlance.Running = 0, queued: AgentsGlance.Queued = 0, on: AgentsGlance.On = false, draining: AgentsGlance.Draining = false)
+  final case class AgentsGlance(running: AgentsGlance.Running = _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.Running(0), queued: AgentsGlance.Queued = _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.Queued(0), on: AgentsGlance.On = _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.On(false), draining: AgentsGlance.Draining = _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.Draining(false))
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
 
     /** The agents at a glance, as the top bar says it. */
     def wording: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult =
       def runs(n: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingRunsN) = if n == 1 then "1 run" else s"$n runs"
-      if !on || (draining && running == 0) then "Agents paused"
+      if !on || (draining && running == 0) then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult("Agents paused")
       else if draining then s"Agents finishing current work · ${runs(running)}"
       else if running > 0 then s"Agents working · ${runs(running)}"
-      else if queued > 0 then s"Agents working · $queued waiting"
-      else "Agents on · nothing to do"
+      else if queued > 0 then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult(s"Agents working · $queued waiting")
+      else _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult("Agents on · nothing to do")
 
   object AgentsGlance:
     type WordingRunsN = WordingRunsN.T
@@ -127,4 +127,4 @@ object UiNotices:
   def advance(held: Option[com.histmersion.api.instance.UiNotices.AdvanceHeld], at: com.histmersion.api.instance.UiNotices.AdvanceAt): com.histmersion.api.instance.UiNotices.AdvanceResult = held.filter(_ > at).getOrElse(at)
 
   def badge(count: Option[com.histmersion.api.instance.UiNotices.BadgeCount]): Option[com.histmersion.api.instance.UiNotices.BadgeResult] =
-    count.filter(_ > 0).map(n => if n > 99 then "99+" else n.toString)
+    count.filter(_ > 0).map(n => if n > 99 then _root_.com.histmersion.api.instance.UiNotices.BadgeResult("99+") else _root_.com.histmersion.api.instance.UiNotices.BadgeResult(n.toString))

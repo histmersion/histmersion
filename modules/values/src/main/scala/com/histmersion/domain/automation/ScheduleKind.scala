@@ -2,8 +2,8 @@ package com.histmersion.domain.automation
 
 import com.histmersion.WireEnumValues
 enum ScheduleKind(val wire: ScheduleKind.Wire, val pipeline: Pipeline):
-  case Currency extends ScheduleKind("currency", Pipeline.CurrencyCheck)
-  case Acquisition extends ScheduleKind("acquisition", Pipeline.AcquisitionSweep)
+  case Currency extends ScheduleKind(_root_.com.histmersion.domain.automation.ScheduleKind.Wire("currency"), Pipeline.CurrencyCheck)
+  case Acquisition extends ScheduleKind(_root_.com.histmersion.domain.automation.ScheduleKind.Wire("acquisition"), Pipeline.AcquisitionSweep)
 
 object ScheduleKind:
   type Wire = Wire.T

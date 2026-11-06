@@ -18,11 +18,11 @@ object MetadataField:
   object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def wireOf(f: MetadataField): com.histmersion.api.library.MetadataField.WireOfResult = f match
-    case Year       => "year"
-    case Venue      => "venue"
-    case Doi        => "doi"
-    case Provenance => "provenance"
-    case CalibreId  => "calibreId"
+    case Year       => _root_.com.histmersion.api.library.MetadataField.WireOfResult("year")
+    case Venue      => _root_.com.histmersion.api.library.MetadataField.WireOfResult("venue")
+    case Doi        => _root_.com.histmersion.api.library.MetadataField.WireOfResult("doi")
+    case Provenance => _root_.com.histmersion.api.library.MetadataField.WireOfResult("provenance")
+    case CalibreId  => _root_.com.histmersion.api.library.MetadataField.WireOfResult("calibreId")
 
   def fromWire(s: com.histmersion.api.library.MetadataField.FromWireS): Option[MetadataField] = values.find(wireOf(_) == s)
 

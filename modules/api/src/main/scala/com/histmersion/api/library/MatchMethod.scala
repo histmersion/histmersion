@@ -26,5 +26,5 @@ object MatchMethod:
 
   given WireEnumValues[MatchMethod]:
     def all: Array[MatchMethod] = MatchMethod.values
-    def wire(e: MatchMethod): com.histmersion.api.library.MatchMethod.WireResult = Ascii.lower(e.toString)
+    def wire(e: MatchMethod): com.histmersion.api.library.MatchMethod.WireResult = Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS(e.toString))
     def fromWire(s: com.histmersion.api.library.MatchMethod.FromWireS): Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase(s.trim))

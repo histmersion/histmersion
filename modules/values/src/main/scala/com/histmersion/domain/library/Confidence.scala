@@ -5,7 +5,7 @@ enum Confidence:
   case High, Medium, Low, Contested
 
   /** The wire / storage spelling (`high`). */
-  def wire: com.histmersion.domain.library.Confidence.WireResult = Ascii.lower(toString)
+  def wire: com.histmersion.domain.library.Confidence.WireResult = Ascii.lower(_root_.com.histmersion.Ascii.LowerS(toString))
 
 object Confidence:
   type WireResult = WireResult.T
@@ -20,6 +20,6 @@ object Confidence:
 
   given WireEnumValues[Confidence]:
     def all: Array[Confidence] = Confidence.values
-    def wire(e: Confidence): com.histmersion.domain.library.Confidence.WireResult = e.toString.toLowerCase
+    def wire(e: Confidence): com.histmersion.domain.library.Confidence.WireResult = _root_.com.histmersion.domain.library.Confidence.WireResult(e.toString.toLowerCase)
     def fromWire(s: com.histmersion.domain.library.Confidence.FromWireS): Option[Confidence] =
       Confidence.values.find(_.toString.equalsIgnoreCase(s))

@@ -10,7 +10,7 @@ object Source:
     case Foundational, Current, Contested, Superseded, Debunked, Retracted, Unassessed
 
     /** The wire / storage spelling (`current`), as the JSON codec writes it. */
-    def wire: com.histmersion.domain.library.Source.Status.WireResult = Ascii.lower(toString)
+    def wire: com.histmersion.domain.library.Source.Status.WireResult = Ascii.lower(_root_.com.histmersion.Ascii.LowerS(toString))
 
   object Status:
 
@@ -26,7 +26,7 @@ object Source:
 
     given WireEnumValues[Status]:
       def all: Array[Status] = Status.values
-      def wire(e: Status): com.histmersion.domain.library.Source.Status.WireResult = e.toString.toLowerCase
+      def wire(e: Status): com.histmersion.domain.library.Source.Status.WireResult = _root_.com.histmersion.domain.library.Source.Status.WireResult(e.toString.toLowerCase)
       def fromWire(s: com.histmersion.domain.library.Source.Status.FromWireS): Option[Status] =
         Status.values.find(_.toString.equalsIgnoreCase(s))
 

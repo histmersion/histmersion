@@ -55,7 +55,7 @@ object Licence:
   def classify(raw: com.histmersion.domain.Licence.ClassifyRaw): Licence =
     val s = raw.trim.toLowerCase(Locale.ROOT).replaceAll("[\\s_]+", "-")
     s match
-      case ""                                                        => unknown("")
+      case ""                                                        => unknown(_root_.com.histmersion.domain.Licence.UnknownStatement(""))
       case c if c.startsWith("cc0") || c == "cc-zero" || c == "cc-0" =>
         Licence(Licence.Id("CC0-1.0"), Licence.Family.Cc0)
       case p
@@ -108,7 +108,7 @@ object Licence:
     cands.iterator
       .map(classify)
       .find(_.family != Licence.Family.Unknown)
-      .getOrElse(unknown(cands.headOption.getOrElse("")))
+      .getOrElse(unknown(cands.headOption.getOrElse(_root_.com.histmersion.domain.Licence.UnknownStatement(""))))
 
   /** A licence as it is stored and shown: an SPDX id (`CC-BY-SA-4.0`, `CC0-1.0`), `public-domain`, or — when it reads
     * as no licence known — the statement itself. Classified into its family by the shared `domain.Licence`.
@@ -121,26 +121,26 @@ object Licence:
     * change. Two families are never stored, whatever a config says: an unreadable licence and all rights reserved.
     */
   enum Family(val wire: Family.Wire):
-    case Cc0 extends Family("cc0")
-    case PublicDomain extends Family("public-domain")
-    case CcBy extends Family("cc-by")
-    case CcBySa extends Family("cc-by-sa")
-    case CcByNc extends Family("cc-by-nc")
-    case CcByNcSa extends Family("cc-by-nc-sa")
-    case CcByNd extends Family("cc-by-nd")
-    case CcByNcNd extends Family("cc-by-nc-nd")
-    case Gfdl extends Family("gfdl")
-    case AllRightsReserved extends Family("all-rights-reserved")
-    case Unknown extends Family("unknown")
+    case Cc0 extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("cc0"))
+    case PublicDomain extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("public-domain"))
+    case CcBy extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("cc-by"))
+    case CcBySa extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("cc-by-sa"))
+    case CcByNc extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("cc-by-nc"))
+    case CcByNcSa extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("cc-by-nc-sa"))
+    case CcByNd extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("cc-by-nd"))
+    case CcByNcNd extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("cc-by-nc-nd"))
+    case Gfdl extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("gfdl"))
+    case AllRightsReserved extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("all-rights-reserved"))
+    case Unknown extends Family(_root_.com.histmersion.domain.Licence.Family.Wire("unknown"))
 
     /** Whether the licence requires the author to be named: every CC BY variant and the GFDL. */
     def needsAttribution: com.histmersion.domain.Licence.Family.NeedsAttributionResult = wire.startsWith(Family.CcBy.wire) || this == Family.Gfdl
 
     /** The ones that need no credit at all (the credit line is still shown, as a courtesy and a source). */
-    def isPublicDomain: com.histmersion.domain.Licence.Family.IsPublicDomainResult = this == Family.Cc0 || this == Family.PublicDomain
+    def isPublicDomain: com.histmersion.domain.Licence.Family.IsPublicDomainResult = _root_.com.histmersion.domain.Licence.Family.IsPublicDomainResult(this == Family.Cc0 || this == Family.PublicDomain)
 
     /** Never stored, whatever an allowlist says. */
-    def never: com.histmersion.domain.Licence.Family.NeverResult = this == Family.AllRightsReserved || this == Family.Unknown
+    def never: com.histmersion.domain.Licence.Family.NeverResult = _root_.com.histmersion.domain.Licence.Family.NeverResult(this == Family.AllRightsReserved || this == Family.Unknown)
 
   object Family:
 

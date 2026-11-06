@@ -14,7 +14,7 @@ final case class ArchiveItem(
     year: Option[com.histmersion.api.catalogue.Year] = None,
     publisher: Option[ArchiveItem.Publisher] = None,
     description: Option[ArchiveItem.Description] = None,
-    lendingOnly: ArchiveItem.LendingOnly = false,
+    lendingOnly: ArchiveItem.LendingOnly = _root_.com.histmersion.api.library.ArchiveItem.LendingOnly(false),
     files: List[ArchiveFile] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

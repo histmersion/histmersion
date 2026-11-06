@@ -27,13 +27,13 @@ object Stalls:
 
   final case class Stall(
       slug: Stall.Slug,
-      title: Stall.Title = "",
-      status: Stall.Status = "",
+      title: Stall.Title = _root_.com.histmersion.api.automation.Stalls.Stall.Title(""),
+      status: Stall.Status = _root_.com.histmersion.api.automation.Stalls.Stall.Status(""),
       lastProgress: Option[Stall.LastProgress] = None,
       idleDays: Option[Stall.IdleDays] = None,
-      code: Stall.Code = "",
-      why: Stall.Why = "",
-      action: Stall.Action = ""
+      code: Stall.Code = _root_.com.histmersion.api.automation.Stalls.Stall.Code(""),
+      why: Stall.Why = _root_.com.histmersion.api.automation.Stalls.Stall.Why(""),
+      action: Stall.Action = _root_.com.histmersion.api.automation.Stalls.Stall.Action("")
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -68,7 +68,7 @@ object Stalls:
   final case class StallReport(
       days: StallReport.Days,
       at: StallReport.At,
-      goals: StallReport.Goals = 0,
+      goals: StallReport.Goals = _root_.com.histmersion.api.automation.Stalls.StallReport.Goals(0),
       stalled: List[Stall] = Nil,
       byReason: List[ReasonCount] = Nil
   ) derives KindlingsCodecAsObject,
@@ -97,7 +97,7 @@ object Stalls:
     val Running = "running"
     val Idle = "idle"
 
-  final case class SchedWait(code: SchedWait.Code, why: SchedWait.Why, position: SchedWait.Position = 0)
+  final case class SchedWait(code: SchedWait.Code, why: SchedWait.Why, position: SchedWait.Position = _root_.com.histmersion.api.automation.Stalls.SchedWait.Position(0))
 
   object SchedWait:
     type Code = Code.T
@@ -109,20 +109,20 @@ object Stalls:
 
   final case class Facts(
       slug: Facts.Slug,
-      title: Facts.Title = "",
-      status: Facts.Status = "",
+      title: Facts.Title = _root_.com.histmersion.api.automation.Stalls.Facts.Title(""),
+      status: Facts.Status = _root_.com.histmersion.api.automation.Stalls.Facts.Status(""),
       lastProgress: Option[Facts.LastProgress] = None,
       idleDays: Option[Facts.IdleDays] = None,
       approvals: List[(Facts.ApprovalsPart1, Facts.ApprovalsPart2)] = Nil,
-      personHeld: Facts.PersonHeld = 0,
+      personHeld: Facts.PersonHeld = _root_.com.histmersion.api.automation.Stalls.Facts.PersonHeld(0),
       paused: List[Facts.Paused] = Nil,
-      draining: Facts.Draining = false,
+      draining: Facts.Draining = _root_.com.histmersion.api.automation.Stalls.Facts.Draining(false),
       waits: List[SchedWait] = Nil,
       lastStop: Option[Facts.LastStop] = None,
-      sources: Facts.Sources = 0,
-      noCandidates: Facts.NoCandidates = false,
-      open: Facts.Open = 0,
-      running: Facts.Running = 0
+      sources: Facts.Sources = _root_.com.histmersion.api.automation.Stalls.Facts.Sources(0),
+      noCandidates: Facts.NoCandidates = _root_.com.histmersion.api.automation.Stalls.Facts.NoCandidates(false),
+      open: Facts.Open = _root_.com.histmersion.api.automation.Stalls.Facts.Open(0),
+      running: Facts.Running = _root_.com.histmersion.api.automation.Stalls.Facts.Running(0)
   )
 
   object Facts:
@@ -163,86 +163,86 @@ object Stalls:
     val g = f.slug
     def waitOf(p: SchedWait => com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult) = f.waits.find(p)
     if f.draining then
-      (Code.Drain, "the agents are draining: nothing new starts", "histmersion agent autopilot undrain")
+      (_root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Drain), _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2("the agents are draining: nothing new starts"), _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("histmersion agent autopilot undrain"))
     else if f.approvals.nonEmpty then
       val kinds =
         f.approvals.groupMapReduce(_._2)(_ => 1)(_ + _).toList.sortBy(-_._2).map((k, n) => s"$k $n").mkString(", ")
       (
-        Code.Person,
-        s"waits for a person: ${Plural.count(f.approvals.size, "open approval")} ($kinds; oldest #${f.approvals.map(_._1).min})",
-        s"histmersion agent decide-all approve --subject $g (or decide them one by one: histmersion agent approvals --subject $g)"
+        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Person),
+        s"waits for a person: ${Plural.count(_root_.com.histmersion.api.Plural.CountN((f.approvals.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("open approval"))} ($kinds; oldest #${f.approvals.map(_._1).min})",
+        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent decide-all approve --subject $g (or decide them one by one: histmersion agent approvals --subject $g)")
       )
     else if f.personHeld > 0 then
       (
-        Code.Held,
-        s"${Plural.count(f.personHeld, "item")} held by a person",
-        s"histmersion agent manager seed:$g items --status held, then release"
+        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Held),
+        s"${Plural.count(f.personHeld, _root_.com.histmersion.api.Plural.CountSingular("item"))} held by a person",
+        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent manager seed:$g items --status held, then release")
       )
     else if f.paused.nonEmpty then
       (
-        Code.Paused,
-        s"its managers are paused: ${f.paused.mkString(", ")}",
-        s"histmersion agent manager ${f.paused.head} resume"
+        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Paused),
+        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2(s"its managers are paused: ${f.paused.mkString(", ")}"),
+        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent manager ${f.paused.head} resume")
       )
     else
       waitOf(w => w.code == "blocked" && w.why.startsWith("budget")).orElse(waitOf(_.code == "budget")) match
         case Some(w) =>
           (
-            Code.Budget,
+            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Budget),
             w.why,
-            "raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day"
+            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("raise agents.budgets.daily-usd (or the manager's daily-usd), or wait for the next UTC day")
           )
         case None =>
           waitOf(w => w.code == "blocked" && w.why.startsWith("starved")).orElse(waitOf(_.code == "pool")) match
             case Some(w) =>
               (
-                Code.Quota,
+                _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Quota),
                 w.why,
-                "histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models"
+                _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("histmersion agent quota (a plan below its floor frees at its reset); histmersion agent models")
               )
             case None =>
               waitOf(w => w.code == "capacity") match
                 case Some(w) =>
                   (
-                    Code.Queue,
+                    _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Queue),
                     s"waits in the scheduler's queue (#${w.position}): ${w.why}",
-                    s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs"
+                    _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent autopilot focus priority $g <n> (or pin it), or raise agents.max-concurrent-runs")
                   )
                 case None =>
                   waitOf(_.code == "blocked") match
                     case Some(w) =>
                       (
-                        Code.Blocked,
+                        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Blocked),
                         w.why,
-                        s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)"
+                        _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)")
                       )
                     case None if f.running > 0 =>
-                      (Code.Running, s"${Plural.count(f.running, "run")} in flight", "nothing: wait for it")
+                      (_root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Running), s"${Plural.count(f.running, _root_.com.histmersion.api.Plural.CountSingular("run"))} in flight", _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("nothing: wait for it"))
                     case None =>
                       f.lastStop match
                         case Some(o) =>
                           (
-                            Code.Failed,
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Failed),
                             s"its last item stopped: ${o.take(300)}",
-                            s"histmersion agent manager seed:$g items --status stopped; reopen it"
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent manager seed:$g items --status stopped; reopen it")
                           )
                         case None if f.noCandidates && f.sources == 0 =>
                           (
-                            Code.NoCandidates,
-                            "its candidate sweep found nothing new and it has no source",
-                            s"give it a better query: histmersion goals link $g query \"<words>\" (or add a source)"
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.NoCandidates),
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2("its candidate sweep found nothing new and it has no source"),
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"give it a better query: histmersion goals link $g query \"<words>\" (or add a source)")
                           )
                         case None if f.open == 0 =>
                           (
-                            Code.Idle,
-                            "nothing open: it waits for its cron or new sources",
-                            s"histmersion agent enqueue seed $g (propose its next articles)"
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Idle),
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2("nothing open: it waits for its cron or new sources"),
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent enqueue seed $g (propose its next articles)")
                           )
                         case None =>
                           (
-                            Code.Idle,
-                            s"${Plural.count(f.open, "item")} open, none due yet (a cooldown or a backoff)",
-                            s"histmersion agent scheduler why <item>"
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Idle),
+                            s"${Plural.count(f.open, _root_.com.histmersion.api.Plural.CountSingular("item"))} open, none due yet (a cooldown or a backoff)",
+                            _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent scheduler why <item>")
                           )
 
   def report(facts: List[Facts], days: com.histmersion.api.automation.Stalls.ReportDays, at: com.histmersion.api.automation.Stalls.ReportAt): StallReport =
@@ -256,7 +256,7 @@ object Stalls:
     StallReport(
       days,
       at,
-      facts.size,
+      _root_.com.histmersion.api.automation.Stalls.StallReport.Goals(facts.size),
       stalls,
       stalls.groupMapReduce(_.code)(_ => 1)(_ + _).toList.sortBy((c, n) => (-n, c)).map(ReasonCount.apply)
     )

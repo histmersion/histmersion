@@ -8,9 +8,9 @@ enum TileLayer:
   case Sites, Events, Media
 
   def wire: com.histmersion.api.catalogue.TileLayer.WireResult = this match
-    case Sites  => "sites"
-    case Events => "events"
-    case Media  => "media"
+    case Sites  => _root_.com.histmersion.api.catalogue.TileLayer.WireResult("sites")
+    case Events => _root_.com.histmersion.api.catalogue.TileLayer.WireResult("events")
+    case Media  => _root_.com.histmersion.api.catalogue.TileLayer.WireResult("media")
 
 object TileLayer:
   type WireResult = WireResult.T

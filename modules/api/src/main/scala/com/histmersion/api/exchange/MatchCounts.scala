@@ -5,14 +5,14 @@ import sttp.tapir.Schema
 import com.histmersion.api.given
 
 final case class MatchCounts(
-    sources: MatchCounts.Sources = 0,
-    byUid: MatchCounts.ByUid = 0,
-    byLedger: MatchCounts.ByLedger = 0,
-    byStrongKey: MatchCounts.ByStrongKey = 0,
-    byScore: MatchCounts.ByScore = 0,
-    undecided: MatchCounts.Undecided = 0,
-    unmatched: MatchCounts.Unmatched = 0,
-    deletedHere: MatchCounts.DeletedHere = 0
+    sources: MatchCounts.Sources = _root_.com.histmersion.api.exchange.MatchCounts.Sources(0),
+    byUid: MatchCounts.ByUid = _root_.com.histmersion.api.exchange.MatchCounts.ByUid(0),
+    byLedger: MatchCounts.ByLedger = _root_.com.histmersion.api.exchange.MatchCounts.ByLedger(0),
+    byStrongKey: MatchCounts.ByStrongKey = _root_.com.histmersion.api.exchange.MatchCounts.ByStrongKey(0),
+    byScore: MatchCounts.ByScore = _root_.com.histmersion.api.exchange.MatchCounts.ByScore(0),
+    undecided: MatchCounts.Undecided = _root_.com.histmersion.api.exchange.MatchCounts.Undecided(0),
+    unmatched: MatchCounts.Unmatched = _root_.com.histmersion.api.exchange.MatchCounts.Unmatched(0),
+    deletedHere: MatchCounts.DeletedHere = _root_.com.histmersion.api.exchange.MatchCounts.DeletedHere(0)
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

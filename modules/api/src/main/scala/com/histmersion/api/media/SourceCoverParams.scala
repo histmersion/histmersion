@@ -2,7 +2,7 @@ package com.histmersion.api.media
 import com.histmersion.api.given
 final case class SourceCoverParams(
     citekey: com.histmersion.api.library.Citekey,
-    provider: com.histmersion.api.media.MediaItem.Provider = MediaProvider.Calibre,
+    provider: com.histmersion.api.media.MediaItem.Provider = _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Calibre),
     key: SourceCoverParams.Key,
     mime: Option[com.histmersion.api.media.AssetInfo.Mime] = None
 )

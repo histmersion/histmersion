@@ -11,9 +11,9 @@ final case class PeriodODataset(
     presets: Map[PeriodODataset.PresetsKey, PresetRegion] = Map.empty,
     version: Option[PeriodODataset.Version] = None
 ):
-  def size: com.histmersion.api.PeriodODataset.SizeResult = authorities.map(_.periods.size).sum
+  def size: com.histmersion.api.PeriodODataset.SizeResult = _root_.com.histmersion.api.PeriodODataset.SizeResult(authorities.map(_.periods.size).sum)
 
-  def curated: com.histmersion.api.PeriodODataset.CuratedResult = parents.nonEmpty || presets.nonEmpty
+  def curated: com.histmersion.api.PeriodODataset.CuratedResult = _root_.com.histmersion.api.PeriodODataset.CuratedResult(parents.nonEmpty || presets.nonEmpty)
 
   /** A PeriodO period id begins with its authority's id. */
   def only(ids: Set[com.histmersion.api.PeriodODataset.OnlyIds]): PeriodODataset =

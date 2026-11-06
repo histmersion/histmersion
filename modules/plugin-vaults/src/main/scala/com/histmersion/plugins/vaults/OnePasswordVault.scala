@@ -16,7 +16,7 @@ final class OnePasswordVault(
   def resolve(ref: com.histmersion.plugins.vaults.OnePasswordVault.ResolveRef): Either[com.histmersion.plugins.vaults.OnePasswordVault.ResolveResultPart1, com.histmersion.plugins.vaults.OnePasswordVault.ResolveResultPart2] =
     val r = ref.trim
     for
-      _ <- Subprocess.plain("the reference", r)
+      _ <- Subprocess.plain(_root_.com.histmersion.plugins.vaults.Subprocess.PlainWhat("the reference"), r)
       uri = if r.startsWith("op://") then r else s"op://$r"
       argv = List(exe, "read", uri) ++ account.toList.flatMap(a => List("--account", a))
       env = token.map(t => Map("OP_SERVICE_ACCOUNT_TOKEN" -> t)).getOrElse(Map.empty)
@@ -26,9 +26,9 @@ final class OnePasswordVault(
   private def classify(uri: com.histmersion.plugins.vaults.OnePasswordVault.ClassifyUri)(err: com.histmersion.plugins.vaults.OnePasswordVault.ClassifyErr): Option[com.histmersion.plugins.vaults.OnePasswordVault.ClassifyResult] =
     if err.contains("not currently signed in") || err.contains("sign in") || err.contains("authorization") ||
       err.contains("session expired") || err.contains("locked")
-    then Some(s"$name: not signed in — unlock the 1Password app, or set service-account-token = \"env:<NAME>\"")
+    then Some(_root_.com.histmersion.plugins.vaults.OnePasswordVault.ClassifyResult(s"$name: not signed in — unlock the 1Password app, or set service-account-token = \"env:<NAME>\""))
     else if err.contains("isn't an item") || err.contains("could not find") || err.contains("not found") then
-      Some(s"$name: no item at $uri")
+      Some(_root_.com.histmersion.plugins.vaults.OnePasswordVault.ClassifyResult(s"$name: no item at $uri"))
     else None
 
 object OnePasswordVault:

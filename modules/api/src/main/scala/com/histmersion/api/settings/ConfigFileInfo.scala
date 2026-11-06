@@ -8,7 +8,7 @@ import com.histmersion.api.given
 
 final case class ConfigFileInfo(
     path: Option[ConfigFileInfo.Path] = None,
-    loaded: ConfigFileInfo.Loaded = false,
+    loaded: ConfigFileInfo.Loaded = _root_.com.histmersion.api.settings.ConfigFileInfo.Loaded(false),
     unknownKeys: List[ConfigFileInfo.UnknownKeys] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -27,9 +27,9 @@ object ConfigFileInfo:
 
   def describe(c: ConfigFileInfo): com.histmersion.api.settings.ConfigFileInfo.DescribeResult =
     c.path match
-      case None    => "none (no location: HOME is unset)"
+      case None    => _root_.com.histmersion.api.settings.ConfigFileInfo.DescribeResult("none (no location: HOME is unset)")
       case Some(p) =>
         val state = if c.loaded then "read" else "not found: defaults and environment only"
         val keys = if c.unknownKeys.isEmpty then ""
-        else s"; ignored unknown ${Plural.noun(c.unknownKeys.size, "key")}: ${c.unknownKeys.mkString(", ")}"
-        s"$p ($state$keys)"
+        else s"; ignored unknown ${Plural.noun(_root_.com.histmersion.api.Plural.NounN((c.unknownKeys.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("key"))}: ${c.unknownKeys.mkString(", ")}"
+        _root_.com.histmersion.api.settings.ConfigFileInfo.DescribeResult(s"$p ($state$keys)")

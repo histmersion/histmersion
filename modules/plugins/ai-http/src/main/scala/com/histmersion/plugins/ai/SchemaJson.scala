@@ -49,9 +49,9 @@ object SchemaJson:
   private val NameToSchema = Set("$defs", "definitions", "patternProperties", "dependentSchemas", "dependencies")
 
   private def shapedElsewhere(obj: JsonObject): com.histmersion.plugins.ai.SchemaJson.ShapedElsewhereResult =
-    ShapeKeywords.exists(obj.contains) || obj("additionalProperties").exists(ap =>
+    _root_.com.histmersion.plugins.ai.SchemaJson.ShapedElsewhereResult(ShapeKeywords.exists(obj.contains) || obj("additionalProperties").exists(ap =>
       !ap.isBoolean || ap.asBoolean.contains(true)
-    )
+    ))
 
   private def close(json: Json): Json =
     json.arrayOrObject(

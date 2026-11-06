@@ -26,7 +26,7 @@ object TilesApi:
       undated: Option[TileQuery.Undated] = None,
       ifNoneMatch: Option[TileQuery.IfNoneMatch] = None
   ):
-    def withUndated: com.histmersion.api.catalogue.TilesApi.TileQuery.WithUndatedResult = undated.contains(true)
+    def withUndated: com.histmersion.api.catalogue.TilesApi.TileQuery.WithUndatedResult = _root_.com.histmersion.api.catalogue.TilesApi.TileQuery.WithUndatedResult(undated.contains(true))
 
   object TileQuery:
     type WithUndatedResult = WithUndatedResult.T

@@ -22,8 +22,8 @@ object SkippedPeriod:
   object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Skipped: com.histmersion.api.jobs.JobDetail.Field[List[SkippedPeriod]] =
-    com.histmersion.api.jobs.JobDetail.Field("skippedPeriods", Nil)
+    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("skippedPeriods"), Nil)
 
   /** How many period presets an init job skipped, in its detail. */
   val SkippedCount: com.histmersion.api.jobs.JobDetail.Field[com.histmersion.api.catalogue.SkippedPeriod.SkippedCount] =
-    com.histmersion.api.jobs.JobDetail.Field("skippedPeriodCount", 0)
+    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("skippedPeriodCount"), 0)

@@ -29,16 +29,16 @@ object Corrections:
     else Outcome.Conflict
 
   def status(o: Outcome): com.histmersion.api.catalogue.Corrections.StatusResult = o match
-    case Outcome.Keep     => Correction.Status.Active
-    case Outcome.Retire   => Correction.Status.Agreed
-    case Outcome.Conflict => Correction.Status.Conflict
+    case Outcome.Keep     => _root_.com.histmersion.api.catalogue.Corrections.StatusResult(Correction.Status.Active)
+    case Outcome.Retire   => _root_.com.histmersion.api.catalogue.Corrections.StatusResult(Correction.Status.Agreed)
+    case Outcome.Conflict => _root_.com.histmersion.api.catalogue.Corrections.StatusResult(Correction.Status.Conflict)
 
   def counts(os: Iterable[Outcome]): Correction.Counts =
-    Correction.Counts(os.count(_ == Outcome.Keep), os.count(_ == Outcome.Retire), os.count(_ == Outcome.Conflict))
+    Correction.Counts(_root_.com.histmersion.api.catalogue.Correction.Counts.Kept(os.count(_ == Outcome.Keep)), _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(os.count(_ == Outcome.Retire)), _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(os.count(_ == Outcome.Conflict)))
 
   def show(json: com.histmersion.api.catalogue.Corrections.ShowJson): com.histmersion.api.catalogue.Corrections.ShowResult =
     io.circe.parser.parse(json).toOption match
-      case Some(j) if j.isNull => "none"
+      case Some(j) if j.isNull => _root_.com.histmersion.api.catalogue.Corrections.ShowResult("none")
       case Some(j)             => j.asString.getOrElse(j.noSpaces)
       case None                => json
 
@@ -48,7 +48,7 @@ object Corrections:
     c.status match
       case Correction.Status.Conflict =>
         s"$base — CONFLICT: the catalogue now says “${Fmt.clip(c.upstreamNow.map(show).getOrElse("?"))}”"
-      case Correction.Status.Agreed => s"$base — retired: the catalogue now agrees"
+      case Correction.Status.Agreed => _root_.com.histmersion.api.catalogue.Corrections.DescribeResult(s"$base — retired: the catalogue now agrees")
       case _                        => base
 
   private object Fmt:
@@ -60,8 +60,8 @@ object Corrections:
     def clip(s: com.histmersion.api.catalogue.Corrections.Fmt.ClipS): com.histmersion.api.catalogue.Corrections.Fmt.ClipResult = if s.length > 80 then s.take(79) + "…" else s
 
   def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.MarkdownResult =
-    if l.corrections.isEmpty then "_No corrections by hand._"
+    if l.corrections.isEmpty then _root_.com.histmersion.api.catalogue.Corrections.MarkdownResult("_No corrections by hand._")
     else
       val lines =
         l.corrections.map(c => s"- **${c.targetId}**${c.label.fold("")(t => s" ($t)")} · ${c.status} · ${describe(c)}")
-      (s"### ${l.total} correction(s) by hand" :: "" :: lines).mkString("\n")
+      _root_.com.histmersion.api.catalogue.Corrections.MarkdownResult((s"### ${l.total} correction(s) by hand" :: "" :: lines).mkString("\n"))

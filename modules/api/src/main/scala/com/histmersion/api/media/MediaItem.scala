@@ -24,7 +24,7 @@ final case class MediaItem(
     originalUrl: Option[MediaItem.OriginalUrl] = None,
     retrievedAt: Option[MediaItem.RetrievedAt] = None,
     thumbUrl: Option[MediaItem.ThumbUrl] = None,
-    fileUrl: MediaItem.FileUrl = "",
+    fileUrl: MediaItem.FileUrl = _root_.com.histmersion.api.media.MediaItem.FileUrl(""),
     targets: List[MediaTarget] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema

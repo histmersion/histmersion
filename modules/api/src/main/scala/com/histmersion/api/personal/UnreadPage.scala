@@ -5,7 +5,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
-final case class UnreadPage(rows: List[UnreadRow], total: UnreadPage.Total, offset: UnreadPage.Offset = 0)
+final case class UnreadPage(rows: List[UnreadRow], total: UnreadPage.Total, offset: UnreadPage.Offset = _root_.com.histmersion.api.personal.UnreadPage.Offset(0))
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 

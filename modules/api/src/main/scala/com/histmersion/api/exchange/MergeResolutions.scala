@@ -41,7 +41,7 @@ object MergeResolutions:
     def flag(s: com.histmersion.api.exchange.MergeResolutions.Text.FlagS): Either[com.histmersion.api.exchange.MergeResolutions.Text.FlagResultPart1, MergeResolution] =
       s.indexOf('=') match
         case i if i > 0 && i < s.length - 1 => Right(MergeResolution(s.take(i).trim, s.drop(i + 1).trim))
-        case _                              => Left(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left")
+        case _                              => Left(_root_.com.histmersion.api.exchange.MergeResolutions.Text.FlagResultPart1(s"--resolve $s: expected ID=decision, e.g. S-3c1e7a2b=keep-left"))
 
     def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.TemplateResult =
       val chosen = current.resolve.map(r => r.issue -> r.decision).toMap
@@ -62,15 +62,15 @@ object MergeResolutions:
         (chosen.get(i.id), i.condition, i.severity) match
           case (Some(d), _, _)    => s"  ${i.id}: $d    # $cond$what"
           case (None, Some(_), _) =>
-            s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}"
+            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult(s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}")
           case (None, None, MergeIssue.Severity.Default) =>
-            s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}"
+            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult(s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}")
           case (None, None, _) if i.decidedBy.contains(MergeIssue.DecidedBy.Policy) =>
-            s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what"
+            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult(s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what")
           case (None, None, _) =>
-            s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})")
+            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLineResult(s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})"))
       val issues = p.issues.filter(_.severity != MergeIssue.Severity.Info)
-      List(
+      _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateResult(List(
         List(
           s"# resolutions for bundle ${p.bundleId} from ${p.from.label.getOrElse(p.from.id.toString)} — plan ${p.planHash}",
           "# left = this collection (here), right = the bundle. An id with no value is still open.",
@@ -84,7 +84,7 @@ object MergeResolutions:
         ),
         issues.map(line),
         texts(current)
-      ).flatten.mkString("", "\n", "\n")
+      ).flatten.mkString("", "\n", "\n"))
 
     /** YAML literal blocks: `|-` when the text has no final newline, `|` with one, `|+` with more, so the text reads
       * back exactly.

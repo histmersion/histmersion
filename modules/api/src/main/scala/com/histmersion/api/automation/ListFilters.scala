@@ -90,7 +90,7 @@ object ListFilters:
     vs.flatMap(_.split(',')).map(_.trim).filter(_.nonEmpty).distinct
 
   def words(groups: List[String]*): Option[com.histmersion.api.automation.ListFilters.WordsResult] =
-    Option(groups.filter(_.nonEmpty).map(_.mkString("/")).mkString(" ")).filter(_.nonEmpty)
+    (Option(groups.filter(_.nonEmpty).map(_.mkString("/")).mkString(" ")).filter(_.nonEmpty)).map(refactorValue22 => _root_.com.histmersion.api.automation.ListFilters.WordsResult(refactorValue22))
 
   def one(v: Option[com.histmersion.api.automation.ListFilters.OneV]): Option[com.histmersion.api.automation.ListFilters.OneResult] = v.map(_.trim).filter(_.nonEmpty)
 
@@ -297,7 +297,7 @@ object ListFilters:
 
   def known(what: com.histmersion.api.automation.ListFilters.KnownWhat, vs: List[com.histmersion.api.automation.ListFilters.KnownVs], known: Seq[com.histmersion.api.automation.ListFilters.KnownKnown]): Either[com.histmersion.api.automation.ListFilters.KnownResultPart1, List[com.histmersion.api.automation.ListFilters.KnownResultPart2]] =
     vs.find(v => !known.contains(v)) match
-      case Some(v) => Left(s"unknown $what '$v' (one of: ${known.mkString(", ")})")
+      case Some(v) => Left(_root_.com.histmersion.api.automation.ListFilters.KnownResultPart1(s"unknown $what '$v' (one of: ${known.mkString(", ")})"))
       case None    => Right(vs)
 
   private val Relative = """(\d{1,6})\s*([dhm])""".r
@@ -342,7 +342,7 @@ object ListFilters:
       if c > ' ' && c < 0x7f && c != '%' && c != ',' && c != '=' then b.append(c)
       else b.append(f"%%${byte & 0xff}%02X")
     }
-    b.toString
+    _root_.com.histmersion.api.automation.ListFilters.EscapeResult(b.toString)
 
   def unescape(s: com.histmersion.api.automation.ListFilters.UnescapeS): com.histmersion.api.automation.ListFilters.UnescapeResult =
     if !s.contains('%') then s
@@ -355,10 +355,10 @@ object ListFilters:
           .map(Integer.parseInt(_, 16))
       var i = 0
       while i < s.length do
-        (if s(i) == '%' then hex(i) else None) match
+        (if s(i) == '%' then hex(_root_.com.histmersion.api.automation.ListFilters.UnescapeHexAt(i)) else None) match
           case Some(b) => out.write(b); i += 3
           case None    => s.substring(i, i + 1).getBytes("UTF-8").foreach(x => out.write(x.toInt)); i += 1
-      new String(out.toByteArray, "UTF-8")
+      _root_.com.histmersion.api.automation.ListFilters.UnescapeResult(new String(out.toByteArray, "UTF-8"))
 
   def encodeFacets(fs: List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart1, List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part1, com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part2)])]): com.histmersion.api.automation.ListFilters.EncodeFacetsResult =
     fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(v)}=$n")).mkString(",")
@@ -372,5 +372,5 @@ object ListFilters:
     triples.map(_._1).distinct.map(f => f -> triples.collect { case (`f`, v, n) => v -> n })
 
   def facetLine(label: com.histmersion.api.automation.ListFilters.FacetLineLabel, counts: List[(com.histmersion.api.automation.ListFilters.FacetLineCountsPart1, com.histmersion.api.automation.ListFilters.FacetLineCountsPart2)]): com.histmersion.api.automation.ListFilters.FacetLineResult =
-    if counts.isEmpty then ""
+    if counts.isEmpty then _root_.com.histmersion.api.automation.ListFilters.FacetLineResult("")
     else s"$label: ${counts.map((v, n) => s"$v ${Paging.grouped(n)}").mkString(" · ")}"
