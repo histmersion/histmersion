@@ -25,14 +25,14 @@ class BundleFormatSuite extends munit.FunSuite:
       U1,
       I,
       slug,
-      "Title",
-      "planned",
+      com.histmersion.api.exchange.Bundle.Goal.Title("Title"),
+      com.histmersion.api.exchange.Bundle.Goal.Status("planned"),
       notes,
-      List("b", "a"),
+      List(com.histmersion.api.exchange.Bundle.Goal.Tags("b"), com.histmersion.api.exchange.Bundle.Goal.Tags("a")),
       Nil,
-      Some(Bundle.Range(Some(-1650), None)),
+      Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1650)), None)),
       None,
-      "2026-10-01T00:00:00.000000Z",
+      com.histmersion.api.exchange.Bundle.Goal.CreatedAt("2026-10-01T00:00:00.000000Z"),
       updated
     )
 
@@ -63,18 +63,18 @@ class BundleFormatSuite extends munit.FunSuite:
     assert(java.util.Arrays.equals(tar(es*), tar(es*)))
 
   test("tar: a header is ustar, 512 bytes, checksummed; a bad checksum or name is refused"):
-    val h = BundleTar.header("manifest.json", 10).fold(e => fail(e), identity)
+    val h = BundleTar.header(com.histmersion.util.data.exchange.BundleTar.Entry.Name("manifest.json"), com.histmersion.ByteCount(10)).fold(e => fail(e), identity)
     assertEquals(h.length, 512)
     assertEquals(String(h.slice(257, 262), UTF_8), "ustar")
-    assertEquals(BundleTar.parseHeader(h), Right(Some(BundleTar.Entry("manifest.json", 10))))
+    assertEquals(BundleTar.parseHeader(h), Right(Some(BundleTar.Entry(com.histmersion.util.data.exchange.BundleTar.Entry.Name("manifest.json"), com.histmersion.util.data.exchange.BundleTar.Entry.Size(10)))))
     assert(BundleTar.parseHeader(h.updated(0, 'M'.toByte)).isLeft)
     assertEquals(BundleTar.parseHeader(new Array[Byte](512)), Right(None))
-    assert(BundleTar.header("x" * 101, 1).isLeft)
-    assert(BundleTar.header("x", -1).isLeft)
+    assert(BundleTar.header("x" * 101, com.histmersion.ByteCount(1)).isLeft)
+    assert(BundleTar.header(com.histmersion.util.data.exchange.BundleTar.Entry.Name("x"), com.histmersion.ByteCount(-1)).isLeft)
 
   test("tar: an entry that writes more or less than it declared is an error"):
     val w = BundleTar.Writer(ByteArrayOutputStream())
-    assert(w.entry("a", 3)(_.write(Array[Byte](1, 2))).isLeft)
+    assert(w.entry(com.histmersion.util.data.exchange.BundleTar.Entry.Name("a"), com.histmersion.ByteCount(3))(_.write(Array[Byte](1, 2))).isLeft)
 
   test("tar: a truncated archive is an error, not a silent short read"):
     val b = tar("a" -> ("q" * 4000).getBytes(UTF_8))
@@ -126,33 +126,33 @@ class BundleFormatSuite extends munit.FunSuite:
     val m = Bundle.Manifest(
       Bundle.Format,
       Bundle.FormatVersion,
-      "33",
+      com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       U1,
       Bundle.Instance(I),
       None,
       None,
       Nil,
-      Bundle.Blobs(0, 0),
-      Bundle.Reference(0, "", 0, "")
+      Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
+      Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
-    assertEquals(BundleFormat.compatible(m, Some("33")), Nil)
-    assertEquals(BundleFormat.compatible(m, Some("40")), Nil)
-    assert(BundleFormat.compatible(m, Some("32")).exists(_.contains("newer than this server")))
-    assertEquals(BundleFormat.compatible(m.modify(_.format).setTo("x").modify(_.formatVersion).setTo(99), Some("33")).size, 2)
+    assertEquals(BundleFormat.compatible(m, Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"))), Nil)
+    assertEquals(BundleFormat.compatible(m, Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("40"))), Nil)
+    assert(BundleFormat.compatible(m, Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("32"))).exists(_.contains("newer than this server")))
+    assertEquals(BundleFormat.compatible(m.modify(_.format).setTo("x").modify(_.formatVersion).setTo(99), Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"))).size, 2)
 
   test("file checks list every missing, unexpected and differing file"):
-    val f = Bundle.FileInfo("entities/goals.ndjson", 1, 10, "a")
+    val f = Bundle.FileInfo(com.histmersion.api.exchange.Bundle.FileInfo.Path("entities/goals.ndjson"), com.histmersion.api.exchange.Bundle.FileInfo.Lines(1), com.histmersion.api.ByteCount(10), com.histmersion.api.Sha256("a"))
     val m = Bundle.Manifest(
       Bundle.Format,
-      1,
-      "33",
+      com.histmersion.api.exchange.Bundle.Manifest.FormatVersion(1),
+      com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       U1,
       Bundle.Instance(I),
       None,
       None,
-      List(f, Bundle.FileInfo("entities/queue.ndjson", 0, 0, "e")),
-      Bundle.Blobs(0, 0),
-      Bundle.Reference(0, "", 0, "")
+      List(f, Bundle.FileInfo(com.histmersion.api.exchange.Bundle.FileInfo.Path("entities/queue.ndjson"), com.histmersion.api.exchange.Bundle.FileInfo.Lines(0), com.histmersion.api.ByteCount(0), com.histmersion.api.Sha256("e"))),
+      Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
+      Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
     val ps = BundleFormat.checkFiles(m, Map(f.path -> f.modify(_.sha256).setTo("b"), "entities/x.ndjson" -> f))
     assertEquals(ps.size, 3, ps.mkString("\n"))
@@ -185,12 +185,12 @@ class BundleFormatSuite extends munit.FunSuite:
   test("markdown: an import report says what it did, and lists every problem"):
     val r = Bundle.ImportResult(
       U1,
-      Bundle.Instance(I, Some("work")),
-      dryRun = false,
-      applied = false,
-      List(Bundle.KindCounts(com.histmersion.api.exchange.Bundle.Kind.Source, inserted = 2)),
-      0,
-      List("source x: clash"),
+      Bundle.Instance(I, Some(com.histmersion.api.exchange.Bundle.Instance.Label("work"))),
+      dryRun = com.histmersion.api.exchange.Bundle.ImportResult.DryRun(false),
+      applied = com.histmersion.api.exchange.Bundle.ImportResult.Applied(false),
+      List(Bundle.KindCounts(com.histmersion.api.exchange.Bundle.Kind.Source, inserted = com.histmersion.api.exchange.Bundle.KindCounts.Inserted(2))),
+      com.histmersion.api.exchange.Bundle.ImportResult.Blobs(0),
+      List(com.histmersion.api.exchange.Bundle.ImportResult.Problems("source x: clash")),
       Nil,
       Nil
     )

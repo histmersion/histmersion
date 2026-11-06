@@ -27,14 +27,14 @@ class BundleEntitiesSuite extends munit.FunSuite:
       U1,
       I,
       slug,
-      "Title",
-      "planned",
+      com.histmersion.api.exchange.Bundle.Goal.Title("Title"),
+      com.histmersion.api.exchange.Bundle.Goal.Status("planned"),
       notes,
-      List("b", "a"),
+      List(com.histmersion.api.exchange.Bundle.Goal.Tags("b"), com.histmersion.api.exchange.Bundle.Goal.Tags("a")),
       Nil,
-      Some(Bundle.Range(Some(-1650), None)),
+      Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1650)), None)),
       None,
-      "2026-10-01T00:00:00.000000Z",
+      com.histmersion.api.exchange.Bundle.Goal.CreatedAt("2026-10-01T00:00:00.000000Z"),
       updated
     )
 
@@ -60,8 +60,8 @@ class BundleEntitiesSuite extends munit.FunSuite:
     val src = Bundle.Source(
       U1,
       I,
-      "ck2001_a",
-      "T",
+      com.histmersion.api.library.Citekey("ck2001_a"),
+      com.histmersion.api.library.Title("T"),
       Nil,
       None,
       None,
@@ -76,11 +76,11 @@ class BundleEntitiesSuite extends munit.FunSuite:
       None,
       None,
       None,
-      "2026-01-01",
+      com.histmersion.api.exchange.Bundle.Source.AddedDate("2026-01-01"),
       Some("b" * 64),
       Some("c" * 64),
-      Some("pdf"),
-      "2026-10-02T00:00:00.000000Z"
+      Some(com.histmersion.api.exchange.Bundle.Source.OriginalExt("pdf")),
+      com.histmersion.api.exchange.Bundle.Source.UpdatedAt("2026-10-02T00:00:00.000000Z")
     )
     val es = BundleEntities(
       sources = List(src),
@@ -89,8 +89,8 @@ class BundleEntitiesSuite extends munit.FunSuite:
           U2,
           I,
           U1,
-          "ck2001_a#0",
-          "c",
+          com.histmersion.api.exchange.Bundle.Finding.Id("ck2001_a#0"),
+          com.histmersion.api.exchange.Bundle.Finding.Claim("c"),
           None,
           None,
           None,
@@ -99,10 +99,10 @@ class BundleEntitiesSuite extends munit.FunSuite:
           Nil,
           None,
           None,
-          "2026-10-03T00:00:00.000000Z"
+          com.histmersion.api.exchange.Bundle.Finding.UpdatedAt("2026-10-03T00:00:00.000000Z")
         )
       ),
-      edges = List(Bundle.Edge(U1, U3, "references"))
+      edges = List(Bundle.Edge(U1, U3, com.histmersion.api.exchange.Bundle.Edge.Kind("references")))
     )
     assertEquals(es.blobRefs.keySet, Set("b" * 64, "c" * 64))
     assertEquals(es.asOf, Some("2026-10-03T00:00:00.000000Z"))
@@ -121,14 +121,14 @@ class BundleEntitiesSuite extends munit.FunSuite:
     Bundle.Event(
       U1,
       I,
-      "e1",
-      "Eruption",
-      "eruption",
-      Some(-1600),
+      com.histmersion.api.exchange.Bundle.Event.Id("e1"),
+      com.histmersion.api.exchange.Bundle.Event.Label("Eruption"),
+      com.histmersion.api.exchange.Bundle.Event.Kind("eruption"),
+      Some(com.histmersion.api.exchange.Bundle.Event.NotBefore(-1600)),
       None,
       None,
-      Some(-1500),
-      "attested",
+      Some(com.histmersion.api.exchange.Bundle.Event.NotAfter(-1500)),
+      com.histmersion.api.exchange.Bundle.Event.Historicity("attested"),
       None,
       None,
       None,
@@ -138,7 +138,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
       Nil,
       Nil,
       Nil,
-      "2026-10-03T00:00:00.000000Z"
+      com.histmersion.api.exchange.Bundle.Event.UpdatedAt("2026-10-03T00:00:00.000000Z")
     )
   )
 
@@ -169,21 +169,21 @@ class BundleEntitiesSuite extends munit.FunSuite:
       eventCatalogue = List(
         Bundle.EventCatalogue(
           U1,
-          "gvp",
-          "212040",
-          Some("https://volcano.si.edu/x"),
-          "Santorini",
-          "eruption",
-          Some(-1610),
+          com.histmersion.api.exchange.Bundle.EventCatalogue.Provider("gvp"),
+          com.histmersion.api.exchange.Bundle.EventCatalogue.ProviderId("212040"),
+          Some(com.histmersion.api.exchange.Bundle.EventCatalogue.Url("https://volcano.si.edu/x")),
+          com.histmersion.api.exchange.Bundle.EventCatalogue.Label("Santorini"),
+          com.histmersion.api.exchange.Bundle.EventCatalogue.Kind("eruption"),
+          Some(com.histmersion.api.exchange.Bundle.EventCatalogue.NotBefore(-1610)),
           None,
           None,
-          Some(-1600),
+          Some(com.histmersion.api.exchange.Bundle.EventCatalogue.NotAfter(-1600)),
           Some(36.4),
           Some(25.4),
-          Some(7),
+          Some(com.histmersion.api.exchange.Bundle.EventCatalogue.Vei(7)),
           None,
           None,
-          "attested",
+          com.histmersion.api.exchange.Bundle.EventCatalogue.Historicity("attested"),
           io.circe.Json.obj("VEI" -> io.circe.Json.fromInt(7)),
           at
         )
@@ -192,33 +192,33 @@ class BundleEntitiesSuite extends munit.FunSuite:
         Bundle.EventCandidate(
           U1,
           U2,
-          "ck2001_a",
+          com.histmersion.api.library.Citekey("ck2001_a"),
           0.75,
-          "confirmed",
-          List("ck2001_a#0"),
+          com.histmersion.api.exchange.Bundle.EventCandidate.Status("confirmed"),
+          List(com.histmersion.api.exchange.Bundle.EventCandidate.Findings("ck2001_a#0")),
           io.circe.Json.arr(),
-          List("near"),
+          List(com.histmersion.api.exchange.Bundle.EventCandidate.Reasons("near")),
           at
         )
       ),
       eventChecks = List(Bundle.EventCheck(U1, at)),
       corrections = List(
         Bundle.Correction(
-          "event",
-          "e1",
+          com.histmersion.api.exchange.Bundle.Correction.TargetKind("event"),
+          com.histmersion.api.exchange.Bundle.Correction.TargetId("e1"),
           Some(U1),
-          "label",
-          "\"Thera\"",
-          Some("gvp"),
-          "\"Santorini\"",
+          com.histmersion.api.exchange.Bundle.Correction.Field("label"),
+          com.histmersion.api.exchange.Bundle.Correction.Value("\"Thera\""),
+          Some(com.histmersion.api.exchange.Bundle.Correction.Upstream("gvp")),
+          com.histmersion.api.exchange.Bundle.Correction.UpstreamValue("\"Santorini\""),
           None,
-          "active",
+          com.histmersion.api.exchange.Bundle.Correction.Status("active"),
           at,
-          "2026-10-06T00:00:00.000000Z",
+          com.histmersion.api.exchange.Bundle.Correction.UpdatedAt("2026-10-06T00:00:00.000000Z"),
           None
         )
       ),
-      siteTypes = List(Bundle.SiteType("pleiades:599928", Some("settlement"), Some(at)))
+      siteTypes = List(Bundle.SiteType(com.histmersion.api.exchange.Bundle.SiteType.PlaceId("pleiades:599928"), Some(com.histmersion.api.exchange.Bundle.SiteType.Value("settlement")), Some(at)))
     )
     val payloads = es.payloads.toMap
     List(
@@ -252,16 +252,16 @@ class BundleEntitiesSuite extends munit.FunSuite:
 
   test("merging the sets: a decision is kept over a proposal, never a proposal over a decision; the newer row wins"):
     import com.histmersion.api.exchange.Bundle.EventSets.*
-    assertEquals(candidateStatus("proposed", "confirmed"), "confirmed")
-    assertEquals(candidateStatus("proposed", "rejected"), "rejected")
-    assertEquals(candidateStatus("proposed", "proposed"), "proposed")
-    assertEquals(candidateStatus("confirmed", "proposed"), "confirmed")
-    assertEquals(candidateStatus("rejected", "confirmed"), "rejected")
-    assert(newer(None, Some("2026-10-05T00:00:00.000000Z")))
-    assert(newer(Some("2026-10-05T00:00:00.000000Z"), Some("2026-10-05T00:00:00.000001Z")))
-    assert(!newer(Some("2026-10-05T00:00:00.000000Z"), Some("2026-10-05T00:00:00.000000Z")))
-    assert(!newer(Some("2026-10-06T00:00:00.000000Z"), Some("2026-10-05T00:00:00.000000Z")))
-    assert(!newer(Some("2026-10-05T00:00:00.000000Z"), None))
+    assertEquals(candidateStatus(com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed"), com.histmersion.api.exchange.Bundle.EventCandidate.Status("confirmed")), "confirmed")
+    assertEquals(candidateStatus(com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed"), com.histmersion.api.exchange.Bundle.EventCandidate.Status("rejected")), "rejected")
+    assertEquals(candidateStatus(com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed"), com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed")), "proposed")
+    assertEquals(candidateStatus(com.histmersion.api.exchange.Bundle.EventCandidate.Status("confirmed"), com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed")), "confirmed")
+    assertEquals(candidateStatus(com.histmersion.api.exchange.Bundle.EventCandidate.Status("rejected"), com.histmersion.api.exchange.Bundle.EventCandidate.Status("confirmed")), "rejected")
+    assert(newer(None, Some(com.histmersion.api.exchange.Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z"))))
+    assert(newer(Some(com.histmersion.api.exchange.Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z")), Some(com.histmersion.api.exchange.Bundle.UpdatedAt("2026-10-05T00:00:00.000001Z"))))
+    assert(!newer(Some(com.histmersion.api.exchange.Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z")), Some(com.histmersion.api.exchange.Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z"))))
+    assert(!newer(Some(com.histmersion.api.exchange.Bundle.UpdatedAt("2026-10-06T00:00:00.000000Z")), Some(com.histmersion.api.exchange.Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z"))))
+    assert(!newer(Some(com.histmersion.api.exchange.Bundle.UpdatedAt("2026-10-05T00:00:00.000000Z")), None))
     assert(!newer(None, None))
 
   test("the reader reports every problem of a bundle, not just the first"):
@@ -269,15 +269,15 @@ class BundleEntitiesSuite extends munit.FunSuite:
     val ps = es.payloads
     val m = Bundle.Manifest(
       Bundle.Format,
-      1,
-      "33",
+      com.histmersion.api.exchange.Bundle.Manifest.FormatVersion(1),
+      com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"),
       U1,
       Bundle.Instance(I),
       None,
       None,
       ps.map((p, b) => BundleFormat.fileInfo(p, b)),
-      Bundle.Blobs(1, 3),
-      Bundle.Reference(0, "", 0, "")
+      Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(1), com.histmersion.api.ByteCount(3)),
+      Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
     val ok = tar(
       (Bundle.ManifestPath -> BundleFormat.manifestBytes(m)) :: ps.map(identity) ++

@@ -13,29 +13,29 @@ class SafePathSuite extends munit.FunSuite:
   private val base = Some("/srv/corpus")
 
   test("a path inside the corpus resolves"):
-    assertEquals(SafePath.confine(base, "/srv/corpus/sources").map(_.toString), Right("/srv/corpus/sources"))
+    assertEquals(SafePath.confine(base, com.histmersion.util.storage.SafePath.Candidate("/srv/corpus/sources")).map(_.toString), Right("/srv/corpus/sources"))
 
   test("a RELATIVE path is resolved against the corpus, not the process's cwd"):
-    assertEquals(SafePath.confine(base, "sources").map(_.toString), Right("/srv/corpus/sources"))
+    assertEquals(SafePath.confine(base, com.histmersion.util.storage.SafePath.Candidate("sources")).map(_.toString), Right("/srv/corpus/sources"))
 
   test("escaping is refused, however it is spelled"):
     List("/etc/passwd", "../../etc/passwd", "/srv/corpus/../etc", "/srv/corpus/a/../../etc", "/srv/corpusevil")
       .foreach(p => assert(SafePath.confine(base, p).isLeft, s"'$p' MUST be refused"))
 
   test("the refusal names the configured directory, so it is actionable"):
-    val e = SafePath.confine(base, "/etc/passwd").swap.toOption.get
+    val e = SafePath.confine(base, com.histmersion.util.storage.SafePath.Candidate("/etc/passwd")).swap.toOption.get
     assert(e.contains("/srv/corpus"), e)
 
   test("no corpus configured = the old behaviour, unchanged"):
-    assert(SafePath.confine(None, "/etc/passwd").isRight)
-    assert(SafePath.confine(Some("  "), "/etc/passwd").isRight)
+    assert(SafePath.confine(None, com.histmersion.util.storage.SafePath.Candidate("/etc/passwd")).isRight)
+    assert(SafePath.confine(Some(com.histmersion.util.storage.SafePath.Base("  ")), com.histmersion.util.storage.SafePath.Candidate("/etc/passwd")).isRight)
     assert(!SafePath.configured(None))
-    assert(!SafePath.configured(Some("")))
+    assert(!SafePath.configured(Some(com.histmersion.util.storage.SafePath.Base(""))))
     assert(SafePath.configured(base))
 
   test("an empty path is refused whatever the configuration"):
-    assert(SafePath.confine(base, "").isLeft)
-    assert(SafePath.confine(None, "   ").isLeft)
+    assert(SafePath.confine(base, com.histmersion.util.storage.SafePath.Candidate("")).isLeft)
+    assert(SafePath.confine(None, com.histmersion.util.storage.SafePath.Candidate("   ")).isLeft)
 
   test("`within` is the same test for an already-built path"):
     assert(SafePath.within(base, Paths.get("/srv/corpus/md/x/paper.md")))
