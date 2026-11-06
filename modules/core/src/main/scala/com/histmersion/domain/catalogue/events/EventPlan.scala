@@ -185,5 +185,5 @@ object EventPlan:
       central = stated.central,
       plusMinus = stated.plusMinus,
       datingMethod = stated.datingMethod,
-      rev = ""
+      rev = com.histmersion.api.exchange.Bundle.Event.Rev("")
     )
