@@ -1,0 +1,3 @@
+path	sha256
+tools/refactor/native-scalar-fixture/src/main/scala/Excluded.scala	43bc8ef6afdc35069c01995ab4af757f3224d7abc5c5b325c2fd1c853b8d902b
+tools/refactor/native-scalar-fixture/src/main/scala/NativeOps.scala	f760232c5eab22d1f6225c2d4031bd2feb98ee604d5df4175d45813b4cd0d2a1

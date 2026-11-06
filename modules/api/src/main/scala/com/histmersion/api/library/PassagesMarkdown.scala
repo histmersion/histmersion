@@ -22,15 +22,15 @@ object PassagesMarkdown:
         val where = p.heading.map(h => s" · § $h").getOrElse("")
         s"### ${i + 1} · offset ${p.offset}$where\n\n${marked(p)}"
       }
-      val more = r.total - r.passages.size
+      val more = (r.total).value - r.passages.size
       val tail = if more > 0 then List(s"_$more more — raise limit or narrow the query._") else Nil
       _root_.com.histmersion.api.library.PassagesMarkdown.RenderResult((head :: items ++ tail).mkString("\n\n"))
 
   def marked(p: PassageHit): com.histmersion.api.library.PassagesMarkdown.MarkedResult =
     val b = new StringBuilder(p.text.length + p.matches.size * 4)
     val end = p.matches.sortBy(_.start).foldLeft(0) { (at, m) =>
-      val s = m.start.max(at).min(p.text.length)
-      val e = m.end.max(s).min(p.text.length)
+      val s = (m.start).value.max(at).min(p.text.length)
+      val e = (m.end).value.max(s).min(p.text.length)
       b ++= p.text.substring(at, s)
       if e > s then b ++= "**" ++= p.text.substring(s, e) ++= "**"
       e

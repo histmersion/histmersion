@@ -23,7 +23,7 @@ object PresetMenu:
   val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = _root_.com.histmersion.api.catalogue.PresetMenu.MinShareValue(0.5)
 
   def share(view: BBox, box: BBox): com.histmersion.api.catalogue.PresetMenu.ShareResult =
-    val area = (view.maxLon - view.minLon) * (view.maxLat - view.minLat)
+    val area = ((view.maxLon).value - view.minLon) * (view.maxLat - view.minLat)
     if ((view.crossesAntimeridian) == _root_.com.histmersion.api.BBox.CrossesAntimeridianResult(true)) || area <= 0 then _root_.com.histmersion.api.catalogue.PresetMenu.ShareResult(0.0)
     else
       val w = math.min(view.maxLon, box.maxLon) - math.max(view.minLon, box.minLon)

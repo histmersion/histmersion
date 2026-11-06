@@ -40,7 +40,7 @@ object IngestMarkdown:
       j.detail.flatMap(VacuumPlan.Detail.of).map(p => s"- **vacuums:** ${Vacuum.describe(p)}"),
       j.detail.flatMap(JobDetail.Purpose.of).map(a => s"- **does:** $a"),
       j.detail
-        .filter(SkippedPeriod.SkippedCount.of(_) > 0)
+        .filter((SkippedPeriod.SkippedCount.of(_)).value > 0)
         .map(d =>
           s"- **skipped:** ${Plural.count(SkippedPeriod.SkippedCount.of(d), _root_.com.histmersion.api.Plural.NounSingular("period definition"))} (not imported)" +
             (if SkippedPeriod.Skipped.of(d).isEmpty then ""

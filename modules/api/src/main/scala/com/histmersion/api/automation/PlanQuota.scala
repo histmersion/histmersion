@@ -250,7 +250,7 @@ object PlanQuota:
 
   def current(readings: List[Reading], now: com.histmersion.api.automation.PlanQuota.CurrentNow, model: Option[com.histmersion.api.automation.PlanQuota.CurrentModel] = None): List[Reading] =
     readings
-      .filter(r => r.resetsAt.forall(_ > now))
+      .filter(r => r.resetsAt.forall((_).value > now))
       .filter(r => r.model.isEmpty || model.isEmpty || r.model == model)
       .groupBy(r => (r.limit, r.kind))
       .values
@@ -260,8 +260,8 @@ object PlanQuota:
 
   def windowState(r: Reading, rules: Rules, now: com.histmersion.api.automation.PlanQuota.WindowStateNow): WindowState =
     val floor = rules.floors.of(r.limit, r.kind, rules.defaultFloor)
-    val left = (100.0 - r.usedPct).max(0)
-    val stale = (now).value - r.observedAt > rules.staleMs
+    val left = (100.0 - (r.usedPct).value).max(0)
+    val stale = (now).value - (r.observedAt).value > rules.staleMs
     val pct = (d: Double) =>
       java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
     val why =
@@ -272,7 +272,7 @@ object PlanQuota:
           s"${r.kind}: ${pct(left)}% left when last read, floor $floor% (+${rules.marginPct} while the reading is stale)"
         )
       else None
-    WindowState(r, floor, left, stale, _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => _root_.com.histmersion.api.automation.PlanQuota.WindowState.Why(refactorValue4)))
+    WindowState(r, floor, _root_.com.histmersion.api.automation.PlanQuota.WindowState.LeftPct(left), stale, _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => _root_.com.histmersion.api.automation.PlanQuota.WindowState.Why(refactorValue4)))
 
   def verdict(
       readings: List[Reading],
@@ -362,7 +362,7 @@ object PlanQuota:
       if states.isEmpty then Some(RefreshNeed.NoReading)
       else
         val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(true))))
-        Option.when(blocking.nonEmpty && blocking.forall(s => ((s.stale) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(true)) && !((s.reading.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) && s.leftPct > s.floor))(
+        Option.when(blocking.nonEmpty && blocking.forall(s => ((s.stale) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(true)) && !((s.reading.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) && (s.leftPct).value > s.floor))(
           RefreshNeed.StaleOnly
         )
 

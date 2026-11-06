@@ -91,7 +91,7 @@ object Candidates:
         venue =
           (str(c, _root_.com.histmersion.api.library.Candidates.StrK("journalTitle")).orElse(c.downField("journalInfo").downField("journal").get[String]("title").toOption)).map(com.histmersion.api.library.Venue.apply),
         isOa = _root_.com.histmersion.api.library.WorkRef.IsOa(str(c, _root_.com.histmersion.api.library.Candidates.StrK("isOpenAccess")).contains("Y")),
-        abstractText = str(c, _root_.com.histmersion.api.library.Candidates.StrK("abstractText")).map(_.replaceAll("<[^>]+>", ""))
+        abstractText = str(c, _root_.com.histmersion.api.library.Candidates.StrK("abstractText")).map((refactorCallback => _root_.com.histmersion.api.library.WorkRef.AbstractText((refactorCallback).value.replaceAll("<[^>]+>", ""))))
       )
     }
 

@@ -59,7 +59,7 @@ object EventLeads:
         .toList
 
   def of(f: LeadFacts): Option[EventLead] =
-    if f.tier != _root_.com.histmersion.api.catalogue.LeadFacts.Tier(EventTier.Catalogue) || f.attesting > 0 then None
+    if f.tier != _root_.com.histmersion.api.catalogue.LeadFacts.Tier(EventTier.Catalogue) || (f.attesting).value > 0 then None
     else
       val k = EventTaxonomy.of(f.kind).label
       val yrs = years(f.timeSpan)
@@ -67,7 +67,7 @@ object EventLeads:
       val around =
         s"${Plural.count(f.findingsNear, _root_.com.histmersion.api.Plural.CountSingular("finding"))} in the corpus within ${math.round(f.km)} km and ±${f.years} years"
       val text =
-        if f.proposed > 0 then
+        if (f.proposed).value > 0 then
           s"No source in the corpus is confirmed to discuss this $sized ($yrs) — ${Plural.count(f.proposed, _root_.com.histmersion.api.Plural.CountSingular("source"))} " +
             s"possibly discuss it (unconfirmed); $around"
         else s"No source in the corpus discusses this $sized ($yrs) — $around"

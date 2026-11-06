@@ -65,7 +65,7 @@ object AnthropicRequest:
         "model" -> Some(Json.fromString(r.model)),
         "messages" -> Some(Json.fromValues(msgs)),
         "system" -> Some(Json.fromString(r.system)),
-        "max_tokens" -> Some(Json.fromInt(if r.maxTokens > 0 then r.maxTokens else DefaultMaxTokens)),
+        "max_tokens" -> Some(Json.fromInt(if (r.maxTokens).value > 0 then r.maxTokens else DefaultMaxTokens)),
         "tools" -> tools,
         "output_config" -> output
       ).collect { case (k, Some(v)) => k -> v }

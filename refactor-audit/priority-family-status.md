@@ -1,6 +1,70 @@
 # Priority-family status
 
-## Current checkpoint: map property sharing and imported Pure adapters, compilation incomplete
+## Current checkpoint: native numeric operations repaired, compilation incomplete
+
+The existing AstRecipe pipeline applies project-native-scalars-2 (95 AST patches
+across 43 production files), then project-native-scalars-3 (21 patches across 14
+of those files). Together: 116 patches, 43 distinct production files, zero
+application test edits: 16 E007 adapters, 93 E008 receiver repairs and seven E134
+numeric infix operand repairs. The imported-pure-3 and native-scalars-1 previews
+were not applied separately. No application-expression mappings, new runners,
+verifiers or report frameworks were introduced. These are applied implementation
+repairs; the global confirmed-policy repair numerator is unchanged.
+
+nativeScalarOperations is opt-in and requires native-Boolean owner mode. It adds
+canonical Pure numeric E008 receiver operations across owners. E134 is limited to
+numeric infix operators, with compiler-reported native overloads and a receiver
+proven by a matching literal or an explicitly typed newtype parameter's `.value`.
+Functions/placeholders as arguments, ordinary method calls, uncertain inferred
+receivers, custom classes and non-Pure constraints remain excluded. General E134
+overload adapters remain disabled. Existing nominal-conversion and argument
+unwrapping permissions are unchanged; imported Pure lookup remains separately
+configured. This does not establish general accessor-policy compliance.
+
+Thirteen positive cases match an independent expected output exactly, and the
+actual rewritten source compiles and runs under Scala 3.10 future source with
+fatal E165 diagnostics. Checks cover numeric overflow, NaN, division by zero,
+bit operations, Char conversion, property selection, unary negation, predicate
+placeholders and single evaluation of an effectful operand. Seven negative cases
+remain absent from the plan, including a user-defined Int and an infix callback.
+Disabling the new option gives an empty plan over the same 20 diagnostics. These
+are transformation fixtures, not independent policy-detection holdouts.
+
+| Module | Before, frontier28/latest | After first pass, frontier29 | After second pass, frontier30 |
+|---|---:|---:|---:|
+| api JVM and JS, each | 1847 | 1801 | 1789 |
+| upstreams | 246 | 245 | cached245 |
+| plugins/ai-http | 64 | 62 | cached62 |
+| plugins/calibre | 145 | 145 | 145 |
+| values | latest17 | cached17 | cached17 |
+| plugin-vaults | latest95 | cached95 | cached95 |
+
+All ten tasks still fail; hello/latest1, hello-ai/latest7 and chimney-iron/latest4
+retain cached failures. Dependent application tests remain blocked. Compiler
+checks, stack16m, maxErrors10000 and serial settings are unchanged; all3170 source
+and build hashes stayed stable during both actual builds. Aggregate changes are
+not complete diagnostic attribution or a zero-regression proof. Plugin API,
+resolver and console sources are unchanged; their previous evidence is retained,
+with no new application-test, native-image or full-project pass claimed.
+
+All43 first-pass files verified before the second application; all14 final files
+match their frozen preview. The final3169-Scala census matches frontier30 (which
+also snapshots build.sbt). Both censuses retain every prior raw-leaf/newtype ID
+and byte-identical origins: zero introduced, removed or corrected raw candidates,
+zero shape delta. Current candidates: production886/test6009; opaque shapes:
+production26888/test19; overlap groups2978; unresolved candidate references16260.
+Positions increase137026 ->137029 through implementation contexts. Alias/import,
+inferred, inherited and external resolution remain partial. No new exceptions,
+inventory acceptance, overall automation rate or confirmed-policy repair count
+is inferred. Model detector refinement remains1/2; other policy families retain
+their previous evidence and were not reassessed by these compiler observations.
+
+Remaining work includes cross-owner nominal helper flows, unsupported native
+receiver shapes, instance-owned companion paths and model-purpose overlap review.
+Their findings remain unresolved, not accepted exceptions. Copy automation stays
+paused; preserved family baselines and historical denominators remain below.
+
+## Previous checkpoint: map property sharing and imported Pure adapters, compilation incomplete
 
 project-type-flows-1 combines seven further companion/value naming repairs (22 AST
 patches) and six helper consolidations (12 patches) in one frozen application over

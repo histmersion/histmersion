@@ -160,7 +160,7 @@ object AgentsMarkdown:
     (firstCallTokens.map(n => s"first call $n tok") ++ turns.map(t => Plural.count(t, _root_.com.histmersion.api.Plural.NounSingular("turn")))).mkString(" · ")
 
   private def tokens(u: Usage): com.histmersion.api.automation.AgentsMarkdown.TokensResult =
-    val cache = if u.cacheRead + u.cacheWrite > 0 then s", cache ${u.cacheRead} read / ${u.cacheWrite} written" else ""
+    val cache = if (u.cacheRead).value + u.cacheWrite > 0 then s", cache ${u.cacheRead} read / ${u.cacheWrite} written" else ""
     _root_.com.histmersion.api.automation.AgentsMarkdown.TokensResult(s"${u.input} in / ${u.output} out$cache")
 
   def models(m: ModelsInfo): com.histmersion.api.automation.AgentsMarkdown.ModelsResult =
@@ -220,8 +220,8 @@ object AgentsMarkdown:
         (if l.reserve > 0 then s", reserve ${amount(l.reserve, l.measure)}" else "") +
         l.freesAt.fold("")(t => s" — frees $t")
     }
-    (s"- `${a.target}` (${a.source}${if a.reservePct > 0 then s", reserve ${a.reservePct}%" else ""}) — $state" +
-      a.note.fold("")(n => s" · $n") :: limits).mkString("\n")
+    _root_.com.histmersion.api.automation.AgentsMarkdown.AllowanceBlockResult((s"- `${a.target}` (${a.source}${if (a.reservePct).value > 0 then s", reserve ${a.reservePct}%" else ""}) — $state" +
+      a.note.fold("")(n => s" · $n") :: limits).mkString("\n"))
 
   def allowance(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceResult = _root_.com.histmersion.api.automation.AgentsMarkdown.AllowanceResult((allowanceBlock(a)).value)
 
@@ -583,17 +583,17 @@ object AgentsMarkdown:
         "tokens" -> c.runs.map(r => tokens(r.usage)),
         "USD" -> c.runs.map(r => usd(r.costUsd)),
         "time" -> c.runs.map(r => secs(r.seconds)),
-        "attempts" -> c.runs.map(r => s"${r.attempts}${if r.failures > 0 then s" (${r.failures} failed)" else ""}")
+        { val refactorTuple8 = "attempts" -> c.runs.map(r => s"${r.attempts}${if (r.failures).value > 0 then s" (${r.failures} failed)" else ""}"); (_root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart1(refactorTuple8._1), (refactorTuple8._2).map(refactorValue4 => _root_.com.histmersion.api.automation.AgentsMarkdown.CompareTableRowsPart2(refactorValue4))) }
       )
     )
     val steps = c.steps.map { row =>
       row.name -> row.runs.map(_.fold("—") { s =>
-        val tries = if s.attempts > 1 || s.failures > 0 then
-          s" · ${s.attempts} tries${if s.failures > 0 then s", ${s.failures} failed" else ""}"
+        val tries = if (s.attempts).value > 1 || (s.failures).value > 0 then
+          s" · ${s.attempts} tries${if (s.failures).value > 0 then s", ${s.failures} failed" else ""}"
         else ""
         val m = models(s.models, s.actual)
         (if m == "—" then "code" else m) + s" · ${s.usage.input}/${s.usage.output}" +
-          (if s.usage.cacheRead + s.usage.cacheWrite > 0 then s" (cache ${s.usage.cacheRead}/${s.usage.cacheWrite})"
+          (if (s.usage.cacheRead).value + s.usage.cacheWrite > 0 then s" (cache ${s.usage.cacheRead}/${s.usage.cacheWrite})"
            else "") +
           (if s.models.nonEmpty then s" · ${paid(s.costUsd, s.billing)}" else "") + s" · ${secs(s.seconds)}$tries" +
           Option(callShape(s.firstCallTokens, s.turns)).filter(_.nonEmpty).fold("")(c => s" · $c")

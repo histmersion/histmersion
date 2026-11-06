@@ -115,8 +115,8 @@ object Markdown:
       case Some(Backup.State.Failed) =>
         _root_.com.histmersion.api.Markdown.BackupStatusResult(s"### Backup failed\n\n- **file:** ${s.file}\n- **error:** ${s.error.getOrElse("unknown")}")
       case _ =>
-        s"### Backup running\n\n- **file:** ${s.file}\n- **for:** ${s.durationMs / 1000} s — " +
-          "`histmersion backup` waits for it; `GET /api/backup/status` reports when it is written"
+        _root_.com.histmersion.api.Markdown.BackupStatusResult(s"### Backup running\n\n- **file:** ${s.file}\n- **for:** ${(s.durationMs).value / 1000} s — " +
+          "`histmersion backup` waits for it; `GET /api/backup/status` reports when it is written")
 
   def backups(rows: Vector[Backup.Info]): com.histmersion.api.Markdown.BackupsResult =
     if rows.isEmpty then _root_.com.histmersion.api.Markdown.BackupsResult("_No backups on the server yet._")

@@ -62,7 +62,7 @@ object MergeMarkdown:
       s"**Summary** ${open.size} blocking · ${p.resolutionErrors.size} stale or invalid · ${conditional.size} conditional · " +
         s"${defaults.size} ${Plural.noun(_root_.com.histmersion.api.Plural.NounN((defaults.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("default"))} · ${p.info.size} info · " +
         s"${Plural.count(_root_.com.histmersion.api.Plural.NounN((p.problems.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("problem"))} · plan ${p.planHash}" +
-        (if p.resolved > 0 then s"+r(${p.resolved})" else "")
+        (if (p.resolved).value > 0 then s"+r(${p.resolved})" else "")
     ).mkString("  \n")
     val sections = List(
       section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Problems (no decision fixes these)"), p.problems.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x"))),
@@ -141,7 +141,7 @@ object MergeMarkdown:
   def applyJob(j: MergeApplyJob): com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult =
     j.state match
       case MergeJobState.Running =>
-        s"**Applying** plan ${j.planHash} — job `${j.job}`, ${j.elapsedMs / 1000} s so far (a backup is taken first)."
+        _root_.com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult(s"**Applying** plan ${j.planHash} — job `${j.job}`, ${(j.elapsedMs).value / 1000} s so far (a backup is taken first).")
       case MergeJobState.Failed =>
         _root_.com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult(s"**The merge apply failed** (job `${j.job}`): ${j.error.getOrElse("no reason given")}")
       case MergeJobState.Interrupted =>

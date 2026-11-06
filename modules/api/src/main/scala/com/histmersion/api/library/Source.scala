@@ -184,7 +184,7 @@ object Source:
       def short(p: DeletePart) = p match
         case DeletePart.EdgesIn => "edges in (parked)"
         case other              => other.wire.replace('-', ' ')
-      val parts = d.counts.filter(_.rows > 0).map(c => s"${c.rows} ${short(c.part)}")
+      val parts = d.counts.filter((_.rows).value > 0).map(c => s"${c.rows} ${short(c.part)}")
       val files = if d.files.isEmpty then Nil else List(Plural.count(_root_.com.histmersion.api.Plural.CountN((d.files.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("stored original")))
       val calibre = d.calibreId.map(id => s"Calibre entry $id kept").toList
       _root_.com.histmersion.api.library.Source.Delete.LogTextResult(s"deleted ${d.citekey} (${d.title})" +

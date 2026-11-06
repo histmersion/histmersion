@@ -151,12 +151,12 @@ object PeriodO:
       defs: List[com.histmersion.api.catalogue.PeriodO.Definition]
   ): (List[SkippedPeriod], List[com.histmersion.api.catalogue.PeriodO.Definition]) =
     val umbrellas = defs.flatMap(_.broader).toSet
-    def span(d: com.histmersion.api.catalogue.PeriodO.Definition) = d.period.end - d.period.start
+    def span(d: com.histmersion.api.catalogue.PeriodO.Definition) = (d.period.end).value - d.period.start
     val judged = defs.filterNot(d => umbrellas.contains(d.id))
     val verdicts = defs.map { d =>
       val others = judged.filter(o => o.id != d.id && o.region == d.region)
       val longest = others.map(span).maxOption.getOrElse(0L)
-      val crossesEra = d.period.start < 0 && d.period.end > 0
+      val crossesEra = (d.period.start).value < 0 && (d.period.end).value > 0
       if !crossesEra || umbrellas.contains(d.id) || others.size < MinSiblings || span(d) < MinImplausibleSpan ||
         span(d) <= SpanFactor * longest
       then Right(d)
@@ -207,7 +207,7 @@ object PeriodO:
       Option.when(labels.nonEmpty)(labels.mkString(", "))
     }
     def skip(reason: Period.Skip, detail: com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail) = Left(SkippedPeriod(id, label, reason, detail))
-    def outside(y: com.histmersion.api.catalogue.PeriodO.DefinitionOutsideY) = (y).value < MinYear || y > MaxYear
+    def outside(y: com.histmersion.api.catalogue.PeriodO.DefinitionOutsideY) = (y).value < (MinYear).value || (y).value > MaxYear
     (start, stop) match
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
         skip(Period.Skip.OutOfRange, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail(s"$s → $e lies outside $MinYear..$MaxYear"))

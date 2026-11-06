@@ -174,7 +174,7 @@ object Stalls:
         _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2(s"waits for a person: ${Plural.count(_root_.com.histmersion.api.Plural.CountN((f.approvals.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("open approval"))} ($kinds; oldest #${f.approvals.map(_._1).min})"),
         _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent decide-all approve --subject $g (or decide them one by one: histmersion agent approvals --subject $g)")
       )
-    else if f.personHeld > 0 then
+    else if (f.personHeld).value > 0 then
       (
         _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Held),
         s"${Plural.count(f.personHeld, _root_.com.histmersion.api.Plural.CountSingular("item"))} held by a person",
@@ -218,7 +218,7 @@ object Stalls:
                         w.why,
                         _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent scheduler why <item> (histmersion agent scheduler queue)")
                       )
-                    case None if f.running > 0 =>
+                    case None if (f.running).value > 0 =>
                       (_root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Running), s"${Plural.count(f.running, _root_.com.histmersion.api.Plural.CountSingular("run"))} in flight", _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("nothing: wait for it"))
                     case None =>
                       f.lastStop match
@@ -254,7 +254,7 @@ object Stalls:
         val (c, w, a) = classify(f)
         Stall(f.slug, f.title, f.status, f.lastProgress, f.idleDays, c, w, a)
       }
-      .sortBy(s => (s.idleDays.fold(Int.MinValue)(-_), s.slug))
+      .sortBy(s => (s.idleDays.fold(Int.MinValue)(-(_).value), s.slug))
     StallReport(
       days,
       at,

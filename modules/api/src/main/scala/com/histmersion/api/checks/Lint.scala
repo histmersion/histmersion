@@ -491,7 +491,7 @@ object Lint:
       else s"### Lint: ${rep.total} finding(s) across ${dirty.size} of ${rep.rules.size} rule(s)"
     val blocks = dirty.map { r =>
       val items = r.items.map(i => s"- **${i.citekey}** — ${i.detail}")
-      val more = if r.count > r.items.size then s"\n- _… and ${r.count - r.items.size} more_" else ""
+      val more = if (r.count).value > r.items.size then s"\n- _… and ${(r.count).value - r.items.size} more_" else ""
       s"\n\n#### ${r.rule} (${r.count})\n_${r.description}_\n\n${items.mkString("\n")}$more"
     }
     val cleanLine =

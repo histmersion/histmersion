@@ -150,7 +150,7 @@ object Gazetteer:
 
   def validity(sourceKey: com.histmersion.api.catalogue.Gazetteer.ValiditySourceKey, span: Span, windowYears: com.histmersion.api.catalogue.Gazetteer.ValidityWindowYears): Validity = span match
     case Span(None, Some(end)) if ((unknownWhenSilent(sourceKey)) == _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentResult(true)) =>
-      Validity(Some(end - math.max(0, (windowYears).value)), Some(end), startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(true))
+      Validity(Some(_root_.com.histmersion.api.catalogue.Year((end).value - math.max(0, (windowYears).value))), Some(end), startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(true))
     case Span(from, to) => Validity(from, to, startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(false))
 
   val DefaultPointAreaKinds: List[com.histmersion.api.catalogue.Gazetteer.DefaultPointAreaKinds] = List(

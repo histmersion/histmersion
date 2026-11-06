@@ -21,7 +21,7 @@ object AgentSchedulerMarkdown:
   private def goal(g: Option[com.histmersion.api.automation.AgentSchedulerMarkdown.GoalG]) = g.fold("library work")(x => s"goal $x")
 
   def waiting(w: Waiting): com.histmersion.api.automation.AgentSchedulerMarkdown.WaitingResult =
-    val place = if w.position > 0 then s"${w.position}. " else "- "
+    val place = if (w.position).value > 0 then s"${w.position}. " else "- "
     s"$place#${w.item} ${w.jobType} **${w.target}** (${w.manager}; ${goal(w.goal)}; priority ${w.priority}; " +
       s"waited ${AgentSchedulerMarkdown.minutes(w.waitedMinutes)}) — _${w.code}_: ${w.why}" +
       (if w.behind.isEmpty then "" else s" · behind ${w.behind.mkString(", ")}")
@@ -46,7 +46,7 @@ object AgentSchedulerMarkdown:
       Option.when(s.pools.nonEmpty)(
         "- plan pools: " + s.pools.map(p => s"${p.pool} ${p.used} of ${p.cap}").mkString(", ")
       ),
-      Option.when(s.forPerson > 0)(
+      Option.when((s.forPerson).value > 0)(
         s"- ${Plural.count(s.forPerson, _root_.com.histmersion.api.Plural.NounSingular("item"))} wait for a person (an approval or a hold): they hold no place"
       ),
       Option.when(s.settings.nonEmpty)("- " + s.settings.mkString(" · "))
@@ -65,7 +65,7 @@ object AgentSchedulerMarkdown:
       (if s.waiting.isEmpty then "_Nothing waits._"
        else
          s.waiting.map(waiting).mkString("\n") +
-           (if s.waitingTotal > s.waiting.size then s"\n\n…and ${s.waitingTotal - s.waiting.size} more" else ""))
+           (if (s.waitingTotal).value > s.waiting.size then s"\n\n…and ${(s.waitingTotal).value - s.waiting.size} more" else ""))
     val strategies = "\n\n## Strategies\n\n" + s.strategies
       .map(x => s"- `${x.name}`${if x.name == s.strategy then " (in effect)" else ""}: ${x.describe}")
       .mkString("\n")
@@ -76,5 +76,5 @@ object AgentSchedulerMarkdown:
     s"# #${w.item} ${w.kind} ${w.target}\n\n- manager: ${w.manager}\n- status: ${w.status}" +
       w.run.fold("")(r => s" (run ${r.take(8)})") + w.approval.fold("")(a => s"\n- waits for approval #$a") +
       s"\n- ${if w.code.nonEmpty then s"_${w.code}_: " else ""}${w.why}" +
-      (if w.position > 0 then s"\n- place in the order: ${w.position}" else "") +
+      (if (w.position).value > 0 then s"\n- place in the order: ${w.position}" else "") +
       (if w.behind.isEmpty then "" else s"\n- behind: ${w.behind.mkString(", ")}")

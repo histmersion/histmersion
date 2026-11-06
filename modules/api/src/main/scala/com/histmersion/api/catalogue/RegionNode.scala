@@ -48,4 +48,4 @@ object RegionNode:
     _root_.com.histmersion.api.catalogue.RegionNode.UncertainLabelResult(l.startsWith("*") || l.contains("?") || l.toLowerCase.startsWith("withdrawn"))
 
   def rootEligible(n: RegionNode): com.histmersion.api.catalogue.RegionNode.RootEligibleResult =
-    RootKinds.contains(_root_.com.histmersion.api.catalogue.RegionNode.RootKindsValue((n.kind).value)) && !((n.withdrawn) == _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(true)) && !uncertainLabel(n.label)
+    RootKinds.contains(_root_.com.histmersion.api.catalogue.RegionNode.RootKindsValue((n.kind).value)) && !((n.withdrawn) == _root_.com.histmersion.api.catalogue.RegionNode.Withdrawn(true)) && !((uncertainLabel(_root_.com.histmersion.api.catalogue.RegionNode.UncertainLabelLabel((n.label).value))) == _root_.com.histmersion.api.catalogue.RegionNode.UncertainLabelResult(true))

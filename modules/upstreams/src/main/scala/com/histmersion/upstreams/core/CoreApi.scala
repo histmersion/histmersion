@@ -28,7 +28,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
                   _root_.com.histmersion.upstreams.core.CoreFailure.Skipped.Why(quota.waitingUntil.fold("CORE answered HTTP 429")(u => s"CORE answered HTTP 429; not asked until $u"))
                 )
               )
-            else if a.status >= 400 then
+            else if (a.status).value >= 400 then
               Left(CoreFailure.Failed(s"$url: HTTP ${a.status} ${String(a.body.take(200), UTF_8)}"))
             else
               io.circe.parser

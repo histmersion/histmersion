@@ -321,7 +321,7 @@ object Article:
             .mkString("\n")
       val critiques = Critiques.markdown(c.critiques)
       s"## Coverage of [[${c.slug}]]\n\n`${c.filterLine}` → ${c.total} (${c.cited.size} cited, ${c.notUsed.size} not used" +
-        s"${if ((c.capped) == _root_.com.histmersion.api.research.Coverage.CappedResult(true)) then s", ${c.total - c.checked} not checked" else ""})\n\n### Drift\n\n$drift" +
+        s"${if ((c.capped) == _root_.com.histmersion.api.research.Coverage.CappedResult(true)) then s", ${(c.total).value - c.checked} not checked" else ""})\n\n### Drift\n\n$drift" +
         (if critiques.isEmpty then "" else s"\n\n$critiques") + s"\n\n### Generated sections\n\n${sections(c)}" +
         (if c.eventLeads.isEmpty then "" else "\n\n" + ArticleEventLead.markdown(c.eventLeads))
 
@@ -1077,7 +1077,7 @@ object Article:
       List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(rows.size)).next, kinds)
 
     def byKind(counts: scala.List[KindCount]): scala.List[KindCount] =
-      counts.filter(_.count > 0).sortBy(k => (-k.count, k.kind))
+      counts.filter((_.count).value > 0).sortBy(k => (-(k.count).value, k.kind))
 
   final case class Patch(
       title: Option[com.histmersion.api.research.Article.Title] = None,
@@ -1209,7 +1209,7 @@ object Article:
 
     def planBlock(p: ArticlePlan): com.histmersion.api.research.Article.Plans.PlanBlockResult =
       val as = p.articles.map { a =>
-        val ov = a.overlapWith.fold("")(o => f" · overlaps [[$o]] ${a.overlap * 100}%.0f%%")
+        val ov = a.overlapWith.fold("")(o => f" · overlaps [[$o]] ${(a.overlap).value * 100}%.0f%%")
         s"- `${a.slug}` — ${a.title} (${a.kind}) · ${a.filter.line} → ${Plural.count(a.hits, _root_.com.histmersion.api.Plural.CountSingular("source"))}$ov" +
           Option(a.why).filter(_.nonEmpty).fold("")(w => s": $w")
       }
@@ -1302,7 +1302,7 @@ object Article:
       val when = f.closedRunNumber.zip(f.closedRound).fold("")((run, round) => s" in run $run, round $round")
       val by = f.closedBy.filter(_.nonEmpty).fold("")(b => s" by ${reviewerName(b)}")
       val note = Option(f.note).map(_.trim).filter(_.nonEmpty).fold("")(n => s": $n")
-      val back = if f.reopened > 0 then s" (reopened ${Plural.count(f.reopened, _root_.com.histmersion.api.Plural.CountSingular("time"))})" else ""
+      val back = if (f.reopened).value > 0 then s" (reopened ${Plural.count(f.reopened, _root_.com.histmersion.api.Plural.CountSingular("time"))})" else ""
       _root_.com.histmersion.api.research.Article.ReviewView.OutcomeLineResult(s"$base$by$when$back$note")
 
     def markdown(r: ReviewView): com.histmersion.api.research.Article.ReviewView.MarkdownResult =
