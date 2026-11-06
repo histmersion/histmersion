@@ -17,12 +17,12 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
 
   private def getJson(url: String): Either[WorkLookup.Problem, Json] = http.json(url).left.map(WorkLookup.Problem(_))
 
-  def search(query: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchQuery, since: Option[com.histmersion.Year], sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSort], limit: com.histmersion.PageSize): Either[WorkLookup.Problem, List[WorkRef]] =
+  def search(query: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchQuery, since: Option[com.histmersion.plugin.Year], sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSort], limit: com.histmersion.upstreams.PageSize): Either[WorkLookup.Problem, List[WorkRef]] =
     // relevance keeps results ON TOPIC; sorting purely by citations surfaces mega-cited but tangential
     // work. `cited_by_count` comes back either way, so a caller can re-rank the relevant set.
     val order = if sort.map((_).value.trim.toLowerCase).contains("cited") then "cited_by_count:desc"
     else "relevance_score:desc"
-    val from = since.getOrElse(com.histmersion.Year(cfg.defaults.minYear.value))
+    val from = since.getOrElse(com.histmersion.plugin.Year(cfg.defaults.minYear.value))
     getJson(
         Url(
           cfg.openalex.url,
@@ -48,9 +48,9 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
     */
   private def crossrefSearch(
       query: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchQuery,
-      from: com.histmersion.Year,
+      from: com.histmersion.plugin.Year,
       sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSort],
-      limit: com.histmersion.PageSize
+      limit: com.histmersion.upstreams.PageSize
   ): Either[WorkLookup.Problem, List[WorkRef]] =
     val bySort = if sort.map((_).value.trim.toLowerCase).contains("cited") then
       List("sort" -> "is-referenced-by-count", "order" -> "desc")
@@ -71,20 +71,20 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .map(AcquireParse.crossrefWorks)
 
   /** OpenAlex first (richer, keyless), Crossref as the fallback — [[WorkLookup.meta]]. */
-  def meta(doi: com.histmersion.domain.library.Doi): Either[WorkLookup.Problem, WorkRef] = WorkLookup.meta(cfg, getJson(_), log)(doi)
+  def meta(doi: com.histmersion.plugin.Doi): Either[WorkLookup.Problem, WorkRef] = WorkLookup.meta(cfg, getJson(_), log)(doi)
 
-  private def crossrefWork(doi: com.histmersion.domain.library.Doi): Either[WorkLookup.Problem, Json] = getJson(WorkLookup.crossrefUrl(cfg, doi))
+  private def crossrefWork(doi: com.histmersion.plugin.Doi): Either[WorkLookup.Problem, Json] = getJson(WorkLookup.crossrefUrl(cfg, doi))
 
   /** `(backend, references)` — Crossref's deposited list, falling back to OpenAlex's `referenced_works` resolved to
     * titles when the publisher deposited none.
     */
-  def references(doi: com.histmersion.domain.library.Doi): Either[WorkLookup.Problem, (com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferenceSource, List[RefRow])] =
+  def references(doi: com.histmersion.plugin.Doi): Either[WorkLookup.Problem, (com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferenceSource, List[RefRow])] =
     crossrefWork(doi).map(AcquireParse.crossrefReferences) match
       case Right(refs) if refs.nonEmpty => Right((_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferenceSource("crossref"), refs))
       case _                            => openalexReferences(doi).map((_root_.com.histmersion.upstreams.openalex.OpenAlexCrossref.ReferenceSource("openalex"), _))
 
   /** Fallback: resolve OpenAlex `referenced_works` ids to titles, 50 at a time. */
-  private def openalexReferences(doi: com.histmersion.domain.library.Doi): Either[WorkLookup.Problem, List[RefRow]] =
+  private def openalexReferences(doi: com.histmersion.plugin.Doi): Either[WorkLookup.Problem, List[RefRow]] =
     getJson(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.UrlPath(""), "select" -> "referenced_works", mailto))
       .map(j => AcquireParse.openalexWork(j).referencedWorks.take(100))
       .map { ids =>
@@ -106,11 +106,11 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       }
 
   /** Crossref `update-to` notices (retraction / correction / expression of concern). */
-  def updates(doi: com.histmersion.domain.library.Doi): Either[WorkLookup.Problem, List[UpdateNotice]] =
+  def updates(doi: com.histmersion.plugin.Doi): Either[WorkLookup.Problem, List[UpdateNotice]] =
     crossrefWork(doi).map(AcquireParse.crossrefUpdates).orElse(Right(Nil))
 
   /** The raw OpenAlex record, for the citation counts an assessment reports and the open locations a fetcher reads. */
-  def raw(doi: com.histmersion.domain.library.Doi): Either[WorkLookup.Problem, Json] =
+  def raw(doi: com.histmersion.plugin.Doi): Either[WorkLookup.Problem, Json] =
     getJson(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.UrlPath(""), "select" -> WorkLookup.WorkFields.value, mailto))
 
 object OpenAlexCrossref:

@@ -11,14 +11,14 @@ final case class ArchiveItem(
 )
 
 object ArchiveItem:
-  type Identifier = com.histmersion.domain.library.ArchiveId
-  val Identifier: _root_.com.histmersion.domain.library.ArchiveId.type = _root_.com.histmersion.domain.library.ArchiveId
-  type Title = com.histmersion.domain.Title
-  val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
+  type Identifier = com.histmersion.upstreams.ArchiveId
+  val Identifier: _root_.com.histmersion.upstreams.ArchiveId.type = _root_.com.histmersion.upstreams.ArchiveId
+  type Title = com.histmersion.plugin.WorkKey.Title
+  val Title: _root_.com.histmersion.plugin.WorkKey.Title.type = _root_.com.histmersion.plugin.WorkKey.Title
   type Creator = Creator.T
   object Creator extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Year = com.histmersion.Year
-  val Year: _root_.com.histmersion.Year.type = _root_.com.histmersion.Year
+  type Year = com.histmersion.plugin.Year
+  val Year: _root_.com.histmersion.plugin.Year.type = _root_.com.histmersion.plugin.Year
   type Publisher = Publisher.T
   object Publisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T

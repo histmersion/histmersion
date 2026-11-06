@@ -10,11 +10,11 @@ import com.histmersion.plugin.Plugin
 final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   /** `https://archive.org/details/<id>` or a bare identifier. */
-  private def identifier(s: com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS): com.histmersion.domain.library.ArchiveId =
+  private def identifier(s: com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS): com.histmersion.upstreams.ArchiveId =
     val t = (s).value.trim
-    _root_.com.histmersion.domain.library.ArchiveId((if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head)
+    _root_.com.histmersion.upstreams.ArchiveId((if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head)
 
-  def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.PageSize): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, List[ArchiveItem]] =
+  def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.upstreams.PageSize): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, List[ArchiveItem]] =
     http
       .json(
         Url(
@@ -32,11 +32,11 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
       // restriction) comes from /metadata, one call per hit
       .map(_.map(i => info(i.identifier).getOrElse(i)))
 
-  def info(id: com.histmersion.domain.library.ArchiveId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, ArchiveItem] =
+  def info(id: com.histmersion.upstreams.ArchiveId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, ArchiveItem] =
     val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
     http.json(Url(archive.url, _root_.com.histmersion.upstreams.http.Url.UrlPath(s"/metadata/$ident"))).map(AcquireParse.archiveItem(ident, _))
 
-  def download(id: com.histmersion.domain.library.ArchiveId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, FetchedFile] =
+  def download(id: com.histmersion.upstreams.ArchiveId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, FetchedFile] =
     val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
     val url = Url(
       archive.url,

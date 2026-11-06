@@ -11,7 +11,7 @@ object Identifiers:
   private val ArxivOld = """^(?:arxiv:)?([a-z-]+(?:\.[A-Z]{2})?/\d{7})(?:v\d+)?$""".r
 
   /** DOIs are case-insensitive, so they are kept lower-case. */
-  def doi(raw: com.histmersion.upstreams.identifiers.Identifiers.DoiText): Option[com.histmersion.domain.library.Doi] =
+  def doi(raw: com.histmersion.upstreams.identifiers.Identifiers.DoiText): Option[com.histmersion.plugin.Doi] =
     val s = Option(raw)
       .getOrElse("")
       .trim
@@ -21,7 +21,7 @@ object Identifiers:
     DoiCore
       .findFirstIn(s)
       .map(
-        _root_.com.histmersion.domain.library.Doi(_.stripSuffix(".")
+        _root_.com.histmersion.plugin.Doi(_.stripSuffix(".")
           .stripSuffix(",")
           .stripSuffix(";")
           .stripSuffix(")")
@@ -30,12 +30,12 @@ object Identifiers:
           .toLowerCase)
       )
 
-  def arxiv(raw: com.histmersion.upstreams.identifiers.Identifiers.ArxivText): Option[com.histmersion.domain.library.ArxivId] =
+  def arxiv(raw: com.histmersion.upstreams.identifiers.Identifiers.ArxivText): Option[com.histmersion.upstreams.ArxivId] =
     Option(raw).map((_).value.trim).filter(_.nonEmpty).flatMap { s =>
       s.toLowerCase match
-        case ArxivNew(id) => Some(_root_.com.histmersion.domain.library.ArxivId(id))
+        case ArxivNew(id) => Some(_root_.com.histmersion.upstreams.ArxivId(id))
         case _            =>
           s match
-            case ArxivOld(id) => Some(_root_.com.histmersion.domain.library.ArxivId(id))
+            case ArxivOld(id) => Some(_root_.com.histmersion.upstreams.ArxivId(id))
             case _            => None
     }

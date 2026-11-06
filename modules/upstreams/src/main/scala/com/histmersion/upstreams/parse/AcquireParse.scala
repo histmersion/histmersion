@@ -65,7 +65,7 @@ object AcquireParse:
     val authors = arr(c, "authorships").flatMap(a => str(a.hcursor, "author", "display_name"))
     val doi = str(c, "doi").flatMap(doiOf)
     val title = str(c, "display_name").map({ val refactorFunction2 = inlineMarkup; (refactorValue6) => refactorFunction2(((refactorValue6))) })
-    val year = int(c, "publication_year").map(com.histmersion.Year(_))
+    val year = int(c, "publication_year").map(com.histmersion.plugin.Year(_))
     WorkRef(
       doi = doi,
       openalexId = str(c, "id").map(id => WorkRef.OpenalexId(tail(id))),
@@ -116,7 +116,7 @@ object AcquireParse:
     val rest = arr(c, "locations").flatMap(l => str(l.hcursor, "pdf_url"))
     ((best ++ oa ++ rest).distinct).map(refactorValue18 => _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls((refactorValue18)))
 
-  private def arxivIdFromUrl(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): Option[com.histmersion.domain.library.ArxivId] =
+  private def arxivIdFromUrl(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): Option[com.histmersion.upstreams.ArxivId] =
     if !(url).value.toLowerCase.contains("arxiv.org") then None
     else Identifiers.arxiv(_root_.com.histmersion.upstreams.identifiers.Identifiers.ArxivText((url).value.split("/").lastOption.getOrElse("").stripSuffix(".pdf")))
 
@@ -158,7 +158,7 @@ object AcquireParse:
     WorkRef(
       doi = str(c, "DOI").flatMap(doiOf),
       title = title,
-      year = year.map(com.histmersion.Year(_)),
+      year = year.map(com.histmersion.plugin.Year(_)),
       authors = authors.map(WorkRef.Authors(_)),
       venue = strings(c, "container-title").headOption.map(WorkRef.Venue(_)),
       citedByCount = int(c, "is-referenced-by-count").map(WorkRef.CitedByCount(_)),
@@ -169,14 +169,14 @@ object AcquireParse:
   /** Titles carry inline markup (`<i>c</i>. 1200 BC`, `H<sub>2</sub>O`): drop the tags WITHOUT a space — they sit
     * inside words — and collapse what is left.
     */
-  private[upstreams] def inlineMarkup(s: String): com.histmersion.domain.Title =
-    _root_.com.histmersion.domain.Title((s).replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim)
+  private[upstreams] def inlineMarkup(s: String): com.histmersion.plugin.WorkKey.Title =
+    _root_.com.histmersion.plugin.WorkKey.Title((s).replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim)
 
   /** Some publishers deposit a chapter title with its first page glued on: "109Writing and Religion in …". Digits
     * running straight into a capitalised word are that page; "1177 B.C." (a space) and "3.2 ka" are left alone.
     */
-  private[upstreams] def gluedPageNumber(s: String): com.histmersion.domain.Title =
-    _root_.com.histmersion.domain.Title((s).replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", ""))
+  private[upstreams] def gluedPageNumber(s: String): com.histmersion.plugin.WorkKey.Title =
+    _root_.com.histmersion.plugin.WorkKey.Title((s).replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", ""))
 
   /** A Crossref `works?query=` page → the works on it (the search fallback when OpenAlex is down). */
   def crossrefWorks(json: Json): List[WorkRef] =
@@ -195,7 +195,7 @@ object AcquireParse:
       RefRow(
         title = str(h, "article-title").orElse(str(h, "volume-title")).map(RefRow.Title(_)),
         authors = str(h, "author").toList.map(RefRow.Authors(_)),
-        year = str(h, "year").filter((_).forall(_.isDigit)).map(y => com.histmersion.Year(y.toInt)),
+        year = str(h, "year").filter((_).forall(_.isDigit)).map(y => com.histmersion.plugin.Year(y.toInt)),
         doi = str(h, "DOI").flatMap(doiOf),
         raw = str(h, "unstructured").map(u => RefRow.Raw(u.take(300)))
       )
@@ -244,7 +244,7 @@ object AcquireParse:
   /** The `search?query=DOI:"…"&resultType=core` hit whose DOI IS the one asked for (a DOI query can match a correction
     * or a comment that cites it).
     */
-  def europepmcHit(json: Json, doi: com.histmersion.domain.library.Doi): Option[EuropePmcHit] =
+  def europepmcHit(json: Json, doi: com.histmersion.plugin.Doi): Option[EuropePmcHit] =
     val want = doiOf(doi.value)
     arr(json.hcursor, "resultList", "result")
       .find(r => want.isDefined && str(r.hcursor, "doi").flatMap(doiOf) == want)
@@ -268,7 +268,7 @@ object AcquireParse:
   /** The newest version NCBI publishes of `pmcid`, from an S3 `ListObjectsV2` answer for the prefix `metadata/<pmcid>.`
     * (keys `metadata/PMC123.1.json`, `metadata/PMC123.2.json`, …).
     */
-  def pmcLatestVersion(listXml: com.histmersion.upstreams.jats.Jats.Xml, pmcid: com.histmersion.domain.library.Pmcid): Option[com.histmersion.upstreams.parse.AcquireParse.PmcVersion] =
+  def pmcLatestVersion(listXml: com.histmersion.upstreams.jats.Jats.Xml, pmcid: com.histmersion.plugin.WorkKey.Pmcid): Option[com.histmersion.upstreams.parse.AcquireParse.PmcVersion] =
     if !PmcId.matches((pmcid).value) then None
     else
       val key = ("<Key>metadata/" + pmcid + """\.(\d+)\.json</Key>""").r
@@ -310,7 +310,7 @@ object AcquireParse:
       val cp = h.downField("citingPaper")
       FollowupRow(
         title = str(cp, "title").map(FollowupRow.Title(_)),
-        year = int(cp, "year").map(com.histmersion.Year(_)),
+        year = int(cp, "year").map(com.histmersion.plugin.Year(_)),
         doi = str(cp, "externalIds", "DOI").flatMap(doiOf),
         arxiv = str(cp, "externalIds", "ArXiv").flatMap(arxivOf),
         citedBy = int(cp, "citationCount").map(FollowupRow.CitedBy(_)),
@@ -321,7 +321,7 @@ object AcquireParse:
     }
 
   /** `next` offset of an S2 page, absent on the last page. */
-  def s2Next(json: Json): Option[com.histmersion.Offset] = (int(json.hcursor, "next")).flatMap(refactorValue49 => _root_.com.histmersion.Offset.option((refactorValue49)))
+  def s2Next(json: Json): Option[com.histmersion.upstreams.Offset] = (int(json.hcursor, "next")).flatMap(refactorValue49 => _root_.com.histmersion.upstreams.Offset.option((refactorValue49)))
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
@@ -331,7 +331,7 @@ object AcquireParse:
     * but never downloaded here. The Python tool refused at exactly this point and so do we — there is no DRM
     * circumvention anywhere in this pipeline.
     */
-  def archiveItem(identifier: com.histmersion.domain.library.ArchiveId, json: Json): ArchiveItem =
+  def archiveItem(identifier: com.histmersion.upstreams.ArchiveId, json: Json): ArchiveItem =
     val c = json.hcursor
     val m = c.downField("metadata")
     val yr = str(m, "year").orElse(str(m, "date")).map((_).take(4)).filter(_.forall(_.isDigit)).map(_.toInt)
@@ -350,7 +350,7 @@ object AcquireParse:
       identifier = identifier,
       title = str(m, "title").map(ArchiveItem.Title(_)),
       creator = creators.map(ArchiveItem.Creator(_)),
-      year = (yr).map(refactorValue46 => _root_.com.histmersion.Year(refactorValue46)),
+      year = (yr).map(refactorValue46 => _root_.com.histmersion.plugin.Year(refactorValue46)),
       publisher = str(m, "publisher").map(ArchiveItem.Publisher(_)),
       description = str(m, "description").map({ val refactorFunction11 = stripTags; (refactorValue55) => refactorFunction11(((refactorValue55))) }).map((refactorCallback => _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Description((refactorCallback).take(500)))),
       lendingOnly = _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly(
@@ -368,7 +368,7 @@ object AcquireParse:
           identifier = ArchiveItem.Identifier(id),
           title = str(h, "title").map(ArchiveItem.Title(_)),
           creator = (str(h, "creator").toList ++ strings(h, "creator")).distinct.map(ArchiveItem.Creator(_)),
-          year = str(h, "year").map((_).take(4)).filter(_.forall(_.isDigit)).map(y => _root_.com.histmersion.Year(y.toInt))
+          year = str(h, "year").map((_).take(4)).filter(_.forall(_.isDigit)).map(y => _root_.com.histmersion.plugin.Year(y.toInt))
         )
       }
     }
@@ -393,7 +393,7 @@ object AcquireParse:
   private val ArxivInText = """(?i)arxiv\s*[:=]\s*([0-9]{4}\.[0-9]{4,5})""".r
 
   /** The article title from `action=parse&prop=wikitext` (after redirects). */
-  def wikiTitle(json: Json): Option[com.histmersion.domain.Title] = (str(json.hcursor.downField("parse"), "title")).map(refactorValue58 => _root_.com.histmersion.domain.Title((refactorValue58)))
+  def wikiTitle(json: Json): Option[com.histmersion.plugin.WorkKey.Title] = (str(json.hcursor.downField("parse"), "title")).map(refactorValue58 => _root_.com.histmersion.plugin.WorkKey.Title((refactorValue58)))
 
   def wikiText(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.Wikitext] =
     (json.hcursor.downField("parse").downField("wikitext").downField("*").as[String].toOption).map(refactorValue48 => _root_.com.histmersion.upstreams.parse.AcquireParse.Wikitext(refactorValue48))
@@ -401,15 +401,15 @@ object AcquireParse:
   /** Harvest every DOI and arXiv id cited by a Wikipedia article's wikitext. Citations trail punctuation (`|`, `}}`,
     * `.`) into the match, so each hit goes through [[Identifiers.doi]].
     */
-  def wikiRefs(wikitext: com.histmersion.upstreams.parse.AcquireParse.Wikitext): (List[com.histmersion.domain.library.Doi], List[com.histmersion.domain.library.ArxivId]) =
+  def wikiRefs(wikitext: com.histmersion.upstreams.parse.AcquireParse.Wikitext): (List[com.histmersion.plugin.Doi], List[com.histmersion.upstreams.ArxivId]) =
     val dois = DoiInText.findAllIn((wikitext).value).toList.flatMap(doiOf).distinct.sortBy(_.value)
     val arxiv = ArxivInText.findAllMatchIn((wikitext).value).map(_.group(1)).toList.distinct.sorted
-    (dois, arxiv.map(com.histmersion.domain.library.ArxivId(_)))
+    (dois, arxiv.map(com.histmersion.upstreams.ArxivId(_)))
 
   /** The Wikipedia page title of an article URL (`…/wiki/Late_Bronze_Age_collapse`). */
-  def wikiPageTitle(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): Option[com.histmersion.domain.Title] =
+  def wikiPageTitle(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): Option[com.histmersion.plugin.WorkKey.Title] =
     val s = (url).value.trim.stripSuffix("/")
     (Option(if s.contains("/wiki/") then s.split("/wiki/").last else s)
       .map(_.split("[?#]").head)
       .map(_.trim)
-      .filter(_.nonEmpty)).map(refactorValue52 => _root_.com.histmersion.domain.Title(refactorValue52))
+      .filter(_.nonEmpty)).map(refactorValue52 => _root_.com.histmersion.plugin.WorkKey.Title(refactorValue52))
