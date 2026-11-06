@@ -46,7 +46,6 @@ object HttpPolicy:
   type ThrottledValue = ThrottledValue.T
   object ThrottledValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecideAttempt = Int
-  val DecideAttempt: Int.type = Int
   type MacKeychains = MacKeychainsValue
   type MacKeychainsValue = MacKeychainsValue.T
   object MacKeychainsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

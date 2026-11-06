@@ -300,7 +300,6 @@ object SchedulerPolicy:
     /** Why `x` stands behind `ahead` (the first candidate before it in the order), in a sentence. */
     def behindWhy(x: Scored, ahead: Scored, s: Settings): String
 
-  object Strategy:
 
   private def goalName(x: Scored): com.histmersion.domain.SchedulerPolicy.Candidate.Goal = x.c.goal.fold("library work")(g => s"goal $g")
 
