@@ -118,9 +118,9 @@ class ArticleNoteSuite extends munit.FunSuite:
         Article.Filter(
           query = Some(com.histmersion.api.library.Filter.Q("Theseus")),
           topics = List(com.histmersion.api.library.Filter.Topics("greek_myth")),
-          from = Some(-1500),
-          to = Some(-400),
-          extraQueries = List("synoikism")
+          from = Some(com.histmersion.api.catalogue.Year(-1500)),
+          to = Some(com.histmersion.api.catalogue.Year(-400)),
+          extraQueries = List(com.histmersion.api.research.Article.Filter.ExtraQueries("synoikism"))
         )
       ),
       reasons = Map("graves2017_greek" -> "retells the myths", "nilsson1927_minoan" -> "Attic origin only in passing")
