@@ -101,8 +101,8 @@ object Bundle:
   def blobSha(path: String): Option[com.histmersion.api.Sha256] =
     val prefix = "blobs/sha256/"
     (Option
-      .when((path).value.startsWith(prefix)) {
-        val rest = (path).value.drop(prefix.length)
+      .when((path).startsWith(prefix)) {
+        val rest = (path).drop(prefix.length)
         rest.drop(3)
       }
       .filter(s =>

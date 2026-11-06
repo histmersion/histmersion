@@ -17,8 +17,8 @@ object ArticleMarkdown:
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
 
   def article(v: Article.View, parts: List[com.histmersion.api.research.Article.Part] = Nil): String =
-    if parts.isEmpty then ((articleFull(v)).value)
-    else ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => _root_.com.histmersion.api.research.Article.Part((refactorValue).value)))).value)
+    if parts.isEmpty then ((articleFull(v)))
+    else ((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => _root_.com.histmersion.api.research.Article.Part((refactorValue).value)))))
 
   private def articleFull(v: Article.View): String =
     val a = v.article
@@ -32,7 +32,7 @@ object ArticleMarkdown:
           case -1 => s"$body\n\n$line"
           case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
     val footer = sourcesCited(v.sourcesCited)
-    val trimmed = if (footer).value.isEmpty then head else stripSourcesSection(_root_.com.histmersion.api.research.Article.Body(head))
+    val trimmed = if (footer).isEmpty then head else stripSourcesSection(_root_.com.histmersion.api.research.Article.Body(head))
     trimmed + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
 
   private def coverage(v: Article.View): String = (v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
@@ -44,7 +44,7 @@ object ArticleMarkdown:
 
   private def chipLinksList(values: List[String], hashKey: String): String =
     values
-      .filter((_).value.nonEmpty)
+      .filter((_).nonEmpty)
       .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${Markdown.enc(v)})")
       .mkString(", ")
 
@@ -64,7 +64,7 @@ object ArticleMarkdown:
     val out = List.newBuilder[String]
 
     if show.contains("summary") then
-      a.summary.map(_.trim).filter(_.nonEmpty).foreach(s => out += s"_${(stripMd(s)).value.take(200)}_")
+      a.summary.map(_.trim).filter(_.nonEmpty).foreach(s => out += s"_${(stripMd(s)).take(200)}_")
 
     if show.contains("body") then
       val body = a.body.trim
@@ -82,11 +82,11 @@ object ArticleMarkdown:
 
     if show.contains("backlinks") then
       val bl = backlinks(v.backlinks, truncate = (true))
-      if (bl).value.nonEmpty then out += (bl).value
+      if (bl).nonEmpty then out += (bl)
 
     if show.contains("cited") then
       val sc = sourcesCited(v.sourcesCited, truncate = (true))
-      if (sc).value.nonEmpty then out += (sc).value
+      if (sc).nonEmpty then out += (sc)
 
     if (show.contains("body") || show.contains("summary")) && v.formatting.nonEmpty then
       val shown = v.formatting.filter(i => show.contains(if i.field == FormatField.Summary then "summary" else "body"))
@@ -97,7 +97,7 @@ object ArticleMarkdown:
     else (result.mkString("\n\n"))
 
   private def stripMd(s: String): String =
-    ((s).value.replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
+    ((s).replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
       .replaceAll("""\[\[([^\]]+)\]\]""", "$1")
       .replaceAll("""\[([^\]]+)\]\([^)]+\)""", "$1")
       .replaceAll("""[*_]{1,2}""", "")

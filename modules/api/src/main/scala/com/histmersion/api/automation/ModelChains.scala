@@ -117,7 +117,7 @@ object ModelChains:
         .getOrElse(a.bigDecimal.stripTrailingZeros.toPlainString))
 
     private def amount(raw: String): Either[com.histmersion.api.automation.ModelChains.Limit.Problem, BigDecimal] =
-      val t = (raw).value.trim.stripPrefix("$")
+      val t = (raw).trim.stripPrefix("$")
       val (num, mult) = t.lastOption match
         case Some('k' | 'K') => (t.init, BigDecimal(1000))
         case Some('m' | 'M') => (t.init, BigDecimal(1000000))

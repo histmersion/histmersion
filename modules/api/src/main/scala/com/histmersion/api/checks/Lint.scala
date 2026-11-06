@@ -275,7 +275,7 @@ object Lint:
         Left(_root_.com.histmersion.api.checks.Lint.Problem(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}"))
       else Right(wanted.flatMap({ val refactorFunction = rule; (refactorValue) => refactorFunction(_root_.com.histmersion.api.checks.Lint.Rule.Name(refactorValue)) }).distinct)
 
-  def blank(s: Option[String]): Boolean = (s.forall((_).value.trim.isEmpty))
+  def blank(s: Option[String]): Boolean = (s.forall((_).trim.isEmpty))
 
   def suggest(target: com.histmersion.api.checks.Lint.LinkTarget, citekeys: Iterable[com.histmersion.api.library.Citekey], max: com.histmersion.api.checks.Lint.ItemLimit): List[com.histmersion.api.checks.Lint.Suggestion] =
     val t = (target).value.trim.toLowerCase
@@ -292,8 +292,8 @@ object Lint:
           val c = (ck).value.toLowerCase
           val p = commonPrefix(_root_.com.histmersion.api.library.Citekey(c), _root_.com.histmersion.api.checks.Lint.LinkTarget(t))
           if c.startsWith(t + "_") then Some((0, c.length, ck))
-          else if c.startsWith(t) || t.startsWith(c) then Some((1, -(p).value, ck))
-          else if p >= 4 then Some((2, -(p).value, ck))
+          else if c.startsWith(t) || t.startsWith(c) then Some((1, -(p), ck))
+          else if p >= 4 then Some((2, -(p), ck))
           else None
         }
         .toList
@@ -323,7 +323,7 @@ object Lint:
   def nonCanonicalTags(rows: List[(com.histmersion.api.library.Citekey, List[com.histmersion.api.checks.Lint.Tag])]): List[LintItem] =
     rows
       .flatMap { (ck, tags) =>
-        tags.filterNot(_root_.com.histmersion.api.checks.Lint.Tag((isCanonicalTag).value)).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(_root_.com.histmersion.api.checks.Lint.Tag((t).value))}'"))
+        tags.filterNot(_root_.com.histmersion.api.checks.Lint.Tag((isCanonicalTag))).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(_root_.com.histmersion.api.checks.Lint.Tag((t).value))}'"))
       }
       .sortBy(i => (i.citekey, i.detail))
 
@@ -377,7 +377,7 @@ object Lint:
   private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
 
   def sentenceCount(text: String): com.histmersion.api.checks.Lint.SentenceCount =
-    val t = (text).value.trim
+    val t = (text).trim
     if t.isEmpty then _root_.com.histmersion.api.checks.Lint.SentenceCount(0)
     else
       // No `\p{Lu}` in the pattern: this code is also compiled to Scala.js, so the next char is tested instead.
@@ -389,7 +389,7 @@ object Lint:
       _root_.com.histmersion.api.checks.Lint.SentenceCount(ends + 1)
 
   def isListLeadIn(text: String): Boolean =
-    val t = (text).value.trim
+    val t = (text).trim
     (t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount((t)) == _root_.com.histmersion.api.checks.Lint.SentenceCount(1))
 
   def extractParagraphs(body: com.histmersion.api.checks.Lint.ProseBody): List[com.histmersion.api.checks.Lint.Paragraph] =
@@ -399,13 +399,13 @@ object Lint:
     val current = new StringBuilder()
     var leadIn: Option[String] = None
     def settle(nextIsList: Boolean): Unit =
-      leadIn.foreach(t => if !(nextIsList).value then paras += (t).value)
+      leadIn.foreach(t => if !(nextIsList) then paras += (t))
       leadIn = None
     def flush(): Unit =
       val text = current.toString.trim
-      if text.nonEmpty then if (isListLeadIn((text))).value then leadIn = Some((text)) else paras += text
+      if text.nonEmpty then if (isListLeadIn((text))) then leadIn = Some((text)) else paras += text
       current.clear()
-    def isList(t: String) = (t).value.startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).value).isDefined
+    def isList(t: String) = (t).startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf((t).value).isDefined
     def block(nextIsList: Boolean): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
       val t = line.trim

@@ -72,7 +72,7 @@ object Lpf:
     * 8601 dates with month and day (`"-0500-01-01"`) are astronomical and converted via [[fromIso]].
     */
   def parseYear(raw: String): Option[com.histmersion.api.catalogue.Year] =
-    val t = Circa.replaceFirstIn((raw).value.trim.toLowerCase, "")
+    val t = Circa.replaceFirstIn((raw).trim.toLowerCase, "")
     if t.isEmpty then None
     else
       val isIso = IsoDate.findFirstIn(t).isDefined
@@ -189,7 +189,7 @@ object Lpf:
         })
     }
     val alts = str(props, "alt_names", "altNames", "NAME_ALT", "nameAlt").toList
-      .flatMap((_).value.split("[|;]").toList)
+      .flatMap((_).split("[|;]").toList)
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(Place.Name(_root_.com.histmersion.api.catalogue.Place.Name.Value(_)))
@@ -292,7 +292,7 @@ object Lpf:
       json: String,
       defaultKind: com.histmersion.api.catalogue.Lpf.ParseDefaultKind = _root_.com.histmersion.api.catalogue.Lpf.ParseDefaultKind(com.histmersion.api.catalogue.Place.Kind.Region)
   ): Either[com.histmersion.api.catalogue.Lpf.Problem, List[Place.Input]] =
-    io.circe.parser.parse((json).value).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+    io.circe.parser.parse((json)).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray
           .map(_.toList)

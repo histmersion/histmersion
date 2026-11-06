@@ -233,7 +233,7 @@ object Article:
     private def statusNote(s: Source.Status): String = if Stated(s) then (s" (${s.wire})") else ("")
 
     private def endSentence(s: String): String =
-      if (s).value.endsWith(".") || (s).value.endsWith("?") || (s).value.endsWith("!") then ((s).value) else (s"$s.")
+      if (s).endsWith(".") || (s).value.endsWith("?") || (s).value.endsWith("!") then ((s)) else (s"$s.")
 
     def method(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.Method =
       val statuses =
@@ -264,14 +264,14 @@ object Article:
 
     private def orList(xs: scala.List[String]): String = xs match
       case Nil        => ("")
-      case one :: Nil => ((one).value)
+      case one :: Nil => ((one))
       case _          => (s"${xs.init.mkString(", ")} or ${xs.last}")
 
     /** An `_` or `*` of a user's query would end the Method line's Markdown emphasis. */
-    private def escape(s: String): String = ((s).value.replace("*", "\\*").replace("_", "\\_"))
+    private def escape(s: String): String = ((s).replace("*", "\\*").replace("_", "\\_"))
 
-    private def isHeading(l: String) = (l).value.trim.startsWith("#")
-    private def level(l: String) = (l).value.trim.takeWhile(_ == '#').length
+    private def isHeading(l: String) = (l).trim.startsWith("#")
+    private def level(l: String) = (l).trim.takeWhile(_ == '#').length
 
     def withoutNotUsed(text: com.histmersion.api.research.Article.Body): com.histmersion.api.research.Article.Body =
       val lines = (text).value.split("\n", -1).toList
@@ -285,7 +285,7 @@ object Article:
           val end = rest.indexWhere(l => isHeading((l)) && level((l)) <= lv)
           _root_.com.histmersion.api.research.Article.Body((lines.take(i) ++ (if end < 0 then Nil else rest.drop(end))).mkString("\n"))
 
-    def hasMethodLine(text: String): Boolean = ((text).value.linesIterator.exists(_.trim.startsWith("_Method")))
+    def hasMethodLine(text: String): Boolean = ((text).linesIterator.exists(_.trim.startsWith("_Method")))
 
     def stripGenerated(body: com.histmersion.api.research.Article.Body): com.histmersion.api.research.Article.Body =
       val s = (body).value.indexOf(GeneratedStart)
@@ -485,10 +485,10 @@ object Article:
       val out = StringBuilder()
       val pos = Array.newBuilder[Int]
       var i = 0
-      while i < (s).value.length do
+      while i < (s).length do
         if s(i).isWhitespace then
           val from = i
-          while i < (s).value.length && s(i).isWhitespace do i += 1
+          while i < (s).length && s(i).isWhitespace do i += 1
           out.append(' '); pos += from
         else
           out.append(s(i)); pos += i; i += 1
@@ -506,7 +506,7 @@ object Article:
         case Nil =>
           val (sq, pos) = squeeze(((text).value))
           val na = a.replaceAll("\\s+", " ")
-          occurrences(_root_.com.histmersion.api.research.Article.Body((sq).value), (na)) match
+          occurrences(_root_.com.histmersion.api.research.Article.Body((sq)), (na)) match
             case scala.List(i) =>
               val last = (i).value + na.length - 1
               Right((pos(i), pos(last) + 1))
@@ -550,8 +550,8 @@ object Article:
           case a :: tail =>
             val base = EditResult(number, a.op, head(Option(a.anchor).getOrElse("")), a.text.getOrElse(""))
             parse(a).flatMap(e => refuse(a).toLeft(e)).flatMap(applyOne(cur, _)) match
-              case Right(t) => loop(tail, ((number).value + 1), t, acc :+ base)
-              case Left(p)  => loop(tail, ((number).value + 1), cur, acc :+ base.copy(problem = Some(p)))
+              case Right(t) => loop(tail, ((number) + 1), t, acc :+ base)
+              case Left(p)  => loop(tail, ((number) + 1), cur, acc :+ base.copy(problem = Some(p)))
       loop(edits, (1), body, Vector.empty)
 
     enum Draft:
@@ -707,14 +707,14 @@ object Article:
 
     given Codec.AsObject[Filter] = StrictJson.codec(KindlingsCodecAsObject.derived[Filter])
 
-    private[api] def quoted(s: String): String = ("\"" + (s).value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
+    private[api] def quoted(s: String): String = ("\"" + (s).replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
 
     def normalise(f: Filter): Either[com.histmersion.api.research.Article.Filter.Problem, Option[Filter]] =
-      def clean(xs: scala.List[String]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty).distinct
+      def clean(xs: scala.List[String]) = xs.flatMap((_).split(",")).map(_.trim).filter(_.nonEmpty).distinct
       val status = clean(f.status).map(_.toLowerCase(java.util.Locale.ROOT))
       val unknown = status.filterNot(s => Source.Status.values.exists(_.wire == s))
       val tidy = Filter(
-        f.query.map((_).value.trim).filter((_).value.nonEmpty),
+        f.query.map((_).value.trim).filter((_).nonEmpty),
         clean(f.topics),
         clean(f.tags),
         status,
@@ -813,7 +813,7 @@ object Article:
       }
 
     def links(body: com.histmersion.api.research.Article.Body, isSource: com.histmersion.api.research.Article.Link.Target => Boolean): scala.List[Link] =
-      classify(targets(body), { val refactorFunction2 = isSource; (refactorValue11) => ((refactorFunction2(_root_.com.histmersion.api.research.Article.Link.Target((refactorValue11).value))).value) })
+      classify(targets(body), { val refactorFunction2 = isSource; (refactorValue11) => ((refactorFunction2(_root_.com.histmersion.api.research.Article.Link.Target((refactorValue11).value)))) })
 
     def hrefFor(target: com.histmersion.api.research.Article.Link.Target, citekeyOf: com.histmersion.api.research.Article.Link.Target => Option[com.histmersion.api.library.Citekey], isArticle: com.histmersion.api.research.Article.Link.Target => Boolean): Option[String] =
       (citekeyOf(_root_.com.histmersion.api.research.Article.Link.Target((target).value))

@@ -361,7 +361,7 @@ object SiteTypes:
     then None
     else
       stored
-        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId).value).contains)
+        .filter(_root_.com.histmersion.api.catalogue.SiteTypes.ByIdPart1((byId)).contains)
         .orElse(featureTypes.flatMap({ val refactorFunction3 = pleiades; (refactorValue5) => refactorFunction3(_root_.com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType((refactorValue5).value)) }))
         .orElse(fcode.flatMap({ val refactorFunction2 = geonames; (refactorValue10) => refactorFunction2(_root_.com.histmersion.api.catalogue.SiteTypes.Geonames.Fcode((refactorValue10).value)) }))
         .orElse(wikidataOwn(p31))

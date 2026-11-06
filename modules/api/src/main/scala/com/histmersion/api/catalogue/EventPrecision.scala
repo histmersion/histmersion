@@ -67,7 +67,7 @@ object EventPrecision:
       case None    => m.map(x => (s"dated by $x"))
 
   private def lowerFirst(s: String): String =
-    ((s).value.split(" ", -1)
+    ((s).split(" ", -1)
       .map(w =>
         if w.length >= 2 && w.charAt(0).isUpper && w.charAt(1).isLower then s"${w.charAt(0).toLower}${w.substring(1)}"
         else w

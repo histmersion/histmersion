@@ -13,7 +13,7 @@ final case class BBox(minLon: com.histmersion.api.catalogue.Longitude, minLat: c
 
   def contains(lon: com.histmersion.api.Geo.Longitude, lat: com.histmersion.api.Geo.Latitude): Boolean =
     val latOk = (lat).value >= (minLat).value && (lat).value <= maxLat
-    val lonOk = if (crossesAntimeridian).value then (lon).value >= (minLon).value || (lon).value <= maxLon else (lon).value >= (minLon).value && (lon).value <= maxLon
+    val lonOk = if (crossesAntimeridian) then (lon).value >= (minLon).value || (lon).value <= maxLon else (lon).value >= (minLon).value && (lon).value <= maxLon
     latOk && lonOk
 
 object BBox:
