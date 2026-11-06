@@ -45,16 +45,16 @@ class CronSuite extends munit.FunSuite:
     assertEquals(next("0 0 29 2 *", "2026-10-04T12:00:00Z"), Some(at("2028-02-29T00:00:00Z")))
 
   test("refused: the wrong number of fields, out of range, backwards, a bad step, a date that never comes"):
-    assert(Cron.parse("* * * *").left.exists(_.contains("five fields")))
-    assert(Cron.parse("60 * * * *").left.exists(_.contains("minute")))
-    assert(Cron.parse("0 24 * * *").left.exists(_.contains("hour")))
-    assert(Cron.parse("0 0 5-2 * *").left.exists(_.contains("backwards")))
-    assert(Cron.parse("*/0 * * * *").left.exists(_.contains("step")))
-    assert(Cron.parse("0 0 30 2 *").left.exists(_.contains("never fires")))
-    assert(Cron.parse("").isLeft)
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("* * * *")).left.exists(_.contains("five fields")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("60 * * * *")).left.exists(_.contains("minute")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 24 * * *")).left.exists(_.contains("hour")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 0 5-2 * *")).left.exists(_.contains("backwards")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("*/0 * * * *")).left.exists(_.contains("step")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("0 0 30 2 *")).left.exists(_.contains("never fires")))
+    assert(Cron.parse(com.histmersion.domain.Cron.Text("")).isLeft)
 
   test("the shortest gap between firings (how a too-frequent schedule is refused)"):
     val from = at("2026-10-04T00:00:00Z")
-    assertEquals(Cron.parse("*/15 * * * *").toOption.get.shortestGapMinutes(from), Some(15L))
-    assertEquals(Cron.parse("@daily").toOption.get.shortestGapMinutes(from), Some(1440L))
-    assertEquals(Cron.parse("0 6,7 * * *").toOption.get.shortestGapMinutes(from), Some(60L))
+    assertEquals(Cron.parse(com.histmersion.domain.Cron.Text("*/15 * * * *")).toOption.get.shortestGapMinutes(from), Some(15L))
+    assertEquals(Cron.parse(com.histmersion.domain.Cron.Text("@daily")).toOption.get.shortestGapMinutes(from), Some(1440L))
+    assertEquals(Cron.parse(com.histmersion.domain.Cron.Text("0 6,7 * * *")).toOption.get.shortestGapMinutes(from), Some(60L))

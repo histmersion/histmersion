@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -13,26 +15,26 @@ import com.histmersion.api.automation.{AgentsMarkdown, Goal, PlanQuota}
 class AgentsSuite extends munit.FunSuite:
 
   test("ModelRef: only the first colon separates the provider (Ollama ids carry colons)"):
-    assertEquals(ModelRef.parse("local:qwen2.5-coder:32b"), Right(ModelRef(ProviderKind.Local, "qwen2.5-coder:32b")))
-    assertEquals(ModelRef.parse(" anthropic:claude-x "), Right(ModelRef(ProviderKind.Anthropic, "claude-x")))
-    assertEquals(ModelRef.parse("openai:gpt").map(_.wire), Right("openai:gpt"))
+    assertEquals(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire("local:qwen2.5-coder:32b")), Right(ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("qwen2.5-coder:32b"))))
+    assertEquals(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire(" anthropic:claude-x ")), Right(ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("claude-x"))))
+    assertEquals(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire("openai:gpt")).map(_.wire), Right("openai:gpt"))
 
   test("ModelRef: unknown provider, no model, no colon are errors"):
-    assert(ModelRef.parse("ollama:qwen").left.exists(_.contains("unknown provider 'ollama'")))
-    assert(ModelRef.parse("local:").left.exists(_.contains("names no model")))
-    assert(ModelRef.parse("qwen").left.exists(_.contains("provider:model")))
+    assert(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire("ollama:qwen")).left.exists(_.contains("unknown provider 'ollama'")))
+    assert(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire("local:")).left.exists(_.contains("names no model")))
+    assert(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire("qwen")).left.exists(_.contains("provider:model")))
 
   test("ModelRef: a plugin provider's name parses only while it is registered (known), never a host name"):
     assert(
-      ModelRef.parse("gemini:pro").left.exists(e => e.contains("unknown provider 'gemini'") && !e.contains("gemini,"))
+      ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire("gemini:pro")).left.exists(e => e.contains("unknown provider 'gemini'") && !e.contains("gemini,"))
     )
-    assertEquals(ModelRef.parse("gemini:pro", Set("gemini")), Right(ModelRef(ProviderKind.Plugin("gemini"), "pro")))
-    assertEquals(ModelRef.parse(" Gemini:pro:v2 ", Set("gemini")).map(_.wire), Right("gemini:pro:v2"))
+    assertEquals(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire("gemini:pro"), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))), Right(ModelRef(ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")), com.histmersion.api.automation.Agents.ModelRef.Model("pro"))))
+    assertEquals(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire(" Gemini:pro:v2 "), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini"))).map(_.wire), Right("gemini:pro:v2"))
     // a host name stays the host's, whatever a plugin claims
-    assertEquals(ModelRef.parse("local:x", Set("local")), Right(ModelRef(ProviderKind.Local, "x")))
+    assertEquals(ModelRef.parse(com.histmersion.api.automation.Agents.ModelRef.Wire("local:x"), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("local"))), Right(ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("x"))))
     assert(
       ModelRef
-        .parse("ollama:x", Set("gemini"))
+        .parse(com.histmersion.api.automation.Agents.ModelRef.Wire("ollama:x"), Set(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")))
         .left
         .exists(_.contains("one of: anthropic, openai, local, claude-code, codex, opencode, gemini"))
     )
@@ -40,10 +42,10 @@ class AgentsSuite extends munit.FunSuite:
       ProviderKind.values.map(_.wire),
       List("anthropic", "openai", "local", "claude-code", "codex", "opencode")
     )
-    assert(!ProviderKind.Plugin("gemini").isCli)
+    assert(!ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")).isCli)
 
   test("a plugin provider's model is metered: no plan pool, paid, needs a price"):
-    val m = ModelRef(ProviderKind.Plugin("gemini"), "pro")
+    val m = ModelRef(ProviderKind.Plugin(com.histmersion.api.automation.ProviderKind.Plugin.Name("gemini")), com.histmersion.api.automation.Agents.ModelRef.Model("pro"))
     assertEquals(PlanQuota.poolOf(m, PlanQuota.Logins()), None)
     assert(PlanQuota.paid(m, PlanQuota.Logins()))
     assert(Prices.billing(Map.empty, m, None).left.exists(_.contains("model 'pro' has no price")))
@@ -53,31 +55,31 @@ class AgentsSuite extends munit.FunSuite:
     )
 
   test("Prices: two or four numbers per model, ; separated"):
-    val p = Prices.parse("qwen2.5-coder:32b=0/0; claude-x=3/15/0.3/3.75").toOption.get
+    val p = Prices.parse(com.histmersion.api.automation.Agents.Prices.Wire("qwen2.5-coder:32b=0/0; claude-x=3/15/0.3/3.75")).toOption.get
     assertEquals(p("qwen2.5-coder:32b"), Price(BigDecimal(0), BigDecimal(0)))
     assertEquals(p("claude-x"), Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75"))))
-    assertEquals(Prices.parse("  "), Right(Map.empty))
+    assertEquals(Prices.parse(com.histmersion.api.automation.Agents.Prices.Wire("  ")), Right(Map.empty))
 
   test("Prices: every malformed entry is reported, none silently skipped"):
-    val e = Prices.parse("a=1; b=x/2; c=1/2/3; =1/1").left.toOption.get
+    val e = Prices.parse(com.histmersion.api.automation.Agents.Prices.Wire("a=1; b=x/2; c=1/2/3; =1/1")).left.toOption.get
     List("'a=1'", "'b=x/2'", "'c=1/2/3'", "'=1/1'").foreach(m => assert(e.contains(m), e))
-    assert(Prices.parse("a=-1/2").isLeft)
+    assert(Prices.parse(com.histmersion.api.automation.Agents.Prices.Wire("a=-1/2")).isLeft)
 
   test("cost: per million tokens, cache reads and writes at their own rates"):
     val ps = Map("m" -> Price(BigDecimal(3), BigDecimal(15), Some(BigDecimal("0.3")), Some(BigDecimal("3.75"))))
     // 1M input of which 200k cache-read and 100k cache-write; 100k output
-    val c = Prices.cost(ps, "m", Usage(input = 1000000, output = 100000, cacheRead = 200000, cacheWrite = 100000))
+    val c = Prices.cost(ps, com.histmersion.api.automation.Agents.Prices.CostModel("m"), Usage(input = com.histmersion.api.automation.Agents.Usage.Input(1000000), output = com.histmersion.api.automation.Agents.Usage.Output(100000), cacheRead = com.histmersion.api.automation.Agents.Usage.CacheRead(200000), cacheWrite = com.histmersion.api.automation.Agents.Usage.CacheWrite(100000)))
     assertEquals(c, Right(BigDecimal("2.1") + BigDecimal("0.06") + BigDecimal("0.375") + BigDecimal("1.5")))
 
   test("cost: an UNPRICED model is refused, never free (the inverse of sttp-ai's PriceTable)"):
-    val c = Prices.cost(Map.empty, "gpt-x", Usage(10, 10))
+    val c = Prices.cost(Map.empty, com.histmersion.api.automation.Agents.Prices.CostModel("gpt-x"), Usage(com.histmersion.api.automation.Agents.Usage.Input(10), com.histmersion.api.automation.Agents.Usage.Output(10)))
     assert(c.left.exists(_.contains("has no price")), c)
 
   test("billing: a plan model needs no price and costs 0 USD; a metered one is priced"):
-    val plan = ModelRef(ProviderKind.ClaudeCode, "sonnet")
+    val plan = ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("sonnet"))
     val b = Prices.billing(Map.empty, plan, Some(PlanQuota.PoolId.ClaudePlan))
     assertEquals(b, Right(Billing.Plan(PlanQuota.PoolId.ClaudePlan)))
-    assertEquals(b.map(_.cost(Usage(1000000, 1000000))), Right(BigDecimal(0)))
+    assertEquals(b.map(_.cost(Usage(com.histmersion.api.automation.Agents.Usage.Input(1000000), com.histmersion.api.automation.Agents.Usage.Output(1000000)))), Right(BigDecimal(0)))
     assertEquals(b.map(_.describe), Right("plan pool: claude-plan"))
     // a price in the table does not make a plan model metered
     assert(
@@ -86,14 +88,14 @@ class AgentsSuite extends munit.FunSuite:
         .exists(_.isInstanceOf[Billing.Plan])
     )
     val m =
-      Prices.billing(Map("m" -> Price(BigDecimal(3), BigDecimal(15))), ModelRef(ProviderKind.Anthropic, "m"), None)
+      Prices.billing(Map("m" -> Price(BigDecimal(3), BigDecimal(15))), ModelRef(ProviderKind.Anthropic, com.histmersion.api.automation.Agents.ModelRef.Model("m")), None)
     assertEquals(m.map(_.cost(Usage(1000000, 0))), Right(BigDecimal(3)))
     assertEquals(m.map(_.describe), Right("price: 3/15 USD per million tokens"))
 
   test("billing: an unpriced METERED model is refused — claude-code on an API key included"):
-    val local = Prices.billing(Map.empty, ModelRef(ProviderKind.Local, "qwen"), None)
+    val local = Prices.billing(Map.empty, ModelRef(ProviderKind.Local, com.histmersion.api.automation.Agents.ModelRef.Model("qwen")), None)
     assert(local.left.exists(_.contains("has no price")), local)
-    val keyed = Prices.billing(Map.empty, ModelRef(ProviderKind.ClaudeCode, "sonnet"), None)
+    val keyed = Prices.billing(Map.empty, ModelRef(ProviderKind.ClaudeCode, com.histmersion.api.automation.Agents.ModelRef.Model("sonnet")), None)
     assert(keyed.left.exists(e => e.contains("has no price") && e.contains("use an API key")), keyed)
 
   test("price text: two or four numbers, trailing zeros dropped"):
@@ -114,27 +116,27 @@ class AgentsSuite extends munit.FunSuite:
     assert(Done.isTerminal && Failed.isTerminal && Cancelled.isTerminal && !Paused.isTerminal)
 
   test("Role and Pipeline parse their wire names"):
-    assertEquals(Role.parse("cold-reader"), Some(Role.ColdReader))
-    assertEquals(Pipeline.parse("enrich-source"), Some(Pipeline.EnrichSource))
-    assertEquals(Pipeline.parse("review-article"), Some(Pipeline.ReviewArticle))
-    assertEquals(Pipeline.parse("enrich_source"), None)
+    assertEquals(Role.parse(com.histmersion.api.automation.AgentRole.Wire("cold-reader")), Some(Role.ColdReader))
+    assertEquals(Pipeline.parse(com.histmersion.api.automation.Pipeline.Wire("enrich-source")), Some(Pipeline.EnrichSource))
+    assertEquals(Pipeline.parse(com.histmersion.api.automation.Pipeline.Wire("review-article")), Some(Pipeline.ReviewArticle))
+    assertEquals(Pipeline.parse(com.histmersion.api.automation.Pipeline.Wire("enrich_source")), None)
 
   test("each pipeline names its target kind and every role it needs"):
     assertEquals(Pipeline.EnrichSource.targetKind, TargetKind.Source)
     assertEquals(Pipeline.ReviewArticle.targetKind, TargetKind.Article)
     assertEquals(Pipeline.ReviewArticle.roles, List(Role.Reviewer, Role.ColdReader, Role.Skeptic, Role.Fixer))
-    assertEquals(TargetKind.parse("article"), Some(TargetKind.Article))
+    assertEquals(TargetKind.parse(com.histmersion.api.automation.TargetKind.Wire("article")), Some(TargetKind.Article))
 
   test("approval vocabularies parse their wire names"):
-    assertEquals(ApprovalKind.parse("status-change"), Some(ApprovalKind.StatusChange))
-    assertEquals(ApprovalState.parse("open"), Some(ApprovalState.Open))
-    assertEquals(Decision.parse(" Approve "), Some(Decision.Approve))
-    assertEquals(Decision.parse("accept"), None)
+    assertEquals(ApprovalKind.parse(com.histmersion.api.automation.Approval.Kind.Wire("status-change")), Some(ApprovalKind.StatusChange))
+    assertEquals(ApprovalState.parse(com.histmersion.api.automation.Approval.State.Wire("open")), Some(ApprovalState.Open))
+    assertEquals(Decision.parse(com.histmersion.api.automation.Agents.Decision.Wire(" Approve ")), Some(Decision.Approve))
+    assertEquals(Decision.parse(com.histmersion.api.automation.Agents.Decision.Wire("accept")), None)
 
   test("RunParams: missing options decode as their defaults"):
     assertEquals(io.circe.parser.decode[RunParams]("{}"), Right(RunParams()))
     assert(!RunParams().fixes)
-    assert(RunParams(fix = Some(true)).fixes)
+    assert(RunParams(fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true))).fixes)
 
   test("RunState: a run waits for an approval only from running, and leaves it only to the queue or cancelled"):
     import RunState.*
@@ -145,47 +147,47 @@ class AgentsSuite extends munit.FunSuite:
     assertEquals(next(WaitingApproval, Paused), None)
     assertEquals(next(Queued, WaitingApproval), None)
     assert(!WaitingApproval.isTerminal)
-    assertEquals(RunState.parse("waiting"), Some(WaitingApproval))
-    assert(RunInfo("r", "plan-goal", "g", "waiting").isWaiting)
+    assertEquals(RunState.parse(com.histmersion.api.automation.Run.State.Wire("waiting")), Some(WaitingApproval))
+    assert(RunInfo(com.histmersion.api.automation.Agents.RunInfo.Id("r"), com.histmersion.api.automation.Agents.RunInfo.Pipeline("plan-goal"), com.histmersion.api.automation.Agents.RunInfo.Target("g"), com.histmersion.api.automation.Agents.RunInfo.Status("waiting")).isWaiting)
 
   test("P3 pipelines, targets, roles and blocking approval kinds"):
-    assertEquals(Pipeline.parse("plan-goal").map(_.targetKind), Some(TargetKind.Goal))
+    assertEquals(Pipeline.parse(com.histmersion.api.automation.Pipeline.Wire("plan-goal")).map(_.targetKind), Some(TargetKind.Goal))
     assertEquals(Pipeline.CompileArticle.roles, List(Role.Extractor, Role.Writer))
     assertEquals(Pipeline.CurrencyCheck.roles, Nil)
     assertEquals(Pipeline.AcquisitionSweep.roles, List(Role.Planner))
     assert(ApprovalKind.GoalPlan.blocking && ApprovalKind.ArticlePublish.blocking)
     assert(!ApprovalKind.StatusChange.blocking && !ApprovalKind.Edge.blocking)
-    assertEquals(Goal.Plans.ScheduleKind.parse("acquisition").map(_.pipeline), Some(Pipeline.AcquisitionSweep))
-    assertEquals(Origin.parse("scheduler"), Some(Origin.Scheduler))
+    assertEquals(Goal.Plans.ScheduleKind.parse(com.histmersion.api.automation.ScheduleKind.Wire("acquisition")).map(_.pipeline), Some(Pipeline.AcquisitionSweep))
+    assertEquals(Origin.parse(com.histmersion.api.automation.Agents.Origin.Wire("scheduler")), Some(Origin.Scheduler))
     // a run stored before P3 reads its new options as absent
-    assertEquals(io.circe.parser.decode[RunParams]("""{"fix":true}"""), Right(RunParams(fix = Some(true))))
+    assertEquals(io.circe.parser.decode[RunParams]("""{"fix":true}"""), Right(RunParams(fix = Some(com.histmersion.api.automation.Agents.RunRequest.Fix(true)))))
 
   test("Markdown: a plan and a draft as a person reads them before approving; a goal with its links and schedules"):
     import com.histmersion.api.automation.Goal.Plans.*
     val plan = Plan(
-      "g",
-      "covers it",
-      List(PlannedGoal("g-sub", "Sub")),
-      List("tin isotopes"),
-      List(PlannedWork("10.1000/x", Some("X"), Some(2020), citekey = Some("x2020_y"), inCorpus = true, why = "core")),
-      List("10.1000/z: not verified upstream")
+      com.histmersion.api.automation.Goal.Slug("g"),
+      com.histmersion.api.automation.Goal.Plans.Plan.Rationale("covers it"),
+      List(PlannedGoal(com.histmersion.api.automation.Goal.Slug("g-sub"), com.histmersion.api.automation.Goal.Title("Sub"))),
+      List(com.histmersion.api.automation.Goal.Plans.Plan.Queries("tin isotopes")),
+      List(PlannedWork(com.histmersion.api.library.Doi("10.1000/x"), Some(com.histmersion.api.library.Title("X")), Some(com.histmersion.api.catalogue.Year(2020)), citekey = Some("x2020_y"), inCorpus = true, why = "core")),
+      List(com.histmersion.api.automation.Goal.Plans.Plan.Dropped("10.1000/z: not verified upstream"))
     )
     val a =
-      ApprovalInfo(7, Some("run12345"), "goal-plan", "", evidence = "covers it", subject = Some("g"), plan = Some(plan))
+      ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(7), Some(com.histmersion.api.automation.Agents.RunInfo.Id("run12345")), com.histmersion.api.automation.Agents.ApprovalInfo.Kind("goal-plan"), com.histmersion.api.library.Citekey(""), evidence = "covers it", subject = Some("g"), plan = Some(plan))
     val md = AgentsMarkdown.approvals(List(a))
     assert(md.contains("plan for goal **g**: 1 sub-goal(s), 1 query(ies), 1 work(s)"), md)
     assert(md.contains("in the corpus as [[x2020_y]]: core") && md.contains("dropped: 10.1000/z"), md)
     assertEquals(md.split("covers it", -1).length - 1, 1, "the rationale is shown once")
     val d = ArticleDraft(
-      "tin",
+      com.histmersion.api.research.Article.Slug("tin"),
       DraftMode.Extend,
-      "Tin",
-      "concept",
-      "New text [[x2020_y]].",
+      com.histmersion.api.research.Article.Title("Tin"),
+      com.histmersion.api.research.Article.Kind.Wire("concept"),
+      com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text("New text [[x2020_y]]."),
       section = Some("## Disagreements"),
       problems = List("a paragraph with no [[citekey]]")
     )
-    val pub = ApprovalInfo(8, None, "article-publish", "", subject = Some("tin"), article = Some(d))
+    val pub = ApprovalInfo(com.histmersion.api.automation.Agents.ApprovalInfo.Id(8), None, com.histmersion.api.automation.Agents.ApprovalInfo.Kind("article-publish"), com.histmersion.api.library.Citekey(""), subject = Some("tin"), article = Some(d))
     val md2 = AgentsMarkdown.approvals(List(pub))
     assert(
       md2.contains("publish a section appended to [[tin]]") && md2.contains("under '## Disagreements'") &&
@@ -193,22 +195,22 @@ class AgentsSuite extends munit.FunSuite:
       md2
     )
     val s = GoalSchedule(
-      "g",
+      com.histmersion.api.automation.Goal.Slug("g"),
       ScheduleKind.Currency,
-      "@daily",
-      enabled = false,
+      com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron("@daily"),
+      enabled = com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(false),
       Some(0.5),
       None,
       None,
-      Some("abcdef123"),
-      Some("skipped: x")
+      Some(com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRun("abcdef123")),
+      Some(com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastNote("skipped: x"))
     )
     assertEquals(
       AgentsMarkdown.scheduleLine(s),
       "g · currency · `@daily` · off · cap 0.5000 USD · last run abcdef12 · skipped: x"
     )
     val v = GoalView(
-      Goal("g", "G", "planned"),
+      Goal(com.histmersion.api.automation.Goal.Slug("g"), com.histmersion.api.automation.Goal.Title("G"), com.histmersion.api.automation.Goal.StatusValue("planned")),
       links = List(GoalLink(LinkKind.Source, "gone2020_x"), GoalLink(LinkKind.Query, "q")),
       schedules = List(s)
     )
@@ -224,60 +226,60 @@ class AgentsSuite extends munit.FunSuite:
 
   test("ModelOverride: role=provider:model, only the first = separates; a missing role or model is an error"):
     assertEquals(
-      ModelOverride.parse(" Skeptic = claude-code:haiku "),
-      Right(ModelOverride("skeptic", "claude-code:haiku"))
+      ModelOverride.parse(com.histmersion.api.automation.Agents.ModelOverride.Wire(" Skeptic = claude-code:haiku ")),
+      Right(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("skeptic"), com.histmersion.api.automation.Agents.ModelOverride.Model("claude-code:haiku")))
     )
     assertEquals(
-      ModelOverride.parse("fixer=local:a > anthropic:b"),
-      Right(ModelOverride("fixer", "local:a > anthropic:b"))
+      ModelOverride.parse(com.histmersion.api.automation.Agents.ModelOverride.Wire("fixer=local:a > anthropic:b")),
+      Right(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("fixer"), com.histmersion.api.automation.Agents.ModelOverride.Model("local:a > anthropic:b")))
     )
-    assert(ModelOverride.parse("skeptic").left.exists(_.contains("<role>=<provider:model>")))
-    assert(ModelOverride.parse("=local:x").left.exists(_.contains("names no role")))
-    assert(ModelOverride.parse("skeptic=").left.exists(_.contains("names no model")))
+    assert(ModelOverride.parse(com.histmersion.api.automation.Agents.ModelOverride.Wire("skeptic")).left.exists(_.contains("<role>=<provider:model>")))
+    assert(ModelOverride.parse(com.histmersion.api.automation.Agents.ModelOverride.Wire("=local:x")).left.exists(_.contains("names no role")))
+    assert(ModelOverride.parse(com.histmersion.api.automation.Agents.ModelOverride.Wire("skeptic=")).left.exists(_.contains("names no model")))
 
   test("a run's model for a role: its --model-for, else its --model, else none (the role's chain)"):
     val r = RunInfo(
-      "r",
-      "review-article",
-      "x",
-      "queued",
+      com.histmersion.api.automation.Agents.RunInfo.Id("r"),
+      com.histmersion.api.automation.Agents.RunInfo.Pipeline("review-article"),
+      com.histmersion.api.automation.Agents.RunInfo.Target("x"),
+      com.histmersion.api.automation.Agents.RunInfo.Status("queued"),
       model = Some("anthropic:all"),
-      params = RunParams(modelFor = Some(List(ModelOverride("skeptic", "claude-code:haiku"))))
+      params = RunParams(modelFor = Some(List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("skeptic"), com.histmersion.api.automation.Agents.ModelOverride.Model("claude-code:haiku")))))
     )
     assertEquals(r.modelFor(Role.Skeptic), Some("claude-code:haiku"))
     assertEquals(r.modelFor(Role.Reviewer), Some("anthropic:all"))
-    assertEquals(RunInfo("r", "p", "x", "queued").modelFor(Role.Fixer), None)
+    assertEquals(RunInfo(com.histmersion.api.automation.Agents.RunInfo.Id("r"), com.histmersion.api.automation.Agents.RunInfo.Pipeline("p"), com.histmersion.api.automation.Agents.RunInfo.Target("x"), com.histmersion.api.automation.Agents.RunInfo.Status("queued")).modelFor(Role.Fixer), None)
 
   test("a step's model: the configured ref, and the provider's id when it said another"):
     val s = StepInfo(
-      1,
-      "skeptic-1",
-      "llm",
-      1,
-      "done",
-      model = Some("claude-code:haiku"),
+      com.histmersion.api.automation.Agents.StepInfo.Seq(1),
+      com.histmersion.api.automation.Agents.StepInfo.Name("skeptic-1"),
+      com.histmersion.api.automation.Agents.StepInfo.Kind("llm"),
+      com.histmersion.api.automation.Agents.StepInfo.Attempt(1),
+      com.histmersion.api.automation.Agents.StepInfo.Status("done"),
+      model = Some(com.histmersion.api.automation.Agents.StepInfo.Model("claude-code:haiku")),
       actualModel = Some("claude-haiku-5-5")
     )
     assertEquals(s.modelText, "claude-code:haiku → claude-haiku-5-5")
     assertEquals(s.modify(_.actualModel).setTo(Some("haiku")).modelText, "claude-code:haiku")
     assertEquals(s.modify(_.actualModel).setTo(None).modelText, "claude-code:haiku")
     assertEquals(s.modify(_.model).setTo(None).modelText, "claude-haiku-5-5")
-    assertEquals(StepInfo(1, "load", "code", 1, "done").modelText, "")
+    assertEquals(StepInfo(com.histmersion.api.automation.Agents.StepInfo.Seq(1), com.histmersion.api.automation.Agents.StepInfo.Name("load"), com.histmersion.api.automation.Agents.StepInfo.Kind("code"), com.histmersion.api.automation.Agents.StepInfo.Attempt(1), com.histmersion.api.automation.Agents.StepInfo.Status("done")).modelText, "")
 
   test("agent show: an LLM step's tokens carry its first call's input and its turns (V072); older steps show neither"):
     val s = StepInfo(
-      2,
-      "notes",
-      "llm",
-      1,
-      "done",
-      model = Some("claude-code:sonnet"),
+      com.histmersion.api.automation.Agents.StepInfo.Seq(2),
+      com.histmersion.api.automation.Agents.StepInfo.Name("notes"),
+      com.histmersion.api.automation.Agents.StepInfo.Kind("llm"),
+      com.histmersion.api.automation.Agents.StepInfo.Attempt(1),
+      com.histmersion.api.automation.Agents.StepInfo.Status("done"),
+      model = Some(com.histmersion.api.automation.Agents.StepInfo.Model("claude-code:sonnet")),
       usage = Usage(41000, 900),
       firstCallTokens = Some(6963),
       turns = Some(9)
     )
     val d = RunDetail(
-      RunInfo("r1", "enrich-source", "x2020", "done"),
+      RunInfo(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), com.histmersion.api.automation.Agents.RunInfo.Pipeline("enrich-source"), com.histmersion.api.automation.Agents.RunInfo.Target("x2020"), com.histmersion.api.automation.Agents.RunInfo.Status("done")),
       List(s, s.modify(_.seq).setTo(3).modify(_.firstCallTokens).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.turns).setTo(None)),
       Nil
     )
@@ -290,12 +292,12 @@ class AgentsSuite extends munit.FunSuite:
 
   test("a dry run is marked in the run line and the run, and each skipped write is shown with its payload"):
     val r = RunInfo(
-      "r1",
-      "enrich-source",
-      "x2020",
-      "done",
+      com.histmersion.api.automation.Agents.RunInfo.Id("r1"),
+      com.histmersion.api.automation.Agents.RunInfo.Pipeline("enrich-source"),
+      com.histmersion.api.automation.Agents.RunInfo.Target("x2020"),
+      com.histmersion.api.automation.Agents.RunInfo.Status("done"),
       dryRun = true,
-      params = RunParams(modelFor = Some(List(ModelOverride("extractor", "local:h"))))
+      params = RunParams(modelFor = Some(List(ModelOverride(com.histmersion.api.automation.Agents.ModelOverride.Role("extractor"), com.histmersion.api.automation.Agents.ModelOverride.Model("local:h")))))
     )
     assert(
       AgentsMarkdown.runLine(r).contains("(dry run, writes nothing, extractor=local:h)"),
@@ -305,12 +307,12 @@ class AgentsSuite extends munit.FunSuite:
       r,
       List(
         StepInfo(
-          8,
-          "patch",
-          "code",
-          1,
-          "done",
-          wouldWrite = List(WouldWrite("patch [[x2020]]: summary", """{"summary":"S"}"""))
+          com.histmersion.api.automation.Agents.StepInfo.Seq(8),
+          com.histmersion.api.automation.Agents.StepInfo.Name("patch"),
+          com.histmersion.api.automation.Agents.StepInfo.Kind("code"),
+          com.histmersion.api.automation.Agents.StepInfo.Attempt(1),
+          com.histmersion.api.automation.Agents.StepInfo.Status("done"),
+          wouldWrite = List(WouldWrite(com.histmersion.api.automation.Agents.WouldWrite.What("patch [[x2020]]: summary"), """{"summary":"S"}"""))
         )
       ),
       Nil

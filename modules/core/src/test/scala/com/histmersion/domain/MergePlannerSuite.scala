@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.CataloguePlan
@@ -56,7 +58,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assertEquals(p.issues.size, expected.size, p.issues.mkString("\n"))
     assertEquals(
       p.matches,
-      MatchCounts(sources = 10, byUid = 1, byStrongKey = 2, byScore = 4, undecided = 1, unmatched = 2)
+      MatchCounts(sources = com.histmersion.api.exchange.MatchCounts.Sources(10), byUid = com.histmersion.api.exchange.MatchCounts.ByUid(1), byStrongKey = 2, byScore = 4, undecided = 1, unmatched = 2)
     )
     assertEquals(p.problems, Nil)
     assertEquals(p.resolutionErrors, Nil)
@@ -67,18 +69,18 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
   test("the evidence behind the matches: strong keys, the score, a DOI on one side only is neutral"):
     val p = plan().plan
     val byRight = com.histmersion.api.RegisteredPlanMatches.kind.all(p.sources).map(m => m.rightCitekey -> m).toMap
-    assertEquals(byRight("kuhrt1995_near").method, MatchMethod.StrongKey)
-    assert(byRight("kuhrt1995_near").why.exists(_.contains("sha256")), byRight("kuhrt1995_near").why.toString)
-    assertEquals(byRight("bryce2005_kingdom").leftCitekey, Some("bryce2005_kingdom_hittites"))
-    assertEquals(byRight("guterbock1997_perspectives").outcome, MatchOutcome.AutoMerge)
-    assertEquals(byRight("guterbock1997_perspectives").leftCitekey, Some("guterbock1997_hittite"))
-    assert(!byRight("guterbock1997_perspectives").why.exists(_.toLowerCase.contains("doi")))
-    assertEquals(byRight("latacz2023_troy").leftCitekey, Some("latacz2004_troy"))
-    assert(byRight("latacz2023_troy").why.exists(_.contains("old citekey")))
-    assertEquals(byRight("harrison1903_prolegomena").leftCitekey, Some("harrison1903_prolegomena_greek"))
-    assertEquals(byRight("olsen2015_penelope").outcome, MatchOutcome.AutoMerge)
-    assertEquals(byRight("page2024_history").outcome, MatchOutcome.NeedsDecision)
-    assertEquals(byRight("smith2019_ritual").outcome, MatchOutcome.New)
+    assertEquals(byRight(com.histmersion.api.library.Citekey("kuhrt1995_near")).method, MatchMethod.StrongKey)
+    assert(byRight(com.histmersion.api.library.Citekey("kuhrt1995_near")).why.exists(_.contains("sha256")), byRight(com.histmersion.api.library.Citekey("kuhrt1995_near")).why.toString)
+    assertEquals(byRight(com.histmersion.api.library.Citekey("bryce2005_kingdom")).leftCitekey, Some("bryce2005_kingdom_hittites"))
+    assertEquals(byRight(com.histmersion.api.library.Citekey("guterbock1997_perspectives")).outcome, MatchOutcome.AutoMerge)
+    assertEquals(byRight(com.histmersion.api.library.Citekey("guterbock1997_perspectives")).leftCitekey, Some("guterbock1997_hittite"))
+    assert(!byRight(com.histmersion.api.library.Citekey("guterbock1997_perspectives")).why.exists(_.toLowerCase.contains("doi")))
+    assertEquals(byRight(com.histmersion.api.library.Citekey("latacz2023_troy")).leftCitekey, Some("latacz2004_troy"))
+    assert(byRight(com.histmersion.api.library.Citekey("latacz2023_troy")).why.exists(_.contains("old citekey")))
+    assertEquals(byRight(com.histmersion.api.library.Citekey("harrison1903_prolegomena")).leftCitekey, Some("harrison1903_prolegomena_greek"))
+    assertEquals(byRight(com.histmersion.api.library.Citekey("olsen2015_penelope")).outcome, MatchOutcome.AutoMerge)
+    assertEquals(byRight(com.histmersion.api.library.Citekey("page2024_history")).outcome, MatchOutcome.NeedsDecision)
+    assertEquals(byRight(com.histmersion.api.library.Citekey("smith2019_ritual")).outcome, MatchOutcome.New)
     // the citekey collision suggests the next title word
     assertEquals(
       issue(p, Issue.Kind.CitekeyCollision, "smith2019_ritual").suggested.map(_.wire),
@@ -306,27 +308,27 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     assert(t2.contains("editions: separate"))
 
   test("the resolution file: unknown keys, bad policies and bad ids are all reported at once"):
-    val bad = MergeResolutionsFile.parse("bundel: x\npolicy:\n  editions: sometimes\n  colour: red\nresolve: [1, 2]\n")
+    val bad = MergeResolutionsFile.parse(com.histmersion.util.data.exchange.MergeResolutionsFile.Text("bundel: x\npolicy:\n  editions: sometimes\n  colour: red\nresolve: [1, 2]\n"))
     val es = bad.left.getOrElse(fail("parsed"))
     assert(es.exists(_.contains("unknown key 'bundel'")), es.toString)
     assert(es.exists(_.contains("'sometimes' is not merge or separate")))
     assert(es.exists(_.contains("policy: unknown key 'colour'")))
     assert(es.exists(_.contains("resolve: expected a map")))
-    assertEquals(MergeResolutionsFile.parse(""), Right(MergeResolutions()))
-    assertEquals(MergeResolutionsFile.flag("S-12345678=keep-left"), Right(MergeResolution("S-12345678", "keep-left")))
-    assert(MergeResolutionsFile.flag("S-12345678").isLeft)
+    assertEquals(MergeResolutionsFile.parse(com.histmersion.util.data.exchange.MergeResolutionsFile.Text("")), Right(MergeResolutions()))
+    assertEquals(MergeResolutionsFile.flag(com.histmersion.api.exchange.MergeResolutions.Text.Flag("S-12345678=keep-left")), Right(MergeResolution(com.histmersion.api.exchange.MergeResolution.Issue("S-12345678"), com.histmersion.api.exchange.MergeResolution.Decision("keep-left"))))
+    assert(MergeResolutionsFile.flag(com.histmersion.api.exchange.MergeResolutions.Text.Flag("S-12345678")).isLeft)
 
   test("decisions: the wire form, arguments where they belong"):
     assertEquals(
-      MergeDecision.parse("map:guterbock1997_hittite"),
-      Right(MergeDecision.withArg(DecisionKind.Map, "guterbock1997_hittite"))
+      MergeDecision.parse(com.histmersion.api.exchange.MergeDecision.Wire("map:guterbock1997_hittite")),
+      Right(MergeDecision.withArg(DecisionKind.Map, com.histmersion.api.exchange.MergeDecision.Argument("guterbock1997_hittite")))
     )
-    assertEquals(MergeDecision.parse(" keep-left "), Right(MergeDecision.of(DecisionKind.KeepLeft)))
-    assert(MergeDecision.parse("map").isLeft)
-    assert(MergeDecision.parse("keep-left:x").isLeft)
-    assert(MergeDecision.parse("keep_left").isLeft)
+    assertEquals(MergeDecision.parse(com.histmersion.api.exchange.MergeDecision.Wire(" keep-left ")), Right(MergeDecision.of(DecisionKind.KeepLeft)))
+    assert(MergeDecision.parse(com.histmersion.api.exchange.MergeDecision.Wire("map")).isLeft)
+    assert(MergeDecision.parse(com.histmersion.api.exchange.MergeDecision.Wire("keep-left:x")).isLeft)
+    assert(MergeDecision.parse(com.histmersion.api.exchange.MergeDecision.Wire("keep_left")).isLeft)
     DecisionKind.values.foreach { k =>
-      val d = if k.takesArgument then MergeDecision.withArg(k, "a1") else MergeDecision.of(k)
+      val d = if k.takesArgument then MergeDecision.withArg(k, com.histmersion.api.exchange.MergeDecision.Argument("a1")) else MergeDecision.of(k)
       assertEquals(MergeDecision.parse(d.wire), Right(d))
     }
 
@@ -352,13 +354,13 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       uid(id),
       origin,
       uid(source),
-      "place",
+      com.histmersion.api.exchange.Bundle.Attestation.TargetType("place"),
       id,
       None,
       Some(quote),
       None,
       None,
-      Some(0),
+      Some(com.histmersion.api.exchange.Bundle.Attestation.CharStart(0)),
       Some(quote.length),
       None,
       None,
@@ -426,21 +428,21 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       cfg,
       List(CataloguePlan, LibraryPlan, ResearchPlan)
     )
-    assertEquals(r3.apply.attestations, List(MergePlanner.AttestationFix(uid("t-home"), None, None, drop = false)))
+    assertEquals(r3.apply.attestations, List(MergePlanner.AttestationFix(uid("t-home"), None, None, drop = com.histmersion.domain.MergePlanner.AttestationFix.Drop(false))))
 
   test("edges: a merge that would make a source cite itself drops that edge and says so (an incremental bundle)"):
     // work's olsen cites a record of the bundle's collection that this collection holds under home's
     // olsen (a redirect from an earlier merge): folding the two would make olsen cite itself
     val earlier = uid("w-olsen-earlier")
     val es = foreign.modify(_.edges).setTo(List(
-        com.histmersion.api.exchange.Bundle.Edge(uid("w-olsen"), earlier, "superseded_by"),
-        com.histmersion.api.exchange.Bundle.Edge(uid("w-olsen"), uid("w-new"), "references")
+        com.histmersion.api.exchange.Bundle.Edge(uid("w-olsen"), earlier, com.histmersion.api.exchange.Bundle.Edge.Kind("superseded_by")),
+        com.histmersion.api.exchange.Bundle.Edge(uid("w-olsen"), uid("w-new"), com.histmersion.api.exchange.Bundle.Edge.Kind("references"))
       )
     )
     val in = input(es).copy(uidAliases = Map(earlier -> uid("h-olsen")))
     val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     val olsen = r.localized.edges.filter(_.srcUid == uid("h-olsen"))
-    assertEquals(olsen, List(com.histmersion.api.exchange.Bundle.Edge(uid("h-olsen"), uid("w-new"), "references")))
+    assertEquals(olsen, List(com.histmersion.api.exchange.Bundle.Edge(uid("h-olsen"), uid("w-new"), com.histmersion.api.exchange.Bundle.Edge.Kind("references"))))
     assertEquals(r.apply.tally.selfLoopsDropped, 1)
     assert(r.plan.info.exists(_.contains("from a source to itself")), r.plan.info.mkString("\n"))
 
@@ -489,7 +491,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val f = MergePlanner.plan(
       in.modify(_.foreign).setTo(clash).modify(_.manifest).setTo(manifest(clash)),
       sketches,
-      MergeResolutions(List(MergeResolution(q.id, "file:merged.md", Some("By hand.")))),
+      MergeResolutions(List(MergeResolution(q.id, com.histmersion.api.exchange.MergeResolution.Decision("file:merged.md"), Some(com.histmersion.api.exchange.MergeResolution.Text("By hand."))))),
       cfg,
       List(CataloguePlan, LibraryPlan, ResearchPlan)
     )
@@ -503,7 +505,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       while current.plan.issues.exists(i => i.decision.isEmpty && i.condition.isEmpty && i.options.nonEmpty) do
         val open = current.plan.issues.filter(i => i.decision.isEmpty && i.condition.isEmpty && i.options.nonEmpty)
         val pick = open(rnd.nextInt(open.size))
-        decided += MergeResolution(pick.id, someDecision(pick, rnd), Some("text"))
+        decided += MergeResolution(pick.id, someDecision(pick, rnd), Some(com.histmersion.api.exchange.MergeResolution.Text("text")))
         current = plan(res = MergeResolutions(decided.toList))
       val known = current.localized.sources.map(_.uid).toSet ++ input().local.sources.map(_.uid)
       current.localized.edges.foreach(e => assert(known(e.srcUid) && known(e.dstUid), s"round $round: dangling $e"))
@@ -518,16 +520,16 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     val r = plan()
     val done = MergeApplyResult(
       foreign.sources.head.uid,
-      com.histmersion.api.exchange.Bundle.Instance(work, Some("work")),
-      applied = true,
+      com.histmersion.api.exchange.Bundle.Instance(work, Some(com.histmersion.api.exchange.Bundle.Instance.Label("work"))),
+      applied = com.histmersion.api.exchange.MergeApplyResult.Applied(true),
       r.plan.planHash,
       mergeId = Some(uid("merge")),
-      backup = Some("histmersion-20261004-1000.dump"),
-      counts = List(com.histmersion.api.exchange.Bundle.KindCounts(Bundle.Kind.Source, inserted = 2)),
+      backup = Some(com.histmersion.api.exchange.MergeApplyResult.Backup("histmersion-20261004-1000.dump")),
+      counts = List(com.histmersion.api.exchange.Bundle.KindCounts(Bundle.Kind.Source, inserted = com.histmersion.api.exchange.Bundle.KindCounts.Inserted(2))),
       tally = r.apply.tally,
-      reviews = List("zz_shared"),
-      logEntry = Some(590),
-      replanChanges = Some(0)
+      reviews = List(com.histmersion.api.exchange.MergeApplyResult.Reviews("zz_shared")),
+      logEntry = Some(com.histmersion.api.exchange.MergeApplyResult.LogEntry(590)),
+      replanChanges = Some(com.histmersion.api.exchange.MergeApplyResult.ReplanChanges(0))
     )
     val md = MergeMarkdown.applied(done)
     assert(md.contains("histmersion-20261004-1000.dump"), md)

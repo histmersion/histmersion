@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.util.ocr.{Chunk, Chunker}
 
 import com.histmersion.config.*
@@ -16,11 +18,11 @@ class PassageFinderSuite extends munit.FunSuite:
 
   // three sections as the Chunker stores them: heading lines removed, breadcrumbs kept
   private val Segs = List(
-    Chunk(0, None, "Preamble line about nothing."),
-    Chunk(1, Some("Theseus"), "Theseus was buried on Skyros.\nCimon brought the bones back to Athens."),
+    Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, com.histmersion.util.ocr.Chunk.Body("Preamble line about nothing.")),
+    Chunk(com.histmersion.util.ocr.Chunk.Ord(1), Some(com.histmersion.util.ocr.Chunk.Heading("Theseus")), com.histmersion.util.ocr.Chunk.Body("Theseus was buried on Skyros.\nCimon brought the bones back to Athens.")),
     Chunk(
-      2,
-      Some("Theseus > Cult"),
+      com.histmersion.util.ocr.Chunk.Ord(2),
+      Some(com.histmersion.util.ocr.Chunk.Heading("Theseus > Cult")),
       "The Theseia honoured him.\n\nAt Ḫattuša nothing like it is known; Güterbock said so."
     )
   )
@@ -37,7 +39,7 @@ class PassageFinderSuite extends munit.FunSuite:
     PassageFinder.find(Ck, segs, q, regex, limit, context, max, timeoutMs).fold(m => fail(m), identity)
 
   private def err(q: String, regex: Boolean): String =
-    PassageFinder.find(Ck, Segs, q, regex, 10, 600, 10000, 2000).fold(identity, r => fail(s"expected an error, got $r"))
+    PassageFinder.find(Ck, Segs, q, regex, com.histmersion.domain.PassageFinder.Limit(10), com.histmersion.domain.PassageFinder.ContextChars(600), com.histmersion.domain.PassageFinder.MaxMatches(10000), com.histmersion.domain.PassageFinder.TimeoutMs(2000)).fold(identity, r => fail(s"expected an error, got $r"))
 
   /** The body slice `get_source {offset, chars}` would return. */
   private def slice(segs: List[Chunk], offset: Int, chars: Int): String =
@@ -79,14 +81,14 @@ class PassageFinderSuite extends munit.FunSuite:
     assertEquals(find("Thêseus").matches, 1)
 
   test("decomposed combining marks belong to the match; folded offsets map back to the original"):
-    val segs = List(Chunk(0, None, "x Güterbock y"))
+    val segs = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, com.histmersion.util.ocr.Chunk.Body("x Güterbock y")))
     val p = find("guterbock", segs = segs).passages.head
     assertEquals(p.text.substring(p.matches.head.start, p.matches.head.end), "Güterbock")
-    val e = find("u", segs = List(Chunk(0, None, "aüb"))).passages.head
+    val e = find("u", segs = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, com.histmersion.util.ocr.Chunk.Body("aüb")))).passages.head
     assertEquals(e.text.substring(e.matches.head.start, e.matches.head.end), "ü", "the mark rides with its letter")
 
   test("OCR typography: curly quotes, dashes, ligatures and soft hyphens match their plain forms"):
-    val segs = List(Chunk(0, None, "Theseus’ bones — the ﬁrst cult, a Bronze Age­ hero"))
+    val segs = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, com.histmersion.util.ocr.Chunk.Body("Theseus’ bones — the ﬁrst cult, a Bronze Age­ hero")))
     assertEquals(find("Theseus' bones - the first", segs = segs).matches, 1)
     assertEquals(find("Age hero", segs = segs).matches, 1)
 
@@ -103,20 +105,20 @@ class PassageFinderSuite extends munit.FunSuite:
     val m = err("(unclosed", regex = true)
     assert(m.startsWith("not a valid regex: Unclosed group"), m)
     assert(m.contains("leave regex off"), m)
-    assertEquals(PassageFinder.find(Ck, Segs, "(unclosed", false, 10, 600, 100, 2000).map(_.matches), Right(0))
+    assertEquals(PassageFinder.find(Ck, Segs, com.histmersion.domain.PassageFinder.Query("(unclosed"), com.histmersion.domain.PassageFinder.Regex(false), com.histmersion.domain.PassageFinder.Limit(10), com.histmersion.domain.PassageFinder.ContextChars(600), com.histmersion.domain.PassageFinder.MaxMatches(100), com.histmersion.domain.PassageFinder.TimeoutMs(2000)).map(_.matches), Right(0))
 
   test("an empty or blank query is refused"):
     assert(err("   ", regex = false).contains("empty"))
 
   test("a pathological regex is refused when it runs past the timeout"):
     // Java memoises the textbook (a+)+b; nested greedy .* still backtracks for seconds on 28 chars
-    val segs = List(Chunk(0, None, "a" * 28 + "!"))
-    val r = PassageFinder.find(Ck, segs, "(.*a){12}x", true, 10, 600, 10000, 50)(using new com.histmersion.util.time.Timer { def start(): com.histmersion.util.time.Timer.Measure = new com.histmersion.util.time.Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.FiniteDuration(51, scala.concurrent.duration.MILLISECONDS) } })
+    val segs = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, "a" * 28 + "!"))
+    val r = PassageFinder.find(Ck, segs, com.histmersion.domain.PassageFinder.Query("(.*a){12}x"), com.histmersion.domain.PassageFinder.Regex(true), com.histmersion.domain.PassageFinder.Limit(10), com.histmersion.domain.PassageFinder.ContextChars(600), com.histmersion.domain.PassageFinder.MaxMatches(10000), com.histmersion.domain.PassageFinder.TimeoutMs(50))(using new com.histmersion.util.time.Timer { def start(): com.histmersion.util.time.Timer.Measure = new com.histmersion.util.time.Timer.Measure { def elapsed: scala.concurrent.duration.FiniteDuration = scala.concurrent.duration.FiniteDuration(51, scala.concurrent.duration.MILLISECONDS) } })
     assert(r.left.exists(_.contains("ran longer than 50 ms")), r)
 
   test("context bounds: whole lines when a line break is in reach, else whole words, never past the budget"):
     val long = (1 to 400).map(i => s"w$i").mkString(" ") // one long line, no breaks
-    val segs = List(Chunk(0, None, long))
+    val segs = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, long))
     val p = find("w200", segs = segs, context = 100).passages.head
     assert(p.text.length <= 100 + 4, p.text.length)
     assert(p.text.split(' ').forall(_.matches("""w\d+""")), p.text) // cut at word boundaries
@@ -131,7 +133,7 @@ class PassageFinderSuite extends munit.FunSuite:
 
   test("passages never cross into each other and dense matches merge instead of repeating text"):
     val body = (1 to 50).map(i => s"Line $i mentions Skyros once.").mkString("\n")
-    val segs = List(Chunk(0, None, body))
+    val segs = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, body))
     val r = find("skyros", segs = segs, context = 120, limit = 50)
     assertEquals(r.matches, 50)
     val ps = r.passages
@@ -145,14 +147,14 @@ class PassageFinderSuite extends munit.FunSuite:
     assertEquals(find("Güterbock").passages.head.heading, Some("Theseus > Cult"))
 
   test("an unchunked body (raw Markdown) takes the nearest heading line above the match"):
-    val raw = List(Chunk(0, None, "intro\n\n# Part One\n\nalpha\n\n## Sub ##\n\nbeta"))
+    val raw = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, com.histmersion.util.ocr.Chunk.Body("intro\n\n# Part One\n\nalpha\n\n## Sub ##\n\nbeta")))
     assertEquals(find("alpha", segs = raw).passages.head.heading, Some("Part One"))
     assertEquals(find("beta", segs = raw).passages.head.heading, Some("Sub"))
     assertEquals(find("intro", segs = raw).passages.head.heading, None)
 
   test("limit truncates the passages shown; the total and the render say how many more"):
     val body = (1 to 30).map(i => s"Paragraph $i names Skyros.").mkString("\n\n")
-    val r = find("skyros", segs = List(Chunk(0, Some("H"), body)), context = 10, limit = 3)
+    val r = find("skyros", segs = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), Some(com.histmersion.util.ocr.Chunk.Heading("H")), body)), context = 10, limit = 3)
     assertEquals((r.matches, r.total, r.passages.size), (30, 30, 3))
     val md = PassagesMarkdown.render(r)
     assert(md.contains("_27 more — raise limit or narrow the query._"), md)
@@ -160,7 +162,7 @@ class PassageFinderSuite extends munit.FunSuite:
 
   test("matches are counted up to the cap, then the result says the count stopped"):
     val body = List.fill(20)("Skyros").mkString(" ")
-    val r = find("skyros", segs = List(Chunk(0, None, body)), max = 5, context = 0)
+    val r = find("skyros", segs = List(Chunk(com.histmersion.util.ocr.Chunk.Ord(0), None, body)), max = 5, context = 0)
     assertEquals((r.matches, r.capped), (5, true))
     assert(PassagesMarkdown.render(r).contains("5+ matches (counting stopped)"))
 
@@ -181,17 +183,17 @@ class PassageFinderSuite extends munit.FunSuite:
     assert(both.startsWith("## Passages: /these(us|ia)/ in"), both)
 
   test("marked tolerates spans at the edges and adjacent spans"):
-    val p = PassageHit(0, None, "abcabc", List(MatchSpan(3, 6), MatchSpan(0, 3)))
+    val p = PassageHit(com.histmersion.api.library.PassageHit.Offset(0), None, com.histmersion.api.library.PassageHit.Text("abcabc"), List(MatchSpan(com.histmersion.api.catalogue.MatchSpan.Start(3), com.histmersion.api.catalogue.MatchSpan.End(6)), MatchSpan(com.histmersion.api.catalogue.MatchSpan.Start(0), com.histmersion.api.catalogue.MatchSpan.End(3))))
     assertEquals(PassagesMarkdown.marked(p), "**abc****abc**")
 
   test("the configured limits clamp a caller's limit and context; absent means the default"):
     val l = PassageLimits(
-      limit = 10,
-      maxLimit = 50,
-      context = 600,
-      maxContext = 3000,
-      maxMatches = 10000,
-      regexTimeoutMs = 2000
+      limit = com.histmersion.config.PassageLimits.Limit(10),
+      maxLimit = com.histmersion.config.PassageLimits.MaxLimit(50),
+      context = com.histmersion.config.PassageLimits.Context(600),
+      maxContext = com.histmersion.config.PassageLimits.MaxContext(3000),
+      maxMatches = com.histmersion.config.PassageLimits.MaxMatches(10000),
+      regexTimeoutMs = com.histmersion.config.PassageLimits.RegexTimeoutMs(2000)
     )
     assertEquals(List(None, Some(0), Some(-3), Some(7), Some(500)).map(l.limitOf), List(10, 10, 10, 7, 50))
     assertEquals(List(None, Some(-1), Some(0), Some(200), Some(9000)).map(l.contextOf), List(600, 600, 0, 200, 3000))

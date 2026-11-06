@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -23,9 +25,9 @@ class BrowserDownloadSuite extends munit.FunSuite:
     title = (Some("Archaeology and the Bible")).map(com.histmersion.api.library.Title.apply),
     year = (Some(2019)).map(com.histmersion.api.catalogue.Year.apply),
     authors = (List("Greener", "Smith")).map(com.histmersion.api.library.AuthorName.apply),
-    isOa = true,
-    oaStatus = Some("gold"),
-    oaUrl = Some("https://www.mdpi.com/2077-1444/10/4/258/pdf"),
+    isOa = com.histmersion.api.library.WorkRef.IsOa(true),
+    oaStatus = Some(com.histmersion.api.library.WorkRef.OaStatus("gold")),
+    oaUrl = Some(com.histmersion.api.library.WorkRef.OaUrl("https://www.mdpi.com/2077-1444/10/4/258/pdf")),
     oaLocations = List("https://www.mdpi.com/2077-1444/10/4/258", "https://www.mdpi.com/2077-1444/10/4/258/pdf"),
     oaLicence = Some("cc-by")
   )
@@ -79,7 +81,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
     val sup = WorkRef(
       doi = (Some("10.16993/bbk")).map(com.histmersion.api.library.Doi.apply),
       title = (Some("Book")).map(com.histmersion.api.library.Title.apply),
-      oaStatus = Some("gold"),
+      oaStatus = Some(com.histmersion.api.library.WorkRef.OaStatus("gold")),
       oaLocations =
         List("https://doi.org/10.16993/bbk", "https://www.stockholmuniversitypress.se/site/books/m/10.16993/bbk/")
     )
@@ -90,7 +92,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
     val dg = WorkRef(
       doi = (Some("10.1515/zzz-2020-0001")).map(com.histmersion.api.library.Doi.apply),
       title = (Some("Article")).map(com.histmersion.api.library.Title.apply),
-      oaStatus = Some("gold"),
-      oaUrl = Some("https://www.degruyter.com/document/doi/10.1515/zzz-2020-0001/pdf")
+      oaStatus = Some(com.histmersion.api.library.WorkRef.OaStatus("gold")),
+      oaUrl = Some(com.histmersion.api.library.WorkRef.OaUrl("https://www.degruyter.com/document/doi/10.1515/zzz-2020-0001/pdf"))
     )
     assertEquals(BrowserDownload.of(dg, ck, Refusing).map(b => b.publisher.value: String), Some("degruyter.com"))

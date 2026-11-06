@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.catalogue.events.*
@@ -32,47 +34,47 @@ class EventDatingSuite extends munit.FunSuite:
 
   test("a dating note: the stated year, ± and method as the card shows them"):
     assertEquals(
-      EventPrecision.note(Some(250), Some(2500), Some("Tephrochronology")),
+      EventPrecision.note(Some(com.histmersion.api.catalogue.EventSummary.Central(250)), Some(com.histmersion.api.catalogue.EventSummary.PlusMinus(2500)), Some(com.histmersion.api.catalogue.EventSummary.DatingMethod("Tephrochronology"))),
       Some("250 CE ± 2500 (tephrochronology)")
     )
     assertEquals(
-      EventPrecision.note(Some(-4050), Some(3000), Some("Isotopic: K/Ar")),
+      EventPrecision.note(Some(com.histmersion.api.catalogue.EventSummary.Central(-4050)), Some(com.histmersion.api.catalogue.EventSummary.PlusMinus(3000)), Some(com.histmersion.api.catalogue.EventSummary.DatingMethod("Isotopic: K/Ar"))),
       Some("4050 BCE ± 3000 (isotopic: K/Ar)")
     )
-    assertEquals(EventPrecision.note(Some(79), None, None), Some("79 CE"))
+    assertEquals(EventPrecision.note(Some(com.histmersion.api.catalogue.EventSummary.Central(79)), None, None), Some("79 CE"))
     assertEquals(
-      EventPrecision.note(None, None, Some("Historical Observations")),
+      EventPrecision.note(None, None, Some(com.histmersion.api.catalogue.EventSummary.DatingMethod("Historical Observations"))),
       Some("dated by historical observations")
     )
 
   test("precision: ± ≤ 50 precise, ≤ 500 approximate, more imprecise; the stated ± or the widest window"):
     def p(ts: TimeSpan, pm: Option[Long] = None) = EventPrecision.of(ts, pm)
-    assertEquals(p(TimeSpan(Some(79), Some(79), Some(79), Some(79))), EventPrecision.Precise)
-    assertEquals(p(TimeSpan(Some(-1624), None, None, Some(-1596))), EventPrecision.Precise, "± 14")
+    assertEquals(p(TimeSpan(Some(com.histmersion.api.catalogue.Year(79)), Some(com.histmersion.api.catalogue.Year(79)), Some(com.histmersion.api.catalogue.Year(79)), Some(com.histmersion.api.catalogue.Year(79)))), EventPrecision.Precise)
+    assertEquals(p(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1624)), None, None, Some(com.histmersion.api.catalogue.Year(-1596)))), EventPrecision.Precise, "± 14")
     assertEquals(
-      p(TimeSpan(Some(-1700), None, None, Some(-1599))),
+      p(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1700)), None, None, Some(com.histmersion.api.catalogue.Year(-1599)))),
       EventPrecision.Precise,
       "a century-wide window: ± 50"
     )
-    assertEquals(EventPrecision.uncertainty(TimeSpan(Some(-1700), None, None, Some(-1599)), None), Some(50L))
-    assertEquals(EventPrecision.uncertainty(TimeSpan(Some(-1700), None, None, Some(-1598)), None), Some(51L))
+    assertEquals(EventPrecision.uncertainty(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1700)), None, None, Some(com.histmersion.api.catalogue.Year(-1599))), None), Some(50L))
+    assertEquals(EventPrecision.uncertainty(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1700)), None, None, Some(com.histmersion.api.catalogue.Year(-1598))), None), Some(51L))
     assertEquals(
-      p(TimeSpan(Some(-1000), None, None, Some(-1)), None),
+      p(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1000)), None, None, Some(com.histmersion.api.catalogue.Year(-1))), None),
       EventPrecision.Approximate,
       "a millennium: ± 499"
     )
-    assertEquals(p(TimeSpan(Some(-1000), None, None, Some(1))), EventPrecision.Approximate, "across year 0: ± 500")
-    assertEquals(p(TimeSpan(Some(-1000), None, None, Some(3))), EventPrecision.Imprecise, "± 501")
-    assertEquals(EventPrecision.uncertainty(TimeSpan(Some(-1000), None, None, Some(1)), None), Some(500L), "no year 0")
+    assertEquals(p(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1000)), None, None, Some(com.histmersion.api.catalogue.Year(1)))), EventPrecision.Approximate, "across year 0: ± 500")
+    assertEquals(p(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1000)), None, None, Some(com.histmersion.api.catalogue.Year(3)))), EventPrecision.Imprecise, "± 501")
+    assertEquals(EventPrecision.uncertainty(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1000)), None, None, Some(com.histmersion.api.catalogue.Year(1))), None), Some(500L), "no year 0")
     // a long war with a certain core is precisely dated, however long it lasted
-    assertEquals(p(TimeSpan(Some(-431), Some(-431), Some(-404), Some(-404))), EventPrecision.Precise)
+    assertEquals(p(TimeSpan(Some(com.histmersion.api.catalogue.Year(-431)), Some(com.histmersion.api.catalogue.Year(-431)), Some(com.histmersion.api.catalogue.Year(-404)), Some(com.histmersion.api.catalogue.Year(-404)))), EventPrecision.Precise)
     // a cored event's widest uncertain window
     assertEquals(
-      EventPrecision.uncertainty(TimeSpan(Some(-1300), Some(-1100), Some(-1000), Some(-990)), None),
+      EventPrecision.uncertainty(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), Some(com.histmersion.api.catalogue.Year(-1100)), Some(com.histmersion.api.catalogue.Year(-1000)), Some(com.histmersion.api.catalogue.Year(-990))), None),
       Some(100L)
     )
     // the stated ± wins where it is larger than what the (clamped) window shows
-    assertEquals(EventPrecision.uncertainty(TimeSpan(Some(-2251), None, None, Some(2026)), Some(2500)), Some(2500L))
+    assertEquals(EventPrecision.uncertainty(TimeSpan(Some(com.histmersion.api.catalogue.Year(-2251)), None, None, Some(com.histmersion.api.catalogue.Year(2026))), Some(com.histmersion.api.catalogue.EventSummary.PlusMinus(2500))), Some(2500L))
     assertEquals(p(TimeSpan()), EventPrecision.Undated)
     assertEquals(
       List(EventPrecision.Precise, EventPrecision.Approximate, EventPrecision.Imprecise, EventPrecision.Undated)
@@ -91,17 +93,17 @@ class EventDatingSuite extends munit.FunSuite:
     assertEquals(Corrections.status(Corrections.Outcome.Conflict), Correction.Status.Conflict)
     assertEquals(
       Corrections.counts(List(Corrections.Outcome.Keep, Corrections.Outcome.Conflict, Corrections.Outcome.Keep)),
-      Correction.Counts(2, 0, 1)
+      Correction.Counts(com.histmersion.api.catalogue.Correction.Counts.Kept(2), com.histmersion.api.catalogue.Correction.Counts.Retired(0), com.histmersion.api.catalogue.Correction.Counts.Conflicts(1))
     )
     val c = Correction(
-      1,
-      "event",
-      "gvp_1",
-      "label",
+      com.histmersion.api.catalogue.Correction.Id(1),
+      com.histmersion.api.catalogue.Correction.TargetKind("event"),
+      com.histmersion.api.catalogue.Correction.TargetId("gvp_1"),
+      com.histmersion.api.catalogue.Correction.Field("label"),
       y.noSpaces,
       x.noSpaces,
       Correction.Status.Conflict,
-      Some("gvp"),
+      Some(com.histmersion.api.catalogue.Correction.Upstream("gvp")),
       Some(z.noSpaces)
     )
     assertEquals(
@@ -111,12 +113,12 @@ class EventDatingSuite extends munit.FunSuite:
 
   test("event fields: a patch and the catalogue's record compare field by field, as JSON"):
     val r = CatalogRecord(
-      "gvp",
-      "1",
-      "",
-      "Eruption of Zz",
-      "volcanic eruption",
-      TimeSpan(Some(1), None, None, Some(3)),
+      com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"),
+      com.histmersion.api.catalogue.CatalogRecord.ProviderId("1"),
+      com.histmersion.api.catalogue.CatalogRecord.Url(""),
+      com.histmersion.api.catalogue.CatalogRecord.Label("Eruption of Zz"),
+      com.histmersion.api.catalogue.CatalogRecord.Kind("volcanic eruption"),
+      TimeSpan(Some(com.histmersion.api.catalogue.Year(1)), None, None, Some(com.histmersion.api.catalogue.Year(3))),
       Some(10.5),
       Some(20.25),
       description = Some("x")
@@ -126,8 +128,8 @@ class EventDatingSuite extends munit.FunSuite:
     assertEquals(up(EventFields.Kind), "eruption".asJson, "canonical")
     val p = EventFields.ofPatch(
       EventPatch(
-        label = Some("Zz"),
-        kind = Some("Volcanic eruption"),
+        label = Some(com.histmersion.api.catalogue.EventSummary.Label("Zz")),
+        kind = Some(com.histmersion.api.catalogue.EventSummary.Kind("Volcanic eruption")),
         geometry = Some("""{"type":"Point","coordinates":[20.25, 10.5]}"""),
         description = Some("")
       )
@@ -136,18 +138,18 @@ class EventDatingSuite extends munit.FunSuite:
     assertEquals(p(EventFields.Geometry), up(EventFields.Geometry), "the same point, whatever the spacing")
     assertEquals(p(EventFields.Kind), up(EventFields.Kind))
     assertEquals(p(EventFields.Description), Json.Null, "an empty description clears it")
-    assertEquals(EventFields.ofPut(EventPut("Zz")).keySet, EventFields.all.toSet)
+    assertEquals(EventFields.ofPut(EventPut(com.histmersion.api.catalogue.EventSummary.Label("Zz"))).keySet, EventFields.all.toSet)
 
   // ── deterministic merge ────────────────────────────────────────────────────────────────────
 
-  private val tol = CatalogMerge.Tolerance(60, 30)
+  private val tol = CatalogMerge.Tolerance(com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(60), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(30))
   private def rec(p: String, id: String, y: Long, lat: Double, lon: Double, group: Option[String] = None) =
     CatalogRecord(
       p,
       id,
-      "",
+      com.histmersion.api.catalogue.CatalogRecord.Url(""),
       s"$p $id",
-      "eruption",
+      com.histmersion.api.catalogue.CatalogRecord.Kind("eruption"),
       TimeSpan(Some(y), Some(y), Some(y), Some(y)),
       Some(lat),
       Some(lon),
@@ -156,13 +158,13 @@ class EventDatingSuite extends munit.FunSuite:
   private def ev(id: String, y0: Long, y1: Long, lat: Double, lon: Double, wd: Option[String] = None) =
     StoredEvent(
       id,
-      "eruption",
+      com.histmersion.domain.catalogue.events.StoredEvent.Kind("eruption"),
       TimeSpan(Some(y0), None, None, Some(y1)),
       Some(lat),
       Some(lon),
       wd,
       Set.empty,
-      catalogue = false
+      catalogue = com.histmersion.domain.catalogue.events.StoredEvent.Catalogue(false)
     )
 
   test(
@@ -213,20 +215,20 @@ class EventDatingSuite extends munit.FunSuite:
 
   test("the owner record of an event: the one its id is named after, else the lowest of its catalogue's"):
     assertEquals(
-      CatalogRecord.owner("gvp_2", "gvp", List("gvp" -> "1", "gvp" -> "2", "noaa" -> "x")),
+      CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("gvp_2"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List("gvp" -> "1", "gvp" -> "2", "noaa" -> "x")),
       Some("gvp" -> "2")
     )
     assertEquals(
-      CatalogRecord.owner("renamed", "gvp", List("noaa" -> "x", "gvp" -> "9", "gvp" -> "10")),
+      CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("renamed"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List("noaa" -> "x", "gvp" -> "9", "gvp" -> "10")),
       Some("gvp" -> "10")
     )
-    assertEquals(CatalogRecord.owner("x", "gvp", List("noaa" -> "x")), None)
+    assertEquals(CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("x"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List("noaa" -> "x")), None)
 
   test("an item read in two Wikidata classes keeps the more specific kind, whichever class is read last"):
     val order = List("naval_battle", "siege", "battle", "revolt", "war")
     val more = EventProviders.WikidataEvents.moreSpecific(order, _, _)
-    assertEquals(more("naval_battle", "battle"), "naval_battle")
-    assertEquals(more("battle", "naval_battle"), "naval_battle")
-    assertEquals(more("war", "revolt"), "revolt")
-    assertEquals(more("battle", "natural_disaster"), "battle", "a kind outside the classes yields")
-    assertEquals(more("natural_disaster", "battle"), "battle")
+    assertEquals(more(com.histmersion.api.catalogue.EventSummary.Kind("naval_battle"), com.histmersion.api.catalogue.EventSummary.Kind("battle")), "naval_battle")
+    assertEquals(more(com.histmersion.api.catalogue.EventSummary.Kind("battle"), com.histmersion.api.catalogue.EventSummary.Kind("naval_battle")), "naval_battle")
+    assertEquals(more(com.histmersion.api.catalogue.EventSummary.Kind("war"), com.histmersion.api.catalogue.EventSummary.Kind("revolt")), "revolt")
+    assertEquals(more(com.histmersion.api.catalogue.EventSummary.Kind("battle"), com.histmersion.api.catalogue.EventSummary.Kind("natural_disaster")), "battle", "a kind outside the classes yields")
+    assertEquals(more(com.histmersion.api.catalogue.EventSummary.Kind("natural_disaster"), com.histmersion.api.catalogue.EventSummary.Kind("battle")), "battle")

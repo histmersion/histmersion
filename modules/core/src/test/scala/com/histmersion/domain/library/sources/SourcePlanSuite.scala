@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.sources
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import com.histmersion.api.MergeFixture
 import com.histmersion.api.given
 
@@ -25,7 +27,7 @@ class SourcePlanSuite extends munit.FunSuite:
       Some(1997),
       notes = Some("home's"),
       origin = home
-    ).copy(tags = List("hittites", "Storm-God"), topics = List("Anatolia"))
+    ).copy(tags = List("hittites", "Storm-God"), topics = List(com.histmersion.api.exchange.Bundle.Source.Topics("Anatolia")))
     val r = src(
       "w",
       "guterbock1997_perspectives",
@@ -37,14 +39,14 @@ class SourcePlanSuite extends munit.FunSuite:
     )
       .copy(
         tags = List("storm_god", "religion"),
-        topics = List("anatolia", "Religion"),
+        topics = List(com.histmersion.api.exchange.Bundle.Source.Topics("anatolia"), com.histmersion.api.exchange.Bundle.Source.Topics("Religion")),
         status = Source.Status.Contested
       )
     val f = SourcePlan.fold(
       l,
       r,
       Map(com.histmersion.api.exchange.MergeIssue.Kind.NotesDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.Concat)),
-      "guterbock1997_hittite"
+      com.histmersion.domain.library.Citekey("guterbock1997_hittite")
     )
     assertEquals(f.uid, l.uid)
     assertEquals(f.origin, home)
@@ -68,12 +70,12 @@ class SourcePlanSuite extends munit.FunSuite:
 
   test("a source folded: the period by hull, the body and original from the side decided"):
     val l = src("h", "a2000_x", "X", Nil, Some(2000), body = Some("ours"), sha = Some("1" * 64), origin = home)
-      .copy(period = Some(Bundle.Range(Some(-1500), Some(-1300))))
+      .copy(period = Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1500)), Some(com.histmersion.api.catalogue.Year(-1300)))))
     val r = src("w", "a2000_y", "X", Nil, Some(2000), body = Some("theirs"), sha = Some("2" * 64))
-      .copy(period = Some(Bundle.Range(Some(-1400), Some(-1100))))
+      .copy(period = Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1400)), Some(com.histmersion.api.catalogue.Year(-1100)))))
     val hull =
       SourcePlan.fold(l, r, Map(com.histmersion.api.exchange.MergeIssue.Kind.PeriodDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.Hull)), l.citekey)
-    assertEquals(hull.period, Some(Bundle.Range(Some(-1500), Some(-1100))))
+    assertEquals(hull.period, Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1500)), Some(com.histmersion.api.catalogue.Year(-1100)))))
     assertEquals(hull.bodySha256, l.bodySha256)
     val right =
       SourcePlan.fold(l, r, Map(com.histmersion.api.exchange.MergeIssue.Kind.BodyDiffers -> MergeDecision.of(com.histmersion.api.exchange.MergeDecision.Kind.KeepRight)), l.citekey)

@@ -13,14 +13,14 @@ class RenameSuite extends munit.FunSuite:
 
   test("validate: a valid, link-shaped, different key passes (trimmed)"):
     assertEquals(
-      com.histmersion.domain.library.sources.Citekeys.renameTo("page2024_history", " page1959_history ").map(ck => ck.value: String),
+      com.histmersion.domain.library.sources.Citekeys.renameTo(com.histmersion.domain.library.Citekey("page2024_history"), com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw(" page1959_history ")).map(ck => ck.value: String),
       Right("page1959_history")
     )
-    assertEquals(com.histmersion.domain.library.sources.Citekeys.renameTo("x2020_a", "knapp2016").map(ck => ck.value: String), Right("knapp2016"))
+    assertEquals(com.histmersion.domain.library.sources.Citekeys.renameTo(com.histmersion.domain.library.Citekey("x2020_a"), com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("knapp2016")).map(ck => ck.value: String), Right("knapp2016"))
 
   test("validate: the same key, an invalid key and a key the link resolver would not take are refused"):
     def refused(to: String, says: String) =
-      com.histmersion.domain.library.sources.Citekeys.renameTo("page2024_history", to) match
+      com.histmersion.domain.library.sources.Citekeys.renameTo(com.histmersion.domain.library.Citekey("page2024_history"), to) match
         case Left(e) =>
           assert(e.nonEmpty)
           assert(e.contains(says), e)
@@ -33,28 +33,28 @@ class RenameSuite extends munit.FunSuite:
     refused("nodigits", "LINK-shaped")
 
   test("shortForms: every prefix that ends right before an underscore"):
-    assertEquals(Rename.shortForms("beckman2025_ahhiyawa"), List("beckman2025"))
-    assertEquals(Rename.shortForms("a2020_b_c"), List("a2020", "a2020_b"))
-    assertEquals(Rename.shortForms("knapp2016"), Nil)
-    assertEquals(Rename.shortForms("_x"), Nil)
+    assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("beckman2025_ahhiyawa")), List("beckman2025"))
+    assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("a2020_b_c")), List("a2020", "a2020_b"))
+    assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("knapp2016")), Nil)
+    assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("_x")), Nil)
 
   test("findingId: only `<old>#…` moves"):
-    assertEquals(Rename.findingId("old2020_a#3", "old2020_a", "new1999_a"), Some("new1999_a#3"))
-    assertEquals(Rename.findingId("old2020_ab#3", "old2020_a", "new1999_a"), None)
-    assertEquals(Rename.findingId("custom-id", "old2020_a", "new1999_a"), None)
+    assertEquals(Rename.findingId(com.histmersion.api.library.Finding.Id("old2020_a#3"), com.histmersion.api.library.Citekey("old2020_a"), com.histmersion.api.library.Citekey("new1999_a")), Some("new1999_a#3"))
+    assertEquals(Rename.findingId(com.histmersion.api.library.Finding.Id("old2020_ab#3"), com.histmersion.api.library.Citekey("old2020_a"), com.histmersion.api.library.Citekey("new1999_a")), None)
+    assertEquals(Rename.findingId(com.histmersion.api.library.Finding.Id("custom-id"), com.histmersion.api.library.Citekey("old2020_a"), com.histmersion.api.library.Citekey("new1999_a")), None)
 
   test("replaceToken: the whole key only, never inside a longer one"):
     assertEquals(
-      Rename.replaceToken("b2021_y|old2020_a|references", "old2020_a", "new1999_a"),
+      Rename.replaceToken("b2021_y|old2020_a|references", com.histmersion.api.library.Citekey("old2020_a"), com.histmersion.api.library.Citekey("new1999_a")),
       "b2021_y|new1999_a|references"
     )
-    assertEquals(Rename.replaceToken("old2020_a#2", "old2020_a", "new1999_a"), "new1999_a#2")
+    assertEquals(Rename.replaceToken("old2020_a#2", com.histmersion.api.library.Citekey("old2020_a"), com.histmersion.api.library.Citekey("new1999_a")), "new1999_a#2")
     assertEquals(
-      Rename.replaceToken("zold2020_a|old2020_ab|old2020_a.x", "old2020_a", "new1999_a"),
+      Rename.replaceToken("zold2020_a|old2020_ab|old2020_a.x", com.histmersion.api.library.Citekey("old2020_a"), com.histmersion.api.library.Citekey("new1999_a")),
       "zold2020_a|old2020_ab|old2020_a.x"
     )
     // a `.` in the key is literal, not a regex wildcard
-    assertEquals(Rename.replaceToken("x2020_v1x2", "x2020_v1.2", "y"), "x2020_v1x2")
+    assertEquals(Rename.replaceToken("x2020_v1x2", com.histmersion.api.library.Citekey("x2020_v1.2"), com.histmersion.api.library.Citekey("y")), "x2020_v1x2")
 
   test("retarget: target moved; label, anchor, escapes, spacing and embeds kept"):
     val to: String => Option[String] = t => Option.when(t == "old2020_a" || t == "old2020")("new1999_a")
@@ -90,10 +90,10 @@ class RenameSuite extends munit.FunSuite:
       None,
       None
     )
-    val counts = Rename.Counts(3, List("troy"), List("x2020_y"), 5, List(Rename.Count("jobs.citekey", 1)), 0)
+    val counts = Rename.Counts(com.histmersion.api.library.Rename.Counts.Findings(3), List(com.histmersion.api.library.Rename.Counts.Articles("troy")), List(com.histmersion.api.library.Rename.Counts.Sources("x2020_y")), com.histmersion.api.library.Rename.Counts.Links(5), List(Rename.Count(com.histmersion.api.library.Rename.Count.Table("jobs.citekey"), com.histmersion.api.library.Rename.Count.Rows(1))), com.histmersion.api.library.Rename.Counts.EdgesPromoted(0))
     val pushed =
       SourcesMarkdown.sourceRenamed(
-        com.histmersion.api.library.Source.Renamed("page2024_history", "page1959_history", src, counts, Some("12"))
+        com.histmersion.api.library.Source.Renamed(com.histmersion.api.library.Citekey("page2024_history"), com.histmersion.api.library.Citekey("page1959_history"), src, counts, Some(com.histmersion.api.library.Source.CalibreId("12")))
       )
     List(
       "`page2024_history` → `page1959_history`",
@@ -107,7 +107,7 @@ class RenameSuite extends munit.FunSuite:
       .foreach(s => assert(pushed.contains(s), s"missing '$s' in\n$pushed"))
     val notPushed =
       SourcesMarkdown.sourceRenamed(
-        com.histmersion.api.library.Source.Renamed("page2024_history", "page1959_history", src, counts, None)
+        com.histmersion.api.library.Source.Renamed(com.histmersion.api.library.Citekey("page2024_history"), com.histmersion.api.library.Citekey("page1959_history"), src, counts, None)
       )
     assert(notPushed.contains("calibre push page1959_history"), notPushed)
     assert(notPushed.contains("`page2024_history` directory"), notPushed)

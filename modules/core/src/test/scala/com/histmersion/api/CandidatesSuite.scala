@@ -1,5 +1,7 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import io.circe.parser.parse
@@ -28,14 +30,14 @@ class CandidatesSuite extends munit.FunSuite:
     "a work's key is its DOI, lower case without a resolver; an arXiv preprint without one gets arXiv's DataCite DOI"
   ):
     assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(w("https://doi.org/10.1234/ABC")), Some("10.1234/abc"))
-    assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(WorkRef(arxivId = Some("2401.01234v3"))), Some("10.48550/arxiv.2401.01234"))
+    assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(WorkRef(arxivId = Some(com.histmersion.api.library.Source.Candidate.ArxivId("2401.01234v3")))), Some("10.48550/arxiv.2401.01234"))
     assertEquals(com.histmersion.domain.library.acquisition.CandidateDedupe.keyOf(WorkRef(title = (Some("no id")).map(com.histmersion.api.library.Title.apply))), None)
 
   test("a watch reads from its watermark, or (never read) the look-back before today"):
     val today = LocalDate.of(2026, 10, 24)
-    assertEquals(Candidates.since(Some("2026-10-01"), today, 365), LocalDate.of(2026, 10, 1))
-    assertEquals(Candidates.since(None, today, 365), LocalDate.of(2025, 10, 24))
-    assertEquals(Candidates.since(Some("not a date"), today, 30), LocalDate.of(2026, 9, 24))
+    assertEquals(Candidates.since(Some(com.histmersion.api.library.Candidates.Watermark("2026-10-01")), today, com.histmersion.api.library.Candidates.Lookback(365)), LocalDate.of(2026, 10, 1))
+    assertEquals(Candidates.since(None, today, com.histmersion.api.library.Candidates.Lookback(365)), LocalDate.of(2025, 10, 24))
+    assertEquals(Candidates.since(Some(com.histmersion.api.library.Candidates.Watermark("not a date")), today, com.histmersion.api.library.Candidates.Lookback(30)), LocalDate.of(2026, 9, 24))
 
   test("one sweep's works: once each by key with every watch that found it; no id, retracted and known left out"):
     val found = List(
@@ -45,9 +47,9 @@ class CandidatesSuite extends munit.FunSuite:
       "openalex query \"x\"" -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
       "openalex query \"x\"" -> w("10.1234/r").modify(_.isRetracted).setTo(true),
       "europepmc query \"x\"" -> w("10.1234/known"),
-      "arxiv query \"x\"" -> WorkRef(arxivId = Some("2401.00001"), title = (Some("P")).map(com.histmersion.api.library.Title.apply))
+      "arxiv query \"x\"" -> WorkRef(arxivId = Some(com.histmersion.api.library.Source.Candidate.ArxivId("2401.00001")), title = (Some("P")).map(com.histmersion.api.library.Title.apply))
     )
-    val (kept, skipped) = com.histmersion.domain.library.acquisition.CandidateDedupe.dedupe(found, Set("10.1234/known"))
+    val (kept, skipped) = com.histmersion.domain.library.acquisition.CandidateDedupe.dedupe(found, Set(com.histmersion.domain.library.Doi("10.1234/known")))
     assertEquals(
       kept.map(k => (k._1, k._3)),
       List(
@@ -72,7 +74,7 @@ class CandidatesSuite extends munit.FunSuite:
         year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
         authors = (List("Doe J", "Roe K")).map(com.histmersion.api.library.AuthorName.apply),
         venue = (Some("J Arch")).map(com.histmersion.api.library.Source.Venue.apply),
-        isOa = true,
+        isOa = com.histmersion.api.library.WorkRef.IsOa(true),
         abstractText = Some("Text")
       )
     )
@@ -90,7 +92,7 @@ class CandidatesSuite extends munit.FunSuite:
           year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
           authors = (List("A B")).map(com.histmersion.api.library.AuthorName.apply),
           venue = (Some("P")).map(com.histmersion.api.library.Source.Venue.apply),
-          isOa = true
+          isOa = com.histmersion.api.library.WorkRef.IsOa(true)
         )
       )
     )
@@ -107,7 +109,7 @@ class CandidatesSuite extends munit.FunSuite:
       List(
         WorkRef(
           doi = (Some("10.1234/ax")).map(com.histmersion.api.library.Doi.apply),
-          arxivId = Some("2410.01234"),
+          arxivId = Some(com.histmersion.api.library.Source.Candidate.ArxivId("2410.01234")),
           title = (Some("Late Bronze Age & climate")).map(com.histmersion.api.library.Title.apply),
           year = (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
           authors = (List("Ann Lee", "Bo Ng")).map(com.histmersion.api.library.AuthorName.apply),
@@ -126,24 +128,24 @@ class CandidatesSuite extends munit.FunSuite:
 
   test("the list and the sweep as Markdown"):
     val c = Source.Candidate(
-      7,
-      "g",
+      com.histmersion.api.library.Source.Candidate.Id(7),
+      com.histmersion.api.library.Source.Candidate.Goal("g"),
       com.histmersion.api.library.Doi("10.1234/a"),
       com.histmersion.api.library.Title("A title"),
       (Some(2026)).map(com.histmersion.api.catalogue.Year.apply),
       (List("Ann", "Bo")).map(com.histmersion.api.library.AuthorName.apply),
       (Some("J")).map(com.histmersion.api.library.Source.Venue.apply),
-      Some("abs"),
-      isOa = true,
+      Some(com.histmersion.api.library.Source.Candidate.AbstractText("abs")),
+      isOa = com.histmersion.api.library.Source.Candidate.IsOa(true),
       foundBy = List("openalex query \"x\""),
       firstSeen = "2026-10-24T10:00:00Z"
     )
     val md = CandidatesMarkdown.list(
       CandidateList(
-        Some("g"),
-        "new",
+        Some(com.histmersion.api.research.ReviewGoal.Slug("g")),
+        com.histmersion.api.library.CandidateList.State("new"),
         List(c),
-        List(CandidateCount("new", 1), CandidateCount("seen", 4)),
+        List(CandidateCount(com.histmersion.api.library.Source.Candidate.State("new"), com.histmersion.api.library.CandidateCount.Count(1)), CandidateCount(com.histmersion.api.library.Source.Candidate.State("seen"), com.histmersion.api.library.CandidateCount.Count(4))),
         next = Some(25)
       )
     )
@@ -151,16 +153,16 @@ class CandidatesSuite extends munit.FunSuite:
     assert(md.contains("Counts: 1 new, 4 seen.") && md.contains("`--offset 25`"), md)
     val sw = CandidatesMarkdown.sweep(
       CandidateSweep(
-        "g",
+        com.histmersion.api.library.CandidateSweep.Goal("g"),
         List(
-          CandidateWatch("g", "query", "x", "crossref", Some("2026-10-24"), lastFound = 3),
-          CandidateWatch("g", "query", "x", "arxiv", lastError = Some("timeout"))
+          CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("g"), com.histmersion.api.library.CandidateWatch.Kind("query"), com.histmersion.api.library.CandidateWatch.Subject("x"), com.histmersion.api.library.CandidateWatch.Index("crossref"), Some(com.histmersion.api.library.CandidateWatch.Watermark("2026-10-24")), lastFound = 3),
+          CandidateWatch(com.histmersion.api.library.CandidateWatch.Goal("g"), com.histmersion.api.library.CandidateWatch.Kind("query"), com.histmersion.api.library.CandidateWatch.Subject("x"), com.histmersion.api.library.CandidateWatch.Index("arxiv"), lastError = Some("timeout"))
         ),
-        3,
-        2,
-        1,
+        com.histmersion.api.library.CandidateSweep.Found(3),
+        com.histmersion.api.library.CandidateSweep.Added(2),
+        com.histmersion.api.library.CandidateSweep.Again(1),
         Map("retracted" -> 1),
-        5
+        com.histmersion.api.library.CandidateSweep.Unseen(5)
       )
     )
     assert(sw.contains("3 work(s) found by 2 watch(es): 2 new candidate(s), 1 found again. Left out: 1 retracted."), sw)

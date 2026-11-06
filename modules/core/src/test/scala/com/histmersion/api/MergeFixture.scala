@@ -67,7 +67,7 @@ object MergeFixture:
       None,
       None,
       None,
-      "2026-01-01",
+      com.histmersion.api.exchange.Bundle.Source.AddedDate("2026-01-01"),
       body.map(BundleFormat.sha256Hex),
       sha,
       None,
@@ -75,7 +75,7 @@ object MergeFixture:
     )
 
   def article(id: String, slug: String, body: String, origin: UUID = work): Bundle.Article =
-    Bundle.Article(uid(id), origin, slug, slug.replace('_', ' '), "concept", body, None, Nil, Nil, None, At)
+    Bundle.Article(uid(id), origin, slug, slug.replace('_', ' '), com.histmersion.api.exchange.Bundle.Article.Kind("concept"), body, None, Nil, Nil, None, At)
 
   def event(
       id: String,
@@ -90,12 +90,12 @@ object MergeFixture:
       origin,
       eventId,
       label,
-      "battle",
+      com.histmersion.api.exchange.Bundle.Event.Kind("battle"),
       Some(from),
       None,
       None,
       Some(to),
-      "historical",
+      com.histmersion.api.exchange.Bundle.Event.Historicity("historical"),
       None,
       None,
       None,
@@ -109,20 +109,20 @@ object MergeFixture:
     )
 
   def goal(id: String, slug: String, title: String, origin: UUID = work, notes: Option[String] = None): Bundle.Goal =
-    Bundle.Goal(uid(id), origin, slug, title, "planned", notes, Nil, Nil, None, None, At, At)
+    Bundle.Goal(uid(id), origin, slug, title, com.histmersion.api.exchange.Bundle.Goal.Status("planned"), notes, Nil, Nil, None, None, At, At)
 
   def manifest(es: BundleEntities): Bundle.Manifest =
     Bundle.Manifest(
       Bundle.Format,
       Bundle.FormatVersion,
-      "36",
+      com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("36"),
       uid("bundle"),
-      Bundle.Instance(work, Some("work")),
+      Bundle.Instance(work, Some(com.histmersion.api.exchange.Bundle.Instance.Label("work"))),
       None,
       es.asOf,
       Nil,
-      Bundle.Blobs(0, 0),
-      Bundle.Reference(0, "", 0, "")
+      Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
+      Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
 
   val bodyOlsen: String =
@@ -219,7 +219,7 @@ object MergeFixture:
       // nothing like it at home
       src("w-new", "zznew2020_only", "A Book Only Work Has", List("Roe, Richard"), Some(2020))
     ),
-    aliases = List(Bundle.Alias("harrison1903_old", uid("w-harrison"), At)),
+    aliases = List(Bundle.Alias(com.histmersion.api.exchange.Bundle.Alias.Value("harrison1903_old"), uid("w-harrison"), At)),
     articles = List(
       article("w-bac", "bronze_age_collapse", "Work's account of the collapse, citing [[kuhrt1995_near]]."),
       article("w-same", "zz_same_text", "Identical on both sides.")
@@ -338,7 +338,7 @@ object MergeFixture:
     )
     Input(
       manifest = manifest(es),
-      here = Bundle.Instance(home, Some("home")),
+      here = Bundle.Instance(home, Some(com.histmersion.api.exchange.Bundle.Instance.Label("home"))),
       compat = Nil,
       readProblems = Nil,
       foreign = es,
@@ -367,7 +367,7 @@ object MergeFixture:
       ),
       live = Set.empty,
       places = Set.empty,
-      reference = Bundle.Reference(0, "", 0, "")
+      reference = Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
 
   /** An issue as the expected list names it: kind, letter, the two labels, severity, conditional on. */

@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.config.*
@@ -25,7 +27,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
       usd: Option[Double] = None,
       next: Option[String] = None
   ) =
-    GoalSchedule("tin", k, cron, on, usd, next)
+    GoalSchedule(com.histmersion.api.automation.Goal.Slug("tin"), k, cron, on, usd, next)
 
   test(
     "a new watcher: the enabled schedules' kinds, the cron that fires most often (its next firing), the acquisition budget"
@@ -59,8 +61,8 @@ class WatchSchedulesSuite extends munit.FunSuite:
   test("an existing watcher keeps its own cron, next firing, sweeps and budget; it gains the enabled kinds"):
     val e = Existing(
       ManagerConfig(sweeps = Some(List("currency")), budgetUsd = Some(1.0)),
-      Some("@weekly"),
-      Some("2026-10-18T00:00:00Z")
+      Some(com.histmersion.domain.Cron.Text("@weekly")),
+      Some(com.histmersion.domain.ManagerPolicy.InstantText("2026-10-18T00:00:00Z"))
     )
     val p = migrate(Some(e), List(sch(ScheduleKind.Acquisition, "@daily", usd = Some(0.2))), now)
     assertEquals(
@@ -71,9 +73,9 @@ class WatchSchedulesSuite extends munit.FunSuite:
 
   test("view: one schedule per sweep, the watcher's cron and next firing; paused says how to make it fire"):
     val m = ManagerInfo(
-      watchId("tin"),
-      "watch",
-      Some("tin"),
+      watchId(com.histmersion.api.automation.Goal.Ref("tin")),
+      com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"),
+      Some(com.histmersion.api.automation.Goal.Slug("tin")),
       State.Paused.wire,
       config = ManagerConfig(sweeps = Some(List("currency")), budgetUsd = Some(0.5)),
       cron = Some("@daily"),
@@ -86,11 +88,11 @@ class WatchSchedulesSuite extends munit.FunSuite:
     )
     assert(v.head.lastNote.exists(_.contains("paused")), v.head.lastNote)
     val it = ManagerItem(
-      1,
+      com.histmersion.api.automation.Managers.ManagerItem.Id(1),
       m.id,
       CurrencyCheck,
-      "tin",
-      "done",
+      com.histmersion.api.automation.Managers.ManagerItem.Target("tin"),
+      com.histmersion.api.automation.Managers.ManagerItem.Status("done"),
       runId = Some("run-1"),
       outcome = Some("currency-check goal tin: …"),
       updatedAt = "2026-10-17T00:00:00Z"

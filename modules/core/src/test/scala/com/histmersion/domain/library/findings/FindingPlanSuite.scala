@@ -1,5 +1,7 @@
 package com.histmersion.domain.library.findings
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.MergeFixture
@@ -17,7 +19,7 @@ class FindingPlanSuite extends munit.FunSuite:
       id: String,
       ck: String,
       claim: String,
-      period: Option[Bundle.Range] = Some(Bundle.Range(Some(-1400), Some(-1200))),
+      period: Option[Bundle.Range] = Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-1400)), Some(com.histmersion.api.catalogue.Year(-1200)))),
       lonLat: Option[(Double, Double)] = Some((34.6, 40.0)),
       tags: List[String] = Nil,
       confidence: Option[Confidence] = Some(Confidence.High),
@@ -49,9 +51,9 @@ class FindingPlanSuite extends munit.FunSuite:
       finding("w#1", "w", "the storm god of Hatti is Tarhunna", tags = List("work"), confidence = Some(Confidence.Low)),
       finding("w#2", "w", "Tarhunna the storm god ruled Hatti and Arinna"),
       finding("w#3", "w", "Hattusa burned around 1180 BC"),
-      finding("w#4", "w", "Tarhunna is the storm god of Hatti", period = Some(Bundle.Range(Some(-500), Some(-400))))
+      finding("w#4", "w", "Tarhunna is the storm god of Hatti", period = Some(Bundle.Range(Some(com.histmersion.api.catalogue.Year(-500)), Some(com.histmersion.api.catalogue.Year(-400)))))
     )
-    val ms = FindingPlan.matches(lefts, rights, 50, 0.6)
+    val ms = FindingPlan.matches(lefts, rights, com.histmersion.domain.MergeSettings.FindingWithinKm(50), 0.6)
     assertEquals(ms.collect { case FindingPlan.Match.Same(r, l) => r.id -> l.id }, List("w#1" -> "h#1"))
     assertEquals(ms.collect { case FindingPlan.Match.Near(r, l, _) => r.id -> l.id }, List("w#2" -> "h#2"))
     // a different period is not the same finding
@@ -63,12 +65,12 @@ class FindingPlanSuite extends munit.FunSuite:
     // far apart, and in different regions: not the same place
     val far =
       finding("w#5", "w", "Tarhunna is the storm god of Hatti", lonLat = Some((10.0, 50.0)), region = Some("Bavaria"))
-    assert(!FindingPlan.samePlace(lefts.head, far, 50))
-    assert(FindingPlan.samePlace(lefts.head, far.modify(_.region).setTo(Some("anatolia")), 50))
+    assert(!FindingPlan.samePlace(lefts.head, far, com.histmersion.domain.MergeSettings.FindingWithinKm(50)))
+    assert(FindingPlan.samePlace(lefts.head, far.modify(_.region).setTo(Some("anatolia")), com.histmersion.domain.MergeSettings.FindingWithinKm(50)))
 
   test("finding ids continue after the highest"):
     assertEquals(
-      FindingPlan.nextIds("a2000_x", Set("a2000_x#1", "a2000_x#7", "b2000_y#9"), 2),
+      FindingPlan.nextIds(com.histmersion.api.library.Citekey("a2000_x"), Set(com.histmersion.api.library.Finding.Id("a2000_x#1"), com.histmersion.api.library.Finding.Id("a2000_x#7"), com.histmersion.api.library.Finding.Id("b2000_y#9")), com.histmersion.domain.library.findings.FindingPlan.IdCount(2)),
       List("a2000_x#8", "a2000_x#9")
     )
-    assertEquals(FindingPlan.nextIds("a2000_x", Set.empty, 1), List("a2000_x#1"))
+    assertEquals(FindingPlan.nextIds(com.histmersion.api.library.Citekey("a2000_x"), Set.empty, com.histmersion.domain.library.findings.FindingPlan.IdCount(1)), List("a2000_x#1"))
