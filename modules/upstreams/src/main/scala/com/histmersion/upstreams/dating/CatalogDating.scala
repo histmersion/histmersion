@@ -77,8 +77,8 @@ object CatalogDating:
   def span(start: Option[Bound], end: Option[Bound]): Span =
     (start.orElse(end), end.orElse(start)) match
       case (Some(s), Some(e)) =>
-        val core = Option.when(s.hi <= e.lo)((s.hi, e.lo))
-        Span(Some(s.lo.min(e.lo)), core.map(_._1), core.map(_._2), Some(e.hi.max(s.hi)))
+        val core = Option.when((s.hi).value <= e.lo)((s.hi, e.lo))
+        Span(Some((s.lo).value.min(e.lo)), core.map(_._1), core.map(_._2), Some((e.hi).value.max(s.hi)))
       case _ => Span()
 
   /** The years a catalogue's dating may cover: none after `present` (an uncertainty is a window around a central

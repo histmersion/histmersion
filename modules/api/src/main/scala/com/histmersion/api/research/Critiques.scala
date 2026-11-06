@@ -187,7 +187,7 @@ object Critiques:
       .getOrElse(3)
     pairs
       .filter((refactorCallback2 => ((refactorCallback2.open) == _root_.com.histmersion.api.research.CritiquePair.OpenResult(true))))
-      .sortBy(p => (tier(p), kind(p), -(p.src.mentions + p.dst.mentions), p.src.citekey, p.dst.citekey))
+      .sortBy(p => (tier(p), kind(p), -((p.src.mentions).value + p.dst.mentions), p.src.citekey, p.dst.citekey))
 
   def summary(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.SummaryResult =
     _root_.com.histmersion.api.research.Critiques.SummaryResult(s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((pairs.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +

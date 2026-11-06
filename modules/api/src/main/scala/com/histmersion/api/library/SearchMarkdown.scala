@@ -141,7 +141,7 @@ object SearchMarkdown:
       val bar = (n: Int) => if n == 0 then "" else "█" * math.max(1, (n.toDouble / max * 24).round.toInt)
       val rows = collapsed.map { b =>
         val periodLabel = s"${fmtYear(b.start)}–${fmtYear(b.end)}"
-        val suffix = if b.merged > 1 then s" _(${b.merged} buckets)_" else ""
+        val suffix = if (b.merged).value > 1 then s" _(${b.merged} buckets)_" else ""
         s"| $periodLabel | ${b.count} | ${bar(b.count)} |$suffix"
       }
       val starts = unit == _root_.com.histmersion.api.library.SearchMarkdown.HistogramUnit(Aggregate.UnitStarts)
@@ -150,10 +150,10 @@ object SearchMarkdown:
       val one = if (unit).value.endsWith("s") then (unit).value.dropRight(1) else unit
       val note =
         if starts then
-          s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each source is counted " +
+          s"_${h.buckets.count((_.count).value > 0)} non-empty bucket(s); each source is counted " +
             "ONCE, in the bucket its period starts in, so the bars do sum to the total._"
         else
-          s"_${h.buckets.count(_.count > 0)} non-empty bucket(s); each $one is counted in " +
+          s"_${h.buckets.count((_.count).value > 0)} non-empty bucket(s); each $one is counted in " +
             "every bucket its period overlaps, so the bars do not sum to a total._"
       // NB: no stripMargin here — every table row starts with '|', which stripMargin would eat.
       val col = if starts then "sources" else unit
@@ -179,7 +179,7 @@ object SearchMarkdown:
         .foldLeft(List.empty[CollapsedBucket]) { (acc, b) =>
           acc match
             case head :: tail if head.count == b.count =>
-              head.copy(end = b.end, merged = head.merged + 1) :: tail
+              head.copy(end = b.end, merged = (head.merged).value + 1) :: tail
             case _ =>
               CollapsedBucket(b.start, b.end, b.count, _root_.com.histmersion.api.library.SearchMarkdown.CollapsedBucket.Merged(1)) :: acc
         }
@@ -199,7 +199,7 @@ object SearchMarkdown:
   private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.SearchMarkdown.TreeLinesUnit, depth: com.histmersion.api.library.SearchMarkdown.TreeLinesDepth): List[com.histmersion.api.library.SearchMarkdown.TreeLinesResult] =
     val pad = "  " * (depth).value
     buckets.flatMap { b =>
-      val over = if b.overlap > 0 then s" · ${b.overlap} in more than one ${childNoun(b)}" else ""
+      val over = if (b.overlap).value > 0 then s" · ${b.overlap} in more than one ${childNoun(b)}" else ""
       val when = if b.kind == _root_.com.histmersion.api.library.Bucket.Kind(Tree.KindTime) then ""
       else Option(periodLabel(b.start, b.end)).filter(_.nonEmpty).map(p => s" · $p").getOrElse("")
       val id = b.placeId.map(i => s" `$i`").getOrElse("")

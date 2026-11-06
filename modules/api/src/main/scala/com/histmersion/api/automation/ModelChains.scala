@@ -330,8 +330,8 @@ object ModelChains:
     case Measure.Usd    => s.usd
 
   def limitState(limit: Limit, reservePct: com.histmersion.api.automation.ModelChains.LimitStateReservePct, spends: Seq[Spend], now: com.histmersion.api.automation.ModelChains.LimitStateNow): LimitState =
-    val windowMs = limit.window.seconds * 1000L
-    val inWindow = spends.filter(s => s.at > (now).value - windowMs && s.at <= now).sortBy(_.at)
+    val windowMs = (limit.window.seconds).value * 1000L
+    val inWindow = spends.filter(s => (s.at).value > (now).value - windowMs && s.at <= now).sortBy(_.at)
     val used = inWindow.map(measureOf(_, limit.measure)).sum
     val reserve = limit.amount * reservePct / 100
     val threshold = limit.amount - reserve
@@ -341,7 +341,7 @@ object ModelChains:
       else
         inWindow
           .scanLeft((used, Option.empty[Long])) { case ((left, _), s) =>
-            (left - measureOf(s, limit.measure), Some(s.at + windowMs))
+            (left - measureOf(s, limit.measure), Some((s.at).value + windowMs))
           }
           .collectFirst { case (left, Some(at)) if left < threshold => at }
     LimitState(limit, used, (limit.amount - used).max(0), reserve, _root_.com.histmersion.api.automation.ModelChains.LimitState.Usable(usable), (freesAt).map(refactorValue16 => _root_.com.histmersion.api.automation.ModelChains.LimitState.FreesAt(refactorValue16)))

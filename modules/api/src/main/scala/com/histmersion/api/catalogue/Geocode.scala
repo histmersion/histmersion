@@ -315,7 +315,7 @@ object Geocode:
 
     def gap(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.GapResult =
       if (overlaps(p)).value then _root_.com.histmersion.api.catalogue.Geocode.Candidate.GapResult(0L)
-      else to.filter((_).value < p.start).map(p.start - _).orElse(from.filter((_).value > p.end).map((_).value - p.end)).getOrElse(_root_.com.histmersion.api.catalogue.Geocode.Candidate.GapResult(0L))
+      else to.filter((_).value < p.start).map((p.start).value - _).orElse(from.filter((_).value > p.end).map((_).value - p.end)).getOrElse(_root_.com.histmersion.api.catalogue.Geocode.Candidate.GapResult(0L))
 
   object Candidate:
     type UndatedResult = UndatedResult.T
@@ -369,7 +369,7 @@ object Geocode:
     case _ => if broad(kind) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0) else if kind == _root_.com.histmersion.api.catalogue.Geocode.KindRankKind(com.histmersion.api.catalogue.Place.Kind.Feature) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(1) else _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(2)
 
   private def timeRank(c: Candidate, at: Option[Period]): (com.histmersion.api.catalogue.Geocode.TimeRankResultPart1, com.histmersion.api.catalogue.Geocode.TimeRankResultPart2) = at match
-    case None    => if ((c.undated) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult(true)) then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(0), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L)) else (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(1), -c.span)
+    case None    => if ((c.undated) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult(true)) then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(0), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L)) else (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(1), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(-(c.span).value))
     case Some(p) =>
       if ((c.undated) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult(true)) then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(1), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L))
       else if ((c.overlaps(p)) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.OverlapsResult(true)) then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(0), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L))
@@ -474,7 +474,7 @@ object Geocode:
     type FromLat = FromLat.T
     object FromLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def worthMoving(m: Move, minKm: com.histmersion.api.catalogue.Geocode.WorthMovingMinKm): com.histmersion.api.catalogue.Geocode.WorthMovingResult = m.km > minKm
+  def worthMoving(m: Move, minKm: com.histmersion.api.catalogue.Geocode.WorthMovingMinKm): com.histmersion.api.catalogue.Geocode.WorthMovingResult = (m.km).value > minKm
 
   final case class Placement(findingId: com.histmersion.api.library.Finding.Id, citekey: com.histmersion.api.library.Citekey, region: Placement.Region, to: Resolution):
     def describe: com.histmersion.api.catalogue.Geocode.Placement.DescribeResult =

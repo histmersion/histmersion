@@ -42,7 +42,7 @@ object AutopilotMarkdown:
       (if f.maxFrom == _root_.com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom("person") then " (set by a person)" else " (agents.autopilot.max-active-goals)")
     val lines = List(
       f.note.map(n => s"_${n}_"),
-      Option.when(f.held > 0)(
+      Option.when((f.held).value > 0)(
         s"${Plural.count(f.held, _root_.com.histmersion.api.Plural.NounSingular("model-using item"))} held for the focus (nothing cancelled; runs in flight finish)"
       ),
       Option.when(f.changes.nonEmpty)(s"Just now: ${f.changes.mkString("; ")}")
@@ -60,7 +60,7 @@ object AutopilotMarkdown:
       if f.queue.isEmpty then "_Nothing waits for a slot._"
       else
         f.queue.zipWithIndex.map((g, i) => s"${i + 1}. ${g.slug} _(${g.stage})_ — ${g.why}").mkString("\n") +
-          (if f.queued > f.queue.size then s"\n\n…and ${f.queued - f.queue.size} more" else "")
+          (if (f.queued).value > f.queue.size then s"\n\n…and ${(f.queued).value - f.queue.size} more" else "")
     val waits = f.waiting.groupBy(_.code).toList.sortBy(-_._2.size).map { (c, ws) =>
       s"- ${Plural.count(_root_.com.histmersion.api.Plural.CountN((ws.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("goal"))} $c: " + ws
         .take(5)
@@ -107,7 +107,7 @@ object AutopilotMarkdown:
     val facts = List(
       s"- approvals: ${if rules.isEmpty then "a person's" else rules}",
       s"- legal open-access ingests today: ${s.ingestedToday}${
-          if s.ingestCap > 0 then s" of ${s.ingestCap} (all watchers)" else ""
+          if (s.ingestCap).value > 0 then s" of ${s.ingestCap} (all watchers)" else ""
         }" + ingestedBy
     ) ++
       beforeBacklog ++ List(

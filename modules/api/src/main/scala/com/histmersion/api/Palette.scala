@@ -87,7 +87,7 @@ object Palette:
   def allTokens: List[com.histmersion.api.Palette.AllTokensResult] =
     (edgeKinds.map({ val refactorFunction2 = edge; (refactorValue10) => refactorFunction2(_root_.com.histmersion.api.Palette.EdgeKind((refactorValue10).value)) }) :+ "--edge-default") ++ (statuses.map({ val refactorFunction = status; (refactorValue4) => refactorFunction(_root_.com.histmersion.api.Palette.StatusStatus((refactorValue4).value)) }) :+ "--status-default") ++
       (mediaKinds.map({ val refactorFunction3 = media; (refactorValue5) => refactorFunction3(_root_.com.histmersion.api.Palette.MediaKind((refactorValue5).value)) }) :+ "--media-default") ++ confidences.map({ val refactorFunction4 = confidence; (refactorValue6) => refactorFunction4(_root_.com.histmersion.api.Palette.ConfidenceLevel((refactorValue6).value)) }) ++
-      (0 until rampStops).map(i => s"--ramp-$i") ++ goalStages.flatMap(s => List(goalStage(s), goalStageSoft(s))) ++
+      (0 until (rampStops).value).map(i => s"--ramp-$i") ++ goalStages.flatMap(s => List(goalStage(_root_.com.histmersion.api.Palette.GoalStageStage((s).value)), goalStageSoft(_root_.com.histmersion.api.Palette.GoalStageStage((s).value)))) ++
       List("--graph-hover", "--graph-label", "--graph-label-hover", "--place-pick", "--place-preview") ++
       mapLabelTokens
 

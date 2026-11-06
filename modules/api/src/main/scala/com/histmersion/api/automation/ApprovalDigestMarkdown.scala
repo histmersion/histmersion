@@ -32,7 +32,7 @@ object ApprovalDigestMarkdown:
         s"- decided by: ${decider(g.decidedBy)}\n" +
         (if g.subjects.isEmpty then ""
          else s"- about: ${g.subjects.map(x => s"${x.subject} (${x.count})").mkString(", ")}\n") +
-        s"- ids: ${g.ids.map(i => s"#$i").mkString(", ")}${if g.count > g.ids.size then ", …" else ""}\n" +
+        s"- ids: ${g.ids.map(i => s"#$i").mkString(", ")}${if (g.count).value > g.ids.size then ", …" else ""}\n" +
         s"- all at once: `histmersion agent decide-all approve --kind ${g.kind}` (or `reject`; `--dry-run` lists them)"
     }
     _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DigestResult((head :: kinds).mkString("\n\n"))

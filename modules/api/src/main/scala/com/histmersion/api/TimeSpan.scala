@@ -16,7 +16,7 @@ final case class TimeSpan(
   def outer: Option[(com.histmersion.api.TimeSpan.OuterResultPart1, com.histmersion.api.TimeSpan.OuterResultPart2)] =
     val start = notBefore.orElse(beginBy).orElse(endFrom).orElse(notAfter)
     val end = notAfter.orElse(endFrom).orElse(beginBy).orElse(notBefore)
-    for a <- start; b <- end yield (a.min(b), a.max(b))
+    for a <- start; b <- end yield ((a).value.min(b), (a).value.max(b))
 
 object TimeSpan:
   type OuterResultPart1 = OuterResultPart1.T

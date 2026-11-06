@@ -57,7 +57,7 @@ object PeriodsMarkdown:
        else "")
     if r.skippedCount == _root_.com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(0) then head
     else
-      val more = r.skippedCount - r.skipped.size
+      val more = (r.skippedCount).value - r.skipped.size
       s"$head\n\nskipped ${Plural.count(r.skippedCount, _root_.com.histmersion.api.Plural.CountSingular("definition"))} (not imported):\n" +
         skippedList(r.skipped) + (if more > 0 then s"\n- …and $more more" else "")
 

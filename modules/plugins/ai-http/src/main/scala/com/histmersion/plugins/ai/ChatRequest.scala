@@ -56,7 +56,7 @@ object ChatRequest:
       "model" -> Some(Json.fromString(r.model)),
       "response_format" -> format,
       "tools" -> tools,
-      "max_completion_tokens" -> Option.when(r.maxTokens > 0)(Json.fromInt(r.maxTokens))
+      "max_completion_tokens" -> Option.when((r.maxTokens).value > 0)(Json.fromInt(r.maxTokens))
     ).collect { case (k, Some(v)) => k -> v }
     ChatRequest(Json.fromFields(fields))
 

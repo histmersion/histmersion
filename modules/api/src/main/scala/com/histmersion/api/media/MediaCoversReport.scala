@@ -38,6 +38,6 @@ object MediaCoversReport:
         .groupBy(_.key)
         .toList
         .map((k, cs) => MediaCount(k, cs.map(_.n).sum))
-        .sortBy(c => (-c.n, c.key)),
+        .sortBy(c => (-(c.n).value, c.key)),
       a.failed ++ b.failed
     )

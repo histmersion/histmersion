@@ -745,7 +745,7 @@ object Calibre:
     /** Equal after [[norm]], or one extends the other: Calibre often keeps or drops a subtitle. */
     def titleMatches(a: com.histmersion.plugins.calibre.Calibre.Audit.TitleMatchesA, b: com.histmersion.plugins.calibre.Calibre.Audit.TitleMatchesB): com.histmersion.plugins.calibre.Calibre.Audit.TitleMatchesResult =
       val (x, y) = (norm(_root_.com.histmersion.plugins.calibre.Calibre.Audit.NormS((a).value)), norm(_root_.com.histmersion.plugins.calibre.Calibre.Audit.NormS((b).value)))
-      (x).value.nonEmpty && (y).value.nonEmpty && ((x).value.startsWith(y) || y.startsWith(x))
+      (x).value.nonEmpty && (y).value.nonEmpty && ((x).value.startsWith((y).value) || (y).value.startsWith(x))
 
     /** "Güterbock, Hans G." and "Hans G. Güterbock" are the same surname; a bracketed role or life span ("Ken Dowden
       * (ed.)", "Gimbutienė, Marija (1921-1994)") is not part of the name.

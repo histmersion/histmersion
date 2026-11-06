@@ -241,7 +241,7 @@ object Tree:
   val SplitRatio: com.histmersion.api.library.Tree.SplitRatio = _root_.com.histmersion.api.library.Tree.SplitRatioValue(0.8)
 
   def splitWorthShowing(parent: com.histmersion.api.library.Tree.SplitWorthShowingParent, kids: List[Bucket]): List[Bucket] =
-    if kids.sizeIs > 1 && kids.exists(_.count < (parent).value * SplitRatio) then kids else Nil
+    if kids.sizeIs > 1 && kids.exists((_.count).value < (parent).value * (SplitRatio).value) then kids else Nil
 
   def regionTree(
       rows: List[TreeRow],

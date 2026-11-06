@@ -88,7 +88,7 @@ object Agents:
       cacheWrite: Option[BigDecimal] = None
   ):
     def cost(u: Usage): BigDecimal =
-      val plain = math.max(u.input - u.cacheRead - u.cacheWrite, 0L)
+      val plain = math.max((u.input).value - u.cacheRead - u.cacheWrite, 0L)
       (BigDecimal(plain) * input + BigDecimal(u.cacheRead) * cacheRead.getOrElse(input) +
         BigDecimal(u.cacheWrite) * cacheWrite.getOrElse(input) + BigDecimal(u.output) * output) / Prices.Million
 

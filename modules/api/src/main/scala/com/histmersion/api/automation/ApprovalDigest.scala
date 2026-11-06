@@ -174,7 +174,7 @@ object ApprovalDigest:
           sorted.take(IdsShown).map(_.id)
         )
       }
-      .sortBy(g => (-g.count, g.kind))
+      .sortBy(g => (-(g.count).value, g.kind))
 
   def matching(open: List[Open], b: BulkDecide): List[Open] =
     open

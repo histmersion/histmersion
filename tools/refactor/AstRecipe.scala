@@ -21,7 +21,7 @@ object AstRecipe {
     signatureBuffers: Boolean = false, bufferHistory: List[String] = Nil, localMemberTypes: Boolean = false, indexNewtypes: Boolean = false,
     expectedNewtypes: List[String] = Nil, expectedOverlap: Map[String,Int] = Map.empty,
     consolidationIndex: String = "", consolidations: List[Consolidation] = Nil, additionalManifest: String = "",
-    ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil, generatedValueNames: Boolean = false, resolveImportedPure: Boolean = false,
+    ironProjects: List[String] = Nil, interfaceContracts: List[String] = Nil, generatedValueNames: Boolean = false, resolveImportedPure: Boolean = false, nativeScalarOperations: Boolean = false,
     compilerObservation: String = "", boundaryRoots: List[String] = Nil, rawInputTargets: List[String] = Nil, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, compilerRepairHistory: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, triviaFiles: List[String] = Nil, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false, propertyFlowsOnly: Boolean = false, generatedHelperAdapters: Boolean = false)
   object Policy {
     implicit val surface: generic.Surface[Policy] = generic.deriveSurface[Policy]
@@ -64,7 +64,7 @@ class AstRecipe(val policy: AstRecipe.Policy) extends SyntacticRule("AstRecipe")
     val renamed = if(policy.generatedValueNames) GeneratedValueNames.patches(frozen,policy.consolidationIndex,policy.boundaryRoots,evidence) else Map.empty[String,List[(Int,Int,String)]]
     val consolidated = TypeConsolidation.patches(frozen,policy.consolidationIndex,policy.consolidations,evidence,policy.creates)
     val aligned = InterfaceSignatures.patches(frozen,policy.consolidationIndex,policy.interfaceContracts,evidence,policy.boundaryRoots)
-    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons,policy.constructionOnly,policy.ownerOperationsOnly,policy.orderingsOnly,policy.rawInputSources,policy.nominalBoundaryContracts,policy.compilerRepairHistory,policy.nativeBooleans,policy.tapirEndpointsOnly,policy.propertyFlowsOnly,policy.generatedHelperAdapters,policy.resolveImportedPure)
+    val repaired = CompilerRepairs.patches(frozen,policy.consolidationIndex,policy.compilerObservation,policy.boundaryRoots,evidence,policy.rawInputTargets,policy.errorType,policy.testComparisons,policy.constructionOnly,policy.ownerOperationsOnly,policy.orderingsOnly,policy.rawInputSources,policy.nominalBoundaryContracts,policy.compilerRepairHistory,policy.nativeBooleans,policy.tapirEndpointsOnly,policy.propertyFlowsOnly,policy.generatedHelperAdapters,policy.resolveImportedPure,policy.nativeScalarOperations)
     val definitionPaths = frozen.keys.filter(p => policy.definitionRoots.exists(p.startsWith) && p.contains("/src/main/")).toSet
     val selected = policy.edits.groupBy(_.path) ++ (definitionPaths ++ consolidated.keySet ++ aligned.keySet ++ repaired.keySet ++ renamed.keySet ++ policy.triviaFiles.toSet ++ (if(policy.ironProjects.nonEmpty) Set("build.sbt") else Set.empty[String])).filterNot(policy.edits.map(_.path).contains).map(_ -> List.empty[AstRecipe.Edit])
     def parseSource(s: String,path: String): Source = {
@@ -490,7 +490,7 @@ object InterfaceSignatures {
 }
 
 object CompilerRepairs {
-  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, repairHistory: List[String] = Nil, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false, propertyFlowsOnly: Boolean = false, generatedHelperAdapters: Boolean = false, resolveImportedPure: Boolean = false): Map[String,List[(Int,Int,String)]] = {
+  def patches(frozen: Map[String,String], index: String, observation: String, roots: List[String], evidence: scala.collection.mutable.ListBuffer[List[String]], rawInputs: List[String] = Nil, errorType: String = "", testComparisons: Boolean = false, constructionOnly: Boolean = false, ownerOperationsOnly: Boolean = false, orderingsOnly: Boolean = false, rawInputSources: List[String] = Nil, nominalBoundaryContracts: List[String] = Nil, repairHistory: List[String] = Nil, nativeBooleans: Boolean = false, tapirEndpointsOnly: Boolean = false, propertyFlowsOnly: Boolean = false, generatedHelperAdapters: Boolean = false, resolveImportedPure: Boolean = false, nativeScalarOperations: Boolean = false): Map[String,List[(Int,Int,String)]] = {
     if(observation.isEmpty) return Map.empty
     implicit val dialect: Dialect = dialects.Scala3
     require(roots.nonEmpty,"Compiler repairs need explicit boundary roots")
@@ -502,8 +502,11 @@ object CompilerRepairs {
     require(!nativeBooleans || ownerOperationsOnly,"Native Boolean comparison requires owner-only mode")
     require(!tapirEndpointsOnly || (!constructionOnly && !ownerOperationsOnly && !orderingsOnly && !nativeBooleans && rawInputs.isEmpty && rawInputSources.isEmpty && errorType.isEmpty && !testComparisons && nominalBoundaryContracts.isEmpty && repairHistory.isEmpty),"Tapir endpoint mode excludes ordinary expression adapters")
     require(!propertyFlowsOnly || (!tapirEndpointsOnly && !constructionOnly && !ownerOperationsOnly && !orderingsOnly && !nativeBooleans && rawInputs.isEmpty && rawInputSources.isEmpty && errorType.isEmpty && !testComparisons && nominalBoundaryContracts.isEmpty && repairHistory.isEmpty),"Property flow mode only consolidates generated helpers")
-    require(!generatedHelperAdapters || (ownerOperationsOnly && nativeBooleans && !propertyFlowsOnly && !tapirEndpointsOnly && rawInputs.isEmpty && rawInputSources.isEmpty && nominalBoundaryContracts.isEmpty && errorType.isEmpty && !testComparisons && repairHistory.isEmpty),"Generated helper adapters require native-Boolean owner mode (E134 disabled), without nominal boundary, error, comparison or history adapters")
+    require(!generatedHelperAdapters || (ownerOperationsOnly && nativeBooleans && !propertyFlowsOnly && !tapirEndpointsOnly && rawInputs.isEmpty && rawInputSources.isEmpty && nominalBoundaryContracts.isEmpty && errorType.isEmpty && !testComparisons && repairHistory.isEmpty),"Generated helper adapters require native-Boolean owner mode (general overload adapters disabled), without nominal boundary, error, comparison or history adapters")
     require(!resolveImportedPure || !propertyFlowsOnly,"Imported Pure resolution is opt-in for compiler adapters, not declaration consolidation")
+    require(!nativeScalarOperations || (ownerOperationsOnly && nativeBooleans),"Native scalar operations require native-Boolean owner mode; general overload adapters stay disabled")
+    val numericBases = Set("Byte","Short","Int","Long","Float","Double","Char")
+    val numericInfix = Set("+","-","*","/","%","<","<=",">",">=","&","|","^","<<",">>",">>>")
     val snapshot = Files.readAllLines(Paths.get(observation,"sources.tsv")).asScala.drop(1).map(_.split("\t",-1)).map(r => r(0) -> r(1)).toMap
     require(snapshot == frozen,"Compiler diagnostics do not describe the current frozen snapshot")
     val text = Files.readString(Paths.get(observation,"build.log")).replaceAll("\u001b\\[[;\\d]*m","")
@@ -1199,7 +1202,7 @@ object CompilerRepairs {
               }
             }
           }
-          member.foreach { m => types.pure(reported(m),tree).filter(n => mayUnwrap(n) || nativeBoolean(n,"").nonEmpty).foreach { n =>
+          member.foreach { m => types.pure(reported(m),tree).filter(n => mayUnwrap(n) || nativeBoolean(n,"").nonEmpty || (nativeScalarOperations && numericBases(n.base))).foreach { n =>
             val method = m.group(1)
             val encoded = scala.reflect.NameTransformer.encode(method)
             val stringMember = n.base == "String" && (method == "+" || (classOf[String].getMethods ++ classOf[scala.collection.StringOps].getMethods).exists(_.getName == encoded))
@@ -1227,7 +1230,7 @@ object CompilerRepairs {
             }
           }
         }
-        if(!nativeBooleans && sourceDisplayMatches && d.group(1) == "E134") {
+        if((!nativeBooleans || nativeScalarOperations) && sourceDisplayMatches && d.group(1) == "E134") {
             val at = block.indexOf("match arguments")
             val description = if(at < 0) "" else block.substring(at + "match arguments".length).linesIterator.map(s => if(s.contains('|')) s.substring(s.indexOf('|') + 1).trim else s.trim).mkString(" ").trim
             def parts(s: String): List[String] = {
@@ -1248,15 +1251,28 @@ object CompilerRepairs {
             val actuals = if(end < 0) Nil else parts(description.substring(1,end))
             if(ownerOperationsOnly && actuals.size == 1) for {
               infix <- terms.collectFirst { case a: Term.ApplyInfix if a.argClause.values.size == 1 => a }
-              primitive = ("of method " + java.util.regex.Pattern.quote(infix.op.value) + " in class (?:scala\\.)?(?:Int|Long|Double|Float|Byte|Short|Char) with types").r
-              if primitive.findFirstIn(block).nonEmpty
-              nominal <- diagnosticType(actuals.head).flatMap(t => types.pure(t.syntax,tree)).filter(mayUnwrap)
+              if !nativeScalarOperations || (numericInfix(infix.op.value) && infix.argClause.values.head.collect {
+                case _: Term.AnonymousFunction | _: Term.Function | _: Term.Placeholder => true
+              }.isEmpty)
+              primitive = ("of method " + java.util.regex.Pattern.quote(infix.op.value) + " in class (?:scala\\.)?(Int|Long|Double|Float|Byte|Short|Char) with types").r
+              primitiveClass <- primitive.findFirstMatchIn(block).map(_.group(1))
+              if !nativeScalarOperations || (infix.lhs match {
+                case _: Lit.Int => primitiveClass == "Int"
+                case _: Lit.Long => primitiveClass == "Long"
+                case _: Lit.Double => primitiveClass == "Double"
+                case _: Lit.Float => primitiveClass == "Float"
+                case _: Lit.Char => primitiveClass == "Char"
+                case Term.Select(n: Term.Name,Term.Name("value")) => parameterType(n,infix).flatMap(types.pure(_,infix)).exists(_.base == primitiveClass)
+                case _ => false
+              })
+              nominal <- diagnosticType(actuals.head).flatMap(t => types.pure(t.syntax,tree)).filter(n =>
+                (!nativeScalarOperations || numericBases(n.base)) && (mayUnwrap(n) || nativeScalarOperations))
               base = if(nominal.base == "String") "(?:String|java.lang.String|CharSequence|java.lang.CharSequence)" else java.util.regex.Pattern.quote(nominal.base)
               parameter = ("\\([^\\n)]*:\\s*" + base + "(?:[,* )]).*").r
               if block.take(at).linesIterator.exists(s => parameter.findFirstIn(s).nonEmpty)
               value = infix.argClause.values.head
-            } { proposed += ((path,value,"(" + source.substring(value.pos.start,value.pos.end) + ").value","E134 owned primitive infix argument")); supported = true }
-          terms.collectFirst { case a: Term.Apply => a }.filter(_ => !supported).foreach { app =>
+            } { proposed += ((path,value,"(" + source.substring(value.pos.start,value.pos.end) + ").value",if(nativeScalarOperations) "E134 proven native numeric infix argument" else "E134 owned primitive infix argument")); supported = true }
+          if(!nativeBooleans) terms.collectFirst { case a: Term.Apply => a }.filter(_ => !supported).foreach { app =>
             app.argClause.values match {
               case List(f: Term.AnonymousFunction) if !constructionOnly && !ownerOperationsOnly && f.body.structure == Term.Select(Term.Placeholder(),Term.Name("value")).structure =>
                 val name = fresh("refactorValue",tree)

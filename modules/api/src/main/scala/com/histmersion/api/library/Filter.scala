@@ -380,8 +380,8 @@ object Filter:
         maxLon = f.bbox.map(_.maxLon),
         maxLat = f.bbox.map(_.maxLat),
         sort = Some(Sort.label(f.sort)),
-        limit = Option(f.limit).filter(_ > 0),
-        offset = Option(f.offset).filter(_ > 0),
+        limit = Option(f.limit).filter((_).value > 0),
+        offset = Option(f.offset).filter((_).value > 0),
         title = f.title,
         goal = f.goal
       )
