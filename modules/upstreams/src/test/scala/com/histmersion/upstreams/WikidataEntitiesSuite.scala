@@ -33,7 +33,7 @@ class WikidataEntitiesSuite extends munit.FunSuite:
   test("best: the preferred statements when there are any, else the normal ones, capped"):
     val st = WikidataEntities.items(entities, Set(com.histmersion.upstreams.wikidata.WikidataStatement.Property("P18"))).toOption.get(com.histmersion.upstreams.wikidata.WikidataItem.Id("Q1")).statements
     assertEquals(WikidataStatement.best(st, com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(2)).map(_.file), List("A.jpg"))
-    val normals = st.map(_.copy(preferred = false))
+    val normals = st.map(_.copy(preferred = com.histmersion.upstreams.wikidata.WikidataStatement.Preferred(false)))
     assertEquals(WikidataStatement.best(normals, com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(1)).map(_.file), List("B.jpg"))
     assertEquals(WikidataStatement.best(normals, com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(0)), Nil)
 
