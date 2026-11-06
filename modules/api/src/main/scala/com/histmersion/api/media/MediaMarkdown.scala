@@ -2,24 +2,25 @@ package com.histmersion.api.media
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{OffsetPage, Plural}
-import com.histmersion.api.Markdown.*
 
 object MediaMarkdown:
 
   type MediaSamplesDryRun = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
   val MediaSamplesDryRun: _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun.type = _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun
 
+  private def providerTitle(p: MediaItem.Provider): MediaProvider.Info.Title = MediaProvider.title(MediaProvider.Id(p.value))
+
   def assetDetail(ck: com.histmersion.api.library.Citekey, a: AssetDetail): String =
     val loc = (a.lat, a.lon) match
       case (Some(lat), Some(lon)) => s"  \n**Location:** $lat, $lon"
       case _                      => ""
     val per = (a.periodStart, a.periodEnd) match
-      case (Some(s), Some(e)) => s"  \n**Period:** ${periodLabel(Some(s), Some(e))}"
+      case (Some(s), Some(e)) => s"  \n**Period:** ${com.histmersion.api.YearFmt.period(Some(s), Some(e))}"
       case _                  => ""
     val meta = List(
       a.kind.map(k => s"**Kind:** $k"),
       a.license.map(l => s"**License:** $l"),
-      Some(s"**Size:** ${Plural.count(a.bytes, _root_.com.histmersion.api.Plural.Noun.Singular("byte"))}"),
+      Some(s"**Size:** ${Plural.count(Plural.Count(a.bytes.value), _root_.com.histmersion.api.Plural.Noun.Singular("byte"))}"),
       (a.width, a.height) match {
         case (Some(w), Some(h)) => Some(s"**Dimensions:** $w×$h")
         case _                  => None
@@ -37,9 +38,9 @@ object MediaMarkdown:
     else
       ps.map { p =>
         val origin = if ((p.builtin) == _root_.com.histmersion.api.media.MediaProvider.Info.Builtin(true)) then s"built in, plugin `${p.plugin}`" else s"plugin `${p.plugin}`"
-        val terms = if p.licences.trim.isEmpty then "" else s" · licences: ${p.licences}"
+        val terms = if p.licences.value.trim.isEmpty then "" else s" · licences: ${p.licences}"
         s"- **`${p.name}`** — ${p.title} (${p.over}; $origin$terms)" +
-          (if p.description.trim.isEmpty then "" else s"\n  ${p.description.trim}")
+          (if p.description.value.trim.isEmpty then "" else s"\n  ${p.description.value.trim}")
       }.mkString("## Media providers\n\n", "\n", "\n\n`histmersion media import <name>` runs one.")
 
   def mediaImportReport(r: MediaImportReport): String =
@@ -53,27 +54,27 @@ object MediaMarkdown:
     else "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
     val done = if ((r.dryRun) == _root_.com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(true)) then ""
     else
-      s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(r.categories, _root_.com.histmersion.api.Plural.Noun.Singular("category"), _root_.com.histmersion.api.Plural.Noun.Plural("categories"))}"
+      s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(Plural.Count(r.categories.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("category"), _root_.com.histmersion.api.Plural.Noun.Plural("categories"))}"
     val revoked = if r.revoked.isEmpty then ""
     else "\n\n**Licence no longer allowed (kept — review):**\n" + r.revoked.map(x => s"- $x").mkString("\n")
     val failed = if r.failed.isEmpty then "" else "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
-    val pending = s"\n\n**Not asked yet:** ${Plural.count(r.pending, _root_.com.histmersion.api.Plural.CountSingular("place/event"), _root_.com.histmersion.api.Plural.CountPlural("places/events"))}" +
-      (if r.batches > 0 then s" · ${Plural.count(r.batches, "batch", "batches")} run" else "")
+    val pending = s"\n\n**Not asked yet:** ${Plural.count(Plural.Count(r.pending.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("place/event"), _root_.com.histmersion.api.Plural.CountPlural("places/events"))}" +
+      (if r.batches.value > 0 then s" · ${Plural.count(Plural.Count(r.batches.value.toLong), "batch", "batches")} run" else "")
     // assembled line by line, not with stripMargin: the table's rows start with `|` themselves
     List(
-      s"# Media import · ${MediaProvider.title(r.provider)} ($mode)",
+      s"# Media import · ${providerTitle(r.provider)} ($mode)",
       "",
       (if MediaProvider.all.contains(r.provider) && r.provider != _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Commons) then
-         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.Noun.Singular("place"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.Noun.Singular("record"))} read · " +
-           s"${Plural.count(r.statements, "match", "matches")} · ${Plural.count(r.files, "picture")}  "
+         s"**Asked about:** ${Plural.count(Plural.Count(r.targets.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("place"))} · ${Plural.count(Plural.Count(r.items.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("record"))} read · " +
+           s"${Plural.count(Plural.Count(r.statements.value.toLong), "match", "matches")} · ${Plural.count(Plural.Count(r.files.value.toLong), "picture")}  "
        else if r.provider == _root_.com.histmersion.api.media.MediaItem.Provider(MediaProvider.Pleiades) then
-         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.Noun.Singular("place"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.Noun.Singular("Pleiades record"))} read · " +
-           s"${Plural.count(r.statements, "linked Commons file")} · ${Plural.count(r.files, "file")}  "
+         s"**Asked about:** ${Plural.count(Plural.Count(r.targets.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("place"))} · ${Plural.count(Plural.Count(r.items.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("Pleiades record"))} read · " +
+           s"${Plural.count(Plural.Count(r.statements.value.toLong), "linked Commons file")} · ${Plural.count(Plural.Count(r.files.value.toLong), "file")}  "
        else
-         s"**Asked about:** ${Plural.count(r.targets, _root_.com.histmersion.api.Plural.Noun.Singular("place/event"), _root_.com.histmersion.api.Plural.Noun.Plural("places/events"))} · ${Plural.count(r.items, _root_.com.histmersion.api.Plural.Noun.Singular("Wikidata item"))} · " +
-           s"${Plural.count(r.statements, "picture statement")} · ${Plural.count(r.files, "file")}  "
+         s"**Asked about:** ${Plural.count(Plural.Count(r.targets.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("place/event"), _root_.com.histmersion.api.Plural.Noun.Plural("places/events"))} · ${Plural.count(Plural.Count(r.items.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("Wikidata item"))} · " +
+           s"${Plural.count(Plural.Count(r.statements.value.toLong), "picture statement")} · ${Plural.count(Plural.Count(r.files.value.toLong), "file")}  "
       ) ,
-      s"**By provider:** ${MediaProvider.title(r.provider)} ${r.files}  ",
+      s"**By provider:** ${providerTitle(r.provider)} ${r.files}  ",
       s"**By role:** ${countsLine(r.byRole)}",
       "",
       licences + rejected + mediaSamples(r.samples, r.dryRun) + done + revoked + failed + pending
@@ -93,33 +94,33 @@ object MediaMarkdown:
     val lines = if r.lines.isEmpty then ""
     else
       "\n\n" + r.lines
-        .map(l => s"- [[${l.citekey}]] — ${l.role} from ${MediaProvider.title(l.provider)}: `${l.detail}`")
+        .map(l => s"- [[${l.citekey}]] — ${l.role} from ${providerTitle(l.provider)}: `${l.detail}`")
         .mkString("\n")
     val skipped =
       if r.skipped.isEmpty then "" else "\n\n**None for**\n" + r.skipped.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
     val failed = if r.failed.isEmpty then "" else "\n\n**Failed**\n" + r.failed.map(x => s"- $x").mkString("\n")
-    s"# Source pictures ($mode)\n\n${Plural.count(r.sources, _root_.com.histmersion.api.Plural.CountSingular("source"))} looked at · $verb " +
-      s"${Plural.count(r.covers, "cover")} and ${Plural.count(r.illustrations, "illustration")}" +
+    s"# Source pictures ($mode)\n\n${Plural.count(Plural.Count(r.sources.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("source"))} looked at · $verb " +
+      s"${Plural.count(Plural.Count(r.covers.value.toLong), "cover")} and ${Plural.count(Plural.Count(r.illustrations.value.toLong), "illustration")}" +
       lines + skipped + failed
 
   def mediaItemLine(m: MediaItem): String =
     val origin = m.citekey
       .map(c => s"[[$c]] / `${m.name}`")
-      .getOrElse(s"${m.provider.map(MediaProvider.title).getOrElse("?")} `${m.providerKey.getOrElse(m.name)}`")
-    val lic = m.license.fold(if m.provider.exists(MediaProvider.covers) then "a cover (no reuse licence; shown locally)"
+      .getOrElse(s"${m.provider.map(providerTitle).getOrElse("?")} `${m.providerKey.getOrElse(m.name)}`")
+    val lic = m.license.fold(if m.provider.exists(p => MediaProvider.covers(MediaProvider.Id(p.value))) then "a cover (no reuse licence; shown locally)"
     else "**no licence**")(l => s"`$l`")
     val targets = if m.targets.isEmpty then ""
     else " → " + m.targets.map(t => s"${t.targetType}:${t.targetId} (${t.role})").mkString(", ")
     (s"- `${m.uid}` $origin · $lic${m.credit.fold("")(c => s" · $c")}$targets")
 
   def mediaList(l: MediaList): String =
-    OffsetPage.markdown(l.page, Plural.noun(l.total.value, _root_.com.histmersion.api.Plural.Noun.Singular("picture")), ("_No pictures._"), l.items)(mediaItemLine)
+    OffsetPage.markdown(l.page, Plural.noun(Plural.Count(l.total.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("picture")), ("_No pictures._"), l.items)(mediaItemLine).value
 
   def mediaItem(m: MediaItem): String =
     val origin = m.citekey
       .map(c => s"**Source:** [[$c]] / `${m.name}`")
       .getOrElse(
-        s"**Provider:** ${m.provider.map(MediaProvider.title).getOrElse("?")} — `${m.providerKey.getOrElse(m.name)}`"
+        s"**Provider:** ${m.provider.map(providerTitle).getOrElse("?")} — `${m.providerKey.getOrElse(m.name)}`"
       )
     val rows = List(
       Some(origin),
@@ -131,7 +132,7 @@ object MediaMarkdown:
       m.retrievedAt.map(t => s"**Retrieved:** $t"),
       Some(
         s"**File:** ${m.mime} · ${Plural
-            .count(m.bytes, _root_.com.histmersion.api.Plural.Noun.Singular("byte"))}${(m.width, m.height) match { case (Some(w), Some(h)) => s" · $w×$h"; case _ => "" }} · `${m.fileUrl}`"
+            .count(Plural.Count(m.bytes.value), _root_.com.histmersion.api.Plural.Noun.Singular("byte"))}${(m.width, m.height) match { case (Some(w), Some(h)) => s" · $w×$h"; case _ => "" }} · `${m.fileUrl}`"
       ),
       m.thumbUrl.map(u => s"**Thumbnail:** `$u`"),
       m.kind.map(k => s"**Kind:** $k")
@@ -150,12 +151,12 @@ object MediaMarkdown:
     (s"# `${m.uid}`\n\n$rows$targets$cap")
 
   def mediaFacets(f: MediaFacets): String =
-    s"**Providers:** ${countsLine(f.providers.map(c => c.modify(_.key).setTo(MediaProvider.title(c.key))))}  \n" +
+    s"**Providers:** ${countsLine(f.providers.map(c => c.modify(_.key).setTo(MediaCount.Key(providerTitle(MediaItem.Provider(c.key.value)).value))))}  \n" +
       s"**Licences:** ${countsLine(f.licences)}"
 
   def figureLicenceFill(f: FigureLicenceFill): String =
-    val what = if ((f.applied) == _root_.com.histmersion.api.media.FigureLicenceFill.Applied(true)) then s"${Plural.count(f.updated, _root_.com.histmersion.api.Plural.CountSingular("figure"))} given their source's licence"
-    else s"${Plural.count(f.candidates, _root_.com.histmersion.api.Plural.CountSingular("figure"))} would take their source's licence (dry run; `--apply` writes it)"
+    val what = if ((f.applied) == _root_.com.histmersion.api.media.FigureLicenceFill.Applied(true)) then s"${Plural.count(Plural.Count(f.updated.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("figure"))} given their source's licence"
+    else s"${Plural.count(Plural.Count(f.candidates.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("figure"))} would take their source's licence (dry run; `--apply` writes it)"
     val by = if f.bySource.isEmpty then "" else "\n\n" + f.bySource.map(c => s"- [[${c.key}]]: ${c.n}").mkString("\n")
     (s"# Figure licences\n\n$what$by")
 
@@ -164,7 +165,7 @@ object MediaMarkdown:
     (s"- **${l.relation}** ${l.targetType}:${l.targetId} ← ${l.citekey}/${l.assetName}$xywh")
 
   def assetLinkList(ll: AssetLink.List): String =
-    OffsetPage.markdown(ll.page, ("link(s)"), ("_No asset links._"), ll.links)(assetLinkLine)
+    OffsetPage.markdown(ll.page, ("link(s)"), ("_No asset links._"), ll.links)(assetLinkLine).value
 
   def assetLink(l: AssetLink): String =
     val xywh = l.xywh.map(x => s"  \n**Region:** $x").getOrElse("")

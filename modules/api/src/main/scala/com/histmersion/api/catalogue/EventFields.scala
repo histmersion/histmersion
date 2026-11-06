@@ -15,37 +15,37 @@ object EventFields:
   val all: List[String] = List(Label, Kind, Span, Historicity, Description, Geometry)
 
   def point(lat: com.histmersion.api.catalogue.Latitude, lon: com.histmersion.api.catalogue.Longitude): Json =
-    Json.obj("type" -> "Point".asJson, "coordinates" -> Json.arr(lon.value.asJson, lat.value.asJson))
+    Json.obj("type" -> "Point".asJson, "coordinates" -> Json.arr((lon.value: Double).asJson, (lat.value: Double).asJson))
 
   def geometry(g: Option[com.histmersion.api.catalogue.EventGeometry.Geojson]): Json =
     g.map((_).value.trim).filter(_.nonEmpty).fold(Json.Null)(t => io.circe.parser.parse(t).getOrElse(t.asJson))
 
   def upstream(r: CatalogRecord): Map[String, Json] =
     Map(
-      Label -> r.label.value.asJson,
-      Kind -> EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value.asJson,
+      Label -> (r.label.value: String).asJson,
+      Kind -> (EventTaxonomy.canonical(EventSummary.Kind(r.kind.value)).value: String).asJson,
       Span -> r.timeSpan.asJson,
-      Historicity -> r.historicity.value.asJson,
-      Description -> r.description.map(_.value).asJson,
+      Historicity -> (r.historicity.value: String).asJson,
+      Description -> r.description.map(d => d.value: String).asJson,
       Geometry -> (for la <- r.lat; lo <- r.lon yield point(la, lo)).getOrElse(Json.Null)
     )
 
   def ofPatch(p: EventPatch): Map[String, Json] =
     List(
-      p.label.map(l => Label -> l.value.asJson),
-      p.kind.map(k => Kind -> EventTaxonomy.canonical(k).value.asJson),
+      p.label.map(l => Label -> (l.value: String).asJson),
+      p.kind.map(k => Kind -> (EventTaxonomy.canonical(k).value: String).asJson),
       p.timeSpan.map(Span -> _.asJson),
-      p.historicity.map(h => Historicity -> h.value.asJson),
-      p.description.map(d => Description -> Option(d.value).filter(_.nonEmpty).asJson),
+      p.historicity.map(h => Historicity -> (h.value: String).asJson),
+      p.description.map(d => Description -> Option(d.value: String).filter(_.nonEmpty).asJson),
       p.geometry.map(g => Geometry -> geometry(Some(EventGeometry.Geojson(g.value))))
     ).flatten.toMap
 
   def ofPut(p: EventPut): Map[String, Json] =
     Map(
-      Label -> p.label.value.asJson,
-      Kind -> EventTaxonomy.canonical(p.kind).value.asJson,
+      Label -> (p.label.value: String).asJson,
+      Kind -> (EventTaxonomy.canonical(p.kind).value: String).asJson,
       Span -> p.timeSpan.asJson,
-      Historicity -> p.historicity.value.asJson,
-      Description -> p.description.map(_.value).filter(_.nonEmpty).asJson,
+      Historicity -> (p.historicity.value: String).asJson,
+      Description -> p.description.map(d => d.value: String).filter(_.nonEmpty).asJson,
       Geometry -> geometry(p.geometry.map(g => EventGeometry.Geojson(g.value)))
     )

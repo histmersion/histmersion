@@ -55,11 +55,11 @@ object StrictJson:
     }
 
   def fieldNames(s: Schema[?]): List[com.histmersion.api.StrictJson.FieldName] = s.schemaType match
-    case p: SchemaType.SProduct[?] => p.fields.map(_root_.com.histmersion.api.StrictJson.FieldName(_.name.encodedName))
+    case p: SchemaType.SProduct[?] => p.fields.map(f => _root_.com.histmersion.api.StrictJson.FieldName(f.name.encodedName))
     case SchemaType.SOption(e)     => fieldNames(e)
     case _                         => Nil
 
-  private def nestedFields(s: Schema[?]): List[(String, String)] =
+  private def nestedFields(s: Schema[?]): List[(com.histmersion.api.StrictJson.FieldPath, com.histmersion.api.StrictJson.FieldName)] =
     def children(path: com.histmersion.api.StrictJson.FieldPath, sc: Schema[?]): List[(com.histmersion.api.StrictJson.FieldPath, Schema[?])] = sc.schemaType match
       case p: SchemaType.SProduct[?] =>
         p.fields.map(f => (_root_.com.histmersion.api.StrictJson.FieldPath((if (path).value.isEmpty then "" else s"$path.") + f.name.encodedName), f.schema))

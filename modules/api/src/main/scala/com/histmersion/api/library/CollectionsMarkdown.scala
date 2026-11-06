@@ -27,8 +27,8 @@ object CollectionsMarkdown:
     if entries.isEmpty then ("_No matching books in the Calibre library._")
     else
       val rows = entries.map { b =>
-        val fmts = b.formats.flatMap(_.split("\\.").lastOption).map(_.toUpperCase).distinct.mkString(", ")
-        s"| ${b.id} | ${b.title.replace("|", "\\|")} | ${who(b.authors).replace("|", "\\|")} " +
+        val fmts = b.formats.flatMap(_.value.split("\\.").lastOption).map(_.toUpperCase).distinct.mkString(", ")
+        s"| ${b.id} | ${b.title.value.replace("|", "\\|")} | ${who(b.authors).replace("|", "\\|")} " +
           s"| ${b.year.map(_.toString).getOrElse("—")} | $fmts |"
       }
       ((List(s"### ${entries.size} book(s)", "", "| id | title | authors | year | formats |", "|---|---|---|---:|---|")
@@ -46,7 +46,7 @@ object CollectionsMarkdown:
       }
       val shown = if (total).value > entries.size then s"${entries.size} of $total" else entries.size.toString
       (List(
-        s"### $shown Calibre ${Plural.noun(total, _root_.com.histmersion.api.Plural.Noun.Singular("entry"), _root_.com.histmersion.api.Plural.Noun.Plural("entries"))} not linked to any source (newest first)",
+        s"### $shown Calibre ${Plural.noun(_root_.com.histmersion.api.Plural.Count(total.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("entry"), _root_.com.histmersion.api.Plural.Noun.Plural("entries"))} not linked to any source (newest first)",
         ""
       )
         ++ lines ++ List(
@@ -57,7 +57,7 @@ object CollectionsMarkdown:
 
   /** The line for the records with no fetched file — never a gap. */
   def uncountedLine(n: com.histmersion.api.library.CollectionsMarkdown.Missing): String =
-    s"$n ${Plural.noun(n, _root_.com.histmersion.api.Plural.Noun.Singular("record"))} without a fetched file — not counted; see the acquire list " +
+    s"$n ${Plural.noun(_root_.com.histmersion.api.Plural.Count(n.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("record"))} without a fetched file — not counted; see the acquire list " +
       "(`histmersion queue acquire`); `--json` lists them."
 
   /** The counted gaps as a table, then one line for the records with no fetched file. */
@@ -69,7 +69,7 @@ object CollectionsMarkdown:
       if counted.isEmpty then "_Every source with a fetched file is in Calibre._"
       else
         val lines = counted.map { g =>
-          s"| `${g.citekey}` | ${esc(g.title).take(70)} | ${g.year.fold("—")(_.toString)} " +
+          s"| `${g.citekey}` | ${esc(g.title.value).take(70)} | ${g.year.fold("—")(_.toString)} " +
             s"| ${esc(g.authors.take(2).mkString(", "))} | ${esc(g.provenance.getOrElse("—"))} | ${g.original} |"
         }
         (List(
@@ -112,7 +112,7 @@ object CollectionsMarkdown:
     }
     val table = changing.flatMap { (r, note) =>
       r.changes.map(c =>
-        s"| ${r.id} | ${r.citekeys.mkString(", ")} | ${c.field} | ${cell(c.from)} | ${cell(c.to)} | $note |"
+        s"| ${r.id} | ${r.citekeys.mkString(", ")} | ${c.field} | ${cell(c.from.value)} | ${cell(c.to.value)} | $note |"
       )
     }
     val left = rows.collect {
@@ -169,7 +169,7 @@ object CollectionsMarkdown:
 
   def pushed(p: CollectionPushed): String =
     p.replaced.fold(s"added `${p.citekey}` to Calibre as id ${p.id} — ${p.title}")(fmt =>
-      s"replaced the ${fmt.toUpperCase} of Calibre id ${p.id} with `${p.citekey}`'s original"
+      s"replaced the ${fmt.value.toUpperCase} of Calibre id ${p.id} with `${p.citekey}`'s original"
     )
 
   def updatedOne(u: CollectionUpdatedOne): String =

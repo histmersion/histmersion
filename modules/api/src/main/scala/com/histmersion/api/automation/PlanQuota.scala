@@ -113,7 +113,8 @@ object PlanQuota:
     type UsedPct = UsedPct.T
     object UsedPct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ResetsAt = ResetsAt.T
-    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ResetsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
     type Rejected = Rejected.T
     object Rejected extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ObservedAt = ObservedAt.T
@@ -125,7 +126,7 @@ object PlanQuota:
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
     def text: com.histmersion.api.automation.PlanQuota.Floors.Wire = _root_.com.histmersion.api.automation.PlanQuota.Floors.Wire(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
     def of(limit: com.histmersion.api.automation.PlanQuota.Floors.OfLimit, kind: com.histmersion.api.automation.PlanQuota.Floors.OfKind, default: com.histmersion.api.automation.PlanQuota.Rules.DefaultFloor): com.histmersion.api.automation.PlanQuota.Floors.Floor =
-      byKind.get(_root_.com.histmersion.api.automation.PlanQuota.Floors.ByKindKey(s"$limit/$kind")).orElse(byKind.get(kind)).getOrElse(default)
+      byKind.get(_root_.com.histmersion.api.automation.PlanQuota.Floors.ByKindKey(s"$limit/$kind")).orElse(byKind.get(_root_.com.histmersion.api.automation.PlanQuota.Floors.ByKindKey(kind.value))).getOrElse(default)
 
   object Floors:
     type Floor = Floor.T
@@ -142,8 +143,8 @@ object PlanQuota:
     type ByKindKey = ByKindKey.T
     object ByKindKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-    type ByKindValue = ByKindValue.T
-    object ByKindValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ByKindValue = com.histmersion.api.automation.PlanQuota.Floors.Floor
+    val ByKindValue: _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor.type = _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor
 
     val Empty: Floors = Floors(Map.empty)
     def parse(s: com.histmersion.api.automation.PlanQuota.Floors.Wire): Either[com.histmersion.api.automation.PlanQuota.Problem, Floors] =
@@ -159,7 +160,7 @@ object PlanQuota:
               .flatMap(p => Either.cond(k.nonEmpty && !k.exists(_.isWhitespace), k -> p, s"'$i' names no window"))
       }
       parsed.collect { case Left(m) => m } match
-        case Nil  => Right(Floors(parsed.collect { case Right(kv) => kv }.toMap))
+        case Nil  => Right(Floors(parsed.collect { case Right((k, v)) => ByKindKey(k) -> Floor(v) }.toMap))
         case errs => Left(_root_.com.histmersion.api.automation.PlanQuota.Problem(errs.mkString("; ")))
 
   final case class Rules(floors: Floors, defaultFloor: Rules.DefaultFloor, staleMs: Rules.StaleMs, marginPct: Rules.MarginPct)
@@ -167,8 +168,8 @@ object PlanQuota:
   object Rules:
     type MinGap = MinGap.T
     object MinGap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DefaultFloor = DefaultFloor.T
-    object DefaultFloor extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type DefaultFloor = com.histmersion.api.automation.PlanQuota.Floors.Floor
+    val DefaultFloor: _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor.type = _root_.com.histmersion.api.automation.PlanQuota.Floors.Floor
     type StaleMs = StaleMs.T
     object StaleMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MarginPct = MarginPct.T
@@ -210,13 +211,13 @@ object PlanQuota:
     object Blocked:
       type Reason = Reason.T
       object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Until = Until.T
-      object Until extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Until = com.histmersion.api.automation.PlanQuota.Reading.ResetsAt
+      val Until: _root_.com.histmersion.api.automation.PlanQuota.Reading.ResetsAt.type = _root_.com.histmersion.api.automation.PlanQuota.Reading.ResetsAt
 
 
   def current(readings: List[Reading], now: com.histmersion.api.automation.PlanQuota.Now, model: Option[com.histmersion.api.automation.ModelChains.ChainEntry.Model] = None): List[Reading] =
     readings
-      .filter(r => r.resetsAt.forall((_).value > now))
+      .filter(r => r.resetsAt.forall(_.value > now.value))
       .filter(r => r.model.isEmpty || model.isEmpty || r.model == model)
       .groupBy(r => (r.limit, r.kind))
       .values
@@ -227,18 +228,18 @@ object PlanQuota:
   def windowState(r: Reading, rules: Rules, now: com.histmersion.api.automation.PlanQuota.WindowStateNow): WindowState =
     val floor = rules.floors.of(r.limit, r.kind, rules.defaultFloor)
     val left = (100.0 - (r.usedPct).value).max(0)
-    val stale = (now).value - (r.observedAt).value > rules.staleMs
+    val stale = now.value - r.observedAt.value > rules.staleMs.value
     val pct = (d: Double) =>
       java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
     val why =
       if ((r.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) then Some(s"${r.kind}: the provider refuses it")
-      else if !stale && left <= floor then Some(s"${r.kind}: ${pct(left)}% left, floor $floor%")
-      else if stale && left < floor + rules.marginPct then
+      else if !stale && left <= floor.value then Some(s"${r.kind}: ${pct(left)}% left, floor $floor%")
+      else if stale && left < floor.value + rules.marginPct.value then
         Some(
           s"${r.kind}: ${pct(left)}% left when last read, floor $floor% (+${rules.marginPct} while the reading is stale)"
         )
       else None
-    WindowState(r, floor, _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct(left), stale, _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => _root_.com.histmersion.api.automation.PlanQuota.WindowState.Why(refactorValue4)))
+    WindowState(r, floor, _root_.com.histmersion.api.automation.PlanQuota.WindowStatus.LeftPct(left), _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(stale), _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(why.isEmpty), (why).map(refactorValue4 => _root_.com.histmersion.api.automation.PlanQuota.WindowState.Why(refactorValue4)))
 
   def verdict(
       readings: List[Reading],
@@ -254,7 +255,7 @@ object PlanQuota:
     val v =
       if (held).value then Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
       else
-        refusal.filter(_._2.forall(((_).value > now).value)) match
+        refusal.filter(_._2.forall(_.value > now.value)) match
           case Some((why, until))             => Verdict.Blocked(why, until)
           case None if blocking.nonEmpty      => Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason(blocking.flatMap(_.why).mkString("; ")), earliest)
           case None if states.isEmpty         => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
@@ -320,18 +321,18 @@ object PlanQuota:
       now: com.histmersion.api.automation.PlanQuota.RefreshNeedNow,
       model: Option[com.histmersion.api.automation.PlanQuota.RefreshNeedModel] = None
   ): Option[RefreshNeed] =
-    if ((held) == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Held(true)) || refusal.exists(_._2.forall(((_).value > now).value)) then None
+    if ((held) == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Held(true)) || refusal.exists(_._2.forall(_.value > now.value)) then None
     else
       val states = current(readings, now, model).map(windowState(_, rules, now))
       if states.isEmpty then Some(RefreshNeed.NoReading)
       else
         val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(true))))
-        Option.when(blocking.nonEmpty && blocking.forall(s => ((s.stale) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(true)) && !((s.reading.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) && (s.leftPct).value > s.floor))(
+        Option.when(blocking.nonEmpty && blocking.forall(s => ((s.stale) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(true)) && !((s.reading.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) && s.leftPct.value > s.floor.value))(
           RefreshNeed.StaleOnly
         )
 
   def throttled(lastAttempt: Option[com.histmersion.api.automation.PlanQuota.RefreshInfo.LastAttempt], minGapMs: com.histmersion.api.automation.PlanQuota.Rules.MinGap, now: com.histmersion.api.automation.PlanQuota.Now): Boolean =
-    lastAttempt.exists((t => (now).value - t < minGapMs).value)
+    lastAttempt.exists(t => now.value - t.value < minGapMs.value)
 
   def refreshDecision(
       need: Option[RefreshNeed],

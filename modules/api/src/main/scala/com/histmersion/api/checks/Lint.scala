@@ -33,22 +33,6 @@ object Lint:
   object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type Names = _root_.com.histmersion.api.checks.Lint.Rule.Name
-  val Names: _root_.com.histmersion.api.checks.Lint.Rule.Name.type = _root_.com.histmersion.api.checks.Lint.Rule.Name
-  type SuggestCitekeys = SuggestCitekeys.T
-  object SuggestCitekeys extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-  type DuplicatesRowsPart1 = DuplicatesRowsPart1.T
-  object DuplicatesRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-  type Abbreviations = AbbreviationsValue
-  type AbbreviationsValue = com.histmersion.api.checks.Lint.AbbreviationsText
-  val AbbreviationsValue: _root_.com.histmersion.api.checks.Lint.AbbreviationsText.type = _root_.com.histmersion.api.checks.Lint.AbbreviationsText
-  type FormatItemsRowsPart1 = FormatItemsRowsPart1.T
-  object FormatItemsRowsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-  type FormatItemsRowsPart3 = com.histmersion.api.checks.Lint.FormatItemDetail
-  val FormatItemsRowsPart3: _root_.com.histmersion.api.checks.Lint.FormatItemDetail.type = _root_.com.histmersion.api.checks.Lint.FormatItemDetail
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -64,10 +48,10 @@ object Lint:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object LintRuleReport:
-    type Rule = Rule.T
-    object Rule extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Description = Description.T
-    object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rule = com.histmersion.api.checks.Lint.Rule.Name
+    val Rule: _root_.com.histmersion.api.checks.Lint.Rule.Name.type = _root_.com.histmersion.api.checks.Lint.Rule.Name
+    type Description = com.histmersion.api.checks.Lint.Rule.Description
+    val Description: _root_.com.histmersion.api.checks.Lint.Rule.Description.type = _root_.com.histmersion.api.checks.Lint.Rule.Description
     type Count = Count.T
     object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -75,7 +59,7 @@ object Lint:
   final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def total: com.histmersion.api.checks.Lint.IssueCount = rules.map(_.count).sum
+    def total: com.histmersion.api.checks.Lint.IssueCount = _root_.com.histmersion.api.checks.Lint.IssueCount(rules.map(r => (r.count).value).sum)
 
   object LintReport:
 
@@ -262,7 +246,7 @@ object Lint:
 
   val MinSummaryChars = 80
 
-  val names: List[com.histmersion.api.checks.Lint.Names] = all.map(_.name)
+  val names: List[com.histmersion.api.checks.Lint.Rule.Name] = all.map(_.name)
 
   def rule(name: com.histmersion.api.checks.Lint.Rule.Name): Option[Rule] = all.find(_.name == _root_.com.histmersion.api.checks.Lint.Rule.Name((name).value.trim.toLowerCase))
 
@@ -279,29 +263,29 @@ object Lint:
 
   def suggest(target: com.histmersion.api.checks.Lint.LinkTarget, citekeys: Iterable[com.histmersion.api.library.Citekey], max: com.histmersion.api.checks.Lint.ItemLimit): List[com.histmersion.api.checks.Lint.Suggestion] =
     val t = (target).value.trim.toLowerCase
-    if t.isEmpty || max <= 0 then Nil
+    if t.isEmpty || (max).value <= 0 then Nil
     else
-      def commonPrefix(a: com.histmersion.api.library.Citekey, b: com.histmersion.api.checks.Lint.LinkTarget): Int =
-        val n = math.min((a).value.length, (b).value.length)
+      def commonPrefix(a: String, b: String): Int =
+        val n = math.min(a.length, b.length)
         var i = 0
-        while i < n && (a).value.charAt(i) == (b).value.charAt(i) do i += 1
-        (i)
+        while i < n && a.charAt(i) == b.charAt(i) do i += 1
+        i
       val scored = citekeys.iterator
-        .filter(_ != target)
+        .filter(ck => (ck).value != (target).value)
         .flatMap { ck =>
           val c = (ck).value.toLowerCase
-          val p = commonPrefix(_root_.com.histmersion.api.library.Citekey(c), _root_.com.histmersion.api.checks.Lint.LinkTarget(t))
+          val p = commonPrefix(c, t)
           if c.startsWith(t + "_") then Some((0, c.length, ck))
           else if c.startsWith(t) || t.startsWith(c) then Some((1, -(p), ck))
           else if p >= 4 then Some((2, -(p), ck))
           else None
         }
         .toList
-      (scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take((max).value)).map(refactorValue3 => _root_.com.histmersion.api.checks.Lint.Suggestion((refactorValue3).value))
+      (scored.sortBy((rank, negLen, ck) => (rank, negLen, (ck).value)).map(_._3).take((max).value)).map(refactorValue3 => _root_.com.histmersion.api.checks.Lint.Suggestion((refactorValue3).value))
 
   def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LinkTarget): Boolean = ("""\d{4}""".r.findFirstIn((target).value).isDefined)
 
-  def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicateKey, com.histmersion.api.library.Citekey)], label: String): List[LintItem] =
+  def duplicates(rows: List[(com.histmersion.api.library.Citekey, com.histmersion.api.checks.Lint.DuplicateKey)], label: String): List[LintItem] =
     rows
       .filter((_, key) => (key).value.trim.nonEmpty)
       .groupBy((_, key) => (key).value.trim.toLowerCase)
@@ -309,7 +293,7 @@ object Lint:
       .filter((_, group) => group.map(_._1).distinct.sizeIs > 1)
       .sortBy((key, _) => key)
       .flatMap { (key, group) =>
-        val cks = group.map(_._1).distinct.sorted
+        val cks = group.map(_._1).distinct.sortBy(_.value)
         cks.map(ck => LintItem(ck, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"$label $key — also on ${cks.filterNot(_ == ck).mkString(", ")}")))
       }
 
@@ -323,9 +307,9 @@ object Lint:
   def nonCanonicalTags(rows: List[(com.histmersion.api.library.Citekey, List[com.histmersion.api.checks.Lint.Tag])]): List[LintItem] =
     rows
       .flatMap { (ck, tags) =>
-        tags.filterNot(_root_.com.histmersion.api.checks.Lint.Tag((isCanonicalTag))).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(_root_.com.histmersion.api.checks.Lint.Tag((t).value))}'"))
+        tags.filterNot(isCanonicalTag).map(t => LintItem(ck, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"tag '$t' → '${normaliseTag(t)}'")))
       }
-      .sortBy(i => (i.citekey, i.detail))
+      .sortBy(i => ((i.citekey).value, (i.detail).value))
 
   private val YearInCitekey = """(\d{4})""".r.unanchored
 
@@ -335,23 +319,23 @@ object Lint:
         yr.flatMap { y =>
           YearInCitekey.findFirstMatchIn((ck).value).flatMap { m =>
             val inKey = m.group(1).toInt
-            if inKey == y then None
+            if inKey == (y).value then None
             else Some(LintItem(ck, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"citekey has $inKey but stored year is $y")))
           }
         }
       }
-      .sortBy(_.citekey)
+      .sortBy(i => (i.citekey).value)
 
   def authorPipe(rows: List[(com.histmersion.api.library.Citekey, List[com.histmersion.api.library.AuthorName])]): List[LintItem] =
     rows
       .flatMap { (ck, authors) =>
         authors.filter((_).value.contains("|")).map(a => LintItem(ck, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"author '$a'")))
       }
-      .sortBy(i => (i.citekey, i.detail))
+      .sortBy(i => ((i.citekey).value, (i.detail).value))
 
   val MaxListLeadIn = 300
 
-  private val Abbreviations: Set[com.histmersion.api.checks.Lint.Abbreviations] =
+  private val Abbreviations: Set[com.histmersion.api.checks.Lint.AbbreviationsText] =
     Set(
       _root_.com.histmersion.api.checks.Lint.AbbreviationsText("c"),
       _root_.com.histmersion.api.checks.Lint.AbbreviationsText("ca"),
@@ -428,7 +412,7 @@ object Lint:
   type FormatChecker = (String, FormatField, Boolean) => List[FormatIssue]
 
   def formatItems(rows: List[(com.histmersion.api.library.Citekey, FormatField, com.histmersion.api.checks.Lint.FormatItemDetail)], check: FormatChecker): List[LintItem] =
-    rows.filter((_._3).value.trim.nonEmpty).sortBy((id, f, _) => (id, f.ordinal)).flatMap { (id, field, text) =>
+    rows.filter(r => (r._3).value.trim.nonEmpty).sortBy((id, f, _) => ((id).value, f.ordinal)).flatMap { (id, field, text) =>
       check((text).value, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
     }
 

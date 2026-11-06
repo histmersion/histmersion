@@ -9,10 +9,6 @@ object ApprovalDigest:
   type Line = Line.T
   object Line extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type GroupWaiting = GroupWaiting.T
-  object GroupWaiting extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LineResult = com.histmersion.api.automation.ApprovalDigest.Line
-  val LineResult: _root_.com.histmersion.api.automation.ApprovalDigest.Line.type = _root_.com.histmersion.api.automation.ApprovalDigest.Line
 
   final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -150,7 +146,7 @@ object ApprovalDigest:
     type CreatedAt = CreatedAt.T
     object CreatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def group(open: List[Open], checked: com.histmersion.api.automation.Approval.Kind.Wire => Boolean, waiting: Set[com.histmersion.api.automation.ApprovalDigest.GroupWaiting] = Set.empty): List[KindGroup] =
+  def group(open: List[Open], checked: com.histmersion.api.automation.Approval.Kind.Wire => Boolean, waiting: Set[com.histmersion.api.automation.Approval.Kind.Wire] = Set.empty): List[KindGroup] =
     open
       .groupBy(_.kind)
       .toList
@@ -162,41 +158,41 @@ object ApprovalDigest:
           .toList
           .sortBy((s, n) => (-n, s))
           .take(10)
-          .map(SubjectCount.apply)
+          .map((s, n) => SubjectCount(SubjectCount.Subject(s.value), SubjectCount.Count(n)))
         KindGroup(
           k,
           _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.Count(as.size),
-          sorted.headOption.map(_.createdAt.take(10)),
+          sorted.headOption.map(o => KindGroup.Oldest(o.createdAt.value.take(10))),
           if waiting(k) then _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire(Waits) else if checked(k) then _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("checked") else _root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("person"),
           subjects,
-          sorted.take(IdsShown).map(_.id)
+          sorted.take(IdsShown).map(o => KindGroup.Ids(o.id.value))
         )
       }
-      .sortBy(g => (-(g.count).value, g.kind))
+      .sortBy(g => (-(g.count).value, g.kind.value))
 
   def matching(open: List[Open], b: BulkDecide): List[Open] =
     open
       .filter(o =>
-        b.kind.forall(k => o.kind == k.trim) && b.subject.forall(s => o.subject.contains(s.trim)) &&
-          (b.ids.isEmpty || b.ids.contains(o.id))
+        b.kind.forall(k => o.kind.value == k.value.trim) && b.subject.forall(s => o.subject.exists(_.value == s.value.trim)) &&
+          (b.ids.isEmpty || b.ids.exists(_.value == o.id.value))
       )
       .sortBy(_.id)
-      .take(math.max(1, b.limit.getOrElse(Int.MaxValue)))
+      .take(math.max(1, b.limit.map(_.value).getOrElse(Int.MaxValue)))
 
   def line(d: Digest): com.histmersion.api.automation.ApprovalDigest.Line =
     if d.total == _root_.com.histmersion.api.automation.ApprovalDigest.Digest.Total(0) && d.heldForPerson == _root_.com.histmersion.api.automation.ApprovalDigest.Digest.HeldForPerson(0) then _root_.com.histmersion.api.automation.ApprovalDigest.Line("approval digest: nothing waits for a person")
     else
-      s"approval digest: ${Plural.count(d.total, _root_.com.histmersion.api.Plural.CountSingular("approval"))} wait for a person" +
+      _root_.com.histmersion.api.automation.ApprovalDigest.Line(s"approval digest: ${Plural.count(_root_.com.histmersion.api.Plural.CountN(d.total.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("approval"))} wait for a person" +
         (if d.kinds.isEmpty then ""
          else
            " — " + d.kinds
              .map(g =>
                s"${g.kind} ${g.count}" + g.oldest.fold("")(o => s" (oldest $o)") +
-                 (if g.decidedBy == "checked" then ", the autopilot's checks decide them within the day's cap"
-                  else if g.decidedBy == Waits then ", waiting: nobody needs to decide them now"
+                 (if g.decidedBy.value == "checked" then ", the autopilot's checks decide them within the day's cap"
+                  else if g.decidedBy.value == Waits then ", waiting: nobody needs to decide them now"
                   else "")
              )
              .mkString("; ")) +
-        (if d.heldForPerson > 0 then s"; ${Plural.count(d.heldForPerson, "manager item")} held for a person" else "") +
+        (if d.heldForPerson.value > 0 then s"; ${Plural.count(_root_.com.histmersion.api.Plural.CountN(d.heldForPerson.value.toLong), _root_.com.histmersion.api.Plural.CountSingular("manager item"))} held for a person" else "") +
         d.goalPlansWait.fold("")(w => s"; $w") +
-        "; decide a whole kind at once: histmersion agent decide-all approve --kind <kind> (or the Approvals window)"
+        "; decide a whole kind at once: histmersion agent decide-all approve --kind <kind> (or the Approvals window)")

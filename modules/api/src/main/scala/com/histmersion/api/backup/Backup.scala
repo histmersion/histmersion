@@ -44,7 +44,7 @@ object Backup:
     if !((taken(_root_.com.histmersion.api.backup.Backup.Result.File((name).value))) == (true)) then _root_.com.histmersion.api.backup.Backup.Result.File((name).value)
     else
       val stem = (name).value.dropRight(Extension.length)
-      LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !((taken(_root_.com.histmersion.api.backup.Backup.Result.File(c))) == (true))).getOrElse(name)
+      LazyList.from(2).map(n => _root_.com.histmersion.api.backup.Backup.Result.File(s"$stem-$n$Extension")).find(c => !((taken(c)) == (true))).getOrElse(_root_.com.histmersion.api.backup.Backup.Result.File((name).value))
 
   private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
 
@@ -52,17 +52,19 @@ object Backup:
     * `…Z-2.dump` sorts before `…Z.dump`, so the order is the stamp, then the same-second suffix.
     */
   def toPrune(names: List[com.histmersion.api.backup.Backup.Result.File], keep: com.histmersion.api.backup.Backup.Retention): List[com.histmersion.api.backup.Backup.Result.File] =
-    if keep <= 0 then Nil
+    if keep.value <= 0 then Nil
     else
-      val ours = names.collect (({ case n @ Written(stamp, suffix) =>
-        (n, (stamp, Option(suffix).map(_.toInt).getOrElse(1)))
-      }).value).value
-      ours.sortBy(_._2).reverse.drop(keep).map(_._1).reverse
+      val ours = names.flatMap { n =>
+        n.value match
+          case Written(stamp, suffix) => List((n, (stamp, Option(suffix).map(_.toInt).getOrElse(1))))
+          case _                      => Nil
+      }
+      ours.sortBy(_._2).reverse.drop(keep.value).map(_._1).reverse
 
   private val AnyStamp = """(\d{8}T\d{6}Z)(?:-(\d+))?""".r.unanchored
 
   /** The stamp in the name wins over the mtime: a copied archive keeps its name but not its mtime. */
-  def takenAt(name: com.histmersion.api.backup.Backup.Result.File, mtime: Instant): Instant = name match
+  def takenAt(name: com.histmersion.api.backup.Backup.Result.File, mtime: Instant): Instant = name.value match
     case AnyStamp(stamp, _) =>
       scala.util.Try(Instant.from(Stamp.parse(stamp))).getOrElse(mtime)
     case _ => mtime
@@ -72,8 +74,8 @@ object Backup:
       case AnyStamp(_, sfx) => Option(sfx).flatMap(_.toIntOption).getOrElse(1)
       case _                => 0
     def at(b: com.histmersion.api.backup.Backup.Info) =
-      scala.util.Try(Instant.parse(b.createdAt)).getOrElse(Instant.EPOCH)
-    bs.sortBy(b => (at(b), suffix(b.file), b.file)).reverse
+      scala.util.Try(Instant.parse(b.createdAt.value)).getOrElse(Instant.EPOCH)
+    bs.sortBy(b => (at(b), suffix(b.file.value), b.file.value: String)).reverse
 
   private val Safe = "[A-Za-z0-9][A-Za-z0-9._-]*".r
 
@@ -91,9 +93,9 @@ object Backup:
   final case class PgTarget(host: Option[PgTarget.Host], port: Option[PgTarget.Port], database: PgTarget.Database):
     /** `-w`: a missing password fails instead of `pg_dump` prompting forever. */
     def args: List[String] =
-      host.toList.flatMap(h => List("-h", h)) ++
-        port.toList.flatMap(p => List("-p", p.toString)) ++
-        List("-d", database, "-w")
+      host.toList.flatMap(h => List("-h", h.value)) ++
+        port.toList.flatMap(p => List("-p", p.value.toString)) ++
+        List("-d", database.value, "-w")
 
   object PgTarget:
 
@@ -128,7 +130,7 @@ object Backup:
         case None    => Right(None)
         case Some(p) => ((p.toIntOption.map(Some(_)).toRight(s"'$p' is not a port number in '$u'")).left.map(refactorError => _root_.com.histmersion.api.backup.Backup.Problem(refactorError))).map(refactorValue2 => (refactorValue2).map(refactorValue3 => _root_.com.histmersion.api.backup.Backup.PgTarget.Port(refactorValue3)))
       for
-        name <- Some(db.trim).filter(_.nonEmpty).toRight(s"JDBC URL has no database name: '$u'")
+        name <- Some(db.trim).filter(_.nonEmpty).toRight(_root_.com.histmersion.api.backup.Backup.Problem(s"JDBC URL has no database name: '$u'"))
         p <- port
       yield PgTarget((Some(host).filter(_.nonEmpty)).map(refactorValue10 => _root_.com.histmersion.api.backup.Backup.PgTarget.Host(refactorValue10)), p, _root_.com.histmersion.api.backup.Backup.PgTarget.Database(name))
 
@@ -206,7 +208,7 @@ object Backup:
 
   final case class Status(
       file: Status.File,
-      state: Status.State,
+      state: com.histmersion.api.backup.Backup.State.Wire,
       durationMs: Status.DurationMs,
       bytes: Option[com.histmersion.api.ByteCount] = None,
       sha256: Option[com.histmersion.api.Sha256] = None,
@@ -227,8 +229,6 @@ object Backup:
 
     type File = com.histmersion.api.backup.Backup.Result.File
     val File: _root_.com.histmersion.api.backup.Backup.Result.File.type = _root_.com.histmersion.api.backup.Backup.Result.File
-    type State = State.T
-    object State extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type DurationMs = com.histmersion.api.backup.Backup.Result.DurationMs
     val DurationMs: _root_.com.histmersion.api.backup.Backup.Result.DurationMs.type = _root_.com.histmersion.api.backup.Backup.Result.DurationMs
     type Error = Error.T

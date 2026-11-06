@@ -50,6 +50,15 @@ object ListFilters:
 
   def one(v: Option[com.histmersion.api.automation.ListFilters.Term]): Option[com.histmersion.api.automation.ListFilters.Term] = (v.map((_).value.trim).filter(_.nonEmpty)).map(refactorValue2 => _root_.com.histmersion.api.automation.ListFilters.Term(refactorValue2))
 
+  private def many[A](vs: List[A], lower: Boolean = false)(text: A => String, make: String => A): List[A] =
+    vs.flatMap(a => text(a).split(',').toList).map(_.trim).filter(_.nonEmpty).distinct.map(s => make(if lower then s.toLowerCase else s))
+
+  private def single[A](v: Option[A], lower: Boolean = false)(text: A => String, make: String => A): Option[A] =
+    v.map(a => text(a).trim).filter(_.nonEmpty).map(s => make(if lower then s.toLowerCase else s))
+
+  private def entry(key: String, v: Option[String]): (Term, Option[OptionLabel]) =
+    Term(key) -> v.map(OptionLabel(_))
+
   export com.histmersion.api.automation.Approval.DecidedBy as DecidedBy
 
   final case class ApprovalFilter(
@@ -61,24 +70,24 @@ object ListFilters:
   ):
     def normalized: ApprovalFilter =
       ApprovalFilter(
-        one(state).map(_.toLowerCase),
-        values(kind).map(_.toLowerCase),
-        one(subject),
-        one(goal),
-        values(decidedBy).map(_.toLowerCase)
+        single(state, true)(_.value, ApprovalFilter.State(_)),
+        many(kind, true)(_.value, ApprovalFilter.Kind(_)),
+        single(subject)(_.value, ApprovalFilter.Subject(_)),
+        single(goal)(_.value, com.histmersion.api.automation.Goal.Slug(_)),
+        many(decidedBy, true)(_.value, ApprovalFilter.DecidedBy(_))
       )
 
     def qualifier: Option[com.histmersion.api.automation.ListFilters.Qualifier] =
       val n = normalized
-      words(n.state.orElse(Some(Agents.ApprovalState.Open.wire)).filter(_ != "all").toList, (n.kind).map(refactorValue3 => (refactorValue3).value))
+      words(n.state.orElse(Some(Agents.ApprovalState.Open.wire)).map(_.value).filter(_ != "all").toList, (n.kind).map(refactorValue3 => (refactorValue3).value))
 
     def options: List[(com.histmersion.api.automation.ListFilters.Term, Option[com.histmersion.api.automation.ListFilters.OptionLabel])] =
       val n = normalized
-      List("state" -> n.state) ++ n.kind.map(k => "kind" -> Some(k)) ++ List(
-        "subject" -> n.subject,
-        "goal" -> n.goal
+      List(entry("state", n.state.map(_.value))) ++ n.kind.map(k => entry("kind", Some(k.value))) ++ List(
+        entry("subject", n.subject.map(_.value)),
+        entry("goal", n.goal.map(_.value))
       ) ++
-        n.decidedBy.map(d => "decided-by" -> Some(d))
+        n.decidedBy.map(d => entry("decided-by", Some(d.value)))
 
   object ApprovalFilter:
     type OptionsResultPart2 = com.histmersion.api.automation.ListFilters.OptionLabel
@@ -108,24 +117,24 @@ object ListFilters:
     def qualifier: Option[com.histmersion.api.automation.ListFilters.Qualifier] = { val n = normalized; words((n.status).map(refactorValue5 => (refactorValue5).value), (n.pipeline).map(refactorValue27 => (refactorValue27).value)) }
     def normalized: RunFilter =
       RunFilter(
-        values(status).map(_.toLowerCase),
-        values(pipeline).map(_.toLowerCase),
-        values(manager),
-        one(goal),
-        values(model),
-        values(provider).map(_.toLowerCase),
-        values(origin).map(_.toLowerCase),
-        one(since),
-        one(until),
-        one(subject)
+        many(status, true)(_.value, RunFilter.Status(_)),
+        many(pipeline, true)(_.value, RunFilter.Pipeline(_)),
+        many(manager)(_.value, RunFilter.Manager(_)),
+        single(goal)(_.value, com.histmersion.api.automation.Goal.Slug(_)),
+        many(model)(_.value, RunFilter.Model(_)),
+        many(provider, true)(_.value, RunFilter.Provider(_)),
+        many(origin, true)(_.value, RunFilter.Origin(_)),
+        single(since)(_.value, RunFilter.Since(_)),
+        single(until)(_.value, RunFilter.Until(_)),
+        single(subject)(_.value, RunFilter.Subject(_))
       )
     def options: List[(com.histmersion.api.automation.ListFilters.Term, Option[com.histmersion.api.automation.ListFilters.OptionLabel])] =
       val n = normalized
-      n.status.map("status" -> Some(_)) ++ n.pipeline.map("pipeline" -> Some(_)) ++ n.manager.map(
-        "manager" -> Some(_)
+      n.status.map(v => entry("status", Some(v.value))) ++ n.pipeline.map(v => entry("pipeline", Some(v.value))) ++ n.manager.map(
+        v => entry("manager", Some(v.value))
       ) ++
-        List("goal" -> n.goal) ++ n.model.map("model" -> Some(_)) ++ n.provider.map("provider" -> Some(_)) ++
-        n.origin.map("origin" -> Some(_)) ++ List("since" -> n.since, "until" -> n.until, "subject" -> n.subject)
+        List(entry("goal", n.goal.map(_.value))) ++ n.model.map(v => entry("model", Some(v.value))) ++ n.provider.map(v => entry("provider", Some(v.value))) ++
+        n.origin.map(v => entry("origin", Some(v.value))) ++ List(entry("since", n.since.map(_.value)), entry("until", n.until.map(_.value)), entry("subject", n.subject.map(_.value)))
 
   object RunFilter:
     type OptionsResultPart2 = com.histmersion.api.automation.ListFilters.OptionLabel
@@ -160,18 +169,18 @@ object ListFilters:
     def qualifier: Option[com.histmersion.api.automation.ListFilters.Qualifier] = { val n = normalized; words((n.status).map(refactorValue14 => (refactorValue14).value), (n.kind).map(refactorValue15 => (refactorValue15).value)) }
     def normalized: JobFilter =
       JobFilter(
-        values(status).map(_.toLowerCase),
-        values(kind).map(_.toLowerCase),
-        one(since),
-        one(until),
-        one(subject)
+        many(status, true)(_.value, JobFilter.Status(_)),
+        many(kind, true)(_.value, JobFilter.Kind(_)),
+        single(since)(_.value, JobFilter.Since(_)),
+        single(until)(_.value, JobFilter.Until(_)),
+        single(subject)(_.value, JobFilter.Subject(_))
       )
     def options: List[(com.histmersion.api.automation.ListFilters.Term, Option[com.histmersion.api.automation.ListFilters.OptionLabel])] =
       val n = normalized
-      n.status.map("status" -> Some(_)) ++ n.kind.map("kind" -> Some(_)) ++ List(
-        "since" -> n.since,
-        "until" -> n.until,
-        "subject" -> n.subject
+      n.status.map(v => entry("status", Some(v.value))) ++ n.kind.map(v => entry("kind", Some(v.value))) ++ List(
+        entry("since", n.since.map(_.value)),
+        entry("until", n.until.map(_.value)),
+        entry("subject", n.subject.map(_.value))
       )
 
   object JobFilter:
@@ -272,9 +281,9 @@ object ListFilters:
       now: Instant
   ): Either[com.histmersion.api.automation.ListFilters.Problem, (Option[Instant], Option[Instant])] =
     for
-      s <- since.fold(Right(None))(timeBound(_root_.com.histmersion.api.automation.ListFilters.TimeBound((_).value), end = (false), now).map(Some(_)).left.map(m => s"since: $m"))
-      u <- until.fold(Right(None))(timeBound(_root_.com.histmersion.api.automation.ListFilters.TimeBound((_).value), end = (true), now).map(Some(_)).left.map(m => s"until: $m"))
-      _ <- Either.cond(s.zip(u).forall((a, b) => a.isBefore(b)), (), "since must lie before until")
+      s <- since.fold(Right(None))(timeBound(_, end = (false), now).map(Some(_)).left.map(m => Problem(s"since: $m")))
+      u <- until.fold(Right(None))(timeBound(_, end = (true), now).map(Some(_)).left.map(m => Problem(s"until: $m")))
+      _ <- Either.cond(s.zip(u).forall((a, b) => a.isBefore(b)), (), Problem("since must lie before until"))
     yield (s, u)
 
   /** `%`, `,`, `=` and anything outside printable ASCII become `%XX` (UTF-8), so any value survives a header.
@@ -317,4 +326,4 @@ object ListFilters:
 
   def facetLine(label: com.histmersion.api.automation.ListFilters.FacetName, counts: List[(com.histmersion.api.automation.ListFilters.Term, com.histmersion.api.RowCount)]): com.histmersion.api.automation.ListFilters.FacetLine =
     if counts.isEmpty then _root_.com.histmersion.api.automation.ListFilters.FacetLine("")
-    else s"$label: ${counts.map((v, n) => s"$v ${Paging.grouped(n)}").mkString(" · ")}"
+    else FacetLine(s"$label: ${counts.map((v, n) => s"$v ${Paging.grouped(Paging.GroupSize(n.value.toLong))}").mkString(" · ")}")

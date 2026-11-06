@@ -14,29 +14,12 @@ object Basemap:
   object Subset:
     type Spec = Spec.T
     object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Latitude = Latitude.T
-  object Latitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Longitude = Longitude.T
-  object Longitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Zoom = Zoom.T
   object Zoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type TileYZ = _root_.com.histmersion.api.basemap.Basemap.Zoom
-  val TileYZ: _root_.com.histmersion.api.basemap.Basemap.Zoom.type = _root_.com.histmersion.api.basemap.Basemap.Zoom
-  type TileRangeZ = _root_.com.histmersion.api.basemap.Basemap.Zoom
-  val TileRangeZ: _root_.com.histmersion.api.basemap.Basemap.Zoom.type = _root_.com.histmersion.api.basemap.Basemap.Zoom
-  type SubsetParamMPart1 = SubsetParamMPart1.T
-  object SubsetParamMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-  type LegacyLacks = LegacyLacksValue
-  type LegacyLacksValue = LegacyLacksValue.T
-  object LegacyLacksValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MissingForNeeds = MissingForNeeds.T
-  object MissingForNeeds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
 
   val FetchCommand = "histmersion basemap fetch"
 
@@ -63,37 +46,37 @@ object Basemap:
       .toPlainString
       .replace("-", "m")
       .replace(".", "p")
-    s"bbox-${f(b.minLon)}-${f(b.minLat)}-${f(b.maxLon)}-${f(b.maxLat)}"
+    _root_.com.histmersion.api.basemap.Basemap.Focus.Name(s"bbox-${f((b.minLon).value)}-${f((b.minLat).value)}-${f((b.maxLon).value)}-${f((b.maxLat).value)}")
 
-  def tileX(lon: com.histmersion.api.basemap.Basemap.Longitude, z: com.histmersion.api.basemap.Basemap.Zoom): com.histmersion.api.basemap.Basemap.Tile.Column =
+  def tileX(lon: com.histmersion.api.catalogue.Longitude, z: com.histmersion.api.basemap.Basemap.Zoom): com.histmersion.api.basemap.Basemap.Tile.Column =
     val n = 1L << (z).value
     _root_.com.histmersion.api.basemap.Basemap.Tile.Column(math.floor(((lon).value + 180.0) / 360.0 * n).toLong.max(0L).min(n - 1))
 
-  def tileY(lat: com.histmersion.api.basemap.Basemap.Latitude, z: com.histmersion.api.basemap.Basemap.TileYZ): com.histmersion.api.basemap.Basemap.Tile.Row =
+  def tileY(lat: com.histmersion.api.catalogue.Latitude, z: com.histmersion.api.basemap.Basemap.Zoom): com.histmersion.api.basemap.Basemap.Tile.Row =
     val n = 1L << (z).value
     val r = math.toRadians((lat).value.max(-MaxLat).min(MaxLat))
     val y = (1.0 - math.log(math.tan(r) + 1.0 / math.cos(r)) / math.Pi) / 2.0 * n
     _root_.com.histmersion.api.basemap.Basemap.Tile.Row(math.floor(y).toLong.max(0L).min(n - 1))
 
-  def tileRange(b: BBox, z: com.histmersion.api.basemap.Basemap.TileRangeZ): ((com.histmersion.api.basemap.Basemap.Tile.Column, com.histmersion.api.basemap.Basemap.Tile.Column), (com.histmersion.api.basemap.Basemap.Tile.Row, com.histmersion.api.basemap.Basemap.Tile.Row)) =
+  def tileRange(b: BBox, z: com.histmersion.api.basemap.Basemap.Zoom): ((com.histmersion.api.basemap.Basemap.Tile.Column, com.histmersion.api.basemap.Basemap.Tile.Column), (com.histmersion.api.basemap.Basemap.Tile.Row, com.histmersion.api.basemap.Basemap.Tile.Row)) =
     ((tileX(b.minLon, z), tileX(b.maxLon, z)), (tileY(b.maxLat, z), tileY(b.minLat, z)))
 
   def tileCount(b: BBox, minZoom: com.histmersion.api.basemap.Basemap.Zoom, maxZoom: com.histmersion.api.basemap.Basemap.Zoom): com.histmersion.api.basemap.Basemap.LayerInfo.Tiles =
-    (minZoom to maxZoom).map { z =>
-      val ((x0, x1), (y0, y1)) = tileRange(b, z)
-      (x1 - x0 + 1) * (y1 - y0 + 1)
-    }.sum
+    _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Tiles(((minZoom).value to (maxZoom).value).map { z =>
+      val ((x0, x1), (y0, y1)) = tileRange(b, _root_.com.histmersion.api.basemap.Basemap.Zoom(z))
+      ((x1).value - (x0).value + 1) * ((y1).value - (y0).value + 1)
+    }.sum)
 
   /** Web Mercator's ±85.05°: as far as web maps go. */
-  val World: BBox = BBox(-180, _root_.com.histmersion.api.catalogue.Latitude(-85.05), 180, _root_.com.histmersion.api.catalogue.Latitude(85.05))
+  val World: BBox = BBox(_root_.com.histmersion.api.catalogue.Longitude(-180.0), _root_.com.histmersion.api.catalogue.Latitude(-85.05), _root_.com.histmersion.api.catalogue.Longitude(180.0), _root_.com.histmersion.api.catalogue.Latitude(85.05))
 
   def validBBox(s: com.histmersion.api.basemap.Basemap.Focus.Bbox): Either[com.histmersion.api.basemap.Basemap.Problem, BBox] =
     if (s).value.trim.equalsIgnoreCase("world") then Right(World)
     else
-      BBox.parse(s).toRight(s"'$s' is not minLon,minLat,maxLon,maxLat").flatMap { b =>
-        if b.minLon >= b.maxLon || b.minLat >= b.maxLat then Left(s"'$s': west must be < east and south < north")
-        else if b.minLon < -180 || b.maxLon > 180 || b.minLat < -90 || b.maxLat > 90 then
-          Left(s"'$s' is outside the world")
+      BBox.parse(s).toRight(_root_.com.histmersion.api.basemap.Basemap.Problem(s"'$s' is not minLon,minLat,maxLon,maxLat")).flatMap { b =>
+        if (b.minLon).value >= (b.maxLon).value || (b.minLat).value >= (b.maxLat).value then Left(_root_.com.histmersion.api.basemap.Basemap.Problem(s"'$s': west must be < east and south < north"))
+        else if (b.minLon).value < -180 || (b.maxLon).value > 180 || (b.minLat).value < -90 || (b.maxLat).value > 90 then
+          Left(_root_.com.histmersion.api.basemap.Basemap.Problem(s"'$s' is outside the world"))
         else Right(b)
       }
 
@@ -107,8 +90,8 @@ object Basemap:
   object DropRule:
     type Spec = Spec.T
     object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Layer = com.histmersion.api.basemap.Basemap.Layer.Wire
-    val Layer: _root_.com.histmersion.api.basemap.Basemap.Layer.Wire.type = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire
+    type Layer = com.histmersion.api.basemap.Basemap.LayerInfo.Dropped
+    val Layer: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped
     type Whole = Whole.T
     object Whole extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Drop = Drop.T
@@ -122,7 +105,7 @@ object Basemap:
       val kinds = words.tail
       val spare = kinds.filter(_.startsWith("+")).map(_.drop(1)).filter(_.nonEmpty).toSet
       val drop = kinds.filterNot(_.startsWith("+")).toSet
-      DropRule(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire(words.head), _root_.com.histmersion.api.basemap.Basemap.DropRule.Whole(kinds.isEmpty), (drop).map(refactorValue7 => _root_.com.histmersion.api.basemap.Basemap.DropRule.Drop(refactorValue7)), (spare).map(refactorValue8 => _root_.com.histmersion.api.basemap.Basemap.DropRule.Spare(refactorValue8)))
+      DropRule(_root_.com.histmersion.api.basemap.Basemap.DropRule.Layer(words.head), _root_.com.histmersion.api.basemap.Basemap.DropRule.Whole(kinds.isEmpty), (drop).map(refactorValue7 => _root_.com.histmersion.api.basemap.Basemap.DropRule.Drop(refactorValue7)), (spare).map(refactorValue8 => _root_.com.histmersion.api.basemap.Basemap.DropRule.Spare(refactorValue8)))
     }
     val dup = rules.groupBy(_.layer).collect { case (l, rs) if rs.size > 1 => l }
     val mixed = rules.filter(r => r.drop.nonEmpty && r.spare.nonEmpty).map(_.layer)
@@ -140,9 +123,11 @@ object Basemap:
 
   object Read:
     type Geoms = Geoms.T
-    object Geoms extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Geoms extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
     type Kinds = Kinds.T
-    object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
 
   private val KindName = "[A-Za-z0-9_:.-]+".r
 
@@ -161,10 +146,10 @@ object Basemap:
           val codes = g.toList.map { case 'p' => 1; case 'l' => 2; case 'a' => 3; case _ => 0 }
           Either.cond(
             l.nonEmpty && codes.nonEmpty && !codes.contains(0),
-            l -> Read((codes.toSet).map(refactorValue3 => _root_.com.histmersion.api.basemap.Basemap.Read.Geoms(refactorValue3)), kinds.fold(Set.empty)((_.toSet).map(refactorValue4 => _root_.com.histmersion.api.basemap.Basemap.Read.Kinds(refactorValue4)))),
+            l -> Read((codes.toSet).map(refactorValue3 => _root_.com.histmersion.api.basemap.Basemap.Read.Geoms(refactorValue3)), kinds.fold(Set.empty[_root_.com.histmersion.api.basemap.Basemap.Read.Kinds])(ks => ks.toSet.map(refactorValue4 => _root_.com.histmersion.api.basemap.Basemap.Read.Kinds(refactorValue4)))),
             s"'$p': geometries are p, l and a"
           )
-        case l :: Nil if l.nonEmpty => Right(l -> Read(Set.empty, kinds.fold(Set.empty)((_.toSet).map(refactorValue11 => _root_.com.histmersion.api.basemap.Basemap.Read.Kinds(refactorValue11)))))
+        case l :: Nil if l.nonEmpty => Right(l -> Read(Set.empty, kinds.fold(Set.empty[_root_.com.histmersion.api.basemap.Basemap.Read.Kinds])(ks => ks.toSet.map(refactorValue11 => _root_.com.histmersion.api.basemap.Basemap.Read.Kinds(refactorValue11)))))
         case _                      => Left(s"'$p' is not layer[:geometries][~kind|kind]")
     }
     ((parsed
@@ -176,18 +161,18 @@ object Basemap:
       )).left.map(refactorError => _root_.com.histmersion.api.basemap.Basemap.Problem(refactorError))).map(refactorValue6 => (refactorValue6).iterator.map { case (refactorKey, refactorItem) => (_root_.com.histmersion.api.basemap.Basemap.Layer.Wire(refactorKey), refactorItem) }.toMap)
 
   def subsetParam(m: Map[com.histmersion.api.basemap.Basemap.Layer.Wire, Read], fromZoom: Map[com.histmersion.api.basemap.Basemap.Layer.Wire, com.histmersion.api.basemap.Basemap.Zoom] = Map.empty): com.histmersion.api.basemap.Basemap.Subset.Spec =
-    m.toList
+    _root_.com.histmersion.api.basemap.Basemap.Subset.Spec(m.toList
       .sortBy(_._1)
       .map { (l, r) =>
         val g = if r.geoms.isEmpty then ""
-        else ":" + r.geoms.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
+        else ":" + r.geoms.toList.sorted.map(g => (g).value match { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }).mkString
         val k = if r.kinds.isEmpty then "" else "~" + r.kinds.toList.sorted.mkString("|")
-        (l).value + g + k + fromZoom.get(_root_.com.histmersion.api.basemap.Basemap.Layer.Wire((l).value)).filter((_).value > 0).fold("")(z => s"@$z")
+        (l).value + g + k + fromZoom.get(l).filter(z => (z).value > 0).fold("")(z => s"@$z")
       }
-      .mkString(",")
+      .mkString(","))
 
   def subsetAt(s: com.histmersion.api.basemap.Basemap.Subset.Spec, z: com.histmersion.api.basemap.Basemap.Zoom): com.histmersion.api.basemap.Basemap.Subset.Spec =
-    (s).value.split(",")
+    _root_.com.histmersion.api.basemap.Basemap.Subset.Spec((s).value.split(",")
       .toList
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -195,23 +180,23 @@ object Basemap:
         e.split("@", 2).toList match
           case l :: n :: Nil =>
             n.trim.toIntOption match
-              case Some(from) => Option.when(z >= from)(l)
+              case Some(from) => Option.when((z).value >= from)(l)
               case None       => Some(e)
           case _ => Some(e)
       }
-      .mkString(",")
+      .mkString(","))
 
-  val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LegacyLacks] = List(_root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("boundaries"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("buildings"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("landuse"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("places"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("pois"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("roads"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacksValue("transit"))
+  val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LayerInfo.Dropped] = List(_root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("boundaries"), _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("buildings"), _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("landuse"), _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("places"), _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("pois"), _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("roads"), _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped("transit"))
 
   def droppedLayers(keepAll: com.histmersion.api.basemap.Basemap.FetchQuery.KeepAll, drop: Option[com.histmersion.api.basemap.Basemap.DropRule.Spec]): List[com.histmersion.api.basemap.Basemap.LayerInfo.Dropped] =
     if (keepAll).value then Nil
     else
       drop match
-        case Some(d) => parseDrop(_root_.com.histmersion.api.basemap.Basemap.DropRule.Spec((d).value)).toOption.getOrElse(Nil).filter((refactorCallback2 => ((refactorCallback2.whole) == _root_.com.histmersion.api.basemap.Basemap.DropRule.Whole(true)))).map(_.layer).distinct.sorted
-        case None    => (LegacyLacks).map(refactorValue10 => _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped((refactorValue10).value))
+        case Some(d) => parseDrop(d).toOption.getOrElse(Nil).filter(r => (r.whole).value).map(_.layer).distinct.sorted
+        case None    => LegacyLacks
 
-  def missingFor(needs: List[com.histmersion.api.basemap.Basemap.Layer.Wire], dropped: List[com.histmersion.api.basemap.Basemap.LayerInfo.Dropped]): List[com.histmersion.api.basemap.Basemap.Layer.Wire] =
-    (needs.filter(dropped.contains).distinct.sorted).map(refactorValue9 => _root_.com.histmersion.api.basemap.Basemap.Layer.Wire((refactorValue9).value))
+  def missingFor(needs: List[com.histmersion.api.basemap.Basemap.LayerInfo.Dropped], dropped: List[com.histmersion.api.basemap.Basemap.LayerInfo.Dropped]): List[com.histmersion.api.basemap.Basemap.StyleState.Missing] =
+    needs.filter(dropped.contains).distinct.sorted
 
   val KeepAllCommand = s"$FetchCommand --layer vector --keep-all"
 
@@ -268,12 +253,13 @@ object Basemap:
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type File = com.histmersion.api.basemap.Basemap.LayerInfo.File
     val File: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.File.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.File
-    type Bbox = Bbox.T
-    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bbox = com.histmersion.api.BBox.Text
+    val Bbox: _root_.com.histmersion.api.BBox.Text.type = _root_.com.histmersion.api.BBox.Text
     type MinZoom = com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom
     val MinZoom: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom
     type MaxZoom = MaxZoom.T
-    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
     type Tiles = com.histmersion.api.basemap.Basemap.LayerInfo.Tiles
     val Tiles: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Tiles.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Tiles
     type FetchedAt = com.histmersion.api.basemap.Basemap.LayerInfo.FetchedAt
@@ -299,7 +285,8 @@ object Basemap:
     type Wires = Wires.T
     object Wires extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Wire = Wire.T
-    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type Title = Title.T
     object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -335,7 +322,7 @@ object Basemap:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def deepest: Option[com.histmersion.api.basemap.Basemap.Focus.MaxZoom] =
-      (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter((refactorCallback => ((refactorCallback.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)))).map(_.maxZoom).toList).maxOption
+      (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter(d => (d.enabled).value).map(_.maxZoom).toList).maxOption
 
   object LayerInfo:
 
@@ -366,7 +353,8 @@ object Basemap:
     type Kept = Kept.T
     object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Dropped = Dropped.T
-    object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Dropped extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type Error = Error.T
     object Error extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -473,5 +461,5 @@ object Basemap:
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Missing = Missing.T
-    object Missing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Missing = com.histmersion.api.basemap.Basemap.LayerInfo.Dropped
+    val Missing: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Dropped

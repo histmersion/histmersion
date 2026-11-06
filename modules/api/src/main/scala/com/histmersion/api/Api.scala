@@ -202,7 +202,7 @@ object Api:
   lazy val filterQuery: EndpointInput[Filter] =
     import com.histmersion.api.library.Filter.Docs as D
     def q[A](p: D.Param)(using Codec[List[String], A, CodecFormat.TextPlain]) =
-      query[A](p.rest).description(p.doc)
+      query[A]((p.rest).value).description((p.doc).value)
     q[Option[String]](D.query)
       .and(q[List[String]](D.tags))
       .and(q[List[String]](D.authors))
@@ -270,15 +270,14 @@ object Api:
   )
 
   object SourceViewQuery:
-    object Heading:
-      type Text = Text.T
-      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FullText = FullText.T
     object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Section = com.histmersion.api.library.Source.Section.Wire
     val Section: _root_.com.histmersion.api.library.Source.Section.Wire.type = _root_.com.histmersion.api.library.Source.Section.Wire
     type Heading = Heading.T
-    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      type Text = Text.T
+      object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Offset = Offset.T
     object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Chars = Chars.T
@@ -390,7 +389,7 @@ object Api:
         asOf: Option[com.histmersion.api.Api.AggregateQuery.TreeAsOf] = None,
         samples: Option[com.histmersion.api.Api.AggregateQuery.TreeSamples] = None
     ): AggregateQuery =
-      AggregateQuery(Some(_root_.com.histmersion.api.Api.AggregateQuery.By((by).value)), unit, filter, depth.orElse(Some(0)), asOf, samples)
+      AggregateQuery(Some(by), unit, filter, depth.orElse(Some(_root_.com.histmersion.api.Api.AggregateQuery.Depth(0))), asOf, samples)
 
   lazy val aggregate: PublicEndpoint[AggregateQuery, com.histmersion.api.Api.Error, TimeHistogram, Any] =
     base.get
@@ -542,7 +541,7 @@ object Api:
     base.get.in("backups").out(jsonBody[List[Backup.Info]])
 
   lazy val downloadBackup: PublicEndpoint[com.histmersion.api.backup.Backup.Name, com.histmersion.api.Api.Error, TapirFile, Any] =
-    endpoint.get.in("api" / "backups" / path[String]("file")).errorOut(writeErrors).out(fileBody)
+    (endpoint.get.in("api" / "backups" / path[String]("file")).errorOut(writeErrors).out(fileBody)).mapIn[_root_.com.histmersion.api.backup.Backup.Name]((refactorDecoded: _root_.java.lang.String) => _root_.com.histmersion.api.backup.Backup.Name(refactorDecoded))((refactorEncoded: _root_.com.histmersion.api.backup.Backup.Name) => (refactorEncoded).value)
 
   lazy val restore: PublicEndpoint[RestoreRequest, com.histmersion.api.Api.Error, RestoreResult, Any] =
     writeBase.post.in("restore").in(jsonBody[RestoreRequest]).out(jsonBody[RestoreResult])
@@ -554,23 +553,26 @@ object Api:
     writeBase.put.in("instance").in(jsonBody[InstanceLabel]).out(jsonBody[InstanceInfo])
 
   lazy val exportBundle: PublicEndpoint[Option[com.histmersion.api.exchange.Bundle.Name], com.histmersion.api.Api.Error, (TapirFile, com.histmersion.api.Api.FileName), Any] =
-    endpoint.get
+    (endpoint.get
       .in("api" / "bundle")
       .in(query[Option[String]]("since"))
       .errorOut(writeErrors)
       .out(fileBody)
-      .out(header[String](sttp.model.HeaderNames.ContentDisposition))
+      .out(header[String](sttp.model.HeaderNames.ContentDisposition)))
+      .mapIn[_root_.scala.Option[_root_.com.histmersion.api.exchange.Bundle.Name]]((refactorDecoded: _root_.scala.Option[_root_.java.lang.String]) => refactorDecoded.map(refactorElement => _root_.com.histmersion.api.exchange.Bundle.Name(refactorElement)))((refactorEncoded: _root_.scala.Option[_root_.com.histmersion.api.exchange.Bundle.Name]) => refactorEncoded.map(refactorElement => (refactorElement).value))
+      .mapOut[(TapirFile, _root_.com.histmersion.api.Api.FileName)]((refactorDecoded: (TapirFile, _root_.java.lang.String)) => (refactorDecoded._1, _root_.com.histmersion.api.Api.FileName(refactorDecoded._2)))((refactorEncoded: (TapirFile, _root_.com.histmersion.api.Api.FileName)) => (refactorEncoded._1, (refactorEncoded._2).value))
 
   lazy val verifyBundle: PublicEndpoint[TapirFile, com.histmersion.api.Api.Error, Bundle.VerifyResult, Any] =
     writeBase.post.in("bundle" / "verify").in(fileBody).out(jsonBody[Bundle.VerifyResult])
 
   /** Not an MCP tool: its input is a file upload, which an MCP call cannot carry. */
   lazy val importBundle: PublicEndpoint[(com.histmersion.api.Api.Apply, TapirFile), com.histmersion.api.Api.Error, Bundle.ImportResult, Any] =
-    writeBase.post
+    (writeBase.post
       .in("bundle" / "import")
       .in(query[Boolean]("dryRun").default(false))
       .in(fileBody)
-      .out(jsonBody[Bundle.ImportResult])
+      .out(jsonBody[Bundle.ImportResult]))
+      .mapIn[(_root_.com.histmersion.api.Api.Apply, TapirFile)]((refactorDecoded: (_root_.scala.Boolean, TapirFile)) => (_root_.com.histmersion.api.Api.Apply(refactorDecoded._1), refactorDecoded._2))((refactorEncoded: (_root_.com.histmersion.api.Api.Apply, TapirFile)) => ((refactorEncoded._1).value, refactorEncoded._2))
 
   /** Kept on the server under its sha256 so `merge plan` and `merge import` can name it: their body is the resolution
     * set, and a request carries one body.
@@ -625,9 +627,6 @@ object Api:
   )
 
   object ArticleQuery:
-    object Kind:
-      type Wire = Wire.T
-      object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = com.histmersion.api.research.Article.Kind.Wire
     val Kind: _root_.com.histmersion.api.research.Article.Kind.Wire.type = _root_.com.histmersion.api.research.Article.Kind.Wire
     type Text = Text.T
@@ -1266,11 +1265,8 @@ object Api:
   )
 
   object GoalQuery:
-    object Status:
-      type Wire = Wire.T
-      object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = com.histmersion.api.Api.GoalQuery.Status.Wire
-    val Status: _root_.com.histmersion.api.Api.GoalQuery.Status.Wire.type = _root_.com.histmersion.api.Api.GoalQuery.Status.Wire
+    type Status = com.histmersion.api.automation.Goal.StatusValue
+    val Status: _root_.com.histmersion.api.automation.Goal.StatusValue.type = _root_.com.histmersion.api.automation.Goal.StatusValue
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Offset = Offset.T
@@ -1387,11 +1383,13 @@ object Api:
       .out(jsonBody[Ingest.Accepted])).mapIn[(_root_.com.histmersion.api.library.Citekey, _root_.com.histmersion.api.Api.Overwrite)]((refactorDecoded189: (_root_.java.lang.String, _root_.scala.Boolean)) => (_root_.com.histmersion.api.library.Citekey((refactorDecoded189)._1), _root_.com.histmersion.api.Api.Overwrite((refactorDecoded189)._2)))((refactorEncoded189: (_root_.com.histmersion.api.library.Citekey, _root_.com.histmersion.api.Api.Overwrite)) => (((refactorEncoded189)._1).value, ((refactorEncoded189)._2).value))
 
   lazy val original: PublicEndpoint[com.histmersion.api.library.Citekey, com.histmersion.api.Api.Error, (TapirFile, com.histmersion.api.Api.FileName), Any] =
-    endpoint.get
+    (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "original")
       .errorOut(ingestErrors)
       .out(fileBody)
-      .out(header[String](sttp.model.HeaderNames.ContentDisposition))
+      .out(header[String](sttp.model.HeaderNames.ContentDisposition)))
+      .mapIn[_root_.com.histmersion.api.library.Citekey]((refactorDecoded: _root_.java.lang.String) => _root_.com.histmersion.api.library.Citekey(refactorDecoded))((refactorEncoded: _root_.com.histmersion.api.library.Citekey) => (refactorEncoded).value)
+      .mapOut[(TapirFile, _root_.com.histmersion.api.Api.FileName)]((refactorDecoded: (TapirFile, _root_.java.lang.String)) => (refactorDecoded._1, _root_.com.histmersion.api.Api.FileName(refactorDecoded._2)))((refactorEncoded: (TapirFile, _root_.com.histmersion.api.Api.FileName)) => (refactorEncoded._1, (refactorEncoded._2).value))
 
   lazy val job: PublicEndpoint[com.histmersion.api.SpatialHierarchyResult.Job.Id, com.histmersion.api.Api.Error, JobInfo, Any] =
     (base.get
@@ -1400,7 +1398,7 @@ object Api:
       .errorOut(statusCode(StatusCode.NotFound))).mapIn[_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id]((refactorDecoded192: _root_.java.lang.String) => _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id(refactorDecoded192))((refactorEncoded192: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id) => (refactorEncoded192).value)
 
   lazy val jobControl: PublicEndpoint[(com.histmersion.api.SpatialHierarchyResult.Job.Id, com.histmersion.api.Api.JobControl.Action), com.histmersion.api.Api.Error, JobInfo, Any] =
-    endpoint.post
+    (endpoint.post
       .in("api" / "jobs" / path[String]("id") / path[String]("action"))
       .errorOut(
         oneOf[com.histmersion.api.Api.Error](
@@ -1413,7 +1411,8 @@ object Api:
           oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[com.histmersion.api.Api.Error]))
         )
       )
-      .out(jsonBody[JobInfo])
+      .out(jsonBody[JobInfo]))
+      .mapIn[(_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id, _root_.com.histmersion.api.Api.JobControl.Action)]((refactorDecoded: (_root_.java.lang.String, _root_.java.lang.String)) => (_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id(refactorDecoded._1), _root_.com.histmersion.api.Api.JobControl.Action(refactorDecoded._2)))((refactorEncoded: (_root_.com.histmersion.api.SpatialHierarchyResult.Job.Id, _root_.com.histmersion.api.Api.JobControl.Action)) => ((refactorEncoded._1).value, (refactorEncoded._2).value))
 
   lazy val activity: PublicEndpoint[
     (Option[com.histmersion.api.automation.Activity.Kind], Option[com.histmersion.api.automation.Activity.Actor], Option[com.histmersion.api.automation.Activity.Subject], Option[com.histmersion.api.automation.Activity.Limit], Option[com.histmersion.api.automation.Activity.Cursor]),
@@ -1697,32 +1696,18 @@ object Api:
       case e if e.isInstanceOf[Error] && e.asInstanceOf[Error].code.contains(code) => (true)
 
   object Index:
-    type Block = Block.T
-    object Block extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Current = Current.T
     object Current extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PathTemplate = PathTemplate.T
-    object PathTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object PathTemplate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type Readme = Readme.T
     object Readme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RepoPath = RepoPath.T
     object RepoPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type PathResult = PathResult.T
-    object PathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type MarkdownResult = MarkdownResult.T
     object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SpliceResultPart2 = com.histmersion.api.Api.Index.Readme
-    val SpliceResultPart2: _root_.com.histmersion.api.Api.Index.Readme.type = _root_.com.histmersion.api.Api.Index.Readme
-    type SpliceReadme = com.histmersion.api.Api.Index.Readme
-    val SpliceReadme: _root_.com.histmersion.api.Api.Index.Readme.type = _root_.com.histmersion.api.Api.Index.Readme
-    type SpliceIndex = com.histmersion.api.Api.Index.Block
-    val SpliceIndex: _root_.com.histmersion.api.Api.Index.Block.type = _root_.com.histmersion.api.Api.Index.Block
-    type CurrentResult = com.histmersion.api.Api.Index.Current
-    val CurrentResult: _root_.com.histmersion.api.Api.Index.Current.type = _root_.com.histmersion.api.Api.Index.Current
-    type CurrentReadme = com.histmersion.api.Api.Index.Readme
-    val CurrentReadme: _root_.com.histmersion.api.Api.Index.Readme.type = _root_.com.histmersion.api.Api.Index.Readme
 
     val Begin = "<!-- BEGIN API INDEX (generated by `just api-docs` — do not edit by hand) -->"
     val End = "<!-- END API INDEX -->"
@@ -1733,17 +1718,17 @@ object Api:
 
     def markdown(endpoints: List[AnyEndpoint]): com.histmersion.api.Api.Index.MarkdownResult =
       val order = List("GET", "POST", "PUT", "PATCH", "DELETE")
-      val byPath = endpoints.groupBy(path).view.mapValues(_.map(method).distinct.sortBy(m => order.indexOf(m))).toMap
+      val byPath = endpoints.groupBy(path).view.mapValues(_.map(method).distinct.sortBy(m => order.indexOf((m).value))).toMap
       val rows = byPath.keys.toList.sorted.map(p => s"| ${byPath(p).map(m => s"`$m`").mkString(" · ")} | `$p` |")
       _root_.com.histmersion.api.Api.Index.MarkdownResult((s"${Plural.count(_root_.com.histmersion.api.Plural.Count((endpoints.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("endpoint"))} on ${Plural.count(_root_.com.histmersion.api.Plural.Count((byPath.size).toLong), _root_.com.histmersion.api.Plural.Noun.Singular("path"))}:" ::
         "" :: "| methods | path |" :: "|---|---|" :: rows).mkString("\n"))
 
     val Page = "docs/user-guide/reference/rest-api.md"
 
-    def splice(readme: com.histmersion.api.Api.Index.Readme, index: com.histmersion.api.Api.Index.Block): Either[com.histmersion.api.Api.Error.Problem, com.histmersion.api.Api.Index.Readme] =
+    def splice(readme: com.histmersion.api.Api.Index.Readme, index: com.histmersion.api.Api.Index.MarkdownResult): Either[com.histmersion.api.Api.Error.Problem, com.histmersion.api.Api.Index.Readme] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
       if b < 0 || e < b then Left(_root_.com.histmersion.api.Api.Error.Problem(s"$Page has no $Begin … $End block"))
-      else Right(_root_.com.histmersion.api.Api.Index.Readme((readme).value.substring(0, b + Begin.length) + "\n" + index + "\n" + (readme).value.substring(e)))
+      else Right(_root_.com.histmersion.api.Api.Index.Readme((readme).value.substring(0, b + Begin.length) + "\n" + (index).value + "\n" + (readme).value.substring(e)))
 
     def current(readme: com.histmersion.api.Api.Index.Readme): Option[com.histmersion.api.Api.Index.Current] =
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
@@ -1752,5 +1737,5 @@ object Api:
   @main def generateApiIndex(repo: com.histmersion.api.Api.Index.RepoPath): Unit =
     val p = java.nio.file.Path.of((repo).value).resolve(Index.Page)
     Index.splice(_root_.com.histmersion.api.Api.Index.Readme(java.nio.file.Files.readString(p)), Index.markdown(Api.all)) match
-      case Left(e)  => throw IllegalStateException(e)
-      case Right(s) => val _ = java.nio.file.Files.writeString(p, s)
+      case Left(e)  => throw IllegalStateException((e).value)
+      case Right(s) => val _ = java.nio.file.Files.writeString(p, (s).value)

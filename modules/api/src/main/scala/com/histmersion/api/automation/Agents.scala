@@ -27,27 +27,26 @@ object Agents:
     def wire: com.histmersion.api.automation.Agents.ModelRef.Wire = _root_.com.histmersion.api.automation.Agents.ModelRef.Wire(s"${provider.wire}:$model")
 
   object ModelRef:
-    object Model:
-      type Problem = Problem.T
-      object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Spec = Spec.T
-      object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Model = Model.T
-    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      type Problem = Problem.T
+      object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+      type Spec = Spec.T
+      object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Agents.ModelRef.Wire, known: Set[com.histmersion.api.automation.Agents.ModelRef.Model] = Set.empty): Either[com.histmersion.api.automation.Agents.ModelRef.Problem, ModelRef] =
+    def parse(s: com.histmersion.api.automation.Agents.ModelRef.Wire, known: Set[com.histmersion.api.automation.ProviderKind.Plugin.Name] = Set.empty): Either[com.histmersion.api.automation.Agents.ModelRef.Problem, ModelRef] =
       val t = (s).value.trim
       t.indexOf(':') match
-        case -1 => Left(s"'$t' is not provider:model (provider: ${ProviderKind.names(known)})")
+        case -1 => Left(Problem(s"'$t' is not provider:model (provider: ${ProviderKind.names(known)})"))
         case i  =>
           val (p, m) = (t.substring(0, i), t.substring(i + 1).trim)
           ProviderKind.parse(_root_.com.histmersion.api.automation.ProviderKind.Wire(p), known) match
-            case None                 => Left(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})")
+            case None                 => Left(Problem(s"unknown provider '$p' in '$t' (one of: ${ProviderKind.names(known)})"))
             case Some(_) if m.isEmpty => Left(_root_.com.histmersion.api.automation.Agents.ModelRef.Problem(s"'$t' names no model"))
             case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
 
@@ -62,7 +61,7 @@ object Agents:
     def total: com.histmersion.api.automation.Agents.Usage.TotalTokens = _root_.com.histmersion.api.automation.Agents.Usage.TotalTokens((input).value + (output).value)
 
     def budgeted(cacheReadWeight: com.histmersion.api.automation.Agents.Usage.CacheReadWeight): com.histmersion.api.automation.Agents.Usage.BudgetedTokens =
-      math.max(0L, (input).value - (cacheRead).value) + (output).value + math.round((cacheRead).value.toDouble * math.max(0.0, cacheReadWeight))
+      _root_.com.histmersion.api.automation.Agents.Usage.BudgetedTokens(math.max(0L, (input).value - (cacheRead).value) + (output).value + math.round((cacheRead).value.toDouble * math.max(0.0, cacheReadWeight.value)))
 
   object Usage:
     type BudgetedTokens = BudgetedTokens.T
@@ -91,9 +90,9 @@ object Agents:
       cacheWrite: Option[BigDecimal] = None
   ):
     def cost(u: Usage): BigDecimal =
-      val plain = math.max((u.input).value - u.cacheRead - u.cacheWrite, 0L)
-      (BigDecimal(plain) * input + BigDecimal(u.cacheRead) * cacheRead.getOrElse(input) +
-        BigDecimal(u.cacheWrite) * cacheWrite.getOrElse(input) + BigDecimal(u.output) * output) / Prices.Million
+      val plain = math.max(u.input.value - u.cacheRead.value - u.cacheWrite.value, 0L)
+      (BigDecimal(plain) * input + BigDecimal(u.cacheRead.value) * cacheRead.getOrElse(input) +
+        BigDecimal(u.cacheWrite.value) * cacheWrite.getOrElse(input) + BigDecimal(u.output.value) * output) / Prices.Million
 
     def text: String =
       val n = (d: BigDecimal) => d.bigDecimal.stripTrailingZeros.toPlainString
@@ -148,12 +147,12 @@ object Agents:
       * never trip a cost budget.
       */
     def cost(prices: Map[com.histmersion.api.automation.Agents.ModelRef.Model, Price], model: com.histmersion.api.automation.Agents.Prices.CostModel, u: Usage): Either[com.histmersion.api.automation.Agents.Prices.Problem, BigDecimal] =
-      (prices.get(_root_.com.histmersion.api.automation.Agents.ModelRef.Model((model).value)).toRight(unpriced(model)).map(_.cost(u))).left.map(refactorError => _root_.com.histmersion.api.automation.Agents.Prices.Problem((refactorError).value))
+      (prices.get(model).toRight(unpriced(model)).map(_.cost(u))).left.map(refactorError => _root_.com.histmersion.api.automation.Agents.Prices.Problem(refactorError))
 
     def billing(prices: Map[com.histmersion.api.automation.Agents.ModelRef.Model, Price], m: ModelRef, pool: Option[PlanQuota.PoolId]): Either[com.histmersion.api.automation.Agents.Prices.Problem, Billing] =
       pool match
         case Some(p) => Right(Billing.Plan(p))
-        case None    => prices.get(m.model).map(Billing.Metered(_)).toRight(unpriced(m.model) + metered(m))
+        case None    => prices.get(m.model).map(Billing.Metered(_)).toRight(Problem(unpriced(m.model) + metered(m)))
 
     private def unpriced(model: com.histmersion.api.automation.Agents.ModelRef.Model): String =
       (s"model '$model' has no price — add it to agents.prices (HISTMERSION_AGENTS_PRICES), e.g. \"$model=0/0\" for a free local model")
@@ -226,12 +225,12 @@ object Agents:
         KindlingsSchema, com.histmersion.api.json.Schema:
     /** A strict-schema provider sends `""` and `null` where it has nothing; they must not pass. */
     def problems(recordYear: Option[com.histmersion.api.automation.Agents.ProbeAnswer.RecordYear]): List[com.histmersion.api.automation.Agents.ProbeAnswer.Problem] = List(
-      Option.when(Option(citekey).forall(_.trim.isEmpty))("the citekey is empty — give the source's citekey"),
-      Option.when(Option(title).forall(_.trim.isEmpty))(
-        "the title is empty — copy the source's exact title from get_source"
+      Option.when(Option(citekey).forall(_.value.trim.isEmpty))(ProbeAnswer.Problem("the citekey is empty — give the source's citekey")),
+      Option.when(Option(title).forall(_.value.trim.isEmpty))(
+        ProbeAnswer.Problem("the title is empty — copy the source's exact title from get_source")
       ),
       Option.when(year.isEmpty && recordYear.isDefined)(
-        "the year is missing — give the source's publication year from get_source"
+        ProbeAnswer.Problem("the year is missing — give the source's publication year from get_source")
       )
     ).flatten
 
@@ -407,8 +406,8 @@ object Agents:
       error: Option[RunInfo.Error] = None,
       model: Option[RunInfo.Model] = None,
       usage: Usage = Usage.Zero,
-      costUsd: RunInfo.CostUsd = 0,
-      budgetUsd: RunInfo.BudgetUsd = 0,
+      costUsd: RunInfo.CostUsd = _root_.com.histmersion.api.automation.Agents.RunInfo.CostUsd(0.0),
+      budgetUsd: RunInfo.BudgetUsd = _root_.com.histmersion.api.automation.Agents.RunInfo.BudgetUsd(0.0),
       budgetTokens: RunInfo.BudgetTokens = _root_.com.histmersion.api.automation.Agents.RunInfo.BudgetTokens((0).toLong),
       warnings: List[RunInfo.Warnings] = Nil,
       createdAt: RunInfo.CreatedAt = _root_.com.histmersion.api.automation.Agents.RunInfo.CreatedAt(""),
@@ -429,7 +428,7 @@ object Agents:
     def isWaiting: Boolean = (status == com.histmersion.api.automation.Run.State.WaitingApproval.wire)
 
     def modelFor(role: Role): Option[com.histmersion.api.automation.Agents.RunInfo.Model] =
-      params.overrides.find(o => Role.parse(o.role).contains(role)).map(_.model).orElse(model)
+      params.overrides.find(o => Role.parse(o.role).contains(role)).map(o => RunInfo.Model(o.model.value)).orElse(model)
 
   object RunInfo:
 
@@ -489,7 +488,7 @@ object Agents:
       model: Option[StepInfo.Model] = None,
       promptHash: Option[StepInfo.PromptHash] = None,
       usage: Usage = Usage.Zero,
-      costUsd: StepInfo.CostUsd = 0,
+      costUsd: StepInfo.CostUsd = _root_.com.histmersion.api.automation.Agents.StepInfo.CostUsd(0.0),
       error: Option[StepInfo.Error] = None,
       output: Option[StepInfo.Output] = None,
       startedAt: StepInfo.StartedAt = _root_.com.histmersion.api.automation.Agents.StepInfo.StartedAt(""),

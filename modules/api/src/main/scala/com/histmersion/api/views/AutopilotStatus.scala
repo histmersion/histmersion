@@ -28,7 +28,7 @@ final case class AutopilotStatus(
     library: List[ManagerBrief] = Nil,
     goals: List[GoalProgress] = Nil,
     changes: List[AutopilotStatus.Changes] = Nil,
-    backlog: AutopilotStatus.Backlog = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Backlog(0),
+    backlog: AutopilotStatus.Backlog = _root_.com.histmersion.api.views.AutopilotStatus.Backlog(0),
     backlogDays: Option[AutopilotStatus.BacklogDays] = None,
     focus: Option[FocusInfo] = None,
     drain: Option[DrainInfo] = None,
@@ -64,47 +64,44 @@ final case class AutopilotStatus(
   )
 
   /** The page in Markdown: the automation's status with the library's lines in their places. */
-  def markdown: com.histmersion.api.views.AutopilotStatus.MarkdownResult =
+  def markdown: String =
     AutopilotMarkdown.status(
       engine,
       ingestedBy = acquireRecheck
-        .filter((_.fetchedToday).value > 0)
+        .filter(_.fetchedToday.value > 0)
         .fold("")(r => s", ${r.fetchedToday} of them by the acquisition list's re-check"),
       beforeBacklog = upstreams.map(q => (s"- ${UpstreamQuotaMarkdown.line(q)}")),
       afterBacklog = (acquireRecheck.map(r => s"- ${AcquireChecksMarkdown.line(r)}").toList).map(refactorValue8 => (refactorValue8))
     )
 
 object AutopilotStatus:
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type On = On.T
-  object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Since = Since.T
-  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type By = com.histmersion.api.automation.Activity.Actor
-  val By: _root_.com.histmersion.api.automation.Activity.Actor.type = _root_.com.histmersion.api.automation.Activity.Actor
-  type AgentsEnabled = AgentsEnabled.T
-  object AgentsEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ManagersEnabled = ManagersEnabled.T
-  object ManagersEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CronsEnabled = CronsEnabled.T
-  object CronsEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestedToday = IngestedToday.T
-  object IngestedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IngestCap = IngestCap.T
-  object IngestCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MaxConcurrentRuns = MaxConcurrentRuns.T
-  object MaxConcurrentRuns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastBackup = LastBackup.T
-  object LastBackup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LastLint = LastLint.T
-  object LastLint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Changes = Changes.T
-  object Changes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Backlog = com.histmersion.api.library.RepairAcquire.RepairResult.Backlog
-  val Backlog: _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Backlog.type = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Backlog
-  type BacklogDays = com.histmersion.api.library.RepairAcquire.RepairResult.BacklogDays
-  val BacklogDays: _root_.com.histmersion.api.library.RepairAcquire.RepairResult.BacklogDays.type = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.BacklogDays
-  type GoalPlansWait = GoalPlansWait.T
-  object GoalPlansWait extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type On = com.histmersion.api.automation.Autopilot.EngineStatus.On
+  val On: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.On.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.On
+  type Since = com.histmersion.api.automation.Autopilot.EngineStatus.Since
+  val Since: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Since.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Since
+  type By = com.histmersion.api.automation.Autopilot.EngineStatus.By
+  val By: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.By.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.By
+  type AgentsEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled
+  val AgentsEnabled: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled
+  type ManagersEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled
+  val ManagersEnabled: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled
+  type CronsEnabled = com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled
+  val CronsEnabled: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled
+  type IngestedToday = com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday
+  val IngestedToday: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday
+  type IngestCap = com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap
+  val IngestCap: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap
+  type MaxConcurrentRuns = com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns
+  val MaxConcurrentRuns: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns
+  type LastBackup = com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup
+  val LastBackup: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup
+  type LastLint = com.histmersion.api.automation.Autopilot.EngineStatus.LastLint
+  val LastLint: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.LastLint.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.LastLint
+  type Changes = com.histmersion.api.automation.Autopilot.EngineStatus.Changes
+  val Changes: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Changes.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Changes
+  type Backlog = com.histmersion.api.automation.Autopilot.EngineStatus.Backlog
+  val Backlog: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Backlog.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.Backlog
+  type BacklogDays = com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays
+  val BacklogDays: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays
+  type GoalPlansWait = com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait
+  val GoalPlansWait: _root_.com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait.type = _root_.com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait

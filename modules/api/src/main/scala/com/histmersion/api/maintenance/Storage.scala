@@ -12,19 +12,13 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.json.NewtypeCodecs.given
 object Storage:
-  type DefaultLowFreeBytesNumber = DefaultLowFreeBytesNumber.T
-  object DefaultLowFreeBytesNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Depth = Depth.T
   object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Hint = Hint.T
   object Hint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type DefaultLowFreeBytes = DefaultLowFreeBytesValue
-  type DefaultLowFreeBytesValue = com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber
-  val DefaultLowFreeBytesValue: _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber.type = _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber
-
-  val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber(10L * 1000 * 1000 * 1000)
+  val DefaultLowFreeBytes: com.histmersion.api.ByteCount = com.histmersion.api.ByteCount(10L * 1000 * 1000 * 1000)
 
   def under(child: com.histmersion.api.maintenance.Storage.Entry.Path, parent: com.histmersion.api.maintenance.Storage.Entry.Path): Boolean =
     def norm(p: com.histmersion.api.maintenance.Storage.Entry.Path) = (p).value.replace('\\', '/').stripSuffix("/")
@@ -42,7 +36,7 @@ object Storage:
             j != i && o.host == e.host && o.path.exists(op => under(p, op) && (op != p || j < i))
           }
           parents
-            .maxByOption { case (o, _) => o.path.fold(0)(_.length) }
+            .maxByOption { case (o, _) => o.path.fold(0)(_.value.length) }
             .fold(e)((o, _) => e.copy(within = Some(o.key)))
         }
     }
@@ -62,9 +56,9 @@ object Storage:
         s"Low disk space on ${v.id}: ${Backup.humanBytes(_root_.com.histmersion.api.ByteCount(v.freeBytes.value.toLong))} free of ${Backup.humanBytes(_root_.com.histmersion.api.ByteCount(v.totalBytes.value.toLong))}"
       if big.isEmpty then _root_.com.histmersion.api.maintenance.Storage.Hint(s"$head.")
       else
-        s"$head. Biggest here: " + big
-          .map(e => s"${e.label} ${Backup.humanBytes(e.bytes.map(_.value.toLong).getOrElse(0L))} (${e.shrink.getOrElse("")})")
-          .mkString("; ") + "."
+        _root_.com.histmersion.api.maintenance.Storage.Hint(s"$head. Biggest here: " + big
+          .map(e => s"${e.label} ${Backup.humanBytes(e.bytes.getOrElse(com.histmersion.api.ByteCount(0L)))} (${e.shrink.getOrElse("")})")
+          .mkString("; ") + ".")
     }
 
   def addLocal(r: Storage.Report, local: List[Storage.Entry], volumes: List[Storage.Volume]): Storage.Report =
@@ -81,19 +75,19 @@ object Storage:
   def withHints(r: Storage.Report): Storage.Report = r.modify(_.hints).setTo(hints(r))
 
   def details(r: Storage.Report, e: Storage.Entry): List[com.histmersion.api.maintenance.Storage.Entry.Detail] =
-    val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Plural.count(_root_.com.histmersion.api.Plural.Count(n), _root_.com.histmersion.api.Plural.Noun.Singular("file"))).toList
-    val extra = e.key match
+    val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Entry.Detail(Plural.count(_root_.com.histmersion.api.Plural.Count(n), _root_.com.histmersion.api.Plural.Noun.Singular("file")))).toList
+    val extra = e.key.value match
       case "backups" =>
         r.backups
           .map(b =>
-            Plural.count(b.count, _root_.com.histmersion.api.Plural.Noun.Singular("archive")) + b.newest.fold("")(n => s", newest $n") +
-              s", keeps ${if b.keep > 0 then b.keep.toString else "every one"}"
+            Entry.Detail(Plural.count(_root_.com.histmersion.api.Plural.Count(b.count.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("archive")) + b.newest.fold("")(n => s", newest $n") +
+              s", keeps ${if b.keep > 0 then b.keep.toString else "every one"}")
           )
           .toList
       case "database" =>
         Option
           .when(r.tables.nonEmpty)(
-            "largest tables: " + r.tables.map(t => s"${t.name} ${Backup.humanBytes(t.bytes)}").mkString(", ")
+            Entry.Detail("largest tables: " + r.tables.map(t => s"${t.name} ${Backup.humanBytes(t.bytes)}").mkString(", "))
           )
           .toList
       case _ => Nil
@@ -119,24 +113,24 @@ object Storage:
     object Keep extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def shrink(key: com.histmersion.api.maintenance.Storage.Entry.Key, keep: com.histmersion.api.maintenance.Storage.Advice.Keep): Option[com.histmersion.api.maintenance.Storage.Hint] = key match
-      case refactorPattern if (refactorPattern.value == "backups") && (refactorPattern10.value == "backups") =>
+    def shrink(key: com.histmersion.api.maintenance.Storage.Entry.Key, keep: com.histmersion.api.maintenance.Storage.Advice.Keep): Option[com.histmersion.api.maintenance.Storage.Hint] = key.value match
+      case "backups" =>
         Some(if (keep).value > 0 then _root_.com.histmersion.api.maintenance.Storage.Hint(s"lower backups.keep (now $keep) — the next backup deletes the older archives")
         else _root_.com.histmersion.api.maintenance.Storage.Hint("set backups.keep (now 0 = keep every archive), or delete old archives"))
-      case refactorPattern11 if (refactorPattern2.value == "basemap") && (refactorPattern11.value == "basemap")   => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("histmersion basemap rm (one layer: histmersion basemap rm --layer <name>)"))
-      case refactorPattern12 if (refactorPattern3.value == "gazetteer") && (refactorPattern12.value == "gazetteer") => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("delete the cached extracts — histmersion places load fetches them again"))
-      case refactorPattern13 if (refactorPattern4.value == "database") && (refactorPattern13.value == "database")  =>
+      case "basemap" => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("histmersion basemap rm (one layer: histmersion basemap rm --layer <name>)"))
+      case "gazetteer" => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("delete the cached extracts — histmersion places load fetches them again"))
+      case "database" =>
         Some(_root_.com.histmersion.api.maintenance.Storage.Hint("histmersion maintenance vacuum; agents.keep-messages-days trims the agents' message traces"))
-      case refactorPattern5 if (refactorPattern5.value == "toolchain") && (refactorPattern14.value == "toolchain")     => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("histmersion-toolchain remove (needed again only to relink plugins)"))
-      case refactorPattern6 if (refactorPattern6.value == "logs") && (refactorPattern15.value == "logs")          => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("delete old log files (the server reopens them)"))
-      case refactorPattern16 if (refactorPattern7.value == "bundles") && (refactorPattern16.value == "bundles")       => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("scratch: safe to empty while no bundle export or import is running"))
-      case refactorPattern8 if (refactorPattern8.value == "acquire-spool") && (refactorPattern17.value == "acquire-spool") => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("scratch: safe to empty while no acquisition is running"))
-      case refactorPattern18 if (refactorPattern9.value == "codex-home") && (refactorPattern18.value == "codex-home")    =>
+      case "toolchain" => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("histmersion-toolchain remove (needed again only to relink plugins)"))
+      case "logs" => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("delete old log files (the server reopens them)"))
+      case "bundles" => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("scratch: safe to empty while no bundle export or import is running"))
+      case "acquire-spool" => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("scratch: safe to empty while no acquisition is running"))
+      case "codex-home" =>
         Some(
           _root_.com.histmersion.api.maintenance.Storage.Hint("lower agents.providers.codex.keep-sessions-days — older run transcripts are deleted and its SQLite " +
             "files vacuumed while no Codex run uses it (every retention-every-hours); never delete auth.json, its login")
         )
-      case k if (k).value.startsWith("cache:") => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("a cache: safe to delete, it is fetched or rebuilt again"))
+      case k if k.startsWith("cache:") => Some(_root_.com.histmersion.api.maintenance.Storage.Hint("a cache: safe to delete, it is fetched or rebuilt again"))
       case _                           => None
 
   final case class Entry(
@@ -148,7 +142,7 @@ object Storage:
       files: Option[com.histmersion.api.maintenance.Storage.FileCount] = None,
       exists: Entry.Exists = _root_.com.histmersion.api.maintenance.Storage.Entry.Exists(true),
       partial: Entry.Partial = _root_.com.histmersion.api.maintenance.Storage.Entry.Partial(false),
-      within: Option[Entry.Within] = None,
+      within: Option[Entry.Key] = None,
       detail: Option[Entry.Detail] = None,
       shrink: Option[Entry.Shrink] = None,
       volume: Option[Entry.Volume] = None,
@@ -170,8 +164,6 @@ object Storage:
     object Exists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Partial = Partial.T
     object Partial extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Within = Within.T
-    object Within extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Detail = Detail.T
     object Detail extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Shrink = Shrink.T

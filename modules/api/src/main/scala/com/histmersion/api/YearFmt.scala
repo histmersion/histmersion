@@ -9,7 +9,7 @@ object YearFmt:
 
   def apply(v: com.histmersion.api.catalogue.Year): String =
     if (v).value < 0 then (s"${-(v).value} BCE")
-    else if v == 0 then ("1 BCE") // no year zero in historical reckoning
+    else if (v).value == 0 then ("1 BCE") // no year zero in historical reckoning
     else (s"$v CE")
 
   def apply(v: Option[com.histmersion.api.catalogue.Year]): String = v.fold("?")(apply)
@@ -27,7 +27,7 @@ object YearFmt:
       case (None, None)       => ((none))
 
   def span(ts: TimeSpan): String =
-    ts.outer.fold("undated")((a, b) => period(Some(a), Some(b)))
+    ts.outer.fold("undated")((a, b) => period(Some(_root_.com.histmersion.api.catalogue.Year(a.value)), Some(_root_.com.histmersion.api.catalogue.Year(b.value))))
 
   def spanLong(ts: TimeSpan): String =
     val parts = List(
