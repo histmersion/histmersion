@@ -58,7 +58,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
       .continually(r.next().fold(e => fail(e.value), identity))
       .takeWhile(_.isDefined)
       .flatten
-      .map(e => e.name -> String(r.readAll(), UTF_8))
+      .map(e => e.name.value -> String(r.readAll(), UTF_8))
       .toList
 
   test("entities: blob references, dangling references and asOf"):
@@ -157,7 +157,7 @@ class BundleEntitiesSuite extends munit.FunSuite:
     val gvp = BundleFormat.stamp(
       event(
         _.modify(
-          _.catalogue).setTo(Some("gvp")).modify(_.names).setTo(Some(List("Thera", "Santorini"))).modify(_.wikidata).setTo(Some("Q1")).modify(_.central).setTo((Some(-1560): _root_.scala.Option[_root_.scala.Long])).modify(_.plusMinus).setTo((Some(10): _root_.scala.Option[_root_.scala.Long])).modify(_.datingMethod).setTo(Some("radiocarbon")
+          _.catalogue).setTo(Some(Bundle.Event.Catalogue("gvp"))).modify(_.names).setTo(Some(List(Bundle.Event.Names("Thera"), Bundle.Event.Names("Santorini")))).modify(_.wikidata).setTo(Some(Bundle.Event.Wikidata("Q1"))).modify(_.central).setTo(Some(Bundle.Event.Central(-1560L))).modify(_.plusMinus).setTo(Some(Bundle.Event.PlusMinus(10L))).modify(_.datingMethod).setTo(Some(Bundle.Event.DatingMethod("radiocarbon"))
         )
       )
     )
@@ -280,13 +280,13 @@ class BundleEntitiesSuite extends munit.FunSuite:
       Bundle.Instance(I),
       None,
       None,
-      ps.map((p, b) => BundleFormat.fileInfo(p, b)),
+      ps.map((p, b) => BundleFormat.fileInfo(Bundle.FileInfo.Path(p), b)),
       Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(1), com.histmersion.api.ByteCount(3)),
       Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
     val ok = tar(
       (Bundle.ManifestPath -> BundleFormat.manifestBytes(m)) :: ps.map(identity) ++
-        List(Bundle.blobPath("ab" * 32) -> Array[Byte](1, 2, 3))*
+        List(Bundle.blobPath(com.histmersion.api.Sha256("ab" * 32)) -> Array[Byte](1, 2, 3))*
     )
     val l = BundleReader.read(ByteArrayInputStream(ok), hashBlobs = true)
     // the blob's content is not its name, and nothing references it

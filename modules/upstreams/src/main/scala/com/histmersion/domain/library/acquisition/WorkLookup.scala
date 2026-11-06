@@ -65,7 +65,7 @@ object WorkLookup:
     */
   def key(doi: Option[com.histmersion.plugin.Doi], arxiv: Option[com.histmersion.upstreams.ArxivId], work: Option[WorkRef]): WorkKey =
     WorkKey(
-      doi = doi.flatMap(d => Doi.option(d.value.trim)),
+      doi = doi.map(_.value.trim).filter(_.matches("10\\.[0-9]+/\\S+")).map(Doi(_)),
       arxiv = arxiv.orElse(work.flatMap(_.arxivId)).map(a => WorkKey.Arxiv(a.value)),
       title = work.flatMap(_.title),
       authors = work.map(_.authors).getOrElse(Nil),
