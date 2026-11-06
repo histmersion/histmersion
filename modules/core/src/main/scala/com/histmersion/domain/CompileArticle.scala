@@ -3,6 +3,7 @@ package com.histmersion.domain
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.research.Articles
+import com.histmersion.domain.library.Citekey
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -27,65 +28,38 @@ import com.histmersion.api.json.NewtypeCodecs.given
 object CompileArticle:
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsTarget = IsTarget.T
-  object IsTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Known = Known.T
-  object Known extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Last = Last.T
   object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LogLine = LogLine.T
   object LogLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxClaims = MaxClaims.T
   object MaxClaims extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinRatio = MinRatio.T
-  object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Reason = Reason.T
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Record = Record.T
-  object Record extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReviewText = ReviewText.T
-  object ReviewText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Tags = Tags.T
-  object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Topics = Topics.T
-  object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Written = Written.T
   object Written extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  // ── phase 1: extraction ─────────────────────────────────────────────────────────────────────────
+  given citekeyKeyEncoder: _root_.io.circe.KeyEncoder[Citekey] = _root_.io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
+  given citekeyKeyDecoder: _root_.io.circe.KeyDecoder[Citekey] = _root_.io.circe.KeyDecoder.instance(Citekey.option(_))
 
-  type DisagreementKinds = DisagreementKindsValue
-  type EvidenceFilter = _root_.com.histmersion.domain.CompileArticle.Evidence.Filter
-  val EvidenceFilter: _root_.com.histmersion.domain.CompileArticle.Evidence.Filter.type = _root_.com.histmersion.domain.CompileArticle.Evidence.Filter
-  type StatusesSilentBody = _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body
-  val StatusesSilentBody: _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body.type = _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body
-  type CitedText = _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body
-  val CitedText: _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body.type = _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body
-  type CheckDraftCurrent = _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body
-  val CheckDraftCurrent: _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body.type = _root_.com.histmersion.domain.CompileArticle.DraftAnswer.Body
+  // ── phase 1: extraction ─────────────────────────────────────────────────────────────────────────
 
   final case class ClaimAnswer(
       claim: ClaimAnswer.Claim,
-      quote: ClaimAnswer.Quote,
+      quote: AgentProposals.Proposal.Quote,
       date: Option[ClaimAnswer.Date] = None,
       place: Option[ClaimAnswer.Place] = None,
-      confidence: ClaimAnswer.Confidence
+      confidence: Confidence.Wire
   ) derives KindlingsCodecAsObject
   object ClaimAnswer:
     type Claim = Claim.T
     object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Date = Date.T
     object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Place = Place.T
     object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Confidence = Confidence.T
-    object Confidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[ClaimAnswer] = KindlingsSchema
       .derived[ClaimAnswer]
@@ -118,33 +92,17 @@ object CompileArticle:
   /** A claim whose quote code found in the record. `ratio` is the OCR-tolerant match share. */
   final case class Claim(
       citekey: com.histmersion.domain.library.Citekey,
-      claim: Claim.Value,
-      quote: Claim.Quote,
-      date: Option[Claim.Date],
-      place: Option[Claim.Place],
+      claim: ClaimAnswer.Claim,
+      quote: AgentProposals.Proposal.Quote,
+      date: Option[ClaimAnswer.Date],
+      place: Option[ClaimAnswer.Place],
       confidence: Confidence,
-      ratio: Claim.Ratio
+      ratio: AgentVerify.Ratio
   ) derives KindlingsCodecAsObject
 
-  object Claim:
-    type Value = Value.T
-    object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Date = Date.T
-    object Date extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Place = Place.T
-    object Place extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Ratio = Ratio.T
-    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** One source's verified extraction (checkpointed): its claims, or why it is not used. */
-  final case class Extracted(citekey: com.histmersion.domain.library.Citekey, claims: List[Claim], notUsed: Option[Extracted.NotUsed])
+  final case class Extracted(citekey: com.histmersion.domain.library.Citekey, claims: List[Claim], notUsed: Option[Coverage.Entry.Reason])
       derives KindlingsCodecAsObject
-
-  object Extracted:
-    type NotUsed = NotUsed.T
-    object NotUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Check one extraction: every quote must be in `record` (summary, findings, notes, body excerpt), every confidence
     * in the vocabulary; a source judged irrelevant must say why. Unverifiable claims send the answer back; on the last
@@ -153,46 +111,46 @@ object CompileArticle:
   def checkExtract(
       a: ExtractAnswer,
       citekey: com.histmersion.domain.library.Citekey,
-      record: com.histmersion.domain.CompileArticle.Record,
-      minRatio: com.histmersion.domain.CompileArticle.MinRatio,
-      maxClaims: com.histmersion.domain.CompileArticle.MaxClaims,
-      last: com.histmersion.domain.CompileArticle.Last
-  ): Either[List[com.histmersion.domain.CompileArticle.Problem], (Extracted, List[com.histmersion.domain.CompileArticle.Description])] =
+      record: AgentVerify.SourceBody,
+      minRatio: AgentVerify.MinRatio,
+      maxClaims: MaxClaims,
+      last: Last
+  ): Either[List[Problem], (Extracted, List[Problem])] =
     val checked = a.claims.zipWithIndex.map { (c, i) =>
-      val label = s"claim ${i + 1} (${Option(c.claim).getOrElse("").take(50)})"
-      if Option(c.claim).forall(_.trim.isEmpty) then Left(s"$label: no claim")
+      val label = s"claim ${i + 1} (${Option(c.claim).map(_.value).getOrElse("").take(50)})"
+      if Option(c.claim).forall(_.value.trim.isEmpty) then Left(Problem(s"$label: no claim"))
       else
-        AgentVerify.confidence(Option(c.confidence).getOrElse("")) match
-          case Left(m)     => Left(s"$label: $m")
+        AgentVerify.confidence(Option(c.confidence).getOrElse(Confidence.Wire(""))) match
+          case Left(m)     => Left(Problem(s"$label: $m"))
           case Right(conf) =>
-            val q = Option(c.quote).map(_.trim).getOrElse("")
-            val m = AgentVerify.findQuote(q, record, minRatio)
-            if q.isEmpty then Left(s"$label: no quote")
-            else if !m.accepted then Left(s"$label: the quote is not in the record of $citekey — copy it exactly")
+            val q = Option(c.quote).map(_.value.trim).getOrElse("")
+            val m = AgentVerify.findQuote(AgentProposals.Proposal.Quote(q), record, minRatio)
+            if q.isEmpty then Left(Problem(s"$label: no quote"))
+            else if !m.accepted then Left(Problem(s"$label: the quote is not in the record of $citekey — copy it exactly"))
             else
               Right(
                 Claim(
                   citekey,
-                  c.claim.trim,
-                  q,
-                  c.date.map(_.trim).filter(_.nonEmpty),
-                  c.place.map(_.trim).filter(_.nonEmpty),
+                  ClaimAnswer.Claim(c.claim.value.trim),
+                  AgentProposals.Proposal.Quote(q),
+                  c.date.map(d => ClaimAnswer.Date(d.value.trim)).filter(_.value.nonEmpty),
+                  c.place.map(p => ClaimAnswer.Place(p.value.trim)).filter(_.value.nonEmpty),
                   conf,
                   m.ratio
                 )
               )
     }
-    val claims = checked.collect { case Right(c) => c }.distinctBy(c => AgentVerify.normalise(c.claim))
+    val claims = checked.collect { case Right(c) => c }.distinctBy(c => AgentVerify.normalise(AgentVerify.Text(c.claim.value)))
     val tooMany =
-      Option.when(claims.size > maxClaims)(s"at most $maxClaims claims per source (you gave ${claims.size})")
-    val reason = Option(a.reason).map(_.trim).filter(_.nonEmpty)
-    val noReason = Option.when((!a.relevant || a.claims.isEmpty) && reason.isEmpty)("say why the record is not used")
+      Option.when(claims.size > maxClaims.value)(Problem(s"at most $maxClaims claims per source (you gave ${claims.size})"))
+    val reason = Option(a.reason).map(_.value.trim).filter(_.nonEmpty)
+    val noReason = Option.when((!a.relevant.value || a.claims.isEmpty) && reason.isEmpty)(Problem("say why the record is not used"))
     val problems = checked.collect { case Left(m) => m } ++ tooMany.toList ++ noReason.toList
-    if problems.nonEmpty && !last then Left(problems)
+    if problems.nonEmpty && !last.value then Left(problems)
     else
-      val kept = if a.relevant then claims.take(maxClaims) else Nil
-      val notUsed = Option.when(kept.isEmpty)(reason.getOrElse("no claim could be verified in its record"))
-      Right((Extracted(citekey, kept, notUsed), problems.map(p => s"extract $citekey: dropped — $p")))
+      val kept = if a.relevant.value then claims.take(maxClaims.value) else Nil
+      val notUsed = Option.when(kept.isEmpty)(Coverage.Entry.Reason(reason.getOrElse("no claim could be verified in its record")))
+      Right((Extracted(citekey, kept, notUsed), problems.map(p => Problem(s"extract $citekey: dropped — $p"))))
 
   // ── phase 2: the evidence model (code, from the database) ───────────────────────────────────────
 
@@ -201,44 +159,30 @@ object CompileArticle:
       derives KindlingsCodecAsObject
 
   /** A disagreement edge between two sources of the filter (only citekey targets count). */
-  final case class EdgeFact(from: com.histmersion.domain.library.Citekey, kind: EdgeFact.Kind, to: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject
-
-  object EdgeFact:
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class EdgeFact(from: com.histmersion.domain.library.Citekey, kind: Article.Coverage.DisagreementKind, to: com.histmersion.domain.library.Citekey) derives KindlingsCodecAsObject
 
   /** The evidence model: the sources with their statuses and claim counts (due weight), the disagreement edges among
     * them, the disputed ones (a non-current status), and the Not-used list with reasons. `filter` is the filter line
     * for the `_Method_` note.
     */
   /** A source the article leaves out, and why. */
-  final case class NotUsed(citekey: com.histmersion.domain.library.Citekey, reason: NotUsed.Reason) derives KindlingsCodecAsObject
-
-  object NotUsed:
-    type Reason = Reason.T
-    object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class NotUsed(citekey: com.histmersion.domain.library.Citekey, reason: Coverage.Entry.Reason) derives KindlingsCodecAsObject
 
   final case class Evidence(
-      filter: Evidence.Filter,
+      filter: ArticleDraft.Filter,
       total: com.histmersion.RowCount,
       sources: List[SourceFact],
-      claims: Map[Evidence.ClaimsKey, Evidence.ClaimsValue],
+      claims: Map[com.histmersion.domain.library.Citekey, Evidence.ClaimCount],
       edges: List[EdgeFact],
-      disputed: List[Evidence.Disputed],
+      disputed: List[com.histmersion.domain.library.Citekey],
       notUsed: List[NotUsed]
   ) derives KindlingsCodecAsObject:
-    def used: List[com.histmersion.domain.library.Citekey] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, 0) > 0)
+    def used: List[com.histmersion.domain.library.Citekey] = sources.map(_.citekey).filter(ck => claims.getOrElse(ck, Evidence.ClaimCount(0)).hasClaims)
 
   object Evidence:
-
-    type Filter = Filter.T
-    object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ClaimsKey = ClaimsKey.T
-    object ClaimsKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ClaimsValue = ClaimsValue.T
-    object ClaimsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Disputed = Disputed.T
-    object Disputed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ClaimCount = ClaimCount.T
+    object ClaimCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      extension (n: ClaimCount) def hasClaims: Boolean = n.value > 0
 
   /** The statuses a first citation must state (writing guide rule 2). */
   val StatedStatuses: Set[Source.Status] = Set(
@@ -249,34 +193,34 @@ object CompileArticle:
     Source.Status.Unassessed
   )
 
-  val DisagreementKinds: Set[com.histmersion.domain.CompileArticle.DisagreementKinds] = Article.Coverage.DisagreementKinds.toSet
+  val DisagreementKinds: Set[Article.Coverage.DisagreementKind] = Article.Coverage.DisagreementKinds.toSet
 
   def evidence(
-      filter: com.histmersion.domain.CompileArticle.EvidenceFilter,
+      filter: ArticleDraft.Filter,
       total: com.histmersion.RowCount,
       facts: List[SourceFact],
       extracted: List[Extracted],
       edges: List[EdgeFact]
   ): Evidence =
     val in = facts.map(_.citekey).toSet
-    val counts = extracted.map(e => e.citekey -> e.claims.size).toMap
+    val counts = extracted.map(e => e.citekey -> Evidence.ClaimCount(e.claims.size)).toMap
     val kept = edges.filter(e => DisagreementKinds.contains(e.kind) && in(e.from) && in(e.to)).distinct
     val disputed = facts
       .filter(f => f.status != Source.Status.Current && f.status != Source.Status.Foundational)
       .map(_.citekey)
     val notUsed = extracted.collect {
-      case e if e.claims.isEmpty => NotUsed(e.citekey, e.notUsed.getOrElse("no claim"))
+      case e if e.claims.isEmpty => NotUsed(e.citekey, e.notUsed.getOrElse(Coverage.Entry.Reason("no claim")))
     } ++
       facts.collect {
-        case f if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, 0) > 0 =>
-          NotUsed(f.citekey, com.histmersion.domain.CompileArticle.NotUsed.Reason("retracted: may be cited only to note the retraction"))
+        case f if f.status == Source.Status.Retracted && counts.getOrElse(f.citekey, Evidence.ClaimCount(0)).hasClaims =>
+          NotUsed(f.citekey, Coverage.Entry.Reason("retracted: may be cited only to note the retraction"))
       }
     Evidence(filter, total, facts, counts, kept, disputed, notUsed.distinctBy(_.citekey))
 
   /** The claim table and evidence model as the writer reads them (data, not instructions). */
-  def evidenceText(ev: Evidence, extracted: List[Extracted]): com.histmersion.domain.CompileArticle.Description =
+  def evidenceText(ev: Evidence, extracted: List[Extracted]): Description =
     val bySource = extracted.map(e => e.citekey -> e).toMap
-    val sources = ev.sources.filter(s => ev.claims.getOrElse(s.citekey, 0) > 0).map { s =>
+    val sources = ev.sources.filter(s => ev.claims.getOrElse(s.citekey, Evidence.ClaimCount(0)).hasClaims).map { s =>
       val claims = bySource.get(s.citekey).toList.flatMap(_.claims).map { c =>
         val when = c.date.fold("")(d => s" · date: $d")
         val where = c.place.fold("")(p => s" · place: $p")
@@ -287,10 +231,10 @@ object CompileArticle:
     }
     val edges = if ev.edges.isEmpty then "none recorded among these sources (not evidence of agreement)"
     else ev.edges.map(e => s"[[${e.from}]] ${e.kind} [[${e.to}]]").mkString("; ")
-    val weight = ev.claims.toList.filter(_._2 > 0).sortBy(-_._2).map((ck, n) => s"[[$ck]] $n").mkString(", ")
+    val weight = ev.claims.toList.filter(_._2.hasClaims).sortBy(-_._2.value).map((ck, n) => s"[[$ck]] $n").mkString(", ")
     val notUsed =
       if ev.notUsed.isEmpty then "none" else ev.notUsed.map(n => s"[[${n.citekey}]]: ${n.reason}").mkString("\n- ")
-    s"Filter: ${ev.filter} → ${ev.total}\n\n## Claim table\n\n${sources.mkString("\n")}\n\n" +
+    Description(s"Filter: ${ev.filter} → ${ev.total}\n\n## Claim table\n\n${sources.mkString("\n")}\n\n" +
       s"## Evidence model\n\n- disagreement edges among the sources: $edges\n" +
       (if ev.edges.isEmpty then ""
        else
@@ -300,27 +244,18 @@ object CompileArticle:
       s"- sources with a non-current status: ${
           if ev.disputed.isEmpty then "none" else ev.disputed.map(c => s"[[$c]]").mkString(", ")
         }\n" +
-      s"- claims per source (due weight): $weight\n\n## Not used\n\n- $notUsed"
+      s"- claims per source (due weight): $weight\n\n## Not used\n\n- $notUsed")
 
   // ── phase 3: the draft ──────────────────────────────────────────────────────────────────────────
 
   final case class DraftAnswer(
-      title: DraftAnswer.Title,
-      summary: DraftAnswer.Summary,
-      body: DraftAnswer.Body,
-      section: Option[DraftAnswer.Section] = None,
+      title: Title,
+      summary: Article.SummaryText,
+      body: Article.Body,
+      section: Option[Article.Section] = None,
       reasons: List[Coverage.Reason] = Nil
   ) derives KindlingsCodecAsObject
   object DraftAnswer:
-    type Title = Title.T
-    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Summary = Summary.T
-    object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Body = Body.T
-    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Section = Section.T
-    object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
     given Schema[DraftAnswer] = KindlingsSchema
       .derived[DraftAnswer]
       .schema
@@ -341,60 +276,48 @@ object CompileArticle:
 
   // ── phase 4: the self-check (code) ──────────────────────────────────────────────────────────────
 
-  private def blocks(body: com.histmersion.domain.CompileArticle.DraftAnswer.Body): List[String] =
-    body.split("\\n\\s*\\n").toList.map(_.trim).filter(_.nonEmpty)
+  private def blocks(body: Article.Body): List[String] =
+    body.value.split("\\n\\s*\\n").toList.map(_.trim).filter(_.nonEmpty)
 
   /** Writing guide rule 2: the FIRST block citing a source whose status is not current or foundational must state that
     * status (the word itself, e.g. "contested").
     */
-  def statusesSilent(body: com.histmersion.domain.CompileArticle.StatusesSilentBody, statusOf: com.histmersion.domain.library.Citekey => Option[Source.Status]): List[com.histmersion.domain.CompileArticle.Description] =
+  def statusesSilent(body: Article.Body, statusOf: Citekey => Option[Source.Status]): List[Problem] =
     val bs = blocks(body)
-    AgentVerify.wikilinks(body).flatMap { ck =>
-      statusOf(ck).filter(StatedStatuses.contains).flatMap { st =>
+    AgentVerify.wikilinks(AgentVerify.Text(body.value)).flatMap { ck =>
+      Citekey.option(ck.value).flatMap(statusOf).filter(StatedStatuses.contains).flatMap { st =>
         bs.find(_.contains(s"[[$ck]]"))
-          .filterNot(_.toLowerCase.contains(st.wire))
-          .map(_ => s"the first citation of [[$ck]] does not say it is ${st.wire}")
+          .filterNot(_.toLowerCase.contains(st.wire.value))
+          .map(_ => Problem(s"the first citation of [[$ck]] does not say it is ${st.wire}"))
       }
     }
 
   /** The citekeys a text cites as EVIDENCE (links that are sources), leaving out its Not used section — the sources
     * listed there are named, not cited.
     */
-  def cited(text: com.histmersion.domain.CompileArticle.CitedText, isCitekey: com.histmersion.domain.library.Citekey => Boolean): List[com.histmersion.domain.library.Citekey] =
-    AgentVerify.wikilinks(withoutNotUsed(text)).filter(isCitekey)
+  def cited(text: Article.Body, isCitekey: Citekey => Boolean): List[Citekey] =
+    AgentVerify.wikilinks(AgentVerify.Text(withoutNotUsed(text).value)).flatMap(w => Citekey.option(w.value)).filter(isCitekey)
 
   /** `text` without its "Not used" section (heading to the next heading of the same or higher level). */
-  def withoutNotUsed(text: com.histmersion.domain.CompileArticle.DraftAnswer.Body): com.histmersion.domain.CompileArticle.DraftAnswer.Body = Article.Coverage.withoutNotUsed(text)
+  def withoutNotUsed(text: Article.Body): Article.Body = Article.Coverage.withoutNotUsed(text)
 
   /** What the article would read after the draft is applied: the whole body (create), or the current body with the text
     * appended (under `section`, else at the end).
     */
-  def combined(mode: DraftMode, current: com.histmersion.domain.CompileArticle.DraftAnswer.Body, text: com.histmersion.domain.CompileArticle.DraftAnswer.Body, section: Option[com.histmersion.domain.CompileArticle.DraftAnswer.Section]): Either[com.histmersion.domain.CompileArticle.Problem, com.histmersion.domain.CompileArticle.DraftAnswer.Body] =
+  def combined(mode: DraftMode, current: Article.Body, text: Article.Body, section: Option[Article.Section]): Either[Articles.Problem, Article.Body] =
     mode match
       case DraftMode.Create => Right(text)
       case DraftMode.Extend =>
-        section.map(_.trim).filter(_.nonEmpty) match
-          case Some(s) => Articles.appendUnderSection(current, s, text.trim)
-          case None    => Right(if current.trim.isEmpty then text.trim else s"${current.stripTrailing}\n\n${text.trim}")
+        section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty) match
+          case Some(s) => Articles.appendUnderSection(current, s, Article.Prose(text.value.trim))
+          case None    => Right(Article.Body(if current.value.trim.isEmpty then text.value.trim else s"${current.value.stripTrailing}\n\n${text.value.trim}"))
 
   /** The inputs of the self-check that come from the corpus. */
   final case class Corpus(
-      isCitekey: Corpus.IsCitekeyArg1 => Corpus.IsCitekeyResult,
-      isTarget: Corpus.IsTargetArg1 => Corpus.IsTargetResult,
-      statusOf: Corpus.StatusOfArg1 => Option[Source.Status]
+      isCitekey: Citekey => Boolean,
+      isTarget: com.histmersion.domain.research.Slug => Boolean,
+      statusOf: Citekey => Option[Source.Status]
   )
-
-  object Corpus:
-    type IsCitekeyArg1 = com.histmersion.domain.library.Citekey
-    val IsCitekeyArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
-    type IsCitekeyResult = com.histmersion.domain.CompileArticle.Known
-    val IsCitekeyResult: _root_.com.histmersion.domain.CompileArticle.Known.type = _root_.com.histmersion.domain.CompileArticle.Known
-    type IsTargetArg1 = com.histmersion.domain.research.Slug
-    val IsTargetArg1: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-    type IsTargetResult = com.histmersion.domain.CompileArticle.IsTarget
-    val IsTargetResult: _root_.com.histmersion.domain.CompileArticle.IsTarget.type = _root_.com.histmersion.domain.CompileArticle.IsTarget
-    type StatusOfArg1 = com.histmersion.domain.library.Citekey
-    val StatusOfArg1: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
 
   /** Check a draft. FATAL problems (an empty text, a link to nothing, escaped brackets, a Sources cited heading, an
     * extend under a heading the article does not have) always send it back; the others (an uncited paragraph, a
@@ -409,32 +332,34 @@ object CompileArticle:
       a: DraftAnswer,
       slug: com.histmersion.domain.research.Slug,
       mode: DraftMode,
-      kind: com.histmersion.domain.CompileArticle.Kind,
-      currentTitle: Option[com.histmersion.domain.Title],
-      current: com.histmersion.domain.CompileArticle.CheckDraftCurrent,
+      kind: Article.Kind.Wire,
+      currentTitle: Option[Title],
+      current: Article.Body,
       evidence: Evidence,
-      filter: com.histmersion.domain.CompileArticle.Evidence.Filter,
+      filter: ArticleDraft.Filter,
       corpus: Corpus,
-      last: com.histmersion.domain.CompileArticle.Last
-  ): Either[List[com.histmersion.domain.CompileArticle.Problem], (ArticleDraft, List[com.histmersion.domain.CompileArticle.Description])] =
-    val text = Option(a.body).map(_.trim).getOrElse("")
-    val section = a.section.map(_.trim).filter(_.nonEmpty).filter(_ => mode == DraftMode.Extend)
-    val title = currentTitle.orElse(Option(a.title).map(_.trim).filter(_.nonEmpty)).getOrElse(slug)
+      last: Last
+  ): Either[List[Problem], (ArticleDraft, List[Problem])] =
+    val text = Article.Body(Option(a.body).map(_.value.trim).getOrElse(""))
+    val section = a.section.map(s => Article.Section(s.value.trim)).filter(_.value.nonEmpty).filter(_ => mode == DraftMode.Extend)
+    val title = currentTitle
+      .orElse(Option(a.title).map(t => Title(t.value.trim)).filter(_.value.nonEmpty))
+      .getOrElse(Title(slug.value))
     // a NEW article takes its title and summary from the draft: an empty one (a strict-schema
     // provider's "" or null) is sent back, not quietly replaced by the slug
     val newArticle = if currentTitle.isDefined || mode != DraftMode.Create then Nil
     else
       List(
-        Option.when(Option(a.title).forall(_.trim.isEmpty))("the title is empty — give the new article's title"),
-        Option.when(Option(a.summary).forall(_.trim.isEmpty))(
+        Option.when(Option(a.title).forall(_.value.trim.isEmpty))("the title is empty — give the new article's title"),
+        Option.when(Option(a.summary).forall(_.value.trim.isEmpty))(
           "the summary is empty — say in one or two sentences what the article answers"
         )
       ).flatten
     val whole = combined(mode, current, text, section)
     val fatal = List(
-      Option.when(text.isEmpty)("the text is empty"),
+      Option.when(text.value.isEmpty)("the text is empty"),
       whole.left.toOption.map(m => s"$m — name an existing heading, or null to add at the end")
-    ).flatten ++ AgentVerify.linkProblems(text, corpus.isCitekey, corpus.isTarget) ++
+    ).flatten ++ AgentVerify.linkProblems(AgentVerify.Text(text.value), corpus.isCitekey, corpus.isTarget).map(_.value) ++
       Option
         .when(ReviewArticle.headings(text).exists(h => h.trim.equalsIgnoreCase("sources cited")))(
           "a Sources cited section is generated by the page; do not write one"
@@ -443,81 +368,82 @@ object CompileArticle:
     val body = whole.getOrElse(text)
     val mech = ReviewArticle.mechanical(
       slug,
-      if mode == DraftMode.Create then kind else com.histmersion.domain.ReviewArticle.Finding.Kind("index"),
+      if mode == DraftMode.Create then ReviewArticle.Finding.Kind(kind.value) else ReviewArticle.Finding.Kind("index"),
       body,
-      corpus.isTarget,
-      generated = com.histmersion.domain.ReviewArticle.MechanicalGenerated(true)
+      t => com.histmersion.domain.research.Slug.option(t.value).exists(corpus.isTarget),
+      generated = ReviewArticle.MechanicalGenerated(true)
     )
     val citesHere = cited(text, corpus.isCitekey)
     val citesAll = cited(body, corpus.isCitekey).toSet
     val allowed = evidence.used.toSet ++ cited(current, corpus.isCitekey)
-    val inFilter = evidence.sources.map(_.citekey).toSet
+    val inFilterKeys = evidence.sources.map(_.citekey.value).toSet
+    val citesAllKeys = citesAll.map(_.value)
     val stated = Option(a.reasons)
       .getOrElse(Nil)
       .map(r =>
         r.modify(
-          _.citekey).setTo(Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")).modify(_.reason).setTo(Option(r.reason).map(_.trim).getOrElse("")
+          _.citekey).setTo(com.histmersion.api.library.Citekey(Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))).modify(_.reason).setTo(Coverage.Entry.Reason(Option(r.reason).map(_.value.trim).getOrElse("")))
         )
       )
     val reasonProblems = stated.flatMap { r =>
-      if !inFilter(r.citekey) then Some(s"a reason for [[${r.citekey}]], which is not a source of the claim table")
-      else if citesAll(r.citekey) then
+      if !inFilterKeys(r.citekey.value) then Some(s"a reason for [[${r.citekey}]], which is not a source of the claim table")
+      else if citesAllKeys(r.citekey.value) then
         Some(s"a reason for [[${r.citekey}]], which the draft cites (a reason is only for a source it leaves out)")
-      else if r.reason.isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
+      else if r.reason.value.isEmpty then Some(s"an empty reason for [[${r.citekey}]]")
       else Coverage.Reason.merge(Map.empty, List(r)).left.toOption
     }
     val writerReasons = stated
-      .filter(r => inFilter(r.citekey) && !citesAll(r.citekey) && r.reason.nonEmpty)
-      .map(r => r.citekey -> r.reason.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars))
+      .filter(r => inFilterKeys(r.citekey.value) && !citesAllKeys(r.citekey.value) && r.reason.value.nonEmpty)
+      .map(r => r.citekey -> Coverage.Entry.Reason(r.reason.value.replaceAll("\\s+", " ").take(Coverage.Reason.MaxChars)))
       .toMap
     // the extraction's reason (the record does not bear on the question), unless the writer gave one
     val reasons =
-      (evidence.notUsed.filterNot(n => citesAll(n.citekey)).map(n => n.citekey -> n.reason).toMap ++ writerReasons)
-    val unexplained = evidence.used.filterNot(ck => citesAll(ck) || reasons.contains(ck))
+      (evidence.notUsed.filterNot(n => citesAll(n.citekey)).map(n => com.histmersion.api.library.Citekey(n.citekey.value) -> n.reason).toMap ++ writerReasons)
+    val unexplained = evidence.used.filterNot(ck => citesAll(ck) || reasons.contains(com.histmersion.api.library.Citekey(ck.value)))
     val handWritten = Option
       .when(ReviewArticle.headings(text).exists(_.trim.toLowerCase.startsWith("not used")))(
         "a Not used section: code generates it from the filter — give each left-out source's reason in `reasons`"
       )
       .toList ++
-      Option.when(Article.Coverage.hasMethodLine(text))("a _Method_ note: code generates it from the filter").toList
+      Option.when(Article.Coverage.hasMethodLine(text.value))("a _Method_ note: code generates it from the filter").toList
     val soft =
       mech
-        .filter(f => f.kind == "citation" && f.problem.contains("no [[citekey]]"))
+        .filter(f => f.kind.value == "citation" && f.problem.value.contains("no [[citekey]]"))
         .take(3)
-        .map(f => s"a paragraph with no [[citekey]]: \"${f.quote.take(80)}\"") ++
+        .map(f => s"a paragraph with no [[citekey]]: \"${f.quote.value.take(80)}\"") ++
         (if mode == DraftMode.Create then
-           mech.filter(f => f.kind == "section" && f.problem.startsWith("no ")).map(_.problem)
+           mech.filter(f => f.kind.value == "section" && f.problem.value.startsWith("no ")).map(_.problem.value)
          else Nil) ++
-        mech.filter(_.kind == "language").map(_.problem) ++
+        mech.filter(_.kind.value == "language").map(_.problem.value) ++
         citesHere.filterNot(allowed).map(ck => s"[[$ck]] is cited but no claim of it is in the claim table") ++
-        statusesSilent(body, corpus.statusOf) ++
+        statusesSilent(body, corpus.statusOf).map(_.value) ++
         Option.when(citesHere.isEmpty)("the text cites no source").toList ++
         newArticle.toList ++
         handWritten ++ reasonProblems ++
         unexplained.map(ck => s"[[$ck]] has claims in the table but is neither cited nor given a reason")
     val problems = fatal ++ soft
-    if fatal.nonEmpty || (soft.nonEmpty && !last) then Left(problems)
+    if fatal.nonEmpty || (soft.nonEmpty && !last.value) then Left(problems.map(Problem(_)))
     else
-      val summary = Option(a.summary).map(_.trim).filter(_.nonEmpty)
-      val notUsed = reasons.toList.sortBy(_._1).map((ck, r) => s"$ck: $r") ++
+      val summary = Option(a.summary).map(s => Article.SummaryText(s.value.trim)).filter(_.value.nonEmpty)
+      val notUsed = reasons.toList.sortBy(_._1.value).map((ck, r) => s"$ck: $r") ++
         unexplained.map(ck => s"$ck: claims extracted but neither cited nor given a reason")
       Right(
         (
           ArticleDraft(
-            slug,
+            com.histmersion.api.research.Article.Slug(slug.value),
             mode,
-            title,
+            Article.Title(title.value),
             kind,
-            text,
+            ArticleDraft.Text(text.value),
             summary,
-            section,
-            citesHere,
-            notUsed,
-            soft,
+            section.map(s => ArticleDraft.Section(s.value)),
+            citesHere.map(ck => com.histmersion.api.library.Citekey(ck.value)),
+            notUsed.map(com.histmersion.api.library.Citekey(_)),
+            soft.map(ArticleDraft.Problems(_)),
             filter,
             Coverage.Reason.list(reasons)
           ),
-          soft.map(p => s"self-check: $p")
+          soft.map(p => Problem(s"self-check: $p"))
         )
       )
 
@@ -526,11 +452,11 @@ object CompileArticle:
     * `None` only when nothing at all selects a source.
     */
   def runFilter(
-      query: Option[com.histmersion.domain.CompileArticle.Evidence.Filter],
-      topics: List[com.histmersion.domain.CompileArticle.Topics],
-      tags: List[com.histmersion.domain.CompileArticle.Tags],
+      query: Option[Article.Filter.Query],
+      topics: List[Article.Filter.Topics],
+      tags: List[Article.Filter.Tags],
       stored: Option[Article.Filter],
-      existingTitle: Option[com.histmersion.domain.Title]
+      existingTitle: Option[Title]
   ): Option[Article.Filter] =
     val stated = Article.Filter(query = query, topics = topics, tags = tags)
     Article.Filter
@@ -538,13 +464,13 @@ object CompileArticle:
       .toOption
       .flatten
       .orElse(stored)
-      .orElse(existingTitle.flatMap(t => Article.Filter.normalise(Article.Filter(query = Some(t))).toOption.flatten))
+      .orElse(existingTitle.flatMap(t => Article.Filter.normalise(Article.Filter(query = Some(Article.Filter.Query(t.value)))).toOption.flatten))
 
   /** The log line of a compile run. */
-  def logLine(d: ArticleDraft, written: com.histmersion.domain.CompileArticle.Written, why: com.histmersion.domain.CompileArticle.Reason, review: Option[com.histmersion.domain.CompileArticle.ReviewText], runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.CompileArticle.LogLine =
+  def logLine(d: ArticleDraft, written: Written, why: Reason, review: Option[com.histmersion.domain.automation.Run.Id], runId: com.histmersion.domain.automation.Run.Id): LogLine =
     val what = d.mode match
       case DraftMode.Create => s"compiled a new article from ${d.cited.size} source(s)"
       case DraftMode.Extend =>
         s"appended a section${d.section.fold("")(s => s" under '$s'")} citing ${d.cited.size} source(s)"
-    val outcome = if written then what else s"nothing written — $why"
-    s"compile-article [[${d.slug}]]: $outcome${review.fold("")(r => s"; review run ${r.take(8)} started")} (agent run ${runId.take(8)})"
+    val outcome = if written.value then what else s"nothing written — $why"
+    LogLine(s"compile-article [[${d.slug}]]: $outcome${review.fold("")(r => s"; review run ${r.value.take(8)} started")} (agent run ${runId.value.take(8)})")

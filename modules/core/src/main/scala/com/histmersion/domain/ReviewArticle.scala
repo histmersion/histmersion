@@ -37,26 +37,18 @@ import com.histmersion.api.research.Article
   * JVM-only, like [[EnrichSource]], because quote matching needs `java.text.Normalizer`.
   */
 object ReviewArticle:
-  type CandidateCitekey = CandidateCitekey.T
-  object CandidateCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CandidateTarget = CandidateTarget.T
-  object CandidateTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitedInCorpusCount = CitedInCorpusCount.T
   object CitedInCorpusCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Criticised = Criticised.T
-  object Criticised extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Criticised = com.histmersion.api.library.Citekey
+  val Criticised: _root_.com.histmersion.api.library.Citekey.type = _root_.com.histmersion.api.library.Citekey
   type DefaultRounds = DefaultRounds.T
   object DefaultRounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FindingCount = FindingCount.T
   object FindingCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FixRun = FixRun.T
   object FixRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HoldLabel = HoldLabel.T
-  object HoldLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastRound = LastRound.T
   object LastRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinorReason = MinorReason.T
-  object MinorReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RequestedRounds = RequestedRounds.T
   object RequestedRounds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RoundCap = RoundCap.T
@@ -115,19 +107,12 @@ object ReviewArticle:
   val CheckNotMaterialLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
   type ChecksOfLast = _root_.com.histmersion.domain.ReviewArticle.LastRound
   val ChecksOfLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
-  type FactualKinds = FactualKindsValue
-  type FactualKindsValue = FactualKindsValue.T
-  object FactualKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckRecheckEdited = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
   val CheckRecheckEdited: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
   type CheckRecheckLast = _root_.com.histmersion.domain.ReviewArticle.LastRound
   val CheckRecheckLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
   type MergeRound = _root_.com.histmersion.domain.ReviewArticle.Merged.Round
   val MergeRound: _root_.com.histmersion.domain.ReviewArticle.Merged.Round.type = _root_.com.histmersion.domain.ReviewArticle.Merged.Round
-  type CheckBodySlug = _root_.com.histmersion.domain.research.Slug
-  val CheckBodySlug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
-  type CheckBodyKind = _root_.com.histmersion.domain.ReviewArticle.Finding.Kind
-  val CheckBodyKind: _root_.com.histmersion.domain.ReviewArticle.Finding.Kind.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Kind
 
   enum Reviewer(val wire: Reviewer.Wire, val prefix: Reviewer.Prefix):
     case Mechanical extends Reviewer(com.histmersion.domain.ReviewArticle.Reviewer.Wire("mechanical"), com.histmersion.domain.ReviewArticle.Reviewer.Prefix("M"))
@@ -142,11 +127,11 @@ object ReviewArticle:
     object Prefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def parse(s: com.histmersion.domain.ReviewArticle.Reviewer.Wire): Option[Reviewer] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.ReviewArticle.Reviewer.Wire): Option[Reviewer] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[Reviewer]:
       def all: Array[Reviewer] = Reviewer.values
-      def wire(e: Reviewer): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Reviewer] = parse(s)
+      def wire(e: Reviewer): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire(e.wire.value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Reviewer] = parse(Reviewer.Wire(s.value))
     given Encoder[Reviewer] = WireEnum.encoder
     given Decoder[Reviewer] = WireEnum.decoder
     given Schema[Reviewer] = WireEnum.schema
@@ -160,11 +145,11 @@ object ReviewArticle:
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-    def parse(s: com.histmersion.domain.ReviewArticle.Severity.Wire): Option[Severity] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.ReviewArticle.Severity.Wire): Option[Severity] = values.find(_.wire.value == s.value.trim.toLowerCase)
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Severity] = parse(s)
+      def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire(e.wire.value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Severity] = parse(Severity.Wire(s.value))
     given Encoder[Severity] = WireEnum.encoder
     given Decoder[Severity] = WireEnum.decoder
     given Schema[Severity] = WireEnum.schema
@@ -179,10 +164,11 @@ object ReviewArticle:
     type Wire = Wire.T
     object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Rank = Rank.T
-    object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Rank extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      extension (r: T) def >(o: T): Boolean = r.value > o.value
 
 
-    def parse(s: com.histmersion.domain.ReviewArticle.Verdict.Wire): Option[Verdict] = values.find(_.wire == s.trim.toUpperCase)
+    def parse(s: com.histmersion.domain.ReviewArticle.Verdict.Wire): Option[Verdict] = values.find(_.wire.value == s.value.trim.toUpperCase)
     def worst(vs: Iterable[Verdict]): Verdict = vs.foldLeft(Pass)((a, b) => if b.rank > a.rank then b else a)
 
     /** What a list of findings amounts to on its own. */
@@ -190,8 +176,8 @@ object ReviewArticle:
       if fs.exists(_.severity == Severity.Major) then Major else if fs.nonEmpty then Minor else Pass
     given WireEnumValues[Verdict]:
       def all: Array[Verdict] = Verdict.values
-      def wire(e: Verdict): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Verdict] = parse(s)
+      def wire(e: Verdict): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire(e.wire.value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Verdict] = parse(Verdict.Wire(s.value))
     given Encoder[Verdict] = WireEnum.encoder
     given Decoder[Verdict] = WireEnum.decoder
     given Schema[Verdict] = WireEnum.schema
@@ -359,8 +345,8 @@ object ReviewArticle:
   object SpotCheckAnswer:
     type Claim = com.histmersion.domain.ReviewArticle.SpotCheck.Claim
     val Claim: _root_.com.histmersion.domain.ReviewArticle.SpotCheck.Claim.type = _root_.com.histmersion.domain.ReviewArticle.SpotCheck.Claim
-    type Verdict = com.histmersion.domain.ReviewArticle.Verdict.Wire
-    val Verdict: _root_.com.histmersion.domain.ReviewArticle.Verdict.Wire.type = _root_.com.histmersion.domain.ReviewArticle.Verdict.Wire
+    type Verdict = com.histmersion.domain.ReviewArticle.SpotVerdictsValue
+    val Verdict: _root_.com.histmersion.domain.ReviewArticle.SpotVerdictsValue.type = _root_.com.histmersion.domain.ReviewArticle.SpotVerdictsValue
     type RecordQuote = com.histmersion.domain.ReviewArticle.SpotCheck.RecordQuote
     val RecordQuote: _root_.com.histmersion.domain.ReviewArticle.SpotCheck.RecordQuote.type = _root_.com.histmersion.domain.ReviewArticle.SpotCheck.RecordQuote
 
@@ -387,8 +373,8 @@ object ReviewArticle:
     val Verdict: _root_.com.histmersion.domain.ReviewArticle.Verdict.Wire.type = _root_.com.histmersion.domain.ReviewArticle.Verdict.Wire
     type ExplainBack = ExplainBack.T
     object ExplainBack extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EmptySlots = EmptySlots.T
-    object EmptySlots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type EmptySlots = com.histmersion.domain.ReviewArticle.ExplainSlotsValue
+    val EmptySlots: _root_.com.histmersion.domain.ReviewArticle.ExplainSlotsValue.type = _root_.com.histmersion.domain.ReviewArticle.ExplainSlotsValue
     type TermsUndefined = TermsUndefined.T
     object TermsUndefined extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OpaqueSentences = OpaqueSentences.T
@@ -409,7 +395,7 @@ object ReviewArticle:
       // the items: one of the slot names (Claude Code and Codex enforce the answer schema)
       .modify(_.emptySlots)(
         _.modifyUnsafe[String](Schema.ModifyCollectionElements)(
-          _.validate(sttp.tapir.Validator.enumeration(ExplainSlots))
+          _.validate(sttp.tapir.Validator.enumeration(ExplainSlots.map(_.value)))
         )
       )
       .modify(_.lostAt)(_.description("The section where you stopped following; null if you never did"))
@@ -452,8 +438,8 @@ object ReviewArticle:
     */
   final case class NotMaterialAnswer(pair: NotMaterialAnswer.Pair, reason: NotMaterialAnswer.Reason) derives KindlingsCodecAsObject
   object NotMaterialAnswer:
-    type Pair = Pair.T
-    object Pair extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pair = com.histmersion.api.research.CritiqueRef.Wire
+    val Pair: _root_.com.histmersion.api.research.CritiqueRef.Wire.type = _root_.com.histmersion.api.research.CritiqueRef.Wire
     type Reason = Reason.T
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -652,8 +638,8 @@ object ReviewArticle:
 
     /** One line for a person or a queue item. */
     def line: String =
-      val at = Option(where).map(_.trim).filter(_.nonEmpty).fold("")(w => s" ($w)")
-      s"$id ${severity.wire}$at: ${problem.trim}"
+      val at = Option(where).map(_.value.trim).filter(_.nonEmpty).fold("")(w => s" ($w)")
+      s"$id ${severity.wire}$at: ${problem.value.trim}"
 
   object Finding:
 
@@ -663,8 +649,8 @@ object ReviewArticle:
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Where = Where.T
     object Where extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = com.histmersion.domain.ReviewArticle.Evidence.Quote
+    val Quote: _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote.type = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Fix = Fix.T
@@ -683,8 +669,8 @@ object ReviewArticle:
     val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
     type Quote = Quote.T
     object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Ratio = Ratio.T
-    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Ratio = com.histmersion.domain.AgentVerify.Ratio
+    val Ratio: _root_.com.histmersion.domain.AgentVerify.Ratio.type = _root_.com.histmersion.domain.AgentVerify.Ratio
 
   /** A verified [[SpotCheckAnswer]]: the claim found in the article, the quote found in the record (`ratio`, as for
     * [[Evidence]]), and `tool` — the call of the step that read the source.
@@ -701,14 +687,14 @@ object ReviewArticle:
   object SpotCheck:
     type Claim = Claim.T
     object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Verdict = com.histmersion.domain.ReviewArticle.Verdict.Wire
-    val Verdict: _root_.com.histmersion.domain.ReviewArticle.Verdict.Wire.type = _root_.com.histmersion.domain.ReviewArticle.Verdict.Wire
-    type RecordQuote = RecordQuote.T
-    object RecordQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Ratio = Ratio.T
-    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tool = Tool.T
-    object Tool extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Verdict = com.histmersion.domain.ReviewArticle.SpotVerdictsValue
+    val Verdict: _root_.com.histmersion.domain.ReviewArticle.SpotVerdictsValue.type = _root_.com.histmersion.domain.ReviewArticle.SpotVerdictsValue
+    type RecordQuote = com.histmersion.domain.ReviewArticle.Evidence.Quote
+    val RecordQuote: _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote.type = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
+    type Ratio = com.histmersion.domain.AgentVerify.Ratio
+    val Ratio: _root_.com.histmersion.domain.AgentVerify.Ratio.type = _root_.com.histmersion.domain.AgentVerify.Ratio
+    type Tool = com.histmersion.domain.automation.agents.ToolUse.Tool
+    val Tool: _root_.com.histmersion.domain.automation.agents.ToolUse.Tool.type = _root_.com.histmersion.domain.automation.agents.ToolUse.Tool
 
   /** One reviewer's verified answer. */
   final case class Report(
@@ -736,12 +722,12 @@ object ReviewArticle:
   final case class Check(id: Check.Id, fixed: Check.Fixed, quote: Check.Quote, note: Check.Note) derives KindlingsCodecAsObject
 
   object Check:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Id: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
     type Fixed = Fixed.T
     object Fixed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = com.histmersion.domain.ReviewArticle.Evidence.Quote
+    val Quote: _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote.type = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
     type Note = Note.T
     object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -773,7 +759,7 @@ object ReviewArticle:
       critiques: List[CritiquePair] = Nil
   ) derives KindlingsCodecAsObject:
     /** The sections code generates from the filter (#958), as the page shows them after the body. */
-    def generated: Option[String] = coverage.map(Article.Coverage.sections)
+    def generated: Option[Article.Coverage.Sections] = coverage.map(Article.Coverage.sections)
 
   object Snapshot:
 
@@ -781,8 +767,8 @@ object ReviewArticle:
     val Slug: _root_.com.histmersion.domain.research.Slug.type = _root_.com.histmersion.domain.research.Slug
     type Title = com.histmersion.domain.Title
     val Title: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-    type Kind = Kind.T
-    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = com.histmersion.api.research.Article.Kind.Wire
+    val Kind: _root_.com.histmersion.api.research.Article.Kind.Wire.type = _root_.com.histmersion.api.research.Article.Kind.Wire
     type Body = com.histmersion.domain.ReviewArticle.Fix.Body
     val Body: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
     type UpdatedAt = UpdatedAt.T
@@ -816,8 +802,8 @@ object ReviewArticle:
       deferred: List[Merged.Deferred] = Nil
   ) derives KindlingsCodecAsObject:
     def majors: List[Finding] = findings.filter(f => f.major && !deferred.contains(f.id))
-    def escalated: List[Finding] = findings.filter(_.escalated)
-    def count(r: Reviewer): com.histmersion.domain.ReviewArticle.FindingCount = findings.count(_.reviewer == r)
+    def escalated: List[Finding] = findings.filter(_.escalated.value)
+    def count(r: Reviewer): com.histmersion.domain.ReviewArticle.FindingCount = com.histmersion.domain.ReviewArticle.FindingCount(findings.count(_.reviewer == r))
 
   object Merged:
 
@@ -827,21 +813,21 @@ object ReviewArticle:
     val ExplainBack: _root_.com.histmersion.domain.ReviewArticle.ColdReaderAnswer.ExplainBack.type = _root_.com.histmersion.domain.ReviewArticle.ColdReaderAnswer.ExplainBack
     type EmptySlots = com.histmersion.domain.ReviewArticle.ColdReaderAnswer.EmptySlots
     val EmptySlots: _root_.com.histmersion.domain.ReviewArticle.ColdReaderAnswer.EmptySlots.type = _root_.com.histmersion.domain.ReviewArticle.ColdReaderAnswer.EmptySlots
-    type Deferred = Deferred.T
-    object Deferred extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Deferred = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Deferred: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
 
   final case class Rejection(id: Rejection.Id, reason: Rejection.Reason, citekey: com.histmersion.domain.library.Citekey, quote: Rejection.Quote, ratio: Rejection.Ratio)
       derives KindlingsCodecAsObject
 
   object Rejection:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Id: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
     type Reason = Reason.T
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Quote = Quote.T
-    object Quote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Ratio = Ratio.T
-    object Ratio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Quote = com.histmersion.domain.ReviewArticle.Evidence.Quote
+    val Quote: _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote.type = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
+    type Ratio = com.histmersion.domain.AgentVerify.Ratio
+    val Ratio: _root_.com.histmersion.domain.AgentVerify.Ratio.type = _root_.com.histmersion.domain.AgentVerify.Ratio
 
   /** The fixer's verified revision: the body its edits produced, and every edit with what became of it (applied, or
     * skipped and why) — what a person reads to see exactly what changed. `unverified` = rejections whose quote code
@@ -876,30 +862,30 @@ object ReviewArticle:
   ) derives KindlingsCodecAsObject
 
   object Fix:
-    type Body = Body.T
-    object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Applied = Applied.T
-    object Applied extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Unverified = Unverified.T
-    object Unverified extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Body = com.histmersion.api.research.Article.Body
+    val Body: _root_.com.histmersion.api.research.Article.Body.type = _root_.com.histmersion.api.research.Article.Body
+    type Applied = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Applied: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
+    type Unverified = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Unverified: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
     type UnresolvedMoved = UnresolvedMoved.T
     object UnresolvedMoved extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WordsBefore = WordsBefore.T
-    object WordsBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WordsAfter = WordsAfter.T
-    object WordsAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Repaired = Repaired.T
-    object Repaired extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WordsBefore = com.histmersion.api.research.Article.Edits.ArticleCheck.WordsBefore
+    val WordsBefore: _root_.com.histmersion.api.research.Article.Edits.ArticleCheck.WordsBefore.type = _root_.com.histmersion.api.research.Article.Edits.ArticleCheck.WordsBefore
+    type WordsAfter = com.histmersion.api.research.Article.Edits.ArticleCheck.WordsAfter
+    val WordsAfter: _root_.com.histmersion.api.research.Article.Edits.ArticleCheck.WordsAfter.type = _root_.com.histmersion.api.research.Article.Edits.ArticleCheck.WordsAfter
+    type Repaired = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Repaired: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
     type Repairs = Repairs.T
     object Repairs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class WontFix(id: WontFix.Id, reason: WontFix.Reason) derives KindlingsCodecAsObject
 
   object WontFix:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Id: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
     type Reason = Reason.T
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -907,8 +893,8 @@ object ReviewArticle:
   final case class SetAside(id: SetAside.Id, pair: CritiqueRef, reason: SetAside.Reason) derives KindlingsCodecAsObject
 
   object SetAside:
-    type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Id = com.histmersion.domain.ReviewArticle.Finding.Id
+    val Id: _root_.com.histmersion.domain.ReviewArticle.Finding.Id.type = _root_.com.histmersion.domain.ReviewArticle.Finding.Id
     type Reason = Reason.T
     object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -958,7 +944,7 @@ object ReviewArticle:
 
   /** The headings of a body, in order, as written. */
   def headings(body: com.histmersion.domain.ReviewArticle.Fix.Body): List[String] =
-    body.linesIterator.collect { case HeadingLine(h) => h.trim }.toList
+    body.value.linesIterator.collect { case HeadingLine(h) => h.trim }.toList
 
   private def norm(h: String): String = h.toLowerCase(java.util.Locale.ROOT).replaceAll("[^a-z ]", "").trim
 
@@ -967,13 +953,20 @@ object ReviewArticle:
     * body must not have one.
     */
   def requiredSections(kind: com.histmersion.domain.ReviewArticle.Snapshot.Kind, generated: com.histmersion.domain.ReviewArticle.BodyCorpus.Generated = com.histmersion.domain.ReviewArticle.BodyCorpus.Generated(false)): List[List[String]] =
-    if kind.trim.equalsIgnoreCase("index") then Nil
+    if kind.value.trim.equalsIgnoreCase("index") then Nil
     else
       List(List("disagreements"), List("unresolved", "open questions")) ++
-        Option.when(!generated)(List("not used")).toList
+        Option.when(!generated.value)(List("not used")).toList
 
   /** The finding kind of the coverage checks (#958): hand-written generated sections, and drift. */
-  val CoverageKind = "coverage"
+  val CoverageKind: com.histmersion.domain.ReviewArticle.Finding.Kind = com.histmersion.domain.ReviewArticle.Finding.Kind("coverage")
+
+  private def findQuote(quote: String, body: String, minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio): AgentVerify.QuoteMatch =
+    AgentVerify.findQuote(AgentProposals.Proposal.Quote(quote), AgentVerify.SourceBody(body), minRatio)
+
+  private def normalise(s: String): String = AgentVerify.normalise(AgentVerify.Text(s)).value
+
+  private def wikilinks(text: String): List[String] = AgentVerify.wikilinks(AgentVerify.Text(text)).map(_.value)
 
   /** The checks code can make with certainty, as `M<n>` findings: banned filler, a paragraph with no `[[citekey]]`,
     * escaped link brackets, a hand-written Sources cited heading, a missing compulsory section, a duplicated heading,
@@ -982,41 +975,42 @@ object ReviewArticle:
     */
   def mechanical(
       slug: com.histmersion.domain.research.Slug,
-      kind: com.histmersion.domain.ReviewArticle.Finding.Kind,
+      kind: com.histmersion.domain.ReviewArticle.Snapshot.Kind,
       body: com.histmersion.domain.ReviewArticle.MechanicalBody,
-      isTarget: com.histmersion.domain.ReviewArticle.CandidateTarget => Boolean,
+      isTarget: com.histmersion.domain.research.Slug => Boolean,
       generated: com.histmersion.domain.ReviewArticle.MechanicalGenerated = com.histmersion.domain.ReviewArticle.MechanicalGenerated(false)
   ): List[Finding] =
     val hs = headings(body)
     def f(sev: Severity, kind: com.histmersion.domain.ReviewArticle.Finding.Kind, where: com.histmersion.domain.ReviewArticle.Finding.Where, quote: com.histmersion.domain.ReviewArticle.Finding.Quote, problem: com.histmersion.domain.ReviewArticle.Finding.Problem, fix: com.histmersion.domain.ReviewArticle.Finding.Fix) =
       (sev, kind, where, quote, problem, fix)
+    val articleSlug = Article.Slug(slug.value)
     val filler = Article.Lint
-      .articleFiller(List(slug -> body))
+      .articleFiller(List(articleSlug -> body))
       .map(i =>
         f(
           Severity.Minor,
-          "language",
-          "body",
-          "",
-          s"banned filler — ${i.detail.stripPrefix("filler: ")}",
-          "rewrite the sentence"
+          Finding.Kind("language"),
+          Finding.Where("body"),
+          Finding.Quote(""),
+          Finding.Problem(s"banned filler — ${i.detail.value.stripPrefix("filler: ")}"),
+          Finding.Fix("rewrite the sentence")
         )
       )
     // the lint rule's own test, one paragraph at a time (a link to an article is not a citation)
     val uncited = Lint
-      .extractParagraphs(body)
-      .filter(p => Article.Lint.articleUncitedParagraphs(List(slug -> p)).nonEmpty)
+      .extractParagraphs(Lint.ProseBody(body.value))
+      .filter(p => Article.Lint.articleUncitedParagraphs(List(articleSlug -> Article.Body(p.value))).nonEmpty)
       .map(p =>
         f(
           Severity.Major,
-          "citation",
-          p.split("\\s+").take(8).mkString(" "),
-          p.take(200),
-          "a paragraph with no [[citekey]]",
-          "cite the source the paragraph rests on, or move it to the unresolved section"
+          Finding.Kind("citation"),
+          Finding.Where(p.value.split("\\s+").take(8).mkString(" ")),
+          Finding.Quote(p.value.take(200)),
+          Finding.Problem("a paragraph with no [[citekey]]"),
+          Finding.Fix("cite the source the paragraph rests on, or move it to the unresolved section")
         )
       )
-    val escaped = Option.when(body.contains("\\[\\["))(
+    val escaped = Option.when(body.value.contains("\\[\\["))(
       f(
         Severity.Major,
         com.histmersion.domain.ReviewArticle.Finding.Kind("citation"),
@@ -1033,14 +1027,14 @@ object ReviewArticle:
         f(
           Severity.Major,
           com.histmersion.domain.ReviewArticle.Finding.Kind("section"),
-          h,
-          s"## $h",
+          Finding.Where(h),
+          Finding.Quote(s"## $h"),
           com.histmersion.domain.ReviewArticle.Finding.Problem("a hand-written Sources cited section (the page generates it)"),
           com.histmersion.domain.ReviewArticle.Finding.Fix("delete the section")
         )
       )
     val handWritten =
-      if !generated then Nil
+      if !generated.value then Nil
       else
         hs.filter(h => norm(h).startsWith("not used"))
           .take(1)
@@ -1048,13 +1042,13 @@ object ReviewArticle:
             f(
               Severity.Major,
               CoverageKind,
-              h,
-              s"## $h",
-              "a hand-written Not used section: the page generates it from the article's filter and its reasons",
-              "delete the section; give each left-out source's reason in `reasons` instead"
+              Finding.Where(h),
+              Finding.Quote(s"## $h"),
+              Finding.Problem("a hand-written Not used section: the page generates it from the article's filter and its reasons"),
+              Finding.Fix("delete the section; give each left-out source's reason in `reasons` instead")
             )
           ) ++
-          body.linesIterator
+          body.value.linesIterator
             .map(_.trim)
             .find(_.startsWith("_Method"))
             .toList
@@ -1062,10 +1056,10 @@ object ReviewArticle:
               f(
                 Severity.Major,
                 CoverageKind,
-                "Method",
-                l.take(200),
-                "a hand-written Method note: the page generates it (the filter, its counts, the statuses, the edges)",
-                "delete the note"
+                Finding.Where("Method"),
+                Finding.Quote(l.take(200)),
+                Finding.Problem("a hand-written Method note: the page generates it (the filter, its counts, the statuses, the edges)"),
+                Finding.Fix("delete the note")
               )
             )
     val missing = requiredSections(kind, generated)
@@ -1073,11 +1067,11 @@ object ReviewArticle:
       .map(alts =>
         f(
           Severity.Major,
-          "section",
-          "headings",
-          "",
-          s"no ${alts.map(a => s"'$a'").mkString(" or ")} section (writing guide rule 4)",
-          "add the section"
+          Finding.Kind("section"),
+          Finding.Where("headings"),
+          Finding.Quote(""),
+          Finding.Problem(s"no ${alts.map(a => s"'$a'").mkString(" or ")} section (writing guide rule 4)"),
+          Finding.Fix("add the section")
         )
       )
     val dup = hs
@@ -1085,22 +1079,21 @@ object ReviewArticle:
       .collect { case (_, xs) if xs.size > 1 => xs.head }
       .toList
       .sorted
-      .map(h => f(Severity.Minor, com.histmersion.domain.ReviewArticle.Finding.Kind("section"), h, s"## $h", com.histmersion.domain.ReviewArticle.Finding.Problem("a duplicated heading"), com.histmersion.domain.ReviewArticle.Finding.Fix("merge the two sections")))
-    val dangling = AgentVerify
-      .wikilinks(body)
-      .filterNot(isTarget)
+      .map(h => f(Severity.Minor, com.histmersion.domain.ReviewArticle.Finding.Kind("section"), Finding.Where(h), Finding.Quote(s"## $h"), com.histmersion.domain.ReviewArticle.Finding.Problem("a duplicated heading"), com.histmersion.domain.ReviewArticle.Finding.Fix("merge the two sections")))
+    val dangling = wikilinks(body.value)
+      .filterNot(t => com.histmersion.domain.research.Slug.option(t).exists(isTarget))
       .map(t =>
         f(
           Severity.Major,
-          "citation",
-          s"[[$t]]",
-          s"[[$t]]",
-          s"[[$t]] is neither a citekey nor an article",
-          "link a real citekey or article"
+          Finding.Kind("citation"),
+          Finding.Where(s"[[$t]]"),
+          Finding.Quote(s"[[$t]]"),
+          Finding.Problem(s"[[$t]] is neither a citekey nor an article"),
+          Finding.Fix("link a real citekey or article")
         )
       )
     (filler ++ uncited ++ escaped ++ sourcesCited ++ handWritten ++ missing ++ dup ++ dangling).zipWithIndex.map {
-      case ((sev, k, w, q, p, fx), i) => Finding(s"M${i + 1}", Reviewer.Mechanical, sev, k, w, q, p, fx)
+      case ((sev, k, w, q, p, fx), i) => Finding(Finding.Id(s"M${i + 1}"), Reviewer.Mechanical, sev, k, w, q, p, fx)
     }
 
   /** The coverage drift of an article that records a filter (#958), as findings to follow the [[mechanical]] ones
@@ -1109,7 +1102,7 @@ object ReviewArticle:
     * returns, is minor (it is not shown).
     */
   def coverageDrift(c: Coverage, from: com.histmersion.domain.ReviewArticle.Merged.Round): List[Finding] =
-    def keys(cks: List[com.histmersion.domain.library.Citekey]) =
+    def keys(cks: List[com.histmersion.api.library.Citekey]) =
       val shown = cks.take(40).map(ck => s"[[$ck]]").mkString(", ")
       if cks.size > 40 then s"$shown (+${cks.size - 40} more)" else shown
     c.drift.zipWithIndex.map { (d, i) =>
@@ -1117,7 +1110,7 @@ object ReviewArticle:
         case DriftKind.Unplaced =>
           (
             Severity.Major,
-            s"${Plural.count(d.citekeys.size, com.histmersion.api.Plural.CountSingular("source"))} the filter returns ${
+            s"${Plural.count(com.histmersion.api.Plural.CountN(d.citekeys.size.toLong), com.histmersion.api.Plural.CountSingular("source"))} the filter returns ${
                 if d.citekeys.size == 1 then "is" else "are"
               } neither cited nor given a reason: ${keys(d.citekeys)}",
             "cite each one where its record bears on the question, or give its reason in `reasons` (read the record first)"
@@ -1125,24 +1118,24 @@ object ReviewArticle:
         case DriftKind.ReasonForCited =>
           (
             Severity.Minor,
-            s"a reason is stored for ${Plural.count(d.citekeys.size, com.histmersion.api.Plural.CountSingular("source"))} the article cites: ${keys(d.citekeys)}",
+            s"a reason is stored for ${Plural.count(com.histmersion.api.Plural.CountN(d.citekeys.size.toLong), com.histmersion.api.Plural.CountSingular("source"))} the article cites: ${keys(d.citekeys)}",
             "remove the reason (an empty one in `reasons`)"
           )
         case DriftKind.ReasonOutside =>
           (
             Severity.Minor,
-            s"a reason is stored for ${Plural.count(d.citekeys.size, com.histmersion.api.Plural.CountSingular("source"))} the filter no longer returns: ${keys(d.citekeys)}",
+            s"a reason is stored for ${Plural.count(com.histmersion.api.Plural.CountN(d.citekeys.size.toLong), com.histmersion.api.Plural.CountSingular("source"))} the filter no longer returns: ${keys(d.citekeys)}",
             "remove the reason (an empty one in `reasons`)"
           )
       Finding(
-        s"M${from + i}",
+        Finding.Id(s"M${from.value + i}"),
         Reviewer.Mechanical,
         sev,
         CoverageKind,
-        Article.Coverage.NotUsedHeading,
+        Finding.Where(Article.Coverage.NotUsedHeading),
         com.histmersion.domain.ReviewArticle.Finding.Quote(""),
-        problem,
-        fix
+        Finding.Problem(problem),
+        Finding.Fix(fix)
       )
     }
 
@@ -1157,15 +1150,15 @@ object ReviewArticle:
   /** The check every reviewer's evidence passes: a real citekey, and a quote that IS in its record (the OCR-tolerant
     * matcher the fixer's rejections use). `text` is the record as get_source shows it (summary, findings, notes, body).
     */
-  def evidenceCheck(isCitekey: com.histmersion.domain.ReviewArticle.CandidateCitekey => Boolean, text: com.histmersion.domain.ReviewArticle.Fix.Body => Option[com.histmersion.domain.ReviewArticle.Fix.Body], minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio): EvidenceCheck =
+  def evidenceCheck(isCitekey: com.histmersion.domain.library.Citekey => Boolean, text: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.AgentVerify.SourceBody], minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio): EvidenceCheck =
     e =>
-      val ck = Option(e.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim).getOrElse("")
-      val q = Option(e.quote).map(_.trim).getOrElse("")
+      val ck = e.citekey
+      val q = Option(e.quote).map(_.value.trim).getOrElse("")
       if q.isEmpty then Left(s"[[$ck]]: no quote")
       else if !isCitekey(ck) then Left(s"'$ck' is not a citekey")
       else
-        text(ck).map(t => AgentVerify.findQuote(q, t, minRatio)).filter(_.accepted) match
-          case Some(m) => Right(Evidence(ck, e.offset.filter(_ >= 0), q, m.ratio))
+        text(ck).map(t => findQuote(q, t.value, minRatio)).filter(_.accepted) match
+          case Some(m) => Right(Evidence(ck, e.offset.filter(_.value >= 0), Evidence.Quote(q), m.ratio))
           case None    => Left(s"the quote is not in the record of [[$ck]]: \"${q.take(80)}\"")
 
   /** Findings as stated → verified findings with code-assigned ids (`R1`…), plus what was dropped. A finding with no
@@ -1179,26 +1172,26 @@ object ReviewArticle:
       ev: EvidenceCheck = NoEvidence
   ): (List[Finding], List[String], List[String]) =
     val checked = as.zipWithIndex.map { (a, i) =>
-      val label = s"finding ${i + 1} (${Option(a.problem).getOrElse("").take(60)})"
+      val label = s"finding ${i + 1} (${Option(a.problem).map(_.value).getOrElse("").take(60)})"
       Severity.parse(Option(a.severity).getOrElse(com.histmersion.domain.ReviewArticle.Severity.Wire(""))) match
         case None => Left(s"$label: severity '${a.severity}' is neither major nor minor")
-        case Some(_) if Option(a.problem).forall(_.trim.isEmpty) => Left(s"$label: no problem stated")
-        case Some(_) if Option(a.where).forall(_.trim.isEmpty)   =>
+        case Some(_) if Option(a.problem).forall(_.value.trim.isEmpty) => Left(s"$label: no problem stated")
+        case Some(_) if Option(a.where).forall(_.value.trim.isEmpty)   =>
           Left(s"$label: no where stated — give the section heading or the passage's first words")
         case Some(s) => Right((s, a))
     }
     val built = checked.collect { case Right(v) => v }.zipWithIndex.map { case ((s, a), i) =>
-      val id = s"${r.prefix}${i + 1}"
+      val id = Finding.Id(s"${r.prefix}${i + 1}")
       val evs = Option(a.evidence).getOrElse(Nil).take(MaxEvidence).map(ev)
       val f = Finding(
         id,
         r,
         s,
-        Option(a.kind).map(_.trim).getOrElse(com.histmersion.domain.ReviewArticle.Finding.Kind("")),
-        Option(a.where).map(_.trim).getOrElse(com.histmersion.domain.ReviewArticle.Finding.Where("")),
-        Option(a.quote).map(_.trim).getOrElse(com.histmersion.domain.ReviewArticle.Finding.Quote("")),
-        a.problem.trim,
-        Option(a.fix).map(_.trim).getOrElse(com.histmersion.domain.ReviewArticle.Finding.Fix("")),
+        Option(a.kind).map(k => Finding.Kind(k.value.trim)).getOrElse(com.histmersion.domain.ReviewArticle.Finding.Kind("")),
+        Option(a.where).map(w => Finding.Where(w.value.trim)).getOrElse(com.histmersion.domain.ReviewArticle.Finding.Where("")),
+        Option(a.quote).map(q => Finding.Quote(q.value.trim)).getOrElse(com.histmersion.domain.ReviewArticle.Finding.Quote("")),
+        Finding.Problem(a.problem.value.trim),
+        Option(a.fix).map(x => Finding.Fix(x.value.trim)).getOrElse(com.histmersion.domain.ReviewArticle.Finding.Fix("")),
         evs.collect { case Right(e) => e },
         pair = Option(a.pair).flatten.flatMap(CritiqueRef.parse(_).toOption)
       )
@@ -1209,25 +1202,25 @@ object ReviewArticle:
   /** The stated verdict must not be worse than the findings show (a MAJOR with no major finding is a finding left out);
     * a milder one is simply corrected. On the last attempt the findings decide.
     */
-  private def verdictOf(stated: com.histmersion.domain.ReviewArticle.Verdict.Wire, fs: List[Finding], last: com.histmersion.domain.ReviewArticle.VerdictOfLast): Either[com.histmersion.domain.ReviewArticle.Verdict.Wire, Verdict] =
+  private def verdictOf(stated: com.histmersion.domain.ReviewArticle.Verdict.Wire, fs: List[Finding], last: com.histmersion.domain.ReviewArticle.VerdictOfLast): Either[String, Verdict] =
     val derived = Verdict.of(fs)
     Verdict.parse(Option(stated).getOrElse(com.histmersion.domain.ReviewArticle.Verdict.Wire(""))) match
-      case None if !last && Option(stated).forall(_.trim.isEmpty) => Left(com.histmersion.domain.ReviewArticle.Verdict.Wire("no verdict given — PASS, MINOR or MAJOR"))
-      case None if !last                             => Left(s"verdict '$stated' is not PASS, MINOR or MAJOR")
-      case Some(v) if v.rank > derived.rank && !last =>
-        Left(s"the verdict is ${v.wire} but no finding is ${v.wire.toLowerCase} — list the finding that makes it so")
+      case None if !last.value && Option(stated).forall(_.value.trim.isEmpty) => Left("no verdict given — PASS, MINOR or MAJOR")
+      case None if !last.value                             => Left(s"verdict '$stated' is not PASS, MINOR or MAJOR")
+      case Some(v) if v.rank > derived.rank && !last.value =>
+        Left(s"the verdict is ${v.wire} but no finding is ${v.wire.value.toLowerCase} — list the finding that makes it so")
       case _ => Right(derived)
 
   private def settle(
       r: Reviewer,
-      verdict: Either[com.histmersion.domain.ReviewArticle.Verdict.Wire, Verdict],
+      verdict: Either[String, Verdict],
       fs: List[Finding],
-      problems: List[com.histmersion.domain.ReviewArticle.Finding.Problem],
+      problems: List[String],
       dropped: List[String],
       last: com.histmersion.domain.ReviewArticle.LastRound
   )(build: Verdict => Report): Either[List[String], (Report, List[String])] =
     val all = problems ++ verdict.left.toOption.toList
-    if all.nonEmpty && !last then Left(all)
+    if all.nonEmpty && !last.value then Left(all)
     else Right((build(verdict.getOrElse(Verdict.of(fs))), all.map(p => s"${r.wire}: dropped — $p") ++ dropped))
 
   /** `critique`: a missing-critique MAJOR of the rules reviewer is calibrated like the skeptic's ([[checkCritiques]];
@@ -1274,8 +1267,8 @@ object ReviewArticle:
   object SpotRule:
     type Required = Required.T
     object Required extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Cited = Cited.T
-    object Cited extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Cited = com.histmersion.domain.library.Citekey
+    val Cited: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
     type Body = com.histmersion.domain.ReviewArticle.Fix.Body
     val Body: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
     type MinRatio = com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio
@@ -1284,12 +1277,12 @@ object ReviewArticle:
   /** How many spot-checks a full pass needs: `min` of them, or one per source the article cites in the corpus when it
     * cites fewer.
     */
-  def spotChecksRequired(min: com.histmersion.domain.ReviewArticle.SpotCheckMin, citedInCorpus: com.histmersion.domain.ReviewArticle.CitedInCorpusCount): com.histmersion.domain.ReviewArticle.SpotCheckCount = math.max(0, math.min(min, citedInCorpus))
+  def spotChecksRequired(min: com.histmersion.domain.ReviewArticle.SpotCheckMin, citedInCorpus: com.histmersion.domain.ReviewArticle.CitedInCorpusCount): com.histmersion.domain.ReviewArticle.SpotCheckCount = com.histmersion.domain.ReviewArticle.SpotCheckCount(math.max(0, math.min(min.value, citedInCorpus.value)))
 
   /** Does tool call `u` read the record of `ck`? A get_source or passages call whose input names it. */
   def reads(u: AgentVerify.ToolUse, ck: com.histmersion.domain.library.Citekey): Boolean =
-    SpotCheckTools(u.tool.trim) && ck.nonEmpty &&
-      Option(u.input).exists(_.toLowerCase(java.util.Locale.ROOT).contains(ck.toLowerCase(java.util.Locale.ROOT)))
+    SpotCheckTools(SpotCheck.Tool(u.tool.value.trim)) && ck.value.nonEmpty &&
+      Option(u.input).exists(_.value.toLowerCase(java.util.Locale.ROOT).contains(ck.value.toLowerCase(java.util.Locale.ROOT)))
 
   /** Verify the spot-checks: each needs a cited citekey, the claim in the article, a verdict from [[SpotVerdicts]], a
     * tool call of this step that read that source ([[reads]]) and the record's sentence found in its record (`ev`, the
@@ -1305,17 +1298,16 @@ object ReviewArticle:
       last: com.histmersion.domain.ReviewArticle.CheckSpotChecksLast
   ): (List[SpotCheck], List[String], List[String]) =
     val results = as.zipWithIndex.map { (a, i) =>
-      val ck = Option(a.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim).getOrElse("")
-      val claim = Option(a.claim).map(_.trim).getOrElse("")
-      val verdict = Option(a.verdict).map(_.trim.toLowerCase(java.util.Locale.ROOT)).getOrElse("")
+      val ck = a.citekey
+      val claim = Option(a.claim).map(_.value.trim).getOrElse("")
+      val verdict = SpotVerdictsValue(Option(a.verdict).map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).getOrElse(""))
       val label = s"spot-check ${i + 1} ([[$ck]])"
-      val checked: Either[com.histmersion.domain.ReviewArticle.Finding.Problem, SpotCheck] =
-        if ck.isEmpty then Left(s"spot-check ${i + 1}: no citekey")
-        else if rule.cited.nonEmpty && !rule.cited.exists(_.equalsIgnoreCase(ck)) then
+      val checked: Either[String, SpotCheck] =
+        if rule.cited.nonEmpty && !rule.cited.exists(_.value.equalsIgnoreCase(ck.value)) then
           Left(s"$label: the article does not cite it — check a source it cites")
         else if !SpotVerdicts.contains(verdict) then
           Left(s"$label: verdict '${a.verdict}' is not one of ${SpotVerdicts.mkString(", ")}")
-        else if claim.isEmpty || !AgentVerify.findQuote(claim, rule.body, rule.minRatio).accepted then
+        else if claim.isEmpty || !findQuote(claim, rule.body.value, rule.minRatio).accepted then
           Left(s"$label: the claim is not in the article — copy the article's words exactly")
         else
           rule.calls.find(reads(_, ck)) match
@@ -1324,22 +1316,22 @@ object ReviewArticle:
                 s"$label: no get_source or passages call for it in this step — read the record before reporting what it says"
               )
             case Some(call) =>
-              ev(EvidenceAnswer(ck, None, Option(a.recordQuote).getOrElse(""))) match
+              ev(EvidenceAnswer(ck, None, Option(a.recordQuote).getOrElse(Evidence.Quote("")))) match
                 case Left(m)  => Left(s"$label: $m")
-                case Right(e) => Right(SpotCheck(e.citekey, claim, verdict, e.quote, e.ratio, call.tool.trim))
+                case Right(e) => Right(SpotCheck(e.citekey, SpotCheck.Claim(claim), verdict, e.quote, e.ratio, SpotCheck.Tool(call.tool.value.trim)))
       checked
     }
     val verified = results.collect { case Right(s) => s }
     val failed = results.collect { case Left(m) => m }
-    val sources = verified.map(_.citekey.toLowerCase(java.util.Locale.ROOT)).distinct.size
-    if sources >= rule.required then (verified, Nil, failed.map(m => s"rules: dropped — $m"))
+    val sources = verified.map(_.citekey.value.toLowerCase(java.util.Locale.ROOT)).distinct.size
+    if sources >= rule.required.value then (verified, Nil, failed.map(m => s"rules: dropped — $m"))
     else
-      val read = rule.calls.filter(u => SpotCheckTools(u.tool.trim)).size
+      val read = rule.calls.filter(u => SpotCheckTools(SpotCheck.Tool(u.tool.value.trim))).size
       val short = s"spot-checks: $sources of the ${rule.required} required are verified (on different cited sources; " +
         s"this step made $read get_source/passages call(s)) — read the records now with get_source or passages, and " +
         "report each check with the record's sentence copied from the result"
       val problems = short :: failed
-      if last then (verified, Nil, problems.map(p => s"rules: unverified — $p"))
+      if last.value then (verified, Nil, problems.map(p => s"rules: unverified — $p"))
       else (verified, problems, Nil)
 
   /** The finding code adds from the cold reader's `termsUndefined` count: above [[TermCountThreshold]] terms, MINOR at
@@ -1350,17 +1342,17 @@ object ReviewArticle:
     */
   object TermCount:
 
-    val Kind = "term-count"
-    val Where = "explain-back"
-    def problem(n: com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined): com.histmersion.domain.ReviewArticle.Finding.Problem = s"$n terms undefined (count only; the individual findings carry the severity)"
-    val Fix = "define each on first use, and add a Glossary"
+    val Kind: com.histmersion.domain.ReviewArticle.Finding.Kind = com.histmersion.domain.ReviewArticle.Finding.Kind("term-count")
+    val Where: com.histmersion.domain.ReviewArticle.Finding.Where = com.histmersion.domain.ReviewArticle.Finding.Where("explain-back")
+    def problem(n: com.histmersion.domain.ReviewArticle.ColdReaderAnswer.TermsUndefined): com.histmersion.domain.ReviewArticle.Finding.Problem = com.histmersion.domain.ReviewArticle.Finding.Problem(s"$n terms undefined (count only; the individual findings carry the severity)")
+    val Fix: com.histmersion.domain.ReviewArticle.Finding.Fix = com.histmersion.domain.ReviewArticle.Finding.Fix("define each on first use, and add a Glossary")
 
     /** The count finding — this one, or the MAJOR "N terms are undefined (more than 8)" earlier runs stored. */
     private val Problem = """^\d+ terms (are )?undefined\b.*""".r
     def is(f: Finding): Boolean =
-      f.reviewer == Reviewer.ColdReader && Option(f.quote).forall(_.trim.isEmpty) &&
-        AgentVerify.normalise(Option(f.where).getOrElse("")) == AgentVerify.normalise(Where) &&
-        (f.kind == Kind || (f.kind == "term" && Problem.matches(Option(f.problem).getOrElse("").trim)))
+      f.reviewer == Reviewer.ColdReader && Option(f.quote).forall(_.value.trim.isEmpty) &&
+        normalise(Option(f.where).map(_.value).getOrElse("")) == normalise(Where.value) &&
+        (f.kind == Kind || (f.kind.value == "term" && Problem.matches(Option(f.problem).map(_.value).getOrElse("").trim)))
 
   private val NoSlot = "^(none|no\\b|nothing|n/?a\\b|all\\b|-+$|—).*".r
 
@@ -1369,11 +1361,11 @@ object ReviewArticle:
     * singular or plural ("open questions", "Disagreements:") is that slot. Returns the slots and the entries that are
     * neither.
     */
-  def emptySlotsOf(raw: List[com.histmersion.domain.ReviewArticle.ColdReaderAnswer.EmptySlots]): (List[String], List[String]) =
-    val entries = raw.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).filterNot(NoSlot.matches)
+  def emptySlotsOf(raw: List[com.histmersion.domain.ReviewArticle.ColdReaderAnswer.EmptySlots]): (List[com.histmersion.domain.ReviewArticle.ColdReaderAnswer.EmptySlots], List[String]) =
+    val entries = raw.map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).filterNot(NoSlot.matches)
     val read = entries.map { e =>
       val first = e.takeWhile(_.isLetter)
-      ExplainSlots.find(s => first == s || first == s + "s").toLeft(e)
+      ExplainSlots.find(s => first == s.value || first == s.value + "s").toLeft(e)
     }
     (read.collect { case Left(s) => s }.distinct, read.collect { case Right(e) => e }.distinct)
 
@@ -1392,31 +1384,31 @@ object ReviewArticle:
   ): Either[List[String], (Report, List[String])] =
     val (stated, ps, _) = checkFindings(Reviewer.ColdReader, a.findings.map(_.asFinding))
     val (slots, odd) = emptySlotsOf(a.emptySlots)
-    val unknown = odd.map(s => s"empty slot '$s' is not one of ${ExplainSlots.mkString(", ")}")
-    val explain = Option(a.explainBack).map(_.trim).filter(_.nonEmpty)
+    val unknown = odd.map(s => s"empty slot '$s' is not one of ${ExplainSlots.map(_.value).mkString(", ")}")
+    val explain = Option(a.explainBack).map(e => ColdReaderAnswer.ExplainBack(e.value.trim)).filter(_.value.nonEmpty)
     val extra =
       slots
         .filter(ExplainSlots.contains)
         .map(s =>
           (
             Severity.Major,
-            "empty-slot",
-            s"the explain-back has no '$s': the article does not say it",
-            "state it in the opening section"
+            Finding.Kind("empty-slot"),
+            Finding.Problem(s"the explain-back has no '$s': the article does not say it"),
+            Finding.Fix("state it in the opening section")
           )
         ) ++
-        Option.when(a.termsUndefined > TermCountThreshold)(
+        Option.when(a.termsUndefined.value > TermCountThreshold)(
           (Severity.Minor, TermCount.Kind, TermCount.problem(a.termsUndefined), TermCount.Fix)
         )
     val added = extra.zipWithIndex.map { case ((sev, k, p, fx), i) =>
-      Finding(s"C${stated.size + i + 1}", Reviewer.ColdReader, sev, k, TermCount.Where, "", p, fx)
+      Finding(Finding.Id(s"C${stated.size + i + 1}"), Reviewer.ColdReader, sev, k, TermCount.Where, Finding.Quote(""), p, fx)
     }
     val fs = stated ++ added
     val (cs, cps, cws) = checksOf(Reviewer.ColdReader, prior, a.checks, last)
     val problems = ps ++ unknown ++ explain.fold(List("no explain-back"))(_ => Nil) ++ cps
     val countOnly =
-      a.termsUndefined > TermCountThreshold && Verdict.parse(Option(a.verdict).getOrElse("")).contains(Verdict.Major)
-    settle(Reviewer.ColdReader, verdictOf(a.verdict, fs, last || countOnly), fs, problems, cws, last)(v =>
+      a.termsUndefined.value > TermCountThreshold && Verdict.parse(Option(a.verdict).getOrElse(Verdict.Wire(""))).contains(Verdict.Major)
+    settle(Reviewer.ColdReader, verdictOf(a.verdict, fs, VerdictOfLast(last.value || countOnly)), fs, problems, cws, last)(v =>
       Report(Reviewer.ColdReader, v, fs, explain, slots.filter(ExplainSlots.contains), checks = cs)
     )
 
@@ -1427,8 +1419,8 @@ object ReviewArticle:
   def checkSkeptic(
       a: SkepticAnswer,
       last: com.histmersion.domain.ReviewArticle.CheckSkepticLast,
-      isCitekey: com.histmersion.domain.ReviewArticle.CandidateCitekey => Boolean,
-      text: com.histmersion.domain.ReviewArticle.Fix.Body => Option[com.histmersion.domain.ReviewArticle.Fix.Body],
+      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
+      text: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.AgentVerify.SourceBody],
       minRatio: com.histmersion.domain.ReviewArticle.CheckSkepticMinRatio,
       prior: Option[Prior] = None,
       critique: Option[CritiqueRule] = None
@@ -1450,9 +1442,9 @@ object ReviewArticle:
   // ── the critique checklist (docs/research-review-convergence.md §6.8) ──────────────────────────
 
   /** The finding kind of an omitted critique. */
-  val MissingCritique = "missing-critique"
+  val MissingCritique: com.histmersion.domain.ReviewArticle.Finding.Kind = com.histmersion.domain.ReviewArticle.Finding.Kind("missing-critique")
 
-  def isMissingCritique(f: Finding): Boolean = f.kind.trim.toLowerCase(java.util.Locale.ROOT) == MissingCritique
+  def isMissingCritique(f: Finding): Boolean = f.kind.value.trim.toLowerCase(java.util.Locale.ROOT) == MissingCritique.value
 
   /** What a missing-critique finding is held to in one pass: the article's checklist (`pairs`), the open pairs the
     * skeptic was shown in full and must rule on (`shown`; empty for a re-check, the confirming panel and the rules
@@ -1464,7 +1456,7 @@ object ReviewArticle:
       shown: List[CritiquePair],
       full: CritiqueRule.Full,
       body: CritiqueRule.Body = com.histmersion.domain.ReviewArticle.CritiqueRule.Body(""),
-      minRatio: CritiqueRule.MinRatio = 0.9
+      minRatio: CritiqueRule.MinRatio = com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio(0.9)
   )
 
   object CritiqueRule:
@@ -1472,11 +1464,11 @@ object ReviewArticle:
     object Full extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Body = com.histmersion.domain.ReviewArticle.Fix.Body
     val Body: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
-    type MinRatio = MinRatio.T
-    object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinRatio = com.histmersion.domain.AgentVerify.MinRatio
+    val MinRatio: _root_.com.histmersion.domain.AgentVerify.MinRatio.type = _root_.com.histmersion.domain.AgentVerify.MinRatio
 
-  private def recordedMinor(f: Finding, why: com.histmersion.domain.ReviewArticle.MinorReason): Finding =
-    f.modify(_.severity).setTo(Severity.Minor).modify(_.problem).setTo(s"${f.problem.trim} (recorded minor: $why)")
+  private def recordedMinor(f: Finding, why: String): Finding =
+    f.modify(_.severity).setTo(Severity.Minor).modify(_.problem).setTo(Finding.Problem(s"${f.problem.value.trim} (recorded minor: $why)"))
 
   /** GRADE hedges and contest words: a sentence carrying one already qualifies its claim. */
   private val Hedge =
@@ -1523,10 +1515,11 @@ object ReviewArticle:
     * never after an abbreviation or an initial (`M. L. West`).
     */
   def sentences(p: com.histmersion.domain.ReviewArticle.Fix.Body): List[com.histmersion.domain.ReviewArticle.Sentence] =
+    val text = p.value
     val cuts = SentenceEnd
-      .findAllMatchIn(p)
+      .findAllMatchIn(text)
       .filter { m =>
-        val word = p
+        val word = text
           .substring(0, m.start)
           .split("[\\s(\\[]")
           .lastOption
@@ -1539,24 +1532,24 @@ object ReviewArticle:
       }
       .map(_.end)
       .toList
-    (0 :: cuts).zip(cuts :+ p.length).map((a, b) => p.substring(a, b).trim).filter(_.nonEmpty)
+    (0 :: cuts).zip(cuts :+ text.length).map((a, b) => text.substring(a, b).trim).filter(_.nonEmpty).map(Sentence(_))
 
   /** The sentence of `body` that holds `quote` — the fewest consecutive sentences (at most four) when it spans more
     * than one, else its paragraph; None when the quote is not in the body.
     */
-  def claimSentence(body: com.histmersion.domain.ReviewArticle.Fix.Body, quote: com.histmersion.domain.ReviewArticle.Evidence.Quote, minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio): Option[String] =
-    val q = Option(quote).map(_.trim).getOrElse("")
-    def has(t: com.histmersion.domain.ReviewArticle.Fix.Body) = AgentVerify.findQuote(q, t, minRatio).accepted
+  def claimSentence(body: com.histmersion.domain.ReviewArticle.Fix.Body, quote: com.histmersion.domain.ReviewArticle.Evidence.Quote, minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio): Option[com.histmersion.domain.ReviewArticle.Sentence] =
+    val q = Option(quote).map(_.value.trim).getOrElse("")
+    def has(t: String) = findQuote(q, t, minRatio).accepted
     if q.isEmpty then None
     else
-      Critiques.paragraphs(body).find(has).map { p =>
-        val ss = sentences(p)
-        (1 to math.min(4, ss.size)).iterator.flatMap(n => ss.sliding(n).map(_.mkString(" "))).find(has).getOrElse(p)
+      Critiques.paragraphs(body).map(_.value).find(has).map { p =>
+        val ss = sentences(Fix.Body(p)).map(_.value)
+        Sentence((1 to math.min(4, ss.size)).iterator.flatMap(n => ss.sliding(n).map(_.mkString(" "))).find(has).getOrElse(p))
       }
 
   /** Does the text carry a hedge or a contest word (outside its links)? */
-  def qualified(text: com.histmersion.domain.ReviewArticle.Fix.Body): Boolean =
-    Hedge.findFirstIn("""\[\[[^\]]*\]\]""".r.replaceAllIn(text, " ")).isDefined
+  def qualified(text: com.histmersion.domain.ReviewArticle.Sentence): Boolean =
+    Hedge.findFirstIn("""\[\[[^\]]*\]\]""".r.replaceAllIn(text.value, " ")).isDefined
 
   private val ClauseEnd = "(;|,\\s+(?:and|but|while|whereas)\\s|\\s(?:but|whereas)\\s)".r
 
@@ -1565,16 +1558,16 @@ object ReviewArticle:
     * (2003) dated the split… [[gray2003_language]], and Bouckaert et al. (2012, contested)…") does not qualify it. The
     * whole sentence when the quote's end is not found.
     */
-  def claimWindow(sentence: com.histmersion.domain.ReviewArticle.Sentence, quote: com.histmersion.domain.ReviewArticle.Evidence.Quote): String =
-    val ws = quote.split("[^\\p{L}\\p{N}]+").filter(_.nonEmpty).takeRight(3)
+  def claimWindow(sentence: com.histmersion.domain.ReviewArticle.Sentence, quote: com.histmersion.domain.ReviewArticle.Evidence.Quote): com.histmersion.domain.ReviewArticle.Sentence =
+    val ws = quote.value.split("[^\\p{L}\\p{N}]+").filter(_.nonEmpty).takeRight(3)
     if ws.isEmpty then sentence
     else
       val re = ("(?i)" + ws.map(java.util.regex.Pattern.quote).mkString("[^\\p{L}\\p{N}]+")).r
-      re.findAllMatchIn(sentence).toList.lastOption.fold(sentence) { m =>
-        val after = sentence.substring(m.end)
+      Sentence(re.findAllMatchIn(sentence.value).toList.lastOption.fold(sentence.value) { m =>
+        val after = sentence.value.substring(m.end)
         val tail = ClauseEnd.findFirstMatchIn(after).fold(after)(c => after.substring(0, c.start))
-        sentence.substring(0, m.end) + tail
-      }
+        sentence.value.substring(0, m.end) + tail
+      })
 
   private val StatusLabel = "(contested|challenged|disputed|superseded|debunked|retracted)"
 
@@ -1583,9 +1576,9 @@ object ReviewArticle:
     * (`[[knapp2016]]` for `knapp2016_seven`) counts.
     */
   def labelled(sentence: com.histmersion.domain.ReviewArticle.LabelledSentence, criticised: com.histmersion.domain.ReviewArticle.Criticised): Boolean =
-    val ck = criticised.trim.toLowerCase(java.util.Locale.ROOT)
+    val ck = criticised.value.trim.toLowerCase(java.util.Locale.ROOT)
     val forms = (ck :: Option.when(ck.contains("_"))(ck.takeWhile(_ != '_')).toList).map(java.util.regex.Pattern.quote)
-    ("(?i)\\[\\[(" + forms.mkString("|") + ")\\]\\][\\s,;(—–-]{0,6}" + StatusLabel).r.findFirstIn(sentence).isDefined
+    ("(?i)\\[\\[(" + forms.mkString("|") + ")\\]\\][\\s,;(—–-]{0,6}" + StatusLabel).r.findFirstIn(sentence.value).isDefined
 
   /** Is the claim `quote` states already qualified in `sentence`: a hedge or contest word in its own clause
     * ([[claimWindow]]), or a status label on the criticised work ([[labelled]])?
@@ -1620,32 +1613,32 @@ object ReviewArticle:
       if !isMissingCritique(f) || !f.major then Right((f, None))
       else
         val label = s"${f.id} (missing-critique, major)"
-        def minor(g: Finding, why: com.histmersion.domain.ReviewArticle.MinorReason) =
+        def minor(g: Finding, why: String) =
           Right((recordedMinor(g, why), Some(s"${r.wire}: $label — $why; recorded minor")))
         f.pair.flatMap(Critiques.find(rule.pairs, _)) match
           case Some(p) if p.open =>
             val g = f.modify(_.pair).setTo(Some(p.ref))
-            if !p.criticised.cited then
+            if !p.criticised.cited.value then
               minor(g, s"the article does not cite [[${p.criticised.citekey}]], so it states none of its claims")
-            else if rule.body.isEmpty then Right((g, None))
+            else if rule.body.value.isEmpty then Right((g, None))
             else
               claimSentence(rule.body, f.quote, rule.minRatio) match
-                case None if rule.full && !last =>
+                case None if rule.full.value && !last.value =>
                   Left(
                     s"$label: its quote is not in the article — quote the article's sentence that states the criticised " +
                       "claim (or the conclusion the critique would change), copied exactly"
                   )
-                case None => minor(g, com.histmersion.domain.ReviewArticle.MinorReason("its quote is not in the article, so no unqualified claim is shown"))
+                case None => minor(g, "its quote is not in the article, so no unqualified claim is shown")
                 case Some(sentence) if qualifiedClaim(sentence, f.quote, p.criticised.citekey) =>
-                  minor(g, s"the article already qualifies the claim: \"${sentence.trim.take(120)}\"")
+                  minor(g, s"the article already qualifies the claim: \"${sentence.value.trim.take(120)}\"")
                 case Some(_) => Right((g, None))
           case Some(p) =>
             val why =
               if p.state == CritiqueState.Addressed then
                 s"${p.ref.wire} is addressed — both sources are cited in one paragraph"
-              else s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.getOrElse("").take(160)}\""
+              else s"${p.ref.wire} is set aside with a stored reason: \"${p.reason.map(_.value).getOrElse("").take(160)}\""
             minor(f.modify(_.pair).setTo(Some(p.ref)), why)
-          case None if f.pair.isEmpty && rule.full && !last =>
+          case None if f.pair.isEmpty && rule.full.value && !last.value =>
             Left(
               s"$label names no pair of the critique checklist (its `pair` is empty): name the pair it is about in " +
                 "`pair` (src>dst) — a disagreement with no recorded edge is a proposal, not a MAJOR"
@@ -1653,7 +1646,7 @@ object ReviewArticle:
           case None =>
             val proposed = f.pair.exists(ref =>
               proposals.exists(pp =>
-                pp.kind == Approval.Kind.Edge && pp.target.exists(t => CritiqueRef(pp.citekey, t).same(ref))
+                pp.kind == Approval.Kind.Edge && pp.target.exists(t => CritiqueRef(com.histmersion.api.library.Citekey(pp.citekey.value), com.histmersion.api.library.Citekey(t.value)).same(ref))
               )
             )
             val why = f.pair.fold("it names no checklist pair")(ref =>
@@ -1706,8 +1699,8 @@ object ReviewArticle:
   ): (List[CritiqueReason], List[String], List[String]) =
     val named = fs.filter(f => f.major && isMissingCritique(f)).flatMap(_.pair)
     val results = as.map { a =>
-      val reason = Option(a.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
-      CritiqueRef.parse(Option(a.pair).getOrElse("")).flatMap { ref =>
+      val reason = Option(a.reason).map(_.value.trim.replaceAll("\\s+", " ")).getOrElse("")
+      CritiqueRef.parse(Option(a.pair).getOrElse(CritiqueRef.Wire(""))).left.map(_.value).flatMap { ref =>
         Critiques.find(rule.pairs, ref) match
           case None               => Left(s"not material ${ref.wire}: not a pair of the critique checklist")
           case Some(p) if !p.open => Left(s"not material ${p.ref.wire}: the pair is already ${p.state.wire}")
@@ -1718,7 +1711,7 @@ object ReviewArticle:
             Left(
               s"not material ${p.ref.wire}: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})"
             )
-          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, reason))
+          case Some(p) => Right(CritiqueReason(p.ref.src, p.ref.dst, CritiqueReason.Reason(reason)))
       }
     }
     val ok = results.collect { case Right(c) => c }.distinctBy(c => (c.src, c.dst))
@@ -1731,7 +1724,7 @@ object ReviewArticle:
       )
       .toList
     val dropped = results.collect { case Left(m) => s"skeptic: dropped — $m" }
-    if last then (ok, Nil, dropped ++ missing.map(m => s"skeptic: $m (left open)"))
+    if last.value then (ok, Nil, dropped ++ missing.map(m => s"skeptic: $m (left open)"))
     else (ok, missing, dropped)
 
   // ── checks of earlier findings, and the verification pass (the review ledger) ──────────────────
@@ -1769,28 +1762,29 @@ object ReviewArticle:
       last: com.histmersion.domain.ReviewArticle.LastRound
   ): (List[Check], List[String], List[String]) =
     val byId = prior.asked.map(f => f.id -> f).toMap
-    def gone(f: Finding) = f.quote.trim.isEmpty || !AgentVerify.findQuote(f.quote, prior.body, prior.minRatio).accepted
+    def gone(f: Finding) = f.quote.value.trim.isEmpty || !findQuote(f.quote.value, prior.body.value, prior.minRatio).accepted
     val results = Option(as).getOrElse(Nil).map { c =>
-      val id = Option(c.id).map(_.trim).getOrElse("")
-      val q = Option(c.quote).map(_.trim).getOrElse("")
-      val note = Option(c.note).map(_.trim).getOrElse("")
-      val checked: Either[com.histmersion.domain.ReviewArticle.Finding.Problem, Check] = byId.get(id) match
-        case None if id.isEmpty =>
-          Left(s"a check with no id — give the id of the finding it checks (${byId.keys.toList.sorted.mkString(", ")})")
+      val idText = Option(c.id).map(_.value.trim).getOrElse("")
+      val id = Finding.Id(idText)
+      val q = Option(c.quote).map(_.value.trim).getOrElse("")
+      val note = Option(c.note).map(_.value.trim).getOrElse("")
+      val checked: Either[String, Check] = byId.get(id) match
+        case None if idText.isEmpty =>
+          Left(s"a check with no id — give the id of the finding it checks (${byId.keys.toList.map(_.value).sorted.mkString(", ")})")
         case None =>
           Left(
-            s"check of '$id': not one of the findings you were asked to check (${byId.keys.toList.sorted.mkString(", ")})"
+            s"check of '$id': not one of the findings you were asked to check (${byId.keys.toList.map(_.value).sorted.mkString(", ")})"
           )
         case Some(_) if q.nonEmpty =>
-          if AgentVerify.findQuote(q, prior.body, prior.minRatio).accepted then Right(Check(id, c.fixed, q, note))
+          if findQuote(q, prior.body.value, prior.minRatio).accepted then Right(Check(id, c.fixed, Check.Quote(q), Check.Note(note)))
           else Left(s"check of $id: the quote is not in the current article — copy it exactly: \"${q.take(80)}\"")
-        case Some(f) if gone(f) => Right(Check(id, c.fixed, com.histmersion.domain.ReviewArticle.Check.Quote(""), note))
+        case Some(f) if gone(f) => Right(Check(id, c.fixed, com.histmersion.domain.ReviewArticle.Check.Quote(""), Check.Note(note)))
         case Some(_)            =>
           Left(s"check of $id: no quote — quote the current text that shows it ${
-              if c.fixed then "fixed" else "still there"
+              if c.fixed.value then "fixed" else "still there"
             }")
       checked match
-        case Right(k) if !k.fixed && k.note.isEmpty =>
+        case Right(k) if !k.fixed.value && k.note.value.isEmpty =>
           Left(s"check of $id: no note — say why it is not fixed (the fixer reads it)")
         case other => other
     }
@@ -1801,7 +1795,7 @@ object ReviewArticle:
     val missing =
       prior.asked.map(_.id).filterNot(checks.map(_.id).toSet).map(id => s"$id: no check — say whether it is fixed")
     val problems = results.collect { case Left(p) => p } ++ missing
-    if last then (checks, Nil, problems.map(p => s"${r.wire}: $p (left open)"))
+    if last.value then (checks, Nil, problems.map(p => s"${r.wire}: $p (left open)"))
     else (checks, problems, Nil)
 
   /** A reviewer's word that a missing-critique finding is fixed, held to what code can see (§6.9): while its pair still
@@ -1817,13 +1811,12 @@ object ReviewArticle:
   ): (List[Check], List[String]) =
     val held = checks.map { c =>
       asked.find(_.id == c.id).flatMap(_.pair).flatMap(Critiques.find(pairs, _)) match
-        case Some(p) if c.fixed && p.bearing =>
+        case Some(p) if c.fixed.value && p.bearing =>
           val why =
             s"[[${p.src.citekey}]] and [[${p.dst.citekey}]] are still not cited in one paragraph, and no reason is stored"
           (
-            c.modify(
-              _.fixed).setTo(false).modify(_.note).setTo(s"$why (code's check)${Option(c.note).filter(_.trim.nonEmpty).fold("")(n => s"; the reviewer: $n")}"
-                  .take(300)
+            c.modify(_.fixed).setTo(Check.Fixed(false)).modify(_.note).setTo(
+              Check.Note(s"$why (code's check)${Option(c.note).filter(_.value.trim.nonEmpty).fold("")(n => s"; the reviewer: $n")}".take(300))
             ),
             Some(s"${c.id}: checked as fixed, but $why — recorded not fixed")
           )
@@ -1846,16 +1839,16 @@ object ReviewArticle:
     val pairBack = isMissingCritique(f) && f.pair.exists(ref =>
       Critiques.find(start, ref).exists(!_.open) && Critiques.find(now, ref).forall(_.open)
     )
-    val kind = f.kind.trim.toLowerCase(java.util.Locale.ROOT)
-    val wrote = (FactualKinds(kind) || kind == "synth") && f.quote.trim.nonEmpty && edited.trim.nonEmpty &&
-      AgentVerify.findQuote(f.quote, edited, minRatio).accepted
+    val kind = f.kind.value.trim.toLowerCase(java.util.Locale.ROOT)
+    val wrote = (FactualKinds(Finding.Kind(kind)) || kind == "synth") && f.quote.value.trim.nonEmpty && edited.value.trim.nonEmpty &&
+      findQuote(f.quote.value, edited.value, minRatio).accepted
     pairBack || wrote
 
   /** The kinds of finding that are factual errors: the only MAJORs a verification pass may raise outside the edited
     * passages, and only with evidence code verified.
     */
-  val FactualKinds: Set[com.histmersion.domain.ReviewArticle.FactualKinds] =
-    Set(com.histmersion.domain.ReviewArticle.FactualKindsValue("contradictory"), com.histmersion.domain.ReviewArticle.FactualKindsValue("extrapolatory"), com.histmersion.domain.ReviewArticle.FactualKindsValue("decorative"), com.histmersion.domain.ReviewArticle.FactualKindsValue("recall"), com.histmersion.domain.ReviewArticle.FactualKindsValue("date"), com.histmersion.domain.ReviewArticle.FactualKindsValue("status"), com.histmersion.domain.ReviewArticle.FactualKindsValue("settled-but-contested"), com.histmersion.domain.ReviewArticle.FactualKindsValue("number"))
+  val FactualKinds: Set[com.histmersion.domain.ReviewArticle.Finding.Kind] =
+    Set(Finding.Kind("contradictory"), Finding.Kind("extrapolatory"), Finding.Kind("decorative"), Finding.Kind("recall"), Finding.Kind("date"), Finding.Kind("status"), Finding.Kind("settled-but-contested"), Finding.Kind("number"))
 
   /** At most this many lessons per answer, each at most this long. */
   val MaxLessonsPerAnswer = 3
@@ -1865,14 +1858,14 @@ object ReviewArticle:
     * stands only as a factual error with evidence, else it is recorded as minor (with the warning saying so).
     */
   def scope(f: Finding, edited: com.histmersion.domain.ReviewArticle.Fix.Body, minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio): (Finding, Option[String]) =
-    val inside = f.quote.trim.nonEmpty && AgentVerify.findQuote(f.quote, edited, minRatio).accepted
-    if !f.major || inside || (FactualKinds(f.kind.trim.toLowerCase(java.util.Locale.ROOT)) && f.evidence.nonEmpty) then
+    val inside = f.quote.value.trim.nonEmpty && findQuote(f.quote.value, edited.value, minRatio).accepted
+    if !f.major || inside || (FactualKinds(Finding.Kind(f.kind.value.trim.toLowerCase(java.util.Locale.ROOT))) && f.evidence.nonEmpty) then
       (f, None)
     else
       (
         f.modify(_.severity).setTo(Severity.Minor),
         Some(
-          s"${f.reviewer.wire}: \"${f.problem.take(80)}\" is outside the edited passages and not a factual error with evidence — recorded as minor"
+          s"${f.reviewer.wire}: \"${f.problem.value.take(80)}\" is outside the edited passages and not a factual error with evidence — recorded as minor"
         )
       )
 
@@ -1897,13 +1890,13 @@ object ReviewArticle:
     val scoped = fs.map(scope(_, edited, prior.minRatio))
     val lessons = Option(a.lessons)
       .getOrElse(Nil)
-      .map(_.trim)
+      .map(_.value.trim)
       .filter(_.nonEmpty)
       .distinct
       .take(MaxLessonsPerAnswer)
-      .map(_.take(LessonChars))
+      .map(l => Recheck.Lessons(l.take(LessonChars)))
     val problems = cps ++ ps
-    if problems.nonEmpty && !last then Left(problems)
+    if problems.nonEmpty && !last.value then Left(problems)
     else
       Right(
         (
@@ -1914,14 +1907,14 @@ object ReviewArticle:
 
   // ── merge and gate (§4.3 steps 4–5) ─────────────────────────────────────────────────────────────
 
-  private def key(f: Finding): (String, String) = (AgentVerify.normalise(f.where), AgentVerify.normalise(f.problem))
+  private def key(f: Finding): (String, String) = (normalise(f.where.value), normalise(f.problem.value))
 
   /** Did a reviewer raise `f` before? Same reviewer, and the same quoted passage — or the same `where` + `problem` when
     * there is no quote (a model rewords its problem, rarely its quote).
     */
   def sameFinding(a: Finding, b: Finding): Boolean =
     a.reviewer == b.reviewer && {
-      val (qa, qb) = (AgentVerify.normalise(a.quote), AgentVerify.normalise(b.quote))
+      val (qa, qb) = (normalise(a.quote.value), normalise(b.quote.value))
       if qa.nonEmpty && qb.nonEmpty then qa == qb else key(a) == key(b)
     }
 
@@ -1946,7 +1939,7 @@ object ReviewArticle:
           case i  => acc.updated(i, acc(i).copy(evidence = mergeEvidence(acc(i).evidence, f.evidence)))
       }
       .toList
-      .map(f => if rejectedBefore.exists(sameFinding(_, f)) then f.modify(_.escalated).setTo(true) else f)
+      .map(f => if rejectedBefore.exists(sameFinding(_, f)) then f.modify(_.escalated).setTo(Finding.Escalated(true)) else f)
     val verdict = Verdict.worst(reports.map(_.verdict) :+ Verdict.of(kept))
     val cold = reports.find(_.reviewer == Reviewer.ColdReader)
     Merged(
@@ -1961,7 +1954,7 @@ object ReviewArticle:
   private def mergeEvidence(a: List[Evidence], b: List[Evidence]): List[Evidence] =
     (a ++ b)
       .foldLeft(Vector.empty[Evidence]) { (acc, e) =>
-        if acc.exists(x => x.citekey == e.citekey && AgentVerify.normalise(x.quote) == AgentVerify.normalise(e.quote))
+        if acc.exists(x => x.citekey == e.citekey && normalise(x.quote.value) == normalise(e.quote.value))
         then acc
         else acc :+ e
       }
@@ -1971,14 +1964,14 @@ object ReviewArticle:
   /** After a round: stop when nothing major is open, when no fixing was asked for, or when the rounds are used up.
     */
   def done(m: Merged, round: com.histmersion.domain.ReviewArticle.Merged.Round, rounds: com.histmersion.domain.ReviewArticle.RoundCount, fix: com.histmersion.domain.ReviewArticle.FixRun): Boolean =
-    m.majors.isEmpty || !fix || round >= rounds
+    m.majors.isEmpty || !fix.value || round.value >= rounds.value
 
   /** The panel rounds a run gets: what it asked for, else the configured default, never more than the cap. The fixer
     * works BETWEEN rounds, so a run that fixes gets at least two (one to find, one to check the fix).
     */
   def rounds(requested: Option[com.histmersion.domain.ReviewArticle.RequestedRounds], default: com.histmersion.domain.ReviewArticle.DefaultRounds, cap: com.histmersion.domain.ReviewArticle.RoundCap, fix: com.histmersion.domain.ReviewArticle.FixRun): com.histmersion.domain.ReviewArticle.RoundCount =
-    val floor = if fix then 2 else 1
-    math.max(floor, math.min(math.max(floor, cap), requested.getOrElse(default)))
+    val floor = if fix.value then 2 else 1
+    com.histmersion.domain.ReviewArticle.RoundCount(math.max(floor, math.min(math.max(floor, cap.value), requested.map(_.value).getOrElse(default.value))))
 
   // ── the fixer (§4.3 step 6) ─────────────────────────────────────────────────────────────────────
 
@@ -1991,32 +1984,22 @@ object ReviewArticle:
   def fixerTurns(base: Int, m: Merged, perFinding: Int, cap: com.histmersion.domain.ReviewArticle.TurnCap): Int =
     val b = math.max(1, base)
     val n = m.findings.count(f => f.major || f.reviewer == Reviewer.Rules || f.reviewer == Reviewer.Skeptic)
-    math.max(b, math.min(cap, b + math.max(0, perFinding) * n))
+    math.max(b, math.min(cap.value, b + math.max(0, perFinding) * n))
 
   /** What a body check needs from the corpus: does `[[x]]` name a source, does it resolve at all (a source, a short
     * form, an article), and the formatting ERRORS of a text (one line each, with no position, so the lines of two texts
     * compare).
     */
   final case class BodyCorpus(
-      isCitekey: BodyCorpus.IsCitekeyArg1 => BodyCorpus.IsCitekeyResult,
-      isTarget: BodyCorpus.IsTargetArg1 => BodyCorpus.IsTargetResult,
-      formatErrors: BodyCorpus.FormatErrorsArg1 => List[BodyCorpus.FormatErrorsResult],
+      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
+      isTarget: com.histmersion.domain.research.Slug => Boolean,
+      formatErrors: com.histmersion.domain.ReviewArticle.Fix.Body => List[BodyCorpus.FormatError],
       generated: BodyCorpus.Generated = com.histmersion.domain.ReviewArticle.BodyCorpus.Generated(false)
   )
 
   object BodyCorpus:
-    type IsCitekeyArg1 = com.histmersion.domain.ReviewArticle.CandidateCitekey
-    val IsCitekeyArg1: _root_.com.histmersion.domain.ReviewArticle.CandidateCitekey.type = _root_.com.histmersion.domain.ReviewArticle.CandidateCitekey
-    type IsCitekeyResult = IsCitekeyResult.T
-    object IsCitekeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type IsTargetArg1 = com.histmersion.domain.ReviewArticle.CandidateTarget
-    val IsTargetArg1: _root_.com.histmersion.domain.ReviewArticle.CandidateTarget.type = _root_.com.histmersion.domain.ReviewArticle.CandidateTarget
-    type IsTargetResult = IsTargetResult.T
-    object IsTargetResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FormatErrorsArg1 = FormatErrorsArg1.T
-    object FormatErrorsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FormatErrorsResult = FormatErrorsResult.T
-    object FormatErrorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FormatError = FormatError.T
+    object FormatError extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type Generated = Generated.T
     object Generated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -2029,45 +2012,46 @@ object ReviewArticle:
     * draft's). FATAL (never written, even on a last attempt): an empty body, or a link problem `before` did not have.
     */
   def checkBody(
-      slug: com.histmersion.domain.ReviewArticle.CheckBodySlug,
+      slug: com.histmersion.domain.research.Slug,
       before: com.histmersion.domain.ReviewArticle.Fix.Body,
-      kind: com.histmersion.domain.ReviewArticle.CheckBodyKind,
+      kind: com.histmersion.domain.ReviewArticle.Snapshot.Kind,
       draft: Article.Edits.Draft,
       corpus: BodyCorpus
   ): Article.Edits.ArticleCheck =
-    def links(t: com.histmersion.domain.ReviewArticle.Fix.Body) = AgentVerify.linkProblems(t, corpus.isCitekey, corpus.isTarget)
+    def links(t: String): List[String] =
+      AgentVerify.linkProblems(AgentVerify.LinkProblemsText(t), corpus.isCitekey, corpus.isTarget).map(_.value)
     val applied = draft match
       case Article.Edits.Draft.Edits(es) =>
         Article.Edits.applyAll(
           before,
           es,
-          a => a.text.flatMap(t => links(t).headOption).map(p => s"its text is refused: $p")
+          a => a.text.flatMap(t => links(t.value).headOption).map(p => Article.Edits.EditResult.Problem(s"its text is refused: $p"))
         )
-      case Article.Edits.Draft.Body(t) => Article.Edits.Applied(t.trim, Nil)
+      case Article.Edits.Draft.Body(t) => Article.Edits.Applied(Fix.Body(t.value.trim), Nil)
     val body = applied.body
     val bodyProblems =
-      if body.trim.isEmpty then List("the body is empty")
+      if body.value.trim.isEmpty then List("the body is empty")
       else
         val again = mechanical(slug, kind, body, corpus.isTarget, corpus.generated)
         val formatBefore = corpus.formatErrors(before).toSet
-        links(body) ++
-          again.filter(f => f.kind == "section" && f.problem.contains("Sources cited")).map(_.problem) ++
-          again.filter(_.kind == CoverageKind).map(_.problem) ++
+        links(body.value) ++
+          again.filter(f => f.kind.value == "section" && f.problem.value.contains("Sources cited")).map(_.problem.value) ++
+          again.filter(_.kind == CoverageKind).map(_.problem.value) ++
           again
-            .filter(f => f.kind == "citation" && f.problem.contains("no [[citekey]]"))
+            .filter(f => f.kind.value == "citation" && f.problem.value.contains("no [[citekey]]"))
             .take(3)
-            .map(f => s"still ${f.problem}: \"${f.quote.take(80)}\"") ++
-          again.filter(_.kind == "language").map(_.problem) ++
+            .map(f => s"still ${f.problem}: \"${f.quote.value.take(80)}\"") ++
+          again.filter(_.kind.value == "language").map(_.problem.value) ++
           corpus.formatErrors(body).filterNot(formatBefore).map(e => s"formatting: $e")
-    val fatal = body.trim.isEmpty || links(body).toSet.diff(links(before).toSet).nonEmpty
+    val fatal = body.value.trim.isEmpty || links(body.value).toSet.diff(links(before.value).toSet).nonEmpty
     Article.Edits.ArticleCheck(
-      slug,
+      Article.Slug(slug.value),
       kind,
       applied.results,
-      applied.problems ++ bodyProblems,
-      fatal,
-      words(before),
-      words(body),
+      applied.problems.map(p => Article.Edits.ArticleCheck.Problems(p.value)) ++ bodyProblems.map(Article.Edits.ArticleCheck.Problems(_)),
+      Article.Edits.ArticleCheck.Fatal(fatal),
+      Article.Edits.ArticleCheck.WordsBefore(words(before.value)),
+      Article.Edits.ArticleCheck.WordsAfter(words(body.value)),
       body
     )
 
@@ -2076,22 +2060,10 @@ object ReviewArticle:
     * ([[ReviewLedger.guard]]); `repair` — the mechanical pairing repair of a body ([[CritiquePairing.repair]]).
     */
   final case class FixGuards(
-      pairsOf: FixGuards.PairsOfArg1 => List[CritiquePair],
-      regressions: (FixGuards.RegressionsArg1, FixGuards.RegressionsArg2) => List[ReviewLedger.Regression],
-      repair: FixGuards.RepairArg1 => (FixGuards.RepairResultPart1, List[CritiquePairing.Hit])
+      pairsOf: com.histmersion.domain.ReviewArticle.Fix.Body => List[CritiquePair],
+      regressions: (com.histmersion.domain.ReviewArticle.Fix.Body, com.histmersion.domain.ReviewArticle.Fix.Body) => List[ReviewLedger.Regression],
+      repair: com.histmersion.domain.ReviewArticle.Fix.Body => (com.histmersion.domain.ReviewArticle.Fix.Body, List[CritiquePairing.Hit])
   )
-
-  object FixGuards:
-    type PairsOfArg1 = com.histmersion.domain.ReviewArticle.NotMaterialAnswer.Pair
-    val PairsOfArg1: _root_.com.histmersion.domain.ReviewArticle.NotMaterialAnswer.Pair.type = _root_.com.histmersion.domain.ReviewArticle.NotMaterialAnswer.Pair
-    type RegressionsArg1 = com.histmersion.domain.ReviewArticle.Fix.Body
-    val RegressionsArg1: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
-    type RegressionsArg2 = com.histmersion.domain.ReviewArticle.Fix.Body
-    val RegressionsArg2: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
-    type RepairArg1 = com.histmersion.domain.ReviewArticle.Fix.Body
-    val RepairArg1: _root_.com.histmersion.domain.ReviewArticle.Fix.Body.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Body
-    type RepairResultPart1 = com.histmersion.domain.ReviewArticle.Fix.Repaired
-    val RepairResultPart1: _root_.com.histmersion.domain.ReviewArticle.Fix.Repaired.type = _root_.com.histmersion.domain.ReviewArticle.Fix.Repaired
 
   /** One evaluation of a list of edits: the checked body, then the pairing repair of it, the checklist of the result
     * and the closed findings it would reopen.
@@ -2127,10 +2099,10 @@ object ReviewArticle:
       m: Merged,
       slug: com.histmersion.domain.research.Slug,
       before: com.histmersion.domain.ReviewArticle.Fix.Body,
-      kind: com.histmersion.domain.ReviewArticle.Finding.Kind,
+      kind: com.histmersion.domain.ReviewArticle.Snapshot.Kind,
       corpus: BodyCorpus,
-      isCitekey: com.histmersion.domain.ReviewArticle.CandidateCitekey => Boolean,
-      text: com.histmersion.domain.ReviewArticle.Fix.Body => Option[com.histmersion.domain.ReviewArticle.Fix.Body],
+      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
+      text: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.AgentVerify.SourceBody],
       minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio,
       last: com.histmersion.domain.ReviewArticle.LastRound,
       coverage: Option[Coverage] = None,
@@ -2139,25 +2111,25 @@ object ReviewArticle:
   ): Either[List[String], (Fix, List[String])] =
     val ids = m.findings.map(_.id).toSet
     val byId = m.findings.map(f => f.id -> f).toMap
-    val applied0 = a.applied.map(_.trim).filter(_.nonEmpty).distinct
-    val unknown = (applied0 ++ a.rejected.map(_.id.trim)).filterNot(ids).distinct.map(i => s"there is no finding '$i'")
+    val applied0 = a.applied.map(x => Finding.Id(x.value.trim)).filter(_.value.nonEmpty).distinct
+    val unknown = (applied0 ++ a.rejected.map(r => Finding.Id(r.id.value.trim))).filterNot(ids).distinct.map(i => s"there is no finding '$i'")
     val rejections = a.rejected.map { r =>
-      val id = r.id.trim
-      val ck = r.citekey.trim
+      val id = Finding.Id(r.id.value.trim)
+      val ck = r.citekey
       byId.get(id) match
         case None                                         => Left(id -> s"rejection of '$id': no such finding")
         case Some(f) if f.reviewer == Reviewer.Mechanical =>
           Left(id -> s"$id is a mechanical check; it cannot be rejected, only fixed")
         case Some(f) if f.reviewer == Reviewer.ColdReader =>
           Left(id -> s"$id is a reader's confusion; it cannot be rejected — define or restructure instead")
-        case Some(_) if Option(r.reason).forall(_.trim.isEmpty) =>
+        case Some(_) if Option(r.reason).forall(_.value.trim.isEmpty) =>
           Left(id -> s"rejection of $id gives no reason — say why the finding is wrong")
         case Some(_) if !isCitekey(ck) => Left(id -> s"rejection of $id names '$ck', which is not a citekey")
         case Some(_)                   =>
-          val q = Option(r.quote).map(_.trim).getOrElse("")
-          val hit = text(ck).map(t => AgentVerify.findQuote(q, t, minRatio))
+          val q = Option(r.quote).map(_.value.trim).getOrElse("")
+          val hit = text(ck).map(t => findQuote(q, t.value, minRatio))
           hit.filter(_.accepted) match
-            case Some(qm) => Right(Rejection(id, r.reason.trim, ck, q, qm.ratio))
+            case Some(qm) => Right(Rejection(id, Rejection.Reason(r.reason.value.trim), ck, Rejection.Quote(q), qm.ratio))
             case None     =>
               Left(
                 id -> s"rejection of $id: the quote is not in the record of $ck — quote it exactly or apply the finding"
@@ -2166,21 +2138,22 @@ object ReviewArticle:
     val rejectedOk = rejections.collect { case Right(r) => r }
     val rejectedBad = rejections.collect { case Left(v) => v }
     val wont = Option(a.wontFix).getOrElse(Nil).map { w =>
-      val id = Option(w.id).map(_.trim).getOrElse("")
+      val idText = Option(w.id).map(_.value.trim).getOrElse("")
+      val id = Finding.Id(idText)
       byId.get(id) match
-        case None if id.isEmpty => Left("a won't-fix with no id — give the id of the minor finding you decline")
+        case None if idText.isEmpty => Left("a won't-fix with no id — give the id of the minor finding you decline")
         case None               => Left(s"won't fix '$id': there is no such finding")
         case Some(f) if f.major && !needsFilter(f, coverage) =>
           Left(s"$id is MAJOR: apply it or reject it — only a minor finding can be declined")
-        case Some(_) if Option(w.reason).forall(_.trim.isEmpty) => Left(s"won't fix $id: give the reason")
-        case Some(_)                                            => Right(WontFix(id, w.reason.trim))
+        case Some(_) if Option(w.reason).forall(_.value.trim.isEmpty) => Left(s"won't fix $id: give the reason")
+        case Some(_)                                            => Right(WontFix(id, WontFix.Reason(w.reason.value.trim)))
     }
     val edits = Option(a.edits).getOrElse(Nil)
 
     def evaluate(es: List[Article.Edits.EditAnswer]): Revision =
       val check = checkBody(slug, before, kind, Article.Edits.Draft.Edits(es), corpus)
       guards match
-        case Some(g) if !check.fatal =>
+        case Some(g) if !check.fatal.value =>
           val (body, hits) = g.repair(check.body)
           Revision(check, body, hits, g.pairsOf(body), g.regressions(before, body))
         case _ => Revision(check, check.body, Nil, critiques, Nil)
@@ -2195,14 +2168,14 @@ object ReviewArticle:
 
     // on the last attempt, the edits that reopen a closed finding are dropped, one at a time from the last
     val rev =
-      if !last || first.regressions.isEmpty || guards.isEmpty then first
+      if !last.value || first.regressions.isEmpty || guards.isEmpty then first
       else
         first.check.edits.filter(_.applied).map(_.index).reverse.foldLeft(first) { (cur, i) =>
           if cur.regressions.isEmpty then cur
           else
             val keep = cur.check.edits.filter(e => e.applied && e.index != i).map(_.index).toSet
-            val trial = evaluate(edits.zipWithIndex.collect { case (e, j) if keep(j + 1) => e })
-            if trial.regressions.size < cur.regressions.size && !trial.check.fatal then trial else cur
+            val trial = evaluate(edits.zipWithIndex.collect { case (e, j) if keep(Article.Edits.EditResult.Index(j + 1)) => e })
+            if trial.regressions.size < cur.regressions.size && !trial.check.fatal.value then trial else cur
         }
     val dropped = first.check.edits.filter(_.applied).map(_.index).diff(rev.check.edits.filter(_.applied).map(_.index))
     val droppedNote = Option.when(dropped.nonEmpty)(
@@ -2219,7 +2192,7 @@ object ReviewArticle:
       s"$id is listed as applied, but ${unansweredText(r)} — cite both where the critique is discussed, or set it aside " +
         "(`setAside`) with a reason"
     )
-    val applied = if last then applied0.filterNot(id => pairUnanswered.exists(_._1 == id)) else applied0
+    val applied = if last.value then applied0.filterNot(id => pairUnanswered.exists(_._1 == id)) else applied0
     // pairs the revision brought in: a work it now cites whose recorded critique it discusses nowhere
     val brought = rev.pairs
       .filter(p => p.bearing && !critiques.exists(_.ref.same(p.ref)) && !aside.exists(_.same(p.ref)))
@@ -2256,9 +2229,9 @@ object ReviewArticle:
       applied.exists(ids) && !check.edits.exists(_.applied) && reasons.isEmpty && asides.isEmpty &&
         rev.hits.isEmpty
     )(s"you list ${applied.mkString(", ")} as applied, but no edit changed the article")
-    val problems = check.problems ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2) ++
+    val problems = check.problems.map(_.value) ++ reasonProblems ++ noEdit.toList ++ unknown ++ undecided ++ rejectedBad.map(_._2) ++
       wont.collect { case Left(p) => p } ++ asideProblems ++ pairProblems ++ broughtProblem.toList ++ regressionProblems
-    if problems.isEmpty || (last && !check.fatal) then
+    if problems.isEmpty || (last.value && !check.fatal.value) then
       val wontOk = wont.collect { case Right(w) => w }.filterNot(w => applied.contains(w.id)).distinctBy(_.id)
       val setAside = asides.filterNot(s => applied.contains(s.id) || rejectedOk.exists(_.id == s.id))
       // every open finding left unanswered, with why — the ledger records it as not fixed
@@ -2269,7 +2242,7 @@ object ReviewArticle:
           .map((_, r) => s"listed as applied, but ${unansweredText(r)}")
           .orElse(rejectedBad.find(_._1 == f.id).map(_ => "its rejection's quote is not in the record it names"))
           .getOrElse(if f.major then "the fixer neither applied nor rejected it" else "the fixer did not answer it")
-        WontFix(f.id, why)
+        WontFix(f.id, WontFix.Reason(why))
       }
       val fix = Fix(
         rev.body,
@@ -2277,15 +2250,15 @@ object ReviewArticle:
         applied.filter(ids),
         rejectedOk,
         rejectedBad.map(_._1).filter(ids).distinct,
-        a.unresolvedMoved.map(_.trim).filter(_.nonEmpty),
-        Option(a.notes).map(_.trim).getOrElse(com.histmersion.domain.ReviewArticle.Fix.Notes("")),
+        a.unresolvedMoved.map(u => Fix.UnresolvedMoved(u.value.trim)).filter(_.value.nonEmpty),
+        Option(a.notes).map(n => Fix.Notes(n.value.trim)).getOrElse(com.histmersion.domain.ReviewArticle.Fix.Notes("")),
         check.wordsBefore,
-        words(rev.body),
+        Fix.WordsAfter(words(rev.body.value)),
         reasons,
         wontOk,
         setAside,
         repaired,
-        rev.hits.map(_.line),
+        rev.hits.map(h => Fix.Repairs(h.line)),
         notFixed,
         pairsAside
       )
@@ -2302,24 +2275,25 @@ object ReviewArticle:
       byId: Map[com.histmersion.domain.ReviewArticle.SetAside.Id, Finding],
       critiques: List[CritiquePair]
   ): (List[SetAside], List[CritiqueReason], List[String]) =
-    def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
-    def held(label: com.histmersion.domain.ReviewArticle.HoldLabel, r: CritiqueRef, reason: com.histmersion.domain.ReviewArticle.SetAside.Reason): Either[String, CritiquePair] =
+    def reasonOf(a: SetAsideAnswer) = Option(a.reason).map(_.value.trim.replaceAll("\\s+", " ")).getOrElse("")
+    def held(label: String, r: CritiqueRef, reason: String): Either[String, CritiquePair] =
       Critiques.find(critiques, r) match
         case None => Left(s"$label: ${r.wire} is not a pair of the article's critique checklist (no recorded edge)")
         case Some(_) if reason.isEmpty                          => Left(s"$label: give the reason")
         case Some(_) if reason.length > CritiqueReason.MaxChars =>
           Left(s"$label: the reason is ${reason.length} characters (at most ${CritiqueReason.MaxChars})")
         case Some(p) => Right(p)
-    val results = as.map { a =>
-      val id = Option(a.id).map(_.trim).getOrElse("")
+    val results: List[Either[String, Either[SetAside, CritiqueReason]]] = as.map { a =>
+      val idText = Option(a.id).map(_.value.trim).getOrElse("")
+      val id = Finding.Id(idText)
       val reason = reasonOf(a)
-      val named = Option(a.pair).flatten.map(_.trim).filter(_.nonEmpty).map(CritiqueRef.parse)
-      if id.isEmpty then
+      val named = Option(a.pair).flatten.map(_.value.trim).filter(_.nonEmpty).map(t => CritiqueRef.parse(CritiqueRef.Wire(t)).left.map(_.value))
+      if idText.isEmpty then
         named match
           case None => Left("a set-aside with neither an id nor a pair — give the finding's id, or the pair (src>dst)")
           case Some(Left(e))  => Left(s"set aside: $e")
           case Some(Right(r)) =>
-            held(s"set aside ${r.wire}", r, reason).map(p => Right(CritiqueReason(p.ref.src, p.ref.dst, reason)))
+            held(s"set aside ${r.wire}", r, reason).map(p => Right(CritiqueReason(p.ref.src, p.ref.dst, CritiqueReason.Reason(reason))))
       else
         byId.get(id) match
           case None                             => Left(s"set aside '$id': there is no such finding")
@@ -2334,7 +2308,7 @@ object ReviewArticle:
                 held(s"set aside $id", r, reason).left
                   .map(m => if m.contains("no recorded edge") then s"$m — apply or reject the finding" else m)
               )
-              .map(p => Left(SetAside(id, p.ref, reason)))
+              .map(p => Left(SetAside(id, p.ref, SetAside.Reason(reason))))
     }
     val ok = results.collect { case Right(v) => v }
     (
@@ -2349,7 +2323,7 @@ object ReviewArticle:
     * as applied without an edit (2026-10-16).
     */
   def needsFilter(f: Finding, coverage: Option[Coverage]): Boolean =
-    f.major && coverage.isEmpty && f.kind.trim.equalsIgnoreCase("coverage")
+    f.major && coverage.isEmpty && f.kind.value.trim.equalsIgnoreCase("coverage")
 
   /** The fixer's coverage reasons (#958) against the coverage the round reviewed: each names a source the filter
     * returns that the revised body leaves out (an empty one may remove any stored reason); an unplaced-sources finding
@@ -2360,7 +2334,7 @@ object ReviewArticle:
       stated: List[Coverage.Reason],
       coverage: Option[Coverage],
       body: com.histmersion.domain.ReviewArticle.Fix.Body,
-      isCitekey: com.histmersion.domain.ReviewArticle.CandidateCitekey => Boolean,
+      isCitekey: com.histmersion.domain.library.Citekey => Boolean,
       m: Merged,
       applied: Set[com.histmersion.domain.ReviewArticle.Fix.Applied]
   ): (List[Coverage.Reason], List[String]) =
@@ -2376,12 +2350,15 @@ object ReviewArticle:
             .toList
         )
       case Some(c) =>
-        val citedAfter = AgentVerify.wikilinks(Article.Coverage.withoutNotUsed(body)).filter(isCitekey).toSet
+        val citedAfter = wikilinks(Article.Coverage.withoutNotUsed(body).value)
+          .filter(t => com.histmersion.domain.library.Citekey.option(t).exists(isCitekey))
+          .map(com.histmersion.api.library.Citekey(_))
+          .toSet
         val inFilter = (c.notUsed.map(_.source.citekey) ++ c.cited.map(_.citekey)).toSet
         val stored = c.reasons.map(r => r.citekey -> r.reason).toMap
         val checked = stated.map { r =>
-          val ck = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
-          val removes = Option(r.reason).forall(_.trim.isEmpty)
+          val ck = com.histmersion.api.library.Citekey(Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))
+          val removes = Option(r.reason).forall(_.value.trim.isEmpty)
           if removes && stored.contains(ck) then Right(r.modify(_.citekey).setTo(ck))
           else if removes then Left(s"reason for [[$ck]]: empty, and no reason is stored for it")
           else if !inFilter(ck) then
@@ -2398,7 +2375,7 @@ object ReviewArticle:
         val unplacedIds = m.findings
           .filter(f =>
             f.reviewer == Reviewer.Mechanical && f.kind == CoverageKind &&
-              f.major && f.problem.contains("neither cited nor given a reason")
+              f.major && f.problem.value.contains("neither cited nor given a reason")
           )
           .map(_.id)
         val left = Article.Coverage.unplacedAfter(c, citedAfter, merged)
@@ -2414,18 +2391,18 @@ object ReviewArticle:
   /** One evidence record, as the fixer reads it. */
   def evidenceLine(e: Evidence): String =
     val at = e.offset.fold("")(o => s" @$o")
-    s"[[${e.citekey}]]$at: \"${e.quote.replace("\n", " ").take(400)}\""
+    s"[[${e.citekey}]]$at: \"${e.quote.value.replace("\n", " ").take(400)}\""
 
   /** The findings, as the fixer reads them — each with the records the reviewer found, verified. */
   def findingsText(m: Merged, notes: Map[String, String] = Map.empty): String =
     m.findings
       .map { f =>
-        val esc = if f.escalated then " [raised again after a rejection]" else ""
-        s"- ${f.id} [${f.reviewer.wire}, ${f.severity.wire}${if f.kind.nonEmpty then s", ${f.kind}" else ""}]$esc " +
+        val esc = if f.escalated.value then " [raised again after a rejection]" else ""
+        s"- ${f.id} [${f.reviewer.wire}, ${f.severity.wire}${if f.kind.value.nonEmpty then s", ${f.kind}" else ""}]$esc " +
           s"where: ${f.where}\n  quote: ${f.quote}\n  problem: ${f.problem}\n  fix: ${f.fix}" +
           f.pair.fold("")(p => s"\n  pair: ${p.wire}") +
           f.evidence.map(e => s"\n  evidence: ${evidenceLine(e)}").mkString +
-          notes.get(f.id).fold("")(n => s"\n  note: $n")
+          notes.get(f.id.value).fold("")(n => s"\n  note: $n")
       }
       .mkString("\n")
 
@@ -2436,5 +2413,5 @@ object ReviewArticle:
     val counts = List(Reviewer.Rules, Reviewer.ColdReader, Reviewer.Skeptic, Reviewer.Mechanical)
       .map(r => s"${r.prefix}:${last.count(r)}")
       .mkString(" ")
-    val fixer = if o.fixed then s", fixer applied ${o.applied} / rejected ${o.rejected}" else ""
-    s"review-article [[${o.slug}]]: round ${o.rounds} → ${o.verdict.wire} ($counts)$fixer (agent run ${runId.take(8)})"
+    val fixer = if o.fixed.value then s", fixer applied ${o.applied} / rejected ${o.rejected}" else ""
+    s"review-article [[${o.slug}]]: round ${o.rounds} → ${o.verdict.wire} ($counts)$fixer (agent run ${runId.value.take(8)})"

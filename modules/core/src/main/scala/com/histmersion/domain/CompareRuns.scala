@@ -11,8 +11,6 @@ import com.histmersion.util.text.ComparedText
   * its config). Nothing is judged: counts, tokens, times, and what one run produced that the others did not.
   */
 object CompareRuns:
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Similarity = Similarity.T
@@ -26,12 +24,17 @@ object CompareRuns:
 
   type Seconds = Seconds.T
   object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OutputName = OutputName.T
-  object OutputName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OutputName = com.histmersion.domain.CompareRuns.Step.Name
+  val OutputName: _root_.com.histmersion.domain.CompareRuns.Step.Name.type = _root_.com.histmersion.domain.CompareRuns.Step.Name
 
   final case class Tokens(input: Tokens.Input = com.histmersion.domain.CompareRuns.Tokens.Input(0), output: Tokens.Output = com.histmersion.domain.CompareRuns.Tokens.Output(0), cacheRead: Tokens.CacheRead = com.histmersion.domain.CompareRuns.Tokens.CacheRead(0), cacheWrite: Tokens.CacheWrite = com.histmersion.domain.CompareRuns.Tokens.CacheWrite(0)):
     def +(o: Tokens): Tokens =
-      Tokens(input + o.input, output + o.output, cacheRead + o.cacheRead, cacheWrite + o.cacheWrite)
+      Tokens(
+        Tokens.Input(input.value + o.input.value),
+        Tokens.Output(output.value + o.output.value),
+        Tokens.CacheRead(cacheRead.value + o.cacheRead.value),
+        Tokens.CacheWrite(cacheWrite.value + o.cacheWrite.value)
+      )
 
   object Tokens:
     type Input = Input.T
@@ -67,13 +70,14 @@ object CompareRuns:
 
   object RunHead:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      extension (id: Id) def short: String = id.value.take(8)
     type Pipeline = Pipeline.T
     object Pipeline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = com.histmersion.domain.automation.Run.State.Wire
+    val Status: _root_.com.histmersion.domain.automation.Run.State.Wire.type = _root_.com.histmersion.domain.automation.Run.State.Wire
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Model = Model.T
@@ -100,8 +104,8 @@ object CompareRuns:
   object Step:
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = com.histmersion.domain.automation.Step.Status.Wire
+    val Status: _root_.com.histmersion.domain.automation.Step.Status.Wire.type = _root_.com.histmersion.domain.automation.Step.Status.Wire
     type Model = Model.T
     object Model extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ActualModel = ActualModel.T
@@ -311,23 +315,23 @@ object CompareRuns:
   /** `outputs` compares what the runs' workflow produced (its owner's, [[OutputComparison]]). */
   def compare(
       runs: List[Run],
-      billing: com.histmersion.domain.CompareRuns.StepSide.Billing => Option[com.histmersion.domain.CompareRuns.StepSide.Billing],
+      billing: com.histmersion.domain.CompareRuns.Step.Model => Option[com.histmersion.domain.CompareRuns.StepSide.Billing],
       outputs: OutputComparison
   ): Either[com.histmersion.domain.CompareRuns.Problem, Comparison] =
     for
-      _ <- Either.cond(runs.size >= 2, (), "give at least two runs to compare")
-      _ <- Either.cond(runs.map(_.run.id).distinct.size == runs.size, (), "a run is given twice")
+      _ <- Either.cond(runs.size >= 2, (), Problem("give at least two runs to compare"))
+      _ <- Either.cond(runs.map(_.run.id).distinct.size == runs.size, (), Problem("a run is given twice"))
       first = runs.head.run
       _ <- runs
         .find(_.run.pipeline != first.pipeline)
         .map(o =>
-          s"run ${o.run.id.take(8)} is ${o.run.pipeline}, run ${first.id.take(8)} ${first.pipeline}: compare runs of one pipeline"
+          Problem(s"run ${o.run.id.short} is ${o.run.pipeline}, run ${first.id.short} ${first.pipeline}: compare runs of one pipeline")
         )
         .toLeft(())
       _ <- runs
         .find(_.run.target != first.target)
         .map(o =>
-          s"run ${o.run.id.take(8)} is on ${o.run.target}, run ${first.id.take(8)} on ${first.target}: compare runs on one target"
+          Problem(s"run ${o.run.id.short} is on ${o.run.target}, run ${first.id.short} on ${first.target}: compare runs on one target")
         )
         .toLeft(())
     yield
@@ -337,7 +341,7 @@ object CompareRuns:
       )
       val notes = runs.collect {
         case d if d.run.status != com.histmersion.domain.automation.Run.State.Done.wire =>
-          s"run ${d.run.id.take(8)} is ${d.run.status}, not done: its outputs are what it had so far"
+          Comparison.Notes(s"run ${d.run.id.short} is ${d.run.status}, not done: its outputs are what it had so far")
       }
       val enrich = outputs.enrich(runs)
       val review = outputs.review(runs)
@@ -349,10 +353,10 @@ object CompareRuns:
   /** Every list's names in one order: the first list's, each later name placed after the name it follows in its own
     * list (a run with more rounds or windows slots its extra steps in).
     */
-  def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.Key]]): List[com.histmersion.domain.CompareRuns.Key] =
+  def unionInOrder(lists: List[List[com.histmersion.domain.CompareRuns.Step.Name]]): List[com.histmersion.domain.CompareRuns.Step.Name] =
     lists
-      .foldLeft(Vector.empty[String]) { (acc, names) =>
-        @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.Key], a: Vector[com.histmersion.domain.CompareRuns.Key], pos: Int): Vector[com.histmersion.domain.CompareRuns.Key] =
+      .foldLeft(Vector.empty[Step.Name]) { (acc, names) =>
+        @tailrec def place(rest: List[com.histmersion.domain.CompareRuns.Step.Name], a: Vector[com.histmersion.domain.CompareRuns.Step.Name], pos: Int): Vector[com.histmersion.domain.CompareRuns.Step.Name] =
           rest match
             case Nil       => a
             case n :: tail =>
@@ -365,26 +369,34 @@ object CompareRuns:
 
   /** A step's duration in whole seconds (the store keeps seconds); 0 when a time is unreadable. */
   def seconds(s: Step): com.histmersion.domain.CompareRuns.Seconds =
-    (for
-      a <- scala.util.Try(java.time.Instant.parse(s.startedAt)).toOption
-      b <- scala.util.Try(java.time.Instant.parse(s.finishedAt)).toOption
-    yield math.max(0L, b.getEpochSecond - a.getEpochSecond)).getOrElse(0L)
+    Seconds(
+      (for
+        a <- scala.util.Try(java.time.Instant.parse(s.startedAt.value)).toOption
+        b <- scala.util.Try(java.time.Instant.parse(s.finishedAt.value)).toOption
+      yield math.max(0L, b.getEpochSecond - a.getEpochSecond)).getOrElse(0L)
+    )
+
+  private def costOf(steps: List[Step]): Step.CostUsd = Step.CostUsd(steps.foldLeft(0.0)((acc, s) => acc + s.costUsd.value))
+
+  private def secondsOf(steps: List[Step]): Seconds = Seconds(steps.foldLeft(0L)((acc, s) => acc + seconds(s).value))
+
+  private def failedIn(steps: List[Step]): Int = steps.count(_.status == com.histmersion.domain.automation.Step.Status.Failed.wire)
 
   private def sum(us: List[Tokens]): Tokens = us.foldLeft(Tokens.Zero)(_ + _)
 
-  def stepSide(attempts: List[Step], billing: com.histmersion.domain.CompareRuns.StepSide.Billing => Option[com.histmersion.domain.CompareRuns.StepSide.Billing]): StepSide =
+  def stepSide(attempts: List[Step], billing: com.histmersion.domain.CompareRuns.Step.Model => Option[com.histmersion.domain.CompareRuns.StepSide.Billing]): StepSide =
     val models = attempts.flatMap(_.model).distinct
     StepSide(
       models,
       attempts.flatMap(_.actualModel).distinct,
       models.flatMap(billing).distinct,
       sum(attempts.map(_.usage)),
-      attempts.map(_.costUsd).sum,
-      attempts.map(seconds).sum,
-      attempts.size,
-      attempts.count(_.status == com.histmersion.domain.automation.Step.Status.Failed.wire),
+      costOf(attempts),
+      secondsOf(attempts),
+      StepSide.Attempts(attempts.size),
+      StepSide.Failures(failedIn(attempts)),
       attempts.flatMap(_.firstCallTokens).headOption,
-      Option.when(attempts.exists(_.turns.isDefined))(attempts.flatMap(_.turns).sum)
+      Option.when(attempts.exists(_.turns.isDefined))(StepSide.Turns(attempts.flatMap(_.turns).foldLeft(0)((acc, t) => acc + t.value)))
     )
 
   private def runSide(d: Run): RunSide =
@@ -396,10 +408,10 @@ object CompareRuns:
       r.model,
       r.modelFor,
       sum(d.steps.map(_.usage)),
-      d.steps.map(_.costUsd).sum,
-      d.steps.map(seconds).sum,
-      d.steps.size,
-      d.steps.count(_.status == com.histmersion.domain.automation.Step.Status.Failed.wire)
+      costOf(d.steps),
+      secondsOf(d.steps),
+      RunSide.Attempts(d.steps.size),
+      RunSide.Failures(failedIn(d.steps))
     )
 
   /** The checkpoint of step `name`: its last finished attempt's output, decoded. */
@@ -408,12 +420,12 @@ object CompareRuns:
       .filter(s => s.name == name && s.status == com.histmersion.domain.automation.Step.Status.Done.wire)
       .lastOption
       .flatMap(_.output)
-      .flatMap(decode[O](_).toOption)
+      .flatMap(o => decode[O](o.value).toOption)
 
   private def words(s: String): Set[String] =
-    ComparedText.normalise(Option(s).getOrElse("")).split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
+    ComparedText.normalise(ComparedText.NormaliseS(Option(s).getOrElse(""))).value.split("[^\\p{L}\\p{N}]+").filter(_.length > 2).toSet
 
   /** Jaccard similarity of two texts' words (0 when both have none). */
   def similarity(a: com.histmersion.domain.CompareRuns.Text, b: com.histmersion.domain.CompareRuns.Text): com.histmersion.domain.CompareRuns.Similarity =
-    val (x, y) = (words(a), words(b))
-    if x.isEmpty && y.isEmpty then 0.0 else (x intersect y).size.toDouble / (x union y).size
+    val (x, y) = (words(a.value), words(b.value))
+    Similarity(if x.isEmpty && y.isEmpty then 0.0 else x.intersect(y).size.toDouble / x.union(y).size)

@@ -35,7 +35,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   private val km = MergeDecision.Kind
   private val findingSource = in.foreign.findings.map(f => f.uid -> f.sourceUid).toMap
   private val localFindingsOf = in.local.findings.groupBy(_.sourceUid)
-  private val nearIssue = mutable.Map.empty[UUID, String] // the bundle's finding → its question
+  private val nearIssue = mutable.Map.empty[UUID, MergeIssue.Id] // the bundle's finding → its question
   private val findingMatches = mutable.Map.empty[UUID, List[Match]] // the bundle's source → its findings' matches
   private val findingLine = mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Finding]
   private val assignedIds = mutable.Set.from(in.local.findings.map(_.id))
@@ -126,21 +126,21 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     def merging(rf: com.histmersion.api.exchange.Bundle.Finding) =
       nearIssue.get(rf.uid).flatMap(folds.decisionIn).exists(_.kind == km.Merge)
     val renumbered =
-      localFindingsOf.getOrElse(left.uid, Nil).map(f => s"$citekey#${f.id.dropWhile(_ != '#').drop(1)}").toSet
+      localFindingsOf.getOrElse(left.uid, Nil).map(f => Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}")).toSet
     val incoming = ms.collect {
       case Match.Unmatched(rf)                  => rf
       case Match.Near(rf, _, _) if !merging(rf) => rf
     }
-    val ids = nextIds(citekey, assignedIds.toSet ++ renumbered, incoming.size)
+    val ids = nextIds(com.histmersion.api.library.Citekey(citekey), assignedIds.toSet ++ renumbered, IdCount(incoming.size))
     assignedIds ++= ids
     incoming.zip(ids).foreach((rf, id) => findingLine(rf.uid) = es => findingIn(es, rf.uid).modify(_.id).setTo(id))
     ms.foreach {
       case Match.Same(rf, lf) =>
         folds.fold(rf.uid, lf.uid, Bundle.Kind.Finding); findingLine(lf.uid) = _ => fold(lf, rf)
-        folds.count(_.modify(_.findingsMerged).using(_ + 1))
+        folds.count(_.modify(_.findingsMerged).using(n => com.histmersion.api.exchange.MergeTally.FindingsMerged(n.value + 1)))
       case Match.Near(rf, lf, _) if merging(rf) =>
         folds.fold(rf.uid, lf.uid, Bundle.Kind.Finding); findingLine(lf.uid) = _ => fold(lf, rf)
-        folds.count(_.modify(_.findingsMerged).using(_ + 1))
+        folds.count(_.modify(_.findingsMerged).using(n => com.histmersion.api.exchange.MergeTally.FindingsMerged(n.value + 1)))
       case _ => ()
     }
     false
@@ -150,7 +150,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
       .filter(_.sourceUid == source)
       .foreach(f =>
         findingLine(f.uid) =
-          es => findingIn(es, f.uid).modify(_.id).setTo(s"$citekey#${f.id.dropWhile(_ != '#').drop(1)}")
+          es => findingIn(es, f.uid).modify(_.id).setTo(Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}"))
       )
 
   // a finding id a different finding has here: the bundle's is renumbered (a source whose citekey collides is renamed
@@ -173,8 +173,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
       .foreach { r =>
         val f = relabels.localized.findings.find(_.uid == r.uid).get
         in.labels.findings.get(f.id).filter(_ != f.uid).foreach { _ =>
-          val ck = f.id.takeWhile(_ != '#')
-          val id = nextIds(ck, assignedIds.toSet, 1).head
+          val ck = f.id.value.takeWhile(_ != '#')
+          val id = nextIds(com.histmersion.api.library.Citekey(ck), assignedIds.toSet, IdCount(1)).head
           assignedIds += id
           findingLine(r.foreignUid) = es => findingIn(es, r.foreignUid).modify(_.id).setTo(id)
           relabels.info(s"finding ${f.id}: that id is another finding's here — the bundle's arrives as $id")
@@ -191,41 +191,17 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
 
 object FindingPlan:
 
+  type ClaimKey = ClaimKey.T
+  object ClaimKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IdCount = IdCount.T
+  object IdCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** A great-circle distance in km. */
+  type Distance = Distance.T
+  object Distance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    extension (d: Distance) def within(limit: MergeSettings.FindingWithinKm): Boolean = d.value <= limit.value
+
   /** How a bundle finding of a merged pair relates to this collection's findings of the survivor. */
-  type MatchesPairNearResultPart2Part2 = MatchesPairNearResultPart2Part2.T
-  object MatchesPairNearResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesPairNearAccPart2Part2 = MatchesPairNearAccPart2Part2.T
-  object MatchesPairNearAccPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type TextResult = TextResult.T
-  object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextO = TextO.T
-  object TextO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaimKeyResult = ClaimKeyResult.T
-  object ClaimKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaimKeyClaim = ClaimKeyClaim.T
-  object ClaimKeyClaim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaimWordsResult = ClaimWordsResult.T
-  object ClaimWordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ClaimWordsClaim = ClaimWordsClaim.T
-  object ClaimWordsClaim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KmResult = KmResult.T
-  object KmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SamePlaceWithinKm = SamePlaceWithinKm.T
-  object SamePlaceWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CautionResult = CautionResult.T
-  object CautionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesWithinKm = MatchesWithinKm.T
-  object MatchesWithinKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesNearAtLeast = MatchesNearAtLeast.T
-  object MatchesNearAtLeast extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextIdsResult = NextIdsResult.T
-  object NextIdsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextIdsTaken = NextIdsTaken.T
-  object NextIdsTaken extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NextIdsCount = NextIdsCount.T
-  object NextIdsCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   enum Match:
     /** The same claim (and a compatible time and place): one finding. */
     case Same(right: com.histmersion.api.exchange.Bundle.Finding, left: com.histmersion.api.exchange.Bundle.Finding)
@@ -245,20 +221,21 @@ object FindingPlan:
       type Jaccard = Jaccard.T
       object Jaccard extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def text(o: Option[com.histmersion.domain.library.findings.FindingPlan.TextO]): Option[com.histmersion.domain.library.findings.FindingPlan.TextResult] = o.map(_.trim).filter(_.nonEmpty)
+  private def text(o: Option[Bundle.Finding.Region]): Option[Bundle.Finding.Region] =
+    o.map(r => Bundle.Finding.Region(r.value.trim)).filter(_.value.nonEmpty)
 
   /** The claim as compared: folded, stopwords out, de-duplicated, sorted. */
-  def claimKey(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimKeyClaim): com.histmersion.domain.library.findings.FindingPlan.ClaimKeyResult = MergeText.significant(MergeText.tokens(claim)).distinct.sorted.mkString(" ")
+  def claimKey(claim: Bundle.Finding.Claim): ClaimKey = ClaimKey(MergeText.significant(MergeText.tokens(claim.value)).distinct.sorted.mkString(" "))
 
-  private def claimWords(claim: com.histmersion.domain.library.findings.FindingPlan.ClaimWordsClaim): Set[com.histmersion.domain.library.findings.FindingPlan.ClaimWordsResult] = MergeText.significant(MergeText.tokens(claim)).toSet
+  private def claimWords(claim: Bundle.Finding.Claim): Set[String] = MergeText.significant(MergeText.tokens(claim.value)).toSet
 
   /** Great-circle distance in km. */
-  def km(lon1: com.histmersion.Longitude, lat1: com.histmersion.Latitude, lon2: com.histmersion.Longitude, lat2: com.histmersion.Latitude): com.histmersion.domain.library.findings.FindingPlan.KmResult =
-    val (p1, p2) = (math.toRadians(lat1), math.toRadians(lat2))
+  def km(lon1: com.histmersion.api.catalogue.Longitude, lat1: com.histmersion.api.catalogue.Latitude, lon2: com.histmersion.api.catalogue.Longitude, lat2: com.histmersion.api.catalogue.Latitude): Distance =
+    val (p1, p2) = (math.toRadians(lat1.value), math.toRadians(lat2.value))
     val dp = p2 - p1
-    val dl = math.toRadians(lon2 - lon1)
+    val dl = math.toRadians(lon2.value - lon1.value)
     val a = math.pow(math.sin(dp / 2), 2) + math.cos(p1) * math.cos(p2) * math.pow(math.sin(dl / 2), 2)
-    6371.0 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    Distance(6371.0 * 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a)))
 
   /** The same place, as far as two findings say: points within `withinKm`, or the same region name (fingerprint), or
     * one of them says nothing about where.
@@ -266,18 +243,18 @@ object FindingPlan:
   def samePlace(
       a: com.histmersion.api.exchange.Bundle.Finding,
       b: com.histmersion.api.exchange.Bundle.Finding,
-      withinKm: com.histmersion.domain.library.findings.FindingPlan.SamePlaceWithinKm
+      withinKm: MergeSettings.FindingWithinKm
   ): Boolean =
-    val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v) <= withinKm
-    val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(x) == MergeText.fingerprint(y))
+    val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v).within(withinKm)
+    val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(x.value) == MergeText.fingerprint(y.value))
     points.orElse(regions).forall(identity) || points.contains(true) || regions.contains(true)
 
   /** Caution ranks: contested is the least sure, then low, medium, high. */
-  private def caution(c: Confidence): com.histmersion.domain.library.findings.FindingPlan.CautionResult = c match
-    case Confidence.Contested => com.histmersion.domain.library.findings.FindingPlan.CautionResult(0)
-    case Confidence.Low       => com.histmersion.domain.library.findings.FindingPlan.CautionResult(1)
-    case Confidence.Medium    => com.histmersion.domain.library.findings.FindingPlan.CautionResult(2)
-    case Confidence.High      => com.histmersion.domain.library.findings.FindingPlan.CautionResult(3)
+  private def caution(c: Confidence): Int = c match
+    case Confidence.Contested => 0
+    case Confidence.Low       => 1
+    case Confidence.Medium    => 2
+    case Confidence.High      => 3
 
   /** Pair each bundle finding with at most one finding here, one-to-one: the same claim first, then the nearest
     * near-duplicate (token Jaccard ≥ `nearAtLeast` and overlapping periods).
@@ -285,11 +262,11 @@ object FindingPlan:
   def matches(
       lefts: List[com.histmersion.api.exchange.Bundle.Finding],
       rights: List[com.histmersion.api.exchange.Bundle.Finding],
-      withinKm: com.histmersion.domain.library.findings.FindingPlan.MatchesWithinKm,
-      nearAtLeast: com.histmersion.domain.library.findings.FindingPlan.MatchesNearAtLeast
+      withinKm: MergeSettings.FindingWithinKm,
+      nearAtLeast: MergeSettings.FindingNearAtLeast
   ): List[Match] =
-    val rs = rights.sortBy(_.id)
-    val ls = lefts.sortBy(_.id)
+    val rs = rights.sortBy(_.id.value)
+    val ls = lefts.sortBy(_.id.value)
     @tailrec def pairSame(
         rest: List[com.histmersion.api.exchange.Bundle.Finding],
         acc: Map[UUID, com.histmersion.api.exchange.Bundle.Finding],
@@ -299,7 +276,7 @@ object FindingPlan:
         case Nil       => (acc, taken)
         case r :: tail =>
           ls.find(l =>
-            !taken(l.uid) && claimKey(l.claim) == claimKey(r.claim) && claimKey(r.claim).nonEmpty &&
+            !taken(l.uid) && claimKey(l.claim) == claimKey(r.claim) && claimKey(r.claim).value.nonEmpty &&
               MergeFold.overlap(l.period, r.period) && samePlace(l, r, withinKm)
           ) match
             case Some(l) => pairSame(tail, acc + (r.uid -> l), taken + l.uid)
@@ -307,18 +284,18 @@ object FindingPlan:
     val (same, takenBySame) = pairSame(rs, Map.empty, Set.empty)
     @tailrec def pairNear(
         rest: List[com.histmersion.api.exchange.Bundle.Finding],
-        acc: Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, com.histmersion.domain.library.findings.FindingPlan.MatchesPairNearAccPart2Part2)],
+        acc: Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, Match.Near.Jaccard)],
         taken: Set[UUID]
-    ): Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, com.histmersion.domain.library.findings.FindingPlan.MatchesPairNearResultPart2Part2)] =
+    ): Map[UUID, (com.histmersion.api.exchange.Bundle.Finding, Match.Near.Jaccard)] =
       rest match
         case Nil       => acc
         case r :: tail =>
           val w = claimWords(r.claim)
           ls.filterNot(l => taken(l.uid))
             .filter(l => l.period.isDefined && r.period.isDefined && MergeFold.overlap(l.period, r.period))
-            .map(l => l -> MergeText.jaccard(w, claimWords(l.claim)))
-            .filter(_._2 >= nearAtLeast)
-            .sortBy((l, j) => (-j, l.id))
+            .map(l => l -> Match.Near.Jaccard(MergeText.jaccard(w, claimWords(l.claim))))
+            .filter(_._2.value >= nearAtLeast.value)
+            .sortBy((l, j) => (-j.value, l.id.value))
             .headOption match
             case Some((l, j)) => pairNear(tail, acc + (r.uid -> (l, j)), taken + l.uid)
             case None         => pairNear(tail, acc, taken)
@@ -348,7 +325,7 @@ object FindingPlan:
     )
 
   /** `<citekey>#<n>` labels for `count` new findings: after the highest number in use, never one that is taken. */
-  def nextIds(citekey: com.histmersion.domain.library.Citekey, taken: Set[com.histmersion.domain.library.findings.FindingPlan.NextIdsTaken], count: com.histmersion.domain.library.findings.FindingPlan.NextIdsCount): List[com.histmersion.domain.library.findings.FindingPlan.NextIdsResult] =
-    val Num = s"""^${java.util.regex.Pattern.quote(citekey)}#(\\d+)$$""".r
-    val top = taken.toList.collect { case Num(n) => n.toInt }.maxOption.getOrElse(0)
-    Iterator.from(top + 1).map(n => s"$citekey#$n").filterNot(taken).take(count).toList
+  def nextIds(citekey: com.histmersion.api.library.Citekey, taken: Set[Bundle.Finding.Id], count: IdCount): List[Bundle.Finding.Id] =
+    val Num = s"""^${java.util.regex.Pattern.quote(citekey.value)}#(\\d+)$$""".r
+    val top = taken.toList.map(_.value).collect { case Num(n) => n.toInt }.maxOption.getOrElse(0)
+    Iterator.from(top + 1).map(n => Bundle.Finding.Id(s"$citekey#$n")).filterNot(taken).take(count.value).toList
