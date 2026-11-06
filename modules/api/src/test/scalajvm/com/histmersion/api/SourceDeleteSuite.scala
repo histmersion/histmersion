@@ -31,9 +31,9 @@ class SourceDeleteSuite extends munit.FunSuite:
     com.histmersion.api.library.Source.Deletion.Title("The Ahhiyawa Texts"),
     applied = com.histmersion.api.library.Source.Deletion.Applied(true),
     counts = List(DeleteCount(DeletePart.Findings, com.histmersion.api.library.DeleteCount.Rows(3)), DeleteCount(DeletePart.EdgesIn, com.histmersion.api.library.DeleteCount.Rows(2))),
-    files = List("/spool/abc.pdf"),
-    calibreId = Some("1693"),
-    logEntry = Some(42)
+    files = List(com.histmersion.api.library.Source.Deletion.Files("/spool/abc.pdf")),
+    calibreId = Some(com.histmersion.api.library.Source.CalibreId("1693")),
+    logEntry = Some(com.histmersion.api.library.Source.Deletion.LogEntry(42))
   )
 
   test("the log line says what went, in words"):
@@ -44,12 +44,12 @@ class SourceDeleteSuite extends munit.FunSuite:
     assertEquals(Source.Delete.logText(Source.Deletion(Ck, com.histmersion.api.library.Source.Deletion.Title("T"), applied = com.histmersion.api.library.Source.Deletion.Applied(true))), s"deleted $Ck (T)")
 
   test("markdown: dry run, refused, applied"):
-    val dry = Source.Delete.markdown(done.modify(_.applied).setTo(false).modify(_.logEntry).setTo(None)).value
+    val dry = Source.Delete.markdown(done.modify(_.applied).setTo(com.histmersion.api.library.Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None)).value
     assert(dry.contains("Would delete") && dry.contains("--apply") && dry.contains("findings: 3"), dry)
     assert(dry.contains("links entry 1693 (not checked against the library)"), dry)
-    val present = Source.Delete.markdown(done.modify(_.applied).setTo(false).modify(_.logEntry).setTo(None), Some(CalibreEntryCheck.Present)).value
+    val present = Source.Delete.markdown(done.modify(_.applied).setTo(com.histmersion.api.library.Source.Deletion.Applied(false)).modify(_.logEntry).setTo(None), Some(CalibreEntryCheck.Present)).value
     assert(present.contains("entry 1693 is linked and is NOT touched"), present)
-    val refused = Source.Delete.markdown(done.modify(_.applied).setTo(false).modify(_.blockers).setTo(blocked)).value
+    val refused = Source.Delete.markdown(done.modify(_.applied).setTo(com.histmersion.api.library.Source.Deletion.Applied(false)).modify(_.blockers).setTo(blocked)).value
     assert(
       refused.contains("Cannot delete") && refused.contains("no override") && !refused.contains("--apply"),
       refused

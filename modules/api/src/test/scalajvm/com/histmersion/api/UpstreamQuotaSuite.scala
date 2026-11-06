@@ -19,7 +19,7 @@ class UpstreamQuotaSuite extends munit.FunSuite:
       "CORE today (UTC 2026-10-26): 14 of 900 tokens — PDF lookups 10, searches 4 of 600 · at most 20 a minute · " +
         "CORE's window 18 of 25 left"
     )
-    val blocked = q.modify(_.blockedUntil).setTo(Some("2026-10-26T18:52:11Z")).modify(_.blockedWhy).setTo(Some("HTTP 429"))
+    val blocked = q.modify(_.blockedUntil).setTo(Some(com.histmersion.api.library.UpstreamQuota.BlockedUntil("2026-10-26T18:52:11Z"))).modify(_.blockedWhy).setTo(Some(com.histmersion.api.library.UpstreamQuota.BlockedWhy("HTTP 429")))
     assert(UpstreamQuotaMarkdown.line(blocked).endsWith("· **not asked until 2026-10-26T18:52:11Z** (HTTP 429)"))
 
   test("about and the autopilot status carry the line; without a budget yet, neither does"):

@@ -52,7 +52,7 @@ class FilterDocsSuite extends munit.FunSuite:
     )
     assertEquals(Filter.Docs.all.map(_.rest), rest)
     assertEquals(Filter.Docs.all.map(_.mcp).distinct.size, Filter.Docs.all.size)
-    assert(Filter.Docs.all.forall(p => p.doc.value.nonEmpty && p.brief.nonEmpty && p.brief.length <= p.doc.value.length + 10))
+    assert(Filter.Docs.all.forall(p => p.doc.value.nonEmpty && p.brief.value.nonEmpty && p.brief.value.length <= p.doc.value.length + 10))
 
   test("the paging text names the footer every list prints"):
     assert(Filter.Docs.offset.doc.value.contains("next: offset=N"))

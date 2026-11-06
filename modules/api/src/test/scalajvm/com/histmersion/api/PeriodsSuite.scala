@@ -329,18 +329,18 @@ class PeriodsSuite extends munit.FunSuite:
     seedRows.foreach(r => r.parentId.foreach(p => assertEquals(r.id.value.take(7), p.value.take(7), s"${r.id} under $p")))
 
   test("the Aegean Bronze Age is divided Helladic / Cycladic / Minoan, down to the phases"):
-    val m = seedRows.map(p => p.id.value -> p).toMap
-    def chain(id: String): List[String] = m.get(id).toList.flatMap(p => p.label.value :: p.parentId.toList.flatMap(pid => chain(pid.value)))
+    val m = byId(seedRows)
+    def chain(id: HistoricalPeriod.Id): List[String] = m.get(id).toList.flatMap(p => p.label.value :: p.parentId.toList.flatMap(pid => chain(HistoricalPeriod.Id(pid.value))))
     // Late Minoan → Bronze Age Minoan → Bronze Age (the BSA's, for Greece) — and nothing above it
-    assertEquals(chain("p0ds9qjh4dh"), List("Late Minoan", "Bronze Age Minoan", "Bronze Age"))
-    assertEquals(m("p0ds9qj9pc2").parentId, Some("p0ds9qjq7b2")) // Bronze Age Helladic under the BSA's Bronze Age
-    assertEquals(m("p0ds9qjq7b2").parentId, None) // no longer under ROAD's Eurasia
+    assertEquals(chain(HistoricalPeriod.Id("p0ds9qjh4dh")), List("Late Minoan", "Bronze Age Minoan", "Bronze Age"))
+    assertEquals(m(HistoricalPeriod.Id("p0ds9qj9pc2")).parentId, Some("p0ds9qjq7b2")) // Bronze Age Helladic under the BSA's Bronze Age
+    assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).parentId, None) // no longer under ROAD's Eurasia
     assert(m.values.exists(p => p.label.value == "Early Helladic" && p.parentId.contains(HistoricalPeriod.ParentId("p0ds9qj9pc2"))))
     assert(m.values.exists(p => p.label.value == "Middle Minoan" && p.parentId.contains(HistoricalPeriod.ParentId("p0ds9qj9kdj"))))
-    assertEquals(m("p0ds9qjq7b2").region, Some("Greece"))
-    assertEquals(m("p0ds9qjq7b2").preset, Some(PresetRegion.Aegean))
+    assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).region, Some("Greece"))
+    assertEquals(m(HistoricalPeriod.Id("p0ds9qjq7b2")).preset, Some(PresetRegion.Aegean))
     // the BSA dates Late Minoan from the earliest start to the latest end it gives
-    assertEquals(m("p0ds9qjh4dh").period, Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1050)))
+    assertEquals(m(HistoricalPeriod.Id("p0ds9qjh4dh")).period, Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1050)))
 
   // ── the curated overlays ─────────────────────────────────────────────────────────────────────
 

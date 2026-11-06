@@ -258,9 +258,9 @@ class IngestSuite extends munit.FunSuite:
   test("JobInfo exposes the state its status names"):
     val j = JobInfo(com.histmersion.api.SpatialHierarchyResult.Job.Id("i"), com.histmersion.api.jobs.JobKinds.Wire(Ingest.KindIngest), com.histmersion.api.jobs.JobInfo.Status("running"), (Some("ck")).map(com.histmersion.api.library.Citekey.apply))
     assert(!j.isTerminal && !j.succeeded)
-    assert(j.modify(_.status).setTo("done").succeeded)
+    assert(j.modify(_.status).setTo(com.histmersion.api.jobs.JobInfo.Status("done")).succeeded)
     // an unparseable status must not read as success
-    assert(!j.modify(_.status).setTo("weird").succeeded)
+    assert(!j.modify(_.status).setTo(com.histmersion.api.jobs.JobInfo.Status("weird")).succeeded)
 
   // ── Markdown ─────────────────────────────────────────────────────────────────────────────────
   test("job Markdown names the status, the citekey and the failure"):
@@ -286,8 +286,8 @@ class IngestSuite extends munit.FunSuite:
       IngestMarkdown.job(j).contains("**acquisition item:** 42 (ticked off when the job succeeds)"),
       IngestMarkdown.job(j)
     )
-    assert(IngestMarkdown.job(j.modify(_.status).setTo("failed")).contains("42 (left open: the job failed)"))
-    assert(IngestMarkdown.job(j.modify(_.status).setTo("done")).contains("**acquisition item:** 42\n"))
+    assert(IngestMarkdown.job(j.modify(_.status).setTo(com.histmersion.api.jobs.JobInfo.Status("failed"))).contains("42 (left open: the job failed)"))
+    assert(IngestMarkdown.job(j.modify(_.status).setTo(com.histmersion.api.jobs.JobInfo.Status("done"))).contains("**acquisition item:** 42\n"))
     assert(!IngestMarkdown.job(j.modify(_.acquireItem).setTo(None)).contains("acquisition item"))
 
   test("empty listings say so rather than rendering an empty table"):

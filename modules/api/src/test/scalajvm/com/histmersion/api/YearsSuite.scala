@@ -116,7 +116,7 @@ class YearsSuite extends munit.FunSuite:
     )
     assert(GoalsMarkdown.goal(g).contains("**Period:** 1200 BCE–1000 BCE"), GoalsMarkdown.goal(g))
     assert(!GoalsMarkdown.goal(g).contains("-1200"))
-    val open = g.modify(_.periodEnd).setTo((None: _root_.scala.Option[_root_.scala.Long]))
+    val open = g.modify(_.periodEnd).setTo(None)
     assert(GoalsMarkdown.goal(open).contains("**Period:** from 1200 BCE"), GoalsMarkdown.goal(open))
 
   test("the places and periods views use the same formatter"):

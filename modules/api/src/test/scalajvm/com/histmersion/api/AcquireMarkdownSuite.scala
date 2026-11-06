@@ -39,7 +39,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
   )
 
   test("discover renders a table and flags what is already stored"):
-    val md = AcquireMarkdown.discover(DiscoverResult(com.histmersion.api.library.DiscoverResult.Query("steppe"), com.histmersion.api.library.DiscoverResult.Count(2), List(work, work.modify(_.inDb).setTo(true))))
+    val md = AcquireMarkdown.discover(DiscoverResult(com.histmersion.api.library.DiscoverResult.Query("steppe"), com.histmersion.api.library.DiscoverResult.Count(2), List(work, work.modify(_.inDb).setTo(com.histmersion.api.library.WorkRef.InDb(true)))))
     assert(md.contains("| citekey | title | year | authors | cited | doi | notes |"))
     assert(md.contains("haak2015_massive"))
     assert(md.contains("in db"))
@@ -53,25 +53,25 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(0), Nil)).contains("_Every stored source is in Calibre._"))
 
   test("calibre gaps show whether the server stores each original, only when the server says"):
-    def gap(ck: com.histmersion.api.library.Citekey, stored: Option[Boolean]) =
+    def gap(ck: com.histmersion.api.library.Citekey, stored: Option[com.histmersion.api.library.CalibreGap.StoredOriginal]) =
       CalibreGap(ck, com.histmersion.api.library.CalibreGap.Title("T"), List(com.histmersion.api.library.CalibreGap.Authors("A")), None, Some(com.histmersion.api.catalogue.Year(2000)), None, None, Nil, Some(com.histmersion.api.library.CalibreGap.Provenance("unpaywall")), storedOriginal = stored)
-    val md = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(2), List(gap(com.histmersion.api.library.Citekey("a"), Some(true)), gap(com.histmersion.api.library.Citekey("b"), Some(false)))))
+    val md = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(2), List(gap(com.histmersion.api.library.Citekey("a"), Some(com.histmersion.api.library.CalibreGap.StoredOriginal(true))), gap(com.histmersion.api.library.Citekey("b"), Some(com.histmersion.api.library.CalibreGap.StoredOriginal(false))))))
     assert(md.contains("| original |") && md.contains("| stored |") && md.contains("| none |"), md)
     assert(md.contains("--file"), md)
     val old = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(1), List(gap(com.histmersion.api.library.Citekey("a"), None))))
     assert(!old.contains("| original |"), old)
 
   test("a retracted work is marked in the single-work view"):
-    val md = AcquireMarkdown.work(work.modify(_.isRetracted).setTo(true))
+    val md = AcquireMarkdown.work(work.modify(_.isRetracted).setTo(com.histmersion.api.library.WorkRef.IsRetracted(true)))
     assert(md.contains("RETRACTED"))
     assert(md.contains("**Citekey (proposed):** `haak2015_massive`"))
 
   test("the single-work view tells 'no free copy' from 'nobody said' (#599)"):
     assert(AcquireMarkdown.work(work).contains("**Access:** open access (green)"))
-    val closed = AcquireMarkdown.work(work.modify(_.isOa).setTo(false).modify(_.oaStatus).setTo(Some("closed")))
+    val closed = AcquireMarkdown.work(work.modify(_.isOa).setTo(com.histmersion.api.library.WorkRef.IsOa(false)).modify(_.oaStatus).setTo(Some(com.histmersion.api.library.WorkRef.OaStatus("closed"))))
     assert(closed.contains("**Access:** no OA copy known"), closed)
     // a Crossref-only record carries no access information at all
-    val unknown = AcquireMarkdown.work(work.modify(_.isOa).setTo(false).modify(_.oaStatus).setTo(None))
+    val unknown = AcquireMarkdown.work(work.modify(_.isOa).setTo(com.histmersion.api.library.WorkRef.IsOa(false)).modify(_.oaStatus).setTo(None))
     assert(unknown.contains("OA status unknown"), unknown)
     assert(!unknown.contains("no OA copy known"), unknown)
 
@@ -88,7 +88,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     val md = AcquireMarkdown.refs(r)
     assert(md.contains("1 of 2 resolve to stored sources; re-run with `--apply`"), md)
     assert(!md.contains("Lambda") && !md.contains("$"), md)
-    assert(AcquireMarkdown.refs(r.modify(_.edgesAdded).setTo(3)).contains("3 `references` edge(s) written"))
+    assert(AcquireMarkdown.refs(r.modify(_.edgesAdded).setTo(com.histmersion.api.library.RefsResult.EdgesAdded(3))).contains("3 `references` edge(s) written"))
 
   test("an assessment shows the verdict, the notices and whether it was applied"):
     val a = Assessment(
@@ -112,7 +112,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(md.contains("Re-run with `--apply`"))
     assert(
       AcquireMarkdown
-        .assessment(a.modify(_.applied).setTo(Some("retracted")))
+        .assessment(a.modify(_.applied).setTo(Some(com.histmersion.api.library.Assessment.Applied("retracted"))))
         .contains("Stored `status` set to **retracted**")
     )
 

@@ -74,7 +74,7 @@ class BasemapSuite extends munit.FunSuite:
         com.histmersion.api.basemap.Basemap.Status.Bbox("x"),
         List(v, t),
         Basemap.Status.FetchCommand(Basemap.FetchCommand),
-        hints = List("Run `histmersion basemap fetch --layer labels`.")
+        hints = List(Basemap.Status.Hints("Run `histmersion basemap fetch --layer labels`."))
       )
     )
     assert(hinted.contains("Run `histmersion basemap fetch --layer labels`."), hinted)
