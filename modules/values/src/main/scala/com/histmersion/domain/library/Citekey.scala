@@ -19,7 +19,7 @@ object Citekey extends RefinedType[String, CitekeyRule]:
   type ValidRaw = String
 
   def parse(raw: String): Either[com.histmersion.domain.library.Citekey.Problem, Citekey] =
-    val s = Option(raw).map((_).value.trim).getOrElse("")
+    val s = Option(raw).map((_).trim).getOrElse("")
     if s.isEmpty then Left(_root_.com.histmersion.domain.library.Citekey.Problem("citekey is required"))
     else if s.contains("..") then Left(_root_.com.histmersion.domain.library.Citekey.Problem(s"invalid citekey '$raw' — it may not contain '..'"))
     else

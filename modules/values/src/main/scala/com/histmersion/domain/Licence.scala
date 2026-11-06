@@ -139,7 +139,7 @@ object Licence:
     type ByWirePart1 = _root_.com.histmersion.domain.Licence.Family.Wire
     val ByWirePart1: _root_.com.histmersion.domain.Licence.Family.Wire.type = _root_.com.histmersion.domain.Licence.Family.Wire
 
-    val allowable: List[Family] = values.toList.filterNot((refactorCallback => (refactorCallback.never).value))
+    val allowable: List[Family] = values.toList.filterNot((refactorCallback => (refactorCallback.never)))
 
     private val byWire: Map[com.histmersion.domain.Licence.Family.ByWirePart1, Family] = values.map(f => f.wire -> f).toMap
 
