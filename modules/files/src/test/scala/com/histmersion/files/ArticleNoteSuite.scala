@@ -92,7 +92,7 @@ class ArticleNoteSuite extends munit.FunSuite:
     assert(once.contains("period_start: -1220"), once)
 
   test("render carries no timestamp, so an unchanged article exports identically every time"):
-    val a = Article(com.histmersion.api.research.Article.Slug("x_y"), com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("# T"), updatedAt = Some("2026-08-25T10:00:00.000000Z"))
+    val a = Article(com.histmersion.api.research.Article.Slug("x_y"), com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.KindValue("concept"), com.histmersion.api.research.Article.Body("# T"), updatedAt = Some(com.histmersion.api.research.Article.UpdatedAt("2026-08-25T10:00:00.000000Z")))
     assert(!ArticleNote.render(a).contains("2026-08-25"), ArticleNote.render(a))
 
   test("the lede skips a leading image embed line and never invents a summary"):
@@ -116,8 +116,8 @@ class ArticleNoteSuite extends munit.FunSuite:
       summary = Some(com.histmersion.api.research.Article.SummaryText("Where the hero Theseus came from.")),
       filter = Some(
         Article.Filter(
-          query = Some("Theseus"),
-          topics = List("greek_myth"),
+          query = Some(com.histmersion.api.library.Filter.Q("Theseus")),
+          topics = List(com.histmersion.api.library.Filter.Topics("greek_myth")),
           from = Some(-1500),
           to = Some(-400),
           extraQueries = List("synoikism")

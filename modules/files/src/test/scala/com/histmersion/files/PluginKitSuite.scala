@@ -127,7 +127,7 @@ class PluginKitSuite extends munit.FunSuite:
     assertEquals(idsOf(com.histmersion.util.plugins.PluginKit.Installed.File("hello-0.1.0.jar"), i), List("hello"))
     assertEquals(idsOf(com.histmersion.util.plugins.PluginKit.Installed.File("dropped-plugin-2.3.1.jar"), i), List("dropped-plugin"))
     assertEquals(idsOf(com.histmersion.util.plugins.PluginKit.Installed.File("noversion.jar"), i), List("noversion"))
-    assertEquals(i.drop("hello-0.1.0.jar"), Index())
+    assertEquals(i.drop(com.histmersion.util.plugins.PluginKit.Installed.File("hello-0.1.0.jar")), Index())
 
   test("checkSigner: the first signed install pins the key; another key is refused"):
     val signed = Index().put(Installed(com.histmersion.util.plugins.PluginKit.Installed.File("p-1.jar"), com.histmersion.util.plugins.PluginKit.Installed.Sha256("1"), com.histmersion.util.plugins.PluginKit.Installed.Source("s"), com.histmersion.util.plugins.PluginKit.Installed.AddedAt("t"), List(PluginDescription(com.histmersion.api.plugins.PluginDescription.Id("p"), com.histmersion.api.plugins.PluginDescription.Version("1"), com.histmersion.api.plugins.PluginDescription.SpiVersion(1))), Some(com.histmersion.util.plugins.PluginKit.Installed.Signer("AAAA"))))
@@ -141,7 +141,7 @@ class PluginKitSuite extends munit.FunSuite:
     assert(refusals(PluginJar(com.histmersion.api.plugins.PluginJar.File("e.jar"), com.histmersion.api.Sha256("1")), com.histmersion.api.plugins.PluginSet.SpiVersion(1), Map.empty).head.contains("holds no plugin"))
     assert(refusals(ok, com.histmersion.api.plugins.PluginSet.SpiVersion(2), Map.empty).head.contains("SPI 1; this Histmersion speaks SPI 2"))
     assert(
-      refusals(PluginJar(com.histmersion.api.plugins.PluginJar.File("b.jar"), com.histmersion.api.Sha256("1"), List(PluginDescription(com.histmersion.api.plugins.PluginDescription.Id(""), com.histmersion.api.plugins.PluginDescription.Version(""), com.histmersion.api.plugins.PluginDescription.SpiVersion(0), error = Some("boom")))), com.histmersion.api.plugins.PluginSet.SpiVersion(0), Map.empty)
+      refusals(PluginJar(com.histmersion.api.plugins.PluginJar.File("b.jar"), com.histmersion.api.Sha256("1"), List(PluginDescription(com.histmersion.api.plugins.PluginDescription.Id(""), com.histmersion.api.plugins.PluginDescription.Version(""), com.histmersion.api.plugins.PluginDescription.SpiVersion(0), error = Some(com.histmersion.api.plugins.PluginDescription.Error("boom"))))), com.histmersion.api.plugins.PluginSet.SpiVersion(0), Map.empty)
         .exists(_.contains("could not be loaded: boom"))
     )
     assert(refusals(ok, com.histmersion.api.plugins.PluginSet.SpiVersion(1), Map("p" -> "other.jar")).head.contains("already provided by other.jar"))
@@ -150,7 +150,7 @@ class PluginKitSuite extends munit.FunSuite:
     val foreign = "it was built against plugin SPI 1; this Histmersion speaks SPI 2 — rebuild the plugin against SPI 2"
     val broken = PluginJar(com.histmersion.api.plugins.PluginJar.File("b.jar"), com.histmersion.api.Sha256("1"), List(PluginDescription(com.histmersion.api.plugins.PluginDescription.Id(""), com.histmersion.api.plugins.PluginDescription.Version(""), com.histmersion.api.plugins.PluginDescription.SpiVersion(0), error = Some(foreign))))
     assertEquals(refusals(broken, com.histmersion.api.plugins.PluginSet.SpiVersion(2), Map.empty), List(s"a provider in b.jar could not be loaded: $foreign"))
-    val missing = PluginJar(com.histmersion.api.plugins.PluginJar.File("m.jar"), com.histmersion.api.Sha256("1"), List(PluginDescription(com.histmersion.api.plugins.PluginDescription.Id(""), com.histmersion.api.plugins.PluginDescription.Version(""), com.histmersion.api.plugins.PluginDescription.SpiVersion(0), error = Some("class x.Y is missing"))))
+    val missing = PluginJar(com.histmersion.api.plugins.PluginJar.File("m.jar"), com.histmersion.api.Sha256("1"), List(PluginDescription(com.histmersion.api.plugins.PluginDescription.Id(""), com.histmersion.api.plugins.PluginDescription.Version(""), com.histmersion.api.plugins.PluginDescription.SpiVersion(0), error = Some(com.histmersion.api.plugins.PluginDescription.Error("class x.Y is missing")))))
     assertEquals(
       refusals(missing, com.histmersion.api.plugins.PluginSet.SpiVersion(2), Map("" -> "other.jar")),
       List("a provider in m.jar could not be loaded: class x.Y is missing")
