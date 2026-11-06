@@ -40,7 +40,7 @@ object Licence:
     Option(csv).toList
       .flatMap((_).value.split(",").toList)
       .map(_.trim.toLowerCase(Locale.ROOT))
-      .flatMap(Licence.Family.fromWire)
+      .flatMap({ val refactorFunction = Licence.Family.fromWire; (refactorValue) => refactorFunction(_root_.com.histmersion.domain.Licence.Family.FromWireS(refactorValue)) })
       .filterNot(_.never)
       .toSet
 
@@ -106,7 +106,7 @@ object Licence:
   def firstKnown(statements: List[com.histmersion.domain.Licence.FirstKnownStatements]): Licence =
     val cands = statements.map((_).value.trim).filter(_.nonEmpty)
     cands.iterator
-      .map(classify)
+      .map({ val refactorFunction2 = classify; (refactorValue3) => refactorFunction2(_root_.com.histmersion.domain.Licence.ClassifyRaw(refactorValue3)) })
       .find(_.family != Licence.Family.Unknown)
       .getOrElse(unknown(cands.headOption.getOrElse(_root_.com.histmersion.domain.Licence.UnknownStatement(""))))
 

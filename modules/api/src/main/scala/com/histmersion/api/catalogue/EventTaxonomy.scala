@@ -161,7 +161,7 @@ object EventTaxonomy:
 
   def of(kind: com.histmersion.api.catalogue.EventTaxonomy.OfKind): Kind =
     val k = canonical(kind)
-    byKind.getOrElse(k, byKind(HumanGeneric).copy(kind = k, label = k.replace('_', ' ')))
+    byKind.getOrElse(k, byKind(_root_.com.histmersion.api.catalogue.EventTaxonomy.ByKindPart1(HumanGeneric)).copy(kind = k, label = k.replace('_', ' ')))
 
   def group(kind: com.histmersion.api.catalogue.EventTaxonomy.GroupKind): com.histmersion.api.catalogue.EventTaxonomy.GroupResult = of(kind).group
   def icon(kind: com.histmersion.api.catalogue.EventTaxonomy.IconKind): com.histmersion.api.catalogue.EventTaxonomy.IconResult = of(kind).icon
@@ -169,7 +169,7 @@ object EventTaxonomy:
 
   def matches(filter: com.histmersion.api.catalogue.EventTaxonomy.MatchesFilter, kind: com.histmersion.api.catalogue.EventTaxonomy.MatchesKind): com.histmersion.api.catalogue.EventTaxonomy.MatchesResult =
     val f = (filter).value.trim.toLowerCase(java.util.Locale.ROOT)
-    f.isEmpty || f == group(kind) || canonical(f) == canonical(kind)
+    f.isEmpty || f == group(kind) || canonical(_root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind(f)) == canonical(kind)
 
   final case class KindCondition(kinds: List[KindCondition.Kinds], negate: KindCondition.Negate)
 

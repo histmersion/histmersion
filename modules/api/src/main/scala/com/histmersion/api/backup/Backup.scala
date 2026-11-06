@@ -82,7 +82,7 @@ object Backup:
     if !taken(name) then name
     else
       val stem = (name).value.dropRight(Extension.length)
-      LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !taken(c)).getOrElse(name)
+      LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !taken(_root_.com.histmersion.api.backup.Backup.UniqueNameTakenArg1(c))).getOrElse(name)
 
   private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
 
@@ -184,7 +184,7 @@ object Backup:
       .map((_).value.trim)
       .filter(_.nonEmpty)
       .filter(l => l.toLowerCase.contains("error") || l.toLowerCase.contains("warning"))
-    val completed = output.exists(l => IgnoredErrors.findFirstMatchIn(l).isDefined)
+    val completed = output.exists(l => IgnoredErrors.findFirstMatchIn((l).value).isDefined)
     if exit == _root_.com.histmersion.api.backup.Backup.RestoreOutcomeExit(0) || completed then Right((notable).map(refactorValue9 => _root_.com.histmersion.api.backup.Backup.RestoreOutcomeResultPart2(refactorValue9)))
     else Left(_root_.com.histmersion.api.backup.Backup.RestoreOutcomeResultPart1(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}"))
 

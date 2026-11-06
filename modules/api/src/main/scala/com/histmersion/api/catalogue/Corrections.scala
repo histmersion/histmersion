@@ -37,7 +37,7 @@ object Corrections:
     Correction.Counts(_root_.com.histmersion.api.catalogue.Correction.Counts.Kept(os.count(_ == Outcome.Keep)), _root_.com.histmersion.api.catalogue.Correction.Counts.Retired(os.count(_ == Outcome.Retire)), _root_.com.histmersion.api.catalogue.Correction.Counts.Conflicts(os.count(_ == Outcome.Conflict)))
 
   def show(json: com.histmersion.api.catalogue.Corrections.ShowJson): com.histmersion.api.catalogue.Corrections.ShowResult =
-    io.circe.parser.parse(json).toOption match
+    io.circe.parser.parse((json).value).toOption match
       case Some(j) if j.isNull => _root_.com.histmersion.api.catalogue.Corrections.ShowResult("none")
       case Some(j)             => j.asString.getOrElse(j.noSpaces)
       case None                => json

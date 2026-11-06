@@ -22,4 +22,4 @@ object SearchResult:
   object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(total: com.histmersion.api.library.SearchResult.OfTotal, hits: List[Hit], offset: com.histmersion.api.library.SearchResult.OfOffset): SearchResult =
-    SearchResult(com.histmersion.api.RowCount((total).value), hits, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(hits.size)).next)
+    SearchResult(com.histmersion.api.RowCount((total).value), hits, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(hits.size)).next)

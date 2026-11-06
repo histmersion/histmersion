@@ -3,6 +3,12 @@ package compilerfixture
 object Contract:
   @main def verifyCompilerRepairs(): Unit =
     WireEndpoints.check()
+    assert(Positive.nestedLiteral == "inside")
+    assert(Positive.nestedNumber == "7")
+    assert(Positive.guarded(Some(true)) == "body" && Positive.guarded(None) == "empty")
+    assert(Positive.conditioned(List(Values.Text("resolve"), Values.Text("next"))))
+    assert(!Positive.conditioned(List(Values.Text("resolve"), Values.Text(""))))
+    assert(!Positive.conditioned(List(Values.Text("other"), Values.Text("next"))))
     NativeConditions.check()
     val flagRows = List(Owned.FlagRecord(Owned.Flag(true)), Owned.FlagRecord(Owned.Flag(false)))
     assert(Owned.flags(flagRows).map(_.flag.value) == List(false))

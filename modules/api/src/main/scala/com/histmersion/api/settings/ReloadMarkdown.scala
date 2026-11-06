@@ -23,7 +23,7 @@ object ReloadMarkdown:
       if ((r.published) == _root_.com.histmersion.api.settings.ReloadReport.Published(true)) || r.errors.nonEmpty || r.restartOnly.nonEmpty then Nil
       else List("Nothing in the config differs from what is running.")
     (List(head, "") ++ file ++ none ++
-      list("Errors (nothing was changed)", r.errors) ++
+      list(_root_.com.histmersion.api.settings.ReloadMarkdown.ReportListTitle("Errors (nothing was changed)"), r.errors) ++
       list("Applied", r.applied) ++
       list("Changed, takes effect after a restart (not applied)", r.restartOnly) ++
       list("Rebuilt", r.rebuilt) ++

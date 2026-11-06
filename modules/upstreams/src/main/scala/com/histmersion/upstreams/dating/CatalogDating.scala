@@ -141,4 +141,4 @@ object CatalogDating:
   def fromAstronomical(a: com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalA): com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalResult = if (a).value <= 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalResult((a).value - 1) else a
 
   /** Pure: a historical year `d` years later (earlier when negative), across the missing year 0. */
-  def shift(h: com.histmersion.upstreams.dating.CatalogDating.ShiftH, d: com.histmersion.upstreams.dating.CatalogDating.ShiftD): com.histmersion.upstreams.dating.CatalogDating.ShiftResult = fromAstronomical(toAstronomical(h) + d)
+  def shift(h: com.histmersion.upstreams.dating.CatalogDating.ShiftH, d: com.histmersion.upstreams.dating.CatalogDating.ShiftD): com.histmersion.upstreams.dating.CatalogDating.ShiftResult = fromAstronomical((toAstronomical(h)).value + d)

@@ -30,7 +30,7 @@ object Ingest:
 
   def dispositionExtension(disposition: com.histmersion.api.library.Ingest.DispositionExtensionDisposition): Option[com.histmersion.api.library.Ingest.DispositionExtensionResult] =
     """filename="?([^";]+)"?""".r
-      .findFirstMatchIn(disposition)
+      .findFirstMatchIn((disposition).value)
       .map(_.group(1).trim)
       .map(_.reverse.takeWhile(_ != '.').reverse.toLowerCase)
       .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))

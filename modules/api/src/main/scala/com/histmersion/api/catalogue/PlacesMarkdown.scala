@@ -141,7 +141,7 @@ object PlacesMarkdown:
         .map { r =>
           val pt = for la <- r.lat; lo <- r.lon yield s"point ${Place.Overrides.pointText(la, lo)}"
           val set =
-            r.kind.toList ++ Option.when(r.periodSet)(Place.Overrides.periodText(r.periodStart, r.periodEnd)).toList ++
+            r.kind.toList ++ Option.when(((r.periodSet) == _root_.com.histmersion.api.catalogue.Place.Override.PeriodSet(true)))(Place.Overrides.periodText(r.periodStart, r.periodEnd)).toList ++
               pt.toList
           val srcPt = if pt.isEmpty then ""
           else
@@ -166,7 +166,7 @@ object PlacesMarkdown:
 
   def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): com.histmersion.api.catalogue.PlacesMarkdown.PlaceResult =
     val p = d.place
-    val header = s"# ${p.label}${contestedMark(((d.contested) == _root_.com.histmersion.api.catalogue.Place.Card.ContestedResult(true)) || ((p.contested) == _root_.com.histmersion.api.catalogue.Place.Summary.Contested(true)), p.label)}" +
+    val header = s"# ${p.label}${contestedMark(_root_.com.histmersion.api.Markdown.ContestedMarkContested(((d.contested) == _root_.com.histmersion.api.catalogue.Place.Card.ContestedResult(true)) || ((p.contested) == _root_.com.histmersion.api.catalogue.Place.Summary.Contested(true))), p.label)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")

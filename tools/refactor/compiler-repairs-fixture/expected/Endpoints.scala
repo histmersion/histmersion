@@ -29,8 +29,20 @@ object WireEndpoints:
     factories += 1
     endpoint.in(path[String]("id")).errorOut(stringBody).out(stringBody)
   def factory(): PublicEndpoint[WireValues.Text, WireValues.Failure, WireValues.Text, Any] = (rawFactory()).mapIn[_root_.compilerfixture.WireValues.Text]((refactorDecoded2: _root_.java.lang.String) => _root_.compilerfixture.WireValues.Text(refactorDecoded2))((refactorEncoded2: _root_.compilerfixture.WireValues.Text) => (refactorEncoded2).value).mapErrorOut[_root_.compilerfixture.WireValues.Failure]((refactorDecoded3: _root_.java.lang.String) => _root_.compilerfixture.WireValues.Failure(refactorDecoded3))((refactorEncoded3: _root_.compilerfixture.WireValues.Failure) => (refactorEncoded3).value).mapOut[_root_.compilerfixture.WireValues.Text]((refactorDecoded4: _root_.java.lang.String) => _root_.compilerfixture.WireValues.Text(refactorDecoded4))((refactorEncoded4: _root_.compilerfixture.WireValues.Text) => (refactorEncoded4).value)
+  val outputOnly: PublicEndpoint[Unit, Unit, WireValues.Text, Any] = (endpoint.out(stringBody)).mapOut[_root_.compilerfixture.WireValues.Text]((refactorDecoded5: _root_.java.lang.String) => _root_.compilerfixture.WireValues.Text(refactorDecoded5))((refactorEncoded5: _root_.compilerfixture.WireValues.Text) => (refactorEncoded5).value)
+  val errorOnly: PublicEndpoint[Unit, WireValues.Failure, Unit, Any] = (endpoint.errorOut(stringBody)).mapErrorOut[_root_.compilerfixture.WireValues.Failure]((refactorDecoded6: _root_.java.lang.String) => _root_.compilerfixture.WireValues.Failure(refactorDecoded6))((refactorEncoded6: _root_.compilerfixture.WireValues.Failure) => (refactorEncoded6).value)
+  val listOnly: PublicEndpoint[Unit, Unit, List[WireValues.Text], Any] = (endpoint.out(stringBody.map(_.split(",").toList)(_.mkString(",")))).mapOut[_root_.scala.List[_root_.compilerfixture.WireValues.Text]]((refactorDecoded7: _root_.scala.List[_root_.java.lang.String]) => (refactorDecoded7).map(refactorElement5 => _root_.compilerfixture.WireValues.Text(refactorElement5)))((refactorEncoded7: _root_.scala.List[_root_.compilerfixture.WireValues.Text]) => (refactorEncoded7).map(refactorElement6 => (refactorElement6).value))
 
   def check(): Unit =
+    val singleOut = outputOnly.output.asInstanceOf[EndpointOutput.MappedPair[?, ?, String, WireValues.Text]].mapping
+    val singleError = errorOnly.errorOutput.asInstanceOf[EndpointOutput.MappedPair[?, ?, String, WireValues.Failure]].mapping
+    val listOut = listOnly.output.asInstanceOf[EndpointOutput.MappedPair[?, ?, List[String], List[WireValues.Text]]].mapping
+    assert(singleOut.decode("") == DecodeResult.Value(WireValues.Text("")))
+    assert(singleOut.encode(WireValues.Text("response")) == "response")
+    assert(singleError.decode("failure") == DecodeResult.Value(WireValues.Failure("failure")))
+    assert(singleError.encode(WireValues.Failure("failure")) == "failure")
+    assert(listOut.decode(List("a", " b")) == DecodeResult.Value(List(WireValues.Text("a"), WireValues.Text(" b"))))
+    assert(listOut.encode(List(WireValues.Text("a"), WireValues.Text(" b"))) == List("a", " b"))
     val mapping = tupled.input.asInstanceOf[EndpointInput.MappedPair[?, ?, (Option[String], List[Int], Boolean), (Option[WireValues.Text], List[WireValues.Count], WireValues.Flag)]].mapping
     val raw = (Some(""), List(Int.MinValue, 0, Int.MaxValue), false)
     val typed = (Some(WireValues.Text("")), List(WireValues.Count(Int.MinValue), WireValues.Count(0), WireValues.Count(Int.MaxValue)), WireValues.Flag(false))

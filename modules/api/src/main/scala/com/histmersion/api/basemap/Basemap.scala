@@ -375,7 +375,7 @@ object Basemap:
       (s).value.trim.toLowerCase(java.util.Locale.ROOT) match
         case "" | "all" => Right(values.toList)
         case other      =>
-          parse(other).map(List(_)).toRight(_root_.com.histmersion.api.basemap.Basemap.Layer.ParseManyResultPart1(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)"))
+          parse(_root_.com.histmersion.api.basemap.Basemap.Layer.ParseS(other)).map(List(_)).toRight(_root_.com.histmersion.api.basemap.Basemap.Layer.ParseManyResultPart1(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)"))
 
   final case class LayerInfo(
       layer: LayerInfo.Layer,
@@ -400,7 +400,7 @@ object Basemap:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def deepest: Option[com.histmersion.api.basemap.Basemap.LayerInfo.DeepestResult] =
-      (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter(_.enabled).map(_.maxZoom).toList).maxOption
+      (maxZoom.toList ++ focus.map(_.maxZoom) ++ onDemand.filter((refactorCallback => ((refactorCallback.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)))).map(_.maxZoom).toList).maxOption
 
   object LayerInfo:
     type DeepestResult = DeepestResult.T

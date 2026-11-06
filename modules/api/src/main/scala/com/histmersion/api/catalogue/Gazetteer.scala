@@ -128,9 +128,9 @@ object Gazetteer:
     (byOwn.map(_ -> 0) ++ byLinks.map(_ -> 1))
       .groupBy(_._1.placeId)
       .values
-      .map(_.minBy((m, via) => (if m.native then 0 else 1, via)))
+      .map(_.minBy((m, via) => (if ((m.native) == _root_.com.histmersion.api.catalogue.Place.Match.Native(true)) then 0 else 1, via)))
       .toList
-      .sortBy((m, via) => (if m.native then 0 else 1, via, rank(m), m.placeId))
+      .sortBy((m, via) => (if ((m.native) == _root_.com.histmersion.api.catalogue.Place.Match.Native(true)) then 0 else 1, via, rank(m), m.placeId))
       .headOption
       .map(_._1.placeId)
 
@@ -145,7 +145,7 @@ object Gazetteer:
       .exists(k => k != com.histmersion.api.catalogue.Gazetteer.Kind.Lpf)
 
   def validity(sourceKey: com.histmersion.api.catalogue.Gazetteer.ValiditySourceKey, span: Span, windowYears: com.histmersion.api.catalogue.Gazetteer.ValidityWindowYears): Validity = span match
-    case Span(None, Some(end)) if unknownWhenSilent(sourceKey) =>
+    case Span(None, Some(end)) if ((unknownWhenSilent(sourceKey)) == _root_.com.histmersion.api.catalogue.Gazetteer.UnknownWhenSilentResult(true)) =>
       Validity(Some(end - math.max(0, (windowYears).value)), Some(end), startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(true))
     case Span(from, to) => Validity(from, to, startUnknown = _root_.com.histmersion.api.Validity.StartUnknown(false))
 
@@ -220,7 +220,7 @@ object Gazetteer:
   private def readNames(f: JsonObject): List[GazName] =
     f("names").flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { j =>
       j.asString
-        .map(GazName(_))
+        .map(GazName(_root_.com.histmersion.api.catalogue.GazName.Name(_)))
         .orElse(j.asObject.flatMap { o =>
           str(o, "toponym", "name", "label").map(t =>
             GazName(t, str(o, "lang", "language").getOrElse(""), o("when").fold(Span.always)(span), citationOf(o))
@@ -235,7 +235,7 @@ object Gazetteer:
       .getOrElse(Nil)
       .flatMap { j =>
         j.asString
-          .map(GazDescription(_))
+          .map(GazDescription(_root_.com.histmersion.api.catalogue.GazDescription.Text(_)))
           .orElse(
             j.asObject.flatMap(o =>
               str(o, "value", "description", "text")
@@ -273,7 +273,7 @@ object Gazetteer:
       ordinal: com.histmersion.api.catalogue.Gazetteer.FromFeatureOrdinal,
       defaultSource: Option[com.histmersion.api.catalogue.Gazetteer.FromFeatureDefaultSource] = None
   ): Either[com.histmersion.api.catalogue.Gazetteer.FromFeatureResultPart1, GazRecord] =
-    Lpf.readFeature(j, com.histmersion.api.catalogue.Place.Kind.Site, ordinal).flatMap { in =>
+    Lpf.readFeature(j, _root_.com.histmersion.api.catalogue.Lpf.ReadFeatureDefaultKind(com.histmersion.api.catalogue.Place.Kind.Site), ordinal).flatMap { in =>
       val f = j.asObject.getOrElse(JsonObject.empty)
       val raw = str(f, "@id", "id").orElse(f("properties").flatMap(_.asObject).flatMap(str(_, "@id", "id", "pid")))
       raw.toRight(s"feature #$ordinal has no @id").map { ref =>
@@ -322,35 +322,35 @@ object Gazetteer:
   ): Either[com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1, GazRecord] =
     val row =
       header.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).zip(cells.map((_).value.trim) ++ List.fill(header.size)("")).toMap
-    def get(k: com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK): Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult] = row.get(k).filter(_.nonEmpty)
+    def get(k: com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK): Option[com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetResult] = row.get((k).value).filter(_.nonEmpty)
     (get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("id")), get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("title"))) match
       case (None, _)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no id"))
       case (_, None)                => Left(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowResultPart1(s"line $line: no title"))
       case (Some(ref), Some(title)) =>
         val own = ExternalId.parse(ref)
-        val variants = get("variants").toList.flatMap(_.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
+        val variants = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("variants")).toList.flatMap(_.split(";").toList).map(_.trim).filter(_.nonEmpty).map { v =>
           val at = v.lastIndexOf('@')
           if at > 0 && v.drop(at + 1).matches("[A-Za-z]{2,3}(-[A-Za-z0-9]+)?") then
             GazName(v.take(at).trim, v.drop(at + 1))
           else GazName(v)
         }
-        val links = get("matches").toList
+        val links = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("matches")).toList
           .flatMap(_.split(";").toList)
           .flatMap(ExternalId.parse)
           .filterNot(own.contains)
           .distinct
           .map(GazLink(_, LinkMatch.Close))
         val point = for
-          lon <- get("lon").flatMap(_.toDoubleOption)
+          lon <- get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("lon")).flatMap(_.toDoubleOption)
           lat <- get("lat").flatMap(_.toDoubleOption)
         yield GazGeometry.GeoJson(s"""{"type":"Point","coordinates":[$lon,$lat]}""")
         val kind =
-          get("types")
+          get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("types"))
             .flatMap(t => t.split(";").toList.flatMap(com.histmersion.api.catalogue.Place.Kind.parse).headOption)
             .getOrElse(com.histmersion.api.catalogue.Place.Kind.Site)
-        val sp = Span(get("start").flatMap(Lpf.parseYear), get("end").flatMap(Lpf.parseYear))
+        val sp = Span(get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("start")).flatMap(Lpf.parseYear), get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("end")).flatMap(Lpf.parseYear))
         val props = JsonObject.fromIterable(
-          get("ccodes")
+          get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("ccodes"))
             .map(c => "ccodes" -> Json.arr(c.split("[;,]").toList.map(_.trim).filter(_.nonEmpty).map(Json.fromString)*))
             .toList ++
             get("types").map(t => "types" -> Json.fromString(t)).toList
@@ -366,9 +366,9 @@ object Gazetteer:
             span = sp,
             names = mergeNames(GazName(title) :: variants),
             links = links,
-            source = get("title_source").orElse(defaultSource),
+            source = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("title_source")).orElse(defaultSource),
             properties = Option.when(props.nonEmpty)(_root_.com.histmersion.api.catalogue.GazRecord.Properties(Json.fromJsonObject(props).noSpaces)),
-            descriptions = get("description").map(GazDescription(_)).toList
+            descriptions = get(_root_.com.histmersion.api.catalogue.Gazetteer.FromTsvRowGetK("description")).map(GazDescription(_)).toList
           )
         )
 

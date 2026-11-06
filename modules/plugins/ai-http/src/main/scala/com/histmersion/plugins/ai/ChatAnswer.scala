@@ -16,7 +16,7 @@ final case class ChatAnswer(status: ChatAnswer.Status, body: ChatAnswer.Body):
   /** The turn the answer says, or the failure's description. */
   def turn: Either[com.histmersion.plugins.ai.ChatAnswer.TurnResultPart1, AiTurn] =
     if (status).value / 100 != 2 then Left(ChatAnswer.errorMessage(status, body))
-    else decode(body)(using ChatAnswer.response).left.map(_.getMessage)
+    else decode((body).value)(using ChatAnswer.response).left.map(_.getMessage)
 
 object ChatAnswer:
 
@@ -60,7 +60,7 @@ object ChatAnswer:
     */
   def errorMessage(status: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageStatus, body: com.histmersion.plugins.ai.ChatAnswer.ErrorMessageBody): com.histmersion.plugins.ai.ChatAnswer.ErrorMessageResult =
     val fallback = (body).value.take(MaxRawErrorBody)
-    parse(body).toOption.flatMap(_.asObject).flatMap(_("error")) match
+    parse((body).value).toOption.flatMap(_.asObject).flatMap(_("error")) match
       case Some(node) =>
         node.as(using error) match
           case Right(Some(message)) => message

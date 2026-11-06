@@ -10,6 +10,8 @@ object ExcludedEndpoints:
   private def consume(e: PublicEndpoint[WireValues.Text, Unit, Unit, Any]): PublicEndpoint[WireValues.Text, Unit, Unit, Any] = e
   val nested: PublicEndpoint[WireValues.Text, Unit, Unit, Any] = consume((endpoint.in(path[String]("id")): PublicEndpoint[String, Unit, Unit, Any]))
   val ordinary: Values.Text = "still-unresolved"
+  val customConcat: PublicEndpoint[Unit, Unit, WireValues.Custom, Any] = endpoint.out(stringBody)
+  val earlierConcat: PublicEndpoint[Unit, Unit, WireValues.Text, Any] = endpoint.out(stringBody).out(statusCode(sttp.model.StatusCode.Ok))
 
   object Lookalike:
     final case class PublicEndpoint[A](value: A)

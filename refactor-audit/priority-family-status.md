@@ -1,6 +1,98 @@
 # Priority-family status
 
-## Current checkpoint: typed Tapir endpoint mappings applied, compilation incomplete
+## Current checkpoint: expression contexts repaired and raw measurement corrected
+
+Two batches use the existing pipeline: project-expression-context-2 applies 423
+ordinary compiler-expression patches plus two compound pattern/guard patches across
+112 production files; project-tapir-concat-2 adds five endpoint output mappings in
+two files. There are 430 emitted AST patches in 113 distinct production files and
+zero application test files changed. Two repairs inside guards are incorporated
+into the compound patches and are not counted again. These are applied transformations,
+not a global verified-policy repair count. No model type declaration was reverted
+to a primitive and no individual application-expression mappings were introduced.
+
+The expression blocker was an incorrect AST category test: Term.SelectLike also
+implements Pat, so the old ancestor test treated ordinary selections such as
+.mkString as pattern positions. E007 adapters now protect actual Case pattern spans
+and non-Term pattern ancestors. They can repair nested value expressions and case
+guards/bodies while preserving real patterns. Existing guard repairs are composed
+from non-overlapping accepted AST edits before the literal guard is added. Enclosing
+conflicts are deferred with unresolved evidence. The failed provisional preview
+stopped before application; its overlap positions are retained in its review note.
+Owner-only unwrapping and nominal restrictions remain. The known E134 adapter is
+still disabled by native Boolean mode.
+
+Tapir mode now also supports a bounded E172 shape: an exact library ParamConcat.Aux
+request with Unit on the left, at the final out/errorOut call of a typed public
+endpoint binding. The requested target must match the declared output slot and
+admit the existing reversible Pure mapping. The diagnostic witnesses only the
+changed slot; other endpoint parts in the adapter plan are placeholders, not claims
+about inferred input/error/capability types. Earlier qualifier failures, non-Unit
+concatenations and custom/nominal/widening/security cases remain unsupported.
+The initial five-case preview was superseded after expression repairs; the same
+rule regenerated all five against the actual build20 snapshot. Nothing was reverted
+because a batch selected few cases.
+
+The corrected combined fixture compiles/runs under Scala 3.10, -source:future and
+fatal E165 against Tapir 1.14.0. Exact output matches for five ordinary, two owner and
+one endpoint files. Runtime assertions cover nested String/Int literal arguments,
+case guards/bodies, true/false literal-pattern matches with an existing guard,
+output/error/list decode/encode and all prior assertions. Nine endpoint negative
+cases remain outside the plan, including the new E172 custom and earlier-concat
+cases. A lexical declared-type resolution correction handles short fixture names
+without individual type mappings. No behavioral assertion was weakened.
+
+The qualified primitive gap is corrected with exact _root_.scala primitive and
+_root_.java.lang.String AST recognition. Existing IDs/denominators remain immutable.
+Delta events distinguish newly recognized previous unresolved primitives from new
+occurrences, instead of classifying every recognition correction as a regression.
+The measurement fixture compiles and requires all 19 selectors (ten old plus nine
+root-qualified), retains a similarly named application class as unresolved, and
+exactly checks one historical recognition correction versus eight introduced IDs.
+Its historical rows are explicit synthetic test data. This uses one of the two
+bounded model detector refinement rounds, not an inventory-acceptance claim.
+
+type-positions-qualified-correction-1 compares the post-endpoint snapshot with the
+pre-endpoint baseline. It records 287 introduced native wire-adapter leaves, zero
+eliminated IDs and zero existing-root recognition corrections: production881/test6009,
+up from the earlier recognized production594/test6009. These candidate occurrences
+were introduced in the previous endpoint batch but omitted by the old classifier;
+they are not 287 newly confirmed policy violations. The earlier census is retained
+with its documented limit; the corrected scan supplies the current denominator.
+
+| Source module | Previous frontier19/latest observation | After expressions, frontier20 | After Tapir, frontier21 |
+|---|---:|---:|---:|
+| api JVM and JS, each | 2694 | 2521 | 2516 |
+| values | 33 | 31 | cached failure |
+| upstreams | 343 | 349 | cached failure |
+| plugin-vaults | 96 | 94 | cached failure |
+| plugins/calibre | 187 | 199 | cached failure |
+| plugins/ai-http | cached failure | 89 | cached failure |
+
+Both actual full builds still fail in all ten previously failing tasks. Frontier21
+has eight cached failures. The upstream and calibre increases are retained; aggregate
+reductions do not classify new/replaced diagnostics or prove zero regressions.
+Dependent compilation/application tests remain blocked. Compiler checks, stack16m,
+maxErrors10000 and serial compilation are unchanged; all build source hashes are
+stable. No full-project test, native or behavioral pass is claimed.
+
+The 112 files verified before the final two-file patch. Those final two files also
+match their frozen preview; the final census's complete Scala hash list matches
+frontier21, which additionally snapshots build.sbt. All 3169 Scala files remain in
+type-positions-after-expression-context-1, with 136587 positions (previous136530).
+Its corrected raw delta is five new native output-adapter annotations, zero removed:
+production886/test6009 (6895 total). Those new stable IDs are explicit in changes.tsv
+and remain candidates. Newtype shapes/origins are unchanged: production26949/test19,
+2983 overlap candidate groups. Unresolved candidate references are16207 (previous16205).
+Import/alias/inherited/external and inferred-type resolution remain partial; neither
+the raw inventory nor an overall automation percentage is accepted as complete.
+
+Next work is the newly exposed compiler frontier and reusable helper/layer-boundary
+adaptations, preserving the typed definitions, followed by remaining primitive
+candidates, smart construction and application tests. The original scope and 90%
+automatic-repair target remain unchanged and unproven.
+
+## Previous checkpoint: typed Tapir endpoint mappings applied, compilation incomplete
 
 The existing frozen-preview pipeline applies 166 endpoint declaration rewrites in
 11 production API files, with zero application test changes. It adds reversible

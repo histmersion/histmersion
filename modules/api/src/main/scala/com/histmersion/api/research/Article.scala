@@ -315,7 +315,7 @@ object Article:
                 case DriftKind.Unplaced       => "neither cited nor given a reason"
                 case DriftKind.ReasonForCited => "given a reason but cited in the body (the reason is stale)"
                 case DriftKind.ReasonOutside  => "given a reason but no longer returned by the filter"
-              s"- ${Plural.count(d.citekeys.size, "source")} $what: ${d.citekeys.map(ck => s"[[$ck]]").mkString(", ")}"
+              s"- ${Plural.count(_root_.com.histmersion.api.Plural.NounN((d.citekeys.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("source"))} $what: ${d.citekeys.map(ck => s"[[$ck]]").mkString(", ")}"
             }
             .mkString("\n")
       val critiques = Critiques.markdown(c.critiques)
@@ -528,7 +528,7 @@ object Article:
 
     def head(anchor: com.histmersion.api.research.Article.Edits.HeadAnchor, max: com.histmersion.api.research.Article.Edits.HeadMax = _root_.com.histmersion.api.research.Article.Edits.HeadMax(48)): com.histmersion.api.research.Article.Edits.HeadResult =
       val one = (anchor).value.trim.replaceAll("\\s+", " ")
-      if one.length <= (max).value then _root_.com.histmersion.api.research.Article.Edits.HeadResult(one) else one.take(max).trim + "…"
+      if one.length <= (max).value then _root_.com.histmersion.api.research.Article.Edits.HeadResult(one) else one.take((max).value).trim + "…"
 
     private def squeeze(s: com.histmersion.api.research.Article.Edits.SqueezeS): (com.histmersion.api.research.Article.Edits.SqueezeResultPart1, com.histmersion.api.research.Article.Edits.SqueezeResultPart2) =
       val out = StringBuilder()
@@ -549,9 +549,9 @@ object Article:
     def locate(text: com.histmersion.api.research.Article.Edits.LocateText, anchor: com.histmersion.api.research.Article.Edits.LocateAnchor): Either[com.histmersion.api.research.Article.Edits.LocateResultPart1, (com.histmersion.api.research.Article.Edits.LocateResultPart2Part1, com.histmersion.api.research.Article.Edits.LocateResultPart2Part2)] =
       val a = (anchor).value.trim
       occurrences(text, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(a)) match
-        case scala.List(i) => Right((i, i + a.length))
+        case scala.List(i) => Right((i, (i).value + a.length))
         case _ :: _ :: _   =>
-          Left(s"the anchor occurs ${occurrences(text, a).size} times — quote more of the passage so it occurs once")
+          Left(s"the anchor occurs ${occurrences(text, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(a)).size} times — quote more of the passage so it occurs once")
         case Nil =>
           val (sq, pos) = squeeze(text)
           val na = a.replaceAll("\\s+", " ")
@@ -996,7 +996,7 @@ object Article:
     )
 
     private[api] val FillerPattern: scala.util.matching.Regex =
-      FillerPhrases.map(p => java.util.regex.Pattern.quote(p)).mkString("(?i)(?:", "|", ")").r
+      FillerPhrases.map(p => java.util.regex.Pattern.quote((p).value)).mkString("(?i)(?:", "|", ")").r
 
     def articleThinSummary(rows: scala.List[(com.histmersion.api.research.Article.Lint.ArticleThinSummaryRowsPart1, com.histmersion.api.research.Article.Lint.ArticleThinSummaryRowsPart2)]): scala.List[LintItem] =
       rows
@@ -1006,19 +1006,19 @@ object Article:
             if s.isEmpty then Some("no summary")
             else
               Articles
-                .summaryOf(Some(s))
+                .summaryOf(Some(_root_.com.histmersion.api.research.Articles.SummaryOfRaw(s)))
                 .left
                 .toOption
                 .map(_ => s"stand-in summary: \"$s\"")
                 .orElse(Option.when(s.length < MinSummaryChars)(s"only ${s.length} chars: \"$s\""))
-          why.map(LintItem(slug, _))
+          why.map(LintItem(slug, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(_)))
         }
         .sortBy(_.citekey)
 
     def articleFiller(articles: scala.List[(com.histmersion.api.research.Article.Lint.ArticleFillerArticlesPart1, com.histmersion.api.research.Article.Lint.ArticleFillerArticlesPart2)]): scala.List[LintItem] =
       articles
         .flatMap { (slug, body) =>
-          val matches = FillerPattern.findAllMatchIn(body).map(_.matched.toLowerCase).toList.distinct
+          val matches = FillerPattern.findAllMatchIn((body).value).map(_.matched.toLowerCase).toList.distinct
           if matches.isEmpty then None
           else
             Some(
@@ -1072,7 +1072,7 @@ object Article:
     object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def of(total: com.histmersion.api.research.Article.List.OfTotal, rows: scala.List[Summary], offset: com.histmersion.api.research.Article.List.OfOffset, kinds: scala.List[KindCount] = Nil): List =
-      List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next, kinds)
+      List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(rows.size)).next, kinds)
 
     def byKind(counts: scala.List[KindCount]): scala.List[KindCount] =
       counts.filter(_.count > 0).sortBy(k => (-k.count, k.kind))

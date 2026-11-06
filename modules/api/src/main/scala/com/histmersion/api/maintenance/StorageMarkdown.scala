@@ -15,8 +15,8 @@ object StorageMarkdown:
   def render(r: Storage.Report): List[com.histmersion.api.maintenance.StorageMarkdown.RenderResult] =
     if r.entries.isEmpty && !((r.measuring) == _root_.com.histmersion.api.maintenance.Storage.Report.Measuring(true)) && r.problems.isEmpty then Nil
     else
-      val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(s)} ago") ++
-        r.tookMillis.map(_.value.toLong).map(ms => s"took $ms ms") ++ Option.when(r.measuring)("measuring…")).mkString(", ")
+      val when = (r.ageSeconds.map(_.value.toLong).map(s => s"measured ${AboutMarkdown.age(_root_.com.histmersion.api.instance.AboutMarkdown.AgeSeconds(s))} ago") ++
+        r.tookMillis.map(_.value.toLong).map(ms => s"took $ms ms") ++ Option.when(((r.measuring) == _root_.com.histmersion.api.maintenance.Storage.Report.Measuring(true)))("measuring…")).mkString(", ")
       val head = s"## Storage" + (if r.entries.nonEmpty then s" — ${Backup.humanBytes(_root_.com.histmersion.api.backup.Backup.HumanBytesN(Storage.total(r.entries).value.toLong))} in all"
                                   else "") +
         (if when.nonEmpty then s" ($when)" else "")

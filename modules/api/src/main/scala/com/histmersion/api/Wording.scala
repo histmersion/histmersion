@@ -167,7 +167,7 @@ object Wording:
   def manager(id: com.histmersion.api.Wording.ManagerId): com.histmersion.api.Wording.ManagerResult =
     val (kind, rest) = (id).value.span(_ != ':')
     Manager.Kind
-      .parse(kind)
+      .parse(_root_.com.histmersion.api.automation.Manager.Kind.ParseS(kind))
       .fold(humanize(id))(k =>
         managerKind(k) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(g)}")
       )

@@ -22,4 +22,4 @@ object Plural:
   def noun(n: com.histmersion.api.Plural.NounN, singular: com.histmersion.api.Plural.NounSingular, plural: com.histmersion.api.Plural.NounPlural = _root_.com.histmersion.api.Plural.NounPlural("")): com.histmersion.api.Plural.NounResult =
     if n == 1 then singular else if (plural).value.nonEmpty then plural else _root_.com.histmersion.api.Plural.NounResult((singular).value + "s")
 
-  def count(n: com.histmersion.api.Plural.CountN, singular: com.histmersion.api.Plural.CountSingular, plural: com.histmersion.api.Plural.CountPlural = _root_.com.histmersion.api.Plural.CountPlural("")): com.histmersion.api.Plural.CountResult = s"$n ${noun(n, singular, plural)}"
+  def count(n: com.histmersion.api.Plural.CountN, singular: com.histmersion.api.Plural.CountSingular, plural: com.histmersion.api.Plural.CountPlural = _root_.com.histmersion.api.Plural.CountPlural("")): com.histmersion.api.Plural.CountResult = _root_.com.histmersion.api.Plural.CountResult(s"$n ${noun(n, singular, plural)}")

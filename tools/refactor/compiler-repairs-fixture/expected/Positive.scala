@@ -9,6 +9,12 @@ object Positive:
   def unionMember(text: Values.Text): String = Option((text).value).getOrElse("").trim
   def produce(raw: String): Values.Text = _root_.compilerfixture.Values.Text(raw)
   def consume(text: Values.Text): String = (text).value
+  def nestedLiteral: String = List(consume(_root_.compilerfixture.Values.Text("inside"))).mkString
+  private def countValue(n: Values.Count): Int = n.value
+  def nestedNumber: String = List(countValue(_root_.compilerfixture.Values.Count(7))).mkString
+  def guarded(value: Option[Boolean]): String = value match
+    case Some(_) if consume(_root_.compilerfixture.Values.Text("guard")).nonEmpty => consume(_root_.compilerfixture.Values.Text("body"))
+    case _ => "empty"
   def number: Values.Count = _root_.compilerfixture.Values.Count(7)
   def upper(text: Values.Text): String = (text).value.toUpperCase(java.util.Locale.ROOT)
   def output(stream: java.io.PrintStream, text: Values.Text): Unit = stream.print((text).value)
@@ -17,6 +23,9 @@ object Positive:
   def optional(raw: String): Option[Values.Text] = Option(_root_.compilerfixture.Values.Text(raw))
   def pattern(values: List[Values.Text]): Boolean = values match
     case refactorPattern :: _ if (refactorPattern.value == "resolve") => true
+    case _ => false
+  def conditioned(values: List[Values.Text]): Boolean = values match
+    case refactorPattern2 :: tail if (refactorPattern2.value == "resolve") && (tail.exists((text: Values.Text) => (text).value.nonEmpty)) => true
     case _ => false
   def texts(values: List[String]): List[Values.Text] = (values).map(refactorValue => _root_.compilerfixture.Values.Text(refactorValue))
   def maybe(value: Option[String]): Option[Values.Text] = (value).map(refactorValue2 => _root_.compilerfixture.Values.Text(refactorValue2))

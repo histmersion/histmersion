@@ -51,7 +51,7 @@ object MergeResolutions:
             val arg = (k, i.suggested) match
               case (_, Some(s)) if s.kind == k && s.argument.isDefined => s":${s.argument.get}"
               case (MergeDecision.Kind.Map, _) => s":${i.left.map(_.label).getOrElse("<citekey>")}"
-              case _ if k.takesArgument        => ":<value>"
+              case _ if ((k.takesArgument) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.TakesArgumentResult(true))        => ":<value>"
               case _                           => ""
             MergeDecision.Kind.wireOf(k) + arg
           }

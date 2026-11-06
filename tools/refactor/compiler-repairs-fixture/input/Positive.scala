@@ -9,6 +9,12 @@ object Positive:
   def unionMember(text: Values.Text): String = Option(text).getOrElse("").trim
   def produce(raw: String): Values.Text = raw
   def consume(text: Values.Text): String = text
+  def nestedLiteral: String = List(consume("inside")).mkString
+  private def countValue(n: Values.Count): Int = n.value
+  def nestedNumber: String = List(countValue(7)).mkString
+  def guarded(value: Option[Boolean]): String = value match
+    case Some(_) if consume("guard").nonEmpty => consume("body")
+    case _ => "empty"
   def number: Values.Count = 7
   def upper(text: Values.Text): String = text.toUpperCase(java.util.Locale.ROOT)
   def output(stream: java.io.PrintStream, text: Values.Text): Unit = stream.print(text)
@@ -17,6 +23,9 @@ object Positive:
   def optional(raw: String): Option[Values.Text] = Option(raw)
   def pattern(values: List[Values.Text]): Boolean = values match
     case "resolve" :: _ => true
+    case _ => false
+  def conditioned(values: List[Values.Text]): Boolean = values match
+    case "resolve" :: tail if tail.exists((text: Values.Text) => text.nonEmpty) => true
     case _ => false
   def texts(values: List[String]): List[Values.Text] = values
   def maybe(value: Option[String]): Option[Values.Text] = value

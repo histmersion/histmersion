@@ -98,12 +98,12 @@ object Storage:
   def withHints(r: Storage.Report): Storage.Report = r.modify(_.hints).setTo(hints(r))
 
   def details(r: Storage.Report, e: Storage.Entry): List[com.histmersion.api.maintenance.Storage.DetailsResult] =
-    val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Plural.count(n, "file")).toList
+    val files = e.files.map(_.value.toLong).filter(_ => e.bytes.map(_.value.toLong).isDefined && e.path.isDefined).map(n => Plural.count(_root_.com.histmersion.api.Plural.NounN(n), _root_.com.histmersion.api.Plural.NounSingular("file"))).toList
     val extra = e.key match
       case "backups" =>
         r.backups
           .map(b =>
-            Plural.count(b.count, "archive") + b.newest.fold("")(n => s", newest $n") +
+            Plural.count(b.count, _root_.com.histmersion.api.Plural.NounSingular("archive")) + b.newest.fold("")(n => s", newest $n") +
               s", keeps ${if b.keep > 0 then b.keep.toString else "every one"}"
           )
           .toList

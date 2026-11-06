@@ -236,7 +236,7 @@ object Acquire:
       force: com.histmersion.api.library.Acquire.StatusDecisionForce
   ): Option[Either[com.histmersion.api.library.Source.Status, com.histmersion.api.library.Source.Status]] =
     statusFor(verdict).map { target =>
-      if target == com.histmersion.api.library.Source.Status.Retracted || force || current == com.histmersion.api.library.Source.Status.Unassessed || current == target
+      if target == com.histmersion.api.library.Source.Status.Retracted || ((force) == _root_.com.histmersion.api.library.Acquire.StatusDecisionForce(true)) || current == com.histmersion.api.library.Source.Status.Unassessed || current == target
       then Right(target)
       else Left(current)
     }

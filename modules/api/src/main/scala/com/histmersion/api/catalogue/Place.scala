@@ -145,7 +145,7 @@ object Place:
 
     /** The precision of the point of place `placeId`. */
     def of(placeId: com.histmersion.api.catalogue.Place.Precision.OfPlaceId, lon: com.histmersion.api.catalogue.Place.Precision.OfLon, lat: com.histmersion.api.catalogue.Place.Precision.OfLat): Precision =
-      if (placeId).value.startsWith("pleiades_") && gridCentre(lon, lat) then GridCell else Stated
+      if (placeId).value.startsWith("pleiades_") && ((gridCentre(lon, lat)) == _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreResult(true)) then GridCell else Stated
 
     /** What a place says about a grid-cell point ("location: approximate (atlas grid square)" on a card). */
     val Approximate: com.histmersion.api.catalogue.Place.Precision.Approximate = _root_.com.histmersion.api.catalogue.Place.Precision.Approximate("approximate (atlas grid square)")
@@ -215,7 +215,7 @@ object Place:
 
     def shapeNote: Option[com.histmersion.api.catalogue.Place.Card.ShapeNoteResult] =
       Option
-        .when(pointOnlyArea)(Shape.NoBoundaryNote)
+        .when(((pointOnlyArea) == _root_.com.histmersion.api.catalogue.Place.Card.PointOnlyAreaResult(true)))(Shape.NoBoundaryNote)
         .orElse(Option.when(geometry.isDefined && Shape.isPeople(place.kind))(Shape.PeopleNote))
 
     def locationNote: Option[com.histmersion.api.catalogue.Place.Card.LocationNoteResult] =
@@ -1143,7 +1143,7 @@ object Place:
     def isArea(kind: com.histmersion.api.catalogue.Place.Shape.IsAreaKind): com.histmersion.api.catalogue.Place.Shape.IsAreaResult =
       _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind(com.histmersion.api.catalogue.Place.Kind.Polity))
 
-    def pointOnlyArea(kind: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind, hasBoundary: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary): com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult = isArea(kind) && !hasBoundary
+    def pointOnlyArea(kind: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind, hasBoundary: com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary): com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaResult = ((isArea(kind)) == _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaResult(true)) && !((hasBoundary) == _root_.com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaHasBoundary(true))
 
     val NoBoundaryNote: com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote = "point only — boundary not yet available"
 

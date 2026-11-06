@@ -544,7 +544,7 @@ object Api:
     object Chars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val sourceView: PublicEndpoint[SourceViewQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.SourceViewPart3, Any] =
-    endpoint.get
+    (endpoint.get
       .in("api" / "sources" / path[String]("citekey") / "view")
       .in(query[Boolean]("fullText").default(false))
       .in(query[Option[String]]("section"))
@@ -554,7 +554,7 @@ object Api:
       .mapInTo[SourceViewQuery]
       .errorOut(statusCode(StatusCode.NotFound))
       .errorOut(jsonBody[com.histmersion.api.Api.Error])
-      .out(stringBody)
+      .out(stringBody)).mapOut[_root_.com.histmersion.api.Api.SourceViewPart3]((refactorDecoded: _root_.java.lang.String) => _root_.com.histmersion.api.Api.SourceViewPart3(refactorDecoded))((refactorEncoded: _root_.com.histmersion.api.Api.SourceViewPart3) => (refactorEncoded).value)
 
   final case class PassagesQuery(
       citekey: com.histmersion.api.library.Citekey,
@@ -783,7 +783,7 @@ object Api:
       .out(stringBody)).mapIn[_root_.com.histmersion.api.Api.ExportSourcePart1]((refactorDecoded16: _root_.java.lang.String) => _root_.com.histmersion.api.Api.ExportSourcePart1(refactorDecoded16))((refactorEncoded16: _root_.com.histmersion.api.Api.ExportSourcePart1) => (refactorEncoded16).value).mapOut[_root_.com.histmersion.api.Api.ExportSourcePart3]((refactorDecoded17: _root_.java.lang.String) => _root_.com.histmersion.api.Api.ExportSourcePart3(refactorDecoded17))((refactorEncoded17: _root_.com.histmersion.api.Api.ExportSourcePart3) => (refactorEncoded17).value)
 
   lazy val citekeys: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[com.histmersion.api.Api.CitekeysPart3], Any] =
-    base.get.in("citekeys").out(jsonBody[List[String]])
+    (base.get.in("citekeys").out(jsonBody[List[String]])).mapOut[_root_.scala.List[_root_.com.histmersion.api.Api.CitekeysPart3]]((refactorDecoded2: _root_.scala.List[_root_.java.lang.String]) => (refactorDecoded2).map(refactorElement => _root_.com.histmersion.api.Api.CitekeysPart3(refactorElement)))((refactorEncoded2: _root_.scala.List[_root_.com.histmersion.api.Api.CitekeysPart3]) => (refactorEncoded2).map(refactorElement2 => (refactorElement2).value))
 
   lazy val resolveEdges: PublicEndpoint[Unit, com.histmersion.api.Api.Error, EdgesResolved, Any] =
     writeBase.post.in("edges" / "resolve").out(jsonBody[EdgesResolved])
@@ -997,7 +997,7 @@ object Api:
       .out(jsonBody[Article.VersionFull])).mapIn[(_root_.com.histmersion.api.Api.ArticleVersionPart1Part1, _root_.com.histmersion.api.Api.ArticleVersionPart1Part2)]((refactorDecoded149: (_root_.java.lang.String, _root_.scala.Long)) => (_root_.com.histmersion.api.Api.ArticleVersionPart1Part1((refactorDecoded149)._1), _root_.com.histmersion.api.Api.ArticleVersionPart1Part2((refactorDecoded149)._2)))((refactorEncoded149: (_root_.com.histmersion.api.Api.ArticleVersionPart1Part1, _root_.com.histmersion.api.Api.ArticleVersionPart1Part2)) => (((refactorEncoded149)._1).value, ((refactorEncoded149)._2).value))
 
   lazy val articleSlugs: PublicEndpoint[Unit, com.histmersion.api.Api.Error, List[com.histmersion.api.Api.ArticleSlugsPart3], Any] =
-    base.get.in("article-slugs").out(jsonBody[List[String]])
+    (base.get.in("article-slugs").out(jsonBody[List[String]])).mapOut[_root_.scala.List[_root_.com.histmersion.api.Api.ArticleSlugsPart3]]((refactorDecoded28: _root_.scala.List[_root_.java.lang.String]) => (refactorDecoded28).map(refactorElement17 => _root_.com.histmersion.api.Api.ArticleSlugsPart3(refactorElement17)))((refactorEncoded28: _root_.scala.List[_root_.com.histmersion.api.Api.ArticleSlugsPart3]) => (refactorEncoded28).map(refactorElement18 => (refactorElement18).value))
 
   // lazy: [[EventsApi]] builds on this object's inputs, so the list waits until both exist
   lazy val all: List[AnyEndpoint] = List(
@@ -1198,7 +1198,7 @@ object Api:
     object Pick extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.PlacesGeoPart3, Any] =
-    base.get
+    (base.get
       .in("places" / "geo")
       .in(
         query[Option[String]]("kind")
@@ -1209,7 +1209,7 @@ object Api:
           .and(query[Option[String]]("pick"))
           .mapTo[PlacesGeoQuery]
       )
-      .out(stringBody)
+      .out(stringBody)).mapOut[_root_.com.histmersion.api.Api.PlacesGeoPart3]((refactorDecoded14: _root_.java.lang.String) => _root_.com.histmersion.api.Api.PlacesGeoPart3(refactorDecoded14))((refactorEncoded14: _root_.com.histmersion.api.Api.PlacesGeoPart3) => (refactorEncoded14).value)
 
   lazy val placeChildren
       : PublicEndpoint[(com.histmersion.api.Api.PlaceChildrenPart1Part1, Option[com.histmersion.api.Api.PlaceChildrenPart1Part2]), com.histmersion.api.Api.Error, List[Place.Summary], Any] =
@@ -1662,10 +1662,10 @@ object Api:
       .errorOut(
         oneOf[com.histmersion.api.Api.Error](
           oneOfVariantValueMatcher(StatusCode.NotFound, jsonBody[com.histmersion.api.Api.Error])(
-            com.histmersion.api.Api.Error.hasCode(Write.CodeNotFound)
+            com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(Write.CodeNotFound))
           ),
           oneOfVariantValueMatcher(StatusCode.Conflict, jsonBody[com.histmersion.api.Api.Error])(
-            com.histmersion.api.Api.Error.hasCode(JobActions.CodeConflict)
+            com.histmersion.api.Api.Error.hasCode(_root_.com.histmersion.api.Api.Error.HasCodeCode(JobActions.CodeConflict))
           ),
           oneOfDefaultVariant(statusCode(StatusCode.BadRequest).and(jsonBody[com.histmersion.api.Api.Error]))
         )
@@ -1988,7 +1988,7 @@ object Api:
       val order = List("GET", "POST", "PUT", "PATCH", "DELETE")
       val byPath = endpoints.groupBy(path).view.mapValues(_.map(method).distinct.sortBy(m => order.indexOf(m))).toMap
       val rows = byPath.keys.toList.sorted.map(p => s"| ${byPath(p).map(m => s"`$m`").mkString(" · ")} | `$p` |")
-      (s"${Plural.count(endpoints.size, "endpoint")} on ${Plural.count(byPath.size, "path")}:" ::
+      (s"${Plural.count(_root_.com.histmersion.api.Plural.NounN((endpoints.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("endpoint"))} on ${Plural.count(_root_.com.histmersion.api.Plural.NounN((byPath.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("path"))}:" ::
         "" :: "| methods | path |" :: "|---|---|" :: rows).mkString("\n")
 
     val Page = "docs/user-guide/reference/rest-api.md"

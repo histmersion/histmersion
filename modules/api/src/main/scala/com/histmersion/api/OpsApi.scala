@@ -112,7 +112,7 @@ object OpsApi:
 
   /** Under `export/` rather than `goals/` so it is never read as a goal slug. */
   lazy val goalsExport: PublicEndpoint[Unit, Api.Error, com.histmersion.api.OpsApi.GoalsExportPart3, Any] =
-    base.get.in("export" / "goals").out(stringBody)
+    (base.get.in("export" / "goals").out(stringBody)).mapOut[_root_.com.histmersion.api.OpsApi.GoalsExportPart3]((refactorDecoded2: _root_.java.lang.String) => _root_.com.histmersion.api.OpsApi.GoalsExportPart3(refactorDecoded2))((refactorEncoded2: _root_.com.histmersion.api.OpsApi.GoalsExportPart3) => (refactorEncoded2).value)
 
   lazy val query: PublicEndpoint[QueryRequest, Api.Error, QueryResult, Any] =
     base.post.in("query").in(jsonBody[QueryRequest]).out(jsonBody[QueryResult])

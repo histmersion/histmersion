@@ -291,7 +291,7 @@ object Tree:
       asOf,
       clamp(depth),
       samples,
-      (mine, _) => timeTime(mine, lo, hi, 1, samples),
+      (mine, _) => timeTime(mine, lo, hi, _root_.com.histmersion.api.library.Tree.ClampDepth(1), samples),
       root
     )._1
 
@@ -308,7 +308,7 @@ object Tree:
     val byId = nodes.iterator.map(n => n.id -> n).toMap
     def live(id: com.histmersion.api.library.Tree.RegionsLiveId) = byId.get(id).exists(n => coversAsOf(n.period, asOf))
     val edges = relations.filter(r =>
-      r.kind == _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf) && coversAsOf(r.period, asOf) && live(r.childId) && live(r.parentId)
+      r.kind == _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf) && ((coversAsOf(r.period, asOf)) == _root_.com.histmersion.api.library.Tree.CoversAsOfResult(true)) && live(r.childId) && live(r.parentId)
     )
     val kidsOf = edges.groupMap(_.parentId)(_.childId).view.mapValues(_.distinct).toMap
     val parents = edges.groupMap(_.childId)(_.parentId).view.mapValues(_.distinct).toMap
@@ -365,8 +365,8 @@ object Tree:
       case Some(id) => List(id)
       case None     =>
         byId.values.iterator
-          .filter(n => coversAsOf(n.period, asOf) && parents.getOrElse(n.id, Nil).isEmpty)
-          .filter(RegionNode.rootEligible)
+          .filter(n => ((coversAsOf(n.period, asOf)) == _root_.com.histmersion.api.library.Tree.CoversAsOfResult(true)) && parents.getOrElse(n.id, Nil).isEmpty)
+          .filter(((RegionNode.rootEligible) == _root_.com.histmersion.api.catalogue.RegionNode.RootEligibleResult(true)))
           .map(_.id)
           .toList
     val located = level(rootIds, Set.empty, depth)
@@ -403,7 +403,7 @@ object Tree:
 
   private def sampleOf(rows: List[TreeRow], n: com.histmersion.api.library.Tree.SampleOfN): List[Bucket.Sample] =
     if n <= 0 then Nil
-    else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take(n).toList
+    else rows.iterator.map(r => Bucket.Sample(r.citekey, r.title)).distinctBy(_.citekey).take((n).value).toList
 
   private def clamp(depth: com.histmersion.api.library.Tree.ClampDepth): com.histmersion.api.library.Tree.ClampResult = (depth).value.max(1).min(MaxDepth)
   private def order(a: com.histmersion.api.library.Tree.OrderA, b: com.histmersion.api.library.Tree.OrderB): (com.histmersion.api.library.Tree.OrderResultPart1, com.histmersion.api.library.Tree.OrderResultPart2) = if a <= b then (a, b) else (b, a)

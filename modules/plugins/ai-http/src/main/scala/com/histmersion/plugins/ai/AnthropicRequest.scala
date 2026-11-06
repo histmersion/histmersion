@@ -101,7 +101,7 @@ object AnthropicRequest:
     calls match
       case Nil                       => Right(acc.reverse)
       case (id, name, input) :: tail =>
-        parse(input).flatMap(_.as[Map[String, Json]]) match
+        parse((input).value).flatMap(_.as[Map[String, Json]]) match
           case Left(e)  => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
           case Right(m) =>
             val use = Json.obj(

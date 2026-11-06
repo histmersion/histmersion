@@ -39,4 +39,4 @@ object Shell:
         if result.exit == 0 then Right(result.out)
         else Left(s"${cmd.head} exited ${result.exit}: ${result.err.trim.take(400)}")
       )
-    def isRunning(processMatch: com.histmersion.plugins.calibre.Shell.SystemIsRunningProcessMatch): com.histmersion.plugins.calibre.Shell.SystemIsRunningResult = run(List("pgrep", "-f", processMatch)).exists(_.trim.nonEmpty)
+    def isRunning(processMatch: com.histmersion.plugins.calibre.Shell.SystemIsRunningProcessMatch): com.histmersion.plugins.calibre.Shell.SystemIsRunningResult = run(List(_root_.com.histmersion.plugins.calibre.Shell.SystemRunCmd("pgrep"), _root_.com.histmersion.plugins.calibre.Shell.SystemRunCmd("-f"), processMatch)).exists(_.trim.nonEmpty)

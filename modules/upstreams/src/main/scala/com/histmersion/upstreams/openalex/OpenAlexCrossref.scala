@@ -25,8 +25,8 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .json(
         Url(
           cfg.openalex.url,
-          "/works",
-          "search" -> query,
+          _root_.com.histmersion.upstreams.http.Url.ApplyPath("/works"),
+          "search" -> (query).value,
           "per-page" -> math.max(1, math.min((limit).value, 50)).toString,
           "sort" -> order,
           "filter" -> s"from_publication_date:$from-01-01,type:article|book|book-chapter",
@@ -58,7 +58,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
       .json(
         Url(
           cfg.crossref.url,
-          "/works",
+          _root_.com.histmersion.upstreams.http.Url.ApplyPath("/works"),
           (List(
             "query" -> query,
             "rows" -> math.max(1, math.min((limit).value, 50)).toString,
@@ -86,7 +86,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
   /** Fallback: resolve OpenAlex `referenced_works` ids to titles, 50 at a time. */
   private def openalexReferences(doi: com.histmersion.upstreams.openalex.OpenAlexCrossref.OpenalexReferencesDoi): Either[com.histmersion.upstreams.openalex.OpenAlexCrossref.OpenalexReferencesResultPart1, List[RefRow]] =
     http
-      .json(Url(WorkLookup.workUrl(cfg, doi), "", "select" -> "referenced_works", mailto))
+      .json(Url(WorkLookup.workUrl(cfg, doi), _root_.com.histmersion.upstreams.http.Url.ApplyPath(""), "select" -> "referenced_works", mailto))
       .map(j => AcquireParse.openalexWork(j).referencedWorks.take(100))
       .map { ids =>
         ids.grouped(50).toList.flatMap { chunk =>

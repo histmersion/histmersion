@@ -190,16 +190,16 @@ object ManagersMarkdown:
       cfg.models.filter(_.nonEmpty).map(ms => s"models ${ms.map(_.text).mkString("; ")}"),
       cfg.budgetUsd.map(u => s"budget $u USD/run"),
       cfg.staleAfterDays.filter(_ > 0).map(n => s"stale after $n days"),
-      cfg.inferFilter.map(b => s"infer-filter ${if b then "on" else "off"}"),
+      cfg.inferFilter.map(b => s"infer-filter ${if ((b) == _root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter(true)) then "on" else "off"}"),
       cfg.minSources.map(n => s"min-sources $n"),
       cfg.maxArticles.map(n => s"max-articles $n"),
       cfg.sweeps.map(ws => s"sweeps ${if ws.isEmpty then "none" else ws.mkString(", ")}"),
       cfg.autoIngest.map(b =>
-        if b then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
+        if ((b) == _root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest(true)) then s"auto-ingest of legal open access on (at most ${cfg.autoIngestPerDay.getOrElse(0)} a day)"
         else "auto-ingest off"
       ),
       cfg.dailyUsd.filter(_ > 0).map(u => s"daily cap ${usd(u)} USD (metered spend; plan-billed runs count 0 USD)"),
-      cfg.autoApprove.map(b => if b then "its approvals decided by code checks" else "its approvals always a person's"),
+      cfg.autoApprove.map(b => if ((b) == _root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove(true)) then "its approvals decided by code checks" else "its approvals always a person's"),
       cfg.extendMinNew.filter(_ > 0).map(n => s"extend at $n new sources")
     ).flatten.mkString(" · ")
     val cron = m.cron.fold("")(c => s"\n- cron `$c` (UTC)" + m.nextTickAt.fold("")(t => s", next $t"))

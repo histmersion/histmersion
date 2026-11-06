@@ -60,15 +60,15 @@ object WikidataEntities:
           else
             val claims = e.downField("claims").focus.flatMap(_.asObject)
             def statementsOf(p: com.histmersion.upstreams.wikidata.WikidataEntities.ItemsStatementsOfP): List[WikidataStatement] =
-              claims.flatMap(_(p)).flatMap(_.asArray).toList.flatten.zipWithIndex.flatMap { (st, i) =>
+              claims.flatMap(_((p).value)).flatMap(_.asArray).toList.flatten.zipWithIndex.flatMap { (st, i) =>
                 val s = st.hcursor
                 val rank = s.get[String]("rank").getOrElse("normal")
                 val snak = s.downField("mainsnak")
                 val v = snak.downField("datavalue").get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
                 if rank == "deprecated" || snak.get[String]("snaktype").toOption.exists(_ != "value") then None
-                else v.map(WikidataStatement(p, _, rank == "preferred", i))
+                else v.map(WikidataStatement(p, _root_.com.histmersion.upstreams.wikidata.WikidataStatement.File(_), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.Preferred(rank == "preferred"), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.Order(i)))
               }
             val pictures = props.toList.sorted.flatMap(statementsOf)
-            val category = WikidataStatement.best(statementsOf(CommonsCategory), 1).headOption.map(_.file)
-            Some(key -> WikidataItem(key, pictures, category))
+            val category = WikidataStatement.best(statementsOf(_root_.com.histmersion.upstreams.wikidata.WikidataEntities.ItemsStatementsOfP(CommonsCategory)), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(1)).headOption.map(_.file)
+            Some(key -> WikidataItem(_root_.com.histmersion.upstreams.wikidata.WikidataItem.Id(key), pictures, category))
         }.toMap)

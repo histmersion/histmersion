@@ -52,7 +52,7 @@ object Vacuum:
     val tables = (if asked.isEmpty then defaults.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
                   else asked).distinct
     val shape = tables.filterNot(TableShape.matches)
-    val absent = tables.filterNot(existing.contains)
+    val absent = tables.filterNot(_root_.com.histmersion.api.maintenance.Vacuum.PlanExisting(existing).contains)
     if tables.isEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg("no table to vacuum: name one, or set maintenance.vacuum-tables")))
     else if shape.nonEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg(s"not a table name: ${shape.mkString(", ")}")))
     else if absent.nonEmpty then Left(invalid(_root_.com.histmersion.api.maintenance.Vacuum.InvalidMsg(s"no such table: ${absent.mkString(", ")}")))

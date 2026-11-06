@@ -12,7 +12,7 @@ object CitationLint:
   def danglingEdges(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: com.histmersion.api.library.CitationLint.DanglingEdgesMaxSuggestions): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.map(_.value.toString).contains(e.dst.value.toString))
-      .sortBy(e => (if looksLikeCitekey(e.dst.value.toString) then 0 else 1, e.src.value.toString, e.kind, e.dst.value.toString))
+      .sortBy(e => (if looksLikeCitekey(_root_.com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget(e.dst.value.toString)) then 0 else 1, e.src.value.toString, e.kind, e.dst.value.toString))
       .map { e =>
         val near = suggest(e.dst.value.toString, citekeys.map(_.value.toString), maxSuggestions)
         val what =
@@ -29,11 +29,11 @@ object CitationLint:
         val near = citekeys.map(_.value.toString).filter(ck => ck.startsWith(e.dst.value.toString + "_")).toList.sorted
         if near.isEmpty then None
         else
-          val shown = near.take(maxSuggestions)
+          val shown = near.take((maxSuggestions).value)
           val more = if near.sizeIs > shown.size then s", +${near.size - shown.size} more" else ""
           val verdict =
             if near.sizeIs == 1 then s"resolves to ${near.head} (fixable: lint --fix)"
             else s"ambiguous between ${shown.mkString(", ")}$more"
-          Some(LintItem(e.src.value.toString, s"${e.kind} → ${e.dst.value.toString} $verdict"))
+          Some(LintItem(e.src.value.toString, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"${e.kind} → ${e.dst.value.toString} $verdict")))
       }
       .sortBy(i => (i.citekey, i.detail))

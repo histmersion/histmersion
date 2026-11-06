@@ -80,7 +80,7 @@ object Palette:
   def status(status: com.histmersion.api.Palette.StatusStatus): com.histmersion.api.Palette.StatusResult = token(_root_.com.histmersion.api.Palette.TokenFamily("status"), statuses, status)
 
   def goalStage(stage: com.histmersion.api.Palette.GoalStageStage): com.histmersion.api.Palette.GoalStageResult = _root_.com.histmersion.api.Palette.GoalStageResult(s"--stage-${(stage).value.trim.toLowerCase}")
-  def goalStageSoft(stage: com.histmersion.api.Palette.GoalStageSoftStage): com.histmersion.api.Palette.GoalStageSoftResult = s"${goalStage(stage)}-soft"
+  def goalStageSoft(stage: com.histmersion.api.Palette.GoalStageSoftStage): com.histmersion.api.Palette.GoalStageSoftResult = _root_.com.histmersion.api.Palette.GoalStageSoftResult(s"${goalStage(stage)}-soft")
   def media(kind: com.histmersion.api.Palette.MediaKind): com.histmersion.api.Palette.MediaResult = token(_root_.com.histmersion.api.Palette.TokenFamily("media"), mediaKinds, kind)
   def confidence(level: com.histmersion.api.Palette.ConfidenceLevel): com.histmersion.api.Palette.ConfidenceResult = _root_.com.histmersion.api.Palette.ConfidenceResult(s"--conf-$level")
 

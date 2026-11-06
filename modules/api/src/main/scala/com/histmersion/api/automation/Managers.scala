@@ -309,16 +309,16 @@ object Managers:
                 case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MinSources(n))))
                 case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles(n))))
                 case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(n))))
-                case "inferFilter" | "infer-filter"               => bool(k, v).map(b => c.copy(inferFilter = Some(b)))
-                case "autoIngest" | "auto-ingest"                 => bool(k, v).map(b => c.copy(autoIngest = Some(b)))
-                case "autoApprove" | "auto-approve"               => bool(k, v).map(b => c.copy(autoApprove = Some(b)))
+                case "inferFilter" | "infer-filter"               => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(inferFilter = Some(b)))
+                case "autoIngest" | "auto-ingest"                 => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoIngest = Some(b)))
+                case "autoApprove" | "auto-approve"               => bool(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolK(k), _root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolV(v)).map(b => c.copy(autoApprove = Some(b)))
                 case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(n))))
                 case "sweeps"                                     =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
-                  ws.find(w => Sweep.parse(w).isEmpty) match
+                  ws.find(w => Sweep.parse(_root_.com.histmersion.api.automation.Managers.Sweep.ParseS(w)).isEmpty) match
                     case Some(w) =>
                       Left(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})")
-                    case None => Right(c.copy(sweeps = Some(ws.flatMap(Sweep.parse).distinct.map(_.wire))))
+                    case None => Right(c.copy(sweeps = Some(ws.flatMap({ val refactorFunction = Sweep.parse; (refactorValue4) => refactorFunction(_root_.com.histmersion.api.automation.Managers.Sweep.ParseS(refactorValue4)) }).distinct.map(_.wire))))
                 case "dailyUsd" | "daily-usd" =>
                   v.toDoubleOption
                     .filter(_ >= 0)
@@ -338,7 +338,7 @@ object Managers:
                     .toList
                     .map(_.trim)
                     .filter(_.nonEmpty)
-                    .map(Agents.ModelOverride.parse)
+                    .map({ val refactorFunction2 = Agents.ModelOverride.parse; (refactorValue5) => refactorFunction2(_root_.com.histmersion.api.automation.Agents.ModelOverride.ParseS(refactorValue5)) })
                     .partitionMap(identity) match
                     case (Nil, ms) => Right(c.copy(models = Some(ms)))
                     case (errs, _) => Left(errs.mkString("; "))

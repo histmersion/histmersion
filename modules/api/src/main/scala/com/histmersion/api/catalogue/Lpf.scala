@@ -132,7 +132,7 @@ object Lpf:
       case Some(obj) =>
         obj("in")
           .flatMap(yearOf)
-          .orElse(obj(wide).flatMap(yearOf))
+          .orElse(obj((wide).value).flatMap(yearOf))
           .orElse(obj(narrow).flatMap(yearOf))
 
   def parseWhen(j: Json): Option[Span] =
@@ -215,7 +215,7 @@ object Lpf:
   private def readNames(f: JsonObject, props: JsonObject, label: com.histmersion.api.catalogue.Lpf.ReadNamesLabel): List[Place.Name] =
     val declared = f("names").orElse(props("names")).flatMap(_.asArray).map(_.toList).getOrElse(Nil).flatMap { n =>
       n.asString
-        .map(s => Place.Name(s.trim))
+        .map(s => Place.Name(_root_.com.histmersion.api.catalogue.Place.Name.Value(s.trim)))
         .orElse(n.asObject.flatMap { o =>
           str(o, "toponym", "name", "title", "label").map { t =>
             val (period, open) =
@@ -246,7 +246,7 @@ object Lpf:
       .flatMap(_.toList)
     val declared = arrays.flatMap { j =>
       j.asString
-        .map(p => Place.Relation(id, p.trim, Place.Relation.PartOf, None))
+        .map(p => Place.Relation(id, _root_.com.histmersion.api.catalogue.Place.Relation.ParentId(p.trim), _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf), None))
         .orElse(j.asObject.flatMap { o =>
           val pred = str(o, "relationType", "relation_type", "kind", "type").getOrElse("gvp:broaderPartitive")
           val kind = if PartOfPredicates.contains(pred.toLowerCase) then Place.Relation.PartOf else pred
@@ -328,7 +328,7 @@ object Lpf:
       json: com.histmersion.api.catalogue.Lpf.ParseJson,
       defaultKind: com.histmersion.api.catalogue.Lpf.ParseDefaultKind = _root_.com.histmersion.api.catalogue.Lpf.ParseDefaultKind(com.histmersion.api.catalogue.Place.Kind.Region)
   ): Either[com.histmersion.api.catalogue.Lpf.ParseResultPart1, List[Place.Input]] =
-    io.circe.parser.parse(json).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+    io.circe.parser.parse((json).value).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray
           .map(_.toList)

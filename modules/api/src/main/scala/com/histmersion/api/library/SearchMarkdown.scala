@@ -48,7 +48,7 @@ object SearchMarkdown:
     else
       val body = hits.map { h =>
         val reg = h.regions.map(Label.display).mkString(", ")
-        val meta = List(year(h.year.map(_.value.toInt)), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(year(h.year.map((refactorCallback => _root_.com.histmersion.api.Markdown.YearY(refactorCallback.value.toInt)))), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
         val per = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val summary = h.summary.map(s => s"\n  ${s.trim.take(240)}").getOrElse("")
@@ -62,7 +62,7 @@ object SearchMarkdown:
       val body = result.hits.map { hit =>
         val h = hit.source
         val reg = h.regions.map(Label.display).mkString(", ")
-        val meta = List(year(h.year.map(_.value.toInt)), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(year(h.year.map((refactorCallback => _root_.com.histmersion.api.Markdown.YearY(refactorCallback.value.toInt)))), h.status.wire, reg).filter(_.nonEmpty).mkString(" · ")
         val per = period(h.periodStart, h.periodEnd)
         val metaLine = if per.nonEmpty then s"$meta · $per" else meta
         val why = if hit.why.isEmpty then "" else s"\n  why: ${hit.why.mkString(" · ")}"
@@ -89,7 +89,7 @@ object SearchMarkdown:
       val body = result.hits.map { hit =>
         val h = hit.source
         val per = period(h.periodStart, h.periodEnd)
-        val meta = List(year(h.year.map(_.value.toInt)), h.status.wire, per).filter(_.nonEmpty).mkString(" · ")
+        val meta = List(year(h.year.map((refactorCallback => _root_.com.histmersion.api.Markdown.YearY(refactorCallback.value.toInt)))), h.status.wire, per).filter(_.nonEmpty).mkString(" · ")
         val why = hit.why.headOption.map(w => s" — $w").getOrElse("")
         s"- **${h.citekey}** — ${h.title}  \n  _${meta}_$why"
       }
@@ -181,7 +181,7 @@ object SearchMarkdown:
             case head :: tail if head.count == b.count =>
               head.copy(end = b.end, merged = head.merged + 1) :: tail
             case _ =>
-              CollapsedBucket(b.start, b.end, b.count, 1) :: acc
+              CollapsedBucket(b.start, b.end, b.count, _root_.com.histmersion.api.library.SearchMarkdown.CollapsedBucket.Merged(1)) :: acc
         }
         .reverse
       runs
@@ -194,7 +194,7 @@ object SearchMarkdown:
       val head = s"### $unit by ${h.by} · $span" + asOfNote(h.asOf)
       val note = s"_Counts are non-additive: each $one is counted in every bucket it overlaps, so " +
         "children never sum to their parent — \"N in more than one …\" is how many are double-counted._"
-      (List(head, "", treeLines(h.tree, unit, 0).mkString("\n"), "", note)).mkString("\n")
+      (List(head, "", treeLines(h.tree, unit, _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesDepth(0)).mkString("\n"), "", note)).mkString("\n")
 
   private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.SearchMarkdown.TreeLinesUnit, depth: com.histmersion.api.library.SearchMarkdown.TreeLinesDepth): List[com.histmersion.api.library.SearchMarkdown.TreeLinesResult] =
     val pad = "  " * (depth).value

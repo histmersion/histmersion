@@ -35,7 +35,7 @@ object AgentSchedulerMarkdown:
     val facts = List(
       Some(
         s.at.fold("- no pass yet")(t =>
-          s"- ${if s.dry then "what a pass would do now (nothing started)" else s"last pass $t"}"
+          s"- ${if ((s.dry) == _root_.com.histmersion.api.automation.AgentScheduler.SchedulerStatus.Dry(true)) then "what a pass would do now (nothing started)" else s"last pass $t"}"
         )
       ),
       s.stop.map(x => s"- **nothing starts: $x**"),
@@ -47,7 +47,7 @@ object AgentSchedulerMarkdown:
         "- plan pools: " + s.pools.map(p => s"${p.pool} ${p.used} of ${p.cap}").mkString(", ")
       ),
       Option.when(s.forPerson > 0)(
-        s"- ${Plural.count(s.forPerson, "item")} wait for a person (an approval or a hold): they hold no place"
+        s"- ${Plural.count(s.forPerson, _root_.com.histmersion.api.Plural.NounSingular("item"))} wait for a person (an approval or a hold): they hold no place"
       ),
       Option.when(s.settings.nonEmpty)("- " + s.settings.mkString(" · "))
     ).flatten

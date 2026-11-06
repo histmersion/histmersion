@@ -43,7 +43,7 @@ object AutopilotMarkdown:
     val lines = List(
       f.note.map(n => s"_${n}_"),
       Option.when(f.held > 0)(
-        s"${Plural.count(f.held, "model-using item")} held for the focus (nothing cancelled; runs in flight finish)"
+        s"${Plural.count(f.held, _root_.com.histmersion.api.Plural.NounSingular("model-using item"))} held for the focus (nothing cancelled; runs in flight finish)"
       ),
       Option.when(f.changes.nonEmpty)(s"Just now: ${f.changes.mkString("; ")}")
     ).flatten
@@ -52,7 +52,7 @@ object AutopilotMarkdown:
       else
         f.active.zipWithIndex
           .map { (g, i) =>
-            s"${i + 1}. **${g.slug}** _(${g.status}, ${g.stage})_${if g.pinned then " (pinned)" else ""} — ${g.why}" +
+            s"${i + 1}. **${g.slug}** _(${g.status}, ${g.stage})_${if ((g.pinned) == _root_.com.histmersion.api.automation.Autopilot.FocusGoal.Pinned(true)) then " (pinned)" else ""} — ${g.why}" +
               g.doing.fold("")(d => s"\n   - now: $d") + s"\n   - ${pace(g)}"
           }
           .mkString("\n")
@@ -64,7 +64,7 @@ object AutopilotMarkdown:
     val waits = f.waiting.groupBy(_.code).toList.sortBy(-_._2.size).map { (c, ws) =>
       s"- ${Plural.count(_root_.com.histmersion.api.Plural.CountN((ws.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("goal"))} $c: " + ws
         .take(5)
-        .map(w => s"${w.slug}${if w.pinned then " (pinned)" else ""}")
+        .map(w => s"${w.slug}${if ((w.pinned) == _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Pinned(true)) then " (pinned)" else ""}")
         .mkString(", ") +
         (if ws.size > 5 then ", …" else "") + ws.headOption.fold("")(w => s" — e.g. ${w.why.take(200)}")
     }
@@ -85,7 +85,7 @@ object AutopilotMarkdown:
       s.since.fold("")(t => s" (since $t${s.by.fold("")(b => s", by $b")})")
     val warn = List(
       s.drain.map(d =>
-        if d.drained then
+        if ((d.drained) == _root_.com.histmersion.api.automation.Autopilot.DrainInfo.Drained(true)) then
           s"DRAINED since ${d.drainedAt.getOrElse(d.since)} (draining since ${d.since}" +
             s"${
                 if d.by.nonEmpty then s" by ${d.by}" else ""
@@ -93,7 +93,7 @@ object AutopilotMarkdown:
             "`histmersion agent autopilot undrain` lifts it"
         else
           s"DRAINING since ${d.since}${if d.by.nonEmpty then s" by ${d.by}" else ""}: nothing new starts; " +
-            s"${Plural.count(d.inFlight, "run")} in flight still finishing"
+            s"${Plural.count(d.inFlight, _root_.com.histmersion.api.Plural.NounSingular("run"))} in flight still finishing"
       ),
       Option.when(!((s.agentsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true)))("agents are disabled on this server (agents.enabled = false): nothing runs"),
       Option.when(((s.agentsEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled(true)) && !((s.managersEnabled) == _root_.com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled(true)))(

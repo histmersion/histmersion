@@ -78,10 +78,10 @@ object ImageSize:
     else None
 
   private def u8(b: com.histmersion.api.media.ImageSize.U8B, i: com.histmersion.api.media.ImageSize.U8I): com.histmersion.api.media.ImageSize.U8Result = b(i) & 0xff
-  private def be16(b: com.histmersion.api.media.ImageSize.Be16B, i: com.histmersion.api.media.ImageSize.Be16I): com.histmersion.api.media.ImageSize.Be16Result = (u8(b, i) << 8) | u8(b, i + 1)
-  private def le16(b: com.histmersion.api.media.ImageSize.Le16B, i: com.histmersion.api.media.ImageSize.Le16I): com.histmersion.api.media.ImageSize.Le16Result = (u8(b, _root_.com.histmersion.api.media.ImageSize.U8I((i).value + 1)) << 8) | u8(b, i)
+  private def be16(b: com.histmersion.api.media.ImageSize.Be16B, i: com.histmersion.api.media.ImageSize.Be16I): com.histmersion.api.media.ImageSize.Be16Result = ((u8(b, i)).value << 8) | u8(b, i + 1)
+  private def le16(b: com.histmersion.api.media.ImageSize.Le16B, i: com.histmersion.api.media.ImageSize.Le16I): com.histmersion.api.media.ImageSize.Le16Result = ((u8(b, _root_.com.histmersion.api.media.ImageSize.U8I((i).value + 1))).value << 8) | u8(b, i)
   private def be32(b: com.histmersion.api.media.ImageSize.Be32B, i: com.histmersion.api.media.ImageSize.Be32I): com.histmersion.api.media.ImageSize.Be32Result =
-    (u8(b, i) << 24) | (u8(b, i + 1) << 16) | (u8(b, i + 2) << 8) | u8(b, i + 3)
+    ((u8(b, i)).value << 24) | (u8(b, i + 1) << 16) | (u8(b, i + 2) << 8) | u8(b, i + 3)
 
   private def png(b: com.histmersion.api.media.ImageSize.PngB): com.histmersion.api.media.ImageSize.PngResult =
     (b).value.length >= 24 && u8(b, _root_.com.histmersion.api.media.ImageSize.U8I(0)) == 0x89 && b(1) == 'P' && b(2) == 'N' && b(3) == 'G'
@@ -95,7 +95,7 @@ object ImageSize:
   private def gifSize(b: com.histmersion.api.media.ImageSize.GifSizeB): Option[(com.histmersion.api.media.ImageSize.GifSizeResultPart1, com.histmersion.api.media.ImageSize.GifSizeResultPart2)] = Some((le16(b, _root_.com.histmersion.api.media.ImageSize.Le16I(6)), le16(b, _root_.com.histmersion.api.media.ImageSize.Le16I(8))))
 
   private def jpeg(b: com.histmersion.api.media.ImageSize.JpegB): com.histmersion.api.media.ImageSize.JpegResult =
-    (b).value.length >= 4 && u8(b, _root_.com.histmersion.api.media.ImageSize.U8I(0)) == 0xff && u8(b, 1) == 0xd8
+    (b).value.length >= 4 && u8(b, _root_.com.histmersion.api.media.ImageSize.U8I(0)) == 0xff && u8(b, _root_.com.histmersion.api.media.ImageSize.U8I(1)) == 0xd8
 
   /** Walk the segment chain to the first SOFn frame header (height then width, 16-bit big-endian). SOF4/SOF8/SOF12 are
     * not frame headers (DHT / JPG / DAC) and must be skipped.

@@ -60,9 +60,9 @@ object AgentMode:
       object On extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def steps(autopilotOn: com.histmersion.api.automation.AgentMode.StepsAutopilotOn, draining: com.histmersion.api.automation.AgentMode.StepsDraining, to: AgentMode): List[Step] = to match
-    case Working   => Option.when(draining)(Step.Drain(false)).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))
-    case Finishing => Option.when(!(draining).value)(Step.Drain(true)).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))
-    case Paused    => Option.when(draining)(Step.Drain(false)).toList ++ Option.when(autopilotOn)(Step.Autopilot(false))
+    case Working   => Option.when(((draining) == _root_.com.histmersion.api.automation.AgentMode.StepsDraining(true)))(Step.Drain(_root_.com.histmersion.api.automation.AgentMode.Step.Drain.On(false))).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))
+    case Finishing => Option.when(!(draining).value)(Step.Drain(_root_.com.histmersion.api.automation.AgentMode.Step.Drain.On(true))).toList ++ Option.when(!autopilotOn)(Step.Autopilot(true))
+    case Paused    => Option.when(((draining) == _root_.com.histmersion.api.automation.AgentMode.StepsDraining(true)))(Step.Drain(_root_.com.histmersion.api.automation.AgentMode.Step.Drain.On(false))).toList ++ Option.when(autopilotOn)(Step.Autopilot(false))
 
   final case class ModeSet(mode: ModeSet.Mode, by: Option[ModeSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 

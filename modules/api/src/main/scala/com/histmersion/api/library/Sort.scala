@@ -34,7 +34,7 @@ object Sort:
   val all: List[com.histmersion.api.library.Sort.All] = values.toList.map(label)
 
   given CirceCodec[Sort] = CirceCodec.from(
-    Decoder.decodeString.emap(s => parse(s).toRight(s"unknown sort '$s' (${all.mkString("|")})")),
+    Decoder.decodeString.emap(s => parse(_root_.com.histmersion.api.library.Sort.ParseS(s)).toRight(s"unknown sort '$s' (${all.mkString("|")})")),
     Encoder.encodeString.contramap((label).value)
   )
   given Schema[Sort] = Schema.string[Sort]

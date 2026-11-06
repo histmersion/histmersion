@@ -42,7 +42,7 @@ object IngestMarkdown:
       j.detail
         .filter(SkippedPeriod.SkippedCount.of(_) > 0)
         .map(d =>
-          s"- **skipped:** ${Plural.count(SkippedPeriod.SkippedCount.of(d), "period definition")} (not imported)" +
+          s"- **skipped:** ${Plural.count(SkippedPeriod.SkippedCount.of(d), _root_.com.histmersion.api.Plural.NounSingular("period definition"))} (not imported)" +
             (if SkippedPeriod.Skipped.of(d).isEmpty then ""
              else
                "\n" + PeriodsMarkdown
@@ -68,7 +68,7 @@ object IngestMarkdown:
           s"${j.progress.getOrElse("")}${j.error.map(e => s" — $e").getOrElse("")} |"
       )
       val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetLineLabel("By kind"), page.facet(_root_.com.histmersion.api.Paging.Page.FacetName("kind")))
-      (List(s"### ${Paging.heading(js.size, page.total, "job", qualifier = status)}", "") ++
+      (List(s"### ${Paging.heading(_root_.com.histmersion.api.Paging.HeadingShown(js.size), page.total, _root_.com.histmersion.api.Paging.HeadingSingular("job"), qualifier = status)}", "") ++
         Option.when(kinds.nonEmpty)(List(kinds, "")).toList.flatten ++
         List("| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o =>
           List("", o)

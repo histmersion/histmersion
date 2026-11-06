@@ -38,8 +38,8 @@ object InitPlan:
 
   def describe(p: InitPlan): com.histmersion.api.exchange.InitPlan.DescribeResult =
     val bundled = List(
-      Option.when(p.gazetteer)("bundled gazetteer"),
-      Option.when(p.periodPresets)("bundled period presets")
+      Option.when(((p.gazetteer) == _root_.com.histmersion.api.exchange.InitPlan.Gazetteer(true)))("bundled gazetteer"),
+      Option.when(((p.periodPresets) == _root_.com.histmersion.api.exchange.InitPlan.PeriodPresets(true)))("bundled period presets")
     ).flatten
     val fetched =
       Option.when(p.fetch.nonEmpty)(s"${if (p.check).value then "dry run of" else "fetch"} ${p.fetch.mkString(", ")}")

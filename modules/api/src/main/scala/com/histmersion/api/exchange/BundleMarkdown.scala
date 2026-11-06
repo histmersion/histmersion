@@ -47,14 +47,14 @@ object BundleMarkdown:
     val scope = m.since.fold("everything")(s => s"changes after $s")
     List(
       s"**Bundle** ${m.bundleId} · from ${who(m.instance)} · format ${m.formatVersion} · schema V${m.schemaVersion}",
-      s"$scope · as of ${m.asOf.getOrElse("—")} · ${Plural.count(m.blobs.count, "blob")} (${bytes(m.blobs.bytes)})",
+      s"$scope · as of ${m.asOf.getOrElse("—")} · ${Plural.count(m.blobs.count, _root_.com.histmersion.api.Plural.NounSingular("blob"))} (${bytes(m.blobs.bytes)})",
       if files.isEmpty then "_(no records)_" else ("| records | lines |" :: "|---|---:|" :: files).mkString("\n")
     ).mkString("\n\n")
 
   def verify(r: Bundle.VerifyResult): com.histmersion.api.exchange.BundleMarkdown.VerifyResult =
     val head = if ((r.ok) == _root_.com.histmersion.api.exchange.Bundle.VerifyResult.Ok(true)) then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, _root_.com.histmersion.api.Plural.CountSingular("blob"))} verified"
     else s"**NOT OK** — ${Plural.count(_root_.com.histmersion.api.Plural.CountN((r.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}"
-    (head :: r.manifest.map(manifest).toList ++ problems("Problems", r.problems)).mkString("\n\n")
+    (head :: r.manifest.map(manifest).toList ++ problems(_root_.com.histmersion.api.exchange.BundleMarkdown.ProblemsTitle("Problems"), r.problems)).mkString("\n\n")
 
   def importResult(r: Bundle.ImportResult): com.histmersion.api.exchange.BundleMarkdown.ImportResultResult =
     val verb =
@@ -83,7 +83,7 @@ object BundleMarkdown:
               .mkString("\n")
         )
     (s"$verb · bundle ${r.bundleId} from ${who(r.from)}" :: table ++
-      problems("Problems (fix these, then import again)", r.problems) ++ issues ++
+      problems(_root_.com.histmersion.api.exchange.BundleMarkdown.ProblemsTitle("Problems (fix these, then import again)"), r.problems) ++ issues ++
       problems("Conflicts (changed on both sides; decided by a resolution)", r.conflicts) ++
       problems("Notes", r.notes)).mkString("\n\n")
 

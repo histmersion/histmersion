@@ -154,7 +154,7 @@ object CritiquePairing:
     case Strong, Weak, Conflict
 
   private def mention(text: com.histmersion.api.research.CritiquePairing.MentionText, name: com.histmersion.api.research.CritiquePairing.MentionName, year: Option[com.histmersion.api.research.CritiquePairing.MentionYear]): Option[Mention] =
-    val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote(name) + "(?!\\p{L})").r
+    val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r
     val ms = re.findAllMatchIn(text).toList
     if ms.isEmpty then None
     else
@@ -216,7 +216,7 @@ object CritiquePairing:
     }
 
   def repair(body: com.histmersion.api.research.CritiquePairing.RepairBody, hs: List[Hit]): (com.histmersion.api.research.CritiquePairing.RepairResultPart1, List[Hit]) =
-    val todo = hs.filter(_.mechanical).groupBy(h => (h.from, h.to))
+    val todo = hs.filter((refactorCallback => ((refactorCallback.mechanical) == _root_.com.histmersion.api.research.CritiquePairing.Hit.Mechanical(true)))).groupBy(h => (h.from, h.to))
     if todo.isEmpty then (body, Nil)
     else
       val crlf = (body).value.contains("\r\n")
@@ -264,7 +264,7 @@ object CritiquePairing:
       val k = (t).value.trim.toLowerCase(java.util.Locale.ROOT)
       if citekeys(_root_.com.histmersion.api.research.CritiquePairing.ResolverCitekeys(k)) then Some(_root_.com.histmersion.api.research.CritiquePairing.ResolverResultResult(k))
       else
-        aliases.get(k).filter(citekeys).orElse {
+        aliases.get(_root_.com.histmersion.api.research.CritiquePairing.ResolverAliasesPart1(k)).filter(citekeys).orElse {
           val pre = sorted.filter(_.startsWith(k + "_"))
           Option.when(pre.size == 1)(pre.head)
         }

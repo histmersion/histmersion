@@ -29,8 +29,20 @@ object WireEndpoints:
     factories += 1
     endpoint.in(path[String]("id")).errorOut(stringBody).out(stringBody)
   def factory(): PublicEndpoint[WireValues.Text, WireValues.Failure, WireValues.Text, Any] = rawFactory()
+  val outputOnly: PublicEndpoint[Unit, Unit, WireValues.Text, Any] = endpoint.out(stringBody)
+  val errorOnly: PublicEndpoint[Unit, WireValues.Failure, Unit, Any] = endpoint.errorOut(stringBody)
+  val listOnly: PublicEndpoint[Unit, Unit, List[WireValues.Text], Any] = endpoint.out(stringBody.map(_.split(",").toList)(_.mkString(",")))
 
   def check(): Unit =
+    val singleOut = outputOnly.output.asInstanceOf[EndpointOutput.MappedPair[?, ?, String, WireValues.Text]].mapping
+    val singleError = errorOnly.errorOutput.asInstanceOf[EndpointOutput.MappedPair[?, ?, String, WireValues.Failure]].mapping
+    val listOut = listOnly.output.asInstanceOf[EndpointOutput.MappedPair[?, ?, List[String], List[WireValues.Text]]].mapping
+    assert(singleOut.decode("") == DecodeResult.Value(WireValues.Text("")))
+    assert(singleOut.encode(WireValues.Text("response")) == "response")
+    assert(singleError.decode("failure") == DecodeResult.Value(WireValues.Failure("failure")))
+    assert(singleError.encode(WireValues.Failure("failure")) == "failure")
+    assert(listOut.decode(List("a", " b")) == DecodeResult.Value(List(WireValues.Text("a"), WireValues.Text(" b"))))
+    assert(listOut.encode(List(WireValues.Text("a"), WireValues.Text(" b"))) == List("a", " b"))
     val mapping = tupled.input.asInstanceOf[EndpointInput.MappedPair[?, ?, (Option[String], List[Int], Boolean), (Option[WireValues.Text], List[WireValues.Count], WireValues.Flag)]].mapping
     val raw = (Some(""), List(Int.MinValue, 0, Int.MaxValue), false)
     val typed = (Some(WireValues.Text("")), List(WireValues.Count(Int.MinValue), WireValues.Count(0), WireValues.Count(Int.MaxValue)), WireValues.Flag(false))

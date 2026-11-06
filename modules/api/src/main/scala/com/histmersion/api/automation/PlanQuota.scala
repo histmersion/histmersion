@@ -155,7 +155,7 @@ object PlanQuota:
   final case class Floors(byKind: Map[Floors.ByKindKey, Floors.ByKindValue]):
     def text: com.histmersion.api.automation.PlanQuota.Floors.TextResult = _root_.com.histmersion.api.automation.PlanQuota.Floors.TextResult(byKind.toList.sortBy(_._1).map((k, v) => s"$k=$v").mkString(", "))
     def of(limit: com.histmersion.api.automation.PlanQuota.Floors.OfLimit, kind: com.histmersion.api.automation.PlanQuota.Floors.OfKind, default: com.histmersion.api.automation.PlanQuota.Floors.OfDefault): com.histmersion.api.automation.PlanQuota.Floors.OfResult =
-      byKind.get(s"$limit/$kind").orElse(byKind.get(kind)).getOrElse(default)
+      byKind.get(_root_.com.histmersion.api.automation.PlanQuota.Floors.ByKindKey(s"$limit/$kind")).orElse(byKind.get(kind)).getOrElse(default)
 
   object Floors:
     type TextResult = TextResult.T
@@ -283,16 +283,16 @@ object PlanQuota:
       model: Option[com.histmersion.api.automation.PlanQuota.VerdictModel] = None
   ): (Verdict, List[WindowState]) =
     val states = current(readings, now, model).map(windowState(_, rules, now))
-    val blocking = states.filterNot(_.usable)
+    val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(true))))
     val earliest = blocking.flatMap(_.reading.resetsAt).minOption
     val v =
       if (held).value then Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason("held: a person paused all agent use of this plan"), None)
       else
         refusal.filter(_._2.forall(((_).value > now).value)) match
           case Some((why, until))             => Verdict.Blocked(why, until)
-          case None if blocking.nonEmpty      => Verdict.Blocked(blocking.flatMap(_.why).mkString("; "), earliest)
+          case None if blocking.nonEmpty      => Verdict.Blocked(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Blocked.Reason(blocking.flatMap(_.why).mkString("; ")), earliest)
           case None if states.isEmpty         => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("no reading yet: unknown until a run reads it")))
-          case None if states.exists(_.stale) => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("the last reading is stale")))
+          case None if states.exists((refactorCallback => ((refactorCallback.stale) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(true)))) => Verdict.Usable(Some(_root_.com.histmersion.api.automation.PlanQuota.Verdict.Usable.Note("the last reading is stale")))
           case None                           => Verdict.Usable(None)
     (v, states)
 
@@ -361,8 +361,8 @@ object PlanQuota:
       val states = current(readings, now, model).map(windowState(_, rules, now))
       if states.isEmpty then Some(RefreshNeed.NoReading)
       else
-        val blocking = states.filterNot(_.usable)
-        Option.when(blocking.nonEmpty && blocking.forall(s => s.stale && !s.reading.rejected && s.leftPct > s.floor))(
+        val blocking = states.filterNot((refactorCallback => ((refactorCallback.usable) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Usable(true))))
+        Option.when(blocking.nonEmpty && blocking.forall(s => ((s.stale) == _root_.com.histmersion.api.automation.PlanQuota.WindowState.Stale(true)) && !((s.reading.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) && s.leftPct > s.floor))(
           RefreshNeed.StaleOnly
         )
 
@@ -383,7 +383,7 @@ object PlanQuota:
       case Login.Missing(why)                         => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1(s"no login: $why"))
       case _ if (force).value                                 => Right(need)
       case _ if need.isEmpty                          => Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("the reading decides by itself"))
-      case _ if throttled(lastAttempt, minGapMs, now) =>
+      case _ if ((throttled(lastAttempt, minGapMs, now)) == _root_.com.histmersion.api.automation.PlanQuota.ThrottledResult(true)) =>
         Left(_root_.com.histmersion.api.automation.PlanQuota.RefreshDecisionResultPart1("a fresh reading was taken (or tried) less than stale-minutes ago"))
       case _ => Right(need)
 

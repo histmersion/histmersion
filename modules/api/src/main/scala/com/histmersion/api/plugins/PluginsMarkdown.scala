@@ -43,7 +43,7 @@ object PluginsMarkdown:
       "",
       s"- config file: ${ConfigFileInfo.describe(file)}",
       s"- plugin SPI: ${r.spiVersion}",
-      s"- plugins: ${Plural.count(r.plugins.size, "plugin")} · ${r.plugins.count(_.enabled)} enabled",
+      s"- plugins: ${Plural.count(_root_.com.histmersion.api.Plural.NounN((r.plugins.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("plugin"))} · ${r.plugins.count((refactorCallback3 => ((refactorCallback3.enabled) == _root_.com.histmersion.api.plugins.PluginStatus.Enabled(true))))} enabled",
       s"- plugin set: ${PluginSet.describe(r.set)}",
       s"- plugin-set digest: ${r.set.fold(PluginSet.EmptyDigest)(_.digest)}"
     ) ++ checks.map((_, l) => s"- $l") ++ List("") ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List(

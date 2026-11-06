@@ -88,7 +88,7 @@ object Attestation:
     object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def of(total: com.histmersion.api.catalogue.Attestation.List.OfTotal, rows: scala.List[Attestation], offset: com.histmersion.api.catalogue.Attestation.List.OfOffset): List =
-      List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next)
+      List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount((total).value), com.histmersion.api.Offset((offset).value), com.histmersion.api.RowCount(rows.size)).next)
 
   final case class Patch(
       quote: Option[com.histmersion.api.catalogue.Attestation.Quote] = None,
