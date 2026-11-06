@@ -90,6 +90,9 @@ object Plugin:
     given ConfigReader[Double] = lenient(_root_.com.histmersion.plugin.Plugin.Config.LenientName("double"), ConfigReader.doubleReader, (_).value.toDoubleOption)
     given ConfigReader[Boolean] = lenient(_root_.com.histmersion.plugin.Plugin.Config.LenientName("boolean"), ConfigReader.booleanReader, (_).value.toBooleanOption)
 
+    given newtypeReader: [T] => (mirror: _root_.io.github.iltotore.iron.RefinedType.Mirror[T]) => (base: ConfigReader[mirror.BaseType]) => ConfigReader[T] =
+      base.emap(mirror.ops.either).asInstanceOf[ConfigReader[T]]
+
   /** What the host lends a plugin, and where it plugs in. Each registry is one extension point; a new extension point
     * is a new registry here, not a new service type, so existing plugin jars keep loading. (Seven: [[secretVaults]],
     * [[sourceFetchers]], [[mediaCollections]], [[eventCatalogues]], [[aiProviders]], [[gazetteerSources]] and

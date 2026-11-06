@@ -1,2 +1,3 @@
 path	sha256
-tools/refactor/consolidation-fixture/input/Models.scala	9df62103ee286c512f4eaca4d8abf4e938879322576f445f35532bde6702f26c
+tools/refactor/consolidation-fixture/input/Models.scala	2626ebbf7b93f082f6b2afc82bebba31c4dde48f5f632430f5ccfc80009791d6
+tools/refactor/consolidation-fixture/dependency/src/main/Shared.scala	328fa0d37135bd24a2e4d0b9459ef3e5c850372faebabbb9f3388dcb6f1b1376

@@ -1,0 +1,39 @@
+[info] welcome to sbt 2.0.11 (GraalVM Community Java 25.0.4.1.1)
+[info] loading global plugins from /Users/dev/.config/sbt/2/plugins
+[info] loading project definition from /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/project
+[info] resolving key references (35873 settings) ...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / scalafmtOnCompile, api / scalafmtOnCompile and 27 others.
+[info] The new values will be used by Compile / scalafmtDoFormatOnCompile, Test / scalafmtDoFormatOnCompile and 57 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining ThisBuild / scalacOptions
+[info] The new value will be used by Compile / scalacOptions, api / Compile / scalacOptions and 27 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] Defining Global / maxErrors
+[info] The new value will be used by Compile / compile / compileOptions, Compile / compile / compilerReporter and 237 others.
+[info] 	Run `last` for details.
+[info] Reapplying settings...
+[info] set current project to histmersion (in build file:/Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/)
+[info] compiling 3 Scala sources to /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/target/out/jvm/scala-3.10.0/histmersion-plugin-hello-deps/classes ...
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala:12:17 
+[error] 12 |    ctx.log.info(s"hello-deps: ${Shout(_root_.com.histmersion.fixtures.hellolib.Shout.ApplyText((config.greeting).value))}")
+[error]    |                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |                 Found:    String
+[error]    |                 Required: com.histmersion.plugin.Plugin.Log.InfoMessage
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] -- [E007] Type Mismatch Error: /Users/dev/Workspaces/GitHub/histmersion-wt/contracts3-scalafix/modules/plugin-fixtures/hello-deps/src/main/scala/com/histmersion/fixtures/hellodeps/HelloDepsPlugin.scala:13:26 
+[error] 13 |    ctx.sourceFetchers.add(_root_.com.histmersion.plugin.Registry.AddId("hello-deps"), HelloDepsFetcher(Shout(_root_.com.histmersion.fixtures.hellolib.Shout.ApplyText((config.greeting).value))))
+[error]    |    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[error]    |Found:    Either[com.histmersion.plugin.Registry.AddResultPart1, Unit]
+[error]    |Required: Either[com.histmersion.fixtures.hellodeps.HelloDepsPlugin.RegisterResultPart1,
+[error]    |  Unit]
+[error]    |
+[error]    | longer explanation available when compiling with `-explain`
+[error] two errors found
+[error] (pluginHelloDeps / Compile / compileIncremental) Compilation failed
+[error] elapsed time: 2 s, cache 97%, 43 disk cache hits, 1 onsite task

@@ -1,5 +1,9 @@
 package consolidationfixture
 
+object Client:
+  type Seconds = _root_.consolidationfixture.Shared.Seconds
+  val Seconds: _root_.consolidationfixture.Shared.Seconds.type = _root_.consolidationfixture.Shared.Seconds
+
 object Run:
   type Seconds = Seconds.T
   object Seconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
