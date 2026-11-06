@@ -413,8 +413,8 @@ object Article:
       def parse(s: com.histmersion.api.research.Article.Edits.Op.ParseS): Option[Op] = values.find((_.wire).value.equalsIgnoreCase((s).value.trim))
       given WireEnumValues[Op]:
         def all: Array[Op] = Op.values
-        def wire(e: Op): com.histmersion.api.research.Article.Edits.Op.WireResult = e.wire
-        def fromWire(s: com.histmersion.api.research.Article.Edits.Op.FromWireS): Option[Op] = parse(s)
+        def wire(e: Op): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+        def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Op] = parse(_root_.com.histmersion.api.research.Article.Edits.Op.ParseS((s).value))
       given Encoder[Op] = WireEnum.encoder
       given Decoder[Op] = WireEnum.decoder
       given Schema[Op] = WireEnum.schema
@@ -832,8 +832,8 @@ object Article:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): com.histmersion.api.research.Article.Kind.WireResult = _root_.com.histmersion.api.research.Article.Kind.WireResult(e.toString.toLowerCase)
-      def fromWire(s: com.histmersion.api.research.Article.Kind.FromWireS): Option[Kind] =
+      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((_root_.com.histmersion.api.research.Article.Kind.WireResult(e.toString.toLowerCase)).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] =
         Kind.values.find(_.toString.equalsIgnoreCase((s).value))
 
     given Encoder[Kind] = WireEnum.encoder

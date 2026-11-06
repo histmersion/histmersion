@@ -2,6 +2,9 @@ package compilerfixture
 
 object Contract:
   @main def verifyCompilerRepairs(): Unit =
+    assert(BoundaryImplementation.encode(7).value == "7")
+    assert(BoundaryImplementation.decode(Values.Text("7")).contains(7))
+    assert(BoundaryImplementation.decode(Values.Text("invalid")).isEmpty)
     OrderedChecks.check()
     ComparisonConstruction.check()
     assert(Owned.raw(Owned.Text("one")) == "one")

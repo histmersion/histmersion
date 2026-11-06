@@ -39,8 +39,8 @@ object PresetRegion:
 
   given WireEnumValues[PresetRegion]:
     def all: Array[PresetRegion] = PresetRegion.values
-    def wire(e: PresetRegion): com.histmersion.api.catalogue.PresetRegion.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.catalogue.PresetRegion.FromWireS): Option[PresetRegion] = PresetRegion.fromWire(s)
+    def wire(e: PresetRegion): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[PresetRegion] = PresetRegion.fromWire(_root_.com.histmersion.api.catalogue.PresetRegion.FromWireS((s).value))
 
   given io.circe.Encoder[PresetRegion] = WireEnum.encoder
   given io.circe.Decoder[PresetRegion] = WireEnum.decoder

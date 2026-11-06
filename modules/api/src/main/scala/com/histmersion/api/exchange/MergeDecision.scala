@@ -90,8 +90,8 @@ object MergeDecision:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): com.histmersion.api.exchange.MergeDecision.Kind.WireResult = wireOf(e)
-      def fromWire(s: com.histmersion.api.exchange.MergeDecision.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult((s).value.trim))
+      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult((s).value.trim))
   def of(kind: MergeDecision.Kind): MergeDecision = MergeDecision(kind, None)
   def withArg(kind: MergeDecision.Kind, arg: com.histmersion.api.exchange.MergeDecision.WithArgArg): MergeDecision = MergeDecision(kind, Some(arg))
 

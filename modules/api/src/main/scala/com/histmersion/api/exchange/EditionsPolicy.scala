@@ -17,5 +17,5 @@ object EditionsPolicy:
 
   given WireEnumValues[EditionsPolicy]:
     def all: Array[EditionsPolicy] = EditionsPolicy.values
-    def wire(e: EditionsPolicy): com.histmersion.api.exchange.EditionsPolicy.WireResult = Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS(e.toString))
-    def fromWire(s: com.histmersion.api.exchange.EditionsPolicy.FromWireS): Option[EditionsPolicy] = EditionsPolicy.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+    def wire(e: EditionsPolicy): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.api.Ascii.LowerS(e.toString))).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[EditionsPolicy] = EditionsPolicy.values.find(_.toString.equalsIgnoreCase((s).value.trim))

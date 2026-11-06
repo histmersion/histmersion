@@ -672,8 +672,8 @@ object Agents:
     def parse(s: com.histmersion.api.automation.Agents.CheckLevel.ParseS): Option[CheckLevel] = values.find(_.wire == s)
     given WireEnumValues[CheckLevel]:
       def all: Array[CheckLevel] = CheckLevel.values
-      def wire(e: CheckLevel): com.histmersion.api.automation.Agents.CheckLevel.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.automation.Agents.CheckLevel.FromWireS): Option[CheckLevel] = parse(s)
+      def wire(e: CheckLevel): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[CheckLevel] = parse(_root_.com.histmersion.api.automation.Agents.CheckLevel.ParseS((s).value))
     given io.circe.Encoder[CheckLevel] = WireEnum.encoder
     given io.circe.Decoder[CheckLevel] = WireEnum.decoder
     given Schema[CheckLevel] = WireEnum.schema

@@ -101,8 +101,8 @@ object Bundle:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): com.histmersion.api.exchange.Bundle.Kind.WireResult = wireOf(e)
-      def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = Kind.fromWire(s)
+      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = Kind.fromWire(_root_.com.histmersion.api.exchange.Bundle.Kind.FromWireS((s).value))
   val Format = "histmersion-bundle"
   val FormatVersion = 1
   val Extension = ".hmx"

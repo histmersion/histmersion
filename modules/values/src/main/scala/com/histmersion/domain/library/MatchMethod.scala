@@ -25,5 +25,5 @@ object MatchMethod:
 
   given WireEnumValues[MatchMethod]:
     def all: Array[MatchMethod] = MatchMethod.values
-    def wire(e: MatchMethod): com.histmersion.domain.library.MatchMethod.WireResult = Ascii.lower(_root_.com.histmersion.Ascii.LowerS(e.toString))
-    def fromWire(s: com.histmersion.domain.library.MatchMethod.FromWireS): Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase((s).value.trim))
+    def wire(e: MatchMethod): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((Ascii.lower(_root_.com.histmersion.Ascii.LowerS(e.toString))).value)
+    def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[MatchMethod] = MatchMethod.values.find(_.toString.equalsIgnoreCase((s).value.trim))

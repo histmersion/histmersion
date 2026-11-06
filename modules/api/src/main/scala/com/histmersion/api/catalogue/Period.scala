@@ -80,8 +80,8 @@ object Period:
 
     given WireEnumValues[Skip]:
       def all: Array[Skip] = Skip.values
-      def wire(e: Skip): com.histmersion.api.catalogue.Period.Skip.WireResult = wireOf(e)
-      def fromWire(s: com.histmersion.api.catalogue.Period.Skip.FromWireS): Option[Skip] = Skip.values.find(wireOf(_) == s)
+      def wire(e: Skip): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Skip] = Skip.values.find(wireOf(_) == s)
 
     given io.circe.Encoder[Skip] = WireEnum.encoder
     given io.circe.Decoder[Skip] = WireEnum.decoder

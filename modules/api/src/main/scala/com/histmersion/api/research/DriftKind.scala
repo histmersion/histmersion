@@ -23,8 +23,8 @@ object DriftKind:
 
   given WireEnumValues[DriftKind]:
     def all: Array[DriftKind] = DriftKind.values
-    def wire(e: DriftKind): com.histmersion.api.research.DriftKind.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.research.DriftKind.FromWireS): Option[DriftKind] = DriftKind.values.find(_.wire == _root_.com.histmersion.api.research.DriftKind.Wire((s).value.trim.toLowerCase))
+    def wire(e: DriftKind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[DriftKind] = DriftKind.values.find(_.wire == _root_.com.histmersion.api.research.DriftKind.Wire((s).value.trim.toLowerCase))
   given Encoder[DriftKind] = WireEnum.encoder
   given Decoder[DriftKind] = WireEnum.decoder
   given Schema[DriftKind] = WireEnum.schema

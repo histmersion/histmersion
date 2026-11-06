@@ -21,6 +21,6 @@ object Confidence:
 
   given WireEnumValues[Confidence]:
     def all: Array[Confidence] = Confidence.values
-    def wire(e: Confidence): com.histmersion.api.library.Confidence.WireResult = _root_.com.histmersion.api.library.Confidence.WireResult(e.toString.toLowerCase)
-    def fromWire(s: com.histmersion.api.library.Confidence.FromWireS): Option[Confidence] =
+    def wire(e: Confidence): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((_root_.com.histmersion.api.library.Confidence.WireResult(e.toString.toLowerCase)).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Confidence] =
       Confidence.values.find(_.toString.equalsIgnoreCase((s).value))

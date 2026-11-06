@@ -34,5 +34,5 @@ object MatchOutcome:
     case DeletedHere   => _root_.com.histmersion.api.library.MatchOutcome.WireOfResult("deleted-here")
   given WireEnumValues[MatchOutcome]:
     def all: Array[MatchOutcome] = MatchOutcome.values
-    def wire(e: MatchOutcome): com.histmersion.api.library.MatchOutcome.WireResult = wireOf(e)
-    def fromWire(s: com.histmersion.api.library.MatchOutcome.FromWireS): Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == _root_.com.histmersion.api.library.MatchOutcome.WireOfResult((s).value.trim))
+    def wire(e: MatchOutcome): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[MatchOutcome] = MatchOutcome.values.find(o => wireOf(o) == _root_.com.histmersion.api.library.MatchOutcome.WireOfResult((s).value.trim))

@@ -108,5 +108,5 @@ object Place:
 
     given WireEnumValues[Precision]:
       def all: Array[Precision] = Precision.values
-      def wire(e: Precision): com.histmersion.domain.catalogue.Place.Precision.WireResult = e.wire
-      def fromWire(s: com.histmersion.domain.catalogue.Place.Precision.FromWireS): Option[Precision] = parse(s)
+      def wire(e: Precision): _root_.com.histmersion.WireEnumValues.WireResult = _root_.com.histmersion.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.WireEnumValues.FromWireS): _root_.scala.Option[Precision] = parse(_root_.com.histmersion.domain.catalogue.Place.Precision.ParseS((s).value))

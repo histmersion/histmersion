@@ -28,8 +28,8 @@ object MetadataField:
 
   given WireEnumValues[MetadataField]:
     def all: Array[MetadataField] = MetadataField.values
-    def wire(e: MetadataField): com.histmersion.api.library.MetadataField.WireResult = wireOf(e)
-    def fromWire(s: com.histmersion.api.library.MetadataField.FromWireS): Option[MetadataField] = MetadataField.fromWire(s)
+    def wire(e: MetadataField): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[MetadataField] = MetadataField.fromWire(_root_.com.histmersion.api.library.MetadataField.FromWireS((s).value))
 
   given Encoder[MetadataField] = WireEnum.encoder
   given Decoder[MetadataField] = WireEnum.decoder

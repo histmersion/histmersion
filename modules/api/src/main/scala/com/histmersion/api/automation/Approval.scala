@@ -60,8 +60,8 @@ object Approval:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): com.histmersion.api.automation.Approval.Kind.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.automation.Approval.Kind.FromWireS): Option[Kind] = parse(s)
+      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = parse(_root_.com.histmersion.api.automation.Approval.Kind.ParseS((s).value))
 
   /** How a kind of proposal is handled: `Manual` waits for a person, `Auto` is applied at once (and still recorded,
     * already approved).

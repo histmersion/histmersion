@@ -1,6 +1,78 @@
 # Priority-family status
 
-## Current checkpoint: ordering and typed comparisons applied, compilation incomplete
+## Current checkpoint: vocabulary contracts aligned, compilation incomplete
+
+The generic interface transformation applies 180 signature patches across 50
+production files for the kernel and API WireEnumValues contracts. The compiler
+transformation then applies 80 body patches in 48 of those files. There are no
+test-source changes in the application and no model types were reverted. These
+are 260 applied AST patches, not 260 verified policy repairs. The same AstRecipe,
+ApplyFrozenPreview and CompileBatch pipeline is used; only batch configuration
+was added.
+
+Interface alignment now substitutes simple generic arguments through containers,
+tuples and function types, qualifies known newtypes in their declaration context,
+and checks parameter/result shapes. Plain imports and nearer declared types can
+prevent a same-name interface from being mistaken for a configured contract.
+Overloaded ambiguity, wildcard arguments, method type parameters, complex aliases,
+renamed/wildcard imports and inherited contracts remain detection limits. This is
+bounded AST evidence, not complete semantic resolution.
+
+Body adaptation is explicitly configured by two contract names, two accepted wire
+output types and two accepted raw wire input types. It permits same-base Pure
+rewrapping only in direct implementation bodies whose method name and
+parameter-clause arity match the configured contract. Other diagnostics remain
+recorded as outside the configured interface body. The optional input-source list
+does not enable conversion between arbitrary domain concepts. Construction-only,
+owner-only and ordering-only modes reject it; the JDK scan stays disabled in
+contract-scoped mode. There are no per-expression or per-enum mappings.
+
+| Source module | Before this checkpoint | After signatures | After body repairs |
+|---|---:|---:|---:|
+| api JVM and JS, each | 3118 | 3136 | 3079 |
+| values | 53 | 58 | 35 |
+
+project-compile-frontier-12/-13 retain both full observations. All ten previously
+failing tasks still fail. The seven other tasks retain cached failures in -13;
+dependent modules and production tests are still blocked. Intermediate increases
+are preserved. Counts do not classify individual compiler regressions or prove
+production behavior. Compiler checks, stack16m, maxErrors10000 and serial
+compilation are unchanged; no assertion or existing exception was weakened.
+
+Both interface fixture outputs match exactly and the rewritten fixture
+compiles/runs with Scala 3.10 and -source:future. Tests cover a concrete generic
+argument, an abstract generic argument, nested anonymous implementations, and
+imported/local same-name traits that remain unchanged. The five existing compiler
+fixture outputs and the new boundary fixture also match exactly. The rewritten
+compiler fixture compiles/runs with fatal E165, preserving all prior runtime
+assertions and adding successful encode/decode and invalid-input checks. Seven
+boundary exclusions remain unchanged: ordinary helpers, unrelated contracts,
+extra implementation members, wrong bases and constrained targets.
+
+The final 48 files exactly match their frozen preview. The full census checks all
+accumulated source hashes, including the two signature-only files. The unchanged
+body rule was run once on -13 and found zero further eligible patches
+(project-vocabulary-bodies-2); the unsupported findings remain recorded and this
+rule is not being refined further in this batch.
+
+type-positions-after-vocabulary-1 retains all 3169 Scala files, production594 and
+test6009 raw candidates, production27632 and test19 newtype shapes, zero
+introduced/removed primitive or newtype IDs, exactly the prior origins and 3014
+overlap groups, and 16108 unresolved references. Local opaque declarations remain
+present for later overlap review. No model-violation repair credit is claimed for
+signature/body adaptation. Global inventory acceptance, confirmed outstanding
+totals and automation coverage remain unestablished; other policy families stay
+frozen partial. Earlier formatting and client-validation test failures remain open.
+
+Next use direct forwarding evidence to consolidate generated helper types with
+their entity properties: require matching field purpose, base/constraint and module,
+and reject conflicting targets or transformations of the value. Keep unrelated
+entity properties distinct. Remaining compilation also includes callback adaptation,
+malformed placeholder unwrapping (Licence.Family.allowable), nominal relationships,
+native operations and enum/name collisions. They remain required work, not accepted
+exceptions or compliant cases.
+
+## Previous checkpoint: ordering and typed comparisons applied, compilation incomplete
 
 Two reusable transformations have changed 119 distinct production files: 45
 native Ordering instances in 30 files, then 261 expression patches in 106 files

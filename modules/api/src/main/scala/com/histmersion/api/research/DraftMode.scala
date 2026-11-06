@@ -20,5 +20,5 @@ object DraftMode:
   def parse(s: com.histmersion.api.research.DraftMode.ParseS): Option[DraftMode] = values.find(_.wire == _root_.com.histmersion.api.research.DraftMode.Wire((s).value.trim.toLowerCase))
   given WireEnumValues[DraftMode]:
     def all: Array[DraftMode] = DraftMode.values
-    def wire(e: DraftMode): com.histmersion.api.research.DraftMode.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.research.DraftMode.FromWireS): Option[DraftMode] = parse(s)
+    def wire(e: DraftMode): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[DraftMode] = parse(_root_.com.histmersion.api.research.DraftMode.ParseS((s).value))

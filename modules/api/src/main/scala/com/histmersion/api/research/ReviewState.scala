@@ -29,8 +29,8 @@ object ReviewState:
   def parse(s: com.histmersion.api.research.ReviewState.ParseS): Option[ReviewState] = values.find(_.wire == _root_.com.histmersion.api.research.ReviewState.Wire((s).value.trim.toLowerCase))
   given WireEnumValues[ReviewState]:
     def all: Array[ReviewState] = ReviewState.values
-    def wire(e: ReviewState): com.histmersion.api.research.ReviewState.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.research.ReviewState.FromWireS): Option[ReviewState] = parse(s)
+    def wire(e: ReviewState): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[ReviewState] = parse(_root_.com.histmersion.api.research.ReviewState.ParseS((s).value))
   given Encoder[ReviewState] = WireEnum.encoder
   given Decoder[ReviewState] = WireEnum.decoder
   given Schema[ReviewState] = WireEnum.schema

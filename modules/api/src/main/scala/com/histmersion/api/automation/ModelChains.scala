@@ -93,8 +93,8 @@ object ModelChains:
     def parse(s: com.histmersion.api.automation.ModelChains.Measure.ParseS): Option[Measure] = values.find(_.wire == _root_.com.histmersion.api.automation.ModelChains.Measure.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
     given WireEnumValues[Measure]:
       def all: Array[Measure] = Measure.values
-      def wire(e: Measure): com.histmersion.api.automation.ModelChains.Measure.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.automation.ModelChains.Measure.FromWireS): Option[Measure] = parse(s)
+      def wire(e: Measure): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Measure] = parse(_root_.com.histmersion.api.automation.ModelChains.Measure.ParseS((s).value))
     given io.circe.Encoder[Measure] = WireEnum.encoder
     given io.circe.Decoder[Measure] = WireEnum.decoder
     given Schema[Measure] = WireEnum.schema

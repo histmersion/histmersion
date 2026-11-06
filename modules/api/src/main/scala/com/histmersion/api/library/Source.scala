@@ -90,8 +90,8 @@ object Source:
 
     given WireEnumValues[Status]:
       def all: Array[Status] = Status.values
-      def wire(e: Status): com.histmersion.api.library.Source.Status.WireResult = _root_.com.histmersion.api.library.Source.Status.WireResult(e.toString.toLowerCase)
-      def fromWire(s: com.histmersion.api.library.Source.Status.FromWireS): Option[Status] =
+      def wire(e: Status): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((_root_.com.histmersion.api.library.Source.Status.WireResult(e.toString.toLowerCase)).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Status] =
         Status.values.find(_.toString.equalsIgnoreCase((s).value))
 
   final case class Alias(alias: Alias.Value, citekey: com.histmersion.api.library.Citekey)

@@ -437,8 +437,8 @@ object Gazetteer:
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
-      def wire(e: Kind): com.histmersion.api.catalogue.Gazetteer.Kind.WireResult = e.wire
-      def fromWire(s: com.histmersion.api.catalogue.Gazetteer.Kind.FromWireS): Option[Kind] = parse(s)
+      def wire(e: Kind): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((e.wire).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Kind] = parse(_root_.com.histmersion.api.catalogue.Gazetteer.Kind.ParseS((s).value))
     given Encoder[Kind] = WireEnum.encoder
     given Decoder[Kind] = WireEnum.decoder
     given Schema[Kind] = WireEnum.schema
