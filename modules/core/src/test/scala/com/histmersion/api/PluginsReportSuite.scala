@@ -49,7 +49,7 @@ class PluginsReportSuite extends munit.FunSuite:
     com.histmersion.api.plugins.PluginStatus.SpiVersion(0),
     enabled = com.histmersion.api.plugins.PluginStatus.Enabled(false),
     com.histmersion.api.plugins.PluginStatus.State(PluginState.Refused.wire.value),
-    error = Some("old: built for SPI 0, this host speaks 1")
+    error = Some(com.histmersion.api.plugins.PluginDescription.Error("old: built for SPI 0, this host speaks 1"))
   )
 
   test("states have wire names and parse back"):
