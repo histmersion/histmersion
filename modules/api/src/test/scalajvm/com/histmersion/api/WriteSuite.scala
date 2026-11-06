@@ -28,13 +28,13 @@ class WriteSuite extends munit.FunSuite:
 
   private val ck = "haak2015_massive"
 
-  private def finding(n: Int, claim: String) =
+  private def finding(n: Finding.Ordinal, claim: Finding.Claim) =
     Finding(
       Source.Write.findingId(com.histmersion.api.library.Citekey(ck), n),
       com.histmersion.api.library.Citekey(ck),
       claim,
       Some(com.histmersion.api.library.Finding.Region("Anatolia")),
-      Some(GeoPoint(32.0, 39.0)),
+      Some(GeoPoint(com.histmersion.api.catalogue.Longitude(32.0), com.histmersion.api.catalogue.Latitude(39.0))),
       Some(Period(com.histmersion.api.catalogue.Year(-2000), com.histmersion.api.catalogue.Year(-1500))),
       Some(com.histmersion.api.library.Finding.PeriodName("EBA")),
       List(com.histmersion.api.library.Finding.Tags("steppe")),
@@ -59,8 +59,8 @@ class WriteSuite extends munit.FunSuite:
     provenance = Some(com.histmersion.api.library.Source.Provenance("unpaywall")),
     calibreId = None,
     ocrMarkdown = Some(com.histmersion.api.library.Source.OcrMarkdown("the whole paper")),
-    findings = List(finding(0, "first"), finding(1, "second")),
-    edges = List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind("references"))),
+    findings = List(finding(Finding.Ordinal(0), Finding.Claim("first")), finding(Finding.Ordinal(1), Finding.Claim("second"))),
+    edges = List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References)),
     notes = Some(com.histmersion.api.library.Source.Notes("# article")),
     updatedAt = Some(com.histmersion.api.library.Source.UpdatedAt("2026-08-25T10:00:00.000000Z"))
   )
@@ -108,7 +108,7 @@ class WriteSuite extends munit.FunSuite:
   test("findings: an add reuses the lowest FREE id after a removal, never a duplicate"):
     val gapped =
       Source.Write
-        .applyPatch(existing, Source.Patch(findings = Some(FindingsPatch(remove = List(s"$ck#0")))))
+        .applyPatch(existing, Source.Patch(findings = Some(FindingsPatch(remove = List(com.histmersion.api.library.FindingsPatch.Remove(s"$ck#0"))))))
         .toOption
         .get
     assertEquals(gapped.findings.map(_.id), List(s"$ck#1"))
@@ -128,7 +128,7 @@ class WriteSuite extends munit.FunSuite:
     val bad = FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("x"), confidence = Some(com.histmersion.api.library.Confidence.Wire("certain")))))
     val r = Source.Write.applyPatch(existing, Source.Patch(findings = Some(bad)))
     assert(
-      r.left.exists(m => m.contains("confidence 'certain'") && m.contains("high|medium|low|contested")),
+      r.left.exists(m => m.value.contains("confidence 'certain'") && m.value.contains("high|medium|low|contested")),
       r.toString
     )
     val ok = Source.Write.applyPatch(
@@ -154,7 +154,7 @@ class WriteSuite extends munit.FunSuite:
     assertEquals(out.map(_.findings), Right(existing.findings))
 
   test("findings: geo needs BOTH lon and lat; period needs both bounds"):
-    val p = FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("half"), lat = Some(39.0), periodStart = None, periodEnd = None)))
+    val p = FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("half"), lat = Some(com.histmersion.api.catalogue.Latitude(39.0)), periodStart = None, periodEnd = None)))
     val out = Source.Write.applyPatch(existing, Source.Patch(findings = Some(p))).toOption.get
     assertEquals(out.findings.last.geo, None)
     assertEquals(out.findings.last.period, None)
@@ -162,7 +162,7 @@ class WriteSuite extends munit.FunSuite:
   test("findings: a half-specified period is rejected with a readable message"):
     val p = FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("bad"), periodStart = Some(com.histmersion.api.catalogue.Year(-1000)))))
     val e = Source.Write.applyPatch(existing, Source.Patch(findings = Some(p))).swap.toOption.get
-    assert(e.contains("period_start"), e)
+    assert(e.value.contains("period_start"), e)
 
   // ── metadata / scalars ───────────────────────────────────────────────────────────────────────
   test("metadata: present fields replace, absent fields are left alone"):
@@ -197,12 +197,12 @@ class WriteSuite extends munit.FunSuite:
     val p = EdgesPatch(
       add = List(
         Edge.Input(com.histmersion.api.library.Citekey("cline2014_1177"), com.histmersion.api.library.Edge.Kind.Supersedes),
-        Edge.Input(com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References, Some(ck))
+        Edge.Input(com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References, Some(com.histmersion.api.library.Citekey(ck)))
       ),
       remove = List(Edge.Input(com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References))
     )
     val out = Source.Write.applyEdges(com.histmersion.api.library.Citekey(ck), existing.edges, p).toOption.get
-    assertEquals(out, List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("cline2014_1177"), com.histmersion.api.library.Edge.Kind("supersedes"))))
+    assertEquals(out, List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("cline2014_1177"), com.histmersion.api.library.Edge.Kind.Supersedes)))
     assert(out.forall(_.src == com.histmersion.api.library.Citekey(ck)))
 
   // #698: a src naming ANOTHER source was rewritten to the patched one — a critic → target edge
@@ -211,18 +211,18 @@ class WriteSuite extends munit.FunSuite:
     val json = """{"edges":{"add":[{"src":"kassian2024_rebuttal","dst":"haak2015_massive","kind":"refutes"}]}}"""
     val p = io.circe.parser.decode[Source.Patch](json).toOption.get
     val e = Source.Write.applyPatch(existing, p).swap.toOption.get
-    assert(e.contains("src 'kassian2024_rebuttal' is not the patched source"), e)
-    assert(e.contains("patch 'kassian2024_rebuttal'"), e)
+    assert(e.value.contains("src 'kassian2024_rebuttal' is not the patched source"), e)
+    assert(e.value.contains("patch 'kassian2024_rebuttal'"), e)
     val rm = EdgesPatch(remove =
       List(Edge.Input(com.histmersion.api.library.Citekey("anthony2007_horse"), com.histmersion.api.library.Edge.Kind.References, Some(com.histmersion.api.library.Citekey("other"))))
     )
-    assert(Source.Write.applyEdges(com.histmersion.api.library.Citekey(ck), existing.edges, rm).swap.toOption.get.contains("edges.remove"))
+    assert(Source.Write.applyEdges(com.histmersion.api.library.Citekey(ck), existing.edges, rm).swap.toOption.get.value.contains("edges.remove"))
 
   test("edges: src is optional and defaults to the patched citekey; a self-edge is refused"):
     val p =
       io.circe.parser.decode[Source.Patch]("""{"edges":{"add":[{"dst":"x2020_y","kind":"challenges"}]}}""").toOption.get
-    assertEquals(Source.Write.applyPatch(existing, p).map(_.edges.last), Right(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("x2020_y"), com.histmersion.api.library.Edge.Kind("challenges"))))
-    val self = EdgesPatch(add = List(Edge.Input(ck, com.histmersion.api.library.Edge.Kind.Challenges)))
+    assertEquals(Source.Write.applyPatch(existing, p).map(_.edges.last), Right(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("x2020_y"), com.histmersion.api.library.Edge.Kind.Challenges)))
+    val self = EdgesPatch(add = List(Edge.Input(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Edge.Kind.Challenges)))
     assert(Source.Write.applyEdges(com.histmersion.api.library.Citekey(ck), existing.edges, self).isLeft)
 
   test("edges: an unknown kind is refused when the patch is decoded"):
@@ -234,9 +234,9 @@ class WriteSuite extends munit.FunSuite:
         EdgesPatch(add = List(Edge.Input(com.histmersion.api.library.Citekey("b2020_x"), com.histmersion.api.library.Edge.Kind.Refutes, Some(com.histmersion.api.library.Citekey("old_key")))))
       )
     )
-    val fixed = Source.Write.srcAliased(p, com.histmersion.api.library.Citekey("old_key"), ck)
-    assertEquals(Source.Write.applyPatch(existing, fixed).map(_.edges.last), Right(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("b2020_x"), com.histmersion.api.library.Edge.Kind("refutes"))))
-    assertEquals(Source.Write.srcAliased(p, ck, ck), p)
+    val fixed = Source.Write.srcAliased(p, com.histmersion.api.library.Citekey("old_key"), com.histmersion.api.library.Citekey(ck))
+    assertEquals(Source.Write.applyPatch(existing, fixed).map(_.edges.last), Right(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("b2020_x"), com.histmersion.api.library.Edge.Kind.Refutes)))
+    assertEquals(Source.Write.srcAliased(p, com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey(ck)), p)
 
   // ── ifUpdatedAt precondition ─────────────────────────────────────────────────────────────────
   test("ifUpdatedAt: matching token passes, stale token fails with an actionable message"):
@@ -247,8 +247,8 @@ class WriteSuite extends munit.FunSuite:
         .swap
         .toOption
         .get
-    assert(e.contains("has moved on"), e)
-    assert(e.contains(ck), e)
+    assert(e.value.contains("has moved on"), e)
+    assert(e.value.contains(ck), e)
 
   test("ifUpdatedAt: absent means last-write-wins, and a stale one blocks the whole patch"):
     assert(Source.Write.applyPatch(existing, Source.Patch(tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("x")))))).isRight)
@@ -262,12 +262,12 @@ class WriteSuite extends munit.FunSuite:
       findings = List(Finding.Input(com.histmersion.api.library.Finding.Claim("a")), Finding.Input(com.histmersion.api.library.Finding.Claim("b"))),
       edges = List(
         Edge.Input(com.histmersion.api.library.Citekey("x"), com.histmersion.api.library.Edge.Kind.References),
-        Edge.Input(com.histmersion.api.library.Citekey("y"), com.histmersion.api.library.Edge.Kind.Refutes, Some(ck))
+        Edge.Input(com.histmersion.api.library.Citekey("y"), com.histmersion.api.library.Edge.Kind.Refutes, Some(com.histmersion.api.library.Citekey(ck)))
       )
     )
     val out = Source.Write.applyPut(com.histmersion.api.library.Citekey(ck), in).toOption.get
     assertEquals(out.findings.map(_.id), List(s"$ck#0", s"$ck#1"))
-    assertEquals(out.edges, List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("x"), com.histmersion.api.library.Edge.Kind("references")), Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("y"), com.histmersion.api.library.Edge.Kind("refutes"))))
+    assertEquals(out.edges, List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("x"), com.histmersion.api.library.Edge.Kind.References), Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("y"), com.histmersion.api.library.Edge.Kind.Refutes)))
     assertEquals(out.status, com.histmersion.api.library.Source.Status.Unassessed)
 
   // #766: put rewrote any edge src to the citekey, the pattern #698 fixed for patch only
@@ -277,12 +277,12 @@ class WriteSuite extends munit.FunSuite:
       .toOption
       .get
     val e = Source.Write.applyPut(com.histmersion.api.library.Citekey(ck), in).swap.toOption.get
-    assert(e.contains("src 'kassian2024_rebuttal' is not the source being put"), e)
+    assert(e.value.contains("src 'kassian2024_rebuttal' is not the source being put"), e)
 
   test("put: a self-edge is refused, including one to an old citekey of this source"):
     val self =
-      Source.Put(title = com.histmersion.api.library.Title("T"), edges = List(Edge.Input(ck, com.histmersion.api.library.Edge.Kind.Challenges)))
-    assert(Source.Write.applyPut(com.histmersion.api.library.Citekey(ck), self).swap.toOption.get.contains("self-edge"))
+      Source.Put(title = com.histmersion.api.library.Title("T"), edges = List(Edge.Input(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Edge.Kind.Challenges)))
+    assert(Source.Write.applyPut(com.histmersion.api.library.Citekey(ck), self).swap.toOption.get.value.contains("self-edge"))
     val viaAlias =
       Source.Put(title = com.histmersion.api.library.Title("T"), edges = List(Edge.Input(com.histmersion.api.library.Citekey("old_key"), com.histmersion.api.library.Edge.Kind.Challenges)))
     assert(Source.Write.applyPut(com.histmersion.api.library.Citekey(ck), viaAlias, (Set("old_key")).map(com.histmersion.api.library.Citekey.apply)).isLeft)
@@ -294,7 +294,7 @@ class WriteSuite extends munit.FunSuite:
     )
     assertEquals(
       Source.Write.applyPut(com.histmersion.api.library.Citekey(ck), in, (Set("old_key")).map(com.histmersion.api.library.Citekey.apply)).map(_.edges),
-      Right(List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("b2020_x"), com.histmersion.api.library.Edge.Kind("refutes"))))
+      Right(List(Edge(com.histmersion.api.library.Citekey(ck), com.histmersion.api.library.Citekey("b2020_x"), com.histmersion.api.library.Edge.Kind.Refutes)))
     )
     assert(Source.Write.applyPut(com.histmersion.api.library.Citekey(ck), in).isLeft, "without the alias it is another source")
 
@@ -305,12 +305,12 @@ class WriteSuite extends munit.FunSuite:
   // ── period bounds must stay inside the representable window ──────────────────────────────────
 
   test("a period bound outside [Earliest, Latest] is a 400, not a stored sentinel"):
-    val put = Source.Put(title = com.histmersion.api.library.Title("T"), periodStart = Some(Long.MinValue + 1), periodEnd = Some(com.histmersion.api.catalogue.Year(-1200)))
+    val put = Source.Put(title = com.histmersion.api.library.Title("T"), periodStart = Some(com.histmersion.api.catalogue.Year(Long.MinValue + 1)), periodEnd = Some(com.histmersion.api.catalogue.Year(-1200)))
     val e = Source.Write.applyPut(com.histmersion.api.library.Citekey("zz_range"), put).swap.toOption.get
-    assert(e.contains("outside the representable range"), e)
+    assert(e.value.contains("outside the representable range"), e)
     assert(
       Source.Write
-        .applyPut(com.histmersion.api.library.Citekey("zz_range"), Source.Put(title = com.histmersion.api.library.Title("T"), periodStart = Some(com.histmersion.api.catalogue.Year(-1200)), periodEnd = Some(Long.MaxValue)))
+        .applyPut(com.histmersion.api.library.Citekey("zz_range"), Source.Put(title = com.histmersion.api.library.Title("T"), periodStart = Some(com.histmersion.api.catalogue.Year(-1200)), periodEnd = Some(com.histmersion.api.catalogue.Year(Long.MaxValue))))
         .isLeft
     )
 
@@ -335,7 +335,7 @@ class WriteSuite extends munit.FunSuite:
   test("a finding's period is range-checked too"):
     val put = Source.Put(
       title = com.histmersion.api.library.Title("T"),
-      findings = List(Finding.Input(claim = com.histmersion.api.library.Finding.Claim("c"), periodStart = Some(com.histmersion.api.catalogue.Year(-1200)), periodEnd = Some(Long.MaxValue)))
+      findings = List(Finding.Input(claim = com.histmersion.api.library.Finding.Claim("c"), periodStart = Some(com.histmersion.api.catalogue.Year(-1200)), periodEnd = Some(com.histmersion.api.catalogue.Year(Long.MaxValue))))
     )
     assert(Source.Write.applyPut(com.histmersion.api.library.Citekey("zz_range"), put).isLeft)
 
@@ -390,7 +390,7 @@ class WriteSuite extends munit.FunSuite:
 
   test("metadata: a field both set and cleared is refused"):
     val p = Source.Patch(metadata = Some(MetadataPatch(doi = (Some("10.1/x")).map(com.histmersion.api.library.Doi.apply), clear = List(MetadataField.Doi))))
-    assert(Source.Write.applyPatch(existing, p).swap.toOption.get.contains("both set and cleared"))
+    assert(Source.Write.applyPatch(existing, p).swap.toOption.get.value.contains("both set and cleared"))
 
   test("metadata: the encoder omits absent fields, so a round trip never turns absent into a clear"):
     import io.circe.parser.decode
@@ -405,7 +405,7 @@ class WriteSuite extends munit.FunSuite:
     val p = Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(com.histmersion.api.library.Source.CalibreId("1806")))))
     assertEquals(Source.Write.applyPatch(existing, p).map(_.calibreId), Right(Some("1806")))
     val bad = Source.Patch(metadata = Some(MetadataPatch(calibreId = Some(com.histmersion.api.library.Source.CalibreId("abc")))))
-    assert(Source.Write.applyPatch(existing, bad).swap.toOption.get.contains("not a Calibre id"))
+    assert(Source.Write.applyPatch(existing, bad).swap.toOption.get.value.contains("not a Calibre id"))
 
   // ── #813: an unknown or misplaced key is refused, naming the key and the expected shape ─────────
   test("strict: an unknown top-level key in a patch is refused, with the keys that are accepted"):
@@ -454,7 +454,7 @@ class WriteSuite extends munit.FunSuite:
       metadata = Some(MetadataPatch(title = (Some("T")).map(com.histmersion.api.library.Title.apply), clear = List(MetadataField.Doi))),
       summary = Some(com.histmersion.api.library.Source.Summary("s")),
       tags = Some(ListPatch(add = List(com.histmersion.api.Write.ListItem("a")), replace = Some(List(com.histmersion.api.Write.ListItem("b"))))),
-      findings = Some(FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("c"), lat = Some(1.0), lon = Some(2.0))))),
+      findings = Some(FindingsPatch(add = List(Finding.Input(com.histmersion.api.library.Finding.Claim("c"), lat = Some(com.histmersion.api.catalogue.Latitude(1.0)), lon = Some(com.histmersion.api.catalogue.Longitude(2.0)))))),
       edges = Some(EdgesPatch(add = List(Edge.Input(com.histmersion.api.library.Citekey("d"), com.histmersion.api.library.Edge.Kind.Refutes)))),
       period = Some(Period.Input(com.histmersion.api.catalogue.Year(-10), com.histmersion.api.catalogue.Year(10))),
       ifUpdatedAt = Some(com.histmersion.api.library.Source.UpdatedAt("t"))
@@ -477,8 +477,8 @@ class WriteSuite extends munit.FunSuite:
     )
 
   test("ApiError.hasCode selects an error output by its code, and nothing else (#829)"):
-    val notFound = Api.Error.hasCode(Write.CodeNotFound)
-    assert(notFound.isDefinedAt(Api.Error("no such source", Some(Write.CodeNotFound))))
-    assert(!notFound.isDefinedAt(Api.Error("stale", Some(Write.CodePrecondition))))
-    assert(!notFound.isDefinedAt(Api.Error("plain 400")))
+    val notFound = Api.Error.hasCode(Api.Error.Code(Write.CodeNotFound))
+    assert(notFound.isDefinedAt(Api.Error(Api.Error.Message("no such source"), Some(Api.Error.Code(Write.CodeNotFound)))))
+    assert(!notFound.isDefinedAt(Api.Error(Api.Error.Message("stale"), Some(Api.Error.Code(Write.CodePrecondition)))))
+    assert(!notFound.isDefinedAt(Api.Error(Api.Error.Message("plain 400"))))
     assert(!notFound.isDefinedAt("not an ApiError"))

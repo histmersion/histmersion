@@ -5,16 +5,16 @@ import com.histmersion.testsupport.ComparedByValue.given
 class WcagSuite extends munit.FunSuite:
 
   test("black on white is 21:1, a colour on itself 1:1, and the ratio is symmetric"):
-    assertEqualsDouble(Wcag.contrast((com.histmersion.api.Wcag.Channel(0), com.histmersion.api.Wcag.Channel(0), com.histmersion.api.Wcag.Channel(0)), (com.histmersion.api.Wcag.Channel(255), com.histmersion.api.Wcag.Channel(255), com.histmersion.api.Wcag.Channel(255))), 21.0, 1e-9)
-    assertEqualsDouble(Wcag.contrast((com.histmersion.api.Wcag.Channel(120), com.histmersion.api.Wcag.Channel(30), com.histmersion.api.Wcag.Channel(200)), (com.histmersion.api.Wcag.Channel(120), com.histmersion.api.Wcag.Channel(30), com.histmersion.api.Wcag.Channel(200))), 1.0, 1e-9)
+    assertEqualsDouble(Wcag.contrast((com.histmersion.api.Wcag.Channel(0), com.histmersion.api.Wcag.Channel(0), com.histmersion.api.Wcag.Channel(0)), (com.histmersion.api.Wcag.Channel(255), com.histmersion.api.Wcag.Channel(255), com.histmersion.api.Wcag.Channel(255))).value, 21.0, 1e-9)
+    assertEqualsDouble(Wcag.contrast((com.histmersion.api.Wcag.Channel(120), com.histmersion.api.Wcag.Channel(30), com.histmersion.api.Wcag.Channel(200)), (com.histmersion.api.Wcag.Channel(120), com.histmersion.api.Wcag.Channel(30), com.histmersion.api.Wcag.Channel(200))).value, 1.0, 1e-9)
     assertEqualsDouble(
-      Wcag.contrast((com.histmersion.api.Wcag.Channel(10), com.histmersion.api.Wcag.Channel(20), com.histmersion.api.Wcag.Channel(30)), (com.histmersion.api.Wcag.Channel(200), com.histmersion.api.Wcag.Channel(210), com.histmersion.api.Wcag.Channel(220))),
-      Wcag.contrast((com.histmersion.api.Wcag.Channel(200), com.histmersion.api.Wcag.Channel(210), com.histmersion.api.Wcag.Channel(220)), (com.histmersion.api.Wcag.Channel(10), com.histmersion.api.Wcag.Channel(20), com.histmersion.api.Wcag.Channel(30))),
+      Wcag.contrast((com.histmersion.api.Wcag.Channel(10), com.histmersion.api.Wcag.Channel(20), com.histmersion.api.Wcag.Channel(30)), (com.histmersion.api.Wcag.Channel(200), com.histmersion.api.Wcag.Channel(210), com.histmersion.api.Wcag.Channel(220))).value,
+      Wcag.contrast((com.histmersion.api.Wcag.Channel(200), com.histmersion.api.Wcag.Channel(210), com.histmersion.api.Wcag.Channel(220)), (com.histmersion.api.Wcag.Channel(10), com.histmersion.api.Wcag.Channel(20), com.histmersion.api.Wcag.Channel(30))).value,
       1e-12
     )
 
   test("the reference value: #777 on white is just under AA (4.48)"):
-    assertEqualsDouble(Wcag.contrast(Wcag.hex(com.histmersion.api.Wcag.Hex("#777")).get, Wcag.hex(com.histmersion.api.Wcag.Hex("#ffffff")).get), 4.48, 0.01)
+    assertEqualsDouble(Wcag.contrast(Wcag.hex(com.histmersion.api.Wcag.Hex("#777")).get, Wcag.hex(com.histmersion.api.Wcag.Hex("#ffffff")).get).value, 4.48, 0.01)
 
   test("hex parses #rgb and #rrggbb and refuses anything else"):
     assertEquals(Wcag.hex(com.histmersion.api.Wcag.Hex("#fff")), Some((255, 255, 255)))

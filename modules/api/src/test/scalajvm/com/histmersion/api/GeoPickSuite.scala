@@ -21,7 +21,7 @@ class GeoPickSuite extends munit.FunSuite:
     assertEquals(GeoPick.resolve(None, Some(com.histmersion.api.catalogue.Year(-2000)), Some(com.histmersion.api.catalogue.Year(-1000)), GeoPick.Start), At(com.histmersion.api.catalogue.Year(-2000)))
     assertEquals(GeoPick.resolve(None, Some(com.histmersion.api.catalogue.Year(-2000)), Some(com.histmersion.api.catalogue.Year(-1000)), GeoPick.End), At(com.histmersion.api.catalogue.Year(-1000)))
     // the middle truncates like the web map's `(a + b) / 2`, so a snapshot shares its cached year
-    assertEquals(GeoPick.resolve(None, Some(com.histmersion.api.catalogue.Year(-3)), Some(com.histmersion.api.catalogue.Year(0)), GeoPick.Mid), At((-3L + 0L) / 2))
+    assertEquals(GeoPick.resolve(None, Some(com.histmersion.api.catalogue.Year(-3)), Some(com.histmersion.api.catalogue.Year(0)), GeoPick.Mid), At(com.histmersion.api.catalogue.Year((-3L + 0L) / 2)))
 
   test("the range picks keep the whole range; reversed bounds are put in order; one year is a snapshot"):
     assertEquals(GeoPick.resolve(None, Some(com.histmersion.api.catalogue.Year(1000)), Some(com.histmersion.api.catalogue.Year(1500)), GeoPick.Earliest), Within(com.histmersion.api.catalogue.Year(1000), com.histmersion.api.catalogue.Year(1500), latest = com.histmersion.api.catalogue.GeoTime.Within.Latest(false)))

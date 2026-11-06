@@ -10,7 +10,7 @@ import com.histmersion.api.library.Query
   */
 class QuerySuite extends munit.FunSuite:
 
-  private def row(vs: String*): List[Option[String]] = vs.toList.map(v => if v == null then None else Some(v))
+  private def row(vs: String*): List[Option[QueryResult.Rows]] = vs.toList.map(v => if v == null then None else Some(QueryResult.Rows(v)))
 
   test("a table renders header, rule and rows"):
     val md = markdownTable(List(com.histmersion.api.library.Query.QueryResult.Columns("citekey"), com.histmersion.api.library.Query.QueryResult.Columns("n")), List(row("a", "1"), row("b", "2")))
@@ -35,12 +35,12 @@ class QuerySuite extends munit.FunSuite:
 
   test("the result header carries the row count, the truncation flag and the timing"):
     val md = Query.markdown(QueryResult(List(com.histmersion.api.library.Query.QueryResult.Columns("n")), List(row("209")), com.histmersion.api.library.Query.QueryResult.RowCount(1), com.histmersion.api.library.Query.QueryResult.Truncated(false), com.histmersion.api.library.Query.QueryResult.ElapsedMs(7)))
-    assert(md.startsWith("### 1 row(s) · 7 ms"), md)
+    assert(md.value.startsWith("### 1 row(s) · 7 ms"), md)
     val cut = Query.markdown(QueryResult(List(com.histmersion.api.library.Query.QueryResult.Columns("n")), List(row("1")), com.histmersion.api.library.Query.QueryResult.RowCount(1), com.histmersion.api.library.Query.QueryResult.Truncated(true), com.histmersion.api.library.Query.QueryResult.ElapsedMs(7)))
-    assert(cut.contains("truncated by the row cap"), cut)
+    assert(cut.value.contains("truncated by the row cap"), cut)
 
   test("an empty result says 'no rows' instead of rendering an empty table"):
-    assert(Query.markdown(QueryResult(List(com.histmersion.api.library.Query.QueryResult.Columns("n")), Nil, com.histmersion.api.library.Query.QueryResult.RowCount(0), com.histmersion.api.library.Query.QueryResult.Truncated(false), com.histmersion.api.library.Query.QueryResult.ElapsedMs(1))).endsWith("_no rows_"))
+    assert(Query.markdown(QueryResult(List(com.histmersion.api.library.Query.QueryResult.Columns("n")), Nil, com.histmersion.api.library.Query.QueryResult.RowCount(0), com.histmersion.api.library.Query.QueryResult.Truncated(false), com.histmersion.api.library.Query.QueryResult.ElapsedMs(1))).value.endsWith("_no rows_"))
 
   // ── the generated tool description ───────────────────────────────────────────────────────────
 
@@ -69,21 +69,21 @@ class QuerySuite extends munit.FunSuite:
 
   test("the tool description names the tables that actually exist, with their key columns"):
     val d = Query.toolDescription(schema)
-    assert(d.contains("sources(citekey, title)"), d)
-    assert(d.contains("queue_items(id, list, text)"), d)
-    assert(!d.contains("ocr_markdown"), "non-key columns stay out of the description")
-    assert(d.contains("READ ONLY"), d)
-    assert(d.contains("BCE negative"), "the deep-time convention is stated where a model will read it")
+    assert(d.value.contains("sources(citekey, title)"), d)
+    assert(d.value.contains("queue_items(id, list, text)"), d)
+    assert(!d.value.contains("ocr_markdown"), "non-key columns stay out of the description")
+    assert(d.value.contains("READ ONLY"), d)
+    assert(d.value.contains("BCE negative"), "the deep-time convention is stated where a model will read it")
 
   test("an unreadable schema still yields a usable description"):
     val d = Query.toolDescription(SchemaTables(Nil))
-    assert(d.contains("schema unavailable"), d)
-    assert(d.contains("READ ONLY"), d)
+    assert(d.value.contains("schema unavailable"), d)
+    assert(d.value.contains("READ ONLY"), d)
 
   test("the schema listing renders every table with its columns and types"):
     val md = Query.schemaMarkdown(schema)
-    assert(md.startsWith("### 2 table(s)"), md)
-    assert(md.contains("- **sources** (table) — citekey text, title text, ocr_markdown text"), md)
+    assert(md.value.startsWith("### 2 table(s)"), md)
+    assert(md.value.contains("- **sources** (table) — citekey text, title text, ocr_markdown text"), md)
     assertEquals(Query.schemaMarkdown(SchemaTables(Nil)), "_(no tables)_")
 
   // ── the statement check (the critical read-only guard, layer 1) ──────────────────────────────
@@ -128,7 +128,7 @@ class QuerySuite extends munit.FunSuite:
 
   test("SET TRANSACTION READ WRITE; SELECT … is REFUSED (the disarming batch)"):
     val e = Query.check(com.histmersion.api.library.Query.Statement("SET TRANSACTION READ WRITE; select * from sources")).left.toOption.get
-    assert(e.contains("2 statements"), e)
+    assert(e.value.contains("2 statements"), e)
 
   test("SELECT 1; SELECT 2 is refused — one statement means one"):
     assert(Query.check(com.histmersion.api.library.Query.Statement("select 1; select 2")).isLeft)
@@ -145,7 +145,7 @@ class QuerySuite extends munit.FunSuite:
       "CALL something()",
       "discard all"
     )
-      .foreach(s => assert(Query.check(s).isLeft, s"'$s' was NOT refused"))
+      .foreach(s => assert(Query.check(Query.Statement(s)).isLeft, s"'$s' was NOT refused"))
 
   test("the keyword check sees past leading comments"):
     assert(Query.check(com.histmersion.api.library.Query.Statement("-- innocent\nSET TRANSACTION READ WRITE")).isLeft)
@@ -169,14 +169,14 @@ class QuerySuite extends munit.FunSuite:
     prefixes.foreach { prefix =>
       commands.foreach { command =>
         val sql = prefix + command
-        assert(Query.check(sql).isLeft, s"control statement accepted: $sql")
+        assert(Query.check(Query.Statement(sql)).isLeft, s"control statement accepted: $sql")
       }
     }
 
   test("nested leading comments preserve allowed queries and their keyword"):
     val sql = "/* outer /* inner */ outer */ select '/* literal */'"
-    assertEquals(Query.leadingKeyword(sql), "SELECT")
-    assertEquals(Query.check(sql), Right(sql))
+    assertEquals(Query.leadingKeyword(Query.Statement(sql)), "SELECT")
+    assertEquals(Query.check(Query.Statement(sql)), Right(sql))
     assertEquals(Query.leadingKeyword(com.histmersion.api.library.Query.Statement("/* /* */ */ -- next\nwith q as (select 1) select * from q")), "WITH")
 
   test("unclosed leading comments contain no executable keyword"):

@@ -6,7 +6,7 @@ import com.histmersion.api.automation.AgentMode
 class AgentModeSuite extends munit.FunSuite:
   import com.histmersion.api.automation.AgentMode.Step
 
-  private val switches = for on <- List(false, true); draining <- List(false, true) yield (on, draining)
+  private val switches = for on <- List(false, true); draining <- List(false, true) yield (Step.Autopilot.On(on), Step.Drain.On(draining))
 
   test("the mode the switches stand for: off is paused, draining or not"):
     assertEquals(AgentMode.of(autopilotOn = com.histmersion.api.automation.AgentMode.Step.Autopilot.On(true), draining = com.histmersion.api.automation.AgentMode.Step.Drain.On(false)), AgentMode.Working)
@@ -23,7 +23,7 @@ class AgentModeSuite extends munit.FunSuite:
       }
       assertEquals(AgentMode.of(on2, drain2), to, s"$on/$draining → $to: $steps")
       assertEquals(steps.distinct, steps)
-      if AgentMode.of(on, draining) == to && !(to == AgentMode.Paused && draining) then
+      if AgentMode.of(on, draining) == to && !(to == AgentMode.Paused && draining.value) then
         assertEquals(steps, Nil, s"$on/$draining → $to")
 
   test("pausing lifts a drain before turning the autopilot off; working lifts it before turning it on"):

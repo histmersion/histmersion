@@ -34,7 +34,7 @@ class PersonalMarkdownSuite extends munit.FunSuite:
     assert(PersonalMarkdown.noteLine(n).endsWith("\n  Bridge here?"), PersonalMarkdown.noteLine(n))
     assert(PersonalMarkdown.note(n).contains("place on the map · 37.50° N, 22.75° E"), PersonalMarkdown.note(n))
     assert(PersonalMarkdown.note(n).contains("changed 2026-10-31 09:00"))
-    assertEquals(PersonalMarkdown.excerpt("x" * 200, com.histmersion.api.checks.FormatIssue.Excerpt.Length(10)), "x" * 9 + "…")
+    assertEquals(PersonalMarkdown.excerpt(Note.Text("x" * 200), com.histmersion.api.checks.FormatIssue.Excerpt.Length(10)), "x" * 9 + "…")
 
   test("read marks"):
     assertEquals(

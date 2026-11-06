@@ -48,6 +48,7 @@ class ArticlesSuite extends munit.FunSuite:
         .left
         .toOption
         .get
+        .value
         .contains("must not be after"),
       true
     )
@@ -76,9 +77,9 @@ class ArticlesSuite extends munit.FunSuite:
         .applyPatch(existing, Article.Patch(append = Some(com.histmersion.api.research.Article.Patch.Append("## New evidence\n\n[[haak2015_massive]]"))))
         .toOption
         .get
-    assert(a.body.startsWith("# The Sea Peoples"), a.body)
-    assert(a.body.endsWith("## New evidence\n\n[[haak2015_massive]]"), a.body)
-    assert(a.body.contains("Medinet Habu"), "the original prose survives an append")
+    assert(a.body.value.startsWith("# The Sea Peoples"), a.body)
+    assert(a.body.value.endsWith("## New evidence\n\n[[haak2015_massive]]"), a.body)
+    assert(a.body.value.contains("Medinet Habu"), "the original prose survives an append")
 
   test("body replaces, and body + append apply in that order"):
     val a = Articles.applyPatch(existing, Article.Patch(body = Some(com.histmersion.api.research.Article.Body("# New")), append = Some(com.histmersion.api.research.Article.Patch.Append("tail")))).toOption.get
@@ -95,8 +96,8 @@ class ArticlesSuite extends munit.FunSuite:
   test("ifUpdatedAt: matching passes, stale fails with a message telling you what to do"):
     assertEquals(Articles.precondition(existing, Article.Patch(ifUpdatedAt = existing.updatedAt)), Right(()))
     val e = Articles.precondition(existing, Article.Patch(ifUpdatedAt = Some(com.histmersion.api.research.Article.UpdatedAt("older")))).left.toOption.get
-    assert(e.contains("has moved on"), e)
-    assert(e.contains("Re-read"), e)
+    assert(e.value.contains("has moved on"), e)
+    assert(e.value.contains("Re-read"), e)
 
   // ── kinds ────────────────────────────────────────────────────────────────────────────────────
   test("a wiki directory maps to the singular kind it holds"):
@@ -113,7 +114,7 @@ class ArticlesSuite extends munit.FunSuite:
     )
 
   // ── the Markdown surface (MCP, CLI and — through flexmark — the HTML page) ───────────────────
-  private def view(body: String, backs: List[Backlink] = Nil, cited: List[CitedSource] = Nil) =
+  private def view(body: Article.Body, backs: List[Backlink] = Nil, cited: List[CitedSource] = Nil) =
     Article.View(
       Article.Row(
         com.histmersion.api.research.Article.Slug("sea_peoples"),
@@ -131,7 +132,7 @@ class ArticlesSuite extends munit.FunSuite:
     )
 
   test("the metadata line goes UNDER the article's own title, never above it"):
-    val md = ArticleMarkdown.article(view("# The Sea Peoples\n\nprose"))
+    val md = ArticleMarkdown.article(view(Article.Body("# The Sea Peoples\n\nprose")))
     assertEquals(
       md,
       "# The Sea Peoples\n\n_concept · [Levant](/#place=Levant) · 1220 BCE–1100 BCE · " +
@@ -139,14 +140,14 @@ class ArticlesSuite extends munit.FunSuite:
     )
 
   test("a body with no heading of its own gets one from the title"):
-    val md = ArticleMarkdown.article(view("prose only"))
+    val md = ArticleMarkdown.article(view(Article.Body("prose only")))
     assert(md.startsWith("# The Sea Peoples\n\n_concept"), md)
     assert(md.endsWith("prose only"), md)
 
   test("backlinks and the cited-sources footer render as wikilinks the page can resolve"):
     val md = ArticleMarkdown.article(
       view(
-        "# T\n\nprose",
+        Article.Body("# T\n\nprose"),
         backs = List(Backlink(com.histmersion.api.research.Backlink.Kind("article"), com.histmersion.api.research.Backlink.Id("bronze_age_collapse"), Some(com.histmersion.api.research.Backlink.Title("LBA Collapse")))),
         cited = List(
           CitedSource(com.histmersion.api.library.Citekey("cline2014_year"), (Some("1177 B.C.")).map(com.histmersion.api.library.Title.apply), (Some(2014)).map(com.histmersion.api.catalogue.Year.apply), Some(Source.Status.Foundational)),
@@ -159,7 +160,7 @@ class ArticlesSuite extends munit.FunSuite:
     assert(md.contains("_(not in the corpus)_"), "a dangling citation is shown, not dropped: " + md)
 
   test("no backlinks and no citations means no empty sections"):
-    val md = ArticleMarkdown.article(view("# T\n\nprose"))
+    val md = ArticleMarkdown.article(view(Article.Body("# T\n\nprose")))
     assert(!md.contains("Backlinks") && !md.contains("Sources cited"), md)
 
   test("list renders slug, title, meta and the page size against the total"):
@@ -192,60 +193,60 @@ class ArticlesSuite extends munit.FunSuite:
   // ── section-targeted append (A16) ───────────────────────────────────────────────────────────
 
   test("appendUnderSection inserts text under the matching heading"):
-    val body = "# Title\n\n## Sources\n\nSource A.\n\n## Disagreements\n\nOld disagreement.\n\n## Conclusion\n\nDone."
+    val body = Article.Body("# Title\n\n## Sources\n\nSource A.\n\n## Disagreements\n\nOld disagreement.\n\n## Conclusion\n\nDone.")
     val result = Articles.appendUnderSection(body, com.histmersion.api.research.Article.Section("## Disagreements"), com.histmersion.api.research.Article.Prose("New disagreement content.")).toOption.get
-    assert(result.contains("Old disagreement."), result)
-    assert(result.contains("New disagreement content."), result)
+    assert(result.value.contains("Old disagreement."), result)
+    assert(result.value.contains("New disagreement content."), result)
     // the new content should be between Disagreements and Conclusion
-    val disIdx = result.indexOf("## Disagreements")
-    val newIdx = result.indexOf("New disagreement content.")
-    val conIdx = result.indexOf("## Conclusion")
+    val disIdx = result.value.indexOf("## Disagreements")
+    val newIdx = result.value.indexOf("New disagreement content.")
+    val conIdx = result.value.indexOf("## Conclusion")
     assert(disIdx < newIdx && newIdx < conIdx, result)
 
   test("appendUnderSection matches case-insensitively and ignores leading #"):
-    val body = "# Title\n\n## Disagreements\n\nOld.\n\n## End"
+    val body = Article.Body("# Title\n\n## Disagreements\n\nOld.\n\n## End")
     assert(Articles.appendUnderSection(body, com.histmersion.api.research.Article.Section("disagreements"), com.histmersion.api.research.Article.Prose("New.")).isRight)
     assert(Articles.appendUnderSection(body, com.histmersion.api.research.Article.Section("## DISAGREEMENTS"), com.histmersion.api.research.Article.Prose("New.")).isRight)
 
   test("appendUnderSection returns an error when the heading is not found"):
-    val body = "# Title\n\n## Sources\n\nData."
+    val body = Article.Body("# Title\n\n## Sources\n\nData.")
     val result = Articles.appendUnderSection(body, com.histmersion.api.research.Article.Section("## Missing"), com.histmersion.api.research.Article.Prose("New content."))
     assert(result.isLeft)
-    assert(result.left.toOption.get.contains("no heading matching"))
+    assert(result.left.toOption.get.value.contains("no heading matching"))
 
   test("appendUnderSection appends at the end when the section is the last heading"):
-    val body = "# Title\n\n## Last Section\n\nSome content."
+    val body = Article.Body("# Title\n\n## Last Section\n\nSome content.")
     val result = Articles.appendUnderSection(body, com.histmersion.api.research.Article.Section("## Last Section"), com.histmersion.api.research.Article.Prose("Added text.")).toOption.get
-    assert(result.endsWith("Added text."), result)
+    assert(result.value.endsWith("Added text."), result)
 
   test("patch_article with section targets the append under the right heading"):
-    val body = "# Sea Peoples\n\n## Evidence\n\nData.\n\n## Disagreements\n\nOld."
+    val body = Article.Body("# Sea Peoples\n\n## Evidence\n\nData.\n\n## Disagreements\n\nOld.")
     val ex = existing.modify(_.body).setTo(body)
     val p = Article.Patch(append = Some(com.histmersion.api.research.Article.Patch.Append("Fresh dispute.")), section = Some(com.histmersion.api.research.Article.Patch.Section("## Disagreements")))
     val a = Articles.applyPatch(ex, p).toOption.get
-    val disIdx = a.body.indexOf("## Disagreements")
-    val newIdx = a.body.indexOf("Fresh dispute.")
+    val disIdx = a.body.value.indexOf("## Disagreements")
+    val newIdx = a.body.value.indexOf("Fresh dispute.")
     assert(disIdx < newIdx, a.body)
-    assert(a.body.contains("Old."), a.body)
+    assert(a.body.value.contains("Old."), a.body)
 
   // ── stand-in summaries (three articles shipped "placeholder" as their card text) ─────────────
 
   test("a stand-in summary is refused on put and on patch, with what to do instead"):
     for s <- List("placeholder", "TODO", " tbd ", "FIXME.", "Lorem ipsum dolor sit amet", "[placeholder]") do
-      val put = Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"), summary = Some(s)))
-      assert(put.left.exists(_.contains("stand-in")), s"put accepted '$s': $put")
-      val patch = Articles.applyPatch(existing, Article.Patch(summary = Some(s)))
+      val put = Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"), summary = Some(Article.SummaryText(s))))
+      assert(put.left.exists(_.value.contains("stand-in")), s"put accepted '$s': $put")
+      val patch = Articles.applyPatch(existing, Article.Patch(summary = Some(Article.SummaryText(s))))
       assert(patch.isLeft, s"patch accepted '$s'")
 
   test("a real summary that merely mentions a stand-in word is kept"):
     val s = "The placeholder names in Linear B are discussed; TODO lists are not."
     assertEquals(
-      Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"), summary = Some(s))).map(_.summary),
+      Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("b"), summary = Some(Article.SummaryText(s)))).map(_.summary),
       Right(Some(s))
     )
 
   test("without a summary, a body that opens with `## Summary` supplies it"):
-    val body = "## Summary\n\n*Hephaestus is the divine craftsman.*\n\n## Evidence\n\nMore."
+    val body = Article.Body("## Summary\n\n*Hephaestus is the divine craftsman.*\n\n## Evidence\n\nMore.")
     assertEquals(Articles.lede(body), Some("Hephaestus is the divine craftsman."))
     assertEquals(
       Articles.applyPut(com.histmersion.api.research.Article.Slug("x"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), body)).map(_.summary),

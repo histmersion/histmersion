@@ -5,7 +5,7 @@ import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.checks.Lint
 import com.histmersion.api.research.{Articles, CoverageSearch, DriftKind}
-import com.histmersion.api.library.Source
+import com.histmersion.api.library.{Citekey, Source}
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 
@@ -15,25 +15,25 @@ import com.histmersion.api.research.Coverage
   */
 class ArticleCoverageSuite extends munit.FunSuite:
 
-  private def src(ck: String, st: Source.Status = Source.Status.Current) =
-    Coverage.Source(ck, s"Title of $ck", Some(com.histmersion.api.catalogue.Year(2000)), st, List(com.histmersion.api.library.AuthorName("Ann Author")))
+  private def src(ck: Citekey, st: Source.Status = Source.Status.Current) =
+    Coverage.Source(ck, com.histmersion.api.library.Title(s"Title of $ck"), Some(com.histmersion.api.catalogue.Year(2000)), st, List(com.histmersion.api.library.AuthorName("Ann Author")))
 
   private val filter = Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("Theseus")), topics = List(com.histmersion.api.library.Filter.Topics("greek_myth")))
   private val hits = List(
-    src("walker1995_theseus", Source.Status.Foundational),
-    src("graves2017_greek", Source.Status.Contested),
-    src("gantz1993_earlymyth"),
-    src("bremmer2008_religion"),
-    src("graf1993_mythology"),
-    src("nilsson1927_minoan", Source.Status.Superseded)
+    src(Citekey("walker1995_theseus"), Source.Status.Foundational),
+    src(Citekey("graves2017_greek"), Source.Status.Contested),
+    src(Citekey("gantz1993_earlymyth")),
+    src(Citekey("bremmer2008_religion")),
+    src(Citekey("graf1993_mythology")),
+    src(Citekey("nilsson1927_minoan"), Source.Status.Superseded)
   )
-  private val cited = List("walker1995_theseus", "gantz1993_earlymyth", "middleton2020_collapse")
+  private val cited = List(Citekey("walker1995_theseus"), Citekey("gantz1993_earlymyth"), Citekey("middleton2020_collapse"))
   private val reasons = Map(
-    "graves2017_greek" -> "retells the myths with no dated finding on their origin",
-    "bremmer2008_religion" -> "a handbook; nothing on synoikism",
-    "graf1993_mythology" -> "a handbook; nothing on synoikism",
-    "gantz1993_earlymyth" -> "stale: it is cited now",
-    "zz2000_gone" -> "the filter no longer returns it"
+    Citekey("graves2017_greek") -> Coverage.Entry.Reason("retells the myths with no dated finding on their origin"),
+    Citekey("bremmer2008_religion") -> Coverage.Entry.Reason("a handbook; nothing on synoikism"),
+    Citekey("graf1993_mythology") -> Coverage.Entry.Reason("a handbook; nothing on synoikism"),
+    Citekey("gantz1993_earlymyth") -> Coverage.Entry.Reason("stale: it is cited now"),
+    Citekey("zz2000_gone") -> Coverage.Entry.Reason("the filter no longer returns it")
   )
   private val edges = List(
     Coverage.Edge(com.histmersion.api.library.Citekey("simpson1970_catalogue"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("gantz1993_earlymyth")),
@@ -42,7 +42,11 @@ class ArticleCoverageSuite extends munit.FunSuite:
   ) // touches no cited source
   private val searches = List(CoverageSearch(com.histmersion.api.research.CoverageSearch.Query("synoikism"), com.histmersion.api.research.CoverageSearch.Total(4), List(com.histmersion.api.library.Citekey("middleton2020_collapse"))))
 
-  private def cov(total: Int = 6, hs: List[Coverage.Source] = hits, rs: Map[String, String] = reasons) =
+  private def cov(
+      total: Article.Coverage.ComputeTotal = Article.Coverage.ComputeTotal(6),
+      hs: List[Coverage.Source] = hits,
+      rs: Map[Citekey, Coverage.Entry.Reason] = reasons
+  ) =
     Article.Coverage.compute(
       com.histmersion.api.research.Article.Coverage.ComputeSlug("theseus_origins"),
       filter,
@@ -96,10 +100,10 @@ class ArticleCoverageSuite extends munit.FunSuite:
     )
     assertEquals(c.unplaced, List("nilsson1927_minoan"))
     // the reasons travel whole, drifted ones included
-    assertEquals(c.reasons.map(_.citekey), reasons.keys.toList.sorted)
+    assertEquals(c.reasons.map(_.citekey), reasons.keys.toList.sortBy(_.value))
 
   test("compute: a capped read says nothing about reasons outside what it read"):
-    val c = cov(total = 812)
+    val c = cov(total = Article.Coverage.ComputeTotal(812))
     assert(c.capped)
     assertEquals(c.drift.map(_.kind), List(DriftKind.Unplaced, DriftKind.ReasonForCited))
 
@@ -107,7 +111,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
     val c = cov()
     assertEquals(Article.Coverage.unplacedAfter(c, Set(com.histmersion.api.library.Citekey("walker1995_theseus")), reasons), List("nilsson1927_minoan"))
     assertEquals(Article.Coverage.unplacedAfter(c, Set(com.histmersion.api.library.Citekey("nilsson1927_minoan")), reasons), Nil)
-    assertEquals(Article.Coverage.unplacedAfter(c, Set.empty, reasons + ("nilsson1927_minoan" -> "superseded")), Nil)
+    assertEquals(Article.Coverage.unplacedAfter(c, Set.empty, reasons + (Citekey("nilsson1927_minoan") -> Coverage.Entry.Reason("superseded"))), Nil)
 
   test("render: the counts sentence, reasons grouped, a missing one is 'not yet assessed', statuses stated"):
     val text = Article.Coverage.notUsed(cov())
@@ -135,28 +139,29 @@ class ArticleCoverageSuite extends munit.FunSuite:
       Nil
     )
     assert(
-      Article.Coverage.notUsed(allCited).endsWith("_All 2 sources the filter returns are cited above._"),
+      Article.Coverage.notUsed(allCited).value.endsWith("_All 2 sources the filter returns are cited above._"),
       Article.Coverage.notUsed(allCited)
     )
     val none = Article.Coverage.compute(com.histmersion.api.research.Article.Coverage.ComputeSlug("a"), filter, com.histmersion.api.research.Article.Coverage.ComputeTotal(0), Nil, Set.empty, Nil, Map.empty, Nil, Nil)
-    assert(Article.Coverage.notUsed(none).endsWith("_The filter returns no source._"))
+    assert(Article.Coverage.notUsed(none).value.endsWith("_The filter returns no source._"))
     val one =
       Article.Coverage.compute(com.histmersion.api.research.Article.Coverage.ComputeSlug("a"), filter, com.histmersion.api.research.Article.Coverage.ComputeTotal(2), hits.take(2), Set.empty, List(com.histmersion.api.library.Citekey("walker1995_theseus")), Map.empty, Nil, Nil)
     assert(
       Article.Coverage
         .notUsed(one)
+        .value
         .contains("1 of them is cited above; the other one is listed here with the reason it is left out:"),
       Article.Coverage.notUsed(one)
     )
-    val capped = Article.Coverage.notUsed(cov(total = 812))
+    val capped = Article.Coverage.notUsed(cov(total = Article.Coverage.ComputeTotal(812)))
     assert(
-      capped.contains(
+      capped.value.contains(
         "The filter returns 812 sources; the first 6 (by citekey) were checked. 2 of them are cited above"
       ),
       capped
     )
     val noneCited = Article.Coverage.compute(com.histmersion.api.research.Article.Coverage.ComputeSlug("a"), filter, com.histmersion.api.research.Article.Coverage.ComputeTotal(2), hits.take(2), Set.empty, Nil, Map.empty, Nil, Nil)
-    assert(Article.Coverage.notUsed(noneCited).contains("None of them is cited above; the other 2 are listed"))
+    assert(Article.Coverage.notUsed(noneCited).value.contains("None of them is cited above; the other 2 are listed"))
 
   test("render: the Method note — filter and total, statuses, further searches, outside citations, edges"):
     val m = Article.Coverage.method(cov())
@@ -172,7 +177,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
         com.histmersion.api.research.Article.Coverage.ComputeSlug("a"),
         Article.Filter(tags = List(com.histmersion.api.library.Filter.Tags("tin"))),
         com.histmersion.api.research.Article.Coverage.ComputeTotal(1),
-        List(src("a2019_tin")),
+        List(src(Citekey("a2019_tin"))),
         Set(com.histmersion.api.library.Citekey("a2019_tin")),
         List(com.histmersion.api.library.Citekey("a2019_tin")),
         Map.empty,
@@ -180,9 +185,9 @@ class ArticleCoverageSuite extends munit.FunSuite:
         Nil
       )
     )
-    assert(quiet.contains("statuses: 1 current; none contested, superseded, debunked or retracted"), quiet)
+    assert(quiet.value.contains("statuses: 1 current; none contested, superseded, debunked or retracted"), quiet)
     assert(
-      quiet.contains(
+      quiet.value.contains(
         "no challenges, refutes, updates or superseded_by edge touches a cited source (not evidence of agreement)"
       ),
       quiet
@@ -191,7 +196,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
   test("render: the generated sections pass the article lints — no uncited paragraph, no filler"):
     val variants = List(
       cov(),
-      cov(total = 812),
+      cov(total = Article.Coverage.ComputeTotal(812)),
       cov(rs = Map.empty),
       Article.Coverage.compute(com.histmersion.api.research.Article.Coverage.ComputeSlug("a"), filter, com.histmersion.api.research.Article.Coverage.ComputeTotal(0), Nil, Set.empty, Nil, Map.empty, Nil, Nil),
       Article.Coverage.compute(
@@ -208,9 +213,9 @@ class ArticleCoverageSuite extends munit.FunSuite:
     )
     variants.foreach { c =>
       val md = Article.Coverage.sections(c)
-      assertEquals(Article.Lint.articleUncitedParagraphs(List("a" -> md)), Nil, md)
-      assertEquals(Article.Lint.articleFiller(List("a" -> md)), Nil, md)
-      assertEquals(Lint.extractParagraphs(md), Nil, md)
+      assertEquals(Article.Lint.articleUncitedParagraphs(List(Article.Slug("a") -> Article.Body(md.value))), Nil, md)
+      assertEquals(Article.Lint.articleFiller(List(Article.Slug("a") -> Article.Body(md.value))), Nil, md)
+      assertEquals(Lint.extractParagraphs(Lint.ProseBody(md.value)), Nil, md)
     }
     // the Method note is ONE line (a metadata line), whatever the filter's text holds
     val odd = Article.Coverage.method(
@@ -226,8 +231,8 @@ class ArticleCoverageSuite extends munit.FunSuite:
         Nil
       )
     )
-    assertEquals(odd.linesIterator.size, 1)
-    assert(odd.contains("a\\_b \\*c\\* \\\"d\\\""), odd)
+    assertEquals(odd.value.linesIterator.size, 1)
+    assert(odd.value.contains("a\\_b \\*c\\* \\\"d\\\""), odd)
 
   test("filter: normalised, statuses checked, an empty one clears, extra queries need a filter"):
     assertEquals(
@@ -240,7 +245,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
       Article.Filter
         .normalise(Article.Filter(tags = List(com.histmersion.api.library.Filter.Tags("x")), status = List(com.histmersion.api.library.Filter.Status("famous"))))
         .left
-        .exists(_.contains("'famous'"))
+        .exists(_.value.contains("'famous'"))
     )
     assert(Article.Filter.normalise(Article.Filter(tags = List(com.histmersion.api.library.Filter.Tags("x")), from = Some(com.histmersion.api.catalogue.Year(-100)), to = Some(com.histmersion.api.catalogue.Year(-200)))).isLeft)
     assertEquals(Article.Filter.normalise(Article.Filter(query = Some(com.histmersion.api.library.Filter.Q("  ")))), Right(None))
@@ -253,7 +258,7 @@ class ArticleCoverageSuite extends munit.FunSuite:
   test("reasons: set, replaced, removed by an empty one, folded onto one line; a non-citekey or an essay refused"):
     val m = Coverage.Reason
       .merge(
-        Map("a2019_tin" -> "old"),
+        Map(Citekey("a2019_tin") -> Coverage.Entry.Reason("old")),
         List(Coverage.Reason(com.histmersion.api.library.Citekey("[[A2019_tin]]"), com.histmersion.api.research.Coverage.Entry.Reason("new\n  reason")), Coverage.Reason(com.histmersion.api.library.Citekey("b2020_iso"), com.histmersion.api.research.Coverage.Entry.Reason("about Egypt")))
       )
       .toOption
@@ -264,15 +269,15 @@ class ArticleCoverageSuite extends munit.FunSuite:
       Right(Map("a2019_tin" -> "new reason"))
     )
     assert(Coverage.Reason.merge(m, List(Coverage.Reason(com.histmersion.api.library.Citekey("Not A Key"), com.histmersion.api.research.Coverage.Entry.Reason("x")))).isLeft)
-    assert(Coverage.Reason.merge(m, List(Coverage.Reason(com.histmersion.api.library.Citekey("a2019_tin"), "x" * 501))).isLeft)
+    assert(Coverage.Reason.merge(m, List(Coverage.Reason(com.histmersion.api.library.Citekey("a2019_tin"), Coverage.Entry.Reason("x" * 501)))).isLeft)
     assertEquals(Coverage.Reason.list(m).map(_.citekey), List("a2019_tin", "b2020_iso"))
 
   test("bodies: a hand-written Not used section is not citation; the export block is dropped on import"):
     val body = "Intro [[a2019_tin]].\n\n## Not used\n\n- [[b2020_iso]]: Egypt\n\n## Glossary\n\n- term"
-    assertEquals(Article.Coverage.withoutNotUsed(body), "Intro [[a2019_tin]].\n\n## Glossary\n\n- term")
+    assertEquals(Article.Coverage.withoutNotUsed(Article.Body(body)), "Intro [[a2019_tin]].\n\n## Glossary\n\n- term")
     val c = cov()
     val exported = "Intro [[a2019_tin]].\n\n" + Article.Coverage.exported(c)
-    assertEquals(Article.Coverage.stripGenerated(exported), "Intro [[a2019_tin]].")
+    assertEquals(Article.Coverage.stripGenerated(Article.Body(exported)), "Intro [[a2019_tin]].")
     assertEquals(Article.Coverage.stripGenerated(com.histmersion.api.research.Article.Body("No block.")), "No block.")
     assert(Article.Coverage.hasMethodLine("x\n_Method: y._") && !Article.Coverage.hasMethodLine("the _Method_ is"))
 
@@ -312,12 +317,12 @@ class ArticleCoverageSuite extends munit.FunSuite:
   test("an exported note sent back as a body: the generated block never enters the store"):
     val exported = "# T\n\nBody [[a2019_tin]].\n\n" + Article.Coverage.exported(cov())
     assertEquals(
-      Articles.applyPut(com.histmersion.api.research.Article.Slug("t"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), exported)).toOption.get.body,
+      Articles.applyPut(com.histmersion.api.research.Article.Slug("t"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), Article.Body(exported))).toOption.get.body,
       "# T\n\nBody [[a2019_tin]]."
     )
     val a = Articles.applyPut(com.histmersion.api.research.Article.Slug("t"), Article.Put(com.histmersion.api.research.Article.Title("T"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.research.Article.Body("# T"))).toOption.get
     assertEquals(
-      Articles.applyPatch(a, Article.Patch(body = Some(exported))).toOption.get.body,
+      Articles.applyPatch(a, Article.Patch(body = Some(Article.Body(exported)))).toOption.get.body,
       "# T\n\nBody [[a2019_tin]]."
     )
 

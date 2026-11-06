@@ -29,7 +29,15 @@ class AboutSuite extends munit.FunSuite:
 
   test("job counts fold the status rows; a status that is no job state is dropped"):
     val c = JobCounts.of(
-      List("queued" -> 2, "running" -> 1, "done" -> 40, "failed" -> 3, "weird" -> 9, "paused" -> 1, "cancelled" -> 4)
+      List(
+        JobState.Wire("queued") -> JobCounts.Count(2),
+        JobState.Wire("running") -> JobCounts.Count(1),
+        JobState.Wire("done") -> JobCounts.Count(40),
+        JobState.Wire("failed") -> JobCounts.Count(3),
+        JobState.Wire("weird") -> JobCounts.Count(9),
+        JobState.Wire("paused") -> JobCounts.Count(1),
+        JobState.Wire("cancelled") -> JobCounts.Count(4)
+      )
     )
     assertEquals(c, JobCounts(com.histmersion.api.jobs.JobCounts.Queued(2), com.histmersion.api.jobs.JobCounts.Running(1), com.histmersion.api.jobs.JobCounts.Done(40), com.histmersion.api.jobs.JobCounts.Failed(3), com.histmersion.api.jobs.JobCounts.Paused(1), com.histmersion.api.jobs.JobCounts.Cancelled(4)))
     assertEquals(JobState.values.toList.map(c.of), List(2, 1, 40, 3, 1, 4))
@@ -48,7 +56,7 @@ class AboutSuite extends munit.FunSuite:
     health = Health(com.histmersion.api.instance.Health.Status("degraded"), com.histmersion.api.instance.Health.Db("ok"), Some(com.histmersion.api.instance.Health.SchemaVersion("28")), Some(com.histmersion.api.instance.Health.Converter("busy: 1 job"))),
     jobs = JobCounts(com.histmersion.api.jobs.JobCounts.Queued(1), com.histmersion.api.jobs.JobCounts.Running(2), com.histmersion.api.jobs.JobCounts.Done(3), com.histmersion.api.jobs.JobCounts.Failed(4)),
     counts = Some(CorpusCounts(com.histmersion.api.instance.CorpusCounts.Sources(10), com.histmersion.api.instance.CorpusCounts.Findings(200), com.histmersion.api.instance.CorpusCounts.Articles(5), com.histmersion.api.instance.CorpusCounts.Events(7), com.histmersion.api.instance.CorpusCounts.Places(15000), com.histmersion.api.instance.CorpusCounts.Periods(40), com.histmersion.api.instance.CorpusCounts.Presets(12))),
-    lastBackup = Some(Backup.Info(com.histmersion.api.backup.Backup.Info.File("histmersion-20261001.dump"), 2_500_000, com.histmersion.api.backup.Backup.Info.CreatedAt("2026-10-01T08:00:00Z"))),
+    lastBackup = Some(Backup.Info(com.histmersion.api.backup.Backup.Info.File("histmersion-20261001.dump"), ByteCount(2_500_000), com.histmersion.api.backup.Backup.Info.CreatedAt("2026-10-01T08:00:00Z"))),
     lastBackupAgeSeconds = Some(com.histmersion.api.instance.About.LastBackupAgeSeconds(7200)),
     problems = List(com.histmersion.api.instance.About.Problems("backups: cannot list /x"))
   )
@@ -66,7 +74,7 @@ class AboutSuite extends munit.FunSuite:
     assert(md.contains("Problems:\n- backups: cannot list /x"), md)
     val bare = AboutMarkdown.render(
       about.modify(
-        _.build).setTo(BuildStamp("1.2.3")).modify(_.counts).setTo(None).modify(_.lastBackup).setTo(None).modify(_.lastBackupAgeSeconds).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.problems).setTo(Nil).modify(_.health).setTo(Health("ok", "ok", None, Some("ok"))
+        _.build).setTo(BuildStamp(BuildStamp.Version("1.2.3"))).modify(_.counts).setTo(None).modify(_.lastBackup).setTo(None).modify(_.lastBackupAgeSeconds).setTo(None).modify(_.problems).setTo(Nil).modify(_.health).setTo(Health(Health.Status("ok"), Health.Db("ok"), None, Some(Health.Converter("ok")))
       )
     )
     assert(bare.contains("- commit: unknown"), bare)
@@ -75,15 +83,15 @@ class AboutSuite extends munit.FunSuite:
     assert(!bare.contains("corpus:") && !bare.contains("Problems"), bare)
 
   test("the source link points at the running commit, or at the repository when the commit is unknown"):
-    val repo = "https://github.com/histmersion/histmersion"
+    val repo = CorrespondingSource.Repository("https://github.com/histmersion/histmersion")
     assertEquals(CorrespondingSource.url(repo, Some(com.histmersion.api.library.CorrespondingSource.Commit("abc123def456"))), s"$repo/tree/abc123def456")
-    assertEquals(CorrespondingSource.url(s"$repo/", Some(com.histmersion.api.library.CorrespondingSource.Commit(" abc123 "))), s"$repo/tree/abc123")
-    assertEquals(CorrespondingSource.url(s"$repo.git", Some(com.histmersion.api.library.CorrespondingSource.Commit("abc123"))), s"$repo/tree/abc123")
+    assertEquals(CorrespondingSource.url(CorrespondingSource.Repository(s"$repo/"), Some(com.histmersion.api.library.CorrespondingSource.Commit(" abc123 "))), s"$repo/tree/abc123")
+    assertEquals(CorrespondingSource.url(CorrespondingSource.Repository(s"$repo.git"), Some(com.histmersion.api.library.CorrespondingSource.Commit("abc123"))), s"$repo/tree/abc123")
     assertEquals(CorrespondingSource.url(repo, None), repo)
     assertEquals(CorrespondingSource.url(repo, Some(com.histmersion.api.library.CorrespondingSource.Commit(""))), repo)
 
   test("histmersion about names the licence and links the source; an older server says unknown"):
-    val src = about.modify(_.build).setTo(about.build.modify(_.licence).setTo(Some("AGPL-3.0-or-later")).modify(_.sourceUrl).setTo(Some("https://example.org/h/tree/abc123def456"))
+    val src = about.modify(_.build).setTo(about.build.modify(_.licence).setTo(Some(BuildStamp.Licence("AGPL-3.0-or-later"))).modify(_.sourceUrl).setTo(Some(BuildStamp.SourceUrl("https://example.org/h/tree/abc123def456")))
     )
     val md = AboutMarkdown.render(src)
     assert(md.contains("- licence: AGPL-3.0-or-later\n- source: https://example.org/h/tree/abc123def456"), md)
@@ -91,9 +99,9 @@ class AboutSuite extends munit.FunSuite:
     assert(old.contains("- licence: unknown\n- source: unknown"), old)
 
   test("histmersion about says which config file the server read"):
-    val read = AboutMarkdown.render(about.modify(_.configFile).setTo(ConfigFileInfo(Some("/c/histmersion.conf"), loaded = true)))
+    val read = AboutMarkdown.render(about.modify(_.configFile).setTo(ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")), loaded = ConfigFileInfo.Loaded(true))))
     assert(read.contains("- config file: /c/histmersion.conf (read)"), read)
-    val none = AboutMarkdown.render(about.modify(_.configFile).setTo(ConfigFileInfo(Some("/c/histmersion.conf"))))
+    val none = AboutMarkdown.render(about.modify(_.configFile).setTo(ConfigFileInfo(Some(ConfigFileInfo.Path("/c/histmersion.conf")))))
     assert(none.contains("- config file: /c/histmersion.conf (not found: defaults and environment only)"), none)
 
   test("an About without configFile (an older server) still decodes"):
@@ -104,7 +112,7 @@ class AboutSuite extends munit.FunSuite:
   test("every count agrees with its noun: 1 article, not 1 articles"):
     val one = AboutMarkdown.render(
       about.modify(_.counts).setTo(about.counts.map(
-          _.modify(_.sources).setTo(1).modify(_.findings).setTo(0).modify(_.articles).setTo(1).modify(_.events).setTo(1).modify(_.places).setTo(1).modify(_.periods).setTo(1).modify(_.presets).setTo(1)
+          _.modify(_.sources).setTo(CorpusCounts.Sources(1)).modify(_.findings).setTo(CorpusCounts.Findings(0)).modify(_.articles).setTo(CorpusCounts.Articles(1)).modify(_.events).setTo(CorpusCounts.Events(1)).modify(_.places).setTo(CorpusCounts.Places(1)).modify(_.periods).setTo(CorpusCounts.Periods(1)).modify(_.presets).setTo(CorpusCounts.Presets(1))
         )
       )
     )

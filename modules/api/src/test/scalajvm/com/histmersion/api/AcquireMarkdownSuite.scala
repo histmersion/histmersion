@@ -53,12 +53,12 @@ class AcquireMarkdownSuite extends munit.FunSuite:
     assert(AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(0), Nil)).contains("_Every stored source is in Calibre._"))
 
   test("calibre gaps show whether the server stores each original, only when the server says"):
-    def gap(ck: String, stored: Option[Boolean]) =
+    def gap(ck: com.histmersion.api.library.Citekey, stored: Option[Boolean]) =
       CalibreGap(ck, com.histmersion.api.library.CalibreGap.Title("T"), List(com.histmersion.api.library.CalibreGap.Authors("A")), None, Some(com.histmersion.api.catalogue.Year(2000)), None, None, Nil, Some(com.histmersion.api.library.CalibreGap.Provenance("unpaywall")), storedOriginal = stored)
-    val md = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(2), List(gap("a", Some(true)), gap("b", Some(false)))))
+    val md = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(2), List(gap(com.histmersion.api.library.Citekey("a"), Some(true)), gap(com.histmersion.api.library.Citekey("b"), Some(false)))))
     assert(md.contains("| original |") && md.contains("| stored |") && md.contains("| none |"), md)
     assert(md.contains("--file"), md)
-    val old = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(1), List(gap("a", None))))
+    val old = AcquireMarkdown.calibreGaps(CalibreGaps(com.histmersion.api.library.CalibreGaps.Count(1), List(gap(com.histmersion.api.library.Citekey("a"), None))))
     assert(!old.contains("| original |"), old)
 
   test("a retracted work is marked in the single-work view"):
@@ -103,7 +103,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       crossrefUpdates = List(UpdateNotice(Some(com.histmersion.api.library.UpdateNotice.Kind("retraction")), Some(com.histmersion.api.library.UpdateNotice.Label("Retraction")), Some(com.histmersion.api.library.Doi("10.1038/y")))),
       flagged = com.histmersion.api.library.Assessment.Flagged(true),
       verdict = Acquire.Verdicts.Retracted,
-      recommendation = Acquire.recommendation(Acquire.Verdicts.Retracted, Some(com.histmersion.api.library.Acquire.CitedByCount(3)))
+      recommendation = com.histmersion.api.library.Assessment.Recommendation(Acquire.recommendation(Acquire.Verdicts.Retracted, Some(com.histmersion.api.library.Acquire.CitedByCount(3))).value)
     )
     val md = AcquireMarkdown.assessment(a)
     assert(md.contains("⛔ RETRACTED"))
@@ -124,7 +124,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       isInfluential = com.histmersion.api.library.FollowupRow.IsInfluential(true),
       intents = List(com.histmersion.api.library.FollowupRow.Intents("result")),
       contexts = List(com.histmersion.api.library.FollowupRow.Contexts("these data contradict it")),
-      proposedKind = Acquire.EdgeKinds.Refutes,
+      proposedKind = com.histmersion.api.library.FollowupRow.ProposedKind(Acquire.EdgeKinds.Refutes),
       citekey = Some(com.histmersion.api.library.Citekey("critic2021_x"))
     )
     val md = AcquireMarkdown.followups(FollowupsResult(com.histmersion.api.library.FollowupsResult.Target("haak2015_massive"), None, com.histmersion.api.library.FollowupsResult.Backend("semantic-scholar"), com.histmersion.api.library.FollowupsResult.Count(1), com.histmersion.api.library.FollowupsResult.EdgesAdded(0), List(f)))
@@ -162,7 +162,7 @@ class AcquireMarkdownSuite extends munit.FunSuite:
       title = Some(com.histmersion.api.library.ArchiveItem.Title("A Book")),
       creator = List(com.histmersion.api.library.ArchiveItem.Creator("C")),
       year = Some(com.histmersion.api.catalogue.Year(1939)),
-      files = List(ArchiveFile(com.histmersion.api.library.ArchiveFile.Name("a.pdf"), Some(com.histmersion.api.library.ArchiveFile.Format("Text PDF")), 12.0))
+      files = List(ArchiveFile(com.histmersion.api.library.ArchiveFile.Name("a.pdf"), Some(com.histmersion.api.library.ArchiveFile.Format("Text PDF")), com.histmersion.api.library.ArchiveFile.Megabytes(12.0)))
     )
     val lines = AcquireMarkdown.archiveItem(item).linesIterator.toList
     val sep = lines.filter(_.contains("---"))

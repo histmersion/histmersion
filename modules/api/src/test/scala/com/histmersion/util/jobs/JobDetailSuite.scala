@@ -32,7 +32,7 @@ class JobDetailSuite extends munit.FunSuite:
     assertEquals(d, Some(JobDetail.empty))
 
   test("a field set, changed and read; a value of the wrong shape fails the whole detail"):
-    val d = InitPlan.Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true)))).change(SkippedPeriod.SkippedCount)(_ + 2)
+    val d = InitPlan.Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true)))).change(SkippedPeriod.SkippedCount)(c => com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(c.value + 2))
     assertEquals(SkippedPeriod.SkippedCount.of(d), 2)
     assertEquals(InitPlan.Detail.of(d).map(_.gazetteer), Some(true))
     assertEquals(SkippedPeriod.Skipped.of(d), Nil)

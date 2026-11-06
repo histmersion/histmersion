@@ -87,8 +87,8 @@ class WireSnapshotSuite extends munit.FunSuite:
   private val finding = Finding.Row(
     com.histmersion.api.library.Finding.Claim("Zq claim one."),
     Some(com.histmersion.api.catalogue.Place.Region("Zqland")),
-    Some(30.5),
-    Some(40.25),
+    Some(com.histmersion.api.catalogue.Longitude(30.5)),
+    Some(com.histmersion.api.catalogue.Latitude(40.25)),
     Some(com.histmersion.api.catalogue.Year(-1300)),
     Some(com.histmersion.api.catalogue.Year(-1200)),
     Some(com.histmersion.api.library.Finding.PeriodName("Zq period")),
@@ -100,7 +100,7 @@ class WireSnapshotSuite extends munit.FunSuite:
     com.histmersion.api.library.Source.Graph.Root("zq_alpha_2001"),
     com.histmersion.api.library.Source.Graph.Depth(2),
     List(GraphNode(com.histmersion.api.library.Citekey("zq_alpha_2001"), Some(com.histmersion.api.library.Title("Zq Alpha")), Some(com.histmersion.api.catalogue.Year(2001)), Some(Source.Status.Current)), GraphNode(com.histmersion.api.library.Citekey("zq_gamma"))),
-    List(GraphLink(com.histmersion.api.library.Citekey("zq_alpha_2001"), com.histmersion.api.library.Citekey("zq_gamma"), com.histmersion.api.library.Edge.Kind("challenges")))
+    List(GraphLink(com.histmersion.api.library.Citekey("zq_alpha_2001"), com.histmersion.api.library.Citekey("zq_gamma"), com.histmersion.api.library.Edge.Kind.Challenges))
   )
   private val contradictions = ContradictionsResult(
     List(
@@ -110,7 +110,7 @@ class WireSnapshotSuite extends munit.FunSuite:
         Some(com.histmersion.api.catalogue.Year(2001)),
         Source.Status.Current,
         Some(com.histmersion.api.library.ContradictionRow.Direction.Wire("out")),
-        Some(com.histmersion.api.library.Edge.Kind("refutes")),
+        Some(com.histmersion.api.library.Edge.Kind.Refutes),
         Some(com.histmersion.api.library.Citekey("zq_gamma")),
         Some(com.histmersion.api.library.Title("Zq Gamma")),
         Some(com.histmersion.api.catalogue.Year(1990)),
@@ -125,8 +125,8 @@ class WireSnapshotSuite extends munit.FunSuite:
     com.histmersion.api.library.GeoHit.Title("Zq Alpha"),
     com.histmersion.api.library.GeoHit.Claim("Zq claim."),
     Some(com.histmersion.api.catalogue.Place.Region("Zqland")),
-    Some(30.5),
-    Some(40.25),
+    Some(com.histmersion.api.catalogue.Longitude(30.5)),
+    Some(com.histmersion.api.catalogue.Latitude(40.25)),
     Some(com.histmersion.api.catalogue.Year(-1300)),
     None,
     Some(Confidence.Low)
@@ -209,7 +209,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       List(EventDating(com.histmersion.api.catalogue.Event.Id("zq-event"), com.histmersion.api.library.Citekey("zq_alpha_2001"), TimeSpan(Some(com.histmersion.api.catalogue.Year(-1620)), None, None, Some(com.histmersion.api.catalogue.Year(-1590))), Some(com.histmersion.api.catalogue.EventDating.Method("c14")))),
     wikidata = Some(com.histmersion.api.catalogue.EventEntry.Wikidata("Q1")),
     media = List(thumb),
-    names = List("Zq eruption", "Zq event")
+    names = List(com.histmersion.api.catalogue.EventEntry.Names("Zq eruption"), com.histmersion.api.catalogue.EventEntry.Names("Zq event"))
   )
   private val place = PlaceDetail(
     summary,
@@ -277,19 +277,19 @@ class WireSnapshotSuite extends munit.FunSuite:
           com.histmersion.api.exchange.Bundle.Asset.FileName("zq.png"),
           com.histmersion.api.exchange.Bundle.Asset.MimeText("image/png"),
           com.histmersion.api.ByteCount(1024),
-          "ab" * 32,
+          com.histmersion.api.Sha256("ab" * 32),
           width = Some(com.histmersion.api.media.ImageSize.Width(10)),
           height = Some(com.histmersion.api.media.ImageSize.Height(20)),
           kind = Some(com.histmersion.api.media.MediaItem.Kind("figure")),
           caption = Some(com.histmersion.api.media.MediaItem.Caption("Zq figure")),
           license = Some(com.histmersion.api.media.MediaItem.License("CC-BY-4.0")),
-          lat = Some(40.25),
-          lon = Some(30.5),
+          lat = Some(com.histmersion.api.catalogue.Latitude(40.25)),
+          lon = Some(com.histmersion.api.catalogue.Longitude(30.5)),
           periodStart = Some(com.histmersion.api.catalogue.Year(-1500)),
           periodEnd = Some(com.histmersion.api.catalogue.Year(-1400))
         )
       ),
-      "mediaThumbLine" -> thumb.markdownLine,
+      "mediaThumbLine" -> thumb.markdownLine.value,
       "mediaList" -> MediaMarkdown.mediaList(
         MediaList(com.histmersion.api.RowCount(2), List(item, item.modify(_.license).setTo(None).modify(_.targets).setTo(Nil)), next = (Some(2)).map(com.histmersion.api.Offset.apply))
       ),
@@ -306,7 +306,7 @@ class WireSnapshotSuite extends munit.FunSuite:
         AssetLink(com.histmersion.api.media.AssetLink.Id(4), com.histmersion.api.library.Citekey("zq_alpha_2001"), com.histmersion.api.exchange.Bundle.Asset.FileName("zq.png"), com.histmersion.api.media.AssetLink.Relation("shows"), com.histmersion.api.media.MediaTarget.TargetType("event"), com.histmersion.api.media.MediaTarget.TargetId("zq-event"))
       ),
       "backupStatus" -> Markdown.backupStatus(
-        Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("done"), com.histmersion.api.backup.Backup.Status.DurationMs(1500), Some(com.histmersion.api.ByteCount(4096)), Some("cd" * 32), None, List(com.histmersion.api.backup.Backup.Result.Pruned("old.dump")))
+        Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("done"), com.histmersion.api.backup.Backup.Status.DurationMs(1500), Some(com.histmersion.api.ByteCount(4096)), Some(com.histmersion.api.Sha256("cd" * 32)), None, List(com.histmersion.api.backup.Backup.Result.Pruned("old.dump")))
       ),
       "backupStatus failed" -> Markdown.backupStatus(Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("failed"), com.histmersion.api.backup.Backup.Status.DurationMs(10), error = Some(com.histmersion.api.backup.Backup.Status.Error("zq error")))),
       "event" -> event.markdown,
@@ -328,7 +328,7 @@ class WireSnapshotSuite extends munit.FunSuite:
         .Detail(Some(InitPlan(gazetteer = com.histmersion.api.exchange.InitPlan.Gazetteer(true), fetch = List(com.histmersion.api.exchange.InitPlan.Fetch("zq-gaz")))))
         .set(SkippedPeriod.SkippedCount, com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(2))
         .set(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash, Some(com.histmersion.api.exchange.MergePlan.PlanHash("zq-hash")))
-        .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = true, List("sources"))))
+        .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), tables = List(VacuumPlan.Tables("sources")))))
         .set(com.histmersion.api.media.ImportJobKinds.Media, Some("a media run"))
         .set(com.histmersion.api.catalogue.EventsJobKinds.Catalogue, Some("zq-catalogue"))
         .set(JobDetail.Purpose, Some("zq_alpha_2001"))

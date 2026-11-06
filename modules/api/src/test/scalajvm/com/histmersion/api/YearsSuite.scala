@@ -42,7 +42,7 @@ class YearsSuite extends munit.FunSuite:
 
   accepted.foreach { (in, want) =>
     test(s"parse '$in' = $want"):
-      assertEquals(Years.parse(in), Right(want))
+      assertEquals(Years.parse(Years.Text(in)), Right(want))
   }
 
   private val refused: List[String] =
@@ -50,11 +50,11 @@ class YearsSuite extends munit.FunSuite:
 
   refused.foreach { in =>
     test(s"parse refuses '$in'"):
-      assert(Years.parse(in).isLeft, Years.parse(in).toString)
+      assert(Years.parse(Years.Text(in)).isLeft, Years.parse(Years.Text(in)).toString)
   }
 
   test("parse: year 0 is refused with the convention, not as garbage"):
-    assert(Years.parse(com.histmersion.api.Years.Text("0")).left.exists(_.contains(Years.NoYearZero)))
+    assert(Years.parse(com.histmersion.api.Years.Text("0")).left.exists(_.value.contains(Years.NoYearZero.value)))
 
   // ── conversion ───────────────────────────────────────────────────────────────────────────────
   test("astronomical ↔ historical: no year 0 on the historical side"):
@@ -63,7 +63,7 @@ class YearsSuite extends munit.FunSuite:
     assertEquals(Years.fromAstronomical(com.histmersion.api.Years.Astronomical(640)), 640L)
     assertEquals(Years.toAstronomical(com.histmersion.api.catalogue.Year(-1)), 0L)
     assertEquals(Years.toAstronomical(com.histmersion.api.catalogue.Year(0)), 0L, "a stored 0 reads as 1 BCE")
-    (-3000L to 3000L).filter(_ != 0).foreach(h => assertEquals(Years.fromAstronomical(Years.toAstronomical(h)), h))
+    (-3000L to 3000L).filter(_ != 0).foreach(h => assertEquals(Years.fromAstronomical(Years.toAstronomical(com.histmersion.api.catalogue.Year(h))), h))
 
   test("shift crosses the era boundary without a year 0"):
     assertEquals(Years.shift(com.histmersion.api.Years.ShiftH(-1), com.histmersion.api.Years.Shift(1)), 1L)
@@ -82,14 +82,14 @@ class YearsSuite extends munit.FunSuite:
     import io.circe.Json
     assertEquals(Years.fromJson(Json.fromLong(-1400), _ => None), Some(-1400L))
     assertEquals(Years.fromJson(Json.fromDoubleOrNull(-1400.0), _ => None), Some(-1400L))
-    assertEquals(Years.fromJson(Json.fromString("1400 BCE"), Lpf.parseYear), Some(-1400L))
-    assertEquals(Years.fromJson(Json.Null, Lpf.parseYear), None)
+    assertEquals(Years.fromJson(Json.fromString("1400 BCE"), raw => Lpf.parseYear(raw.value)), Some(-1400L))
+    assertEquals(Years.fromJson(Json.Null, raw => Lpf.parseYear(raw.value)), None)
 
   // ── formatting: every formatter agrees ───────────────────────────────────────────────────────
   test("YearFmt: BCE negative, CE positive, 0 as 1 BCE, an unknown year as ?"):
-    assertEquals(YearFmt(-1300L), "1300 BCE")
-    assertEquals(YearFmt(530L), "530 CE")
-    assertEquals(YearFmt(0L), "1 BCE")
+    assertEquals(YearFmt(com.histmersion.api.catalogue.Year(-1300L)), "1300 BCE")
+    assertEquals(YearFmt(com.histmersion.api.catalogue.Year(530L)), "530 CE")
+    assertEquals(YearFmt(com.histmersion.api.catalogue.Year(0L)), "1 BCE")
     assertEquals(YearFmt(None), "?")
 
   test("openPeriod: both, one, neither"):
