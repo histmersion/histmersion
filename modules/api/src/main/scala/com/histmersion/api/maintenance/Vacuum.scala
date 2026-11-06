@@ -63,7 +63,7 @@ object Vacuum:
     if (analyze).value then _root_.com.histmersion.api.maintenance.Vacuum.StatementResult(s"VACUUM (ANALYZE) $q") else _root_.com.histmersion.api.maintenance.Vacuum.StatementResult(s"VACUUM $q")
 
   def describe(p: VacuumPlan): com.histmersion.api.maintenance.Vacuum.DescribeResult =
-    s"${if p.analyze then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}"
+    _root_.com.histmersion.api.maintenance.Vacuum.DescribeResult(s"${if ((p.analyze) == _root_.com.histmersion.api.maintenance.VacuumPlan.Analyze(true)) then "VACUUM (ANALYZE)" else "VACUUM"} of ${p.tables.mkString(", ")}")
 
   def tableLine(
       table: com.histmersion.api.maintenance.Vacuum.TableLineTable,

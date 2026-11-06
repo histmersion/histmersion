@@ -52,14 +52,14 @@ object BundleMarkdown:
     ).mkString("\n\n")
 
   def verify(r: Bundle.VerifyResult): com.histmersion.api.exchange.BundleMarkdown.VerifyResult =
-    val head = if r.ok then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, _root_.com.histmersion.api.Plural.CountSingular("blob"))} verified"
+    val head = if ((r.ok) == _root_.com.histmersion.api.exchange.Bundle.VerifyResult.Ok(true)) then s"**OK** — every checksum, record and ${Plural.count(r.blobsChecked, _root_.com.histmersion.api.Plural.CountSingular("blob"))} verified"
     else s"**NOT OK** — ${Plural.count(_root_.com.histmersion.api.Plural.CountN((r.problems.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("problem"))}"
     (head :: r.manifest.map(manifest).toList ++ problems("Problems", r.problems)).mkString("\n\n")
 
   def importResult(r: Bundle.ImportResult): com.histmersion.api.exchange.BundleMarkdown.ImportResultResult =
     val verb =
       if r.problems.nonEmpty then "**Refused** — nothing was written"
-      else if r.dryRun then "**Dry run** — nothing was written; this is what an import would do"
+      else if ((r.dryRun) == _root_.com.histmersion.api.exchange.Bundle.ImportResult.DryRun(true)) then "**Dry run** — nothing was written; this is what an import would do"
       else if r.changed == _root_.com.histmersion.api.exchange.Bundle.ImportResult.ChangedResult(0) then "**Nothing to change** — this instance already has everything in the bundle"
       else
         s"**Imported** — ${Plural.count(r.changed, _root_.com.histmersion.api.Plural.CountSingular("row"))} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("")

@@ -117,7 +117,7 @@ object Storage:
     files ++ extra ++ e.detail.toList
 
   def shown(entries: List[Storage.Entry]): List[(Storage.Entry, com.histmersion.api.maintenance.Storage.ShownResultPart2)] =
-    val present = entries.filter(_.exists)
+    val present = entries.filter((refactorCallback => ((refactorCallback.exists) == _root_.com.histmersion.api.maintenance.Storage.Entry.Exists(true))))
     val keys = present.map(_.key).toSet
     def walk(e: Storage.Entry, depth: com.histmersion.api.maintenance.Storage.ShownWalkDepth, seen: Set[com.histmersion.api.maintenance.Storage.ShownWalkSeen]): List[(Storage.Entry, com.histmersion.api.maintenance.Storage.ShownWalkResultPart2)] =
       (e, depth) :: present
@@ -127,8 +127,8 @@ object Storage:
 
   def size(e: Storage.Entry): com.histmersion.api.maintenance.Storage.SizeResult =
     e.bytes.map(_.value.toLong) match
-      case None                 => if e.exists then _root_.com.histmersion.api.maintenance.Storage.SizeResult("—") else _root_.com.histmersion.api.maintenance.Storage.SizeResult("not there")
-      case Some(b) if e.partial => _root_.com.histmersion.api.maintenance.Storage.SizeResult(s"at least ${Backup.humanBytes(_root_.com.histmersion.api.backup.Backup.HumanBytesN(b))}")
+      case None                 => if ((e.exists) == _root_.com.histmersion.api.maintenance.Storage.Entry.Exists(true)) then _root_.com.histmersion.api.maintenance.Storage.SizeResult("—") else _root_.com.histmersion.api.maintenance.Storage.SizeResult("not there")
+      case Some(b) if ((e.partial) == _root_.com.histmersion.api.maintenance.Storage.Entry.Partial(true)) => _root_.com.histmersion.api.maintenance.Storage.SizeResult(s"at least ${Backup.humanBytes(_root_.com.histmersion.api.backup.Backup.HumanBytesN(b))}")
       case Some(b)              => Backup.humanBytes(_root_.com.histmersion.api.backup.Backup.HumanBytesN(b))
 
   object Advice:

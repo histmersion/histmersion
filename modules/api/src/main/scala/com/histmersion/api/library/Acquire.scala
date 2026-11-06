@@ -178,7 +178,7 @@ object Acquire:
       staleBefore: com.histmersion.api.library.Acquire.VerdictStaleBefore
   ): com.histmersion.api.library.Acquire.VerdictResult =
     val kinds = updates.flatMap(_.kind).map(_.trim.toLowerCase)
-    if openalexRetracted || retractions.exists(r => r.nature.exists(isRetractingNature)) ||
+    if ((openalexRetracted) == _root_.com.histmersion.api.library.Acquire.VerdictOpenalexRetracted(true)) || retractions.exists(r => r.nature.exists(isRetractingNature)) ||
       kinds.exists(RetractingUpdate.contains)
     then _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Retracted)
     else if retractions.nonEmpty || kinds.exists(CorrectingUpdate.contains) then _root_.com.histmersion.api.library.Acquire.VerdictResult(Verdicts.Corrected)
@@ -195,7 +195,7 @@ object Acquire:
   val BrowserDownloadTopic = "browser download"
 
   def browserDownloadText(work: WorkRef, doi: com.histmersion.api.library.Acquire.BrowserDownloadTextDoi, citekey: com.histmersion.api.library.Acquire.BrowserDownloadTextCitekey, refusals: List[com.histmersion.api.library.Acquire.BrowserDownloadTextRefusals] = Nil): Option[com.histmersion.api.library.Acquire.BrowserDownloadTextResult] =
-    Option.when(work.isOa) {
+    Option.when(((work.isOa) == _root_.com.histmersion.api.library.WorkRef.IsOa(true))) {
       val who = work.authors.map(_.value).headOption.map(a => if work.authors.map(_.value).size > 1 then s"$a et al." else a)
       val head = List(who, work.year.map(_.value.toInt).map(y => s"($y)")).flatten.mkString(" ")
       val title = work.title.map(_.value).map(_.trim).filter(_.nonEmpty).getOrElse(doi)
@@ -205,10 +205,10 @@ object Acquire:
         .filter(u => u.nonEmpty && !u.toLowerCase.contains(doi.toLowerCase))
         .fold("")(u => s" at $u")
       val said = refusals.map((_).value.trim).filter(_.nonEmpty).distinct.mkString("; ")
-      s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
+      _root_.com.histmersion.api.library.Acquire.BrowserDownloadTextResult(s"${if head.isEmpty then "" else s"$head. "}$title. https://doi.org/$doi — $oa$at, but no script may download " +
         s"it: download it in the browser${
             if said.isEmpty then "" else s" ($said)"
-          }, then histmersion ingest <file> --citekey $citekey"
+          }, then histmersion ingest <file> --citekey $citekey")
     }
 
   def flagged(verdict: com.histmersion.api.library.Acquire.FlaggedVerdict): com.histmersion.api.library.Acquire.FlaggedResult = _root_.com.histmersion.api.library.Acquire.FlaggedResult(verdict == _root_.com.histmersion.api.library.Acquire.FlaggedVerdict(Verdicts.Retracted) || verdict == _root_.com.histmersion.api.library.Acquire.FlaggedVerdict(Verdicts.Corrected))
@@ -313,7 +313,7 @@ object Acquire:
 
     if has((RefutesCues).map(refactorValue7 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue7))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Refutes)
     else if has((SupersedeCues).map(refactorValue8 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue8))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Supersedes)
-    else if isInfluential && strong && newer && has(ReviseCues) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Supersedes)
+    else if ((isInfluential) == _root_.com.histmersion.api.library.Acquire.ClassifyIsInfluential(true)) && strong && newer && has((ReviseCues).map(refactorValue2 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue2))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Supersedes)
     else if has((ChallengeCues).map(refactorValue4 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue4))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Challenges)
     else if has((ConfirmCues).map(refactorValue5 => _root_.com.histmersion.api.library.Acquire.ClassifyHasCues(refactorValue5))) then _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Confirms)
     else _root_.com.histmersion.api.library.Acquire.ClassifyResult(EdgeKinds.Cites)
@@ -321,7 +321,7 @@ object Acquire:
   def rankFollowups(rows: List[FollowupRow]): List[FollowupRow] =
     rows.sortBy { r =>
       val strong = r.intents.map(_.toLowerCase).exists(i => i == "result" || i == "methodology")
-      (if r.isInfluential then 0 else 1, if strong then 0 else 1, -r.year.getOrElse(0))
+      (if ((r.isInfluential) == _root_.com.histmersion.api.library.FollowupRow.IsInfluential(true)) then 0 else 1, if strong then 0 else 1, -r.year.getOrElse(0))
     }
 
   final case class RetractionRow(doi: com.histmersion.api.library.Doi, reason: Option[RetractionRow.Reason], date: Option[RetractionRow.Date], nature: Option[RetractionRow.Nature])

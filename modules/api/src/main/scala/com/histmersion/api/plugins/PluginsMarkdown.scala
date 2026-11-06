@@ -26,9 +26,9 @@ object PluginsMarkdown:
     _root_.com.histmersion.api.plugins.PluginsMarkdown.LineResult(s"${p.id} ${p.version} — $what")
 
   def summary(r: PluginsReport): List[com.histmersion.api.plugins.PluginsMarkdown.SummaryResult] =
-    val enabled = r.plugins.count(_.enabled)
+    val enabled = r.plugins.count((refactorCallback2 => ((refactorCallback2.enabled) == _root_.com.histmersion.api.plugins.PluginStatus.Enabled(true))))
     val head = s"- plugins: ${Plural.count(_root_.com.histmersion.api.Plural.CountN((r.plugins.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("plugin"))} in this binary · $enabled enabled" +
-      (if r.ok then "" else " · PROBLEMS")
+      (if ((r.ok) == _root_.com.histmersion.api.plugins.PluginsReport.OkResult(true)) then "" else " · PROBLEMS")
     (head :: s"  - plugin set: ${PluginSet.describe(r.set)}" :: (r.plugins.map(p => s"  - ${line(p)}") ++
       r.plugins.flatMap(p => p.warnings.map(w => s"  - warning: $w")) ++
       r.warnings.map(w => s"  - warning: $w"))).map(refactorValue => _root_.com.histmersion.api.plugins.PluginsMarkdown.SummaryResult(refactorValue))
@@ -37,7 +37,7 @@ object PluginsMarkdown:
     val plugins = r.plugins.flatMap { p =>
       s"- ${line(p)}" :: (p.settings.map(s => s"    ${s.key} = ${s.value}") ++ p.warnings.map(w => s"    warning: $w"))
     }
-    val verdict = if r.ok && checks.forall((refactorCallback => (refactorCallback._1).value)) then "self-check passed" else "self-check FAILED"
+    val verdict = if ((r.ok) == _root_.com.histmersion.api.plugins.PluginsReport.OkResult(true)) && checks.forall((refactorCallback => (refactorCallback._1).value)) then "self-check passed" else "self-check FAILED"
     (List(
       "# Histmersion self-check",
       "",

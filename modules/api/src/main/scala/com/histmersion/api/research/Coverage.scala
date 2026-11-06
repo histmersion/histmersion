@@ -98,7 +98,7 @@ object Coverage:
         acc.flatMap { m =>
           val ck = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
           val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
-          if !Article.Links.isCitekeyShaped(_root_.com.histmersion.api.text.WikiLinks.IsCitekeyShapedS(ck)) then Left(s"reason for '${r.citekey}': not a citekey")
+          if !((Article.Links.isCitekeyShaped(_root_.com.histmersion.api.text.WikiLinks.IsCitekeyShapedS(ck))) == _root_.com.histmersion.api.text.WikiLinks.IsCitekeyShapedResult(true)) then Left(s"reason for '${r.citekey}': not a citekey")
           else if text.length > MaxChars then
             Left(s"reason for $ck: ${text.length} characters (at most $MaxChars — one sentence)")
           else if text.isEmpty then Right(m - ck)

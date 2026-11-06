@@ -103,9 +103,9 @@ object MergeDecision:
     MergeDecision.Kind.values.find(d => MergeDecision.Kind.wireOf(d) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.WireOfResult(k)) match
       case None =>
         Left(_root_.com.histmersion.api.exchange.MergeDecision.ParseResultPart1(s"'$s' is not a decision (${MergeDecision.Kind.values.map(MergeDecision.Kind.wireOf).mkString(", ")})"))
-      case Some(d) if d.takesArgument && arg.forall(_.isEmpty) =>
+      case Some(d) if ((d.takesArgument) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.TakesArgumentResult(true)) && arg.forall(_.isEmpty) =>
         Left(_root_.com.histmersion.api.exchange.MergeDecision.ParseResultPart1(s"'$s': ${MergeDecision.Kind.wireOf(d)} needs an argument (${MergeDecision.Kind.wireOf(d)}:<value>)"))
-      case Some(d) if !d.takesArgument && arg.isDefined =>
+      case Some(d) if !((d.takesArgument) == _root_.com.histmersion.api.exchange.MergeDecision.Kind.TakesArgumentResult(true)) && arg.isDefined =>
         Left(_root_.com.histmersion.api.exchange.MergeDecision.ParseResultPart1(s"'$s': ${MergeDecision.Kind.wireOf(d)} takes no argument"))
       case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.exchange.MergeDecision.Argument(refactorValue))))
 

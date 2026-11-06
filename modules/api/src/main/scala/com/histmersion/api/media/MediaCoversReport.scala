@@ -29,7 +29,7 @@ object MediaCoversReport:
 
   def combine(a: MediaCoversReport, b: MediaCoversReport): MediaCoversReport =
     MediaCoversReport(
-      a.dryRun && b.dryRun,
+      ((a.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) && ((b.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)),
       _root_.com.histmersion.api.media.MediaCoversReport.Sources((a.sources).value + (b.sources).value),
       _root_.com.histmersion.api.media.MediaCoversReport.Covers((a.covers).value + (b.covers).value),
       _root_.com.histmersion.api.media.MediaCoversReport.Illustrations((a.illustrations).value + (b.illustrations).value),

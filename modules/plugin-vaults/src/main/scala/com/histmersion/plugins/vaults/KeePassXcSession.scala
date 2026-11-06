@@ -68,7 +68,7 @@ object KeePassXcSession:
     */
   def segment(out: com.histmersion.plugins.vaults.KeePassXcSession.SegmentOut, from: com.histmersion.plugins.vaults.KeePassXcSession.SegmentFrom, prompt: com.histmersion.plugins.vaults.KeePassXcSession.SegmentPrompt): Option[com.histmersion.plugins.vaults.KeePassXcSession.SegmentResult] =
     Option
-      .when((out).value.length >= (from).value + (prompt).value.length && (out).value.endsWith((prompt).value))((out).value.substring((from).value, (out).value.length - (prompt).value.length))
+      .when((out).value.length >= (from).value + (prompt).value.length && (out).value.endsWith((prompt).value))(_root_.com.histmersion.plugins.vaults.KeePassXcSession.SegmentResult((out).value.substring((from).value, (out).value.length - (prompt).value.length)))
 
   /** Pure: the value in a segment — without the echo of the request line (a session reading through readline prints it
     * back) and without the line break the value ends with.

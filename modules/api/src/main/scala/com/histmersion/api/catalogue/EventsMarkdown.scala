@@ -29,7 +29,7 @@ object EventsMarkdown:
     OffsetPage.markdown(result.page, _root_.com.histmersion.api.OffsetPage.MarkdownNoun("event(s)"), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No matching events._"), result.events)(eventLine)
 
   private[api] def eventScale(e: EventSummary): com.histmersion.api.catalogue.EventsMarkdown.EventScaleResult =
-    s"${e.scale} (${if e.scaleStated then "stated" else "derived"})"
+    _root_.com.histmersion.api.catalogue.EventsMarkdown.EventScaleResult(s"${e.scale} (${if ((e.scaleStated) == _root_.com.histmersion.api.catalogue.EventSummary.ScaleStated(true)) then "stated" else "derived"})")
 
   /** An event's page; `pictures` are its pictures' lines, as the page that shows them renders them. */
   def event(d: EventCard, pictures: List[com.histmersion.api.catalogue.EventsMarkdown.EventPictures] = Nil): com.histmersion.api.catalogue.EventsMarkdown.EventResult =

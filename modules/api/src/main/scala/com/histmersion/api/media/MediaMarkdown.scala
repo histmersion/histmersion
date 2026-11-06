@@ -73,7 +73,7 @@ object MediaMarkdown:
       }.mkString("## Media providers\n\n", "\n", "\n\n`histmersion media import <name>` runs one.")
 
   def mediaImportReport(r: MediaImportReport): com.histmersion.api.media.MediaMarkdown.MediaImportReportResult =
-    val mode = if r.dryRun then "dry run — nothing stored" else "stored"
+    val mode = if ((r.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) then "dry run — nothing stored" else "stored"
     val licences = if r.byLicence.isEmpty then "_none_"
     else
       r.byLicence
@@ -81,7 +81,7 @@ object MediaMarkdown:
         .mkString("| licence | files | allowed |\n|---|---|---|\n", "\n", "")
     val rejected = if r.rejected.isEmpty then ""
     else "\n\n**Not stored**\n" + r.rejected.map(c => s"- ${c.key}: ${c.n}").mkString("\n")
-    val done = if r.dryRun then ""
+    val done = if ((r.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) then ""
     else
       s"\n\n**Stored:** ${r.stored} new · ${r.updated} refreshed · ${r.linked} link(s) · ${r.categories} Commons ${Plural.noun(r.categories, _root_.com.histmersion.api.Plural.NounSingular("category"), _root_.com.histmersion.api.Plural.NounPlural("categories"))}"
     val revoked = if r.revoked.isEmpty then ""
@@ -118,8 +118,8 @@ object MediaMarkdown:
         ).mkString("\n"))
 
   def mediaCoversReport(r: MediaCoversReport): com.histmersion.api.media.MediaMarkdown.MediaCoversReportResult =
-    val mode = if r.dryRun then "dry run — nothing stored" else "stored"
-    val verb = if r.dryRun then "would link" else "linked"
+    val mode = if ((r.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) then "dry run — nothing stored" else "stored"
+    val verb = if ((r.dryRun) == _root_.com.histmersion.api.media.MediaImportRequest.DryRun(true)) then "would link" else "linked"
     val lines = if r.lines.isEmpty then ""
     else
       "\n\n" + r.lines
@@ -184,7 +184,7 @@ object MediaMarkdown:
       s"**Licences:** ${countsLine(f.licences)}"
 
   def figureLicenceFill(f: FigureLicenceFill): com.histmersion.api.media.MediaMarkdown.FigureLicenceFillResult =
-    val what = if f.applied then s"${Plural.count(f.updated, _root_.com.histmersion.api.Plural.CountSingular("figure"))} given their source's licence"
+    val what = if ((f.applied) == _root_.com.histmersion.api.media.FigureLicenceFill.Applied(true)) then s"${Plural.count(f.updated, _root_.com.histmersion.api.Plural.CountSingular("figure"))} given their source's licence"
     else s"${Plural.count(f.candidates, _root_.com.histmersion.api.Plural.CountSingular("figure"))} would take their source's licence (dry run; `--apply` writes it)"
     val by = if f.bySource.isEmpty then "" else "\n\n" + f.bySource.map(c => s"- [[${c.key}]]: ${c.n}").mkString("\n")
     _root_.com.histmersion.api.media.MediaMarkdown.FigureLicenceFillResult(s"# Figure licences\n\n$what$by")

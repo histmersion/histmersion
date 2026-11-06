@@ -1,6 +1,75 @@
 # Priority-family status
 
-## Current checkpoint: helper properties consolidated, compilation incomplete
+## Current checkpoint: native Boolean consumers repaired, compilation incomplete
+
+The existing compiler-repair pipeline applies 189 AST patches in 67 production
+files, then 17 further patches in 15 of those files after recompilation. This is
+206 applied expression patches across 67 distinct production files, zero application
+test files changed, not 206 independently verified policy repairs. No declaration
+was reverted to a primitive. All application edits were applied by Scalafix through
+the frozen-preview pipeline; no individual source-expression mappings were added.
+
+The opt-in nativeBooleans mode compares a Boolean-backed Pure value with its own
+typed true value at native Boolean consumers. It handles conditions, negation,
+Boolean operators, ordinary function results and PartialFunction results. Existing
+short-circuit operators remain in place, function factories are evaluated once,
+and PartialFunction.andThen preserves the original input domain and default path.
+The mode requires an indexed, stable, exact qualified Iron/Pure shape and an empty,
+unmodified companion with one parent and no constructor arguments or same-name val
+collision. Custom constructors, aliases of constraints, unresolved definitions,
+instance-owned types and extra inherited behavior remain unsupported. Existing
+owner-only primitive operations and raw-to-Pure constructions can also apply as
+compilation exposes them; the consumer mode does not allow general nominal adapters
+or general consumer .value access.
+
+The rewritten Boolean fixture compiles/runs under Scala 3.10, -source:future and
+fatal E165. Assertions verify true/false branches, negation, both short-circuit
+paths, operand/factory evaluation counts, ordinary functions, PartialFunction
+isDefinedAt, guards, result bodies and applyOrElse defaults. Its output matches
+exactly. The prior five ordinary and two owner fixture outputs also match exactly,
+and the combined rewritten fixture passes all prior runtime assertions. The new
+negative fixture remains outside the applied plan: custom constructor, unresolved
+constraint alias and unrelated consumer numeric/string operations are unchanged.
+
+project-native-booleans-1 was rejected before application: preview review found
+an unrelated existing E134 overload adapter proposing .value on a callback block.
+This mode now excludes E134 entirely. That adapter needs a separate correction;
+the rejected preview is retained and receives no repair credit. The applied reports
+are project-native-booleans-2 and -3. No new runner or verifier was introduced.
+
+| Source module | Previous frontier15 | After first pass, frontier16 | After follow-up, frontier17 |
+|---|---:|---:|---:|
+| api JVM and JS, each | 3029 | 2914 | 2904 |
+| values | 34 | 34 | 33 |
+| upstreams | 341 | 340 | 340 |
+| plugin-vaults | 99 | 97 | 96 |
+| plugins/calibre | 188 (earlier observation) | 188 | 187 |
+
+Both full builds fail with all ten previously failing tasks still failing. The
+other four tasks retain cached failures in frontier17. Dependent production/test
+compilation and application behavioral tests remain blocked. The compiler flags,
+stack16m, maxErrors10000 and serial compilation are unchanged. Every source hash is
+stable during both builds. Aggregate error reductions are observations, not proof
+of individual diagnostic regression classification or whole-policy completion.
+
+The final 15 files match their frozen preview. The complete Scala-source hash list
+from type-positions-after-native-booleans-1 matches frontier17; the build snapshot
+additionally retains build.sbt. All 3169 Scala files remain measured. Primitive
+candidate IDs are unchanged: production594/test6009, zero removed and zero introduced.
+Newtype IDs and original declaration provenance are also unchanged: production27504/
+test19 opaque shapes, 3010 overlap candidate groups and 16152 unresolved candidate
+references. The position count is 135425 (previous135395), reflecting generated
+callbacks, not new policy repair credit. Import/alias/inherited/external reference
+resolution remains partial. No candidate was relabeled compliant or excepted.
+
+The canonical migration-rounds.tsv appends this checkpoint for the existing model
+family; earlier rows for that family retain historical observations and are not
+additional defect counts. Inventory acceptance and global automation coverage remain
+unestablished. Next work is reusable helper-type sharing/native-library contract
+repair, retaining the current type definitions and compiling against them, followed
+by remaining primitive candidates, model smart construction and application tests.
+
+## Previous checkpoint: helper properties consolidated, compilation incomplete
 
 The reusable forwarding transformation consolidates 128 generated helper opaque
 types into entity property types across 56 production files (256 alias/constructor

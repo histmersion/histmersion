@@ -238,7 +238,7 @@ object RepositoryLanding:
     */
   def wordLabel(label: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelLabel, w: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelW): com.histmersion.upstreams.landing.RepositoryLanding.WordLabelResult =
     (w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
-      (label.startsWith(w) && label.length > w.length && { val c = label.charAt(w.length); c == '-' || c.isDigit }))
+      ((label).value.startsWith((w).value) && label.length > w.length && { val c = label.charAt(w.length); c == '-' || c.isDigit }))
 
   /** A host entry matches the host itself or any subdomain of it. */
   def matchesHost(host: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost, entry: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostEntry): com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostResult =
@@ -309,7 +309,7 @@ object RepositoryLanding:
   /** Pure: is this an open-access publisher's OPEN location (#2550) — read although it is a publisher's: an index says
     * it is open, and its host is on `oa-publisher-hosts`.
     */
-  def oaPublisherPage(c: Candidate, rules: Rules): com.histmersion.upstreams.landing.RepositoryLanding.OaPublisherPageResult = c.open && host(c.url).exists(rules.oaPublisher)
+  def oaPublisherPage(c: Candidate, rules: Rules): com.histmersion.upstreams.landing.RepositoryLanding.OaPublisherPageResult = ((c.open) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(true)) && host(c.url).exists(rules.oaPublisher)
 
   /** Pure: where the DOI handle API (`doi.org/api/handles/<doi>?type=URL`) says a DOI resolves — its first URL value.
     * Read only for an open location on an OA publisher, so a `doi.org` link is still never followed blind.

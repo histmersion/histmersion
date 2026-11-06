@@ -88,7 +88,7 @@ object ManagersMarkdown:
 
   def line(m: ManagerInfo): com.histmersion.api.automation.ManagersMarkdown.LineResult =
     val goal = m.goal.fold("")(g => s" · goal $g")
-    val runs = if m.pauseRuns then " (its runs paused too)" else ""
+    val runs = if ((m.pauseRuns) == _root_.com.histmersion.api.automation.Managers.ManagerInfo.PauseRuns(true)) then " (its runs paused too)" else ""
     s"**${m.id}** (${m.kind}$goal) · ${m.state}$runs · ${counts(m.counts)} · ${m.inFlight} run(s) in flight · ${today(m)}" +
       (if m.backlog > 0 then s" · ${backlog(m.backlog, m.backlogDays)}" else "") +
       m.statusNote.filter(_.nonEmpty).fold("")(n => s" · $n") +
@@ -168,7 +168,7 @@ object ManagersMarkdown:
     val proposed = h.proposal.fold("")(a =>
       s" · proposed: ${h.proposed.fold("an action")(effect)} (approval #$a waits for a person)"
     )
-    s"#${h.id} (${if h.standing then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
+    s"#${h.id} (${if ((h.standing) == _root_.com.histmersion.api.automation.Managers.ManagerHint.Standing(true)) then "standing" else "once"}, $scope, by ${h.author}$eff) ${h.text}$proposed" +
       h.retiredAt.fold("")(r => s" · retired $r") + (if h.uses > 0 then s" · reached ${h.uses} run(s)" else "")
 
   def enqueued(r: EnqueueResult): com.histmersion.api.automation.ManagersMarkdown.EnqueuedResult =

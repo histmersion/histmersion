@@ -163,7 +163,7 @@ object Critiques:
         )
       }
 
-  def find(pairs: List[CritiquePair], r: CritiqueRef): Option[CritiquePair] = pairs.find(_.ref.same(r))
+  def find(pairs: List[CritiquePair], r: CritiqueRef): Option[CritiquePair] = pairs.find((refactorCallback => ((refactorCallback.ref.same(r)) == _root_.com.histmersion.api.research.CritiqueRef.SameResult(true))))
 
   def count(pairs: List[CritiquePair], s: CritiqueState): com.histmersion.api.research.Critiques.CountResult = _root_.com.histmersion.api.research.Critiques.CountResult(pairs.count(_.state == s))
 
@@ -175,7 +175,7 @@ object Critiques:
 
   def ranked(pairs: List[CritiquePair]): List[CritiquePair] =
     def tier(p: CritiquePair) =
-      if !p.critic.cited && p.criticised.cited then 0 else if p.critic.cited && p.criticised.cited then 1 else 2
+      if !((p.critic.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) && ((p.criticised.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) then 0 else if ((p.critic.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) && ((p.criticised.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) then 1 else 2
     def kind(p: CritiquePair) = p.kinds
       .map {
         case "refutes" | "superseded_by" => 0
@@ -199,7 +199,7 @@ object Critiques:
     val meta = (s.year.map(_.toString).toList ++ s.title
       .map(t => "\"" + (if t.length > 90 then t.take(89).trim + "…" else t) + "\"")
       .toList)
-    val cited = if s.cited then "cited" else "not cited"
+    val cited = if ((s.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) then "cited" else "not cited"
     _root_.com.histmersion.api.research.Critiques.SideTextResult(s"[[${s.citekey}]] (${(meta :+ cited).mkString(", ")})")
 
   def pairText(p: CritiquePair): com.histmersion.api.research.Critiques.PairTextResult =
@@ -233,7 +233,7 @@ object Critiques:
     val open = toRule(pairs)
     val shown = open.take(math.max(0, (maxOpen).value))
     val rest = open.drop(shown.size)
-    val background = ranked(pairs).filterNot(_.bearing)
+    val background = ranked(pairs).filterNot((refactorCallback => ((refactorCallback.bearing) == _root_.com.histmersion.api.research.CritiquePair.BearingResult(true))))
     val reasoned = pairs.filter(_.state == CritiqueState.Reasoned)
     if shown.isEmpty && background.isEmpty && reasoned.isEmpty then (_root_.com.histmersion.api.research.Critiques.PromptTextResultPart1(""), Nil)
     else

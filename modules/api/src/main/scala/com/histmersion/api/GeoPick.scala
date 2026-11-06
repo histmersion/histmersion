@@ -71,5 +71,5 @@ object GeoPick:
       case (None, None)       => None
     span match
       case None                                        => asOf.fold(GeoTime.Always)(GeoTime.At(_))
-      case Some((lo, hi)) if pick.snapshot || lo == hi => GeoTime.At(yearOf(pick, lo, hi))
+      case Some((lo, hi)) if ((pick.snapshot) == _root_.com.histmersion.api.GeoPick.SnapshotResult(true)) || lo == hi => GeoTime.At(yearOf(pick, lo, hi))
       case Some((lo, hi))                              => GeoTime.Within(lo, hi, latest = _root_.com.histmersion.api.catalogue.GeoTime.Within.Latest(pick == Latest))

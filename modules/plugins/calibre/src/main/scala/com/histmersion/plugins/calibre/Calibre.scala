@@ -157,7 +157,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
         (),
         "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
       )
-      _ <- Either.cond(files.isFile(file), (), s"no such file: $file")
+      _ <- Either.cond(((files.isFile(file)) == _root_.com.histmersion.plugin.LocalFiles.IsFileResult(true)), (), s"no such file: $file")
       _ <- byId(id).flatMap(_.toRight(s"there is no Calibre entry $id"))
       _ <- shell.run(Calibre.replaceFormatCmd(cfg.calibredb, libArgs, id, file))
     yield fmt

@@ -164,12 +164,12 @@ object AgentsMarkdown:
     _root_.com.histmersion.api.automation.AgentsMarkdown.TokensResult(s"${u.input} in / ${u.output} out$cache")
 
   def models(m: ModelsInfo): com.histmersion.api.automation.AgentsMarkdown.ModelsResult =
-    val head = s"# Embedded agents — ${if m.enabled then "enabled" else "OFF"}\n\n" +
+    val head = s"# Embedded agents — ${if ((m.enabled) == _root_.com.histmersion.api.automation.Agents.ModelsInfo.Enabled(true)) then "enabled" else "OFF"}\n\n" +
       s"Pipelines: ${m.pipelines.mkString(", ")} · at most ${m.maxConcurrentRuns} run(s) at once\n\n"
     val problems = if m.problems.isEmpty then "" else "\n\n" + m.problems.map(p => s"- $p").mkString("\n")
     if m.chains.isEmpty then
       val rows = m.roles.map { r =>
-        s"| ${r.role} | ${r.model.getOrElse("—")} | ${if r.ready then "ready" else r.problem.getOrElse("not ready")} |"
+        s"| ${r.role} | ${r.model.getOrElse("—")} | ${if ((r.ready) == _root_.com.histmersion.api.automation.Agents.RoleModel.Ready(true)) then "ready" else r.problem.getOrElse("not ready")} |"
       }
       _root_.com.histmersion.api.automation.AgentsMarkdown.ModelsResult(head + "| role | model | state |\n|---|---|---|\n" + rows.mkString("\n") + problems)
     else
@@ -188,18 +188,18 @@ object AgentsMarkdown:
 
   private def chainEntry(e: ModelChains.ChainEntry): com.histmersion.api.automation.AgentsMarkdown.ChainEntryResult =
     val mark =
-      if e.usable then ""
-      else if !e.ready then " (not ready)"
-      else if e.cooling then
+      if ((e.usable) == _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Usable(true)) then ""
+      else if !((e.ready) == _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Ready(true)) then " (not ready)"
+      else if ((e.cooling) == _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Cooling(true)) then
         " (cooling down" + e.freesAt.fold("")(t => s" until $t") + ": its plan reported its usage limit)"
       else " (paused" + e.freesAt.fold(")")(t => s" until $t)")
     _root_.com.histmersion.api.automation.AgentsMarkdown.ChainEntryResult(s"`${e.model}`$mark${e.billing.fold("")(b => s" ($b)")}")
 
   def roleChain(c: ModelChains.RoleChain): com.histmersion.api.automation.AgentsMarkdown.RoleChainResult =
     val lines = c.models.zipWithIndex.map { (e, i) =>
-      val state = if e.usable then "usable"
-      else if !e.ready then "not ready"
-      else if e.cooling then "cooling down"
+      val state = if ((e.usable) == _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Usable(true)) then "usable"
+      else if !((e.ready) == _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Ready(true)) then "not ready"
+      else if ((e.cooling) == _root_.com.histmersion.api.automation.ModelChains.ChainEntry.Cooling(true)) then "cooling down"
       else "below its allowance"
       s"${i + 1}. `${e.model}` — $state${e.problem.fold("")(p => s": $p")}${e.freesAt.fold("")(t => s" (frees $t)")}" +
         e.billing.fold("")(b => s" · $b")
@@ -213,7 +213,7 @@ object AgentsMarkdown:
     case ModelChains.Measure.Usd => usd(v)
 
   private def allowanceBlock(a: ModelChains.AllowanceStatus): com.histmersion.api.automation.AgentsMarkdown.AllowanceBlockResult =
-    val state = if a.usable then "has headroom"
+    val state = if ((a.usable) == _root_.com.histmersion.api.automation.ModelChains.AllowanceStatus.Usable(true)) then "has headroom"
     else s"**below its reserve**${a.freesAt.fold(" (does not free by itself)")(t => s" until $t")}"
     val limits = a.limits.map { l =>
       s"  - ${l.limit}: ${amount(l.used, l.measure)} used, ${amount(l.remaining, l.measure)} left" +
@@ -236,9 +236,9 @@ object AgentsMarkdown:
 
   def pool(p: PlanQuota.PoolStatus): com.histmersion.api.automation.AgentsMarkdown.PoolResult =
     val state =
-      if !p.available then s"**${p.reason.getOrElse("unavailable: no login")}**"
-      else if p.held then "**held** — no agent use until released"
-      else if p.usable then "usable" + p.reason.fold("")(r => s" ($r)")
+      if !((p.available) == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Available(true)) then s"**${p.reason.getOrElse("unavailable: no login")}**"
+      else if ((p.held) == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Held(true)) then "**held** — no agent use until released"
+      else if ((p.usable) == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.Usable(true)) then "usable" + p.reason.fold("")(r => s" ($r)")
       else s"**paused** — ${p.reason.getOrElse("below its floor")}" + p.until.fold("")(u => s"; frees at $u")
     val windows =
       if p.windows.isEmpty then "\n\n_No reading yet: unknown until a run or a fresh reading reads it._"
@@ -261,7 +261,7 @@ object AgentsMarkdown:
     val how = p.refresh.fold("no fresh reading is taken (refresh off)")(m => s"fresh reading by $m")
     val times = if p.refreshesToday == _root_.com.histmersion.api.automation.PlanQuota.PoolStatus.RefreshesToday(1) then "once" else s"${p.refreshesToday} times"
     val last = p.lastRefresh.fold("")(r =>
-      s"; last ${r.at} (${r.trigger}, ${r.mode}): ${if r.ok then "" else "failed — "}${r.detail}"
+      s"; last ${r.at} (${r.trigger}, ${r.mode}): ${if ((r.ok) == _root_.com.histmersion.api.automation.PlanQuota.RefreshInfo.Ok(true)) then "" else "failed — "}${r.detail}"
     )
     _root_.com.histmersion.api.automation.AgentsMarkdown.RefreshLineResult(s"\n\nLogin: ${p.login.getOrElse("—")} · $how · refreshed $times today$last")
 
@@ -304,14 +304,14 @@ object AgentsMarkdown:
       case CheckLevel.Fail => "**FAIL**"
     def checks(cs: List[DoctorCheck]) = cs.map(c => s"- ${mark(c.level)} · ${c.name}: ${c.detail}").mkString("\n")
     val provs = d.providers.map { p =>
-      val use = if p.used then s"used by: ${p.models.mkString(", ")}" else "no role uses it"
+      val use = if ((p.used) == _root_.com.histmersion.api.automation.Agents.ProviderDoctor.Used(true)) then s"used by: ${p.models.mkString(", ")}" else "no role uses it"
       s"## ${p.provider} — ${mark(p.level)} ($use)\n\n${checks(p.checks)}" +
         (if p.upstreamModels.isEmpty then ""
          else
            s"\n\nUpstream lists: ${p.upstreamModels.take(30).mkString(", ")}" +
              (if p.upstreamModels.size > 30 then s" … (${p.upstreamModels.size})" else ""))
     }
-    s"# Agent doctor${if d.online then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs.mkString("\n\n")
+    _root_.com.histmersion.api.automation.AgentsMarkdown.DoctorResult(s"# Agent doctor${if ((d.online) == _root_.com.histmersion.api.automation.Agents.DoctorReport.Online(true)) then "" else " (offline)"}\n\n${checks(d.checks)}\n\n" + provs.mkString("\n\n"))
 
   def probe(p: ProbeResult): com.histmersion.api.automation.AgentsMarkdown.ProbeResult =
     val verdict =
@@ -381,7 +381,7 @@ object AgentsMarkdown:
 
   def run(d: RunDetail, withMessages: com.histmersion.api.automation.AgentsMarkdown.RunWithMessages): com.histmersion.api.automation.AgentsMarkdown.RunResult =
     val r = d.run
-    val head = s"# Agent run ${r.id}${if r.dryRun then " (dry run)" else ""}\n\n" +
+    val head = s"# Agent run ${r.id}${if ((r.dryRun) == _root_.com.histmersion.api.automation.Agents.RunInfo.DryRun(true)) then " (dry run)" else ""}\n\n" +
       s"- pipeline: ${r.pipeline} · target: ${r.target}${r.model.fold("")(m => s" · model: $m")}" +
       Option(options(r)).filter((_).value.nonEmpty).fold("")(o => s" · $o") + "\n" +
       s"- status: **${r.status}**${r.error.filter(_.nonEmpty).fold("")(e => s" — $e")}\n" +
@@ -489,8 +489,8 @@ object AgentsMarkdown:
     val goals = p.subGoals.map(g => s"- sub-goal `${g.slug}` — ${g.title}${g.notes.fold("")(n => s": $n")}")
     val queries = p.queries.map(q => s"- query: $q")
     val works = p.works.map { w =>
-      val where = if w.inCorpus then s"in the corpus as [[${w.citekey.getOrElse("?")}]]"
-      else if w.isOa then "to acquire (open access)"
+      val where = if ((w.inCorpus) == _root_.com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus(true)) then s"in the corpus as [[${w.citekey.getOrElse("?")}]]"
+      else if ((w.isOa) == _root_.com.histmersion.api.automation.Goal.Plans.PlannedWork.IsOa(true)) then "to acquire (open access)"
       else "to acquire"
       s"- ${w.title.getOrElse(w.doi)} (${w.year.fold("n.d.")(_.toString)}) doi:${w.doi} — $where${
           if w.why.isEmpty then "" else s": ${w.why}"
@@ -512,7 +512,7 @@ object AgentsMarkdown:
     _root_.com.histmersion.api.automation.AgentsMarkdown.DraftBlockResult(s"$head\n\n$problems\n\n```markdown\n$text\n```")
 
   def scheduleLine(s: Goal.Plans.GoalSchedule): com.histmersion.api.automation.AgentsMarkdown.ScheduleLineResult =
-    val state = if s.enabled then "on" else "off"
+    val state = if ((s.enabled) == _root_.com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true)) then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${usd(b)} USD")
     s"${s.goal} · ${s.kind.wire} · `${s.cron}` · $state$budget" +
       s.nextRunAt.fold("")(n => s" · next $n") + s.lastRun.fold("")(r => s" · last run ${r.take(8)}") +
@@ -574,7 +574,7 @@ object AgentsMarkdown:
         rows.map((k, vs) => s"| $k | ${vs.map(cell).mkString(" | ")} |").mkString("\n")
     val runs = table(
       List(
-        "status" -> c.runs.map(r => r.status + (if r.dryRun then " (dry run)" else "")),
+        "status" -> c.runs.map(r => r.status + (if ((r.dryRun) == _root_.com.histmersion.api.automation.RunCompare.RunSide.DryRun(true)) then " (dry run)" else "")),
         { val refactorTuple22 = "model" -> c.runs.map(r =>
           (r.model.toList ++ r.modelFor.map(_.text)).mkString(", ") match
             case "" => "the configured roles"

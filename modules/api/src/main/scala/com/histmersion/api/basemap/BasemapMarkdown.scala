@@ -23,11 +23,11 @@ object BasemapMarkdown:
 
   def status(s: Basemap.Status): com.histmersion.api.basemap.BasemapMarkdown.StatusResult =
     val head =
-      if s.available then "The local base map is downloaded."
+      if ((s.available) == _root_.com.histmersion.api.basemap.Basemap.Status.Available(true)) then "The local base map is downloaded."
       else s"The local base map is not downloaded — run `${s.fetchCommand}`."
     val rows = s.layers.map { l =>
       val what = Basemap.Layer.parse(l.layer).map(_.title).getOrElse(l.layer)
-      if !l.present then s"| ${l.layer} | $what | not downloaded | | | |"
+      if !((l.present) == _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Present(true)) then s"| ${l.layer} | $what | not downloaded | | | |"
       else
         val zoom = (l.minZoom, l.maxZoom) match
           case (Some(a), Some(b)) => s"$a–$b"
@@ -52,7 +52,7 @@ object BasemapMarkdown:
         .flatMap(_.onDemand)
         .map(outside("The sea floor", "bathymetry", _)),
       Option.when(focus.nonEmpty)(("Relief kept deeper for:" :: focus).mkString("\n")),
-      Option.when(s.available && s.styles.nonEmpty)(
+      Option.when(((s.available) == _root_.com.histmersion.api.basemap.Basemap.Status.Available(true)) && s.styles.nonEmpty)(
         "Styles: " + s.styles
           .map { st =>
             if st.missing.isEmpty then st.name else s"${st.name} (lacks ${st.missing.mkString(", ")})"
@@ -71,14 +71,14 @@ object BasemapMarkdown:
     (head :: "" :: table :: "" :: notes).mkString("\n")
 
   def onDemand(o: Basemap.OnDemand): com.histmersion.api.basemap.BasemapMarkdown.OnDemandResult =
-    if !o.enabled then _root_.com.histmersion.api.basemap.BasemapMarkdown.OnDemandResult("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
+    if !((o.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)) then _root_.com.histmersion.api.basemap.BasemapMarkdown.OnDemandResult("Relief deeper than the extract: off (basemap.terrain.on-demand.enabled).")
     else
       s"Relief deeper than the extract: read when a page shows an area, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
   def outside(what: com.histmersion.api.basemap.BasemapMarkdown.OutsideWhat, key: com.histmersion.api.basemap.BasemapMarkdown.OutsideKey, o: Basemap.OnDemand): com.histmersion.api.basemap.BasemapMarkdown.OutsideResult =
-    if !o.enabled then _root_.com.histmersion.api.basemap.BasemapMarkdown.OutsideResult(s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
+    if !((o.enabled) == _root_.com.histmersion.api.basemap.Basemap.OnDemand.Enabled(true)) then _root_.com.histmersion.api.basemap.BasemapMarkdown.OutsideResult(s"$what outside the downloaded region: off (basemap.$key.on-demand.enabled).")
     else
       s"$what outside the downloaded region (and deeper than it): read when a page shows it, to zoom ${o.maxZoom}; cached " +
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +

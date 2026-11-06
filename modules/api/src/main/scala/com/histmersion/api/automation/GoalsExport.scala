@@ -122,7 +122,7 @@ object GoalsExport:
     val sch = if v.schedules.isEmpty then Nil
     else List("**Schedules**\n" + v.schedules.sortBy(_.kind.ordinal).map(s => s"- ${scheduleLine(s)}").mkString("\n"))
     val plan = v.plan
-      .filter(p => !p.isEmpty || p.rationale.trim.nonEmpty)
+      .filter(p => !((p.isEmpty) == _root_.com.histmersion.api.automation.Goal.Plans.Plan.IsEmptyResult(true)) || p.rationale.trim.nonEmpty)
       .map(p => s"**Approved plan**\n\n${AgentsMarkdown.planBlock(p)}")
       .toList
     (List(heading + "\n\n" + facts) ++ notes ++ links ++ sch ++ plan).mkString("\n\n")
@@ -177,7 +177,7 @@ object GoalsExport:
       case None => _root_.com.histmersion.api.automation.GoalsExport.QueueLineResult(s"`#${l.ref}` (not found)${noted(l)}")
 
   private def scheduleLine(s: GoalSchedule): com.histmersion.api.automation.GoalsExport.ScheduleLineResult =
-    val state = if s.enabled then "on" else "off"
+    val state = if ((s.enabled) == _root_.com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled(true)) then "on" else "off"
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b)} USD")
     _root_.com.histmersion.api.automation.GoalsExport.ScheduleLineResult(s"${s.kind.wire} · `${s.cron}` · $state$budget")
 

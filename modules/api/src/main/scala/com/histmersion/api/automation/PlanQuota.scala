@@ -91,9 +91,9 @@ object PlanQuota:
     object OpencodeChatgpt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def poolOf(m: ModelRef, logins: Logins): Option[PoolId] = m.provider match
-    case ProviderKind.ClaudeCode if !logins.claudeCodeApiKey                              => Some(PoolId.ClaudePlan)
-    case ProviderKind.Codex if !logins.codexApiKey                                        => Some(PoolId.ChatgptPlan)
-    case ProviderKind.Opencode if logins.opencodeChatgpt && m.model.startsWith("openai/") => Some(PoolId.ChatgptPlan)
+    case ProviderKind.ClaudeCode if !((logins.claudeCodeApiKey) == _root_.com.histmersion.api.automation.PlanQuota.Logins.ClaudeCodeApiKey(true))                              => Some(PoolId.ClaudePlan)
+    case ProviderKind.Codex if !((logins.codexApiKey) == _root_.com.histmersion.api.automation.PlanQuota.Logins.CodexApiKey(true))                                        => Some(PoolId.ChatgptPlan)
+    case ProviderKind.Opencode if ((logins.opencodeChatgpt) == _root_.com.histmersion.api.automation.PlanQuota.Logins.OpencodeChatgpt(true)) && m.model.startsWith("openai/") => Some(PoolId.ChatgptPlan)
     case _                                                                                => None
 
   def paid(m: ModelRef, logins: Logins): com.histmersion.api.automation.PlanQuota.PaidResult =
@@ -265,7 +265,7 @@ object PlanQuota:
     val pct = (d: Double) =>
       java.math.BigDecimal(d).setScale(1, java.math.RoundingMode.HALF_UP).stripTrailingZeros.toPlainString
     val why =
-      if r.rejected then Some(s"${r.kind}: the provider refuses it")
+      if ((r.rejected) == _root_.com.histmersion.api.automation.PlanQuota.Reading.Rejected(true)) then Some(s"${r.kind}: the provider refuses it")
       else if !stale && left <= floor then Some(s"${r.kind}: ${pct(left)}% left, floor $floor%")
       else if stale && left < floor + rules.marginPct then
         Some(
@@ -356,7 +356,7 @@ object PlanQuota:
       now: com.histmersion.api.automation.PlanQuota.RefreshNeedNow,
       model: Option[com.histmersion.api.automation.PlanQuota.RefreshNeedModel] = None
   ): Option[RefreshNeed] =
-    if held || refusal.exists(_._2.forall(((_).value > now).value)) then None
+    if ((held) == _root_.com.histmersion.api.automation.PlanQuota.RefreshNeedHeld(true)) || refusal.exists(_._2.forall(((_).value > now).value)) then None
     else
       val states = current(readings, now, model).map(windowState(_, rules, now))
       if states.isEmpty then Some(RefreshNeed.NoReading)

@@ -349,7 +349,7 @@ object ModelChains:
     a.limits.map(limitState(_, a.reservePct, spends, now))
 
   def verdict(ss: List[LimitState]): (com.histmersion.api.automation.ModelChains.VerdictResultPart1, Option[com.histmersion.api.automation.ModelChains.VerdictResultPart2]) =
-    val blocked = ss.filterNot(_.usable)
+    val blocked = ss.filterNot((refactorCallback => ((refactorCallback.usable) == _root_.com.histmersion.api.automation.ModelChains.LimitState.Usable(true))))
     if blocked.isEmpty then (_root_.com.histmersion.api.automation.ModelChains.VerdictResultPart1(true), None)
     else (_root_.com.histmersion.api.automation.ModelChains.VerdictResultPart1(false), if blocked.exists(_.freesAt.isEmpty) then None else Some(blocked.flatMap(_.freesAt).max))
 

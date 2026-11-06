@@ -94,7 +94,7 @@ object AcquireMarkdown:
     ).filter(_.nonEmpty).mkString(" · ")
     // OpenAlex and Unpaywall set `oaStatus` (`closed` when there is no copy); Crossref records no access at all.
     val oa =
-      if w.isOa then s"open access (${w.oaStatus.getOrElse("?")})"
+      if ((w.isOa) == _root_.com.histmersion.api.library.WorkRef.IsOa(true)) then s"open access (${w.oaStatus.getOrElse("?")})"
       else if w.oaStatus.isEmpty then "OA status unknown (the metadata came from Crossref, which records none)"
       else "no OA copy known"
     val lines = List(
@@ -106,8 +106,8 @@ object AcquireMarkdown:
       s"**Citekey (proposed):** `${w.citekey.map(_.value.toString).getOrElse("—")}`  ",
       s"**Cited by:** ${num(w.citedByCount)}  ",
       s"**Access:** $oa" + w.oaUrl.map(u => s" — $u").getOrElse(""),
-      if w.isRetracted then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
-      if w.inDb then s"\n_Already in the corpus as `${w.citekey.map(_.value.toString).getOrElse("?")}`._" else "",
+      if ((w.isRetracted) == _root_.com.histmersion.api.library.WorkRef.IsRetracted(true)) then "\n> ⚠ OpenAlex marks this work as RETRACTED." else "",
+      if ((w.inDb) == _root_.com.histmersion.api.library.WorkRef.InDb(true)) then s"\n_Already in the corpus as `${w.citekey.map(_.value.toString).getOrElse("?")}`._" else "",
       w.abstractText.map(a => s"\n## Abstract\n\n$a").getOrElse("")
     )
     lines.filter(_.nonEmpty).mkString("\n")
@@ -192,7 +192,7 @@ object AcquireMarkdown:
   def retractionsUpdate(r: RetractionsUpdate): com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult =
     r.error match
       case Some(e)           => _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch refresh FAILED: $e (the mirror still holds ${r.rows} row(s)).")
-      case None if r.running =>
+      case None if ((r.running) == _root_.com.histmersion.api.library.RetractionsUpdate.Running(true)) =>
         _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch refresh running in the background; the mirror holds **${r.rows}** row(s) " +
           "so far. Ask again to see whether it has finished.")
       case None => _root_.com.histmersion.api.library.AcquireMarkdown.RetractionsUpdateResult(s"Retraction Watch mirror: **${r.rows}** row(s) from ${r.source}.")
@@ -248,7 +248,7 @@ object AcquireMarkdown:
       else
         table(List(_root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("file"), _root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("format"), _root_.com.histmersion.api.library.AcquireMarkdown.TableHeader("MB")), i.files.map(f => List(esc(f.name), cell(f.format), _root_.com.histmersion.api.library.AcquireMarkdown.TableRows(f.megabytes.toString))))
     val restriction =
-      if i.lendingOnly then
+      if ((i.lendingOnly) == _root_.com.histmersion.api.library.ArchiveItem.LendingOnly(true)) then
         List(
           "",
           "> ⛔ **Lending-only item.** It must be BORROWED on archive.org; it is never " +
@@ -267,11 +267,11 @@ object AcquireMarkdown:
       .mkString("\n")
 
   def ingest(r: Ingest.Report): com.histmersion.api.library.AcquireMarkdown.IngestResult =
-    val steps = r.steps.map(s => s"- ${if s.ok then "✓" else "✗"} **${s.step}** — ${s.detail}")
+    val steps = r.steps.map(s => s"- ${if ((s.ok) == _root_.com.histmersion.api.library.Ingest.Step.Ok(true)) then "✓" else "✗"} **${s.step}** — ${s.detail}")
     val pdf = r.pdf match
       case Some(p) =>
         s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(p.bytes, _root_.com.histmersion.api.Plural.CountSingular("byte"))})"
-      case None if r.steps.exists(s => s.step == _root_.com.histmersion.api.library.Ingest.Step.Value("fetch") && s.ok) =>
+      case None if r.steps.exists(s => s.step == _root_.com.histmersion.api.library.Ingest.Step.Value("fetch") && ((s.ok) == _root_.com.histmersion.api.library.Ingest.Step.Ok(true))) =>
         "**PDF:** not fetched — the source already has its original"
       case None => "**PDF:** none found through legal open access"
     // No stripMargin: `assessment` embeds tables, whose rows start with '|'.

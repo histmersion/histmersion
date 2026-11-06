@@ -84,7 +84,7 @@ object PlacesMarkdown:
       val head =
         "| source | file | pinned | imported | places | names | links | licence |\n|---|---|---|---|---:|---:|---:|---|"
       val body = rows.map { r =>
-        val file = r.file.fold("—")(f => s"`$f`" + (if r.present then "" else " (missing)"))
+        val file = r.file.fold("—")(f => s"`$f`" + (if ((r.present) == _root_.com.histmersion.api.catalogue.Gazetteer.SourceInfo.Present(true)) then "" else " (missing)"))
         val imported = r.importedVersion.fold("—")(v => s"$v (${r.importedAt.getOrElse("").take(10)})")
         val n = (x: Option[Int]) => x.fold("—")(_.toString)
         s"| ${r.key} — ${r.title} | $file | ${r.pinnedVersion.getOrElse("—")} | $imported | ${n(r.places)} | " +
@@ -95,9 +95,9 @@ object PlacesMarkdown:
   def placeNameChanged(r: Place.NameChanged): com.histmersion.api.catalogue.PlacesMarkdown.PlaceNameChangedResult =
     val lang = if r.lang.isEmpty then "" else s" (${r.lang})"
     val what =
-      if !r.added then s"removed the name **${r.name}**$lang from"
-      else if !r.changed then s"**${r.name}**$lang was already a name added by hand to"
-      else if r.wasImported then s"kept **${r.name}**$lang (a name the seed gives) as one added by hand, on"
+      if !((r.added) == _root_.com.histmersion.api.catalogue.Place.NameChanged.Added(true)) then s"removed the name **${r.name}**$lang from"
+      else if !((r.changed) == _root_.com.histmersion.api.catalogue.Place.NameChanged.Changed(true)) then s"**${r.name}**$lang was already a name added by hand to"
+      else if ((r.wasImported) == _root_.com.histmersion.api.catalogue.Place.NameChanged.WasImported(true)) then s"kept **${r.name}**$lang (a name the seed gives) as one added by hand, on"
       else s"added the name **${r.name}**$lang to"
     _root_.com.histmersion.api.catalogue.PlacesMarkdown.PlaceNameChangedResult(s"$what **${r.label}** `${r.placeId}` — names added by hand survive every re-seed")
 
@@ -121,7 +121,7 @@ object PlacesMarkdown:
       case (_, _, Some(c), Some(d)) => s", point ${Place.Overrides.pointText(c, d)}"
       case _                        => ""
     val head =
-      if r.reset then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
+      if ((r.reset) == _root_.com.histmersion.api.catalogue.Place.OverrideChanged.Reset(true)) then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
       else s"set **${r.label}** `${r.placeId}`: $kind, $period$point — kept by every re-seed and re-import"
     val lost = if r.unlocated == _root_.com.histmersion.api.catalogue.Place.OverrideChanged.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
     _root_.com.histmersion.api.catalogue.PlacesMarkdown.PlaceOverrideChangedResult(s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
@@ -166,7 +166,7 @@ object PlacesMarkdown:
 
   def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): com.histmersion.api.catalogue.PlacesMarkdown.PlaceResult =
     val p = d.place
-    val header = s"# ${p.label}${contestedMark(d.contested || p.contested, p.label)}" +
+    val header = s"# ${p.label}${contestedMark(((d.contested) == _root_.com.histmersion.api.catalogue.Place.Card.ContestedResult(true)) || ((p.contested) == _root_.com.histmersion.api.catalogue.Place.Summary.Contested(true)), p.label)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")
@@ -174,7 +174,7 @@ object PlacesMarkdown:
       d.siteType.flatMap(SiteTypes.get).map(t => s"  \n**Site type:** ${t.label}").getOrElse("")
     val shape = d.shapeNote.map(n => s"  \n**Shape:** $n").getOrElse("") +
       d.locationNote.map(n => s"  \n**Location:** $n").getOrElse("")
-    val dating = if d.datedByFindings then s"  \n**Dating:** ${Place.TimeBasis.FindingsNote}" else ""
+    val dating = if ((d.datedByFindings) == _root_.com.histmersion.api.catalogue.Place.Card.DatedByFindingsResult(true)) then s"  \n**Dating:** ${Place.TimeBasis.FindingsNote}" else ""
     val names = if p.names.isEmpty then "" else s"  \n**Also known as:** ${p.names}"
     val geom = d.geometry
       .map(g => s"  \n**Geometry:** ${g.take(40).takeWhile(_ != ',')}… (GeoJSON)")

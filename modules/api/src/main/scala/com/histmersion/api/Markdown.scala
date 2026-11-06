@@ -137,7 +137,7 @@ object Markdown:
        |- **took:** ${r.durationMs} ms""".stripMargin + warn)
 
   def contestedMark(contested: com.histmersion.api.Markdown.ContestedMarkContested, label: com.histmersion.api.Markdown.ContestedMarkLabel = _root_.com.histmersion.api.Markdown.ContestedMarkLabel("")): com.histmersion.api.Markdown.ContestedMarkResult =
-    if contested && !(label).value.toLowerCase.contains("contested") then _root_.com.histmersion.api.Markdown.ContestedMarkResult(" (contested)") else _root_.com.histmersion.api.Markdown.ContestedMarkResult("")
+    if ((contested) == _root_.com.histmersion.api.Markdown.ContestedMarkContested(true)) && !(label).value.toLowerCase.contains("contested") then _root_.com.histmersion.api.Markdown.ContestedMarkResult(" (contested)") else _root_.com.histmersion.api.Markdown.ContestedMarkResult("")
 
   private[api] def asOfNote(asOf: Option[com.histmersion.api.Markdown.AsOfNoteAsOf]): com.histmersion.api.Markdown.AsOfNoteResult =
     asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")

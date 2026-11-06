@@ -164,7 +164,7 @@ object Stalls:
   def classify(f: Facts): (com.histmersion.api.automation.Stalls.ClassifyResultPart1, com.histmersion.api.automation.Stalls.ClassifyResultPart2, com.histmersion.api.automation.Stalls.ClassifyResultPart3) =
     val g = f.slug
     def waitOf(p: SchedWait => com.histmersion.api.automation.Stalls.ClassifyWaitOfPResult) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)).value })
-    if f.draining then
+    if ((f.draining) == _root_.com.histmersion.api.automation.Stalls.Facts.Draining(true)) then
       (_root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.Drain), _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2("the agents are draining: nothing new starts"), _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3("histmersion agent autopilot undrain"))
     else if f.approvals.nonEmpty then
       val kinds =
@@ -228,7 +228,7 @@ object Stalls:
                             s"its last item stopped: ${o.take(300)}",
                             _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart3(s"histmersion agent manager seed:$g items --status stopped; reopen it")
                           )
-                        case None if f.noCandidates && f.sources == _root_.com.histmersion.api.automation.Stalls.Facts.Sources(0) =>
+                        case None if ((f.noCandidates) == _root_.com.histmersion.api.automation.Stalls.Facts.NoCandidates(true)) && f.sources == _root_.com.histmersion.api.automation.Stalls.Facts.Sources(0) =>
                           (
                             _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart1(Code.NoCandidates),
                             _root_.com.histmersion.api.automation.Stalls.ClassifyResultPart2("its candidate sweep found nothing new and it has no source"),
