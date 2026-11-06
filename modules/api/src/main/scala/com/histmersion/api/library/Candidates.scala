@@ -101,13 +101,13 @@ object Candidates:
     def unescape(s: String) =
       (s).replace("&lt;", "<").replace("&gt;", ">").replace("&quot;", "\"").replace("&apos;", "'").replace("&amp;", "&")
     "(?s)<entry>(.*?)</entry>".r.findAllMatchIn((atom)).map(_.group(1)).toList.map { e =>
-      val id = tag((e), ("id")).map((_).value.replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
+      val id = tag((e), ("id")).map((_).replaceFirst("^https?://arxiv.org/abs/", "").replaceAll("v\\d+$", ""))
       WorkRef(
         arxivId = (id).map(refactorValue8 => _root_.com.histmersion.api.library.WorkRef.ArxivId(refactorValue8)),
         title = (tag((e), ("title")).map(unescape)).map(com.histmersion.api.library.Title.apply),
-        year = (tag((e), ("published")).flatMap((_).value.take(4).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
+        year = (tag((e), ("published")).flatMap((_).take(4).toIntOption)).map(com.histmersion.api.catalogue.Year.apply),
         authors = ("(?s)<author>\\s*<name>(.*?)</name>".r.findAllMatchIn(e).map(m => unescape((m.group(1).trim))).toList).map(com.histmersion.api.library.AuthorName.apply),
-        doi = (tag((e), ("arxiv:doi"))).map((com).value.histmersion.api.library.Doi.apply),
+        doi = (tag((e), ("arxiv:doi"))).map((com).histmersion.api.library.Doi.apply),
         venue = (Some("arXiv")).map(com.histmersion.api.library.Source.Venue.apply),
         isOa = true,
         abstractText = tag(e, "summary").map(unescape)

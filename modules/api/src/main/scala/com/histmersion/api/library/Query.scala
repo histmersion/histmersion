@@ -114,7 +114,7 @@ object Query:
     var i = 0
     val n = (sql).length
     var depth = 0
-    def at(k: Int): Char = if k >= 0 && k < n then ((sql).charAt((k).value)) else (0.toChar)
+    def at(k: Int): Char = if k >= 0 && k < n then ((sql).charAt((k))) else (0.toChar)
     while i < n do
       val c = (sql).charAt(i)
       if depth > 0 then
@@ -122,7 +122,7 @@ object Query:
         else if c == '/' && at((i + 1)) == ('*') then { depth += 1; cur.append("/*"); i += 2 }
         else { cur.append(c); i += 1 }
       else if c == '-' && at((i + 1)) == ('-') then
-        while i < n && (sql).value.charAt(i) != '\n' do { cur.append((sql).charAt(i)); i += 1 }
+        while i < n && (sql).charAt(i) != '\n' do { cur.append((sql).charAt(i)); i += 1 }
       else if c == '/' && at((i + 1)) == ('*') then { depth += 1; cur.append("/*"); i += 2 }
       else if c == '\'' || c == '"' then
         cur.append(c); i += 1
@@ -135,7 +135,7 @@ object Query:
       else if c == '$' then
         dollarTag(sql, (i)) match
           case Some(tag) =>
-            val end = (sql).indexOf(tag, i + (tag).value.length)
+            val end = (sql).indexOf(tag, i + (tag).length)
             val to = if end < 0 then n else end + (tag).value.length
             cur.append((sql).substring(i, to)); i = to
           case None => { cur.append(c); i += 1 }
@@ -145,12 +145,12 @@ object Query:
     (out.result().map(_.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.library.Query.Statement(refactorValue))
 
   private def dollarTag(sql: String, i: Int): Option[String] =
-    val close = (sql).indexOf('$', (i).value + 1)
+    val close = (sql).indexOf('$', (i) + 1)
     if close < 0 then None
     else
-      val tag = (sql).substring((i).value + 1, close)
+      val tag = (sql).substring((i) + 1, close)
       if tag.isEmpty || (tag.head.isLetter || tag.head == '_') && tag.forall(ch => ch.isLetterOrDigit || ch == '_')
-      then Some(((sql).substring((i).value, close + 1)))
+      then Some(((sql).substring((i), close + 1)))
       else None
 
   def leadingKeyword(statement: com.histmersion.api.library.Query.Statement): String =
