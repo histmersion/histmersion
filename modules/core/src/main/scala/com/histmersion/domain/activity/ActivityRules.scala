@@ -13,18 +13,10 @@ import com.histmersion.api.Api
 object ActivityRules:
 
   /** The statuses of a run or job that is going now. */
-
-  type RunningStates = RunningStatesValue
-  type RunningStatesValue = RunningStatesValue.T
-  object RunningStatesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProblemStates = ProblemStatesValue
-  type ProblemStatesValue = ProblemStatesValue.T
-  object ProblemStatesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  val RunningStates: Set[com.histmersion.domain.activity.ActivityRules.RunningStates] = Set(com.histmersion.domain.activity.ActivityRules.RunningStatesValue("running"))
+  val RunningStates: Set[Entry.State] = Set(Entry.State("running"))
 
   /** The statuses of a run or job that went wrong. */
-  val ProblemStates: Set[com.histmersion.domain.activity.ActivityRules.ProblemStates] = Set(com.histmersion.domain.activity.ActivityRules.ProblemStatesValue("failed"))
+  val ProblemStates: Set[Entry.State] = Set(Entry.State("failed"))
 
   /** Does `e` belong to what `show` shows? */
   def shows(show: Show, e: Entry): Boolean =
@@ -33,8 +25,8 @@ object ActivityRules:
       case Show.Everything => true
       case Show.Running    => isRunOrJob(e) && RunningStates.contains(e.state)
       case Show.Agents     =>
-        kind.contains(EntryKind.Run) || (kind.contains(EntryKind.Log) && e.by.contains(Writer.Agent.wire))
-      case Show.Jobs => kind.contains(EntryKind.Job) || (kind.contains(EntryKind.Log) && e.by.contains(Writer.Job.wire))
+        kind.contains(EntryKind.Run) || (kind.contains(EntryKind.Log) && e.by.exists(_.value == Writer.Agent.wire.value))
+      case Show.Jobs => kind.contains(EntryKind.Job) || (kind.contains(EntryKind.Log) && e.by.exists(_.value == Writer.Job.wire.value))
       case Show.Yours    => kind.contains(EntryKind.Decision)
       case Show.Problems => isRunOrJob(e) && ProblemStates.contains(e.state)
 
@@ -42,26 +34,26 @@ object ActivityRules:
 
   /** Does `e` pass every filter of `q` but the page's place? */
   def matches(q: ActivityQuery, e: Entry): Boolean =
-    shows(q.show, e) && q.goal.forall(g => e.goal.contains(g)) && q.since.forall(s => !instantOf(e).isBefore(s))
+    shows(q.show, e) && q.goal.forall(g => e.goal.exists(_.value == g.value)) && q.since.forall(s => !instantOf(e).isBefore(s))
 
-  private def instantOf(e: Entry): Instant = Instant.parse(e.at)
+  private def instantOf(e: Entry): Instant = Instant.parse(e.at.value)
 
   /** Newest first; entries of one instant by key, descending. */
   val newestFirst: Ordering[Entry] =
-    Ordering.by[Entry, (Instant, String)](e => (instantOf(e), e.key)).reverse
+    Ordering.by[Entry, (Instant, String)](e => (instantOf(e), e.key.value)).reverse
 
   /** Is `e` older than the cursor (after it in the list)? */
   def after(c: ActivityCursor, e: Entry): Boolean =
     val at = instantOf(e)
-    at.isBefore(c.at) || (at == c.at && e.key < c.key)
+    at.isBefore(c.at) || (at == c.at && e.key.value < c.key.value)
 
   /** The page `q` asks for out of `entries` (any order), with the cursor of the next one. */
   def page(entries: List[Entry], q: ActivityQuery, counts: Activity.Counts): Activity.Page =
     val kept = entries.filter(e => matches(q, e) && q.before.forall(after(_, e))).sorted(using newestFirst)
-    val (rows, rest) = kept.splitAt(q.limit)
-    Activity.Page(rows, Option.when(rest.nonEmpty)(rows.lastOption).flatten.map(cursorOf(_).wire), counts)
+    val (rows, rest) = kept.splitAt(q.limit.value)
+    Activity.Page(rows, Option.when(rest.nonEmpty)(rows.lastOption).flatten.map(e => Activity.Page.Next(cursorOf(e).wire.value)), counts)
 
-  def cursorOf(e: Entry): ActivityCursor = ActivityCursor(instantOf(e), e.key)
+  def cursorOf(e: Entry): ActivityCursor = ActivityCursor(instantOf(e), ActivityCursor.Key(e.key.value))
 
   /** The chips' counts over `entries`: running now, and failed since `weekAgo`. */
   def counts(entries: List[Entry], weekAgo: Instant): Activity.Counts =
@@ -70,40 +62,40 @@ object ActivityRules:
         val run = isRunOrJob(e) && RunningStates.contains(e.state)
         val fail = isRunOrJob(e) && ProblemStates.contains(e.state) && !instantOf(e).isBefore(weekAgo)
         loop(tail, running + (if run then 1 else 0), problems + (if fail then 1 else 0))
-      case Nil => Activity.Counts(running, problems)
+      case Nil => Activity.Counts(Activity.Counts.Running(running), Activity.Counts.ProblemsWeek(problems))
     loop(entries, 0, 0)
 
   /** The query a client asked for, checked: `show` one of the chips' words, `since` a date, an instant or a time ago
     * (against `now`), `limit` within 1 … [[Activity.MaxLimit]], `before` a cursor this list gave.
     */
   def query(
-      show: Option[com.histmersion.domain.activity.ActivityQuery.Show],
-      since: Option[com.histmersion.domain.activity.ActivityQuery.Since],
-      goal: Option[com.histmersion.domain.activity.ActivityQuery.Goal],
-      limit: Option[com.histmersion.domain.activity.ActivityQuery.Limit],
-      before: Option[com.histmersion.domain.activity.ActivityQuery.Before],
+      show: Option[Show.Wire],
+      since: Option[ListFilters.TimeBound],
+      goal: Option[ActivityQuery.Goal],
+      limit: Option[ActivityQuery.Limit],
+      before: Option[ActivityCursor.Wire],
       now: Instant
   ): Either[Api.Error, ActivityQuery] =
-    def bad(m: com.histmersion.domain.activity.ActivityQuery.Problem) = Api.Error(m)
+    def bad(m: String) = Api.Error(Api.Error.Message(m))
     for
       s <- show
-        .map(_.trim)
+        .map(_.value.trim)
         .filter(_.nonEmpty)
         .fold(Right(Show.Everything))(w =>
-          Show.parse(w).toRight(bad(s"unknown kind '$w' — one of: ${Show.values.map(_.wire).mkString(", ")}"))
+          Show.parse(Show.Wire(w)).toRight(bad(s"unknown kind '$w' — one of: ${Show.values.map(_.wire).mkString(", ")}"))
         )
       t <- since
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .fold(Right(None))(v => ListFilters.timeBound(v, end = false, now).map(Some(_)).left.map(bad))
+        .map(v => ListFilters.TimeBound(v.value.trim))
+        .filter(_.value.nonEmpty)
+        .fold(Right(None))(v => ListFilters.timeBound(v, end = false, now).map(Some(_)).left.map(p => bad(p.value)))
       c <- before
-        .map(_.trim)
-        .filter(_.nonEmpty)
-        .fold(Right(None))(v => ActivityCursor.parse(v).map(Some(_)).left.map(bad))
+        .map(w => ActivityCursor.Wire(w.value.trim))
+        .filter(_.value.nonEmpty)
+        .fold(Right(None))(v => ActivityCursor.parse(v).map(Some(_)).left.map(p => bad(p.value)))
     yield ActivityQuery(
       s,
       t,
-      goal.map(_.trim).filter(_.nonEmpty),
-      limit.getOrElse(Activity.DefaultLimit).max(1).min(Activity.MaxLimit),
+      goal.map(g => ActivityQuery.Goal(g.value.trim)).filter(_.value.nonEmpty),
+      ActivityQuery.Limit(limit.fold(Activity.DefaultLimit)(_.value).max(1).min(Activity.MaxLimit)),
       c
     )

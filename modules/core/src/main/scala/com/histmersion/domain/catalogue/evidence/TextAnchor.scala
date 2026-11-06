@@ -1,6 +1,6 @@
 package com.histmersion.domain.catalogue.evidence
 
-import com.histmersion.util.ocr.Chunker
+import com.histmersion.util.ocr.{Chunk, Chunker}
 import com.histmersion.util.text.Anchor
 
 /** Finding a quoted passage again in another text — the W3C Web Annotation TextQuoteSelector (`exact` + `prefix` +
@@ -36,43 +36,48 @@ object TextAnchor:
       suffix: Option[com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix],
       hint: Option[com.histmersion.domain.catalogue.evidence.TextAnchor.ReanchorHint]
   ): Option[Anchor] =
-    if quote.isEmpty then None
+    val body = text.value
+    val exactQuote = quote.value
+    if exactQuote.isEmpty then None
     else
-      val exact = occurrences(text, quote).map(i => Anchor(i, i + quote.length))
+      val exact = occurrences(body, exactQuote).map(i => anchorAt(i, i + exactQuote.length))
       val found =
         if exact.nonEmpty then exact
         else
-          val (norm, back) = collapse(text)
-          val q = collapse(quote)._1.trim
+          val (norm, back) = collapse(body)
+          val q = collapse(exactQuote)._1.trim
           if q.isEmpty then Nil
-          else occurrences(norm, q).map(i => Anchor(back(i), back(i + q.length - 1) + 1))
-      best(text, found, prefix.getOrElse(com.histmersion.domain.catalogue.evidence.TextAnchor.Prefix("")), suffix.getOrElse(com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix("")), hint)
+          else occurrences(norm, q).map(i => anchorAt(back(i), back(i + q.length - 1) + 1))
+      best(body, found, prefix.fold("")(_.value), suffix.fold("")(_.value), hint.map(_.value))
+
+  private def anchorAt(start: Int, end: Int): Anchor = Anchor(Anchor.Start(start), Anchor.End(end))
 
   private def best(
-      text: com.histmersion.domain.catalogue.evidence.TextAnchor.Text,
+      text: String,
       found: List[Anchor],
-      prefix: com.histmersion.domain.catalogue.evidence.TextAnchor.Prefix,
-      suffix: com.histmersion.domain.catalogue.evidence.TextAnchor.Suffix,
-      hint: Option[com.histmersion.Offset]
+      prefix: String,
+      suffix: String,
+      hint: Option[Int]
   ): Option[Anchor] =
     found match
       case Nil        => None
       case one :: Nil => Some(one)
       case many       =>
         Some(many.minBy { a =>
-          val agree = commonSuffix(text.substring(0, a.start), prefix) + commonPrefix(text.substring(a.end), suffix)
-          (-agree, hint.fold(0)(h => math.abs(a.start - h)), a.start)
+          val agree =
+            commonSuffix(text.substring(0, a.start.value), prefix) + commonPrefix(text.substring(a.end.value), suffix)
+          (-agree, hint.fold(0)(h => math.abs(a.start.value - h)), a.start.value)
         })
 
   /** Every start index of `needle` in `hay`, overlapping ones included. */
-  def occurrences(hay: com.histmersion.domain.catalogue.evidence.TextAnchor.Text, needle: String): List[Int] =
+  private def occurrences(hay: String, needle: String): List[Int] =
     if needle.isEmpty then Nil
     else Iterator.iterate(hay.indexOf(needle))(i => hay.indexOf(needle, i + 1)).takeWhile(_ >= 0).toList
 
   /** The text with every whitespace run as one space, and for each of its characters the index it came from in the
     * original.
     */
-  private def collapse(s: com.histmersion.domain.catalogue.evidence.TextAnchor.Text): (String, Array[Int]) =
+  private def collapse(s: String): (String, Array[Int]) =
     val sb = StringBuilder()
     val back = Array.newBuilder[Int]
     var inWs = false // one pass over the characters: whether the previous one was whitespace
@@ -97,14 +102,15 @@ object TextAnchor:
     * is the n-th in the text, and the chunks are searched for the n-th one in document order. `None` when the chunking
     * cannot tell (a quote cut by a chunk boundary).
     */
-  def chunkOf(text: com.histmersion.domain.catalogue.evidence.TextAnchor.Text, anchor: Anchor, chunkChars: com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkChars): Option[com.histmersion.domain.catalogue.evidence.AttestationPlan.AnchorTry.ChunkOrd] =
-    if chunkChars <= 0 then None
+  def chunkOf(text: com.histmersion.domain.catalogue.evidence.TextAnchor.Text, anchor: Anchor, chunkChars: com.histmersion.domain.catalogue.evidence.TextAnchor.ChunkChars): Option[Chunk.Ord] =
+    if chunkChars.value <= 0 then None
     else
-      val quote = text.substring(anchor.start, anchor.end)
-      val nth = occurrences(text.substring(0, anchor.start), quote).size
+      val body = text.value
+      val quote = body.substring(anchor.start.value, anchor.end.value)
+      val nth = occurrences(body.substring(0, anchor.start.value), quote).size
       Chunker
-        .chunk(text, chunkChars)
+        .chunk(Chunker.ChunkMarkdown(body), Chunker.ChunkMaxChars(chunkChars.value))
         .iterator
-        .flatMap(c => occurrences(c.body, quote).map(_ => c.ord))
+        .flatMap(c => occurrences(c.body.value, quote).map(_ => c.ord))
         .drop(nth)
         .nextOption()

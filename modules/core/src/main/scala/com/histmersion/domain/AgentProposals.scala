@@ -17,12 +17,8 @@ import com.histmersion.api.library.Source
 object AgentProposals:
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MinRatio = MinRatio.T
-  object MinRatio extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = com.histmersion.domain.AgentVerify.Problem
+  val Problem: _root_.com.histmersion.domain.AgentVerify.Problem.type = _root_.com.histmersion.domain.AgentVerify.Problem
 
   /** The edge kinds an agent may propose: the disagreement kinds the writing guide counts. A plain `references` edge is
     * code's business (`refs`), never a model's.
@@ -41,18 +37,18 @@ object AgentProposals:
       citekey: com.histmersion.domain.library.Citekey,
       status: Option[Source.Status] = None,
       edgeKind: Option[Edge.Kind] = None,
-      target: Option[Proposal.Target] = None,
+      target: Option[com.histmersion.domain.library.Citekey] = None,
       evidence: Proposal.Evidence = com.histmersion.domain.AgentProposals.Proposal.Evidence(""),
       quote: Option[Proposal.Quote] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     /** One line for a person: what would change. */
     def describe: com.histmersion.domain.AgentProposals.Description = kind match
-      case Approval.Kind.StatusChange => s"[[$citekey]] status → ${status.fold("?")(_.wire)}"
+      case Approval.Kind.StatusChange => Description(s"[[$citekey]] status → ${status.fold("?")(_.wire)}")
       case Approval.Kind.Edge         =>
-        s"edge [[$citekey]] ${edgeKind.fold("?")(Edge.Kind.wireOf)} [[${target.getOrElse("?")}]]"
+        Description(s"edge [[$citekey]] ${edgeKind.fold("?")(Edge.Kind.wireOf)} [[${target.fold("?")(_.value)}]]")
       // a plan or an article is never a source proposal (it is carried by its own approval)
-      case k => s"${k.wire} (not a source change)"
+      case k => Description(s"${k.wire} (not a source change)")
 
     /** The one patch that applies it, on `citekey`. An edge is patched on its source. */
     def patch: com.histmersion.api.library.Source.Patch = kind match
@@ -60,13 +56,11 @@ object AgentProposals:
         com.histmersion.api.library.Source.Patch(metadata = Some(MetadataPatch(status = status)))
       case Approval.Kind.Edge =>
         com.histmersion.api.library.Source.Patch(edges = Some(EdgesPatch(add = (for k <- edgeKind; t <- target
-        yield com.histmersion.api.library.Edge.Input(t, k)).toList)))
+        yield com.histmersion.api.library.Edge.Input(com.histmersion.api.library.Citekey(t.value), k)).toList)))
       case _ => com.histmersion.api.library.Source.Patch()
 
   object Proposal:
 
-    type Target = Target.T
-    object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Evidence = Evidence.T
     object Evidence extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Quote = Quote.T
@@ -97,7 +91,7 @@ object AgentProposals:
   def route(p: Proposal, current: Option[Source.Status], statusMode: Approval.Mode, edgeMode: Approval.Mode): Route =
     p.kind match
       case Approval.Kind.StatusChange =>
-        if p.status.isEmpty || p.status == current then Route.Skip(s"already ${current.fold("?")(_.wire)}")
+        if p.status.isEmpty || p.status == current then Route.Skip(Route.Skip.Reason(s"already ${current.fold("?")(_.wire)}"))
         else if current.contains(Source.Status.Unassessed) &&
           p.status.exists(s => s == Source.Status.Current || s == Source.Status.Foundational)
         then Route.Apply
@@ -105,14 +99,14 @@ object AgentProposals:
         else Route.Ask
       case Approval.Kind.Edge =>
         if edgeMode == Approval.Mode.Auto then Route.Apply else Route.Ask
-      case k => Route.Skip(s"${k.wire} is not a source change")
+      case k => Route.Skip(Route.Skip.Reason(s"${k.wire} is not a source change"))
 
   // ── from a model's answer ───────────────────────────────────────────────────────────────────────
 
   /** A change a model proposes, as it states it. */
   final case class ProposalAnswer(
       kind: ProposalAnswer.Kind,
-      citekey: com.histmersion.domain.library.Citekey,
+      citekey: ProposalAnswer.Citekey,
       status: Option[ProposalAnswer.Status] = None,
       edgeKind: Option[ProposalAnswer.EdgeKind] = None,
       target: Option[ProposalAnswer.Target] = None,
@@ -122,10 +116,12 @@ object AgentProposals:
   object ProposalAnswer:
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Status = Status.T
-    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EdgeKind = EdgeKind.T
-    object EdgeKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = com.histmersion.domain.library.Source.Status.Wire
+    val Status: _root_.com.histmersion.domain.library.Source.Status.Wire.type = _root_.com.histmersion.domain.library.Source.Status.Wire
+    type EdgeKind = com.histmersion.api.library.Edge.Kind.Wire
+    val EdgeKind: _root_.com.histmersion.api.library.Edge.Kind.Wire.type = _root_.com.histmersion.api.library.Edge.Kind.Wire
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Evidence = Evidence.T
@@ -159,46 +155,50 @@ object AgentProposals:
   def check(
       a: ProposalAnswer,
       isCitekey: com.histmersion.domain.library.Citekey => Boolean,
-      text: com.histmersion.domain.AgentProposals.Text => Option[com.histmersion.domain.AgentProposals.Text],
-      minRatio: com.histmersion.domain.AgentProposals.MinRatio
+      text: com.histmersion.domain.library.Citekey => Option[AgentVerify.SourceBody],
+      minRatio: AgentVerify.MinRatio
   ): Either[com.histmersion.domain.AgentProposals.Problem, Proposal] =
-    val ck = a.citekey.trim
-    val label = s"proposal for ${if ck.isEmpty then "?" else ck}"
+    val raw = a.citekey.value.trim
+    val label = s"proposal for ${if raw.isEmpty then "?" else raw}"
     def quoted(keys: List[com.histmersion.domain.library.Citekey]): Either[com.histmersion.domain.AgentProposals.Problem, com.histmersion.domain.AgentProposals.Proposal.Quote] =
-      val q = a.quote.trim
-      if q.isEmpty then Left(s"$label: no quote")
-      else if keys.flatMap(text).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)
-      else Left(s"$label: the quote is not in the record of ${keys.mkString(" or ")}")
+      val q = Proposal.Quote(a.quote.value.trim)
+      if q.value.isEmpty then Left(Problem(s"$label: no quote"))
+      else if keys.flatMap(text(_)).exists(t => AgentVerify.findQuote(q, t, minRatio).accepted) then Right(q)
+      else Left(Problem(s"$label: the quote is not in the record of ${keys.mkString(" or ")}"))
     for
-      _ <- Either.cond(isCitekey(ck), (), s"$label: '$ck' is not a citekey")
-      _ <- Either.cond(a.evidence.trim.nonEmpty, (), s"$label: no evidence given")
-      p <- a.kind.trim.toLowerCase match
+      ck <- com.histmersion.domain.library.Citekey.parse(raw).toOption.filter(isCitekey).toRight(Problem(s"$label: '$raw' is not a citekey"))
+      _ <- Either.cond(a.evidence.value.trim.nonEmpty, (), Problem(s"$label: no evidence given"))
+      p <- a.kind.value.trim.toLowerCase match
         case "status" =>
           for
             st <- a.status
-              .toRight(s"$label: a status change names no status")
+              .toRight(Problem(s"$label: a status change names no status"))
               .flatMap(AgentVerify.status)
               .left
-              .map(m => s"$label: $m")
-            _ <- Either.cond(st != Source.Status.Unassessed, (), s"$label: unassessed is not a change to propose")
+              .map(m => Problem(s"$label: $m"))
+            _ <- Either.cond(st != Source.Status.Unassessed, (), Problem(s"$label: unassessed is not a change to propose"))
             q <- quoted(List(ck))
-          yield Proposal(Approval.Kind.StatusChange, ck, status = Some(st), evidence = a.evidence.trim, quote = Some(q))
+          yield Proposal(Approval.Kind.StatusChange, ck, status = Some(st), evidence = Proposal.Evidence(a.evidence.value.trim), quote = Some(q))
         case "edge" =>
           for
             k <- a.edgeKind
               .flatMap(Edge.Kind.fromWire)
               .filter(EdgeKinds.contains)
-              .toRight(s"$label: edge kind must be one of ${EdgeKinds.map(Edge.Kind.wireOf).mkString(", ")}")
-            t <- a.target.map(_.trim).filter(isCitekey).toRight(s"$label: the edge target is not a citekey")
-            _ <- Either.cond(t != ck, (), s"$label: an edge from a source to itself")
+              .toRight(Problem(s"$label: edge kind must be one of ${EdgeKinds.map(Edge.Kind.wireOf).mkString(", ")}"))
+            t <- a.target
+              .map(_.value.trim)
+              .flatMap(com.histmersion.domain.library.Citekey.parse(_).toOption)
+              .filter(isCitekey)
+              .toRight(Problem(s"$label: the edge target is not a citekey"))
+            _ <- Either.cond(t != ck, (), Problem(s"$label: an edge from a source to itself"))
             q <- quoted(List(ck, t))
           yield Proposal(
             Approval.Kind.Edge,
             ck,
             edgeKind = Some(k),
             target = Some(t),
-            evidence = a.evidence.trim,
+            evidence = Proposal.Evidence(a.evidence.value.trim),
             quote = Some(q)
           )
-        case other => Left(s"$label: kind '$other' is neither status nor edge")
+        case other => Left(Problem(s"$label: kind '$other' is neither status nor edge"))
     yield p

@@ -87,68 +87,68 @@ object HintProposals:
       item: Option[com.histmersion.domain.HintProposals.Item],
       last: com.histmersion.domain.HintProposals.Last
   ): Either[List[com.histmersion.domain.HintProposals.Problem], (Option[HintEffect], List[com.histmersion.domain.HintProposals.Description])] =
-    val action = Option(a.action).map(_.trim.toLowerCase).getOrElse("")
-    val targets = a.targets.map(_.trim).filter(_.nonEmpty).distinct
+    val action = Option(a.action).map(_.value.trim.toLowerCase).getOrElse("")
+    val targets = a.targets.map(_.value.trim).filter(_.nonEmpty).distinct.map(Item(_))
     val (good, unknown) = targets.partition(known)
-    val tag = a.tag.map(_.trim).filter(_.nonEmpty)
-    def fail(ps: List[com.histmersion.domain.HintProposals.Proposed.Problems]) = if last then Right((None, ps.map(p => s"nothing proposed: $p"))) else Left(ps)
+    val tag = a.tag.map(_.value.trim).filter(_.nonEmpty)
+    def fail(ps: List[com.histmersion.domain.HintProposals.Problem]): Either[List[com.histmersion.domain.HintProposals.Problem], (Option[HintEffect], List[com.histmersion.domain.HintProposals.Description])] =
+      if last.value then Right((None, ps.map(p => Description(s"nothing proposed: $p")))) else Left(ps)
     if action == "none" || action.isEmpty then Right((None, Nil))
     else if !HintEffect.Proposable.contains(action) then
-      fail(List(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})"))
+      fail(List(Problem(s"'${a.action}' is not an action (one of: none, ${HintEffect.Proposable.mkString(", ")})")))
     else if action == HintEffect.Config then
-      val kvs = a.settings.map(_.trim).filter(_.nonEmpty)
-      if kvs.isEmpty then fail(List(com.histmersion.domain.HintProposals.Proposed.Problems("config: give the settings to change as key=value")))
+      val kvs = a.settings.map(_.value.trim).filter(_.nonEmpty)
+      if kvs.isEmpty then fail(List(Problem("config: give the settings to change as key=value")))
       else
-        ManagerConfig.parse(kvs) match
-          case Left(e)  => fail(List(s"config: $e"))
-          case Right(c) => Right((Some(HintEffect(HintEffect.Config, config = Some(c))), Nil))
+        ManagerConfig.parse(kvs.map(ManagerConfig.Spec(_))) match
+          case Left(e)  => fail(List(Problem(s"config: $e")))
+          case Right(c) => Right((Some(HintEffect(HintEffect.Action(HintEffect.Config), config = Some(c))), Nil))
     else
       val problems = List(
-        Option.when(unknown.nonEmpty && !last)(
-          s"not among the manager's items: ${unknown.mkString(", ")} — name them exactly as listed"
+        Option.when(unknown.nonEmpty && !last.value)(
+          Problem(s"not among the manager's items: ${unknown.mkString(", ")} — name them exactly as listed")
         ),
         Option.when(good.isEmpty && unknown.isEmpty && tag.isEmpty && item.isEmpty)(
-          s"$action: name the items (targets) or a tag"
+          Problem(s"$action: name the items (targets) or a tag")
         ),
         Option.when(
-          action == HintEffect.HoldAction && a.until.forall(_.trim.isEmpty) && a.untilSource.forall(_.trim.isEmpty)
-        )("hold: give `until` (a date) or `untilSource` (a DOI or citekey)"),
+          action == HintEffect.HoldAction && a.until.forall(_.value.trim.isEmpty) && a.untilSource.forall(_.value.trim.isEmpty)
+        )(Problem("hold: give `until` (a date) or `untilSource` (a DOI or citekey)")),
         a.until
-          .map(_.trim)
+          .map(_.value.trim)
           .filter(_.nonEmpty)
-          .filter(u => ManagerPolicy.parseInstant(u).isEmpty)
-          .map(u => s"hold: '$u' is not a date (2026-11-01)"),
+          .filter(u => ManagerPolicy.parseInstant(ManagerPolicy.InstantText(u)).isEmpty)
+          .map(u => Problem(s"hold: '$u' is not a date (2026-11-01)")),
         a.priority
+          .map(_.value)
           .filter(p => p < -MaxPriority || p > MaxPriority)
-          .map(p => s"prioritise: priority $p is outside ±$MaxPriority")
+          .map(p => Problem(s"prioritise: priority $p is outside ±$MaxPriority"))
       ).flatten
       if problems.nonEmpty then fail(problems)
-      else if good.isEmpty && tag.isEmpty && item.isEmpty then fail(List(s"$action: none of the items it names exists"))
+      else if good.isEmpty && tag.isEmpty && item.isEmpty then fail(List(Problem(s"$action: none of the items it names exists")))
       else
         Right(
           (
             Some(
               HintEffect(
-                action,
-                good ++ item.filterNot(good.contains).toList,
-                tag,
-                until = a.until.map(_.trim).filter(_.nonEmpty),
-                untilSource = a.untilSource.map(_.trim).filter(_.nonEmpty),
-                priority = a.priority.filter(_ => action == HintEffect.Prioritise)
+                HintEffect.Action(action),
+                (good ++ item.filterNot(good.contains).toList).map(i => HintEffect.Targets(i.value)),
+                tag.map(HintEffect.Tag(_)),
+                until = a.until.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.Until(_)),
+                untilSource = a.untilSource.map(_.value.trim).filter(_.nonEmpty).map(HintEffect.UntilSource(_)),
+                priority = a.priority.filter(_ => action == HintEffect.Prioritise).map(p => HintEffect.Priority(p.value))
               )
             ),
-            Option.when(unknown.nonEmpty)(s"dropped, not among the manager's items: ${unknown.mkString(", ")}").toList
+            Option.when(unknown.nonEmpty)(Description(s"dropped, not among the manager's items: ${unknown.mkString(", ")}")).toList
           )
         )
 
   /** What the step checkpoints: the proposal that passed (None: nothing asked for, or nothing passed), why, and the
     * warnings.
     */
-  final case class Proposed(effect: Option[HintEffect], why: Proposed.Why, problems: List[Proposed.Problems] = Nil)
+  final case class Proposed(effect: Option[HintEffect], why: Proposed.Why, problems: List[Description] = Nil)
       derives KindlingsCodecAsObject
 
   object Proposed:
     type Why = Why.T
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Problems = Problems.T
-    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

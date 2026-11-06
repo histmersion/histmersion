@@ -20,8 +20,6 @@ import com.histmersion.api.given
   * Pure: the job (server) supplies the items and the source, and writes what this decides.
   */
 object AcquireMatch:
-  type ClosedCount = ClosedCount.T
-  object ClosedCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecimalText = DecimalText.T
   object DecimalText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T
@@ -73,13 +71,15 @@ object AcquireMatch:
   /** A DOI as a key: lower case, no resolver prefix or `doi:` scheme, no trailing punctuation, and a closing
     * parenthesis kept only when the DOI opened one (`10.1002/(SICI)1097-…` keeps its pair).
     */
-  def doiKey(raw: com.histmersion.domain.AcquireMatch.DoiText): Option[com.histmersion.domain.library.Doi] =
+  def doiKey(raw: com.histmersion.domain.AcquireMatch.DoiText): Option[com.histmersion.domain.library.Doi] = doiKeyOf(raw.value)
+
+  private def doiKeyOf(raw: String): Option[com.histmersion.domain.library.Doi] =
     val s = Option(raw)
       .getOrElse("")
       .trim
       .replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", "")
       .replaceFirst("(?i)^doi:\\s*", "")
-    DoiIn.findFirstIn(s).map(trim).map(_.toLowerCase).filter(_.contains('/'))
+    DoiIn.findFirstIn(s).map(trim).map(_.toLowerCase).filter(_.contains('/')).flatMap(com.histmersion.domain.library.Doi.option(_))
 
   @annotation.tailrec
   private def trim(d: String): String =
@@ -91,8 +91,10 @@ object AcquireMatch:
       else d
 
   /** Every DOI written anywhere in `text`, as keys. */
-  def doisIn(text: com.histmersion.domain.AcquireMatch.DoiText): Set[com.histmersion.domain.library.Doi] =
-    DoiIn.findAllIn(Option(text).getOrElse("")).flatMap(doiKey).toSet
+  def doisIn(text: com.histmersion.domain.AcquireMatch.DoiText): Set[com.histmersion.domain.library.Doi] = doisInText(text.value)
+
+  private def doisInText(text: String): Set[com.histmersion.domain.library.Doi] =
+    DoiIn.findAllIn(Option(text).getOrElse("")).flatMap(doiKeyOf).toSet
 
   /** Words too common to say anything about which work a title names. */
   private val Stop = Set(
@@ -139,6 +141,9 @@ object AcquireMatch:
     * like a year or a volume), stop words dropped.
     */
   def tokens(text: com.histmersion.domain.AcquireMatch.MatchText): Set[com.histmersion.domain.AcquireMatch.Token] =
+    tokensOf(text.value).map(Token(_))
+
+  private def tokensOf(text: String): Set[String] =
     LatinFold
       .fold(Option(text).getOrElse(""))
       .toLowerCase
@@ -150,28 +155,32 @@ object AcquireMatch:
   /** The first author's surname, folded: the part before the comma of `Last, First`, else the last word. */
   def surname(authors: List[com.histmersion.domain.AuthorName]): Option[com.histmersion.domain.AcquireMatch.Surname] =
     authors
-      .map(_.trim)
+      .map(_.value.trim)
       .find(_.nonEmpty)
       .map { a =>
         val last = if a.contains(",") then a.takeWhile(_ != ',') else a.split("\\s+").lastOption.getOrElse(a)
         LatinFold.fold(last).toLowerCase.replaceAll("[^a-z]", "")
       }
       .filter(_.length >= 2)
+      .map(Surname(_))
 
   /** How much `itemText` looks like a request for the work `title` by `authors`, 0…1: the share of the title's
     * distinctive words the item contains (three quarters of the weight), and whether it names the first author's
     * surname (the rest). Without authors the title words are the whole score. Two decimals, so a listing is stable.
     */
   def score(itemText: com.histmersion.domain.AcquireMatch.MatchText, title: com.histmersion.domain.Title, authors: List[com.histmersion.domain.AcquireMatch.ScoreAuthors]): com.histmersion.domain.AcquireMatch.Decision.Propose.Score =
-    val want = tokens(title)
-    if want.isEmpty then 0.0
+    scoreOf(itemText.value, title.value, authors)
+
+  private def scoreOf(itemText: String, title: String, authors: List[com.histmersion.domain.AuthorName]): com.histmersion.domain.AcquireMatch.Decision.Propose.Score =
+    val want = tokensOf(title)
+    if want.isEmpty then Decision.Propose.Score(0.0)
     else
-      val have = tokens(itemText)
+      val have = tokensOf(itemText)
       val words = want.count(have.contains).toDouble / want.size
       val raw = surname(authors) match
-        case Some(s) => 0.75 * words + (if have.contains(s) then 0.25 else 0.0)
+        case Some(s) => 0.75 * words + (if have.contains(s.value) then 0.25 else 0.0)
         case None    => words
-      math.round(raw * 100) / 100.0
+      Decision.Propose.Score(math.round(raw * 100) / 100.0)
 
   /** The decision for every open ACQUISITION item, given the source's DOI, title and authors: DOI-exact items are
     * closed; other items scoring at least `proposeAt` are proposed, best first. Items already done, notes and other
@@ -184,38 +193,41 @@ object AcquireMatch:
       authors: List[com.histmersion.domain.AcquireMatch.DecideAuthors],
       proposeAt: com.histmersion.domain.AcquireMatch.ProposeThreshold
   ): List[Decision] =
-    val key = doi.flatMap(doiKey)
-    val open = items.filter(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.Open)
-    val (closes, rest) = open.partition(i => key.exists(doisIn(i.text + " " + i.reason.getOrElse("")).contains))
+    val key = doi.flatMap(d => doiKeyOf(d.value))
+    val open = items.filter(i => i.list == Queue.Kind.Acquire.label && i.status == Queue.QueueItem.Status(Queue.Open))
+    val (closes, rest) =
+      open.partition(i => key.exists(doisInText(i.text.value + " " + i.reason.map(_.value).getOrElse("")).contains))
     val proposals = rest
       .flatMap { i =>
-        val s = score(i.text, title, authors)
-        Option.when(s >= proposeAt) {
-          val named = doisIn(i.text).toList.sorted
+        val s = scoreOf(i.text.value, title.value, authors)
+        Option.when(s.value >= proposeAt.value) {
+          val named = doisInText(i.text.value).toList.sortBy(_.value)
           Decision.Propose(i, s, named.find(d => !key.contains(d)))
         }
       }
-      .sortBy { case Decision.Propose(i, s, _) => (-s, i.id); case _ => (0.0, 0) }
+      .sortBy { case Decision.Propose(i, s, _) => (-s.value, i.id.value); case _ => (0.0, 0) }
     closes.map(Decision.Close(_)) ++ proposals
 
   /** One line per decision, for a job's progress and an import's output. `closed` maps an item to the outcome of the
     * write that closed it (`Left(reason)` when it could not be).
     */
-  def describe(d: Decision, closed: com.histmersion.domain.AcquireMatch.ClosedCount => Either[com.histmersion.domain.AcquireMatch.Problem, Unit] = _ => Right(())): com.histmersion.domain.AcquireMatch.Description = d match
+  def describe(d: Decision, closed: Queue.QueueItem.Id => Either[com.histmersion.domain.AcquireMatch.Problem, Unit] = _ => Right(())): com.histmersion.domain.AcquireMatch.Description = d match
     case Decision.Close(i) =>
       closed(i.id).fold(
-        e => s"acquisition item #${i.id} matches by DOI but was NOT ticked off: $e",
-        _ => s"ticked off acquisition item #${i.id} (same DOI)"
+        e => Description(s"acquisition item #${i.id} matches by DOI but was NOT ticked off: $e"),
+        _ => Description(s"ticked off acquisition item #${i.id} (same DOI)")
       )
     case Decision.Propose(i, s, other) =>
-      val whole = i.text.linesIterator.mkString(" ")
+      val whole = i.text.value.linesIterator.mkString(" ")
       val text = if whole.length > 100 then whole.take(99) + "…" else whole
       val doiNote = other.fold("")(d => s"; it names another DOI, $d")
-      s"possible acquisition item #${i.id} (similarity ${decimal(s)}$doiNote): $text — tick it off with " +
-        s"`histmersion queue done ${i.id}` if it is this work"
+      Description(
+        s"possible acquisition item #${i.id} (similarity ${decimal(s)}$doiNote): $text — tick it off with " +
+          s"`histmersion queue done ${i.id}` if it is this work"
+      )
 
   /** `0.83`, with a dot whatever the default locale (`f"%.2f"` writes `0,83` under en_PL). */
   def decimal(x: com.histmersion.domain.AcquireMatch.Decision.Propose.Score): com.histmersion.domain.AcquireMatch.DecimalText =
-    val cents = math.round(x * 100)
-    f"${cents / 100}.${cents % 100}%02d"
+    val cents = math.round(x.value * 100)
+    DecimalText(f"${cents / 100}.${cents % 100}%02d")
 end AcquireMatch

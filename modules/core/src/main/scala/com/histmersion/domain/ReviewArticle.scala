@@ -91,8 +91,6 @@ object ReviewArticle:
   val CheckColdReaderLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
   type CheckSkepticLast = _root_.com.histmersion.domain.ReviewArticle.LastRound
   val CheckSkepticLast: _root_.com.histmersion.domain.ReviewArticle.LastRound.type = _root_.com.histmersion.domain.ReviewArticle.LastRound
-  type CheckSkepticMinRatio = _root_.com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio
-  val CheckSkepticMinRatio: _root_.com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio.type = _root_.com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio
   type LabelledSentence = _root_.com.histmersion.domain.ReviewArticle.Sentence
   val LabelledSentence: _root_.com.histmersion.domain.ReviewArticle.Sentence.type = _root_.com.histmersion.domain.ReviewArticle.Sentence
   type QualifiedClaimSentence = _root_.com.histmersion.domain.ReviewArticle.Sentence
@@ -1421,7 +1419,7 @@ object ReviewArticle:
       last: com.histmersion.domain.ReviewArticle.CheckSkepticLast,
       isCitekey: com.histmersion.domain.library.Citekey => Boolean,
       text: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.AgentVerify.SourceBody],
-      minRatio: com.histmersion.domain.ReviewArticle.CheckSkepticMinRatio,
+      minRatio: CritiqueRule.MinRatio,
       prior: Option[Prior] = None,
       critique: Option[CritiqueRule] = None
   ): Either[List[String], (Report, List[String])] =

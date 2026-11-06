@@ -7,7 +7,7 @@ package com.histmersion.domain.catalogue.maptiles
 final case class UndatedBuild(version: UndatedBuild.Version, perSide: UndatedBuild.PerSide, maxZoom: UndatedBuild.MaxZoom):
   /** Do they answer for the writes up to `current`, on a grid of `wantedPerSide` squares to `wantedMaxZoom`? */
   def answers(current: com.histmersion.domain.catalogue.maptiles.UndatedBuild.Version, wantedPerSide: com.histmersion.domain.catalogue.maptiles.UndatedBuild.PerSide, wantedMaxZoom: com.histmersion.domain.catalogue.maptiles.UndatedBuild.MaxZoom): Boolean =
-    version == current && perSide == wantedPerSide && maxZoom >= wantedMaxZoom
+    version == current && perSide == wantedPerSide && maxZoom.value >= wantedMaxZoom.value
 
 object UndatedBuild:
 

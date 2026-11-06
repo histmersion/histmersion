@@ -5,6 +5,7 @@ import com.histmersion.api.exchange.MergeDecision
 import com.histmersion.api.exchange.{IssueDetail, IssueField, IssuePlace, IssueSide, MergeIssue}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
+import com.histmersion.util.data.exchange.BundlePlan
 import com.histmersion.util.data.exchange.PlanFolds
 import com.histmersion.util.data.exchange.PlanMerge
 import com.histmersion.util.data.exchange.PlanQuestions
@@ -34,18 +35,26 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit =
       folds.fold(f, o, Bundle.Kind.Period)
       periodLine(o) = _ => localPeriod(o)
-      folds.count(_.modify(_.periodsMerged).using(_ + 1))
-    def info(label: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.periods.PeriodPlan.InfoBundleLabel): com.histmersion.domain.catalogue.periods.PeriodPlan.InfoResult =
-      s"named period $label: the bundle's $bundleLabel is the same period — this collection's kept"
+      folds.count(_.modify(_.periodsMerged).using(n => com.histmersion.api.exchange.MergeTally.PeriodsMerged(n.value + 1)))
+    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
+      PlanMerge.InfoResult(s"named period $label: the bundle's $bundleLabel is the same period — this collection's kept")
 
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
-    val periodIdMap: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdMapPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.LocalizedPeriodIdMapPart2] =
-      in.foreign.periods.flatMap(p => in.periodMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap
+    val periodIdMap: Map[Bundle.Period.ParentId, Bundle.Period.ParentId] =
+      in.foreign.periods
+        .flatMap(p =>
+          in.periodMatches
+            .get(p.uid)
+            .map(m => Bundle.Period.Id(m.value))
+            .filter(_ != p.id)
+            .map(m => Bundle.Period.ParentId(p.id.value) -> Bundle.Period.ParentId(m.value))
+        )
+        .toMap
     repoint(es, periodIdMap)
 
   override def addedOnBoth(q: PlanQuestions): Unit =
     val localPeriodById = in.local.periods.map(p => p.id -> p).toMap
-    q.localized.periods.filter(p => q.writesInitially(p.uid)).sortBy(_.id).foreach { p =>
+    q.localized.periods.filter(p => q.writesInitially(p.uid)).sortBy(_.id.value).foreach { p =>
       val f = q.bundleUidOf(p.uid)
       localPeriodById.get(p.id).filter(_.uid != p.uid) match
         case Some(o) if samePeriod(o, p) => q.merge(f, o.uid, SamePeriod)
@@ -55,8 +64,8 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
             Bundle.Kind.Period,
             List(f),
             List(o.uid),
-            q.rightRev(f),
-            q.localRev(o.uid)
+            BundlePlan.Ledger.ForeignRev(q.rightRev(f).value),
+            BundlePlan.Local.Rev(q.localRev(o.uid).value)
           )
           q.ask(
             MergeIssue(
@@ -64,23 +73,25 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
               MergeIssue.Kind.NamedPeriodDiffers,
               MergeIssue.Severity.Blocking,
               Bundle.Kind.Period,
-              s"named period ${p.id} was added on both sides and says something else: " +
-                s"${o.label} ${MergeIssue.Detail.rangeText(o.period)} here, ${p.label} ${MergeIssue.Detail.rangeText(p.period)} in the bundle",
-              Some(IssueSide(o.id, o.uid, List(o.label))),
-              Some(IssueSide(p.id, f, List(p.label))),
-              List("keep-left keeps this collection's period; keep-right takes the bundle's label and span"),
+              MergeIssue.Title(
+                s"named period ${p.id} was added on both sides and says something else: " +
+                  s"${o.label} ${MergeIssue.Detail.rangeText(o.period)} here, ${p.label} ${MergeIssue.Detail.rangeText(p.period)} in the bundle"
+              ),
+              Some(IssueSide(IssueSide.Label(o.id.value), o.uid, List(IssueSide.Lines(o.label.value)))),
+              Some(IssueSide(IssueSide.Label(p.id.value), f, List(IssueSide.Lines(p.label.value)))),
+              List(MergeIssue.Why("keep-left keeps this collection's period; keep-right takes the bundle's label and span")),
               lr,
               detail = Some(
                 IssueDetail(
                   fields = List(
-                    IssueField("label", Some(o.label), Some(p.label)),
+                    IssueField(IssueField.Field("label"), Some(IssueField.Left(o.label.value)), Some(IssueField.Right(p.label.value))),
                     IssueField(
-                      "span",
-                      Some(MergeIssue.Detail.rangeText(o.period)),
-                      Some(MergeIssue.Detail.rangeText(p.period))
+                      IssueField.Field("span"),
+                      Some(IssueField.Left(MergeIssue.Detail.rangeText(o.period))),
+                      Some(IssueField.Right(MergeIssue.Detail.rangeText(p.period)))
                     ),
-                    IssueField("authority", o.authority, p.authority),
-                    IssueField("region", o.region, p.region)
+                    IssueField(IssueField.Field("authority"), o.authority.map(a => IssueField.Left(a.value)), p.authority.map(a => IssueField.Right(a.value))),
+                    IssueField(IssueField.Field("region"), o.region.map(a => IssueField.Left(a.value)), p.region.map(a => IssueField.Right(a.value)))
                   ),
                   place = Some(
                     IssuePlace(
@@ -95,7 +106,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
           )
         case None =>
           localPeriodById.values
-            .find(x => in.periodMatches.get(f).contains(x.id))
+            .find(x => in.periodMatches.get(f).exists(m => m.value == x.id.value))
             .foreach(o => q.merge(f, o.uid, SamePeriod))
     }
 
@@ -104,7 +115,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
       case (MergeIssue.Kind.NamedPeriodDiffers, Bundle.Kind.Period, Some(d), Some(f), Some(o)) =>
         folds.fold(f, o, Bundle.Kind.Period)
-        folds.count(_.modify(_.periodsMerged).using(_ + 1))
+        folds.count(_.modify(_.periodsMerged).using(n => com.histmersion.api.exchange.MergeTally.PeriodsMerged(n.value + 1)))
         if d.kind == km.KeepRight then
           periodLine(o) = es => periodIn(es, o).modify(_.origin).setTo(localPeriod(o).origin).modify(_.rev).setTo("")
         else folds.keepLocal(f)
@@ -114,7 +125,7 @@ final class PeriodPlan(in: MergePlanner.Input) extends PlanRun:
     es.modify(_.periods)
       .setTo(
         MergePlanner
-          .replaced(es0.periods, _.uid, periodLine, es0, (_: com.histmersion.api.exchange.Bundle.Period) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
+          .replaced(es0.periods, _.uid, periodLine, es0, (_: com.histmersion.api.exchange.Bundle.Period) => true)
       )
 
 object PeriodPlan:
@@ -122,23 +133,7 @@ object PeriodPlan:
   /** Periods point at their parents by id: a bundle period matched to one here under another id is pointed at under
     * that id. Pure.
     */
-  type LocalizedPeriodIdMapPart1 = LocalizedPeriodIdMapPart1.T
-  object LocalizedPeriodIdMapPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LocalizedPeriodIdMapPart2 = LocalizedPeriodIdMapPart2.T
-  object LocalizedPeriodIdMapPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type InfoResult = InfoResult.T
-  object InfoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoLabel = InfoLabel.T
-  object InfoLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoBundleLabel = InfoBundleLabel.T
-  object InfoBundleLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepointPeriodsPart1 = RepointPeriodsPart1.T
-  object RepointPeriodsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepointPeriodsPart2 = RepointPeriodsPart2.T
-  object RepointPeriodsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def repoint(es: BundleEntities, periods: Map[com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart1, com.histmersion.domain.catalogue.periods.PeriodPlan.RepointPeriodsPart2]): BundleEntities =
+  def repoint(es: BundleEntities, periods: Map[Bundle.Period.ParentId, Bundle.Period.ParentId]): BundleEntities =
     if periods.isEmpty then es
     else
       es.modify(_.periods)
@@ -149,4 +144,4 @@ object PeriodPlan:
       l: com.histmersion.api.exchange.Bundle.Period,
       r: com.histmersion.api.exchange.Bundle.Period
   ): Boolean =
-    l.period == r.period && Fingerprint.of(l.label) == Fingerprint.of(r.label)
+    l.period == r.period && Fingerprint.of(Fingerprint.OfS(l.label.value)) == Fingerprint.of(Fingerprint.OfS(r.label.value))

@@ -22,8 +22,8 @@ object Attribution:
   type Credit = Credit.T
   object Credit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Cc0Url = "https://creativecommons.org/publicdomain/zero/1.0/"
-  val PdmUrl = "https://creativecommons.org/publicdomain/mark/1.0/"
+  val Cc0Url: Licence.Url = Licence.Url("https://creativecommons.org/publicdomain/zero/1.0/")
+  val PdmUrl: Licence.Url = Licence.Url("https://creativecommons.org/publicdomain/mark/1.0/")
 
   def cc0(author: Option[com.histmersion.domain.Attribution.Cc0Author], credit: com.histmersion.domain.Attribution.Cc0Credit): Attribution =
     Attribution(Licence(Licence.Id("CC0-1.0"), Licence.Family.Cc0), Some(Cc0Url), author, credit)
@@ -36,8 +36,8 @@ object Attribution:
     * What the credits show (`DataCredit`) stays as stated.
     */
   def ofDataset(credit: com.histmersion.api.media.DataCredit): Attribution =
-    val stated = Licence.ofStatement(credit.licence)
+    val stated = Licence.ofStatement(Licence.Statement(credit.licence.value))
     val licence =
       if stated.family != Licence.Family.Unknown then stated
-      else credit.licenceUrl.map(Licence.ofUrl).filter(_.family != Licence.Family.Unknown).getOrElse(stated)
-    Attribution(licence, credit.licenceUrl, None, credit.credit)
+      else credit.licenceUrl.map(u => Licence.ofUrl(Licence.Url(u.value))).filter(_.family != Licence.Family.Unknown).getOrElse(stated)
+    Attribution(licence, credit.licenceUrl.map(u => LicenceUrl(u.value)), None, Credit(credit.credit.value))

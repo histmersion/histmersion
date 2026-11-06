@@ -30,7 +30,7 @@ object ComparedText:
     * emphasis/heading marks dropped, whitespace collapsed.
     */
   def normalise(s: com.histmersion.util.text.ComparedText.NormaliseS): com.histmersion.util.text.ComparedText.NormaliseResult =
-    var t = Normalizer.normalize(s, Normalizer.Form.NFKC).toLowerCase(java.util.Locale.ROOT) // local accumulator
+    var t = Normalizer.normalize(s.value, Normalizer.Form.NFKC).toLowerCase(java.util.Locale.ROOT) // local accumulator
     ligatures.foreach((a, b) => t = t.replace(a, b))
     t = t
       .replace("­", "")
@@ -41,4 +41,4 @@ object ComparedText:
       .replaceAll("[*_#>|]", " ")
       .replaceAll("\\s+", " ")
       .trim
-    t
+    NormaliseResult(t)

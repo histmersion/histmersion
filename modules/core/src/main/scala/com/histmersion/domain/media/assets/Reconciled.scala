@@ -7,40 +7,13 @@ import scala.annotation.tailrec
   * takes over an existing row with the same sha256 that no name claimed (`renames`, existing → incoming); every
   * existing row left over is `deletes`.
   */
-final case class Reconciled(renames: List[(Reconciled.RenamesPart1, Reconciled.RenamesPart2)], deletes: List[Reconciled.Deletes])
+final case class Reconciled(renames: List[(NewFigure.Name, NewFigure.Name)], deletes: List[NewFigure.Name])
 
 object Reconciled:
-  type OfRenameRestPart1 = OfRenameRestPart1.T
-  object OfRenameRestPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfRenameRestPart2 = OfRenameRestPart2.T
-  object OfRenameRestPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfRenameAccPart1 = OfRenameAccPart1.T
-  object OfRenameAccPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfRenameAccPart2 = OfRenameAccPart2.T
-  object OfRenameAccPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfRenameUsed = OfRenameUsed.T
-  object OfRenameUsed extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type OfExistingPart1 = OfExistingPart1.T
-  object OfExistingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfExistingPart2 = OfExistingPart2.T
-  object OfExistingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfIncomingPart1 = OfIncomingPart1.T
-  object OfIncomingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfIncomingPart2 = OfIncomingPart2.T
-  object OfIncomingPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type RenamesPart1 = RenamesPart1.T
-  object RenamesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamesPart2 = RenamesPart2.T
-  object RenamesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Deletes = Deletes.T
-  object Deletes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def of(existing: List[(com.histmersion.domain.media.assets.Reconciled.OfExistingPart1, com.histmersion.domain.media.assets.Reconciled.OfExistingPart2)], incoming: List[(com.histmersion.domain.media.assets.Reconciled.OfIncomingPart1, com.histmersion.domain.media.assets.Reconciled.OfIncomingPart2)]): Reconciled =
+  def of(existing: List[(NewFigure.Name, com.histmersion.Sha256)], incoming: List[(NewFigure.Name, com.histmersion.Sha256)]): Reconciled =
     val incomingNames = incoming.map(_._1).toSet
     val byName = existing.filter((n, _) => incomingNames(n)).map(_._1).toSet
-    @tailrec def rename(rest: List[(com.histmersion.domain.media.assets.Reconciled.OfRenameRestPart1, com.histmersion.domain.media.assets.Reconciled.OfRenameRestPart2)], acc: List[(com.histmersion.domain.media.assets.Reconciled.OfRenameAccPart1, com.histmersion.domain.media.assets.Reconciled.OfRenameAccPart2)], used: Set[com.histmersion.domain.media.assets.Reconciled.OfRenameUsed]): Reconciled =
+    @tailrec def rename(rest: List[(NewFigure.Name, com.histmersion.Sha256)], acc: List[(NewFigure.Name, NewFigure.Name)], used: Set[NewFigure.Name]): Reconciled =
       rest match
         case Nil                 => Reconciled(acc.reverse, existing.map(_._1).filterNot(used))
         case (name, sha) :: tail =>

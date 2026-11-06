@@ -6,7 +6,7 @@ import java.time.Instant
   * by time, then key, both descending). On the wire: `<ISO instant>~<key>`.
   */
 final case class ActivityCursor(at: Instant, key: ActivityCursor.Key):
-  def wire: com.histmersion.domain.activity.ActivityCursor.Wire = s"$at~$key"
+  def wire: com.histmersion.domain.activity.ActivityCursor.Wire = ActivityCursor.Wire(s"$at~$key")
 
 object ActivityCursor:
   type Problem = Problem.T
@@ -18,11 +18,11 @@ object ActivityCursor:
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(s: com.histmersion.domain.activity.ActivityCursor.Wire): Either[com.histmersion.domain.activity.ActivityCursor.Problem, ActivityCursor] =
-    s.trim.split("~", 2) match
+    s.value.trim.split("~", 2) match
       case Array(at, key) if key.nonEmpty =>
         scala.util
           .Try(Instant.parse(at))
           .toOption
-          .map(ActivityCursor(_, key))
-          .toRight(s"'$s' is not a page of the activity list (its time is not an instant)")
-      case _ => Left(s"'$s' is not a page of the activity list")
+          .map(ActivityCursor(_, Key(key)))
+          .toRight(Problem(s"'$s' is not a page of the activity list (its time is not an instant)"))
+      case _ => Left(Problem(s"'$s' is not a page of the activity list"))

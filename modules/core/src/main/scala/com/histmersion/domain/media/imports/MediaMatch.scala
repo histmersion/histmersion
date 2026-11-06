@@ -129,7 +129,7 @@ object MediaMatch:
   /** What a gazetteer id names on the map: the ids of the map places carrying it, equivalents of one site counted once
     * — the caller's lookup.
     */
-  type ResolveId = ((MediaRecord.IdsPart1, MediaRecord.IdsPart2)) => Set[PlaceInfo.Id]
+  type ResolveId = ((ExternalIds.Scheme, ExternalIds.ExternalId)) => Set[PlaceInfo.Id]
 
   /** Pure: the rule for a record that may carry gazetteer ids (Open Context). The FINEST evidence decides (#2571): its
     * fields in `deeper` (Open Context's context path below its country — the site, then the parts of it; excavation

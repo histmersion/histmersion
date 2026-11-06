@@ -30,12 +30,12 @@ object Fingerprint extends RefinedType[String, Pure]:
     * first (it also maps the letters NFD does not decompose — `ß`, `ł`, `ø`, `þ`), then NFD for every other script.
     */
   def fold(s: com.histmersion.util.text.Fingerprint.FoldS): com.histmersion.util.text.Fingerprint.FoldResult =
-    val pre = LatinFold.fold(s).flatMap(c => quotes.getOrElse(c, c.toString))
-    Normalizer.normalize(pre, Normalizer.Form.NFD).replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT)
+    val pre = LatinFold.fold(s.value).flatMap(c => quotes.getOrElse(c, c.toString))
+    FoldResult(Normalizer.normalize(pre, Normalizer.Form.NFD).replaceAll("\\p{M}+", "").toLowerCase(java.util.Locale.ROOT))
 
   /** Folded alphanumeric tokens, in order. */
   def tokens(s: com.histmersion.util.text.Fingerprint.TokensS): List[com.histmersion.util.text.Fingerprint.TokensResult] =
-    fold(s).split("[^\\p{L}\\p{N}]+").toList.filter(_.nonEmpty)
+    fold(s).value.split("[^\\p{L}\\p{N}]+").toList.filter(_.nonEmpty).map(TokensResult(_))
 
   /** The fingerprint of `s`. */
-  def of(s: com.histmersion.util.text.Fingerprint.OfS): Fingerprint = Fingerprint(tokens(s).distinct.sorted.mkString(" "))
+  def of(s: com.histmersion.util.text.Fingerprint.OfS): Fingerprint = Fingerprint(tokens(s).map(_.value).distinct.sorted.mkString(" "))

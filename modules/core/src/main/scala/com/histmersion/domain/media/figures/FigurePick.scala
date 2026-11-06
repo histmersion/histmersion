@@ -13,43 +13,20 @@ package com.histmersion.domain.media.figures
   */
 object FigurePick:
 
+  type Page = Page.T
+  object Page extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Order = Order.T
+  object Order extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Rejection = Rejection.T
+  object Rejection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Score = Score.T
+  object Score extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConvertedText = ConvertedText.T
+  object ConvertedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   /** One stored figure of a source. `refs`: how many times the text links it; `firstAt`: where the first link sits, as
     * a share of the text (0 = its start); both `None`/0 when the text has none.
     */
-  type PageScanSizesNearAPart1 = PageScanSizesNearAPart1.T
-  object PageScanSizesNearAPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageScanSizesNearAPart2 = PageScanSizesNearAPart2.T
-  object PageScanSizesNearAPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageScanSizesNearBPart1 = PageScanSizesNearBPart1.T
-  object PageScanSizesNearBPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageScanSizesNearBPart2 = PageScanSizesNearBPart2.T
-  object PageScanSizesNearBPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type PageResult = PageResult.T
-  object PageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageName = PageName.T
-  object PageName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderResult = OrderResult.T
-  object OrderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderName = OrderName.T
-  object OrderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageScanSizesResultPart1 = PageScanSizesResultPart1.T
-  object PageScanSizesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PageScanSizesResultPart2 = PageScanSizesResultPart2.T
-  object PageScanSizesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RejectResult = RejectResult.T
-  object RejectResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RejectScansPart1 = RejectScansPart1.T
-  object RejectScansPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RejectScansPart2 = RejectScansPart2.T
-  object RejectScansPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScoreResult = ScoreResult.T
-  object ScoreResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefsBody = RefsBody.T
-  object RefsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithRefsBody = _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody
-  val WithRefsBody: _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody.type = _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody
-
   final case class Figure(
       name: Figure.Name,
       width: Option[Figure.Width],
@@ -74,7 +51,7 @@ object FigurePick:
   final case class Rules(
       minSide: Rules.MinSide = com.histmersion.domain.media.figures.FigurePick.Rules.MinSide(160),
       minArea: Rules.MinArea = com.histmersion.domain.media.figures.FigurePick.Rules.MinArea(40000),
-      maxAspect: Rules.MaxAspect = 4.0,
+      maxAspect: Rules.MaxAspect = com.histmersion.domain.media.figures.FigurePick.Rules.MaxAspect(4.0),
       maxRefs: Rules.MaxRefs = com.histmersion.domain.media.figures.FigurePick.Rules.MaxRefs(2),
       earlyPages: Rules.EarlyPages = com.histmersion.domain.media.figures.FigurePick.Rules.EarlyPages(6),
       pageScanMin: Rules.PageScanMin = com.histmersion.domain.media.figures.FigurePick.Rules.PageScanMin(5)
@@ -100,57 +77,57 @@ object FigurePick:
   /** Pure: the page a figure's name says it is on (pymupdf4llm's `fig-<page>-<n>`, pages counted from 1 as the
     * converter writes them), `None` for any other name.
     */
-  def page(name: com.histmersion.domain.media.figures.FigurePick.PageName): Option[com.histmersion.domain.media.figures.FigurePick.PageResult] = name match
-    case PageName(p) => p.toIntOption
+  def page(name: Figure.Name): Option[Page] = name.value match
+    case PageName(p) => p.toIntOption.map(Page(_))
     case _           => None
 
   /** Pure: a figure's order in its document by its name alone — the page for `fig-…`, the sequence number for docling's
     * `image_…`.
     */
-  def order(name: com.histmersion.domain.media.figures.FigurePick.OrderName): Option[com.histmersion.domain.media.figures.FigurePick.OrderResult] = page(name).orElse(name match
-    case SeqName(n) => n.toIntOption
+  def order(name: Figure.Name): Option[Order] = page(name).map(p => Order(p.value)).orElse(name.value match
+    case SeqName(n) => n.toIntOption.map(Order(_))
     case _          => None)
 
   /** Pure: the sizes that are page scans — `pageScanMin` or more portrait figures (height/width between 1.2 and 1.6)
     * whose sides agree within 2 %.
     */
-  def pageScanSizes(figs: List[Figure], rules: Rules): Set[(com.histmersion.domain.media.figures.FigurePick.PageScanSizesResultPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesResultPart2)] =
+  def pageScanSizes(figs: List[Figure], rules: Rules): Set[(Figure.Width, Figure.Height)] =
     val portrait = figs.flatMap(f =>
-      for w <- f.width; h <- f.height if w > 0 && h.toDouble / w >= 1.2 && h.toDouble / w <= 1.6 yield (w, h)
+      for w <- f.width; h <- f.height if w.value > 0 && h.value.toDouble / w.value >= 1.2 && h.value.toDouble / w.value <= 1.6 yield (w, h)
     )
-    def near(a: (com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearAPart2), b: (com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearBPart1, com.histmersion.domain.media.figures.FigurePick.PageScanSizesNearBPart2)) =
-      math.abs(a._1 - b._1) <= a._1 * 0.02 && math.abs(a._2 - b._2) <= a._2 * 0.02
-    portrait.distinct.filter(s => portrait.count(near(s, _)) >= rules.pageScanMin.max(2)).toSet
+    def near(a: (Figure.Width, Figure.Height), b: (Figure.Width, Figure.Height)) =
+      math.abs(a._1.value - b._1.value) <= a._1.value * 0.02 && math.abs(a._2.value - b._2.value) <= a._2.value * 0.02
+    portrait.distinct.filter(s => portrait.count(near(s, _)) >= rules.pageScanMin.value.max(2)).toSet
 
   /** Pure: why a figure cannot illustrate its source, or `None` when it can. */
-  def reject(f: Figure, rules: Rules, scans: Set[(com.histmersion.domain.media.figures.FigurePick.RejectScansPart1, com.histmersion.domain.media.figures.FigurePick.RejectScansPart2)] = Set.empty): Option[com.histmersion.domain.media.figures.FigurePick.RejectResult] =
+  def reject(f: Figure, rules: Rules, scans: Set[(Figure.Width, Figure.Height)] = Set.empty): Option[Rejection] =
     (f.width, f.height) match
-      case (Some(w), Some(h)) if w > 0 && h > 0 =>
-        val aspect = math.max(w, h).toDouble / math.min(w, h)
-        if aspect > rules.maxAspect then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("a strip"))
-        else if math.min(w, h) < rules.minSide then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("too small"))
-        else if w.toLong * h < rules.minArea then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("too small"))
-        else if f.refs > rules.maxRefs then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("repeated in the text"))
-        else if scans.contains((w, h)) then Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("a page scan"))
+      case (Some(w), Some(h)) if w.value > 0 && h.value > 0 =>
+        val aspect = math.max(w.value, h.value).toDouble / math.min(w.value, h.value)
+        if aspect > rules.maxAspect.value then Some(Rejection("a strip"))
+        else if math.min(w.value, h.value) < rules.minSide.value then Some(Rejection("too small"))
+        else if w.value.toLong * h.value < rules.minArea.value then Some(Rejection("too small"))
+        else if f.refs.value > rules.maxRefs.value then Some(Rejection("repeated in the text"))
+        else if scans.contains((w, h)) then Some(Rejection("a page scan"))
         else None
-      case _ => Some(com.histmersion.domain.media.figures.FigurePick.RejectResult("no size"))
+      case _ => Some(Rejection("no size"))
 
   /** Pure: the figure's weight — its area, halved past the early pages (or, without a page in its name, past the first
     * third of the text).
     */
-  def score(f: Figure, rules: Rules): com.histmersion.domain.media.figures.FigurePick.ScoreResult =
-    val area = f.width.getOrElse(0).toDouble * f.height.getOrElse(0)
+  def score(f: Figure, rules: Rules): Score =
+    val area = f.width.fold(0)(_.value).toDouble * f.height.fold(0)(_.value)
     val early = page(f.name) match
-      case Some(p) => p <= rules.earlyPages
-      case None    => f.firstAt.forall(_ <= 1.0 / 3)
-    if early then area else area / 2
+      case Some(p) => p.value <= rules.earlyPages.value
+      case None    => f.firstAt.forall(_.value <= 1.0 / 3)
+    Score(if early then area else area / 2)
 
   /** Pure: the illustration — the best-scoring acceptable figure; ties go to the earlier one. */
   def choose(figs: List[Figure], rules: Rules): Option[Figure] =
     val scans = pageScanSizes(figs, rules)
     figs
       .filter(reject(_, rules, scans).isEmpty)
-      .sortBy(f => (-score(f, rules), order(f.name).getOrElse(Int.MaxValue), f.firstAt.getOrElse(1.0), f.name))
+      .sortBy(f => (-score(f, rules).value, order(f.name).fold(Int.MaxValue)(_.value), f.firstAt.fold(1.0)(_.value), f.name.value))
       .headOption
 
   private val AssetLink = """assets/([A-Za-z0-9._-]+)""".r
@@ -158,19 +135,19 @@ object FigurePick:
   /** Pure: every figure a converted text links (`assets/<name>`, the form the converter writes), with how many times
     * and where first (a share of the text) — one pass, whatever the number of figures.
     */
-  def refs(body: com.histmersion.domain.media.figures.FigurePick.RefsBody): Map[com.histmersion.domain.media.figures.FigurePick.Figure.Name, (com.histmersion.domain.media.figures.FigurePick.Figure.Refs, com.histmersion.domain.media.figures.FigurePick.Figure.FirstAt)] =
-    if body.isEmpty then Map.empty
+  def refs(body: ConvertedText): Map[Figure.Name, (Figure.Refs, Figure.FirstAt)] =
+    if body.value.isEmpty then Map.empty
     else
-      val len = body.length.toDouble
+      val len = body.value.length.toDouble
       AssetLink
-        .findAllMatchIn(body)
+        .findAllMatchIn(body.value)
         .toList
         .groupBy(_.group(1))
         .view
-        .mapValues(ms => (ms.size, ms.map(_.start).min / len))
+        .map((name, ms) => Figure.Name(name) -> (Figure.Refs(ms.size), Figure.FirstAt(ms.map(_.start).min / len)))
         .toMap
 
   /** Pure: the figures with their links counted in `body`. */
-  def withRefs(figs: List[Figure], body: com.histmersion.domain.media.figures.FigurePick.WithRefsBody): List[Figure] =
+  def withRefs(figs: List[Figure], body: ConvertedText): List[Figure] =
     val r = refs(body)
     figs.map(f => r.get(f.name).fold(f.copy(refs = com.histmersion.domain.media.figures.FigurePick.Figure.Refs(0), firstAt = None))((n, at) => f.copy(refs = n, firstAt = Some(at))))

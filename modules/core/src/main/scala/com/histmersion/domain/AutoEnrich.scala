@@ -17,8 +17,6 @@ import com.histmersion.domain.automation.Run
   *     nothing after it finished; a failed run does not count, so the next import tries again.
   */
 object AutoEnrich:
-  type Description = Description.T
-  object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FindingCount = FindingCount.T
   object FindingCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemId = ItemId.T
@@ -31,10 +29,6 @@ object AutoEnrich:
   object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Why no run is queued. `Off` is silent: nothing was asked for. */
-  type DecideFindings = _root_.com.histmersion.domain.AutoEnrich.FindingCount
-  val DecideFindings: _root_.com.histmersion.domain.AutoEnrich.FindingCount.type = _root_.com.histmersion.domain.AutoEnrich.FindingCount
-  type DecideNotes = _root_.com.histmersion.domain.AutoEnrich.Notes
-  val DecideNotes: _root_.com.histmersion.domain.AutoEnrich.Notes.type = _root_.com.histmersion.domain.AutoEnrich.Notes
 
   enum Skip:
     case Off
@@ -56,30 +50,33 @@ object AutoEnrich:
   def decide(
       agentsEnabled: Boolean,
       switchOn: Boolean,
-      findings: com.histmersion.domain.AutoEnrich.DecideFindings,
-      notes: Option[com.histmersion.domain.AutoEnrich.DecideNotes],
+      findings: FindingCount,
+      notes: Option[Notes],
       runs: List[PriorRun]
   ): Either[Skip, Unit] =
     if !agentsEnabled || !switchOn then Left(Skip.Off)
     else enrichedBy(findings, notes, runs).map(Skip.Enriched(_)).toLeft(())
 
   /** Why the source counts as already enriched, if it does. */
-  def enrichedBy(findings: com.histmersion.domain.AutoEnrich.FindingCount, notes: Option[com.histmersion.domain.AutoEnrich.Notes], runs: List[PriorRun]): Option[com.histmersion.domain.AutoEnrich.Description] =
+  def enrichedBy(findings: com.histmersion.domain.AutoEnrich.FindingCount, notes: Option[com.histmersion.domain.AutoEnrich.Notes], runs: List[PriorRun]): Option[Reason] =
     val live = runs.find(r => r.state != Run.State.Failed && r.state != Run.State.Cancelled)
-    if findings > 0 then Some(s"it already has ${Plural.count(findings, com.histmersion.api.Plural.CountSingular("finding"))}")
-    else if notes.exists(_.trim.nonEmpty) then Some(com.histmersion.domain.AutoEnrich.Description("it already has notes"))
-    else live.map(r => s"enrich-source run ${r.id} is ${r.state.wire}")
+    if findings.value > 0 then
+      Some(Reason(s"it already has ${Plural.count(Plural.CountN(findings.value.toLong), Plural.CountSingular("finding"))}"))
+    else if notes.exists(_.value.trim.nonEmpty) then Some(Reason("it already has notes"))
+    else live.map(r => Reason(s"enrich-source run ${r.id} is ${r.state.wire}"))
 
   /** The job's progress note for what happened. */
-  def queued(runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.AutoEnrich.Description = s"enrichment queued: run $runId"
-  def notQueued(why: com.histmersion.domain.AutoEnrich.Reason): com.histmersion.domain.AutoEnrich.Description = s"enrichment not queued: $why"
+  def queued(runId: com.histmersion.domain.automation.Run.Id): Note = Note(s"enrichment queued: run $runId")
+  def notQueued(why: Reason): Note = Note(s"enrichment not queued: $why")
 
   /** The note when the source went to the enrich manager (docs/research-process-managers.md, phase 2): its item, and —
     * unless the manager is active — that nothing runs until a person resumes it.
     */
-  def managed(item: com.histmersion.domain.AutoEnrich.ItemId, managerState: com.histmersion.domain.automation.Manager.State.Wire): com.histmersion.domain.AutoEnrich.Description =
-    s"enrichment queued: item #$item of the enrich manager" +
-      (if managerState == "active" then "" else s" ($managerState — resume it in the Managers window to start)")
+  def managed(item: com.histmersion.domain.AutoEnrich.ItemId, managerState: com.histmersion.domain.automation.Manager.State.Wire): Note =
+    Note(
+      s"enrichment queued: item #$item of the enrich manager" +
+        (if managerState.value == "active" then "" else s" ($managerState — resume it in the Managers window to start)")
+    )
 
   def note(skip: Skip): Option[com.histmersion.domain.AutoEnrich.Note] = skip match
     case Skip.Off           => None

@@ -27,8 +27,10 @@ object BundlePlan:
   object EntityOwnBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TombstoneOwnBundle = TombstoneOwnBundle.T
   object TombstoneOwnBundle extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LedgerAfterForeignRev = _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
-  val LedgerAfterForeignRev: _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev.type = _root_.com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev
+
+  /** The stamp of a row's content that the ledger and the local row are compared by. */
+  type Rev = Rev.T
+  object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Decision:
     case Insert, FastForward, Unchanged, KeepLocal, Conflict, SkipDeleted, Delete, RecordTombstone
@@ -61,17 +63,17 @@ object BundlePlan:
   final case class Ledger(foreignRev: Ledger.ForeignRev, localRevAfter: Option[Ledger.LocalRevAfter])
 
   object Ledger:
-    type ForeignRev = ForeignRev.T
-    object ForeignRev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LocalRevAfter = LocalRevAfter.T
-    object LocalRevAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ForeignRev = BundlePlan.Rev
+    val ForeignRev: BundlePlan.Rev.type = BundlePlan.Rev
+    type LocalRevAfter = BundlePlan.Rev
+    val LocalRevAfter: BundlePlan.Rev.type = BundlePlan.Rev
 
   /** A uid as this instance knows it: the live row's rev, whether it is tombstoned, the ledger. */
   final case class Local(rev: Option[Local.Rev], tombstoned: Local.Tombstoned, ledger: Option[Ledger])
 
   object Local:
-    type Rev = Rev.T
-    object Rev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Rev = BundlePlan.Rev
+    val Rev: BundlePlan.Rev.type = BundlePlan.Rev
     type Tombstoned = Tombstoned.T
     object Tombstoned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -87,22 +89,22 @@ object BundlePlan:
   def entity(foreignRev: com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev, localizedRev: com.histmersion.util.data.exchange.BundlePlan.Local.Rev, local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.EntityOwnBundle): Decision =
     local.rev match
       case Some(r) if r == localizedRev                                => Decision.Unchanged
-      case Some(_) if ownBundle                                        => Decision.KeepLocal
+      case Some(_) if ownBundle.value                                  => Decision.KeepLocal
       case Some(_) if local.ledger.exists(_.foreignRev == foreignRev)  => Decision.KeepLocal
       case Some(r) if local.ledger.exists(_.localRevAfter.contains(r)) => Decision.FastForward
       case Some(_)                                                     => Decision.Conflict
-      case None if local.tombstoned                                    => Decision.SkipDeleted
+      case None if local.tombstoned.value                              => Decision.SkipDeleted
       case None                                                        => Decision.Insert
 
   def tombstone(local: Local, ownBundle: com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle): Decision =
     local.rev match
-      case Some(_) if ownBundle => Decision.KeepLocal
+      case Some(_) if ownBundle.value => Decision.KeepLocal
       // the deletion was seen before and the row kept by decision (`keep-left`)
-      case Some(_) if local.ledger.exists(l => l.foreignRev == DeletedRev && l.localRevAfter.isEmpty) =>
+      case Some(_) if local.ledger.exists(l => l.foreignRev.value == DeletedRev && l.localRevAfter.isEmpty) =>
         Decision.KeepLocal
       case Some(r) if local.ledger.exists(_.localRevAfter.contains(r)) => Decision.Delete
       case Some(_)                                                     => Decision.Conflict
-      case None if local.tombstoned                                    => Decision.Unchanged
+      case None if local.tombstoned.value                              => Decision.Unchanged
       case None                                                        => Decision.RecordTombstone
 
   /** The per-kind tally of the report. A recorded tombstone of a row that never existed here changes nothing visible,
@@ -123,14 +125,14 @@ object BundlePlan:
       if !decisions.hasNext then
         com.histmersion.api.exchange.Bundle.KindCounts(
           kind,
-          inserted,
-          updated,
-          unchanged,
-          keptLocal,
-          conflicts,
-          deleted,
-          skippedDeleted,
-          held = held
+          Bundle.KindCounts.Inserted(inserted),
+          Bundle.KindCounts.Updated(updated),
+          Bundle.KindCounts.Unchanged(unchanged),
+          Bundle.KindCounts.KeptLocal(keptLocal),
+          Bundle.KindCounts.Conflicts(conflicts),
+          Bundle.KindCounts.Deleted(deleted),
+          Bundle.KindCounts.SkippedDeleted(skippedDeleted),
+          held = Bundle.KindCounts.Held(held)
         )
       else
         decisions.next() match
@@ -158,7 +160,7 @@ object BundlePlan:
     * so the old ancestor stays, and a later change over there is seen as the conflict it is; a conflict or a skip
     * leaves it as well. For a tombstone `foreignRev` is a fixed marker.
     */
-  def ledgerAfter(d: Decision, foreignRev: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterForeignRev, tombstone: com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned): Option[Ledger] =
+  def ledgerAfter(d: Decision, foreignRev: Ledger.ForeignRev, tombstone: com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned): Option[Ledger] =
     ledgerAfter(d, foreignRev, foreignRev, None, tombstone)
 
   /** As above with the line mapped onto this instance (`localizedRev`, see [[entity]]), and the local rev a `Kept` row
@@ -167,14 +169,14 @@ object BundlePlan:
     */
   def ledgerAfter(
       d: Decision,
-      foreignRev: com.histmersion.util.data.exchange.BundlePlan.LedgerAfterForeignRev,
+      foreignRev: Ledger.ForeignRev,
       localizedRev: com.histmersion.util.data.exchange.BundlePlan.Ledger.LocalRevAfter,
       localRev: Option[com.histmersion.util.data.exchange.BundlePlan.Ledger.LocalRevAfter],
       tombstone: com.histmersion.util.data.exchange.BundlePlan.Local.Tombstoned
   ): Option[Ledger] =
     d match
       case Decision.Conflict | Decision.SkipDeleted | Decision.KeepLocal | Decision.Skip | Decision.Held => None
-      case _ if tombstone                                              => Some(Ledger(foreignRev, None))
+      case _ if tombstone.value                                        => Some(Ledger(foreignRev, None))
       case Decision.Kept                                               => Some(Ledger(foreignRev, localRev))
       case Decision.Insert | Decision.FastForward | Decision.Unchanged => Some(Ledger(foreignRev, Some(localizedRev)))
       case Decision.Delete | Decision.RecordTombstone                  => Some(Ledger(foreignRev, None))

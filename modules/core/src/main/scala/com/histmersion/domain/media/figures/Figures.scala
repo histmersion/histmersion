@@ -13,35 +13,37 @@ import com.histmersion.domain.media.assets.NewFigure
   */
 object Figures:
 
-  type MdPathOfResult = MdPathOfResult.T
-  object MdPathOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MdPathOfNoteText = MdPathOfNoteText.T
-  object MdPathOfNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfFilesPart1 = OfFilesPart1.T
-  object OfFilesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfFilesPart2 = OfFilesPart2.T
-  object OfFilesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfMaxBytes = OfMaxBytes.T
-  object OfMaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NoteText = NoteText.T
+  object NoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MdPath = MdPath.T
+  object MdPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileName = FileName.T
+  object FileName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private val MdPath = """(?m)^md_path:\s*"?([^"\n\r]+)"?\s*$""".r
+  private val MdPathLine = """(?m)^md_path:\s*"?([^"\n\r]+)"?\s*$""".r
 
   /** The `md_path:` value of a note's frontmatter, if it has one. */
-  def mdPathOf(noteText: com.histmersion.domain.media.figures.Figures.MdPathOfNoteText): Option[com.histmersion.domain.media.figures.Figures.MdPathOfResult] =
-    MdPath.findFirstMatchIn(noteText.take(8192)).map(_.group(1).trim).filter(_.nonEmpty)
+  def mdPathOf(noteText: NoteText): Option[MdPath] =
+    MdPathLine.findFirstMatchIn(noteText.value.take(8192)).map(_.group(1).trim).filter(_.nonEmpty).map(MdPath(_))
 
   /** The images among a figures folder's files (by name, in name order), each at most `maxBytes`, with the size read
     * off its header.
     */
-  def of(files: List[(com.histmersion.domain.media.figures.Figures.OfFilesPart1, com.histmersion.domain.media.figures.Figures.OfFilesPart2)], maxBytes: com.histmersion.domain.media.figures.Figures.OfMaxBytes): List[NewFigure] =
-    files.sortBy(_._1).flatMap { (file, b) =>
-      val name = AssetLinks.safeName(file)
-      val mime = AssetLinks.mimeOf(name)
+  def of(files: List[(FileName, NewFigure.Bytes)], maxBytes: com.histmersion.ByteCount): List[NewFigure] =
+    files.sortBy(_._1.value).flatMap { (file, b) =>
+      val name = AssetLinks.safeName(file.value)
+      val mime = AssetLinks.mimeOf(com.histmersion.api.exchange.Bundle.Asset.Extension(name.value))
       Option
-        .when(mime.startsWith("image/") && b.nonEmpty && b.length <= maxBytes)(b)
+        .when(mime.value.startsWith("image/") && b.value.nonEmpty && b.value.length <= maxBytes.value)(b)
         .map { b =>
           // measured from the header: the converter reports sizes, a file on disk cannot
-          val size = ImageSize.of(b)
-          NewFigure(name, mime, b, size.map(_._1), size.map(_._2))
+          val size = ImageSize.of(ImageSize.Bytes(b.value))
+          NewFigure(
+            NewFigure.Name(name.value),
+            NewFigure.Mime(mime.value),
+            b,
+            size.map(s => NewFigure.Width(s._1.value)),
+            size.map(s => NewFigure.Height(s._2.value))
+          )
         }
     }

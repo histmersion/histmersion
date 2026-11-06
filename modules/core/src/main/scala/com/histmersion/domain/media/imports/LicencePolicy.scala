@@ -15,7 +15,4 @@ final case class LicencePolicy(allowed: Set[Licence.Family]):
 object LicencePolicy:
 
   /** The policy a settings value names (`"cc0,public-domain,cc-by,cc-by-sa"`). */
-  type OfCsv = OfCsv.T
-  object OfCsv extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def of(csv: com.histmersion.domain.media.imports.LicencePolicy.OfCsv): LicencePolicy = LicencePolicy(Licence.allowList(csv))
+  def of(csv: com.histmersion.domain.Licence.AllowList): LicencePolicy = LicencePolicy(Licence.allowList(csv))

@@ -33,18 +33,14 @@ object CoreQuota:
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeaderName = HeaderName.T
   object HeaderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RetryAt = RetryAt.T
-  object RetryAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HeaderValue = HeaderValue.T
+  object HeaderValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Spent = Spent.T
   object Spent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusCode = StatusCode.T
   object StatusCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What a call to CORE is for: the share of the daily budget it spends. */
-
-  type ObserveHeadersPart2 = ObserveHeadersPart2.T
-  object ObserveHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   enum Purpose(val wire: Purpose.Wire, val label: Purpose.Label):
     /** The acquisition chain's `core` step: a work's download URLs by its DOI. */
     case Lookup extends Purpose(com.histmersion.domain.CoreQuota.Purpose.Wire("lookup"), com.histmersion.domain.CoreQuota.Purpose.Label("PDF lookups"))
@@ -69,8 +65,11 @@ object CoreQuota:
       maxWaitSeconds: Limits.MaxWaitSeconds
   ):
     def cost(p: Purpose): com.histmersion.domain.CoreQuota.Cost = p match
-      case Purpose.Lookup => lookupCost.max(0)
-      case Purpose.Search => searchCost.max(0)
+      case Purpose.Lookup => Cost(lookupCost.value.max(0))
+      case Purpose.Search => Cost(searchCost.value.max(0))
+
+    def dailyCap: com.histmersion.domain.CoreQuota.Cap = Cap(dailyTokens.value)
+    def searchCap: com.histmersion.domain.CoreQuota.Cap = Cap(searchDailyTokens.value)
 
   object Limits:
 
@@ -117,10 +116,10 @@ object CoreQuota:
       window: Option[Window],
       recent: Vector[Instant] = Vector.empty
   ):
-    def spent: com.histmersion.domain.CoreQuota.Spent = lookupTokens + searchTokens
+    def spent: com.histmersion.domain.CoreQuota.Spent = Spent(lookupTokens.value + searchTokens.value)
     def spentOn(p: Purpose): com.histmersion.domain.CoreQuota.Spent = p match
-      case Purpose.Lookup => lookupTokens
-      case Purpose.Search => searchTokens
+      case Purpose.Lookup => Spent(lookupTokens.value)
+      case Purpose.Search => Spent(searchTokens.value)
 
   object State:
 
@@ -138,13 +137,17 @@ object CoreQuota:
     case Paced(waitMs: Refusal.Paced.WaitMs)
 
     def describe: com.histmersion.domain.CoreQuota.Description = this match
-      case Blocked(until, why)       => s"CORE asked to wait until $until ($why)"
+      case Blocked(until, why)       => Description(s"CORE asked to wait until $until ($why)")
       case OverBudget(p, spent, cap) =>
-        s"CORE's daily budget for ${p.label} is spent ($spent of $cap tokens today, UTC; acquire.core." +
-          s"${if p == Purpose.Search then "search-daily-tokens" else "daily-tokens"})"
+        Description(
+          s"CORE's daily budget for ${p.label} is spent ($spent of $cap tokens today, UTC; acquire.core." +
+            s"${if p == Purpose.Search then "search-daily-tokens" else "daily-tokens"})"
+        )
       case Paced(waitMs) =>
-        s"CORE's next free slot is ${(waitMs + 999) / 1000} s away (acquire.core.per-minute), longer than " +
-          "acquire.core.max-wait-seconds"
+        Description(
+          s"CORE's next free slot is ${(waitMs.value + 999) / 1000} s away (acquire.core.per-minute), longer than " +
+            "acquire.core.max-wait-seconds"
+        )
 
   object Refusal:
     object Blocked:
@@ -188,26 +191,26 @@ object CoreQuota:
     s.block.filter(_.until.isAfter(now)) match
       case Some(b) => Left(Refusal.Blocked(b.until, b.why))
       case None    =>
-        if s.spent + cost > limits.dailyTokens then Left(Refusal.OverBudget(purpose, s.spent, limits.dailyTokens))
-        else if purpose == Purpose.Search && s.searchTokens + cost > limits.searchDailyTokens then
-          Left(Refusal.OverBudget(purpose, s.searchTokens, limits.searchDailyTokens))
+        if s.spent.value + cost.value > limits.dailyTokens.value then Left(Refusal.OverBudget(purpose, s.spent, limits.dailyCap))
+        else if purpose == Purpose.Search && s.searchTokens.value + cost.value > limits.searchDailyTokens.value then
+          Left(Refusal.OverBudget(purpose, s.spentOn(Purpose.Search), limits.searchCap))
         else
           // CORE's own reported window wins when it is smaller than ours (a new key may get less than its tier)
-          val perMinute = s.window.flatMap(_.limit).filter(_ > 0).fold(limits.perMinute)(_ min limits.perMinute).max(1)
+          val perMinute = s.window.flatMap(_.limit).map(l => (l.value: Int)).filter(_ > 0).fold(limits.perMinute.value: Int)(_ min limits.perMinute.value).max(1)
           val inWindow = s.recent.filter(t => t.toEpochMilli > now.toEpochMilli - Minute).sortBy(_.toEpochMilli)
           val slot =
             if inWindow.size < perMinute then now
             else Instant.ofEpochMilli((inWindow(inWindow.size - perMinute).toEpochMilli + Minute).max(now.toEpochMilli))
           val waitMs = slot.toEpochMilli - now.toEpochMilli
-          if waitMs > limits.maxWaitSeconds.toLong.max(0L) * 1000L then Left(Refusal.Paced(waitMs))
+          if waitMs > limits.maxWaitSeconds.value.toLong.max(0L) * 1000L then Left(Refusal.Paced(Grant.WaitMs(waitMs)))
           else
             val spent = purpose match
-              case Purpose.Lookup => s.modify(_.lookupTokens).using(_ + cost)
-              case Purpose.Search => s.modify(_.searchTokens).using(_ + cost)
+              case Purpose.Lookup => s.modify(_.lookupTokens).using(t => State.LookupTokens(t.value + cost.value))
+              case Purpose.Search => s.modify(_.searchTokens).using(t => State.SearchTokens(t.value + cost.value))
             Right(
               Grant(
                 spent.modify(_.block).setTo(None).modify(_.recent).setTo((inWindow :+ slot).sortBy(_.toEpochMilli).takeRight(perMinute)),
-                waitMs
+                Grant.WaitMs(waitMs)
               )
             )
 
@@ -215,16 +218,16 @@ object CoreQuota:
     * and a block after a 429 or when `Remaining` reached 0 — until the time CORE gave, else `exhaustedPauseSeconds`
     * from now. A block is only ever lengthened by an answer.
     */
-  def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.StatusCode, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.ObserveHeadersPart2], now: Instant): State =
-    def int(name: com.histmersion.domain.CoreQuota.HeaderName) = headers.get(name).flatMap(_.trim.toIntOption)
-    val window = Window(int(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-limit")), int(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-remaining")), now)
+  def observe(s: State, limits: Limits, code: com.histmersion.domain.CoreQuota.StatusCode, headers: Map[com.histmersion.domain.CoreQuota.HeaderName, com.histmersion.domain.CoreQuota.HeaderValue], now: Instant): State =
+    def int(name: com.histmersion.domain.CoreQuota.HeaderName) = headers.get(name).flatMap(_.value.trim.toIntOption)
+    val window = Window(int(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-limit")).map(Window.Limit(_)), int(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-remaining")).map(Window.Remaining(_)), now)
     val retry = retryAt(headers.get(com.histmersion.domain.CoreQuota.HeaderName("x-ratelimit-retry-after")), now).orElse(retryAt(headers.get("retry-after"), now))
-    val pause = now.plusSeconds(limits.exhaustedPauseSeconds.toLong.max(1L))
+    val pause = now.plusSeconds(limits.exhaustedPauseSeconds.value.toLong.max(1L))
     val until = retry.filter(_.isAfter(now)).getOrElse(pause)
     val why =
-      if code == 429 then Some("HTTP 429")
-      else if window.remaining.contains(0) then
-        Some(s"X-RateLimit-Remaining 0 of ${window.limit.fold("?")(_.toString)}")
+      if code.value == 429 then Some(Block.Why("HTTP 429"))
+      else if window.remaining.exists(_.value == 0) then
+        Some(Block.Why(s"X-RateLimit-Remaining 0 of ${window.limit.fold("?")(_.toString)}"))
       else None
     val block = why.map(Block(until, _)) match
       case Some(b) => Some(s.block.filter(_.until.isAfter(b.until)).getOrElse(b))
@@ -237,12 +240,12 @@ object CoreQuota:
   /** A retry time as CORE gives it (`2026-10-26T18:52:11+0000`), an ISO-8601 instant or offset time, delay seconds, or
     * an HTTP date.
     */
-  def retryAt(v: Option[com.histmersion.domain.CoreQuota.RetryAt], now: Instant): Option[Instant] =
-    v.map(_.trim).filter(_.nonEmpty).flatMap { s =>
+  def retryAt(v: Option[com.histmersion.domain.CoreQuota.HeaderValue], now: Instant): Option[Instant] =
+    v.map(_.value.trim).filter(_.nonEmpty).flatMap { s =>
       Try(OffsetDateTime.parse(s, CoreTime).toInstant).toOption
         .orElse(Try(OffsetDateTime.parse(s).toInstant).toOption)
         .orElse(Try(Instant.parse(s)).toOption)
-        .orElse(HttpPolicy.retryAfterMs(Some(s), now).map(ms => now.plusMillis(ms)))
+        .orElse(HttpPolicy.retryAfterMs(Some(HttpPolicy.RetryAfter(s)), now).map(ms => now.plusMillis(ms.value)))
     }
 
   /** The state as the surfaces show it (`histmersion about`, the autopilot status), as of `now`. */
@@ -251,15 +254,15 @@ object CoreQuota:
     val b = s.block.filter(_.until.isAfter(now))
     UpstreamQuota(
       com.histmersion.api.library.UpstreamQuota.Upstream("core"),
-      s.day.toString,
-      s.lookupTokens,
-      s.searchTokens,
-      limits.dailyTokens,
-      limits.searchDailyTokens,
-      limits.perMinute,
-      b.map(_.until.toString),
-      b.map(_.why),
-      s.window.flatMap(_.limit),
-      s.window.flatMap(_.remaining),
-      s.window.map(_.at.toString)
+      com.histmersion.api.library.UpstreamQuota.Day(s.day.toString),
+      com.histmersion.api.library.UpstreamQuota.LookupTokens(s.lookupTokens.value),
+      com.histmersion.api.library.UpstreamQuota.SearchTokens(s.searchTokens.value),
+      com.histmersion.api.library.UpstreamQuota.DailyTokens(limits.dailyTokens.value),
+      com.histmersion.api.library.UpstreamQuota.SearchDailyTokens(limits.searchDailyTokens.value),
+      com.histmersion.api.library.UpstreamQuota.PerMinute(limits.perMinute.value),
+      b.map(x => com.histmersion.api.library.UpstreamQuota.BlockedUntil(x.until.toString)),
+      b.map(x => com.histmersion.api.library.UpstreamQuota.BlockedWhy(x.why.value)),
+      s.window.flatMap(_.limit).map(l => com.histmersion.api.library.UpstreamQuota.RateLimit(l.value)),
+      s.window.flatMap(_.remaining).map(m => com.histmersion.api.library.UpstreamQuota.RateRemaining(m.value)),
+      s.window.map(w => com.histmersion.api.library.UpstreamQuota.ObservedAt(w.at.toString))
     )
