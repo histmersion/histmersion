@@ -1,0 +1,10 @@
+## modules/core/src/test/scala/com/histmersion/domain/WatchSchedulesSuite.scala
+47:10 [E008] 47 |        _.contains("one cron for both: `@daily` (fires most often) over the acquisition schedule's `@monthly`") / |value contains is not a member of com.histmersion.domain.WatchSchedules.Plan.Notes
+58:28 [E008] 58 |    assert(p.notes.exists(_.contains("was off: not swept")), p.notes) / |value contains is not a member of com.histmersion.domain.WatchSchedules.Plan.Notes
+72:28 [E008] 72 |    assert(p.notes.exists(_.contains("its cron `@weekly` kept over the acquisition schedule's `@daily`")), p.notes) / |value contains is not a member of com.histmersion.domain.WatchSchedules.Plan.Notes
+81:18 [E007] 81 |      cron = Some("@daily"), / |    Found:    ("@daily" : String) / |    Required: com.histmersion.api.automation.Managers.ManagerInfo.Cron.T
+82:24 [E007] 82 |      nextTickAt = Some("2026-10-18T00:00:00Z") / |Found:    ("2026-10-18T00:00:00Z" : String) / |Required: com.histmersion.api.automation.Managers.ManagerInfo.NextTickAt.T
+97:21 [E007] 97 |      outcome = Some("currency-check goal tin: …"), / | Found:    ("currency-check goal tin: …" : String) / | Required: com.histmersion.api.automation.Managers.ManagerItem.Outcome.T
+101:16 [E171] 101 |    assertEquals(active.map(_.kind), List(ScheduleKind.Acquisition, ScheduleKind.Currency)) / |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any) / |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions: / |    munit.diff.DiffOptions): Unit
+104:16 [E171] 104 |    assertEquals(view(m.modify(_.goal).setTo(None), Nil), Nil) / |missing argument for parameter clue of method assertEquals in trait Assertions: (obtained: A, expected: B, clue: => Any) / |  (implicit loc: munit.Location, compare: munit.Compare[A, B], diffOptions: / |    munit.diff.DiffOptions): Unit
+
