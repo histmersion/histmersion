@@ -12,8 +12,8 @@ import com.histmersion.domain.automation.ItemStatus
 
 class ArticleReviewStatusSuite extends munit.FunSuite:
 
-  private def finding(id: String, r: Reviewer, s: Severity): Finding =
-    Finding(id, r, s, com.histmersion.domain.ReviewArticle.Finding.Kind("undefined-term"), com.histmersion.domain.ReviewArticle.Finding.Where("Background ¶2"), com.histmersion.domain.ReviewArticle.Finding.Quote("a quote"), s"problem $id", s"fix $id")
+  private def finding(id: Finding.Id, r: Reviewer, s: Severity): Finding =
+    Finding(id, r, s, com.histmersion.domain.ReviewArticle.Finding.Kind("undefined-term"), com.histmersion.domain.ReviewArticle.Finding.Where("Background ¶2"), com.histmersion.domain.ReviewArticle.Finding.Quote("a quote"), com.histmersion.domain.ReviewArticle.Finding.Problem(s"problem ${id.value}"), com.histmersion.domain.ReviewArticle.Finding.Fix(s"fix ${id.value}"))
 
   private val ledgerFacts = LedgerFacts(openMajors = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMajors(0), openMinors = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMinors(0), findings = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Findings(0), runs = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Runs(0))
 
@@ -21,7 +21,7 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
     val b = badge(Facts())
     assertEquals(b.state, ReviewState.Unreviewed)
     assertEquals(b.label, "not reviewed")
-    assert(b.detail.startsWith("Not reviewed yet"), b.detail)
+    assert(b.detail.value.startsWith("Not reviewed yet"), b.detail)
 
   test("an empty ledger and no item is still not reviewed; a cancelled item is no item"):
     assertEquals(badge(Facts(ledger = Some(ledgerFacts))).state, ReviewState.Unreviewed)
@@ -33,7 +33,7 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
     val b = badge(Facts(item = Some(ItemFacts(ItemStatus.Pending))))
     assertEquals(b.state, ReviewState.Queued)
     assertEquals(b.label, "queued")
-    assert(b.detail.contains("when a run slot is free"), b.detail)
+    assert(b.detail.value.contains("when a run slot is free"), b.detail)
 
   test("a pending item after a run says how the run ended and what is open"):
     val b = badge(
@@ -128,11 +128,11 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
     assertEquals(failed.label, "review failed")
     val older =
       badge(Facts(item = Some(ItemFacts(ItemStatus.Stopped, None, com.histmersion.domain.ArticleReviewStatus.ItemFacts.Attempts(1))), ledger = Some(LedgerFacts(com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMajors(2), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMinors(0), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Findings(9), com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Runs(3)))))
-    assert(older.detail.startsWith("Review stopped after 3 runs."), older.detail)
+    assert(older.detail.value.startsWith("Review stopped after 3 runs."), older.detail)
 
   test("approvals waiting for a person are named in the detail"):
     val b = badge(Facts(waiting = List(ReviewApproval(com.histmersion.api.research.ReviewApproval.Id(741), com.histmersion.api.research.ReviewApproval.Kind("article-filter")))))
-    assert(b.detail.endsWith(" Waiting for a person: approval #741 (article-filter)."), b.detail)
+    assert(b.detail.value.endsWith(" Waiting for a person: approval #741 (article-filter)."), b.detail)
 
   // ── history ────────────────────────────────────────────────────────────────────────────────
 
@@ -140,21 +140,21 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
     com.histmersion.domain.ReviewLedger.Ledger.Slug("zz-art"),
     List(
       Entry(
-        finding("R1", Reviewer.Rules, Severity.Major),
+        finding(com.histmersion.domain.ReviewArticle.Finding.Id("R1"), Reviewer.Rules, Severity.Major),
         com.histmersion.domain.ReviewLedger.Entry.Run("run-a"),
         com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Fixed,
         closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("rules"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("run-a"), com.histmersion.domain.ReviewLedger.Closure.Note("fixed in ¶2")))
       ),
       Entry(
-        finding("S1", Reviewer.Skeptic, Severity.Major),
+        finding(com.histmersion.domain.ReviewArticle.Finding.Id("S1"), Reviewer.Skeptic, Severity.Major),
         com.histmersion.domain.ReviewLedger.Entry.Run("run-a"),
         com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Rejected,
         closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), com.histmersion.domain.ReviewLedger.Closure.Run("run-b"), com.histmersion.domain.ReviewLedger.Closure.Note("the record says otherwise")))
       ),
-      Entry(finding("C1", Reviewer.ColdReader, Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("run-a"), com.histmersion.domain.ReviewLedger.Entry.Round(2)),
-      Entry(finding("M1", Reviewer.Mechanical, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-b"), com.histmersion.domain.ReviewLedger.Entry.Round(1), deferred = Some(com.histmersion.domain.automation.Run.Id("run-b")), reopened = com.histmersion.domain.ReviewLedger.Entry.Reopened(1))
+      Entry(finding(com.histmersion.domain.ReviewArticle.Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("run-a"), com.histmersion.domain.ReviewLedger.Entry.Round(2)),
+      Entry(finding(com.histmersion.domain.ReviewArticle.Finding.Id("M1"), Reviewer.Mechanical, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-b"), com.histmersion.domain.ReviewLedger.Entry.Round(1), deferred = Some(com.histmersion.domain.automation.Run.Id("run-b")), reopened = com.histmersion.domain.ReviewLedger.Entry.Reopened(1))
     )
   )
 
@@ -162,7 +162,7 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
     assertEquals(LedgerFacts.of(ledger), LedgerFacts(openMajors = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMajors(1), openMinors = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMinors(1), findings = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Findings(4), runs = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Runs(2)))
 
   test("the history groups findings by run and pass, oldest first, with what became of each"):
-    val h = history(ledger, Map("run-a" -> "2026-10-01T10:00:00Z", "run-b" -> "2026-10-02T10:00:00Z"))
+    val h = history(ledger, Map(com.histmersion.domain.automation.Run.Id("run-a") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-01T10:00:00Z"), com.histmersion.domain.automation.Run.Id("run-b") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-02T10:00:00Z")))
     assertEquals(
       h.map(r => (r.runNumber, r.round, r.findings.map(_.id))),
       List((1, 1, List("R1", "S1")), (1, 2, List("C1")), (2, 1, List("M1")))
@@ -178,9 +178,9 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
 
   test("runs order by their start; a run with no record left goes first; otherwise ledger order"):
     assertEquals(
-      runOrder(ledger, Map("run-a" -> "2026-10-03T00:00:00Z", "run-b" -> "2026-10-02T00:00:00Z")),
+      runOrder(ledger, Map(com.histmersion.domain.automation.Run.Id("run-a") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-03T00:00:00Z"), com.histmersion.domain.automation.Run.Id("run-b") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-02T00:00:00Z"))),
       List("run-b", "run-a")
     )
-    assertEquals(runOrder(ledger, Map("run-a" -> "2026-10-03T00:00:00Z")), List("run-b", "run-a"))
+    assertEquals(runOrder(ledger, Map(com.histmersion.domain.automation.Run.Id("run-a") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-03T00:00:00Z"))), List("run-b", "run-a"))
     assertEquals(runOrder(ledger, Map.empty), List("run-a", "run-b"))
     assertEquals(history(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zz-empty")), Map.empty), Nil)

@@ -29,17 +29,17 @@ class PluginsReportSuite extends munit.FunSuite:
     com.histmersion.api.plugins.PluginStatus.Version("0.1.0"),
     com.histmersion.api.plugins.PluginStatus.SpiVersion(1),
     enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true),
-    PluginState.Registered.wire,
+    com.histmersion.api.plugins.PluginStatus.State(PluginState.Registered.wire.value),
     provides = List(com.histmersion.api.plugins.PluginDescription.Provides("secret-vault:keepassxc")),
     settings = List(PluginSetting(com.histmersion.api.plugins.PluginSetting.Key("database"), com.histmersion.api.plugins.PluginSetting.Value("/v.kdbx")), PluginSetting(com.histmersion.api.plugins.PluginSetting.Key("password"), com.histmersion.api.plugins.PluginSetting.Value("env:KP_PASSWORD")))
   )
-  private val off = PluginStatus(com.histmersion.api.plugins.PluginStatus.Id("bitwarden"), com.histmersion.api.plugins.PluginStatus.Version("0.1.0"), com.histmersion.api.plugins.PluginStatus.SpiVersion(1), enabled = com.histmersion.api.plugins.PluginStatus.Enabled(false), PluginState.Disabled.wire)
+  private val off = PluginStatus(com.histmersion.api.plugins.PluginStatus.Id("bitwarden"), com.histmersion.api.plugins.PluginStatus.Version("0.1.0"), com.histmersion.api.plugins.PluginStatus.SpiVersion(1), enabled = com.histmersion.api.plugins.PluginStatus.Enabled(false), com.histmersion.api.plugins.PluginStatus.State(PluginState.Disabled.wire.value))
   private val broken = PluginStatus(
     com.histmersion.api.plugins.PluginStatus.Id("portal"),
     com.histmersion.api.plugins.PluginStatus.Version("2.0.0"),
     com.histmersion.api.plugins.PluginStatus.SpiVersion(1),
     enabled = com.histmersion.api.plugins.PluginStatus.Enabled(true),
-    PluginState.Failed.wire,
+    com.histmersion.api.plugins.PluginStatus.State(PluginState.Failed.wire.value),
     warnings = List("histmersion.plugins.portal.token: a secret written into the config (value:***)"),
     error = Some("histmersion.plugins.portal.token: environment variable PORTAL_TOKEN is not set")
   )
@@ -48,7 +48,7 @@ class PluginsReportSuite extends munit.FunSuite:
     com.histmersion.api.plugins.PluginStatus.Version("0.0.1"),
     com.histmersion.api.plugins.PluginStatus.SpiVersion(0),
     enabled = com.histmersion.api.plugins.PluginStatus.Enabled(false),
-    PluginState.Refused.wire,
+    com.histmersion.api.plugins.PluginStatus.State(PluginState.Refused.wire.value),
     error = Some("old: built for SPI 0, this host speaks 1")
   )
 
@@ -114,7 +114,7 @@ class PluginsReportSuite extends munit.FunSuite:
         plugins = PluginsReport(com.histmersion.api.plugins.PluginsReport.SpiVersion(1), set = Some(set))
       )
     )
-    assert(linked.contains(s"  - plugin set: ${set.digest.take(12)}… · 1 jar (native): hello-0.1.0.jar"), linked)
+    assert(linked.contains(s"  - plugin set: ${set.digest.value.take(12)}… · 1 jar (native): hello-0.1.0.jar"), linked)
     val check = PluginsMarkdown.selfCheck(ConfigFileInfo(), PluginsReport(com.histmersion.api.plugins.PluginsReport.SpiVersion(1), set = Some(set)))
     assert(check.contains(s"- plugin-set digest: ${set.digest}"), check)
     assert(

@@ -22,12 +22,12 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
       .find(d => Files.isDirectory(d.resolve("db/places")))
       .getOrElse(fail("no db/places above the working directory"))
     Lpf
-      .parse(Files.readString(root.resolve("db/places/03-pleiades.json")), Place.Kind.Region)
+      .parse(Files.readString(root.resolve("db/places/03-pleiades.json")), com.histmersion.api.catalogue.Place.KindValue(Place.Kind.Region))
       .fold(e => fail(e), identity)
 
   private def prop(in: com.histmersion.api.catalogue.Place.Input, key: String): List[String] =
     in.place.properties
-      .flatMap(p => io.circe.parser.parse(p).toOption)
+      .flatMap(p => io.circe.parser.parse(p.value).toOption)
       .flatMap(_.hcursor.get[String](key).toOption)
       .toList
       .flatMap(_.split(",").toList)
@@ -35,15 +35,15 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
       .filter(_.nonEmpty)
 
   test("every Pleiades place's kind is the one the place-kind rule gives it"):
-    val proposals = pleiades.filter(_.place.geometry.exists(_.contains("\"Point\""))).flatMap { in =>
+    val proposals = pleiades.filter(_.place.geometry.exists(_.value.contains("\"Point\""))).flatMap { in =>
       val e = PlaceReview.Evidence(
-        in.place.id.value,
-        in.place.label,
-        in.place.kind,
-        prop(in, "feature_types"),
-        prop(in, "time_periods"),
-        in.place.period.map(_.start),
-        in.place.period.map(_.end)
+        PlaceReview.Evidence.Id(in.place.id.value),
+        PlaceReview.Evidence.Label(in.place.label.value),
+        Place.Kind.Wire(in.place.kind.value),
+        prop(in, "feature_types").map(PlaceReview.Evidence.FeatureTypes(_)),
+        prop(in, "time_periods").map(PlaceReview.Evidence.TimePeriods(_)),
+        in.place.period.map(p => DeepTime.SignedYear(p.start.value)),
+        in.place.period.map(p => DeepTime.SignedYear(p.end.value))
       )
       PlaceReview.propose(e).filter(_.fixable)
     }
@@ -56,4 +56,4 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
     assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_580062")).map(_.kind), Some(Place.Kind.Site), "Peiraieus")
     assertEquals(byId.get(com.histmersion.api.catalogue.Place.Id("pleiades_307963010")).map(_.kind), Some(Place.Kind.Region), "Regio I (Porta Capena)")
     assert(!byId.contains(com.histmersion.api.catalogue.Place.Id("pleiades_981515")), "Withdrawn (duplicate): Creta et Cyrene")
-    assert(pleiades.forall(in => PlaceReview.duplicateOf(in.place.label).isEmpty))
+    assert(pleiades.forall(in => PlaceReview.duplicateOf(PlaceReview.Evidence.Label(in.place.label.value)).isEmpty))

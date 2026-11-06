@@ -17,8 +17,15 @@ import com.histmersion.api.library.WorkRef
 class BrowserDownloadSuite extends munit.FunSuite:
 
   private val RefusingHosts = List("degruyter.com", "mdpi.com", "stockholmuniversitypress.se")
-  private val Refusing: String => Option[String] =
-    com.histmersion.upstreams.landing.RepositoryLanding.onHost(_, RefusingHosts)
+    .map(com.histmersion.upstreams.landing.RepositoryLanding.HostPattern(_))
+  private def refusing(
+      hosts: List[com.histmersion.upstreams.landing.RepositoryLanding.HostPattern]
+  ): BrowserDownload.Location => Option[BrowserDownload.Host] =
+    location =>
+      com.histmersion.upstreams.landing.RepositoryLanding
+        .onHost(com.histmersion.upstreams.landing.RepositoryLanding.OnHostUrl(location.value), hosts)
+        .map(host => BrowserDownload.Host(host.value))
+  private val Refusing: BrowserDownload.Location => Option[BrowserDownload.Host] = refusing(RefusingHosts)
   private val ck = Citekey.parse("greener2019_archaeology").toOption.get
   private val mdpi = WorkRef(
     doi = (Some("10.3390/REL10040258")).map(com.histmersion.api.library.Doi.apply),
@@ -70,7 +77,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
       ),
       None
     )
-    assertEquals(BrowserDownload.of(mdpi, ck, com.histmersion.upstreams.landing.RepositoryLanding.onHost(_, Nil)), None)
+    assertEquals(BrowserDownload.of(mdpi, ck, refusing(Nil)), None)
     assertEquals(
       BrowserDownload.of(mdpi.modify(_.oaUrl).setTo(Some("https://notmdpi.com/x")).copy(oaLocations = Nil), ck, Refusing),
       None,

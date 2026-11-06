@@ -12,7 +12,7 @@ import java.time.Instant
 class ActivityRulesSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-30T12:00:00Z")
-  private def at(min: Int) = now.minusSeconds(min * 60L).toString
+  private def at(min: Int) = Entry.At(now.minusSeconds(min * 60L).toString)
 
   private val entries = List(
     Entry(com.histmersion.api.automation.Activity.Entry.Key("run:r1"), com.histmersion.api.automation.Activity.Entry.Kind("run"), at(1), state = com.histmersion.api.automation.Activity.Entry.State("running"), what = com.histmersion.api.automation.Activity.Entry.What("review-article"), goal = Some("g1"), job = Some("r1")),
@@ -33,14 +33,14 @@ class ActivityRulesSuite extends munit.FunSuite:
     )
 
   test("pages follow on without a gap or a repeat, also inside one instant"):
-    def walk(q: ActivityQuery, acc: List[String]): List[String] =
+    def walk(q: ActivityQuery, acc: List[Entry.Key]): List[Entry.Key] =
       val p = ActivityRules.page(entries, q, Activity.Counts())
       p.next match
-        case Some(c) => walk(q.modify(_.before).setTo(Some(ActivityCursor.parse(c).fold(fail(_), identity))), acc ++ keys(p))
+        case Some(c) => walk(q.modify(_.before).setTo(Some(ActivityCursor.parse(ActivityCursor.Wire(c.value)).fold(p => fail(p.value), identity))), acc ++ keys(p))
         case None    => acc ++ keys(p)
     for size <- 1 to 4 do
       assertEquals(
-        walk(ActivityQuery(limit = size), Nil),
+        walk(ActivityQuery(limit = ActivityQuery.Limit(size)), Nil),
         keys(ActivityRules.page(entries, ActivityQuery(), Activity.Counts())),
         s"page size $size"
       )
@@ -84,14 +84,14 @@ class ActivityRulesSuite extends munit.FunSuite:
   test("the query: the chips' words, a time ago, a capped limit; anything else a 400 naming what is allowed"):
     assertEquals(
       ActivityRules.query(Some(com.histmersion.api.automation.Activity.Show.Wire("problems")), Some(com.histmersion.api.automation.ListFilters.TimeBound("7d")), Some(com.histmersion.domain.activity.ActivityQuery.Goal(" g1 ")), Some(com.histmersion.domain.activity.ActivityQuery.Limit(1000)), None, now),
-      Right(ActivityQuery(Show.Problems, Some(now.minusSeconds(7 * 86400)), Some(com.histmersion.domain.activity.ActivityQuery.Goal("g1")), Activity.MaxLimit, None))
+      Right(ActivityQuery(Show.Problems, Some(now.minusSeconds(7 * 86400)), Some(com.histmersion.domain.activity.ActivityQuery.Goal("g1")), ActivityQuery.Limit(Activity.MaxLimit), None))
     )
     assertEquals(ActivityRules.query(None, None, None, None, None, now), Right(ActivityQuery()))
     assert(
       ActivityRules
         .query(Some(com.histmersion.api.automation.Activity.Show.Wire("everything else")), None, None, None, None, now)
         .left
-        .exists(_.message.contains("running"))
+        .exists(_.message.value.contains("running"))
     )
     assert(ActivityRules.query(None, Some(com.histmersion.api.automation.ListFilters.TimeBound("last week")), None, None, None, now).isLeft)
     assert(ActivityRules.query(None, None, None, None, Some(com.histmersion.domain.activity.ActivityCursor.Wire("nope")), now).isLeft)

@@ -34,7 +34,7 @@ class CurrencyCheckRulesSuite extends munit.FunSuite:
           (p.kind, p.citekey, p.edgeKind, p.target),
           (ApprovalKind.Edge, "new2024_x", Some(Edge.Kind.Refutes), Some("old2000_y"))
         )
-        assert(p.evidence.contains("we refute X"), p.evidence)
+        assert(p.evidence.value.contains("we refute X"), p.evidence)
       case other => fail(s"expected a proposal, got $other")
     currencyAction(com.histmersion.domain.library.Citekey("old2000_y"), row.modify(_.proposedKind).setTo("supersedes")) match
       case CurrencyAction.Propose(p) =>

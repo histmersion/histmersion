@@ -80,7 +80,7 @@ class BundleMergeSuite extends munit.FunSuite:
           U1,
           U2,
           com.histmersion.api.library.Citekey("ck"),
-          1.0,
+          com.histmersion.api.exchange.Bundle.EventCandidate.Score(1.0),
           com.histmersion.api.exchange.Bundle.EventCandidate.Status("proposed"),
           Nil,
           io.circe.Json.arr(),
@@ -130,7 +130,7 @@ class BundleMergeSuite extends munit.FunSuite:
 
   test("decisions: the whole table of a two-way merge with the ledger as ancestor"):
     def d(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None, own: Boolean = false) =
-      BundlePlan.entity(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), Local(local, tomb, ledger), own)
+      BundlePlan.entity(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("F"), Local(local.map(Local.Rev(_)), Local.Tombstoned(tomb), ledger), BundlePlan.EntityOwnBundle(own))
     assertEquals(d(None), Decision.Insert)
     assertEquals(d(None, tomb = true), Decision.SkipDeleted)
     assertEquals(d(Some("F")), Decision.Unchanged)
@@ -142,7 +142,7 @@ class BundleMergeSuite extends munit.FunSuite:
 
   test("tombstones: delete only what is still as the last merge left it; record the rest"):
     def t(local: Option[String], tomb: Boolean = false, ledger: Option[Ledger] = None) =
-      BundlePlan.tombstone(Local(local, tomb, ledger), ownBundle = com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle(false))
+      BundlePlan.tombstone(Local(local.map(Local.Rev(_)), Local.Tombstoned(tomb), ledger), ownBundle = com.histmersion.util.data.exchange.BundlePlan.TombstoneOwnBundle(false))
     assertEquals(t(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("L"))))), Decision.Delete)
     assertEquals(t(Some("L"), ledger = Some(Ledger(com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev("E"), Some(com.histmersion.util.data.exchange.BundlePlan.Rev("X"))))), Decision.Conflict)
     assertEquals(t(Some("L")), Decision.Conflict)

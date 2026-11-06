@@ -384,8 +384,8 @@ class ReviewArticleSuite extends munit.FunSuite:
       com.histmersion.domain.ReviewArticle.FixerAnswer.Notes("")
     )
     val (f, ws) = fix(a, last = LastRound(true)).toOption.get
-    assert(!f.body.contains("ghost2020_x"), f.body)
-    assert(f.body.contains("the scarce half of bronze"))
+    assert(!f.body.value.contains("ghost2020_x"), f.body)
+    assert(f.body.value.contains("the scarce half of bronze"))
     assert(ws.exists(_.contains("ghost2020_x")), ws)
 
   test("fixer, last attempt: a result with a NEW link problem or no text is fatal; an old one is not"):
@@ -394,7 +394,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     assert(fix(empty, last = LastRound(true)).isLeft)
     val withGhost = Good + "\nOld [[ghost2020_x]] link [[knapp2016_tin]].\n"
     val (f, ws) = fix(FixerAnswer(List(gloss), List(com.histmersion.domain.ReviewArticle.Finding.Id("C1"), com.histmersion.domain.ReviewArticle.Finding.Id("S1")), Nil, Nil, com.histmersion.domain.ReviewArticle.FixerAnswer.Notes("")), last = LastRound(true), Article.Body(withGhost)).toOption.get
-    assert(f.body.contains("the scarce half of bronze"))
+    assert(f.body.value.contains("the scarce half of bronze"))
     assert(ws.exists(_.contains("ghost2020_x")), ws)
 
   test("checkBody: a whole body (a writer's draft) is checked with the same rules"):
@@ -436,14 +436,14 @@ class ReviewArticleSuite extends munit.FunSuite:
   ):
     assertEquals(mechanical(com.histmersion.domain.research.Slug("a"), com.histmersion.domain.ReviewArticle.Snapshot.Kind("concept"), Article.Body(Generated), isTarget, generated = com.histmersion.domain.ReviewArticle.MechanicalGenerated(true)), Nil)
     assert(
-      mechanical(com.histmersion.domain.research.Slug("a"), com.histmersion.domain.ReviewArticle.Snapshot.Kind("concept"), Article.Body(Generated), isTarget).exists(_.problem.contains("'not used'")),
+      mechanical(com.histmersion.domain.research.Slug("a"), com.histmersion.domain.ReviewArticle.Snapshot.Kind("concept"), Article.Body(Generated), isTarget).exists(_.problem.value.contains("'not used'")),
       "without a filter it is still required"
     )
     val written =
       mechanical(com.histmersion.domain.research.Slug("a"), com.histmersion.domain.ReviewArticle.Snapshot.Kind("concept"), Article.Body(Good + "\n_Method: search {topics:[tin]} → 3._\n"), isTarget, generated = com.histmersion.domain.ReviewArticle.MechanicalGenerated(true))
     assertEquals(written.map(f => (f.kind, f.major)), List((CoverageKind, true), (CoverageKind, true)))
     assert(
-      written.head.problem.startsWith("a hand-written Not used section") && written(1).problem.startsWith(
+      written.head.problem.value.startsWith("a hand-written Not used section") && written(1).problem.value.startsWith(
         "a hand-written Method note"
       )
     )

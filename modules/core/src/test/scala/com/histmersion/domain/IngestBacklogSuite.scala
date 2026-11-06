@@ -53,7 +53,11 @@ class IngestBacklogSuite extends munit.FunSuite:
       Entry(com.histmersion.domain.IngestBacklog.Entry.Id(4), com.histmersion.domain.IngestBacklog.Entry.ManagerId("watch:c"), com.histmersion.domain.IngestBacklog.Entry.Priority(0), Some(now.plusSeconds(3600))),
       Entry(com.histmersion.domain.IngestBacklog.Entry.Id(6), com.histmersion.domain.IngestBacklog.Entry.ManagerId("watch:a"), com.histmersion.domain.IngestBacklog.Entry.Priority(0), None)
     )
-    val left = Map("watch:a" -> 2, "watch:b" -> 5, "watch:c" -> 5)
+    val left = Map(
+      Entry.ManagerId("watch:a") -> Lane.LeftToday(2),
+      Entry.ManagerId("watch:b") -> Lane.LeftToday(5),
+      Entry.ManagerId("watch:c") -> Lane.LeftToday(5)
+    )
     assertEquals(
       drain(es, left, None, now, com.histmersion.domain.IngestBacklog.DrainLimit(10)).map(_.id),
       List(3L, 1L, 2L, 5L),
@@ -62,7 +66,7 @@ class IngestBacklogSuite extends munit.FunSuite:
     assertEquals(drain(es, left, Some(com.histmersion.domain.IngestBacklog.SharedAllowance(2)), now, com.histmersion.domain.IngestBacklog.DrainLimit(10)).map(_.id), List(3L, 1L), "the shared cap")
     assertEquals(drain(es, left, None, now, com.histmersion.domain.IngestBacklog.DrainLimit(1)).map(_.id), List(3L), "one tick's share")
     assertEquals(
-      drain(es, left - "watch:b", None, now, com.histmersion.domain.IngestBacklog.DrainLimit(10)).map(_.id),
+      drain(es, left - Entry.ManagerId("watch:b"), None, now, com.histmersion.domain.IngestBacklog.DrainLimit(10)).map(_.id),
       List(1L, 5L),
       "a watcher missing (paused, auto-ingest off) drains nothing"
     )
@@ -84,7 +88,7 @@ class IngestBacklogSuite extends munit.FunSuite:
     assert(isNoLegalCopy(com.histmersion.domain.IngestBacklog.Problem("no legal open-access copy of 10.1/x: nothing found")))
     assert(!isNoLegalCopy(com.histmersion.domain.IngestBacklog.Problem("HTTP 503 from the converter")))
     onFailure(com.histmersion.domain.IngestBacklog.Problem("no legal open-access copy of 10.1/x"), com.histmersion.domain.IngestBacklog.Failure.Retry.Failures(0), com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxFailures(3), com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes(15), com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360), now) match
-      case Failure.ToAcquire(why) => assert(why.startsWith(NoLegalCopy), why)
+      case Failure.ToAcquire(why) => assert(why.value.startsWith(NoLegalCopy), why)
       case other                  => fail(s"expected the acquisition list, got $other")
     assertEquals(onFailure(com.histmersion.domain.IngestBacklog.Problem("timeout"), com.histmersion.domain.IngestBacklog.Failure.Retry.Failures(0), com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxFailures(3), com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes(15), com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360), now), Failure.Retry(now.plusSeconds(15 * 60), com.histmersion.domain.IngestBacklog.Failure.Retry.Failures(1), com.histmersion.domain.IngestBacklog.Failure.Why("timeout")))
     assertEquals(onFailure(com.histmersion.domain.IngestBacklog.Problem("timeout"), com.histmersion.domain.IngestBacklog.Failure.Retry.Failures(1), com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxFailures(3), com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes(15), com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360), now), Failure.Retry(now.plusSeconds(30 * 60), com.histmersion.domain.IngestBacklog.Failure.Retry.Failures(2), com.histmersion.domain.IngestBacklog.Failure.Why("timeout")))
@@ -100,7 +104,7 @@ class IngestBacklogSuite extends munit.FunSuite:
     assertEquals(daysToDrain(List(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(10), com.histmersion.domain.IngestBacklog.Lane.PerDay(5), com.histmersion.domain.IngestBacklog.Lane.LeftToday(2))), None, None), Some(2), "2 today, 5, then 3")
     // 96 works over 35 watchers of 5 a day each, 20 a day in all, today's 20 spent: ~5 more days
     val lanes = List.fill(26)(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(3), com.histmersion.domain.IngestBacklog.Lane.PerDay(5), com.histmersion.domain.IngestBacklog.Lane.LeftToday(0))) ++ List.fill(9)(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(2), com.histmersion.domain.IngestBacklog.Lane.PerDay(5), com.histmersion.domain.IngestBacklog.Lane.LeftToday(0)))
-    assertEquals(lanes.map(_.backlog).sum, 96)
+    assertEquals(lanes.map(_.backlog.value).sum, 96)
     assertEquals(daysToDrain(lanes, Some(com.histmersion.domain.IngestBacklog.Lane.PerDay(20)), Some(com.histmersion.domain.IngestBacklog.Lane.LeftToday(0))), Some(5))
     assertEquals(daysToDrain(lanes, None, None), Some(1), "no shared cap: every watcher drains its 2–3 tomorrow")
     assertEquals(daysToDrain(List(Lane(com.histmersion.domain.IngestBacklog.Lane.Backlog(4), com.histmersion.domain.IngestBacklog.Lane.PerDay(0), com.histmersion.domain.IngestBacklog.Lane.LeftToday(0))), None, None), None, "a cap of 0 never drains")
@@ -118,7 +122,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       "closed: never touched"
     )
     assert(repairAction(f.modify(_.watcherAutoIngest).setTo(false)) match
-      case RepairAction.Keep(why) => why.contains("does not auto-ingest")
+      case RepairAction.Keep(why) => why.value.contains("does not auto-ingest")
       case _                      => false)
     assert(repairAction(f.modify(_.watcherExists).setTo(false)).isInstanceOf[RepairAction.Keep])
 
@@ -153,18 +157,18 @@ class IngestBacklogSuite extends munit.FunSuite:
       kept = com.histmersion.api.library.RepairAcquire.RepairResult.Kept(1),
       untouched = com.histmersion.api.library.RepairAcquire.RepairResult.Untouched(5),
       rows = List(
-        RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(7), com.histmersion.api.library.Doi("10.1/x"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.Move, com.histmersion.api.library.RepairAcquire.RepairRow.Detail("legal open access")),
-        RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(8), com.histmersion.api.library.Doi("10.1/y"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.Keep, com.histmersion.api.library.RepairAcquire.RepairRow.Detail("closed"))
+        RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(7), com.histmersion.api.library.Doi("10.1/x"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.RepairRow.Action(RepairAcquire.Move), com.histmersion.api.library.RepairAcquire.RepairRow.Detail("legal open access")),
+        RepairAcquire.RepairRow(com.histmersion.api.library.RepairAcquire.RepairRow.Item(8), com.histmersion.api.library.Doi("10.1/y"), List(com.histmersion.api.library.RepairAcquire.RepairRow.Goals("g")), com.histmersion.api.library.RepairAcquire.RepairRow.Watcher("watch:g"), RepairAcquire.RepairRow.Action(RepairAcquire.Keep), com.histmersion.api.library.RepairAcquire.RepairRow.Detail("closed"))
       ),
       backlog = com.histmersion.api.automation.Managers.ManagerInfo.Backlog(1),
       backlogDays = Some(com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays(1))
     )
     val md = RepairAcquire.markdown(r)
     assert(
-      md.contains("dry run: nothing changed") && md.contains("would move 1 legal open-access work") &&
-        md.contains("#7 https://doi.org/10.1/x · goal g · would move to watch:g") && md.contains(
+      md.value.contains("dry run: nothing changed") && md.value.contains("would move 1 legal open-access work") &&
+        md.value.contains("#7 https://doi.org/10.1/x · goal g · would move to watch:g") && md.value.contains(
           "#8 https://doi.org/10.1/y · goal g · keep: closed"
         ) &&
-        md.contains("5 open acquisition items not created by a watcher's sweep: untouched"),
-      md
+        md.value.contains("5 open acquisition items not created by a watcher's sweep: untouched"),
+      md.value
     )

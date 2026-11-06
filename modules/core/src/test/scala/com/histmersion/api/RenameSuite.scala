@@ -21,18 +21,18 @@ class RenameSuite extends munit.FunSuite:
     assertEquals(com.histmersion.domain.library.sources.Citekeys.renameTo(com.histmersion.domain.library.Citekey("x2020_a"), com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("knapp2016")).map(ck => ck.value: String), Right("knapp2016"))
 
   test("validate: the same key, an invalid key and a key the link resolver would not take are refused"):
-    def refused(to: String, says: String) =
+    def refused(to: com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw, says: String) =
       com.histmersion.domain.library.sources.Citekeys.renameTo(com.histmersion.domain.library.Citekey("page2024_history"), to) match
         case Left(e) =>
-          assert(e.nonEmpty)
-          assert(e.contains(says), e)
+          assert(e.value.nonEmpty)
+          assert(e.value.contains(says), e)
         case Right(k) => fail(s"$to should be refused, got $k")
-    refused("page2024_history", "already the citekey")
-    refused("Page 1959", "invalid citekey")
-    refused("../etc", "invalid citekey")
-    refused("page-1959", "LINK-shaped") // a valid citekey, but [[page-1959]] is an article link
-    refused("page1959.v2", "LINK-shaped")
-    refused("nodigits", "LINK-shaped")
+    refused(com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("page2024_history"), "already the citekey")
+    refused(com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("Page 1959"), "invalid citekey")
+    refused(com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("../etc"), "invalid citekey")
+    refused(com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("page-1959"), "LINK-shaped") // a valid citekey, but [[page-1959]] is an article link
+    refused(com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("page1959.v2"), "LINK-shaped")
+    refused(com.histmersion.domain.library.sources.Citekeys.RenameToNewRaw("nodigits"), "LINK-shaped")
 
   test("shortForms: every prefix that ends right before an underscore"):
     assertEquals(Rename.shortForms(com.histmersion.api.library.Citekey("beckman2025_ahhiyawa")), List("beckman2025"))
@@ -59,10 +59,12 @@ class RenameSuite extends munit.FunSuite:
     assertEquals(Rename.replaceToken("x2020_v1x2", com.histmersion.api.library.Citekey("x2020_v1.2"), com.histmersion.api.library.Citekey("y")), "x2020_v1x2")
 
   test("retarget: target moved; label, anchor, escapes, spacing and embeds kept"):
-    val to: String => Option[String] = t => Option.when(t == "old2020_a" || t == "old2020")("new1999_a")
-    val md =
+    val to: com.histmersion.api.text.WikiLinks.Occurrence.Target => Option[com.histmersion.api.text.WikiLinks.Occurrence.Target] =
+      t => Option.when(t.value == "old2020_a" || t.value == "old2020")(com.histmersion.api.text.WikiLinks.Occurrence.Target("new1999_a"))
+    val md = com.histmersion.api.text.WikiLinks.Body(
       """[[old2020_a]] [[old2020_a|the book]] [[old2020_a#ch-1|ch. 1]] [[ Old2020_A ]]
         |\[\[old2020_a\]\] ![[old2020_a]] [[old2020]] [[old2020_ab]] [[other2019_x]] [old2020_a]""".stripMargin
+    )
     val (out, n) = Article.Links.retarget(md, to)
     assertEquals(
       out,
@@ -72,7 +74,7 @@ class RenameSuite extends munit.FunSuite:
     assertEquals(n, 6)
 
   test("retarget: nothing to move is the identity"):
-    val md = "No [[links]] here to [[other2019_x]]."
+    val md = com.histmersion.api.text.WikiLinks.Body("No [[links]] here to [[other2019_x]].")
     assertEquals(Article.Links.retarget(md, _ => None), (md, 0))
 
   test("the rename report names the alias, the counts, and what Calibre and the mirror need"):

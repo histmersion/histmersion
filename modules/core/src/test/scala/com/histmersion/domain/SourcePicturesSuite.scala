@@ -7,6 +7,7 @@ import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.media.MediaMarkdown
 
 import com.histmersion.domain.media.figures.FigurePick
+import com.histmersion.domain.media.figures.FigurePick.Figure
 
 import com.histmersion.config.*
 import com.histmersion.api.given
@@ -23,7 +24,13 @@ import com.histmersion.api.media.{MediaCount, MediaCoversReport, MediaImportRepo
 class SourcePicturesSuite extends munit.FunSuite:
 
   private val rules = FigurePick.Rules()
-  private def fig(name: String, w: Int, h: Int, refs: Int = 1, at: Option[Double] = None) =
+  private def fig(
+      name: Figure.Name,
+      w: Figure.Width,
+      h: Figure.Height,
+      refs: Figure.Refs = Figure.Refs(1),
+      at: Option[Figure.FirstAt] = None
+  ) =
     FigurePick.Figure(name, Some(w), Some(h), refs, at)
 
   test("the paper the converter cut up: the map on page 2, not the logo, the masthead or the badge"):
@@ -32,11 +39,11 @@ class SourcePicturesSuite extends munit.FunSuite:
     val figs = json.hcursor.downField("figures").values.get.toList.map { j =>
       val c = j.hcursor
       FigurePick.Figure(
-        c.get[String]("name").toOption.get,
-        c.get[Int]("width").toOption,
-        c.get[Int]("height").toOption,
-        c.get[Int]("refs").getOrElse(0),
-        c.get[Double]("firstAt").toOption
+        Figure.Name(c.get[String]("name").toOption.get),
+        c.get[Int]("width").toOption.map(Figure.Width(_)),
+        c.get[Int]("height").toOption.map(Figure.Height(_)),
+        Figure.Refs(c.get[Int]("refs").getOrElse(0)),
+        c.get[Double]("firstAt").toOption.map(Figure.FirstAt(_))
       )
     }
     assertEquals(figs.size, 4)
@@ -54,9 +61,9 @@ class SourcePicturesSuite extends munit.FunSuite:
     assertEquals(FigurePick.order(com.histmersion.domain.media.figures.FigurePick.Figure.Name("cover.jpg")), None)
 
   test("a figure linked again and again is a running header; a page-sized series is page scans"):
-    assertEquals(FigurePick.reject(fig("fig-0001-01.png", 600, 400, refs = 9), rules), Some("repeated in the text"))
-    val scans = (1 to 6).map(i => fig(f"fig-$i%04d-01.png", 1275 + i % 2, 1650)).toList
-    val real = fig("fig-0003-02.png", 700, 500)
+    assertEquals(FigurePick.reject(fig(Figure.Name("fig-0001-01.png"), Figure.Width(600), Figure.Height(400), refs = Figure.Refs(9)), rules), Some("repeated in the text"))
+    val scans = (1 to 6).map(i => fig(Figure.Name(f"fig-$i%04d-01.png"), Figure.Width(1275 + i % 2), Figure.Height(1650))).toList
+    val real = fig(Figure.Name("fig-0003-02.png"), Figure.Width(700), Figure.Height(500))
     assertEquals(FigurePick.choose(scans :+ real, rules).map(_.name), Some("fig-0003-02.png"))
     assertEquals(FigurePick.choose(scans, rules), None, "nothing but page scans: no illustration")
     assertEquals(
@@ -66,40 +73,40 @@ class SourcePicturesSuite extends munit.FunSuite:
     )
 
   test("early pages win over a larger figure late in the paper; a size-less figure never"):
-    val early = fig("fig-0002-01.png", 600, 400)
-    val late = fig("fig-0019-01.png", 900, 500)
+    val early = fig(Figure.Name("fig-0002-01.png"), Figure.Width(600), Figure.Height(400))
+    val late = fig(Figure.Name("fig-0019-01.png"), Figure.Width(900), Figure.Height(500))
     assertEquals(FigurePick.choose(List(late, early), rules).map(_.name), Some("fig-0002-01.png"))
-    val huge = fig("fig-0019-02.png", 1600, 1000)
+    val huge = fig(Figure.Name("fig-0019-02.png"), Figure.Width(1600), Figure.Height(1000))
     assertEquals(FigurePick.choose(List(huge, early), rules).map(_.name), Some("fig-0019-02.png"), "unless far larger")
     assertEquals(FigurePick.reject(FigurePick.Figure(com.histmersion.domain.media.figures.FigurePick.Figure.Name("x.png"), None, None), rules), Some("no size"))
     // docling names: the position in the text decides what is early
-    val a = fig("image_000009_x.png", 600, 400, at = Some(0.1))
-    val b = fig("image_000001_y.png", 800, 500, at = Some(0.9))
+    val a = fig(Figure.Name("image_000009_x.png"), Figure.Width(600), Figure.Height(400), at = Some(Figure.FirstAt(0.1)))
+    val b = fig(Figure.Name("image_000001_y.png"), Figure.Width(800), Figure.Height(500), at = Some(Figure.FirstAt(0.9)))
     assertEquals(FigurePick.choose(List(a, b), rules).map(_.name), Some("image_000009_x.png"))
 
   test("links in the converted text: counted per figure, the first one's position"):
     val body = "start ![](assets/a.png) mid ![](assets/b.png) ![](assets/a.png) end"
-    val r = FigurePick.refs(body)
-    assertEquals(r("a.png")._1, 2)
-    assertEquals(r("b.png")._1, 1)
-    assert(r("a.png")._2 < r("b.png")._2)
-    val w = FigurePick.withRefs(List(fig("a.png", 1, 1), fig("c.png", 1, 1)), body)
+    val r = FigurePick.refs(FigurePick.ConvertedText(body))
+    assertEquals(r(Figure.Name("a.png"))._1, 2)
+    assertEquals(r(Figure.Name("b.png"))._1, 1)
+    assert(r(Figure.Name("a.png"))._2.value < r(Figure.Name("b.png"))._2.value)
+    val w = FigurePick.withRefs(List(fig(Figure.Name("a.png"), Figure.Width(1), Figure.Height(1)), fig(Figure.Name("c.png"), Figure.Width(1), Figure.Height(1))), FigurePick.ConvertedText(body))
     assertEquals(w.map(f => (f.name, f.refs, f.firstAt.isDefined)), List(("a.png", 2, true), ("c.png", 0, false)))
 
   test("reports: a job's batches add up; the covers report in Markdown"):
     val a = MediaImportReport(
-      MediaProvider.Commons,
+      com.histmersion.api.media.MediaItem.Provider(MediaProvider.Commons),
       dryRun = com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false),
       targets = com.histmersion.api.media.MediaImportReport.Targets(50),
-      files = 10,
-      stored = 4,
+      files = com.histmersion.api.media.MediaImportReport.Files(10),
+      stored = com.histmersion.api.media.MediaImportReport.Stored(4),
       byLicence = List(MediaCount(com.histmersion.api.media.MediaCount.Key("CC0-1.0"), com.histmersion.api.media.MediaCount.N(2))),
-      failed = List("x"),
-      pending = 900,
-      batches = 1
+      failed = List(com.histmersion.api.media.MediaImportReport.Failed("x")),
+      pending = com.histmersion.api.media.MediaImportReport.Pending(900),
+      batches = com.histmersion.api.media.MediaImportReport.Batches(1)
     )
     val b = a.modify(
-      _.targets).setTo(20).modify(_.stored).setTo(1).modify(_.byLicence).setTo(List(MediaCount("CC0-1.0", 1), MediaCount("CC-BY-4.0", 1))).modify(_.failed).setTo(Nil).modify(_.pending).setTo(880
+      _.targets).setTo(com.histmersion.api.media.MediaImportReport.Targets(20)).modify(_.stored).setTo(com.histmersion.api.media.MediaImportReport.Stored(1)).modify(_.byLicence).setTo(List(MediaCount(com.histmersion.api.media.MediaCount.Key("CC0-1.0"), com.histmersion.api.media.MediaCount.N(1)), MediaCount(com.histmersion.api.media.MediaCount.Key("CC-BY-4.0"), com.histmersion.api.media.MediaCount.N(1)))).modify(_.failed).setTo(Nil).modify(_.pending).setTo(com.histmersion.api.media.MediaImportReport.Pending(880)
     )
     val c = MediaImportReport.combine(a, b)
     assertEquals((c.targets, c.stored, c.batches, c.pending, c.failed), (70, 5, 2, 880, List("x")))
@@ -110,7 +117,7 @@ class SourcePicturesSuite extends munit.FunSuite:
       sources = com.histmersion.api.media.MediaCoversReport.Sources(3),
       covers = com.histmersion.api.media.MediaCoversReport.Covers(1),
       illustrations = com.histmersion.api.media.MediaCoversReport.Illustrations(1),
-      lines = List(MediaSourceLine(com.histmersion.api.library.Citekey("anthony2007"), com.histmersion.api.media.MediaSourceLine.Role("cover"), MediaProvider.Calibre, com.histmersion.api.media.MediaSourceLine.Detail("Calibre id 12"))),
+      lines = List(MediaSourceLine(com.histmersion.api.library.Citekey("anthony2007"), com.histmersion.api.media.MediaSourceLine.Role("cover"), com.histmersion.api.media.MediaItem.Provider(MediaProvider.Calibre), com.histmersion.api.media.MediaSourceLine.Detail("Calibre id 12"))),
       skipped = List(MediaCount(com.histmersion.api.media.MediaCount.Key("illustration: no figures"), com.histmersion.api.media.MediaCount.N(1)))
     )
     val md = MediaMarkdown.mediaCoversReport(r)
@@ -120,5 +127,5 @@ class SourcePicturesSuite extends munit.FunSuite:
     assertEquals(MediaCoversReport.combine(r, r.modify(_.dryRun).setTo(false)).covers, 2)
 
   test("roles: a cover shows before an illustration"):
-    assert(MediaRole.order(MediaRole.Cover) < MediaRole.order(MediaRole.Illustration))
-    assert(MediaProvider.covers(MediaProvider.Calibre) && !MediaProvider.covers(MediaProvider.Commons))
+    assert(MediaRole.order(MediaRole.Wire(MediaRole.Cover)) < MediaRole.order(MediaRole.Wire(MediaRole.Illustration)))
+    assert(MediaProvider.covers(MediaProvider.Id(MediaProvider.Calibre)) && !MediaProvider.covers(MediaProvider.Id(MediaProvider.Commons)))

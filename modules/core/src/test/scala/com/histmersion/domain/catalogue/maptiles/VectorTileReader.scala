@@ -8,10 +8,10 @@ import java.nio.charset.StandardCharsets
 object VectorTileReader:
 
   final case class Feature(x: Int, y: Int, props: Map[String, TileValue]):
-    def text(k: String): Option[String] = props.get(k).collect { case TileValue.Text(s) => s }
-    def whole(k: String): Option[Long] = props.get(k).collect { case TileValue.Whole(n) => n }
+    def text(k: String): Option[String] = props.get(k).collect { case TileValue.Text(s) => s.value }
+    def whole(k: String): Option[Long] = props.get(k).collect { case TileValue.Whole(n) => n.value }
     def real(k: String): Option[Double] =
-      props.get(k).collect { case TileValue.Real(d) => d; case TileValue.Whole(n) => n.toDouble }
+      props.get(k).collect { case TileValue.Real(d) => d.value; case TileValue.Whole(n) => n.value.toDouble }
 
   final case class Layer(name: String, extent: Int, features: Vector[Feature])
 
@@ -35,10 +35,10 @@ object VectorTileReader:
 
   private def value(b: Array[Byte], from: Int, until: Int): TileValue =
     fields(b, from, until).headOption match
-      case Some((1, _, s, e))    => TileValue.Text(String(b, s, e - s, StandardCharsets.UTF_8))
-      case Some((3, bits, _, _)) => TileValue.Real(java.lang.Double.longBitsToDouble(bits))
-      case Some((6, v, _, _))    => TileValue.Whole(unzig(v))
-      case Some((7, v, _, _))    => TileValue.Flag(v != 0)
+      case Some((1, _, s, e))    => TileValue.Text(TileValue.Text.Value(String(b, s, e - s, StandardCharsets.UTF_8)))
+      case Some((3, bits, _, _)) => TileValue.Real(TileValue.Real.Value(java.lang.Double.longBitsToDouble(bits)))
+      case Some((6, v, _, _))    => TileValue.Whole(TileValue.Whole.Value(unzig(v)))
+      case Some((7, v, _, _))    => TileValue.Flag(TileValue.Flag.Value(v != 0))
       case other                 => throw IllegalArgumentException(s"unexpected value $other")
 
   private def unzig(n: Long): Long = (n >>> 1) ^ -(n & 1)

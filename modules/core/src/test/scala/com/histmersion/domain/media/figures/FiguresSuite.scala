@@ -11,15 +11,15 @@ class FiguresSuite extends munit.FunSuite:
     png(19) = 40; png(23) = 30
     val got = Figures.of(
       List(
-        "b.txt" -> Array[Byte](4, 5),
-        "z.png" -> png,
-        "a b.jpg" -> new Array[Byte](64),
-        "e.png" -> Array.emptyByteArray
+        com.histmersion.domain.media.figures.Figures.FileName("b.txt") -> com.histmersion.domain.media.assets.NewFigure.Bytes(Array[Byte](4, 5)),
+        com.histmersion.domain.media.figures.Figures.FileName("z.png") -> com.histmersion.domain.media.assets.NewFigure.Bytes(png),
+        com.histmersion.domain.media.figures.Figures.FileName("a b.jpg") -> com.histmersion.domain.media.assets.NewFigure.Bytes(new Array[Byte](64)),
+        com.histmersion.domain.media.figures.Figures.FileName("e.png") -> com.histmersion.domain.media.assets.NewFigure.Bytes(Array.emptyByteArray)
       ),
       maxBytes = com.histmersion.ByteCount(32)
     )
     assertEquals(got.map(f => (f.name, f.mime, f.width, f.height)), List(("z.png", "image/png", Some(40), Some(30))))
-    assertEquals(Figures.of(List("a b.jpg" -> new Array[Byte](64)), com.histmersion.ByteCount(1024)).map(_.name), List("a-b.jpg"))
+    assertEquals(Figures.of(List(com.histmersion.domain.media.figures.Figures.FileName("a b.jpg") -> com.histmersion.domain.media.assets.NewFigure.Bytes(new Array[Byte](64))), com.histmersion.ByteCount(1024)).map(_.name), List("a-b.jpg"))
 
   test("md_path is read from the frontmatter, quoted or not"):
     assertEquals(Figures.mdPathOf(com.histmersion.domain.media.figures.Figures.NoteText("---\nmd_path: md/x/paper.md\n---\n")), Some("md/x/paper.md"))
