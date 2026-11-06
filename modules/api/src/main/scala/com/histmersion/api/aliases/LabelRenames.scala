@@ -5,16 +5,12 @@ import com.histmersion.api.exchange.Bundle
 import com.histmersion.api.Api
 
 object LabelRenames:
-  type ValidateResultPart2 = ValidateResultPart2.T
-  object ValidateResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidateFrom = ValidateFrom.T
-  object ValidateFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValidateRaw = ValidateRaw.T
-  object ValidateRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Label = Label.T
+  object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Shape = "^[a-z0-9][a-z0-9_.-]*$".r
 
-  def validate(kind: Bundle.Kind, from: com.histmersion.api.aliases.LabelRenames.ValidateFrom, raw: com.histmersion.api.aliases.LabelRenames.ValidateRaw): Either[Api.Error, com.histmersion.api.aliases.LabelRenames.ValidateResultPart2] =
+  def validate(kind: Bundle.Kind, from: com.histmersion.api.aliases.LabelRenames.Label, raw: com.histmersion.api.aliases.LabelRenames.Label): Either[Api.Error, com.histmersion.api.aliases.LabelRenames.Label] =
     val to = (raw).value.trim
     val what = kind match
       case Bundle.Kind.Article => "article slug"
@@ -24,4 +20,4 @@ object LabelRenames:
     if !Shape.matches(to) then
       Left(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"'$to' is not an $what (lower-case letters, digits, '_', '.' and '-')"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))
     else if to == (from).value.trim then Left(Api.Error(_root_.com.histmersion.api.Api.Error.Message(s"'$to' is already that $what"), Some(_root_.com.histmersion.api.Api.Error.Code(Write.CodeInvalid))))
-    else Right(_root_.com.histmersion.api.aliases.LabelRenames.ValidateResultPart2(to))
+    else Right(_root_.com.histmersion.api.aliases.LabelRenames.Label(to))

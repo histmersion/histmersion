@@ -16,14 +16,10 @@ final case class ArticleEventLead(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 object ArticleEventLead:
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
-  type MentionedResult = MentionedResult.T
-  object MentionedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MentionedBody = MentionedBody.T
-  object MentionedBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MentionedNames = MentionedNames.T
-  object MentionedNames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -40,9 +36,9 @@ object ArticleEventLead:
   type Provider = Provider.T
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def mentioned(body: com.histmersion.api.catalogue.ArticleEventLead.MentionedBody, names: List[com.histmersion.api.catalogue.ArticleEventLead.MentionedNames]): com.histmersion.api.catalogue.ArticleEventLead.MentionedResult =
+  def mentioned(body: com.histmersion.api.catalogue.ArticleEventLead.Body, names: List[com.histmersion.api.catalogue.CatalogRecord.Names]): Boolean =
     val b = (body).value.toLowerCase(java.util.Locale.ROOT)
-    _root_.com.histmersion.api.catalogue.ArticleEventLead.MentionedResult(names.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains))
+    (names.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains))
 
   def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult =
     if leads.isEmpty then _root_.com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult("")
@@ -50,5 +46,5 @@ object ArticleEventLead:
       ("### Catalogue events in this article's period and region that it never names" :: "" ::
         leads.map { l =>
           s"- ${l.label} (`${l.eventId}`, ${l.kind}${l.size.fold("")(s => s", $s")}, ${l.years}) — " +
-            s"${Plural.count(l.findingsNear, _root_.com.histmersion.api.Plural.NounSingular("finding"))} of the filter's sources near it; from ${l.provider} (a lead, not evidence)"
+            s"${Plural.count(l.findingsNear, _root_.com.histmersion.api.Plural.Noun.Singular("finding"))} of the filter's sources near it; from ${l.provider} (a lead, not evidence)"
         }).mkString("\n")

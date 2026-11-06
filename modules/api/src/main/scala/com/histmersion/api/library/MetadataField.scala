@@ -10,26 +10,22 @@ enum MetadataField:
   case Year, Venue, Doi, Provenance, CalibreId
 
 object MetadataField:
-  type WireOfResult = WireOfResult.T
-  object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromWireS = FromWireS.T
-  object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WireResult = WireResult.T
-  object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wire = Wire.T
+  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def wireOf(f: MetadataField): com.histmersion.api.library.MetadataField.WireOfResult = f match
-    case Year       => _root_.com.histmersion.api.library.MetadataField.WireOfResult("year")
-    case Venue      => _root_.com.histmersion.api.library.MetadataField.WireOfResult("venue")
-    case Doi        => _root_.com.histmersion.api.library.MetadataField.WireOfResult("doi")
-    case Provenance => _root_.com.histmersion.api.library.MetadataField.WireOfResult("provenance")
-    case CalibreId  => _root_.com.histmersion.api.library.MetadataField.WireOfResult("calibreId")
+  def wireOf(f: MetadataField): com.histmersion.api.library.MetadataField.Wire = f match
+    case Year       => _root_.com.histmersion.api.library.MetadataField.Wire("year")
+    case Venue      => _root_.com.histmersion.api.library.MetadataField.Wire("venue")
+    case Doi        => _root_.com.histmersion.api.library.MetadataField.Wire("doi")
+    case Provenance => _root_.com.histmersion.api.library.MetadataField.Wire("provenance")
+    case CalibreId  => _root_.com.histmersion.api.library.MetadataField.Wire("calibreId")
 
-  def fromWire(s: com.histmersion.api.library.MetadataField.FromWireS): Option[MetadataField] = values.find(wireOf(_) == s)
+  def fromWire(s: com.histmersion.api.library.MetadataField.Wire): Option[MetadataField] = values.find(wireOf(_) == s)
 
   given WireEnumValues[MetadataField]:
     def all: Array[MetadataField] = MetadataField.values
-    def wire(e: MetadataField): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
-    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[MetadataField] = MetadataField.fromWire(_root_.com.histmersion.api.library.MetadataField.FromWireS((s).value))
+    def wire(e: MetadataField): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((wireOf(e)).value)
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[MetadataField] = MetadataField.fromWire(_root_.com.histmersion.api.library.MetadataField.Wire((s).value))
 
   given Encoder[MetadataField] = WireEnum.encoder
   given Decoder[MetadataField] = WireEnum.decoder

@@ -6,61 +6,33 @@ import io.circe.Json
   * astronomical years of ISO/XSD dates (0 is 1 BCE, −1 is 2 BCE) that Wikidata, LPF and PeriodO answer with.
   */
 object Years:
+  object Iso:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Era:
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Astronomical = Astronomical.T
+  object Astronomical extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Shift = Shift.T
+  object Shift extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseIsBceEra = ParseIsBceEra.T
-  object ParseIsBceEra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseSignedResultPart1 = ParseSignedResultPart1.T
-  object ParseSignedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseSignedResultPart2 = ParseSignedResultPart2.T
-  object ParseSignedResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseSignedNum = ParseSignedNum.T
-  object ParseSignedNum extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseSignedEra = ParseSignedEra.T
-  object ParseSignedEra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type FromAstronomicalResult = FromAstronomicalResult.T
-  object FromAstronomicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromAstronomicalA = FromAstronomicalA.T
-  object FromAstronomicalA extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToAstronomicalResult = ToAstronomicalResult.T
-  object ToAstronomicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToAstronomicalH = ToAstronomicalH.T
-  object ToAstronomicalH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShiftResult = ShiftResult.T
-  object ShiftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShiftH = _root_.com.histmersion.api.Years.ToAstronomicalH
-  val ShiftH: _root_.com.histmersion.api.Years.ToAstronomicalH.type = _root_.com.histmersion.api.Years.ToAstronomicalH
-  type ShiftD = ShiftD.T
-  object ShiftD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShiftH = _root_.com.histmersion.api.library.Tree.Year
+  val ShiftH: _root_.com.histmersion.api.library.Tree.Year.type = _root_.com.histmersion.api.library.Tree.Year
   type NoYearZero = NoYearZeroValue
   type NoYearZeroValue = NoYearZeroValue.T
   object NoYearZeroValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart2 = ParseResultPart2.T
-  object ParseResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseRaw = ParseRaw.T
-  object ParseRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsoAstronomicalResult = IsoAstronomicalResult.T
-  object IsoAstronomicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsoAstronomicalXsd = IsoAstronomicalXsd.T
-  object IsoAstronomicalXsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseIsoResult = ParseIsoResult.T
-  object ParseIsoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseIsoRaw = ParseIsoRaw.T
-  object ParseIsoRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromJsonResult = FromJsonResult.T
-  object FromJsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromJsonTextArg1 = FromJsonTextArg1.T
-  object FromJsonTextArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromJsonTextResult = FromJsonTextResult.T
-  object FromJsonTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def fromAstronomical(a: com.histmersion.api.Years.FromAstronomicalA): com.histmersion.api.Years.FromAstronomicalResult = if a <= 0 then _root_.com.histmersion.api.Years.FromAstronomicalResult((a).value - 1) else _root_.com.histmersion.api.Years.FromAstronomicalResult((a).value)
+  def fromAstronomical(a: com.histmersion.api.Years.Astronomical): com.histmersion.api.library.Tree.Year = if a <= 0 then _root_.com.histmersion.api.library.Tree.Year((a).value - 1) else _root_.com.histmersion.api.library.Tree.Year((a).value)
 
-  def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((h).value + 1) else if h == 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((0).toLong) else _root_.com.histmersion.api.Years.ToAstronomicalResult((h).value)
+  def toAstronomical(h: com.histmersion.api.library.Tree.Year): com.histmersion.api.Years.Astronomical = if (h).value < 0 then _root_.com.histmersion.api.Years.Astronomical((h).value + 1) else if h == 0 then _root_.com.histmersion.api.Years.Astronomical((0).toLong) else _root_.com.histmersion.api.Years.Astronomical((h).value)
 
-  def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical((toAstronomical(h)).value + d)
+  def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.Shift): com.histmersion.api.library.Tree.Year = fromAstronomical((toAstronomical(h)).value + d)
 
   val NoYearZero: com.histmersion.api.Years.NoYearZero = _root_.com.histmersion.api.Years.NoYearZeroValue("there is no year 0 (1 BCE is -1, 1 CE is 1)")
 
@@ -70,13 +42,13 @@ object Years:
   private val Typed = s"^([+-]?\\d+)\\s*($EraBce|$EraCe)?$$".r
   private val EraFirst = s"^($EraBce|$EraCe)\\s*(\\d+)$$".r
 
-  def parse(raw: com.histmersion.api.Years.ParseRaw): Either[com.histmersion.api.Years.ParseResultPart1, com.histmersion.api.Years.ParseResultPart2] =
+  def parse(raw: com.histmersion.api.Years.Text): Either[com.histmersion.api.Years.Problem, com.histmersion.api.library.Tree.Year] =
     val t = Circa
       .replaceFirstIn(Option((raw).value).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT), "")
       .replace(",", "")
       .trim
-    def isBce(era: com.histmersion.api.Years.ParseIsBceEra) = (era).value.matches(EraBce)
-    def signed(num: com.histmersion.api.Years.ParseSignedNum, era: Option[com.histmersion.api.Years.ParseSignedEra]): Either[com.histmersion.api.Years.ParseSignedResultPart1, com.histmersion.api.Years.ParseSignedResultPart2] =
+    def isBce(era: com.histmersion.api.Years.Era.Wire) = (era).value.matches(EraBce)
+    def signed(num: String, era: Option[com.histmersion.api.Years.Era.Wire]): Either[com.histmersion.api.Years.Problem, com.histmersion.api.library.Tree.Year] =
       (num).value.toLongOption.toRight(s"'${(raw).value.trim}' is not a year").flatMap { n =>
         era match
           case None                => Right(n)
@@ -85,19 +57,19 @@ object Years:
           case Some(_)             => Right(n)
       }
     val parsed = t match
-      case Typed(num, era)    => signed(_root_.com.histmersion.api.Years.ParseSignedNum(num), Option(_root_.com.histmersion.api.Years.ParseSignedEra(era)))
-      case EraFirst(era, num) => signed(_root_.com.histmersion.api.Years.ParseSignedNum(num), Some(_root_.com.histmersion.api.Years.ParseSignedEra(era)))
+      case Typed(num, era)    => signed((num), Option(_root_.com.histmersion.api.Years.Era.Wire(era)))
+      case EraFirst(era, num) => signed((num), Some(_root_.com.histmersion.api.Years.Era.Wire(era)))
       case _                  => Left(s"'${(raw).value.trim}' is not a year (e.g. 1300 BCE, 530 CE, -1300)")
     parsed.flatMap(y => if y == 0 then Left(s"'${(raw).value.trim}': $NoYearZero") else Right(y))
 
-  def isoAstronomical(xsd: com.histmersion.api.Years.IsoAstronomicalXsd): Option[com.histmersion.api.Years.IsoAstronomicalResult] =
+  def isoAstronomical(xsd: com.histmersion.api.Years.Iso.Wire): Option[com.histmersion.api.Years.Astronomical] =
     val s = (xsd).value.trim
     val neg = s.startsWith("-")
     val digits = (if neg || s.startsWith("+") then s.drop(1) else s).takeWhile(_.isDigit)
-    digits.toLongOption.map(v => if neg then _root_.com.histmersion.api.Years.IsoAstronomicalResult(-v) else _root_.com.histmersion.api.Years.IsoAstronomicalResult(v))
+    digits.toLongOption.map(v => if neg then _root_.com.histmersion.api.Years.Astronomical(-v) else _root_.com.histmersion.api.Years.Astronomical(v))
 
-  def parseIso(raw: com.histmersion.api.Years.ParseIsoRaw): Option[com.histmersion.api.Years.ParseIsoResult] =
-    (raw).value.trim.toLongOption.map(_root_.com.histmersion.api.Years.ParseIsoResult((fromAstronomical).value))
+  def parseIso(raw: com.histmersion.api.Years.Iso.Wire): Option[com.histmersion.api.Years.Astronomical] =
+    (raw).value.trim.toLongOption.map(_root_.com.histmersion.api.Years.Astronomical((fromAstronomical).value))
 
-  def fromJson(j: Json, text: com.histmersion.api.Years.FromJsonTextArg1 => Option[com.histmersion.api.Years.FromJsonTextResult]): Option[com.histmersion.api.Years.FromJsonResult] =
-    (j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(_root_.com.histmersion.api.Years.FromJsonTextArg1(refactorValue))).map(refactorValue2 => (refactorValue2).value) })).orElse(j.asNumber.map(_.toDouble.round))).map(refactorValue4 => _root_.com.histmersion.api.Years.FromJsonResult(refactorValue4))
+  def fromJson(j: Json, text: com.histmersion.api.Years.Text => Option[com.histmersion.api.library.Tree.Year]): Option[com.histmersion.api.library.Tree.Year] =
+    (j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(_root_.com.histmersion.api.Years.Text(refactorValue))).map(refactorValue2 => (refactorValue2).value) })).orElse(j.asNumber.map(_.toDouble.round))).map(refactorValue4 => _root_.com.histmersion.api.library.Tree.Year(refactorValue4))

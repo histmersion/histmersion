@@ -9,12 +9,12 @@ import io.circe.Codec
 import scala.annotation.tailrec
 import sttp.tapir.Schema
 final case class Period(start: com.histmersion.api.catalogue.Year, end: com.histmersion.api.catalogue.Year):
-  def isPoint: com.histmersion.api.catalogue.Period.IsPointResult = _root_.com.histmersion.api.catalogue.Period.IsPointResult(start == end)
+  def isPoint: Boolean = (start == end)
 
 object Period:
+  type IsoYear = IsoYear.T
+  object IsoYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type IsPointResult = IsPointResult.T
-  object IsPointResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Detail(
       period: HistoricalPeriod,
@@ -65,23 +65,19 @@ object Period:
     case ImplausibleSpan
 
   object Skip:
-    type WireOfResult = WireOfResult.T
-    object WireOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WireResult = WireResult.T
-    object WireResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type FromWireS = FromWireS.T
-    object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Wire = Wire.T
+    object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def wireOf(p: Skip): com.histmersion.api.catalogue.Period.Skip.WireOfResult = p match
-      case NoSpan          => _root_.com.histmersion.api.catalogue.Period.Skip.WireOfResult("no_span")
-      case EndsBeforeStart => _root_.com.histmersion.api.catalogue.Period.Skip.WireOfResult("ends_before_start")
-      case OutOfRange      => _root_.com.histmersion.api.catalogue.Period.Skip.WireOfResult("out_of_range")
-      case ImplausibleSpan => _root_.com.histmersion.api.catalogue.Period.Skip.WireOfResult("implausible_span")
+    def wireOf(p: Skip): com.histmersion.api.catalogue.Period.Skip.Wire = p match
+      case NoSpan          => _root_.com.histmersion.api.catalogue.Period.Skip.Wire("no_span")
+      case EndsBeforeStart => _root_.com.histmersion.api.catalogue.Period.Skip.Wire("ends_before_start")
+      case OutOfRange      => _root_.com.histmersion.api.catalogue.Period.Skip.Wire("out_of_range")
+      case ImplausibleSpan => _root_.com.histmersion.api.catalogue.Period.Skip.Wire("implausible_span")
 
     given WireEnumValues[Skip]:
       def all: Array[Skip] = Skip.values
-      def wire(e: Skip): _root_.com.histmersion.api.WireEnumValues.WireResult = _root_.com.histmersion.api.WireEnumValues.WireResult((wireOf(e)).value)
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Skip] = Skip.values.find(wireOf(_) == s)
+      def wire(e: Skip): _root_.com.histmersion.api.WireEnumValues.Wire = _root_.com.histmersion.api.WireEnumValues.Wire((wireOf(e)).value)
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Skip] = Skip.values.find(wireOf(_) == s)
 
     given io.circe.Encoder[Skip] = WireEnum.encoder
     given io.circe.Decoder[Skip] = WireEnum.decoder

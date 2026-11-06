@@ -3,41 +3,29 @@ package com.histmersion.api.catalogue
 import com.histmersion.api.{Plural, TimeSpan, YearFmt}
 import com.histmersion.api.given
 object EventLeads:
+  type LeadList = LeadList.T
+  object LeadList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type YearsResult = YearsResult.T
-  object YearsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeResult = SizeResult.T
-  object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SizeVei = _root_.com.histmersion.api.catalogue.LeadFacts.Vei
   val SizeVei: _root_.com.histmersion.api.catalogue.LeadFacts.Vei.type = _root_.com.histmersion.api.catalogue.LeadFacts.Vei
   type SizeMagnitude = _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude
   val SizeMagnitude: _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude.type = _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude
-  type QResult = QResult.T
-  object QResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QS = QS.T
-  object QS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionsEventId = ActionsEventId.T
-  object ActionsEventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ActionsLabel = _root_.com.histmersion.api.catalogue.LeadFacts.Label
   val ActionsLabel: _root_.com.histmersion.api.catalogue.LeadFacts.Label.type = _root_.com.histmersion.api.catalogue.LeadFacts.Label
-  type ActionsYrs = ActionsYrs.T
-  object ActionsYrs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ActionsProposed = _root_.com.histmersion.api.catalogue.LeadFacts.Proposed
   val ActionsProposed: _root_.com.histmersion.api.catalogue.LeadFacts.Proposed.type = _root_.com.histmersion.api.catalogue.LeadFacts.Proposed
-  type MarkdownResult = MarkdownResult.T
-  object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def years(ts: TimeSpan): com.histmersion.api.catalogue.EventLeads.YearsResult =
+  def years(ts: TimeSpan): String =
     YearFmt.span(ts)
 
-  def size(vei: Option[com.histmersion.api.catalogue.EventLeads.SizeVei], magnitude: Option[com.histmersion.api.catalogue.EventLeads.SizeMagnitude]): Option[com.histmersion.api.catalogue.EventLeads.SizeResult] =
+  def size(vei: Option[com.histmersion.api.catalogue.EventLeads.SizeVei], magnitude: Option[com.histmersion.api.catalogue.EventLeads.SizeMagnitude]): Option[String] =
     (vei
       .map(v => s"VEI $v")
-      .orElse(magnitude.map(m => s"M ${BigDecimal((m).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)}"))).map(refactorValue2 => _root_.com.histmersion.api.catalogue.EventLeads.SizeResult(refactorValue2))
+      .orElse(magnitude.map(m => s"M ${BigDecimal((m).value).setScale(1, BigDecimal.RoundingMode.HALF_UP)}"))).map(refactorValue2 => (refactorValue2))
 
-  private def q(s: com.histmersion.api.catalogue.EventLeads.QS): com.histmersion.api.catalogue.EventLeads.QResult = _root_.com.histmersion.api.catalogue.EventLeads.QResult("\"" + (s).value.replace("\"", "'") + "\"")
+  private def q(s: String): String = ("\"" + (s).value.replace("\"", "'") + "\"")
 
-  def actions(eventId: com.histmersion.api.catalogue.EventLeads.ActionsEventId, label: com.histmersion.api.catalogue.EventLeads.ActionsLabel, yrs: com.histmersion.api.catalogue.EventLeads.ActionsYrs, proposed: com.histmersion.api.catalogue.EventLeads.ActionsProposed): List[EventLead.Action] =
+  def actions(eventId: com.histmersion.api.catalogue.Event.Id, label: com.histmersion.api.catalogue.EventLeads.ActionsLabel, yrs: String, proposed: com.histmersion.api.catalogue.EventLeads.ActionsProposed): List[EventLead.Action] =
     List(
       EventLead.Action(
         _root_.com.histmersion.api.catalogue.EventLead.Action.Kind("discover"),
@@ -48,7 +36,7 @@ object EventLeads:
       EventLead.Action(
         _root_.com.histmersion.api.catalogue.EventLead.Action.Kind("acquire"),
         _root_.com.histmersion.api.catalogue.EventLead.Action.Label("add to the acquire queue"),
-        _root_.com.histmersion.api.catalogue.EventLead.Action.Command(s"histmersion queue acquire add ${q(_root_.com.histmersion.api.catalogue.EventLeads.QS(s"literature on $label ($yrs)"))} --topic events")
+        _root_.com.histmersion.api.catalogue.EventLead.Action.Command(s"histmersion queue acquire add ${q((s"literature on $label ($yrs)"))} --topic events")
       ),
       EventLead.Action(_root_.com.histmersion.api.catalogue.EventLead.Action.Kind("goal"), _root_.com.histmersion.api.catalogue.EventLead.Action.Label("link to a goal"), s"histmersion goals link <goal> --query ${q(label)}", Some(label))
     ) ++
@@ -79,17 +67,17 @@ object EventLeads:
           f.tier,
           yrs,
           text,
-          actions(f.eventId, f.label, _root_.com.histmersion.api.catalogue.EventLeads.ActionsYrs((yrs).value), f.proposed),
+          actions(f.eventId, f.label, ((yrs).value), f.proposed),
           f.findingsNear,
           f.proposed
         )
       )
 
-  def markdown(l: EventLead.List): com.histmersion.api.catalogue.EventLeads.MarkdownResult =
+  def markdown(l: EventLead.List): com.histmersion.api.catalogue.EventLeads.LeadList =
     if l.leads.isEmpty then
-      _root_.com.histmersion.api.catalogue.EventLeads.MarkdownResult("_No leads: every event in the selection is attested by a source in the corpus, or none matched._")
+      _root_.com.histmersion.api.catalogue.EventLeads.LeadList("_No leads: every event in the selection is attested by a source in the corpus, or none matched._")
     else
-      _root_.com.histmersion.api.catalogue.EventLeads.MarkdownResult((s"## Event leads (${l.leads.size} of ${l.total})" :: "" :: l.leads.map { e =>
+      _root_.com.histmersion.api.catalogue.EventLeads.LeadList((s"## Event leads (${l.leads.size} of ${l.total})" :: "" :: l.leads.map { e =>
         s"- **${e.label}** (`${e.eventId}`, ${e.kind}) — ${e.text}\n" +
           e.actions.map(a => s"  - ${a.label}: `${a.command}`").mkString("\n")
       }).mkString("\n"))

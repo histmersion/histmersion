@@ -24,23 +24,19 @@ final case class MediaThumb(
     _root_.com.histmersion.api.media.MediaThumb.MarkdownLineResult(s"- _${role}_ — $credit · $lic$from · `$url`")
 
 object MediaThumb:
+  type FilePath = FilePath.T
+  object FilePath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ThumbPath = ThumbPath.T
+  object ThumbPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   type MarkdownLineResult = MarkdownLineResult.T
   object MarkdownLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbPathResult = ThumbPathResult.T
-  object ThumbPathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ThumbPathUid = ThumbPathUid.T
-  object ThumbPathUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilePathResult = FilePathResult.T
-  object FilePathResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FilePathUid = FilePathUid.T
-  object FilePathUid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Role = Role.T
   object Role extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Url = Url.T
   object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def thumbPath(uid: com.histmersion.api.media.MediaThumb.ThumbPathUid): com.histmersion.api.media.MediaThumb.ThumbPathResult = _root_.com.histmersion.api.media.MediaThumb.ThumbPathResult(s"/media/$uid/thumb")
-  def filePath(uid: com.histmersion.api.media.MediaThumb.FilePathUid): com.histmersion.api.media.MediaThumb.FilePathResult = _root_.com.histmersion.api.media.MediaThumb.FilePathResult(s"/media/$uid/file")
+  def thumbPath(uid: com.histmersion.api.media.Asset.Uid): com.histmersion.api.media.MediaThumb.ThumbPath = _root_.com.histmersion.api.media.MediaThumb.ThumbPath(s"/media/$uid/thumb")
+  def filePath(uid: com.histmersion.api.media.Asset.Uid): com.histmersion.api.media.MediaThumb.FilePath = _root_.com.histmersion.api.media.MediaThumb.FilePath(s"/media/$uid/file")

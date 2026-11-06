@@ -20,10 +20,12 @@ final class PlanMatchKind[A](listed: A => PlanMatchKind.ListedResult, line: A =>
   def all(m: PlanMatches): List[A] = m.rows.flatMap(decoder.decodeJson(_).toOption)
 
   /** The matches the plan's Markdown lists (at most `limit`), one line each. */
-  def lines(m: PlanMatches, limit: com.histmersion.api.exchange.PlanMatchKind.LinesLimit): List[com.histmersion.api.exchange.PlanMatchKind.LinesResult] =
+  def lines(m: PlanMatches, limit: com.histmersion.api.exchange.PlanMatchKind.LineLimit): List[com.histmersion.api.exchange.PlanMatchKind.LinesResult] =
     m.rows.flatMap(decoder.decodeJson(_).toOption).filter({ val refactorFunction = listed; (refactorValue) => ((refactorFunction(refactorValue)) == _root_.com.histmersion.api.exchange.PlanMatchKind.ListedResult(true)) }).take((limit).value).map({ val refactorFunction3 = line; (refactorValue3) => _root_.com.histmersion.api.exchange.PlanMatchKind.LinesResult((refactorFunction3(refactorValue3)).value) })
 
 object PlanMatchKind:
+  type LineLimit = LineLimit.T
+  object LineLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListedResult = ListedResult.T
   object ListedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LineResult = LineResult.T
@@ -31,5 +33,3 @@ object PlanMatchKind:
 
   type LinesResult = LinesResult.T
   object LinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinesLimit = LinesLimit.T
-  object LinesLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

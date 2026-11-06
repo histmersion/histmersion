@@ -399,8 +399,8 @@ object ReviewArticle:
     def parse(s: com.histmersion.domain.ReviewArticle.Reviewer.ParseS): Option[Reviewer] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[Reviewer]:
       def all: Array[Reviewer] = Reviewer.values
-      def wire(e: Reviewer): _root_.com.histmersion.api.WireEnumValues.WireResult = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Reviewer] = parse(s)
+      def wire(e: Reviewer): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Reviewer] = parse(s)
     given Encoder[Reviewer] = WireEnum.encoder
     given Decoder[Reviewer] = WireEnum.decoder
     given Schema[Reviewer] = WireEnum.schema
@@ -423,8 +423,8 @@ object ReviewArticle:
     def parse(s: com.histmersion.domain.ReviewArticle.Severity.ParseS): Option[Severity] = values.find(_.wire == s.trim.toLowerCase)
     given WireEnumValues[Severity]:
       def all: Array[Severity] = Severity.values
-      def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.WireResult = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Severity] = parse(s)
+      def wire(e: Severity): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Severity] = parse(s)
     given Encoder[Severity] = WireEnum.encoder
     given Decoder[Severity] = WireEnum.decoder
     given Schema[Severity] = WireEnum.schema
@@ -456,8 +456,8 @@ object ReviewArticle:
       if fs.exists(_.severity == Severity.Major) then Major else if fs.nonEmpty then Minor else Pass
     given WireEnumValues[Verdict]:
       def all: Array[Verdict] = Verdict.values
-      def wire(e: Verdict): _root_.com.histmersion.api.WireEnumValues.WireResult = e.wire
-      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[Verdict] = parse(s)
+      def wire(e: Verdict): _root_.com.histmersion.api.WireEnumValues.Wire = e.wire
+      def fromWire(s: _root_.com.histmersion.api.WireEnumValues.Wire): _root_.scala.Option[Verdict] = parse(s)
     given Encoder[Verdict] = WireEnum.encoder
     given Decoder[Verdict] = WireEnum.decoder
     given Schema[Verdict] = WireEnum.schema

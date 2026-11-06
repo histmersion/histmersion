@@ -3,75 +3,43 @@ package com.histmersion.api.research
 import com.histmersion.api.Plural
 import com.histmersion.api.given
 object Critiques:
+  type Count = Count.T
+  object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OpenLimit = OpenLimit.T
+  object OpenLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Prompt = Prompt.T
+  object Prompt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReasonedLimit = ReasonedLimit.T
+  object ReasonedLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefCount = RefCount.T
+  object RefCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Refs = Refs.T
+  object Refs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Summary = Summary.T
+  object Summary extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type UnitsAddS = UnitsAddS.T
-  object UnitsAddS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotUsedLinesHeadingL = NotUsedLinesHeadingL.T
-  object NotUsedLinesHeadingL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotUsedLinesLevelL = NotUsedLinesLevelL.T
-  object NotUsedLinesLevelL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildSideCk = BuildSideCk.T
-  object BuildSideCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Kinds = KindsValue
   type KindsValue = KindsValue.T
   object KindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OlderFirstResult = OlderFirstResult.T
-  object OlderFirstResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OlderFirstKinds = OlderFirstKinds.T
   object OlderFirstKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParagraphsResult = _root_.com.histmersion.api.research.Critiques.Block.Text
   val ParagraphsResult: _root_.com.histmersion.api.research.Critiques.Block.Text.type = _root_.com.histmersion.api.research.Critiques.Block.Text
-  type ParagraphsBody = _root_.com.histmersion.api.research.Critiques.UnitsBody
-  val ParagraphsBody: _root_.com.histmersion.api.research.Critiques.UnitsBody.type = _root_.com.histmersion.api.research.Critiques.UnitsBody
-  type UnitsBody = UnitsBody.T
-  object UnitsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotUsedLinesResult = NotUsedLinesResult.T
-  object NotUsedLinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotUsedLinesLines = NotUsedLinesLines.T
-  object NotUsedLinesLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildBody = _root_.com.histmersion.api.research.Critiques.UnitsBody
-  val BuildBody: _root_.com.histmersion.api.research.Critiques.UnitsBody.type = _root_.com.histmersion.api.research.Critiques.UnitsBody
-  type BuildResolveArg1 = BuildResolveArg1.T
-  object BuildResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildResolveResult = BuildResolveResult.T
-  object BuildResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildRefsArg1 = BuildRefsArg1.T
-  object BuildRefsArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildRefsResultPart1 = BuildRefsResultPart1.T
-  object BuildRefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildRefsResultPart2 = BuildRefsResultPart2.T
-  object BuildRefsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountResult = CountResult.T
-  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TogetherResult = TogetherResult.T
-  object TogetherResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TogetherBody = _root_.com.histmersion.api.research.Critiques.UnitsBody
-  val TogetherBody: _root_.com.histmersion.api.research.Critiques.UnitsBody.type = _root_.com.histmersion.api.research.Critiques.UnitsBody
-  type TogetherResolveArg1 = TogetherResolveArg1.T
-  object TogetherResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TogetherResolveResult = TogetherResolveResult.T
-  object TogetherResolveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SummaryResult = SummaryResult.T
-  object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParagraphsBody = String
+  val ParagraphsBody: String.type = String
+  type BuildBody = String
+  val BuildBody: String.type = String
+  type TogetherBody = String
+  val TogetherBody: String.type = String
   type MethodPartResult = MethodPartResult.T
   object MethodPartResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SideTextResult = SideTextResult.T
-  object SideTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PairTextResult = PairTextResult.T
-  object PairTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PromptTextResultPart1 = PromptTextResultPart1.T
-  object PromptTextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PromptTextMaxOpen = PromptTextMaxOpen.T
-  object PromptTextMaxOpen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PromptTextMaxReasoned = PromptTextMaxReasoned.T
-  object PromptTextMaxReasoned extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Kinds: List[com.histmersion.api.research.Critiques.Kinds] = Article.Coverage.DisagreementKinds
 
-  def olderFirst(kinds: List[com.histmersion.api.research.Critiques.OlderFirstKinds]): com.histmersion.api.research.Critiques.OlderFirstResult = _root_.com.histmersion.api.research.Critiques.OlderFirstResult(kinds.nonEmpty && kinds.forall(_ == _root_.com.histmersion.api.research.Critiques.OlderFirstKinds("superseded_by")))
+  def olderFirst(kinds: List[com.histmersion.api.research.Critiques.OlderFirstKinds]): Boolean = (kinds.nonEmpty && kinds.forall(_ == _root_.com.histmersion.api.research.Critiques.OlderFirstKinds("superseded_by")))
 
   private val ListItem = "^([-*+]|\\d+[.)])\\s+.*".r
 
@@ -87,7 +55,7 @@ object Critiques:
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def units(body: com.histmersion.api.research.Critiques.UnitsBody): List[Block] =
+  def units(body: String): List[Block] =
     val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector
     val skip = notUsedLines(lines)
     val out = List.newBuilder[Block]
@@ -102,7 +70,7 @@ object Critiques:
       start = -1
     lines.indices.foreach { i =>
       val t = lines(i).trim
-      def add(s: com.histmersion.api.research.Critiques.UnitsAddS): Unit =
+      def add(s: String): Unit =
         if start < 0 then start = i
         last = i
         cur.append(if cur.isEmpty then s else s" $s")
@@ -111,34 +79,34 @@ object Critiques:
       else if fence then ()
       else if t.isEmpty then flush()
       else if t.startsWith("#") then flush()
-      else if t.startsWith("|") then { flush(); add(_root_.com.histmersion.api.research.Critiques.UnitsAddS(t)); flush() }
-      else if ListItem.matches(t) then { flush(); add(_root_.com.histmersion.api.research.Critiques.UnitsAddS(t)) }
-      else add(_root_.com.histmersion.api.research.Critiques.UnitsAddS(t))
+      else if t.startsWith("|") then { flush(); add((t)); flush() }
+      else if ListItem.matches(t) then { flush(); add((t)) }
+      else add((t))
     }
     flush()
     out.result()
 
-  private def notUsedLines(lines: Vector[com.histmersion.api.research.Critiques.NotUsedLinesLines]): Set[com.histmersion.api.research.Critiques.NotUsedLinesResult] =
-    def heading(l: com.histmersion.api.research.Critiques.NotUsedLinesHeadingL) = (l).value.trim.startsWith("#")
-    def level(l: com.histmersion.api.research.Critiques.NotUsedLinesLevelL) = (l).value.trim.takeWhile(_ == '#').length
+  private def notUsedLines(lines: Vector[String]): Set[Int] =
+    def heading(l: String) = (l).value.trim.startsWith("#")
+    def level(l: String) = (l).value.trim.takeWhile(_ == '#').length
     lines.indexWhere(l => heading(l) && l.trim.replaceAll("^#+\\s*", "").trim.toLowerCase.startsWith("not used")) match
       case -1 => Set.empty
       case i  =>
         val lv = level(lines(i))
         val end = lines.indexWhere(l => heading(l) && level(l) <= lv, i + 1)
-        ((i until (if end < 0 then lines.size else end)).toSet).map(refactorValue => _root_.com.histmersion.api.research.Critiques.NotUsedLinesResult(refactorValue))
+        ((i until (if end < 0 then lines.size else end)).toSet).map(refactorValue => (refactorValue))
 
   def build(
       body: com.histmersion.api.research.Critiques.BuildBody,
-      resolve: com.histmersion.api.research.Critiques.BuildResolveArg1 => Option[com.histmersion.api.research.Critiques.BuildResolveResult],
+      resolve: com.histmersion.api.library.Citekey => Option[com.histmersion.api.library.Citekey],
       edges: List[Coverage.Edge],
       reasons: List[CritiqueReason],
-      refs: com.histmersion.api.research.Critiques.BuildRefsArg1 => Option[(com.histmersion.api.research.Critiques.BuildRefsResultPart1, Option[com.histmersion.api.research.Critiques.BuildRefsResultPart2])] = _ => None
+      refs: com.histmersion.api.research.Critiques.Block.Text => Option[(com.histmersion.api.research.Critiques.Refs, Option[com.histmersion.api.research.Critiques.RefCount])] = _ => None
   ): List[CritiquePair] =
     val units = paragraphs(body).map(p => Article.Links.targets(p).flatMap(resolve).toSet)
     val cited = units.flatten.toSet
     val mentions = units.flatMap(_.toList).groupBy(identity).view.mapValues(_.size).toMap
-    def side(ck: com.histmersion.api.research.Critiques.BuildSideCk) =
+    def side(ck: com.histmersion.api.library.Citekey) =
       val r = refs(ck)
       CritiqueSide(ck, r.map(_._1), r.flatMap(_._2), cited(ck), mentions.getOrElse(ck, 0))
     edges
@@ -164,11 +132,11 @@ object Critiques:
         )
       }
 
-  def find(pairs: List[CritiquePair], r: CritiqueRef): Option[CritiquePair] = pairs.find((refactorCallback => ((refactorCallback.ref.same(r)) == _root_.com.histmersion.api.research.CritiqueRef.SameResult(true))))
+  def find(pairs: List[CritiquePair], r: CritiqueRef): Option[CritiquePair] = pairs.find((refactorCallback => ((refactorCallback.ref.same(r)) == (true))))
 
-  def count(pairs: List[CritiquePair], s: CritiqueState): com.histmersion.api.research.Critiques.CountResult = _root_.com.histmersion.api.research.Critiques.CountResult(pairs.count(_.state == s))
+  def count(pairs: List[CritiquePair], s: CritiqueState): com.histmersion.api.research.Critiques.Count = _root_.com.histmersion.api.research.Critiques.Count(pairs.count(_.state == s))
 
-  def together(body: com.histmersion.api.research.Critiques.TogetherBody, r: CritiqueRef, resolve: com.histmersion.api.research.Critiques.TogetherResolveArg1 => Option[com.histmersion.api.research.Critiques.TogetherResolveResult]): com.histmersion.api.research.Critiques.TogetherResult =
+  def together(body: com.histmersion.api.research.Critiques.TogetherBody, r: CritiqueRef, resolve: com.histmersion.api.library.Citekey => Option[com.histmersion.api.library.Citekey]): Boolean =
     units(body).exists { u =>
       val cks = Article.Links.targets(u.text).flatMap(resolve).toSet
       cks(r.src) && cks(r.dst)
@@ -186,25 +154,25 @@ object Critiques:
       .minOption
       .getOrElse(3)
     pairs
-      .filter((refactorCallback2 => ((refactorCallback2.open) == _root_.com.histmersion.api.research.CritiquePair.OpenResult(true))))
+      .filter((refactorCallback2 => ((refactorCallback2.open) == (true))))
       .sortBy(p => (tier(p), kind(p), -((p.src.mentions).value + p.dst.mentions), p.src.citekey, p.dst.citekey))
 
-  def summary(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.SummaryResult =
-    _root_.com.histmersion.api.research.Critiques.SummaryResult(s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((pairs.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
+  def summary(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.Summary =
+    _root_.com.histmersion.api.research.Critiques.Summary(s"${Plural.count(_root_.com.histmersion.api.Plural.CountN((pairs.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("pair"))} — ${count(pairs, CritiqueState.Addressed)} addressed, " +
       s"${count(pairs, CritiqueState.Reasoned)} reasoned, ${count(pairs, CritiqueState.Open)} open")
 
   def methodPart(pairs: List[CritiquePair]): Option[com.histmersion.api.research.Critiques.MethodPartResult] =
     Option.when(pairs.nonEmpty)(_root_.com.histmersion.api.research.Critiques.MethodPartResult(s"disagreements checked: ${summary(pairs)}"))
 
-  private def sideText(s: CritiqueSide): com.histmersion.api.research.Critiques.SideTextResult =
+  private def sideText(s: CritiqueSide): String =
     val meta = (s.year.map(_.toString).toList ++ s.title
       .map(t => "\"" + (if t.length > 90 then t.take(89).trim + "…" else t) + "\"")
       .toList)
     val cited = if ((s.cited) == _root_.com.histmersion.api.research.CritiqueSide.Cited(true)) then "cited" else "not cited"
-    _root_.com.histmersion.api.research.Critiques.SideTextResult(s"[[${s.citekey}]] (${(meta :+ cited).mkString(", ")})")
+    (s"[[${s.citekey}]] (${(meta :+ cited).mkString(", ")})")
 
-  def pairText(p: CritiquePair): com.histmersion.api.research.Critiques.PairTextResult =
-    _root_.com.histmersion.api.research.Critiques.PairTextResult(s"${p.ref.wire}: ${sideText(p.src)} ${p.kinds.mkString("/")} ${sideText(p.dst)}")
+  def pairText(p: CritiquePair): String =
+    (s"${p.ref.wire}: ${sideText(p.src)} ${p.kinds.mkString("/")} ${sideText(p.dst)}")
 
   def markdown(pairs: List[CritiquePair]): com.histmersion.api.research.Critiques.MarkdownResult =
     if pairs.isEmpty then _root_.com.histmersion.api.research.Critiques.MarkdownResult("")
@@ -226,17 +194,17 @@ object Critiques:
 
   def toRule(pairs: List[CritiquePair]): List[CritiquePair] =
     ranked(pairs)
-      .filter((refactorCallback2 => ((refactorCallback2.bearing) == _root_.com.histmersion.api.research.CritiquePair.BearingResult(true))))
-      .foldLeft(Vector.empty[CritiquePair])((acc, p) => if acc.exists((refactorCallback2 => ((refactorCallback2.ref.same(p.ref)) == _root_.com.histmersion.api.research.CritiqueRef.SameResult(true)))) then acc else acc :+ p)
+      .filter((refactorCallback2 => ((refactorCallback2.bearing) == (true))))
+      .foldLeft(Vector.empty[CritiquePair])((acc, p) => if acc.exists((refactorCallback2 => ((refactorCallback2.ref.same(p.ref)) == (true)))) then acc else acc :+ p)
       .toList
 
-  def promptText(pairs: List[CritiquePair], maxOpen: com.histmersion.api.research.Critiques.PromptTextMaxOpen, maxReasoned: com.histmersion.api.research.Critiques.PromptTextMaxReasoned): (com.histmersion.api.research.Critiques.PromptTextResultPart1, List[CritiquePair]) =
+  def promptText(pairs: List[CritiquePair], maxOpen: com.histmersion.api.research.Critiques.OpenLimit, maxReasoned: com.histmersion.api.research.Critiques.ReasonedLimit): (com.histmersion.api.research.Critiques.Prompt, List[CritiquePair]) =
     val open = toRule(pairs)
     val shown = open.take(math.max(0, (maxOpen).value))
     val rest = open.drop(shown.size)
-    val background = ranked(pairs).filterNot((refactorCallback => ((refactorCallback.bearing) == _root_.com.histmersion.api.research.CritiquePair.BearingResult(true))))
+    val background = ranked(pairs).filterNot((refactorCallback => ((refactorCallback.bearing) == (true))))
     val reasoned = pairs.filter(_.state == CritiqueState.Reasoned)
-    if shown.isEmpty && background.isEmpty && reasoned.isEmpty then (_root_.com.histmersion.api.research.Critiques.PromptTextResultPart1(""), Nil)
+    if shown.isEmpty && background.isEmpty && reasoned.isEmpty then (_root_.com.histmersion.api.research.Critiques.Prompt(""), Nil)
     else
       def names(ps: List[CritiquePair]) =
         ps.take(40).map(_.ref.wire).mkString(", ") + (if ps.size > 40 then ", …" else "")
@@ -263,4 +231,4 @@ object Critiques:
               .map(p => s"- ${p.ref.wire}: ${p.reason.getOrElse("").take(200)}")
               .mkString("\n") +
             (if reasoned.size > (maxReasoned).value then s"\n(+${reasoned.size - (maxReasoned).value} more)" else "")
-      (_root_.com.histmersion.api.research.Critiques.PromptTextResultPart1(s"${summary(pairs)}.\n\n$openPart$reasonPart"), shown)
+      (_root_.com.histmersion.api.research.Critiques.Prompt(s"${summary(pairs)}.\n\n$openPart$reasonPart"), shown)

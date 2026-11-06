@@ -7,66 +7,20 @@ import com.histmersion.api.given
 import com.histmersion.api.library.Source
 object ArticleMarkdown:
 
-  type ArticleResult = ArticleResult.T
-  object ArticleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleParts = ArticleParts.T
-  object ArticleParts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleFullResult = ArticleFullResult.T
-  object ArticleFullResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoverageResult = CoverageResult.T
-  object CoverageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaLineResult = MetaLineResult.T
-  object MetaLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MetaLineKind = _root_.com.histmersion.api.research.Article.KindValue
   val MetaLineKind: _root_.com.histmersion.api.research.Article.KindValue.type = _root_.com.histmersion.api.research.Article.KindValue
   type MetaLineRegions = _root_.com.histmersion.api.research.Article.Row.Regions
   val MetaLineRegions: _root_.com.histmersion.api.research.Article.Row.Regions.type = _root_.com.histmersion.api.research.Article.Row.Regions
-  type MetaLinePeriod = MetaLinePeriod.T
-  object MetaLinePeriod extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MetaLineTags = _root_.com.histmersion.api.research.Article.Row.Tags
   val MetaLineTags: _root_.com.histmersion.api.research.Article.Row.Tags.type = _root_.com.histmersion.api.research.Article.Row.Tags
-  type ChipLinksListResult = ChipLinksListResult.T
-  object ChipLinksListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipLinksListValues = ChipLinksListValues.T
-  object ChipLinksListValues extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipLinksListHashKey = ChipLinksListHashKey.T
-  object ChipLinksListHashKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripSourcesSectionResult = StripSourcesSectionResult.T
-  object StripSourcesSectionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripSourcesSectionBody = StripSourcesSectionBody.T
-  object StripSourcesSectionBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticlePartsResult = ArticlePartsResult.T
-  object ArticlePartsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticlePartsShow = ArticlePartsShow.T
-  object ArticlePartsShow extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripMdResult = StripMdResult.T
-  object StripMdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripMdS = StripMdS.T
-  object StripMdS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklinksResult = BacklinksResult.T
-  object BacklinksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BacklinksTruncate = BacklinksTruncate.T
-  object BacklinksTruncate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcesCitedResult = SourcesCitedResult.T
-  object SourcesCitedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourcesCitedTruncate = SourcesCitedTruncate.T
-  object SourcesCitedTruncate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VersionsResult = VersionsResult.T
-  object VersionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VersionsSlug = VersionsSlug.T
-  object VersionsSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VersionResult = VersionResult.T
-  object VersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListResult = ListResult.T
-  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val AllParts = List("body", "summary", "coverage", "cited", "backlinks")
 
-  def article(v: Article.View, parts: List[com.histmersion.api.research.ArticleMarkdown.ArticleParts] = Nil): com.histmersion.api.research.ArticleMarkdown.ArticleResult =
-    if parts.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.ArticleResult((articleFull(v)).value)
-    else _root_.com.histmersion.api.research.ArticleMarkdown.ArticleResult((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => _root_.com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow((refactorValue).value)))).value)
+  def article(v: Article.View, parts: List[com.histmersion.api.research.Article.Part] = Nil): com.histmersion.api.Markdown.Text =
+    if parts.isEmpty then _root_.com.histmersion.api.Markdown.Text((articleFull(v)).value)
+    else _root_.com.histmersion.api.Markdown.Text((articleParts(v, (parts.filter(AllParts.contains)).map(refactorValue => _root_.com.histmersion.api.research.Article.Part((refactorValue).value)))).value)
 
-  private def articleFull(v: Article.View): com.histmersion.api.research.ArticleMarkdown.ArticleFullResult =
+  private def articleFull(v: Article.View): com.histmersion.api.Markdown.Text =
     val a = v.article
     val body = a.body.trim
     val line = metaLine(a.kind, a.regions, YearFmt.period(a.periodStart, a.periodEnd), a.tags)
@@ -78,34 +32,34 @@ object ArticleMarkdown:
           case -1 => s"$body\n\n$line"
           case i  => s"${body.take(i)}\n\n$line${body.drop(i)}"
     val footer = sourcesCited(v.sourcesCited)
-    val trimmed = if (footer).value.isEmpty then head else stripSourcesSection(_root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody(head))
+    val trimmed = if (footer).value.isEmpty then head else stripSourcesSection(_root_.com.histmersion.api.research.Article.Body(head))
     trimmed + coverage(v) + backlinks(v.backlinks) + footer + FormatMarkdown.notice(v.formatting)
 
-  private def coverage(v: Article.View): com.histmersion.api.research.ArticleMarkdown.CoverageResult = _root_.com.histmersion.api.research.ArticleMarkdown.CoverageResult(v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
+  private def coverage(v: Article.View): com.histmersion.api.Markdown.Text = _root_.com.histmersion.api.Markdown.Text(v.coverage.fold("")(c => "\n\n" + Article.Coverage.sections(c)))
 
-  private[api] def metaLine(kind: com.histmersion.api.research.ArticleMarkdown.MetaLineKind, regions: List[com.histmersion.api.research.ArticleMarkdown.MetaLineRegions], period: com.histmersion.api.research.ArticleMarkdown.MetaLinePeriod, tags: List[com.histmersion.api.research.ArticleMarkdown.MetaLineTags]): com.histmersion.api.research.ArticleMarkdown.MetaLineResult =
-    val parts = List(Label.display(_root_.com.histmersion.api.library.Label.DisplayS((kind).value.trim)), chipLinksList(regions, _root_.com.histmersion.api.research.ArticleMarkdown.ChipLinksListHashKey("place")), (period).value.trim, chipLinksList(tags, _root_.com.histmersion.api.research.ArticleMarkdown.ChipLinksListHashKey("tag")))
+  private[api] def metaLine(kind: com.histmersion.api.research.ArticleMarkdown.MetaLineKind, regions: List[com.histmersion.api.research.ArticleMarkdown.MetaLineRegions], period: com.histmersion.api.research.Article.Period, tags: List[com.histmersion.api.research.ArticleMarkdown.MetaLineTags]): String =
+    val parts = List(Label.display(_root_.com.histmersion.api.library.Label.Text((kind).value.trim)), chipLinksList(regions, ("place")), (period).value.trim, chipLinksList(tags, ("tag")))
       .filter(_.nonEmpty)
-    if parts.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.MetaLineResult("") else s"_${parts.mkString(" · ")}_"
+    if parts.isEmpty then ("") else s"_${parts.mkString(" · ")}_"
 
-  private def chipLinksList(values: List[com.histmersion.api.research.ArticleMarkdown.ChipLinksListValues], hashKey: com.histmersion.api.research.ArticleMarkdown.ChipLinksListHashKey): com.histmersion.api.research.ArticleMarkdown.ChipLinksListResult =
+  private def chipLinksList(values: List[String], hashKey: String): String =
     values
       .filter((_).value.nonEmpty)
       .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${Markdown.enc(v)})")
       .mkString(", ")
 
-  def stripSourcesSection(body: com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionBody): com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult =
+  def stripSourcesSection(body: com.histmersion.api.research.Article.Body): com.histmersion.api.research.Article.Body =
     val heading = """^#{1,6}\s*(sources\b.*|references|bibliography|works cited)\s*$""".r
     val lines = (body).value.linesIterator.toList
     lines.lastIndexWhere(l => heading.matches(l.trim.toLowerCase)) match
-      case -1 => _root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult((body).value)
+      case -1 => _root_.com.histmersion.api.research.Article.Body((body).value)
       case i  =>
         val rest = lines.drop(i + 1).map(_.trim).filter(_.nonEmpty)
         if rest.forall(l => l.startsWith("-") || l.startsWith("*") || l.startsWith("[[") || l.startsWith("1."))
-        then _root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult(lines.take(i).mkString("\n").stripTrailing)
-        else _root_.com.histmersion.api.research.ArticleMarkdown.StripSourcesSectionResult((body).value)
+        then _root_.com.histmersion.api.research.Article.Body(lines.take(i).mkString("\n").stripTrailing)
+        else _root_.com.histmersion.api.research.Article.Body((body).value)
 
-  private def articleParts(v: Article.View, show: List[com.histmersion.api.research.ArticleMarkdown.ArticlePartsShow]): com.histmersion.api.research.ArticleMarkdown.ArticlePartsResult =
+  private def articleParts(v: Article.View, show: List[com.histmersion.api.research.Article.Part]): com.histmersion.api.Markdown.Text =
     val a = v.article
     val out = List.newBuilder[String]
 
@@ -127,11 +81,11 @@ object ArticleMarkdown:
     if show.contains("coverage") then v.coverage.foreach(c => out += Article.Coverage.sections(c))
 
     if show.contains("backlinks") then
-      val bl = backlinks(v.backlinks, truncate = _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate(true))
+      val bl = backlinks(v.backlinks, truncate = (true))
       if (bl).value.nonEmpty then out += (bl).value
 
     if show.contains("cited") then
-      val sc = sourcesCited(v.sourcesCited, truncate = _root_.com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate(true))
+      val sc = sourcesCited(v.sourcesCited, truncate = (true))
       if (sc).value.nonEmpty then out += (sc).value
 
     if (show.contains("body") || show.contains("summary")) && v.formatting.nonEmpty then
@@ -139,31 +93,31 @@ object ArticleMarkdown:
       if shown.nonEmpty then out += FormatMarkdown.notice(shown).trim
 
     val result = out.result()
-    if result.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.ArticlePartsResult(s"# ${a.title}\n\n_(no parts selected)_")
-    else _root_.com.histmersion.api.research.ArticleMarkdown.ArticlePartsResult(result.mkString("\n\n"))
+    if result.isEmpty then _root_.com.histmersion.api.Markdown.Text(s"# ${a.title}\n\n_(no parts selected)_")
+    else _root_.com.histmersion.api.Markdown.Text(result.mkString("\n\n"))
 
-  private def stripMd(s: com.histmersion.api.research.ArticleMarkdown.StripMdS): com.histmersion.api.research.ArticleMarkdown.StripMdResult =
-    _root_.com.histmersion.api.research.ArticleMarkdown.StripMdResult((s).value.replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
+  private def stripMd(s: String): String =
+    ((s).value.replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
       .replaceAll("""\[\[([^\]]+)\]\]""", "$1")
       .replaceAll("""\[([^\]]+)\]\([^)]+\)""", "$1")
       .replaceAll("""[*_]{1,2}""", "")
       .replaceAll("""`""", ""))
 
-  def backlinks(rows: List[Backlink], truncate: com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate = _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate(false)): com.histmersion.api.research.ArticleMarkdown.BacklinksResult =
-    if rows.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksResult("")
+  def backlinks(rows: List[Backlink], truncate: Boolean = (false)): com.histmersion.api.Markdown.Text =
+    if rows.isEmpty then _root_.com.histmersion.api.Markdown.Text("")
     else
       val items = rows.map { b =>
-        val title = b.title.map(t => if ((truncate) == _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksTruncate(true)) then s" — ${stripMd(t).take(200)}" else s" — $t").getOrElse("")
+        val title = b.title.map(t => if ((truncate) == (true)) then s" — ${stripMd(t).take(200)}" else s" — $t").getOrElse("")
         s"- [[${b.id}]]$title"
       }
-      _root_.com.histmersion.api.research.ArticleMarkdown.BacklinksResult(s"\n\n## Backlinks (${rows.size})\n\n${items.mkString("\n")}")
+      _root_.com.histmersion.api.Markdown.Text(s"\n\n## Backlinks (${rows.size})\n\n${items.mkString("\n")}")
 
-  def sourcesCited(rows: List[CitedSource], truncate: com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate = _root_.com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate(false)): com.histmersion.api.research.ArticleMarkdown.SourcesCitedResult =
-    if rows.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.SourcesCitedResult("")
+  def sourcesCited(rows: List[CitedSource], truncate: Boolean = (false)): com.histmersion.api.Markdown.Text =
+    if rows.isEmpty then _root_.com.histmersion.api.Markdown.Text("")
     else
       val items = rows.map { s =>
         val t = s.title.map(_.value)
-          .map(v => if ((truncate) == _root_.com.histmersion.api.research.ArticleMarkdown.SourcesCitedTruncate(true)) then stripMd(v).take(200) else v)
+          .map(v => if ((truncate) == (true)) then stripMd(v).take(200) else v)
           .getOrElse("_(not in the corpus)_")
         val auth = Source.Ref.shortAuthors(s.authors.map(_.value))
         val yr = s.year.map(_.value.toInt).map(_.toString).getOrElse("")
@@ -173,28 +127,28 @@ object ArticleMarkdown:
           .mkString(" · ")
         s"- [[${s.citekey}]] — $tail"
       }
-      _root_.com.histmersion.api.research.ArticleMarkdown.SourcesCitedResult(s"\n\n## Sources cited (${rows.size})\n\n${items.mkString("\n")}")
+      _root_.com.histmersion.api.Markdown.Text(s"\n\n## Sources cited (${rows.size})\n\n${items.mkString("\n")}")
 
-  def versions(slug: com.histmersion.api.research.ArticleMarkdown.VersionsSlug, vs: List[Article.Version]): com.histmersion.api.research.ArticleMarkdown.VersionsResult =
-    if vs.isEmpty then _root_.com.histmersion.api.research.ArticleMarkdown.VersionsResult(s"_No versions recorded for **$slug**._")
+  def versions(slug: com.histmersion.api.research.ReviewGoal.Slug, vs: List[Article.Version]): com.histmersion.api.Markdown.Text =
+    if vs.isEmpty then _root_.com.histmersion.api.Markdown.Text(s"_No versions recorded for **$slug**._")
     else
       val items = vs.map { v =>
         val sum = v.summary.map(s => s" — ${s.take(120)}").getOrElse("")
         s"- **${v.id}** · ${v.updatedAt} · ${Plural.count(v.wordCount, _root_.com.histmersion.api.Plural.CountSingular("word"))}$sum"
       }
-      _root_.com.histmersion.api.research.ArticleMarkdown.VersionsResult(s"### ${vs.size} version(s) of $slug\n\n${items.mkString("\n")}")
+      _root_.com.histmersion.api.Markdown.Text(s"### ${vs.size} version(s) of $slug\n\n${items.mkString("\n")}")
 
-  def version(v: Article.VersionFull): com.histmersion.api.research.ArticleMarkdown.VersionResult =
+  def version(v: Article.VersionFull): com.histmersion.api.Markdown.Text =
     val sum = v.summary.map(s => s"\n\n_${s.take(200)}_").getOrElse("")
-    _root_.com.histmersion.api.research.ArticleMarkdown.VersionResult(s"### Version ${v.id} of ${v.slug}\n\n_saved ${v.updatedAt}, archived ${v.createdAt}_$sum\n\n---\n\n${v.body}")
+    _root_.com.histmersion.api.Markdown.Text(s"### Version ${v.id} of ${v.slug}\n\n_saved ${v.updatedAt}, archived ${v.createdAt}_$sum\n\n---\n\n${v.body}")
 
-  def list(r: Article.List): com.histmersion.api.research.ArticleMarkdown.ListResult =
-    OffsetPage.markdown(r.page, _root_.com.histmersion.api.OffsetPage.MarkdownNoun("article(s)"), _root_.com.histmersion.api.OffsetPage.MarkdownEmpty("_No matching articles._"), r.articles) { a =>
+  def list(r: Article.List): com.histmersion.api.Markdown.Text =
+    OffsetPage.markdown(r.page, ("article(s)"), ("_No matching articles._"), r.articles) { a =>
       val tagsStr = a.tags.mkString(", ")
       val meta = List(a.kind, YearFmt.period(a.periodStart, a.periodEnd), tagsStr)
         .map(_.trim)
         .filter(_.nonEmpty)
         .mkString(" · ")
       val sum = a.summary.map(s => s"\n  ${s.trim}").getOrElse("")
-      _root_.com.histmersion.api.OffsetPage.MarkdownLineResult(s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum")
+      (s"- **${a.slug}** — ${a.title}\n  _${meta}_$sum")
     }

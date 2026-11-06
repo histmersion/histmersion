@@ -2,8 +2,6 @@ package com.histmersion.api
 
 object MapStack:
 
-  type PointsAboveAreasResult = PointsAboveAreasResult.T
-  object PointsAboveAreasResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas):
     case Areas extends Pane(_root_.com.histmersion.api.MapStack.Pane.Name("areas"), point = _root_.com.histmersion.api.MapStack.Pane.Point(false), canvas = _root_.com.histmersion.api.MapStack.Pane.Canvas(true))
@@ -18,7 +16,7 @@ object MapStack:
 
     case Events extends Pane(_root_.com.histmersion.api.MapStack.Pane.Name("events"), point = _root_.com.histmersion.api.MapStack.Pane.Point(true), canvas = _root_.com.histmersion.api.MapStack.Pane.Canvas(false))
 
-    def cssClass: com.histmersion.api.MapStack.Pane.CssClassResult = _root_.com.histmersion.api.MapStack.Pane.CssClassResult(s"hd-pane--$name")
+    def cssClass: String = (s"hd-pane--$name")
 
   object Pane:
     type Name = Name.T
@@ -28,13 +26,11 @@ object MapStack:
     type Canvas = Canvas.T
     object Canvas extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type CssClassResult = CssClassResult.T
-    object CssClassResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val order: List[Pane] = Pane.values.toList
 
   val domPanes: List[Pane] = order.filterNot((refactorCallback => ((refactorCallback.canvas) == _root_.com.histmersion.api.MapStack.Pane.Canvas(true))))
 
-  def pointsAboveAreas(order: List[Pane]): com.histmersion.api.MapStack.PointsAboveAreasResult =
+  def pointsAboveAreas(order: List[Pane]): Boolean =
     val firstPoint = order.indexWhere((refactorCallback => ((refactorCallback.point) == _root_.com.histmersion.api.MapStack.Pane.Point(true))))
-    _root_.com.histmersion.api.MapStack.PointsAboveAreasResult(firstPoint < 0 || order.drop(firstPoint).forall((refactorCallback => ((refactorCallback.point) == _root_.com.histmersion.api.MapStack.Pane.Point(true)))))
+    (firstPoint < 0 || order.drop(firstPoint).forall((refactorCallback => ((refactorCallback.point) == _root_.com.histmersion.api.MapStack.Pane.Point(true)))))

@@ -11,88 +11,38 @@ import com.histmersion.api.given
   * clients read.
   */
 object ListFilters:
+  type EncodedFacets = EncodedFacets.T
+  object EncodedFacets extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FacetName = FacetName.T
+  object FacetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Qualifier = Qualifier.T
+  object Qualifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Term = Term.T
+  object Term extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TimeBound = TimeBound.T
+  object TimeBound extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type UnescapeHexResult = UnescapeHexResult.T
-  object UnescapeHexResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnescapeHexAt = UnescapeHexAt.T
-  object UnescapeHexAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ValuesResult = ValuesResult.T
-  object ValuesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ValuesVs = ValuesVs.T
-  object ValuesVs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WordsResult = WordsResult.T
-  object WordsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OneResult = OneResult.T
-  object OneResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OneV = OneV.T
-  object OneV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KnownResultPart1 = KnownResultPart1.T
   object KnownResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownResultPart2 = KnownResultPart2.T
-  object KnownResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownWhat = KnownWhat.T
-  object KnownWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownVs = KnownVs.T
-  object KnownVs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KnownKnown = KnownKnown.T
-  object KnownKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeBoundResultPart1 = TimeBoundResultPart1.T
   object TimeBoundResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeBoundS = TimeBoundS.T
-  object TimeBoundS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TimeBoundEnd = TimeBoundEnd.T
-  object TimeBoundEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RangeResultPart1 = RangeResultPart1.T
   object RangeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeSince = RangeSince.T
-  object RangeSince extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeUntil = RangeUntil.T
-  object RangeUntil extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeResult = EscapeResult.T
-  object EscapeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EscapeS = EscapeS.T
-  object EscapeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnescapeResult = UnescapeResult.T
-  object UnescapeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnescapeS = UnescapeS.T
-  object UnescapeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeFacetsResult = EncodeFacetsResult.T
-  object EncodeFacetsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeFacetsFsPart1 = EncodeFacetsFsPart1.T
-  object EncodeFacetsFsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeFacetsFsPart2Part1 = EncodeFacetsFsPart2Part1.T
-  object EncodeFacetsFsPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EncodeFacetsFsPart2Part2 = EncodeFacetsFsPart2Part2.T
-  object EncodeFacetsFsPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeFacetsResultPart1 = DecodeFacetsResultPart1.T
-  object DecodeFacetsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeFacetsResultPart2Part1 = DecodeFacetsResultPart2Part1.T
-  object DecodeFacetsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeFacetsResultPart2Part2 = DecodeFacetsResultPart2Part2.T
-  object DecodeFacetsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeFacetsS = DecodeFacetsS.T
-  object DecodeFacetsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FacetLineResult = FacetLineResult.T
   object FacetLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetLineLabel = FacetLineLabel.T
-  object FacetLineLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetLineCountsPart1 = FacetLineCountsPart1.T
-  object FacetLineCountsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FacetLineCountsPart2 = FacetLineCountsPart2.T
-  object FacetLineCountsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val FacetsHeader = "X-Facet-Counts"
 
   val FacetMax = 40
 
-  def values(vs: List[com.histmersion.api.automation.ListFilters.ValuesVs]): List[com.histmersion.api.automation.ListFilters.ValuesResult] =
-    (vs.flatMap((_).value.split(',')).map(_.trim).filter(_.nonEmpty).distinct).map(refactorValue => _root_.com.histmersion.api.automation.ListFilters.ValuesResult(refactorValue))
+  def values(vs: List[com.histmersion.api.automation.ListFilters.Term]): List[com.histmersion.api.automation.ListFilters.Term] =
+    (vs.flatMap((_).value.split(',')).map(_.trim).filter(_.nonEmpty).distinct).map(refactorValue => _root_.com.histmersion.api.automation.ListFilters.Term(refactorValue))
 
-  def words(groups: List[String]*): Option[com.histmersion.api.automation.ListFilters.WordsResult] =
-    (Option(groups.filter(_.nonEmpty).map(_.mkString("/")).mkString(" ")).filter(_.nonEmpty)).map(refactorValue22 => _root_.com.histmersion.api.automation.ListFilters.WordsResult(refactorValue22))
+  def words(groups: List[String]*): Option[com.histmersion.api.automation.ListFilters.Qualifier] =
+    (Option(groups.filter(_.nonEmpty).map(_.mkString("/")).mkString(" ")).filter(_.nonEmpty)).map(refactorValue22 => _root_.com.histmersion.api.automation.ListFilters.Qualifier(refactorValue22))
 
-  def one(v: Option[com.histmersion.api.automation.ListFilters.OneV]): Option[com.histmersion.api.automation.ListFilters.OneResult] = (v.map((_).value.trim).filter(_.nonEmpty)).map(refactorValue2 => _root_.com.histmersion.api.automation.ListFilters.OneResult(refactorValue2))
+  def one(v: Option[com.histmersion.api.automation.ListFilters.Term]): Option[com.histmersion.api.automation.ListFilters.Term] = (v.map((_).value.trim).filter(_.nonEmpty)).map(refactorValue2 => _root_.com.histmersion.api.automation.ListFilters.Term(refactorValue2))
 
   export com.histmersion.api.automation.Approval.DecidedBy as DecidedBy
 
@@ -112,11 +62,11 @@ object ListFilters:
         values(decidedBy).map(_.toLowerCase)
       )
 
-    def qualifier: Option[com.histmersion.api.automation.ListFilters.ApprovalFilter.QualifierResult] =
+    def qualifier: Option[com.histmersion.api.automation.ListFilters.Qualifier] =
       val n = normalized
       words(n.state.orElse(Some(Agents.ApprovalState.Open.wire)).filter(_ != "all").toList, (n.kind).map(refactorValue3 => (refactorValue3).value))
 
-    def options: List[(com.histmersion.api.automation.ListFilters.ApprovalFilter.OptionsResultPart1, Option[com.histmersion.api.automation.ListFilters.ApprovalFilter.OptionsResultPart2])] =
+    def options: List[(com.histmersion.api.automation.ListFilters.Term, Option[com.histmersion.api.automation.ListFilters.ApprovalFilter.OptionsResultPart2])] =
       val n = normalized
       List("state" -> n.state) ++ n.kind.map(k => "kind" -> Some(k)) ++ List(
         "subject" -> n.subject,
@@ -125,10 +75,6 @@ object ListFilters:
         n.decidedBy.map(d => "decided-by" -> Some(d))
 
   object ApprovalFilter:
-    type QualifierResult = QualifierResult.T
-    object QualifierResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OptionsResultPart1 = OptionsResultPart1.T
-    object OptionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OptionsResultPart2 = OptionsResultPart2.T
     object OptionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -153,7 +99,7 @@ object ListFilters:
       until: Option[RunFilter.Until] = None,
       subject: Option[RunFilter.Subject] = None
   ):
-    def qualifier: Option[com.histmersion.api.automation.ListFilters.RunFilter.QualifierResult] = { val n = normalized; words((n.status).map(refactorValue5 => (refactorValue5).value), (n.pipeline).map(refactorValue27 => (refactorValue27).value)) }
+    def qualifier: Option[com.histmersion.api.automation.ListFilters.Qualifier] = { val n = normalized; words((n.status).map(refactorValue5 => (refactorValue5).value), (n.pipeline).map(refactorValue27 => (refactorValue27).value)) }
     def normalized: RunFilter =
       RunFilter(
         values(status).map(_.toLowerCase),
@@ -167,7 +113,7 @@ object ListFilters:
         one(until),
         one(subject)
       )
-    def options: List[(com.histmersion.api.automation.ListFilters.RunFilter.OptionsResultPart1, Option[com.histmersion.api.automation.ListFilters.RunFilter.OptionsResultPart2])] =
+    def options: List[(com.histmersion.api.automation.ListFilters.Term, Option[com.histmersion.api.automation.ListFilters.RunFilter.OptionsResultPart2])] =
       val n = normalized
       n.status.map("status" -> Some(_)) ++ n.pipeline.map("pipeline" -> Some(_)) ++ n.manager.map(
         "manager" -> Some(_)
@@ -176,10 +122,6 @@ object ListFilters:
         n.origin.map("origin" -> Some(_)) ++ List("since" -> n.since, "until" -> n.until, "subject" -> n.subject)
 
   object RunFilter:
-    type QualifierResult = QualifierResult.T
-    object QualifierResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OptionsResultPart1 = OptionsResultPart1.T
-    object OptionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OptionsResultPart2 = OptionsResultPart2.T
     object OptionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -209,7 +151,7 @@ object ListFilters:
       until: Option[JobFilter.Until] = None,
       subject: Option[JobFilter.Subject] = None
   ):
-    def qualifier: Option[com.histmersion.api.automation.ListFilters.JobFilter.QualifierResult] = { val n = normalized; words((n.status).map(refactorValue14 => (refactorValue14).value), (n.kind).map(refactorValue15 => (refactorValue15).value)) }
+    def qualifier: Option[com.histmersion.api.automation.ListFilters.Qualifier] = { val n = normalized; words((n.status).map(refactorValue14 => (refactorValue14).value), (n.kind).map(refactorValue15 => (refactorValue15).value)) }
     def normalized: JobFilter =
       JobFilter(
         values(status).map(_.toLowerCase),
@@ -218,7 +160,7 @@ object ListFilters:
         one(until),
         one(subject)
       )
-    def options: List[(com.histmersion.api.automation.ListFilters.JobFilter.OptionsResultPart1, Option[com.histmersion.api.automation.ListFilters.JobFilter.OptionsResultPart2])] =
+    def options: List[(com.histmersion.api.automation.ListFilters.Term, Option[com.histmersion.api.automation.ListFilters.JobFilter.OptionsResultPart2])] =
       val n = normalized
       n.status.map("status" -> Some(_)) ++ n.kind.map("kind" -> Some(_)) ++ List(
         "since" -> n.since,
@@ -227,10 +169,6 @@ object ListFilters:
       )
 
   object JobFilter:
-    type QualifierResult = QualifierResult.T
-    object QualifierResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OptionsResultPart1 = OptionsResultPart1.T
-    object OptionsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OptionsResultPart2 = OptionsResultPart2.T
     object OptionsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -295,15 +233,15 @@ object ListFilters:
       )
       .mapTo[JobFilter]
 
-  def known(what: com.histmersion.api.automation.ListFilters.KnownWhat, vs: List[com.histmersion.api.automation.ListFilters.KnownVs], known: Seq[com.histmersion.api.automation.ListFilters.KnownKnown]): Either[com.histmersion.api.automation.ListFilters.KnownResultPart1, List[com.histmersion.api.automation.ListFilters.KnownResultPart2]] =
+  def known(what: com.histmersion.api.automation.ListFilters.FacetName, vs: List[com.histmersion.api.automation.ListFilters.Term], known: Seq[com.histmersion.api.automation.ListFilters.Term]): Either[com.histmersion.api.automation.ListFilters.KnownResultPart1, List[com.histmersion.api.automation.ListFilters.Term]] =
     vs.find(v => !known.contains(v)) match
       case Some(v) => Left(_root_.com.histmersion.api.automation.ListFilters.KnownResultPart1(s"unknown $what '$v' (one of: ${known.mkString(", ")})"))
-      case None    => Right((vs).map(refactorValue34 => _root_.com.histmersion.api.automation.ListFilters.KnownResultPart2((refactorValue34).value)))
+      case None    => Right((vs).map(refactorValue34 => _root_.com.histmersion.api.automation.ListFilters.Term((refactorValue34).value)))
 
   private val Relative = """(\d{1,6})\s*([dhm])""".r
   private val DateOnly = """(\d{4}-\d{2}-\d{2})""".r
 
-  def timeBound(s: com.histmersion.api.automation.ListFilters.TimeBoundS, end: com.histmersion.api.automation.ListFilters.TimeBoundEnd, now: Instant): Either[com.histmersion.api.automation.ListFilters.TimeBoundResultPart1, Instant] =
+  def timeBound(s: com.histmersion.api.automation.ListFilters.TimeBound, end: Boolean, now: Instant): Either[com.histmersion.api.automation.ListFilters.TimeBoundResultPart1, Instant] =
     (s).value.trim.toLowerCase match
       case Relative(n, unit) =>
         val secs = n.toLong * (unit match { case "d" => 86400L; case "h" => 3600L; case _ => 60L })
@@ -312,7 +250,7 @@ object ListFilters:
         scala.util
           .Try(LocalDate.parse(d))
           .toOption
-          .map(day => (if ((end) == _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(true)) then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
+          .map(day => (if ((end) == (true)) then day.plusDays(1) else day).atStartOfDay(ZoneOffset.UTC).toInstant)
           .toRight(_root_.com.histmersion.api.automation.ListFilters.TimeBoundResultPart1(s"'$s' is not a date"))
       case _ =>
         scala.util
@@ -323,54 +261,54 @@ object ListFilters:
           )
 
   def range(
-      since: Option[com.histmersion.api.automation.ListFilters.RangeSince],
-      until: Option[com.histmersion.api.automation.ListFilters.RangeUntil],
+      since: Option[com.histmersion.api.automation.ListFilters.TimeBound],
+      until: Option[com.histmersion.api.automation.ListFilters.TimeBound],
       now: Instant
   ): Either[com.histmersion.api.automation.ListFilters.RangeResultPart1, (Option[Instant], Option[Instant])] =
     for
-      s <- since.fold(Right(None))(timeBound(_root_.com.histmersion.api.automation.ListFilters.TimeBoundS((_).value), end = _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(false), now).map(Some(_)).left.map(m => s"since: $m"))
-      u <- until.fold(Right(None))(timeBound(_root_.com.histmersion.api.automation.ListFilters.TimeBoundS((_).value), end = _root_.com.histmersion.api.automation.ListFilters.TimeBoundEnd(true), now).map(Some(_)).left.map(m => s"until: $m"))
+      s <- since.fold(Right(None))(timeBound(_root_.com.histmersion.api.automation.ListFilters.TimeBound((_).value), end = (false), now).map(Some(_)).left.map(m => s"since: $m"))
+      u <- until.fold(Right(None))(timeBound(_root_.com.histmersion.api.automation.ListFilters.TimeBound((_).value), end = (true), now).map(Some(_)).left.map(m => s"until: $m"))
       _ <- Either.cond(s.zip(u).forall((a, b) => a.isBefore(b)), (), "since must lie before until")
     yield (s, u)
 
   /** `%`, `,`, `=` and anything outside printable ASCII become `%XX` (UTF-8), so any value survives a header.
     */
-  def escape(s: com.histmersion.api.automation.ListFilters.EscapeS): com.histmersion.api.automation.ListFilters.EscapeResult =
+  def escape(s: String): String =
     val b = new StringBuilder
     (s).value.getBytes("UTF-8").foreach { byte =>
       val c = (byte & 0xff).toChar
       if c > ' ' && c < 0x7f && c != '%' && c != ',' && c != '=' then b.append(c)
       else b.append(f"%%${byte & 0xff}%02X")
     }
-    _root_.com.histmersion.api.automation.ListFilters.EscapeResult(b.toString)
+    (b.toString)
 
-  def unescape(s: com.histmersion.api.automation.ListFilters.UnescapeS): com.histmersion.api.automation.ListFilters.UnescapeResult =
-    if !(s).value.contains('%') then _root_.com.histmersion.api.automation.ListFilters.UnescapeResult((s).value)
+  def unescape(s: String): String =
+    if !(s).value.contains('%') then ((s).value)
     else
       val out = new java.io.ByteArrayOutputStream
-      def hex(at: com.histmersion.api.automation.ListFilters.UnescapeHexAt): Option[com.histmersion.api.automation.ListFilters.UnescapeHexResult] =
+      def hex(at: Int): Option[Int] =
         Option
           .when((at).value + 3 <= (s).value.length)((s).value.substring((at).value + 1, (at).value + 3))
           .filter(_.forall(c => Character.digit(c, 16) >= 0))
-          .map(_root_.com.histmersion.api.automation.ListFilters.UnescapeHexResult(Integer.parseInt(_, 16)))
+          .map((Integer.parseInt(_, 16)))
       var i = 0
       while i < (s).value.length do
-        (if s(i) == '%' then hex(_root_.com.histmersion.api.automation.ListFilters.UnescapeHexAt(i)) else None) match
+        (if s(i) == '%' then hex((i)) else None) match
           case Some(b) => out.write((b).value); i += 3
           case None    => (s).value.substring(i, i + 1).getBytes("UTF-8").foreach(x => out.write(x.toInt)); i += 1
-      _root_.com.histmersion.api.automation.ListFilters.UnescapeResult(new String(out.toByteArray, "UTF-8"))
+      (new String(out.toByteArray, "UTF-8"))
 
-  def encodeFacets(fs: List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart1, List[(com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part1, com.histmersion.api.automation.ListFilters.EncodeFacetsFsPart2Part2)])]): com.histmersion.api.automation.ListFilters.EncodeFacetsResult =
-    _root_.com.histmersion.api.automation.ListFilters.EncodeFacetsResult(fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(_root_.com.histmersion.api.automation.ListFilters.EscapeS((v).value))}=$n")).mkString(","))
+  def encodeFacets(fs: List[(com.histmersion.api.automation.ListFilters.FacetName, List[(com.histmersion.api.automation.ListFilters.Term, com.histmersion.api.RowCount)])]): com.histmersion.api.automation.ListFilters.EncodedFacets =
+    _root_.com.histmersion.api.automation.ListFilters.EncodedFacets(fs.flatMap((f, vs) => vs.map((v, n) => s"$f=${escape(((v).value))}=$n")).mkString(","))
 
-  def decodeFacets(s: com.histmersion.api.automation.ListFilters.DecodeFacetsS): List[(com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart1, List[(com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part1, com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part2)])] =
+  def decodeFacets(s: com.histmersion.api.automation.ListFilters.EncodedFacets): List[(com.histmersion.api.automation.ListFilters.FacetName, List[(com.histmersion.api.automation.ListFilters.Term, com.histmersion.api.RowCount)])] =
     val triples = (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { t =>
       t.split('=') match
-        case Array(f, v, n) if f.nonEmpty => n.trim.toIntOption.map(c => (f.trim, unescape(_root_.com.histmersion.api.automation.ListFilters.UnescapeS(v)), c))
+        case Array(f, v, n) if f.nonEmpty => n.trim.toIntOption.map(c => (f.trim, unescape((v)), c))
         case _                            => None
     }
-    triples.map(_._1).distinct.map(f => { val refactorTuple9 = f -> triples.collect { case (`f`, v, n) => v -> n }; (_root_.com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart1(refactorTuple9._1), (refactorTuple9._2).map(refactorValue62 => { val refactorTuple10 = refactorValue62; (_root_.com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part1((refactorTuple10._1).value), _root_.com.histmersion.api.automation.ListFilters.DecodeFacetsResultPart2Part2(refactorTuple10._2)) })) })
+    triples.map(_._1).distinct.map(f => { val refactorTuple9 = f -> triples.collect { case (`f`, v, n) => v -> n }; (_root_.com.histmersion.api.automation.ListFilters.FacetName(refactorTuple9._1), (refactorTuple9._2).map(refactorValue62 => { val refactorTuple10 = refactorValue62; (_root_.com.histmersion.api.automation.ListFilters.Term((refactorTuple10._1).value), _root_.com.histmersion.api.RowCount(refactorTuple10._2)) })) })
 
-  def facetLine(label: com.histmersion.api.automation.ListFilters.FacetLineLabel, counts: List[(com.histmersion.api.automation.ListFilters.FacetLineCountsPart1, com.histmersion.api.automation.ListFilters.FacetLineCountsPart2)]): com.histmersion.api.automation.ListFilters.FacetLineResult =
+  def facetLine(label: com.histmersion.api.automation.ListFilters.FacetName, counts: List[(com.histmersion.api.automation.ListFilters.Term, com.histmersion.api.RowCount)]): com.histmersion.api.automation.ListFilters.FacetLineResult =
     if counts.isEmpty then _root_.com.histmersion.api.automation.ListFilters.FacetLineResult("")
     else s"$label: ${counts.map((v, n) => s"$v ${Paging.grouped(n)}").mkString(" · ")}"

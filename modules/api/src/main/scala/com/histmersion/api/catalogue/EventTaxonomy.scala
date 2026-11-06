@@ -1,59 +1,42 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
 object EventTaxonomy:
+  object Label:
+    type Pattern = Pattern.T
+    object Pattern extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Groups = Groups.T
-  object Groups extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ByKindPart1 = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value
   val ByKindPart1: _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Value
-  type AliasesPart1 = AliasesPart1.T
-  object AliasesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AliasesPart2 = AliasesPart2.T
   object AliasesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalResult = CanonicalResult.T
-  object CanonicalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CanonicalKind = CanonicalKind.T
-  object CanonicalKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelRulesPart1 = LabelRulesPart1.T
-  object LabelRulesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelRulesPart2 = LabelRulesPart2.T
   object LabelRulesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefineResult = RefineResult.T
-  object RefineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefineKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  val RefineKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  type RefineLabel = RefineLabel.T
-  object RefineLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  val OfKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
+  type RefineKind = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  val RefineKind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  type OfKind = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  val OfKind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
   type GroupResult = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group
   val GroupResult: _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group
-  type GroupKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  val GroupKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
+  type GroupKind = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  val GroupKind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
   type IconResult = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon
   val IconResult: _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon
-  type IconKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  val IconKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  type IsNaturalResult = IsNaturalResult.T
-  object IsNaturalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsNaturalKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  val IsNaturalKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  type MatchesResult = MatchesResult.T
-  object MatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesFilter = MatchesFilter.T
-  object MatchesFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  val MatchesKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  type ConditionFilter = ConditionFilter.T
-  object ConditionFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IconKind = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  val IconKind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  type IsNaturalKind = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  val IsNaturalKind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  type MatchesKind = _root_.com.histmersion.api.catalogue.EventSummary.Kind
+  val MatchesKind: _root_.com.histmersion.api.catalogue.EventSummary.Kind.type = _root_.com.histmersion.api.catalogue.EventSummary.Kind
 
   val Natural = "natural"
   val Human = "human"
-  val groups: List[com.histmersion.api.catalogue.EventTaxonomy.Groups] = List(_root_.com.histmersion.api.catalogue.EventTaxonomy.Groups(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Groups(Human))
+  val groups: List[com.histmersion.api.catalogue.EventTaxonomy.Kind.Group] = List(_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural), _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Human))
 
   final case class Kind(kind: Kind.Value, group: Kind.Group, label: Kind.Label, icon: Kind.Icon)
 
   object Kind:
+    type Alias = Alias.T
+    object Alias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Value = Value.T
     object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Group = Group.T
@@ -121,40 +104,40 @@ object EventTaxonomy:
 
   private val byKind: Map[com.histmersion.api.catalogue.EventTaxonomy.ByKindPart1, Kind] = kinds.map(k => k.kind -> k).toMap
 
-  private val aliases: Map[com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1, com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2] = Map(
-    { val refactorTuple22 = "rebellion" -> Revolt; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple22._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple22._2)) },
-    { val refactorTuple23 = "uprising" -> Revolt; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple23._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple23._2)) },
-    { val refactorTuple3 = "revolt" -> Revolt; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple3._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple3._2)) },
-    { val refactorTuple4 = "naval_battle" -> NavalBattle; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple4._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple4._2)) },
-    { val refactorTuple5 = "sea_battle" -> NavalBattle; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple5._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple5._2)) },
-    { val refactorTuple6 = "volcanic_eruption" -> Eruption; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple6._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple6._2)) },
-    { val refactorTuple28 = "plague" -> Epidemic; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple28._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple28._2)) },
-    { val refactorTuple29 = "pandemic" -> Epidemic; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple29._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple29._2)) },
-    { val refactorTuple30 = "climate_change" -> ClimateEvent; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple30._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple30._2)) },
-    { val refactorTuple31 = "climatic_event" -> ClimateEvent; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple31._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple31._2)) },
-    { val refactorTuple11 = "reign" -> Era; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple11._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple11._2)) },
-    { val refactorTuple33 = "period" -> Era; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple33._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple33._2)) },
-    { val refactorTuple34 = "diplomatic_era" -> Era; (_root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart1(refactorTuple34._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple34._2)) }
+  private val aliases: Map[com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias, com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2] = Map(
+    { val refactorTuple22 = "rebellion" -> Revolt; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple22._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple22._2)) },
+    { val refactorTuple23 = "uprising" -> Revolt; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple23._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple23._2)) },
+    { val refactorTuple3 = "revolt" -> Revolt; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple3._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple3._2)) },
+    { val refactorTuple4 = "naval_battle" -> NavalBattle; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple4._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple4._2)) },
+    { val refactorTuple5 = "sea_battle" -> NavalBattle; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple5._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple5._2)) },
+    { val refactorTuple6 = "volcanic_eruption" -> Eruption; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple6._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple6._2)) },
+    { val refactorTuple28 = "plague" -> Epidemic; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple28._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple28._2)) },
+    { val refactorTuple29 = "pandemic" -> Epidemic; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple29._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple29._2)) },
+    { val refactorTuple30 = "climate_change" -> ClimateEvent; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple30._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple30._2)) },
+    { val refactorTuple31 = "climatic_event" -> ClimateEvent; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple31._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple31._2)) },
+    { val refactorTuple11 = "reign" -> Era; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple11._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple11._2)) },
+    { val refactorTuple33 = "period" -> Era; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple33._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple33._2)) },
+    { val refactorTuple34 = "diplomatic_era" -> Era; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Alias(refactorTuple34._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.AliasesPart2(refactorTuple34._2)) }
   )
 
-  def canonical(kind: com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind): com.histmersion.api.catalogue.EventTaxonomy.CanonicalResult =
+  def canonical(kind: com.histmersion.api.catalogue.EventSummary.Kind): com.histmersion.api.catalogue.EventSummary.Kind =
     val k = EventScale.normKind(kind)
     aliases.get(k).orElse(Option.when(k.endsWith("_era"))(Era)).getOrElse(k)
 
-  val labelRules: List[(com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1, com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2)] = List(
-    { val refactorTuple35 = "erupt|volcan" -> Eruption; (_root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1(refactorTuple35._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple35._2)) },
-    { val refactorTuple15 = "earthquake|seism|quake" -> Earthquake; (_root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1(refactorTuple15._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple15._2)) },
-    { val refactorTuple16 = "tsunami" -> Tsunami; (_root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1(refactorTuple16._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple16._2)) },
-    { val refactorTuple17 = "flood|deluge" -> Flood; (_root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1(refactorTuple17._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple17._2)) },
-    { val refactorTuple18 = "drought|aridi" -> Drought; (_root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1(refactorTuple18._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple18._2)) },
-    { val refactorTuple19 = "kiloyear|climat|cooling|warming" -> ClimateEvent; (_root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1(refactorTuple19._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple19._2)) },
-    { val refactorTuple20 = "plague|epidemic|pandemic|pestilence" -> Epidemic; (_root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1(refactorTuple20._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple20._2)) },
-    { val refactorTuple42 = "famine" -> Famine; (_root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart1(refactorTuple42._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple42._2)) }
+  val labelRules: List[(com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern, com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2)] = List(
+    { val refactorTuple35 = "erupt|volcan" -> Eruption; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple35._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple35._2)) },
+    { val refactorTuple15 = "earthquake|seism|quake" -> Earthquake; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple15._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple15._2)) },
+    { val refactorTuple16 = "tsunami" -> Tsunami; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple16._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple16._2)) },
+    { val refactorTuple17 = "flood|deluge" -> Flood; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple17._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple17._2)) },
+    { val refactorTuple18 = "drought|aridi" -> Drought; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple18._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple18._2)) },
+    { val refactorTuple19 = "kiloyear|climat|cooling|warming" -> ClimateEvent; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple19._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple19._2)) },
+    { val refactorTuple20 = "plague|epidemic|pandemic|pestilence" -> Epidemic; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple20._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple20._2)) },
+    { val refactorTuple42 = "famine" -> Famine; (_root_.com.histmersion.api.catalogue.EventTaxonomy.Label.Pattern(refactorTuple42._1), _root_.com.histmersion.api.catalogue.EventTaxonomy.LabelRulesPart2(refactorTuple42._2)) }
   )
 
-  def refine(kind: com.histmersion.api.catalogue.EventTaxonomy.RefineKind, label: com.histmersion.api.catalogue.EventTaxonomy.RefineLabel): com.histmersion.api.catalogue.EventTaxonomy.RefineResult =
+  def refine(kind: com.histmersion.api.catalogue.EventTaxonomy.RefineKind, label: com.histmersion.api.catalogue.EventSummary.Label): com.histmersion.api.catalogue.EventSummary.Kind =
     val k = canonical(kind)
-    if k != NaturalGeneric then _root_.com.histmersion.api.catalogue.EventTaxonomy.RefineResult((k).value)
+    if k != NaturalGeneric then _root_.com.histmersion.api.catalogue.EventSummary.Kind((k).value)
     else
       val l = (label).value.toLowerCase(java.util.Locale.ROOT)
       labelRules.collectFirst { case (re, sub) if (re).value.r.findFirstIn(l).isDefined => sub }.getOrElse(k)
@@ -165,27 +148,29 @@ object EventTaxonomy:
 
   def group(kind: com.histmersion.api.catalogue.EventTaxonomy.GroupKind): com.histmersion.api.catalogue.EventTaxonomy.GroupResult = of(kind).group
   def icon(kind: com.histmersion.api.catalogue.EventTaxonomy.IconKind): com.histmersion.api.catalogue.EventTaxonomy.IconResult = of(kind).icon
-  def isNatural(kind: com.histmersion.api.catalogue.EventTaxonomy.IsNaturalKind): com.histmersion.api.catalogue.EventTaxonomy.IsNaturalResult = group(kind) == Natural
+  def isNatural(kind: com.histmersion.api.catalogue.EventTaxonomy.IsNaturalKind): Boolean = group(kind) == Natural
 
-  def matches(filter: com.histmersion.api.catalogue.EventTaxonomy.MatchesFilter, kind: com.histmersion.api.catalogue.EventTaxonomy.MatchesKind): com.histmersion.api.catalogue.EventTaxonomy.MatchesResult =
+  def matches(filter: com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter, kind: com.histmersion.api.catalogue.EventTaxonomy.MatchesKind): Boolean =
     val f = (filter).value.trim.toLowerCase(java.util.Locale.ROOT)
-    f.isEmpty || f == group(kind) || canonical(_root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind(f)) == canonical(kind)
+    f.isEmpty || f == group(kind) || canonical(_root_.com.histmersion.api.catalogue.EventSummary.Kind(f)) == canonical(kind)
 
   final case class KindCondition(kinds: List[KindCondition.Kinds], negate: KindCondition.Negate)
 
   object KindCondition:
+    type Filter = Filter.T
+    object Filter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kinds = Kinds.T
     object Kinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Negate = Negate.T
     object Negate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def condition(filter: Option[com.histmersion.api.catalogue.EventTaxonomy.ConditionFilter]): Option[KindCondition] =
+  def condition(filter: Option[com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Filter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
       val natural = (kinds.filter(_.group == _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural)).map(_.kind) ++
         aliases.collect { case (a, v) if byKind.get(_root_.com.histmersion.api.catalogue.EventTaxonomy.ByKindPart1((v).value)).exists(_.group == Natural) => a }).distinct.sorted
       if f == Natural then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(false))
       else if f == Human then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(true))
       else
-        val c = canonical(_root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind(f))
+        val c = canonical(_root_.com.histmersion.api.catalogue.EventSummary.Kind(f))
         KindCondition((c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sorted, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(false))
     }
