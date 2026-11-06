@@ -12,32 +12,33 @@ import com.histmersion.api.library.Source
 
 class AgentVerifySuite extends munit.FunSuite:
 
-  private val body =
+  private val body = SourceBody(
     """# Results
       |
       |The Uluburun ship carried ten tons of cop-
       |per and one ton of tin, “a ratio typical of bronze” according to
       |the excavators. The ﬁnds date to about 1320 BCE.
       |""".stripMargin
+  )
 
   test("quote: verbatim modulo hyphenation, ligatures, Unicode quotes and whitespace"):
-    assertEquals(findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("ten tons of copper and one ton of tin"), body, 0.9), QuoteMatch.Verbatim)
-    assertEquals(findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("\"a ratio typical of bronze\" according to the excavators"), body, 0.9), QuoteMatch.Verbatim)
-    assertEquals(findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("The finds date to about 1320 BCE."), body, 0.9), QuoteMatch.Verbatim)
+    assertEquals(findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("ten tons of copper and one ton of tin"), body, MinRatio(0.9)), QuoteMatch.Verbatim)
+    assertEquals(findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("\"a ratio typical of bronze\" according to the excavators"), body, MinRatio(0.9)), QuoteMatch.Verbatim)
+    assertEquals(findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("The finds date to about 1320 BCE."), body, MinRatio(0.9)), QuoteMatch.Verbatim)
 
   test("quote: OCR noise (a slipped letter, a dropped word) is a fuzzy match with its ratio"):
-    val noisy = "The Uluburun shlp carried ten tons of copper and one ton of qxzv tin"
-    findQuote(noisy, body, 0.85) match
-      case QuoteMatch.Fuzzy(r) => assert(r >= 0.85 && r < 1.0, r)
+    val noisy = com.histmersion.domain.AgentProposals.Proposal.Quote("The Uluburun shlp carried ten tons of copper and one ton of qxzv tin")
+    findQuote(noisy, body, MinRatio(0.85)) match
+      case QuoteMatch.Fuzzy(r) => assert(r.value >= 0.85 && r.value < 1.0, r)
       case other               => fail(s"expected Fuzzy, got $other")
 
   test("quote: an invented or paraphrased quote is missing"):
-    assert(!findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("The ship sank off the coast of Cyprus after a storm in winter"), body, 0.9).accepted)
-    assert(!findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("carried copper and tin from Cornwall to Egypt by sea"), body, 0.9).accepted)
+    assert(!findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("The ship sank off the coast of Cyprus after a storm in winter"), body, MinRatio(0.9)).accepted)
+    assert(!findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("carried copper and tin from Cornwall to Egypt by sea"), body, MinRatio(0.9)).accepted)
 
   test("quote: a short quote must be verbatim — three words match anywhere by chance"):
-    assert(!findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("ten tins of"), body, 0.5).accepted)
-    assertEquals(findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("ten tons of"), body, 0.5), QuoteMatch.Verbatim)
+    assert(!findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("ten tins of"), body, MinRatio(0.5)).accepted)
+    assertEquals(findQuote(com.histmersion.domain.AgentProposals.Proposal.Quote("ten tons of"), body, MinRatio(0.5)), QuoteMatch.Verbatim)
 
   test("similarWord: one edit at four letters or more, never on short words"):
     assert(similarWord("mycenaean", "mycenacan"))
@@ -58,7 +59,7 @@ class AgentVerifySuite extends munit.FunSuite:
     assertEquals(toSignedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(0), YearUnit.CalBP), Right(1950L))
 
   test("uncalibrated BP is refused, never guessed into a calendar year"):
-    assert(toSignedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(3270), YearUnit.BP).left.exists(_.contains("uncalibrated")))
+    assert(toSignedYear(com.histmersion.domain.AgentVerify.ToSignedYearValue(3270), YearUnit.BP).left.exists(_.value.contains("uncalibrated")))
 
   test("YearUnit: the spellings sources use"):
     assertEquals(YearUnit.parse(com.histmersion.domain.AgentVerify.YearUnit.Wire("cal BP")), Some(YearUnit.CalBP))
@@ -69,21 +70,21 @@ class AgentVerifySuite extends munit.FunSuite:
 
   test("period sanity: order, year 0, bound, and the source's own span"):
     assertEquals(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(-1600), com.histmersion.domain.AgentVerify.PeriodEnd(-1500), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000)), Nil)
-    assert(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(-1500), com.histmersion.domain.AgentVerify.PeriodEnd(-1600), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000)).exists(_.contains("after it ends")))
-    assert(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(0), com.histmersion.domain.AgentVerify.PeriodEnd(10), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000)).exists(_.contains("year 0")))
-    assert(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(-4000000), com.histmersion.domain.AgentVerify.PeriodEnd(-1), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000)).exists(_.contains("beyond")))
-    assert(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(-3000), com.histmersion.domain.AgentVerify.PeriodEnd(-2900), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000), Some(Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1200)))).exists(_.contains("outside")))
+    assert(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(-1500), com.histmersion.domain.AgentVerify.PeriodEnd(-1600), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000)).exists(_.value.contains("after it ends")))
+    assert(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(0), com.histmersion.domain.AgentVerify.PeriodEnd(10), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000)).exists(_.value.contains("year 0")))
+    assert(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(-4000000), com.histmersion.domain.AgentVerify.PeriodEnd(-1), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000)).exists(_.value.contains("beyond")))
+    assert(periodProblems(com.histmersion.domain.AgentVerify.PeriodStart(-3000), com.histmersion.domain.AgentVerify.PeriodEnd(-2900), com.histmersion.domain.AgentVerify.MaxAbsYear(3000000), Some(Period(com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1200)))).exists(_.value.contains("outside")))
 
   test("status vocabulary: a typo is rejected, not turned into unassessed"):
     assertEquals(status(com.histmersion.domain.library.Source.Status.Wire("Current")), Right(Source.Status.Current))
     assert(status(com.histmersion.domain.library.Source.Status.Wire("debunk")).isLeft)
 
   test("links: dangling targets and escaped brackets are problems"):
-    val text = "See [[haak2015_massive]] and [[ie-migrations|the article]] and [[nope2020_x]]. Also \\[\\[x\\]\\]."
-    val ps = linkProblems(text, Set("haak2015_massive"), Set("ie-migrations"))
+    val text = LinkProblemsText("See [[haak2015_massive]] and [[ie-migrations|the article]] and [[nope2020_x]]. Also \\[\\[x\\]\\].")
+    val ps = linkProblems(text, _.value == "haak2015_massive", _.value == "ie-migrations")
     assertEquals(ps.size, 2, ps)
-    assert(ps.exists(_.contains("[[nope2020_x]]")))
-    assert(ps.exists(_.contains("escaped")))
+    assert(ps.exists(_.value.contains("[[nope2020_x]]")))
+    assert(ps.exists(_.value.contains("escaped")))
     assertEquals(wikilinks(com.histmersion.domain.AgentVerify.Text("[[a]] [[b|B]] [[a]]")), List("a", "b"))
 
   test("titles compare without case or punctuation"):

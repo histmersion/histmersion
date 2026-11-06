@@ -100,7 +100,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       "links":[{"type":"closeMatch","identifier":"wd:Q193236"},{"type":"exactMatch","identifier":"pl:638753"},
                {"type":"primaryTopicOf","identifier":"https://en.wikipedia.org/wiki/Hattusa"}],
       "geometry":{"type":"Point","coordinates":[34.615,40.019]}}""")
-    val r = Gazetteer.fromFeature(f, com.histmersion.api.catalogue.Gazetteer.FromFeatureDataset("anatolia"), 0).fold(e => fail(e), identity)
+    val r = Gazetteer.fromFeature(f, com.histmersion.api.catalogue.Gazetteer.FromFeatureDataset("anatolia"), 0).fold(e => fail(e.value), identity)
     assertEquals(r.own, Some(ExternalId(LinkScheme.Whg, com.histmersion.api.library.ExternalId.Id("99"))))
     assertEquals(r.ref, "whg:99")
     assertEquals(r.placeId, com.histmersion.api.catalogue.Place.Id("whg_99"))
@@ -114,10 +114,10 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       )
     )
     assertEquals(
-      r.names.find(_.lang == "hit"),
+      r.names.find(_.lang == com.histmersion.api.catalogue.GazName.Lang("hit")),
       Some(GazName(com.histmersion.api.catalogue.GazName.Name("Ḫattuša"), com.histmersion.api.catalogue.GazName.Lang("hit"), Span(Some(com.histmersion.api.catalogue.Year(-1650)), Some(com.histmersion.api.catalogue.Year(-1180))), Some(com.histmersion.api.catalogue.GazName.Citation("Bryce 2005 (2005)"))))
     )
-    assert(r.names.exists(_.name == "Hattusa"), "the title is a name")
+    assert(r.names.exists(_.name == com.histmersion.api.catalogue.GazName.Name("Hattusa")), "the title is a name")
     assertEquals(r.placeLinks.head, GazLink(ExternalId(LinkScheme.Whg, com.histmersion.api.library.ExternalId.Id("99")), LinkMatch.Exact))
 
   test("fromFeature: a dataset-local @id makes an lpf_<dataset>_ place id; no @id is an error"):
@@ -135,7 +135,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     val row = Gazetteer.tsvCells(
       "p1\tKaneš\tKt archive\tTR\twd:Q1192387; tgn:7016542\tKanesh@en; Neša@hit; Kültepe\tsettlement\t35.635\t38.850\t-2000\t-1700"
     )
-    val r = Gazetteer.fromTsvRow(header, row, com.histmersion.api.catalogue.Gazetteer.FromTsvRowDataset("kultepe"), 2).fold(e => fail(e), identity)
+    val r = Gazetteer.fromTsvRow(header, row, com.histmersion.api.catalogue.Gazetteer.FromTsvRowDataset("kultepe"), 2).fold(e => fail(e.value), identity)
     assertEquals(r.placeId, com.histmersion.api.catalogue.Place.Id("lpf_kultepe_p1"))
     assertEquals(r.kind, Place.Kind.Site)
     assertEquals(r.span, Span(Some(com.histmersion.api.catalogue.Year(-2000)), Some(com.histmersion.api.catalogue.Year(-1700))))
@@ -144,7 +144,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       r.names.map(n => n.name -> n.lang).toSet,
       Set("Kaneš" -> "", "Kanesh" -> "en", "Neša" -> "hit", "Kültepe" -> "")
     )
-    assertEquals(r.geometry, Some(GazGeometry.GeoJson("""{"type":"Point","coordinates":[35.635,38.85]}""")))
+    assertEquals(r.geometry, Some(GazGeometry.GeoJson(com.histmersion.api.catalogue.GazGeometry.GeoJson.Text("""{"type":"Point","coordinates":[35.635,38.85]}"""))))
     assertEquals(r.source, Some("Kt archive"))
     assert(Gazetteer.fromTsvRow(header, Gazetteer.tsvCells("\tno id"), com.histmersion.api.catalogue.Gazetteer.FromTsvRowDataset("x"), 3).isLeft)
 
@@ -195,6 +195,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(Gazetteer.canonical(List(gn, tgn)), Some("tgn_7000001"))
     assertEquals(
       List(None, Some("lpf:x"), Some("wikidata"), Some("tgn"), Some("geonames"), Some("other"))
+        .map(_.map(s => com.histmersion.api.catalogue.Place.Match.ImportSource(s)))
         .map(Geocode.tierOf),
       List(0, 1, 2, 3, 4, 5)
     )
@@ -277,10 +278,10 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     assertEquals(AppConfig.load().places.sources.openStartWindowYears, Gazetteer.DefaultOpenStartWindowYears)
 
   test("inDataset: an LPF feature with no `when` takes its dataset's; a dated one keeps its own"):
-    val r = GazRecord(com.histmersion.api.catalogue.GazRecord.Ref("x"), None, com.histmersion.api.catalogue.Place.Id("lpf_d_x"), com.histmersion.api.catalogue.GazRecord.Label("X"), Place.Kind.Site, None, Span.always, Nil, Nil, None, None)
+    val r = GazRecord(com.histmersion.api.catalogue.GazRecord.Ref("x"), None, com.histmersion.api.catalogue.Place.Id("lpf_d_x"), com.histmersion.api.catalogue.GazRecord.Label("X"), com.histmersion.api.catalogue.GazRecord.Kind(Place.Kind.Site), None, Span.always, Nil, Nil, None, None)
     val ds = LpfDataset(None, None, None, Span(Some(com.histmersion.api.catalogue.Year(-800L)), Some(com.histmersion.api.catalogue.Year(-300L))))
     assertEquals(Gazetteer.inDataset(r, ds).span, Span(Some(com.histmersion.api.catalogue.Year(-800L)), Some(com.histmersion.api.catalogue.Year(-300L))))
-    assertEquals(Gazetteer.inDataset(r.modify(_.span).setTo(Span(Some(-500L), None)), ds).span, Span(Some(com.histmersion.api.catalogue.Year(-500L)), None))
+    assertEquals(Gazetteer.inDataset(r.modify(_.span).setTo(Span(Some(com.histmersion.api.catalogue.Year(-500L)), None)), ds).span, Span(Some(com.histmersion.api.catalogue.Year(-500L)), None))
     assertEquals(Gazetteer.inDataset(r, LpfDataset(None, None, None)).span, Span.always)
 
   test("an LPF feature's descriptions (Wikidata's schema:description) are read, trimmed and de-duplicated"):
@@ -291,7 +292,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       "descriptions":[{"value":" former country in Modern Day Spain ","lang":"EN"},
                       {"value":"microestado de Europa (siglo VIII-1769)","lang":"es"},
                       {"value":"former country in Modern Day Spain","lang":"en"}, {"value":"  "}]}""")
-    val r = Gazetteer.fromFeature(f, com.histmersion.api.catalogue.Gazetteer.FromFeatureDataset(""), 1).fold(fail(_), identity)
+    val r = Gazetteer.fromFeature(f, com.histmersion.api.catalogue.Gazetteer.FromFeatureDataset(""), 1).fold(e => fail(e.value), identity)
     assertEquals(
       r.descriptions,
       List(
@@ -300,7 +301,7 @@ class GazetteerSourcesSuite extends munit.FunSuite:
       )
     )
     assertEquals(r.span, Span(None, Some(com.histmersion.api.catalogue.Year(1769L))))
-    assert(!r.properties.exists(_.contains("descriptions")), "not also dumped into properties")
+    assert(!r.properties.exists(_.value.contains("descriptions")), "not also dumped into properties")
 
   test("a century or a millennium is read as its widest years (an LPF earliest/latest bound)"):
     assertEquals(
@@ -352,11 +353,11 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     )
 
   test("PlaceShape: a region or polity is a shape; a point-only one has no boundary yet; a site is a point by nature"):
-    assert(com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(Place.Kind.Region, hasBoundary = false))
-    assert(com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(Place.Kind.Polity, hasBoundary = false))
-    assert(!com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(Place.Kind.Region, hasBoundary = true))
-    assert(!com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(Place.Kind.Site, hasBoundary = false))
-    assert(!com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote.contains("_"))
+    assert(com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind(Place.Kind.Region), hasBoundary = false))
+    assert(com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind(Place.Kind.Polity), hasBoundary = false))
+    assert(!com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind(Place.Kind.Region), hasBoundary = true))
+    assert(!com.histmersion.api.catalogue.Place.Shape.pointOnlyArea(com.histmersion.api.catalogue.Place.Shape.PointOnlyAreaKind(Place.Kind.Site), hasBoundary = false))
+    assert(!com.histmersion.api.catalogue.Place.Shape.NoBoundaryNote.value.contains("_"))
 
   test("PlaceLink.url: the authority's own page"):
     assertEquals(
@@ -378,29 +379,29 @@ class GazetteerSourcesSuite extends munit.FunSuite:
     val a = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2"), descriptionsChanged = com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsChanged(2))
     assert(!a.unchanged)
     assert(a.describe.contains("descriptions +0 −0 ~2"), a.describe)
-    assertEquals((a + Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2"), descriptionsAdded = 1)).descriptionsAdded, 1L)
+    assertEquals((a + Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2"), descriptionsAdded = com.histmersion.api.catalogue.Gazetteer.LoadCounts.DescriptionsAdded(1L))).descriptionsAdded, 1L)
     assert(Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v2")).unchanged)
 
   // ── an area known only by a point (2026-10-09) ────────────────────────────────────────────────
 
-  private def gj(t: String) = Some(GazGeometry.GeoJson(t))
-  private val Pt = gj("""{"type":"Point","coordinates":[30,40]}""")
-  private val Poly = gj("""{"type":"Polygon","coordinates":[[[30,40],[31,40],[31,41],[30,40]]]}""")
+  private def gj(t: com.histmersion.api.catalogue.GazGeometry.GeoJson.Text) = Some(GazGeometry.GeoJson(t))
+  private val Pt = gj(com.histmersion.api.catalogue.GazGeometry.GeoJson.Text("""{"type":"Point","coordinates":[30,40]}"""))
+  private val Poly = gj(com.histmersion.api.catalogue.GazGeometry.GeoJson.Text("""{"type":"Polygon","coordinates":[[[30,40],[31,40],[31,41],[30,40]]]}"""))
 
   test("pointOnly: a Point, a MultiPoint or no geometry; a polygon, a line or anything unreadable is a shape"):
     assert(Gazetteer.pointOnly(Pt))
-    assert(Gazetteer.pointOnly(gj("""{"type":"MultiPoint","coordinates":[[30,40],[31,41]]}""")))
+    assert(Gazetteer.pointOnly(gj(com.histmersion.api.catalogue.GazGeometry.GeoJson.Text("""{"type":"MultiPoint","coordinates":[[30,40],[31,41]]}"""))))
     assert(Gazetteer.pointOnly(None))
     assert(Gazetteer.pointOnly(Some(GazGeometry.Wkt(com.histmersion.api.catalogue.GazGeometry.Wkt.Text("POINT(30 40)")))))
     assert(Gazetteer.pointOnly(Some(GazGeometry.Wkt(com.histmersion.api.catalogue.GazGeometry.Wkt.Text(" srid=4326;multipoint((30 40))")))))
     assert(!Gazetteer.pointOnly(Poly))
-    assert(!Gazetteer.pointOnly(gj("""{"type":"LineString","coordinates":[[30,40],[31,41]]}""")))
+    assert(!Gazetteer.pointOnly(gj(com.histmersion.api.catalogue.GazGeometry.GeoJson.Text("""{"type":"LineString","coordinates":[[30,40],[31,41]]}"""))))
     assert(!Gazetteer.pointOnly(Some(GazGeometry.Wkt(com.histmersion.api.catalogue.GazGeometry.Wkt.Text("POLYGON((30 40,31 40,31 41,30 40))")))))
-    assert(!Gazetteer.pointOnly(gj("not json")), "never dropped on a guess")
+    assert(!Gazetteer.pointOnly(gj(com.histmersion.api.catalogue.GazGeometry.GeoJson.Text("not json"))), "never dropped on a guess")
 
   test("dropsPointArea: a GeoNames/Wikidata region, polity or people with only a point; nothing else"):
     val kinds = Gazetteer.DefaultPointAreaKinds.toSet
-    def r(kind: String, g: Option[GazGeometry]) =
+    def r(kind: com.histmersion.api.catalogue.GazRecord.Kind, g: Option[GazGeometry]) =
       GazRecord(
         com.histmersion.api.catalogue.GazRecord.Ref("wikidata:Q1"),
         Some(ExternalId(LinkScheme.Wikidata, com.histmersion.api.library.ExternalId.Id("Q1"))),
@@ -414,20 +415,20 @@ class GazetteerSourcesSuite extends munit.FunSuite:
         None,
         None
       )
-    for k <- List(Place.Kind.Region, Place.Kind.Polity, Place.Kind.People); src <- List("wikidata", "geonames") do
-      assert(Gazetteer.dropsPointArea(src, r(k, Pt), kinds), s"$src $k")
-    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(Place.Kind.Region, Poly), kinds), "a shape is a region")
-    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(Place.Kind.Site, Pt), kinds), "a site is a point by nature")
-    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("geonames"), r(Place.Kind.Feature, Pt), kinds))
-    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("lpf:whg"), r(Place.Kind.Region, Pt), kinds), "an LPF dataset keeps its points")
-    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(Place.Kind.Region, Pt), Set.empty), "\"\" keeps every record")
-    assert(Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(Place.Kind.Polity, Pt), Set(Place.Kind.Polity)))
-    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(Place.Kind.Region, Pt), Set(Place.Kind.Polity)))
+    for k <- List(Place.Kind.Region, Place.Kind.Polity, Place.Kind.People); src <- List("wikidata", "geonames").map(s => com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key(s)) do
+      assert(Gazetteer.dropsPointArea(src, r(com.histmersion.api.catalogue.GazRecord.Kind(k), Pt), kinds), s"$src $k")
+    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(com.histmersion.api.catalogue.GazRecord.Kind(Place.Kind.Region), Poly), kinds), "a shape is a region")
+    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(com.histmersion.api.catalogue.GazRecord.Kind(Place.Kind.Site), Pt), kinds), "a site is a point by nature")
+    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("geonames"), r(com.histmersion.api.catalogue.GazRecord.Kind(Place.Kind.Feature), Pt), kinds))
+    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("lpf:whg"), r(com.histmersion.api.catalogue.GazRecord.Kind(Place.Kind.Region), Pt), kinds), "an LPF dataset keeps its points")
+    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(com.histmersion.api.catalogue.GazRecord.Kind(Place.Kind.Region), Pt), Set.empty), "\"\" keeps every record")
+    assert(Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(com.histmersion.api.catalogue.GazRecord.Kind(Place.Kind.Polity), Pt), Set(com.histmersion.api.catalogue.Gazetteer.PointAreaKinds(Place.Kind.Polity))))
+    assert(!Gazetteer.dropsPointArea(com.histmersion.api.catalogue.Gazetteer.SourceInfo.Key("wikidata"), r(com.histmersion.api.catalogue.GazRecord.Kind(Place.Kind.Region), Pt), Set(com.histmersion.api.catalogue.Gazetteer.PointAreaKinds(Place.Kind.Polity))))
 
   test("the point-area kinds' default is the configured one"):
     assertEquals(AppConfig.load().places.sources.pointAreaKindSet, Gazetteer.DefaultPointAreaKinds.toSet)
-    assert(AppConfig.load().places.sources.pointAreaFixBatch > 0)
-    assert(AppConfig.load().places.sources.pointAreaFixSeconds <= 50, "well inside netty's 60 s idle timeout")
+    assert(AppConfig.load().places.sources.pointAreaFixBatch.value > 0)
+    assert(AppConfig.load().places.sources.pointAreaFixSeconds.value <= 50, "well inside netty's 60 s idle timeout")
 
   test("load counts: a dropped point-only area is reported, and is no change by itself"):
     val c = Gazetteer.LoadCounts(com.histmersion.api.catalogue.Gazetteer.LoadCounts.Source("wikidata"), com.histmersion.api.catalogue.Gazetteer.LoadCounts.Version("v1"), records = com.histmersion.api.catalogue.Gazetteer.LoadCounts.Records(3), pointAreasSkipped = com.histmersion.api.catalogue.Gazetteer.LoadCounts.PointAreasSkipped(2))

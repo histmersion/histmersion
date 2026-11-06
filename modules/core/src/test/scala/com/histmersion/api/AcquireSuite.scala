@@ -19,7 +19,7 @@ class AcquireSuite extends munit.FunSuite:
       Acquire.citekey(
         List(com.histmersion.api.library.AuthorName("Wolfgang Haak"), com.histmersion.api.library.AuthorName("Iosif Lazaridis")),
         Some(com.histmersion.api.catalogue.Year(2015)),
-        Some("Massive migration from the steppe was a source for Indo-European languages in Europe")
+        Some(com.histmersion.api.library.Title("Massive migration from the steppe was a source for Indo-European languages in Europe"))
       ),
       "haak2015_massive"
     )
@@ -94,8 +94,8 @@ class AcquireSuite extends munit.FunSuite:
       retr: List[RetractionNotice] = Nil,
       upd: List[UpdateNotice] = Nil,
       oaRetracted: Boolean = false,
-      cited: Option[Int] = Some(10),
-      year: Option[Int] = Some(2015)
+      cited: Option[com.histmersion.api.library.Acquire.CitedByCount] = Some(com.histmersion.api.library.Acquire.CitedByCount(10)),
+      year: Option[com.histmersion.api.catalogue.Year] = Some(com.histmersion.api.catalogue.Year(2015))
   ) = Acquire.verdict(retr, upd, oaRetracted, cited, year, wellCitedAt = com.histmersion.api.library.Acquire.CitationThreshold(50), lowCitedAt = com.histmersion.api.library.Acquire.CitationThreshold(3), staleBefore = com.histmersion.api.catalogue.Year(2018))
 
   test("a Retraction Watch retraction, an OpenAlex flag or a Crossref retraction all mean retracted"):
@@ -106,7 +106,7 @@ class AcquireSuite extends munit.FunSuite:
 
   test("a reinstatement is NOT a retraction"):
     assertEquals(
-      v(retr = List(RetractionNotice(Some(com.histmersion.api.library.RetractionNotice.Nature("Reinstatement")), None, None)), cited = Some(80)),
+      v(retr = List(RetractionNotice(Some(com.histmersion.api.library.RetractionNotice.Nature("Reinstatement")), None, None)), cited = Some(com.histmersion.api.library.Acquire.CitedByCount(80))),
       Verdicts.Corrected
     )
 
@@ -116,9 +116,9 @@ class AcquireSuite extends munit.FunSuite:
     assertEquals(v(retr = List(RetractionNotice(Some(com.histmersion.api.library.RetractionNotice.Nature("Correction")), None, None))), Verdicts.Corrected)
 
   test("citation metrics decide when nothing is flagged"):
-    assertEquals(v(cited = Some(900)), Verdicts.Current)
-    assertEquals(v(cited = Some(1), year = Some(2001)), Verdicts.LowImpact)
-    assertEquals(v(cited = Some(1), year = Some(2024)), Verdicts.Current) // too new to judge by citations
+    assertEquals(v(cited = Some(com.histmersion.api.library.Acquire.CitedByCount(900))), Verdicts.Current)
+    assertEquals(v(cited = Some(com.histmersion.api.library.Acquire.CitedByCount(1)), year = Some(com.histmersion.api.catalogue.Year(2001))), Verdicts.LowImpact)
+    assertEquals(v(cited = Some(com.histmersion.api.library.Acquire.CitedByCount(1)), year = Some(com.histmersion.api.catalogue.Year(2024))), Verdicts.Current) // too new to judge by citations
     assertEquals(v(cited = None), Verdicts.Unassessed)
 
   test("verdict → flagged, status and recommendation"):
@@ -130,55 +130,55 @@ class AcquireSuite extends munit.FunSuite:
     // low-impact is about reach, not correctness: it must never overwrite a curated status
     assertEquals(Acquire.statusFor(Verdicts.LowImpact), None)
     assertEquals(Acquire.statusFor(Verdicts.Unassessed), None)
-    assert(Acquire.recommendation(Verdicts.Retracted, Some(com.histmersion.api.library.Acquire.CitedByCount(3))).startsWith("EXCLUDE"))
-    assert(Acquire.recommendation(Verdicts.Current, Some(com.histmersion.api.library.Acquire.CitedByCount(90))).contains("90 citation(s)"))
+    assert(Acquire.recommendation(Verdicts.Retracted, Some(com.histmersion.api.library.Acquire.CitedByCount(3))).value.startsWith("EXCLUDE"))
+    assert(Acquire.recommendation(Verdicts.Current, Some(com.histmersion.api.library.Acquire.CitedByCount(90))).value.contains("90 citation(s)"))
 
   // ── follow-up classification ────────────────────────────────────────────────────────────────
   private def c(
-      ctx: String,
-      intents: List[String] = Nil,
+      ctx: com.histmersion.api.library.Acquire.CitationContext,
+      intents: List[com.histmersion.api.library.Acquire.Intent.Wire] = Nil,
       infl: Boolean = false,
-      citing: Option[Int] = Some(2020),
-      target: Option[Int] = Some(2015)
+      citing: Option[com.histmersion.api.catalogue.Year] = Some(com.histmersion.api.catalogue.Year(2020)),
+      target: Option[com.histmersion.api.catalogue.Year] = Some(com.histmersion.api.catalogue.Year(2015))
   ) =
     Acquire.classify(intents, List(ctx), infl, citing, target)
 
   test("refutation cues win over the support word they contain"):
-    assertEquals(c("We find no support for the steppe hypothesis"), EdgeKinds.Refutes)
-    assertEquals(c("These data contradict the earlier claim"), EdgeKinds.Refutes)
-    assertEquals(c("The result could not be replicated"), EdgeKinds.Refutes)
+    assertEquals(c(com.histmersion.api.library.Acquire.CitationContext("We find no support for the steppe hypothesis")), EdgeKinds.Refutes)
+    assertEquals(c(com.histmersion.api.library.Acquire.CitationContext("These data contradict the earlier claim")), EdgeKinds.Refutes)
+    assertEquals(c(com.histmersion.api.library.Acquire.CitationContext("The result could not be replicated")), EdgeKinds.Refutes)
 
   test("supersede, challenge and confirm cues"):
-    assertEquals(c("this model is now obsolete"), EdgeKinds.Supersedes)
-    assertEquals(c("However, the chronology is disputed"), EdgeKinds.Challenges)
-    assertEquals(c("Our results are consistent with Haak et al."), EdgeKinds.Confirms)
-    assertEquals(c("as background, see Haak et al."), EdgeKinds.Cites)
+    assertEquals(c(com.histmersion.api.library.Acquire.CitationContext("this model is now obsolete")), EdgeKinds.Supersedes)
+    assertEquals(c(com.histmersion.api.library.Acquire.CitationContext("However, the chronology is disputed")), EdgeKinds.Challenges)
+    assertEquals(c(com.histmersion.api.library.Acquire.CitationContext("Our results are consistent with Haak et al.")), EdgeKinds.Confirms)
+    assertEquals(c(com.histmersion.api.library.Acquire.CitationContext("as background, see Haak et al.")), EdgeKinds.Cites)
 
   test("an influential, much later result/method paper that reanalyses supersedes"):
     assertEquals(
       c(
-        "we reanalyse the same samples with a larger dataset",
-        List("result"),
+        com.histmersion.api.library.Acquire.CitationContext("we reanalyse the same samples with a larger dataset"),
+        List(com.histmersion.api.library.Acquire.Intent.Wire("result")),
         infl = true,
-        citing = Some(2023),
-        target = Some(2015)
+        citing = Some(com.histmersion.api.catalogue.Year(2023)),
+        target = Some(com.histmersion.api.catalogue.Year(2015))
       ),
       EdgeKinds.Supersedes
     )
     // not influential → merely cites (the same words, none of the metadata)
     assertEquals(
       c(
-        "we reanalyse the same samples with a larger dataset",
-        List("result"),
+        com.histmersion.api.library.Acquire.CitationContext("we reanalyse the same samples with a larger dataset"),
+        List(com.histmersion.api.library.Acquire.Intent.Wire("result")),
         infl = false,
-        citing = Some(2023),
-        target = Some(2015)
+        citing = Some(com.histmersion.api.catalogue.Year(2023)),
+        target = Some(com.histmersion.api.catalogue.Year(2015))
       ),
       EdgeKinds.Cites
     )
     // influential but published immediately after → not a superseding paper
     assertEquals(
-      c("we reanalyse the samples", List("result"), infl = true, citing = Some(2016), target = Some(2015)),
+      c(com.histmersion.api.library.Acquire.CitationContext("we reanalyse the samples"), List(com.histmersion.api.library.Acquire.Intent.Wire("result")), infl = true, citing = Some(com.histmersion.api.catalogue.Year(2016)), target = Some(com.histmersion.api.catalogue.Year(2015))),
       EdgeKinds.Cites
     )
 
@@ -201,11 +201,11 @@ class AcquireSuite extends munit.FunSuite:
   private def csv = scala.io.Source.fromResource("acquire/retraction_watch.csv").mkString
 
   test("Retraction Watch CSV parses by header name, through quoted commas and newlines"):
-    val rows = Acquire.parseRetractionWatch(csv).flatMap(r => com.histmersion.domain.library.acquisition.Ident.doi(r.doi).map(Acquire.RetractionRow(_, r.reason, r.date, r.nature)))
+    val rows = Acquire.parseRetractionWatch(csv).flatMap(r => com.histmersion.domain.library.acquisition.Ident.doi(com.histmersion.domain.library.acquisition.Ident.Written(r.doi.value)).map(d => Acquire.RetractionRow(com.histmersion.api.library.Doi(d.value), r.reason, r.date, r.nature)))
     assertEquals(rows.size, 3)
     assertEquals(rows.head.doi, "10.1177/1758835919874651")
     assertEquals(rows.head.nature, Some("Retraction"))
-    assert(rows.head.reason.exists(_.contains("Duplication of Image")))
+    assert(rows.head.reason.exists(_.value.contains("Duplication of Image")))
     // the second row's Notes column contains a comma AND a newline inside quotes
     assertEquals(rows(1).doi, "10.1038/nature00000") // lower-cased by normalizeDoi
     assertEquals(rows(2).doi, "10.1126/science.yyy") // resolver prefix stripped
@@ -242,12 +242,12 @@ class AcquireSuite extends munit.FunSuite:
       )
     )
     // the DOI link is not repeated as the location; no status says just "open access"; a closed work gets none
-    val doiOnly = w.modify(_.oaStatus).setTo(None).modify(_.oaUrl).setTo(Some("https://doi.org/10.3390/rel10040258")).modify(_.authors).setTo(List("A", "B").map(com.histmersion.api.library.AuthorName.apply))
+    val doiOnly = w.modify(_.oaStatus).setTo(None).modify(_.oaUrl).setTo(Some(com.histmersion.api.library.WorkRef.OaUrl("https://doi.org/10.3390/rel10040258"))).modify(_.authors).setTo(List("A", "B").map(com.histmersion.api.library.AuthorName.apply))
     assert(
       Acquire
         .browserDownloadText(doiOnly, com.histmersion.api.library.Doi("10.3390/REL10040258"), com.histmersion.api.library.Citekey("k"))
         .exists(t =>
-          t.startsWith("A et al. (2019).") && t.contains("— open access, but") && !t.contains(" at https://doi.org")
+          t.value.startsWith("A et al. (2019).") && t.value.contains("— open access, but") && !t.value.contains(" at https://doi.org")
         )
     )
     assertEquals(Acquire.browserDownloadText(w.modify(_.isOa).setTo(false), com.histmersion.api.library.Doi("10.3390/rel10040258"), com.histmersion.api.library.Citekey("k")), None)
@@ -260,8 +260,8 @@ class AcquireSuite extends munit.FunSuite:
       isOa = com.histmersion.api.library.WorkRef.IsOa(true),
       oaStatus = Some(com.histmersion.api.library.WorkRef.OaStatus("gold"))
     )
-    val refusal = "oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
-      "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0"
-    val text = Acquire.browserDownloadText(w, com.histmersion.api.library.Doi("10.1515/zz"), com.histmersion.api.library.Citekey("k"), List(refusal, refusal, com.histmersion.api.library.Acquire.Refusal(" "))).getOrElse(fail("an item"))
+    val refusal = com.histmersion.api.library.Acquire.Refusal("oapen: an openly licensed copy exists but could not be downloaded: 20.500.12657/23223 " +
+      "(https://library.oapen.org/handle/20.500.12657/23223), licence CC BY 4.0")
+    val text = Acquire.browserDownloadText(w, com.histmersion.api.library.Doi("10.1515/zz"), com.histmersion.api.library.Citekey("k"), List(refusal, refusal, com.histmersion.api.library.Acquire.Refusal(" "))).getOrElse(fail("an item")).value
     assert(text.contains(s"download it in the browser ($refusal), then histmersion ingest <file> --citekey k"), text)
-    assertEquals(text.sliding(refusal.length).count(_ == refusal), 1, "each refusal once")
+    assertEquals(text.sliding(refusal.value.length).count(_ == refusal.value), 1, "each refusal once")

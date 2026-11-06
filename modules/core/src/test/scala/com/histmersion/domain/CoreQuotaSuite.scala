@@ -43,9 +43,9 @@ class CoreQuotaSuite extends munit.FunSuite:
       limits,
       com.histmersion.domain.CoreQuota.StatusCode(429),
       Map(
-        "x-ratelimit-limit" -> "25",
-        "x-ratelimit-remaining" -> "0",
-        "x-ratelimit-retry-after" -> "2026-10-26T18:52:11+0000"
+        HeaderName("x-ratelimit-limit") -> HeaderValue("25"),
+        HeaderName("x-ratelimit-remaining") -> HeaderValue("0"),
+        HeaderName("x-ratelimit-retry-after") -> HeaderValue("2026-10-26T18:52:11+0000")
       ),
       t0
     )
@@ -60,22 +60,22 @@ class CoreQuotaSuite extends munit.FunSuite:
     assertEquals(after.toOption.get.state.block, None)
 
   test("Remaining 0 without a 429 blocks too; without a retry time, for exhausted-pause-seconds"):
-    val s = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(200), Map("x-ratelimit-limit" -> "10", "x-ratelimit-remaining" -> "0"), t0)
+    val s = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(200), Map(HeaderName("x-ratelimit-limit") -> HeaderValue("10"), HeaderName("x-ratelimit-remaining") -> HeaderValue("0")), t0)
     assertEquals(s.block, Some(Block(t0.plusSeconds(60), com.histmersion.domain.CoreQuota.Block.Why("X-RateLimit-Remaining 0 of 10"))))
     val plain429 = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map.empty, t0)
     assertEquals(plain429.block.map(_.until), Some(t0.plusSeconds(60)))
     // the standard Retry-After header counts when CORE's own is missing
     assertEquals(
-      observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map("retry-after" -> "120"), t0).block.map(_.until),
+      observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map(HeaderName("retry-after") -> HeaderValue("120")), t0).block.map(_.until),
       Some(t0.plusSeconds(120))
     )
 
   test("an answer with tokens left blocks nothing and records the window; a later answer never shortens a block"):
-    val ok = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(200), Map("x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "18"), t0)
+    val ok = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(200), Map(HeaderName("x-ratelimit-limit") -> HeaderValue("25"), HeaderName("x-ratelimit-remaining") -> HeaderValue("18")), t0)
     assertEquals(ok.block, None)
     assertEquals(ok.window, Some(Window(Some(com.histmersion.domain.CoreQuota.Window.Limit(25)), Some(com.histmersion.domain.CoreQuota.Window.Remaining(18)), t0)))
-    val long = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map("x-ratelimit-retry-after" -> "2026-10-26T20:00:00+0000"), t0)
-    val shorter = observe(long, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map("x-ratelimit-retry-after" -> "2026-10-26T18:51:00+0000"), t0)
+    val long = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map(HeaderName("x-ratelimit-retry-after") -> HeaderValue("2026-10-26T20:00:00+0000")), t0)
+    val shorter = observe(long, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map(HeaderName("x-ratelimit-retry-after") -> HeaderValue("2026-10-26T18:51:00+0000")), t0)
     assertEquals(shorter.block.map(_.until), Some(Instant.parse("2026-10-26T20:00:00Z")))
     // an answer without the headers keeps the window last reported
     assertEquals(observe(ok, limits, com.histmersion.domain.CoreQuota.StatusCode(200), Map.empty, t0.plusSeconds(5)).window, ok.window)
@@ -88,7 +88,7 @@ class CoreQuotaSuite extends munit.FunSuite:
       case Left(Refusal.Paced(ms)) => assertEquals(ms, 51_000L) // the first slot (t0+1 s) leaves the window at t0+61 s
       case other                   => fail(other.toString)
     // with patience, the call waits for its slot (counted now, sent then)
-    val patient = limits.modify(_.maxWaitSeconds).setTo(60)
+    val patient = limits.modify(_.maxWaitSeconds).setTo(Limits.MaxWaitSeconds(60))
     val g = reserve(three, patient, Purpose.Search, t0.plusSeconds(10)).toOption.get
     assertEquals(g.waitMs, 51_000L)
     assertEquals(g.state.searchTokens, 1)
@@ -96,19 +96,19 @@ class CoreQuotaSuite extends munit.FunSuite:
     assert(reserve(three, limits, Purpose.Lookup, t0.plusSeconds(62)).isRight)
 
   test("pacing follows CORE's reported window when it is smaller than per-minute"):
-    val roomy = limits.modify(_.perMinute).setTo(20)
-    val window = observe(fresh, roomy, com.histmersion.domain.CoreQuota.StatusCode(200), Map("x-ratelimit-limit" -> "2", "x-ratelimit-remaining" -> "2"), t0)
+    val roomy = limits.modify(_.perMinute).setTo(Limits.PerMinute(20))
+    val window = observe(fresh, roomy, com.histmersion.domain.CoreQuota.StatusCode(200), Map(HeaderName("x-ratelimit-limit") -> HeaderValue("2"), HeaderName("x-ratelimit-remaining") -> HeaderValue("2")), t0)
     val two = (1 to 2).foldLeft(window)((s, i) => granted(s, at = t0.plusSeconds(i.toLong), l = roomy))
     assert(reserve(two, roomy, Purpose.Lookup, t0.plusSeconds(10)).left.exists(_.isInstanceOf[Refusal.Paced]))
     // a reported window larger than per-minute changes nothing
-    val wide = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(200), Map("x-ratelimit-limit" -> "25", "x-ratelimit-remaining" -> "25"), t0)
+    val wide = observe(fresh, limits, com.histmersion.domain.CoreQuota.StatusCode(200), Map(HeaderName("x-ratelimit-limit") -> HeaderValue("25"), HeaderName("x-ratelimit-remaining") -> HeaderValue("25")), t0)
     val three = (1 to 3).foldLeft(wide)((s, i) => granted(s, at = t0.plusSeconds(i.toLong)))
     assert(reserve(three, limits, Purpose.Lookup, t0.plusSeconds(10)).isLeft)
 
   test(
     "the daily budget: searches stop at search-daily-tokens, the rest stays for PDF lookups; together at daily-tokens"
   ):
-    val free = limits.modify(_.perMinute).setTo(1000)
+    val free = limits.modify(_.perMinute).setTo(Limits.PerMinute(1000))
     val searches = (1 to 6).foldLeft(fresh)((s, _) => granted(s, Purpose.Search, l = free))
     assertEquals(
       reserve(searches, free, Purpose.Search, t0).left.toOption,
@@ -127,14 +127,14 @@ class CoreQuotaSuite extends munit.FunSuite:
     assert(reserve(searches, free, Purpose.Search, t0).isLeft)
 
   test("costs are settings: a call costing 3 tokens counts 3"):
-    val dear = limits.modify(_.perMinute).setTo(1000).modify(_.searchCost).setTo(3)
+    val dear = limits.modify(_.perMinute).setTo(Limits.PerMinute(1000)).modify(_.searchCost).setTo(Limits.SearchCost(3))
     val s = granted(granted(fresh, Purpose.Search, l = dear), Purpose.Search, l = dear)
     assertEquals(s.searchTokens, 6)
     assert(reserve(s, dear, Purpose.Search, t0).isLeft)
 
   test("a new UTC day starts with nothing spent; a block that has not ended stays"):
     val spent = (1 to 3).foldLeft(fresh)((s, i) => granted(s, at = t0.plusSeconds(i.toLong)))
-    val blocked = observe(spent, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map("x-ratelimit-retry-after" -> "2026-10-27T00:30:00+0000"), t0)
+    val blocked = observe(spent, limits, com.histmersion.domain.CoreQuota.StatusCode(429), Map(HeaderName("x-ratelimit-retry-after") -> HeaderValue("2026-10-27T00:30:00+0000")), t0)
     val midnight = Instant.parse("2026-10-27T00:10:00Z")
     val next = onDay(blocked, midnight)
     assertEquals((next.day, next.spent), (LocalDate.of(2026, 10, 27), 0))
@@ -150,9 +150,9 @@ class CoreQuotaSuite extends munit.FunSuite:
       limits,
       com.histmersion.domain.CoreQuota.StatusCode(429),
       Map(
-        "x-ratelimit-limit" -> "25",
-        "x-ratelimit-remaining" -> "0",
-        "x-ratelimit-retry-after" -> "2026-10-26T18:52:11+0000"
+        HeaderName("x-ratelimit-limit") -> HeaderValue("25"),
+        HeaderName("x-ratelimit-remaining") -> HeaderValue("0"),
+        HeaderName("x-ratelimit-retry-after") -> HeaderValue("2026-10-26T18:52:11+0000")
       ),
       t0
     )
@@ -169,7 +169,7 @@ class CoreQuotaSuite extends munit.FunSuite:
     assertEquals(view(s, limits, Instant.parse("2026-10-27T09:00:00Z")).lookupTokens, 0)
 
   test("refusals say what to change"):
-    assert(Refusal.OverBudget(Purpose.Search, com.histmersion.domain.CoreQuota.Refusal.OverBudget.Spent(600), com.histmersion.domain.CoreQuota.Refusal.OverBudget.Cap(600)).describe.contains("acquire.core.search-daily-tokens"))
-    assert(Refusal.OverBudget(Purpose.Lookup, com.histmersion.domain.CoreQuota.Refusal.OverBudget.Spent(900), com.histmersion.domain.CoreQuota.Refusal.OverBudget.Cap(900)).describe.contains("acquire.core.daily-tokens"))
-    assert(Refusal.Paced(4_200).describe.contains("5 s"))
-    assert(Refusal.Blocked(t0, com.histmersion.domain.CoreQuota.Refusal.Blocked.Why("HTTP 429")).describe.contains("HTTP 429"))
+    assert(Refusal.OverBudget(Purpose.Search, com.histmersion.domain.CoreQuota.Refusal.OverBudget.Spent(600), com.histmersion.domain.CoreQuota.Refusal.OverBudget.Cap(600)).describe.value.contains("acquire.core.search-daily-tokens"))
+    assert(Refusal.OverBudget(Purpose.Lookup, com.histmersion.domain.CoreQuota.Refusal.OverBudget.Spent(900), com.histmersion.domain.CoreQuota.Refusal.OverBudget.Cap(900)).describe.value.contains("acquire.core.daily-tokens"))
+    assert(Refusal.Paced(Refusal.Paced.WaitMs(4_200L)).describe.value.contains("5 s"))
+    assert(Refusal.Blocked(t0, com.histmersion.domain.CoreQuota.Refusal.Blocked.Why("HTTP 429")).describe.value.contains("HTTP 429"))

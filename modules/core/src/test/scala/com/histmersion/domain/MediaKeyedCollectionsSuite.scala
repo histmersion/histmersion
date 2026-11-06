@@ -1,5 +1,7 @@
 package com.histmersion.domain
 
+import com.histmersion.testsupport.ComparedByValue.given
+
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.domain.media.imports.MediaMatch
@@ -20,7 +22,7 @@ class MediaKeyedCollectionsSuite extends munit.FunSuite:
   ):
     val orkney = MediaMatch.PlaceInfo(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Id("orkney"), com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Label("Orkney Islands"), Set(com.histmersion.domain.media.imports.MediaMatch.PlaceInfo.Keys("orkney")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(-7000L), com.histmersion.domain.DeepTime.SignedYear(2100L)))
     def rec(period: Option[Period]) =
-      MediaRecord(com.histmersion.domain.media.imports.MediaRecord.Key("k"), com.histmersion.domain.media.imports.MediaRecord.Title("t"), com.histmersion.domain.media.imports.MediaRecord.PageUrl("p"), None, None, None, Left(com.histmersion.domain.media.imports.MediaRecord.RightsPart1("unused")), List("x" -> "Orkney"), period)
+      MediaRecord(com.histmersion.domain.media.imports.MediaRecord.Key("k"), com.histmersion.domain.media.imports.MediaRecord.Title("t"), com.histmersion.domain.media.imports.MediaRecord.PageUrl("p"), None, None, None, Left(com.histmersion.domain.media.imports.MediaRecord.RightsPart1("unused")), List(MediaRecord.GeographyPart1("x") -> MediaRecord.GeographyPart2("Orkney")), period)
     assertEquals(
       MediaMatch.dated(com.histmersion.domain.media.imports.MediaMatch.Basis("x = Orkney"), rec(DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(1896L), com.histmersion.domain.DeepTime.SignedYear(1896L))), orkney, Some(com.histmersion.Year(1500))),
       Left("made after 1500 CE")

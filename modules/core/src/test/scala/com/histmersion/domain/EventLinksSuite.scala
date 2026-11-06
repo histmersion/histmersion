@@ -38,9 +38,9 @@ class EventLinksSuite extends munit.FunSuite:
   private val w = EventMatcher.Weights(
     km = com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Km(150),
     years = com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Years(100),
-    name = 1.0,
-    finding = 0.6,
-    minScore = 0.3,
+    name = com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Name(1.0),
+    finding = com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.Finding(0.6),
+    minScore = com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinScore(0.3),
     minNameChars = com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MinNameChars(5),
     maxCandidates = com.histmersion.domain.catalogue.evidence.EventMatcher.Weights.MaxCandidates(12)
   )
@@ -65,12 +65,12 @@ class EventLinksSuite extends munit.FunSuite:
       EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("c#1"), com.histmersion.domain.library.Citekey("named2020"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(100), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(20))
     )
     val named =
-      Map("named2020" -> List(EventPassage(com.histmersion.api.catalogue.EventPassage.Start(120), com.histmersion.api.catalogue.EventPassage.End(125), com.histmersion.api.catalogue.EventPassage.Quote("Thera"), com.histmersion.api.catalogue.EventPassage.Name("Thera")), EventPassage(com.histmersion.api.catalogue.EventPassage.Start(900), com.histmersion.api.catalogue.EventPassage.End(905), com.histmersion.api.catalogue.EventPassage.Quote("Thera"), com.histmersion.api.catalogue.EventPassage.Name("Thera"))))
+      Map(com.histmersion.domain.library.Citekey("named2020") -> List(EventPassage(com.histmersion.api.catalogue.EventPassage.Start(120), com.histmersion.api.catalogue.EventPassage.End(125), com.histmersion.api.catalogue.EventPassage.Quote("Thera"), com.histmersion.api.catalogue.EventPassage.Name("Thera")), EventPassage(com.histmersion.api.catalogue.EventPassage.Start(900), com.histmersion.api.catalogue.EventPassage.End(905), com.histmersion.api.catalogue.EventPassage.Quote("Thera"), com.histmersion.api.catalogue.EventPassage.Name("Thera"))))
     val cs = EventMatcher.candidates(com.histmersion.domain.catalogue.Event.Id("thera"), near, named, w)
     assertEquals(cs.map(_.citekey), List("named2020", "near2020").map(com.histmersion.api.library.Citekey.apply))
     assertEquals(cs.head.status, Event.LinkStatus.Proposed)
-    assert(cs.head.reasons.exists(_.contains("names it 2 times")), cs.head.reasons.toString)
-    assert(cs(1).score <= w.finding, "findings alone never pass a name")
+    assert(cs.head.reasons.exists(_.value.contains("names it 2 times")), cs.head.reasons.toString)
+    assert(cs(1).score.value <= w.finding.value, "findings alone never pass a name")
     assertEquals(cs(1).findings, List("a#1", "a#2"))
 
   test("no passage, no attestation: only a passage naming the event becomes one, with its quote and offsets"):
@@ -90,7 +90,7 @@ class EventLinksSuite extends munit.FunSuite:
       com.histmersion.api.catalogue.LeadFacts.Label("Eruption of Santorini"),
       com.histmersion.api.catalogue.LeadFacts.Kind("eruption"),
       TimeSpan(Some(com.histmersion.api.catalogue.Year(-1624)), None, None, Some(com.histmersion.api.catalogue.Year(-1596))),
-      EventTier.Catalogue,
+      com.histmersion.api.catalogue.LeadFacts.Tier(EventTier.Catalogue),
       Some(com.histmersion.api.catalogue.LeadFacts.Vei(7)),
       None,
       findingsNear = com.histmersion.api.catalogue.LeadFacts.FindingsNear(7),
@@ -108,11 +108,11 @@ class EventLinksSuite extends munit.FunSuite:
     assertEquals(l.actions.map(_.kind), List("discover", "acquire", "goal"))
     assertEquals(l.actions.head.command, "histmersion discover search \"Eruption of Santorini\" --not-in-db")
     val withProposed = EventLeads.of(f.modify(_.proposed).setTo(2)).get
-    assert(withProposed.text.contains("2 sources possibly discuss it (unconfirmed)"))
+    assert(withProposed.text.value.contains("2 sources possibly discuss it (unconfirmed)"))
     assertEquals(withProposed.actions.last.command, "histmersion events links gvp_13879")
-    assertEquals(EventLeads.of(f.modify(_.tier).setTo(EventTier.Attested)), None)
+    assertEquals(EventLeads.of(f.modify(_.tier).setTo(com.histmersion.api.catalogue.LeadFacts.Tier(EventTier.Attested))), None)
     assertEquals(EventLeads.of(f.modify(_.attesting).setTo(1)), None)
-    assertEquals(EventLeads.size(None, Some(7.25)), Some("M 7.3"))
+    assertEquals(EventLeads.size(None, Some(com.histmersion.api.catalogue.LeadFacts.Magnitude(7.25))), Some("M 7.3"))
 
   test("an article names an event by any of its names, ignoring case; short names do not count"):
     assert(
@@ -122,11 +122,11 @@ class EventLinksSuite extends munit.FunSuite:
     val md = ArticleEventLead.markdown(
       List(ArticleEventLead(com.histmersion.api.catalogue.Event.Id("gvp_1"), com.histmersion.api.catalogue.ArticleEventLead.Label("Eruption of X"), com.histmersion.api.catalogue.ArticleEventLead.Kind("eruption"), com.histmersion.api.catalogue.ArticleEventLead.Years("1600 BCE"), Some(com.histmersion.api.catalogue.ArticleEventLead.Size("VEI 6")), com.histmersion.api.catalogue.ArticleEventLead.FindingsNear(3), com.histmersion.api.catalogue.ArticleEventLead.Provider("GVP")))
     )
-    assert(md.contains("never names") && md.contains("a lead, not evidence"), md)
+    assert(md.value.contains("never names") && md.value.contains("a lead, not evidence"), md)
     assertEquals(ArticleEventLead.markdown(Nil), "")
 
   test("markdown of links and leads says unconfirmed and lists the commands"):
-    val l = EventLinkList(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventLinkList.Label("E"), List(EventLinkCandidate(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.library.Citekey("a2020"), 1.1, reasons = List("names it 1 time"))))
+    val l = EventLinkList(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.catalogue.EventLinkList.Label("E"), List(EventLinkCandidate(com.histmersion.api.catalogue.Event.Id("e"), com.histmersion.api.library.Citekey("a2020"), EventLinkCandidate.Score(1.1), reasons = List(EventLinkCandidate.Reasons("names it 1 time")))))
     assert(EventLinksMarkdown.list(l).contains("unconfirmed"))
     val md = EventLeads.markdown(
       EventLead.List(
@@ -136,7 +136,7 @@ class EventLinksSuite extends munit.FunSuite:
         )
       )
     )
-    assert(md.contains("`histmersion discover search \"E\" --not-in-db`"), md)
+    assert(md.value.contains("`histmersion discover search \"E\" --not-in-db`"), md)
 
   // ── site types ──────────────────────────────────────────────────────────────────────────────
 
@@ -166,14 +166,14 @@ class EventLinksSuite extends munit.FunSuite:
 
   test("Wikidata: own classes first, then the walked superclasses, then the import's class"):
     assertEquals(
-      SiteTypes.wikidata(List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q755017")), Nil, Some(SiteTypes.ArchaeologicalSite)),
+      SiteTypes.wikidata(List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q755017")), Nil, Some(com.histmersion.api.catalogue.CatalogRecord.Wikidata.ImportClass(SiteTypes.ArchaeologicalSite))),
       Some(SiteTypes.Settlement)
     )
     assertEquals(
-      SiteTypes.wikidata(List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q999999")), List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q34023")), Some(SiteTypes.ArchaeologicalSite)),
+      SiteTypes.wikidata(List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q999999")), List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q34023")), Some(com.histmersion.api.catalogue.CatalogRecord.Wikidata.ImportClass(SiteTypes.ArchaeologicalSite))),
       Some(SiteTypes.Burial)
     )
-    assertEquals(SiteTypes.wikidata(Nil, Nil, Some(SiteTypes.HumanSettlement)), Some(SiteTypes.Settlement))
+    assertEquals(SiteTypes.wikidata(Nil, Nil, Some(com.histmersion.api.catalogue.CatalogRecord.Wikidata.ImportClass(SiteTypes.HumanSettlement))), Some(SiteTypes.Settlement))
     assertEquals(
       SiteTypes.wikidata(List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q44539"), com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q486972")), Nil, None),
       Some(SiteTypes.Sanctuary),
@@ -200,16 +200,16 @@ class EventLinksSuite extends munit.FunSuite:
     assertEquals(SiteTypes.wikidataOwn(List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q12280"))), Some(SiteTypes.Bridge))
     assertEquals(SiteTypes.wikidataOwn(List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q474"))), Some(SiteTypes.Aqueduct))
     assertEquals(SiteTypes.wikidataOwn(List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q1"))), None)
-    assertEquals(SiteTypes.p31Of(Some("""["Q16970","Q2031836"]""")), List("Q16970", "Q2031836"))
+    assertEquals(SiteTypes.p31Of(Some(com.histmersion.api.catalogue.CatalogRecord.Wikidata.P31Json("""["Q16970","Q2031836"]"""))), List("Q16970", "Q2031836"))
     assertEquals(SiteTypes.p31Of(None), Nil)
 
   test("a place's type: the stored refinement, else its gazetteer's own field; only sites and features"):
     assertEquals(
-      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), Some(com.histmersion.api.catalogue.SiteTypes.SiteType.Id("burial")), None, None, Some(SiteTypes.HumanSettlement)),
+      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), Some(com.histmersion.api.catalogue.SiteTypes.SiteType.Id("burial")), None, None, Some(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class(SiteTypes.HumanSettlement))),
       Some("burial")
     )
     assertEquals(
-      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), None, None, None, Some(SiteTypes.HumanSettlement)),
+      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), None, None, None, Some(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class(SiteTypes.HumanSettlement))),
       Some("settlement")
     )
     assertEquals(SiteTypes.of(com.histmersion.api.catalogue.Place.Id("pleiades_1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), None, Some(com.histmersion.api.catalogue.SiteTypes.Pleiades.FeatureType("temple-2")), None, None), Some("sanctuary"))
@@ -218,18 +218,18 @@ class EventLinksSuite extends munit.FunSuite:
     assertEquals(SiteTypes.of(com.histmersion.api.catalogue.Place.Id("x"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), Some(com.histmersion.api.catalogue.SiteTypes.SiteType.Id("not-a-type")), None, None, None), None)
     // a Wikidata item's own P31 before the class the import reached; a heritage-only item has no class
     assertEquals(
-      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), None, None, None, Some(SiteTypes.ArchaeologicalSite), List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q23413"))),
+      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), None, None, None, Some(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class(SiteTypes.ArchaeologicalSite)), List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q23413"))),
       Some("fortification")
     )
     assertEquals(SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), None, None, None, None, List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q44613"))), Some("sanctuary"))
     assertEquals(
-      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), None, None, None, Some(SiteTypes.HumanSettlement), List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q1"))),
+      SiteTypes.of(com.histmersion.api.catalogue.Place.Id("wikidata_q1"), com.histmersion.api.catalogue.Place.Kind.Wire("site"), None, None, None, Some(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class(SiteTypes.HumanSettlement)), List(com.histmersion.api.catalogue.CatalogRecord.Wikidata.Class("Q1"))),
       Some("settlement"),
       "an unknown P31: the import's class"
     )
 
   test("every type and kind has an icon name; the mapping tables only name known types"):
-    assert(SiteTypes.all.forall(_.icon.nonEmpty) && EventTaxonomy.kinds.forall(_.icon.nonEmpty))
+    assert(SiteTypes.all.forall(_.icon.value.nonEmpty) && EventTaxonomy.kinds.forall(_.icon.value.nonEmpty))
     val ids = SiteTypes.all.map(_.id).toSet
     assert(
       (SiteTypes.pleiadesTypes.values ++ SiteTypes.geonamesCodes.values ++ SiteTypes.wikidataClasses.values).forall(ids)

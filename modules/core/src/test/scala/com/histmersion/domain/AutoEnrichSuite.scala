@@ -28,7 +28,7 @@ class AutoEnrichSuite extends munit.FunSuite:
     List(com.histmersion.domain.automation.Run.State.Queued, com.histmersion.domain.automation.Run.State.Running, com.histmersion.domain.automation.Run.State.Paused, com.histmersion.domain.automation.Run.State.WaitingApproval, com.histmersion.domain.automation.Run.State.Done).foreach { st =>
       assertEquals(
         decide(true, true, com.histmersion.domain.AutoEnrich.FindingCount(0), None, List(PriorRun(com.histmersion.domain.AutoEnrich.PriorRun.Id("r1"), st))),
-        Left(Skip.Enriched(s"enrich-source run r1 is ${st.wire}"))
+        Left(Skip.Enriched(com.histmersion.domain.AutoEnrich.Skip.Enriched.Why(s"enrich-source run r1 is ${st.wire}")))
       )
     }
     assertEquals(

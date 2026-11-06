@@ -7,7 +7,7 @@ import com.histmersion.testsupport.ComparedByValue.given
   */
 class VectorTilesSuite extends munit.FunSuite:
 
-  private def tile(z: Int, x: Long, y: Long) = TileCoord.of(z, x, y, com.histmersion.domain.catalogue.maptiles.TileCoord.Z(22)).toOption.get
+  private def tile(z: TileCoord.Z, x: TileCoord.X, y: TileCoord.Y) = TileCoord.of(z, x, y, TileCoord.Z(22)).toOption.get
 
   test("only a tile inside the grid exists, no deeper than the server cuts"):
     assert(TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(0), com.histmersion.domain.catalogue.maptiles.TileCoord.X(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(12)).isRight)
@@ -18,54 +18,54 @@ class VectorTilesSuite extends munit.FunSuite:
     assert(TileCoord.of(com.histmersion.domain.catalogue.maptiles.TileCoord.Z(-1), com.histmersion.domain.catalogue.maptiles.TileCoord.X(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Y(0), com.histmersion.domain.catalogue.maptiles.TileCoord.Z(12)).isLeft)
 
   test("a tile's bounds: the world at zoom 0, a quarter at zoom 1"):
-    val (w, s, e, n) = tile(0, 0, 0).bounds
+    val (w, s, e, n) = tile(TileCoord.Z(0), TileCoord.X(0), TileCoord.Y(0)).bounds
     assertEqualsDouble(w, -180, 1e-9)
     assertEqualsDouble(e, 180, 1e-9)
-    assertEqualsDouble(n, TileCoord.MaxLat, 1e-6)
-    assertEqualsDouble(s, -TileCoord.MaxLat, 1e-6)
-    val (w1, s1, e1, n1) = tile(1, 1, 0).bounds
+    assertEqualsDouble(n, TileCoord.MaxLat.value, 1e-6)
+    assertEqualsDouble(s, -TileCoord.MaxLat.value, 1e-6)
+    val (w1, s1, e1, n1) = tile(TileCoord.Z(1), TileCoord.X(1), TileCoord.Y(0)).bounds
     assertEqualsDouble(w1, 0, 1e-9)
     assertEqualsDouble(e1, 180, 1e-9)
     assertEqualsDouble(s1, 0, 1e-9)
-    assertEqualsDouble(n1, TileCoord.MaxLat, 1e-6)
+    assertEqualsDouble(n1, TileCoord.MaxLat.value, 1e-6)
 
   test("a point falls in exactly one tile: its units are inside that tile's extent and outside its neighbour's"):
-    val (lat, lon) = (37.97, 23.72) // Athens
-    val z = 6
+    val (lat, lon) = (com.histmersion.Latitude(37.97), com.histmersion.Longitude(23.72)) // Athens
+    val z = TileCoord.Z(6)
     val (mx, my) = TileCoord.mercator(lat, lon)
-    val t = tile(z, math.floor(mx * (1 << z)).toLong, math.floor(my * (1 << z)).toLong)
+    val t = tile(z, TileCoord.X(math.floor(mx * (1 << z.value)).toLong), TileCoord.Y(math.floor(my * (1 << z.value)).toLong))
     val (px, py) = t.unitsOf(lat, lon)
-    assert(px >= 0 && px < TileCoord.Extent && py >= 0 && py < TileCoord.Extent, s"$px $py")
-    val (qx, _) = tile(z, t.x + 1, t.y).unitsOf(lat, lon)
+    assert(px >= 0 && px < TileCoord.Extent.value && py >= 0 && py < TileCoord.Extent.value, s"$px $py")
+    val (qx, _) = tile(z, TileCoord.X(t.x.value + 1), t.y).unitsOf(lat, lon)
     assert(qx < 0)
     val (w, s, e, n) = t.bounds
-    assert(lon >= w && lon < e && lat > s && lat <= n)
+    assert(lon.value >= w && lon.value < e && lat.value > s && lat.value <= n)
 
   test("the poles land on the grid's edge, not off it"):
-    val (_, top) = tile(0, 0, 0).unitsOf(90, 0)
-    val (_, bottom) = tile(0, 0, 0).unitsOf(-90, 0)
+    val (_, top) = tile(TileCoord.Z(0), TileCoord.X(0), TileCoord.Y(0)).unitsOf(com.histmersion.Latitude(90.0), com.histmersion.Longitude(0.0))
+    val (_, bottom) = tile(TileCoord.Z(0), TileCoord.X(0), TileCoord.Y(0)).unitsOf(com.histmersion.Latitude(-90.0), com.histmersion.Longitude(0.0))
     assertEqualsDouble(top, 0, 1e-3)
-    assertEqualsDouble(bottom, TileCoord.Extent.toDouble, 1e-3)
+    assertEqualsDouble(bottom, TileCoord.Extent.value.toDouble, 1e-3)
 
   test("latOf is mercator's inverse"):
     Seq(-80.0, -33.3, 0.0, 12.5, 61.2).foreach { lat =>
-      assertEqualsDouble(TileCoord.latOf(TileCoord.mercator(lat, com.histmersion.Longitude(0))._2), lat, 1e-9)
+      assertEqualsDouble(TileCoord.latOf(TileCoord.mercator(com.histmersion.Latitude.assume(lat), com.histmersion.Longitude(0.0))._2).value, lat, 1e-9)
     }
 
   test("the grid groups only below its deepest zoom, and cells are tile units"):
     val g = TileGrid.of(maxZoom = com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom(12), maxPoints = com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints(600), cellPx = com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx(32))
     assertEquals(g.cellUnits, 256)
-    assertEquals(g.pointsAt(tile(5, 0, 0)), 600)
-    assertEquals(g.pointsAt(tile(12, 0, 0)), Int.MaxValue)
+    assertEquals(g.pointsAt(tile(TileCoord.Z(5), TileCoord.X(0), TileCoord.Y(0))), 600)
+    assertEquals(g.pointsAt(tile(TileCoord.Z(12), TileCoord.X(0), TileCoord.Y(0))), Int.MaxValue)
     assertEquals(TileGrid.of(com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom(12), com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints(600), com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx(0)).cellUnits, 8)
     assertEquals(TileGrid.of(com.histmersion.domain.catalogue.maptiles.TileGrid.MaxZoom(12), com.histmersion.domain.catalogue.maptiles.TileGrid.MaxPoints(600), com.histmersion.domain.catalogue.maptiles.TileGrid.CellPx(4096)).cellUnits, TileCoord.Extent)
 
   test("a written tile reads back: layer, extent, places and typed properties"):
     val pts = Seq(
-      TilePoint(com.histmersion.domain.catalogue.maptiles.TilePoint.X(10), com.histmersion.domain.catalogue.maptiles.TilePoint.Y(20), Seq("k" -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("a")), "n" -> TileValue.Whole(com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value(-3)), "lo" -> TileValue.Real(-1500.5))),
-      TilePoint(com.histmersion.domain.catalogue.maptiles.TilePoint.X(4095), com.histmersion.domain.catalogue.maptiles.TilePoint.Y(0), Seq("k" -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("b")), "f" -> TileValue.Flag(com.histmersion.domain.catalogue.maptiles.TileValue.Flag.Value(true)), "n" -> TileValue.Whole(com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value(-3))))
+      TilePoint(com.histmersion.domain.catalogue.maptiles.TilePoint.X(10), com.histmersion.domain.catalogue.maptiles.TilePoint.Y(20), Seq(TilePoint.PropKey("k") -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("a")), TilePoint.PropKey("n") -> TileValue.Whole(com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value(-3)), TilePoint.PropKey("lo") -> TileValue.Real(TileValue.Real.Value(-1500.5)))),
+      TilePoint(com.histmersion.domain.catalogue.maptiles.TilePoint.X(4095), com.histmersion.domain.catalogue.maptiles.TilePoint.Y(0), Seq(TilePoint.PropKey("k") -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("b")), TilePoint.PropKey("f") -> TileValue.Flag(com.histmersion.domain.catalogue.maptiles.TileValue.Flag.Value(true)), TilePoint.PropKey("n") -> TileValue.Whole(com.histmersion.domain.catalogue.maptiles.TileValue.Whole.Value(-3))))
     )
-    val layers = VectorTileReader.read(VectorTileWriter.tile(Seq("sites" -> pts, "empty" -> Nil)))
+    val layers = VectorTileReader.read(VectorTileWriter.tile(Seq(VectorTileWriter.LayerName("sites") -> pts, VectorTileWriter.LayerName("empty") -> Nil)).value)
     assertEquals(layers.map(_.name), Vector("sites"))
     val l = layers.head
     assertEquals(l.extent, 4096)
@@ -77,6 +77,6 @@ class VectorTilesSuite extends munit.FunSuite:
     assertEquals(l.features(1).whole("n"), Some(-3L))
 
   test("a key and a value are stored once per layer"):
-    val pts = (1 to 50).map(i => TilePoint(i, i, Seq("kind" -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("site")))))
+    val pts = (1 to 50).map(i => TilePoint(TilePoint.X(i), TilePoint.Y(i), Seq(TilePoint.PropKey("kind") -> TileValue.Text(com.histmersion.domain.catalogue.maptiles.TileValue.Text.Value("site")))))
     val bytes = VectorTileWriter.layer(com.histmersion.domain.catalogue.maptiles.VectorTileWriter.LayerName("sites"), pts)
-    assertEquals(new String(bytes, "UTF-8").sliding(4).count(_ == "site"), 2) // the layer's name and the value
+    assertEquals(new String(bytes.value, "UTF-8").sliding(4).count(_ == "site"), 2) // the layer's name and the value

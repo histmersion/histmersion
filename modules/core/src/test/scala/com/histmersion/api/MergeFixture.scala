@@ -51,31 +51,31 @@ object MergeFixture:
     Bundle.Source(
       uid(id),
       origin,
-      ck,
-      title,
-      authors,
-      doi,
-      year,
-      venue,
+      com.histmersion.api.library.Citekey(ck),
+      com.histmersion.api.library.Title(title),
+      authors.map(com.histmersion.api.library.AuthorName(_)),
+      doi.map(com.histmersion.api.library.Doi(_)),
+      year.map(y => com.histmersion.api.catalogue.Year(y.toLong)),
+      venue.map(Source.Venue(_)),
       status,
       Nil,
       Nil,
       Nil,
       None,
-      summary,
-      notes,
+      summary.map(Bundle.Source.Summary(_)),
+      notes.map(Bundle.Source.Notes(_)),
       None,
       None,
       None,
       com.histmersion.api.exchange.Bundle.Source.AddedDate("2026-01-01"),
-      body.map(BundleFormat.sha256Hex),
-      sha,
+      body.map(b => Bundle.Source.BodySha256(BundleFormat.sha256Hex(b).value)),
+      sha.map(Bundle.Source.OriginalSha256(_)),
       None,
-      At
+      Bundle.Source.UpdatedAt(At)
     )
 
   def article(id: String, slug: String, body: String, origin: UUID = work): Bundle.Article =
-    Bundle.Article(uid(id), origin, slug, slug.replace('_', ' '), com.histmersion.api.exchange.Bundle.Article.Kind("concept"), body, None, Nil, Nil, None, At)
+    Bundle.Article(uid(id), origin, Bundle.Article.Slug(slug), Bundle.Article.Title(slug.replace('_', ' ')), com.histmersion.api.exchange.Bundle.Article.Kind("concept"), Bundle.Article.Body(body), None, Nil, Nil, None, Bundle.Article.UpdatedAt(At))
 
   def event(
       id: String,
@@ -88,13 +88,13 @@ object MergeFixture:
     Bundle.Event(
       uid(id),
       origin,
-      eventId,
-      label,
+      Bundle.Event.Id(eventId),
+      Bundle.Event.Label(label),
       com.histmersion.api.exchange.Bundle.Event.Kind("battle"),
-      Some(from),
+      Some(Bundle.Event.NotBefore(from)),
       None,
       None,
-      Some(to),
+      Some(Bundle.Event.NotAfter(to)),
       com.histmersion.api.exchange.Bundle.Event.Historicity("historical"),
       None,
       None,
@@ -105,16 +105,16 @@ object MergeFixture:
       Nil,
       Nil,
       Nil,
-      At
+      Bundle.Event.UpdatedAt(At)
     )
 
   def goal(id: String, slug: String, title: String, origin: UUID = work, notes: Option[String] = None): Bundle.Goal =
-    Bundle.Goal(uid(id), origin, slug, title, com.histmersion.api.exchange.Bundle.Goal.Status("planned"), notes, Nil, Nil, None, None, At, At)
+    Bundle.Goal(uid(id), origin, Bundle.Goal.Slug(slug), Bundle.Goal.Title(title), com.histmersion.api.exchange.Bundle.Goal.Status("planned"), notes.map(Bundle.Goal.Notes(_)), Nil, Nil, None, None, Bundle.Goal.CreatedAt(At), Bundle.Goal.UpdatedAt(At))
 
   def manifest(es: BundleEntities): Bundle.Manifest =
     Bundle.Manifest(
-      Bundle.Format,
-      Bundle.FormatVersion,
+      Bundle.Manifest.Format(Bundle.Format),
+      Bundle.Manifest.FormatVersion(Bundle.FormatVersion),
       com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("36"),
       uid("bundle"),
       Bundle.Instance(work, Some(com.histmersion.api.exchange.Bundle.Instance.Label("work"))),
@@ -219,7 +219,7 @@ object MergeFixture:
       // nothing like it at home
       src("w-new", "zznew2020_only", "A Book Only Work Has", List("Roe, Richard"), Some(2020))
     ),
-    aliases = List(Bundle.Alias(com.histmersion.api.exchange.Bundle.Alias.Value("harrison1903_old"), uid("w-harrison"), At)),
+    aliases = List(Bundle.Alias(com.histmersion.api.exchange.Bundle.Alias.Value("harrison1903_old"), uid("w-harrison"), Bundle.Alias.CreatedAt(At))),
     articles = List(
       article("w-bac", "bronze_age_collapse", "Work's account of the collapse, citing [[kuhrt1995_near]]."),
       article("w-same", "zz_same_text", "Identical on both sides.")
@@ -227,7 +227,7 @@ object MergeFixture:
     events = List(event("w-siege", "zz_siege", "Siege of Troy (work)")),
     goals = List(goal("w-goal", "zz_goal_both", "Goal created at work")),
     tombstones =
-      List(Bundle.Tombstone(uid("goal-shared"), com.histmersion.api.exchange.Bundle.Kind.Goal, work, At))
+      List(Bundle.Tombstone(uid("goal-shared"), com.histmersion.api.exchange.Bundle.Kind.Goal, work, Bundle.Tombstone.DeletedAt(At)))
   )
 
   /** Home's sources. */
@@ -313,13 +313,13 @@ object MergeFixture:
     article("h-same", "zz_same_text", "Identical on both sides.", home)
   )
 
-  def sketches: Map[String, com.histmersion.util.text.MinHash] =
+  def sketches: Map[Bundle.Source.BodySha256, com.histmersion.util.text.MinHash] =
     (foreign.sources ++ here).flatMap(s => s.bodySha256.map(_ -> s)).toMap.flatMap { (sha, s) =>
       val text = if s.uid == uid("w-olsen") then bodyOlsen
       else if s.uid == uid("h-olsen") then bodyOlsenAgain
       else if s.uid == uid("w-kuhrt") then "Kuhrt body, work's OCR"
       else "Kuhrt body, home's OCR"
-      Some(sha -> com.histmersion.util.text.MinHash.of(text, cfg.minhashSize))
+      Some(sha -> com.histmersion.util.text.MinHash.of(com.histmersion.util.text.MinHash.Text(text), com.histmersion.util.text.MinHash.Size(cfg.minhashSize.value)))
     }
 
   /** Home's event under work's event id, dated differently: not the same event without asking. */
@@ -345,14 +345,14 @@ object MergeFixture:
       uidAliases = Map.empty,
       ledger = Map(
         sharedOriginal.uid -> LedgerEntry(
-          BundleFormat.stamp(sharedOriginal).rev,
+          com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev(BundleFormat.stamp(sharedOriginal).rev),
           sharedOriginal.uid,
-          Some(BundleFormat.stamp(sharedOriginal).rev)
+          Some(com.histmersion.util.data.exchange.BundlePlan.Ledger.LocalRevAfter(BundleFormat.stamp(sharedOriginal).rev))
         ),
         goalOriginal.uid -> LedgerEntry(
-          BundleFormat.stamp(goalOriginal).rev,
+          com.histmersion.util.data.exchange.BundlePlan.Ledger.ForeignRev(BundleFormat.stamp(goalOriginal).rev),
           goalOriginal.uid,
-          Some(BundleFormat.stamp(goalOriginal).rev)
+          Some(com.histmersion.util.data.exchange.BundlePlan.Ledger.LocalRevAfter(BundleFormat.stamp(goalOriginal).rev))
         )
       ),
       tombstoned = Set.empty,
@@ -360,10 +360,10 @@ object MergeFixture:
       sources = local,
       labels = Labels(
         citekeys = local.map(s => s.citekey -> s.uid).toMap,
-        aliases = Map("latacz2023_troy" -> uid("h-latacz"), "harrison1903_old" -> uid("h-themis")),
+        aliases = Map(com.histmersion.api.library.Citekey("latacz2023_troy") -> uid("h-latacz"), com.histmersion.api.library.Citekey("harrison1903_old") -> uid("h-themis")),
         slugs = localArticles.map(a => a.slug -> a.uid).toMap,
-        events = Map("zz_siege" -> uid("h-siege")),
-        goals = Map("zz_goal_both" -> uid("h-goal"), "zz_shared_goal" -> goalOriginal.uid)
+        events = Map(Bundle.Event.Id("zz_siege") -> uid("h-siege")),
+        goals = Map(Bundle.Goal.Slug("zz_goal_both") -> uid("h-goal"), Bundle.Goal.Slug("zz_shared_goal") -> goalOriginal.uid)
       ),
       live = Set.empty,
       places = Set.empty,
@@ -374,8 +374,8 @@ object MergeFixture:
   final case class Expect(
       kind: Issue.Kind,
       letter: String,
-      left: Option[String],
-      right: Option[String],
+      left: Option[com.histmersion.api.exchange.IssueSide.Label],
+      right: Option[com.histmersion.api.exchange.IssueSide.Label],
       severity: Issue.Severity,
       when: Option[DecisionKind] = None
   )
@@ -385,7 +385,7 @@ object MergeFixture:
       .map(i =>
         Expect(
           i.kind,
-          i.id.takeWhile(_ != '-'),
+          i.id.value.takeWhile(_ != '-'),
           i.left.map(_.label),
           i.right.map(_.label),
           i.severity,
@@ -397,18 +397,18 @@ object MergeFixture:
   import com.histmersion.api.exchange.MergeIssue.Kind.*
   import com.histmersion.api.exchange.MergeIssue.Severity.*
   val expected: Set[Expect] = Set(
-    Expect(NotesDiffers, "S", Some("guterbock1997_hittite"), Some("guterbock1997_perspectives"), Blocking),
-    Expect(DoiDiffers, "S", Some("kuhrt1995_ancient"), Some("kuhrt1995_near"), Blocking),
-    Expect(BodyDiffers, "O", Some("kuhrt1995_ancient"), Some("kuhrt1995_near"), Default),
-    Expect(StatusDiffers, "S", Some("bryce2005_kingdom_hittites"), Some("bryce2005_kingdom"), Blocking),
-    Expect(SameWork, "S", Some("page1959_history"), Some("page2024_history"), Blocking),
-    Expect(YearDiffers, "S", Some("page1959_history"), Some("page2024_history"), Blocking, Some(DecisionKind.Map)),
-    Expect(CitekeyCollision, "S", Some("smith2019_ritual"), Some("smith2019_ritual"), Blocking),
-    Expect(AliasConflict, "L", Some("harrison1912_themis"), Some("harrison1903_prolegomena"), Blocking),
-    Expect(BodyDiffers, "O", Some("olsen2015_penelope_weaving"), Some("olsen2015_penelope"), Default),
-    Expect(ChangedBothSides, "S", Some("zzshared2001_alpha"), Some("zzshared2001_alpha"), Blocking),
-    Expect(DeletedThereChangedHere, "G", Some("zz_shared_goal"), None, Blocking),
-    Expect(ArticleDiverged, "A", Some("bronze_age_collapse"), Some("bronze_age_collapse"), Blocking),
-    Expect(ArticleDiverged, "A", Some("zz_same_text"), Some("zz_same_text"), Default),
-    Expect(LabelTaken, "E", Some("zz_siege"), Some("zz_siege"), Blocking)
+    Expect(NotesDiffers, "S", Some(com.histmersion.api.exchange.IssueSide.Label("guterbock1997_hittite")), Some(com.histmersion.api.exchange.IssueSide.Label("guterbock1997_perspectives")), Blocking),
+    Expect(DoiDiffers, "S", Some(com.histmersion.api.exchange.IssueSide.Label("kuhrt1995_ancient")), Some(com.histmersion.api.exchange.IssueSide.Label("kuhrt1995_near")), Blocking),
+    Expect(BodyDiffers, "O", Some(com.histmersion.api.exchange.IssueSide.Label("kuhrt1995_ancient")), Some(com.histmersion.api.exchange.IssueSide.Label("kuhrt1995_near")), Default),
+    Expect(StatusDiffers, "S", Some(com.histmersion.api.exchange.IssueSide.Label("bryce2005_kingdom_hittites")), Some(com.histmersion.api.exchange.IssueSide.Label("bryce2005_kingdom")), Blocking),
+    Expect(SameWork, "S", Some(com.histmersion.api.exchange.IssueSide.Label("page1959_history")), Some(com.histmersion.api.exchange.IssueSide.Label("page2024_history")), Blocking),
+    Expect(YearDiffers, "S", Some(com.histmersion.api.exchange.IssueSide.Label("page1959_history")), Some(com.histmersion.api.exchange.IssueSide.Label("page2024_history")), Blocking, Some(DecisionKind.Map)),
+    Expect(CitekeyCollision, "S", Some(com.histmersion.api.exchange.IssueSide.Label("smith2019_ritual")), Some(com.histmersion.api.exchange.IssueSide.Label("smith2019_ritual")), Blocking),
+    Expect(AliasConflict, "L", Some(com.histmersion.api.exchange.IssueSide.Label("harrison1912_themis")), Some(com.histmersion.api.exchange.IssueSide.Label("harrison1903_prolegomena")), Blocking),
+    Expect(BodyDiffers, "O", Some(com.histmersion.api.exchange.IssueSide.Label("olsen2015_penelope_weaving")), Some(com.histmersion.api.exchange.IssueSide.Label("olsen2015_penelope")), Default),
+    Expect(ChangedBothSides, "S", Some(com.histmersion.api.exchange.IssueSide.Label("zzshared2001_alpha")), Some(com.histmersion.api.exchange.IssueSide.Label("zzshared2001_alpha")), Blocking),
+    Expect(DeletedThereChangedHere, "G", Some(com.histmersion.api.exchange.IssueSide.Label("zz_shared_goal")), None, Blocking),
+    Expect(ArticleDiverged, "A", Some(com.histmersion.api.exchange.IssueSide.Label("bronze_age_collapse")), Some(com.histmersion.api.exchange.IssueSide.Label("bronze_age_collapse")), Blocking),
+    Expect(ArticleDiverged, "A", Some(com.histmersion.api.exchange.IssueSide.Label("zz_same_text")), Some(com.histmersion.api.exchange.IssueSide.Label("zz_same_text")), Default),
+    Expect(LabelTaken, "E", Some(com.histmersion.api.exchange.IssueSide.Label("zz_siege")), Some(com.histmersion.api.exchange.IssueSide.Label("zz_siege")), Blocking)
   )

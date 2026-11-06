@@ -60,15 +60,15 @@ class ManagerPolicySuite extends munit.FunSuite:
   test("holds: a date that passed, a source that exists; neither waits for a person"):
     assert(released(Hold(until = Some(com.histmersion.api.automation.Managers.Hold.Until("2026-10-15"))), now, _ => false))
     assert(!released(Hold(until = Some(com.histmersion.api.automation.Managers.Hold.Until("2026-10-16T00:00:00Z"))), now, _ => false))
-    assert(released(Hold(untilSource = Some(com.histmersion.api.automation.Managers.Hold.UntilSource("10.1/x"))), now, _ == "10.1/x"))
+    assert(released(Hold(untilSource = Some(com.histmersion.api.automation.Managers.Hold.UntilSource("10.1/x"))), now, _.value == "10.1/x"))
     assert(!released(Hold(reason = com.histmersion.api.automation.Managers.Hold.Reason("person")), now, _ => true))
 
   test("hint effects match by target, tag, topic or goal; notes are live and in scope"):
-    val e = HintEffect(HintEffect.Prioritise, tag = Some("Tin Trade"))
+    val e = HintEffect(HintEffect.Action(HintEffect.Prioritise), tag = Some(HintEffect.Tag("Tin Trade")))
     assert(matches(e, com.histmersion.domain.ManagerPolicy.Candidate.Target("x"), List(com.histmersion.domain.ManagerPolicy.Tag("tin trade")), Nil, Nil))
     assert(!matches(e, com.histmersion.domain.ManagerPolicy.Candidate.Target("x"), List(com.histmersion.domain.ManagerPolicy.Tag("copper")), Nil, Nil))
-    assert(matches(HintEffect(HintEffect.Skip, targets = List(com.histmersion.api.automation.Managers.HintEffect.Targets("tin"))), com.histmersion.domain.ManagerPolicy.Candidate.Target("TIN"), Nil, Nil, Nil))
-    assert(matches(HintEffect(HintEffect.HoldAction, goal = Some("g")), com.histmersion.domain.ManagerPolicy.Candidate.Target("x"), Nil, Nil, List(com.histmersion.domain.automation.Goal.Slug("g"))))
+    assert(matches(HintEffect(HintEffect.Action(HintEffect.Skip), targets = List(com.histmersion.api.automation.Managers.HintEffect.Targets("tin"))), com.histmersion.domain.ManagerPolicy.Candidate.Target("TIN"), Nil, Nil, Nil))
+    assert(matches(HintEffect(HintEffect.Action(HintEffect.HoldAction), goal = Some(com.histmersion.api.automation.Goal.Slug("g"))), com.histmersion.domain.ManagerPolicy.Candidate.Target("x"), Nil, Nil, List(com.histmersion.domain.automation.Goal.Slug("g"))))
     val hs = List(
       ManagerHint(com.histmersion.api.automation.Managers.ManagerHint.Id(2), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), None, com.histmersion.api.automation.Managers.ManagerHint.Text("b")),
       ManagerHint(com.histmersion.api.automation.Managers.ManagerHint.Id(1), com.histmersion.api.automation.Managers.ManagerInfo.Id("review"), Some(com.histmersion.api.automation.Managers.ManagerHint.ItemId(7)), com.histmersion.api.automation.Managers.ManagerHint.Text("a")),
@@ -83,7 +83,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       statusNote(com.histmersion.domain.automation.Manager.State.Active, Some(com.histmersion.domain.ManagerPolicy.StatusNote("skeptic chain below its plan floor")), com.histmersion.domain.ManagerPolicy.Capacity(0), com.histmersion.domain.ManagerPolicy.PendingCount(3), com.histmersion.domain.ManagerPolicy.DueCount(3), com.histmersion.domain.ManagerPolicy.InFlightCount(0), None),
       "starved: skeptic chain below its plan floor"
     )
-    assert(statusNote(com.histmersion.domain.automation.Manager.State.Active, None, com.histmersion.domain.ManagerPolicy.Capacity(0), com.histmersion.domain.ManagerPolicy.PendingCount(3), com.histmersion.domain.ManagerPolicy.DueCount(3), com.histmersion.domain.ManagerPolicy.InFlightCount(2), None).startsWith("at capacity"))
+    assert(statusNote(com.histmersion.domain.automation.Manager.State.Active, None, com.histmersion.domain.ManagerPolicy.Capacity(0), com.histmersion.domain.ManagerPolicy.PendingCount(3), com.histmersion.domain.ManagerPolicy.DueCount(3), com.histmersion.domain.ManagerPolicy.InFlightCount(2), None).value.startsWith("at capacity"))
     assertEquals(statusNote(com.histmersion.domain.automation.Manager.State.Active, None, com.histmersion.domain.ManagerPolicy.Capacity(0), com.histmersion.domain.ManagerPolicy.PendingCount(0), com.histmersion.domain.ManagerPolicy.DueCount(0), com.histmersion.domain.ManagerPolicy.InFlightCount(0), None), "idle")
     assertEquals(statusNote(com.histmersion.domain.automation.Manager.State.Active, None, com.histmersion.domain.ManagerPolicy.Capacity(1), com.histmersion.domain.ManagerPolicy.PendingCount(3), com.histmersion.domain.ManagerPolicy.DueCount(0), com.histmersion.domain.ManagerPolicy.InFlightCount(0), Some(com.histmersion.domain.ManagerPolicy.BlockReason("budget: x"))), "budget: x")
 
@@ -100,22 +100,22 @@ class ManagerPolicySuite extends munit.FunSuite:
   // ── phase 2 ───────────────────────────────────────────────────────────────────────────────────
 
   test("waitsFor: an article's review waits while its infer-filter item is open; nothing else waits"):
-    val open = List(InferFilter -> "a", ArticleReview -> "a", ArticleReview -> "b")
-    assert(waitsFor(ArticleReview, com.histmersion.domain.ManagerPolicy.Candidate.Target("a"), open))
-    assert(!waitsFor(ArticleReview, com.histmersion.domain.ManagerPolicy.Candidate.Target("b"), open))
-    assert(!waitsFor(InferFilter, com.histmersion.domain.ManagerPolicy.Candidate.Target("a"), open))
+    val open = List(ItemKind.InferFilter -> Candidate.Target("a"), ItemKind.ArticleReview -> Candidate.Target("a"), ItemKind.ArticleReview -> Candidate.Target("b"))
+    assert(waitsFor(ItemKind.ArticleReview, com.histmersion.domain.ManagerPolicy.Candidate.Target("a"), open))
+    assert(!waitsFor(ItemKind.ArticleReview, com.histmersion.domain.ManagerPolicy.Candidate.Target("b"), open))
+    assert(!waitsFor(ItemKind.InferFilter, com.histmersion.domain.ManagerPolicy.Candidate.Target("a"), open))
 
   test("evaluateStep: done → finished, held for an approval, or stopped; failed backs off then stops; cancelled stops"):
-    def ev(st: RunState, f: StepFacts, failures: Int = 0) =
-      evaluateStep(s, InferFilter, com.histmersion.domain.ManagerPolicy.Candidate.Target("tin"), failures, ItemState(), com.histmersion.domain.automation.Run.Id("run-1234567890"), st, Some(com.histmersion.domain.ManagerPolicy.Problem("boom")), f, now)
+    def ev(st: RunState, f: StepFacts, failures: Next.Retry.Failures = Next.Retry.Failures(0)) =
+      evaluateStep(s, StepLabel(InferFilter), com.histmersion.domain.ManagerPolicy.Candidate.Target("tin"), failures, ItemState(), com.histmersion.domain.automation.Run.Id("run-1234567890"), st, Some(com.histmersion.domain.ManagerPolicy.Problem("boom")), f, now)
     assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("ok"))), Next.Done(com.histmersion.domain.ManagerPolicy.ItemOutcome("ok"), ItemState()))
     assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.Waiting(com.histmersion.domain.ManagerPolicy.ApprovalId(7), com.histmersion.domain.ManagerPolicy.ItemNote("waits"))), Next.Wait(com.histmersion.domain.ManagerPolicy.ApprovalId(7), com.histmersion.domain.ManagerPolicy.ItemNote("waits")))
     assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.NotDone(com.histmersion.domain.ManagerPolicy.ItemOutcome("no"), None)), Next.Stop(com.histmersion.domain.ManagerPolicy.ItemOutcome("no"), None, ItemState()))
     ev(com.histmersion.domain.automation.Run.State.Failed, StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("x"))) match
-      case Next.Retry(nb, 1, _) => assertEquals(nb, now.plusSeconds(15 * 60))
+      case Next.Retry(nb, failures, _) if failures == Next.Retry.Failures(1) => assertEquals(nb, now.plusSeconds(15 * 60))
       case other                => fail(other.toString)
-    ev(com.histmersion.domain.automation.Run.State.Failed, StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("x")), failures = 2) match
-      case Next.Stop(o, Some(t), _) => assert(o.contains("3 failed runs") && t.contains("[[tin]]"), t)
+    ev(com.histmersion.domain.automation.Run.State.Failed, StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("x")), failures = Next.Retry.Failures(2)) match
+      case Next.Stop(o, Some(t), _) => assert(o.value.contains("3 failed runs") && t.value.contains("[[tin]]"), t)
       case other                    => fail(other.toString)
     assert(ev(com.histmersion.domain.automation.Run.State.Cancelled, StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("x"))).isInstanceOf[Next.Stop])
 
@@ -167,7 +167,7 @@ class ManagerPolicySuite extends munit.FunSuite:
     ManagerRunDefaults(com.histmersion.domain.ManagerRunDefaults.MaxRuns(2)),
     ManagerRunDefaults(com.histmersion.domain.ManagerRunDefaults.MaxRuns(4)),
     ManagerRunDefaults(com.histmersion.domain.ManagerRunDefaults.MaxRuns(1)),
-    ManagerRunDefaults(watch.maxRuns)
+    ManagerRunDefaults(com.histmersion.domain.ManagerRunDefaults.MaxRuns(watch.maxRuns.value))
   )
 
   test("watcher: its item kinds and words, its sweeps (none named = both), its settings and defaults"):
@@ -192,7 +192,7 @@ class ManagerPolicySuite extends munit.FunSuite:
       c.map(x => (x.sweeps, x.autoIngest, x.autoIngestPerDay)),
       Right((Some(List("acquisition", "currency")), Some(true), Some(3)))
     )
-    assert(ManagerConfig.parse(List(com.histmersion.api.automation.Managers.ManagerConfig.Spec("sweeps=weekly"))).left.exists(_.contains("not a sweep")))
+    assert(ManagerConfig.parse(List(com.histmersion.api.automation.Managers.ManagerConfig.Spec("sweeps=weekly"))).left.exists(_.value.contains("not a sweep")))
     assert(ManagerConfig.parse(List(com.histmersion.api.automation.Managers.ManagerConfig.Spec("auto-ingest=perhaps"))).isLeft)
 
   test("auto-ingest is opt-in: off by default; on, what is left of the daily cap (the watcher's own cap wins)"):
@@ -219,28 +219,28 @@ class ManagerPolicySuite extends munit.FunSuite:
     )
 
   test("checkCron: it parses and fires no more often than the minimum interval"):
-    assert(checkCron(com.histmersion.domain.Cron.Text("not cron"), now, com.histmersion.domain.ManagerPolicy.MinIntervalMinutes(60)).left.exists(_.contains("five fields")))
-    assert(checkCron(com.histmersion.domain.Cron.Text("*/5 * * * *"), now, com.histmersion.domain.ManagerPolicy.MinIntervalMinutes(60)).left.exists(_.contains("min-interval")))
+    assert(checkCron(com.histmersion.domain.Cron.Text("not cron"), now, com.histmersion.domain.ManagerPolicy.MinIntervalMinutes(60)).left.exists(_.value.contains("five fields")))
+    assert(checkCron(com.histmersion.domain.Cron.Text("*/5 * * * *"), now, com.histmersion.domain.ManagerPolicy.MinIntervalMinutes(60)).left.exists(_.value.contains("min-interval")))
     assertEquals(checkCron(com.histmersion.domain.Cron.Text("@daily"), now, com.histmersion.domain.ManagerPolicy.MinIntervalMinutes(60)).map(_.text), Right("@daily"))
 
   test("daily cap: its own, else agents.managers.daily-usd (0 = none); blocks once the metered spend reaches it"):
     assertEquals(dailyCap(ManagerConfig(), mcfg), None)
-    assertEquals(dailyCap(ManagerConfig(dailyUsd = Some(2.0)), mcfg), Some(2.0))
+    assertEquals(dailyCap(ManagerConfig(dailyUsd = Some(ManagerConfig.DailyUsd(2.0))), mcfg), Some(2.0))
     assertEquals(
-      dailyCap(ManagerConfig(dailyUsd = Some(0.0)), mcfg.modify(_.dailyUsd).setTo((5: _root_.scala.Double))),
+      dailyCap(ManagerConfig(dailyUsd = Some(ManagerConfig.DailyUsd(0.0))), mcfg.modify(_.dailyUsd).setTo(com.histmersion.domain.ManagerDefaults.DailyUsd(5.0))),
       None,
       "0 on the manager = no cap"
     )
-    assertEquals(dailyCap(ManagerConfig(), mcfg.modify(_.dailyUsd).setTo((5: _root_.scala.Double))), Some(5.0))
+    assertEquals(dailyCap(ManagerConfig(), mcfg.modify(_.dailyUsd).setTo(com.histmersion.domain.ManagerDefaults.DailyUsd(5.0))), Some(5.0))
     assertEquals(dailyBlock(None, BigDecimal(100)), None)
-    assertEquals(dailyBlock(Some(2.0), BigDecimal("1.99")), None)
+    assertEquals(dailyBlock(Some(ManagerConfig.DailyUsd(2.0)), BigDecimal("1.99")), None)
     assert(
-      dailyBlock(Some(2.0), BigDecimal(2)).exists(_.contains("metered calls only")),
-      dailyBlock(Some(2.0), BigDecimal(2))
+      dailyBlock(Some(ManagerConfig.DailyUsd(2.0)), BigDecimal(2)).exists(_.value.contains("metered calls only")),
+      dailyBlock(Some(ManagerConfig.DailyUsd(2.0)), BigDecimal(2))
     )
     assertEquals(
       ReviewSettings
-        .defaultsFor(com.histmersion.domain.automation.Manager.Kind.Enrich, mcfg.modify(_.dailyUsd).setTo((5: _root_.scala.Double)))
+        .defaultsFor(com.histmersion.domain.automation.Manager.Kind.Enrich, mcfg.modify(_.dailyUsd).setTo(com.histmersion.domain.ManagerDefaults.DailyUsd(5.0)))
         .dailyUsd,
       Some(5.0)
     )

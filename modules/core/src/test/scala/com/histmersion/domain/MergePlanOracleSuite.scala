@@ -54,11 +54,11 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
   private def finding(
       id: String,
       source: String,
-      label: String,
-      claim: String,
-      at: Option[(Double, Double)] = None,
-      period: Option[(Long, Long)] = None,
-      region: Option[String] = None,
+      label: Bundle.Finding.Id,
+      claim: Bundle.Finding.Claim,
+      at: Option[(com.histmersion.api.catalogue.Longitude, com.histmersion.api.catalogue.Latitude)] = None,
+      period: Option[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] = None,
+      region: Option[Bundle.Finding.Region] = None,
       confidence: Option[Confidence] = Some(Confidence.High),
       origin: UUID = work
   ): Bundle.Finding =
@@ -76,13 +76,16 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       List(com.histmersion.api.exchange.Bundle.Finding.Tags("zz")),
       confidence,
       None,
-      At
+      Bundle.Finding.UpdatedAt(At)
     )
 
-  private def resolve(pairs: (String, String)*): MergeResolutions =
-    MergeResolutions(pairs.toList.map((i, d) => MergeResolution(i, d)))
+  private def answer(issue: Issue.Id, decision: MergeResolution.Decision): MergeResolution =
+    MergeResolution(MergeResolution.Issue(issue.value), decision)
 
-  private def idOf(p: MergePlan, kind: Issue.Kind, right: String): String =
+  private def resolve(pairs: (Issue.Id, MergeResolution.Decision)*): MergeResolutions =
+    MergeResolutions(pairs.toList.map((i, d) => answer(i, d)))
+
+  private def idOf(p: MergePlan, kind: Issue.Kind, right: com.histmersion.api.exchange.IssueSide.Label): Issue.Id =
     p.issues
       .find(i => i.kind == kind && i.right.exists(_.label == right))
       .getOrElse(fail(s"no $kind on $right in\n${p.issues.mkString("\n")}"))
@@ -90,18 +93,18 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
 
   private def plan(
       in: MergePlanner.Input,
-      sk: Map[String, com.histmersion.util.text.MinHash],
+      sk: Map[Bundle.Source.BodySha256, com.histmersion.util.text.MinHash],
       res: MergeResolutions
   ): MergePlanner.Result =
     MergePlanner.plan(in, sk, res, cfg, rules)
 
   private def wanted(
       in: MergePlanner.Input,
-      sk: Map[String, com.histmersion.util.text.MinHash],
+      sk: Map[Bundle.Source.BodySha256, com.histmersion.util.text.MinHash],
       res: MergeResolutions
   ): String =
-    val s = MergePlanner.sketchesWanted(in, cfg, rules).toList.sorted
-    val b = MergePlanner.bodiesWanted(in, sk, res, cfg, rules).toList.sorted
+    val s = MergePlanner.sketchesWanted(in, cfg, rules).toList.sortBy(_.value)
+    val b = MergePlanner.bodiesWanted(in, sk, res, cfg, rules).toList.sortBy(_.value)
     s"sketches wanted: ${s.mkString(", ")}\nbodies wanted: ${b.mkString(", ")}\n"
 
   private def render(r: MergePlanner.Result): String =
@@ -112,9 +115,9 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       lines.foreach(l => out ++= s"$l\n")
     section("plan", List(r.plan.asJson.spaces2))
     section("rows", r.rows.map(_.toString))
-    section("needs apply", r.needsApply)
-    section("old citekeys left out", r.skipAliases.toList.sorted)
-    section("notes", r.notes)
+    section("needs apply", r.needsApply.map(_.value))
+    section("old citekeys left out", r.skipAliases.toList.map(_.value).sorted)
+    section("notes", r.notes.map(_.value))
     section("apply: folds", a.folds.map(_.toString))
     section("apply: renames", a.renames.map(_.toString))
     section("apply: snapshots", a.snapshots.toList.map(_.toString).sorted)
@@ -123,7 +126,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     section("apply: attestations", a.attestations.map(_.toString))
     section("apply: tombstones", a.tombstones.map(_.toString))
     section("apply: body renames", a.bodyRenames.toList.map(_.toString).sorted)
-    section("apply: reviews", a.reviews)
+    section("apply: reviews", a.reviews.map(_.value))
     section("apply: remember", a.remember.map((i, d) => s"$i = ${d.wire}"))
     section("apply: touch", a.touch.toList.map(_.toString).sorted)
     section("apply: tally", List(a.tally.asJson.noSpaces))
@@ -141,92 +144,92 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     finding(
       "wf-g1",
       "w-guterbock",
-      "guterbock1997_perspectives#1",
-      "The Hittite king ruled from Hattusa",
-      Some((34.6, 40.0)),
-      Some((-1600L, -1200L)),
-      Some("Anatolia"),
+      Bundle.Finding.Id("guterbock1997_perspectives#1"),
+      Bundle.Finding.Claim("The Hittite king ruled from Hattusa"),
+      Some((com.histmersion.api.catalogue.Longitude(34.6), com.histmersion.api.catalogue.Latitude(40.0))),
+      Some((com.histmersion.api.catalogue.Year(-1600L), com.histmersion.api.catalogue.Year(-1200L))),
+      Some(Bundle.Finding.Region("Anatolia")),
       Some(Confidence.Medium)
     ),
     finding(
       "wf-g2",
       "w-guterbock",
-      "guterbock1997_perspectives#2",
-      "Hittite scribes wrote treaties on clay tablets in Akkadian",
+      Bundle.Finding.Id("guterbock1997_perspectives#2"),
+      Bundle.Finding.Claim("Hittite scribes wrote treaties on clay tablets in Akkadian"),
       None,
-      Some((-1400L, -1300L)),
-      Some("Anatolia")
+      Some((com.histmersion.api.catalogue.Year(-1400L), com.histmersion.api.catalogue.Year(-1300L))),
+      Some(Bundle.Finding.Region("Anatolia"))
     ),
     finding(
       "wf-g3",
       "w-guterbock",
-      "guterbock1997_perspectives#3",
-      "Storm gods were worshipped in the capital",
-      Some((34.61, 40.01)),
-      Some((-1500L, -1200L))
+      Bundle.Finding.Id("guterbock1997_perspectives#3"),
+      Bundle.Finding.Claim("Storm gods were worshipped in the capital"),
+      Some((com.histmersion.api.catalogue.Longitude(34.61), com.histmersion.api.catalogue.Latitude(40.01))),
+      Some((com.histmersion.api.catalogue.Year(-1500L), com.histmersion.api.catalogue.Year(-1200L)))
     ),
     // kuhrt (one by its original file): the same claim, no place on one side
     finding(
       "wf-k1",
       "w-kuhrt",
-      "kuhrt1995_near#1",
-      "Assyria rose after the collapse",
+      Bundle.Finding.Id("kuhrt1995_near#1"),
+      Bundle.Finding.Claim("Assyria rose after the collapse"),
       None,
-      Some((-1100L, -900L)),
+      Some((com.histmersion.api.catalogue.Year(-1100L), com.histmersion.api.catalogue.Year(-900L))),
       None
     ),
     // page (a question): held until it is decided
     finding(
       "wf-p1",
       "w-page",
-      "page2024_history#1",
-      "The Catalogue of Ships preserves Mycenaean geography",
+      Bundle.Finding.Id("page2024_history#1"),
+      Bundle.Finding.Claim("The Catalogue of Ships preserves Mycenaean geography"),
       None,
-      Some((-1300L, -1200L))
+      Some((com.histmersion.api.catalogue.Year(-1300L), com.histmersion.api.catalogue.Year(-1200L)))
     ),
     // smith (its citekey taken here): renamed with its source
-    finding("wf-s1", "w-smith", "smith2019_ritual#1", "Kingship was sacral in early Mesopotamia"),
-    finding("wf-s2", "w-smith", "smith2019_ritual#2", "Temples redistributed grain"),
+    finding("wf-s1", "w-smith", Bundle.Finding.Id("smith2019_ritual#1"), Bundle.Finding.Claim("Kingship was sacral in early Mesopotamia")),
+    finding("wf-s2", "w-smith", Bundle.Finding.Id("smith2019_ritual#2"), Bundle.Finding.Claim("Temples redistributed grain")),
     // new: its id is another finding's here
-    finding("wf-n1", "w-new", "zznew2020_only#1", "Only work has this claim"),
-    finding("wf-n2", "w-new", "zznew2020_only#2", "And this one")
+    finding("wf-n1", "w-new", Bundle.Finding.Id("zznew2020_only#1"), Bundle.Finding.Claim("Only work has this claim")),
+    finding("wf-n2", "w-new", Bundle.Finding.Id("zznew2020_only#2"), Bundle.Finding.Claim("And this one"))
   )
 
   private val localFindings: List[Bundle.Finding] = List(
     finding(
       "hf-g1",
       "h-guterbock",
-      "guterbock1997_hittite#1",
-      "the Hittite king ruled from Hattusa.",
-      Some((34.62, 40.02)),
-      Some((-1650L, -1180L)),
-      Some("anatolia"),
+      Bundle.Finding.Id("guterbock1997_hittite#1"),
+      Bundle.Finding.Claim("the Hittite king ruled from Hattusa."),
+      Some((com.histmersion.api.catalogue.Longitude(34.62), com.histmersion.api.catalogue.Latitude(40.02))),
+      Some((com.histmersion.api.catalogue.Year(-1650L), com.histmersion.api.catalogue.Year(-1180L))),
+      Some(Bundle.Finding.Region("anatolia")),
       Some(Confidence.Low),
       home
     ),
     finding(
       "hf-g2",
       "h-guterbock",
-      "guterbock1997_hittite#2",
-      "Hittite scribes wrote treaties on clay tablets",
+      Bundle.Finding.Id("guterbock1997_hittite#2"),
+      Bundle.Finding.Claim("Hittite scribes wrote treaties on clay tablets"),
       None,
-      Some((-1350L, -1250L)),
-      Some("Anatolia"),
+      Some((com.histmersion.api.catalogue.Year(-1350L), com.histmersion.api.catalogue.Year(-1250L))),
+      Some(Bundle.Finding.Region("Anatolia")),
       origin = home
     ),
-    finding("hf-g7", "h-guterbock", "guterbock1997_hittite#7", "A claim far away in time", None, Some((500L, 600L))),
+    finding("hf-g7", "h-guterbock", Bundle.Finding.Id("guterbock1997_hittite#7"), Bundle.Finding.Claim("A claim far away in time"), None, Some((com.histmersion.api.catalogue.Year(500L), com.histmersion.api.catalogue.Year(600L)))),
     finding(
       "hf-k1",
       "h-kuhrt",
-      "kuhrt1995_ancient#1",
-      "Assyria rose after the collapse",
-      Some((43.1, 36.3)),
-      Some((-1150L, -950L)),
-      Some("Assyria"),
+      Bundle.Finding.Id("kuhrt1995_ancient#1"),
+      Bundle.Finding.Claim("Assyria rose after the collapse"),
+      Some((com.histmersion.api.catalogue.Longitude(43.1), com.histmersion.api.catalogue.Latitude(36.3))),
+      Some((com.histmersion.api.catalogue.Year(-1150L), com.histmersion.api.catalogue.Year(-950L))),
+      Some(Bundle.Finding.Region("Assyria")),
       origin = home
     ),
-    finding("hf-p1", "h-page", "page1959_history#1", "The Catalogue of Ships preserves Mycenaean geography."),
-    finding("hf-x", "h-themis", "zznew2020_only#1", "A finding here under the bundle's id", origin = home)
+    finding("hf-p1", "h-page", Bundle.Finding.Id("page1959_history#1"), Bundle.Finding.Claim("The Catalogue of Ships preserves Mycenaean geography.")),
+    finding("hf-x", "h-themis", Bundle.Finding.Id("zznew2020_only#1"), Bundle.Finding.Claim("A finding here under the bundle's id"), origin = home)
   )
 
   private def withFindings: MergePlanner.Input =
@@ -307,7 +310,7 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     src("e-ambiguous", "zzdurand2010_rites", "Rites of Hatti", List("Durand, J."), Some(2010))
   )
 
-  private val edgeAliases: List[Bundle.Alias] = List(Bundle.Alias(com.histmersion.api.exchange.Bundle.Alias.Value("zzseeher_old"), uid("e-alias"), At))
+  private val edgeAliases: List[Bundle.Alias] = List(Bundle.Alias(com.histmersion.api.exchange.Bundle.Alias.Value("zzseeher_old"), uid("e-alias"), Bundle.Alias.CreatedAt(At)))
 
   private val edgeHere: List[Bundle.Source] = List(
     src(
@@ -414,20 +417,20 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     in.modify(
       _.local).setTo(BundleEntities(sources = edgeHere)).modify(_.labels).setTo(MergePlanner.Labels(
         citekeys = edgeHere.map(s => s.citekey -> s.uid).toMap,
-        aliases = Map("zzseeher_old" -> uid("f-alias"))
+        aliases = Map(com.histmersion.api.library.Citekey("zzseeher_old") -> uid("f-alias"))
       )).modify(_.ledger).setTo(Map.empty
     )
 
-  private def edgeSketches: Map[String, com.histmersion.util.text.MinHash] =
+  private def edgeSketches: Map[Bundle.Source.BodySha256, com.histmersion.util.text.MinHash] =
     List(bodyA, bodyB, bodyC)
-      .map(t => BundleFormat.sha256Hex(t) -> com.histmersion.util.text.MinHash.of(t, cfg.minhashSize))
+      .map(t => Bundle.Source.BodySha256(BundleFormat.sha256Hex(t).value) -> com.histmersion.util.text.MinHash.of(com.histmersion.util.text.MinHash.Text(t), com.histmersion.util.text.MinHash.Size(cfg.minhashSize.value)))
       .toMap
 
   // ── the record ───────────────────────────────────────────────────────────────────────────────
 
   test("the merge plan's source and finding stages, as recorded"):
     val out = StringBuilder()
-    def scenario(name: String, in: MergePlanner.Input, sk: Map[String, com.histmersion.util.text.MinHash])(
+    def scenario(name: String, in: MergePlanner.Input, sk: Map[Bundle.Source.BodySha256, com.histmersion.util.text.MinHash])(
         res: MergeResolutions
     ): MergePlanner.Result =
       val r = plan(in, sk, res)
@@ -438,36 +441,36 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val fixture = input()
     val first = scenario("the fixture, nothing decided", fixture, sketches)(MergeResolutions()).plan
     val answered = resolve(
-      idOf(first, Issue.Kind.SameWork, "page2024_history") -> "map:page1959_history",
-      idOf(first, Issue.Kind.CitekeyCollision, "smith2019_ritual") -> "rename-right:smith2019_ritualkingship",
-      idOf(first, Issue.Kind.DoiDiffers, "kuhrt1995_near") -> "keep-right",
-      idOf(first, Issue.Kind.BodyDiffers, "kuhrt1995_near") -> "keep-right",
-      idOf(first, Issue.Kind.NotesDiffers, "guterbock1997_perspectives") -> "concat",
-      idOf(first, Issue.Kind.StatusDiffers, "bryce2005_kingdom") -> "keep-right",
-      idOf(first, Issue.Kind.AliasConflict, "harrison1903_prolegomena") -> "keep-left",
-      idOf(first, Issue.Kind.BodyDiffers, "olsen2015_penelope") -> "keep-right"
+      idOf(first, Issue.Kind.SameWork, com.histmersion.api.exchange.IssueSide.Label("page2024_history")) -> MergeResolution.Decision("map:page1959_history"),
+      idOf(first, Issue.Kind.CitekeyCollision, com.histmersion.api.exchange.IssueSide.Label("smith2019_ritual")) -> MergeResolution.Decision("rename-right:smith2019_ritualkingship"),
+      idOf(first, Issue.Kind.DoiDiffers, com.histmersion.api.exchange.IssueSide.Label("kuhrt1995_near")) -> MergeResolution.Decision("keep-right"),
+      idOf(first, Issue.Kind.BodyDiffers, com.histmersion.api.exchange.IssueSide.Label("kuhrt1995_near")) -> MergeResolution.Decision("keep-right"),
+      idOf(first, Issue.Kind.NotesDiffers, com.histmersion.api.exchange.IssueSide.Label("guterbock1997_perspectives")) -> MergeResolution.Decision("concat"),
+      idOf(first, Issue.Kind.StatusDiffers, com.histmersion.api.exchange.IssueSide.Label("bryce2005_kingdom")) -> MergeResolution.Decision("keep-right"),
+      idOf(first, Issue.Kind.AliasConflict, com.histmersion.api.exchange.IssueSide.Label("harrison1903_prolegomena")) -> MergeResolution.Decision("keep-left"),
+      idOf(first, Issue.Kind.BodyDiffers, com.histmersion.api.exchange.IssueSide.Label("olsen2015_penelope")) -> MergeResolution.Decision("keep-right")
     )
     val mapped = scenario("the fixture, every question answered", fixture, sketches)(answered).plan
     val year = mapped.issues.find(_.kind == Issue.Kind.YearDiffers).map(_.id).toList
     scenario("the fixture, every question answered and the year kept right", fixture, sketches)(
-      MergeResolutions(answered.resolve ++ year.map(MergeResolution(_, com.histmersion.api.exchange.MergeResolution.Decision("keep-right"))))
+      MergeResolutions(answered.resolve ++ year.map(answer(_, com.histmersion.api.exchange.MergeResolution.Decision("keep-right"))))
     )
     scenario("the fixture, the gate answered both, the collision renamed left", fixture, sketches)(
       resolve(
-        idOf(first, Issue.Kind.SameWork, "page2024_history") -> "both",
-        idOf(first, Issue.Kind.CitekeyCollision, "smith2019_ritual") -> "rename-left:smith2019_ritual_aegean"
+        idOf(first, Issue.Kind.SameWork, com.histmersion.api.exchange.IssueSide.Label("page2024_history")) -> MergeResolution.Decision("both"),
+        idOf(first, Issue.Kind.CitekeyCollision, com.histmersion.api.exchange.IssueSide.Label("smith2019_ritual")) -> MergeResolution.Decision("rename-left:smith2019_ritual_aegean")
       )
     )
-    val collision = idOf(first, Issue.Kind.CitekeyCollision, "smith2019_ritual")
-    val gate = idOf(first, Issue.Kind.SameWork, "page2024_history")
+    val collision = idOf(first, Issue.Kind.CitekeyCollision, com.histmersion.api.exchange.IssueSide.Label("smith2019_ritual"))
+    val gate = idOf(first, Issue.Kind.SameWork, com.histmersion.api.exchange.IssueSide.Label("page2024_history"))
     scenario("the fixture, an invalid citekey, a bad map and a stale id", fixture, sketches)(
-      resolve(collision -> "rename-right:Smith-2019", gate -> "map:nonsense", "S-00000000" -> "keep-left")
+      resolve(collision -> MergeResolution.Decision("rename-right:Smith-2019"), gate -> MergeResolution.Decision("map:nonsense"), Issue.Id("S-00000000") -> MergeResolution.Decision("keep-left"))
     )
     scenario("the fixture, a citekey taken here and a map to another source's citekey", fixture, sketches)(
-      resolve(collision -> "rename-right:kuhrt1995_ancient", gate -> "map:guterbock1997_hittite")
+      resolve(collision -> MergeResolution.Decision("rename-right:kuhrt1995_ancient"), gate -> MergeResolution.Decision("map:guterbock1997_hittite"))
     )
     scenario("the fixture, a citekey taken in the bundle, a map under the bundle's", fixture, sketches)(
-      resolve(collision -> "rename-left:latacz2023_troy", gate -> "map:page2024_history")
+      resolve(collision -> MergeResolution.Decision("rename-left:latacz2023_troy"), gate -> MergeResolution.Decision("map:page2024_history"))
     )
     scenario("the fixture, editions merged", fixture, sketches)(
       MergeResolutions(policy = MergePolicy(Some(EditionsPolicy.Merge)))
@@ -482,10 +485,10 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val near = f0.issues.filter(_.kind == Issue.Kind.FindingNearDuplicate).map(_.id)
     scenario("findings, the near duplicates merged, the gate mapped, the collision renamed", fs, sketches)(
       MergeResolutions(
-        near.map(MergeResolution(_, com.histmersion.api.exchange.MergeResolution.Decision("merge"))) ++ List(
-          MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), com.histmersion.api.exchange.MergeResolution.Decision("map:page1959_history")),
-          MergeResolution(
-            idOf(f0, Issue.Kind.CitekeyCollision, "smith2019_ritual"),
+        near.map(answer(_, com.histmersion.api.exchange.MergeResolution.Decision("merge"))) ++ List(
+          answer(idOf(f0, Issue.Kind.SameWork, com.histmersion.api.exchange.IssueSide.Label("page2024_history")), com.histmersion.api.exchange.MergeResolution.Decision("map:page1959_history")),
+          answer(
+            idOf(f0, Issue.Kind.CitekeyCollision, com.histmersion.api.exchange.IssueSide.Label("smith2019_ritual")),
             com.histmersion.api.exchange.MergeResolution.Decision("rename-right:smith2019_ritualkingship")
           )
         )
@@ -494,19 +497,19 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
     val f1 = plan(
       fs,
       sketches,
-      resolve(idOf(f0, Issue.Kind.SameWork, "page2024_history") -> "map:page1959_history")
+      resolve(idOf(f0, Issue.Kind.SameWork, com.histmersion.api.exchange.IssueSide.Label("page2024_history")) -> MergeResolution.Decision("map:page1959_history"))
     ).plan
     val nearMapped = f1.issues.filter(_.kind == Issue.Kind.FindingNearDuplicate).map(_.id)
     scenario("findings, the gate mapped, every near duplicate merged", fs, sketches)(
       MergeResolutions(
-        MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), com.histmersion.api.exchange.MergeResolution.Decision("map:page1959_history")) ::
-          nearMapped.map(MergeResolution(_, com.histmersion.api.exchange.MergeResolution.Decision("merge")))
+        answer(idOf(f0, Issue.Kind.SameWork, com.histmersion.api.exchange.IssueSide.Label("page2024_history")), com.histmersion.api.exchange.MergeResolution.Decision("map:page1959_history")) ::
+          nearMapped.map(answer(_, com.histmersion.api.exchange.MergeResolution.Decision("merge")))
       )
     )
     scenario("findings, the gate both, the near duplicates kept both", fs, sketches)(
       MergeResolutions(
-        MergeResolution(idOf(f0, Issue.Kind.SameWork, "page2024_history"), com.histmersion.api.exchange.MergeResolution.Decision("both")) ::
-          near.map(MergeResolution(_, com.histmersion.api.exchange.MergeResolution.Decision("both")))
+        answer(idOf(f0, Issue.Kind.SameWork, com.histmersion.api.exchange.IssueSide.Label("page2024_history")), com.histmersion.api.exchange.MergeResolution.Decision("both")) ::
+          near.map(answer(_, com.histmersion.api.exchange.MergeResolution.Decision("both")))
       )
     )
 
@@ -517,12 +520,12 @@ class MergePlanOracleSuite extends munit.FunSuite with Bounded:
       MergeResolutions(
         e0.issues
           .filter(_.kind == Issue.Kind.SameWork)
-          .flatMap(i => i.left.map(l => MergeResolution(i.id, s"map:${l.label}")))
+          .flatMap(i => i.left.map(l => answer(i.id, com.histmersion.api.exchange.MergeResolution.Decision(s"map:${l.label}"))))
       )
     )
     scenario("the score's edge cases, every gate both, editions separate", e, edgeSketches)(
       MergeResolutions(
-        e0.issues.filter(_.kind == Issue.Kind.SameWork).map(i => MergeResolution(i.id, com.histmersion.api.exchange.MergeResolution.Decision("both"))),
+        e0.issues.filter(_.kind == Issue.Kind.SameWork).map(i => answer(i.id, com.histmersion.api.exchange.MergeResolution.Decision("both"))),
         MergePolicy(Some(EditionsPolicy.Separate))
       )
     )
