@@ -31,8 +31,8 @@ object PlacesInput:
   type DrawPendingPart1 = DrawPendingPart1.T
   object DrawPendingPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type LearnId = LearnId.T
-  object LearnId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LearnId = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  val LearnId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
   type ActiveIdx = ActiveIdx.T
   object ActiveIdx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Timer = Timer.T
@@ -47,8 +47,8 @@ object PlacesInput:
   object ChipsSignalPart4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Layer = Layer.T
   object Layer extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PreviewId = PreviewId.T
-  object PreviewId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PreviewId = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  val PreviewId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
   type Drawn = Drawn.T
   object Drawn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastTextJson = LastTextJson.T
@@ -75,16 +75,16 @@ object PlacesInput:
   object RemoveIdAtI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RemoveTextAtI = RemoveTextAtI.T
   object RemoveTextAtI extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrawPlaceId = DrawPlaceId.T
-  object DrawPlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DrawPlaceId = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  val DrawPlaceId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
   type DrawPlaceAtResult = DrawPlaceAtResult.T
   object DrawPlaceAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DrawFit = DrawFit.T
   object DrawFit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PreviewAsOfYear = PreviewAsOfYear.T
   object PreviewAsOfYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RememberId = RememberId.T
-  object RememberId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RememberId = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  val RememberId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
   type RememberLabel = _root_.com.histmersion.web.PlacesInput.KnownPlace.Label
   val RememberLabel: _root_.com.histmersion.web.PlacesInput.KnownPlace.Label.type = _root_.com.histmersion.web.PlacesInput.KnownPlace.Label
   type RememberKind = _root_.com.histmersion.web.PlacesInput.KnownPlace.Kind
@@ -93,8 +93,8 @@ object PlacesInput:
   val RememberContested: _root_.com.histmersion.web.PlacesInput.KnownPlace.Contested.type = _root_.com.histmersion.web.PlacesInput.KnownPlace.Contested
   type ToggleFromMapResult = ToggleFromMapResult.T
   object ToggleFromMapResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToggleFromMapId = ToggleFromMapId.T
-  object ToggleFromMapId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToggleFromMapId = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  val ToggleFromMapId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
   type ToggleFromMapLabel = ToggleFromMapLabel.T
   object ToggleFromMapLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToggleFromMapKind = ToggleFromMapKind.T
@@ -123,12 +123,12 @@ object PlacesInput:
   object ChipTextLookupResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChipTextLookupResultPart2 = ChipTextLookupResultPart2.T
   object ChipTextLookupResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnsureKnownId = EnsureKnownId.T
-  object EnsureKnownId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EnsureKnownId = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  val EnsureKnownId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
   type ChipTextSignalResult = ChipTextSignalResult.T
   object ChipTextSignalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipTextSignalId = ChipTextSignalId.T
-  object ChipTextSignalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChipTextSignalId = _root_.com.histmersion.web.PlacesInput.ChipTextId
+  val ChipTextSignalId: _root_.com.histmersion.web.PlacesInput.ChipTextId.type = _root_.com.histmersion.web.PlacesInput.ChipTextId
 
   private case class KnownPlace(label: KnownPlace.Label, kind: KnownPlace.Kind, contested: KnownPlace.Contested)
 

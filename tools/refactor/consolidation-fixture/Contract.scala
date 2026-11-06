@@ -1,6 +1,14 @@
 package consolidationfixture
 
 object Contract:
+  summon[ForwardMethods.OuterN =:= ForwardMethods.LeafN]
+  summon[ForwardMethods.MiddleN =:= ForwardMethods.LeafN]
+  summon[ForwardMethods.FullN =:= ForwardMethods.LeafN]
+  summon[ForwardMethods.OuterLabel =:= ForwardMethods.LeafLabel]
+  summon[ForwardMethods.MiddleLabel =:= ForwardMethods.LeafLabel]
+  summon[ForwardMethods.FullLabel =:= ForwardMethods.LeafLabel]
+  summon[ForwardMethods.RightCount =:= ForwardMethods.LeftCount]
+  summon[ForwardMethods.ListTag =:= ForwardMethods.LeafTag]
   summon[Forward.Builders.MakeTitle =:= Forward.Item.Title]
   summon[Forward.Builders.MakeCount =:= Forward.Item.Count]
   summon[Forward.Builders.NamedTitle =:= Forward.Item.Title]
@@ -13,6 +21,10 @@ object Contract:
   summon[scala.util.NotGiven[Run.OtherUnit.Milliseconds =:= Run.Seconds]]
 
   @main def verifyConsolidation(): Unit =
+    assert(ForwardMethods.outer(ForwardMethods.OuterN(7L), ForwardMethods.OuterLabel("one")) == "7:one")
+    assert(ForwardMethods.fullyQualified(ForwardMethods.FullN(9L), ForwardMethods.FullLabel("two")) == "9:two")
+    assert(ForwardMethods.left(ForwardMethods.LeftCount(2)) == 2)
+    assert(ForwardMethods.lists(List(ForwardMethods.ListTag("tag"))).map(_.value) == List("tag"))
     val made = Forward.Builders.make(Forward.Builders.MakeTitle("first"), Forward.Builders.MakeCount(7))
     assert(made.title.value == "first" && made.count.value == 7)
     val named = Forward.Builders.named(Forward.Builders.NamedTitle("second"), Forward.Builders.NamedCount(9))

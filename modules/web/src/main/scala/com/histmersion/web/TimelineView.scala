@@ -173,10 +173,10 @@ object TimelineView:
   object UnderlayBucketsFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnderlayBucketsTo = UnderlayBucketsTo.T
   object UnderlayBucketsTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AlignDetailW = AlignDetailW.T
-  object AlignDetailW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderDetailAxisW = RenderDetailAxisW.T
-  object RenderDetailAxisW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AlignDetailW = _root_.com.histmersion.web.TimelineView.DrawAreaCurveW
+  val AlignDetailW: _root_.com.histmersion.web.TimelineView.DrawAreaCurveW.type = _root_.com.histmersion.web.TimelineView.DrawAreaCurveW
+  type RenderDetailAxisW = _root_.com.histmersion.web.TimelineView.DrawAreaCurveW
+  val RenderDetailAxisW: _root_.com.histmersion.web.TimelineView.DrawAreaCurveW.type = _root_.com.histmersion.web.TimelineView.DrawAreaCurveW
 
   private val OH = Layout.overviewHeight.value
   private val O_BASE = Layout.overviewBase.value

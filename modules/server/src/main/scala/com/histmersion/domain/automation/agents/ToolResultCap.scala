@@ -19,8 +19,8 @@ object ToolResultCap:
   object PlainLinksMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CompactSourceResult = CompactSourceResult.T
   object CompactSourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompactSourceMd = CompactSourceMd.T
-  object CompactSourceMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompactSourceMd = _root_.com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksMd
+  val CompactSourceMd: _root_.com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksMd.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.PlainLinksMd
   type TrailerResult = TrailerResult.T
   object TrailerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TrailerShown = TrailerShown.T
@@ -35,22 +35,22 @@ object ToolResultCap:
   object CapText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CapMax = CapMax.T
   object CapMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CapHint = CapHint.T
-  object CapHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapHint = _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint
+  val CapHint: _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint
   type SourceResult = SourceResult.T
   object SourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceMd = SourceMd.T
   object SourceMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SourceMax = SourceMax.T
-  object SourceMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SourceMax = _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax
+  val SourceMax: _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.CapMax
   type NotesExcerptResult = NotesExcerptResult.T
   object NotesExcerptResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NotesExcerptNotes = NotesExcerptNotes.T
   object NotesExcerptNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NotesExcerptRoom = NotesExcerptRoom.T
   object NotesExcerptRoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotesExcerptHint = NotesExcerptHint.T
-  object NotesExcerptHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NotesExcerptHint = _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint
+  val NotesExcerptHint: _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint.type = _root_.com.histmersion.domain.automation.agents.ToolResultCap.TrailerHint
 
   private val ChipLink = """\[([^\]\n]*)\]\(/#[^)\s]*\)""".r
 

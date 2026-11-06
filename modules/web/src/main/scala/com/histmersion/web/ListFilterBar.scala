@@ -40,8 +40,8 @@ object ListFilterBar:
   object TypedS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DateResult = DateResult.T
   object DateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DateS = DateS.T
-  object DateS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DateS = _root_.com.histmersion.web.ListFilterBar.TypedS
+  val DateS: _root_.com.histmersion.web.ListFilterBar.TypedS.type = _root_.com.histmersion.web.ListFilterBar.TypedS
   type OptionLabelResult = OptionLabelResult.T
   object OptionLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OptionLabelV = OptionLabelV.T

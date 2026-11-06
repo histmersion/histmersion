@@ -38,8 +38,8 @@ object Europeana:
   object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlApi = SearchUrlApi.T
   object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlName = SearchUrlName.T
-  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlName = _root_.com.histmersion.plugins.media.Europeana.QueryName
+  val SearchUrlName: _root_.com.histmersion.plugins.media.Europeana.QueryName.type = _root_.com.histmersion.plugins.media.Europeana.QueryName
   type SearchUrlRows = SearchUrlRows.T
   object SearchUrlRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LettersS = LettersS.T
@@ -84,12 +84,12 @@ object Europeana:
   object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
   object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsApi = RecordsApi.T
-  object RecordsApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsApi = _root_.com.histmersion.plugins.media.Europeana.ThumbnailUrlApi
+  val RecordsApi: _root_.com.histmersion.plugins.media.Europeana.ThumbnailUrlApi.type = _root_.com.histmersion.plugins.media.Europeana.ThumbnailUrlApi
   type RecordResultPart1 = RecordResultPart1.T
   object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordApi = RecordApi.T
-  object RecordApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordApi = _root_.com.histmersion.plugins.media.Europeana.ThumbnailUrlApi
+  val RecordApi: _root_.com.histmersion.plugins.media.Europeana.ThumbnailUrlApi.type = _root_.com.histmersion.plugins.media.Europeana.ThumbnailUrlApi
   type ItemResultPart1 = ItemResultPart1.T
   object ItemResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

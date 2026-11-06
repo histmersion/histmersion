@@ -18,18 +18,18 @@ object LibraryAddress:
   object ParamName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemResult = ItemResult.T
   object ItemResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemSearch = ItemSearch.T
-  object ItemSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShelfSearch = ShelfSearch.T
-  object ShelfSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemSearch = _root_.com.histmersion.web.library.LibraryAddress.ParamSearch
+  val ItemSearch: _root_.com.histmersion.web.library.LibraryAddress.ParamSearch.type = _root_.com.histmersion.web.library.LibraryAddress.ParamSearch
+  type ShelfSearch = _root_.com.histmersion.web.library.LibraryAddress.ParamSearch
+  val ShelfSearch: _root_.com.histmersion.web.library.LibraryAddress.ParamSearch.type = _root_.com.histmersion.web.library.LibraryAddress.ParamSearch
   type SearchResult = SearchResult.T
   object SearchResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchItem = SearchItem.T
   object SearchItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HrefResult = HrefResult.T
   object HrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HrefItem = HrefItem.T
-  object HrefItem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HrefItem = _root_.com.histmersion.web.library.LibraryAddress.SearchItem
+  val HrefItem: _root_.com.histmersion.web.library.LibraryAddress.SearchItem.type = _root_.com.histmersion.web.library.LibraryAddress.SearchItem
   type DecodeResult = DecodeResult.T
   object DecodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecodeV = DecodeV.T

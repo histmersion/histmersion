@@ -44,14 +44,14 @@ object PlaceGlyph:
   object LabelMarkerLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelMarkerLon = LabelMarkerLon.T
   object LabelMarkerLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelMarkerLabel = LabelMarkerLabel.T
-  object LabelMarkerLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelMarkerKind = LabelMarkerKind.T
-  object LabelMarkerKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelMarkerLabel = _root_.com.histmersion.web.PlaceGlyph.LabelHtmlLabel
+  val LabelMarkerLabel: _root_.com.histmersion.web.PlaceGlyph.LabelHtmlLabel.type = _root_.com.histmersion.web.PlaceGlyph.LabelHtmlLabel
+  type LabelMarkerKind = _root_.com.histmersion.web.PlaceGlyph.LabelHtmlKind
+  val LabelMarkerKind: _root_.com.histmersion.web.PlaceGlyph.LabelHtmlKind.type = _root_.com.histmersion.web.PlaceGlyph.LabelHtmlKind
   type LabelMarkerWrapClass = LabelMarkerWrapClass.T
   object LabelMarkerWrapClass extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LabelMarkerHidden = LabelMarkerHidden.T
-  object LabelMarkerHidden extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LabelMarkerHidden = _root_.com.histmersion.web.PlaceGlyph.LabelHtmlHidden
+  val LabelMarkerHidden: _root_.com.histmersion.web.PlaceGlyph.LabelHtmlHidden.type = _root_.com.histmersion.web.PlaceGlyph.LabelHtmlHidden
 
   def of(kind: com.histmersion.web.PlaceGlyph.OfKind, geometryType: com.histmersion.web.PlaceGlyph.OfGeometryType): PlaceGlyph =
     val point = geometryType == "Point" || geometryType == "MultiPoint"

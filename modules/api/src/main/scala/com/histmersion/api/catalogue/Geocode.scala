@@ -74,18 +74,18 @@ object Geocode:
   object IsPlaceholderPlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KindRankResult = KindRankResult.T
   object KindRankResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindRankKind = KindRankKind.T
-  object KindRankKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindRankKind = _root_.com.histmersion.api.catalogue.Geocode.BroadKind
+  val KindRankKind: _root_.com.histmersion.api.catalogue.Geocode.BroadKind.type = _root_.com.histmersion.api.catalogue.Geocode.BroadKind
   type TimeRankResultPart1 = TimeRankResultPart1.T
   object TimeRankResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TimeRankResultPart2 = TimeRankResultPart2.T
   object TimeRankResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RankPlaceholderMin = RankPlaceholderMin.T
-  object RankPlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankPlaceholderMin = _root_.com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin
+  val RankPlaceholderMin: _root_.com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin.type = _root_.com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin
   type ChooseAsked = _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked
   val ChooseAsked: _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked.type = _root_.com.histmersion.api.catalogue.Geocode.Resolution.Asked
-  type ChoosePlaceholderMin = ChoosePlaceholderMin.T
-  object ChoosePlaceholderMin extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChoosePlaceholderMin = _root_.com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin
+  val ChoosePlaceholderMin: _root_.com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin.type = _root_.com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin
   type DistanceKmResult = DistanceKmResult.T
   object DistanceKmResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DistanceKmLon1 = DistanceKmLon1.T

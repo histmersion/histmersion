@@ -9,8 +9,8 @@ object ArticleOpening:
   object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfBody = OfBody.T
   object OfBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfLimit = OfLimit.T
-  object OfLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfLimit = _root_.com.histmersion.web.library.ArticleOpening.CutLimit
+  val OfLimit: _root_.com.histmersion.web.library.ArticleOpening.CutLimit.type = _root_.com.histmersion.web.library.ArticleOpening.CutLimit
   type ProseResult = ProseResult.T
   object ProseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProseP = ProseP.T

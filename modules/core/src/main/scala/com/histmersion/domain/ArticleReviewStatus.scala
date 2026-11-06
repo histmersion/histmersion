@@ -32,10 +32,10 @@ object ArticleReviewStatus:
   object RunOrderRunStartsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunOrderRunStartsPart2 = RunOrderRunStartsPart2.T
   object RunOrderRunStartsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HistoryRunStartsPart1 = HistoryRunStartsPart1.T
-  object HistoryRunStartsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HistoryRunStartsPart2 = HistoryRunStartsPart2.T
-  object HistoryRunStartsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistoryRunStartsPart1 = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1
+  val HistoryRunStartsPart1: _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart1
+  type HistoryRunStartsPart2 = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2
+  val HistoryRunStartsPart2: _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2.type = _root_.com.histmersion.domain.ArticleReviewStatus.RunOrderRunStartsPart2
   type FindingNumberPart1 = FindingNumberPart1.T
   object FindingNumberPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FindingNumberPart2 = FindingNumberPart2.T

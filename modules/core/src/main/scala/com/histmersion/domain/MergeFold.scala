@@ -53,16 +53,16 @@ object MergeFold:
   object UnionKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnionTagsResult = UnionTagsResult.T
   object UnionTagsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionTagsL = UnionTagsL.T
-  object UnionTagsL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionTagsR = UnionTagsR.T
-  object UnionTagsR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionTagsL = _root_.com.histmersion.domain.MergeFold.UnionL
+  val UnionTagsL: _root_.com.histmersion.domain.MergeFold.UnionL.type = _root_.com.histmersion.domain.MergeFold.UnionL
+  type UnionTagsR = _root_.com.histmersion.domain.MergeFold.UnionR
+  val UnionTagsR: _root_.com.histmersion.domain.MergeFold.UnionR.type = _root_.com.histmersion.domain.MergeFold.UnionR
   type UnionNamesResult = UnionNamesResult.T
   object UnionNamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionNamesL = UnionNamesL.T
-  object UnionNamesL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionNamesR = UnionNamesR.T
-  object UnionNamesR extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnionNamesL = _root_.com.histmersion.domain.MergeFold.UnionL
+  val UnionNamesL: _root_.com.histmersion.domain.MergeFold.UnionL.type = _root_.com.histmersion.domain.MergeFold.UnionL
+  type UnionNamesR = _root_.com.histmersion.domain.MergeFold.UnionR
+  val UnionNamesR: _root_.com.histmersion.domain.MergeFold.UnionR.type = _root_.com.histmersion.domain.MergeFold.UnionR
   type TextResult = TextResult.T
   object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextO = TextO.T

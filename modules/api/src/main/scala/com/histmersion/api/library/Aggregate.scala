@@ -28,12 +28,12 @@ object Aggregate:
   object BucketCountTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BucketCountSize = BucketCountSize.T
   object BucketCountSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HistogramFrom = HistogramFrom.T
-  object HistogramFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HistogramTo = HistogramTo.T
-  object HistogramTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HistogramSize = HistogramSize.T
-  object HistogramSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HistogramFrom = _root_.com.histmersion.api.library.Aggregate.BucketsFrom
+  val HistogramFrom: _root_.com.histmersion.api.library.Aggregate.BucketsFrom.type = _root_.com.histmersion.api.library.Aggregate.BucketsFrom
+  type HistogramTo = _root_.com.histmersion.api.library.Aggregate.BucketsTo
+  val HistogramTo: _root_.com.histmersion.api.library.Aggregate.BucketsTo.type = _root_.com.histmersion.api.library.Aggregate.BucketsTo
+  type HistogramSize = _root_.com.histmersion.api.library.Aggregate.BucketsSize
+  val HistogramSize: _root_.com.histmersion.api.library.Aggregate.BucketsSize.type = _root_.com.histmersion.api.library.Aggregate.BucketsSize
   type SpanResultPart1 = SpanResultPart1.T
   object SpanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SpanResultPart2 = SpanResultPart2.T

@@ -80,30 +80,30 @@ object PassageFinder:
   object MergeSpansPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeSpansPart2 = MergeSpansPart2.T
   object MergeSpansPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeText = MergeText.T
-  object MergeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeText = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
+  val MergeText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
   type MergeContext = MergeContext.T
   object MergeContext extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartOfResult = StartOfResult.T
   object StartOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartOfText = StartOfText.T
-  object StartOfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartOfText = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
+  val StartOfText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
   type StartOfS = StartOfS.T
   object StartOfS extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StartOfHalf = StartOfHalf.T
   object StartOfHalf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SkipBlanksResult = SkipBlanksResult.T
   object SkipBlanksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkipBlanksText = SkipBlanksText.T
-  object SkipBlanksText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkipBlanksText = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
+  val SkipBlanksText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
   type SkipBlanksFrom = SkipBlanksFrom.T
   object SkipBlanksFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SkipBlanksUpTo = SkipBlanksUpTo.T
   object SkipBlanksUpTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EndOfResult = EndOfResult.T
   object EndOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EndOfText = EndOfText.T
-  object EndOfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EndOfText = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
+  val EndOfText: _root_.com.histmersion.domain.PassageFinder.DropBlanksText.type = _root_.com.histmersion.domain.PassageFinder.DropBlanksText
   type EndOfE = EndOfE.T
   object EndOfE extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EndOfHalf = EndOfHalf.T

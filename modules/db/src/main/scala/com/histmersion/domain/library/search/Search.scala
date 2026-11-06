@@ -35,28 +35,28 @@ object Search:
   /** The parsed query, as a fragment. Spliced once per use site so parameters stay in textual order. */
   type TsQueryQ = TsQueryQ.T
   object TsQueryQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FtsPredicateQ = FtsPredicateQ.T
-  object FtsPredicateQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FtsPredicateQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
+  val FtsPredicateQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
   type FtsPredicateAlias = FtsPredicateAlias.T
   object FtsPredicateAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RankExprQ = RankExprQ.T
-  object RankExprQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RankExprQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
+  val RankExprQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
   type RankExprAlias = RankExprAlias.T
   object RankExprAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BestChunkJoinQ = BestChunkJoinQ.T
-  object BestChunkJoinQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BestChunkJoinQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
+  val BestChunkJoinQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
   type BestChunkJoinMaxWords = BestChunkJoinMaxWords.T
   object BestChunkJoinMaxWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BestChunkJoinAlias = BestChunkJoinAlias.T
   object BestChunkJoinAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BestChunkCteQ = BestChunkCteQ.T
-  object BestChunkCteQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RankExprCteQ = RankExprCteQ.T
-  object RankExprCteQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BestChunkCteQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
+  val BestChunkCteQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
+  type RankExprCteQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
+  val RankExprCteQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
   type RankExprCteAlias = RankExprCteAlias.T
   object RankExprCteAlias extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SnippetsQueryQ = SnippetsQueryQ.T
-  object SnippetsQueryQ extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SnippetsQueryQ = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
+  val SnippetsQueryQ: _root_.com.histmersion.domain.library.search.Search.TsQueryQ.type = _root_.com.histmersion.domain.library.search.Search.TsQueryQ
   type SnippetsQueryMaxWords = SnippetsQueryMaxWords.T
   object SnippetsQueryMaxWords extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SnippetsQueryCitekeys = SnippetsQueryCitekeys.T

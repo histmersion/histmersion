@@ -5,7 +5,7 @@ import java.nio.file.{Files, Paths}
 import scala.jdk.CollectionConverters._
 
 object AstRecipe {
-  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1, primitiveEitherLeft: Boolean = false, constructorProperties: Boolean = false, forwardedProperties: Boolean = false, reuseAcross: List[String] = Nil)
+  case class Consolidation(within: String = "", names: List[String] = Nil, target: String = "", targetOwner: String = "", expected: Int = -1, primitiveEitherLeft: Boolean = false, constructorProperties: Boolean = false, forwardedProperties: Boolean = false, forwardedParameters: Boolean = false, reuseAcross: List[String] = Nil)
   object Consolidation {
     implicit val surface: generic.Surface[Consolidation] = generic.deriveSurface[Consolidation]
     implicit val decoder: ConfDecoder[Consolidation] = generic.deriveDecoder(Consolidation()).noTypos
@@ -1175,7 +1175,97 @@ object TypeConsolidation {
       require(role.expected < 0 || accepted.size == role.expected,"Forwarded property count differs: expected=" + role.expected + " actual=" + accepted.size)
       accepted.map { case(a,b) => AstRecipe.Consolidation(within = a.substring(0,a.lastIndexOf('.')), names = List(a.split('.').last), target = b, expected = 1) }
     }
-    val selected = (roles.filterNot(r => r.constructorProperties || r.forwardedProperties) ++ factoryRoles ++ forwardedRoles).flatMap { role =>
+    val parameterRoles = roles.filter(_.forwardedParameters).flatMap { role =>
+      require(role.within.nonEmpty && role.target.isEmpty && role.targetOwner.isEmpty && role.names.isEmpty && role.reuseAcross.isEmpty && !role.constructorProperties && !role.forwardedProperties,"Forwarded parameters take a namespace and stable same-owner methods")
+      val indexed = definitions.groupBy(_(5))
+      val origins = rows(index + "/newtype-origins.tsv").groupBy(_.head)
+      val properties = currentTrees.values.toList.flatMap(_.collect {
+        case p: Term.Param if resolver.parents(p).exists(_.is[Ctor.Primary]) => p.decltpe.toList.flatMap(_.collect {
+          case t: Type => resolver.pure(t.syntax,t).map(_.name)
+        }.flatten)
+      }.flatten).toSet
+      val usable = scala.collection.mutable.Map.empty[String,Boolean]
+      def eligible(name: String, method: Defn.Def, parameter: String): Boolean = indexed.get(name).exists {
+        case List(d) => !properties(name) && d(12) == "member" && d(5).stripSuffix("." + d(6)) == resolver.owner(method) &&
+          origins.getOrElse(d.head,Nil).exists(_(1) == method.name.value + "." + parameter) &&
+          usable.getOrElseUpdate(name,currentTrees(d(1)).collect {
+            case o: Defn.Object if resolver.owner(o) + "." + o.name.value == name =>
+              o.mods.isEmpty && o.templ.stats.isEmpty && o.templ.inits.size == 1 && o.templ.inits.head.argClauses.isEmpty &&
+                o.parent.toList.flatMap(_.children).exists { case a: Defn.Type => a.name.value == o.name.value && a.body.syntax == o.name.value + ".T" && a.mods.isEmpty && a.tparamClause.values.isEmpty; case _ => false } &&
+                !o.parent.toList.flatMap(_.children).exists { case v: Defn.Val => v.pats.exists { case Pat.Var(n) => n.value == o.name.value; case _ => false }; case _ => false }
+          } == List(true))
+        case _ => false
+      }
+      def stable(m: Defn.Def): Boolean = resolver.parents(m).collectFirst { case t: Template => t }.flatMap(_.parent).exists(_.is[Defn.Object]) &&
+        !resolver.parents(m).exists(t => t.is[Defn.Def] || t.is[Defn.Class] || t.is[Defn.Trait] || t.is[Defn.Enum] || t.is[Defn.ExtensionGroup])
+      val methods = currentTrees.toList.flatMap { case(path,tree) => tree.collect {
+        case m: Defn.Def if stable(m) && (resolver.owner(m) == role.within || resolver.owner(m).startsWith(role.within + ".")) => (path,m)
+      }}
+      val byName = methods.groupBy { case(_,m) => resolver.owner(m) -> m.name.value }
+      val edges = methods.flatMap { case(path,method) =>
+        val clauses = method.paramClauseGroups.flatMap(_.paramClauses)
+        if(method.collect { case _: Type.Param => true }.nonEmpty || clauses.size != 1 || method.mods.exists(_.is[Mod.Override])) Nil else {
+          val parameters = clauses.head.values
+          val shadowed = method.body.collect {
+            case p: Pat.Var => p.name.value
+            case p: Term.Param => p.name.value
+            case d: Defn.Def => d.name.value
+            case o: Defn.Object => o.name.value
+            case c: Defn.Class => c.name.value
+          }.toSet
+          val localImports = method.body.collect { case _: Import => true }.nonEmpty
+          val namespace = resolver.owner(method)
+          method.body.collect { case app: Term.Apply if resolver.parents(app).collectFirst { case m: Defn.Def => m }.contains(method) => app }.flatMap { app =>
+            val head = app.fun.syntax.stripPrefix("_root_.")
+            val name = head.stripPrefix(namespace + ".")
+            val called = if(name.contains(".") || (localImports && !head.contains(".")) || shadowed(name) || parameters.exists(_.name.value == name) ||
+              (!app.fun.syntax.startsWith("_root_.") && head.contains(".") && (shadowed ++ parameters.map(_.name.value))(head.takeWhile(_ != '.')))) Nil
+              else byName.getOrElse(namespace -> name,Nil)
+            called match {
+              case List((_,callee)) if callee.collect { case _: Type.Param => true }.isEmpty && !callee.mods.exists(_.is[Mod.Override]) && callee.paramClauseGroups.flatMap(_.paramClauses).size == 1 =>
+                val targets = callee.paramClauseGroups.flatMap(_.paramClauses).head.values
+                val bound = scala.collection.mutable.Set.empty[Int]
+                var named = false
+                val arguments = app.argClause.values.zipWithIndex.map { case(arg,i) =>
+                  val (at,value) = arg match {
+                    case Term.Assign(n: Term.Name,v) => named = true; targets.indexWhere(_.name.value == n.value) -> v
+                    case v if !named => i -> v
+                    case v => -1 -> v
+                  }
+                  if(at < 0 || at >= targets.size || bound(at)) None else { bound += at; Some(value -> targets(at)) }
+                }
+                if(arguments.exists(_.isEmpty) || targets.indices.exists(i => !bound(i) && targets(i).default.isEmpty)) Nil else arguments.flatten.flatMap {
+                  case (arg: Term.Name,target) if arg.value == target.name.value && !shadowed(arg.value) =>
+                    parameters.filter(_.name.value == arg.value).flatMap(p => p.decltpe.toList.flatMap(a => target.decltpe.toList.flatMap(b => forwardingPairs(a,b)))).flatMap { case(a,b) =>
+                      val source = indexed.getOrElse(a,Nil); val destination = indexed.getOrElse(b,Nil)
+                      if(source.size == 1 && destination.size == 1 && source.head(2) == destination.head(2) && source.head(3) == destination.head(3) &&
+                        eligible(a,method,arg.value) && eligible(b,callee,arg.value) && resolver.pure(a,app).exists(x => resolver.pure(b,app).exists(_.base == x.base))) {
+                        evidence += List(path,(arg.pos.startLine + 1).toString,"FORWARDED_PARAMETER " + a + " -> " + b,method.name.value + "." + arg.value + " -> " + callee.name.value + "." + target.name.value + "; " + app.structure)
+                        List(a -> b)
+                      } else { evidence += List(path,(arg.pos.startLine + 1).toString,"UNRESOLVED forwarded parameter " + a + " -> " + b,"Requires same stable owner, generated origins at both methods, matching Pure base, empty companions, no model property and same module/source set"); Nil }
+                    }
+                  case _ => Nil
+                }
+              case _ => Nil
+            }
+          }
+        }
+      }.distinct
+      val remaining = scala.collection.mutable.Set.empty[String] ++ edges.flatMap { case(a,b) => List(a,b) }
+      val pairs = scala.collection.mutable.ListBuffer.empty[(String,String)]
+      while(remaining.nonEmpty) {
+        var component = Set(remaining.min)
+        var next = component ++ edges.collect { case(a,b) if component(a) || component(b) => List(a,b) }.flatten
+        while(next != component) { component = next; next = component ++ edges.collect { case(a,b) if component(a) || component(b) => List(a,b) }.flatten }
+        val sinks = component -- edges.collect { case(a,b) if a != b && component(a) => a }
+        val canonical = (if(sinks.nonEmpty) sinks else component).min
+        (component - canonical).toList.sorted.foreach(a => pairs += a -> canonical)
+        remaining --= component
+      }
+      require(role.expected < 0 || pairs.size == role.expected,"Forwarded parameter count differs: expected=" + role.expected + " actual=" + pairs.size)
+      pairs.toList.map { case(a,b) => AstRecipe.Consolidation(within = a.substring(0,a.lastIndexOf('.')), names = List(a.split('.').last), target = b, expected = 1) }
+    }
+    val selected = (roles.filterNot(r => r.constructorProperties || r.forwardedProperties || r.forwardedParameters) ++ factoryRoles ++ forwardedRoles ++ parameterRoles).flatMap { role =>
       require(role.reuseAcross.isEmpty || (role.reuseAcross.size == 2 && role.reuseAcross.distinct.size == 2 && role.target.nonEmpty && role.names.nonEmpty && role.expected > 0),"Cross-module reuse requires exact named bindings, a positive count and a directed module pair")
       require(role.within.nonEmpty && (role.target.nonEmpty != role.targetOwner.nonEmpty),"Choose one canonical type or projection owner")
       require(role.target.isEmpty || (role.names.nonEmpty && role.target.contains(".")),"Canonical role needs names and a qualified type")

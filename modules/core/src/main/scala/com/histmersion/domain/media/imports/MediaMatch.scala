@@ -30,8 +30,8 @@ object MediaMatch:
   object UncertainV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KeyOfResult = KeyOfResult.T
   object KeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyOfV = KeyOfV.T
-  object KeyOfV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KeyOfV = _root_.com.histmersion.domain.media.imports.MediaMatch.UncertainV
+  val KeyOfV: _root_.com.histmersion.domain.media.imports.MediaMatch.UncertainV.type = _root_.com.histmersion.domain.media.imports.MediaMatch.UncertainV
   type OverlapsResult = OverlapsResult.T
   object OverlapsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type YearsResult = YearsResult.T
@@ -48,8 +48,8 @@ object MediaMatch:
   object MuseumResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MuseumResultPart2 = MuseumResultPart2.T
   object MuseumResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MuseumLatest = MuseumLatest.T
-  object MuseumLatest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MuseumLatest = _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest
+  val MuseumLatest: _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest.type = _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest
   type DatedResultPart1 = DatedResultPart1.T
   object DatedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DatedResultPart2 = DatedResultPart2.T
@@ -64,8 +64,8 @@ object MediaMatch:
   object WithIdsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WithIdsDeeper = WithIdsDeeper.T
   object WithIdsDeeper extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithIdsLatest = WithIdsLatest.T
-  object WithIdsLatest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithIdsLatest = _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest
+  val WithIdsLatest: _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest.type = _root_.com.histmersion.domain.media.imports.MediaMatch.DatedLatest
   type MapResultPart1 = MapResultPart1.T
   object MapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MapResultPart2 = MapResultPart2.T

@@ -50,16 +50,16 @@ object MergeText:
   object MainTitleTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TitleKeyResult = TitleKeyResult.T
   object TitleKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitleKeyTitle = TitleKeyTitle.T
-  object TitleKeyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TitleKeyTitle = _root_.com.histmersion.domain.library.sources.MergeText.MainTitleTitle
+  val TitleKeyTitle: _root_.com.histmersion.domain.library.sources.MergeText.MainTitleTitle.type = _root_.com.histmersion.domain.library.sources.MergeText.MainTitleTitle
   type Particles = Particles.T
   object Particles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Suffixes = Suffixes.T
   object Suffixes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NameTokensResult = NameTokensResult.T
   object NameTokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NameTokensS = NameTokensS.T
-  object NameTokensS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NameTokensS = _root_.com.histmersion.domain.library.sources.MergeText.TokensS
+  val NameTokensS: _root_.com.histmersion.domain.library.sources.MergeText.TokensS.type = _root_.com.histmersion.domain.library.sources.MergeText.TokensS
   type PersonRaw = PersonRaw.T
   object PersonRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GivenCompatibleResult = GivenCompatibleResult.T
@@ -72,8 +72,8 @@ object MergeText:
   object SamePersonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SurnameKeysResult = SurnameKeysResult.T
   object SurnameKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SurnameKeysRaw = SurnameKeysRaw.T
-  object SurnameKeysRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SurnameKeysRaw = _root_.com.histmersion.domain.library.sources.MergeText.PersonRaw
+  val SurnameKeysRaw: _root_.com.histmersion.domain.library.sources.MergeText.PersonRaw.type = _root_.com.histmersion.domain.library.sources.MergeText.PersonRaw
   type AuthorsA = AuthorsA.T
   object AuthorsA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AuthorsB = AuthorsB.T

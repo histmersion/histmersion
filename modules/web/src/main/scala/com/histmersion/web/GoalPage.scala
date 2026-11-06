@@ -41,8 +41,8 @@ object GoalPage:
   object ScheduleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScheduleLastCheck = ScheduleLastCheck.T
   object ScheduleLastCheck extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScheduleNowMs = ScheduleNowMs.T
-  object ScheduleNowMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScheduleNowMs = _root_.com.histmersion.web.GoalPage.DaysNowMs
+  val ScheduleNowMs: _root_.com.histmersion.web.GoalPage.DaysNowMs.type = _root_.com.histmersion.web.GoalPage.DaysNowMs
   type PausedResult = PausedResult.T
   object PausedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListOfResult = ListOfResult.T
@@ -57,8 +57,8 @@ object GoalPage:
   object MapOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MapOfGoal = MapOfGoal.T
   object MapOfGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PaneSlug = PaneSlug.T
-  object PaneSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaneSlug = _root_.com.histmersion.web.GoalPage.ShowFilteredSlug
+  val PaneSlug: _root_.com.histmersion.web.GoalPage.ShowFilteredSlug.type = _root_.com.histmersion.web.GoalPage.ShowFilteredSlug
   type HeaderNote = HeaderNote.T
   object HeaderNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StepN = StepN.T
@@ -67,8 +67,8 @@ object GoalPage:
   object ProducedBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ProducedAcquire = ProducedAcquire.T
   object ProducedAcquire extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ProducedSlug = ProducedSlug.T
-  object ProducedSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ProducedSlug = _root_.com.histmersion.web.GoalPage.ShowFilteredSlug
+  val ProducedSlug: _root_.com.histmersion.web.GoalPage.ShowFilteredSlug.type = _root_.com.histmersion.web.GoalPage.ShowFilteredSlug
   type ShowFilteredSlug = ShowFilteredSlug.T
   object ShowFilteredSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

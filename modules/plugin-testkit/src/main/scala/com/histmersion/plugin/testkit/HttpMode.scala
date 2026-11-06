@@ -51,10 +51,10 @@ object HttpMode:
   object LiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FromEnvResultPart1 = FromEnvResultPart1.T
   object FromEnvResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromEnvEnvPart1 = FromEnvEnvPart1.T
-  object FromEnvEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromEnvEnvPart2 = FromEnvEnvPart2.T
-  object FromEnvEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FromEnvEnvPart1 = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1
+  val FromEnvEnvPart1: _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1.type = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart1
+  type FromEnvEnvPart2 = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2
+  val FromEnvEnvPart2: _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2.type = _root_.com.histmersion.plugin.testkit.HttpMode.ChooseEnvPart2
   type ChooseResultPart1 = ChooseResultPart1.T
   object ChooseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChooseEnvPart1 = ChooseEnvPart1.T

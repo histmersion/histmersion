@@ -17,8 +17,8 @@ object Png:
   object EncodeRgbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChunkData = ChunkData.T
   object ChunkData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeB = DecodeB.T
-  object DecodeB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecodeB = _root_.com.histmersion.util.basemap.Png.IsPngB
+  val DecodeB: _root_.com.histmersion.util.basemap.Png.IsPngB.type = _root_.com.histmersion.util.basemap.Png.IsPngB
 
   type IsPngResult = IsPngResult.T
   object IsPngResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

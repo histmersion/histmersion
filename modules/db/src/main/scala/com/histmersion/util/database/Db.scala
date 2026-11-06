@@ -22,8 +22,8 @@ import javax.sql.DataSource
 object Db:
 
   /** The APPLICATION pool: owns the schema, runs the migrations, serves every repo. */
-  type PooledUrl = PooledUrl.T
-  object PooledUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PooledUrl = _root_.com.histmersion.util.database.Db.DatabaseOfUrl
+  val PooledUrl: _root_.com.histmersion.util.database.Db.DatabaseOfUrl.type = _root_.com.histmersion.util.database.Db.DatabaseOfUrl
   type PooledUser = PooledUser.T
   object PooledUser extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PooledPassword = PooledPassword.T

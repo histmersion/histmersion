@@ -24,10 +24,10 @@ object GoalsExport:
 
   type RenderResult = RenderResult.T
   object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderItemStatusPart1 = RenderItemStatusPart1.T
-  object RenderItemStatusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderItemStatusPart2 = RenderItemStatusPart2.T
-  object RenderItemStatusPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderItemStatusPart1 = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1
+  val RenderItemStatusPart1: _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1.type = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1
+  type RenderItemStatusPart2 = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2
+  val RenderItemStatusPart2: _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2.type = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2
   type SummaryResult = SummaryResult.T
   object SummaryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TreeResultPart2 = TreeResultPart2.T
@@ -38,16 +38,16 @@ object GoalsExport:
   object BlockDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BlockKnown = BlockKnown.T
   object BlockKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockItemStatusPart1 = BlockItemStatusPart1.T
-  object BlockItemStatusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockItemStatusPart2 = BlockItemStatusPart2.T
-  object BlockItemStatusPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockItemStatusPart1 = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1
+  val BlockItemStatusPart1: _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1.type = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1
+  type BlockItemStatusPart2 = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2
+  val BlockItemStatusPart2: _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2.type = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2
   type LinkSectionsResult = LinkSectionsResult.T
   object LinkSectionsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkSectionsItemStatusPart1 = LinkSectionsItemStatusPart1.T
-  object LinkSectionsItemStatusPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkSectionsItemStatusPart2 = LinkSectionsItemStatusPart2.T
-  object LinkSectionsItemStatusPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkSectionsItemStatusPart1 = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1
+  val LinkSectionsItemStatusPart1: _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1.type = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart1
+  type LinkSectionsItemStatusPart2 = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2
+  val LinkSectionsItemStatusPart2: _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2.type = _root_.com.histmersion.api.automation.GoalsExport.QueueLineItemStatusPart2
   type TitledResult = TitledResult.T
   object TitledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NotedResult = NotedResult.T

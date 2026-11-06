@@ -48,12 +48,12 @@ object AcquireMatch:
   object ScoreItemText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ScoreTitle = ScoreTitle.T
   object ScoreTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScoreAuthors = ScoreAuthors.T
-  object ScoreAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideTitle = DecideTitle.T
-  object DecideTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecideAuthors = DecideAuthors.T
-  object DecideAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ScoreAuthors = _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors
+  val ScoreAuthors: _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors.type = _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors
+  type DecideTitle = _root_.com.histmersion.domain.AcquireMatch.ScoreTitle
+  val DecideTitle: _root_.com.histmersion.domain.AcquireMatch.ScoreTitle.type = _root_.com.histmersion.domain.AcquireMatch.ScoreTitle
+  type DecideAuthors = _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors
+  val DecideAuthors: _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors.type = _root_.com.histmersion.domain.AcquireMatch.SurnameAuthors
   type DecideProposeAt = DecideProposeAt.T
   object DecideProposeAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DescribeResult = DescribeResult.T

@@ -32,30 +32,30 @@ object SourceNote:
   object FindingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseFileConfineTo = ParseFileConfineTo.T
   object ParseFileConfineTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseNoteText = ParseNoteText.T
-  object ParseNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseNoteFallbackCitekey = ParseNoteFallbackCitekey.T
-  object ParseNoteFallbackCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
+  val ParseNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.SplitText.type = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
+  type ParseNoteFallbackCitekey = _root_.com.histmersion.domain.library.sources.SourceNote.ToSourceFallbackCitekey
+  val ParseNoteFallbackCitekey: _root_.com.histmersion.domain.library.sources.SourceNote.ToSourceFallbackCitekey.type = _root_.com.histmersion.domain.library.sources.SourceNote.ToSourceFallbackCitekey
   type YamlMapResultPart1 = YamlMapResultPart1.T
   object YamlMapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YamlMapText = YamlMapText.T
-  object YamlMapText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type YamlMapText = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
+  val YamlMapText: _root_.com.histmersion.domain.library.sources.SourceNote.SplitText.type = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
   type LinkTargetsResultPart1 = LinkTargetsResultPart1.T
   object LinkTargetsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkTargetsResultPart2 = LinkTargetsResultPart2.T
   object LinkTargetsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkTargetsNoteText = LinkTargetsNoteText.T
   object LinkTargetsNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgesOfMPart1 = EdgesOfMPart1.T
-  object EdgesOfMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgesOfNoteText = EdgesOfNoteText.T
-  object EdgesOfNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EdgesOfMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val EdgesOfMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  type EdgesOfNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText
+  val EdgesOfNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText.type = _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText
   type WithLinkedTopicsResult = WithLinkedTopicsResult.T
   object WithLinkedTopicsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WithLinkedTopicsTopics = WithLinkedTopicsTopics.T
   object WithLinkedTopicsTopics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithLinkedTopicsNoteText = WithLinkedTopicsNoteText.T
-  object WithLinkedTopicsNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithLinkedTopicsNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText
+  val WithLinkedTopicsNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText.type = _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText
   type FullTextResult = FullTextResult.T
   object FullTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FullTextMPart1 = FullTextMPart1.T
@@ -64,12 +64,12 @@ object SourceNote:
   object FullTextConfineTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExtractYamlResult = ExtractYamlResult.T
   object ExtractYamlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtractYamlText = ExtractYamlText.T
-  object ExtractYamlText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ExtractYamlText = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
+  val ExtractYamlText: _root_.com.histmersion.domain.library.sources.SourceNote.SplitText.type = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
   type BodyOfResult = BodyOfResult.T
   object BodyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyOfText = BodyOfText.T
-  object BodyOfText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BodyOfText = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
+  val BodyOfText: _root_.com.histmersion.domain.library.sources.SourceNote.SplitText.type = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
   type SplitResultPart1 = SplitResultPart1.T
   object SplitResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SplitResultPart2 = SplitResultPart2.T
@@ -86,42 +86,42 @@ object SourceNote:
   object RawK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StrResult = StrResult.T
   object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrMPart1 = StrMPart1.T
-  object StrMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrK = StrK.T
-  object StrK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StrMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val StrMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  type StrK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
+  val StrK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
   type ListResult = ListResult.T
   object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListMPart1 = ListMPart1.T
-  object ListMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListK = ListK.T
-  object ListK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ListMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val ListMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  type ListK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
+  val ListK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
   type IntResult = IntResult.T
   object IntResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IntMPart1 = IntMPart1.T
-  object IntMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IntK = IntK.T
-  object IntK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IntMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val IntMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  type IntK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
+  val IntK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
   type LongResult = LongResult.T
   object LongResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LongMPart1 = LongMPart1.T
-  object LongMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LongK = LongK.T
-  object LongK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LongMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val LongMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  type LongK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
+  val LongK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
   type DoubleResult = DoubleResult.T
   object DoubleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoubleMPart1 = DoubleMPart1.T
-  object DoubleMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoubleK = DoubleK.T
-  object DoubleK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PeriodMPart1 = PeriodMPart1.T
-  object PeriodMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToSourceMPart1 = ToSourceMPart1.T
-  object ToSourceMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DoubleMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val DoubleMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  type DoubleK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
+  val DoubleK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
+  type PeriodMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val PeriodMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  type ToSourceMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val ToSourceMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
   type ToSourceFallbackCitekey = ToSourceFallbackCitekey.T
   object ToSourceFallbackCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindingsMPart1 = FindingsMPart1.T
-  object FindingsMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FindingsMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  val FindingsMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
 
   def note(s: Source): com.histmersion.domain.library.sources.SourceNote.NoteResult =
     frontmatterOf(s).note(s.notes.map(_.trim).filter(_.nonEmpty))

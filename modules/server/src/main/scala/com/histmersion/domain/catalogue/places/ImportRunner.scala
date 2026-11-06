@@ -22,8 +22,8 @@ object ImportRunner:
   object FetchAndImportResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FetchAndImportDryRun = FetchAndImportDryRun.T
   object FetchAndImportDryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FetchAndImportToleranceKm = FetchAndImportToleranceKm.T
-  object FetchAndImportToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FetchAndImportToleranceKm = _root_.com.histmersion.domain.catalogue.places.ImportRunner.BatchUpsertToleranceKm
+  val FetchAndImportToleranceKm: _root_.com.histmersion.domain.catalogue.places.ImportRunner.BatchUpsertToleranceKm.type = _root_.com.histmersion.domain.catalogue.places.ImportRunner.BatchUpsertToleranceKm
   type BatchUpsertResultPart1 = BatchUpsertResultPart1.T
   object BatchUpsertResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BatchUpsertToleranceKm = BatchUpsertToleranceKm.T

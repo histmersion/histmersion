@@ -35,16 +35,16 @@ object BuiltinCatalogues:
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveResultPart2 = ResolveResultPart2.T
   object ResolveResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResolveAsked = ResolveAsked.T
-  object ResolveAsked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResolveAsked = _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalAsked
+  val ResolveAsked: _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalAsked.type = _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.CanonicalAsked
   type ResolveCataloguesPart1 = ResolveCataloguesPart1.T
   object ResolveCataloguesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InfoName = InfoName.T
   object InfoName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InfoCataloguesPart1 = InfoCataloguesPart1.T
   object InfoCataloguesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfosCataloguesPart1 = InfosCataloguesPart1.T
-  object InfosCataloguesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type InfosCataloguesPart1 = _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoCataloguesPart1
+  val InfosCataloguesPart1: _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoCataloguesPart1.type = _root_.com.histmersion.domain.catalogue.events.BuiltinCatalogues.InfoCataloguesPart1
 
   final case class Entry(plugin: Entry.Plugin, name: Entry.Name):
     def title: com.histmersion.domain.catalogue.events.BuiltinCatalogues.Entry.TitleResult = CatalogProvider.info(name).fold(name)(_.title)

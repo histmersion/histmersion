@@ -36,14 +36,14 @@ object UserPaths:
   object DefaultDataDirEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DefaultDataDirEnvResult = DefaultDataDirEnvResult.T
   object DefaultDataDirEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultDataDirOsName = DefaultDataDirOsName.T
-  object DefaultDataDirOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DefaultDataDirOsName = _root_.com.histmersion.config.UserPaths.IsMacOsName
+  val DefaultDataDirOsName: _root_.com.histmersion.config.UserPaths.IsMacOsName.type = _root_.com.histmersion.config.UserPaths.IsMacOsName
   type DataDirEnvArg1 = DataDirEnvArg1.T
   object DataDirEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DataDirEnvResult = DataDirEnvResult.T
   object DataDirEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DataDirOsName = DataDirOsName.T
-  object DataDirOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DataDirOsName = _root_.com.histmersion.config.UserPaths.IsMacOsName
+  val DataDirOsName: _root_.com.histmersion.config.UserPaths.IsMacOsName.type = _root_.com.histmersion.config.UserPaths.IsMacOsName
   type CacheDirEnvArg1 = CacheDirEnvArg1.T
   object CacheDirEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CacheDirEnvResult = CacheDirEnvResult.T

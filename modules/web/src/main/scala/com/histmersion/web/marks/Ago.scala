@@ -23,8 +23,8 @@ object Ago:
   object MsIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfResult = OfResult.T
   object OfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfIso = OfIso.T
-  object OfIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfIso = _root_.com.histmersion.web.marks.Ago.MsIso
+  val OfIso: _root_.com.histmersion.web.marks.Ago.MsIso.type = _root_.com.histmersion.web.marks.Ago.MsIso
 
   def apply(thenMs: com.histmersion.web.marks.Ago.ApplyThenMs, nowMs: com.histmersion.web.marks.Ago.ApplyNowMs, isoDate: com.histmersion.web.marks.Ago.ApplyIsoDate): com.histmersion.web.marks.Ago.ApplyResult =
     val s = math.max(0.0, (nowMs - thenMs) / 1000)

@@ -1,6 +1,78 @@
 # Priority-family status
 
-## Current checkpoint: native Boolean consumers repaired, compilation incomplete
+## Current checkpoint: forwarded helper parameters consolidated, compilation incomplete
+
+The existing consolidation pipeline applies 1110 alias/companion AST patches for
+555 helper opaque shapes in 175 production files, with no application test changes.
+The helper names remain as aliases and constructor aliases to a canonical helper
+type. No model property becomes a primitive and no method body changes. These are
+applied consolidations, not a global verified-policy repair count or 555 deleted
+model concepts. The application config selects one namespace and a reusable mode;
+it contains no individual type or source-expression mappings.
+
+forwardedParameters follows an unchanged parameter passed directly to a method
+parameter with the exact same name in the same stable object owner. Both helper
+types must have recorded generated parameter origins, the same qualified Iron/Pure
+base, stable empty companions, one parent and no conflicting value/alias/modifiers.
+Module/source-set identity is required. Constructor property types are protected.
+Qualified same-owner calls, positional/named arguments, defaults and matching tuple/
+container positions are supported. Generic, override, local, class/trait/enum,
+extension and anonymous-object methods, ambiguous overloads, shadowed bindings,
+unqualified calls with local imports, different parameter names, transformed values,
+custom behavior, missing provenance and cross-owner calls remain unsupported.
+
+Connected forwarding chains share one canonical type, chosen deterministically from
+the terminal helpers (or the sorted component for a cycle), preventing cyclic aliases.
+Direct call AST witnesses and original generated origins remain in the reports.
+This evidence identifies a shared parameter role within an owner; it does not
+establish semantic equivalence between unrelated fields or arbitrary equal-base types.
+project-forwarded-parameters-1 is an unapplied provisional preview (559 shapes/177
+files). The final immediate-template/local-import guards exclude four shapes/two
+files; project-forwarded-parameters-2 is the applied 555-shape/175-file preview.
+
+All three expected fixture outputs match exactly. The rewritten fixture compiles
+and runs under Scala 3.10, -source:future and fatal E165. Eight new identity proofs
+cover positional/named/qualified calls, transitive chains, cycles and collection
+parameters; runtime assertions verify unchanged results. All prior consolidation
+identity/runtime assertions still pass. The negative fixture is absent from the
+plan: missing origins, model properties, transformed arguments, different purposes,
+custom companions, base mismatch, generics, lambda/method/import shadowing, overloads
+and cross-owner calls stay unchanged. Fixture origin records are explicit synthetic
+data, not production migration history. No expected assertion was weakened.
+
+| Source module | Previous frontier17 | Current frontier18 |
+|---|---:|---:|
+| api JVM and JS, each | 2904 | 2860 |
+| values | 33 | 33 |
+| upstreams | 340 | 343 |
+| plugin-vaults | 96 | cached failure |
+| plugins/calibre | 187 | cached failure |
+
+The actual full build still fails in all ten previously failing tasks. Six tasks
+retain cached failures. The upstream increase is preserved explicitly; a reduction
+in API counts does not classify the new/replaced upstream diagnostics or prove
+absence of regressions. Changed downstream modules and application tests remain
+blocked by dependencies. Stack16m, maxErrors10000, serial compilation and compiler
+checks are unchanged, and the build verifies all source hashes stayed stable.
+
+All 175 application files match the frozen preview. The final census's complete
+Scala-source hash list matches frontier18, which additionally snapshots build.sbt.
+type-positions-after-forwarded-parameters-1 measures all 3169 Scala files and 135980
+positions (previous135425; constructor aliases add declarations). Primitive IDs are
+unchanged: production594/test6009, zero removed and zero introduced. The opaque-shape
+delta is exactly 555 removed and zero introduced: production26949/test19. Previous
+identities/history remain in the prior immutable index; aliases still retain their
+source names. Overlap candidate groups are 2983 (previous3010), unresolved candidate
+references16197 (previous16152). Import, alias, inheritance and external-symbol
+resolution remain partial; alias omissions are not evidence of caller completion.
+No new exceptions, global inventory acceptance or automation rate is claimed.
+
+Next work remains compilation against the typed definitions: reusable native-library
+contract/result adaptations and additional evidenced helper/property sharing, then
+remaining primitive candidates, smart construction and application tests. The known
+general E134 callback-block adapter remains excluded from Boolean mode and unresolved.
+
+## Previous checkpoint: native Boolean consumers repaired, compilation incomplete
 
 The existing compiler-repair pipeline applies 189 AST patches in 67 production
 files, then 17 further patches in 15 of those files after recompilation. This is

@@ -11,22 +11,22 @@ object LicenseName:
   object LabelId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UrlResult = UrlResult.T
   object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlId = UrlId.T
-  object UrlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlId = _root_.com.histmersion.web.LicenseName.LabelId
+  val UrlId: _root_.com.histmersion.web.LicenseName.LabelId.type = _root_.com.histmersion.web.LicenseName.LabelId
   type LinkResultPart1 = LinkResultPart1.T
   object LinkResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinkResultPart2 = LinkResultPart2.T
   object LinkResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkId = LinkId.T
-  object LinkId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkId = _root_.com.histmersion.web.LicenseName.LabelId
+  val LinkId: _root_.com.histmersion.web.LicenseName.LabelId.type = _root_.com.histmersion.web.LicenseName.LabelId
   type LinkRecorded = LinkRecorded.T
   object LinkRecorded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HtmlResult = HtmlResult.T
   object HtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlId = HtmlId.T
-  object HtmlId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HtmlRecorded = HtmlRecorded.T
-  object HtmlRecorded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HtmlId = _root_.com.histmersion.web.LicenseName.LabelId
+  val HtmlId: _root_.com.histmersion.web.LicenseName.LabelId.type = _root_.com.histmersion.web.LicenseName.LabelId
+  type HtmlRecorded = _root_.com.histmersion.web.LicenseName.LinkRecorded
+  val HtmlRecorded: _root_.com.histmersion.web.LicenseName.LinkRecorded.type = _root_.com.histmersion.web.LicenseName.LinkRecorded
 
   private val Cc0 = "(?i)^CC0(?:[- ]1\\.0)?\\.?$".r
   // CC-BY, CC-BY-SA-4.0, CC BY-NC-SA 2.5, CC-BY-SA-3.0-DE (a ported licence)

@@ -12,12 +12,12 @@ object Plural:
   object NounPlural extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CountResult = CountResult.T
   object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountN = CountN.T
-  object CountN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountSingular = CountSingular.T
-  object CountSingular extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountPlural = CountPlural.T
-  object CountPlural extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CountN = _root_.com.histmersion.api.Plural.NounN
+  val CountN: _root_.com.histmersion.api.Plural.NounN.type = _root_.com.histmersion.api.Plural.NounN
+  type CountSingular = _root_.com.histmersion.api.Plural.NounSingular
+  val CountSingular: _root_.com.histmersion.api.Plural.NounSingular.type = _root_.com.histmersion.api.Plural.NounSingular
+  type CountPlural = _root_.com.histmersion.api.Plural.NounPlural
+  val CountPlural: _root_.com.histmersion.api.Plural.NounPlural.type = _root_.com.histmersion.api.Plural.NounPlural
 
   def noun(n: com.histmersion.api.Plural.NounN, singular: com.histmersion.api.Plural.NounSingular, plural: com.histmersion.api.Plural.NounPlural = _root_.com.histmersion.api.Plural.NounPlural("")): com.histmersion.api.Plural.NounResult =
     if n == 1 then singular else if (plural).value.nonEmpty then plural else _root_.com.histmersion.api.Plural.NounResult((singular).value + "s")

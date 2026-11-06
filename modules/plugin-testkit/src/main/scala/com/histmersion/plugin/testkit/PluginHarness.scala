@@ -379,12 +379,12 @@ object PluginHarness:
   object ResolveSecretRef extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadResultPart1 = LoadResultPart1.T
   object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadId = LoadId.T
-  object LoadId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadSecretsPart1 = LoadSecretsPart1.T
-  object LoadSecretsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadSecretsPart2 = LoadSecretsPart2.T
-  object LoadSecretsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadId = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
+  val LoadId: _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId.type = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
+  type LoadSecretsPart1 = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart1
+  val LoadSecretsPart1: _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart1.type = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart1
+  type LoadSecretsPart2 = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2
+  val LoadSecretsPart2: _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2.type = _root_.com.histmersion.plugin.testkit.PluginHarness.TestVaultsSecretsPart2
   type LoadEnvPart1 = LoadEnvPart1.T
   object LoadEnvPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadEnvPart2 = LoadEnvPart2.T
@@ -409,8 +409,8 @@ object PluginHarness:
   object TestVaultsSecretsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UserConfigResultPart1 = UserConfigResultPart1.T
   object UserConfigResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UserConfigId = UserConfigId.T
-  object UserConfigId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UserConfigId = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
+  val UserConfigId: _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId.type = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
   type UserConfigText = UserConfigText.T
   object UserConfigText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UserConfigWithVaults = UserConfigWithVaults.T
@@ -427,8 +427,8 @@ object PluginHarness:
   object ReferencedValuesEnvPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RegisterResultPart1 = RegisterResultPart1.T
   object RegisterResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegisterId = RegisterId.T
-  object RegisterId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RegisterId = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
+  val RegisterId: _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId.type = _root_.com.histmersion.plugin.testkit.PluginHarness.DiscoverId
   type SaveFetcher = SaveFetcher.T
   object SaveFetcher extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

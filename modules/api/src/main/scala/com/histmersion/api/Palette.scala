@@ -35,8 +35,8 @@ object Palette:
   object GoalStageStage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalStageSoftResult = GoalStageSoftResult.T
   object GoalStageSoftResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalStageSoftStage = GoalStageSoftStage.T
-  object GoalStageSoftStage extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GoalStageSoftStage = _root_.com.histmersion.api.Palette.GoalStageStage
+  val GoalStageSoftStage: _root_.com.histmersion.api.Palette.GoalStageStage.type = _root_.com.histmersion.api.Palette.GoalStageStage
   type MediaResult = MediaResult.T
   object MediaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MediaKind = MediaKind.T

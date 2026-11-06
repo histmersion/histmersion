@@ -50,8 +50,8 @@ object Wording:
   object ManagerKindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ManagerResult = ManagerResult.T
   object ManagerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ManagerId = ManagerId.T
-  object ManagerId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ManagerId = _root_.com.histmersion.api.Wording.HumanizeId
+  val ManagerId: _root_.com.histmersion.api.Wording.HumanizeId.type = _root_.com.histmersion.api.Wording.HumanizeId
   type SchedulerJobTypesPart1 = SchedulerJobTypesPart1.T
   object SchedulerJobTypesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SchedulerJobTypesPart2 = SchedulerJobTypesPart2.T
@@ -92,8 +92,8 @@ object Wording:
   object JobStateResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PluginResult = PluginResult.T
   object PluginResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PluginId = PluginId.T
-  object PluginId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PluginId = _root_.com.histmersion.api.Wording.HumanizeId
+  val PluginId: _root_.com.histmersion.api.Wording.HumanizeId.type = _root_.com.histmersion.api.Wording.HumanizeId
   type PluginNamesPart1 = PluginNamesPart1.T
   object PluginNamesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PluginNamesPart2 = PluginNamesPart2.T

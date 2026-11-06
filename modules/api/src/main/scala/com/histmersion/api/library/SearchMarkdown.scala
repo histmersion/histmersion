@@ -25,8 +25,8 @@ object SearchMarkdown:
   object HistogramUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TreeResult = TreeResult.T
   object TreeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TreeUnit = TreeUnit.T
-  object TreeUnit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TreeUnit = _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesUnit
+  val TreeUnit: _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesUnit.type = _root_.com.histmersion.api.library.SearchMarkdown.TreeLinesUnit
   type TreeLinesResult = TreeLinesResult.T
   object TreeLinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TreeLinesUnit = TreeLinesUnit.T

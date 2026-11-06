@@ -82,8 +82,8 @@ object SourceMatcher:
   object ReprintHintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EvidenceSketchesPart1 = EvidenceSketchesPart1.T
   object EvidenceSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AssignSketchesPart1 = AssignSketchesPart1.T
-  object AssignSketchesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AssignSketchesPart1 = _root_.com.histmersion.domain.library.sources.SourceMatcher.EvidenceSketchesPart1
+  val AssignSketchesPart1: _root_.com.histmersion.domain.library.sources.SourceMatcher.EvidenceSketchesPart1.type = _root_.com.histmersion.domain.library.sources.SourceMatcher.EvidenceSketchesPart1
 
   final case class Side(source: Bundle.Source, aliases: Set[Side.Aliases]):
     def uid: UUID = source.uid

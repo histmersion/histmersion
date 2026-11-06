@@ -52,14 +52,14 @@ object CompileArticle:
   object BlocksBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StatusesSilentResult = StatusesSilentResult.T
   object StatusesSilentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatusesSilentBody = StatusesSilentBody.T
-  object StatusesSilentBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatusesSilentBody = _root_.com.histmersion.domain.CompileArticle.BlocksBody
+  val StatusesSilentBody: _root_.com.histmersion.domain.CompileArticle.BlocksBody.type = _root_.com.histmersion.domain.CompileArticle.BlocksBody
   type StatusesSilentStatusOfArg1 = StatusesSilentStatusOfArg1.T
   object StatusesSilentStatusOfArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitedResult = CitedResult.T
   object CitedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitedText = CitedText.T
-  object CitedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CitedText = _root_.com.histmersion.domain.CompileArticle.WithoutNotUsedText
+  val CitedText: _root_.com.histmersion.domain.CompileArticle.WithoutNotUsedText.type = _root_.com.histmersion.domain.CompileArticle.WithoutNotUsedText
   type CitedIsCitekeyArg1 = CitedIsCitekeyArg1.T
   object CitedIsCitekeyArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitedIsCitekeyResult = CitedIsCitekeyResult.T
@@ -88,8 +88,8 @@ object CompileArticle:
   object CheckDraftKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckDraftCurrentTitle = CheckDraftCurrentTitle.T
   object CheckDraftCurrentTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CheckDraftCurrent = CheckDraftCurrent.T
-  object CheckDraftCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CheckDraftCurrent = _root_.com.histmersion.domain.CompileArticle.CombinedCurrent
+  val CheckDraftCurrent: _root_.com.histmersion.domain.CompileArticle.CombinedCurrent.type = _root_.com.histmersion.domain.CompileArticle.CombinedCurrent
   type CheckDraftFilter = CheckDraftFilter.T
   object CheckDraftFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CheckDraftLast = CheckDraftLast.T

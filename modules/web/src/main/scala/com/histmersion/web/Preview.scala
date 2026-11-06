@@ -68,18 +68,18 @@ object Preview:
   object TargetOfPlace extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TargetOfEvent = TargetOfEvent.T
   object TargetOfEvent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PinUnderKeyboard = PinUnderKeyboard.T
-  object PinUnderKeyboard extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PinUnderKeyboard = _root_.com.histmersion.web.Preview.PinKeyboard
+  val PinUnderKeyboard: _root_.com.histmersion.web.Preview.PinKeyboard.type = _root_.com.histmersion.web.Preview.PinKeyboard
   type ShowingAtResult = ShowingAtResult.T
   object ShowingAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowAtX = ShowAtX.T
-  object ShowAtX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ShowAtY = ShowAtY.T
-  object ShowAtY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoveToX = MoveToX.T
-  object MoveToX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MoveToY = MoveToY.T
-  object MoveToY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ShowAtX = _root_.com.histmersion.web.Preview.PointFitX
+  val ShowAtX: _root_.com.histmersion.web.Preview.PointFitX.type = _root_.com.histmersion.web.Preview.PointFitX
+  type ShowAtY = _root_.com.histmersion.web.Preview.PointFitY
+  val ShowAtY: _root_.com.histmersion.web.Preview.PointFitY.type = _root_.com.histmersion.web.Preview.PointFitY
+  type MoveToX = _root_.com.histmersion.web.Preview.PointFitX
+  val MoveToX: _root_.com.histmersion.web.Preview.PointFitX.type = _root_.com.histmersion.web.Preview.PointFitX
+  type MoveToY = _root_.com.histmersion.web.Preview.PointFitY
+  val MoveToY: _root_.com.histmersion.web.Preview.PointFitY.type = _root_.com.histmersion.web.Preview.PointFitY
   type LastPointPart1 = LastPointPart1.T
   object LastPointPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LastPointPart2 = LastPointPart2.T
@@ -110,64 +110,64 @@ object Preview:
   object PointFitY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointFitW = PointFitW.T
   object PointFitW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointFitH = PointFitH.T
-  object PointFitH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointFitH = _root_.com.histmersion.web.Preview.VerticalFitH
+  val PointFitH: _root_.com.histmersion.web.Preview.VerticalFitH.type = _root_.com.histmersion.web.Preview.VerticalFitH
   type PointFitVw = PointFitVw.T
   object PointFitVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointFitVh = PointFitVh.T
-  object PointFitVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointFitVh = _root_.com.histmersion.web.Preview.VerticalFitVh
+  val PointFitVh: _root_.com.histmersion.web.Preview.VerticalFitVh.type = _root_.com.histmersion.web.Preview.VerticalFitVh
   type UnderFitLeft = UnderFitLeft.T
   object UnderFitLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderFitTop = UnderFitTop.T
-  object UnderFitTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderFitBottom = UnderFitBottom.T
-  object UnderFitBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitTop = _root_.com.histmersion.web.Preview.VerticalFitTop
+  val UnderFitTop: _root_.com.histmersion.web.Preview.VerticalFitTop.type = _root_.com.histmersion.web.Preview.VerticalFitTop
+  type UnderFitBottom = _root_.com.histmersion.web.Preview.VerticalFitBottom
+  val UnderFitBottom: _root_.com.histmersion.web.Preview.VerticalFitBottom.type = _root_.com.histmersion.web.Preview.VerticalFitBottom
   type UnderFitWidth = UnderFitWidth.T
   object UnderFitWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnderFitW = UnderFitW.T
   object UnderFitW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderFitH = UnderFitH.T
-  object UnderFitH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitH = _root_.com.histmersion.web.Preview.VerticalFitH
+  val UnderFitH: _root_.com.histmersion.web.Preview.VerticalFitH.type = _root_.com.histmersion.web.Preview.VerticalFitH
   type UnderFitVw = UnderFitVw.T
   object UnderFitVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderFitVh = UnderFitVh.T
-  object UnderFitVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderFitVh = _root_.com.histmersion.web.Preview.VerticalFitVh
+  val UnderFitVh: _root_.com.histmersion.web.Preview.VerticalFitVh.type = _root_.com.histmersion.web.Preview.VerticalFitVh
   type PointPlacementResultPart1 = PointPlacementResultPart1.T
   object PointPlacementResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PointPlacementResultPart2 = PointPlacementResultPart2.T
   object PointPlacementResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointPlacementX = PointPlacementX.T
-  object PointPlacementX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointPlacementY = PointPlacementY.T
-  object PointPlacementY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointPlacementW = PointPlacementW.T
-  object PointPlacementW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointPlacementH = PointPlacementH.T
-  object PointPlacementH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointPlacementVw = PointPlacementVw.T
-  object PointPlacementVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PointPlacementVh = PointPlacementVh.T
-  object PointPlacementVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PointPlacementX = _root_.com.histmersion.web.Preview.PointFitX
+  val PointPlacementX: _root_.com.histmersion.web.Preview.PointFitX.type = _root_.com.histmersion.web.Preview.PointFitX
+  type PointPlacementY = _root_.com.histmersion.web.Preview.PointFitY
+  val PointPlacementY: _root_.com.histmersion.web.Preview.PointFitY.type = _root_.com.histmersion.web.Preview.PointFitY
+  type PointPlacementW = _root_.com.histmersion.web.Preview.PointFitW
+  val PointPlacementW: _root_.com.histmersion.web.Preview.PointFitW.type = _root_.com.histmersion.web.Preview.PointFitW
+  type PointPlacementH = _root_.com.histmersion.web.Preview.VerticalFitH
+  val PointPlacementH: _root_.com.histmersion.web.Preview.VerticalFitH.type = _root_.com.histmersion.web.Preview.VerticalFitH
+  type PointPlacementVw = _root_.com.histmersion.web.Preview.PointFitVw
+  val PointPlacementVw: _root_.com.histmersion.web.Preview.PointFitVw.type = _root_.com.histmersion.web.Preview.PointFitVw
+  type PointPlacementVh = _root_.com.histmersion.web.Preview.VerticalFitVh
+  val PointPlacementVh: _root_.com.histmersion.web.Preview.VerticalFitVh.type = _root_.com.histmersion.web.Preview.VerticalFitVh
   type UnderPlacementResultPart1 = UnderPlacementResultPart1.T
   object UnderPlacementResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnderPlacementResultPart2 = UnderPlacementResultPart2.T
   object UnderPlacementResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderPlacementLeft = UnderPlacementLeft.T
-  object UnderPlacementLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderPlacementTop = UnderPlacementTop.T
-  object UnderPlacementTop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderPlacementBottom = UnderPlacementBottom.T
-  object UnderPlacementBottom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderPlacementWidth = UnderPlacementWidth.T
-  object UnderPlacementWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderPlacementW = UnderPlacementW.T
-  object UnderPlacementW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderPlacementH = UnderPlacementH.T
-  object UnderPlacementH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderPlacementVw = UnderPlacementVw.T
-  object UnderPlacementVw extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnderPlacementVh = UnderPlacementVh.T
-  object UnderPlacementVh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UnderPlacementLeft = _root_.com.histmersion.web.Preview.UnderFitLeft
+  val UnderPlacementLeft: _root_.com.histmersion.web.Preview.UnderFitLeft.type = _root_.com.histmersion.web.Preview.UnderFitLeft
+  type UnderPlacementTop = _root_.com.histmersion.web.Preview.VerticalFitTop
+  val UnderPlacementTop: _root_.com.histmersion.web.Preview.VerticalFitTop.type = _root_.com.histmersion.web.Preview.VerticalFitTop
+  type UnderPlacementBottom = _root_.com.histmersion.web.Preview.VerticalFitBottom
+  val UnderPlacementBottom: _root_.com.histmersion.web.Preview.VerticalFitBottom.type = _root_.com.histmersion.web.Preview.VerticalFitBottom
+  type UnderPlacementWidth = _root_.com.histmersion.web.Preview.UnderFitWidth
+  val UnderPlacementWidth: _root_.com.histmersion.web.Preview.UnderFitWidth.type = _root_.com.histmersion.web.Preview.UnderFitWidth
+  type UnderPlacementW = _root_.com.histmersion.web.Preview.UnderFitW
+  val UnderPlacementW: _root_.com.histmersion.web.Preview.UnderFitW.type = _root_.com.histmersion.web.Preview.UnderFitW
+  type UnderPlacementH = _root_.com.histmersion.web.Preview.VerticalFitH
+  val UnderPlacementH: _root_.com.histmersion.web.Preview.VerticalFitH.type = _root_.com.histmersion.web.Preview.VerticalFitH
+  type UnderPlacementVw = _root_.com.histmersion.web.Preview.UnderFitVw
+  val UnderPlacementVw: _root_.com.histmersion.web.Preview.UnderFitVw.type = _root_.com.histmersion.web.Preview.UnderFitVw
+  type UnderPlacementVh = _root_.com.histmersion.web.Preview.VerticalFitVh
+  val UnderPlacementVh: _root_.com.histmersion.web.Preview.VerticalFitVh.type = _root_.com.histmersion.web.Preview.VerticalFitVh
   type IsPinnedResult = IsPinnedResult.T
   object IsPinnedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SameCardResult = SameCardResult.T

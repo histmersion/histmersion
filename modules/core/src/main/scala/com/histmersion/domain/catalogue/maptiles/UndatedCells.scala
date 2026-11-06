@@ -16,8 +16,8 @@ object UndatedCells:
   type TotalLoopSum = TotalLoopSum.T
   object TotalLoopSum extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type MergeZ = MergeZ.T
-  object MergeZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeZ = _root_.com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ
+  val MergeZ: _root_.com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ.type = _root_.com.histmersion.domain.catalogue.maptiles.UndatedCells.CellOfZ
   type TotalResult = TotalResult.T
   object TotalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CellOfZ = CellOfZ.T

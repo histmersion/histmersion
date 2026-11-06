@@ -14,8 +14,8 @@ object ArticleLink:
   object HrefResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HrefSlug = HrefSlug.T
   object HrefSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplySlug = ApplySlug.T
-  object ApplySlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplySlug = _root_.com.histmersion.web.ArticleLink.HrefSlug
+  val ApplySlug: _root_.com.histmersion.web.ArticleLink.HrefSlug.type = _root_.com.histmersion.web.ArticleLink.HrefSlug
   type ApplyLabel = ApplyLabel.T
   object ApplyLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

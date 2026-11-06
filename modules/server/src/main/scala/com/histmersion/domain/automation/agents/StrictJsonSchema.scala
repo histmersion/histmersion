@@ -42,10 +42,10 @@ object StrictJsonSchema:
   object IsNullableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConvertDefsPart1 = ConvertDefsPart1.T
   object ConvertDefsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConvertSeen = ConvertSeen.T
-  object ConvertSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConvertObjectDefsPart1 = ConvertObjectDefsPart1.T
-  object ConvertObjectDefsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ConvertSeen = _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen
+  val ConvertSeen: _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen.type = _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertObjectSeen
+  type ConvertObjectDefsPart1 = _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1
+  val ConvertObjectDefsPart1: _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1.type = _root_.com.histmersion.domain.automation.agents.StrictJsonSchema.ConvertDefsPart1
   type ConvertObjectSeen = ConvertObjectSeen.T
   object ConvertObjectSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

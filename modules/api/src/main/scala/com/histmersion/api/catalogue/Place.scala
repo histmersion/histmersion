@@ -122,10 +122,10 @@ object Place:
     object GridCentreLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfPlaceId = OfPlaceId.T
     object OfPlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLon = OfLon.T
-    object OfLon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OfLat = OfLat.T
-    object OfLat extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type OfLon = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLon
+    val OfLon: _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLon.type = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLon
+    type OfLat = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat
+    val OfLat: _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat.type = _root_.com.histmersion.api.catalogue.Place.Precision.GridCentreLat
     type Approximate = Approximate.T
     object Approximate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ParseS = ParseS.T
@@ -1127,8 +1127,8 @@ object Place:
     object IsAreaKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type PointOnlyAreaResult = PointOnlyAreaResult.T
     object PointOnlyAreaResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PointOnlyAreaKind = PointOnlyAreaKind.T
-    object PointOnlyAreaKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type PointOnlyAreaKind = _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind
+    val PointOnlyAreaKind: _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind.type = _root_.com.histmersion.api.catalogue.Place.Shape.IsAreaKind
     type PointOnlyAreaHasBoundary = PointOnlyAreaHasBoundary.T
     object PointOnlyAreaHasBoundary extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type NoBoundaryNote = NoBoundaryNote.T

@@ -60,22 +60,22 @@ object MapView:
   object PlayFade extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Playhead = Playhead.T
   object Playhead extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayFrameSpanPart1 = PlayFrameSpanPart1.T
-  object PlayFrameSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlayFrameSpanPart2 = PlayFrameSpanPart2.T
-  object PlayFrameSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlayFrameSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  val PlayFrameSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  type PlayFrameSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
+  val PlayFrameSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
   type PlayFramePh = PlayFramePh.T
   object PlayFramePh extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlayFrameYearsPerSecond = PlayFrameYearsPerSecond.T
   object PlayFrameYearsPerSecond extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RestylePlayAreasSpanPart1 = RestylePlayAreasSpanPart1.T
-  object RestylePlayAreasSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RestylePlayAreasSpanPart2 = RestylePlayAreasSpanPart2.T
-  object RestylePlayAreasSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddPlayAreasSpanPart1 = AddPlayAreasSpanPart1.T
-  object AddPlayAreasSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddPlayAreasSpanPart2 = AddPlayAreasSpanPart2.T
-  object AddPlayAreasSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RestylePlayAreasSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  val RestylePlayAreasSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  type RestylePlayAreasSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
+  val RestylePlayAreasSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
+  type AddPlayAreasSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  val AddPlayAreasSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  type AddPlayAreasSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
+  val AddPlayAreasSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
   type AddPlayAreasKeyOfResult = AddPlayAreasKeyOfResult.T
   object AddPlayAreasKeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MidOfResult = MidOfResult.T
@@ -102,28 +102,28 @@ object MapView:
   object RangeOfMids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GradientBgResult = GradientBgResult.T
   object GradientBgResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GradientBgSpanPart1 = GradientBgSpanPart1.T
-  object GradientBgSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GradientBgSpanPart2 = GradientBgSpanPart2.T
-  object GradientBgSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GradientBgSpanPart1 = _root_.com.histmersion.web.MapView.ColorForSpanPart1
+  val GradientBgSpanPart1: _root_.com.histmersion.web.MapView.ColorForSpanPart1.type = _root_.com.histmersion.web.MapView.ColorForSpanPart1
+  type GradientBgSpanPart2 = _root_.com.histmersion.web.MapView.ColorForSpanPart2
+  val GradientBgSpanPart2: _root_.com.histmersion.web.MapView.ColorForSpanPart2.type = _root_.com.histmersion.web.MapView.ColorForSpanPart2
   type GradientOfResult = GradientOfResult.T
   object GradientOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GradientOfMids = GradientOfMids.T
-  object GradientOfMids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GradientOfSpanPart1 = GradientOfSpanPart1.T
-  object GradientOfSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GradientOfSpanPart2 = GradientOfSpanPart2.T
-  object GradientOfSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GradientOfMids = _root_.com.histmersion.web.MapView.RangeOfMids
+  val GradientOfMids: _root_.com.histmersion.web.MapView.RangeOfMids.type = _root_.com.histmersion.web.MapView.RangeOfMids
+  type GradientOfSpanPart1 = _root_.com.histmersion.web.MapView.ColorForSpanPart1
+  val GradientOfSpanPart1: _root_.com.histmersion.web.MapView.ColorForSpanPart1.type = _root_.com.histmersion.web.MapView.ColorForSpanPart1
+  type GradientOfSpanPart2 = _root_.com.histmersion.web.MapView.ColorForSpanPart2
+  val GradientOfSpanPart2: _root_.com.histmersion.web.MapView.ColorForSpanPart2.type = _root_.com.histmersion.web.MapView.ColorForSpanPart2
   type RampEndsResultPart1 = RampEndsResultPart1.T
   object RampEndsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RampEndsResultPart2 = RampEndsResultPart2.T
   object RampEndsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RampEndsMids = RampEndsMids.T
-  object RampEndsMids extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RampEndsSpanPart1 = RampEndsSpanPart1.T
-  object RampEndsSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RampEndsSpanPart2 = RampEndsSpanPart2.T
-  object RampEndsSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RampEndsMids = _root_.com.histmersion.web.MapView.RangeOfMids
+  val RampEndsMids: _root_.com.histmersion.web.MapView.RangeOfMids.type = _root_.com.histmersion.web.MapView.RangeOfMids
+  type RampEndsSpanPart1 = _root_.com.histmersion.web.MapView.ColorForSpanPart1
+  val RampEndsSpanPart1: _root_.com.histmersion.web.MapView.ColorForSpanPart1.type = _root_.com.histmersion.web.MapView.ColorForSpanPart1
+  type RampEndsSpanPart2 = _root_.com.histmersion.web.MapView.ColorForSpanPart2
+  val RampEndsSpanPart2: _root_.com.histmersion.web.MapView.ColorForSpanPart2.type = _root_.com.histmersion.web.MapView.ColorForSpanPart2
   type RadiusForResult = RadiusForResult.T
   object RadiusForResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RadiusForN = RadiusForN.T
@@ -162,10 +162,10 @@ object MapView:
   object UpdateKeySites extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpdateKeyUndated = UpdateKeyUndated.T
   object UpdateKeyUndated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadEventsSpanPart1 = LoadEventsSpanPart1.T
-  object LoadEventsSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadEventsSpanPart2 = LoadEventsSpanPart2.T
-  object LoadEventsSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadEventsSpanPart1 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
+  val LoadEventsSpanPart1: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
+  type LoadEventsSpanPart2 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
+  val LoadEventsSpanPart2: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
   type TileSpanOfResultPart1 = TileSpanOfResultPart1.T
   object TileSpanOfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileSpanOfResultPart2 = TileSpanOfResultPart2.T
@@ -184,10 +184,10 @@ object MapView:
   object TileSpanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileSpanResultPart2 = TileSpanResultPart2.T
   object TileSpanResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanSpanPart1 = TileSpanSpanPart1.T
-  object TileSpanSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileSpanSpanPart2 = TileSpanSpanPart2.T
-  object TileSpanSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileSpanSpanPart1 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
+  val TileSpanSpanPart1: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
+  type TileSpanSpanPart2 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
+  val TileSpanSpanPart2: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
   type UpdateLegendSpanPart1 = UpdateLegendSpanPart1.T
   object UpdateLegendSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpdateLegendSpanPart2 = UpdateLegendSpanPart2.T
@@ -198,10 +198,10 @@ object MapView:
   object HoverSourceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkerLabelResult = MarkerLabelResult.T
   object MarkerLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderSpanPart1 = RenderSpanPart1.T
-  object RenderSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderSpanPart2 = RenderSpanPart2.T
-  object RenderSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  val RenderSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  type RenderSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
+  val RenderSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
   type RevealKey = RevealKey.T
   object RevealKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WaitsForQuietResult = WaitsForQuietResult.T
@@ -236,14 +236,14 @@ object MapView:
   object ViridisAtResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ViridisAtMid = ViridisAtMid.T
   object ViridisAtMid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ViridisAtSpanPart1 = ViridisAtSpanPart1.T
-  object ViridisAtSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ViridisAtSpanPart2 = ViridisAtSpanPart2.T
-  object ViridisAtSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadOverlaySpanPart1 = LoadOverlaySpanPart1.T
-  object LoadOverlaySpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadOverlaySpanPart2 = LoadOverlaySpanPart2.T
-  object LoadOverlaySpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ViridisAtSpanPart1 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  val ViridisAtSpanPart1: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart1
+  type ViridisAtSpanPart2 = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
+  val ViridisAtSpanPart2: _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2.type = _root_.com.histmersion.web.MapView.UpdateLegendSpanPart2
+  type LoadOverlaySpanPart1 = _root_.com.histmersion.web.MapView.AreaTimeSpanPart1
+  val LoadOverlaySpanPart1: _root_.com.histmersion.web.MapView.AreaTimeSpanPart1.type = _root_.com.histmersion.web.MapView.AreaTimeSpanPart1
+  type LoadOverlaySpanPart2 = _root_.com.histmersion.web.MapView.AreaTimeSpanPart2
+  val LoadOverlaySpanPart2: _root_.com.histmersion.web.MapView.AreaTimeSpanPart2.type = _root_.com.histmersion.web.MapView.AreaTimeSpanPart2
   type SyncPointLabelsKeyOfResult = SyncPointLabelsKeyOfResult.T
   object SyncPointLabelsKeyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceClassesResult = PlaceClassesResult.T
@@ -258,14 +258,14 @@ object MapView:
   object TileFilterSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileFilterSpanPart2 = TileFilterSpanPart2.T
   object TileFilterSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadMediaSpanPart1 = LoadMediaSpanPart1.T
-  object LoadMediaSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadMediaSpanPart2 = LoadMediaSpanPart2.T
-  object LoadMediaSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadSitesSpanPart1 = LoadSitesSpanPart1.T
-  object LoadSitesSpanPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadSitesSpanPart2 = LoadSitesSpanPart2.T
-  object LoadSitesSpanPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadMediaSpanPart1 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
+  val LoadMediaSpanPart1: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
+  type LoadMediaSpanPart2 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
+  val LoadMediaSpanPart2: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
+  type LoadSitesSpanPart1 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
+  val LoadSitesSpanPart1: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart1
+  type LoadSitesSpanPart2 = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
+  val LoadSitesSpanPart2: _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2.type = _root_.com.histmersion.web.MapView.TileSpanOfSpanPart2
 
   private var radius: com.histmersion.web.MapView.Radius = Layout.markerRadiusDefault
   private val pickerMax = Layout.pickerMax

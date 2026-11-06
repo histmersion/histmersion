@@ -11,8 +11,8 @@ import org.scalajs.dom
   */
 object LibraryTable:
 
-  type ElementChosen = ElementChosen.T
-  object ElementChosen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ElementChosen = _root_.com.histmersion.web.library.LibraryTable.RowChosen
+  val ElementChosen: _root_.com.histmersion.web.library.LibraryTable.RowChosen.type = _root_.com.histmersion.web.library.LibraryTable.RowChosen
   type CurrentKeysResult = CurrentKeysResult.T
   object CurrentKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChosenKeyResult = ChosenKeyResult.T

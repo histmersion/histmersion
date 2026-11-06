@@ -10,12 +10,12 @@ object LikePattern:
   object EscapeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContainsResult = ContainsResult.T
   object ContainsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContainsS = ContainsS.T
-  object ContainsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContainsS = _root_.com.histmersion.util.database.LikePattern.EscapeS
+  val ContainsS: _root_.com.histmersion.util.database.LikePattern.EscapeS.type = _root_.com.histmersion.util.database.LikePattern.EscapeS
   type StartsWithResult = StartsWithResult.T
   object StartsWithResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StartsWithS = StartsWithS.T
-  object StartsWithS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StartsWithS = _root_.com.histmersion.util.database.LikePattern.EscapeS
+  val StartsWithS: _root_.com.histmersion.util.database.LikePattern.EscapeS.type = _root_.com.histmersion.util.database.LikePattern.EscapeS
 
   def escape(s: com.histmersion.util.database.LikePattern.EscapeS): com.histmersion.util.database.LikePattern.EscapeResult = s.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
   def contains(s: com.histmersion.util.database.LikePattern.ContainsS): com.histmersion.util.database.LikePattern.ContainsResult = "%" + escape(s) + "%"

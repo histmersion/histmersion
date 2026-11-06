@@ -14,16 +14,16 @@ import com.histmersion.util.text.Anchor
   */
 object TextAnchor:
 
-  type ReanchorText = ReanchorText.T
-  object ReanchorText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReanchorText = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestText
+  val ReanchorText: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestText.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestText
   type ReanchorQuote = ReanchorQuote.T
   object ReanchorQuote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReanchorPrefix = ReanchorPrefix.T
   object ReanchorPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReanchorSuffix = ReanchorSuffix.T
   object ReanchorSuffix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReanchorHint = ReanchorHint.T
-  object ReanchorHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReanchorHint = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestHint
+  val ReanchorHint: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestHint.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.BestHint
   type BestText = BestText.T
   object BestText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BestPrefix = BestPrefix.T

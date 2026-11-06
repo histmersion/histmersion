@@ -46,22 +46,22 @@ object AssetLinks:
   object DropBoilerplateHeadingsTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NormalizeBodyResult = NormalizeBodyResult.T
   object NormalizeBodyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NormalizeBodyMd = NormalizeBodyMd.T
-  object NormalizeBodyMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NormalizeBodyTitle = NormalizeBodyTitle.T
-  object NormalizeBodyTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormalizeBodyMd = _root_.com.histmersion.api.media.AssetLinks.FromFiguresMd
+  val NormalizeBodyMd: _root_.com.histmersion.api.media.AssetLinks.FromFiguresMd.type = _root_.com.histmersion.api.media.AssetLinks.FromFiguresMd
+  type NormalizeBodyTitle = _root_.com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsTitle
+  val NormalizeBodyTitle: _root_.com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsTitle.type = _root_.com.histmersion.api.media.AssetLinks.DropBoilerplateHeadingsTitle
   type ToWebResult = ToWebResult.T
   object ToWebResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToWebMd = ToWebMd.T
-  object ToWebMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToWebCitekey = ToWebCitekey.T
-  object ToWebCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToWebMd = _root_.com.histmersion.api.media.AssetLinks.RetargetMd
+  val ToWebMd: _root_.com.histmersion.api.media.AssetLinks.RetargetMd.type = _root_.com.histmersion.api.media.AssetLinks.RetargetMd
+  type ToWebCitekey = _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey
+  val ToWebCitekey: _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey.type = _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey
   type ToAbsoluteResult = ToAbsoluteResult.T
   object ToAbsoluteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToAbsoluteMd = ToAbsoluteMd.T
-  object ToAbsoluteMd extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToAbsoluteCitekey = ToAbsoluteCitekey.T
-  object ToAbsoluteCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToAbsoluteMd = _root_.com.histmersion.api.media.AssetLinks.RetargetMd
+  val ToAbsoluteMd: _root_.com.histmersion.api.media.AssetLinks.RetargetMd.type = _root_.com.histmersion.api.media.AssetLinks.RetargetMd
+  type ToAbsoluteCitekey = _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey
+  val ToAbsoluteCitekey: _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey.type = _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey
   type ToAbsolutePublicUrl = ToAbsolutePublicUrl.T
   object ToAbsolutePublicUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WebBaseResult = WebBaseResult.T
@@ -70,8 +70,8 @@ object AssetLinks:
   object WebBaseCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UrlResult = UrlResult.T
   object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UrlCitekey = UrlCitekey.T
-  object UrlCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlCitekey = _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey
+  val UrlCitekey: _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey.type = _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey
   type UrlName = UrlName.T
   object UrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncResult = EncResult.T

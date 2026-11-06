@@ -22,8 +22,8 @@ object EventScale:
   object NormKindKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfKindResult = OfKindResult.T
   object OfKindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfKindKind = OfKindKind.T
-  object OfKindKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfKindKind = _root_.com.histmersion.api.catalogue.EventScale.NormKindKind
+  val OfKindKind: _root_.com.histmersion.api.catalogue.EventScale.NormKindKind.type = _root_.com.histmersion.api.catalogue.EventScale.NormKindKind
   type OfPlaceKindResult = OfPlaceKindResult.T
   object OfPlaceKindResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfPlaceKindPlaceKind = OfPlaceKindPlaceKind.T
@@ -36,8 +36,8 @@ object EventScale:
   object EffectiveResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EffectiveStated = EffectiveStated.T
   object EffectiveStated extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EffectiveKind = EffectiveKind.T
-  object EffectiveKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EffectiveKind = _root_.com.histmersion.api.catalogue.EventScale.NormKindKind
+  val EffectiveKind: _root_.com.histmersion.api.catalogue.EventScale.NormKindKind.type = _root_.com.histmersion.api.catalogue.EventScale.NormKindKind
   type EffectiveHasParent = EffectiveHasParent.T
   object EffectiveHasParent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EffectivePlaceKind = EffectivePlaceKind.T

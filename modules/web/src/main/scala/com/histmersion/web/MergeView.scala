@@ -110,10 +110,10 @@ object MergeView:
   object FailWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadSha = LoadSha.T
   object LoadSha extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetIssue = SetIssue.T
-  object SetIssue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetText = SetText.T
-  object SetText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetIssue = _root_.com.histmersion.web.MergeView.DecideIssue
+  val SetIssue: _root_.com.histmersion.web.MergeView.DecideIssue.type = _root_.com.histmersion.web.MergeView.DecideIssue
+  type SetText = _root_.com.histmersion.web.MergeView.DecideText
+  val SetText: _root_.com.histmersion.web.MergeView.DecideText.type = _root_.com.histmersion.web.MergeView.DecideText
   type SideWho = SideWho.T
   object SideWho extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleViewEdited = ArticleViewEdited.T

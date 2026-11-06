@@ -24,8 +24,8 @@ object WindowManager:
   object FilterHashResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FilterHashHref = FilterHashHref.T
   object FilterHashHref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WireLinksWid = WireLinksWid.T
-  object WireLinksWid extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WireLinksWid = _root_.com.histmersion.web.WindowManager.LoadContentWid
+  val WireLinksWid: _root_.com.histmersion.web.WindowManager.LoadContentWid.type = _root_.com.histmersion.web.WindowManager.LoadContentWid
   type BuildUrlResult = BuildUrlResult.T
   object BuildUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BuildUrlFragment = BuildUrlFragment.T

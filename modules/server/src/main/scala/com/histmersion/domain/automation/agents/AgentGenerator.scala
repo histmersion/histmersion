@@ -25,8 +25,8 @@ object AgentGenerator:
   object SkillsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SkillsPrefix = SkillsPrefix.T
   object SkillsPrefix extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SkillsKeepAllowedTools = SkillsKeepAllowedTools.T
-  object SkillsKeepAllowedTools extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SkillsKeepAllowedTools = _root_.com.histmersion.domain.automation.agents.AgentGenerator.SkillFileKeepAllowedTools
+  val SkillsKeepAllowedTools: _root_.com.histmersion.domain.automation.agents.AgentGenerator.SkillFileKeepAllowedTools.type = _root_.com.histmersion.domain.automation.agents.AgentGenerator.SkillFileKeepAllowedTools
   type YamlStringResult = YamlStringResult.T
   object YamlStringResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type YamlStringS = YamlStringS.T

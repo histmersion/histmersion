@@ -69,8 +69,8 @@ object GazetteerLoad:
   object LinesEachArg2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadResultPart1 = LoadResultPart1.T
   object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadApply = LoadApply.T
-  object LoadApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadApply = _root_.com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileApply
+  val LoadApply: _root_.com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileApply.type = _root_.com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileApply
   type LoadNoteArg1 = LoadNoteArg1.T
   object LoadNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseLineResultPart1 = ParseLineResultPart1.T
@@ -95,8 +95,8 @@ object GazetteerLoad:
   object RunLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadLpfResultPart1 = LoadLpfResultPart1.T
   object LoadLpfResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadLpfApply = LoadLpfApply.T
-  object LoadLpfApply extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadLpfApply = _root_.com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileApply
+  val LoadLpfApply: _root_.com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileApply.type = _root_.com.histmersion.domain.catalogue.places.GazetteerLoad.LoadLpfFileApply
   type LoadLpfNoteArg1 = LoadLpfNoteArg1.T
   object LoadLpfNoteArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LoadLpfFileResultPart1 = LoadLpfFileResultPart1.T

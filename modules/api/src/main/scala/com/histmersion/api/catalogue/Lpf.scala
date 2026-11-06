@@ -73,8 +73,8 @@ object Lpf:
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseJson = ParseJson.T
   object ParseJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseDefaultKind = ParseDefaultKind.T
-  object ParseDefaultKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseDefaultKind = _root_.com.histmersion.api.catalogue.Lpf.ReadFeatureDefaultKind
+  val ParseDefaultKind: _root_.com.histmersion.api.catalogue.Lpf.ReadFeatureDefaultKind.type = _root_.com.histmersion.api.catalogue.Lpf.ReadFeatureDefaultKind
   type RenderResult = RenderResult.T
   object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

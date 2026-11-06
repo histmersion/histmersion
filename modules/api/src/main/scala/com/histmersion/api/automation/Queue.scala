@@ -39,8 +39,8 @@ object Queue:
   object FulfilledReasonPrev extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FulfilledReasonCitekey = FulfilledReasonCitekey.T
   object FulfilledReasonCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FulfilCitekey = FulfilCitekey.T
-  object FulfilCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FulfilCitekey = _root_.com.histmersion.api.automation.Queue.FulfilledReasonCitekey
+  val FulfilCitekey: _root_.com.histmersion.api.automation.Queue.FulfilledReasonCitekey.type = _root_.com.histmersion.api.automation.Queue.FulfilledReasonCitekey
   type FulfilBy = FulfilBy.T
   object FulfilBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FulfillableResultPart1 = FulfillableResultPart1.T

@@ -37,8 +37,8 @@ object PluginEvents:
 
   type LimitsPresent = LimitsPresent.T
   object LimitsPresent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RereadProvider = RereadProvider.T
-  object RereadProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RereadProvider = _root_.com.histmersion.pluginhost.PluginEvents.RecordProvider
+  val RereadProvider: _root_.com.histmersion.pluginhost.PluginEvents.RecordProvider.type = _root_.com.histmersion.pluginhost.PluginEvents.RecordProvider
   type QueryFrom = QueryFrom.T
   object QueryFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QueryTo = QueryTo.T

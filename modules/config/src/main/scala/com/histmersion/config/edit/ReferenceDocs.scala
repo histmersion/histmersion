@@ -120,24 +120,24 @@ object ReferenceDocs:
   object CommentStartL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ContentResult = ContentResult.T
   object ContentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContentL = ContentL.T
-  object ContentL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ContentL = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
+  val ContentL: _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL.type = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
   type IsCommentOnlyResult = IsCommentOnlyResult.T
   object IsCommentOnlyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsCommentOnlyL = IsCommentOnlyL.T
-  object IsCommentOnlyL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IsCommentOnlyL = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
+  val IsCommentOnlyL: _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL.type = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
   type CommentColumnResult = CommentColumnResult.T
   object CommentColumnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommentColumnL = CommentColumnL.T
-  object CommentColumnL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommentColumnL = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
+  val CommentColumnL: _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL.type = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
   type CommentTextResult = CommentTextResult.T
   object CommentTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommentTextL = CommentTextL.T
-  object CommentTextL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CommentTextL = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
+  val CommentTextL: _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL.type = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
   type TrailingCommentResult = TrailingCommentResult.T
   object TrailingCommentResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TrailingCommentL = TrailingCommentL.T
-  object TrailingCommentL extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TrailingCommentL = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
+  val TrailingCommentL: _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL.type = _root_.com.histmersion.config.edit.ReferenceDocs.CommentStartL
   type CleanResult = CleanResult.T
   object CleanResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CleanParts = CleanParts.T

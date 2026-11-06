@@ -15,28 +15,28 @@ object PlanQuota:
   object CurrentNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CurrentModel = CurrentModel.T
   object CurrentModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WindowStateNow = WindowStateNow.T
-  object WindowStateNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WindowStateNow = _root_.com.histmersion.api.automation.PlanQuota.CurrentNow
+  val WindowStateNow: _root_.com.histmersion.api.automation.PlanQuota.CurrentNow.type = _root_.com.histmersion.api.automation.PlanQuota.CurrentNow
   type VerdictHeld = VerdictHeld.T
   object VerdictHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VerdictRefusalPart1 = VerdictRefusalPart1.T
   object VerdictRefusalPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VerdictRefusalPart2 = VerdictRefusalPart2.T
   object VerdictRefusalPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerdictNow = VerdictNow.T
-  object VerdictNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerdictModel = VerdictModel.T
-  object VerdictModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VerdictNow = _root_.com.histmersion.api.automation.PlanQuota.CurrentNow
+  val VerdictNow: _root_.com.histmersion.api.automation.PlanQuota.CurrentNow.type = _root_.com.histmersion.api.automation.PlanQuota.CurrentNow
+  type VerdictModel = _root_.com.histmersion.api.automation.PlanQuota.CurrentModel
+  val VerdictModel: _root_.com.histmersion.api.automation.PlanQuota.CurrentModel.type = _root_.com.histmersion.api.automation.PlanQuota.CurrentModel
   type RefreshNeedHeld = RefreshNeedHeld.T
   object RefreshNeedHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefreshNeedRefusalPart1 = RefreshNeedRefusalPart1.T
   object RefreshNeedRefusalPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefreshNeedRefusalPart2 = RefreshNeedRefusalPart2.T
   object RefreshNeedRefusalPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshNeedNow = RefreshNeedNow.T
-  object RefreshNeedNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshNeedModel = RefreshNeedModel.T
-  object RefreshNeedModel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshNeedNow = _root_.com.histmersion.api.automation.PlanQuota.CurrentNow
+  val RefreshNeedNow: _root_.com.histmersion.api.automation.PlanQuota.CurrentNow.type = _root_.com.histmersion.api.automation.PlanQuota.CurrentNow
+  type RefreshNeedModel = _root_.com.histmersion.api.automation.PlanQuota.CurrentModel
+  val RefreshNeedModel: _root_.com.histmersion.api.automation.PlanQuota.CurrentModel.type = _root_.com.histmersion.api.automation.PlanQuota.CurrentModel
   type ThrottledResult = ThrottledResult.T
   object ThrottledResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ThrottledLastAttempt = ThrottledLastAttempt.T
@@ -49,12 +49,12 @@ object PlanQuota:
   object RefreshDecisionResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefreshDecisionEnabled = RefreshDecisionEnabled.T
   object RefreshDecisionEnabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshDecisionLastAttempt = RefreshDecisionLastAttempt.T
-  object RefreshDecisionLastAttempt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshDecisionMinGapMs = RefreshDecisionMinGapMs.T
-  object RefreshDecisionMinGapMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RefreshDecisionNow = RefreshDecisionNow.T
-  object RefreshDecisionNow extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefreshDecisionLastAttempt = _root_.com.histmersion.api.automation.PlanQuota.ThrottledLastAttempt
+  val RefreshDecisionLastAttempt: _root_.com.histmersion.api.automation.PlanQuota.ThrottledLastAttempt.type = _root_.com.histmersion.api.automation.PlanQuota.ThrottledLastAttempt
+  type RefreshDecisionMinGapMs = _root_.com.histmersion.api.automation.PlanQuota.ThrottledMinGapMs
+  val RefreshDecisionMinGapMs: _root_.com.histmersion.api.automation.PlanQuota.ThrottledMinGapMs.type = _root_.com.histmersion.api.automation.PlanQuota.ThrottledMinGapMs
+  type RefreshDecisionNow = _root_.com.histmersion.api.automation.PlanQuota.ThrottledNow
+  val RefreshDecisionNow: _root_.com.histmersion.api.automation.PlanQuota.ThrottledNow.type = _root_.com.histmersion.api.automation.PlanQuota.ThrottledNow
   type RefreshDecisionForce = RefreshDecisionForce.T
   object RefreshDecisionForce extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

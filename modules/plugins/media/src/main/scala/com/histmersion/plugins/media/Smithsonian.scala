@@ -33,12 +33,12 @@ object Smithsonian:
   object SearchUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchUrlApi = SearchUrlApi.T
   object SearchUrlApi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlName = SearchUrlName.T
-  object SearchUrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlName = _root_.com.histmersion.plugins.media.Smithsonian.QueryName
+  val SearchUrlName: _root_.com.histmersion.plugins.media.Smithsonian.QueryName.type = _root_.com.histmersion.plugins.media.Smithsonian.QueryName
   type SearchUrlRows = SearchUrlRows.T
   object SearchUrlRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchUrlExcludedUnits = SearchUrlExcludedUnits.T
-  object SearchUrlExcludedUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SearchUrlExcludedUnits = _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits
+  val SearchUrlExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits.type = _root_.com.histmersion.plugins.media.Smithsonian.QueryExcludedUnits
   type UnitOfResult = UnitOfResult.T
   object UnitOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DateLabels = DateLabels.T
@@ -49,8 +49,8 @@ object Smithsonian:
   object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
   object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsExcludedUnits = RecordsExcludedUnits.T
-  object RecordsExcludedUnits extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsExcludedUnits = _root_.com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits
+  val RecordsExcludedUnits: _root_.com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits.type = _root_.com.histmersion.plugins.media.Smithsonian.RecordExcludedUnits
   type LabelledResultPart1 = LabelledResultPart1.T
   object LabelledResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LabelledResultPart2 = LabelledResultPart2.T

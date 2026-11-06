@@ -48,12 +48,12 @@ object PmTiles:
   object IsGzipB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DecompressResultPart2 = DecompressResultPart2.T
   object DecompressResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecompressB = DecompressB.T
-  object DecompressB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DecompressB = _root_.com.histmersion.util.basemap.PmTiles.GunzipB
+  val DecompressB: _root_.com.histmersion.util.basemap.PmTiles.GunzipB.type = _root_.com.histmersion.util.basemap.PmTiles.GunzipB
   type CompressResult = CompressResult.T
   object CompressResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CompressB = CompressB.T
-  object CompressB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CompressB = _root_.com.histmersion.util.basemap.PmTiles.GzipB
+  val CompressB: _root_.com.histmersion.util.basemap.PmTiles.GzipB.type = _root_.com.histmersion.util.basemap.PmTiles.GzipB
 
   type ParseHeaderResultPart1 = ParseHeaderResultPart1.T
   object ParseHeaderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -63,8 +63,8 @@ object PmTiles:
   object ZoomBaseZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileIdResult = TileIdResult.T
   object TileIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TileIdZ = TileIdZ.T
-  object TileIdZ extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TileIdZ = _root_.com.histmersion.util.basemap.PmTiles.ZoomBaseZ
+  val TileIdZ: _root_.com.histmersion.util.basemap.PmTiles.ZoomBaseZ.type = _root_.com.histmersion.util.basemap.PmTiles.ZoomBaseZ
   type TileIdX = TileIdX.T
   object TileIdX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TileIdY = TileIdY.T

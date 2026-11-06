@@ -29,8 +29,8 @@ object VectorTileWriter:
   object MessagePayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VarintFieldNumber = VarintFieldNumber.T
   object VarintFieldNumber extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VarintFieldV = VarintFieldV.T
-  object VarintFieldV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type VarintFieldV = _root_.com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV
+  val VarintFieldV: _root_.com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV.type = _root_.com.histmersion.domain.catalogue.maptiles.VectorTileWriter.VarintV
   type VarintV = VarintV.T
   object VarintV extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

@@ -120,18 +120,18 @@ object RunsView:
   object FacetResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FacetName = FacetName.T
   object FacetName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StateBadgeStatus = StateBadgeStatus.T
-  object StateBadgeStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StateBadgeStatus = _root_.com.histmersion.web.RunsView.StatusLabelStatus
+  val StateBadgeStatus: _root_.com.histmersion.web.RunsView.StatusLabelStatus.type = _root_.com.histmersion.web.RunsView.StatusLabelStatus
   type AgoResult = AgoResult.T
   object AgoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AgoIso = AgoIso.T
   object AgoIso extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunPaneId = RunPaneId.T
   object RunPaneId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunBodyBusy = RunBodyBusy.T
-  object RunBodyBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunBodyRaise = RunBodyRaise.T
-  object RunBodyRaise extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunBodyBusy = _root_.com.histmersion.web.RunsView.ControlsBusy
+  val RunBodyBusy: _root_.com.histmersion.web.RunsView.ControlsBusy.type = _root_.com.histmersion.web.RunsView.ControlsBusy
+  type RunBodyRaise = _root_.com.histmersion.web.RunsView.ControlsRaise
+  val RunBodyRaise: _root_.com.histmersion.web.RunsView.ControlsRaise.type = _root_.com.histmersion.web.RunsView.ControlsRaise
   type ControlsBusy = ControlsBusy.T
   object ControlsBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ControlsRaise = ControlsRaise.T

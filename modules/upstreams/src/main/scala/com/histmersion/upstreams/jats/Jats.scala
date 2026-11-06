@@ -39,16 +39,16 @@ object Jats:
   object EntitiesS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToMarkdownResult = ToMarkdownResult.T
   object ToMarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToMarkdownXml = ToMarkdownXml.T
-  object ToMarkdownXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ToMarkdownXml = _root_.com.histmersion.upstreams.jats.Jats.ParseXml
+  val ToMarkdownXml: _root_.com.histmersion.upstreams.jats.Jats.ParseXml.type = _root_.com.histmersion.upstreams.jats.Jats.ParseXml
   type BlocksResult = BlocksResult.T
   object BlocksResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlocksLevel = BlocksLevel.T
-  object BlocksLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlocksLevel = _root_.com.histmersion.upstreams.jats.Jats.RefListLevel
+  val BlocksLevel: _root_.com.histmersion.upstreams.jats.Jats.RefListLevel.type = _root_.com.histmersion.upstreams.jats.Jats.RefListLevel
   type BlockResult = BlockResult.T
   object BlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlockLevel = BlockLevel.T
-  object BlockLevel extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlockLevel = _root_.com.histmersion.upstreams.jats.Jats.RefListLevel
+  val BlockLevel: _root_.com.histmersion.upstreams.jats.Jats.RefListLevel.type = _root_.com.histmersion.upstreams.jats.Jats.RefListLevel
   type CaptionTextResult = CaptionTextResult.T
   object CaptionTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TableResult = TableResult.T

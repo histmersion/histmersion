@@ -21,8 +21,8 @@ object TileDecode:
   object NumK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LongResult = LongResult.T
   object LongResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LongK = LongK.T
-  object LongK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LongK = _root_.com.histmersion.web.TileDecode.NumK
+  val LongK: _root_.com.histmersion.web.TileDecode.NumK.type = _root_.com.histmersion.web.TileDecode.NumK
   type IsCellResult = IsCellResult.T
   object IsCellResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

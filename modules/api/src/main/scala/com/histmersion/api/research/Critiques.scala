@@ -21,16 +21,16 @@ object Critiques:
   object OlderFirstKinds extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParagraphsResult = ParagraphsResult.T
   object ParagraphsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParagraphsBody = ParagraphsBody.T
-  object ParagraphsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParagraphsBody = _root_.com.histmersion.api.research.Critiques.UnitsBody
+  val ParagraphsBody: _root_.com.histmersion.api.research.Critiques.UnitsBody.type = _root_.com.histmersion.api.research.Critiques.UnitsBody
   type UnitsBody = UnitsBody.T
   object UnitsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NotUsedLinesResult = NotUsedLinesResult.T
   object NotUsedLinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NotUsedLinesLines = NotUsedLinesLines.T
   object NotUsedLinesLines extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BuildBody = BuildBody.T
-  object BuildBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildBody = _root_.com.histmersion.api.research.Critiques.UnitsBody
+  val BuildBody: _root_.com.histmersion.api.research.Critiques.UnitsBody.type = _root_.com.histmersion.api.research.Critiques.UnitsBody
   type BuildResolveArg1 = BuildResolveArg1.T
   object BuildResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BuildResolveResult = BuildResolveResult.T
@@ -45,8 +45,8 @@ object Critiques:
   object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TogetherResult = TogetherResult.T
   object TogetherResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TogetherBody = TogetherBody.T
-  object TogetherBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TogetherBody = _root_.com.histmersion.api.research.Critiques.UnitsBody
+  val TogetherBody: _root_.com.histmersion.api.research.Critiques.UnitsBody.type = _root_.com.histmersion.api.research.Critiques.UnitsBody
   type TogetherResolveArg1 = TogetherResolveArg1.T
   object TogetherResolveArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TogetherResolveResult = TogetherResolveResult.T

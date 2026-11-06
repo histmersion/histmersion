@@ -21,8 +21,8 @@ import com.histmersion.api.research.Coverage
   */
 object ArticlePatches:
 
-  type BuildJson = BuildJson.T
-  object BuildJson extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BuildJson = _root_.com.histmersion.cli.ArticlePatches.ParseJson
+  val BuildJson: _root_.com.histmersion.cli.ArticlePatches.ParseJson.type = _root_.com.histmersion.cli.ArticlePatches.ParseJson
   type BuildTitle = BuildTitle.T
   object BuildTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BuildSummary = BuildSummary.T

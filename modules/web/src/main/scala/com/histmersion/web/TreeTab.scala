@@ -39,18 +39,18 @@ object TreeTab:
   object UnitWordResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UnitWordN = UnitWordN.T
   object UnitWordN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenderNodeDepth = RenderNodeDepth.T
-  object RenderNodeDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ToggleDepth = ToggleDepth.T
-  object ToggleDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RenderNodeDepth = _root_.com.histmersion.web.TreeTab.RenderSampleDepth
+  val RenderNodeDepth: _root_.com.histmersion.web.TreeTab.RenderSampleDepth.type = _root_.com.histmersion.web.TreeTab.RenderSampleDepth
+  type ToggleDepth = _root_.com.histmersion.web.TreeTab.RenderSampleDepth
+  val ToggleDepth: _root_.com.histmersion.web.TreeTab.RenderSampleDepth.type = _root_.com.histmersion.web.TreeTab.RenderSampleDepth
   type ToggleExpanded = ToggleExpanded.T
   object ToggleExpanded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToggleFilled = ToggleFilled.T
   object ToggleFilled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToggleOpenable = ToggleOpenable.T
   object ToggleOpenable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FillWithDepth = FillWithDepth.T
-  object FillWithDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FillWithDepth = _root_.com.histmersion.web.TreeTab.RenderSampleDepth
+  val FillWithDepth: _root_.com.histmersion.web.TreeTab.RenderSampleDepth.type = _root_.com.histmersion.web.TreeTab.RenderSampleDepth
   type RenderSampleDepth = RenderSampleDepth.T
   object RenderSampleDepth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

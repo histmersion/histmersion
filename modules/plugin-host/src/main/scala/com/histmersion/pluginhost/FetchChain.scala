@@ -129,8 +129,8 @@ object FetchChain:
   object OfResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfRegisteredPart1 = OfRegisteredPart1.T
   object OfRegisteredPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfChain = OfChain.T
-  object OfChain extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type OfChain = _root_.com.histmersion.pluginhost.FetchChain.OrderChain
+  val OfChain: _root_.com.histmersion.pluginhost.FetchChain.OrderChain.type = _root_.com.histmersion.pluginhost.FetchChain.OrderChain
   type OfAllowUnauthorised = OfAllowUnauthorised.T
   object OfAllowUnauthorised extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfPlugins = OfPlugins.T

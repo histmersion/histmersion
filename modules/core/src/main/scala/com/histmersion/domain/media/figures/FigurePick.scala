@@ -53,8 +53,8 @@ object FigurePick:
   object RefsResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefsBody = RefsBody.T
   object RefsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithRefsBody = WithRefsBody.T
-  object WithRefsBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WithRefsBody = _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody
+  val WithRefsBody: _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody.type = _root_.com.histmersion.domain.media.figures.FigurePick.RefsBody
 
   final case class Figure(
       name: Figure.Name,

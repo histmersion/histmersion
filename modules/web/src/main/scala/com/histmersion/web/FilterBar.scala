@@ -74,8 +74,8 @@ object FilterBar:
   object KeepKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KeepOn = KeepOn.T
   object KeepOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetFoldedOn = SetFoldedOn.T
-  object SetFoldedOn extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetFoldedOn = _root_.com.histmersion.web.FilterBar.KeepOn
+  val SetFoldedOn: _root_.com.histmersion.web.FilterBar.KeepOn.type = _root_.com.histmersion.web.FilterBar.KeepOn
 
   final private case class ChipField(state: Field[List[ChipField.State]], facet: ChipField.Facet, label: ChipField.Label, placeholder: ChipField.Placeholder)
 

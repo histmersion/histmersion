@@ -51,20 +51,20 @@ object BackgroundJob:
   object StartBodyArg2Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LaunchKind = LaunchKind.T
   object LaunchKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LaunchWhat = LaunchWhat.T
-  object LaunchWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LaunchWhat = _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat
+  val LaunchWhat: _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat.type = _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat
   type LaunchBusyCode = LaunchBusyCode.T
   object LaunchBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LaunchBodyArg2Arg1 = LaunchBodyArg2Arg1.T
   object LaunchBodyArg2Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResumeResultPart1 = ResumeResultPart1.T
   object ResumeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResumeKind = ResumeKind.T
-  object ResumeKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResumeWhat = ResumeWhat.T
-  object ResumeWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ResumeBusyCode = ResumeBusyCode.T
-  object ResumeBusyCode extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ResumeKind = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchKind
+  val ResumeKind: _root_.com.histmersion.util.jobs.BackgroundJob.LaunchKind.type = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchKind
+  type ResumeWhat = _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat
+  val ResumeWhat: _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat.type = _root_.com.histmersion.util.jobs.BackgroundJob.BusyWhat
+  type ResumeBusyCode = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode
+  val ResumeBusyCode: _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode.type = _root_.com.histmersion.util.jobs.BackgroundJob.LaunchBusyCode
   type ResumeBodyArg2Arg1 = ResumeBodyArg2Arg1.T
   object ResumeBodyArg2Arg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

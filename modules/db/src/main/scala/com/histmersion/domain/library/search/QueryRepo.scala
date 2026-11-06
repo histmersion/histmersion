@@ -50,8 +50,8 @@ private[search] object QueryRepo:
   object MessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReadMaxRows = ReadMaxRows.T
   object ReadMaxRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReadMaxCellChars = ReadMaxCellChars.T
-  object ReadMaxCellChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ReadMaxCellChars = _root_.com.histmersion.domain.library.search.QueryRepo.CellMaxCellChars
+  val ReadMaxCellChars: _root_.com.histmersion.domain.library.search.QueryRepo.CellMaxCellChars.type = _root_.com.histmersion.domain.library.search.QueryRepo.CellMaxCellChars
   type ReadElapsedMs = ReadElapsedMs.T
   object ReadElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CellResult = CellResult.T

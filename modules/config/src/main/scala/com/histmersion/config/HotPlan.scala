@@ -52,8 +52,8 @@ object HotPlan:
   object PlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlanResultPart2 = PlanResultPart2.T
   object PlanResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanChanged = PlanChanged.T
-  object PlanChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanChanged = _root_.com.histmersion.config.HotPlan.TouchedChanged
+  val PlanChanged: _root_.com.histmersion.config.HotPlan.TouchedChanged.type = _root_.com.histmersion.config.HotPlan.TouchedChanged
   type PlanForced = PlanForced.T
   object PlanForced extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

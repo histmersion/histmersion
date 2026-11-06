@@ -101,8 +101,8 @@ object GoalFocus:
   object StageWhyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StageWhyMinSources = StageWhyMinSources.T
   object StageWhyMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FitKidsPart1 = FitKidsPart1.T
-  object FitKidsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FitKidsPart1 = _root_.com.histmersion.domain.GoalFocus.UnfinishedKidsKidsPart1
+  val FitKidsPart1: _root_.com.histmersion.domain.GoalFocus.UnfinishedKidsKidsPart1.type = _root_.com.histmersion.domain.GoalFocus.UnfinishedKidsKidsPart1
   type RootResult = RootResult.T
   object RootResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RootSlug = RootSlug.T
@@ -127,8 +127,8 @@ object GoalFocus:
   object PickWhyKPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PickWhyKPart2 = PickWhyKPart2.T
   object PickWhyKPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PickWhyMinSources = PickWhyMinSources.T
-  object PickWhyMinSources extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PickWhyMinSources = _root_.com.histmersion.domain.GoalFocus.StageWhyMinSources
+  val PickWhyMinSources: _root_.com.histmersion.domain.GoalFocus.StageWhyMinSources.type = _root_.com.histmersion.domain.GoalFocus.StageWhyMinSources
   type FairOrderFocusResult = FairOrderFocusResult.T
   object FairOrderFocusResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FairOrderRecent = FairOrderRecent.T

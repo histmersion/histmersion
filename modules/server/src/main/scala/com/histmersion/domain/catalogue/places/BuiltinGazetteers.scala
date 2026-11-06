@@ -26,8 +26,8 @@ object BuiltinGazetteers:
   object ThirdPartyRegisteredPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AvailableResult = AvailableResult.T
   object AvailableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AvailableRegisteredPart1 = AvailableRegisteredPart1.T
-  object AvailableRegisteredPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AvailableRegisteredPart1 = _root_.com.histmersion.domain.catalogue.places.BuiltinGazetteers.ThirdPartyRegisteredPart1
+  val AvailableRegisteredPart1: _root_.com.histmersion.domain.catalogue.places.BuiltinGazetteers.ThirdPartyRegisteredPart1.type = _root_.com.histmersion.domain.catalogue.places.BuiltinGazetteers.ThirdPartyRegisteredPart1
   type ResolveResultPart1 = ResolveResultPart1.T
   object ResolveResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ResolveName = ResolveName.T

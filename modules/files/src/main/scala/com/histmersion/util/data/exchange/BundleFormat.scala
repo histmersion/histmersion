@@ -39,8 +39,8 @@ object BundleFormat:
   object ParseManifestBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NdjsonResult = NdjsonResult.T
   object NdjsonResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileInfoPayload = FileInfoPayload.T
-  object FileInfoPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FileInfoPayload = _root_.com.histmersion.util.data.exchange.BundleFormat.LinesPayload
+  val FileInfoPayload: _root_.com.histmersion.util.data.exchange.BundleFormat.LinesPayload.type = _root_.com.histmersion.util.data.exchange.BundleFormat.LinesPayload
   type LinesPayload = LinesPayload.T
   object LinesPayload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SplitLinesPayload = SplitLinesPayload.T

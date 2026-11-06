@@ -73,10 +73,10 @@ object LabelPlacement:
   object CentroidCellResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SignedDistanceResult = SignedDistanceResult.T
   object SignedDistanceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignedDistanceX = SignedDistanceX.T
-  object SignedDistanceX extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignedDistanceY = SignedDistanceY.T
-  object SignedDistanceY extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SignedDistanceX = _root_.com.histmersion.web.LabelPlacement.SignedDistanceFlatX
+  val SignedDistanceX: _root_.com.histmersion.web.LabelPlacement.SignedDistanceFlatX.type = _root_.com.histmersion.web.LabelPlacement.SignedDistanceFlatX
+  type SignedDistanceY = _root_.com.histmersion.web.LabelPlacement.SignedDistanceFlatY
+  val SignedDistanceY: _root_.com.histmersion.web.LabelPlacement.SignedDistanceFlatY.type = _root_.com.histmersion.web.LabelPlacement.SignedDistanceFlatY
   type SignedDistanceFlatResult = SignedDistanceFlatResult.T
   object SignedDistanceFlatResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SignedDistanceFlatX = SignedDistanceFlatX.T
@@ -103,24 +103,24 @@ object LabelPlacement:
   object TierExtent0 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TierZoom = TierZoom.T
   object TierZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceScale = PlaceScale.T
-  object PlaceScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceHalfW = PlaceHalfW.T
-  object PlaceHalfW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlaceHalfH = PlaceHalfH.T
-  object PlaceHalfH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlaceScale = _root_.com.histmersion.web.LabelPlacement.EdgePlaceScale
+  val PlaceScale: _root_.com.histmersion.web.LabelPlacement.EdgePlaceScale.type = _root_.com.histmersion.web.LabelPlacement.EdgePlaceScale
+  type PlaceHalfW = _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfW
+  val PlaceHalfW: _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfW.type = _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfW
+  type PlaceHalfH = _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfH
+  val PlaceHalfH: _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfH.type = _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfH
   type EdgePlaceScale = EdgePlaceScale.T
   object EdgePlaceScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EdgePlaceHalfW = EdgePlaceHalfW.T
   object EdgePlaceHalfW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EdgePlaceHalfH = EdgePlaceHalfH.T
   object EdgePlaceHalfH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GlideScale = GlideScale.T
-  object GlideScale extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GlideHalfW = GlideHalfW.T
-  object GlideHalfW extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GlideHalfH = GlideHalfH.T
-  object GlideHalfH extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GlideScale = _root_.com.histmersion.web.LabelPlacement.EdgePlaceScale
+  val GlideScale: _root_.com.histmersion.web.LabelPlacement.EdgePlaceScale.type = _root_.com.histmersion.web.LabelPlacement.EdgePlaceScale
+  type GlideHalfW = _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfW
+  val GlideHalfW: _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfW.type = _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfW
+  type GlideHalfH = _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfH
+  val GlideHalfH: _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfH.type = _root_.com.histmersion.web.LabelPlacement.EdgePlaceHalfH
   type CullResult = CullResult.T
   object CullResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CullCell = CullCell.T

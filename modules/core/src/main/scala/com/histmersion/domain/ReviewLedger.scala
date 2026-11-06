@@ -90,10 +90,10 @@ object ReviewLedger:
   val LearnRun: _root_.com.histmersion.domain.ReviewLedger.Lesson.Run.type = _root_.com.histmersion.domain.ReviewLedger.Lesson.Run
   type LearnRound = _root_.com.histmersion.domain.ReviewLedger.Lesson.Round
   val LearnRound: _root_.com.histmersion.domain.ReviewLedger.Lesson.Round.type = _root_.com.histmersion.domain.ReviewLedger.Lesson.Round
-  type ApplyRecheckRun = ApplyRecheckRun.T
-  object ApplyRecheckRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyRecheckRound = ApplyRecheckRound.T
-  object ApplyRecheckRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApplyRecheckRun = _root_.com.histmersion.domain.ReviewLedger.AbsorbRun
+  val ApplyRecheckRun: _root_.com.histmersion.domain.ReviewLedger.AbsorbRun.type = _root_.com.histmersion.domain.ReviewLedger.AbsorbRun
+  type ApplyRecheckRound = _root_.com.histmersion.domain.ReviewLedger.AbsorbRound
+  val ApplyRecheckRound: _root_.com.histmersion.domain.ReviewLedger.AbsorbRound.type = _root_.com.histmersion.domain.ReviewLedger.AbsorbRound
   type MergedRound = MergedRound.T
   object MergedRound extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergedExplainBack = MergedExplainBack.T
@@ -152,8 +152,8 @@ object ReviewLedger:
   object TaskTextMaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticleTaskResult = ArticleTaskResult.T
   object ArticleTaskResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleTaskSlug = ArticleTaskSlug.T
-  object ArticleTaskSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ArticleTaskSlug = _root_.com.histmersion.domain.ReviewLedger.LegacyTaskSlug
+  val ArticleTaskSlug: _root_.com.histmersion.domain.ReviewLedger.LegacyTaskSlug.type = _root_.com.histmersion.domain.ReviewLedger.LegacyTaskSlug
   type ArticleTaskText = ArticleTaskText.T
   object ArticleTaskText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LegacyTaskResult = LegacyTaskResult.T

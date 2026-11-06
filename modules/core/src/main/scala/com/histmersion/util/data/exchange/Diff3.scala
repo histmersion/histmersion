@@ -42,8 +42,8 @@ object Diff3:
   object MergeLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeRight = MergeRight.T
   object MergeRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeLinesO = MergeLinesO.T
-  object MergeLinesO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MergeLinesO = _root_.com.histmersion.util.data.exchange.Diff3.MatchingO
+  val MergeLinesO: _root_.com.histmersion.util.data.exchange.Diff3.MatchingO.type = _root_.com.histmersion.util.data.exchange.Diff3.MatchingO
   type MergeLinesA = MergeLinesA.T
   object MergeLinesA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeLinesB = MergeLinesB.T

@@ -50,12 +50,12 @@ object FirstPartySettings:
   object HostKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RebuildsResult = RebuildsResult.T
   object RebuildsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RebuildsPlugin = RebuildsPlugin.T
-  object RebuildsPlugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RebuildsPlugin = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
+  val RebuildsPlugin: _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin.type = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
   type RebuildsChanged = RebuildsChanged.T
   object RebuildsChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FallbackPlugin = FallbackPlugin.T
-  object FallbackPlugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FallbackPlugin = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
+  val FallbackPlugin: _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin.type = _root_.com.histmersion.pluginhost.FirstPartySettings.OfPlugin
 
   type Plugin = Plugin.T
   object Plugin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

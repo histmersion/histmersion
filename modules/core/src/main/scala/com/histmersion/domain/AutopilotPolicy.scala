@@ -97,14 +97,14 @@ object AutopilotPolicy:
   object ScaledCapCeiling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CapTextResult = CapTextResult.T
   object CapTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CapTextBase = CapTextBase.T
-  object CapTextBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CapTextBacklog = CapTextBacklog.T
-  object CapTextBacklog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CapTextShare = CapTextShare.T
-  object CapTextShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CapTextCeiling = CapTextCeiling.T
-  object CapTextCeiling extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CapTextBase = _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapBase
+  val CapTextBase: _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapBase.type = _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapBase
+  type CapTextBacklog = _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapBacklog
+  val CapTextBacklog: _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapBacklog.type = _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapBacklog
+  type CapTextShare = _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapShare
+  val CapTextShare: _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapShare.type = _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapShare
+  type CapTextCeiling = _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapCeiling
+  val CapTextCeiling: _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapCeiling.type = _root_.com.histmersion.domain.AutopilotPolicy.ScaledCapCeiling
   type ArticlesInProgressResult = ArticlesInProgressResult.T
   object ArticlesInProgressResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ArticlesInProgressUnreviewed = ArticlesInProgressUnreviewed.T
@@ -155,8 +155,8 @@ object AutopilotPolicy:
   object StaggerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type StaggerBase = StaggerBase.T
   object StaggerBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StaggerKey = StaggerKey.T
-  object StaggerKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StaggerKey = _root_.com.histmersion.domain.AutopilotPolicy.SpreadKey
+  val StaggerKey: _root_.com.histmersion.domain.AutopilotPolicy.SpreadKey.type = _root_.com.histmersion.domain.AutopilotPolicy.SpreadKey
   type ExtendDueResult = ExtendDueResult.T
   object ExtendDueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ExtendDueNewSources = ExtendDueNewSources.T

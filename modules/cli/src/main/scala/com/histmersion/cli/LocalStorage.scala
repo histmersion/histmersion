@@ -33,8 +33,8 @@ object LocalStorage:
   object AddEnvArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AddEnvResult = AddEnvResult.T
   object AddEnvResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddOsName = AddOsName.T
-  object AddOsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type AddOsName = _root_.com.histmersion.cli.LocalStorage.LocationsOsName
+  val AddOsName: _root_.com.histmersion.cli.LocalStorage.LocationsOsName.type = _root_.com.histmersion.cli.LocalStorage.LocationsOsName
 
   def locations(
       cfg: AppConfig,

@@ -69,8 +69,8 @@ object UiState:
   object ToggledPlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TogglePlaceResult = TogglePlaceResult.T
   object TogglePlaceResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TogglePlaceId = TogglePlaceId.T
-  object TogglePlaceId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TogglePlaceId = _root_.com.histmersion.web.UiState.ToggledPlaceId
+  val TogglePlaceId: _root_.com.histmersion.web.UiState.ToggledPlaceId.type = _root_.com.histmersion.web.UiState.ToggledPlaceId
   type SetSearchText = SetSearchText.T
   object SetSearchText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ToFilterExcept = ToFilterExcept.T
@@ -97,16 +97,16 @@ object UiState:
   object PairsOfHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HashStringResult = HashStringResult.T
   object HashStringResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WriteHashPush = WriteHashPush.T
-  object WriteHashPush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WriteHashPush = _root_.com.histmersion.web.UiState.NavigatePush
+  val WriteHashPush: _root_.com.histmersion.web.UiState.NavigatePush.type = _root_.com.histmersion.web.UiState.NavigatePush
   type NavigatePathAndSearch = NavigatePathAndSearch.T
   object NavigatePathAndSearch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NavigatePush = NavigatePush.T
   object NavigatePush extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LoadHashHash = LoadHashHash.T
-  object LoadHashHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AddHashHash = AddHashHash.T
-  object AddHashHash extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LoadHashHash = _root_.com.histmersion.web.UiState.PairsOfHash
+  val LoadHashHash: _root_.com.histmersion.web.UiState.PairsOfHash.type = _root_.com.histmersion.web.UiState.PairsOfHash
+  type AddHashHash = _root_.com.histmersion.web.UiState.PairsOfHash
+  val AddHashHash: _root_.com.histmersion.web.UiState.PairsOfHash.type = _root_.com.histmersion.web.UiState.PairsOfHash
   type StoredResult = StoredResult.T
   object StoredResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

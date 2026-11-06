@@ -45,8 +45,8 @@ object CliProcess:
   object RunStdin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunTimeoutSeconds = RunTimeoutSeconds.T
   object RunTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RunHint = RunHint.T
-  object RunHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RunHint = _root_.com.histmersion.server.agents.CliProcess.CannotStartHint
+  val RunHint: _root_.com.histmersion.server.agents.CliProcess.CannotStartHint.type = _root_.com.histmersion.server.agents.CliProcess.CannotStartHint
   type RunOnLineArg1 = RunOnLineArg1.T
   object RunOnLineArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RunOnLineResult = RunOnLineResult.T

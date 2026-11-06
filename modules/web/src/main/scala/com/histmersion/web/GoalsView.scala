@@ -96,14 +96,14 @@ object GoalsView:
   object CreatedNoteWatched extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CreatedNoteActive = CreatedNoteActive.T
   object CreatedNoteActive extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BadgeStatus = BadgeStatus.T
-  object BadgeStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BadgeStatus = _root_.com.histmersion.web.GoalsView.MeaningStatus
+  val BadgeStatus: _root_.com.histmersion.web.GoalsView.MeaningStatus.type = _root_.com.histmersion.web.GoalsView.MeaningStatus
   type BadgeText = BadgeText.T
   object BadgeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GoalPaneSlug = GoalPaneSlug.T
   object GoalPaneSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanSectionSlug = PlanSectionSlug.T
-  object PlanSectionSlug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanSectionSlug = _root_.com.histmersion.web.GoalsView.PendingPlanSlug
+  val PlanSectionSlug: _root_.com.histmersion.web.GoalsView.PendingPlanSlug.type = _root_.com.histmersion.web.GoalsView.PendingPlanSlug
   type PlanSectionBusy = PlanSectionBusy.T
   object PlanSectionBusy extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LinksSectionSlug = LinksSectionSlug.T

@@ -50,16 +50,16 @@ object ArtInstituteCollection:
   object RecordsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordsResultPart2Part1 = RecordsResultPart2Part1.T
   object RecordsResultPart2Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsIiif = RecordsIiif.T
-  object RecordsIiif extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsDisplayPx = RecordsDisplayPx.T
-  object RecordsDisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordsThumbPx = RecordsThumbPx.T
-  object RecordsThumbPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordsIiif = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
+  val RecordsIiif: _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
+  type RecordsDisplayPx = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx
+  val RecordsDisplayPx: _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordDisplayPx
+  type RecordsThumbPx = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx
+  val RecordsThumbPx: _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.RecordThumbPx
   type RecordResultPart1 = RecordResultPart1.T
   object RecordResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RecordIiif = RecordIiif.T
-  object RecordIiif extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RecordIiif = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
+  val RecordIiif: _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif.type = _root_.com.histmersion.plugins.media.ArtInstituteCollection.ImageUrlIiif
   type RecordDisplayPx = RecordDisplayPx.T
   object RecordDisplayPx extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RecordThumbPx = RecordThumbPx.T

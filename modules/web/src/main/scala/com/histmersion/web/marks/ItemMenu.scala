@@ -16,16 +16,16 @@ object ItemMenu:
   object LinkOrigin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TextResult = TextResult.T
   object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TextByline = TextByline.T
-  object TextByline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type TextByline = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
+  val TextByline: _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline.type = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownOrigin = MarkdownOrigin.T
-  object MarkdownOrigin extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownOrigin = _root_.com.histmersion.web.marks.ItemMenu.LinkOrigin
+  val MarkdownOrigin: _root_.com.histmersion.web.marks.ItemMenu.LinkOrigin.type = _root_.com.histmersion.web.marks.ItemMenu.LinkOrigin
   type MarkdownByline = MarkdownByline.T
   object MarkdownByline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntriesByline = EntriesByline.T
-  object EntriesByline extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EntriesByline = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
+  val EntriesByline: _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline.type = _root_.com.histmersion.web.marks.ItemMenu.MarkdownByline
 
   def link(origin: com.histmersion.web.marks.ItemMenu.LinkOrigin, ref: ItemRef): com.histmersion.web.marks.ItemMenu.LinkResult = origin.stripSuffix("/") + ItemRef.page(ref.target)
 

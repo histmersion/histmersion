@@ -52,10 +52,10 @@ object ActivityView:
   object GoalLinkG extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListEmpty = ListEmpty.T
   object ListEmpty extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChipsGoal = ChipsGoal.T
-  object ChipsGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PaneGoal = PaneGoal.T
-  object PaneGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ChipsGoal = _root_.com.histmersion.web.ActivityView.SearchGoal
+  val ChipsGoal: _root_.com.histmersion.web.ActivityView.SearchGoal.type = _root_.com.histmersion.web.ActivityView.SearchGoal
+  type PaneGoal = _root_.com.histmersion.web.ActivityView.SearchGoal
+  val PaneGoal: _root_.com.histmersion.web.ActivityView.SearchGoal.type = _root_.com.histmersion.web.ActivityView.SearchGoal
   type ShortLimit = ShortLimit.T
   object ShortLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HistoryGoal = HistoryGoal.T

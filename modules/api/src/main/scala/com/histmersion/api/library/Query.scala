@@ -27,8 +27,8 @@ object Query:
 
   type StatementsResult = StatementsResult.T
   object StatementsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StatementsSql = StatementsSql.T
-  object StatementsSql extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type StatementsSql = _root_.com.histmersion.api.library.Query.DollarTagSql
+  val StatementsSql: _root_.com.histmersion.api.library.Query.DollarTagSql.type = _root_.com.histmersion.api.library.Query.DollarTagSql
   type DollarTagResult = DollarTagResult.T
   object DollarTagResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DollarTagSql = DollarTagSql.T

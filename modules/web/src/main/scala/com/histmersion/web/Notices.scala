@@ -44,8 +44,8 @@ object Notices:
   object SpokenResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RefreshAfterArg1Part1 = RefreshAfterArg1Part1.T
   object RefreshAfterArg1Part1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkAt = MarkAt.T
-  object MarkAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkAt = _root_.com.histmersion.web.Notices.SeenAtAt
+  val MarkAt: _root_.com.histmersion.web.Notices.SeenAtAt.type = _root_.com.histmersion.web.Notices.SeenAtAt
 
   def boardOf(key: WindowKey): Option[Board] = Board.parse(key.wire)
 

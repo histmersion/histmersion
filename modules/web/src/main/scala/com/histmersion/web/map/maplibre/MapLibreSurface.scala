@@ -451,8 +451,8 @@ object MapLibreSurface:
   object EasesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EasesAnimated = EasesAnimated.T
   object EasesAnimated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MotionAnimated = MotionAnimated.T
-  object MotionAnimated extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MotionAnimated = _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated
+  val MotionAnimated: _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated.type = _root_.com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated
 
   def eases(animated: com.histmersion.web.map.maplibre.MapLibreSurface.EasesAnimated): com.histmersion.web.map.maplibre.MapLibreSurface.EasesResult = animated && MotionPref.animate()
 

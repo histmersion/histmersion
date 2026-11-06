@@ -72,8 +72,8 @@ object NoaaCatalogue:
   object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseResultPart2Part2 = ParseResultPart2Part2.T
   object ParseResultPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseDataset = ParseDataset.T
-  object ParseDataset extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ParseDataset = _root_.com.histmersion.plugins.events.NoaaCatalogue.RecordDataset
+  val ParseDataset: _root_.com.histmersion.plugins.events.NoaaCatalogue.RecordDataset.type = _root_.com.histmersion.plugins.events.NoaaCatalogue.RecordDataset
   type DatasetOfResult = DatasetOfResult.T
   object DatasetOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DatasetOfProviderId = DatasetOfProviderId.T
