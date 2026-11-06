@@ -60,7 +60,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
 
   test("an existing watcher keeps its own cron, next firing, sweeps and budget; it gains the enabled kinds"):
     val e = Existing(
-      ManagerConfig(sweeps = Some(List("currency")), budgetUsd = Some(ManagerConfig.BudgetUsd(1.0))),
+      ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(1.0))),
       Some(com.histmersion.domain.Cron.Text("@weekly")),
       Some(com.histmersion.domain.ManagerPolicy.InstantText("2026-10-18T00:00:00Z"))
     )
@@ -77,7 +77,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
       com.histmersion.api.automation.Managers.ManagerInfo.Kind("watch"),
       Some(com.histmersion.api.automation.Goal.Slug("tin")),
       State.Paused.wire,
-      config = ManagerConfig(sweeps = Some(List("currency")), budgetUsd = Some(ManagerConfig.BudgetUsd(0.5))),
+      config = ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(0.5))),
       cron = Some("@daily"),
       nextTickAt = Some("2026-10-18T00:00:00Z")
     )
@@ -93,7 +93,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
       ManagerItem.Kind(CurrencyCheck),
       com.histmersion.api.automation.Managers.ManagerItem.Target("tin"),
       com.histmersion.api.automation.Managers.ManagerItem.Status("done"),
-      runId = Some("run-1"),
+      runId = Some(com.histmersion.api.automation.Agents.RunInfo.Id("run-1")),
       outcome = Some("currency-check goal tin: …"),
       updatedAt = "2026-10-17T00:00:00Z"
     )
