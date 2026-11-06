@@ -51,3 +51,7 @@ with the code under test, do not guess: compare with the behaviour reference and
 ## Trusting a test run
 
 sbt 2 caches test results, even across `clean`: `test` may run a few suites or none and still exit 0. A pass counts only from `<project>/testOnly *`, and only if the total matches the expected number of tests.
+
+## Public signatures keep their concepts
+
+Do not delete a type from a public signature and use `String`, `Int`, `Boolean` or `Array[Byte]` instead, even when that makes the error go away. If a name is positional, replace it with the real concept: name one, defining it on the owner if none exists. Plain types are fine only in private helpers and for predicate results. Do not change behaviour to suit a type: if a value the old code accepted no longer fits, report it.
