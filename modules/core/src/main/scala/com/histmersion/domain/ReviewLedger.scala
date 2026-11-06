@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.StoredIdCodecs.given
 import scala.annotation.tailrec
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.{Plural, WireEnum}

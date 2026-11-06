@@ -44,7 +44,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
     assertEquals((p.cron, p.nextTick, p.config.budgetUsd), (Some("@daily"), Some("2026-10-18T00:00:00Z"), Some(0.25)))
     assert(
       p.notes.exists(
-        _.contains("one cron for both: `@daily` (fires most often) over the acquisition schedule's `@monthly`")
+        _.value.contains("one cron for both: `@daily` (fires most often) over the acquisition schedule's `@monthly`")
       ),
       p.notes
     )
@@ -55,7 +55,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
     val p =
       migrate(None, List(sch(ScheduleKind.Currency, GoalSchedule.Cron("@weekly"), on = GoalSchedule.Enabled(false), next = Some(GoalSchedule.NextRunAt("2026-10-18T00:00:00Z")))), now)
     assertEquals((p.config.sweeps, p.cron, p.nextTick), (Some(Nil), Some("@weekly"), None))
-    assert(p.notes.exists(_.contains("was off: not swept")), p.notes)
+    assert(p.notes.exists(_.value.contains("was off: not swept")), p.notes)
     assertEquals(Sweep.of(p.config), Nil)
 
   test("an existing watcher keeps its own cron, next firing, sweeps and budget; it gains the enabled kinds"):
@@ -69,7 +69,7 @@ class WatchSchedulesSuite extends munit.FunSuite:
       (p.config.sweeps, p.cron, p.nextTick, p.config.budgetUsd),
       (Some(List("acquisition", "currency")), Some("@weekly"), Some("2026-10-18T00:00:00Z"), Some(1.0))
     )
-    assert(p.notes.exists(_.contains("its cron `@weekly` kept over the acquisition schedule's `@daily`")), p.notes)
+    assert(p.notes.exists(_.value.contains("its cron `@weekly` kept over the acquisition schedule's `@daily`")), p.notes)
 
   test("view: one schedule per sweep, the watcher's cron and next firing; paused says how to make it fire"):
     val m = ManagerInfo(
@@ -78,8 +78,8 @@ class WatchSchedulesSuite extends munit.FunSuite:
       Some(com.histmersion.api.automation.Goal.Slug("tin")),
       State.Paused.wire,
       config = ManagerConfig(sweeps = Some(List(com.histmersion.api.automation.Managers.Sweep.Wire("currency"))), budgetUsd = Some(ManagerConfig.BudgetUsd(0.5))),
-      cron = Some("@daily"),
-      nextTickAt = Some("2026-10-18T00:00:00Z")
+      cron = Some(com.histmersion.api.automation.Managers.ManagerInfo.Cron("@daily")),
+      nextTickAt = Some(com.histmersion.api.automation.Managers.ManagerInfo.NextTickAt("2026-10-18T00:00:00Z"))
     )
     val v = view(m, Nil)
     assertEquals(
@@ -94,8 +94,8 @@ class WatchSchedulesSuite extends munit.FunSuite:
       com.histmersion.api.automation.Managers.ManagerItem.Target("tin"),
       com.histmersion.api.automation.Managers.ManagerItem.Status("done"),
       runId = Some(com.histmersion.api.automation.Agents.RunInfo.Id("run-1")),
-      outcome = Some("currency-check goal tin: …"),
-      updatedAt = "2026-10-17T00:00:00Z"
+      outcome = Some(com.histmersion.api.automation.Managers.ManagerItem.Outcome("currency-check goal tin: …")),
+      updatedAt = com.histmersion.api.automation.Managers.ManagerItem.UpdatedAt("2026-10-17T00:00:00Z")
     )
     val active = view(m.modify(_.state).setTo(State.Active.wire).modify(_.config).setTo(ManagerConfig()), List(it))
     assertEquals(active.map(_.kind), List(ScheduleKind.Acquisition, ScheduleKind.Currency))

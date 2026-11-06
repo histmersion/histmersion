@@ -23,7 +23,7 @@ class PlaceSeedKindsSuite extends munit.FunSuite:
       .getOrElse(fail("no db/places above the working directory"))
     Lpf
       .parse(Files.readString(root.resolve("db/places/03-pleiades.json")), com.histmersion.api.catalogue.Place.KindValue(Place.Kind.Region))
-      .fold(e => fail(e), identity)
+      .fold(e => fail(e.value), identity)
 
   private def prop(in: com.histmersion.api.catalogue.Place.Input, key: String): List[String] =
     in.place.properties

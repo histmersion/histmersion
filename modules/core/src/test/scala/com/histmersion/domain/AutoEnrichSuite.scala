@@ -37,5 +37,5 @@ class AutoEnrichSuite extends munit.FunSuite:
     )
 
   test("progress notes"):
-    assertEquals(queued(com.histmersion.domain.automation.Run.Id("abc")), "enrichment queued: run abc")
+    assertEquals(queued(com.histmersion.domain.automation.Run.Id("90015098-3cd2-4fb0-d696-3f7d28e17f72")), "enrichment queued: run 90015098-3cd2-4fb0-d696-3f7d28e17f72")
     assertEquals(note(Skip.Enriched(com.histmersion.domain.AutoEnrich.Skip.Enriched.Why("it already has notes"))), Some("enrichment not queued: it already has notes"))

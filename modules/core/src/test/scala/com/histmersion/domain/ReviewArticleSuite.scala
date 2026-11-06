@@ -606,7 +606,7 @@ class ReviewArticleSuite extends munit.FunSuite:
     val m = Merged(com.histmersion.domain.ReviewArticle.Merged.Round(2), Verdict.Major, open, None, Nil, Nil)
     val o = Outcome(com.histmersion.domain.ReviewArticle.Outcome.Slug("sea_peoples"), com.histmersion.domain.ReviewArticle.Outcome.Rounds(2), Verdict.Major, open, com.histmersion.domain.ReviewArticle.Outcome.Applied(3), com.histmersion.domain.ReviewArticle.Outcome.Rejected(1), fixed = com.histmersion.domain.ReviewArticle.Outcome.Fixed(true), com.histmersion.domain.ReviewArticle.Outcome.Approvals(0))
     assertEquals(
-      logLine(o, m, com.histmersion.domain.automation.Run.Id("abcdef0123")),
+      logLine(o, m, com.histmersion.domain.automation.Run.Id("abcdef01-93ac-ef8b-cd70-71607816bfcb")),
       "review-article [[sea_peoples]]: round 2 → MAJOR (R:0 C:0 S:1 M:0), fixer applied 3 / rejected 1 (agent run abcdef01)"
     )
 
@@ -852,8 +852,8 @@ class ReviewArticleSuite extends munit.FunSuite:
     assertEquals(run(declined, None).map(_._1.wontFix.map(_.id)), Right(List("R8")))
     assert(needsFilter(cover, None) && !needsFilter(cover, Some(cov)) && !needsFilter(merged.findings.head, None))
     // the ledger keeps a declined MAJOR open, and not claimed
-    val led = ReviewLedger.Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin"), m.findings.map(ReviewLedger.Entry(_, com.histmersion.domain.ReviewLedger.Entry.Run("run1"), com.histmersion.domain.ReviewLedger.Entry.Round(1))))
-    val after = ReviewLedger.applyFix(led, run(declined, None).toOption.get._1, com.histmersion.domain.ReviewLedger.ApplyFixRun("run1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
+    val led = ReviewLedger.Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin"), m.findings.map(ReviewLedger.Entry(_, com.histmersion.domain.ReviewLedger.Entry.Run("b7f86a38-be91-c3c1-64ae-ba52940975e8"), com.histmersion.domain.ReviewLedger.Entry.Round(1))))
+    val after = ReviewLedger.applyFix(led, run(declined, None).toOption.get._1, com.histmersion.domain.ReviewLedger.ApplyFixRun("b7f86a38-be91-c3c1-64ae-ba52940975e8"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     assert(after.entry(com.histmersion.domain.ReviewArticle.Finding.Id("R8")).exists(e => e.open && !e.claimed.value), after.entries)
     // with a recorded filter the article's Not used list is generated: the finding is answered in `reasons`
     val withFilter = run(declined, Some(cov)).left.toOption.get

@@ -167,7 +167,7 @@ class EventScaleSuite extends munit.FunSuite:
     assert(EventsMarkdown.event(EventDetail(e)).contains("**Scale:** local (derived)"))
     assert(
       EventsMarkdown
-        .event(EventDetail(e.modify(_.scale).setTo("regional").modify(_.scaleStated).setTo(true)))
+        .event(EventDetail(e.modify(_.scale).setTo(com.histmersion.api.catalogue.EventSummary.Scale("regional")).modify(_.scaleStated).setTo(com.histmersion.api.catalogue.EventSummary.ScaleStated(true))))
         .contains("**Scale:** regional (stated)")
     )
 
@@ -196,5 +196,5 @@ class EventScaleSuite extends munit.FunSuite:
     )
     val line = BundleFormat.stamp(ev).line
     assert(!line.contains("scale"), line)
-    assert(BundleFormat.stamp(ev.modify(_.scale).setTo(Some("regional"))).line.contains("\"scale\":\"regional\""))
-    assertNotEquals(BundleFormat.stamp(ev.modify(_.scale).setTo(Some("regional"))).rev, BundleFormat.stamp(ev).rev)
+    assert(BundleFormat.stamp(ev.modify(_.scale).setTo(Some(com.histmersion.api.exchange.Bundle.Event.Scale("regional")))).line.contains("\"scale\":\"regional\""))
+    assertNotEquals(BundleFormat.stamp(ev.modify(_.scale).setTo(Some(com.histmersion.api.exchange.Bundle.Event.Scale("regional")))).rev, BundleFormat.stamp(ev).rev)

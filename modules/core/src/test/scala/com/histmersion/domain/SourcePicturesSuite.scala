@@ -67,7 +67,7 @@ class SourcePicturesSuite extends munit.FunSuite:
     assertEquals(FigurePick.choose(scans :+ real, rules).map(_.name), Some("fig-0003-02.png"))
     assertEquals(FigurePick.choose(scans, rules), None, "nothing but page scans: no illustration")
     assertEquals(
-      FigurePick.choose(scans.take(3) :+ real, rules.modify(_.pageScanMin).setTo(5)).map(_.width),
+      FigurePick.choose(scans.take(3) :+ real, rules.modify(_.pageScanMin).setTo(com.histmersion.domain.media.figures.FigurePick.Rules.PageScanMin(5))).map(_.width),
       Some(Some(1276)),
       "three big portrait pictures are figures, not a scanned book"
     )
@@ -124,7 +124,7 @@ class SourcePicturesSuite extends munit.FunSuite:
     assert(md.contains("3 sources looked at · would link 1 cover and 1 illustration"), md)
     assert(md.contains("[[anthony2007]] — cover from Calibre library: `Calibre id 12`"), md)
     assert(md.contains("- illustration: no figures: 1"), md)
-    assertEquals(MediaCoversReport.combine(r, r.modify(_.dryRun).setTo(false)).covers, 2)
+    assertEquals(MediaCoversReport.combine(r, r.modify(_.dryRun).setTo(com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false))).covers, 2)
 
   test("roles: a cover shows before an illustration"):
     assert(MediaRole.order(MediaRole.Wire(MediaRole.Cover)) < MediaRole.order(MediaRole.Wire(MediaRole.Illustration)))

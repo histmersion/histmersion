@@ -17,16 +17,16 @@ class AcquisitionSweepRulesSuite extends munit.FunSuite:
   test("a sweep never offers what the corpus or the queue has; each work once; capped"):
     val w = (doi: String, inDb: WorkRef.InDb) => WorkRef(doi = (Some(doi)).map(com.histmersion.api.library.Doi.apply), title = (Some(doi)).map(com.histmersion.api.library.Title.apply), inDb = inDb)
     val found = List(
-      "q1" -> w("10.1000/a", WorkRef.InDb(false)),
-      "q1" -> w("10.1000/b", WorkRef.InDb(true)),
-      "q2" -> w("10.1000/a", WorkRef.InDb(false)),
-      "q2" -> w("10.1000/c", WorkRef.InDb(false)),
-      "q2" -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
-      "q2" -> w("10.1000/d", WorkRef.InDb(false)),
-      "q2" -> WorkRef(doi = (Some("10.1000/e")).map(com.histmersion.api.library.Doi.apply), isRetracted = com.histmersion.api.library.WorkRef.IsRetracted(true))
+      Candidate.Query("q1") -> w("10.1000/a", WorkRef.InDb(false)),
+      Candidate.Query("q1") -> w("10.1000/b", WorkRef.InDb(true)),
+      Candidate.Query("q2") -> w("10.1000/a", WorkRef.InDb(false)),
+      Candidate.Query("q2") -> w("10.1000/c", WorkRef.InDb(false)),
+      Candidate.Query("q2") -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
+      Candidate.Query("q2") -> w("10.1000/d", WorkRef.InDb(false)),
+      Candidate.Query("q2") -> WorkRef(doi = (Some("10.1000/e")).map(com.histmersion.api.library.Doi.apply), isRetracted = com.histmersion.api.library.WorkRef.IsRetracted(true))
     )
     val (cs, skipped) = candidates(found, queued = Set(com.histmersion.domain.library.Doi("10.1000/c")), max = com.histmersion.domain.library.workflows.AcquisitionSweepRules.Limit(1))
-    assertEquals(cs.map(c => (c.doi, c.query)), List(("10.1000/a", "q1")))
+    assertEquals(cs.map(c => (c.doi, c.query)), List((com.histmersion.domain.library.Doi("10.1000/a"), Candidate.Query("q1"))))
     assertEquals(
       skipped,
       Map("in the corpus" -> 1, "already queued" -> 1, "no DOI" -> 1, "retracted" -> 1, "over the sweep limit" -> 1)

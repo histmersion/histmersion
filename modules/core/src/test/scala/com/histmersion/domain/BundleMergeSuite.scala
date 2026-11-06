@@ -113,17 +113,17 @@ class BundleMergeSuite extends munit.FunSuite:
     assertEquals(l.corrections.map(_.targetUid), List(Some(U3)))
 
   test("folding two events keeps one stated dating whole and both sets of names"):
-    val w = event(_.modify(_.names).setTo(Some(List("Thera"))).modify(_.catalogue).setTo(None))
+    val w = event(_.modify(_.names).setTo(Some(List(com.histmersion.api.exchange.Bundle.Event.Names("Thera")))).modify(_.catalogue).setTo(None))
     val o = event(
       _.modify(
-        _.uid).setTo(U2).modify(_.names).setTo(Some(List("Santorini", "Thera"))).modify(_.catalogue).setTo(Some("gvp")).modify(_.central).setTo((Some(-1560): _root_.scala.Option[_root_.scala.Long])).modify(_.plusMinus).setTo((Some(10): _root_.scala.Option[_root_.scala.Long])).modify(_.datingMethod).setTo(Some("radiocarbon")
+        _.uid).setTo(U2).modify(_.names).setTo(Some(List(com.histmersion.api.exchange.Bundle.Event.Names("Santorini"), com.histmersion.api.exchange.Bundle.Event.Names("Thera")))).modify(_.catalogue).setTo(Some(com.histmersion.api.exchange.Bundle.Event.Catalogue("gvp"))).modify(_.central).setTo(Some(com.histmersion.api.exchange.Bundle.Event.Central(-1560L))).modify(_.plusMinus).setTo(Some(com.histmersion.api.exchange.Bundle.Event.PlusMinus(10L))).modify(_.datingMethod).setTo(Some(com.histmersion.api.exchange.Bundle.Event.DatingMethod("radiocarbon"))
       )
     )
     val f = EventPlan.foldEvent(w, o)
-    assertEquals(f.names, Some(List("Thera", "Santorini")))
-    assertEquals(f.catalogue, Some("gvp"))
-    assertEquals((f.central, f.plusMinus, f.datingMethod), (Some(-1560L), Some(10L), Some("radiocarbon")))
-    val w2 = w.modify(_.plusMinus).setTo((Some(50): _root_.scala.Option[_root_.scala.Long]))
+    assertEquals(f.names, Some(List(com.histmersion.api.exchange.Bundle.Event.Names("Thera"), com.histmersion.api.exchange.Bundle.Event.Names("Santorini"))))
+    assertEquals(f.catalogue, Some(com.histmersion.api.exchange.Bundle.Event.Catalogue("gvp")))
+    assertEquals((f.central, f.plusMinus, f.datingMethod), (Some(com.histmersion.api.exchange.Bundle.Event.Central(-1560L)), Some(com.histmersion.api.exchange.Bundle.Event.PlusMinus(10L)), Some(com.histmersion.api.exchange.Bundle.Event.DatingMethod("radiocarbon"))))
+    val w2 = w.modify(_.plusMinus).setTo(Some(com.histmersion.api.exchange.Bundle.Event.PlusMinus(50L)))
     assertEquals(EventPlan.foldEvent(w2, o).central, None, "the winner's own statement is not mixed with the other's")
 
   import BundlePlan.{Decision, Ledger, Local}

@@ -259,10 +259,34 @@ object Acquire:
     type Nature = com.histmersion.api.library.RetractionNotice.Nature
     val Nature: _root_.com.histmersion.api.library.RetractionNotice.Nature.type = _root_.com.histmersion.api.library.RetractionNotice.Nature
 
+  private val DoiCore = """10\.\d{4,9}/[-._;()/:A-Za-z0-9<>\[\]]+""".r
+
+  /** DOIs are case-insensitive, so they are stored lower-case: the DOI a text gives (bare, `doi:`, or as a resolver URL),
+    * without the punctuation a sentence leaves after it; `None` when it gives none.
+    */
+  private def normalizeDoi(raw: String): Option[String] =
+    val s = Option(raw)
+      .getOrElse("")
+      .trim
+      .replaceFirst("(?i)^https?://(dx\\.)?doi\\.org/", "")
+      .replaceFirst("(?i)^doi:\\s*", "")
+      .trim
+    DoiCore
+      .findFirstIn(s)
+      .map(
+        _.stripSuffix(".")
+          .stripSuffix(",")
+          .stripSuffix(";")
+          .stripSuffix(")")
+          .stripSuffix("}")
+          .stripSuffix("|")
+          .toLowerCase
+      )
+
   /** The export's `Reason` column is full of quoted commas and embedded newlines, so it needs a real CSV reader.
     * Columns are located by header name because their order has changed between exports, and the last row for a DOI
-    * wins because the export lists amendments chronologically. The DOI is as the export writes it: the server
-    * normalizes it (and drops a row whose DOI is none).
+    * wins because the export lists amendments chronologically. A DOI is normalised (lower case, no resolver prefix) and
+    * a row whose DOI is none is dropped.
     */
   def parseRetractionWatch(csv: String): List[RetractionRow] =
     Csv.parse(csv) match
@@ -272,7 +296,7 @@ object Acquire:
         def col(r: List[String], name: String): Option[String] =
           idx.get(name).flatMap(r.lift).map(_.trim).filter(_.nonEmpty)
         rows.flatMap { r =>
-          col(r, "OriginalPaperDOI").map { doi =>
+          col(r, "OriginalPaperDOI").flatMap(normalizeDoi).map { doi =>
             RetractionRow(_root_.com.histmersion.api.library.Doi(doi), col(r, "Reason").map(x => RetractionRow.Reason(x)), col(r, "RetractionDate").map(x => RetractionRow.Date(x)), col(r, "RetractionNature").map(x => RetractionRow.Nature(x)))
           }
         }

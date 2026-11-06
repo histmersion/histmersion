@@ -45,7 +45,7 @@ class CandidatesSuite extends munit.FunSuite:
       com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("crossref query \"x\"") -> w("10.1234/A", title = "Other title"),
       com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("openalex citing 10.9999/z") -> w("10.1234/a"),
       com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("openalex query \"x\"") -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
-      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("openalex query \"x\"") -> w("10.1234/r").modify(_.isRetracted).setTo(true),
+      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("openalex query \"x\"") -> w("10.1234/r").modify(_.isRetracted).setTo(com.histmersion.api.library.WorkRef.IsRetracted(true)),
       com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("europepmc query \"x\"") -> w("10.1234/known"),
       com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("arxiv query \"x\"") -> WorkRef(arxivId = Some(com.histmersion.api.library.Source.Candidate.ArxivId("2401.00001")), title = (Some("P")).map(com.histmersion.api.library.Title.apply))
     )

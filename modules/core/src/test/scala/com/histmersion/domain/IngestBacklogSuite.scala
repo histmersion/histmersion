@@ -115,16 +115,16 @@ class IngestBacklogSuite extends munit.FunSuite:
   ):
     val f = RepairFacts(com.histmersion.domain.IngestBacklog.RepairFacts.Item(7), com.histmersion.domain.library.Doi("10.1/x"), isOa = com.histmersion.domain.IngestBacklog.RepairFacts.IsOa(true), com.histmersion.domain.IngestBacklog.RepairFacts.Watcher("watch:g"), watcherExists = com.histmersion.domain.IngestBacklog.RepairFacts.WatcherExists(true), watcherAutoIngest = com.histmersion.domain.IngestBacklog.RepairFacts.WatcherAutoIngest(true), None)
     assertEquals(repairAction(f), RepairAction.Move)
-    assertEquals(repairAction(f.modify(_.inCorpus).setTo(Some("ck"))), RepairAction.Remove(com.histmersion.domain.library.Citekey("ck")))
-    assert(repairAction(f.modify(_.isOa).setTo(false)).isInstanceOf[RepairAction.Keep], "a closed work stays on the list")
+    assertEquals(repairAction(f.modify(_.inCorpus).setTo(Some(com.histmersion.domain.library.Citekey("ck")))), RepairAction.Remove(com.histmersion.domain.library.Citekey("ck")))
+    assert(repairAction(f.modify(_.isOa).setTo(com.histmersion.domain.IngestBacklog.RepairFacts.IsOa(false))).isInstanceOf[RepairAction.Keep], "a closed work stays on the list")
     assert(
-      repairAction(f.modify(_.isOa).setTo(false).modify(_.inCorpus).setTo(Some("ck"))).isInstanceOf[RepairAction.Keep],
+      repairAction(f.modify(_.isOa).setTo(com.histmersion.domain.IngestBacklog.RepairFacts.IsOa(false)).modify(_.inCorpus).setTo(Some(com.histmersion.domain.library.Citekey("ck")))).isInstanceOf[RepairAction.Keep],
       "closed: never touched"
     )
-    assert(repairAction(f.modify(_.watcherAutoIngest).setTo(false)) match
+    assert(repairAction(f.modify(_.watcherAutoIngest).setTo(com.histmersion.domain.IngestBacklog.RepairFacts.WatcherAutoIngest(false))) match
       case RepairAction.Keep(why) => why.value.contains("does not auto-ingest")
       case _                      => false)
-    assert(repairAction(f.modify(_.watcherExists).setTo(false)).isInstanceOf[RepairAction.Keep])
+    assert(repairAction(f.modify(_.watcherExists).setTo(com.histmersion.domain.IngestBacklog.RepairFacts.WatcherExists(false))).isInstanceOf[RepairAction.Keep])
 
   test("the backlog's wire state and its few words"):
     val st =
@@ -150,7 +150,7 @@ class IngestBacklogSuite extends munit.FunSuite:
       ManagersMarkdown.line(info).contains("4 legal open-access works in the ingest backlog (~1 more day"),
       ManagersMarkdown.line(info)
     )
-    assert(!ManagersMarkdown.line(info.modify(_.backlog).setTo(0)).contains("backlog"))
+    assert(!ManagersMarkdown.line(info.modify(_.backlog).setTo(com.histmersion.api.automation.Managers.ManagerInfo.Backlog(0))).contains("backlog"))
     val r = RepairAcquire.RepairResult(
       dryRun = com.histmersion.api.library.RepairAcquire.RepairResult.DryRun(true),
       moved = com.histmersion.api.library.RepairAcquire.RepairResult.Moved(1),

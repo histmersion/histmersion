@@ -101,9 +101,9 @@ class AgentProposalsSuite extends munit.FunSuite:
     )
 
   test("route: the fill rule applies, anything else waits for a person unless configured auto"):
-    val current = Proposal(ApprovalKind.StatusChange, com.histmersion.domain.library.Citekey("a"), status = Some(Source.Status.Current))
-    val debunk = Proposal(ApprovalKind.StatusChange, com.histmersion.domain.library.Citekey("a"), status = Some(Source.Status.Debunked))
-    val edge = Proposal(ApprovalKind.Edge, com.histmersion.domain.library.Citekey("a"), edgeKind = Some(Edge.Kind.Refutes), target = Some(com.histmersion.domain.library.Citekey("b")))
+    val current = Proposal(ApprovalKind.StatusChange, com.histmersion.domain.library.Citekey.assume("a"), status = Some(Source.Status.Current))
+    val debunk = Proposal(ApprovalKind.StatusChange, com.histmersion.domain.library.Citekey.assume("a"), status = Some(Source.Status.Debunked))
+    val edge = Proposal(ApprovalKind.Edge, com.histmersion.domain.library.Citekey.assume("a"), edgeKind = Some(Edge.Kind.Refutes), target = Some(com.histmersion.domain.library.Citekey.assume("b")))
     import ApprovalMode.*
     assertEquals(route(current, Some(Source.Status.Unassessed), Manual, Manual), Route.Apply)
     assertEquals(route(current, Some(Source.Status.Contested), Manual, Manual), Route.Ask)

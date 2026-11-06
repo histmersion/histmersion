@@ -54,7 +54,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
     assert(articlePublish(draft, com.histmersion.domain.AutopilotPolicy.MinSources(3), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(10)).isInstanceOf[Verdict.Approve])
     assert(articlePublish(draft, com.histmersion.domain.AutopilotPolicy.MinSources(3), com.histmersion.domain.AutopilotPolicy.ApprovedToday(10), com.histmersion.domain.AutopilotPolicy.Cap(10)).isInstanceOf[Verdict.Leave])
     assert(
-      articlePublish(draft.modify(_.create).setTo(false).modify(_.slugFree).setTo(false), com.histmersion.domain.AutopilotPolicy.MinSources(3), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(10)).isInstanceOf[Verdict.Approve],
+      articlePublish(draft.modify(_.create).setTo(com.histmersion.domain.AutopilotPolicy.DraftFacts.Create(false)).modify(_.slugFree).setTo(com.histmersion.domain.AutopilotPolicy.DraftFacts.SlugFree(false)), com.histmersion.domain.AutopilotPolicy.MinSources(3), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(10)).isInstanceOf[Verdict.Approve],
       "an extension"
     )
 
@@ -62,26 +62,26 @@ class AutopilotPolicySuite extends munit.FunSuite:
     def why(d: DraftFacts) = articlePublish(d, com.histmersion.domain.AutopilotPolicy.MinSources(3), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(10)) match
       case Verdict.Reject(r) => r.value
       case v                 => fail(v.toString)
-    assert(why(draft.modify(_.filterRecorded).setTo(false)).contains("no coverage filter"))
-    assert(why(draft.modify(_.hits).setTo(Some(1))).contains("returns 1 source(s), fewer than 3"))
+    assert(why(draft.modify(_.filterRecorded).setTo(com.histmersion.domain.AutopilotPolicy.DraftFacts.FilterRecorded(false))).contains("no coverage filter"))
+    assert(why(draft.modify(_.hits).setTo(Some(com.histmersion.domain.AutopilotPolicy.DraftFacts.Hits(1)))).contains("returns 1 source(s), fewer than 3"))
     assert(why(draft.modify(_.hits).setTo(None)).contains("unknown number"))
-    assert(why(draft.modify(_.problems).setTo(List("p1", "p2"))).contains("2 problems: p1; p2"))
-    assert(why(draft.modify(_.cited).setTo(0)).contains("cites no source"))
-    assert(why(draft.modify(_.slugFree).setTo(false)).contains("slug x is taken"))
+    assert(why(draft.modify(_.problems).setTo(List(com.histmersion.domain.AutopilotPolicy.DraftFacts.Problems("p1"), com.histmersion.domain.AutopilotPolicy.DraftFacts.Problems("p2")))).contains("2 problems: p1; p2"))
+    assert(why(draft.modify(_.cited).setTo(com.histmersion.domain.AutopilotPolicy.DraftFacts.Cited(0))).contains("cites no source"))
+    assert(why(draft.modify(_.slugFree).setTo(com.histmersion.domain.AutopilotPolicy.DraftFacts.SlugFree(false))).contains("slug x is taken"))
 
   test(
     "goal-plan: something proposed → approved; sub-goals at the depth limit rejected; nothing rejected; the cap leaves it"
   ):
     val p = GoalPlanFacts(com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Goal("g"), subGoals = com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.SubGoals(3), queries = com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Queries(4), works = com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Works(2), depth = com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Depth(1))
     assert(goalPlan(p, com.histmersion.domain.AutopilotPolicy.DepthLimit(2), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(5)).isInstanceOf[Verdict.Approve])
-    goalPlan(p.modify(_.depth).setTo(2), com.histmersion.domain.AutopilotPolicy.DepthLimit(2), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(5)) match
+    goalPlan(p.modify(_.depth).setTo(com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Depth(2)), com.histmersion.domain.AutopilotPolicy.DepthLimit(2), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(5)) match
       case Verdict.Reject(r) => assert(r.value.contains("3 sub-goals") && r.value.contains("2 level(s) below a root"), r)
       case v                 => fail(v.toString)
     assert(
-      goalPlan(p.modify(_.subGoals).setTo(0).modify(_.depth).setTo(2), com.histmersion.domain.AutopilotPolicy.DepthLimit(2), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(5)).isInstanceOf[Verdict.Approve],
+      goalPlan(p.modify(_.subGoals).setTo(com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.SubGoals(0)).modify(_.depth).setTo(com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Depth(2)), com.histmersion.domain.AutopilotPolicy.DepthLimit(2), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(5)).isInstanceOf[Verdict.Approve],
       "no sub-goals: fine at any depth"
     )
-    assert(goalPlan(p.modify(_.subGoals).setTo(0).modify(_.queries).setTo(0).modify(_.works).setTo(0), com.histmersion.domain.AutopilotPolicy.DepthLimit(2), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(5)).isInstanceOf[Verdict.Reject])
+    assert(goalPlan(p.modify(_.subGoals).setTo(com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.SubGoals(0)).modify(_.queries).setTo(com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Queries(0)).modify(_.works).setTo(com.histmersion.domain.AutopilotPolicy.GoalPlanFacts.Works(0)), com.histmersion.domain.AutopilotPolicy.DepthLimit(2), com.histmersion.domain.AutopilotPolicy.ApprovedToday(0), com.histmersion.domain.AutopilotPolicy.Cap(5)).isInstanceOf[Verdict.Reject])
     assert(goalPlan(p, com.histmersion.domain.AutopilotPolicy.DepthLimit(2), com.histmersion.domain.AutopilotPolicy.ApprovedToday(5), com.histmersion.domain.AutopilotPolicy.Cap(5)).isInstanceOf[Verdict.Leave])
 
   test("the note marks the decision as the autopilot's; a left one carries none"):
@@ -104,23 +104,23 @@ class AutopilotPolicySuite extends munit.FunSuite:
     "advance: planned → seeding once managed; → compiled with an article and nothing left; → reviewed when it passed"
   ):
     assertEquals(advance(g), None)
-    assertEquals(advance(g.modify(_.managed).setTo(true)).map(_._1), Some(Goal.Status.Seeding))
-    assertEquals(advance(g.modify(_.managed).setTo(true).modify(_.articles).setTo(2).modify(_.compileOpen).setTo(true)).map(_._1), Some(Goal.Status.Seeding))
-    assertEquals(advance(g.modify(_.managed).setTo(true).modify(_.articles).setTo(2)).map(_._1), Some(Goal.Status.Compiled))
+    assertEquals(advance(g.modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true))).map(_._1), Some(Goal.Status.Seeding))
+    assertEquals(advance(g.modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true)).modify(_.articles).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Articles(2)).modify(_.compileOpen).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.CompileOpen(true))).map(_._1), Some(Goal.Status.Seeding))
+    assertEquals(advance(g.modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true)).modify(_.articles).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Articles(2))).map(_._1), Some(Goal.Status.Compiled))
     assertEquals(
-      advance(g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Compiled)).modify(_.managed).setTo(true).modify(_.articles).setTo(2).modify(_.reviewed).setTo(true)),
+      advance(g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Compiled)).modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true)).modify(_.articles).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Articles(2)).modify(_.reviewed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Reviewed(true))),
       Some((Goal.Status.Reviewed, "its 2 articles passed review"))
     )
 
   test("advance: never back, never past done, an unknown status is left"):
-    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Reviewed)).modify(_.managed).setTo(true)), None)
-    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Done)).modify(_.managed).setTo(true).modify(_.articles).setTo(3).modify(_.reviewed).setTo(true)), None)
-    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Wire("frozen")).modify(_.managed).setTo(true)), None)
-    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Compiled)).modify(_.managed).setTo(true).modify(_.articles).setTo(1).modify(_.compileOpen).setTo(true)), None)
+    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Reviewed)).modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true))), None)
+    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Done)).modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true)).modify(_.articles).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Articles(3)).modify(_.reviewed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Reviewed(true))), None)
+    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Wire("frozen")).modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true))), None)
+    assertEquals(advance(g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Compiled)).modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true)).modify(_.articles).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Articles(1)).modify(_.compileOpen).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.CompileOpen(true))), None)
 
   test("advance: a parent follows its sub-goals"):
     val p =
-      g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Seeding)).modify(_.managed).setTo(true).modify(_.children).setTo(List(Goal.Status.Wire(Goal.Status.Compiled), Goal.Status.Wire(Goal.Status.Seeding)))
+      g.modify(_.status).setTo(Goal.Status.Wire(Goal.Status.Seeding)).modify(_.managed).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Managed(true)).modify(_.children).setTo(List(Goal.Status.Wire(Goal.Status.Compiled), Goal.Status.Wire(Goal.Status.Seeding)))
     assertEquals(advance(p), None)
     assertEquals(
       advance(p.modify(_.children).setTo(List(Goal.Status.Wire(Goal.Status.Compiled), Goal.Status.Wire(Goal.Status.Reviewed)))).map(_._1),
@@ -132,7 +132,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       "no own article: reviewed when its sub-goals are"
     )
     assertEquals(
-      advance(p.modify(_.articles).setTo(1).modify(_.children).setTo(List(Goal.Status.Wire(Goal.Status.Reviewed)))).map(_._1),
+      advance(p.modify(_.articles).setTo(com.histmersion.domain.AutopilotPolicy.GoalFacts.Articles(1)).modify(_.children).setTo(List(Goal.Status.Wire(Goal.Status.Reviewed)))).map(_._1),
       Some(Goal.Status.Compiled),
       "its own article not reviewed yet"
     )
@@ -260,7 +260,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       com.histmersion.domain.ManagerPolicy.Candidate.Target("x"),
       com.histmersion.domain.ManagerPolicy.Next.Retry.Failures(0),
       ItemState(),
-      com.histmersion.domain.automation.Run.Id("run-12345678"),
+      com.histmersion.domain.automation.Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
       com.histmersion.domain.automation.Run.State.Done,
       None,
       StepFacts.Redo(com.histmersion.domain.ManagerPolicy.ItemOutcome("the draft was rejected")),
@@ -274,7 +274,7 @@ class AutopilotPolicySuite extends munit.FunSuite:
       com.histmersion.domain.ManagerPolicy.Candidate.Target("x"),
       com.histmersion.domain.ManagerPolicy.Next.Retry.Failures(1),
       ItemState(),
-      com.histmersion.domain.automation.Run.Id("run-12345678"),
+      com.histmersion.domain.automation.Run.Id("1feffdd6-4fb2-79cf-4978-543444f78922"),
       com.histmersion.domain.automation.Run.State.Done,
       None,
       StepFacts.Redo(com.histmersion.domain.ManagerPolicy.ItemOutcome("the draft was rejected")),
@@ -330,10 +330,10 @@ class NextArticleSuite extends munit.FunSuite:
 
   test("the next article: every article done, the seeding manager active, no proposal open, the cooldown over"):
     assert(nextArticle(done, now, com.histmersion.domain.AutopilotPolicy.CooldownHours(24)).exists(_.value.contains("2 articles are compiled and passed review")))
-    assertEquals(nextArticle(done.modify(_.unreviewed).setTo(1), now, com.histmersion.domain.AutopilotPolicy.CooldownHours(24)), None, "an article to review")
-    assertEquals(nextArticle(done.modify(_.compileOpen).setTo(1), now, com.histmersion.domain.AutopilotPolicy.CooldownHours(24)), None, "an article to compile")
+    assertEquals(nextArticle(done.modify(_.unreviewed).setTo(com.histmersion.domain.AutopilotPolicy.NextFacts.Unreviewed(1)), now, com.histmersion.domain.AutopilotPolicy.CooldownHours(24)), None, "an article to review")
+    assertEquals(nextArticle(done.modify(_.compileOpen).setTo(com.histmersion.domain.AutopilotPolicy.NextFacts.CompileOpen(1)), now, com.histmersion.domain.AutopilotPolicy.CooldownHours(24)), None, "an article to compile")
     assertEquals(
-      nextArticle(done.modify(_.articles).setTo(0), now, com.histmersion.domain.AutopilotPolicy.CooldownHours(24)),
+      nextArticle(done.modify(_.articles).setTo(com.histmersion.domain.AutopilotPolicy.NextFacts.Articles(0)), now, com.histmersion.domain.AutopilotPolicy.CooldownHours(24)),
       None,
       "no article yet: the first proposal is the plan's"
     )

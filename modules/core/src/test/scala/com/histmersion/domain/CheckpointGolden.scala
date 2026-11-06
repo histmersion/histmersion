@@ -192,7 +192,7 @@ object CheckpointGolden:
       Geocoded(
         findingInputs,
         List(
-          GeocodeChoice(com.histmersion.domain.EnrichSource.GeocodeChoice.Claim("Tin came from the east."), com.histmersion.domain.EnrichSource.GeocodeChoice.Asked("Troy"), Some(com.histmersion.domain.catalogue.Place.Id("troy")), Some(com.histmersion.domain.EnrichSource.GeocodeChoice.Label("Troy")), Some(com.histmersion.domain.EnrichSource.GeocodeChoice.Approximate("a qualifier was dropped"))),
+          GeocodeChoice(com.histmersion.domain.EnrichSource.GeocodeChoice.Claim("Tin came from the east."), com.histmersion.domain.EnrichSource.GeocodeChoice.Asked("Troy"), Some(com.histmersion.domain.catalogue.Place.Id.assume("troy")), Some(com.histmersion.domain.EnrichSource.GeocodeChoice.Label("Troy")), Some(com.histmersion.domain.EnrichSource.GeocodeChoice.Approximate("a qualifier was dropped"))),
           GeocodeChoice(com.histmersion.domain.EnrichSource.GeocodeChoice.Claim("Nowhere."), com.histmersion.domain.EnrichSource.GeocodeChoice.Asked("Atlantis"), None, None, None)
         )
       ),
@@ -336,7 +336,7 @@ private object EnrichSourceSamples:
     EnrichSource
       .patch(
         loaded.modify(
-          _.status).setTo("current").modify(_.hasSummary).setTo(true).modify(_.hasNotes).setTo(true).modify(_.hasPeriod).setTo(true).modify(_.topics).setTo(List("bronze_age")).modify(_.regions).setTo(List("Aegean")).modify(_.tags).setTo(List("tin", "trade")
+          _.status).setTo(com.histmersion.api.library.Source.Status.Wire("current")).modify(_.hasSummary).setTo(com.histmersion.domain.EnrichSource.Loaded.HasSummary(true)).modify(_.hasNotes).setTo(com.histmersion.domain.EnrichSource.Loaded.HasNotes(true)).modify(_.hasPeriod).setTo(com.histmersion.domain.EnrichSource.Loaded.HasPeriod(true)).modify(_.topics).setTo(List(com.histmersion.domain.EnrichSource.Topic("bronze_age"))).modify(_.regions).setTo(List(com.histmersion.domain.EnrichSource.Region("Aegean"))).modify(_.tags).setTo(List(com.histmersion.domain.EnrichSource.Tag("tin"), com.histmersion.domain.EnrichSource.Tag("trade"))
         ),
         classified.modify(_.status).setTo(Source.Status.Contested),
         Nil,

@@ -59,7 +59,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       failures: Next.Retry.Failures = Next.Retry.Failures(0),
       error: Option[ManagerPolicy.Problem] = None
   ) =
-    evaluateReview(s, com.histmersion.domain.research.Slug("tin"), attempts, failures, st, com.histmersion.domain.automation.Run.Id("run-1234567890"), status, error, fs, task, now)
+    evaluateReview(s, com.histmersion.domain.research.Slug("tin"), attempts, failures, st, com.histmersion.domain.automation.Run.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"), status, error, fs, task, now)
 
   test("no open MAJOR: done, converged after k runs"):
     eval(fs = facts(ReviewFacts.OpenMajors(0)), attempts = ManagerPolicy.Attempts(2)) match
@@ -72,7 +72,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     eval(st = ItemState(before = Some(com.histmersion.api.automation.Managers.ItemState.Before(5)))) match
       case Next.Again(nb, st, note) =>
         assertEquals(nb, Some(now.plusSeconds(1800)))
-        assertEquals(st.history, List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("run-1234567890"), Some(com.histmersion.api.automation.Managers.RunMark.Before(5)), com.histmersion.api.automation.Managers.RunMark.After(2))))
+        assertEquals(st.history, List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"), Some(com.histmersion.api.automation.Managers.RunMark.Before(5)), com.histmersion.api.automation.Managers.RunMark.After(2))))
         assertEquals(st.before, None)
         assert(note.value.contains("2 open MAJORs"), note)
       case other => fail(other.toString)
@@ -91,7 +91,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         assert(t.value.contains("review manager stopped: omission churn"), t)
         assertEquals(
           st.history.last,
-          RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("run-1234567890"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), churn = com.histmersion.api.automation.Managers.RunMark.Churn(true), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(5)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(5)))
+          RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), churn = com.histmersion.api.automation.Managers.RunMark.Churn(true), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(5)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(5)))
         )
       case other => fail(other.toString)
 
@@ -142,7 +142,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
   test("a stop with no ledger line still files a task naming the article and the run"):
     eval(fs = facts(ReviewFacts.OpenMajors(1), escalated = ReviewFacts.Escalated(1)), task = None) match
       case Next.Stop(_, Some(t), _) =>
-        assert(t.value.startsWith("review manager stopped [[tin]]: ") && t.value.contains("run-1234"), t)
+        assert(t.value.startsWith("review manager stopped [[tin]]: ") && t.value.contains("ccf9dbcf"), t)
       case other => fail(other.toString)
 
   test("failed runs back off exponentially; the max-failures-th stops the item with a task"):
@@ -165,7 +165,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       case _                     => false)
 
   test("facts from a ledger: open majors, reopen counts, escalation, whether every open MAJOR is a missing-critique"):
-    val run = com.histmersion.domain.automation.Run.Id("run-a")
+    val run = com.histmersion.domain.automation.Run.Id("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59")
     val sk = f(Finding.Id("S1"), Reviewer.Skeptic, MissingCritique)
     val sk2 = f(Finding.Id("S2"), Reviewer.Skeptic, MissingCritique)
     val l1 = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), List(sk), run, com.histmersion.domain.ReviewLedger.Closure.Round(1))._1

@@ -106,12 +106,12 @@ class AcquireRecheckSuite extends munit.FunSuite:
     )
     assertEquals(allowance(settings, com.histmersion.domain.AcquireRecheck.CheckedToday(0), Some(Shared(left = com.histmersion.domain.AcquireRecheck.Shared.Left(2), cap = com.histmersion.domain.AcquireRecheck.Shared.Cap(60), backlogPending = com.histmersion.domain.AcquireRecheck.Shared.BacklogPending(5), fetchedToday = com.histmersion.domain.AcquireRecheck.Shared.FetchedToday(0)))), 0)
     assertEquals(
-      allowance(settings.modify(_.sharePercent).setTo(0), com.histmersion.domain.AcquireRecheck.CheckedToday(0), Some(Shared(com.histmersion.domain.AcquireRecheck.Shared.Left(60), com.histmersion.domain.AcquireRecheck.Shared.Cap(60), com.histmersion.domain.AcquireRecheck.Shared.BacklogPending(0), com.histmersion.domain.AcquireRecheck.Shared.FetchedToday(0)))),
+      allowance(settings.modify(_.sharePercent).setTo(com.histmersion.domain.AcquireRecheck.Settings.SharePercent(0)), com.histmersion.domain.AcquireRecheck.CheckedToday(0), Some(Shared(com.histmersion.domain.AcquireRecheck.Shared.Left(60), com.histmersion.domain.AcquireRecheck.Shared.Cap(60), com.histmersion.domain.AcquireRecheck.Shared.BacklogPending(0), com.histmersion.domain.AcquireRecheck.Shared.FetchedToday(0)))),
       0,
       "no share: nothing under a shared cap"
     )
     assertEquals(
-      allowance(settings.modify(_.sharePercent).setTo(100).modify(_.perPass).setTo(100), com.histmersion.domain.AcquireRecheck.CheckedToday(0), Some(Shared(com.histmersion.domain.AcquireRecheck.Shared.Left(60), com.histmersion.domain.AcquireRecheck.Shared.Cap(60), com.histmersion.domain.AcquireRecheck.Shared.BacklogPending(0), com.histmersion.domain.AcquireRecheck.Shared.FetchedToday(0)))),
+      allowance(settings.modify(_.sharePercent).setTo(com.histmersion.domain.AcquireRecheck.Settings.SharePercent(100)).modify(_.perPass).setTo(com.histmersion.domain.AcquireRecheck.Settings.PerPass(100)), com.histmersion.domain.AcquireRecheck.CheckedToday(0), Some(Shared(com.histmersion.domain.AcquireRecheck.Shared.Left(60), com.histmersion.domain.AcquireRecheck.Shared.Cap(60), com.histmersion.domain.AcquireRecheck.Shared.BacklogPending(0), com.histmersion.domain.AcquireRecheck.Shared.FetchedToday(0)))),
       40,
       "the day's cap still holds"
     )

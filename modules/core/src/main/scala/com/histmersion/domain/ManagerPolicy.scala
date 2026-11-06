@@ -435,7 +435,7 @@ object ManagerPolicy:
       .exists(!_.isAfter(now)) || h.untilSource
       .map(_.value.trim)
       .filter(_.nonEmpty)
-      .flatMap(u => com.histmersion.domain.library.Citekey.option(u))
+      .map(com.histmersion.domain.library.Citekey.assume(_))
       .exists(sourceExists)
 
   /** `2026-11-01` (UTC midnight) or an ISO instant. */

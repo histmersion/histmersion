@@ -50,7 +50,7 @@ class AcquireMatchSuite extends munit.FunSuite:
   test("an item naming the source's DOI is CLOSED — whatever case or prefix either side writes it in"):
     val ds = AcquireMatch.decide(
       List(Brill),
-      Some(com.histmersion.domain.library.Doi("https://doi.org/10.1163/9789004441385")),
+      Some(com.histmersion.domain.library.Doi.assume("https://doi.org/10.1163/9789004441385")),
       com.histmersion.domain.AcquireMatch.DecideTitle("The Rise of Bronze Age Society"),
       List(com.histmersion.domain.AuthorName("Kristiansen, Kristian")),
       AcquireMatch.ProposeThreshold(0.6)

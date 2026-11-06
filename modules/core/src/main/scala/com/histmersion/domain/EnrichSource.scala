@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.StoredIdCodecs.given
 import scala.annotation.tailrec
 import com.histmersion.api.ListPatch
 import com.histmersion.api.library.{FindingsPatch, MetadataPatch, WorkRef}

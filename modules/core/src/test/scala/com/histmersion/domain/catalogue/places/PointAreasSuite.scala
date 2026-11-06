@@ -30,19 +30,19 @@ class PointAreasSuite extends munit.FunSuite:
     val l = Listed(com.histmersion.domain.catalogue.places.PointAreas.Listed.Id("wikidata_q17167"), com.histmersion.domain.catalogue.places.PointAreas.Listed.Label("Roman Republic"), com.histmersion.domain.catalogue.places.PointAreas.Listed.Source("wikidata"), com.histmersion.domain.catalogue.places.PointAreas.Listed.Kind("polity"), Dating.Dated, findings = com.histmersion.domain.catalogue.places.PointAreas.Listed.Findings(27))
     assertEquals(l.detail, "Roman Republic (wikidata polity, dated): 27 findings, each also at another place")
     assertEquals(
-      l.modify(_.alone).setTo(3).detail,
+      l.modify(_.alone).setTo(com.histmersion.domain.catalogue.places.PointAreas.Listed.Alone(3)).detail,
       "Roman Republic (wikidata polity, dated): 27 findings, 3 of them at no other place"
     )
-    assertEquals(l.modify(_.findings).setTo(0).detail, "Roman Republic (wikidata polity, dated)")
+    assertEquals(l.modify(_.findings).setTo(com.histmersion.domain.catalogue.places.PointAreas.Listed.Findings(0)).detail, "Roman Republic (wikidata polity, dated)")
     assertEquals(
-      l.modify(_.findings).setTo(1).detail,
+      l.modify(_.findings).setTo(com.histmersion.domain.catalogue.places.PointAreas.Listed.Findings(1)).detail,
       "Roman Republic (wikidata polity, dated): 1 finding, also at another place"
     )
     assertEquals(
-      l.modify(_.findings).setTo(1).modify(_.alone).setTo(1).detail,
+      l.modify(_.findings).setTo(com.histmersion.domain.catalogue.places.PointAreas.Listed.Findings(1)).modify(_.alone).setTo(com.histmersion.domain.catalogue.places.PointAreas.Listed.Alone(1)).detail,
       "Roman Republic (wikidata polity, dated): 1 finding, at no other place"
     )
-    assert(l.modify(_.pinned).setTo(1).detail.value.contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)"))
+    assert(l.modify(_.pinned).setTo(com.histmersion.domain.catalogue.places.PointAreas.Listed.Pinned(1)).detail.value.contains("kept: named by 1 attestation(s)/asset link(s)/place override(s)"))
 
   test("report: the true count, the groups and every holder always, the sample fills up to the cap"):
     val groups = List(Group(com.histmersion.domain.catalogue.places.PointAreas.Group.Source("wikidata"), com.histmersion.domain.catalogue.places.PointAreas.Group.Kind("region"), Dating.Undated, com.histmersion.domain.catalogue.places.PointAreas.Group.Places(3)), Group(com.histmersion.domain.catalogue.places.PointAreas.Group.Source("geonames"), com.histmersion.domain.catalogue.places.PointAreas.Group.Kind("region"), Dating.Undated, com.histmersion.domain.catalogue.places.PointAreas.Group.Places(5)))
