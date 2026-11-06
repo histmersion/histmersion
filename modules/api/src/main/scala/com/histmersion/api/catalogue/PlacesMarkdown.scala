@@ -8,8 +8,8 @@ object PlacesMarkdown:
 
   type KindOfResult = KindOfResult.T
   object KindOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KindOfKind = KindOfKind.T
-  object KindOfKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type KindOfKind = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
+  val KindOfKind: _root_.com.histmersion.api.catalogue.Place.Summary.Kind.type = _root_.com.histmersion.api.catalogue.Place.Summary.Kind
   type KindOfPs = KindOfPs.T
   object KindOfPs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type KindOfPe = KindOfPe.T

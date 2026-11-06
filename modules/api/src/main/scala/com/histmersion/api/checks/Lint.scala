@@ -21,8 +21,8 @@ object Lint:
   type ExtractParagraphsBlockNextIsList = ExtractParagraphsBlockNextIsList.T
   object ExtractParagraphsBlockNextIsList extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Names = Names.T
-  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Names = _root_.com.histmersion.api.checks.Lint.Rule.Name
+  val Names: _root_.com.histmersion.api.checks.Lint.Rule.Name.type = _root_.com.histmersion.api.checks.Lint.Rule.Name
   type RuleName = RuleName.T
   object RuleName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SelectResultPart1 = SelectResultPart1.T

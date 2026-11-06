@@ -277,8 +277,8 @@ object Calibre:
   object IsBlankS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GuardResultPart1 = GuardResultPart1.T
   object GuardResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GuardTitle = GuardTitle.T
-  object GuardTitle extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GuardTitle = _root_.com.histmersion.plugins.calibre.Calibre.Push.Title
+  val GuardTitle: _root_.com.histmersion.plugins.calibre.Calibre.Push.Title.type = _root_.com.histmersion.plugins.calibre.Calibre.Push.Title
   type GuardAuthors = GuardAuthors.T
   object GuardAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ReplaceableFormats = ReplaceableFormats.T
@@ -299,8 +299,8 @@ object Calibre:
   object UpdatePlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetMetadataCmdResult = SetMetadataCmdResult.T
   object SetMetadataCmdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetMetadataCmdCalibredb = SetMetadataCmdCalibredb.T
-  object SetMetadataCmdCalibredb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetMetadataCmdCalibredb = _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb
+  val SetMetadataCmdCalibredb: _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb.type = _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb
   type SetMetadataCmdLibArgs = SetMetadataCmdLibArgs.T
   object SetMetadataCmdLibArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetMetadataCmdId = SetMetadataCmdId.T
@@ -330,8 +330,8 @@ object Calibre:
   object NormaliseAuthorRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NormaliseAuthorsResult = NormaliseAuthorsResult.T
   object NormaliseAuthorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NormaliseAuthorsAuthors = NormaliseAuthorsAuthors.T
-  object NormaliseAuthorsAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NormaliseAuthorsAuthors = _root_.com.histmersion.plugins.calibre.Calibre.Push.Authors
+  val NormaliseAuthorsAuthors: _root_.com.histmersion.plugins.calibre.Calibre.Push.Authors.type = _root_.com.histmersion.plugins.calibre.Calibre.Push.Authors
   type PlanAllBooksPart1 = PlanAllBooksPart1.T
   object PlanAllBooksPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SettableFields = SettableFields.T
@@ -340,8 +340,8 @@ object Calibre:
   object SetCmdResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetCmdResultPart2 = SetCmdResultPart2.T
   object SetCmdResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SetCmdCalibredb = SetCmdCalibredb.T
-  object SetCmdCalibredb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SetCmdCalibredb = _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb
+  val SetCmdCalibredb: _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb.type = _root_.com.histmersion.plugins.calibre.Calibre.Library.Calibredb
   type SetCmdLibArgs = SetCmdLibArgs.T
   object SetCmdLibArgs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SetCmdId = SetCmdId.T

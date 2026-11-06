@@ -2,6 +2,7 @@ package compilerfixture
 
 object Contract:
   @main def verifyCompilerRepairs(): Unit =
+    propertyfixture.Flows.check()
     WireEndpoints.check()
     assert(Positive.nestedLiteral == "inside")
     assert(Positive.nestedNumber == "7")

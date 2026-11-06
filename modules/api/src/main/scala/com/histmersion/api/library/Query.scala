@@ -51,10 +51,10 @@ object Query:
   object CellV extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MarkdownTableResult = MarkdownTableResult.T
   object MarkdownTableResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownTableColumns = MarkdownTableColumns.T
-  object MarkdownTableColumns extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MarkdownTableRows = MarkdownTableRows.T
-  object MarkdownTableRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MarkdownTableColumns = _root_.com.histmersion.api.library.Query.QueryResult.Columns
+  val MarkdownTableColumns: _root_.com.histmersion.api.library.Query.QueryResult.Columns.type = _root_.com.histmersion.api.library.Query.QueryResult.Columns
+  type MarkdownTableRows = _root_.com.histmersion.api.library.Query.QueryResult.Rows
+  val MarkdownTableRows: _root_.com.histmersion.api.library.Query.QueryResult.Rows.type = _root_.com.histmersion.api.library.Query.QueryResult.Rows
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SchemaMarkdownResult = SchemaMarkdownResult.T

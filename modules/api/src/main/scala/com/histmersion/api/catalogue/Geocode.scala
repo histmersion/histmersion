@@ -62,8 +62,8 @@ object Geocode:
   object CompassPart2Part4 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type AttemptsName = AttemptsName.T
   object AttemptsName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BroadKind = BroadKind.T
-  object BroadKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BroadKind = _root_.com.histmersion.api.catalogue.Geocode.Candidate.Kind
+  val BroadKind: _root_.com.histmersion.api.catalogue.Geocode.Candidate.Kind.type = _root_.com.histmersion.api.catalogue.Geocode.Candidate.Kind
   type TierOfResult = TierOfResult.T
   object TierOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TierOfImportSource = _root_.com.histmersion.api.catalogue.Place.Match.ImportSource

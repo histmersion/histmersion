@@ -1,6 +1,80 @@
 # Priority-family status
 
-## Current checkpoint: expression contexts repaired and raw measurement corrected
+## Current checkpoint: property-flow helpers share model types, compilation incomplete
+
+project-property-flows-4 applies 110 alias/companion AST patches for 55 generated
+helper types across 30 production files, with zero application test edits. Helpers
+now alias their constructor property's canonical type and companion. For example,
+Paging.EncodeCountsCountsPart1/2 share Paging.Page.CountsPart1/2, and
+AgentsMarkdown.CallShapeFirstCallTokens shares Agents.StepInfo.FirstCallTokens.
+No method body or model property definition changes. These are applied
+consolidations, not 55 independently verified policy repairs or deleted model
+concepts. The configuration selects one reusable mode and project-wide roots;
+there are no individual application type or source-expression mappings.
+
+The existing CompilerRepairs consumes frozen E007 type evidence and AST property
+projections, then delegates to TypeConsolidation. A helper needs owner-match
+generated provenance, an empty qualified Pure companion over the same base,
+matching module/source set and a compatible platform. Constructor property types
+are protected. Supported flows are unchanged matching-name arguments, whole
+method results and typed values, including bounded collection projections. All
+parsed property constraints are collected before positive filtering; conflicting
+targets veto the entire helper, including conflicts in otherwise unsupported
+contexts. Arbitrary transforms, custom behavior, unknown origins, real
+property-to-property merging and unsupported diagnostics stay unresolved.
+Import/alias resolution and unprinted/inferred flows remain detection limits.
+
+Five positive fixture aliases match the independent golden exactly. The actual
+rewritten fixture compiles/runs with Scala 3.10, -source:future and fatal E165,
+checking type identity, unchanged values, collection results and constructors.
+All five ordinary, two owner and one Tapir golden files remain exact; their prior
+runtime assertions still pass. Negative fixture evidence preserves conflicts,
+unknown origins, differing parameter names, transformed results, custom behavior,
+protected model properties, cross-module and incompatible-platform cases. Fixture
+origins are explicitly synthetic test data. Preliminary previews1/2 were not
+applied; a compilation failure prevented preview3; final preview4 alone was applied.
+
+All 30 files verify against the frozen preview. The full source census matches
+frontier22's Scala hashes (the build additionally snapshots build.sbt), retaining
+all 3169 Scala files and 136642 positions. Stable raw-ID delta is zero introduced,
+zero removed and zero recognition corrections: production886/test6009 candidates.
+Opaque shape history records 55 removed shapes, zero introduced, leaving
+production26894/test19. The aliases retain helper names and constructors. There
+are 2981 overlap candidate groups (previous2983), and 16228 unresolved references
+(previous16207). Partial alias resolution prevents treating those changes as
+semantic acceptance or caller completion. No detector refinement round is consumed.
+
+| Module | Previous latest | Actual frontier22 |
+|---|---:|---:|
+| api JVM and JS, each | 2516 | 2478 |
+| values | 31 | cached failure |
+| upstreams | 349 | 346 |
+| plugin-vaults | 94 | 94 |
+| plugins/calibre | 199 | 194 |
+| plugins/ai-http | 89 | 89 |
+| plugin-fixtures/hello | cached failure | 1 |
+| plugin-fixtures/hello-ai | 7 | 7 |
+| chimney-iron | cached failure | cached failure |
+
+All ten previously failing tasks still fail. These diagnostic counts are not
+stable policy IDs or individually verified fixes; new/replaced compiler errors
+are not classified by aggregate reduction. Stack16m, maxErrors10000, serial
+compilation and compiler checks are unchanged, and all 3170 source/build hashes
+are stable. Plugin API production compilation passes. Its actual all-suite test
+run executes 48 tests: 45 pass and the same three ValuesSuite coordinate/DOI/
+Wikidata client-validation conflicts fail. Their assertions remain intact.
+CompileBatch labels the nonzero test exit COMPILE_FAILED; build.log records the
+actual test failures. Other dependent compilation/application tests remain blocked.
+No full-project test/native pass, inventory acceptance or global automation rate
+is claimed. Other policy families retain their prior evidence and outstanding work.
+
+Next work is the remaining compiler frontier, especially generated helper flows
+and native-library boundaries, using reusable transformations across all eligible
+findings. Remaining raw candidates, smart construction and application tests stay
+in scope. The original migration scope and 90% automatic-repair target remain
+unchanged and unproven.
+
+## Previous checkpoint: expression contexts repaired and raw measurement corrected
 
 Two batches use the existing pipeline: project-expression-context-2 applies 423
 ordinary compiler-expression patches plus two compound pattern/guard patches across

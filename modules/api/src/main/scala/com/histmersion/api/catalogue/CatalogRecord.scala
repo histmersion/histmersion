@@ -41,10 +41,10 @@ object CatalogRecord:
   object KeyResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EventIdResult = EventIdResult.T
   object EventIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventIdProvider = EventIdProvider.T
-  object EventIdProvider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EventIdProviderId = EventIdProviderId.T
-  object EventIdProviderId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type EventIdProvider = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
+  val EventIdProvider: _root_.com.histmersion.api.catalogue.CatalogRecord.Provider.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
+  type EventIdProviderId = _root_.com.histmersion.api.catalogue.CatalogRecord.ProviderId
+  val EventIdProviderId: _root_.com.histmersion.api.catalogue.CatalogRecord.ProviderId.type = _root_.com.histmersion.api.catalogue.CatalogRecord.ProviderId
   type OwnerResultPart1 = OwnerResultPart1.T
   object OwnerResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OwnerResultPart2 = OwnerResultPart2.T

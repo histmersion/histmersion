@@ -72,8 +72,8 @@ object AssetLinks:
   object UrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UrlCitekey = _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey
   val UrlCitekey: _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey.type = _root_.com.histmersion.api.media.AssetLinks.WebBaseCitekey
-  type UrlName = UrlName.T
-  object UrlName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type UrlName = _root_.com.histmersion.api.media.AssetInfo.Name
+  val UrlName: _root_.com.histmersion.api.media.AssetInfo.Name.type = _root_.com.histmersion.api.media.AssetInfo.Name
   type EncResult = EncResult.T
   object EncResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EncS = EncS.T

@@ -4,8 +4,8 @@ object UpstreamQuotaMarkdown:
 
   type NameResult = NameResult.T
   object NameResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NameUpstream = NameUpstream.T
-  object NameUpstream extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type NameUpstream = _root_.com.histmersion.api.library.UpstreamQuota.Upstream
+  val NameUpstream: _root_.com.histmersion.api.library.UpstreamQuota.Upstream.type = _root_.com.histmersion.api.library.UpstreamQuota.Upstream
   type LineResult = LineResult.T
   object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

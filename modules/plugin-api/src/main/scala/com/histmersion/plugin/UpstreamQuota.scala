@@ -37,12 +37,12 @@ object UpstreamQuota:
   object TakeResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type TakePurpose = TakePurpose.T
   object TakePurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObserveStatus = ObserveStatus.T
-  object ObserveStatus extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObserveHeadersPart1 = ObserveHeadersPart1.T
-  object ObserveHeadersPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ObserveHeadersPart2 = ObserveHeadersPart2.T
-  object ObserveHeadersPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ObserveStatus = _root_.com.histmersion.plugin.Plugin.HttpResponse.Status
+  val ObserveStatus: _root_.com.histmersion.plugin.Plugin.HttpResponse.Status.type = _root_.com.histmersion.plugin.Plugin.HttpResponse.Status
+  type ObserveHeadersPart1 = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey
+  val ObserveHeadersPart1: _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey.type = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersKey
+  type ObserveHeadersPart2 = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue
+  val ObserveHeadersPart2: _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue.type = _root_.com.histmersion.plugin.Plugin.HttpResponse.HeadersValue
   type WaitingUntilResult = WaitingUntilResult.T
   object WaitingUntilResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

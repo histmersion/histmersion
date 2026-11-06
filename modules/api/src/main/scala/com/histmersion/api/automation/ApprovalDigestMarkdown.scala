@@ -5,8 +5,8 @@ import com.histmersion.api.given
 object ApprovalDigestMarkdown:
   type DeciderResult = DeciderResult.T
   object DeciderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DeciderDecidedBy = DeciderDecidedBy.T
-  object DeciderDecidedBy extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type DeciderDecidedBy = _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy
+  val DeciderDecidedBy: _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy.type = _root_.com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy
   type DigestResult = DigestResult.T
   object DigestResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BulkResult = BulkResult.T

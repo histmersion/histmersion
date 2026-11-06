@@ -26,12 +26,12 @@ object EventTaxonomy:
   object RefineLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   val OfKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  type GroupResult = GroupResult.T
-  object GroupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type GroupResult = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group
+  val GroupResult: _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group
   type GroupKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   val GroupKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
-  type IconResult = IconResult.T
-  object IconResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type IconResult = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon
+  val IconResult: _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Icon
   type IconKind = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   val IconKind: _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind.type = _root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind
   type IsNaturalResult = IsNaturalResult.T

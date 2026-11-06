@@ -17,10 +17,10 @@ object AgentsMarkdown:
   object UsdD extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CallShapeResult = CallShapeResult.T
   object CallShapeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CallShapeFirstCallTokens = CallShapeFirstCallTokens.T
-  object CallShapeFirstCallTokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CallShapeTurns = CallShapeTurns.T
-  object CallShapeTurns extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type CallShapeFirstCallTokens = _root_.com.histmersion.api.automation.Agents.StepInfo.FirstCallTokens
+  val CallShapeFirstCallTokens: _root_.com.histmersion.api.automation.Agents.StepInfo.FirstCallTokens.type = _root_.com.histmersion.api.automation.Agents.StepInfo.FirstCallTokens
+  type CallShapeTurns = _root_.com.histmersion.api.automation.Agents.StepInfo.Turns
+  val CallShapeTurns: _root_.com.histmersion.api.automation.Agents.StepInfo.Turns.type = _root_.com.histmersion.api.automation.Agents.StepInfo.Turns
   type TokensResult = TokensResult.T
   object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ModelsResult = ModelsResult.T
@@ -133,14 +133,14 @@ object AgentsMarkdown:
   object SecsN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ModelsConfigured = ModelsConfigured.T
   object ModelsConfigured extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ModelsActual = ModelsActual.T
-  object ModelsActual extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ModelsActual = _root_.com.histmersion.api.automation.RunCompare.StepSide.Actual
+  val ModelsActual: _root_.com.histmersion.api.automation.RunCompare.StepSide.Actual.type = _root_.com.histmersion.api.automation.RunCompare.StepSide.Actual
   type PaidResult = PaidResult.T
   object PaidResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PaidCostUsd = PaidCostUsd.T
-  object PaidCostUsd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PaidBilling = PaidBilling.T
-  object PaidBilling extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PaidCostUsd = _root_.com.histmersion.api.automation.RunCompare.RunSide.CostUsd
+  val PaidCostUsd: _root_.com.histmersion.api.automation.RunCompare.RunSide.CostUsd.type = _root_.com.histmersion.api.automation.RunCompare.RunSide.CostUsd
+  type PaidBilling = _root_.com.histmersion.api.automation.RunCompare.StepSide.Billing
+  val PaidBilling: _root_.com.histmersion.api.automation.RunCompare.StepSide.Billing.type = _root_.com.histmersion.api.automation.RunCompare.StepSide.Billing
   type RatioResult = RatioResult.T
   object RatioResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type RatioN = RatioN.T

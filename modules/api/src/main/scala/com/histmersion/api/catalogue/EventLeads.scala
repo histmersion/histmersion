@@ -8,22 +8,22 @@ object EventLeads:
   object YearsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SizeResult = SizeResult.T
   object SizeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeVei = SizeVei.T
-  object SizeVei extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SizeMagnitude = SizeMagnitude.T
-  object SizeMagnitude extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type SizeVei = _root_.com.histmersion.api.catalogue.LeadFacts.Vei
+  val SizeVei: _root_.com.histmersion.api.catalogue.LeadFacts.Vei.type = _root_.com.histmersion.api.catalogue.LeadFacts.Vei
+  type SizeMagnitude = _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude
+  val SizeMagnitude: _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude.type = _root_.com.histmersion.api.catalogue.LeadFacts.Magnitude
   type QResult = QResult.T
   object QResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QS = QS.T
   object QS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ActionsEventId = ActionsEventId.T
   object ActionsEventId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionsLabel = ActionsLabel.T
-  object ActionsLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionsLabel = _root_.com.histmersion.api.catalogue.LeadFacts.Label
+  val ActionsLabel: _root_.com.histmersion.api.catalogue.LeadFacts.Label.type = _root_.com.histmersion.api.catalogue.LeadFacts.Label
   type ActionsYrs = ActionsYrs.T
   object ActionsYrs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ActionsProposed = ActionsProposed.T
-  object ActionsProposed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ActionsProposed = _root_.com.histmersion.api.catalogue.LeadFacts.Proposed
+  val ActionsProposed: _root_.com.histmersion.api.catalogue.LeadFacts.Proposed.type = _root_.com.histmersion.api.catalogue.LeadFacts.Proposed
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

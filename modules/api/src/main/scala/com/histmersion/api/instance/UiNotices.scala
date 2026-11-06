@@ -48,8 +48,8 @@ object UiNotices:
 
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type WiresResult = WiresResult.T
-    object WiresResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type WiresResult = _root_.com.histmersion.api.instance.UiNotices.Board.Wire
+    val WiresResult: _root_.com.histmersion.api.instance.UiNotices.Board.Wire.type = _root_.com.histmersion.api.instance.UiNotices.Board.Wire
 
     def parse(s: com.histmersion.api.instance.UiNotices.Board.ParseS): Option[Board] = values.find(_.wire == _root_.com.histmersion.api.instance.UiNotices.Board.Wire(Option(s).map((_).value.trim.toLowerCase).getOrElse("")))
     def wires: List[com.histmersion.api.instance.UiNotices.Board.WiresResult] = values.toList.map(_.wire)

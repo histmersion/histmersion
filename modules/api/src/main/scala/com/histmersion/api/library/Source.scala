@@ -146,8 +146,8 @@ object Source:
 
     type CalibreLineResult = CalibreLineResult.T
     object CalibreLineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type CalibreLineCalibreId = CalibreLineCalibreId.T
-    object CalibreLineCalibreId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type CalibreLineCalibreId = _root_.com.histmersion.api.library.Source.CalibreId
+    val CalibreLineCalibreId: _root_.com.histmersion.api.library.Source.CalibreId.type = _root_.com.histmersion.api.library.Source.CalibreId
     type RefusalResult = RefusalResult.T
     object RefusalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type RefusalCk = RefusalCk.T
