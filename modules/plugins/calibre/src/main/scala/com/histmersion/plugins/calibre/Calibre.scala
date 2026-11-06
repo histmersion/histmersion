@@ -60,11 +60,11 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
       limit: com.histmersion.plugins.calibre.Calibre.ViaSqliteLimit
   ): Either[com.histmersion.plugins.calibre.Calibre.ViaSqliteResultPart1, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     val where = id match
-      case Some(n) => s"b.id = ${n.toInt}"
+      case Some(n) => s"b.id = ${(n).value.toInt}"
       case None    =>
         val like = Calibre.sqlLiteral(_root_.com.histmersion.plugins.calibre.Calibre.SqlLiteralS("%" + query.getOrElse("") + "%"))
         s"(b.title LIKE $like OR b.author_sort LIKE $like)"
-    val sql = Calibre.sqliteQuery(where, limit)
+    val sql = Calibre.sqliteQuery(_root_.com.histmersion.plugins.calibre.Calibre.SqliteQueryWhere(where), limit)
     shell
       .run(List(cfg.sqlite, "-readonly", "-json", Path.of(cfg.library, "metadata.db").toString, sql))
       .flatMap(Calibre.parseSqliteJson(_, cfg.library))
@@ -114,7 +114,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
     */
   def updateAll(linked: List[LinkedRecord], apply: com.histmersion.plugins.calibre.Calibre.UpdateAllApply): Either[com.histmersion.plugins.calibre.Calibre.UpdateAllResultPart1, List[UpdateEntry]] =
     for
-      _ <- Either.cond(!apply || !guiRunning, (), GuiRunning)
+      _ <- Either.cond(!(apply).value || !(guiRunning).value, (), GuiRunning)
       books <- all()
     yield Calibre.planAll(linked, books.map(b => b.id -> b).toMap).map { e =>
       e.outcome match
@@ -153,7 +153,7 @@ final class Calibre(cfg: com.histmersion.plugins.calibre.Calibre.Library, shell:
     for
       fmt <- Calibre.formatOf(file)
       _ <- Either.cond(
-        !guiRunning,
+        !(guiRunning).value,
         (),
         "the Calibre GUI is running — quit it first (calibredb needs exclusive access to the library)"
       )
@@ -380,7 +380,7 @@ object Calibre:
 
   private val Blank = Set("", "unknown", "unknown author", "untitled", "n/a", "?", "none")
 
-  def isBlank(s: com.histmersion.plugins.calibre.Calibre.IsBlankS): com.histmersion.plugins.calibre.Calibre.IsBlankResult = Blank.contains(Option(s).getOrElse("").trim.toLowerCase)
+  def isBlank(s: com.histmersion.plugins.calibre.Calibre.IsBlankS): com.histmersion.plugins.calibre.Calibre.IsBlankResult = _root_.com.histmersion.plugins.calibre.Calibre.IsBlankResult(Blank.contains(Option((s).value).getOrElse("").trim.toLowerCase))
 
   /** The metadata guard, shared by `import` (Calibre → corpus) and `push` (corpus → Calibre). */
   def guard(title: com.histmersion.plugins.calibre.Calibre.GuardTitle, authors: List[com.histmersion.plugins.calibre.Calibre.GuardAuthors]): Either[com.histmersion.plugins.calibre.Calibre.GuardResultPart1, Unit] =
@@ -504,10 +504,10 @@ object Calibre:
     * separates the pairs), so it is left out.
     */
   def mergeIdentifiers(current: Map[com.histmersion.plugins.calibre.Calibre.MergeIdentifiersCurrentPart1, com.histmersion.plugins.calibre.Calibre.MergeIdentifiersCurrentPart2], doi: Option[com.histmersion.plugins.calibre.Calibre.MergeIdentifiersDoi], isbn: Option[com.histmersion.plugins.calibre.Calibre.MergeIdentifiersIsbn]): Map[com.histmersion.plugins.calibre.Calibre.MergeIdentifiersResultPart1, com.histmersion.plugins.calibre.Calibre.MergeIdentifiersResultPart2] =
-    def ok(v: com.histmersion.plugins.calibre.Calibre.MergeIdentifiersOkV) = v.trim.nonEmpty && !v.contains(",")
+    def ok(v: com.histmersion.plugins.calibre.Calibre.MergeIdentifiersOkV) = (v).value.trim.nonEmpty && !(v).value.contains(",")
     val sameDoi = (d: String) => current.get("doi").exists(_.trim.equalsIgnoreCase(d))
-    current ++ doi.map(_.trim).filter(ok).filterNot(sameDoi).map("doi" -> _) ++
-      isbn.map(_.trim).filter(ok).filterNot(_ => current.get("isbn").exists(_.trim.nonEmpty)).map("isbn" -> _)
+    current ++ doi.map((_).value.trim).filter(ok).filterNot(sameDoi).map("doi" -> _) ++
+      isbn.map((_).value.trim).filter(ok).filterNot(_ => current.get("isbn").exists(_.trim.nonEmpty)).map("isbn" -> _)
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
   def identifiersValue(ids: Map[com.histmersion.plugins.calibre.Calibre.IdentifiersValueIdsPart1, com.histmersion.plugins.calibre.Calibre.IdentifiersValueIdsPart2]): com.histmersion.plugins.calibre.Calibre.IdentifiersValueResult =
@@ -529,7 +529,7 @@ object Calibre:
     * `Martin Luther King Jr.`. A name with more commas than that is not one "Last, First" and is left in its order.
     */
   def normaliseAuthor(raw: com.histmersion.plugins.calibre.Calibre.NormaliseAuthorRaw): com.histmersion.plugins.calibre.Calibre.NormaliseAuthorResult =
-    val unbracketed = raw.replaceAll("\\([^)]*\\)|\\[[^\\]]*\\]", " ")
+    val unbracketed = (raw).value.replaceAll("\\([^)]*\\)|\\[[^\\]]*\\]", " ")
     val bare = Iterator
       .iterate(unbracketed.trim)(s =>
         LifeDates.replaceFirstIn(Role.replaceFirstIn(s, ""), "").trim.stripSuffix(",").stripSuffix(";").trim
@@ -542,7 +542,7 @@ object Calibre:
       case List(last, first)                                 => s"$first $last"
       case List(last, first, sfx) if Suffix(sfx.toLowerCase) => s"$first $last $sfx"
       case _                                                 => bare
-    ordered.replaceAll("\\s+", " ").trim
+    _root_.com.histmersion.plugins.calibre.Calibre.NormaliseAuthorResult(ordered.replaceAll("\\s+", " ").trim)
 
   /** [[normaliseAuthor]] over a list, dropping names that end up empty and repeats. */
   def normaliseAuthors(authors: List[com.histmersion.plugins.calibre.Calibre.NormaliseAuthorsAuthors]): List[com.histmersion.plugins.calibre.Calibre.NormaliseAuthorsResult] =
@@ -604,7 +604,7 @@ object Calibre:
     * ABSOLUTE paths.
     */
   def parseMachineJson(out: com.histmersion.plugins.calibre.Calibre.ParseMachineJsonOut): Either[com.histmersion.plugins.calibre.Calibre.ParseMachineJsonResultPart1, List[com.histmersion.plugins.calibre.Calibre.Book]] =
-    if out.trim.isEmpty then Right(Nil) // no match: nothing is printed at all
+    if (out).value.trim.isEmpty then Right(Nil) // no match: nothing is printed at all
     else
       io.circe.parser
         .parse(out)
@@ -636,7 +636,7 @@ object Calibre:
       libraryDir: com.histmersion.plugins.calibre.Calibre.ParseSqliteJsonLibraryDir
   ): Either[com.histmersion.plugins.calibre.Calibre.ParseSqliteJsonResultPart1, List[com.histmersion.plugins.calibre.Calibre.Book]] =
     // `sqlite3 -json` prints NOTHING for an empty result, not `[]` — that was "exhausted input"
-    if out.trim.isEmpty then Right(Nil)
+    if (out).value.trim.isEmpty then Right(Nil)
     else
       io.circe.parser
         .parse(out)
@@ -673,18 +673,18 @@ object Calibre:
         })
 
   private def splitAuthors(s: com.histmersion.plugins.calibre.Calibre.SplitAuthorsS): List[com.histmersion.plugins.calibre.Calibre.SplitAuthorsResult] =
-    s.split(" & ").map(_.trim).filter(_.nonEmpty).toList
+    ((s).value.split(" & ").map(_.trim).filter(_.nonEmpty).toList).map(refactorValue8 => _root_.com.histmersion.plugins.calibre.Calibre.SplitAuthorsResult(refactorValue8))
 
   /** Single-quote a SQL literal for the `sqlite3` command line. The only user value that reaches SQL is a search term,
     * and it goes through here.
     */
-  def sqlLiteral(s: com.histmersion.plugins.calibre.Calibre.SqlLiteralS): com.histmersion.plugins.calibre.Calibre.SqlLiteralResult = "'" + s.replace("'", "''") + "'"
+  def sqlLiteral(s: com.histmersion.plugins.calibre.Calibre.SqlLiteralS): com.histmersion.plugins.calibre.Calibre.SqlLiteralResult = _root_.com.histmersion.plugins.calibre.Calibre.SqlLiteralResult("'" + (s).value.replace("'", "''") + "'")
 
   /** The read-only projection that mirrors `calibredb --for-machine` (Calibre's schema: `books` plus link tables for
     * authors/tags/publishers/identifiers, and `data` for the files).
     */
   def sqliteQuery(where: com.histmersion.plugins.calibre.Calibre.SqliteQueryWhere, limit: com.histmersion.plugins.calibre.Calibre.SqliteQueryLimit): com.histmersion.plugins.calibre.Calibre.SqliteQueryResult =
-    s"""SELECT b.id AS id, b.title AS title,
+    _root_.com.histmersion.plugins.calibre.Calibre.SqliteQueryResult(s"""SELECT b.id AS id, b.title AS title,
        | (SELECT group_concat(a.name, ' & ') FROM authors a
        |    JOIN books_authors_link l ON l.author = a.id WHERE l.book = b.id) AS authors,
        | b.pubdate AS pubdate,
@@ -697,8 +697,8 @@ object Calibre:
        | (SELECT group_concat(b.path || '/' || d.name || '.' || lower(d.format), '|')
        |    FROM data d WHERE d.book = b.id) AS formats,
        | CASE WHEN b.has_cover THEN b.path || '/cover.jpg' END AS cover
-       |FROM books b WHERE $where ORDER BY b.id DESC LIMIT ${limit.max(1)}""".stripMargin
-      .replace("\n", " ")
+       |FROM books b WHERE $where ORDER BY b.id DESC LIMIT ${(limit).value.max(1)}""".stripMargin
+      .replace("\n", " "))
 
   /** The PURE half of `histmersion calibre audit`: compare every linked entry with its record. */
   object Audit:
@@ -748,8 +748,8 @@ object Calibre:
       * (ed.)", "Gimbutienė, Marija (1921-1994)") is not part of the name.
       */
     def surname(author: com.histmersion.plugins.calibre.Calibre.Audit.SurnameAuthor): com.histmersion.plugins.calibre.Calibre.Audit.SurnameResult =
-      val name = author.replaceAll("\\([^)]*\\)", " ").trim
-      norm(if name.contains(",") then name.takeWhile(_ != ',') else name.split("\\s+").last)
+      val name = (author).value.replaceAll("\\([^)]*\\)", " ").trim
+      norm(if name.contains(",") then _root_.com.histmersion.plugins.calibre.Calibre.Audit.NormS(name.takeWhile(_ != ',')) else _root_.com.histmersion.plugins.calibre.Calibre.Audit.NormS(name.split("\\s+").last))
 
     def authorsMatch(a: List[com.histmersion.plugins.calibre.Calibre.Audit.AuthorsMatchA], b: List[com.histmersion.plugins.calibre.Calibre.Audit.AuthorsMatchB]): com.histmersion.plugins.calibre.Calibre.Audit.AuthorsMatchResult =
       (a.map(surname).toSet & b.map(surname).toSet).exists(_.nonEmpty)
@@ -766,8 +766,8 @@ object Calibre:
     def issues(r: AuditRecord, b: Book): List[AuditIssue] =
       List(
         Option.when(junk(b))(AuditIssue.Junk),
-        Option.when(!junk(b) && !titleMatches(r.title, b.title))(AuditIssue.Title),
-        Option.when(!junk(b) && !authorsMatch(r.authors, b.authors))(AuditIssue.Authors),
+        Option.when(!(junk(b)).value && !titleMatches(r.title, b.title))(AuditIssue.Title),
+        Option.when(!(junk(b)).value && !authorsMatch(r.authors, b.authors))(AuditIssue.Authors),
         Option.when(r.year.isDefined && year(b).isDefined && r.year != year(b))(AuditIssue.Year)
       ).flatten
 
@@ -803,7 +803,7 @@ object Calibre:
       * publication year.
       */
     def year: Option[com.histmersion.plugins.calibre.Calibre.Book.YearResult] = pubdate
-      .map(_.take(4))
+      .map((_).value.take(4))
       .filter(_.forall(_.isDigit))
       .flatMap(_.toIntOption)
       .filter(_ >= Book.FirstYear)
@@ -812,8 +812,8 @@ object Calibre:
 
     /** The file to import: the requested format, else PDF, else EPUB (both carry a text layer). */
     def pick(format: Option[com.histmersion.plugins.calibre.Calibre.Book.PickFormat]): Option[com.histmersion.plugins.calibre.Calibre.Book.PickResult] =
-      val wanted = format.map(_.toLowerCase).toList ++ List("pdf", "epub")
-      wanted.iterator.map(ext => formats.find(_.toLowerCase.endsWith("." + ext))).collectFirst { case Some(f) =>
+      val wanted = format.map((_).value.toLowerCase).toList ++ List("pdf", "epub")
+      wanted.iterator.map(ext => formats.find((_).value.toLowerCase.endsWith("." + ext))).collectFirst { case Some(f) =>
         f
       }
 
@@ -960,7 +960,7 @@ object Calibre:
         searchPath: Option[com.histmersion.plugins.calibre.Calibre.Settings.LibrarySearchPath],
         executable: Path => com.histmersion.plugins.calibre.Calibre.Settings.LibraryExecutableResult
     ): Library =
-      val path = libraryPath.trim match
+      val path = (libraryPath).value.trim match
         case "~"                                       => home.getOrElse("~")
         case p if p.startsWith("~/") && home.isDefined => home.getOrElse("") + p.drop(1)
         case p                                         => p
@@ -1014,8 +1014,8 @@ object Calibre:
       * [[InstallDirs]].
       */
     def locate(name: com.histmersion.plugins.calibre.Calibre.Settings.LocateName, home: Option[com.histmersion.plugins.calibre.Calibre.Settings.LocateHome], searchPath: Option[com.histmersion.plugins.calibre.Calibre.Settings.LocateSearchPath], executable: Path => com.histmersion.plugins.calibre.Calibre.Settings.LocateExecutableResult): com.histmersion.plugins.calibre.Calibre.Settings.LocateResult =
-      if name.contains('/') || name.isBlank then name
+      if (name).value.contains('/') || (name).value.isBlank then name
       else
-        val dirs = searchPath.toList.flatMap(_.split(':').toList).filter(_.nonEmpty) ++
-          InstallDirs.flatMap(d => if d.startsWith("~/") then home.map(_ + d.drop(1)).toList else List(d))
+        val dirs = searchPath.toList.flatMap((_).value.split(':').toList).filter(_.nonEmpty) ++
+          InstallDirs.flatMap(d => if d.startsWith("~/") then home.map((_).value + d.drop(1)).toList else List(d))
         dirs.iterator.map(d => Path.of(d, name)).find(executable).fold(name)(_.toString)

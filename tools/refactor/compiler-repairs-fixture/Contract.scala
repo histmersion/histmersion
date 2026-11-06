@@ -2,6 +2,21 @@ package compilerfixture
 
 object Contract:
   @main def verifyCompilerRepairs(): Unit =
+    assert(Owned.raw(Owned.Text("one")) == "one")
+    assert(Owned.alias(Owned.Text("alias")) == "alias")
+    assert(Owned.upper(Owned.Text("one")) == "ONE")
+    assert(Owned.increment(Owned.Count(Int.MaxValue)) == Int.MinValue)
+    assert(Owned.sum(Owned.Count(3), Owned.Count(4)) == 7)
+    var generatedLeftCalls = 0
+    assert(Owned.generatedLeft(() => { generatedLeftCalls += 1; 3 }, Owned.Count(4)) == 7)
+    assert(generatedLeftCalls == 1)
+    assert(Owned.negative(Owned.Count(7)) == -7)
+    assert(Owned.small(Owned.Count(3)) && !Owned.small(Owned.Count(4)))
+    assert(Owned.wide(Owned.Count(Int.MinValue)) == Int.MinValue.toLong)
+    assert(Owned.flag(Owned.Flag(true)) && !Owned.not(Owned.Flag(true)))
+    assert(Owned.length(Owned.Bytes(Array[Byte](1, 2))) == 2)
+    assert(Owned.path(Owned.Text("one")).toString == "one")
+    assert(OwnedRecord(OwnedRecord.Text(" one ")).trimmed == "one")
     assert(ConstructOnly.text("one").value == "one")
     assert(ConstructMode.Finishing.wire.value == "finish")
     assert(ConstructOnly.large.value == 7L)

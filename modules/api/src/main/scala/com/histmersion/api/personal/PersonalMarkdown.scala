@@ -29,7 +29,7 @@ object PersonalMarkdown:
   type ReadingResult = ReadingResult.T
   object ReadingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def minute(at: com.histmersion.api.personal.PersonalMarkdown.MinuteAt): com.histmersion.api.personal.PersonalMarkdown.MinuteResult = at.take(16).replace('T', ' ')
+  def minute(at: com.histmersion.api.personal.PersonalMarkdown.MinuteAt): com.histmersion.api.personal.PersonalMarkdown.MinuteResult = _root_.com.histmersion.api.personal.PersonalMarkdown.MinuteResult((at).value.take(16).replace('T', ' '))
 
   def targetLine(t: Target): com.histmersion.api.personal.PersonalMarkdown.TargetLineResult =
     val where = Target.where(t)
@@ -48,8 +48,8 @@ object PersonalMarkdown:
     else _root_.com.histmersion.api.personal.PersonalMarkdown.BookmarksResult((s"**Bookmarks** — ${bs.size}" :: "" :: bs.map(bookmarkLine)).mkString("\n"))
 
   def excerpt(text: com.histmersion.api.personal.PersonalMarkdown.ExcerptText, chars: com.histmersion.api.personal.PersonalMarkdown.ExcerptChars = _root_.com.histmersion.api.personal.PersonalMarkdown.ExcerptChars(120)): com.histmersion.api.personal.PersonalMarkdown.ExcerptResult =
-    val first = text.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse("")
-    if first.length <= chars then first else first.take(chars - 1).trim + "…"
+    val first = (text).value.linesIterator.map(_.trim).find(_.nonEmpty).getOrElse("")
+    if first.length <= (chars).value then _root_.com.histmersion.api.personal.PersonalMarkdown.ExcerptResult(first) else _root_.com.histmersion.api.personal.PersonalMarkdown.ExcerptResult(first.take((chars).value - 1).trim + "…")
 
   def noteLine(n: Note): com.histmersion.api.personal.PersonalMarkdown.NoteLineResult =
     s"- **${n.title}** — ${targetLine(n.target)} · ${minute(n.updatedAt)} · id `${n.id.value}`\n  ${excerpt(n.text.value)}"

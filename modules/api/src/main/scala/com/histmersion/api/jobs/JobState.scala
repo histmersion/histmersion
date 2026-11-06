@@ -17,7 +17,7 @@ object JobState:
   val Interrupted = "interrupted"
 
   def parse(s: com.histmersion.api.jobs.JobState.ParseS): Option[JobState] =
-    values.find(_.wire == s.trim.toLowerCase)
+    values.find(_.wire == (s).value.trim.toLowerCase)
 
   def next(from: JobState, to: JobState): Option[JobState] = (from, to) match
     case (Queued, Running)    => Some(Running)

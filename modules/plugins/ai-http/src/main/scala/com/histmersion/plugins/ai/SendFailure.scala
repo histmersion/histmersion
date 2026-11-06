@@ -7,7 +7,7 @@ package com.histmersion.plugins.ai
 final case class SendFailure(reported: SendFailure.Reported):
 
   /** The exception the host's client named. */
-  def exception: com.histmersion.plugins.ai.SendFailure.ExceptionResult = reported.takeWhile(_ != ':').trim
+  def exception: com.histmersion.plugins.ai.SendFailure.ExceptionResult = _root_.com.histmersion.plugins.ai.SendFailure.ExceptionResult((reported).value.takeWhile(_ != ':').trim)
 
   /** The failure of `method` to `url`. */
   def describe(method: com.histmersion.plugins.ai.SendFailure.DescribeMethod, url: com.histmersion.plugins.ai.SendFailure.DescribeUrl): com.histmersion.plugins.ai.SendFailure.DescribeResult =
@@ -57,7 +57,7 @@ object SendFailure:
 
   /** The kind of transport failure an exception of the host's client is, if it is one. */
   def kind(exception: com.histmersion.plugins.ai.SendFailure.KindException): Option[com.histmersion.plugins.ai.SendFailure.KindResult] =
-    if Connect(exception) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("ConnectException"))
-    else if Timeout(exception) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("TimeoutException"))
-    else if exception.endsWith("Exception") && !NotTransport(exception) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("ReadException"))
+    if Connect((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("ConnectException"))
+    else if Timeout((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("TimeoutException"))
+    else if (exception).value.endsWith("Exception") && !NotTransport((exception).value) then Some(_root_.com.histmersion.plugins.ai.SendFailure.KindResult("ReadException"))
     else None

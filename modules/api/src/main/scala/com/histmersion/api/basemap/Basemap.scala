@@ -110,12 +110,12 @@ object Basemap:
   val MaxLat = 85.0511287798066
 
   def validFocusName(s: com.histmersion.api.basemap.Basemap.ValidFocusNameS): Either[com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart1, com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart2] =
-    val n = s.trim.toLowerCase(java.util.Locale.ROOT)
-    Either.cond(n.matches("[a-z0-9][a-z0-9-]{0,40}"), n, _root_.com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart1(s"'$s' is not a focus region name (letters, digits and -)"))
+    val n = (s).value.trim.toLowerCase(java.util.Locale.ROOT)
+    Either.cond(n.matches("[a-z0-9][a-z0-9-]{0,40}"), _root_.com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart2(n), _root_.com.histmersion.api.basemap.Basemap.ValidFocusNameResultPart1(s"'$s' is not a focus region name (letters, digits and -)"))
 
   def focusRegion(spec: com.histmersion.api.basemap.Basemap.FocusRegionSpec): Either[com.histmersion.api.basemap.Basemap.FocusRegionResultPart1, (com.histmersion.api.basemap.Basemap.FocusRegionResultPart2Part1, BBox)] =
-    spec.trim.split("\\s+", 2).toList match
-      case n :: b :: Nil => for name <- validFocusName(n); box <- validBBox(b.replace(" ", "")) yield (name, box)
+    (spec).value.trim.split("\\s+", 2).toList match
+      case n :: b :: Nil => for name <- validFocusName(_root_.com.histmersion.api.basemap.Basemap.ValidFocusNameS(n)); box <- validBBox(_root_.com.histmersion.api.basemap.Basemap.ValidBBoxS(b.replace(" ", ""))) yield (name, box)
       case _             => Left(_root_.com.histmersion.api.basemap.Basemap.FocusRegionResultPart1(s"'$spec' is not \"name minLon,minLat,maxLon,maxLat\""))
 
   def focusNameOf(b: BBox): com.histmersion.api.basemap.Basemap.FocusNameOfResult =
@@ -129,12 +129,12 @@ object Basemap:
     s"bbox-${f(b.minLon)}-${f(b.minLat)}-${f(b.maxLon)}-${f(b.maxLat)}"
 
   def tileX(lon: com.histmersion.api.basemap.Basemap.TileXLon, z: com.histmersion.api.basemap.Basemap.TileXZ): com.histmersion.api.basemap.Basemap.TileXResult =
-    val n = 1L << z
-    math.floor((lon + 180.0) / 360.0 * n).toLong.max(0L).min(n - 1)
+    val n = 1L << (z).value
+    math.floor(((lon).value + 180.0) / 360.0 * n).toLong.max(0L).min(n - 1)
 
   def tileY(lat: com.histmersion.api.basemap.Basemap.TileYLat, z: com.histmersion.api.basemap.Basemap.TileYZ): com.histmersion.api.basemap.Basemap.TileYResult =
-    val n = 1L << z
-    val r = math.toRadians(lat.max(-MaxLat).min(MaxLat))
+    val n = 1L << (z).value
+    val r = math.toRadians((lat).value.max(-MaxLat).min(MaxLat))
     val y = (1.0 - math.log(math.tan(r) + 1.0 / math.cos(r)) / math.Pi) / 2.0 * n
     math.floor(y).toLong.max(0L).min(n - 1)
 
@@ -151,7 +151,7 @@ object Basemap:
   val World: BBox = BBox(-180, -85.05, 180, 85.05)
 
   def validBBox(s: com.histmersion.api.basemap.Basemap.ValidBBoxS): Either[com.histmersion.api.basemap.Basemap.ValidBBoxResultPart1, BBox] =
-    if s.trim.equalsIgnoreCase("world") then Right(World)
+    if (s).value.trim.equalsIgnoreCase("world") then Right(World)
     else
       BBox.parse(s).toRight(s"'$s' is not minLon,minLat,maxLon,maxLat").flatMap { b =>
         if b.minLon >= b.maxLon || b.minLat >= b.maxLat then Left(s"'$s': west must be < east and south < north")
@@ -178,18 +178,18 @@ object Basemap:
     object Spare extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parseDrop(s: com.histmersion.api.basemap.Basemap.ParseDropS): Either[com.histmersion.api.basemap.Basemap.ParseDropResultPart1, List[DropRule]] =
-    val parts = s.split(";").toList.map(_.trim).filter(_.nonEmpty).map(_.split("\\s+").toList)
+    val parts = (s).value.split(";").toList.map(_.trim).filter(_.nonEmpty).map(_.split("\\s+").toList)
     val rules = parts.map { words =>
       val kinds = words.tail
       val spare = kinds.filter(_.startsWith("+")).map(_.drop(1)).filter(_.nonEmpty).toSet
       val drop = kinds.filterNot(_.startsWith("+")).toSet
-      DropRule(words.head, kinds.isEmpty, drop, spare)
+      DropRule(_root_.com.histmersion.api.basemap.Basemap.DropRule.Layer(words.head), _root_.com.histmersion.api.basemap.Basemap.DropRule.Whole(kinds.isEmpty), (drop).map(refactorValue7 => _root_.com.histmersion.api.basemap.Basemap.DropRule.Drop(refactorValue7)), (spare).map(refactorValue8 => _root_.com.histmersion.api.basemap.Basemap.DropRule.Spare(refactorValue8)))
     }
     val dup = rules.groupBy(_.layer).collect { case (l, rs) if rs.size > 1 => l }
     val mixed = rules.filter(r => r.drop.nonEmpty && r.spare.nonEmpty).map(_.layer)
-    if dup.nonEmpty then Left(s"basemap.vector.drop names ${dup.mkString(", ")} twice")
+    if dup.nonEmpty then Left(_root_.com.histmersion.api.basemap.Basemap.ParseDropResultPart1(s"basemap.vector.drop names ${dup.mkString(", ")} twice"))
     else if mixed.nonEmpty then
-      Left(s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other")
+      Left(_root_.com.histmersion.api.basemap.Basemap.ParseDropResultPart1(s"basemap.vector.drop: ${mixed.mkString(", ")} both drops kinds and spares kinds (+kind) — one or the other"))
     else Right(rules)
 
   final case class Read(geoms: Set[Read.Geoms] = Set.empty, kinds: Set[Read.Kinds] = Set.empty):
@@ -208,7 +208,7 @@ object Basemap:
   private val KindName = "[A-Za-z0-9_:.-]+".r
 
   def parseSubset(s: com.histmersion.api.basemap.Basemap.ParseSubsetS): Either[com.histmersion.api.basemap.Basemap.ParseSubsetResultPart1, Map[com.histmersion.api.basemap.Basemap.ParseSubsetResultPart2Part1, Read]] =
-    val parts = s.split(",").toList.map(_.trim).filter(_.nonEmpty)
+    val parts = (s).value.split(",").toList.map(_.trim).filter(_.nonEmpty)
     val parsed = parts.map { p =>
       val (head, kindPart) = p.split("~", 2).toList match
         case h :: k :: Nil => (h, Some(k))
@@ -222,19 +222,19 @@ object Basemap:
           val codes = g.toList.map { case 'p' => 1; case 'l' => 2; case 'a' => 3; case _ => 0 }
           Either.cond(
             l.nonEmpty && codes.nonEmpty && !codes.contains(0),
-            l -> Read(codes.toSet, kinds.fold(Set.empty)(_.toSet)),
+            l -> Read((codes.toSet).map(refactorValue3 => _root_.com.histmersion.api.basemap.Basemap.Read.Geoms(refactorValue3)), kinds.fold(Set.empty)((_.toSet).map(refactorValue4 => _root_.com.histmersion.api.basemap.Basemap.Read.Kinds(refactorValue4)))),
             s"'$p': geometries are p, l and a"
           )
-        case l :: Nil if l.nonEmpty => Right(l -> Read(Set.empty, kinds.fold(Set.empty)(_.toSet)))
+        case l :: Nil if l.nonEmpty => Right(l -> Read(Set.empty, kinds.fold(Set.empty)((_.toSet).map(refactorValue11 => _root_.com.histmersion.api.basemap.Basemap.Read.Kinds(refactorValue11)))))
         case _                      => Left(s"'$p' is not layer[:geometries][~kind|kind]")
     }
-    parsed
+    ((parsed
       .collectFirst { case Left(e) => e }
       .toLeft(
         parsed
           .collect { case Right(kv) => kv }
           .groupMapReduce(_._1)(_._2)(_.merge(_))
-      )
+      )).left.map(refactorError => _root_.com.histmersion.api.basemap.Basemap.ParseSubsetResultPart1(refactorError))).map(refactorValue6 => (refactorValue6).iterator.map { case (refactorKey, refactorItem) => (_root_.com.histmersion.api.basemap.Basemap.ParseSubsetResultPart2Part1(refactorKey), refactorItem) }.toMap)
 
   def subsetParam(m: Map[com.histmersion.api.basemap.Basemap.SubsetParamMPart1, Read], fromZoom: Map[com.histmersion.api.basemap.Basemap.SubsetParamFromZoomPart1, com.histmersion.api.basemap.Basemap.SubsetParamFromZoomPart2] = Map.empty): com.histmersion.api.basemap.Basemap.SubsetParamResult =
     m.toList
@@ -248,7 +248,7 @@ object Basemap:
       .mkString(",")
 
   def subsetAt(s: com.histmersion.api.basemap.Basemap.SubsetAtS, z: com.histmersion.api.basemap.Basemap.SubsetAtZ): com.histmersion.api.basemap.Basemap.SubsetAtResult =
-    s.split(",")
+    (s).value.split(",")
       .toList
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -265,7 +265,7 @@ object Basemap:
   val LegacyLacks: List[com.histmersion.api.basemap.Basemap.LegacyLacks] = List(_root_.com.histmersion.api.basemap.Basemap.LegacyLacks("boundaries"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("buildings"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("landuse"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("places"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("pois"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("roads"), _root_.com.histmersion.api.basemap.Basemap.LegacyLacks("transit"))
 
   def droppedLayers(keepAll: com.histmersion.api.basemap.Basemap.DroppedLayersKeepAll, drop: Option[com.histmersion.api.basemap.Basemap.DroppedLayersDrop]): List[com.histmersion.api.basemap.Basemap.DroppedLayersResult] =
-    if keepAll then Nil
+    if (keepAll).value then Nil
     else
       drop match
         case Some(d) => parseDrop(d).toOption.getOrElse(Nil).filter(_.whole).map(_.layer).distinct.sorted
@@ -277,10 +277,10 @@ object Basemap:
   val KeepAllCommand = s"$FetchCommand --layer vector --keep-all"
 
   def keptLine(keepAll: com.histmersion.api.basemap.Basemap.KeptLineKeepAll, drop: Option[com.histmersion.api.basemap.Basemap.KeptLineDrop]): com.histmersion.api.basemap.Basemap.KeptLineResult =
-    if keepAll then _root_.com.histmersion.api.basemap.Basemap.KeptLineResult("everything (unfiltered)")
+    if (keepAll).value then _root_.com.histmersion.api.basemap.Basemap.KeptLineResult("everything (unfiltered)")
     else
       drop match
-        case Some(d) if d.trim.isEmpty => _root_.com.histmersion.api.basemap.Basemap.KeptLineResult("everything (nothing dropped)")
+        case Some(d) if (d).value.trim.isEmpty => _root_.com.histmersion.api.basemap.Basemap.KeptLineResult("everything (nothing dropped)")
         case Some(d)                   => _root_.com.histmersion.api.basemap.Basemap.KeptLineResult(s"all but: $d")
         case None                      => _root_.com.histmersion.api.basemap.Basemap.KeptLineResult("earth, water and land cover only (fetched before the drop list)")
 
@@ -367,10 +367,10 @@ object Basemap:
     type ParseManyS = ParseManyS.T
     object ParseManyS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.basemap.Basemap.Layer.ParseS): Option[Layer] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.basemap.Basemap.Layer.ParseS): Option[Layer] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
 
     def parseMany(s: com.histmersion.api.basemap.Basemap.Layer.ParseManyS): Either[com.histmersion.api.basemap.Basemap.Layer.ParseManyResultPart1, List[Layer]] =
-      s.trim.toLowerCase(java.util.Locale.ROOT) match
+      (s).value.trim.toLowerCase(java.util.Locale.ROOT) match
         case "" | "all" => Right(values.toList)
         case other      =>
           parse(other).map(List(_)).toRight(_root_.com.histmersion.api.basemap.Basemap.Layer.ParseManyResultPart1(s"unknown base-map layer '$s' (vector, terrain, labels, bathymetry or all)"))

@@ -81,7 +81,7 @@ object Backup:
   def uniqueName(name: com.histmersion.api.backup.Backup.UniqueNameName, taken: com.histmersion.api.backup.Backup.UniqueNameTakenArg1 => com.histmersion.api.backup.Backup.UniqueNameTakenResult): com.histmersion.api.backup.Backup.UniqueNameResult =
     if !taken(name) then name
     else
-      val stem = name.dropRight(Extension.length)
+      val stem = (name).value.dropRight(Extension.length)
       LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !taken(c)).getOrElse(name)
 
   private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
@@ -92,9 +92,9 @@ object Backup:
   def toPrune(names: List[com.histmersion.api.backup.Backup.ToPruneNames], keep: com.histmersion.api.backup.Backup.ToPruneKeep): List[com.histmersion.api.backup.Backup.ToPruneResult] =
     if keep <= 0 then Nil
     else
-      val ours = names.collect { case n @ Written(stamp, suffix) =>
+      val ours = names.collect (({ case n @ Written(stamp, suffix) =>
         (n, (stamp, Option(suffix).map(_.toInt).getOrElse(1)))
-      }
+      }).value).value
       ours.sortBy(_._2).reverse.drop(keep).map(_._1).reverse
 
   private val AnyStamp = """(\d{8}T\d{6}Z)(?:-(\d+))?""".r.unanchored
@@ -116,7 +116,7 @@ object Backup:
   private val Safe = "[A-Za-z0-9][A-Za-z0-9._-]*".r
 
   def safeName(raw: com.histmersion.api.backup.Backup.SafeNameRaw): Either[com.histmersion.api.backup.Backup.SafeNameResultPart1, com.histmersion.api.backup.Backup.SafeNameResultPart2] =
-    val n = Option(raw).map(_.trim).getOrElse("")
+    val n = Option(raw).map((_).value.trim).getOrElse("")
     if n.isEmpty then Left(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart1("no backup file given"))
     else if n.length > 128 then Left(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart1(s"backup file name is too long (${n.length} chars)"))
     else if !n.endsWith(Extension) then Left(_root_.com.histmersion.api.backup.Backup.SafeNameResultPart1(s"'$n' is not a $Extension file"))
@@ -147,7 +147,7 @@ object Backup:
   private val JdbcScheme = "jdbc:postgresql:"
 
   def parseJdbc(url: com.histmersion.api.backup.Backup.ParseJdbcUrl): Either[com.histmersion.api.backup.Backup.ParseJdbcResultPart1, PgTarget] =
-    val u = Option(url).map(_.trim).getOrElse("")
+    val u = Option(url).map((_).value.trim).getOrElse("")
     if !u.startsWith(JdbcScheme) then Left(_root_.com.histmersion.api.backup.Backup.ParseJdbcResultPart1(s"not a PostgreSQL JDBC URL: '$u'"))
     else
       val rest = u.drop(JdbcScheme.length).takeWhile(_ != '?')
@@ -181,11 +181,11 @@ object Backup:
     */
   def restoreOutcome(exit: com.histmersion.api.backup.Backup.RestoreOutcomeExit, output: List[com.histmersion.api.backup.Backup.RestoreOutcomeOutput]): Either[com.histmersion.api.backup.Backup.RestoreOutcomeResultPart1, List[com.histmersion.api.backup.Backup.RestoreOutcomeResultPart2]] =
     val notable = output
-      .map(_.trim)
+      .map((_).value.trim)
       .filter(_.nonEmpty)
       .filter(l => l.toLowerCase.contains("error") || l.toLowerCase.contains("warning"))
     val completed = output.exists(l => IgnoredErrors.findFirstMatchIn(l).isDefined)
-    if exit == 0 || completed then Right(notable)
+    if exit == 0 || completed then Right((notable).map(refactorValue9 => _root_.com.histmersion.api.backup.Backup.RestoreOutcomeResultPart2(refactorValue9)))
     else Left(_root_.com.histmersion.api.backup.Backup.RestoreOutcomeResultPart1(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}"))
 
   val CodeMaintenance = "maintenance"
@@ -201,11 +201,11 @@ object Backup:
     */
   def humanBytes(n: com.histmersion.api.backup.Backup.HumanBytesN): com.histmersion.api.backup.Backup.HumanBytesResult =
     val units = Vector("kB", "MB", "GB", "TB")
-    if n < 1000 then _root_.com.histmersion.api.backup.Backup.HumanBytesResult(s"$n B")
+    if (n).value < 1000 then _root_.com.histmersion.api.backup.Backup.HumanBytesResult(s"$n B")
     else
-      val exp = math.min(units.size, (math.log(n.toDouble) / math.log(1000)).toInt)
-      val v = n.toDouble / math.pow(1000, exp.toDouble)
-      String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1))
+      val exp = math.min(units.size, (math.log((n).value.toDouble) / math.log(1000)).toInt)
+      val v = (n).value.toDouble / math.pow(1000, exp.toDouble)
+      _root_.com.histmersion.api.backup.Backup.HumanBytesResult(String.format(Locale.ROOT, "%.1f %s", v, units(exp - 1)))
 
   final case class Info(file: Info.File, bytes: com.histmersion.api.ByteCount, createdAt: Info.CreatedAt) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 

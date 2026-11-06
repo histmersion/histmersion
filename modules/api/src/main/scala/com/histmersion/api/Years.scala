@@ -55,9 +55,9 @@ object Years:
   type FromJsonTextResult = FromJsonTextResult.T
   object FromJsonTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def fromAstronomical(a: com.histmersion.api.Years.FromAstronomicalA): com.histmersion.api.Years.FromAstronomicalResult = if a <= 0 then a - 1 else a
+  def fromAstronomical(a: com.histmersion.api.Years.FromAstronomicalA): com.histmersion.api.Years.FromAstronomicalResult = if a <= 0 then _root_.com.histmersion.api.Years.FromAstronomicalResult((a).value - 1) else a
 
-  def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if h < 0 then h + 1 else if h == 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((0).toLong) else h
+  def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((h).value + 1) else if h == 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((0).toLong) else h
 
   def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical(toAstronomical(h) + d)
 
@@ -71,32 +71,32 @@ object Years:
 
   def parse(raw: com.histmersion.api.Years.ParseRaw): Either[com.histmersion.api.Years.ParseResultPart1, com.histmersion.api.Years.ParseResultPart2] =
     val t = Circa
-      .replaceFirstIn(Option(raw).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT), "")
+      .replaceFirstIn(Option((raw).value).getOrElse("").trim.toLowerCase(java.util.Locale.ROOT), "")
       .replace(",", "")
       .trim
-    def isBce(era: com.histmersion.api.Years.ParseIsBceEra) = era.matches(EraBce)
+    def isBce(era: com.histmersion.api.Years.ParseIsBceEra) = (era).value.matches(EraBce)
     def signed(num: com.histmersion.api.Years.ParseSignedNum, era: Option[com.histmersion.api.Years.ParseSignedEra]): Either[com.histmersion.api.Years.ParseSignedResultPart1, com.histmersion.api.Years.ParseSignedResultPart2] =
-      num.toLongOption.toRight(s"'${raw.trim}' is not a year").flatMap { n =>
+      (num).value.toLongOption.toRight(s"'${(raw).value.trim}' is not a year").flatMap { n =>
         era match
           case None                => Right(n)
           case Some(e) if isBce(e) => Right(-math.abs(n))
-          case Some(_) if n < 0    => Left(s"'${raw.trim}': a CE year is positive; write the BCE year instead")
+          case Some(_) if n < 0    => Left(s"'${(raw).value.trim}': a CE year is positive; write the BCE year instead")
           case Some(_)             => Right(n)
       }
     val parsed = t match
-      case Typed(num, era)    => signed(num, Option(era))
-      case EraFirst(era, num) => signed(num, Some(era))
-      case _                  => Left(s"'${raw.trim}' is not a year (e.g. 1300 BCE, 530 CE, -1300)")
-    parsed.flatMap(y => if y == 0 then Left(s"'${raw.trim}': $NoYearZero") else Right(y))
+      case Typed(num, era)    => signed(_root_.com.histmersion.api.Years.ParseSignedNum(num), Option(_root_.com.histmersion.api.Years.ParseSignedEra(era)))
+      case EraFirst(era, num) => signed(_root_.com.histmersion.api.Years.ParseSignedNum(num), Some(_root_.com.histmersion.api.Years.ParseSignedEra(era)))
+      case _                  => Left(s"'${(raw).value.trim}' is not a year (e.g. 1300 BCE, 530 CE, -1300)")
+    parsed.flatMap(y => if y == 0 then Left(s"'${(raw).value.trim}': $NoYearZero") else Right(y))
 
   def isoAstronomical(xsd: com.histmersion.api.Years.IsoAstronomicalXsd): Option[com.histmersion.api.Years.IsoAstronomicalResult] =
-    val s = xsd.trim
+    val s = (xsd).value.trim
     val neg = s.startsWith("-")
     val digits = (if neg || s.startsWith("+") then s.drop(1) else s).takeWhile(_.isDigit)
-    digits.toLongOption.map(v => if neg then -v else v)
+    digits.toLongOption.map(v => if neg then _root_.com.histmersion.api.Years.IsoAstronomicalResult(-v) else _root_.com.histmersion.api.Years.IsoAstronomicalResult(v))
 
   def parseIso(raw: com.histmersion.api.Years.ParseIsoRaw): Option[com.histmersion.api.Years.ParseIsoResult] =
-    raw.trim.toLongOption.map(fromAstronomical)
+    (raw).value.trim.toLongOption.map(fromAstronomical)
 
   def fromJson(j: Json, text: com.histmersion.api.Years.FromJsonTextArg1 => Option[com.histmersion.api.Years.FromJsonTextResult]): Option[com.histmersion.api.Years.FromJsonResult] =
     j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(text)).orElse(j.asNumber.map(_.toDouble.round))

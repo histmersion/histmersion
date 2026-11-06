@@ -74,7 +74,7 @@ object StrictJson:
   private def nestedFields(s: Schema[?]): List[(com.histmersion.api.StrictJson.NestedFieldsResultPart1, com.histmersion.api.StrictJson.NestedFieldsResultPart2)] =
     def children(path: com.histmersion.api.StrictJson.NestedFieldsChildrenPath, sc: Schema[?]): List[(com.histmersion.api.StrictJson.NestedFieldsChildrenResultPart1, Schema[?])] = sc.schemaType match
       case p: SchemaType.SProduct[?] =>
-        p.fields.map(f => ((if path.isEmpty then "" else s"$path.") + f.name.encodedName, f.schema))
+        p.fields.map(f => (_root_.com.histmersion.api.StrictJson.NestedFieldsChildrenResultPart1((if (path).value.isEmpty then "" else s"$path.") + f.name.encodedName), f.schema))
       case SchemaType.SOption(e) => children(path, e)
       case SchemaType.SArray(e)  => children(path, e)
       case _                     => Nil

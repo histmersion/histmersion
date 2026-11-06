@@ -134,9 +134,9 @@ object Paging:
     _root_.com.histmersion.api.Paging.EncodeCountsResult(counts.map((s, n) => s"$s=$n").mkString(","))
 
   def decodeCounts(s: com.histmersion.api.Paging.DecodeCountsS): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.DecodeCountsResultPart2)] =
-    s.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { pair =>
+    (s).value.split(',').toList.map(_.trim).filter(_.nonEmpty).flatMap { pair =>
       pair.split('=') match
-        case Array(k, v) => v.trim.toIntOption.map(k.trim -> _)
+        case Array(k, v) => v.trim.toIntOption.map({ val refactorTuple12 = k.trim -> _; (_root_.com.histmersion.api.Paging.DecodeCountsResultPart1(refactorTuple12._1), _root_.com.histmersion.api.Paging.DecodeCountsResultPart2(refactorTuple12._2)) })
         case _           => None
     }
 
@@ -164,18 +164,18 @@ object Paging:
 
   /** Grouped by hand, never through a locale: JDK 25's `en_PL` groups with a space. */
   def grouped(n: com.histmersion.api.Paging.GroupedN): com.histmersion.api.Paging.GroupedResult =
-    val s = math.abs(n).toString
+    val s = math.abs((n).value).toString
     val g = s.reverse.grouped(3).mkString(",").reverse
-    if n < 0 then _root_.com.histmersion.api.Paging.GroupedResult(s"-$g") else g
+    if (n).value < 0 then _root_.com.histmersion.api.Paging.GroupedResult(s"-$g") else _root_.com.histmersion.api.Paging.GroupedResult(g)
 
   def heading(shown: com.histmersion.api.Paging.HeadingShown, total: com.histmersion.api.Paging.HeadingTotal, singular: com.histmersion.api.Paging.HeadingSingular, plural: com.histmersion.api.Paging.HeadingPlural = _root_.com.histmersion.api.Paging.HeadingPlural(""), qualifier: Option[com.histmersion.api.Paging.HeadingQualifier] = None): com.histmersion.api.Paging.HeadingResult =
-    val all = math.max(shown, total)
-    val noun = qualifier.fold("")(q => s"$q ") + Plural.noun(all, singular, plural)
-    if shown >= all then _root_.com.histmersion.api.Paging.HeadingResult(s"${grouped(all)} $noun")
-    else s"Latest ${grouped(shown)} of ${grouped(all)} $noun"
+    val all = math.max((shown).value, (total).value)
+    val noun = qualifier.fold("")(q => s"$q ") + Plural.noun(_root_.com.histmersion.api.Plural.NounN((all).toLong), singular, plural)
+    if shown >= all then _root_.com.histmersion.api.Paging.HeadingResult(s"${grouped(_root_.com.histmersion.api.Paging.GroupedN((all).toLong))} $noun")
+    else s"Latest ${grouped(shown)} of ${grouped(_root_.com.histmersion.api.Paging.GroupedN((all).toLong))} $noun"
 
   def olderLine(page: Page, ask: com.histmersion.api.Paging.OlderLineAskArg1 => com.histmersion.api.Paging.OlderLineAskResult): Option[com.histmersion.api.Paging.OlderLineResult] =
     page.next.map(c => s"Older: ${ask(c)}")
 
   def cut[A](rows: Vector[A], limit: com.histmersion.api.Paging.CutLimit): (Vector[A], com.histmersion.api.Paging.CutResultPart2) =
-    if rows.size > limit then (rows.take(limit), _root_.com.histmersion.api.Paging.CutResultPart2(true)) else (rows, _root_.com.histmersion.api.Paging.CutResultPart2(false))
+    if rows.size > (limit).value then (rows.take((limit).value), _root_.com.histmersion.api.Paging.CutResultPart2(true)) else (rows, _root_.com.histmersion.api.Paging.CutResultPart2(false))

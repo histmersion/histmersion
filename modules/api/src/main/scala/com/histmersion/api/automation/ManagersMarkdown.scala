@@ -69,11 +69,11 @@ object ManagersMarkdown:
       (if m.tokensToday > 0 then s", ${tokens(m.tokensToday)} tokens" else "")
 
   def usd(d: com.histmersion.api.automation.ManagersMarkdown.UsdD): com.histmersion.api.automation.ManagersMarkdown.UsdResult =
-    BigDecimal(d).setScale(if d != 0 && math.abs(d) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
+    BigDecimal((d).value).setScale(if d != 0 && math.abs((d).value) < 0.1 then 4 else 2, BigDecimal.RoundingMode.HALF_UP).toString
 
   private def tokens(n: com.histmersion.api.automation.ManagersMarkdown.TokensN): com.histmersion.api.automation.ManagersMarkdown.TokensResult =
-    def one(x: com.histmersion.api.automation.ManagersMarkdown.TokensOneX) = BigDecimal(x).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
-    if n >= 1000000 then s"${one(n / 1e6)}M" else if n >= 1000 then s"${one(n / 1e3)}k" else _root_.com.histmersion.api.automation.ManagersMarkdown.TokensResult(n.toString)
+    def one(x: com.histmersion.api.automation.ManagersMarkdown.TokensOneX) = BigDecimal((x).value).setScale(1, BigDecimal.RoundingMode.HALF_UP).toString
+    if n >= 1000000 then _root_.com.histmersion.api.automation.ManagersMarkdown.TokensResult(s"${one(_root_.com.histmersion.api.automation.ManagersMarkdown.TokensOneX((n).value / 1e6))}M") else if n >= 1000 then _root_.com.histmersion.api.automation.ManagersMarkdown.TokensResult(s"${one(_root_.com.histmersion.api.automation.ManagersMarkdown.TokensOneX((n).value / 1e3))}k") else _root_.com.histmersion.api.automation.ManagersMarkdown.TokensResult(n.toString)
 
   def backlog(n: com.histmersion.api.automation.ManagersMarkdown.BacklogN, days: Option[com.histmersion.api.automation.ManagersMarkdown.BacklogDays]): com.histmersion.api.automation.ManagersMarkdown.BacklogResult =
     s"${Plural.count(n, _root_.com.histmersion.api.Plural.CountSingular("legal open-access work"))} in the ingest backlog" + (if n == 0 then ""

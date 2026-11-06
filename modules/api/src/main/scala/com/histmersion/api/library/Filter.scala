@@ -26,9 +26,9 @@ final case class Filter(
       KindlingsSchema, com.histmersion.api.json.Schema:
 
   def isEmpty: com.histmersion.api.library.Filter.IsEmptyResult =
-    q.forall(_.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
-      status.isEmpty && years.isEmpty && period.isEmpty && bbox.isEmpty && title.forall(_.trim.isEmpty) &&
-      goal.forall(_.trim.isEmpty)
+    _root_.com.histmersion.api.library.Filter.IsEmptyResult(q.forall((_).value.trim.isEmpty) && tags.isEmpty && authors.isEmpty && places.isEmpty && topics.isEmpty &&
+      status.isEmpty && years.isEmpty && period.isEmpty && bbox.isEmpty && title.forall((_).value.trim.isEmpty) &&
+      goal.forall((_).value.trim.isEmpty))
 
   def sourceSet: Filter = Filter(q, tags, authors, places, topics, status, years, period, bbox, goal = goal)
 
@@ -135,7 +135,7 @@ object Filter:
   /** Postgres rejects an inverted range (`range lower bound must be less than or equal to range upper bound`), so a
     * nonsense bound is clamped before it can build one.
     */
-  def clamp(v: com.histmersion.api.library.Filter.ClampV): com.histmersion.api.library.Filter.ClampResult = math.max(Earliest, math.min(Latest, v))
+  def clamp(v: com.histmersion.api.library.Filter.ClampV): com.histmersion.api.library.Filter.ClampResult = math.max(Earliest, math.min(Latest, (v).value))
 
   def periodOf(from: Option[com.histmersion.api.library.Filter.PeriodOfFrom], to: Option[com.histmersion.api.library.Filter.PeriodOfTo]): Option[Period] =
     (from.map(clamp), to.map(clamp)) match
@@ -179,9 +179,9 @@ object Filter:
       title: Option[com.histmersion.api.library.Filter.OfTitle] = None,
       goal: Option[com.histmersion.api.library.Filter.OfGoal] = None
   ): Filter =
-    def clean(xs: List[com.histmersion.api.library.Filter.OfCleanXs]) = xs.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty)
+    def clean(xs: List[com.histmersion.api.library.Filter.OfCleanXs]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty)
     Filter(
-      q = q.map(_.trim).filter(_.nonEmpty),
+      q = q.map((_).value.trim).filter((_).value.nonEmpty),
       tags = clean(tags),
       authors = clean(authors),
       places = clean(places),
@@ -193,8 +193,8 @@ object Filter:
       sort = sort.flatMap(Sort.parse).getOrElse(Sort.Relevance),
       limit = limit.getOrElse(0),
       offset = offset.getOrElse(0).max(0),
-      title = title.map(_.trim).filter(_.nonEmpty),
-      goal = goal.map(_.trim).filter(_.nonEmpty)
+      title = title.map((_).value.trim).filter((_).value.nonEmpty),
+      goal = goal.map((_).value.trim).filter((_).value.nonEmpty)
     )
 
   /** [[Param.brief]] is the agents' wording, a few words: every turn of an agent step re-sends a tool's schema. */

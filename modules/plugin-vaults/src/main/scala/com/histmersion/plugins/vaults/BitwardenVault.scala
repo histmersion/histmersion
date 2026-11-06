@@ -17,17 +17,17 @@ final class BitwardenVault(
     val (item, f) = Vaults.entryAndField(ref, field)
     for
       i <- Subprocess.plain(_root_.com.histmersion.plugins.vaults.Subprocess.PlainWhat("the item"), item)
-      g <- Subprocess.plain("the field", f)
+      g <- Subprocess.plain(_root_.com.histmersion.plugins.vaults.Subprocess.PlainWhat("the field"), f)
       argv = List(exe, "get", g, i, "--nointeraction")
       env = session.map(s => Map("BW_SESSION" -> s)).getOrElse(Map.empty)
       v <- Vaults.answer(name, ref, Subprocess.run(argv, env, None, timeout), classify(i))
     yield v
 
   private def classify(item: com.histmersion.plugins.vaults.BitwardenVault.ClassifyItem)(err: com.histmersion.plugins.vaults.BitwardenVault.ClassifyErr): Option[com.histmersion.plugins.vaults.BitwardenVault.ClassifyResult] =
-    if err.contains("vault is locked") || err.contains("not logged in") then
+    if (err).value.contains("vault is locked") || (err).value.contains("not logged in") then
       Some(_root_.com.histmersion.plugins.vaults.BitwardenVault.ClassifyResult(s"$name: the vault is locked — run `bw unlock` and set session = \"env:BW_SESSION\" for this vault"))
-    else if err.contains("more than one result") then Some(_root_.com.histmersion.plugins.vaults.BitwardenVault.ClassifyResult(s"$name: '$item' matches more than one item — use its id"))
-    else if err.contains("not found") then Some(_root_.com.histmersion.plugins.vaults.BitwardenVault.ClassifyResult(s"$name: no item '$item'"))
+    else if (err).value.contains("more than one result") then Some(_root_.com.histmersion.plugins.vaults.BitwardenVault.ClassifyResult(s"$name: '$item' matches more than one item — use its id"))
+    else if (err).value.contains("not found") then Some(_root_.com.histmersion.plugins.vaults.BitwardenVault.ClassifyResult(s"$name: no item '$item'"))
     else None
 
 object BitwardenVault:

@@ -51,7 +51,7 @@ object Goal:
 
     val SearchQuery: LinkKind = Query
 
-    def parse(s: com.histmersion.domain.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.automation.Goal.LinkKind.ParseS): Option[LinkKind] = values.find(_.wire == (s).value.trim.toLowerCase)
     given WireEnumValues[LinkKind]:
       def all: Array[LinkKind] = LinkKind.values
       def wire(e: LinkKind): com.histmersion.domain.automation.Goal.LinkKind.WireResult = e.wire

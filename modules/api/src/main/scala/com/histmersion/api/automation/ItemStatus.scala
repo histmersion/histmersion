@@ -20,4 +20,4 @@ object ItemStatus:
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.automation.ItemStatus.ParseS): Option[ItemStatus] = values.find(_.wire == s.trim.toLowerCase)
+  def parse(s: com.histmersion.api.automation.ItemStatus.ParseS): Option[ItemStatus] = values.find(_.wire == (s).value.trim.toLowerCase)

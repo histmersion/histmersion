@@ -241,7 +241,7 @@ object Article:
     private def statusNote(s: Source.Status): com.histmersion.api.research.Article.Coverage.StatusNoteResult = if Stated(s) then _root_.com.histmersion.api.research.Article.Coverage.StatusNoteResult(s" (${s.wire})") else _root_.com.histmersion.api.research.Article.Coverage.StatusNoteResult("")
 
     private def endSentence(s: com.histmersion.api.research.Article.Coverage.EndSentenceS): com.histmersion.api.research.Article.Coverage.EndSentenceResult =
-      if s.endsWith(".") || s.endsWith("?") || s.endsWith("!") then s else _root_.com.histmersion.api.research.Article.Coverage.EndSentenceResult(s"$s.")
+      if (s).value.endsWith(".") || (s).value.endsWith("?") || (s).value.endsWith("!") then s else _root_.com.histmersion.api.research.Article.Coverage.EndSentenceResult(s"$s.")
 
     def method(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MethodResult =
       val statuses =
@@ -276,33 +276,33 @@ object Article:
       case _          => _root_.com.histmersion.api.research.Article.Coverage.OrListResult(s"${xs.init.mkString(", ")} or ${xs.last}")
 
     /** An `_` or `*` of a user's query would end the Method line's Markdown emphasis. */
-    private def escape(s: com.histmersion.api.research.Article.Coverage.EscapeS): com.histmersion.api.research.Article.Coverage.EscapeResult = s.replace("*", "\\*").replace("_", "\\_")
+    private def escape(s: com.histmersion.api.research.Article.Coverage.EscapeS): com.histmersion.api.research.Article.Coverage.EscapeResult = _root_.com.histmersion.api.research.Article.Coverage.EscapeResult((s).value.replace("*", "\\*").replace("_", "\\_"))
 
-    private def isHeading(l: com.histmersion.api.research.Article.Coverage.IsHeadingL) = l.trim.startsWith("#")
-    private def level(l: com.histmersion.api.research.Article.Coverage.LevelL) = l.trim.takeWhile(_ == '#').length
+    private def isHeading(l: com.histmersion.api.research.Article.Coverage.IsHeadingL) = (l).value.trim.startsWith("#")
+    private def level(l: com.histmersion.api.research.Article.Coverage.LevelL) = (l).value.trim.takeWhile(_ == '#').length
 
     def withoutNotUsed(text: com.histmersion.api.research.Article.Coverage.WithoutNotUsedText): com.histmersion.api.research.Article.Coverage.WithoutNotUsedResult =
-      val lines = text.split("\n", -1).toList
+      val lines = (text).value.split("\n", -1).toList
       lines.indexWhere(l =>
-        isHeading(l) && l.trim.replaceAll("^#+\\s*", "").trim.toLowerCase.startsWith("not used")
+        isHeading(_root_.com.histmersion.api.research.Article.Coverage.IsHeadingL(l)) && l.trim.replaceAll("^#+\\s*", "").trim.toLowerCase.startsWith("not used")
       ) match
         case -1 => text
         case i  =>
-          val lv = level(lines(i))
+          val lv = level(_root_.com.histmersion.api.research.Article.Coverage.LevelL(lines(i)))
           val rest = lines.drop(i + 1)
-          val end = rest.indexWhere(l => isHeading(l) && level(l) <= lv)
-          (lines.take(i) ++ (if end < 0 then Nil else rest.drop(end))).mkString("\n")
+          val end = rest.indexWhere(l => isHeading(_root_.com.histmersion.api.research.Article.Coverage.IsHeadingL(l)) && level(_root_.com.histmersion.api.research.Article.Coverage.LevelL(l)) <= lv)
+          _root_.com.histmersion.api.research.Article.Coverage.WithoutNotUsedResult((lines.take(i) ++ (if end < 0 then Nil else rest.drop(end))).mkString("\n"))
 
-    def hasMethodLine(text: com.histmersion.api.research.Article.Coverage.HasMethodLineText): com.histmersion.api.research.Article.Coverage.HasMethodLineResult = text.linesIterator.exists(_.trim.startsWith("_Method"))
+    def hasMethodLine(text: com.histmersion.api.research.Article.Coverage.HasMethodLineText): com.histmersion.api.research.Article.Coverage.HasMethodLineResult = _root_.com.histmersion.api.research.Article.Coverage.HasMethodLineResult((text).value.linesIterator.exists(_.trim.startsWith("_Method")))
 
     def stripGenerated(body: com.histmersion.api.research.Article.Coverage.StripGeneratedBody): com.histmersion.api.research.Article.Coverage.StripGeneratedResult =
-      val s = body.indexOf(GeneratedStart)
+      val s = (body).value.indexOf(GeneratedStart)
       if s < 0 then body
       else
-        val e = body.indexOf(GeneratedEnd, s)
-        val tail = if e < 0 then "" else body.substring(e + GeneratedEnd.length)
-        (body.substring(0, s).stripTrailing + (if tail.trim.isEmpty then ""
-                                               else "\n\n" + tail.dropWhile(_.isWhitespace))).trim
+        val e = (body).value.indexOf(GeneratedEnd, s)
+        val tail = if e < 0 then "" else (body).value.substring(e + GeneratedEnd.length)
+        _root_.com.histmersion.api.research.Article.Coverage.StripGeneratedResult(((body).value.substring(0, s).stripTrailing + (if tail.trim.isEmpty then ""
+                                               else "\n\n" + tail.dropWhile(_.isWhitespace))).trim)
 
     def markdown(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MarkdownResult =
       val drift =
@@ -409,7 +409,7 @@ object Article:
       type FromWireS = FromWireS.T
       object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-      def parse(s: com.histmersion.api.research.Article.Edits.Op.ParseS): Option[Op] = values.find(_.wire.equalsIgnoreCase(s.trim))
+      def parse(s: com.histmersion.api.research.Article.Edits.Op.ParseS): Option[Op] = values.find((_.wire).value.equalsIgnoreCase((s).value.trim))
       given WireEnumValues[Op]:
         def all: Array[Op] = Op.values
         def wire(e: Op): com.histmersion.api.research.Article.Edits.Op.WireResult = e.wire
@@ -526,45 +526,45 @@ object Article:
       object AppliedCountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def head(anchor: com.histmersion.api.research.Article.Edits.HeadAnchor, max: com.histmersion.api.research.Article.Edits.HeadMax = _root_.com.histmersion.api.research.Article.Edits.HeadMax(48)): com.histmersion.api.research.Article.Edits.HeadResult =
-      val one = anchor.trim.replaceAll("\\s+", " ")
-      if one.length <= max then one else one.take(max).trim + "…"
+      val one = (anchor).value.trim.replaceAll("\\s+", " ")
+      if one.length <= (max).value then _root_.com.histmersion.api.research.Article.Edits.HeadResult(one) else one.take(max).trim + "…"
 
     private def squeeze(s: com.histmersion.api.research.Article.Edits.SqueezeS): (com.histmersion.api.research.Article.Edits.SqueezeResultPart1, com.histmersion.api.research.Article.Edits.SqueezeResultPart2) =
       val out = StringBuilder()
       val pos = Array.newBuilder[Int]
       var i = 0
-      while i < s.length do
+      while i < (s).value.length do
         if s(i).isWhitespace then
           val from = i
-          while i < s.length && s(i).isWhitespace do i += 1
+          while i < (s).value.length && s(i).isWhitespace do i += 1
           out.append(' '); pos += from
         else
           out.append(s(i)); pos += i; i += 1
       (_root_.com.histmersion.api.research.Article.Edits.SqueezeResultPart1(out.toString), _root_.com.histmersion.api.research.Article.Edits.SqueezeResultPart2(pos.result()))
 
     private def occurrences(text: com.histmersion.api.research.Article.Edits.OccurrencesText, needle: com.histmersion.api.research.Article.Edits.OccurrencesNeedle): scala.List[com.histmersion.api.research.Article.Edits.OccurrencesResult] =
-      Iterator.iterate(text.indexOf(needle))(i => text.indexOf(needle, i + 1)).takeWhile(_ >= 0).toList
+      (Iterator.iterate((text).value.indexOf(needle))(i => (text).value.indexOf(needle, i + 1)).takeWhile(_ >= 0).toList).map(refactorValue14 => _root_.com.histmersion.api.research.Article.Edits.OccurrencesResult(refactorValue14))
 
     def locate(text: com.histmersion.api.research.Article.Edits.LocateText, anchor: com.histmersion.api.research.Article.Edits.LocateAnchor): Either[com.histmersion.api.research.Article.Edits.LocateResultPart1, (com.histmersion.api.research.Article.Edits.LocateResultPart2Part1, com.histmersion.api.research.Article.Edits.LocateResultPart2Part2)] =
-      val a = anchor.trim
-      occurrences(text, a) match
+      val a = (anchor).value.trim
+      occurrences(text, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(a)) match
         case scala.List(i) => Right((i, i + a.length))
         case _ :: _ :: _   =>
           Left(s"the anchor occurs ${occurrences(text, a).size} times — quote more of the passage so it occurs once")
         case Nil =>
           val (sq, pos) = squeeze(text)
           val na = a.replaceAll("\\s+", " ")
-          occurrences(sq, na) match
+          occurrences(sq, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(na)) match
             case scala.List(i) =>
-              val last = i + na.length - 1
+              val last = (i).value + na.length - 1
               Right((pos(i), pos(last) + 1))
             case Nil =>
               Left(_root_.com.histmersion.api.research.Article.Edits.LocateResultPart1("the anchor is not in the article — copy it exactly from the current body (earlier edits included)"))
             case more => Left(_root_.com.histmersion.api.research.Article.Edits.LocateResultPart1(s"the anchor occurs ${more.size} times — quote more of the passage so it occurs once"))
 
     private def cut(text: com.histmersion.api.research.Article.Edits.CutText, s: com.histmersion.api.research.Article.Edits.CutS, e: com.histmersion.api.research.Article.Edits.CutE): com.histmersion.api.research.Article.Edits.CutResult =
-      val before = text.substring(0, s)
-      val after = text.substring(e)
+      val before = (text).value.substring(0, (s).value)
+      val after = (text).value.substring((e).value)
       val pre = before.reverseIterator.takeWhile(_.isWhitespace).mkString.reverse
       val post = after.takeWhile(_.isWhitespace)
       val gap = pre + post
@@ -576,7 +576,7 @@ object Article:
         else if gap.contains('\n') then "\n"
         else if gap.nonEmpty then " "
         else ""
-      head + joint + tail + (if tail.isEmpty then post.filter(_ == '\n').take(1) else "")
+      _root_.com.histmersion.api.research.Article.Edits.CutResult(head + joint + tail + (if tail.isEmpty then post.filter(_ == '\n').take(1) else ""))
 
     def applyOne(text: com.histmersion.api.research.Article.Edits.ApplyOneText, e: Edit): Either[com.histmersion.api.research.Article.Edits.ApplyOneResultPart1, com.histmersion.api.research.Article.Edits.ApplyOneResultPart2] =
       locate(text, e.anchor).map { (s, end) =>
@@ -598,8 +598,8 @@ object Article:
           case a :: tail =>
             val base = EditResult(number, a.op, head(Option(a.anchor).getOrElse("")), a.text.getOrElse(""))
             parse(a).flatMap(e => refuse(a).toLeft(e)).flatMap(applyOne(cur, _)) match
-              case Right(t) => loop(tail, number + 1, t, acc :+ base)
-              case Left(p)  => loop(tail, number + 1, cur, acc :+ base.copy(problem = Some(p)))
+              case Right(t) => loop(tail, _root_.com.histmersion.api.research.Article.Edits.ApplyAllLoopNumber((number).value + 1), t, acc :+ base)
+              case Left(p)  => loop(tail, _root_.com.histmersion.api.research.Article.Edits.ApplyAllLoopNumber((number).value + 1), cur, acc :+ base.copy(problem = Some(p)))
       loop(edits, _root_.com.histmersion.api.research.Article.Edits.ApplyAllLoopNumber(1), body, Vector.empty)
 
     enum Draft:
@@ -685,8 +685,8 @@ object Article:
       extraQueries: scala.List[Filter.ExtraQueries] = Nil
   ):
     def isEmpty: com.histmersion.api.research.Article.Filter.IsEmptyResult =
-      query.forall(_.trim.isEmpty) && topics.isEmpty && tags.isEmpty && status.isEmpty && places.isEmpty &&
-        authors.isEmpty && from.isEmpty && to.isEmpty
+      _root_.com.histmersion.api.research.Article.Filter.IsEmptyResult(query.forall((_).value.trim.isEmpty) && topics.isEmpty && tags.isEmpty && status.isEmpty && places.isEmpty &&
+        authors.isEmpty && from.isEmpty && to.isEmpty)
 
     def toFilter: com.histmersion.api.library.Filter =
       com.histmersion.api.library.Filter.of(
@@ -767,14 +767,14 @@ object Article:
 
     given Codec.AsObject[Filter] = StrictJson.codec(KindlingsCodecAsObject.derived[Filter])
 
-    private[api] def quoted(s: com.histmersion.api.research.Article.Filter.QuotedS): com.histmersion.api.research.Article.Filter.QuotedResult = "\"" + s.replace("\\", "\\\\").replace("\"", "\\\"") + "\""
+    private[api] def quoted(s: com.histmersion.api.research.Article.Filter.QuotedS): com.histmersion.api.research.Article.Filter.QuotedResult = _root_.com.histmersion.api.research.Article.Filter.QuotedResult("\"" + (s).value.replace("\\", "\\\\").replace("\"", "\\\"") + "\"")
 
     def normalise(f: Filter): Either[com.histmersion.api.research.Article.Filter.NormaliseResultPart1, Option[Filter]] =
-      def clean(xs: scala.List[com.histmersion.api.research.Article.Filter.NormaliseCleanXs]) = xs.flatMap(_.split(",")).map(_.trim).filter(_.nonEmpty).distinct
+      def clean(xs: scala.List[com.histmersion.api.research.Article.Filter.NormaliseCleanXs]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty).distinct
       val status = clean(f.status).map(_.toLowerCase(java.util.Locale.ROOT))
       val unknown = status.filterNot(s => Source.Status.values.exists(_.wire == s))
       val tidy = Filter(
-        f.query.map(_.trim).filter(_.nonEmpty),
+        f.query.map((_).value.trim).filter((_).value.nonEmpty),
         clean(f.topics),
         clean(f.tags),
         status,
@@ -782,7 +782,7 @@ object Article:
         clean(f.authors),
         f.from,
         f.to,
-        f.extraQueries.map(_.trim).filter(_.nonEmpty).distinct
+        (f.extraQueries.map((_).value.trim).filter(_.nonEmpty).distinct).map(refactorValue19 => _root_.com.histmersion.api.research.Article.Filter.ExtraQueries(refactorValue19))
       )
       if unknown.nonEmpty then
         Left(
@@ -827,13 +827,13 @@ object Article:
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def fromString(s: com.histmersion.api.research.Article.Kind.FromStringS): Option[Kind] =
-      values.find(_.toString.equalsIgnoreCase(s))
+      values.find(_.toString.equalsIgnoreCase((s).value))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
       def wire(e: Kind): com.histmersion.api.research.Article.Kind.WireResult = _root_.com.histmersion.api.research.Article.Kind.WireResult(e.toString.toLowerCase)
       def fromWire(s: com.histmersion.api.research.Article.Kind.FromWireS): Option[Kind] =
-        Kind.values.find(_.toString.equalsIgnoreCase(s))
+        Kind.values.find(_.toString.equalsIgnoreCase((s).value))
 
     given Encoder[Kind] = WireEnum.encoder
     given Decoder[Kind] = WireEnum.decoder
@@ -1000,7 +1000,7 @@ object Article:
     def articleThinSummary(rows: scala.List[(com.histmersion.api.research.Article.Lint.ArticleThinSummaryRowsPart1, com.histmersion.api.research.Article.Lint.ArticleThinSummaryRowsPart2)]): scala.List[LintItem] =
       rows
         .flatMap { (slug, summary) =>
-          val s = summary.trim
+          val s = (summary).value.trim
           val why =
             if s.isEmpty then Some("no summary")
             else
@@ -1071,7 +1071,7 @@ object Article:
     object OfOffset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def of(total: com.histmersion.api.research.Article.List.OfTotal, rows: scala.List[Summary], offset: com.histmersion.api.research.Article.List.OfOffset, kinds: scala.List[KindCount] = Nil): List =
-      List(com.histmersion.api.RowCount(total), rows, com.histmersion.api.Offset(offset), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next, kinds)
+      List(com.histmersion.api.RowCount((total).value), rows, com.histmersion.api.Offset((offset).value), OffsetPage(com.histmersion.api.RowCount(total), com.histmersion.api.Offset(offset), com.histmersion.api.RowCount(rows.size)).next, kinds)
 
     def byKind(counts: scala.List[KindCount]): scala.List[KindCount] =
       counts.filter(_.count > 0).sortBy(k => (-k.count, k.kind))
@@ -1130,7 +1130,7 @@ object Article:
         sample: scala.List[FilterProposal.Sample] = Nil
     ) derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema:
-      def recall: com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult = if cited == 0 then _root_.com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult(1.0) else citedIn.toDouble / cited
+      def recall: com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult = if cited == 0 then _root_.com.histmersion.api.research.Article.Plans.FilterProposal.RecallResult(1.0) else (citedIn).value.toDouble / (cited).value
 
     object FilterProposal:
       type RecallResult = RecallResult.T
@@ -1284,10 +1284,10 @@ object Article:
     object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def reviewerName(wire: com.histmersion.api.research.Article.ReviewView.ReviewerNameWire): com.histmersion.api.research.Article.ReviewView.ReviewerNameResult = wire match
-      case "rules"       => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("rules reviewer")
-      case "cold-reader" => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("cold reader")
-      case "skeptic"     => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("skeptic")
-      case "mechanical"  => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("mechanical check")
+      case refactorPattern if (refactorPattern.value == "rules") && (refactorPattern5.value == "rules")       => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("rules reviewer")
+      case refactorPattern2 if (refactorPattern2.value == "cold-reader") && (refactorPattern6.value == "cold-reader") => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("cold reader")
+      case refactorPattern7 if (refactorPattern3.value == "skeptic") && (refactorPattern7.value == "skeptic")     => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("skeptic")
+      case refactorPattern4 if (refactorPattern4.value == "mechanical") && (refactorPattern8.value == "mechanical")  => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("mechanical check")
       case other         => other
 
     def outcomeLine(f: ReviewFinding): com.histmersion.api.research.Article.ReviewView.OutcomeLineResult =
@@ -1304,7 +1304,7 @@ object Article:
 
     def markdown(r: ReviewView): com.histmersion.api.research.Article.ReviewView.MarkdownResult =
       val head = s"## Review of [[${r.slug}]]\n\n**${r.badge.label}** — ${r.badge.detail}" +
-        r.outcome.filter(_.nonEmpty).fold("")(o => s"\n\nReview manager: $o" + r.updatedAt.fold("")(t => s" ($t)"))
+        r.outcome.filter((_).value.nonEmpty).fold("")(o => s"\n\nReview manager: $o" + r.updatedAt.fold("")(t => s" ($t)"))
       val goals =
         if r.goals.isEmpty then ""
         else "\n\n### Research goals\n\n" + r.goals.map(g => s"- `${g.slug}` (${g.status}) ${g.title}").mkString("\n")

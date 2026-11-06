@@ -108,7 +108,7 @@ object Lpf:
     * 8601 dates with month and day (`"-0500-01-01"`) are astronomical and converted via [[fromIso]].
     */
   def parseYear(raw: com.histmersion.api.catalogue.Lpf.ParseYearRaw): Option[com.histmersion.api.catalogue.Lpf.ParseYearResult] =
-    val t = Circa.replaceFirstIn(raw.trim.toLowerCase, "")
+    val t = Circa.replaceFirstIn((raw).value.trim.toLowerCase, "")
     if t.isEmpty then None
     else
       val isIso = IsoDate.findFirstIn(t).isDefined
@@ -178,7 +178,7 @@ object Lpf:
     (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue25 => _root_.com.histmersion.api.catalogue.Lpf.StrResult(refactorValue25))
 
   private def slug(s: com.histmersion.api.catalogue.Lpf.SlugS): com.histmersion.api.catalogue.Lpf.SlugResult =
-    s.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64)
+    _root_.com.histmersion.api.catalogue.Lpf.SlugResult((s).value.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
 
   private def propertyPeriod(o: JsonObject): Option[Span] =
     def fromPair(a: Option[com.histmersion.api.catalogue.Lpf.PropertyPeriodFromPairA], b: Option[com.histmersion.api.catalogue.Lpf.PropertyPeriodFromPairB]): Option[Span] = (a, b) match
@@ -225,10 +225,10 @@ object Lpf:
         })
     }
     val alts = str(props, "alt_names", "altNames", "NAME_ALT", "nameAlt").toList
-      .flatMap(_.split("[|;]").toList)
+      .flatMap((_).value.split("[|;]").toList)
       .map(_.trim)
       .filter(_.nonEmpty)
-      .map(Place.Name(_))
+      .map(Place.Name(_root_.com.histmersion.api.catalogue.Place.Name.Value(_)))
     val given_ = (declared ++ alts)
       .filter(_.name.nonEmpty)
       .distinctBy(n => (n.name.toLowerCase, n.lang.toLowerCase))

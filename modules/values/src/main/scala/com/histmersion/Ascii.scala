@@ -6,10 +6,10 @@ private[histmersion] object Ascii:
   object LowerS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def lower(s: com.histmersion.Ascii.LowerS): com.histmersion.Ascii.LowerResult =
-    val cs = s.toCharArray
+    val cs = (s).value.toCharArray
     var i = 0
     while i < cs.length do
       val c = cs(i)
       if c >= 'A' && c <= 'Z' then cs(i) = (c + 32).toChar
       i += 1
-    new String(cs)
+    _root_.com.histmersion.Ascii.LowerResult(new String(cs))

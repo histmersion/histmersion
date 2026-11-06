@@ -26,11 +26,11 @@ object CritiqueRef:
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def key(s: com.histmersion.api.research.CritiqueRef.KeyS): com.histmersion.api.research.CritiqueRef.KeyResult =
-    s.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT)
+    _root_.com.histmersion.api.research.CritiqueRef.KeyResult((s).value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase(java.util.Locale.ROOT))
 
   def parse(s: com.histmersion.api.research.CritiqueRef.ParseS): Either[com.histmersion.api.research.CritiqueRef.ParseResultPart1, CritiqueRef] =
-    val t = Option(s).getOrElse("").replace("->", ">").replace("→", ">")
+    val t = Option((s).value).getOrElse("").replace("->", ">").replace("→", ">")
     t.split(">", -1).toList match
-      case a :: b :: Nil if key(a).nonEmpty && key(b).nonEmpty && key(a) != key(b) => Right(CritiqueRef(key(a), key(b)))
+      case a :: b :: Nil if key(a).nonEmpty && key(b).nonEmpty && key(a) != key(b) => Right(CritiqueRef(key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(a)), key(_root_.com.histmersion.api.research.CritiqueRef.KeyS(b))))
       case _                                                                       =>
         Left(_root_.com.histmersion.api.research.CritiqueRef.ParseResultPart1(s"'$s' is not a pair — write it as <src>><dst>, the critic first (e.g. smith1987_dying>frazer1922_golden)"))

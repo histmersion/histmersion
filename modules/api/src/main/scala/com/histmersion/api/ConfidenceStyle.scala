@@ -35,7 +35,7 @@ object ConfidenceStyle:
   def desaturate(rgb: com.histmersion.api.ConfidenceStyle.DesaturateRgb, c: Confidence): com.histmersion.api.ConfidenceStyle.DesaturateResult =
     val s = saturation(c)
     "\\d+".r.findAllIn(rgb).take(3).map(_.toInt).toList match
-      case r :: g :: b :: Nil if s < 1.0 =>
+      case r :: g :: b :: Nil if (s).value < 1.0 =>
         val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
         def mix(v: com.histmersion.api.ConfidenceStyle.DesaturateMixV) = (grey + (v - grey) * s).round.toInt
         s"rgb(${mix(r)},${mix(g)},${mix(b)})"

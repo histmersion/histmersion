@@ -18,7 +18,7 @@ object IronNewtypePairs:
   object DifferentConstraintsMessageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def withoutPackageObjects(name: io.scalaland.chimney.histmersion.IronNewtypePairs.WithoutPackageObjectsName): io.scalaland.chimney.histmersion.IronNewtypePairs.WithoutPackageObjectsResult =
-    name.replaceAll("""\w+\$package\$?\.""", "").replace("scala.Predef.", "")
+    _root_.io.scalaland.chimney.histmersion.IronNewtypePairs.WithoutPackageObjectsResult((name).value.replaceAll("""\w+\$package\$?\.""", "").replace("scala.Predef.", ""))
 
 final class IronNewtypePairs(using val quotes: Quotes):
   import IronNewtypePairs.withoutPackageObjects

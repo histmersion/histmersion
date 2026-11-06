@@ -17,7 +17,7 @@ object FormatSeverity:
   given WireEnumValues[FormatSeverity]:
     def all: Array[FormatSeverity] = FormatSeverity.values
     def wire(e: FormatSeverity): com.histmersion.api.checks.FormatSeverity.WireResult = _root_.com.histmersion.api.checks.FormatSeverity.WireResult(e.toString.toLowerCase(java.util.Locale.ROOT))
-    def fromWire(s: com.histmersion.api.checks.FormatSeverity.FromWireS): Option[FormatSeverity] = FormatSeverity.values.find(_.toString.equalsIgnoreCase(s))
+    def fromWire(s: com.histmersion.api.checks.FormatSeverity.FromWireS): Option[FormatSeverity] = FormatSeverity.values.find(_.toString.equalsIgnoreCase((s).value))
   given Encoder[FormatSeverity] = WireEnum.encoder
   given Decoder[FormatSeverity] = WireEnum.decoder
   given Schema[FormatSeverity] = WireEnum.schema

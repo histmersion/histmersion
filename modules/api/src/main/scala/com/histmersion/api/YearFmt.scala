@@ -26,7 +26,7 @@ object YearFmt:
   object SpanLongResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(v: com.histmersion.api.YearFmt.ApplyV): com.histmersion.api.YearFmt.ApplyResult =
-    if v < 0 then s"${-v} BCE"
+    if (v).value < 0 then _root_.com.histmersion.api.YearFmt.ApplyResult(s"${-(v).value} BCE")
     else if v == 0 then _root_.com.histmersion.api.YearFmt.ApplyResult("1 BCE") // no year zero in historical reckoning
     else _root_.com.histmersion.api.YearFmt.ApplyResult(s"$v CE")
 

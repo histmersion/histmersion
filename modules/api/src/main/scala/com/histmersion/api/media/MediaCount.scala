@@ -29,4 +29,4 @@ object MediaCount:
       .groupBy(identity)
       .toList
       .map((k, v) => MediaCount(k, v.size, allowed(k)))
-      .sortBy(c => (-c.n, c.key))
+      .sortBy(c => (-(c.n).value, c.key))

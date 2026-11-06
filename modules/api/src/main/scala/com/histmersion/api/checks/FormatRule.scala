@@ -240,7 +240,7 @@ object FormatRule:
   given WireEnumValues[FormatRule]:
     def all: Array[FormatRule] = FormatRule.values
     def wire(e: FormatRule): com.histmersion.api.checks.FormatRule.WireResult = e.wire
-    def fromWire(s: com.histmersion.api.checks.FormatRule.FromWireS): Option[FormatRule] = FormatRule.values.find(_.wire == s.trim.toLowerCase)
+    def fromWire(s: com.histmersion.api.checks.FormatRule.FromWireS): Option[FormatRule] = FormatRule.values.find(_.wire == (s).value.trim.toLowerCase)
   given Encoder[FormatRule] = WireEnum.encoder
   given Decoder[FormatRule] = WireEnum.decoder
   given Schema[FormatRule] = WireEnum.schema

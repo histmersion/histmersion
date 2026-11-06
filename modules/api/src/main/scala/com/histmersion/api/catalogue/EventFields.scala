@@ -33,7 +33,7 @@ object EventFields:
     Json.obj("type" -> "Point".asJson, "coordinates" -> Json.arr(lon.asJson, lat.asJson))
 
   def geometry(g: Option[com.histmersion.api.catalogue.EventFields.GeometryG]): Json =
-    g.map(_.trim).filter(_.nonEmpty).fold(Json.Null)(t => io.circe.parser.parse(t).getOrElse(t.asJson))
+    g.map((_).value.trim).filter(_.nonEmpty).fold(Json.Null)(t => io.circe.parser.parse(t).getOrElse(t.asJson))
 
   def upstream(r: CatalogRecord): Map[com.histmersion.api.catalogue.EventFields.UpstreamResultPart1, Json] =
     Map(

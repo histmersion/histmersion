@@ -10,4 +10,4 @@ object PersonalIds:
   val MaxLimit = 1000
   val DefaultLimit = 200
 
-  def limit(asked: Option[com.histmersion.api.personal.PersonalIds.LimitAsked]): com.histmersion.api.personal.PersonalIds.LimitResult = asked.filter(_ > 0).fold(DefaultLimit)(math.min(_, MaxLimit))
+  def limit(asked: Option[com.histmersion.api.personal.PersonalIds.LimitAsked]): com.histmersion.api.personal.PersonalIds.LimitResult = _root_.com.histmersion.api.personal.PersonalIds.LimitResult(asked.filter((_).value > 0).fold(DefaultLimit)((refactorValue => math.min(refactorValue.value, MaxLimit))))

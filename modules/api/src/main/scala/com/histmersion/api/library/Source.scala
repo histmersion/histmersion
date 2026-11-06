@@ -92,7 +92,7 @@ object Source:
       def all: Array[Status] = Status.values
       def wire(e: Status): com.histmersion.api.library.Source.Status.WireResult = _root_.com.histmersion.api.library.Source.Status.WireResult(e.toString.toLowerCase)
       def fromWire(s: com.histmersion.api.library.Source.Status.FromWireS): Option[Status] =
-        Status.values.find(_.toString.equalsIgnoreCase(s))
+        Status.values.find(_.toString.equalsIgnoreCase((s).value))
 
   final case class Alias(alias: Alias.Value, citekey: com.histmersion.api.library.Citekey)
       derives KindlingsCodecAsObject,
@@ -394,27 +394,27 @@ object Source:
     ): com.histmersion.api.library.Source.Kinds.OfResult =
       val words = (tags ++ topics).map(_.toLowerCase(java.util.Locale.ROOT))
       val where = venue.getOrElse("").toLowerCase(java.util.Locale.ROOT)
-      val id = doi.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
+      val id = doi.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty)
       def says(w: String*) = words.exists(t => w.exists(t.contains)) || w.exists(where.contains)
       if says("thesis", "dissertation") then _root_.com.histmersion.api.library.Source.Kinds.OfResult(Thesis)
       else if words.exists(_.contains("dataset")) || id.exists(d => DataDoiPrefixes.exists(d.startsWith)) then _root_.com.histmersion.api.library.Source.Kinds.OfResult(Dataset)
       else
-        id.flatMap(isbnDoi) match
-          case Some(chapter)        => if chapter then _root_.com.histmersion.api.library.Source.Kinds.OfResult(Chapter) else _root_.com.histmersion.api.library.Source.Kinds.OfResult(Book)
+        id.flatMap({ val refactorFunction2 = isbnDoi; (refactorValue14) => refactorFunction2(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiDoi(refactorValue14)) }) match
+          case Some(chapter)        => if (chapter).value then _root_.com.histmersion.api.library.Source.Kinds.OfResult(Chapter) else _root_.com.histmersion.api.library.Source.Kinds.OfResult(Book)
           case None if id.isDefined => _root_.com.histmersion.api.library.Source.Kinds.OfResult(Paper)
           case None                 =>
-            if hasCover || provenance.map(_.trim.toLowerCase(java.util.Locale.ROOT)).exists(BookProvenance.contains)
+            if hasCover || provenance.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).exists(BookProvenance.contains)
             then _root_.com.histmersion.api.library.Source.Kinds.OfResult(Book)
             else _root_.com.histmersion.api.library.Source.Kinds.OfResult(Unknown)
 
     def isbnDoi(doi: com.histmersion.api.library.Source.Kinds.IsbnDoiDoi): Option[com.histmersion.api.library.Source.Kinds.IsbnDoiResult] =
-      val suffix = doi.dropWhile(_ != '/').drop(1).toLowerCase(java.util.Locale.ROOT).stripPrefix("cbo")
+      val suffix = (doi).value.dropWhile(_ != '/').drop(1).toLowerCase(java.util.Locale.ROOT).stripPrefix("cbo")
       if !(suffix.startsWith("978") || suffix.startsWith("979")) then None
       else
         @tailrec def isbnEnd(i: com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI, digits: com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits): Option[com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndResult] =
           if digits >= 13 then Some(i)
-          else if i < suffix.length && suffix(i).isDigit then isbnEnd(i + 1, digits + 1)
-          else if i < suffix.length && suffix(i) == '-' then isbnEnd(i + 1, digits)
+          else if (i).value < suffix.length && suffix(i).isDigit then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits((digits).value + 1))
+          else if (i).value < suffix.length && suffix((i).value) == '-' then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), digits)
           else None
         isbnEnd(0, 0).map(end => suffix.drop(end).exists(_.isLetterOrDigit))
 
@@ -450,7 +450,7 @@ object Source:
     /** A source's match as the plan's Markdown lists it. */
     def line(s: Match): com.histmersion.api.library.Source.Match.LineResult =
       val target = s.leftCitekey.fold("")(c => s" → `$c`")
-      val score = s.score.fold("")(x => s" · score ${math.round(x * 10) / 10.0}")
+      val score = s.score.fold("")(x => s" · score ${math.round((x).value * 10) / 10.0}")
       _root_.com.histmersion.api.library.Source.Match.LineResult(s"- `${s.rightCitekey}`$target · ${MatchOutcome.wireOf(s.outcome)}$score" + s.issue.fold("")(i => s" · $i"))
 
   final case class Patch(
@@ -537,7 +537,7 @@ object Source:
     def shortCite: com.histmersion.api.library.Source.Ref.ShortCiteResult =
       val auth = Ref.shortAuthors(authors.map(_.value))
       val yr = year.map(_.toString).getOrElse("n.d.")
-      if auth.isEmpty then _root_.com.histmersion.api.library.Source.Ref.ShortCiteResult(yr) else _root_.com.histmersion.api.library.Source.Ref.ShortCiteResult(s"$auth $yr")
+      if (auth).value.isEmpty then _root_.com.histmersion.api.library.Source.Ref.ShortCiteResult(yr) else _root_.com.histmersion.api.library.Source.Ref.ShortCiteResult(s"$auth $yr")
 
   object Ref:
     type IdLabelResult = IdLabelResult.T
@@ -554,17 +554,17 @@ object Source:
     object ShortAuthorsAuthors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def surname(full: com.histmersion.api.library.Source.Ref.SurnameFull): com.histmersion.api.library.Source.Ref.SurnameResult =
-      val t = full.trim
-      if t.contains(",") then t.takeWhile(_ != ',').trim
-      else t.split("\\s+").lastOption.getOrElse(t)
+      val t = (full).value.trim
+      if t.contains(",") then _root_.com.histmersion.api.library.Source.Ref.SurnameResult(t.takeWhile(_ != ',').trim)
+      else _root_.com.histmersion.api.library.Source.Ref.SurnameResult(t.split("\\s+").lastOption.getOrElse(t))
 
     def shortAuthors(authors: List[com.histmersion.api.library.Source.Ref.ShortAuthorsAuthors]): com.histmersion.api.library.Source.Ref.ShortAuthorsResult =
-      val names = authors.map(_.trim).filter(_.nonEmpty)
+      val names = authors.map((_).value.trim).filter(_.nonEmpty)
       names match
         case Nil           => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult("")
-        case a :: Nil      => surname(a)
-        case a :: b :: Nil => surname(a) + " & " + surname(b)
-        case a :: _        => surname(a) + " et al."
+        case a :: Nil      => surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))
+        case a :: b :: Nil => (surname(a)).value + " & " + surname(b)
+        case a :: _        => (surname(a)).value + " et al."
 
   final case class Renamed(
       oldCitekey: com.histmersion.api.library.Citekey,
@@ -594,7 +594,7 @@ object Source:
     val all: List[com.histmersion.api.library.Source.Section.All] = List(_root_.com.histmersion.api.library.Source.Section.All(Summary), _root_.com.histmersion.api.library.Source.Section.All(Findings), _root_.com.histmersion.api.library.Source.Section.All(Notes), _root_.com.histmersion.api.library.Source.Section.All(Toc), _root_.com.histmersion.api.library.Source.Section.All(Body), All)
 
     def parse(s: com.histmersion.api.library.Source.Section.ParseS): Option[com.histmersion.api.library.Source.Section.ParseResult] =
-      val lower = s.trim.toLowerCase
+      val lower = (s).value.trim.toLowerCase
       all.find(_ == lower)
 
   final case class WithFindings(
@@ -742,12 +742,12 @@ object Source:
           periodOf(Some(p.start), Some(p.end), _root_.com.histmersion.api.library.Source.Write.PeriodOfWhat("source"))
         )
         fs <- patch.findings.fold[Either[String, List[Finding]]](Right(existing.findings))(fp =>
-          applyFindings(existing.citekey, existing.findings, fp)
+          (applyFindings(existing.citekey, existing.findings, fp)).left.map(refactorError8 => (refactorError8).value)
         )
         meta = patch.metadata.getOrElse(MetadataPatch())
         _ <- metadataCheck(meta)
         newEdges <- patch.edges.fold[Either[String, List[Edge]]](Right(existing.edges))(
-          applyEdges(existing.citekey, existing.edges, _)
+          (applyEdges(existing.citekey, existing.edges, _)).left.map(refactorError9 => (refactorError9).value)
         )
         newStatus = meta.status.getOrElse(existing.status)
         _ <- supersededEdgeCheck(newStatus, newEdges)
@@ -794,7 +794,7 @@ object Source:
               s"source: patch '$other' to record '$other' --${com.histmersion.api.library.Edge.Kind.wireOf(in.kind)}--> '${in.dst}' " +
               s"(src may be omitted; it defaults to the $role)")
           )
-        case _ => Right(Edge(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.library.Citekey(in.dst.trim), com.histmersion.api.library.Edge.Kind.wireOf(in.kind)))
+        case _ => Right(Edge(com.histmersion.api.library.Citekey((citekey).value), com.histmersion.api.library.Citekey(in.dst.trim), com.histmersion.api.library.Edge.Kind.wireOf(in.kind)))
 
     private[api] def metadataCheck(m: MetadataPatch): Either[com.histmersion.api.library.Source.Write.MetadataCheckResultPart1, Unit] =
       val both = m.clear.filter {
@@ -814,7 +814,7 @@ object Source:
 
     def applyFindings(citekey: com.histmersion.api.library.Citekey, current: List[Finding], p: FindingsPatch): Either[com.histmersion.api.library.Source.Write.ApplyFindingsResultPart1, List[Finding]] =
       for
-        base <- p.replace.fold[Either[String, List[Finding]]](Right(current))(numbered(citekey, _))
+        base <- p.replace.fold[Either[String, List[Finding]]](Right(current))((numbered(citekey, _)).left.map(refactorError5 => (refactorError5).value))
         kept = base.filterNot(f => p.remove.contains(f.id))
         added <- allocate(citekey, kept, p.add)
       yield kept ++ added
@@ -851,7 +851,7 @@ object Source:
         Finding(id, citekey, in.claim, in.region, geo, p, in.periodName, in.tags, conf, in.significance)
 
     private[api] def confidenceOf(raw: Option[com.histmersion.api.library.Source.Write.ConfidenceOfRaw], what: com.histmersion.api.library.Source.Write.ConfidenceOfWhat): Either[com.histmersion.api.library.Source.Write.ConfidenceOfResultPart1, Option[Confidence]] =
-      raw.map(_.trim).filter(_.nonEmpty) match
+      raw.map((_).value.trim).filter(_.nonEmpty) match
         case None    => Right(None)
         case Some(c) =>
           Confidence
@@ -888,4 +888,4 @@ object Source:
       else Right(())
 
     private[api] def traverse[A, B](as: List[A])(f: A => Either[com.histmersion.api.library.Source.Write.TraverseFResultPart1, B]): Either[com.histmersion.api.library.Source.Write.TraverseResultPart1, List[B]] =
-      as.foldLeft[Either[String, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => f(a).map(bs :+ _)))
+      (as.foldLeft[Either[String, List[B]]](Right(Nil))((acc, a) => acc.flatMap(bs => (f(a).map(bs :+ _)).left.map(refactorError14 => (refactorError14).value)))).left.map(refactorError4 => _root_.com.histmersion.api.library.Source.Write.TraverseResultPart1(refactorError4))

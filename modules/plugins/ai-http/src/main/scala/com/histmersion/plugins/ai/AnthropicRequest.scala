@@ -72,10 +72,10 @@ object AnthropicRequest:
       AnthropicRequest(Json.fromFields(fields))
     }
 
-  private def text(t: com.histmersion.plugins.ai.AnthropicRequest.TextT): Json = Json.obj("text" -> Json.fromString(t), "type" -> Json.fromString("text"))
+  private def text(t: com.histmersion.plugins.ai.AnthropicRequest.TextT): Json = Json.obj("text" -> Json.fromString((t).value), "type" -> Json.fromString("text"))
 
   private def message(role: com.histmersion.plugins.ai.AnthropicRequest.MessageRole, content: List[Json]): Json =
-    Json.obj("role" -> Json.fromString(role), "content" -> Json.fromValues(content))
+    Json.obj("role" -> Json.fromString((role).value), "content" -> Json.fromValues(content))
 
   private def messages(ms: List[AiMessage]): Either[com.histmersion.plugins.ai.AnthropicRequest.MessagesResultPart1, List[Json]] =
     @annotation.tailrec
@@ -105,8 +105,8 @@ object AnthropicRequest:
           case Left(e)  => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
           case Right(m) =>
             val use = Json.obj(
-              "id" -> Json.fromString(id),
-              "name" -> Json.fromString(name),
+              "id" -> Json.fromString((id).value),
+              "name" -> Json.fromString((name).value),
               "input" -> Encoder[Map[String, Json]].apply(m),
               "type" -> Json.fromString("tool_use")
             )

@@ -22,7 +22,7 @@ object Sort:
     case Oldest      => _root_.com.histmersion.api.library.Sort.LabelResult("oldest")
     case Title       => _root_.com.histmersion.api.library.Sort.LabelResult("title")
 
-  def parse(s: com.histmersion.api.library.Sort.ParseS): Option[Sort] = s.trim.toLowerCase.replace("_", "") match
+  def parse(s: com.histmersion.api.library.Sort.ParseS): Option[Sort] = (s).value.trim.toLowerCase.replace("_", "") match
     case "relevance" | "rank"              => Some(Relevance)
     case "cited" | "citations"             => Some(Cited)
     case "period" | "periodstart" | "time" => Some(PeriodStart)
@@ -35,6 +35,6 @@ object Sort:
 
   given CirceCodec[Sort] = CirceCodec.from(
     Decoder.decodeString.emap(s => parse(s).toRight(s"unknown sort '$s' (${all.mkString("|")})")),
-    Encoder.encodeString.contramap(label)
+    Encoder.encodeString.contramap((label).value)
   )
   given Schema[Sort] = Schema.string[Sort]

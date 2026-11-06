@@ -15,7 +15,7 @@ object EventLinksMarkdown:
   type ResultResult = ResultResult.T
   object ResultResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def km(d: com.histmersion.api.catalogue.EventLinksMarkdown.KmD): com.histmersion.api.catalogue.EventLinksMarkdown.KmResult = s"${math.round(d)} km"
+  private def km(d: com.histmersion.api.catalogue.EventLinksMarkdown.KmD): com.histmersion.api.catalogue.EventLinksMarkdown.KmResult = _root_.com.histmersion.api.catalogue.EventLinksMarkdown.KmResult(s"${math.round((d).value)} km")
 
   def context(d: com.histmersion.api.catalogue.EventCard): com.histmersion.api.catalogue.EventLinksMarkdown.ContextResult =
     val tier = s"\n\n**Tier:** ${d.tier}" + (if d.tier == EventTier.Catalogue then

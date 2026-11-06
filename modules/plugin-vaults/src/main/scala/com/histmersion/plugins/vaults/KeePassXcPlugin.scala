@@ -51,7 +51,7 @@ final class KeePassXcPlugin extends Plugin:
     */
   private def detector(ykman: com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorYkman, ctx: Plugin.Context): Either[com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorResultPart1, Option[com.histmersion.plugins.vaults.KeePassXcPlugin.DetectorResultPart2]] =
     given files: com.histmersion.plugin.LocalFiles = ctx.files
-    val t = Option(ykman).map(_.trim).getOrElse("")
+    val t = Option(ykman).map((_).value.trim).getOrElse("")
     if t.isEmpty then
       ctx.log.info(_root_.com.histmersion.plugin.Plugin.Log.InfoMessage("YubiKey detection is off (ykman = \"\"): the configured YubiKeys are tried in order"))
       Right(None)

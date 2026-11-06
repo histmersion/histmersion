@@ -44,5 +44,5 @@ object PluginSet:
     case None | Some(PluginSet(_, _, Nil, _, _, _, _)) =>
       s"first-party plugins only (digest ${s.fold(EmptyDigest)(_.digest).take(12)}…)"
     case Some(set) =>
-      s"${set.digest.take(12)}… · ${Plural.count(_root_.com.histmersion.api.Plural.CountN((set.jars.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("jar"))} (${set.mode}): " +
-        set.jars.map(j => j.file).mkString(", ")
+      _root_.com.histmersion.api.plugins.PluginSet.DescribeResult(s"${(set.digest).value.take(12)}… · ${Plural.count(_root_.com.histmersion.api.Plural.CountN((set.jars.size).toLong), _root_.com.histmersion.api.Plural.CountSingular("jar"))} (${set.mode}): " +
+        set.jars.map(j => j.file).mkString(", "))

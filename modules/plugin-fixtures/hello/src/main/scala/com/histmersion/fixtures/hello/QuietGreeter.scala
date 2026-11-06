@@ -4,7 +4,7 @@ import com.histmersion.plugin.*
 import com.histmersion.plugin.Plugin.Config.given
 
 final class QuietGreeter extends Greeter:
-  def greet(who: com.histmersion.fixtures.hello.QuietGreeter.GreetWho) = s"(${who.toLowerCase(java.util.Locale.ROOT)})"
+  def greet(who: com.histmersion.fixtures.hello.QuietGreeter.GreetWho) = s"(${(who).value.toLowerCase(java.util.Locale.ROOT)})"
 
 object QuietGreeter:
   type GreetWho = GreetWho.T

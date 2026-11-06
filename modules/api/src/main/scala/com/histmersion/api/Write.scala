@@ -23,7 +23,7 @@ object Write:
   type ApplyListCurrent = ApplyListCurrent.T
   object ApplyListCurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private[api] def blankToNone(v: Option[com.histmersion.api.Write.BlankToNoneV]): Option[com.histmersion.api.Write.BlankToNoneResult] = v.map(_.trim).filter(_.nonEmpty)
+  private[api] def blankToNone(v: Option[com.histmersion.api.Write.BlankToNoneV]): Option[com.histmersion.api.Write.BlankToNoneResult] = (v.map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.Write.BlankToNoneResult(refactorValue))
 
   val CodeNotFound = "not_found"
   val CodePrecondition = "precondition_failed"

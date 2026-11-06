@@ -21,7 +21,7 @@ object ExchangeJobKinds:
     JobInfo.Kind("merge-apply"),
     _root_.com.histmersion.api.jobs.JobKindEntry.OfName("Merge another collection"),
     _root_.com.histmersion.api.jobs.JobKindEntry.OfMeaning("Merges another collection's bundle into this one, after taking a backup."),
-    subject = PlanHash.of(_).map(h => s"merge plan $h")
+    subject = PlanHash.of(_).map(h => _root_.com.histmersion.api.jobs.JobKindEntry.OfSubjectResult(s"merge plan $h"))
   )
 
   /** The plan a merge apply carries out, by its hash, in the job's detail. */

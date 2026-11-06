@@ -75,11 +75,11 @@ object JobCounts:
         case Nil            => JobCounts(queued, running, done, failed, paused, cancelled)
         case (s, n) :: tail =>
           JobState.parse(s) match
-            case Some(JobState.Queued)    => loop(tail, queued + n, running, done, failed, paused, cancelled)
-            case Some(JobState.Running)   => loop(tail, queued, running + n, done, failed, paused, cancelled)
-            case Some(JobState.Done)      => loop(tail, queued, running, done + n, failed, paused, cancelled)
-            case Some(JobState.Failed)    => loop(tail, queued, running, done, failed + n, paused, cancelled)
-            case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, paused + n, cancelled)
-            case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, cancelled + n)
+            case Some(JobState.Queued)    => loop(tail, (queued).value + (n).value, running, done, failed, paused, cancelled)
+            case Some(JobState.Running)   => loop(tail, queued, (running).value + (n).value, done, failed, paused, cancelled)
+            case Some(JobState.Done)      => loop(tail, queued, running, (done).value + (n).value, failed, paused, cancelled)
+            case Some(JobState.Failed)    => loop(tail, queued, running, done, (failed).value + (n).value, paused, cancelled)
+            case Some(JobState.Paused)    => loop(tail, queued, running, done, failed, (paused).value + (n).value, cancelled)
+            case Some(JobState.Cancelled) => loop(tail, queued, running, done, failed, paused, (cancelled).value + (n).value)
             case None                     => loop(tail, queued, running, done, failed, paused, cancelled)
     loop(rows, _root_.com.histmersion.api.jobs.JobCounts.OfLoopQueued(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopRunning(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopDone(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopFailed(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopPaused(0), _root_.com.histmersion.api.jobs.JobCounts.OfLoopCancelled(0))

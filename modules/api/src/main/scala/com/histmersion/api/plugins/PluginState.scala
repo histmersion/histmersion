@@ -17,4 +17,4 @@ object PluginState:
   type ParseS = ParseS.T
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.plugins.PluginState.ParseS): Option[PluginState] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+  def parse(s: com.histmersion.api.plugins.PluginState.ParseS): Option[PluginState] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))

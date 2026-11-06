@@ -48,7 +48,7 @@ object GeoPick:
   type ResolveTo = ResolveTo.T
   object ResolveTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.GeoPick.ParseS): Option[GeoPick] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+  def parse(s: com.histmersion.api.GeoPick.ParseS): Option[GeoPick] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
 
   given WireEnumValues[GeoPick]:
     def all: Array[GeoPick] = GeoPick.values
@@ -61,11 +61,11 @@ object GeoPick:
   def yearOf(pick: GeoPick, lo: com.histmersion.api.GeoPick.YearOfLo, hi: com.histmersion.api.GeoPick.YearOfHi): com.histmersion.api.GeoPick.YearOfResult = pick match
     case Start => lo
     case End   => hi
-    case _     => (lo + hi) / 2
+    case _     => ((lo).value + (hi).value) / 2
 
   def resolve(asOf: Option[com.histmersion.api.GeoPick.ResolveAsOf], from: Option[com.histmersion.api.GeoPick.ResolveFrom], to: Option[com.histmersion.api.GeoPick.ResolveTo], pick: GeoPick): GeoTime =
     val span = (from, to) match
-      case (Some(a), Some(b)) => Some((a.min(b), a.max(b)))
+      case (Some(a), Some(b)) => Some(((a).value.min((b).value), (a).value.max((b).value)))
       case (Some(a), None)    => Some((a, a))
       case (None, Some(b))    => Some((b, b))
       case (None, None)       => None

@@ -19,7 +19,7 @@ object NeighborTarget:
     def all: Array[NeighborTarget] = NeighborTarget.values
     def wire(e: NeighborTarget): com.histmersion.api.library.NeighborTarget.WireResult = _root_.com.histmersion.api.library.NeighborTarget.WireResult(e.toString.toLowerCase)
     def fromWire(s: com.histmersion.api.library.NeighborTarget.FromWireS): Option[NeighborTarget] =
-      NeighborTarget.values.find(_.toString.equalsIgnoreCase(s))
+      NeighborTarget.values.find(_.toString.equalsIgnoreCase((s).value))
 
   given Encoder[NeighborTarget] = WireEnum.encoder
   given Decoder[NeighborTarget] = WireEnum.decoder

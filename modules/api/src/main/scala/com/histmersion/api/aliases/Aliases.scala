@@ -30,9 +30,9 @@ object Aliases:
     Rule.replaceFirst("The old one", s"The old ${k.idWord.value}").replace("new one", s"new ${k.idWord.value}")
 
   def followed(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.FollowedAsked, now: com.histmersion.api.aliases.Aliases.FollowedNow): Option[com.histmersion.api.aliases.Aliases.FollowedResult] =
-    val a = asked.trim
-    Option.when(a.nonEmpty && a != now)(
-      s"_`$a` is an old ${k.idWord.value} of this ${k.noun.value} — it went to `$now`._"
+    val a = (asked).value.trim
+    Option.when(a.nonEmpty && a != (now).value)(
+      _root_.com.histmersion.api.aliases.Aliases.FollowedResult(s"_`$a` is an old ${k.idWord.value} of this ${k.noun.value} — it went to `$now`._")
     )
 
   def note(k: AliasKind, asked: com.histmersion.api.aliases.Aliases.NoteAsked, now: com.histmersion.api.aliases.Aliases.NoteNow)(md: com.histmersion.api.aliases.Aliases.NoteMd): com.histmersion.api.aliases.Aliases.NoteResult =

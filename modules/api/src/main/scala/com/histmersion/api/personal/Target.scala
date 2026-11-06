@@ -52,7 +52,7 @@ object Target:
   type DegreesMinus = DegreesMinus.T
   object DegreesMinus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def item(kind: ItemKind, key: com.histmersion.api.personal.Target.ItemKey): Target = Target(kind, Some(ItemKey(key.trim)))
+  def item(kind: ItemKind, key: com.histmersion.api.personal.Target.ItemKey): Target = Target(kind, Some(ItemKey((key).value.trim)))
 
   def check(t: Target, allowed: Set[ItemKind], what: com.histmersion.api.personal.Target.CheckWhat): Either[com.histmersion.api.personal.Target.CheckResultPart1, Target] =
     val years = (t.from, t.to) match
@@ -100,15 +100,15 @@ object Target:
     val span = YearFmt.period(t.from.map(_root_.com.histmersion.api.YearFmt.PeriodStart(_.value.toLong)), t.to.map(_root_.com.histmersion.api.YearFmt.PeriodEnd(_.value.toLong)))
     val at = t.lat.zip(t.lon).fold("")((la, lo) => s"${degrees(la.value, _root_.com.histmersion.api.personal.Target.DegreesPlus("N"), _root_.com.histmersion.api.personal.Target.DegreesMinus("S"))}, ${degrees(lo.value, _root_.com.histmersion.api.personal.Target.DegreesPlus("E"), _root_.com.histmersion.api.personal.Target.DegreesMinus("W"))}")
     t.kind match
-      case ItemKind.Point => List(at, span).filter(_.nonEmpty).mkString(" · ")
+      case ItemKind.Point => _root_.com.histmersion.api.personal.Target.WhereResult(List(at, span).filter(_.nonEmpty).mkString(" · "))
       case ItemKind.View  =>
         List(at, t.zoom.fold("")(z => s"zoom ${round1(z.value)}"), span).filter(_.nonEmpty).mkString(" · ")
       case ItemKind.Period => span
       case _               => _root_.com.histmersion.api.personal.Target.WhereResult("")
 
   private def round1(v: com.histmersion.api.personal.Target.Round1V): com.histmersion.api.personal.Target.Round1Result =
-    BigDecimal(v).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString
+    _root_.com.histmersion.api.personal.Target.Round1Result(BigDecimal((v).value).setScale(1, BigDecimal.RoundingMode.HALF_UP).bigDecimal.stripTrailingZeros.toPlainString)
 
   private def degrees(v: com.histmersion.api.personal.Target.DegreesV, plus: com.histmersion.api.personal.Target.DegreesPlus, minus: com.histmersion.api.personal.Target.DegreesMinus): com.histmersion.api.personal.Target.DegreesResult =
-    val a = BigDecimal(math.abs(v)).setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
+    val a = BigDecimal(math.abs((v).value)).setScale(2, BigDecimal.RoundingMode.HALF_UP).bigDecimal.toPlainString
     s"$a° ${if v >= 0 then plus else minus}"

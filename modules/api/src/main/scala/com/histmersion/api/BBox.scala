@@ -13,7 +13,7 @@ final case class BBox(minLon: com.histmersion.api.catalogue.Longitude, minLat: c
 
   def contains(lon: com.histmersion.api.BBox.ContainsLon, lat: com.histmersion.api.BBox.ContainsLat): com.histmersion.api.BBox.ContainsResult =
     val latOk = lat >= minLat && lat <= maxLat
-    val lonOk = if crossesAntimeridian then lon >= minLon || lon <= maxLon else lon >= minLon && lon <= maxLon
+    val lonOk = if (crossesAntimeridian).value then lon >= minLon || lon <= maxLon else lon >= minLon && lon <= maxLon
     latOk && lonOk
 
 object BBox:
@@ -31,7 +31,7 @@ object BBox:
   object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def parse(s: com.histmersion.api.BBox.ParseS): Option[BBox] =
-    val parts = s.split(",").map(_.trim).toList
+    val parts = (s).value.split(",").map(_.trim).toList
     parts.traverseDouble.filter(_.length == 4).map(a => BBox(a(0), a(1), a(2), a(3)))
 
   extension (xs: List[String])

@@ -91,12 +91,12 @@ object MergeDecision:
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
       def wire(e: Kind): com.histmersion.api.exchange.MergeDecision.Kind.WireResult = wireOf(e)
-      def fromWire(s: com.histmersion.api.exchange.MergeDecision.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == s.trim)
+      def fromWire(s: com.histmersion.api.exchange.MergeDecision.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == (s).value.trim)
   def of(kind: MergeDecision.Kind): MergeDecision = MergeDecision(kind, None)
   def withArg(kind: MergeDecision.Kind, arg: com.histmersion.api.exchange.MergeDecision.WithArgArg): MergeDecision = MergeDecision(kind, Some(arg))
 
   def parse(raw: com.histmersion.api.exchange.MergeDecision.ParseRaw): Either[com.histmersion.api.exchange.MergeDecision.ParseResultPart1, MergeDecision] =
-    val s = raw.trim
+    val s = (raw).value.trim
     val (k, arg) = s.indexOf(':') match
       case -1 => (s, None)
       case i  => (s.take(i), Some(s.drop(i + 1).trim))
@@ -107,8 +107,8 @@ object MergeDecision:
         Left(_root_.com.histmersion.api.exchange.MergeDecision.ParseResultPart1(s"'$s': ${MergeDecision.Kind.wireOf(d)} needs an argument (${MergeDecision.Kind.wireOf(d)}:<value>)"))
       case Some(d) if !d.takesArgument && arg.isDefined =>
         Left(_root_.com.histmersion.api.exchange.MergeDecision.ParseResultPart1(s"'$s': ${MergeDecision.Kind.wireOf(d)} takes no argument"))
-      case Some(d) => Right(MergeDecision(d, arg.filter(_.nonEmpty)))
+      case Some(d) => Right(MergeDecision(d, (arg.filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.api.exchange.MergeDecision.Argument(refactorValue))))
 
-  given Encoder[MergeDecision] = Encoder.encodeString.contramap(_.wire)
+  given Encoder[MergeDecision] = Encoder.encodeString.contramap((_.wire).value)
   given Decoder[MergeDecision] = Decoder.decodeString.emap(_root_.com.histmersion.api.exchange.MergeDecision.ParseRaw(parse))
   given Schema[MergeDecision] = Schema.string[MergeDecision]

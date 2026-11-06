@@ -25,7 +25,7 @@ final case class Coverage(
     critiques: List[CritiquePair] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def capped: com.histmersion.api.research.Coverage.CappedResult = checked < total
+  def capped: com.histmersion.api.research.Coverage.CappedResult = (checked).value < (total).value
   def unplaced: List[com.histmersion.api.research.Coverage.UnplacedResult] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
 
@@ -93,11 +93,11 @@ object Coverage:
     val MaxChars = 500
 
     def merge(current: Map[com.histmersion.api.research.Coverage.Reason.MergeCurrentPart1, com.histmersion.api.research.Coverage.Reason.MergeCurrentPart2], stated: List[Reason]): Either[com.histmersion.api.research.Coverage.Reason.MergeResultPart1, Map[com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part1, com.histmersion.api.research.Coverage.Reason.MergeResultPart2Part2]] =
-      stated.foldLeft[Either[String, Map[String, String]]](Right(current)) { (acc, r) =>
+      stated.foldLeft[Either[String, Map[String, String]]](Right((current).iterator.map { case (refactorKey2, refactorItem2) => ((refactorKey2).value, (refactorItem2).value) }.toMap)) { (acc, r) =>
         acc.flatMap { m =>
           val ck = Option(r.citekey).map(_.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse("")
-          val text = Option(r.reason).map(_.trim.replaceAll("\\s+", " ")).getOrElse("")
-          if !Article.Links.isCitekeyShaped(ck) then Left(s"reason for '${r.citekey}': not a citekey")
+          val text = Option(r.reason).map((_).value.trim.replaceAll("\\s+", " ")).getOrElse("")
+          if !Article.Links.isCitekeyShaped(_root_.com.histmersion.api.text.WikiLinks.IsCitekeyShapedS(ck)) then Left(s"reason for '${r.citekey}': not a citekey")
           else if text.length > MaxChars then
             Left(s"reason for $ck: ${text.length} characters (at most $MaxChars — one sentence)")
           else if text.isEmpty then Right(m - ck)

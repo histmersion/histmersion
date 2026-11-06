@@ -34,12 +34,12 @@ object WikidataEntities:
 
   val CommonsCategory = "P373"
 
-  private def enc(s: com.histmersion.upstreams.wikidata.WikidataEntities.EncS): com.histmersion.upstreams.wikidata.WikidataEntities.EncResult = URLEncoder.encode(s, UTF_8)
+  private def enc(s: com.histmersion.upstreams.wikidata.WikidataEntities.EncS): com.histmersion.upstreams.wikidata.WikidataEntities.EncResult = _root_.com.histmersion.upstreams.wikidata.WikidataEntities.EncResult(URLEncoder.encode((s).value, UTF_8))
 
   /** Pure: the `wbgetentities` URL for up to the API's batch of ids. `maxlag` 0 = not sent. */
   def url(api: com.histmersion.upstreams.wikidata.WikidataEntities.UrlApi, ids: List[com.histmersion.upstreams.wikidata.WikidataEntities.UrlIds], maxlag: com.histmersion.upstreams.wikidata.WikidataEntities.UrlMaxlag): com.histmersion.upstreams.wikidata.WikidataEntities.UrlResult =
-    val lag = if maxlag > 0 then s"&maxlag=$maxlag" else ""
-    s"$api?action=wbgetentities&format=json&formatversion=2&props=claims&ids=${enc(_root_.com.histmersion.upstreams.wikidata.WikidataEntities.EncS(ids.mkString("|")))}$lag"
+    val lag = if (maxlag).value > 0 then s"&maxlag=$maxlag" else ""
+    _root_.com.histmersion.upstreams.wikidata.WikidataEntities.UrlResult(s"$api?action=wbgetentities&format=json&formatversion=2&props=claims&ids=${enc(_root_.com.histmersion.upstreams.wikidata.WikidataEntities.EncS(ids.mkString("|")))}$lag")
 
   /** Pure: the items of a `wbgetentities` answer, keyed by the id ASKED for (a redirected item answers under the id
     * that was asked, with the statements of its target). `props` are the picture properties to keep; P373 is always

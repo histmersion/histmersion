@@ -35,7 +35,7 @@ object ServiceState:
   )
 
   def of(text: Option[com.histmersion.api.ServiceState.OfText]): ServiceState =
-    text.map(_.trim.toLowerCase).filter(_.nonEmpty) match
+    text.map((_).value.trim.toLowerCase).filter(_.nonEmpty) match
       case None                                                               => Unknown
       case Some(t) if t == "ok" || t.startsWith("ok ") || t.startsWith("ok:") => Ok
       case Some(t) if t.startsWith("busy") || t.contains(" busy")             => Busy

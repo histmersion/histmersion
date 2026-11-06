@@ -156,8 +156,8 @@ object EventTaxonomy:
     val k = canonical(kind)
     if k != NaturalGeneric then k
     else
-      val l = label.toLowerCase(java.util.Locale.ROOT)
-      labelRules.collectFirst { case (re, sub) if re.r.findFirstIn(l).isDefined => sub }.getOrElse(k)
+      val l = (label).value.toLowerCase(java.util.Locale.ROOT)
+      labelRules.collectFirst { case (re, sub) if (re).value.r.findFirstIn(l).isDefined => sub }.getOrElse(k)
 
   def of(kind: com.histmersion.api.catalogue.EventTaxonomy.OfKind): Kind =
     val k = canonical(kind)
@@ -168,7 +168,7 @@ object EventTaxonomy:
   def isNatural(kind: com.histmersion.api.catalogue.EventTaxonomy.IsNaturalKind): com.histmersion.api.catalogue.EventTaxonomy.IsNaturalResult = group(kind) == Natural
 
   def matches(filter: com.histmersion.api.catalogue.EventTaxonomy.MatchesFilter, kind: com.histmersion.api.catalogue.EventTaxonomy.MatchesKind): com.histmersion.api.catalogue.EventTaxonomy.MatchesResult =
-    val f = filter.trim.toLowerCase(java.util.Locale.ROOT)
+    val f = (filter).value.trim.toLowerCase(java.util.Locale.ROOT)
     f.isEmpty || f == group(kind) || canonical(f) == canonical(kind)
 
   final case class KindCondition(kinds: List[KindCondition.Kinds], negate: KindCondition.Negate)
@@ -180,12 +180,12 @@ object EventTaxonomy:
     object Negate extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def condition(filter: Option[com.histmersion.api.catalogue.EventTaxonomy.ConditionFilter]): Option[KindCondition] =
-    filter.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
+    filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
       val natural = (kinds.filter(_.group == Natural).map(_.kind) ++
         aliases.collect { case (a, v) if byKind.get(v).exists(_.group == Natural) => a }).distinct.sorted
       if f == Natural then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(false))
       else if f == Human then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(true))
       else
-        val c = canonical(f)
+        val c = canonical(_root_.com.histmersion.api.catalogue.EventTaxonomy.CanonicalKind(f))
         KindCondition((c :: aliases.collect { case (a, v) if v == c => a }.toList).distinct.sorted, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(false))
     }

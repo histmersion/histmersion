@@ -9,7 +9,7 @@ final case class AgentLeaseInfo(owner: AgentLeaseInfo.Owner, until: AgentLeaseIn
     derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
   def describe: com.histmersion.api.automation.AgentLeaseInfo.DescribeResult =
-    s"$owner${if thisServer then " (this server)" else ""} until $until${if expired then " — expired" else ""}"
+    _root_.com.histmersion.api.automation.AgentLeaseInfo.DescribeResult(s"$owner${if (thisServer).value then " (this server)" else ""} until $until${if (expired).value then " — expired" else ""}")
 
 object AgentLeaseInfo:
   type DescribeResult = DescribeResult.T

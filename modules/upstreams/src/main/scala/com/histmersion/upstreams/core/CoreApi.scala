@@ -14,7 +14,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
 
   /** One search for `purpose` (`lookup`: a work's download URLs by its DOI; `search`: a saved query). */
   def searchWorks(key: com.histmersion.upstreams.core.CoreApi.SearchWorksKey, query: com.histmersion.upstreams.core.CoreApi.SearchWorksQuery, limit: com.histmersion.upstreams.core.CoreApi.SearchWorksLimit, purpose: com.histmersion.upstreams.core.CoreApi.SearchWorksPurpose): Either[CoreFailure, Json] =
-    val url = Url(core.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath("/search/works/"), "q" -> query, "limit" -> limit.toString)
+    val url = Url(core.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath("/search/works/"), "q" -> (query).value, "limit" -> limit.toString)
     quota.take(purpose) match
       case Left(why) => Left(CoreFailure.Skipped(why))
       case Right(_)  =>

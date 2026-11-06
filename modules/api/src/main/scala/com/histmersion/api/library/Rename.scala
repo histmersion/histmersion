@@ -31,10 +31,10 @@ object Rename:
   object ReplaceTokenNewCk extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def shortForms(ck: com.histmersion.api.library.Rename.ShortFormsCk): List[com.histmersion.api.library.Rename.ShortFormsResult] =
-    ck.indices.filter(i => i > 0 && ck.charAt(i) == '_').map(ck.take(_)).toList
+    ((ck).value.indices.filter(i => i > 0 && (ck).value.charAt(i) == '_').map((ck).value.take(_)).toList).map(refactorValue => _root_.com.histmersion.api.library.Rename.ShortFormsResult(refactorValue))
 
   def findingId(id: com.histmersion.api.library.Rename.FindingIdId, oldCk: com.histmersion.api.library.Rename.FindingIdOldCk, newCk: com.histmersion.api.library.Rename.FindingIdNewCk): Option[com.histmersion.api.library.Rename.FindingIdResult] =
-    Option.when(id.startsWith(oldCk + "#"))(newCk + id.drop(oldCk.length))
+    Option.when((id).value.startsWith((oldCk).value + "#"))(_root_.com.histmersion.api.library.Rename.FindingIdResult((newCk).value + (id).value.drop((oldCk).value.length)))
 
   def replaceToken(text: com.histmersion.api.library.Rename.ReplaceTokenText, oldCk: com.histmersion.api.library.Rename.ReplaceTokenOldCk, newCk: com.histmersion.api.library.Rename.ReplaceTokenNewCk): com.histmersion.api.library.Rename.ReplaceTokenResult =
     val token = s"(?<![a-z0-9_.-])${java.util.regex.Pattern.quote(oldCk)}(?![a-z0-9_.-])".r

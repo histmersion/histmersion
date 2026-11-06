@@ -25,7 +25,7 @@ object ActivityMarkdown:
   type PageOlderHintResult = PageOlderHintResult.T
   object PageOlderHintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def minute(at: com.histmersion.api.automation.ActivityMarkdown.MinuteAt): com.histmersion.api.automation.ActivityMarkdown.MinuteResult = at.take(16).replace('T', ' ')
+  def minute(at: com.histmersion.api.automation.ActivityMarkdown.MinuteAt): com.histmersion.api.automation.ActivityMarkdown.MinuteResult = _root_.com.histmersion.api.automation.ActivityMarkdown.MinuteResult((at).value.take(16).replace('T', ' '))
 
   def headline(e: Entry): com.histmersion.api.automation.ActivityMarkdown.HeadlineResult = e.entryKind match
     case Some(EntryKind.Run) =>
@@ -63,7 +63,7 @@ object ActivityMarkdown:
       .flatMap(_ => e.job)
       .fold("")(j => s" `${j.take(8)}`")
     val refsText = refs(e)
-    s"- ${minute(e.at)} · **$kind**$id · ${headline(e).replace('\n', ' ').take(200)}" +
+    s"- ${minute(e.at)} · **$kind**$id · ${(headline(e)).value.replace('\n', ' ').take(200)}" +
       (if state.nonEmpty then s" · $state" else "") +
       e.error.filter(_.nonEmpty).fold("")(err => s" — ${err.take(160)}") +
       (if refsText.nonEmpty then s" _(${refsText.mkString(", ")})_" else "")

@@ -42,15 +42,15 @@ object Wcag:
 
   def luminance(r: com.histmersion.api.Wcag.LuminanceR, g: com.histmersion.api.Wcag.LuminanceG, b: com.histmersion.api.Wcag.LuminanceB): com.histmersion.api.Wcag.LuminanceResult =
     def lin(c: com.histmersion.api.Wcag.LuminanceLinC): com.histmersion.api.Wcag.LuminanceLinResult =
-      val v = c / 255.0
-      if v <= 0.03928 then v / 12.92 else math.pow((v + 0.055) / 1.055, 2.4)
+      val v = (c).value / 255.0
+      if v <= 0.03928 then _root_.com.histmersion.api.Wcag.LuminanceLinResult(v / 12.92) else _root_.com.histmersion.api.Wcag.LuminanceLinResult(math.pow((v + 0.055) / 1.055, 2.4))
     0.2126 * lin(r) + 0.7152 * lin(g) + 0.0722 * lin(b)
 
   def hex(s: com.histmersion.api.Wcag.HexS): Option[(com.histmersion.api.Wcag.HexResultPart1, com.histmersion.api.Wcag.HexResultPart2, com.histmersion.api.Wcag.HexResultPart3)] =
-    val h = s.trim.stripPrefix("#")
+    val h = (s).value.trim.stripPrefix("#")
     val full = if h.length == 3 then h.flatMap(c => s"$c$c") else h
     Option.when(full.length == 6 && full.forall(c => Character.digit(c, 16) >= 0))(
-      (Integer.parseInt(full.take(2), 16), Integer.parseInt(full.slice(2, 4), 16), Integer.parseInt(full.drop(4), 16))
+      (_root_.com.histmersion.api.Wcag.HexResultPart1(Integer.parseInt(full.take(2), 16)), _root_.com.histmersion.api.Wcag.HexResultPart2(Integer.parseInt(full.slice(2, 4), 16)), _root_.com.histmersion.api.Wcag.HexResultPart3(Integer.parseInt(full.drop(4), 16)))
     )
 
   def contrast(a: (com.histmersion.api.Wcag.ContrastAPart1, com.histmersion.api.Wcag.ContrastAPart2, com.histmersion.api.Wcag.ContrastAPart3), b: (com.histmersion.api.Wcag.ContrastBPart1, com.histmersion.api.Wcag.ContrastBPart2, com.histmersion.api.Wcag.ContrastBPart3)): com.histmersion.api.Wcag.ContrastResult =

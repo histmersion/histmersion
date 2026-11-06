@@ -5,7 +5,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   */
 final case class CoreEndpoint(url: CoreEndpoint.Url, apiKey: CoreEndpoint.ApiKey) derives ConfigReader:
   /** The key, when one is configured. */
-  def key: Option[com.histmersion.domain.library.acquisition.CoreEndpoint.KeyResult] = Option(apiKey).map(_.trim).filter(_.nonEmpty)
+  def key: Option[com.histmersion.domain.library.acquisition.CoreEndpoint.KeyResult] = (Option(apiKey).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.domain.library.acquisition.CoreEndpoint.KeyResult(refactorValue))
 
 object CoreEndpoint:
   type KeyResult = KeyResult.T

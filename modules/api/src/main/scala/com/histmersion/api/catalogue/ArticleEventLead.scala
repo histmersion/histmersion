@@ -41,8 +41,8 @@ object ArticleEventLead:
   object Provider extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def mentioned(body: com.histmersion.api.catalogue.ArticleEventLead.MentionedBody, names: List[com.histmersion.api.catalogue.ArticleEventLead.MentionedNames]): com.histmersion.api.catalogue.ArticleEventLead.MentionedResult =
-    val b = body.toLowerCase(java.util.Locale.ROOT)
-    names.map(_.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains)
+    val b = (body).value.toLowerCase(java.util.Locale.ROOT)
+    _root_.com.histmersion.api.catalogue.ArticleEventLead.MentionedResult(names.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.length >= 4).exists(b.contains))
 
   def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult =
     if leads.isEmpty then _root_.com.histmersion.api.catalogue.ArticleEventLead.MarkdownResult("")

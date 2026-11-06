@@ -81,7 +81,7 @@ object Bundle:
       case Place          => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("P")
       case Period         => _root_.com.histmersion.util.data.exchange.Bundle.Kind.LetterOfResult("N")
 
-    def fromWire(s: com.histmersion.util.data.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == s.trim.toLowerCase)
+    def fromWire(s: com.histmersion.util.data.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == (s).value.trim.toLowerCase)
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values

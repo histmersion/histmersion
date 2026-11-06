@@ -84,7 +84,7 @@ object BasemapMarkdown:
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  def plain(html: com.histmersion.api.basemap.BasemapMarkdown.PlainHtml): com.histmersion.api.basemap.BasemapMarkdown.PlainResult = html.replaceAll("<[^>]+>", "")
+  def plain(html: com.histmersion.api.basemap.BasemapMarkdown.PlainHtml): com.histmersion.api.basemap.BasemapMarkdown.PlainResult = _root_.com.histmersion.api.basemap.BasemapMarkdown.PlainResult((html).value.replaceAll("<[^>]+>", ""))
 
   def removed(r: Basemap.Removed): com.histmersion.api.basemap.BasemapMarkdown.RemovedResult =
     if r.removed.isEmpty then _root_.com.histmersion.api.basemap.BasemapMarkdown.RemovedResult("Nothing to remove: no base-map file is downloaded.")

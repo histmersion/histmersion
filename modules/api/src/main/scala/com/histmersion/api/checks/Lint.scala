@@ -308,10 +308,10 @@ object Lint:
 
   val names: List[com.histmersion.api.checks.Lint.Names] = all.map(_.name)
 
-  def rule(name: com.histmersion.api.checks.Lint.RuleName): Option[Rule] = all.find(_.name == name.trim.toLowerCase)
+  def rule(name: com.histmersion.api.checks.Lint.RuleName): Option[Rule] = all.find(_.name == (name).value.trim.toLowerCase)
 
   def select(requested: List[com.histmersion.api.checks.Lint.SelectRequested]): Either[com.histmersion.api.checks.Lint.SelectResultPart1, List[Rule]] =
-    val wanted = requested.map(_.trim).filter(_.nonEmpty)
+    val wanted = requested.map((_).value.trim).filter(_.nonEmpty)
     if wanted.isEmpty then Right(all)
     else
       val unknown = wanted.filter(w => rule(w).isEmpty)
@@ -319,25 +319,25 @@ object Lint:
         Left(_root_.com.histmersion.api.checks.Lint.SelectResultPart1(s"unknown lint rule(s): ${unknown.mkString(", ")} — known rules: ${names.mkString(", ")}"))
       else Right(wanted.flatMap(rule).distinct)
 
-  def blank(s: Option[com.histmersion.api.checks.Lint.BlankS]): com.histmersion.api.checks.Lint.BlankResult = s.forall(_.trim.isEmpty)
+  def blank(s: Option[com.histmersion.api.checks.Lint.BlankS]): com.histmersion.api.checks.Lint.BlankResult = _root_.com.histmersion.api.checks.Lint.BlankResult(s.forall((_).value.trim.isEmpty))
 
   def suggest(target: com.histmersion.api.checks.Lint.SuggestTarget, citekeys: Iterable[com.histmersion.api.checks.Lint.SuggestCitekeys], max: com.histmersion.api.checks.Lint.SuggestMax): List[com.histmersion.api.checks.Lint.SuggestResult] =
-    val t = target.trim.toLowerCase
+    val t = (target).value.trim.toLowerCase
     if t.isEmpty || max <= 0 then Nil
     else
       def commonPrefix(a: com.histmersion.api.checks.Lint.SuggestCommonPrefixA, b: com.histmersion.api.checks.Lint.SuggestCommonPrefixB): com.histmersion.api.checks.Lint.SuggestCommonPrefixResult =
-        val n = math.min(a.length, b.length)
+        val n = math.min((a).value.length, (b).value.length)
         var i = 0
-        while i < n && a.charAt(i) == b.charAt(i) do i += 1
+        while i < n && (a).value.charAt(i) == (b).value.charAt(i) do i += 1
         _root_.com.histmersion.api.checks.Lint.SuggestCommonPrefixResult(i)
       val scored = citekeys.iterator
         .filter(_ != target)
         .flatMap { ck =>
-          val c = ck.toLowerCase
+          val c = (ck).value.toLowerCase
           val p = commonPrefix(c, t)
           if c.startsWith(t + "_") then Some((0, c.length, ck))
-          else if c.startsWith(t) || t.startsWith(c) then Some((1, -p, ck))
-          else if p >= 4 then Some((2, -p, ck))
+          else if c.startsWith(t) || t.startsWith(c) then Some((1, -(p).value, ck))
+          else if p >= 4 then Some((2, -(p).value, ck))
           else None
         }
         .toList
@@ -347,8 +347,8 @@ object Lint:
 
   def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicatesRowsPart1, com.histmersion.api.checks.Lint.DuplicatesRowsPart2)], label: com.histmersion.api.checks.Lint.DuplicatesLabel): List[LintItem] =
     rows
-      .filter((_, key) => key.trim.nonEmpty)
-      .groupBy((_, key) => key.trim.toLowerCase)
+      .filter((_, key) => (key).value.trim.nonEmpty)
+      .groupBy((_, key) => (key).value.trim.toLowerCase)
       .toList
       .filter((_, group) => group.map(_._1).distinct.sizeIs > 1)
       .sortBy((key, _) => key)
@@ -359,10 +359,10 @@ object Lint:
 
   private val CanonicalTag = """^[a-z0-9][a-z0-9_]*$""".r
 
-  def isCanonicalTag(tag: com.histmersion.api.checks.Lint.IsCanonicalTagTag): com.histmersion.api.checks.Lint.IsCanonicalTagResult = CanonicalTag.matches(tag)
+  def isCanonicalTag(tag: com.histmersion.api.checks.Lint.IsCanonicalTagTag): com.histmersion.api.checks.Lint.IsCanonicalTagResult = _root_.com.histmersion.api.checks.Lint.IsCanonicalTagResult(CanonicalTag.matches((tag).value))
 
   def normaliseTag(tag: com.histmersion.api.checks.Lint.NormaliseTagTag): com.histmersion.api.checks.Lint.NormaliseTagResult =
-    tag.trim.toLowerCase.replaceAll("""[\s-]+""", "_").replaceAll("_+", "_").stripPrefix("_").stripSuffix("_")
+    _root_.com.histmersion.api.checks.Lint.NormaliseTagResult((tag).value.trim.toLowerCase.replaceAll("""[\s-]+""", "_").replaceAll("_+", "_").stripPrefix("_").stripSuffix("_"))
 
   def nonCanonicalTags(rows: List[(com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart1, List[com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart2])]): List[LintItem] =
     rows
@@ -389,7 +389,7 @@ object Lint:
   def authorPipe(rows: List[(com.histmersion.api.checks.Lint.AuthorPipeRowsPart1, List[com.histmersion.api.checks.Lint.AuthorPipeRowsPart2])]): List[LintItem] =
     rows
       .flatMap { (ck, authors) =>
-        authors.filter(_.contains("|")).map(a => LintItem(ck, s"author '$a'"))
+        authors.filter((_).value.contains("|")).map(a => LintItem(ck, s"author '$a'"))
       }
       .sortBy(i => (i.citekey, i.detail))
 
@@ -421,7 +421,7 @@ object Lint:
   private val SentenceEnd = "([^\\s]*)[.!?]+[\"”’)]*\\s+(?=(\\S))".r
 
   def sentenceCount(text: com.histmersion.api.checks.Lint.SentenceCountText): com.histmersion.api.checks.Lint.SentenceCountResult =
-    val t = text.trim
+    val t = (text).value.trim
     if t.isEmpty then _root_.com.histmersion.api.checks.Lint.SentenceCountResult(0)
     else
       // No `\p{Lu}` in the pattern: this code is also compiled to Scala.js, so the next char is tested instead.
@@ -433,38 +433,38 @@ object Lint:
       _root_.com.histmersion.api.checks.Lint.SentenceCountResult(ends + 1)
 
   def isListLeadIn(text: com.histmersion.api.checks.Lint.IsListLeadInText): com.histmersion.api.checks.Lint.IsListLeadInResult =
-    val t = text.trim
-    t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(t) == 1
+    val t = (text).value.trim
+    t.endsWith(":") && t.length <= MaxListLeadIn && sentenceCount(_root_.com.histmersion.api.checks.Lint.SentenceCountText(t)) == 1
 
   def extractParagraphs(body: com.histmersion.api.checks.Lint.ExtractParagraphsBody): List[com.histmersion.api.checks.Lint.ExtractParagraphsResult] =
-    val lines = body.linesIterator.toList
+    val lines = (body).value.linesIterator.toList
     var inFence = false
     val paras = List.newBuilder[String]
     val current = new StringBuilder()
     var leadIn: Option[com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn] = None
     def settle(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsSettleNextIsList): Unit =
-      leadIn.foreach(t => if !nextIsList then paras += t)
+      leadIn.foreach(t => if !(nextIsList).value then paras += (t).value)
       leadIn = None
     def flush(): Unit =
       val text = current.toString.trim
-      if text.nonEmpty then if isListLeadIn(_root_.com.histmersion.api.checks.Lint.IsListLeadInText(text)) then leadIn = Some(_root_.com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn(text)) else paras += text
+      if text.nonEmpty then if (isListLeadIn(_root_.com.histmersion.api.checks.Lint.IsListLeadInText(text))).value then leadIn = Some(_root_.com.histmersion.api.checks.Lint.ExtractParagraphsLeadIn(text)) else paras += text
       current.clear()
-    def isList(t: com.histmersion.api.checks.Lint.ExtractParagraphsIsListT) = t.startsWith("- ") || t.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
+    def isList(t: com.histmersion.api.checks.Lint.ExtractParagraphsIsListT) = (t).value.startsWith("- ") || (t).value.startsWith("* ") || "^\\d+[.)] ".r.findPrefixOf(t).isDefined
     def block(nextIsList: com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList): Unit = { flush(); settle(nextIsList) }
     for line <- lines do
       val t = line.trim
       if t.startsWith("```") then
-        block(nextIsList = false)
+        block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
         inFence = !inFence
       else if inFence then ()
       else if t.isEmpty then flush()
-      else if t.startsWith("#") then block(nextIsList = false)
-      else if isList(t) then block(nextIsList = true)
-      else if t.startsWith("> ") then block(nextIsList = false)
-      else if t.startsWith("_") && t.endsWith("_") then block(nextIsList = false)
-      else if t.startsWith("|") then block(nextIsList = false)
+      else if t.startsWith("#") then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
+      else if isList(_root_.com.histmersion.api.checks.Lint.ExtractParagraphsIsListT(t)) then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(true))
+      else if t.startsWith("> ") then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
+      else if t.startsWith("_") && t.endsWith("_") then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
+      else if t.startsWith("|") then block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
       else
-        if current.isEmpty then settle(nextIsList = false)
+        if current.isEmpty then settle(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsSettleNextIsList(false))
         current.append(line).append(" ")
     block(nextIsList = _root_.com.histmersion.api.checks.Lint.ExtractParagraphsBlockNextIsList(false))
     (paras.result()).map(refactorValue2 => _root_.com.histmersion.api.checks.Lint.ExtractParagraphsResult(refactorValue2))
@@ -472,12 +472,12 @@ object Lint:
   type FormatChecker = (String, FormatField, Boolean) => List[FormatIssue]
 
   def formatItems(rows: List[(com.histmersion.api.checks.Lint.FormatItemsRowsPart1, FormatField, com.histmersion.api.checks.Lint.FormatItemsRowsPart3)], check: FormatChecker): List[LintItem] =
-    rows.filter(_._3.trim.nonEmpty).sortBy((id, f, _) => (id, f.ordinal)).flatMap { (id, field, text) =>
+    rows.filter((_._3).value.trim.nonEmpty).sortBy((id, f, _) => (id, f.ordinal)).flatMap { (id, field, text) =>
       check(text, field, field == FormatField.Body).map(i => LintItem(id, FormatMarkdown.line(i)))
     }
 
   def report(r: Rule, items: List[LintItem], maxItems: com.histmersion.api.checks.Lint.ReportMaxItems): LintRuleReport =
-    LintRuleReport(r.name, r.description, _root_.com.histmersion.api.checks.Lint.LintRuleReport.Count(items.size), items.take(math.max(0, maxItems)))
+    LintRuleReport(r.name, r.description, _root_.com.histmersion.api.checks.Lint.LintRuleReport.Count(items.size), items.take(math.max(0, (maxItems).value)))
 
   def markdown(rep: LintReport): com.histmersion.api.checks.Lint.MarkdownResult =
     val fixed = if rep.fixed.isEmpty then "" else rep.fixed.map(f => s"- fixed: $f").mkString("", "\n", "\n\n")

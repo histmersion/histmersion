@@ -31,17 +31,17 @@ object HtmlAtoms:
   object ConfidenceBadgeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def esc(s: com.histmersion.api.HtmlAtoms.EscS): com.histmersion.api.HtmlAtoms.EscResult =
-    s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;")
+    _root_.com.histmersion.api.HtmlAtoms.EscResult((s).value.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;").replace("\"", "&quot;"))
 
   def segment(s: com.histmersion.api.HtmlAtoms.SegmentS): com.histmersion.api.HtmlAtoms.SegmentResult =
     val unreserved = (c: Char) => c.isLetterOrDigit && c < 128 || "-._~".contains(c)
-    s.flatMap { c =>
+    _root_.com.histmersion.api.HtmlAtoms.SegmentResult((s).value.flatMap { c =>
       if unreserved(c) then c.toString
       else c.toString.getBytes("UTF-8").map(b => f"%%${b & 0xff}%02X").mkString
-    }
+    })
 
   def sourceLink(citekey: com.histmersion.api.HtmlAtoms.SourceLinkCitekey, doi: Option[com.histmersion.api.HtmlAtoms.SourceLinkDoi], label: com.histmersion.api.HtmlAtoms.SourceLinkLabel): com.histmersion.api.HtmlAtoms.SourceLinkResult =
-    val doiAttr = doi.map(_.trim).filter(_.nonEmpty).fold("")(d => s""" data-doi="${esc(d)}"""")
+    val doiAttr = doi.map((_).value.trim).filter(_.nonEmpty).fold("")(d => s""" data-doi="${esc(_root_.com.histmersion.api.HtmlAtoms.EscS(d))}"""")
     s"""<a class="src-ref" data-ck="${esc(citekey)}"$doiAttr href="/source/${esc(segment(citekey))}">${esc(
         label
       )}</a>"""

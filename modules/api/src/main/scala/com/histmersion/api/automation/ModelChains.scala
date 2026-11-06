@@ -60,12 +60,12 @@ object ModelChains:
     * contains `>`.
     */
   def parseChain(s: com.histmersion.api.automation.ModelChains.ParseChainS, known: Set[com.histmersion.api.automation.ModelChains.ParseChainKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.ParseChainResultPart1, List[ModelRef]] =
-    val parts = s.split('>').toList.map(_.trim)
+    val parts = (s).value.split('>').toList.map(_.trim)
     if parts.forall(_.isEmpty) then Right(Nil)
-    else parseModels(parts, known)
+    else parseModels((parts).map(refactorValue => _root_.com.histmersion.api.automation.ModelChains.ParseModelsRefs(refactorValue)), known)
 
   def parseModels(refs: List[com.histmersion.api.automation.ModelChains.ParseModelsRefs], known: Set[com.histmersion.api.automation.ModelChains.ParseModelsKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.ParseModelsResultPart1, List[ModelRef]] =
-    val parsed = refs.map(_.trim).filter(_.nonEmpty).map(ModelRef.parse(_, known))
+    val parsed = refs.map((_).value.trim).filter(_.nonEmpty).map(ModelRef.parse(_root_.com.histmersion.api.automation.Agents.ModelRef.ParseS(_), known))
     parsed.collect { case Left(m) => m } match
       case Nil =>
         val ms = parsed.collect { case Right(m) => m }
@@ -90,7 +90,7 @@ object ModelChains:
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.ModelChains.Measure.ParseS): Option[Measure] = values.find(_.wire == s.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.automation.ModelChains.Measure.ParseS): Option[Measure] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
     given WireEnumValues[Measure]:
       def all: Array[Measure] = Measure.values
       def wire(e: Measure): com.histmersion.api.automation.ModelChains.Measure.WireResult = e.wire
@@ -101,9 +101,9 @@ object ModelChains:
 
   final case class Window(seconds: Window.Seconds):
     def text: com.histmersion.api.automation.ModelChains.Window.TextResult =
-      if seconds % 86400 == 0 then s"${seconds / 86400}d"
-      else if seconds % 3600 == 0 then s"${seconds / 3600}h"
-      else s"${seconds / 60}m"
+      if (seconds).value % 86400 == 0 then _root_.com.histmersion.api.automation.ModelChains.Window.TextResult(s"${(seconds).value / 86400}d")
+      else if (seconds).value % 3600 == 0 then _root_.com.histmersion.api.automation.ModelChains.Window.TextResult(s"${(seconds).value / 3600}h")
+      else _root_.com.histmersion.api.automation.ModelChains.Window.TextResult(s"${(seconds).value / 60}m")
 
   object Window:
     type TextResult = TextResult.T
@@ -124,14 +124,14 @@ object ModelChains:
     val MaxSeconds: com.histmersion.api.automation.ModelChains.Window.MaxSeconds = _root_.com.histmersion.api.automation.ModelChains.Window.MaxSeconds(90L * 86400L)
 
     def parse(s: com.histmersion.api.automation.ModelChains.Window.ParseS): Either[com.histmersion.api.automation.ModelChains.Window.ParseResultPart1, Window] =
-      val t = s.trim.toLowerCase(java.util.Locale.ROOT)
+      val t = (s).value.trim.toLowerCase(java.util.Locale.ROOT)
       val secs = Names.get(t).orElse {
         Option.when(t.length >= 2)(t.last).flatMap(Unit.get).flatMap(u => t.init.toLongOption.filter(_ > 0).map(_ * u))
       }
       secs match
         case None => Left(_root_.com.histmersion.api.automation.ModelChains.Window.ParseResultPart1(s"'$s' is not a window (hour, day, week, month, or <n>m|h|d|w such as 5h or 7d)"))
         case Some(x) if x < 60 || x > MaxSeconds => Left(_root_.com.histmersion.api.automation.ModelChains.Window.ParseResultPart1(s"window '$s' must be between 1 minute and 90 days"))
-        case Some(x)                             => Right(Window(x))
+        case Some(x)                             => Right(Window(_root_.com.histmersion.api.automation.ModelChains.Window.Seconds(x)))
 
   final case class Limit(amount: BigDecimal, measure: Measure, window: Window):
     def text: com.histmersion.api.automation.ModelChains.Limit.TextResult = measure match
@@ -165,7 +165,7 @@ object ModelChains:
         .getOrElse(a.bigDecimal.stripTrailingZeros.toPlainString))
 
     private def amount(raw: com.histmersion.api.automation.ModelChains.Limit.AmountRaw): Either[com.histmersion.api.automation.ModelChains.Limit.AmountResultPart1, BigDecimal] =
-      val t = raw.trim.stripPrefix("$")
+      val t = (raw).value.trim.stripPrefix("$")
       val (num, mult) = t.lastOption match
         case Some('k' | 'K') => (t.init, BigDecimal(1000))
         case Some('m' | 'M') => (t.init, BigDecimal(1000000))
@@ -176,10 +176,10 @@ object ModelChains:
         .toOption
         .map(_ * mult)
         .filter(_ > 0)
-        .toRight(s"'$raw' is not a positive amount")
+        .toRight(_root_.com.histmersion.api.automation.ModelChains.Limit.AmountResultPart1(s"'$raw' is not a positive amount"))
 
     def parse(s: com.histmersion.api.automation.ModelChains.Limit.ParseS): Either[com.histmersion.api.automation.ModelChains.Limit.ParseResultPart1, Limit] =
-      val t = s.trim
+      val t = (s).value.trim
       t.lastIndexOf('/') match
         case -1 => Left(_root_.com.histmersion.api.automation.ModelChains.Limit.ParseResultPart1(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
         case i  =>
@@ -192,7 +192,7 @@ object ModelChains:
             case _ => Left(_root_.com.histmersion.api.automation.ModelChains.Limit.ParseParsedPart1(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
           for
             am <- parsed
-            w <- Window.parse(win)
+            w <- Window.parse(_root_.com.histmersion.api.automation.ModelChains.Window.ParseS(win))
             _ <- Either.cond(am._2 == Measure.Usd || am._1.isWhole, (), s"'$t': a token count is a whole number")
           yield Limit(am._1, am._2, w)
 
@@ -233,7 +233,7 @@ object ModelChains:
     object ParseKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.automation.ModelChains.Target.ParseS, known: Set[com.histmersion.api.automation.ModelChains.Target.ParseKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.Target.ParseResultPart1, Target] =
-      val t = s.trim
+      val t = (s).value.trim
       if t.endsWith(":*") then
         val p = t.dropRight(2)
         ProviderKind
@@ -244,7 +244,7 @@ object ModelChains:
 
   final case class Allowance(target: Target, limits: List[Limit], reservePct: Allowance.ReservePct):
     def text: com.histmersion.api.automation.ModelChains.Allowance.TextResult =
-      (limits.map(_.text) ++ Option.when(reservePct > 0)(s"reserve $reservePct%")).mkString(", ")
+      _root_.com.histmersion.api.automation.ModelChains.Allowance.TextResult((limits.map(_.text) ++ Option.when((reservePct).value > 0)(s"reserve $reservePct%")).mkString(", "))
 
   object Allowance:
     type TextResult = TextResult.T
@@ -258,7 +258,7 @@ object ModelChains:
     object ReservePct extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def of(target: Target, limits: List[Limit], reservePct: com.histmersion.api.automation.ModelChains.Allowance.OfReservePct): Either[com.histmersion.api.automation.ModelChains.Allowance.OfResultPart1, Allowance] =
-      if reservePct < 0 || reservePct > 99 then Left(_root_.com.histmersion.api.automation.ModelChains.Allowance.OfResultPart1(s"a reserve is 0 to 99 %, not $reservePct"))
+      if (reservePct).value < 0 || (reservePct).value > 99 then Left(_root_.com.histmersion.api.automation.ModelChains.Allowance.OfResultPart1(s"a reserve is 0 to 99 %, not $reservePct"))
       else
         val windows =
           limits.groupBy(l => (l.measure, l.window.seconds)).collect { case (k, ls) if ls.size > 1 => ls.head }
@@ -267,21 +267,21 @@ object ModelChains:
         else Right(Allowance(target, limits, reservePct))
 
   def parseAllowances(s: com.histmersion.api.automation.ModelChains.ParseAllowancesS, known: Set[com.histmersion.api.automation.ModelChains.ParseAllowancesKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.ParseAllowancesResultPart1, List[Allowance]] =
-    val entries = s.split(';').toList.map(_.trim).filter(_.nonEmpty)
+    val entries = (s).value.split(';').toList.map(_.trim).filter(_.nonEmpty)
     val parsed = entries.map { e =>
       e.indexOf('=') match
         case -1 => Left(s"'$e' is not <provider:model or provider:*> = <limits>")
-        case i  => parseAllowance(e.substring(0, i), e.substring(i + 1).split(',').toList, known)
+        case i  => parseAllowance(_root_.com.histmersion.api.automation.ModelChains.ParseAllowanceTarget(e.substring(0, i)), (e.substring(i + 1).split(',').toList).map(refactorValue11 => _root_.com.histmersion.api.automation.ModelChains.ParseAllowanceItems(refactorValue11)), known)
     }
     parsed.collect { case Left(m) => m } match
       case Nil =>
         val as = parsed.collect { case Right(a) => a }
         val dup = as.groupBy(_.target.wire).collect { case (t, xs) if xs.size > 1 => t }
-        if dup.nonEmpty then Left(s"an allowance is given twice for ${dup.mkString(", ")}") else Right(as)
-      case errs => Left(errs.mkString("; "))
+        if dup.nonEmpty then Left(_root_.com.histmersion.api.automation.ModelChains.ParseAllowancesResultPart1(s"an allowance is given twice for ${dup.mkString(", ")}")) else Right(as)
+      case errs => Left(_root_.com.histmersion.api.automation.ModelChains.ParseAllowancesResultPart1(errs.mkString("; ")))
 
   def parseAllowance(target: com.histmersion.api.automation.ModelChains.ParseAllowanceTarget, items: List[com.histmersion.api.automation.ModelChains.ParseAllowanceItems], known: Set[com.histmersion.api.automation.ModelChains.ParseAllowanceKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.ParseAllowanceResultPart1, Allowance] =
-    val ts = items.map(_.trim).filter(_.nonEmpty)
+    val ts = items.map((_).value.trim).filter(_.nonEmpty)
     val (reserves, limits) = ts.partition(_.toLowerCase(java.util.Locale.ROOT).startsWith("reserve"))
     for
       t <- Target.parse(target, known)
@@ -296,7 +296,7 @@ object ModelChains:
     yield a
 
   def parseReserve(s: com.histmersion.api.automation.ModelChains.ParseReserveS): Either[com.histmersion.api.automation.ModelChains.ParseReserveResultPart1, com.histmersion.api.automation.ModelChains.ParseReserveResultPart2] =
-    s.trim.stripPrefix("=").trim.stripSuffix("%").trim.toIntOption.toRight(s"'${s.trim}' is not a reserve percentage")
+    (((s).value.trim.stripPrefix("=").trim.stripSuffix("%").trim.toIntOption.toRight(s"'${(s).value.trim}' is not a reserve percentage")).left.map(refactorError4 => _root_.com.histmersion.api.automation.ModelChains.ParseReserveResultPart1(refactorError4))).map(refactorValue15 => _root_.com.histmersion.api.automation.ModelChains.ParseReserveResultPart2(refactorValue15))
 
   final case class Spend(at: Spend.At, tokens: Spend.Tokens, usd: BigDecimal)
 
@@ -328,7 +328,7 @@ object ModelChains:
 
   def limitState(limit: Limit, reservePct: com.histmersion.api.automation.ModelChains.LimitStateReservePct, spends: Seq[Spend], now: com.histmersion.api.automation.ModelChains.LimitStateNow): LimitState =
     val windowMs = limit.window.seconds * 1000L
-    val inWindow = spends.filter(s => s.at > now - windowMs && s.at <= now).sortBy(_.at)
+    val inWindow = spends.filter(s => s.at > (now).value - windowMs && s.at <= now).sortBy(_.at)
     val used = inWindow.map(measureOf(_, limit.measure)).sum
     val reserve = limit.amount * reservePct / 100
     val threshold = limit.amount - reserve

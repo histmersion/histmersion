@@ -112,10 +112,10 @@ object MediaMarkdown:
   private[api] def mediaSamples(xs: List[MediaSample], dryRun: com.histmersion.api.media.MediaMarkdown.MediaSamplesDryRun): com.histmersion.api.media.MediaMarkdown.MediaSamplesResult =
     if xs.isEmpty then _root_.com.histmersion.api.media.MediaMarkdown.MediaSamplesResult("")
     else
-      s"\n\n**${if dryRun then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
+      _root_.com.histmersion.api.media.MediaMarkdown.MediaSamplesResult(s"\n\n**${if (dryRun).value then "Would link" else "Linked"} (sample of ${xs.size})**\n" +
         xs.map(x =>
           s"- ${x.targetType} `${x.targetId}` (${x.targetLabel}) ← ${x.title} [`${x.key}`](${x.url}) · `${x.license}` — ${x.basis}"
-        ).mkString("\n")
+        ).mkString("\n"))
 
   def mediaCoversReport(r: MediaCoversReport): com.histmersion.api.media.MediaMarkdown.MediaCoversReportResult =
     val mode = if r.dryRun then "dry run — nothing stored" else "stored"

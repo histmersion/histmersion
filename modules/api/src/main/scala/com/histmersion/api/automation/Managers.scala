@@ -47,7 +47,7 @@ object Managers:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Managers.ItemOrigin.ParseS): Option[ItemOrigin] = values.find(_.wire == s.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Managers.ItemOrigin.ParseS): Option[ItemOrigin] = values.find(_.wire == (s).value.trim.toLowerCase)
 
   object Feed:
     val Started = "started"
@@ -94,7 +94,7 @@ object Managers:
     case Kind.Watch  => List(_root_.com.histmersion.api.automation.Managers.ItemKindsResult(AcquisitionSweep), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(CurrencyCheck), _root_.com.histmersion.api.automation.Managers.ItemKindsResult(OaIngest))
 
   def itemKindOf(k: Kind, word: com.histmersion.api.automation.Managers.ItemKindOfWord): Option[com.histmersion.api.automation.Managers.ItemKindOfResult] =
-    val w = word.trim.toLowerCase
+    val w = (word).value.trim.toLowerCase
     val kinds = itemKinds(k)
     if w.isEmpty then kinds.headOption
     else
@@ -116,9 +116,9 @@ object Managers:
 
   val EnrichId = "enrich"
 
-  def seedId(goal: com.histmersion.api.automation.Managers.SeedIdGoal): com.histmersion.api.automation.Managers.SeedIdResult = s"seed:${goal.trim}"
+  def seedId(goal: com.histmersion.api.automation.Managers.SeedIdGoal): com.histmersion.api.automation.Managers.SeedIdResult = _root_.com.histmersion.api.automation.Managers.SeedIdResult(s"seed:${(goal).value.trim}")
 
-  def watchId(goal: com.histmersion.api.automation.Managers.WatchIdGoal): com.histmersion.api.automation.Managers.WatchIdResult = s"watch:${goal.trim}"
+  def watchId(goal: com.histmersion.api.automation.Managers.WatchIdGoal): com.histmersion.api.automation.Managers.WatchIdResult = _root_.com.histmersion.api.automation.Managers.WatchIdResult(s"watch:${(goal).value.trim}")
 
   enum Sweep(val wire: Sweep.Wire, val itemKind: Sweep.ItemKind):
     case Acquisition extends Sweep(_root_.com.histmersion.api.automation.Managers.Sweep.Wire("acquisition"), _root_.com.histmersion.api.automation.Managers.Sweep.ItemKind(AcquisitionSweep))
@@ -136,7 +136,7 @@ object Managers:
     object OfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.automation.Managers.Sweep.ParseS): Option[Sweep] =
-      values.find(x => x.wire == s.trim.toLowerCase || x.itemKind == s.trim.toLowerCase)
+      values.find(x => x.wire == (s).value.trim.toLowerCase || x.itemKind == (s).value.trim.toLowerCase)
     def ofItem(kind: com.histmersion.api.automation.Managers.Sweep.OfItemKind): Option[Sweep] = values.find(_.itemKind == kind)
 
     def of(c: ManagerConfig): List[Sweep] =
@@ -155,7 +155,7 @@ object Managers:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Managers.EnqueueKind.ParseS): Option[EnqueueKind] = s.trim.toLowerCase match
+    def parse(s: com.histmersion.api.automation.Managers.EnqueueKind.ParseS): Option[EnqueueKind] = (s).value.trim.toLowerCase match
       case "" | "article" | ArticleReview       => Some(Review)
       case ArticleExtend                        => Some(Extend)
       case SourceEnrich | "source"              => Some(Enrich)
@@ -290,29 +290,29 @@ object Managers:
     def parse(kvs: List[com.histmersion.api.automation.Managers.ManagerConfig.ParseKvs]): Either[com.histmersion.api.automation.Managers.ManagerConfig.ParseResultPart1, ManagerConfig] =
       kvs.foldLeft[Either[String, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
         acc.flatMap { c =>
-          kv.split("=", 2) match
+          (kv).value.split("=", 2) match
             case Array(k0, v0) =>
               val (k, v) = (k0.trim, v0.trim)
               def int = v.toIntOption.filter(_ >= 0).toRight(s"$k: '$v' is not a whole number")
               k match
-                case "maxRuns" | "max-runs"                       => int.map(n => c.copy(maxRuns = Some(n)))
-                case "maxOpen" | "max-open"                       => int.map(n => c.copy(maxOpen = Some(n)))
-                case "rounds"                                     => int.map(n => c.copy(rounds = Some(n)))
-                case "maxRunsPerArticle" | "max-runs-per-article" => int.map(n => c.copy(maxRunsPerArticle = Some(n)))
-                case "noProgressRuns" | "no-progress-runs"        => int.map(n => c.copy(noProgressRuns = Some(n)))
-                case "reopenLimit" | "reopen-limit"               => int.map(n => c.copy(reopenLimit = Some(n)))
-                case "cooldownMinutes" | "cooldown-minutes"       => int.map(n => c.copy(cooldownMinutes = Some(n)))
-                case "lowWater" | "low-water"                     => int.map(n => c.copy(lowWater = Some(n)))
-                case "refillBatch" | "refill-batch"               => int.map(n => c.copy(refillBatch = Some(n)))
-                case "maxFailures" | "max-failures"               => int.map(n => c.copy(maxFailures = Some(n)))
-                case "staleAfterDays" | "stale-after-days"        => int.map(n => c.copy(staleAfterDays = Some(n)))
-                case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(n)))
-                case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(n)))
-                case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(n)))
+                case "maxRuns" | "max-runs"                       => int.map(n => c.copy(maxRuns = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(n))))
+                case "maxOpen" | "max-open"                       => int.map(n => c.copy(maxOpen = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxOpen(n))))
+                case "rounds"                                     => int.map(n => c.copy(rounds = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.Rounds(n))))
+                case "maxRunsPerArticle" | "max-runs-per-article" => int.map(n => c.copy(maxRunsPerArticle = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxRunsPerArticle(n))))
+                case "noProgressRuns" | "no-progress-runs"        => int.map(n => c.copy(noProgressRuns = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.NoProgressRuns(n))))
+                case "reopenLimit" | "reopen-limit"               => int.map(n => c.copy(reopenLimit = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ReopenLimit(n))))
+                case "cooldownMinutes" | "cooldown-minutes"       => int.map(n => c.copy(cooldownMinutes = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.CooldownMinutes(n))))
+                case "lowWater" | "low-water"                     => int.map(n => c.copy(lowWater = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.LowWater(n))))
+                case "refillBatch" | "refill-batch"               => int.map(n => c.copy(refillBatch = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.RefillBatch(n))))
+                case "maxFailures" | "max-failures"               => int.map(n => c.copy(maxFailures = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxFailures(n))))
+                case "staleAfterDays" | "stale-after-days"        => int.map(n => c.copy(staleAfterDays = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.StaleAfterDays(n))))
+                case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MinSources(n))))
+                case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles(n))))
+                case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(n))))
                 case "inferFilter" | "infer-filter"               => bool(k, v).map(b => c.copy(inferFilter = Some(b)))
                 case "autoIngest" | "auto-ingest"                 => bool(k, v).map(b => c.copy(autoIngest = Some(b)))
                 case "autoApprove" | "auto-approve"               => bool(k, v).map(b => c.copy(autoApprove = Some(b)))
-                case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(n)))
+                case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(n))))
                 case "sweeps"                                     =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
                   ws.find(w => Sweep.parse(w).isEmpty) match
@@ -323,16 +323,16 @@ object Managers:
                   v.toDoubleOption
                     .filter(_ >= 0)
                     .toRight(s"$k: '$v' is not a number of USD (0 = no cap)")
-                    .map(d => c.copy(dailyUsd = Some(d)))
+                    .map(d => c.copy(dailyUsd = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.DailyUsd(d))))
                 case "budgetUsd" | "budget-usd" =>
                   v.toDoubleOption
                     .filter(_ > 0)
                     .toRight(s"$k: '$v' is not a positive number")
-                    .map(d => c.copy(budgetUsd = Some(d)))
+                    .map(d => c.copy(budgetUsd = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BudgetUsd(d))))
                 case "includeTags" | "include-tags" | "tags" =>
-                  Right(c.copy(includeTags = Some(v.split(",").toList.map(_.trim).filter(_.nonEmpty))))
+                  Right(c.copy(includeTags = Some((v.split(",").toList.map(_.trim).filter(_.nonEmpty)).map(refactorValue3 => _root_.com.histmersion.api.automation.Managers.ManagerConfig.IncludeTags(refactorValue3)))))
                 case "includeGoal" | "include-goal" | "goal" =>
-                  Right(c.copy(includeGoal = Option(v).filter(_.nonEmpty)))
+                  Right(c.copy(includeGoal = (Option(v).filter(_.nonEmpty)).map(refactorValue8 => _root_.com.histmersion.api.automation.Managers.ManagerConfig.IncludeGoal(refactorValue8))))
                 case "models" =>
                   v.split(";")
                     .toList
@@ -347,7 +347,7 @@ object Managers:
         }
       }
 
-    private def bool(k: com.histmersion.api.automation.Managers.ManagerConfig.BoolK, v: com.histmersion.api.automation.Managers.ManagerConfig.BoolV): Either[com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart1, com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2] = v.toLowerCase match
+    private def bool(k: com.histmersion.api.automation.Managers.ManagerConfig.BoolK, v: com.histmersion.api.automation.Managers.ManagerConfig.BoolV): Either[com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart1, com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2] = (v).value.toLowerCase match
       case "true" | "on" | "yes"  => Right(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2(true))
       case "false" | "off" | "no" => Right(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart2(false))
       case _                      => Left(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BoolResultPart1(s"$k: '$v' is not true or false"))
@@ -362,7 +362,7 @@ object Managers:
       cancelled: ItemCounts.Cancelled = _root_.com.histmersion.api.automation.Managers.ItemCounts.Cancelled(0)
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
-    def open: com.histmersion.api.automation.Managers.ItemCounts.OpenResult = pending + held + active
+    def open: com.histmersion.api.automation.Managers.ItemCounts.OpenResult = (pending).value + (held).value + active
   object ItemCounts:
 
 
@@ -422,14 +422,14 @@ object Managers:
           case Nil            => ItemCounts(pending, held, active, done, stopped, failed, cancelled)
           case (s, n) :: tail =>
             ItemStatus.parse(s) match
-              case Some(ItemStatus.Pending)   => loop(tail, pending + n, held, active, done, stopped, failed, cancelled)
-              case Some(ItemStatus.Held)      => loop(tail, pending, held + n, active, done, stopped, failed, cancelled)
-              case Some(ItemStatus.Active)    => loop(tail, pending, held, active + n, done, stopped, failed, cancelled)
-              case Some(ItemStatus.Done)      => loop(tail, pending, held, active, done + n, stopped, failed, cancelled)
-              case Some(ItemStatus.Stopped)   => loop(tail, pending, held, active, done, stopped + n, failed, cancelled)
-              case Some(ItemStatus.Failed)    => loop(tail, pending, held, active, done, stopped, failed + n, cancelled)
+              case Some(ItemStatus.Pending)   => loop(tail, (pending).value + (n).value, held, active, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Held)      => loop(tail, pending, (held).value + (n).value, active, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Active)    => loop(tail, pending, held, (active).value + (n).value, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Done)      => loop(tail, pending, held, active, (done).value + (n).value, stopped, failed, cancelled)
+              case Some(ItemStatus.Stopped)   => loop(tail, pending, held, active, done, (stopped).value + (n).value, failed, cancelled)
+              case Some(ItemStatus.Failed)    => loop(tail, pending, held, active, done, stopped, (failed).value + (n).value, cancelled)
               case Some(ItemStatus.Cancelled) =>
-                loop(tail, pending, held, active, done, stopped, failed, cancelled + n)
+                loop(tail, pending, held, active, done, stopped, failed, (cancelled).value + (n).value)
               case None => loop(tail, pending, held, active, done, stopped, failed, cancelled)
       loop(rows, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopPending(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopHeld(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopActive(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopDone(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopStopped(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopFailed(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopCancelled(0))
 

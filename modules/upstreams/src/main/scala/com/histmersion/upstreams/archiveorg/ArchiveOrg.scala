@@ -11,8 +11,8 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   /** `https://archive.org/details/<id>` or a bare identifier. */
   private def identifier(s: com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS): com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierResult =
-    val t = s.trim
-    (if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head
+    val t = (s).value.trim
+    _root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierResult((if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head)
 
   def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchRows): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchResultPart1, List[ArchiveItem]] =
     http
@@ -46,7 +46,7 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
     )
     http.get(url).flatMap { b =>
       if b.length < 10240 then Left(s"archive.org returned only ${b.length} bytes for $file")
-      else Right(FetchedFile(_root_.com.histmersion.plugin.FetchedFile.Source("archive_org"), Some(url), b, file.toLowerCase.split("\\.").lastOption.getOrElse("pdf")))
+      else Right(FetchedFile(_root_.com.histmersion.plugin.FetchedFile.Source("archive_org"), Some(url), b, _root_.com.histmersion.plugin.FetchedFile.Extension((file).value.toLowerCase.split("\\.").lastOption.getOrElse("pdf"))))
     }
 
 object ArchiveOrg:

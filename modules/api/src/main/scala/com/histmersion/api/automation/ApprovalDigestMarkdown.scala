@@ -15,7 +15,7 @@ object ApprovalDigestMarkdown:
   import ApprovalDigest.*
 
   private def decider(decidedBy: com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderDecidedBy): com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult = decidedBy match
-    case "checked" => _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult("the autopilot's checks (within the day's cap); a person may decide them first")
+    case refactorPattern if (refactorPattern.value == "checked") && (refactorPattern2.value == "checked") => _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult("the autopilot's checks (within the day's cap); a person may decide them first")
     case Waits     => _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult("nobody now: they wait (see above); a person may still decide one")
     case _         => _root_.com.histmersion.api.automation.ApprovalDigestMarkdown.DeciderResult("a person")
 

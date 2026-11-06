@@ -17,5 +17,5 @@ object AttestationTarget:
   val all: List[com.histmersion.domain.catalogue.AttestationTarget.All] = List(_root_.com.histmersion.domain.catalogue.AttestationTarget.All(Finding), _root_.com.histmersion.domain.catalogue.AttestationTarget.All(Event), _root_.com.histmersion.domain.catalogue.AttestationTarget.All(EventDating), _root_.com.histmersion.domain.catalogue.AttestationTarget.All(Place), _root_.com.histmersion.domain.catalogue.AttestationTarget.All(Edge))
 
   def check(t: com.histmersion.domain.catalogue.AttestationTarget.CheckT): Either[com.histmersion.domain.catalogue.AttestationTarget.CheckResultPart1, com.histmersion.domain.catalogue.AttestationTarget.CheckResultPart2] =
-    val n = Option(t).getOrElse("").trim.toLowerCase
-    Either.cond(all.contains(n), n, _root_.com.histmersion.domain.catalogue.AttestationTarget.CheckResultPart1(s"unknown target type '$t' (${all.mkString(", ")})"))
+    val n = Option((t).value).getOrElse("").trim.toLowerCase
+    Either.cond(all.contains(n), _root_.com.histmersion.domain.catalogue.AttestationTarget.CheckResultPart2(n), _root_.com.histmersion.domain.catalogue.AttestationTarget.CheckResultPart1(s"unknown target type '$t' (${all.mkString(", ")})"))

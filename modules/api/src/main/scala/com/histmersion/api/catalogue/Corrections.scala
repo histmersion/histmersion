@@ -57,7 +57,7 @@ object Corrections:
     type ClipS = ClipS.T
     object ClipS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def clip(s: com.histmersion.api.catalogue.Corrections.Fmt.ClipS): com.histmersion.api.catalogue.Corrections.Fmt.ClipResult = if s.length > 80 then s.take(79) + "…" else s
+    def clip(s: com.histmersion.api.catalogue.Corrections.Fmt.ClipS): com.histmersion.api.catalogue.Corrections.Fmt.ClipResult = if (s).value.length > 80 then _root_.com.histmersion.api.catalogue.Corrections.Fmt.ClipResult((s).value.take(79) + "…") else s
 
   def markdown(l: Correction.List): com.histmersion.api.catalogue.Corrections.MarkdownResult =
     if l.corrections.isEmpty then _root_.com.histmersion.api.catalogue.Corrections.MarkdownResult("_No corrections by hand._")

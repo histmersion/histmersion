@@ -31,6 +31,6 @@ object StorageMarkdown:
         vols ++ (if hints.isEmpty then Nil else "" :: hints) ++ problems
 
   private def entry(r: Storage.Report, e: Storage.Entry, depth: com.histmersion.api.maintenance.StorageMarkdown.EntryDepth): com.histmersion.api.maintenance.StorageMarkdown.EntryResult =
-    val indent = "  " * depth
+    val indent = "  " * (depth).value
     val host = if e.host == "server" then "" else " [on this machine]"
     _root_.com.histmersion.api.maintenance.StorageMarkdown.EntryResult(s"$indent- ${e.label}$host: ${(Storage.size(e) :: Storage.details(r, e) ++ e.path.toList).mkString(" · ")}")

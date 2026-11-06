@@ -1,6 +1,73 @@
 # Priority-family status
 
-## Current checkpoint: project-wide constructor batch applied, compilation incomplete
+## Current checkpoint: owner operations applied, compilation incomplete
+
+The current batch adds 17 construction patches in 17 production files and 1619
+owner-operation/construction patches across three previews (1016, 489 and 114).
+Together they change 232 distinct production files. These are applied expression
+patches, not verified policy-repair counts. No model declarations were reverted.
+
+The reusable ownerOperationsOnly policy permits unwrapping only inside the
+immediate owning model/class or companion. It excludes parent/child namespaces,
+consumers, nominal conversions, error adapters and test-comparison adapters. It
+uses compiler diagnostics, resolved Pure definitions and the actual AST to repair
+native arithmetic, string/array operations and raw construction. The native infix
+case requires a primitive receiver's overload diagnostic and changes only its
+right operand. Per-expression recipes were not added.
+
+| Source module | Previous checkpoint | Latest positioned errors | Observation |
+|---|---:|---:|---|
+| api JVM and JS, each | 3929 | 3316 | project-compile-frontier-9 |
+| values | 102 | 73 | project-compile-frontier-9 |
+| upstreams | 470 | 359 | project-compile-frontier-9 |
+| plugin-vaults | 139 | 102 | project-compile-frontier-9 |
+| plugins/calibre | 208 | 179 | -8; -9 retains cached failure |
+| plugins/ai-http | 113 | 97 | -8; -9 retains cached failure |
+| chimney-iron | 5 | 4 | -8; -9 retains cached failure |
+| plugin-fixtures/hello | 3 | 1 | -6; later cached failure |
+| plugin-fixtures/hello-ai | 9 | 8 | -6; later cached failure |
+
+All ten failing compilation tasks still fail. Counts are compiler observations,
+include API platform duplication and newly exposed errors, and cannot establish
+stable-ID fixes or new regressions. Dependent modules and production behavioral
+tests remain blocked. No overall repair/automation percentage is established.
+The unchanged stack override is -Xss16m. Diagnostics now request maxErrors=10000;
+no compiler/source policy or existing assertion was weakened.
+
+All five normal fixture outputs, the construction-only output and both owner
+outputs match exactly. The rewritten fixture compiles/runs under Scala 3.10,
+-source:future and fatal E165. Assertions cover arithmetic overflow, single
+evaluation of a function call, aliases, Boolean/array operations and prior
+construction/comparison behavior. Eight owner-consumer exclusions, five
+construction-only exclusions and eight prior compiler negatives remain unresolved.
+The final 48 application files exactly match their frozen preview; the full census
+also checks every source hash against the accumulated snapshot.
+
+The accepted census is type-positions-after-owner-operations-2: all 3169 Scala
+files, production594/test6009 raw primitive candidates, production27632/test19
+newtype shapes, zero primitive or newtype IDs introduced/removed, 3014 overlap
+candidate groups and 16108 unresolved references. No model-repair credit is claimed
+for expression repairs. Inventory acceptance and confirmed outstanding totals
+remain unestablished globally; other policy families remain frozen partial.
+
+Execution manifests now use CompileBatch's full source snapshot to avoid a deep
+HOCON include-chain parser failure. This is an execution checkpoint, not a new
+inventory denominator. The first census (-1) omitted declaration origins and
+incorrectly changed overlap grouping to 3481; it is retained as rejected evidence.
+NewtypeIndex now carries prior origins for still-existing IDs. The corrected -2
+has exactly the prior origin rows (order ignored), identical overlap-groups.tsv,
+and empty primitive/newtype ID deltas. Original histories remain authoritative.
+
+project-owner-operations-1 and -2 were previews only and were never applied. The
+broader namespace policy in -1 was rejected; -2 predates the lexical-alias fixture
+correction. Applied plans are project-constructions-2 and owner-operations-3/-4/-5.
+The factory-type scan found no eligible matches and was not refined further.
+The earlier formatting failure and three client-validation test conflicts remain
+unresolved. Next address missing native type-class instances, explicit boundary
+callback contracts and canonical interface/nominal relationships with reusable
+transformations. Continue compiling and testing without reverting typed models.
+
+## Previous checkpoint: project-wide constructor batch applied, compilation incomplete
 
 The construction-only compiler transformation has applied 4047 expression patches
 in 361 production files across all nine source modules with supported observed

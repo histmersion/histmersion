@@ -86,7 +86,7 @@ object JobDetail:
 
     /** The field in the detail's schema: optional, as a field with a default is. */
     private[histmersion] def schemaField: SProductField[JobDetail] =
-      SProductField[JobDetail, A](FieldName(name), schema.copy(isOptional = true), d => Some(of(d)))
+      SProductField[JobDetail, A](FieldName((name).value), schema.copy(isOptional = true), d => Some(of(d)))
 
   object Field:
     type Name = Name.T
