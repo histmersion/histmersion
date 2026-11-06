@@ -78,7 +78,7 @@ class BundleFormatSuite extends munit.FunSuite:
     assert(BundleTar.parseHeader(h.updated(0, 'M'.toByte)).isLeft)
     assertEquals(BundleTar.parseHeader(new Array[Byte](512)), Right(None))
     assert(BundleTar.header(BundleTar.Entry.Name("x" * 101), com.histmersion.ByteCount(1)).isLeft)
-    assert(BundleTar.header(com.histmersion.util.data.exchange.BundleTar.Entry.Name("x"), com.histmersion.ByteCount(-1)).isLeft)
+    assert(BundleTar.header(com.histmersion.util.data.exchange.BundleTar.Entry.Name("x"), com.histmersion.ByteCount.assume(-1L)).isLeft)
 
   test("tar: an entry that writes more or less than it declared is an error"):
     val w = BundleTar.Writer(ByteArrayOutputStream())
@@ -114,7 +114,7 @@ class BundleFormatSuite extends munit.FunSuite:
     )
     assertNotEquals(BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev, BundleFormat.stamp(goal(Bundle.Goal.Slug("g"), notes = Some(Bundle.Goal.Notes("n")))).rev)
     // a rev field already set is replaced, never trusted
-    assertEquals(BundleFormat.stamp(goal(Bundle.Goal.Slug("g")).modify(_.rev).setTo("bogus")).rev, BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev)
+    assertEquals(BundleFormat.stamp(goal(Bundle.Goal.Slug("g")).modify(_.rev).setTo(Bundle.Goal.Rev("bogus"))).rev, BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).rev)
 
   test("decoding a line checks its rev; a tampered line is reported"):
     val line = BundleFormat.stamp(goal(Bundle.Goal.Slug("g"))).line
@@ -146,7 +146,7 @@ class BundleFormatSuite extends munit.FunSuite:
     assertEquals(BundleFormat.compatible(m, Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"))), Nil)
     assertEquals(BundleFormat.compatible(m, Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("40"))), Nil)
     assert(BundleFormat.compatible(m, Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("32"))).exists(_.contains("newer than this server")))
-    assertEquals(BundleFormat.compatible(m.modify(_.format).setTo("x").modify(_.formatVersion).setTo(99), Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"))).size, 2)
+    assertEquals(BundleFormat.compatible(m.modify(_.format).setTo(Bundle.Manifest.Format("x")).modify(_.formatVersion).setTo(Bundle.Manifest.FormatVersion(99)), Some(com.histmersion.api.exchange.Bundle.Manifest.SchemaVersion("33"))).size, 2)
 
   test("file checks list every missing, unexpected and differing file"):
     val f = Bundle.FileInfo(com.histmersion.api.exchange.Bundle.FileInfo.Path("entities/goals.ndjson"), com.histmersion.api.exchange.Bundle.FileInfo.Lines(1), com.histmersion.api.ByteCount(10), com.histmersion.api.Sha256("a"))
@@ -162,7 +162,7 @@ class BundleFormatSuite extends munit.FunSuite:
       Bundle.Blobs(com.histmersion.api.exchange.Bundle.Blobs.Count(0), com.histmersion.api.ByteCount(0)),
       Bundle.Reference(com.histmersion.api.exchange.Bundle.Reference.Places(0), com.histmersion.api.exchange.Bundle.Reference.PlacesDigest(""), com.histmersion.api.exchange.Bundle.Reference.Periods(0), com.histmersion.api.exchange.Bundle.Reference.PeriodsDigest(""))
     )
-    val ps = BundleFormat.checkFiles(m, Map(f.path -> f.modify(_.sha256).setTo("b"), Bundle.FileInfo.Path("entities/x.ndjson") -> f))
+    val ps = BundleFormat.checkFiles(m, Map(f.path -> f.modify(_.sha256).setTo(com.histmersion.api.Sha256("b")), Bundle.FileInfo.Path("entities/x.ndjson") -> f))
     assertEquals(ps.size, 3, ps.mkString("\n"))
 
   // ── entities ─────────────────────────────────────────────────────────────────────────────────
@@ -207,5 +207,5 @@ class BundleFormatSuite extends munit.FunSuite:
     assert(md.contains("- source x: clash"), md)
     assert(md.contains("work ("), md)
     assert(
-      BundleMarkdown.importResult(r.modify(_.problems).setTo(Nil).modify(_.applied).setTo(true).modify(_.counts).setTo(Nil)).contains("Nothing to change")
+      BundleMarkdown.importResult(r.modify(_.problems).setTo(Nil).modify(_.applied).setTo(Bundle.ImportResult.Applied(true)).modify(_.counts).setTo(Nil)).contains("Nothing to change")
     )
