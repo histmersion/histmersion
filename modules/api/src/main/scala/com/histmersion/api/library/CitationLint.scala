@@ -12,7 +12,7 @@ object CitationLint:
   def danglingEdges(edges: List[Edge], citekeys: Set[com.histmersion.api.library.Citekey], maxSuggestions: com.histmersion.api.library.CitationLint.DanglingEdgesMaxSuggestions): List[LintItem] =
     edges.distinct
       .filterNot(e => citekeys.map(_.value.toString).contains(e.dst.value.toString))
-      .sortBy(e => (if looksLikeCitekey(_root_.com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget(e.dst.value.toString)) then 0 else 1, e.src.value.toString, e.kind, e.dst.value.toString))
+      .sortBy(e => (if ((looksLikeCitekey(_root_.com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget(e.dst.value.toString))) == _root_.com.histmersion.api.checks.Lint.LooksLikeCitekeyResult(true)) then 0 else 1, e.src.value.toString, e.kind, e.dst.value.toString))
       .map { e =>
         val near = suggest(e.dst.value.toString, citekeys.map(_.value.toString), maxSuggestions)
         val what =

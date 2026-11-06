@@ -62,9 +62,9 @@ object YubiKey:
 
   /** Pure: every entry of the setting, in order, without repeats; the first malformed one fails it all. */
   def parseAll(entries: List[com.histmersion.plugins.vaults.YubiKey.ParseAllEntries]): Either[com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1, List[Slot]] =
-    entries.map((_).value.trim).filter(_.nonEmpty).foldLeft[Either[String, List[Slot]]](Right(Nil)) { (acc, e) =>
+    (entries.map((_).value.trim).filter(_.nonEmpty).foldLeft[Either[String, List[Slot]]](Right(Nil)) { (acc, e) =>
       acc.flatMap(ok => (parse(_root_.com.histmersion.plugins.vaults.YubiKey.ParseText(e)).map(s => if ok.contains(s) then ok else ok :+ s)).left.map(refactorError => (refactorError).value))
-    }
+    }).left.map(refactorError3 => _root_.com.histmersion.plugins.vaults.YubiKey.ParseAllResultPart1(refactorError3))
 
   /** Pure: the serials `ykman list --serials` printed, one per line (anything else is ignored). */
   def serials(out: com.histmersion.plugins.vaults.YubiKey.SerialsOut): Set[com.histmersion.plugins.vaults.YubiKey.SerialsResult] =

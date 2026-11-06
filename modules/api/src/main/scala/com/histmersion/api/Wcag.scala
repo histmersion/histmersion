@@ -54,8 +54,8 @@ object Wcag:
     )
 
   def contrast(a: (com.histmersion.api.Wcag.ContrastAPart1, com.histmersion.api.Wcag.ContrastAPart2, com.histmersion.api.Wcag.ContrastAPart3), b: (com.histmersion.api.Wcag.ContrastBPart1, com.histmersion.api.Wcag.ContrastBPart2, com.histmersion.api.Wcag.ContrastBPart3)): com.histmersion.api.Wcag.ContrastResult =
-    val la = luminance(a._1, a._2, a._3)
-    val lb = luminance(b._1, b._2, b._3)
+    val la = luminance(_root_.com.histmersion.api.Wcag.LuminanceR((a._1).value), _root_.com.histmersion.api.Wcag.LuminanceG((a._2).value), _root_.com.histmersion.api.Wcag.LuminanceB((a._3).value))
+    val lb = luminance(_root_.com.histmersion.api.Wcag.LuminanceR((b._1).value), _root_.com.histmersion.api.Wcag.LuminanceG((b._2).value), _root_.com.histmersion.api.Wcag.LuminanceB((b._3).value))
     (math.max(la, lb) + 0.05) / (math.min(la, lb) + 0.05)
 
   /** AA for normal text; large text (≥ 18.66 px bold) needs 3. */

@@ -79,10 +79,10 @@ object Backup:
   def fileName(at: Instant): com.histmersion.api.backup.Backup.FileNameResult = _root_.com.histmersion.api.backup.Backup.FileNameResult(s"$Prefix${timestamp(at)}$Extension")
 
   def uniqueName(name: com.histmersion.api.backup.Backup.UniqueNameName, taken: com.histmersion.api.backup.Backup.UniqueNameTakenArg1 => com.histmersion.api.backup.Backup.UniqueNameTakenResult): com.histmersion.api.backup.Backup.UniqueNameResult =
-    if !taken(name) then name
+    if !taken(_root_.com.histmersion.api.backup.Backup.UniqueNameTakenArg1((name).value)) then _root_.com.histmersion.api.backup.Backup.UniqueNameResult((name).value)
     else
       val stem = (name).value.dropRight(Extension.length)
-      LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !taken(_root_.com.histmersion.api.backup.Backup.UniqueNameTakenArg1(c))).getOrElse(name)
+      LazyList.from(2).map(n => s"$stem-$n$Extension").find(c => !((taken(_root_.com.histmersion.api.backup.Backup.UniqueNameTakenArg1(c))) == _root_.com.histmersion.api.backup.Backup.UniqueNameTakenResult(true))).getOrElse(name)
 
   private val Written = """histmersion-(\d{8}T\d{6}Z)(?:-(\d+))?\.dump""".r
 
@@ -284,8 +284,8 @@ object Backup:
     type Pruned = Pruned.T
     object Pruned extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def running(file: com.histmersion.api.backup.Backup.Status.RunningFile, elapsedMs: com.histmersion.api.backup.Backup.Status.RunningElapsedMs): Status = Status(file, State.Running.wire, elapsedMs)
+    def running(file: com.histmersion.api.backup.Backup.Status.RunningFile, elapsedMs: com.histmersion.api.backup.Backup.Status.RunningElapsedMs): Status = Status(file, State.Running.wire, _root_.com.histmersion.api.backup.Backup.Status.DurationMs((elapsedMs).value))
     def done(r: Result): Status =
       Status(r.file, State.Done.wire, r.durationMs, Some(r.bytes), Some(r.sha256), pruned = r.pruned)
     def failed(file: com.histmersion.api.backup.Backup.Status.FailedFile, elapsedMs: com.histmersion.api.backup.Backup.Status.FailedElapsedMs, error: com.histmersion.api.backup.Backup.Status.FailedError): Status =
-      Status(file, State.Failed.wire, elapsedMs, error = Some(error))
+      Status(file, State.Failed.wire, _root_.com.histmersion.api.backup.Backup.Status.DurationMs((elapsedMs).value), error = Some(error))

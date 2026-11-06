@@ -67,7 +67,7 @@ object CatalogDating:
   /** Pure: a year with a ± uncertainty in years (negative or absent = none). */
   def year(y: com.histmersion.upstreams.dating.CatalogDating.YearY, plusMinus: Option[com.histmersion.upstreams.dating.CatalogDating.YearPlusMinus] = None): Bound =
     val u = plusMinus.filter((_).value > 0).getOrElse(0L)
-    Bound(shift(y, -u), shift(y, u))
+    Bound(shift(_root_.com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalH((y).value), -u), shift(_root_.com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalH((y).value), u))
 
   /** Pure: the span of an event that starts within `start` and ends within `end` (either may be unknown: then the one
     * known stands for both — a one-day battle, an eruption whose end is not recorded). The certain core (beginBy,
@@ -121,7 +121,7 @@ object CatalogDating:
     * store.
     */
   def wikidata(isoYear: com.histmersion.upstreams.dating.CatalogDating.WikidataIsoYear, precision: com.histmersion.upstreams.dating.CatalogDating.WikidataPrecision): Bound =
-    if (precision).value >= 9 then { val h = fromAstronomical(isoYear); Bound(h, h) }
+    if (precision).value >= 9 then { val h = fromAstronomical(_root_.com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalA((isoYear).value)); Bound(h, h) }
     else
       val unit = math.pow(10, (9 - (precision).value.max(0)).toDouble).toLong
       val lo = Math.floorDiv((isoYear).value, unit) * unit
@@ -135,10 +135,10 @@ object CatalogDating:
     digits.toLongOption.map(v => if neg then _root_.com.histmersion.upstreams.dating.CatalogDating.IsoYearResult(-v) else _root_.com.histmersion.upstreams.dating.CatalogDating.IsoYearResult(v))
 
   /** Pure: a historical year as an astronomical one (−1, 1 BCE, is 0). */
-  def toAstronomical(h: com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalH): com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult((h).value + 1) else if h == 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult((0).toLong) else h
+  def toAstronomical(h: com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalH): com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult((h).value + 1) else if h == 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult((0).toLong) else _root_.com.histmersion.upstreams.dating.CatalogDating.ToAstronomicalResult((h).value)
 
   /** Pure: an astronomical year as a historical one (0 is −1, 1 BCE). */
-  def fromAstronomical(a: com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalA): com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalResult = if (a).value <= 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalResult((a).value - 1) else a
+  def fromAstronomical(a: com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalA): com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalResult = if (a).value <= 0 then _root_.com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalResult((a).value - 1) else _root_.com.histmersion.upstreams.dating.CatalogDating.FromAstronomicalResult((a).value)
 
   /** Pure: a historical year `d` years later (earlier when negative), across the missing year 0. */
   def shift(h: com.histmersion.upstreams.dating.CatalogDating.ShiftH, d: com.histmersion.upstreams.dating.CatalogDating.ShiftD): com.histmersion.upstreams.dating.CatalogDating.ShiftResult = fromAstronomical((toAstronomical(h)).value + d)

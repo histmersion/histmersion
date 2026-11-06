@@ -344,9 +344,9 @@ object Lint:
           else None
         }
         .toList
-      scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take((max).value)
+      (scored.sortBy((rank, negLen, ck) => (rank, negLen, ck)).map(_._3).take((max).value)).map(refactorValue3 => _root_.com.histmersion.api.checks.Lint.SuggestResult((refactorValue3).value))
 
-  def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget): com.histmersion.api.checks.Lint.LooksLikeCitekeyResult = """\d{4}""".r.findFirstIn((target).value).isDefined
+  def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LooksLikeCitekeyTarget): com.histmersion.api.checks.Lint.LooksLikeCitekeyResult = _root_.com.histmersion.api.checks.Lint.LooksLikeCitekeyResult("""\d{4}""".r.findFirstIn((target).value).isDefined)
 
   def duplicates(rows: List[(com.histmersion.api.checks.Lint.DuplicatesRowsPart1, com.histmersion.api.checks.Lint.DuplicatesRowsPart2)], label: com.histmersion.api.checks.Lint.DuplicatesLabel): List[LintItem] =
     rows
@@ -370,7 +370,7 @@ object Lint:
   def nonCanonicalTags(rows: List[(com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart1, List[com.histmersion.api.checks.Lint.NonCanonicalTagsRowsPart2])]): List[LintItem] =
     rows
       .flatMap { (ck, tags) =>
-        tags.filterNot(isCanonicalTag).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(t)}'"))
+        tags.filterNot(_root_.com.histmersion.api.checks.Lint.IsCanonicalTagTag((isCanonicalTag).value)).map(t => LintItem(ck, s"tag '$t' → '${normaliseTag(_root_.com.histmersion.api.checks.Lint.NormaliseTagTag((t).value))}'"))
       }
       .sortBy(i => (i.citekey, i.detail))
 
@@ -383,7 +383,7 @@ object Lint:
           YearInCitekey.findFirstMatchIn((ck).value).flatMap { m =>
             val inKey = m.group(1).toInt
             if inKey == y then None
-            else Some(LintItem(ck, s"citekey has $inKey but stored year is $y"))
+            else Some(LintItem(ck, _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"citekey has $inKey but stored year is $y")))
           }
         }
       }

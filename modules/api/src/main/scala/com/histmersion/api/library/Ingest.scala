@@ -29,11 +29,11 @@ object Ingest:
     _root_.com.histmersion.api.library.Ingest.OriginalDispositionResult(s"""attachment; filename="$citekey.${if ext == (storedName).value then "bin" else ext}"""")
 
   def dispositionExtension(disposition: com.histmersion.api.library.Ingest.DispositionExtensionDisposition): Option[com.histmersion.api.library.Ingest.DispositionExtensionResult] =
-    """filename="?([^";]+)"?""".r
+    ("""filename="?([^";]+)"?""".r
       .findFirstMatchIn((disposition).value)
       .map(_.group(1).trim)
       .map(_.reverse.takeWhile(_ != '.').reverse.toLowerCase)
-      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))
+      .filter(e => e.nonEmpty && e.length <= 8 && e.forall(_.isLetterOrDigit))).map(refactorValue => _root_.com.histmersion.api.library.Ingest.DispositionExtensionResult(refactorValue))
 
   final case class Accepted(jobId: com.histmersion.api.jobs.JobInfo.Id, citekey: com.histmersion.api.library.Citekey, status: Accepted.Status, sha256: Option[com.histmersion.api.Sha256] = None)
       derives KindlingsCodecAsObject,

@@ -18,6 +18,6 @@ object EventCount:
   object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(keys: List[com.histmersion.api.catalogue.EventCount.OfKeys]): List[EventCount] =
-    keys.groupBy(identity).toList.map((k, v) => EventCount(k, _root_.com.histmersion.api.catalogue.EventCount.N(v.size))).sortBy(c => (-(c.n).value, c.key))
+    keys.groupBy(identity).toList.map((k, v) => EventCount(_root_.com.histmersion.api.catalogue.EventCount.Key((k).value), _root_.com.histmersion.api.catalogue.EventCount.N(v.size))).sortBy(c => (-(c.n).value, c.key))
   def add(a: List[EventCount], b: List[EventCount]): List[EventCount] =
     (a ++ b).groupBy(_.key).toList.map((k, cs) => EventCount(k, cs.map(_.n).sum)).sortBy(c => (-(c.n).value, c.key))

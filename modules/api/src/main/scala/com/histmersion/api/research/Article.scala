@@ -157,7 +157,7 @@ object Article:
         .filterNot(s => citedSet(s.citekey))
         .map(s => com.histmersion.api.research.Coverage.Entry(s, reasons.get(s.citekey)))
       val capped = read.size < total
-      val outside = cited.distinct.filterNot(ck => citedInFilter(ck) || readSet(ck))
+      val outside = cited.distinct.filterNot(ck => citedInFilter(_root_.com.histmersion.api.research.Article.Coverage.ComputeCitedInFilter((ck).value)) || readSet(ck))
       val statuses =
         Source.Status.values.toList.flatMap(st =>
           Option(read.count(_.status == st)).filter(_ > 0).map(StatusCount(st, _))
@@ -242,7 +242,7 @@ object Article:
     private def statusNote(s: Source.Status): com.histmersion.api.research.Article.Coverage.StatusNoteResult = if Stated(s) then _root_.com.histmersion.api.research.Article.Coverage.StatusNoteResult(s" (${s.wire})") else _root_.com.histmersion.api.research.Article.Coverage.StatusNoteResult("")
 
     private def endSentence(s: com.histmersion.api.research.Article.Coverage.EndSentenceS): com.histmersion.api.research.Article.Coverage.EndSentenceResult =
-      if (s).value.endsWith(".") || (s).value.endsWith("?") || (s).value.endsWith("!") then s else _root_.com.histmersion.api.research.Article.Coverage.EndSentenceResult(s"$s.")
+      if (s).value.endsWith(".") || (s).value.endsWith("?") || (s).value.endsWith("!") then _root_.com.histmersion.api.research.Article.Coverage.EndSentenceResult((s).value) else _root_.com.histmersion.api.research.Article.Coverage.EndSentenceResult(s"$s.")
 
     def method(c: com.histmersion.api.research.Coverage): com.histmersion.api.research.Article.Coverage.MethodResult =
       val statuses =
@@ -273,7 +273,7 @@ object Article:
 
     private def orList(xs: scala.List[com.histmersion.api.research.Article.Coverage.OrListXs]): com.histmersion.api.research.Article.Coverage.OrListResult = xs match
       case Nil        => _root_.com.histmersion.api.research.Article.Coverage.OrListResult("")
-      case one :: Nil => one
+      case one :: Nil => _root_.com.histmersion.api.research.Article.Coverage.OrListResult((one).value)
       case _          => _root_.com.histmersion.api.research.Article.Coverage.OrListResult(s"${xs.init.mkString(", ")} or ${xs.last}")
 
     /** An `_` or `*` of a user's query would end the Method line's Markdown emphasis. */
@@ -287,7 +287,7 @@ object Article:
       lines.indexWhere(l =>
         isHeading(_root_.com.histmersion.api.research.Article.Coverage.IsHeadingL(l)) && l.trim.replaceAll("^#+\\s*", "").trim.toLowerCase.startsWith("not used")
       ) match
-        case -1 => text
+        case -1 => _root_.com.histmersion.api.research.Article.Coverage.WithoutNotUsedResult((text).value)
         case i  =>
           val lv = level(_root_.com.histmersion.api.research.Article.Coverage.LevelL(lines(i)))
           val rest = lines.drop(i + 1)
@@ -298,7 +298,7 @@ object Article:
 
     def stripGenerated(body: com.histmersion.api.research.Article.Coverage.StripGeneratedBody): com.histmersion.api.research.Article.Coverage.StripGeneratedResult =
       val s = (body).value.indexOf(GeneratedStart)
-      if s < 0 then body
+      if s < 0 then _root_.com.histmersion.api.research.Article.Coverage.StripGeneratedResult((body).value)
       else
         val e = (body).value.indexOf(GeneratedEnd, s)
         val tail = if e < 0 then "" else (body).value.substring(e + GeneratedEnd.length)
@@ -528,7 +528,7 @@ object Article:
 
     def head(anchor: com.histmersion.api.research.Article.Edits.HeadAnchor, max: com.histmersion.api.research.Article.Edits.HeadMax = _root_.com.histmersion.api.research.Article.Edits.HeadMax(48)): com.histmersion.api.research.Article.Edits.HeadResult =
       val one = (anchor).value.trim.replaceAll("\\s+", " ")
-      if one.length <= (max).value then _root_.com.histmersion.api.research.Article.Edits.HeadResult(one) else one.take((max).value).trim + "…"
+      if one.length <= (max).value then _root_.com.histmersion.api.research.Article.Edits.HeadResult(one) else _root_.com.histmersion.api.research.Article.Edits.HeadResult(one.take((max).value).trim + "…")
 
     private def squeeze(s: com.histmersion.api.research.Article.Edits.SqueezeS): (com.histmersion.api.research.Article.Edits.SqueezeResultPart1, com.histmersion.api.research.Article.Edits.SqueezeResultPart2) =
       val out = StringBuilder()
@@ -549,11 +549,11 @@ object Article:
     def locate(text: com.histmersion.api.research.Article.Edits.LocateText, anchor: com.histmersion.api.research.Article.Edits.LocateAnchor): Either[com.histmersion.api.research.Article.Edits.LocateResultPart1, (com.histmersion.api.research.Article.Edits.LocateResultPart2Part1, com.histmersion.api.research.Article.Edits.LocateResultPart2Part2)] =
       val a = (anchor).value.trim
       occurrences(text, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(a)) match
-        case scala.List(i) => Right((i, (i).value + a.length))
+        case scala.List(i) => Right((_root_.com.histmersion.api.research.Article.Edits.LocateResultPart2Part1((i).value), _root_.com.histmersion.api.research.Article.Edits.LocateResultPart2Part2((i).value + a.length)))
         case _ :: _ :: _   =>
-          Left(s"the anchor occurs ${occurrences(text, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(a)).size} times — quote more of the passage so it occurs once")
+          Left(_root_.com.histmersion.api.research.Article.Edits.LocateResultPart1(s"the anchor occurs ${occurrences(text, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(a)).size} times — quote more of the passage so it occurs once"))
         case Nil =>
-          val (sq, pos) = squeeze(text)
+          val (sq, pos) = squeeze(_root_.com.histmersion.api.research.Article.Edits.SqueezeS((text).value))
           val na = a.replaceAll("\\s+", " ")
           occurrences(sq, _root_.com.histmersion.api.research.Article.Edits.OccurrencesNeedle(na)) match
             case scala.List(i) =>
@@ -703,7 +703,7 @@ object Article:
 
     def line: com.histmersion.api.research.Article.Filter.LineResult =
       def list(xs: scala.List[com.histmersion.api.research.Article.Filter.LineListXs]) = xs.map(Filter.quoted).mkString("[", ", ", "]")
-      val parts = query.map(q => s"query: ${Filter.quoted(q)}").toList ++
+      val parts = query.map(q => s"query: ${Filter.quoted(_root_.com.histmersion.api.research.Article.Filter.QuotedS((q).value))}").toList ++
         Option.when(topics.nonEmpty)(s"topics: ${list(topics)}") ++
         Option.when(tags.nonEmpty)(s"tags: ${list(tags)}") ++
         Option.when(status.nonEmpty)(s"status: ${list(status)}") ++
@@ -914,10 +914,10 @@ object Article:
       }
 
     def links(body: com.histmersion.api.research.Article.Links.LinksBody, isSource: com.histmersion.api.research.Article.Links.LinksIsSourceArg1 => com.histmersion.api.research.Article.Links.LinksIsSourceResult): scala.List[Link] =
-      classify(targets(body), isSource)
+      classify(targets(body), { val refactorFunction2 = isSource; (refactorValue11) => _root_.com.histmersion.api.research.Article.Links.ClassifyIsSourceResult((refactorFunction2(_root_.com.histmersion.api.research.Article.Links.LinksIsSourceArg1((refactorValue11).value))).value) })
 
     def hrefFor(target: com.histmersion.api.research.Article.Links.HrefForTarget, citekeyOf: com.histmersion.api.research.Article.Links.HrefForCitekeyOfArg1 => Option[com.histmersion.api.research.Article.Links.HrefForCitekeyOfResult], isArticle: com.histmersion.api.research.Article.Links.HrefForIsArticleArg1 => com.histmersion.api.research.Article.Links.HrefForIsArticleResult): Option[com.histmersion.api.research.Article.Links.HrefForResult] =
-      citekeyOf(target)
+      citekeyOf(_root_.com.histmersion.api.research.Article.Links.HrefForCitekeyOfArg1((target).value))
         .map(ck => s"/source/$ck")
         .orElse(Option.when(isArticle(target))(s"/article/$target"))
 
@@ -1024,9 +1024,9 @@ object Article:
             Some(
               LintItem(
                 slug,
-                s"filler: ${matches.take(3).mkString(", ")}${
+                _root_.com.histmersion.api.checks.Lint.LintItem.Detail(s"filler: ${matches.take(3).mkString(", ")}${
                     if matches.sizeIs > 3 then s" (+${matches.size - 3} more)" else ""
-                  }"
+                  }")
               )
             )
         }
@@ -1289,7 +1289,7 @@ object Article:
       case refactorPattern2 if (refactorPattern2.value == "cold-reader") && (refactorPattern6.value == "cold-reader") => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("cold reader")
       case refactorPattern7 if (refactorPattern3.value == "skeptic") && (refactorPattern7.value == "skeptic")     => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("skeptic")
       case refactorPattern4 if (refactorPattern4.value == "mechanical") && (refactorPattern8.value == "mechanical")  => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult("mechanical check")
-      case other         => other
+      case other         => _root_.com.histmersion.api.research.Article.ReviewView.ReviewerNameResult((other).value)
 
     def outcomeLine(f: ReviewFinding): com.histmersion.api.research.Article.ReviewView.OutcomeLineResult =
       val base = f.outcome match

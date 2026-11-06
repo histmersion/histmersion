@@ -11,7 +11,7 @@ final case class SendFailure(reported: SendFailure.Reported):
 
   /** The failure of `method` to `url`. */
   def describe(method: com.histmersion.plugins.ai.SendFailure.DescribeMethod, url: com.histmersion.plugins.ai.SendFailure.DescribeUrl): com.histmersion.plugins.ai.SendFailure.DescribeResult =
-    SendFailure.kind(exception).fold(reported)(k => s"$k: Exception when sending request: $method $url")
+    SendFailure.kind(_root_.com.histmersion.plugins.ai.SendFailure.KindException((exception).value)).fold(reported)(k => s"$k: Exception when sending request: $method $url")
 
 object SendFailure:
 

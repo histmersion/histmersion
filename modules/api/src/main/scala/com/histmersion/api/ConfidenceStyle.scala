@@ -37,9 +37,9 @@ object ConfidenceStyle:
     "\\d+".r.findAllIn((rgb).value).take(3).map(_.toInt).toList match
       case r :: g :: b :: Nil if (s).value < 1.0 =>
         val grey = (0.299 * r + 0.587 * g + 0.114 * b).round.toInt
-        def mix(v: com.histmersion.api.ConfidenceStyle.DesaturateMixV) = (grey + (v - grey) * s).round.toInt
-        s"rgb(${mix(r)},${mix(g)},${mix(b)})"
-      case _ => rgb
+        def mix(v: com.histmersion.api.ConfidenceStyle.DesaturateMixV) = (grey + ((v).value - grey) * s).round.toInt
+        s"rgb(${mix(_root_.com.histmersion.api.ConfidenceStyle.DesaturateMixV(r))},${mix(_root_.com.histmersion.api.ConfidenceStyle.DesaturateMixV(g))},${mix(_root_.com.histmersion.api.ConfidenceStyle.DesaturateMixV(b))})"
+      case _ => _root_.com.histmersion.api.ConfidenceStyle.DesaturateResult((rgb).value)
 
   final case class IconPart(d: IconPart.D, filled: IconPart.Filled)
 

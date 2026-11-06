@@ -55,9 +55,9 @@ object Years:
   type FromJsonTextResult = FromJsonTextResult.T
   object FromJsonTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def fromAstronomical(a: com.histmersion.api.Years.FromAstronomicalA): com.histmersion.api.Years.FromAstronomicalResult = if a <= 0 then _root_.com.histmersion.api.Years.FromAstronomicalResult((a).value - 1) else a
+  def fromAstronomical(a: com.histmersion.api.Years.FromAstronomicalA): com.histmersion.api.Years.FromAstronomicalResult = if a <= 0 then _root_.com.histmersion.api.Years.FromAstronomicalResult((a).value - 1) else _root_.com.histmersion.api.Years.FromAstronomicalResult((a).value)
 
-  def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((h).value + 1) else if h == 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((0).toLong) else h
+  def toAstronomical(h: com.histmersion.api.Years.ToAstronomicalH): com.histmersion.api.Years.ToAstronomicalResult = if (h).value < 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((h).value + 1) else if h == 0 then _root_.com.histmersion.api.Years.ToAstronomicalResult((0).toLong) else _root_.com.histmersion.api.Years.ToAstronomicalResult((h).value)
 
   def shift(h: com.histmersion.api.Years.ShiftH, d: com.histmersion.api.Years.ShiftD): com.histmersion.api.Years.ShiftResult = fromAstronomical((toAstronomical(h)).value + d)
 
@@ -96,7 +96,7 @@ object Years:
     digits.toLongOption.map(v => if neg then _root_.com.histmersion.api.Years.IsoAstronomicalResult(-v) else _root_.com.histmersion.api.Years.IsoAstronomicalResult(v))
 
   def parseIso(raw: com.histmersion.api.Years.ParseIsoRaw): Option[com.histmersion.api.Years.ParseIsoResult] =
-    (raw).value.trim.toLongOption.map(fromAstronomical)
+    (raw).value.trim.toLongOption.map(_root_.com.histmersion.api.Years.ParseIsoResult((fromAstronomical).value))
 
   def fromJson(j: Json, text: com.histmersion.api.Years.FromJsonTextArg1 => Option[com.histmersion.api.Years.FromJsonTextResult]): Option[com.histmersion.api.Years.FromJsonResult] =
-    j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(_root_.com.histmersion.api.Years.FromJsonTextArg1(refactorValue))).map(refactorValue2 => (refactorValue2).value) })).orElse(j.asNumber.map(_.toDouble.round))
+    (j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(_root_.com.histmersion.api.Years.FromJsonTextArg1(refactorValue))).map(refactorValue2 => (refactorValue2).value) })).orElse(j.asNumber.map(_.toDouble.round))).map(refactorValue4 => _root_.com.histmersion.api.Years.FromJsonResult(refactorValue4))

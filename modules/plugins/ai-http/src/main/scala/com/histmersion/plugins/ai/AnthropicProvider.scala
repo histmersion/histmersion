@@ -70,7 +70,7 @@ object AnthropicProvider:
   val Version = "2023-06-01"
 
   def headers(key: com.histmersion.plugins.ai.AnthropicProvider.HeadersKey): Map[com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1, com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2] =
-    Map("x-api-key" -> key, { val refactorTuple2 = "anthropic-version" -> Version; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple2._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple2._2)) }, { val refactorTuple3 = "content-type" -> "application/json"; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple3._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple3._2)) })
+    Map({ val refactorTuple = "x-api-key" -> key; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2((refactorTuple._2).value)) }, { val refactorTuple2 = "anthropic-version" -> Version; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple2._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple2._2)) }, { val refactorTuple3 = "content-type" -> "application/json"; (_root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart1(refactorTuple3._1), _root_.com.histmersion.plugins.ai.AnthropicProvider.HeadersResultPart2(refactorTuple3._2)) })
 
   /** The models known NOT to give structured output (older than Claude 4.1); any other model is taken to. */
   val WithoutStructuredOutput: Set[com.histmersion.plugins.ai.AnthropicProvider.WithoutStructuredOutput] = Set(

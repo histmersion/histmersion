@@ -245,7 +245,7 @@ object Basemap:
         val g = if r.geoms.isEmpty then ""
         else ":" + r.geoms.toList.sorted.map { case 1 => 'p'; case 2 => 'l'; case _ => 'a' }.mkString
         val k = if r.kinds.isEmpty then "" else "~" + r.kinds.toList.sorted.mkString("|")
-        (l).value + g + k + fromZoom.get(l).filter(_ > 0).fold("")(z => s"@$z")
+        (l).value + g + k + fromZoom.get(_root_.com.histmersion.api.basemap.Basemap.SubsetParamFromZoomPart1((l).value)).filter(_ > 0).fold("")(z => s"@$z")
       }
       .mkString(",")
 
@@ -270,11 +270,11 @@ object Basemap:
     if (keepAll).value then Nil
     else
       drop match
-        case Some(d) => parseDrop(d).toOption.getOrElse(Nil).filter(_.whole).map(_.layer).distinct.sorted
+        case Some(d) => parseDrop(_root_.com.histmersion.api.basemap.Basemap.ParseDropS((d).value)).toOption.getOrElse(Nil).filter(_.whole).map(_.layer).distinct.sorted
         case None    => LegacyLacks
 
   def missingFor(needs: List[com.histmersion.api.basemap.Basemap.MissingForNeeds], dropped: List[com.histmersion.api.basemap.Basemap.MissingForDropped]): List[com.histmersion.api.basemap.Basemap.MissingForResult] =
-    needs.filter(dropped.contains).distinct.sorted
+    (needs.filter(dropped.contains).distinct.sorted).map(refactorValue9 => _root_.com.histmersion.api.basemap.Basemap.MissingForResult((refactorValue9).value))
 
   val KeepAllCommand = s"$FetchCommand --layer vector --keep-all"
 

@@ -87,8 +87,8 @@ object Jats:
   sealed trait Node
   final case class Elem(name: Elem.Name, attrs: Map[Elem.AttrsKey, Elem.AttrsValue], children: Vector[Node]) extends Node:
     def kids(n: com.histmersion.upstreams.jats.Jats.Elem.KidsN): Vector[Elem] = children.collect { case e: Elem if e.name == n => e }
-    def kid(n: com.histmersion.upstreams.jats.Jats.Elem.KidN): Option[Elem] = kids(n).headOption
-    def attr(n: com.histmersion.upstreams.jats.Jats.Elem.AttrN): Option[com.histmersion.upstreams.jats.Jats.Elem.AttrResult] = attrs.get(n)
+    def kid(n: com.histmersion.upstreams.jats.Jats.Elem.KidN): Option[Elem] = kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN((n).value)).headOption
+    def attr(n: com.histmersion.upstreams.jats.Jats.Elem.AttrN): Option[com.histmersion.upstreams.jats.Jats.Elem.AttrResult] = attrs.get(_root_.com.histmersion.upstreams.jats.Jats.Elem.AttrsKey((n).value))
     def elems: Vector[Elem] = children.collect { case e: Elem => e }
 
   object Elem:
@@ -133,14 +133,14 @@ object Jats:
     val n = (xml).value.length
     var i = 0 // the read position: a scanning loop, local to this call
     while i < n do
-      if (xml).value.startsWith("<!--", i) then i = after(xml, _root_.com.histmersion.upstreams.jats.Jats.AfterToken("-->"), _root_.com.histmersion.upstreams.jats.Jats.AfterFrom(i + 4))
+      if (xml).value.startsWith("<!--", i) then i = after(_root_.com.histmersion.upstreams.jats.Jats.AfterS((xml).value), _root_.com.histmersion.upstreams.jats.Jats.AfterToken("-->"), _root_.com.histmersion.upstreams.jats.Jats.AfterFrom(i + 4))
       else if (xml).value.startsWith("<![CDATA[", i) then
         val end = (xml).value.indexOf("]]>", i + 9)
         val stop = if end < 0 then n else end
         add(Text(_root_.com.histmersion.upstreams.jats.Jats.Text.S((xml).value.substring(i + 9, stop))))
         i = if end < 0 then n else end + 3
-      else if (xml).value.startsWith("<!", i) then i = doctypeEnd(xml, _root_.com.histmersion.upstreams.jats.Jats.DoctypeEndFrom(i))
-      else if (xml).value.startsWith("<?", i) then i = after(xml, _root_.com.histmersion.upstreams.jats.Jats.AfterToken("?>"), _root_.com.histmersion.upstreams.jats.Jats.AfterFrom(i + 2))
+      else if (xml).value.startsWith("<!", i) then i = doctypeEnd(_root_.com.histmersion.upstreams.jats.Jats.DoctypeEndS((xml).value), _root_.com.histmersion.upstreams.jats.Jats.DoctypeEndFrom(i))
+      else if (xml).value.startsWith("<?", i) then i = after(_root_.com.histmersion.upstreams.jats.Jats.AfterS((xml).value), _root_.com.histmersion.upstreams.jats.Jats.AfterToken("?>"), _root_.com.histmersion.upstreams.jats.Jats.AfterFrom(i + 2))
       else if (xml).value.startsWith("</", i) then
         val end = (xml).value.indexOf('>', i)
         val name = (xml).value.substring(i + 2, if end < 0 then n else end).trim
@@ -150,7 +150,7 @@ object Jats:
           close()
         i = if end < 0 then n else end + 1
       else if (xml).value.charAt(i) == '<' then
-        val end = tagEnd(xml, _root_.com.histmersion.upstreams.jats.Jats.TagEndFrom(i + 1))
+        val end = tagEnd(_root_.com.histmersion.upstreams.jats.Jats.TagEndS((xml).value), _root_.com.histmersion.upstreams.jats.Jats.TagEndFrom(i + 1))
         val raw = (xml).value.substring(i + 1, end)
         val selfClosing = raw.endsWith("/")
         val body = if selfClosing then raw.dropRight(1) else raw
@@ -187,7 +187,7 @@ object Jats:
       if quote != 0 then { if c == quote then quote = 0.toChar }
       else if c == '"' || c == '\'' then quote = c
       j += 1
-    j
+    _root_.com.histmersion.upstreams.jats.Jats.TagEndResult((j).value)
 
   /** A `<!DOCTYPE …>` with an optional `[internal subset]`. */
   private def doctypeEnd(s: com.histmersion.upstreams.jats.Jats.DoctypeEndS, from: com.histmersion.upstreams.jats.Jats.DoctypeEndFrom): com.histmersion.upstreams.jats.Jats.DoctypeEndResult =
@@ -204,7 +204,7 @@ object Jats:
   private val Named = Map("amp" -> "&", "lt" -> "<", "gt" -> ">", "quot" -> "\"", "apos" -> "'", "nbsp" -> " ")
 
   def entities(s: com.histmersion.upstreams.jats.Jats.EntitiesS): com.histmersion.upstreams.jats.Jats.EntitiesResult =
-    if !(s).value.contains('&') then s
+    if !(s).value.contains('&') then _root_.com.histmersion.upstreams.jats.Jats.EntitiesResult((s).value)
     else
       _root_.com.histmersion.upstreams.jats.Jats.EntitiesResult(EntityRe.replaceAllIn(
         (s).value,
@@ -225,40 +225,40 @@ object Jats:
     */
   def toMarkdown(xml: com.histmersion.upstreams.jats.Jats.ToMarkdownXml): com.histmersion.upstreams.jats.Jats.ToMarkdownResult =
     val article = parse(xml)
-    val meta = article.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("front")).flatMap(_.kid("article-meta"))
+    val meta = article.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("front")).flatMap(_.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("article-meta")))
     val title = meta
-      .flatMap(_.kid("title-group"))
-      .flatMap(_.kid("article-title"))
+      .flatMap(_.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("title-group")))
+      .flatMap(_.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("article-title")))
       .map(runText)
-      .filter(_.nonEmpty)
+      .filter((_).value.nonEmpty)
       .map("# " + _)
     val authors = meta.toVector
-      .flatMap(_.kids("contrib-group"))
-      .flatMap(_.kids("contrib"))
-      .filter(_.attr("contrib-type").forall(_ == "author"))
-      .flatMap(c => c.kid("name").map(byName).orElse(c.kid("collab").map(runText)))
+      .flatMap(_.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("contrib-group")))
+      .flatMap(_.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("contrib")))
+      .filter(_.attr(_root_.com.histmersion.upstreams.jats.Jats.Elem.AttrN("contrib-type")).forall(_ == "author"))
+      .flatMap(c => c.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("name")).map(byName).orElse(c.kid("collab").map(runText)))
       .filter(_.nonEmpty)
     val byline = Option.when(authors.nonEmpty)(authors.mkString(", "))
     val abstracts = meta.toVector
-      .flatMap(_.kids("abstract"))
-      .filterNot(a => a.attr("abstract-type").exists(Set("graphical", "teaser", "toc")))
+      .flatMap(_.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("abstract")))
+      .filterNot(a => a.attr(_root_.com.histmersion.upstreams.jats.Jats.Elem.AttrN("abstract-type")).exists(Set("graphical", "teaser", "toc")))
       .flatMap { a =>
-        val heading = a.kid("title").map(runText).filter(_.nonEmpty).getOrElse("Abstract")
-        s"## $heading" +: blocks(a, 3)
+        val heading = a.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("title")).map(runText).filter(_.nonEmpty).getOrElse("Abstract")
+        s"## $heading" +: blocks(a, _root_.com.histmersion.upstreams.jats.Jats.RefListLevel(3))
       }
-    val body = article.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("body")).toVector.flatMap(blocks(_, 2))
+    val body = article.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("body")).toVector.flatMap(blocks(_, _root_.com.histmersion.upstreams.jats.Jats.RefListLevel(2)))
     // a body that opens with running text rather than a section would read as part of the abstract
-    val rule = Option.when(abstracts.nonEmpty && body.headOption.exists(!_.startsWith("#")))("---")
+    val rule = Option.when(abstracts.nonEmpty && body.headOption.exists(!(_).value.startsWith("#")))("---")
     val back = article.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("back")).toVector.flatMap { b =>
       b.elems.flatMap {
         case e if e.name == "ack" =>
-          val heading = e.kid("title").map(runText).filter(_.nonEmpty).getOrElse("Acknowledgements")
-          s"## $heading" +: blocks(e, 3)
-        case e if e.name == "ref-list" => refList(e, 2)
-        case e                         => block(e, 2)
+          val heading = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("title")).map(runText).filter(_.nonEmpty).getOrElse("Acknowledgements")
+          s"## $heading" +: blocks(e, _root_.com.histmersion.upstreams.jats.Jats.RefListLevel(3))
+        case e if e.name == "ref-list" => refList(e, _root_.com.histmersion.upstreams.jats.Jats.RefListLevel(2))
+        case e                         => block(e, _root_.com.histmersion.upstreams.jats.Jats.RefListLevel(2))
       }
     }
-    val floats = article.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("floats-group")).toVector.flatMap(blocks(_, 2))
+    val floats = article.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("floats-group")).toVector.flatMap(blocks(_, _root_.com.histmersion.upstreams.jats.Jats.RefListLevel(2)))
     (title.toVector ++ byline ++ abstracts ++ rule ++ body ++ floats ++ back)
       .map(_.trim)
       .filter(_.nonEmpty)
@@ -293,8 +293,8 @@ object Jats:
 
   private def block(e: Elem, level: com.histmersion.upstreams.jats.Jats.BlockLevel): Vector[com.histmersion.upstreams.jats.Jats.BlockResult] = e.name match
     case "sec" | "app" | "boxed-text" | "glossary" | "notes" | "fn-group" | "app-group" | "sec-meta" =>
-      val heading = (e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("label")).map(runText).toList ++ e.kid("title").map(runText).toList)
-        .filter(_.nonEmpty)
+      val heading = (e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("label")).map(runText).toList ++ e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("title")).map(runText).toList)
+        .filter((_).value.nonEmpty)
         .mkString(" ")
       Option.when(heading.nonEmpty)("#" * math.min(6, (level).value) + " " + heading).toVector ++
         blocks(e, _root_.com.histmersion.upstreams.jats.Jats.BlocksLevel((level).value + 1))
@@ -327,17 +327,17 @@ object Jats:
       )
     case "disp-quote" => blocks(e, level).map((_).value.linesIterator.map("> " + _).mkString("\n"))
     case "fig" | "fig-group" | "supplementary-material" | "chem-struct-wrap" =>
-      val label = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("label")).map(runText(_).stripSuffix(".")).filter(_.nonEmpty)
+      val label = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("label")).map((runText(_)).value.stripSuffix(".")).filter(_.nonEmpty)
       val cap = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("caption")).toVector.flatMap(captionText)
       if label.isEmpty && cap.isEmpty then e.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("fig")).flatMap(block(_, level))
-      else Vector((label.map(l => s"**$l.** ").getOrElse("") + cap.mkString(" ")).trim)
+      else Vector(_root_.com.histmersion.upstreams.jats.Jats.BlockResult((label.map(l => s"**$l.** ").getOrElse("") + cap.mkString(" ")).trim))
     case "table-wrap" | "table-wrap-group" =>
-      val label = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("label")).map(runText(_).stripSuffix(".")).filter(_.nonEmpty)
+      val label = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("label")).map((runText(_)).value.stripSuffix(".")).filter(_.nonEmpty)
       val cap = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("caption")).toVector.flatMap(captionText)
       val head = Option
         .when(label.nonEmpty || cap.nonEmpty)((label.map(l => s"**$l.** ").getOrElse("") + cap.mkString(" ")).trim)
         .toVector
-      head ++ e.kids("table").flatMap(table) ++ e.kids("table-wrap").flatMap(block(_, level)) ++
+      head ++ e.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("table")).flatMap(table) ++ e.kids("table-wrap").flatMap(block(_, level)) ++
         e.kids("table-wrap-foot").flatMap(blocks(_, level))
     case "disp-formula" => formula(e).map(f => s"$$$$$f$$$$").toVector
     case "ref-list"     => refList(e, level)
@@ -345,11 +345,11 @@ object Jats:
       Vector(
         e.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("def-item"))
           .map(d =>
-            "- " + (d.kid("term").map(runText).getOrElse("") + ": " + d.kid("def").map(runText).getOrElse("")).trim
+            "- " + (d.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("term")).map(runText).getOrElse("") + ": " + d.kid("def").map(runText).getOrElse("")).trim
           )
           .mkString("\n")
       )
-    case "fn"                                 => Vector(runText(e))
+    case "fn"                                 => Vector(_root_.com.histmersion.upstreams.jats.Jats.BlockResult((runText(e)).value))
     case n if Skip(n) || n.startsWith("mml:") => Vector.empty
     case _                                    => blocks(e, level)
 
@@ -357,7 +357,7 @@ object Jats:
     Set("list", "disp-quote", "fig", "table-wrap", "disp-formula", "boxed-text", "def-list", "supplementary-material")
 
   private def captionText(c: Elem): Vector[com.histmersion.upstreams.jats.Jats.CaptionTextResult] =
-    (c.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("title")).map(runText).toVector ++ c.kids("p").map(runText)).filter(_.nonEmpty)
+    (c.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("title")).map(runText).toVector ++ c.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("p")).map(runText)).filter(_.nonEmpty)
 
   private def table(t: Elem): Vector[com.histmersion.upstreams.jats.Jats.TableResult] =
     def rows(e: Elem): Vector[Elem] = e.elems.flatMap(c => if c.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("tr") then Vector(c) else rows(c))
@@ -378,25 +378,25 @@ object Jats:
   private def formula(e: Elem): Option[com.histmersion.upstreams.jats.Jats.FormulaResult] =
     def find(x: Elem): Option[Elem] =
       if x.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("tex-math") then Some(x) else x.elems.iterator.flatMap(find).nextOption()
-    find(e).map(t => collapse(text(t)).stripPrefix("$").stripSuffix("$").trim).filter(_.nonEmpty)
+    find(e).map(t => collapse(_root_.com.histmersion.upstreams.jats.Jats.CollapseS((text(t)).value)).stripPrefix("$").stripSuffix("$").trim).filter(_.nonEmpty)
 
   private def refList(e: Elem, level: com.histmersion.upstreams.jats.Jats.RefListLevel, parent: Option[com.histmersion.upstreams.jats.Jats.RefListParent] = None): Vector[com.histmersion.upstreams.jats.Jats.RefListResult] =
-    val heading = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("title")).map(runText).filter(_.nonEmpty).getOrElse("References")
+    val heading = e.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("title")).map(runText).filter((_).value.nonEmpty).getOrElse("References")
     val shown = Option.when(!parent.contains(heading))("#" * math.min(6, (level).value) + " " + heading)
     val refs = e.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("ref")).map { r =>
-      val label = r.kid("label").map(runText).filter(_.nonEmpty).map(_.stripSuffix(".") + ". ").getOrElse("")
-      val cites = r.elems.filter(c => c.name.endsWith("citation")).map(citation).filter(_.nonEmpty)
+      val label = r.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("label")).map(runText).filter(_.nonEmpty).map(_.stripSuffix(".") + ". ").getOrElse("")
+      val cites = r.elems.filter(c => c.name.endsWith("citation")).map(citation).filter((_).value.nonEmpty)
       "- " + label + cites.mkString(" ")
     }
     shown.toVector ++
       Option.when(refs.nonEmpty)(refs.mkString("\n")).toVector ++
-      e.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("ref-list")).flatMap(refList(_, level + 1, Some(heading)))
+      e.kids(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidsN("ref-list")).flatMap(refList(_, (level).value + 1, Some(heading)))
 
   /** A `mixed-citation` carries its own punctuation; an `element-citation` is bare fields, joined — a volume with its
     * issue and a page range read as one field (`522(7555):167–172`).
     */
   private def citation(c: Elem): com.histmersion.upstreams.jats.Jats.CitationResult =
-    if c.name != _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("element-citation") then runText(c)
+    if c.name != _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("element-citation") then _root_.com.histmersion.upstreams.jats.Jats.CitationResult((runText(c)).value)
     else
       val fields: Vector[(com.histmersion.upstreams.jats.Jats.CitationFieldsPart1, com.histmersion.upstreams.jats.Jats.CitationFieldsPart2)] = c.elems.flatMap {
         case g if g.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("person-group") =>
@@ -409,7 +409,7 @@ object Jats:
             .filter(_.nonEmpty)
           Option.when(names.nonEmpty)({ val refactorTuple = "person-group" -> names.mkString(", "); (_root_.com.histmersion.upstreams.jats.Jats.CitationFieldsPart1(refactorTuple._1), _root_.com.histmersion.upstreams.jats.Jats.CitationFieldsPart2(refactorTuple._2)) })
         case p if p.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("pub-id") =>
-          Option.when(p.attr(_root_.com.histmersion.upstreams.jats.Jats.Elem.AttrN("pub-id-type")).contains("doi"))("doi" -> ("doi:" + runText(p)))
+          Option.when(p.attr(_root_.com.histmersion.upstreams.jats.Jats.Elem.AttrN("pub-id-type")).contains("doi"))({ val refactorTuple2 = "doi" -> ("doi:" + runText(p)); (_root_.com.histmersion.upstreams.jats.Jats.CitationFieldsPart1(refactorTuple2._1), _root_.com.histmersion.upstreams.jats.Jats.CitationFieldsPart2(refactorTuple2._2)) })
         case x => Some(x.name -> runText(x))
       }
       val merged = fields.foldLeft(Vector.empty[(String, String)]) { (acc, f) =>
@@ -425,37 +425,37 @@ object Jats:
 
   /** `Given Surname`, for the byline. */
   private def byName(n: Elem): com.histmersion.upstreams.jats.Jats.ByNameResult =
-    (n.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("given-names")).map(runText).toList ++ n.kid("surname").map(runText).toList ++
-      n.kid("suffix").map(runText).toList).filter(_.nonEmpty).mkString(" ")
+    (n.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("given-names")).map(runText).toList ++ n.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("surname")).map(runText).toList ++
+      n.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("suffix")).map(runText).toList).filter((_).value.nonEmpty).mkString(" ")
 
   /** `Surname Given`, as references write it. */
   private def personName(n: Elem): com.histmersion.upstreams.jats.Jats.PersonNameResult =
-    (n.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("surname")).map(runText).toList ++ n.kid("given-names").map(runText).toList ++
-      n.kid("suffix").map(runText).toList).filter(_.nonEmpty).mkString(" ")
+    (n.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("surname")).map(runText).toList ++ n.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("given-names")).map(runText).toList ++
+      n.kid(_root_.com.histmersion.upstreams.jats.Jats.Elem.KidN("suffix")).map(runText).toList).filter((_).value.nonEmpty).mkString(" ")
 
   /** An element's running text as one Markdown line. */
-  def runText(e: Elem): com.histmersion.upstreams.jats.Jats.RunTextResult = collapse(inlineRaw(e))
+  def runText(e: Elem): com.histmersion.upstreams.jats.Jats.RunTextResult = collapse(_root_.com.histmersion.upstreams.jats.Jats.CollapseS((inlineRaw(e)).value))
 
   private def inlineRaw(e: Elem): com.histmersion.upstreams.jats.Jats.InlineRawResult =
     e.children.map {
       case Text(s) => s
       case c: Elem =>
         c.name match
-          case "italic" | "em"                               => wrap(_root_.com.histmersion.upstreams.jats.Jats.WrapMark("*"), inlineRaw(c))
-          case "bold" | "strong"                             => wrap(_root_.com.histmersion.upstreams.jats.Jats.WrapMark("**"), inlineRaw(c))
+          case "italic" | "em"                               => wrap(_root_.com.histmersion.upstreams.jats.Jats.WrapMark("*"), _root_.com.histmersion.upstreams.jats.Jats.WrapS((inlineRaw(c)).value))
+          case "bold" | "strong"                             => wrap(_root_.com.histmersion.upstreams.jats.Jats.WrapMark("**"), _root_.com.histmersion.upstreams.jats.Jats.WrapS((inlineRaw(c)).value))
           case "xref" if c.attr(_root_.com.histmersion.upstreams.jats.Jats.Elem.AttrN("ref-type")).contains("bibr") =>
-            val t = collapse(inlineRaw(c))
+            val t = collapse(_root_.com.histmersion.upstreams.jats.Jats.CollapseS((inlineRaw(c)).value))
             if t.isEmpty then "" else s"[$t]"
           case "inline-formula"                                        => formula(c).map(f => s"$$$f$$").getOrElse("")
           case "break"                                                 => " "
-          case "fn" | "table-wrap" | "fig" | "disp-formula" | "list"   => " " + collapse(inlineRaw(c)) + " "
+          case "fn" | "table-wrap" | "fig" | "disp-formula" | "list"   => " " + collapse(_root_.com.histmersion.upstreams.jats.Jats.CollapseS((inlineRaw(c)).value)) + " "
           case n if Skip(n) || n.startsWith("mml:") || n == "tex-math" => ""
           case _                                                       => inlineRaw(c)
     }.mkString
 
   private def wrap(mark: com.histmersion.upstreams.jats.Jats.WrapMark, s: com.histmersion.upstreams.jats.Jats.WrapS): com.histmersion.upstreams.jats.Jats.WrapResult =
     val t = (s).value.trim
-    if t.isEmpty then s
+    if t.isEmpty then _root_.com.histmersion.upstreams.jats.Jats.WrapResult((s).value)
     else
       _root_.com.histmersion.upstreams.jats.Jats.WrapResult((if (s).value.headOption.exists(_.isWhitespace) then " " else "") + mark + t + mark +
         (if (s).value.lastOption.exists(_.isWhitespace) then " " else ""))

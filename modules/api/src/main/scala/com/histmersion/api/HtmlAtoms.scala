@@ -42,12 +42,12 @@ object HtmlAtoms:
 
   def sourceLink(citekey: com.histmersion.api.HtmlAtoms.SourceLinkCitekey, doi: Option[com.histmersion.api.HtmlAtoms.SourceLinkDoi], label: com.histmersion.api.HtmlAtoms.SourceLinkLabel): com.histmersion.api.HtmlAtoms.SourceLinkResult =
     val doiAttr = doi.map((_).value.trim).filter(_.nonEmpty).fold("")(d => s""" data-doi="${esc(_root_.com.histmersion.api.HtmlAtoms.EscS(d))}"""")
-    s"""<a class="src-ref" data-ck="${esc(citekey)}"$doiAttr href="/source/${esc(segment(citekey))}">${esc(
-        label
+    s"""<a class="src-ref" data-ck="${esc(_root_.com.histmersion.api.HtmlAtoms.EscS((citekey).value))}"$doiAttr href="/source/${esc(segment(_root_.com.histmersion.api.HtmlAtoms.SegmentS((citekey).value)))}">${esc(
+        _root_.com.histmersion.api.HtmlAtoms.EscS((label).value)
       )}</a>"""
 
   def articleLink(slug: com.histmersion.api.HtmlAtoms.ArticleLinkSlug, label: com.histmersion.api.HtmlAtoms.ArticleLinkLabel): com.histmersion.api.HtmlAtoms.ArticleLinkResult =
-    s"""<a class="art-ref" data-slug="${esc(slug)}" href="/article/${esc(segment(slug))}">${esc(label)}</a>"""
+    s"""<a class="art-ref" data-slug="${esc(_root_.com.histmersion.api.HtmlAtoms.EscS((slug).value))}" href="/article/${esc(segment(_root_.com.histmersion.api.HtmlAtoms.SegmentS((slug).value)))}">${esc(_root_.com.histmersion.api.HtmlAtoms.EscS((label).value))}</a>"""
 
   def confidenceBadge(c: Confidence): com.histmersion.api.HtmlAtoms.ConfidenceBadgeResult =
     val wire = c.toString.toLowerCase

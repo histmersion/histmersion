@@ -165,7 +165,7 @@ object Query:
         dollarTag(sql, _root_.com.histmersion.api.library.Query.DollarTagI(i)) match
           case Some(tag) =>
             val end = (sql).value.indexOf(tag, i + (tag).value.length)
-            val to = if end < 0 then n else end + tag.length
+            val to = if end < 0 then n else end + (tag).value.length
             cur.append((sql).value.substring(i, to)); i = to
           case None => { cur.append(c); i += 1 }
       else if c == ';' then { out += cur.toString; cur.clear(); i += 1 }
@@ -210,13 +210,13 @@ object Query:
       statements(_root_.com.histmersion.api.library.Query.StatementsSql(text)) match
         case Nil        => Left(_root_.com.histmersion.api.library.Query.CheckResultPart1("empty statement"))
         case one :: Nil =>
-          val kw = leadingKeyword(one)
+          val kw = leadingKeyword(_root_.com.histmersion.api.library.Query.LeadingKeywordStatement((one).value))
           if Forbidden.contains(kw) then
             Left(
               _root_.com.histmersion.api.library.Query.CheckResultPart1(s"'$kw' is not allowed here — `query` runs ONE read-only statement (SELECT, or a " +
                 "WITH that only reads); transaction and session control are refused")
             )
-          else Right(one)
+          else Right(_root_.com.histmersion.api.library.Query.CheckResultPart2((one).value))
         case many =>
           Left(
             _root_.com.histmersion.api.library.Query.CheckResultPart1(s"${many.size} statements were given — `query` runs exactly ONE; " +
@@ -239,7 +239,7 @@ object Query:
     val head =
       s"### ${r.rowCount} row(s)${if ((r.truncated) == _root_.com.histmersion.api.library.Query.QueryResult.Truncated(true)) then " (truncated by the row cap)" else ""} · ${r.elapsedMs} ms"
     if r.rows.isEmpty then _root_.com.histmersion.api.library.Query.MarkdownResult(s"$head\n\n_no rows_")
-    else s"$head\n\n${markdownTable(r.columns, r.rows)}"
+    else _root_.com.histmersion.api.library.Query.MarkdownResult(s"$head\n\n${markdownTable(r.columns, r.rows)}")
 
   private val Key = Set(
     "id",

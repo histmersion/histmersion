@@ -72,7 +72,7 @@ object MediaProvider:
     case Pleiades          => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Pleiades (linked Commons files)")
     case Smithsonian       => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Smithsonian Institution")
     case Europeana         => _root_.com.histmersion.api.media.MediaProvider.TitleResult("Europeana")
-    case other             => other
+    case other             => _root_.com.histmersion.api.media.MediaProvider.TitleResult((other).value)
 
   final case class Info(
       name: com.histmersion.api.media.MediaItem.Provider,

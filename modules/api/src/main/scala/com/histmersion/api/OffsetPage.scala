@@ -43,6 +43,6 @@ object OffsetPage:
   def markdown[A](p: OffsetPage, noun: com.histmersion.api.OffsetPage.MarkdownNoun, empty: com.histmersion.api.OffsetPage.MarkdownEmpty, items: List[A])(line: A => com.histmersion.api.OffsetPage.MarkdownLineResult): com.histmersion.api.OffsetPage.MarkdownResult =
     if items.isEmpty then
       p.offset.value match
-        case 0 => empty
+        case 0 => _root_.com.histmersion.api.OffsetPage.MarkdownResult((empty).value)
         case o => _root_.com.histmersion.api.OffsetPage.MarkdownResult(s"$empty\n\n_offset=$o is past the end: there are ${p.total.value}_")
-    else s"${header(p, noun)}\n\n${items.map(line).mkString("\n")}${footer(p)}"
+    else s"${header(p, _root_.com.histmersion.api.OffsetPage.HeaderNoun((noun).value))}\n\n${items.map(line).mkString("\n")}${footer(p)}"

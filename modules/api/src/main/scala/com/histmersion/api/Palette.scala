@@ -76,16 +76,16 @@ object Palette:
   private def token(family: com.histmersion.api.Palette.TokenFamily, known: List[com.histmersion.api.Palette.TokenKnown], name: com.histmersion.api.Palette.TokenName): com.histmersion.api.Palette.TokenResult =
     if known.contains(name) then _root_.com.histmersion.api.Palette.TokenResult(s"--$family-$name") else _root_.com.histmersion.api.Palette.TokenResult(s"--$family-default")
 
-  def edge(kind: com.histmersion.api.Palette.EdgeKind): com.histmersion.api.Palette.EdgeResult = token(_root_.com.histmersion.api.Palette.TokenFamily("edge"), edgeKinds, kind)
-  def status(status: com.histmersion.api.Palette.StatusStatus): com.histmersion.api.Palette.StatusResult = token(_root_.com.histmersion.api.Palette.TokenFamily("status"), statuses, status)
+  def edge(kind: com.histmersion.api.Palette.EdgeKind): com.histmersion.api.Palette.EdgeResult = token(_root_.com.histmersion.api.Palette.TokenFamily("edge"), (edgeKinds).map(refactorValue2 => _root_.com.histmersion.api.Palette.TokenKnown((refactorValue2).value)), _root_.com.histmersion.api.Palette.TokenName((kind).value))
+  def status(status: com.histmersion.api.Palette.StatusStatus): com.histmersion.api.Palette.StatusResult = token(_root_.com.histmersion.api.Palette.TokenFamily("status"), (statuses).map(refactorValue3 => _root_.com.histmersion.api.Palette.TokenKnown((refactorValue3).value)), _root_.com.histmersion.api.Palette.TokenName((status).value))
 
   def goalStage(stage: com.histmersion.api.Palette.GoalStageStage): com.histmersion.api.Palette.GoalStageResult = _root_.com.histmersion.api.Palette.GoalStageResult(s"--stage-${(stage).value.trim.toLowerCase}")
   def goalStageSoft(stage: com.histmersion.api.Palette.GoalStageSoftStage): com.histmersion.api.Palette.GoalStageSoftResult = _root_.com.histmersion.api.Palette.GoalStageSoftResult(s"${goalStage(stage)}-soft")
-  def media(kind: com.histmersion.api.Palette.MediaKind): com.histmersion.api.Palette.MediaResult = token(_root_.com.histmersion.api.Palette.TokenFamily("media"), mediaKinds, kind)
+  def media(kind: com.histmersion.api.Palette.MediaKind): com.histmersion.api.Palette.MediaResult = token(_root_.com.histmersion.api.Palette.TokenFamily("media"), (mediaKinds).map(refactorValue9 => _root_.com.histmersion.api.Palette.TokenKnown((refactorValue9).value)), _root_.com.histmersion.api.Palette.TokenName((kind).value))
   def confidence(level: com.histmersion.api.Palette.ConfidenceLevel): com.histmersion.api.Palette.ConfidenceResult = _root_.com.histmersion.api.Palette.ConfidenceResult(s"--conf-$level")
 
   def allTokens: List[com.histmersion.api.Palette.AllTokensResult] =
-    (edgeKinds.map(edge) :+ "--edge-default") ++ (statuses.map(status) :+ "--status-default") ++
+    (edgeKinds.map({ val refactorFunction2 = edge; (refactorValue10) => refactorFunction2(_root_.com.histmersion.api.Palette.EdgeKind((refactorValue10).value)) }) :+ "--edge-default") ++ (statuses.map(status) :+ "--status-default") ++
       (mediaKinds.map(media) :+ "--media-default") ++ confidences.map(confidence) ++
       (0 until rampStops).map(i => s"--ramp-$i") ++ goalStages.flatMap(s => List(goalStage(s), goalStageSoft(s))) ++
       List("--graph-hover", "--graph-label", "--graph-label-hover", "--place-pick", "--place-preview") ++

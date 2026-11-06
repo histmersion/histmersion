@@ -90,12 +90,12 @@ object PeriodO:
       val c = doc.hcursor
       val overlay = c.downField("histmersion")
       def strings(key: com.histmersion.api.catalogue.PeriodO.ParseStringsKey): List[(com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart1, com.histmersion.api.catalogue.PeriodO.ParseStringsResultPart2)] = overlay
-        .downField(key)
+        .downField((key).value)
         .focus
         .flatMap(_.asObject)
         .map(_.toList.flatMap((k, v) => v.asString.map(k -> _)))
         .getOrElse(Nil)
-      val presets = strings("presets").map((id, r) =>
+      val presets = strings(_root_.com.histmersion.api.catalogue.PeriodO.ParseStringsKey("presets")).map((id, r) =>
         PresetRegion
           .fromWire(r)
           .map(id -> _)
@@ -127,8 +127,8 @@ object PeriodO:
       c: ACursor
   ): (com.histmersion.api.catalogue.PeriodO.Authority, List[SkippedPeriod]) =
     val src = c.downField("source")
-    val title = str(src, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("title")).orElse(str(src.downField("partOf"), "title")).getOrElse(id)
-    val year = int(src, _root_.com.histmersion.api.catalogue.PeriodO.IntKey("yearPublished")).orElse(int(src.downField("partOf"), "yearPublished"))
+    val title = str(src, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("title")).orElse(str(src.downField("partOf"), _root_.com.histmersion.api.catalogue.PeriodO.StrKey("title"))).getOrElse(id)
+    val year = int(src, _root_.com.histmersion.api.catalogue.PeriodO.IntKey("yearPublished")).orElse(int(src.downField("partOf"), _root_.com.histmersion.api.catalogue.PeriodO.IntKey("yearPublished")))
     val defs = c
       .downField("periods")
       .focus
@@ -173,8 +173,8 @@ object PeriodO:
       c: ACursor
   ): Either[SkippedPeriod, com.histmersion.api.catalogue.PeriodO.Definition] =
     // FASTI labels its Ukrainian periods in Ukrainian, with the English label as an alternative
-    val own = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("label")).map(_.trim).filter(_.nonEmpty)
-    val english = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("languageTag")).exists(_.toLowerCase.startsWith("en"))
+    val own = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("label")).map((_).value.trim).filter(_.nonEmpty)
+    val english = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("languageTag")).exists((_).value.toLowerCase.startsWith("en"))
     val label = (if english then own else None)
       .orElse(
         c.downField("localizedLabels")
@@ -189,7 +189,7 @@ object PeriodO:
       .getOrElse(id)
     val start = bound(c.downField("start").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.BoundOuter("earliestYear"))
     val stop = bound(c.downField("stop").downField("in"), _root_.com.histmersion.api.catalogue.PeriodO.BoundOuter("latestYear"))
-    val region = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("spatialCoverageDescription")).map(_.trim).filter(_.nonEmpty).orElse {
+    val region = str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("spatialCoverageDescription")).map((_).value.trim).filter(_.nonEmpty).orElse {
       val labels = c
         .downField("spatialCoverage")
         .focus
@@ -207,19 +207,19 @@ object PeriodO:
       case (Some(s), Some(e)) if outside(s) || outside(e) =>
         skip(Period.Skip.OutOfRange, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail(s"$s → $e lies outside $MinYear..$MaxYear"))
       case (Some(s), Some(e)) if s <= e =>
-        Right(com.histmersion.api.catalogue.PeriodO.Definition(id, label, Period(s, e), region, str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("broader"))))
+        Right(com.histmersion.api.catalogue.PeriodO.Definition(id, label, Period(s, e), (region).map(refactorValue => _root_.com.histmersion.api.catalogue.PeriodO.Definition.Region(refactorValue)), str(c, _root_.com.histmersion.api.catalogue.PeriodO.StrKey("broader"))))
       case (Some(s), Some(e)) => skip(Period.Skip.EndsBeforeStart, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail(s"starts after it ends ($s > $e)"))
       case _                  => skip(Period.Skip.NoSpan, _root_.com.histmersion.api.catalogue.PeriodO.DefinitionSkipDetail("no readable start or stop year"))
 
   private def bound(in: ACursor, outer: com.histmersion.api.catalogue.PeriodO.BoundOuter): Option[com.histmersion.api.catalogue.PeriodO.BoundResult] =
-    yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey("year")).orElse(yearAt(in, outer))
+    yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey("year")).orElse(yearAt(in, _root_.com.histmersion.api.catalogue.PeriodO.YearAtKey((outer).value)))
 
   private def yearAt(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.YearAtKey): Option[com.histmersion.api.catalogue.PeriodO.YearAtResult] =
-    c.downField((key).value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).flatMap(isoYear)
+    c.downField((key).value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).flatMap((isoYear).map(refactorValue10 => _root_.com.histmersion.api.catalogue.PeriodO.YearAtResult((refactorValue10).value)))
 
-  private def str(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.StrKey): Option[com.histmersion.api.catalogue.PeriodO.StrResult] = c.downField((key).value).focus.flatMap(_.asString)
+  private def str(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.StrKey): Option[com.histmersion.api.catalogue.PeriodO.StrResult] = c.downField((key).value).focus.flatMap((refactorCallback => (refactorCallback.asString).map(refactorValue4 => _root_.com.histmersion.api.catalogue.PeriodO.StrResult(refactorValue4))))
   private def int(c: ACursor, key: com.histmersion.api.catalogue.PeriodO.IntKey): Option[com.histmersion.api.catalogue.PeriodO.IntResult] =
-    c.downField((key).value).focus.flatMap(j => j.asNumber.flatMap(_.toInt).orElse(j.asString.flatMap(_.toIntOption)))
+    c.downField((key).value).focus.flatMap(j => (j.asNumber.flatMap(_.toInt).orElse(j.asString.flatMap(_.toIntOption))).map(refactorValue12 => _root_.com.histmersion.api.catalogue.PeriodO.IntResult(refactorValue12)))
 
   def toPeriods(
       ds: PeriodODataset,

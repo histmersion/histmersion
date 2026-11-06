@@ -73,7 +73,7 @@ object Markdown:
 
   private[api] def year(y: Option[com.histmersion.api.Markdown.YearY]): com.histmersion.api.Markdown.YearResult = _root_.com.histmersion.api.Markdown.YearResult(y.map(_.toString).getOrElse("n.d."))
   private[api] def fmtYear(v: com.histmersion.api.Markdown.FmtYearV): com.histmersion.api.Markdown.FmtYearResult = YearFmt(v)
-  private[api] def period(start: Option[com.histmersion.api.Markdown.PeriodStart], end: Option[com.histmersion.api.Markdown.PeriodEnd]): com.histmersion.api.Markdown.PeriodResult = periodLabel(start, end)
+  private[api] def period(start: Option[com.histmersion.api.Markdown.PeriodStart], end: Option[com.histmersion.api.Markdown.PeriodEnd]): com.histmersion.api.Markdown.PeriodResult = _root_.com.histmersion.api.Markdown.PeriodResult((periodLabel(start, end)).value)
 
   def periodLabel(start: Option[com.histmersion.api.Markdown.PeriodLabelStart], end: Option[com.histmersion.api.Markdown.PeriodLabelEnd]): com.histmersion.api.Markdown.PeriodLabelResult = YearFmt.period(start, end)
   private[api] def place(region: Option[com.histmersion.api.Markdown.PlaceRegion], lat: Option[com.histmersion.api.Markdown.PlaceLat], lon: Option[com.histmersion.api.Markdown.PlaceLon]): com.histmersion.api.Markdown.PlaceResult =
@@ -89,7 +89,7 @@ object Markdown:
   def chipLinks(values: List[com.histmersion.api.Markdown.ChipLinksValues], hashKey: com.histmersion.api.Markdown.ChipLinksHashKey): com.histmersion.api.Markdown.ChipLinksResult =
     values
       .filter((_).value.nonEmpty)
-      .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(v)})")
+      .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${enc(_root_.com.histmersion.api.Markdown.EncS((v).value))})")
       .mkString(", ")
 
   private[api] def enc(s: com.histmersion.api.Markdown.EncS): com.histmersion.api.Markdown.EncResult = _root_.com.histmersion.api.Markdown.EncResult(java.net.URLEncoder.encode((s).value, "UTF-8").replace("+", "%20"))
@@ -97,7 +97,7 @@ object Markdown:
   def bodySlice(text: com.histmersion.api.Markdown.BodySliceText, offset: com.histmersion.api.Markdown.BodySliceOffset, total: com.histmersion.api.Markdown.BodySliceTotal): com.histmersion.api.Markdown.BodySliceResult =
     val remaining = (total).value - (offset).value - (text).value.length
     if remaining > 0 then _root_.com.histmersion.api.Markdown.BodySliceResult(s"$text\n\n_…$remaining more chars — pass offset=${(offset).value + (text).value.length}_")
-    else text
+    else _root_.com.histmersion.api.Markdown.BodySliceResult((text).value)
 
   def backup(r: Backup.Result): com.histmersion.api.Markdown.BackupResult =
     s"""### Backup written

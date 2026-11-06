@@ -239,7 +239,7 @@ object Queue:
   def textOf(raw: Option[com.histmersion.api.automation.Queue.TextOfRaw]): Either[com.histmersion.api.automation.Queue.TextOfResultPart1, Option[com.histmersion.api.automation.Queue.TextOfResultPart2]] =
     raw match
       case Some(t) if (t).value.trim.isEmpty => Left(_root_.com.histmersion.api.automation.Queue.TextOfResultPart1("queue item text is empty"))
-      case other                     => Right(other)
+      case other                     => Right((other).map(refactorValue => _root_.com.histmersion.api.automation.Queue.TextOfResultPart2((refactorValue).value)))
 
   def fulfilledReason(prev: Option[com.histmersion.api.automation.Queue.FulfilledReasonPrev], citekey: com.histmersion.api.automation.Queue.FulfilledReasonCitekey): com.histmersion.api.automation.Queue.FulfilledReasonResult =
     val tag = s"ingested as [[$citekey]]"
@@ -353,7 +353,7 @@ object Queue:
     }).value).value
 
   private def trimBlank(ls: List[com.histmersion.api.automation.Queue.TrimBlankLs]): List[com.histmersion.api.automation.Queue.TrimBlankResult] =
-    ls.dropWhile((_).value.trim.isEmpty).reverse.dropWhile((_).value.trim.isEmpty).reverse
+    (ls.dropWhile((_).value.trim.isEmpty).reverse.dropWhile((_).value.trim.isEmpty).reverse).map(refactorValue15 => _root_.com.histmersion.api.automation.Queue.TrimBlankResult((refactorValue15).value))
 
   private def defaultPreamble(kind: Kind): com.histmersion.api.automation.Queue.DefaultPreambleResult = kind match
     case Kind.Acquire =>
@@ -403,7 +403,7 @@ object Queue:
       prev = p
       is.foreach(i => blocks += (if i.status == Note then Block.Note(i.text) else Block.Item(bullet(kind, i))))
     }
-    join(blocks.result())
+    _root_.com.histmersion.api.automation.Queue.RenderResult((join(blocks.result())).value)
 
   private def headingLines(prev: Vector[com.histmersion.api.automation.Queue.HeadingLinesPrev], next: Vector[com.histmersion.api.automation.Queue.HeadingLinesNext]): List[Block] =
     if next.isEmpty then Nil
@@ -412,7 +412,7 @@ object Queue:
       val from = firstDiff.getOrElse(next.length - 1)
       (from until next.length).toList.map { i =>
         val seg = next(i)
-        if isBold(seg) then Block.Heading(seg)
+        if isBold(_root_.com.histmersion.api.automation.Queue.IsBoldS((seg).value)) then Block.Heading(seg)
         else Block.Heading(_root_.com.histmersion.api.automation.Queue.Block.Heading.Line(s"${"#" * (i + 2)} $seg"))
       }
 

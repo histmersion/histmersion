@@ -244,13 +244,13 @@ object Geocode:
       case j :: w :: tail if dropped.nonEmpty && Joiners.contains(key(j)) && isQ(w) => go(tail, dropped :+ j :+ w)
       case _                                                                        => (dropped, rest)
     val (dropped, rest) = go((words).map(refactorValue6 => _root_.com.histmersion.api.catalogue.Geocode.StripQualifierGoRest(refactorValue6)), Nil)
-    Option.when(dropped.nonEmpty && rest.nonEmpty && key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(rest.mkString(" "))).nonEmpty)(
+    Option.when(dropped.nonEmpty && rest.nonEmpty && (key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(rest.mkString(" ")))).value.nonEmpty)(
       (_root_.com.histmersion.api.catalogue.Geocode.StripQualifierResultPart1(dropped.mkString(" ")), _root_.com.histmersion.api.catalogue.Geocode.StripQualifierResultPart2(rest.mkString(" ")))
     )
 
   def compassBox(dropped: com.histmersion.api.catalogue.Geocode.CompassBoxDropped): Option[(com.histmersion.api.catalogue.Geocode.CompassBoxResultPart1, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart2, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart3, com.histmersion.api.catalogue.Geocode.CompassBoxResultPart4)] =
-    val words = (dropped).value.split("[\\s\\-]+").map({ val refactorFunction = key; (refactorValue7) => refactorFunction(_root_.com.histmersion.api.catalogue.Geocode.KeyS(refactorValue7)) }).filter(_.nonEmpty).toList
-    val dirs = words.flatMap(w => Compass.get(w.stripSuffix("ern")).orElse(Compass.get(w)))
+    val words = (dropped).value.split("[\\s\\-]+").map({ val refactorFunction = key; (refactorValue7) => refactorFunction(_root_.com.histmersion.api.catalogue.Geocode.KeyS(refactorValue7)) }).filter((_).value.nonEmpty).toList
+    val dirs = words.flatMap(w => Compass.get((w).value.stripSuffix("ern")).orElse(Compass.get(w)))
     dirs match
       case List(box) => Some(box)
       case _         => None
@@ -275,14 +275,14 @@ object Geocode:
     val n = (name).value.trim
     if (key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(n))).value.isEmpty then Nil
     else
-      val asides = Asides.findAllMatchIn(n).map(_.group(1).trim).filter(a => key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(a)).nonEmpty).map(Attempt(_root_.com.histmersion.api.catalogue.Geocode.Attempt.Name(_))).toList
+      val asides = Asides.findAllMatchIn(n).map(_.group(1).trim).filter(a => (key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(a))).value.nonEmpty).map(Attempt(_root_.com.histmersion.api.catalogue.Geocode.Attempt.Name(_))).toList
       val comma = n.lastIndexOf(',') match
-        case i if i > 0 && key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(n.take(i))).nonEmpty && key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(n.drop(i + 1))).nonEmpty =>
+        case i if i > 0 && (key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(n.take(i)))).value.nonEmpty && key(_root_.com.histmersion.api.catalogue.Geocode.KeyS(n.drop(i + 1))).nonEmpty =>
           Some((n.take(i).trim, n.drop(i + 1).trim))
         case _ => None
       val head = comma.fold(n)(_._1)
       val qualified =
-        stripQualifier(_root_.com.histmersion.api.catalogue.Geocode.StripQualifierName(head)).map((q, base) => Attempt(base, comma.map(_._2), Some(Approximation.Qualifier(q))))
+        stripQualifier(_root_.com.histmersion.api.catalogue.Geocode.StripQualifierName(head)).map((q, base) => Attempt(base, comma.map((refactorCallback => _root_.com.histmersion.api.catalogue.Geocode.Attempt.Within(refactorCallback._2))), Some(Approximation.Qualifier(q))))
       val all = List(Attempt(_root_.com.histmersion.api.catalogue.Geocode.Attempt.Name(n))) ++ asides ++
         comma.map((a, in) => Attempt(_root_.com.histmersion.api.catalogue.Geocode.Attempt.Name(a), Some(_root_.com.histmersion.api.catalogue.Geocode.Attempt.Within(in)))).toList ++
         qualified.toList ++
@@ -375,7 +375,7 @@ object Geocode:
     cs.sortBy { c =>
       val (t, gap) = timeRank(c, at)
       (
-        if ((isPlaceholder(c, placeholderMin)) == _root_.com.histmersion.api.catalogue.Geocode.IsPlaceholderResult(true)) || c.gridCell then 1 else 0,
+        if ((isPlaceholder(c, placeholderMin)) == _root_.com.histmersion.api.catalogue.Geocode.IsPlaceholderResult(true)) || ((c.gridCell) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.GridCell(true)) then 1 else 0,
         if ((c.byLabel) == _root_.com.histmersion.api.catalogue.Geocode.Candidate.ByLabel(true)) then 0 else 1,
         c.tier,
         kindRank(c.kind, hint),

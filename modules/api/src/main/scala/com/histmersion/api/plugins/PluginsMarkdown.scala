@@ -38,7 +38,7 @@ object PluginsMarkdown:
       s"- ${line(p)}" :: (p.settings.map(s => s"    ${s.key} = ${s.value}") ++ p.warnings.map(w => s"    warning: $w"))
     }
     val verdict = if ((r.ok) == _root_.com.histmersion.api.plugins.PluginsReport.OkResult(true)) && checks.forall((refactorCallback => (refactorCallback._1).value)) then "self-check passed" else "self-check FAILED"
-    (List(
+    _root_.com.histmersion.api.plugins.PluginsMarkdown.SelfCheckResult((List(
       "# Histmersion self-check",
       "",
       s"- config file: ${ConfigFileInfo.describe(file)}",
@@ -49,4 +49,4 @@ object PluginsMarkdown:
     ) ++ checks.map((_, l) => s"- $l") ++ List("") ++ plugins ++ r.warnings.map(w => s"- warning: $w") ++ List(
       "",
       verdict
-    )).mkString("\n")
+    )).mkString("\n"))

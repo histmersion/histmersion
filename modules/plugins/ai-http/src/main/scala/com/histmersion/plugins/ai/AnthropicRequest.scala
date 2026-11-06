@@ -102,7 +102,7 @@ object AnthropicRequest:
       case Nil                       => Right(acc.reverse)
       case (id, name, input) :: tail =>
         parse((input).value).flatMap(_.as[Map[String, Json]]) match
-          case Left(e)  => Left(s"${e.getClass.getSimpleName}: ${e.getMessage}")
+          case Left(e)  => Left(_root_.com.histmersion.plugins.ai.AnthropicRequest.ToolUsesResultPart1(s"${e.getClass.getSimpleName}: ${e.getMessage}"))
           case Right(m) =>
             val use = Json.obj(
               "id" -> Json.fromString((id).value),

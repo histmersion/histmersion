@@ -31,7 +31,7 @@ object Sort:
     case "title"                           => Some(Title)
     case _                                 => None
 
-  val all: List[com.histmersion.api.library.Sort.All] = values.toList.map(label)
+  val all: List[com.histmersion.api.library.Sort.All] = values.toList.map(_root_.com.histmersion.api.library.Sort.All((label).value))
 
   given CirceCodec[Sort] = CirceCodec.from(
     Decoder.decodeString.emap(s => parse(_root_.com.histmersion.api.library.Sort.ParseS(s)).toRight(s"unknown sort '$s' (${all.mkString("|")})")),

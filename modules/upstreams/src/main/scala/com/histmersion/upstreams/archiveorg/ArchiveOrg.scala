@@ -33,11 +33,11 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
       .map(_.map(i => info(i.identifier).getOrElse(i)))
 
   def info(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoResultPart1, ArchiveItem] =
-    val ident = identifier(id)
+    val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
     http.json(Url(archive.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath(s"/metadata/$ident"))).map(AcquireParse.archiveItem(ident, _))
 
   def download(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadResultPart1, FetchedFile] =
-    val ident = identifier(id)
+    val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
     val url = Url(
       archive.url,
       s"/download/$ident/" + java.net.URLEncoder

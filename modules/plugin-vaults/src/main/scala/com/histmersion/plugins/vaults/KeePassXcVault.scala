@@ -27,7 +27,7 @@ final class KeePassXcVault(
   private def file = Path.of((db).value).getFileName.toString
 
   def resolve(ref: com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef): Either[com.histmersion.plugins.vaults.KeePassXcVault.ResolveResultPart1, com.histmersion.plugins.vaults.KeePassXcVault.ResolveResultPart2] =
-    request(ref).flatMap { (entry, attr) =>
+    request(_root_.com.histmersion.plugins.vaults.KeePassXcVault.RequestRef((ref).value)).flatMap { (entry, attr) =>
       if yubikeys.nonEmpty then
         withYubiKey(s"read '$ref'", s"for '$ref'", entry)(yk =>
           Subprocess
@@ -50,7 +50,7 @@ final class KeePassXcVault(
     }
     val single = asked.filterNot(r => batched.exists(_._1 == r)).map(r => r -> resolve(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef(r))).toMap
     if batched.size <= 1 then (single ++ batched.map((r, _) => r -> resolve(_root_.com.histmersion.plugins.vaults.KeePassXcVault.ResolveRef(r)))).iterator.map { case (refactorKey, refactorItem) => (refactorKey, ((refactorItem).left.map(refactorError => (refactorError).value)).map(refactorValue => (refactorValue).value)) }.toMap
-    else single ++ session(batched)
+    else single ++ session((batched).map(refactorValue2 => { val refactorTuple = refactorValue2; (_root_.com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart1(refactorTuple._1), { val refactorTuple2 = refactorTuple._2; (_root_.com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart2Part1((refactorTuple2._1).value), _root_.com.histmersion.plugins.vaults.KeePassXcVault.SessionBatchedPart2Part2((refactorTuple2._2).value)) }) }))
 
   /** `<entry>#<attribute>` as two arguments that cannot read as options. */
   private def request(ref: com.histmersion.plugins.vaults.KeePassXcVault.RequestRef): Either[com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart1, (com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart2Part1, com.histmersion.plugins.vaults.KeePassXcVault.RequestResultPart2Part2)] =
@@ -97,7 +97,7 @@ final class KeePassXcVault(
     val opened: Either[com.histmersion.plugins.vaults.KeePassXcVault.SessionOpenedPart1, Opened] =
       if yubikeys.nonEmpty then
         withYubiKey(_root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyWhat(what), _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyPurpose(s"for ${batched.size} references (${batched.map(_._1).mkString(", ")})"), _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyEntry(""))(yk =>
-          open(Some(yk), yubikeyTimeout)
+          (open(Some(yk), yubikeyTimeout)).left.map(refactorError3 => _root_.com.histmersion.plugins.vaults.KeePassXcVault.WithYubiKeyAttemptResultPart1((refactorError3).value))
         )
       else
         open(None, timeout) match
@@ -111,7 +111,7 @@ final class KeePassXcVault(
     opened match
       case Left(e)  => batched.map((r, _) => r -> Left(e)).toMap
       case Right(o) =>
-        try readAll(o, batched)
+        try readAll(o, (batched).map(refactorValue9 => { val refactorTuple3 = refactorValue9; (_root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart1((refactorTuple3._1).value), { val refactorTuple4 = refactorTuple3._2; (_root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part1((refactorTuple4._1).value), _root_.com.histmersion.plugins.vaults.KeePassXcVault.ReadAllBatchedPart2Part2((refactorTuple4._2).value)) }) }))
         finally
           val _ = o.session.send(_root_.com.histmersion.plugin.Processes.Session.SendLine("exit"))
           val _ = o.session.close(timeout)

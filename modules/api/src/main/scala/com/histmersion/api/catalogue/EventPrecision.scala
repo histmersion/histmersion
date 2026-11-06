@@ -76,7 +76,7 @@ object EventPrecision:
       case Some(u) if u <= ApproximateUpTo => _root_.com.histmersion.api.catalogue.EventPrecision.OfResult(Approximate)
       case _                               => _root_.com.histmersion.api.catalogue.EventPrecision.OfResult(Imprecise)
 
-  def of(ts: TimeSpan, plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.OfPlusMinus]): com.histmersion.api.catalogue.EventPrecision.OfResult = of(uncertainty(ts, plusMinus))
+  def of(ts: TimeSpan, plusMinus: Option[com.histmersion.api.catalogue.EventPrecision.OfPlusMinus]): com.histmersion.api.catalogue.EventPrecision.OfResult = of((uncertainty(ts, plusMinus)).map(refactorValue4 => _root_.com.histmersion.api.catalogue.EventPrecision.OfUncertainty((refactorValue4).value)))
 
   def mapped(precision: com.histmersion.api.catalogue.EventPrecision.MappedPrecision): com.histmersion.api.catalogue.EventPrecision.MappedResult = _root_.com.histmersion.api.catalogue.EventPrecision.MappedResult(precision != _root_.com.histmersion.api.catalogue.EventPrecision.MappedPrecision(Imprecise) && precision != _root_.com.histmersion.api.catalogue.EventPrecision.MappedPrecision(Undated))
 

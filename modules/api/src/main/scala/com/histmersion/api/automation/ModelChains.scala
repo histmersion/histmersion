@@ -62,7 +62,7 @@ object ModelChains:
   def parseChain(s: com.histmersion.api.automation.ModelChains.ParseChainS, known: Set[com.histmersion.api.automation.ModelChains.ParseChainKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.ParseChainResultPart1, List[ModelRef]] =
     val parts = (s).value.split('>').toList.map(_.trim)
     if parts.forall(_.isEmpty) then Right(Nil)
-    else parseModels((parts).map(refactorValue => _root_.com.histmersion.api.automation.ModelChains.ParseModelsRefs(refactorValue)), known)
+    else (parseModels((parts).map(refactorValue => _root_.com.histmersion.api.automation.ModelChains.ParseModelsRefs(refactorValue)), known)).left.map(refactorError => _root_.com.histmersion.api.automation.ModelChains.ParseChainResultPart1((refactorError).value))
 
   def parseModels(refs: List[com.histmersion.api.automation.ModelChains.ParseModelsRefs], known: Set[com.histmersion.api.automation.ModelChains.ParseModelsKnown] = Set.empty): Either[com.histmersion.api.automation.ModelChains.ParseModelsResultPart1, List[ModelRef]] =
     val parsed = refs.map((_).value.trim).filter(_.nonEmpty).map(ModelRef.parse(_root_.com.histmersion.api.automation.Agents.ModelRef.ParseS(_), known))
@@ -188,7 +188,7 @@ object ModelChains:
           val parsed: Either[com.histmersion.api.automation.ModelChains.Limit.ParseParsedPart1, (BigDecimal, Measure)] = words match
             case List(a) if a.startsWith("$") => amount(_root_.com.histmersion.api.automation.ModelChains.Limit.AmountRaw(a)).map(_ -> Measure.Usd)
             case List(a, m)                   =>
-              Measure.parse(_root_.com.histmersion.api.automation.ModelChains.Measure.ParseS(m)).toRight(s"'$m' is neither tokens nor usd").flatMap(me => amount(a).map(_ -> me))
+              Measure.parse(_root_.com.histmersion.api.automation.ModelChains.Measure.ParseS(m)).toRight(s"'$m' is neither tokens nor usd").flatMap(me => amount(_root_.com.histmersion.api.automation.ModelChains.Limit.AmountRaw(a)).map(_ -> me))
             case _ => Left(_root_.com.histmersion.api.automation.ModelChains.Limit.ParseParsedPart1(s"'$t' is not <amount> tokens|usd/<window> (e.g. 500k tokens/5h, 5 usd/day)"))
           for
             am <- parsed

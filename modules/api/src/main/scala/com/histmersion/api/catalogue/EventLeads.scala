@@ -79,7 +79,7 @@ object EventLeads:
           f.tier,
           yrs,
           text,
-          actions(f.eventId, f.label, yrs, f.proposed),
+          actions(f.eventId, f.label, _root_.com.histmersion.api.catalogue.EventLeads.ActionsYrs((yrs).value), f.proposed),
           f.findingsNear,
           f.proposed
         )

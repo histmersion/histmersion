@@ -57,7 +57,7 @@ object Vaults:
   /** Pure: `<entry>#<field>`, the field defaulting to `dflt` (split at the LAST `#`). */
   def entryAndField(ref: com.histmersion.plugins.vaults.Vaults.EntryAndFieldRef, dflt: com.histmersion.plugins.vaults.Vaults.EntryAndFieldDflt): (com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart1, com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart2) =
     (ref).value.lastIndexOf('#') match
-      case -1 => (_root_.com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart1((ref).value.trim), dflt)
+      case -1 => (_root_.com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart1((ref).value.trim), _root_.com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart2((dflt).value))
       case i  => (_root_.com.histmersion.plugins.vaults.Vaults.EntryAndFieldResultPart1((ref).value.take(i).trim), Option((ref).value.drop(i + 1).trim).filter(_.nonEmpty).getOrElse(dflt))
 
   /** A Secret given in a vault's own settings (its unlock password, its session), resolved through the host; `None`

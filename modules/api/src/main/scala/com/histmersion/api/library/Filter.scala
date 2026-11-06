@@ -138,7 +138,7 @@ object Filter:
   def clamp(v: com.histmersion.api.library.Filter.ClampV): com.histmersion.api.library.Filter.ClampResult = math.max(Earliest, math.min(Latest, (v).value))
 
   def periodOf(from: Option[com.histmersion.api.library.Filter.PeriodOfFrom], to: Option[com.histmersion.api.library.Filter.PeriodOfTo]): Option[Period] =
-    (from.map(clamp), to.map(clamp)) match
+    (from.map({ val refactorFunction4 = clamp; (refactorValue36) => refactorFunction4(_root_.com.histmersion.api.library.Filter.ClampV((refactorValue36).value)) }), to.map({ val refactorFunction5 = clamp; (refactorValue37) => refactorFunction5(_root_.com.histmersion.api.library.Filter.ClampV((refactorValue37).value)) })) match
       case (None, None)       => None
       case (Some(a), Some(b)) => Some(if a <= b then Period(a, b) else Period(b, a))
       case (Some(a), None)    => Some(Period(a, Latest))
@@ -187,7 +187,7 @@ object Filter:
       places = clean(places),
       topics = clean(topics),
       status = clean(status),
-      years = periodOf(yearFrom, yearTo),
+      years = periodOf((yearFrom).map(refactorValue10 => _root_.com.histmersion.api.library.Filter.PeriodOfFrom((refactorValue10).value)), (yearTo).map(refactorValue46 => _root_.com.histmersion.api.library.Filter.PeriodOfTo((refactorValue46).value))),
       period = periodOf(from, to),
       bbox = bboxOf(minLon, minLat, maxLon, maxLat),
       sort = sort.flatMap(Sort.parse).getOrElse(Sort.Relevance),

@@ -61,7 +61,7 @@ object KeePassXcSession:
     _root_.com.histmersion.plugins.vaults.KeePassXcSession.EscapeResult((s).value.flatMap(c => if c == ' ' || c == '\t' || c == '"' || c == '\\' then s"\\$c" else c.toString))
 
   /** Pure: the line that asks for one attribute of one entry. */
-  def command(attribute: com.histmersion.plugins.vaults.KeePassXcSession.CommandAttribute, entry: com.histmersion.plugins.vaults.KeePassXcSession.CommandEntry): com.histmersion.plugins.vaults.KeePassXcSession.CommandResult = s"show -q -a ${escape(attribute)} ${escape(entry)}"
+  def command(attribute: com.histmersion.plugins.vaults.KeePassXcSession.CommandAttribute, entry: com.histmersion.plugins.vaults.KeePassXcSession.CommandEntry): com.histmersion.plugins.vaults.KeePassXcSession.CommandResult = s"show -q -a ${escape(_root_.com.histmersion.plugins.vaults.KeePassXcSession.EscapeS((attribute).value))} ${escape(_root_.com.histmersion.plugins.vaults.KeePassXcSession.EscapeS((entry).value))}"
 
   /** Pure: what the session printed for the request sent when its output was `from` characters long, once it has
     * printed its prompt again: the text in between (`None` while it has not).

@@ -39,10 +39,10 @@ object YearFmt:
 
   def openPeriod(start: Option[com.histmersion.api.YearFmt.OpenPeriodStart], end: Option[com.histmersion.api.YearFmt.OpenPeriodEnd], none: com.histmersion.api.YearFmt.OpenPeriodNone = _root_.com.histmersion.api.YearFmt.OpenPeriodNone("undated")): com.histmersion.api.YearFmt.OpenPeriodResult =
     (start, end) match
-      case (Some(_), Some(_)) => period(start, end)
+      case (Some(_), Some(_)) => _root_.com.histmersion.api.YearFmt.OpenPeriodResult((period(start, end)).value)
       case (Some(a), None)    => s"from ${apply(a)}"
       case (None, Some(b))    => s"until ${apply(b)}"
-      case (None, None)       => none
+      case (None, None)       => _root_.com.histmersion.api.YearFmt.OpenPeriodResult((none).value)
 
   def span(ts: TimeSpan): com.histmersion.api.YearFmt.SpanResult =
     ts.outer.fold("undated")((a, b) => period(Some(a), Some(b)))

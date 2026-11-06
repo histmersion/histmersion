@@ -416,7 +416,7 @@ object Source:
           else if (i).value < suffix.length && suffix((i).value).isDigit then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits((digits).value + 1))
           else if (i).value < suffix.length && suffix((i).value) == '-' then isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI((i).value + 1), digits)
           else None
-        isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI(0), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits(0)).map(end => suffix.drop(end).exists(_.isLetterOrDigit))
+        isbnEnd(_root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndI(0), _root_.com.histmersion.api.library.Source.Kinds.IsbnDoiIsbnEndDigits(0)).map(end => suffix.drop((end).value).exists(_.isLetterOrDigit))
 
   final case class Match(
       rightUid: UUID,
@@ -562,9 +562,9 @@ object Source:
       val names = authors.map((_).value.trim).filter(_.nonEmpty)
       names match
         case Nil           => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult("")
-        case a :: Nil      => surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))
-        case a :: b :: Nil => (surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " & " + surname(b)
-        case a :: _        => (surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " et al."
+        case a :: Nil      => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult((surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value)
+        case a :: b :: Nil => (surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " & " + surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(b))
+        case a :: _        => _root_.com.histmersion.api.library.Source.Ref.ShortAuthorsResult((surname(_root_.com.histmersion.api.library.Source.Ref.SurnameFull(a))).value + " et al.")
 
   final case class Renamed(
       oldCitekey: com.histmersion.api.library.Citekey,
@@ -769,8 +769,8 @@ object Source:
 
     def applyEdges(citekey: com.histmersion.api.library.Citekey, current: List[Edge], p: EdgesPatch): Either[com.histmersion.api.library.Source.Write.ApplyEdgesResultPart1, List[Edge]] =
       for
-        removed <- traverse(p.remove)(edgeOf(_root_.com.histmersion.api.library.Source.Write.EdgeOfCitekey(citekey.value.toString), Set.empty, _root_.com.histmersion.api.library.Source.Write.EdgeOfPart("edges.remove"), _root_.com.histmersion.api.library.Source.Write.EdgeOfRole("patched source"), _))
-        added <- traverse(p.add)(edgeOf(_root_.com.histmersion.api.library.Source.Write.EdgeOfCitekey(citekey.value.toString), Set.empty, _root_.com.histmersion.api.library.Source.Write.EdgeOfPart("edges.add"), _root_.com.histmersion.api.library.Source.Write.EdgeOfRole("patched source"), _))
+        removed <- traverse(p.remove)((refactorCallback => (edgeOf(_root_.com.histmersion.api.library.Source.Write.EdgeOfCitekey(citekey.value.toString), Set.empty, _root_.com.histmersion.api.library.Source.Write.EdgeOfPart("edges.remove"), _root_.com.histmersion.api.library.Source.Write.EdgeOfRole("patched source"), refactorCallback)).left.map(refactorError7 => _root_.com.histmersion.api.library.Source.Write.TraverseFResultPart1((refactorError7).value))))
+        added <- traverse(p.add)((refactorCallback => (edgeOf(_root_.com.histmersion.api.library.Source.Write.EdgeOfCitekey(citekey.value.toString), Set.empty, _root_.com.histmersion.api.library.Source.Write.EdgeOfPart("edges.add"), _root_.com.histmersion.api.library.Source.Write.EdgeOfRole("patched source"), refactorCallback)).left.map(refactorError10 => _root_.com.histmersion.api.library.Source.Write.TraverseFResultPart1((refactorError10).value))))
         _ <- added
           .find(_.dst == citekey)
           .fold(Right(()))(e =>
@@ -863,8 +863,8 @@ object Source:
     private[api] def periodOf(start: Option[com.histmersion.api.library.Source.Write.PeriodOfStart], end: Option[com.histmersion.api.library.Source.Write.PeriodOfEnd], what: com.histmersion.api.library.Source.Write.PeriodOfWhat): Either[com.histmersion.api.library.Source.Write.PeriodOfResultPart1, Option[Period]] =
       def sane(v: com.histmersion.api.library.Source.Write.PeriodOfSaneV) = v >= Filter.Earliest && v <= Filter.Latest
       (start, end) match
-        case (Some(a), _) if !sane(a)     => Left(outOfRange(what, _root_.com.histmersion.api.library.Source.Write.OutOfRangeField("period_start"), a))
-        case (_, Some(b)) if !sane(b)     => Left(outOfRange(what, _root_.com.histmersion.api.library.Source.Write.OutOfRangeField("period_end"), b))
+        case (Some(a), _) if !sane(a)     => Left(outOfRange(what, _root_.com.histmersion.api.library.Source.Write.OutOfRangeField("period_start"), _root_.com.histmersion.api.library.Source.Write.OutOfRangeV((a).value)))
+        case (_, Some(b)) if !sane(b)     => Left(outOfRange(what, _root_.com.histmersion.api.library.Source.Write.OutOfRangeField("period_end"), _root_.com.histmersion.api.library.Source.Write.OutOfRangeV((b).value)))
         case (Some(a), Some(b)) if a <= b => Right(Some(Period(a, b)))
         case (Some(a), Some(b))           => Left(_root_.com.histmersion.api.library.Source.Write.PeriodOfResultPart1(s"$what: period_start ($a) must not be after period_end ($b)"))
         case (None, None)                 => Right(None)

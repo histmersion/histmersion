@@ -39,7 +39,7 @@ final class ChatCompletionsProvider(
       url <- base.map(_.endpoint("chat", "completions"))
       body = ChatRequest.of(request, settings.strictTools).body
       answer <- http
-        .post(url, ChatCompletionsProvider.headers(key), body, math.max(1, settings.timeoutSeconds))
+        .post(url, ChatCompletionsProvider.headers(_root_.com.histmersion.plugins.ai.ChatCompletionsProvider.HeadersKey((key).value)), body, math.max(1, settings.timeoutSeconds))
         .left
         .map(e => SendFailure(e).describe("POST", url))
       turn <- ChatAnswer(answer.status, answer.body).turn.left.map(why => s"RuntimeException: OpenAI API error: $why")

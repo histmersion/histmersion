@@ -15,7 +15,7 @@ object Bundle:
       */
     case Place, Period
 
-    def wire: com.histmersion.util.data.exchange.Bundle.Kind.WireResult = Kind.wireOf(this)
+    def wire: com.histmersion.util.data.exchange.Bundle.Kind.WireResult = _root_.com.histmersion.util.data.exchange.Bundle.Kind.WireResult((Kind.wireOf(this)).value)
 
     /** The NDJSON file holding this kind's lines. */
     def file: com.histmersion.util.data.exchange.Bundle.Kind.FileResult = _root_.com.histmersion.util.data.exchange.Bundle.Kind.FileResult(s"entities/${Kind.fileStem(this)}.ndjson")

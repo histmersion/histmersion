@@ -20,13 +20,13 @@ final case class LandingSettings(
 ) derives ConfigReader:
   def rules: RepositoryLanding.Rules =
     RepositoryLanding.Rules(
-      LandingSettings.entries(allowHosts),
-      (LandingSettings.entries(denyHosts) ++ LandingSettings.entries(denyHostsExtra)).distinct,
-      LandingSettings.entries(academicHostWords),
-      LandingSettings.entries(generators),
-      LandingSettings.entries(denyGenerators),
-      LandingSettings.entries(denyHostWords),
-      LandingSettings.entries(oaPublisherHosts)
+      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((allowHosts).value)),
+      (LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHosts).value)) ++ LandingSettings.entries(denyHostsExtra)).distinct,
+      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((academicHostWords).value)),
+      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((generators).value)),
+      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyGenerators).value)),
+      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHostWords).value)),
+      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((oaPublisherHosts).value))
     )
 
 object LandingSettings:

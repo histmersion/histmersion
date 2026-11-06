@@ -61,15 +61,15 @@ object MergeMarkdown:
         (if m.deletedHere > 0 then s" · ${m.deletedHere} deleted here" else ""),
       s"**Summary** ${open.size} blocking · ${p.resolutionErrors.size} stale or invalid · ${conditional.size} conditional · " +
         s"${defaults.size} ${Plural.noun(_root_.com.histmersion.api.Plural.NounN((defaults.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("default"))} · ${p.info.size} info · " +
-        s"${Plural.count(p.problems.size, "problem")} · plan ${p.planHash}" +
+        s"${Plural.count(_root_.com.histmersion.api.Plural.NounN((p.problems.size).toLong), _root_.com.histmersion.api.Plural.NounSingular("problem"))} · plan ${p.planHash}" +
         (if p.resolved > 0 then s"+r(${p.resolved})" else "")
     ).mkString("  \n")
     val sections = List(
       section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Problems (no decision fixes these)"), p.problems.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x"))),
       section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Resolutions not used (errors)"), p.resolutionErrors.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x"))),
-      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Blocking"), open.map(issue)),
-      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Decided"), decided.map(issue)),
-      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(issue)),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Blocking"), open.map(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines((issue).value))),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Decided"), decided.map(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines((issue).value))),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Conditional (listed now, so no new issue appears after a decision)"), conditional.map(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines((issue).value))),
       section(
         _root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Defaults (applied unless overridden with --resolve)"),
         (if ((all) == _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(true)) then defaults else defaults.take(5)).map(issue) ++
@@ -77,8 +77,8 @@ object MergeMarkdown:
       ),
       section(
         _root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Info"),
-        (if ((all) == _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(true)) then p.info else p.info.take(8)).map(x => s"- $x") ++
-          Option.when(!(all).value && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList
+        ((if ((all) == _root_.com.histmersion.api.exchange.MergeMarkdown.PlanAll(true)) then p.info else p.info.take(8)).map(x => s"- $x") ++
+          Option.when(!(all).value && p.info.size > 8)(s"- … ${p.info.size - 8} more (--all)").toList).map(refactorValue5 => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(refactorValue5))
       ),
       section(
         _root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Matches"),
@@ -133,10 +133,10 @@ object MergeMarkdown:
       .toList
     val sections = List(
       section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Problems (nothing was written)"), r.problems.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x"))),
-      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Open"), r.issues.map(issue)),
+      section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Open"), r.issues.map(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines((issue).value))),
       section(_root_.com.histmersion.api.exchange.MergeMarkdown.SectionTitle("Notes"), r.notes.map(x => _root_.com.histmersion.api.exchange.MergeMarkdown.SectionLines(s"- $x")))
     ).flatten
-    (head :: body ++ sections).mkString("\n\n")
+    _root_.com.histmersion.api.exchange.MergeMarkdown.AppliedResult((head :: body ++ sections).mkString("\n\n"))
 
   def applyJob(j: MergeApplyJob): com.histmersion.api.exchange.MergeMarkdown.ApplyJobResult =
     j.state match

@@ -191,19 +191,19 @@ object CollectionsMarkdown:
               val todo =
                 f.fix.fold("re-push, or clear the source's calibre id")(ck => s"`histmersion calibre update $ck`")
               s"| ${f.id} | ${f.citekeys.mkString(", ")} | ${f.labels.mkString("; ")} | ${cell(_root_.com.histmersion.api.library.CollectionsMarkdown.AuditCellS(view(f.record)))} | " +
-                s"${cell(f.entry.fold("—")(view))} | $todo |"
+                s"${cell(_root_.com.histmersion.api.library.CollectionsMarkdown.AuditCellS(f.entry.fold("—")(view)))} | $todo |"
             }
             .mkString("\n")
       _root_.com.histmersion.api.library.CollectionsMarkdown.AuditResult(s"### ${a.findings.size} of ${a.checked} linked Calibre entries disagree with the corpus\n\n$table\n\n" +
         "_`histmersion calibre update --all` lists every change it would make; `--apply` writes them._")
 
   def imported(i: CollectionImported): com.histmersion.api.library.CollectionsMarkdown.ImportedResult =
-    (List(s"Imported Calibre id ${i.id} as `${i.citekey}` — ${i.title}") ++
+    _root_.com.histmersion.api.library.CollectionsMarkdown.ImportedResult((List(s"Imported Calibre id ${i.id} as `${i.citekey}` — ${i.title}") ++
       i.relinkedFrom.map(prev => s"Re-linked `${i.citekey}` from Calibre id $prev to ${i.id}") ++
       List(s"File (left in place, never modified): ${i.file}") ++
       i.cover.map(c => if ((c.warning) == _root_.com.histmersion.api.library.CollectionCover.Warning(true)) then s"warning: cover not stored — ${c.line}" else c.line) ++
       i.job.map(j => s"queued job ${j.jobId} for ${j.citekey}") ++
-      i.jobError.map(e => s"not converted: $e")).mkString("\n")
+      i.jobError.map(e => s"not converted: $e")).mkString("\n"))
 
   def linked(l: CollectionLinked): com.histmersion.api.library.CollectionsMarkdown.LinkedResult = _root_.com.histmersion.api.library.CollectionsMarkdown.LinkedResult(s"linked `${l.citekey}` to Calibre id ${l.id} — ${l.title}")
 

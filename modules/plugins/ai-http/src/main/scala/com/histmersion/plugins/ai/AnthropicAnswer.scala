@@ -15,14 +15,14 @@ final case class AnthropicAnswer(status: AnthropicAnswer.Status, body: Anthropic
 
   /** The turn the answer says, or the failure's description. */
   def turn: Either[com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1, AiTurn] =
-    if (status).value / 100 != 2 then Left(body)
+    if (status).value / 100 != 2 then Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1((body).value))
     else
       parse((body).value).flatMap(_.as(using AnthropicAnswer.message)) match
         case Right(turn) => Right(turn)
         case Left(_)     =>
           parse((body).value).flatMap(_.as(using AnthropicAnswer.error)) match
-            case Right(message) => Left(message)
-            case Left(e)        => Left(e.getMessage)
+            case Right(message) => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1((message).value))
+            case Left(e)        => Left(_root_.com.histmersion.plugins.ai.AnthropicAnswer.TurnResultPart1(e.getMessage))
 
 object AnthropicAnswer:
 
@@ -48,7 +48,7 @@ object AnthropicAnswer:
     for
       _ <- objectAt(c)
       m <- c.downField("error").as(using errorDetail)
-    yield m
+    yield _root_.com.histmersion.plugins.ai.AnthropicAnswer.Error((m).value)
   }
 
   private val errorDetail: Decoder[com.histmersion.plugins.ai.AnthropicAnswer.ErrorDetail] = Decoder.instance { c =>

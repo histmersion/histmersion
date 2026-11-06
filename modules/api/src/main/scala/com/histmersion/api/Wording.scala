@@ -102,14 +102,14 @@ object Wording:
   def humanize(id: com.histmersion.api.Wording.HumanizeId): com.histmersion.api.Wording.HumanizeResult =
     val words =
       (id).value.trim.replace(':', '\u0000').replaceAll("[_-]+", " ").replace("\u0000", ": ").replaceAll("\\s+", " ").trim
-    capitalize(_root_.com.histmersion.api.Wording.CapitalizeS(words))
+    _root_.com.histmersion.api.Wording.HumanizeResult((capitalize(_root_.com.histmersion.api.Wording.CapitalizeS(words))).value)
 
-  def capitalize(s: com.histmersion.api.Wording.CapitalizeS): com.histmersion.api.Wording.CapitalizeResult = if (s).value.isEmpty then s else _root_.com.histmersion.api.Wording.CapitalizeResult((s).value.substring(0, 1).toUpperCase + (s).value.substring(1))
+  def capitalize(s: com.histmersion.api.Wording.CapitalizeS): com.histmersion.api.Wording.CapitalizeResult = if (s).value.isEmpty then _root_.com.histmersion.api.Wording.CapitalizeResult((s).value) else _root_.com.histmersion.api.Wording.CapitalizeResult((s).value.substring(0, 1).toUpperCase + (s).value.substring(1))
 
   def value(s: com.histmersion.api.Wording.ValueS): com.histmersion.api.Wording.ValueResult = Label.display(s)
 
   def heading(s: com.histmersion.api.Wording.HeadingS): com.histmersion.api.Wording.HeadingResult =
-    if (s).value.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then humanize(s) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.DisplayS((s).value.trim)))
+    if (s).value.trim.matches("[a-z0-9]+([-_][a-z0-9]+)+") then humanize(_root_.com.histmersion.api.Wording.HumanizeId((s).value)) else capitalize(Label.display(_root_.com.histmersion.api.library.Label.DisplayS((s).value.trim)))
 
   def status(s: Source.Status): com.histmersion.api.Wording.StatusResult = s match
     case Source.Status.Foundational => _root_.com.histmersion.api.Wording.StatusResult("Foundational")
@@ -121,7 +121,7 @@ object Wording:
     case Source.Status.Unassessed   => _root_.com.histmersion.api.Wording.StatusResult("Not assessed")
 
   def statusOf(wire: com.histmersion.api.Wording.StatusOfWire): com.histmersion.api.Wording.StatusOfResult =
-    Source.Status.values.find(_.wire == _root_.com.histmersion.api.library.Source.Status.WireResult((wire).value.trim.toLowerCase)).fold(humanize(wire))(status)
+    Source.Status.values.find(_.wire == _root_.com.histmersion.api.library.Source.Status.WireResult((wire).value.trim.toLowerCase)).fold(humanize(_root_.com.histmersion.api.Wording.HumanizeId((wire).value)))(status)
 
   def pipeline(p: Pipeline): com.histmersion.api.Wording.PipelineResult = p match
     case Pipeline.EnrichSource     => _root_.com.histmersion.api.Wording.PipelineResult("Enrich a source")
@@ -169,7 +169,7 @@ object Wording:
     Manager.Kind
       .parse(_root_.com.histmersion.api.automation.Manager.Kind.ParseS(kind))
       .fold(humanize(id))(k =>
-        managerKind(k) + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(g)}")
+        (managerKind(k)).value + Option(rest.drop(1)).filter(_.nonEmpty).fold("")(g => s" · ${humanize(_root_.com.histmersion.api.Wording.HumanizeId(g))}")
       )
 
   val schedulerJobTypes: Map[com.histmersion.api.Wording.SchedulerJobTypesPart1, com.histmersion.api.Wording.SchedulerJobTypesPart2] = Map(
@@ -211,7 +211,7 @@ object Wording:
       case "one_day" | "daily"             => _root_.com.histmersion.api.Wording.AllowanceWindowResult("Today's limit")
       case s if s.startsWith("seven_day_") => _root_.com.histmersion.api.Wording.AllowanceWindowResult(s"This week's limit (${humanize(_root_.com.histmersion.api.Wording.HumanizeId(s.stripPrefix("seven_day_")))})")
       case s if s.startsWith("five_hour_") => _root_.com.histmersion.api.Wording.AllowanceWindowResult(s"5-hour limit (${humanize(_root_.com.histmersion.api.Wording.HumanizeId(s.stripPrefix("five_hour_")))})")
-      case other                           => humanize(_root_.com.histmersion.api.Wording.HumanizeId(other))
+      case other                           => _root_.com.histmersion.api.Wording.AllowanceWindowResult((humanize(_root_.com.histmersion.api.Wording.HumanizeId(other))).value)
 
   def agentsState(autopilotOn: com.histmersion.api.Wording.AgentsStateAutopilotOn, draining: com.histmersion.api.Wording.AgentsStateDraining): com.histmersion.api.Wording.AgentsStateResult =
     if (draining).value then _root_.com.histmersion.api.Wording.AgentsStateResult("Agents: finishing current work, then pausing")
@@ -241,7 +241,7 @@ object Wording:
   def plugin(id: com.histmersion.api.Wording.PluginId): com.histmersion.api.Wording.PluginResult =
     val families = List("ai-" -> "AI provider", "oa-" -> "Open access", "media-" -> "Pictures", "events-" -> "Events")
     pluginNames
-      .get(id)
+      .get(_root_.com.histmersion.api.Wording.PluginNamesPart1((id).value))
       .orElse(families.collectFirst {
         case (prefix, family) if id.startsWith(prefix) => s"$family: ${humanize(id.stripPrefix(prefix))}"
       })

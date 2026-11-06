@@ -31,7 +31,7 @@ final case class CatalogRecord(
     raw: Option[CatalogRecord.Raw] = None
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def key: (com.histmersion.api.catalogue.CatalogRecord.KeyResultPart1, com.histmersion.api.catalogue.CatalogRecord.KeyResultPart2) = (provider, providerId)
+  def key: (com.histmersion.api.catalogue.CatalogRecord.KeyResultPart1, com.histmersion.api.catalogue.CatalogRecord.KeyResultPart2) = (_root_.com.histmersion.api.catalogue.CatalogRecord.KeyResultPart1((provider).value), _root_.com.histmersion.api.catalogue.CatalogRecord.KeyResultPart2((providerId).value))
 object CatalogRecord:
 
 
@@ -101,4 +101,4 @@ object CatalogRecord:
 
   def owner(eventId: com.histmersion.api.catalogue.CatalogRecord.OwnerEventId, catalogue: com.histmersion.api.catalogue.CatalogRecord.OwnerCatalogue, keys: Iterable[(com.histmersion.api.catalogue.CatalogRecord.OwnerKeysPart1, com.histmersion.api.catalogue.CatalogRecord.OwnerKeysPart2)]): Option[(com.histmersion.api.catalogue.CatalogRecord.OwnerResultPart1, com.histmersion.api.catalogue.CatalogRecord.OwnerResultPart2)] =
     val own = keys.filter(_._1 == catalogue).toList.sortBy(_._2)
-    own.find(k => CatalogRecord.eventId(k._1, k._2) == eventId).orElse(own.headOption)
+    own.find(k => CatalogRecord.eventId(_root_.com.histmersion.api.catalogue.CatalogRecord.Provider((k._1).value), _root_.com.histmersion.api.catalogue.CatalogRecord.ProviderId((k._2).value)) == eventId).orElse(own.headOption)

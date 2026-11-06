@@ -91,12 +91,12 @@ object LatinFold:
   private val Table: Map[com.histmersion.api.LatinFold.TablePart1, com.histmersion.api.LatinFold.TablePart2] =
     Pairs.grouped(2).map(p => p(0) -> p(1).toString).toMap ++ Multi
 
-  def tableChars: Set[com.histmersion.api.LatinFold.TableCharsResult] = Table.keySet
+  def tableChars: Set[com.histmersion.api.LatinFold.TableCharsResult] = (Table.keySet).map(refactorValue => _root_.com.histmersion.api.LatinFold.TableCharsResult((refactorValue).value))
 
   private def isCombiningMark(c: com.histmersion.api.LatinFold.IsCombiningMarkC): com.histmersion.api.LatinFold.IsCombiningMarkResult = c >= '\u0300' && c <= '\u036f'
 
   def foldChar(c: com.histmersion.api.LatinFold.FoldCharC): com.histmersion.api.LatinFold.FoldCharResult =
-    if ((isCombiningMark(c)) == _root_.com.histmersion.api.LatinFold.IsCombiningMarkResult(true)) then _root_.com.histmersion.api.LatinFold.FoldCharResult("") else Table.getOrElse(c, c.toString)
+    if ((isCombiningMark(c)) == _root_.com.histmersion.api.LatinFold.IsCombiningMarkResult(true)) then _root_.com.histmersion.api.LatinFold.FoldCharResult("") else Table.getOrElse(_root_.com.histmersion.api.LatinFold.TablePart1((c).value), c.toString)
 
   def fold(s: com.histmersion.api.LatinFold.FoldS): com.histmersion.api.LatinFold.FoldResult =
     val b = new StringBuilder((s).value.length)

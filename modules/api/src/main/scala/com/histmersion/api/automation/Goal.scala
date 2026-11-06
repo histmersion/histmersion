@@ -358,4 +358,4 @@ object Goal:
       { val refactorTuple10 = com.histmersion.api.automation.Goal.Status.Done -> "finished: only you set this, the autopilot never does"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPart1(refactorTuple10._1), _root_.com.histmersion.api.automation.Goal.Stages.AllPart2(refactorTuple10._2)) }
     )
 
-    def meaning(status: com.histmersion.api.automation.Goal.Stages.MeaningStatus): Option[com.histmersion.api.automation.Goal.Stages.MeaningResult] = all.collectFirst { case (s, m) if s == status => m }
+    def meaning(status: com.histmersion.api.automation.Goal.Stages.MeaningStatus): Option[com.histmersion.api.automation.Goal.Stages.MeaningResult] = all.collectFirst { case (s, m) if s == status => _root_.com.histmersion.api.automation.Goal.Stages.MeaningResult((m).value) }

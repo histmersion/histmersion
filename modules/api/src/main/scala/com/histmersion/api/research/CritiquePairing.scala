@@ -155,7 +155,7 @@ object CritiquePairing:
 
   private def mention(text: com.histmersion.api.research.CritiquePairing.MentionText, name: com.histmersion.api.research.CritiquePairing.MentionName, year: Option[com.histmersion.api.research.CritiquePairing.MentionYear]): Option[Mention] =
     val re = ("(?<!\\p{L})" + java.util.regex.Pattern.quote((name).value) + "(?!\\p{L})").r
-    val ms = re.findAllMatchIn(text).toList
+    val ms = re.findAllMatchIn((text).value).toList
     if ms.isEmpty then None
     else
       val near = ms.map(m =>
@@ -217,7 +217,7 @@ object CritiquePairing:
 
   def repair(body: com.histmersion.api.research.CritiquePairing.RepairBody, hs: List[Hit]): (com.histmersion.api.research.CritiquePairing.RepairResultPart1, List[Hit]) =
     val todo = hs.filter((refactorCallback => ((refactorCallback.mechanical) == _root_.com.histmersion.api.research.CritiquePairing.Hit.Mechanical(true)))).groupBy(h => (h.from, h.to))
-    if todo.isEmpty then (body, Nil)
+    if todo.isEmpty then (_root_.com.histmersion.api.research.CritiquePairing.RepairResultPart1((body).value), Nil)
     else
       val crlf = (body).value.contains("\r\n")
       val lines = (body).value.replace("\r\n", "\n").split("\n", -1).toVector

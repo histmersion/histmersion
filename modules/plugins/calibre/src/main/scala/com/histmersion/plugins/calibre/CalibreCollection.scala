@@ -226,7 +226,7 @@ object CalibreCollection:
           "holds metadata.db (a server in a container needs that folder mounted)")
       )
     else
-      Try { files.readPrefix(db, _root_.com.histmersion.plugin.LocalFiles.ReadPrefixLength(16)); () }.toEither.left
+      (Try { files.readPrefix(db, _root_.com.histmersion.plugin.LocalFiles.ReadPrefixLength(16)); () }.toEither.left
         .map {
           case _: java.nio.file.NoSuchFileException =>
             s"there is no metadata.db in $dir — set histmersion.plugins.calibre.library-path to the Calibre library's folder"
@@ -236,4 +236,4 @@ object CalibreCollection:
               "and Folders) for the server's binary, granted in System Settings → Privacy & Security; a server in a " +
               "container needs the library mounted"
         }
-        .map(_ => ())
+        .map(_ => ())).left.map(refactorError4 => _root_.com.histmersion.plugins.calibre.CalibreCollection.ReachResultPart1(refactorError4))
