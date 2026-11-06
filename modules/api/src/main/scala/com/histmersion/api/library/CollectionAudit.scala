@@ -3,6 +3,7 @@ import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** An audit of every linked item: those that disagree with their records, and how many items were checked. */
 final case class CollectionAudit(

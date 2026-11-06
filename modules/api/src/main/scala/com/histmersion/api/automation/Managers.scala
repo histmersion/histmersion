@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.research.Article
 
 object Managers:
@@ -263,12 +264,12 @@ object Managers:
     object ExtendMinNew extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(kvs: List[com.histmersion.api.automation.Managers.ManagerConfig.Spec]): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, ManagerConfig] =
-      kvs.foldLeft[Either[String, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
+      kvs.foldLeft[Either[ManagerConfig.Problem, ManagerConfig]](Right(ManagerConfig())) { (acc, kv) =>
         acc.flatMap { c =>
           (kv).value.split("=", 2) match
             case Array(k0, v0) =>
               val (k, v) = (k0.trim, v0.trim)
-              def int = v.toIntOption.filter(_ >= 0).toRight(s"$k: '$v' is not a whole number")
+              def int = v.toIntOption.filter(_ >= 0).toRight(Problem(s"$k: '$v' is not a whole number"))
               k match
                 case "maxRuns" | "max-runs"                       => int.map(n => c.copy(maxRuns = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxRuns(n))))
                 case "maxOpen" | "max-open"                       => int.map(n => c.copy(maxOpen = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxOpen(n))))
@@ -284,25 +285,25 @@ object Managers:
                 case "minSources" | "min-sources"                 => int.map(n => c.copy(minSources = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MinSources(n))))
                 case "maxArticles" | "max-articles"               => int.map(n => c.copy(maxArticles = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.MaxArticles(n))))
                 case "autoIngestPerDay" | "auto-ingest-per-day"   => int.map(n => c.copy(autoIngestPerDay = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngestPerDay(n))))
-                case "inferFilter" | "infer-filter"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b)))))).left.map(refactorError4 => (refactorError4).value)
-                case "autoIngest" | "auto-ingest"                 => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b)))))).left.map(refactorError5 => (refactorError5).value)
-                case "autoApprove" | "auto-approve"               => (bool(_root_.com.histmersion.api.automation.AgentStateDeleted.Key.Wire(k), (v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b)))))).left.map(refactorError6 => (refactorError6).value)
+                case "inferFilter" | "infer-filter"               => (bool(k, (v)).map(b => c.copy(inferFilter = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.InferFilter((b))))))
+                case "autoIngest" | "auto-ingest"                 => (bool(k, (v)).map(b => c.copy(autoIngest = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoIngest((b))))))
+                case "autoApprove" | "auto-approve"               => (bool(k, (v)).map(b => c.copy(autoApprove = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.AutoApprove((b))))))
                 case "extendMinNew" | "extend-min-new"            => int.map(n => c.copy(extendMinNew = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.ExtendMinNew(n))))
                 case "sweeps"                                     =>
                   val ws = v.split(",").toList.map(_.trim).filter(_.nonEmpty)
                   ws.find(w => Sweep.parse(_root_.com.histmersion.api.automation.Managers.Sweep.Wire(w)).isEmpty) match
                     case Some(w) =>
-                      Left(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})")
+                      Left(Problem(s"$k: '$w' is not a sweep (one of: ${Sweep.values.map(_.wire).mkString(", ")})"))
                     case None => Right(c.copy(sweeps = Some(ws.flatMap({ val refactorFunction = Sweep.parse; (refactorValue4) => refactorFunction(_root_.com.histmersion.api.automation.Managers.Sweep.Wire(refactorValue4)) }).distinct.map(_.wire))))
                 case "dailyUsd" | "daily-usd" =>
                   v.toDoubleOption
                     .filter(_ >= 0)
-                    .toRight(s"$k: '$v' is not a number of USD (0 = no cap)")
+                    .toRight(Problem(s"$k: '$v' is not a number of USD (0 = no cap)"))
                     .map(d => c.copy(dailyUsd = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.DailyUsd(d))))
                 case "budgetUsd" | "budget-usd" =>
                   v.toDoubleOption
                     .filter(_ > 0)
-                    .toRight(s"$k: '$v' is not a positive number")
+                    .toRight(Problem(s"$k: '$v' is not a positive number"))
                     .map(d => c.copy(budgetUsd = Some(_root_.com.histmersion.api.automation.Managers.ManagerConfig.BudgetUsd(d))))
                 case "includeTags" | "include-tags" | "tags" =>
                   Right(c.copy(includeTags = Some((v.split(",").toList.map(_.trim).filter(_.nonEmpty)).map(refactorValue3 => _root_.com.histmersion.api.automation.Managers.ManagerConfig.IncludeTags(refactorValue3)))))
@@ -316,16 +317,16 @@ object Managers:
                     .map({ val refactorFunction2 = Agents.ModelOverride.parse; (refactorValue5) => refactorFunction2(_root_.com.histmersion.api.automation.Agents.ModelOverride.Wire(refactorValue5)) })
                     .partitionMap(identity) match
                     case (Nil, ms) => Right(c.copy(models = Some(ms)))
-                    case (errs, _) => Left(errs.mkString("; "))
-                case other => Left(s"unknown manager setting '$other'")
-            case _ => Left(s"'$kv' is not key=value")
+                    case (errs, _) => Left(Problem(errs.mkString("; ")))
+                case other => Left(Problem(s"unknown manager setting '$other'"))
+            case _ => Left(Problem(s"'$kv' is not key=value"))
         }
       }
 
-    private def bool(k: com.histmersion.api.automation.AgentStateDeleted.Key.Wire, v: String): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, Boolean] = (v).toLowerCase match
+    private def bool(k: String, v: String): Either[com.histmersion.api.automation.Managers.ManagerConfig.Problem, Boolean] = (v).toLowerCase match
       case "true" | "on" | "yes"  => Right((true))
       case "false" | "off" | "no" => Right((false))
-      case _                      => Left(_root_.com.histmersion.api.automation.Managers.ManagerConfig.Problem(s"$k: '$v' is not true or false"))
+      case _                      => Left(Problem(s"$k: '$v' is not true or false"))
 
   final case class ItemCounts(
       pending: ItemCounts.Pending = _root_.com.histmersion.api.automation.Managers.ItemCounts.Pending(0),

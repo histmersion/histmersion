@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class CatalogProviderInfo(id: CatalogProviderInfo.Id, title: CatalogProviderInfo.Title, licence: CatalogProviderInfo.Licence, citation: CatalogProviderInfo.Citation, home: CatalogProviderInfo.Home)
     derives KindlingsCodecAsObject,

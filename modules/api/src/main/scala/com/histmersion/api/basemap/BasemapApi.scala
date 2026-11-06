@@ -41,7 +41,7 @@ object BasemapApi:
           .and(query[Boolean]("dryRun").default(false))
           .and(query[Boolean]("keepAll").default(false))
           .and(query[Option[String]]("focus"))
-          .mapTo[Basemap.FetchQuery]
+          .map { case (layer, maxZoom, terrainMaxZoom, bbox, dryRun, keepAll, focus) => Basemap.FetchQuery(Basemap.FetchQuery.Layer(layer), maxZoom.map(Basemap.FetchQuery.MaxZoom(_)), terrainMaxZoom.map(Basemap.FetchQuery.TerrainMaxZoom(_)), bbox.map(Basemap.FetchQuery.Bbox(_)), Basemap.FetchQuery.DryRun(dryRun), Basemap.FetchQuery.KeepAll(keepAll), focus.map(Basemap.FetchQuery.Focus(_))) }(v => (v.layer.value, v.maxZoom.map(_.value), v.terrainMaxZoom.map(_.value), v.bbox.map(_.value), v.dryRun.value, v.keepAll.value, v.focus.map(_.value)))
       )
       .errorOut(fetchErrors)
       .out(jsonBody[JobInfo])
@@ -54,7 +54,7 @@ object BasemapApi:
           .default("all")
           .and(query[Option[String]]("focus"))
           .and(query[Boolean]("cache").default(false))
-          .mapTo[Basemap.RemoveQuery]
+          .map { case (layer, focus, cache) => Basemap.RemoveQuery(Basemap.RemoveQuery.Layer(layer), focus.map(Basemap.RemoveQuery.Focus(_)), Basemap.RemoveQuery.Cache(cache)) }(v => (v.layer.value, v.focus.map(_.value), v.cache.value))
       )
       .errorOut(fetchErrors)
       .out(jsonBody[Basemap.Removed])

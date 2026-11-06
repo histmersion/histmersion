@@ -7,6 +7,7 @@ import com.histmersion.api.automation.Autopilot.{ApprovalRule, DrainInfo, FocusI
 import com.histmersion.api.automation.{Autopilot, AutopilotMarkdown}
 import com.histmersion.api.library.{AcquireChecksMarkdown, UpstreamQuota, UpstreamQuotaMarkdown}
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Acquire
 
 /** The autopilot as `GET /api/agents/autopilot` shows it: the automation's [[Autopilot.EngineStatus]], then the

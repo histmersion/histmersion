@@ -3,6 +3,7 @@ package com.histmersion.api.maintenance
 import com.histmersion.api.Write
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Api
 import com.histmersion.api.StrictJson
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

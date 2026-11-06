@@ -3,6 +3,7 @@ import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** The sources with a fetched file that are not in a collection: `count` gaps, `uncounted` records without a file,
   * `total` both, and every row.

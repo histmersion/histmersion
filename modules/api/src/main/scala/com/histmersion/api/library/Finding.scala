@@ -2,6 +2,7 @@ package com.histmersion.api.library
 import com.histmersion.api.GeoPoint
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.StrictJson
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
@@ -78,7 +79,7 @@ object Finding:
   final case class Match(
       id: com.histmersion.api.library.Finding.Id,
       claim: com.histmersion.api.library.Finding.Claim,
-      regionName: Option[Match.RegionName],
+      regionName: Option[com.histmersion.api.catalogue.Place.Region],
       lon: Option[com.histmersion.api.catalogue.Longitude],
       lat: Option[com.histmersion.api.catalogue.Latitude],
       periodStart: Option[com.histmersion.api.catalogue.Year],
@@ -91,8 +92,6 @@ object Finding:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object Match:
-    type RegionName = RegionName.T
-    object RegionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T
     object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Places = Places.T
@@ -101,7 +100,7 @@ object Finding:
 
   final case class Row(
       claim: com.histmersion.api.library.Finding.Claim,
-      regionName: Option[Row.RegionName],
+      regionName: Option[com.histmersion.api.catalogue.Place.Region],
       lon: Option[com.histmersion.api.catalogue.Longitude],
       lat: Option[com.histmersion.api.catalogue.Latitude],
       periodStart: Option[com.histmersion.api.catalogue.Year],
@@ -114,6 +113,3 @@ object Finding:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
-  object Row:
-    type RegionName = RegionName.T
-    object RegionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

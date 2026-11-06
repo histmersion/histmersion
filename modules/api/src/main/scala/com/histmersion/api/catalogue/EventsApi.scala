@@ -19,7 +19,7 @@ object EventsApi:
       .and(query[Option[String]]("tier"))
       .and(query[Option[Boolean]]("context"))
       .and(query[Option[String]]("area"))
-      .mapTo[Api.EventQuery]
+      .map(Api.EventQuery.read)(Api.EventQuery.write)
 
   lazy val importEvents: PublicEndpoint[EventImportRequest, Api.Error, JobInfo, Any] =
     endpoint.post

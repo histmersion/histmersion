@@ -3,6 +3,7 @@ import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** One source the library lists as not in a collection: its push metadata, where its original is (`local`, `stored`,
   * `none`, `unknown`) and whether it counts as a gap (a record with no fetched file never does).

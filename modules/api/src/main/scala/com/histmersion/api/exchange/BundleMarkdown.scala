@@ -23,7 +23,7 @@ object BundleMarkdown:
   def manifest(m: Bundle.Manifest): String =
     val files = m.files
       .filter(_.lines.value > 0)
-      .map(f => s"| ${f.path.stripPrefix("entities/").stripSuffix(".ndjson")} | ${f.lines} |")
+      .map(f => s"| ${f.path.value.stripPrefix("entities/").stripSuffix(".ndjson")} | ${f.lines} |")
     val scope = m.since.fold("everything")(s => s"changes after $s")
     List(
       s"**Bundle** ${m.bundleId} · from ${who(m.instance)} · format ${m.formatVersion} · schema V${m.schemaVersion}",

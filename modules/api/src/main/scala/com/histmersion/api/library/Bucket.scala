@@ -3,13 +3,14 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class Bucket(
     label: Bucket.Label,
     key: Bucket.Key,
     kind: Bucket.Kind,
-    start: Option[Bucket.Start] = None,
-    end: Option[Bucket.End] = None,
+    start: Option[com.histmersion.api.catalogue.Year] = None,
+    end: Option[com.histmersion.api.catalogue.Year] = None,
     placeId: Option[Bucket.PlaceId] = None,
     count: Bucket.Count = _root_.com.histmersion.api.library.Bucket.Count(0),
     overlap: Bucket.Overlap = _root_.com.histmersion.api.library.Bucket.Overlap(0),
@@ -31,10 +32,6 @@ object Bucket:
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Kind = Kind.T
   object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Start = Start.T
-  object Start extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type End = End.T
-  object End extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceId = com.histmersion.api.catalogue.Place.Id
   val PlaceId: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
   type Count = Count.T

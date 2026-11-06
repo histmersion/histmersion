@@ -1,5 +1,6 @@
 package com.histmersion.api.instance
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema

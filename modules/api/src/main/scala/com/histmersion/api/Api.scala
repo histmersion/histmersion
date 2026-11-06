@@ -94,6 +94,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.maintenance.Vacuum
 import com.histmersion.api.research.Article
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
+import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.AnyEndpoint
 import sttp.tapir.Schema
@@ -193,6 +194,11 @@ object Api:
 
     def of(filter: Filter): FindingsQuery = FindingsQuery(filter, None)
 
+    def read(t: (Filter, Option[String])): FindingsQuery = t match
+      case (filter, region) => FindingsQuery(filter, region.map(FindingsQuery.Region(_)))
+
+    def write(v: FindingsQuery): (Filter, Option[String]) = (v.filter, v.region.map(_.value))
+
   private lazy val base = endpoint.in("api").errorOut(jsonBody[com.histmersion.api.Api.Error])
 
   /** A `def`, not a `val`: endpoints defined above `writeErrors` use it too. */
@@ -222,7 +228,7 @@ object Api:
       .and(q[Option[Int]](D.offset))
       .and(q[Option[String]](D.title))
       .and(q[Option[String]](D.goal))
-      .mapTo[Filter.Query]
+      .map { case (q, tag, author, place, topic, status, yearFrom, yearTo, from, to, minLon, minLat, maxLon, maxLat, sort, limit, offset, title, goal) => Filter.Query(q.map(com.histmersion.api.library.Filter.Q(_)), tag.map(com.histmersion.api.library.Filter.Tags(_)), author.map(com.histmersion.api.library.Filter.Authors(_)), place.map(com.histmersion.api.library.Filter.Places(_)), topic.map(com.histmersion.api.library.Filter.Topics(_)), status.map(com.histmersion.api.library.Filter.Status(_)), yearFrom.map(com.histmersion.api.catalogue.Year(_)), yearTo.map(com.histmersion.api.catalogue.Year(_)), from.map(com.histmersion.api.catalogue.Year(_)), to.map(com.histmersion.api.catalogue.Year(_)), minLon.map(com.histmersion.api.catalogue.Longitude(_)), minLat.map(com.histmersion.api.catalogue.Latitude(_)), maxLon.map(com.histmersion.api.catalogue.Longitude(_)), maxLat.map(com.histmersion.api.catalogue.Latitude(_)), sort.map(com.histmersion.api.library.Sort.Wire(_)), limit.map(com.histmersion.api.library.Filter.Limit(_)), offset.map(com.histmersion.api.library.Filter.Offset(_)), title.map(com.histmersion.api.library.Filter.Title(_)), goal.map(com.histmersion.api.research.ReviewGoal.Slug(_))) }(v => (v.q.map(_.value), v.tag.map(_.value), v.author.map(_.value), v.place.map(_.value), v.topic.map(_.value), v.status.map(_.value), v.yearFrom.map(_.value), v.yearTo.map(_.value), v.from.map(_.value), v.to.map(_.value), v.minLon.map(_.value), v.minLat.map(_.value), v.maxLon.map(_.value), v.maxLat.map(_.value), v.sort.map(_.value), v.limit.map(_.value), v.offset.map(_.value), v.title.map(_.value), v.goal.map(_.value)))
       .map(_.toFilter)(Filter.Query.from)
 
   lazy val version: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Version.Info, Any] =
@@ -291,7 +297,7 @@ object Api:
       .in(query[Option[String]]("heading"))
       .in(query[Option[Int]]("offset"))
       .in(query[Option[Int]]("chars"))
-      .mapInTo[SourceViewQuery]
+      .mapIn { case (citekey, fullText, section, heading, offset, chars) => SourceViewQuery(com.histmersion.api.library.Citekey(citekey), SourceViewQuery.FullText(fullText), section.map(SourceViewQuery.Section(_)), heading.map(SourceViewQuery.Heading(_)), offset.map(SourceViewQuery.Offset(_)), chars.map(SourceViewQuery.Chars(_))) }(v => (v.citekey.value, v.fullText.value, v.section.map(_.value), v.heading.map(_.value), v.offset.map(_.value), v.chars.map(_.value)))
       .errorOut(statusCode(StatusCode.NotFound))
       .errorOut(jsonBody[com.histmersion.api.Api.Error])
       .out(stringBody)).mapOut[_root_.com.histmersion.api.library.Source.View]((refactorDecoded: _root_.java.lang.String) => _root_.com.histmersion.api.library.Source.View(refactorDecoded))((refactorEncoded: _root_.com.histmersion.api.library.Source.View) => (refactorEncoded).value)
@@ -325,7 +331,7 @@ object Api:
       .in(query[Boolean]("regex").default(false))
       .in(query[Option[Int]]("limit").description("passages shown (default and cap from config)"))
       .in(query[Option[Int]]("context").description("characters of context around a match"))
-      .mapInTo[PassagesQuery]
+      .mapIn { case (citekey, q, regex, limit, context) => PassagesQuery(com.histmersion.api.library.Citekey(citekey), PassagesQuery.Q(q), PassagesQuery.Regex(regex), limit.map(PassagesQuery.Limit(_)), context.map(PassagesQuery.Context(_))) }(v => (v.citekey.value, v.q.value, v.regex.value, v.limit.map(_.value), v.context.map(_.value)))
       .errorOut(writeErrors)
       .out(jsonBody[PassageResult])
 
@@ -334,7 +340,7 @@ object Api:
       .in("findings")
       .in(filterQuery)
       .in(query[Option[String]]("region"))
-      .mapInTo[FindingsQuery]
+      .mapIn(FindingsQuery.read)(FindingsQuery.write)
       .out(jsonBody[List[GeoHit]])
 
   lazy val findingsPage: PublicEndpoint[FindingsQuery, com.histmersion.api.Api.Error, GeoHitPage, Any] =
@@ -342,7 +348,7 @@ object Api:
       .in("findings" / "page")
       .in(filterQuery)
       .in(query[Option[String]]("region"))
-      .mapInTo[FindingsQuery]
+      .mapIn(FindingsQuery.read)(FindingsQuery.write)
       .out(jsonBody[GeoHitPage])
 
   final case class AggregateQuery(
@@ -401,7 +407,7 @@ object Api:
       .in(query[Option[Long]]("asOf"))
       .in(query[Option[Int]]("samples"))
       .in(query[Option[Long]]("size"))
-      .mapInTo[AggregateQuery]
+      .mapIn { case (by, unit, filter, depth, asOf, samples, size) => AggregateQuery(by.map(AggregateQuery.By(_)), unit.map(AggregateQuery.Unit(_)), filter, depth.map(AggregateQuery.Depth(_)), asOf.map(AggregateQuery.AsOf(_)), samples.map(AggregateQuery.Samples(_)), size.map(AggregateQuery.Size(_))) }(v => (v.by.map(_.value), v.unit.map(_.value), v.filter, v.depth.map(_.value), v.asOf.map(_.value), v.samples.map(_.value), v.size.map(_.value)))
       .out(jsonBody[TimeHistogram])
 
   lazy val neighbors: PublicEndpoint[(com.histmersion.api.library.Citekey, List[com.histmersion.api.library.Edge.Kind.Wire]), com.histmersion.api.Api.Error, List[NeighborRow], Any] =
@@ -638,7 +644,7 @@ object Api:
       .in(filterQuery)
       .in(query[Option[String]]("kind"))
       .in(query[Option[String]]("text"))
-      .mapInTo[ArticleQuery]
+      .mapIn { case (filter, kind, text) => ArticleQuery(filter, kind.map(ArticleQuery.Kind(_)), text.map(ArticleQuery.Text(_))) }(v => (v.filter, v.kind.map(_.value), v.text.map(_.value)))
       .out(jsonBody[Article.List])
 
   lazy val renameArticle: PublicEndpoint[(com.histmersion.api.research.ReviewGoal.Slug, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
@@ -946,7 +952,7 @@ object Api:
           .and(query[Option[Long]]("from"))
           .and(query[Option[Long]]("to"))
           .and(query[Option[String]]("pick"))
-          .mapTo[PlacesGeoQuery]
+          .map { case (kind, asOf, limit, from, to, pick) => PlacesGeoQuery(kind.map(PlacesGeoQuery.Kind(_)), asOf.map(PlacesGeoQuery.AsOf(_)), limit.map(PlacesGeoQuery.Limit(_)), from.map(PlacesGeoQuery.From(_)), to.map(PlacesGeoQuery.To(_)), pick.map(PlacesGeoQuery.Pick(_))) }(v => (v.kind.map(_.value), v.asOf.map(_.value), v.limit.map(_.value), v.from.map(_.value), v.to.map(_.value), v.pick.map(_.value)))
       )
       .out(stringBody)).mapOut[_root_.com.histmersion.api.Api.PlacesGeo.Json]((refactorDecoded14: _root_.java.lang.String) => _root_.com.histmersion.api.Api.PlacesGeo.Json(refactorDecoded14))((refactorEncoded14: _root_.com.histmersion.api.Api.PlacesGeo.Json) => (refactorEncoded14).value)
 
@@ -1130,6 +1136,11 @@ object Api:
   )
 
   object EventQuery:
+    def read(t: (Filter, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Boolean], Option[String])): EventQuery = t match
+      case (filter, text, kind, historicity, placeId, tier, context, area) => EventQuery(filter, text.map(EventQuery.Text(_)), kind.map(EventQuery.Kind(_)), historicity.map(EventQuery.Historicity(_)), placeId.map(EventQuery.PlaceId(_)), tier.map(EventQuery.Tier(_)), context.map(EventQuery.Context(_)), area.map(EventQuery.Area(_)))
+
+    def write(v: EventQuery): (Filter, Option[String], Option[String], Option[String], Option[String], Option[String], Option[Boolean], Option[String]) = (v.filter, v.text.map(_.value), v.kind.map(_.value), v.historicity.map(_.value), v.placeId.map(_.value), v.tier.map(_.value), v.context.map(_.value), v.area.map(_.value))
+
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
@@ -1156,7 +1167,7 @@ object Api:
       .in(query[Option[String]]("tier"))
       .in(query[Option[Boolean]]("context"))
       .in(query[Option[String]]("area"))
-      .mapInTo[EventQuery]
+      .mapIn(EventQuery.read)(EventQuery.write)
       .out(jsonBody[EventList])
 
   lazy val eventsGeo: PublicEndpoint[EventQuery, com.histmersion.api.Api.Error, EventGeo.List, Any] =
@@ -1170,7 +1181,7 @@ object Api:
       .in(query[Option[String]]("tier"))
       .in(query[Option[Boolean]]("context"))
       .in(query[Option[String]]("area"))
-      .mapInTo[EventQuery]
+      .mapIn(EventQuery.read)(EventQuery.write)
       .out(jsonBody[EventGeo.List])
 
   lazy val renameEvent: PublicEndpoint[(com.histmersion.api.catalogue.Event.Uid, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
@@ -1228,7 +1239,7 @@ object Api:
       .in(query[Option[String]]("targetId"))
       .in(query[Option[Int]]("limit"))
       .in(query[Option[Int]]("offset"))
-      .mapInTo[AttestationQuery]
+      .mapIn { case (citekey, targetType, targetId, limit, offset) => AttestationQuery(citekey.map(com.histmersion.api.library.Citekey(_)), targetType.map(AttestationQuery.TargetType(_)), targetId.map(AttestationQuery.TargetId(_)), limit.map(AttestationQuery.Limit(_)), offset.map(AttestationQuery.Offset(_))) }(v => (v.citekey.map(_.value), v.targetType.map(_.value), v.targetId.map(_.value), v.limit.map(_.value), v.offset.map(_.value)))
       .out(jsonBody[Attestation.List])
 
   lazy val getAttestation: PublicEndpoint[com.histmersion.api.catalogue.Attestation.Id, com.histmersion.api.Api.Error, Attestation, Any] =
@@ -1278,7 +1289,7 @@ object Api:
       .in(query[Option[String]]("status"))
       .in(query[Option[Int]]("limit"))
       .in(query[Option[Int]]("offset"))
-      .mapInTo[GoalQuery]
+      .mapIn { case (status, limit, offset) => GoalQuery(status.map(GoalQuery.Status(_)), limit.map(GoalQuery.Limit(_)), offset.map(GoalQuery.Offset(_))) }(v => (v.status.map(_.value), v.limit.map(_.value), v.offset.map(_.value)))
       .out(jsonBody[Goal.List])
 
   lazy val renameGoal: PublicEndpoint[(com.histmersion.api.automation.Goal.Uid, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
@@ -1356,14 +1367,14 @@ object Api:
       .and(query[Boolean]("force").default(false))
       .and(query[Option[String]]("title"))
       .and(query[List[String]]("author"))
-      .and(query[Option[Int]]("year"))
+      .and(query[Option[Long]]("year"))
       .and(query[Option[String]]("doi"))
       .and(query[Option[String]]("provenance"))
       .and(
         query[Option[Int]]("acquireItem")
           .description("id of the acquisition item this upload fulfils; the OCR job ticks it off when it succeeds")
       )
-      .mapTo[Ingest.Params]
+      .map { case (citekey, filename, quality, force, title, authors, year, doi, provenance, acquireItem) => Ingest.Params(com.histmersion.api.library.Citekey(citekey), filename.map(Ingest.Params.Filename(_)), Ingest.Params.Quality(quality), Ingest.Params.Force(force), title.map(com.histmersion.api.library.Title(_)), authors.map(com.histmersion.api.library.AuthorName(_)), year.map(com.histmersion.api.catalogue.Year(_)), doi.map(com.histmersion.api.library.Doi(_)), provenance.map(Ingest.Params.Provenance(_)), acquireItem.map(Ingest.Params.AcquireItem(_))) }(v => (v.citekey.value, v.filename.map(_.value), v.quality.value, v.force.value, v.title.map(_.value), v.authors.map(_.value), v.year.map(_.value), v.doi.map(_.value), v.provenance.map(_.value), v.acquireItem.map(_.value)))
 
   lazy val ingest: PublicEndpoint[(Ingest.Params, TapirFile), com.histmersion.api.Api.Error, Ingest.Accepted, Any] =
     endpoint.post
@@ -1514,7 +1525,7 @@ object Api:
           .and(query[Option[Int]]("limit"))
           .and(query[Option[String]]("provider"))
           .and(query[Option[String]]("license"))
-          .mapTo[MediaGeoQuery]
+          .map { case (kind, from, to, limit, provider, license) => MediaGeoQuery(kind.map(MediaGeoQuery.Kind(_)), from.map(MediaGeoQuery.From(_)), to.map(MediaGeoQuery.To(_)), limit.map(MediaGeoQuery.Limit(_)), provider.map(MediaGeoQuery.Provider(_)), license.map(MediaGeoQuery.License(_))) }(v => (v.kind.map(_.value), v.from.map(_.value), v.to.map(_.value), v.limit.map(_.value), v.provider.map(_.value), v.license.map(_.value)))
       )
       .out(jsonBody[List[MediaGeoHit]])
 
@@ -1555,7 +1566,7 @@ object Api:
           .and(query[Option[String]]("q"))
           .and(query[Option[Int]]("limit"))
           .and(query[Option[Int]]("offset"))
-          .mapTo[MediaQuery]
+          .map { case (provider, license, place, event, q, limit, offset) => MediaQuery(provider.map(MediaQuery.Provider(_)), license.map(MediaQuery.License(_)), place.map(MediaQuery.Place(_)), event.map(MediaQuery.Event(_)), q.map(MediaQuery.Q(_)), limit.map(MediaQuery.Limit(_)), offset.map(MediaQuery.Offset(_))) }(v => (v.provider.map(_.value), v.license.map(_.value), v.place.map(_.value), v.event.map(_.value), v.q.map(_.value), v.limit.map(_.value), v.offset.map(_.value)))
       )
       .out(jsonBody[MediaList])
 
@@ -1598,7 +1609,7 @@ object Api:
       .in(query[String]("provider").default(MediaProvider.Calibre))
       .in(query[String]("key"))
       .in(query[Option[String]]("mime"))
-      .mapInTo[SourceCoverParams]
+      .mapIn { case (citekey, provider, key, mime) => SourceCoverParams(com.histmersion.api.library.Citekey(citekey), com.histmersion.api.media.MediaItem.Provider(provider), SourceCoverParams.Key(key), mime.map(com.histmersion.api.exchange.Bundle.Asset.MimeText(_))) }(v => (v.citekey.value, v.provider.value, v.key.value, v.mime.map(_.value)))
       .in(byteArrayBody)
       .out(jsonBody[MediaItem])).mapIn[(_root_.com.histmersion.api.media.SourceCoverParams, _root_.com.histmersion.api.Api.FileBytes)]((refactorDecoded96: (_root_.com.histmersion.api.media.SourceCoverParams, _root_.scala.Array[_root_.scala.Byte])) => ((refactorDecoded96)._1, _root_.com.histmersion.api.Api.FileBytes((refactorDecoded96)._2)))((refactorEncoded96: (_root_.com.histmersion.api.media.SourceCoverParams, _root_.com.histmersion.api.Api.FileBytes)) => ((refactorEncoded96)._1, ((refactorEncoded96)._2).value))
 
@@ -1703,8 +1714,6 @@ object Api:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type Readme = Readme.T
     object Readme extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RepoPath = RepoPath.T
-    object RepoPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type MarkdownResult = MarkdownResult.T
     object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -1734,8 +1743,8 @@ object Api:
       val (b, e) = ((readme).value.indexOf(Begin), (readme).value.indexOf(End))
       Option.when(b >= 0 && e > b)(_root_.com.histmersion.api.Api.Index.Current((readme).value.substring(b + Begin.length, e).trim))
 
-  @main def generateApiIndex(repo: com.histmersion.api.Api.Index.RepoPath): Unit =
-    val p = java.nio.file.Path.of((repo).value).resolve(Index.Page)
+  @main def generateApiIndex(repo: String): Unit =
+    val p = java.nio.file.Path.of(repo).resolve(Index.Page)
     Index.splice(_root_.com.histmersion.api.Api.Index.Readme(java.nio.file.Files.readString(p)), Index.markdown(Api.all)) match
       case Left(e)  => throw IllegalStateException((e).value)
       case Right(s) => val _ = java.nio.file.Files.writeString(p, (s).value)

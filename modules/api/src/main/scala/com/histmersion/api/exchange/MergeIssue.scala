@@ -5,6 +5,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.Goal
 import io.circe.Json

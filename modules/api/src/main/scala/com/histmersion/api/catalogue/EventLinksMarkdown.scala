@@ -35,7 +35,7 @@ object EventLinksMarkdown:
       "\n\n**Findings near it**\n" + d.findings
         .map(f =>
           s"- [[${f.citekey}]] `${f.id}` — ${km(f.km.value)}, " +
-            s"${if f.yearGap == 0 then "overlapping in time" else s"${f.yearGap} years apart"}: ${f.claim.take(140)}"
+            s"${if f.yearGap.value == 0 then "overlapping in time" else s"${f.yearGap} years apart"}: ${f.claim.value.take(140)}"
         )
         .mkString("\n")
     val cands = if d.candidates.isEmpty then ""

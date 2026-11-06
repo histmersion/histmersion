@@ -3,6 +3,7 @@ import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** Add source `citekey`'s stored original to a collection as a new item — or with `replace`, swap the file of the item
   * it is linked to.

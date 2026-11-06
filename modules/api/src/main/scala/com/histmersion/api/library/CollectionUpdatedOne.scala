@@ -3,6 +3,7 @@ import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** An item rewritten from a record: the fields written (none when it already agreed) and the record's title. */
 final case class CollectionUpdatedOne(

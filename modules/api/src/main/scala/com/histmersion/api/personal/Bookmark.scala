@@ -8,6 +8,7 @@ import io.circe.{Decoder, Encoder}
 import io.github.iltotore.iron.*
 import io.github.iltotore.iron.constraint.any.Pure
 import io.github.iltotore.iron.constraint.string.Match
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class Bookmark(
     id: com.histmersion.api.personal.Bookmark.Id,

@@ -5,6 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.StatusCount
 import com.histmersion.api.catalogue.ArticleEventLead
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.Source
 
 final case class Coverage(

@@ -5,6 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.Write
 import com.histmersion.api.library.Source
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 object ConfigEdit:
 

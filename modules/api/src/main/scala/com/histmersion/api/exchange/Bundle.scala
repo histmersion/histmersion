@@ -1,6 +1,7 @@
 package com.histmersion.api.exchange
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.aliases.Aliases
 import com.histmersion.api.library.Confidence
 import com.histmersion.api.library.Source

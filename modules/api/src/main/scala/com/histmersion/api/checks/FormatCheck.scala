@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class FormatCheck(text: FormatCheck.Text, field: FormatField = FormatField.Body, fix: FormatCheck.Fix = _root_.com.histmersion.api.checks.FormatCheck.Fix(false))
     derives KindlingsCodecAsObject,

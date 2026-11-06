@@ -4,6 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** Left is always here and right always the bundle: JabRef's vocabulary (`keep-left`, `keep-right`, `both`), which the
   * resolution file uses.

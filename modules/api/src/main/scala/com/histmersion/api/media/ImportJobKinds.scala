@@ -3,6 +3,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** The media's imports, as it registers them: pictures asked of a provider. */
 object ImportJobKinds:

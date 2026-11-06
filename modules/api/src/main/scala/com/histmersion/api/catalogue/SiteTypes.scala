@@ -1,5 +1,6 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 
 /** Each type comes from what the site's gazetteer says: Pleiades' `feature_types` (comma-separated, `temple-2` a

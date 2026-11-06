@@ -4,6 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.Source
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** A plan is spent by every client of the account, and the provider says how much is left only as a percentage of each
   * window plus its reset, so a plan is governed by floors rather than budgets.

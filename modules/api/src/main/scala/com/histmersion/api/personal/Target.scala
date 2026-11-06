@@ -35,8 +35,6 @@ object Target:
 
   type ItemKey = com.histmersion.api.personal.ItemKey
   val ItemKey: _root_.com.histmersion.api.personal.ItemKey.type = _root_.com.histmersion.api.personal.ItemKey
-  type CheckResultPart1 = com.histmersion.api.personal.Target.Problem
-  val CheckResultPart1: _root_.com.histmersion.api.personal.Target.Problem.type = _root_.com.histmersion.api.personal.Target.Problem
   type CheckWhat = String
   object CheckWhat:
     inline def apply(v: String): String = v
@@ -60,28 +58,28 @@ object Target:
   def check(t: Target, allowed: Set[ItemKind], what: String): Either[com.histmersion.api.personal.Target.Problem, Target] =
     val years = (t.from, t.to) match
       case (Some(a), Some(b)) if a.value > b.value =>
-        Left(s"the period ends (${YearFmt(b)}) before it starts (${YearFmt(a)})")
+        Left(Problem(s"the period ends (${YearFmt(b)}) before it starts (${YearFmt(a)})"))
       case _ => Right(())
     if !allowed.contains(t.kind) then
       Left(
-        s"a $what cannot be left on a ${t.kind.label.value.toLowerCase}; it can be on: ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}"
+        Problem(s"a $what cannot be left on a ${t.kind.label.value.toLowerCase}; it can be on: ${ItemKind.values.filter(allowed).map(_.wire).mkString(", ")}")
       )
     else
       years.flatMap { _ =>
         t.kind match
           case k if k.isItem =>
             t.id.map(_.value.trim).filter(_.nonEmpty) match
-              case None      => Left(s"a $what on a ${k.label.value.toLowerCase} names it (its id)")
+              case None      => Left(Problem(s"a $what on a ${k.label.value.toLowerCase} names it (its id)"))
               case Some(key) => Right(Target(k, Some(ItemKey(key))))
           case ItemKind.Point =>
-            if t.lat.isEmpty || t.lon.isEmpty then Left(s"a $what on the map names the point (lat and lon)")
+            if t.lat.isEmpty || t.lon.isEmpty then Left(Problem(s"a $what on the map names the point (lat and lon)"))
             else Right(Target(ItemKind.Point, lat = t.lat, lon = t.lon, zoom = t.zoom, from = t.from, to = t.to))
           case ItemKind.View =>
             val view = t.view.map(_.value.trim.stripPrefix("#"))
             if view.exists(_.length > ViewState.MaxChars) then
-              Left(s"a saved view is at most ${ViewState.MaxChars} characters")
+              Left(Problem(s"a saved view is at most ${ViewState.MaxChars} characters"))
             else if view.isEmpty && t.lat.isEmpty then
-              Left("a saved view holds the filters (view) or the map's position (lat, lon)")
+              Left(Problem("a saved view holds the filters (view) or the map's position (lat, lon)"))
             else
               Right(
                 Target(
@@ -95,7 +93,7 @@ object Target:
                 )
               )
           case _ =>
-            if t.from.isEmpty || t.to.isEmpty then Left(s"a $what on a period names its years (from and to)")
+            if t.from.isEmpty || t.to.isEmpty then Left(Problem(s"a $what on a period names its years (from and to)"))
             else Right(Target(ItemKind.Period, from = t.from, to = t.to))
       }
 

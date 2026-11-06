@@ -74,5 +74,5 @@ object Markdown:
   def contestedMark(contested: Boolean, label: String = ("")): String =
     if ((contested) == (true)) && !(label).toLowerCase.contains("contested") then (" (contested)") else ("")
 
-  private[api] def asOfNote(asOf: Option[com.histmersion.api.catalogue.Place.Entry.AsOf]): String =
+  private[api] def asOfNote(asOf: Option[com.histmersion.api.catalogue.Year]): String =
     asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("")

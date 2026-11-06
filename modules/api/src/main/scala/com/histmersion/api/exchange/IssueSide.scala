@@ -5,6 +5,7 @@ import sttp.tapir.Schema
 
 import java.util.UUID
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class IssueSide(label: IssueSide.Label, uid: UUID, lines: List[IssueSide.Lines] = Nil)
     derives KindlingsCodecAsObject,

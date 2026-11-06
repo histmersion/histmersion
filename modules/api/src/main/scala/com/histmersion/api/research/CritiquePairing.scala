@@ -4,6 +4,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import com.histmersion.api.LatinFold
 import com.histmersion.api.library.Hit
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 object CritiquePairing:
   object Instruction:
@@ -114,7 +115,7 @@ object CritiquePairing:
     val citedAnywhere = blocks.flatMap(u => targetsOf(u).flatMap(resolve)).toSet
     blocks.zipWithIndex.flatMap { (u, i) =>
       val cited = targetsOf(u).flatMap(resolve).distinct
-      val text = prose(u.text)
+      val text = prose(u.text.value)
       val where = Hit.Where(words(text).take(8).mkString(" "))
       val partners = cited
         .flatMap { x =>
@@ -175,7 +176,7 @@ object CritiquePairing:
                 insert(tail, ls.updated(j, l.substring(0, at) + ins + l.substring(at)), acc ++ xs.distinctBy(_.missing))
       val (out, done) = insert(todo.toList.sortBy { case ((f, t), _) => ((f.value: Int), (t.value: Int)) }, lines, Nil)
       val text = out.mkString("\n")
-      (_root_.com.histmersion.api.research.Article.Body(if crlf then text.replace("\n", "\r\n") else text), done.sortBy(h => (h.unit.value, h.missing.value)))
+      (_root_.com.histmersion.api.research.Article.Body(if crlf then text.replace("\n", "\r\n") else text), done.sortBy(h => ((h.unit.value: Int), (h.missing.value: String))))
 
   def instruction(
       body: com.histmersion.api.research.Article.Body,
@@ -188,7 +189,7 @@ object CritiquePairing:
     val us = Critiques.units(body).zipWithIndex
     def cites(u: Critiques.Block) = targetsOf(u).flatMap(resolve).contains(crit)
     near.flatMap(n => us.find((u, i) => i == n.value && cites(u))).orElse(us.find((u, _) => cites(u))).map { (u, _) =>
-      val head = words(prose(u.text)).take(10).mkString(" ")
+      val head = words(prose(u.text.value)).take(10).mkString(" ")
       Instruction.Text(s"${p.ref.wire}: in the paragraph beginning \"$head\" (it cites [[$crit]]), add one sentence stating the " +
         s"${p.kinds.mkString("/")} from [[$critic]]'s record and cite [[$critic]] in that paragraph — or, when it does " +
         "not touch what that paragraph says, set the pair aside with a reason")

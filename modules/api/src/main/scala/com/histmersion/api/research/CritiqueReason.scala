@@ -5,6 +5,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class CritiqueReason(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey, reason: CritiqueReason.Reason, by: Option[CritiqueReason.By] = None)
     derives KindlingsCodecAsObject:
@@ -50,6 +51,6 @@ object CritiqueReason:
     else
       Right(
         r.modify(
-          _.src).setTo(com.histmersion.api.library.Citekey(r.src.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.dst).setTo(com.histmersion.api.library.Citekey(r.dst.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.reason).setTo(text
+          _.src).setTo(com.histmersion.api.library.Citekey(r.src.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.dst).setTo(com.histmersion.api.library.Citekey(r.dst.value.trim.toLowerCase(java.util.Locale.ROOT))).modify(_.reason).setTo(Reason(text)
         )
       )

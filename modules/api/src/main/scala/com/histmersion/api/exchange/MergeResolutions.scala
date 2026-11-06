@@ -27,14 +27,8 @@ object MergeResolutions:
     object Flag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Problem = Problem.T
     object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Resolution = Resolution.T
-    object Resolution extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Template = Template.T
     object Template extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TemplateLine = TemplateLine.T
-    object TemplateLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TemplateOptions = TemplateOptions.T
-    object TemplateOptions extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
 
@@ -45,7 +39,7 @@ object MergeResolutions:
 
     def template(p: MergePlan, current: MergeResolutions): com.histmersion.api.exchange.MergeResolutions.Text.Template =
       val chosen = current.resolve.map(r => r.issue.value -> r.decision).toMap
-      def opts(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateOptions =
+      def opts(i: MergeIssue): String =
         i.options
           .map { k =>
             val arg = (k, i.suggested) match
@@ -56,19 +50,19 @@ object MergeResolutions:
             MergeDecision.Kind.wireOf(k).value + arg
           }
           .mkString(" | ")
-      def line(i: MergeIssue): com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine =
+      def line(i: MergeIssue): String =
         val what = s"${i.entity.wire} — ${i.title}".replace("\n", " ")
         val cond = i.condition.fold("")(c => s"if ${c.issue} = ${MergeDecision.Kind.wireOf(c.when)}: ")
         (chosen.get(i.id.value), i.condition, i.severity) match
           case (Some(d), _, _)    => s"  ${i.id}: $d    # $cond$what"
           case (None, Some(_), _) =>
-            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}")
+            s"  # ${i.id}: ${i.suggested.fold("")(_.wire)}    # $cond$what; decide ${opts(i)}"
           case (None, None, MergeIssue.Severity.Default) =>
-            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}")
+            s"  # ${i.id}: ${i.decision.orElse(i.suggested).fold("")(_.wire)}    # default — $what; decide ${opts(i)}"
           case (None, None, _) if i.decidedBy.contains(MergeIssue.DecidedBy.Policy) =>
-            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what")
+            s"  # ${i.id}: ${i.decision.fold("")(_.wire)}    # by policy — $what"
           case (None, None, _) =>
-            _root_.com.histmersion.api.exchange.MergeResolutions.Text.TemplateLine(s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})"))
+            s"  ${i.id}:    # $what; decide ${opts(i)}" + i.suggested.fold("")(s => s" (suggested: ${s.wire})")
       val issues = p.issues.filter(_.severity != MergeIssue.Severity.Info)
       _root_.com.histmersion.api.exchange.MergeResolutions.Text.Template(List(
         List(
@@ -89,11 +83,11 @@ object MergeResolutions:
     /** YAML literal blocks: `|-` when the text has no final newline, `|` with one, `|+` with more, so the text reads
       * back exactly.
       */
-    def texts(current: MergeResolutions): List[com.histmersion.api.exchange.MergeResolutions.Text.Resolution] =
+    def texts(current: MergeResolutions): List[String] =
       val withText = current.resolve.flatMap(r => r.text.map(r.issue -> _)).sortBy(_._1)
       if withText.isEmpty then Nil
       else
-        _root_.com.histmersion.api.exchange.MergeResolutions.Text.Resolution("texts:") :: withText.flatMap { (id, t) =>
+        "texts:" :: withText.flatMap { (id, t) =>
           val chomp = if !t.value.endsWith("\n") then "-" else if t.value.endsWith("\n\n") then "+" else ""
           val lines = t.value.stripSuffix("\n").split("\n", -1).toList
           // with `|+` the empty last lines are the text's own trailing breaks

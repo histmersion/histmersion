@@ -14,7 +14,7 @@ object CandidatesMarkdown:
       s"- **#${c.id}** `${c.doi}` — ${c.title} ($who${c.year.fold("n.d.")(_.toString)}${c.venue.fold("")(v => s", $v")})" +
         (if ((c.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true)) then " · open access" else "") + (if l.goal.isEmpty then s" · goal `${c.goal}`" else "") +
         s"\n  found by ${c.foundBy.mkString("; ")} · first seen ${c.firstSeen.value.take(10)}" +
-        c.abstractText.fold("")(a => s"\n  ${a.take(400)}${if a.length > 400 then "…" else ""}")
+        c.abstractText.fold("")(a => s"\n  ${a.value.take(400)}${if a.value.length > 400 then "…" else ""}")
     }
     val tail = l.next.map(n => s"More: `--offset $n`.").toList
     val body = if rows.isEmpty then List(s"No ${l.state} candidates.") else rows

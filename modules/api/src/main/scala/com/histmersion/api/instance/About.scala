@@ -9,6 +9,7 @@ import com.histmersion.api.library.UpstreamQuota
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.backup.Backup
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.maintenance.Storage

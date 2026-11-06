@@ -29,8 +29,8 @@ object AcquireChecksMarkdown:
       s"# Acquisition list re-check${if ((r.dryRun) == _root_.com.histmersion.api.library.Acquire.Checks.RecheckResult.DryRun(true)) then " (dry run: no fetcher asked, nothing stored)" else ""}\n\n" +
         s"- ${Plural.count(Plural.CountN(r.open.value.toLong), Plural.CountSingular("open item"))}, ${r.withDoi} with a DOI; ${r.due} due for a try, ${r.allowance} this pass may try\n" +
         (if r.dryRun.value then
-           s"- ${verb}close ${Plural.count(Plural.CountN(r.rows.count(_.action == WouldClose).toLong), Plural.CountSingular("item"))} the corpus holds with its text\n" +
-             s"- ${verb}try ${Plural.count(Plural.CountN(r.rows.count(_.action == WouldTry).toLong), Plural.CountSingular("item"))} through the legal chain"
+           s"- ${verb}close ${Plural.count(Plural.CountN(r.rows.count(_.action.value == WouldClose).toLong), Plural.CountSingular("item"))} the corpus holds with its text\n" +
+             s"- ${verb}try ${Plural.count(Plural.CountN(r.rows.count(_.action.value == WouldTry).toLong), Plural.CountSingular("item"))} through the legal chain"
          else
            s"- closed ${Plural.count(Plural.CountN(r.closed.value.toLong), Plural.CountSingular("item"))} the corpus holds with its text\n" +
              s"- a legal copy found for ${r.fetched} (converting: the conversion closes the item), " +

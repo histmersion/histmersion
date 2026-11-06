@@ -9,8 +9,8 @@ import com.histmersion.api.settings.ConfigFileInfo
 import com.histmersion.api.given
 
 object AboutMarkdown:
-  def age(seconds: com.histmersion.api.instance.About.LastBackupAgeSeconds): String =
-    val s = math.max(0L, (seconds).value)
+  def age(seconds: Long): String =
+    val s = math.max(0L, seconds)
     if s < 60 then (s"$s s")
     else if s < 3600 then (s"${s / 60} min")
     else if s < 86400 then (s"${s / 3600} h")
@@ -21,7 +21,7 @@ object AboutMarkdown:
     val commit = b.gitCommit.fold("unknown")(c => if ((b.dirty) == _root_.com.histmersion.api.instance.BuildStamp.Dirty(true)) then s"$c (with uncommitted changes)" else c)
     val conv = a.health.converter
     val backup = a.lastBackup.fold("none")(bk =>
-      s"${bk.file} · ${Backup.humanBytes(bk.bytes)}" + a.lastBackupAgeSeconds.fold("")(s => s" · ${age(s)} ago")
+      s"${bk.file} · ${Backup.humanBytes(bk.bytes)}" + a.lastBackupAgeSeconds.fold("")(s => s" · ${age(s.value)} ago")
     )
     val j = a.jobs
     val lines = List(

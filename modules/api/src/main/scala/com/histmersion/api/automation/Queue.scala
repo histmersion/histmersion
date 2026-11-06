@@ -7,6 +7,7 @@ import io.circe.Codec
 import com.histmersion.api.StrictJson
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 object Queue:
   type Export = Export.T

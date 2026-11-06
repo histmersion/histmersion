@@ -6,6 +6,7 @@ import java.time.{Instant, LocalDate, ZoneOffset}
 import com.histmersion.api.Paging
 import com.histmersion.api.jobs.JobState
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** The facet counts travel in the [[FacetsHeader]] response header, so the JSON body stays the plain array older
   * clients read.
@@ -212,7 +213,7 @@ object ListFilters:
       )
       .and(query[Option[String]]("goal").description("one goal's: its plan, or proposed by a run for it"))
       .and(query[List[String]]("decidedBy").description(s"any of: ${DecidedBy.values.map(_.wire).mkString(", ")}"))
-      .mapTo[ApprovalFilter]
+      .map { case (state, kind, subject, goal, decidedBy) => ApprovalFilter(state.map(ApprovalFilter.State(_)), kind.map(ApprovalFilter.Kind(_)), subject.map(ApprovalFilter.Subject(_)), goal.map(com.histmersion.api.automation.Goal.Slug(_)), decidedBy.map(ApprovalFilter.DecidedBy(_))) }(v => (v.state.map(_.value), v.kind.map(_.value), v.subject.map(_.value), v.goal.map(_.value), v.decidedBy.map(_.value)))
 
   val runQuery: EndpointInput[RunFilter] =
     query[List[String]]("status")
@@ -231,7 +232,7 @@ object ListFilters:
       )
       .and(query[Option[String]]("until").description("started before the end of: 2026-10-01, or an ISO instant"))
       .and(query[Option[String]]("subject").description("text in its target: a citekey, an article or goal slug"))
-      .mapTo[RunFilter]
+      .map { case (status, pipeline, manager, goal, model, provider, origin, since, until, subject) => RunFilter(status.map(RunFilter.Status(_)), pipeline.map(RunFilter.Pipeline(_)), manager.map(RunFilter.Manager(_)), goal.map(com.histmersion.api.automation.Goal.Slug(_)), model.map(RunFilter.Model(_)), provider.map(RunFilter.Provider(_)), origin.map(RunFilter.Origin(_)), since.map(RunFilter.Since(_)), until.map(RunFilter.Until(_)), subject.map(RunFilter.Subject(_))) }(v => (v.status.map(_.value), v.pipeline.map(_.value), v.manager.map(_.value), v.goal.map(_.value), v.model.map(_.value), v.provider.map(_.value), v.origin.map(_.value), v.since.map(_.value), v.until.map(_.value), v.subject.map(_.value)))
 
   val jobQuery: EndpointInput[JobFilter] =
     query[List[String]]("status")
@@ -246,7 +247,7 @@ object ListFilters:
         query[Option[String]]("subject")
           .description("text in what it is about (citekey, target, detail), or the start of its id")
       )
-      .mapTo[JobFilter]
+      .map { case (status, kind, since, until, subject) => JobFilter(status.map(JobFilter.Status(_)), kind.map(JobFilter.Kind(_)), since.map(JobFilter.Since(_)), until.map(JobFilter.Until(_)), subject.map(JobFilter.Subject(_))) }(v => (v.status.map(_.value), v.kind.map(_.value), v.since.map(_.value), v.until.map(_.value), v.subject.map(_.value)))
 
   def known(what: com.histmersion.api.automation.ListFilters.FacetName, vs: List[com.histmersion.api.automation.ListFilters.Term], known: Seq[com.histmersion.api.automation.ListFilters.Term]): Either[com.histmersion.api.automation.ListFilters.Problem, List[com.histmersion.api.automation.ListFilters.Term]] =
     vs.find(v => !known.contains(v)) match

@@ -4,6 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class ArticleEventLead(
     eventId: com.histmersion.api.catalogue.Event.Id,
@@ -21,9 +22,6 @@ object ArticleEventLead:
   type Markdown = Markdown.T
   object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-
-  type MarkdownResult = com.histmersion.api.catalogue.ArticleEventLead.Markdown
-  val MarkdownResult: _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown.type = _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown
 
   type Label = com.histmersion.api.catalogue.CatalogRecord.Label
   val Label: _root_.com.histmersion.api.catalogue.CatalogRecord.Label.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Label
@@ -45,8 +43,8 @@ object ArticleEventLead:
   def markdown(leads: List[ArticleEventLead]): com.histmersion.api.catalogue.ArticleEventLead.Markdown =
     if leads.isEmpty then _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown("")
     else
-      ("### Catalogue events in this article's period and region that it never names" :: "" ::
+      _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown(("### Catalogue events in this article's period and region that it never names" :: "" ::
         leads.map { l =>
           s"- ${l.label} (`${l.eventId}`, ${l.kind}${l.size.fold("")(s => s", $s")}, ${l.years}) — " +
             s"${Plural.count(_root_.com.histmersion.api.Plural.CountN(l.findingsNear.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("finding"))} of the filter's sources near it; from ${l.provider} (a lead, not evidence)"
-        }).mkString("\n")
+        }).mkString("\n"))

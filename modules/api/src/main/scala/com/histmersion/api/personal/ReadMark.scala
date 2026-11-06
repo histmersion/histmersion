@@ -5,6 +5,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.ItemKind
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class ReadMark(
     kind: ItemKind,
