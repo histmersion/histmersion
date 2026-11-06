@@ -4,7 +4,9 @@
 usage: apply.py [--write]   Without --write only reports what it would do.
 """
 import collections, glob, json, re, subprocess, sys
-OUT = 'refactor-audit/concept-table'
+import os
+OUT = os.environ.get('CONCEPT_OUT', 'refactor-audit/concept-table')
+STAGE_MODULES = set(os.environ.get('CONCEPT_MODULES', 'api').split(','))
 WRITE = '--write' in sys.argv
 rows = {r['fqn']: r for r in json.load(open(f'{OUT}/rows.json'))}
 for r in rows.values():
@@ -21,7 +23,7 @@ second = {}
 for p in sorted(glob.glob(f'{OUT}/out2/*.tsv')):
     for l in open(p):
         a = l.rstrip('\n').split('\t')
-        if not (len(a) == 2 and a[0] in rows and rows[a[0]]['pure'] and a[1].strip() != 'keep' and rows[a[0]]['module'] == 'api'):
+        if not (len(a) == 2 and a[0] in rows and rows[a[0]]['pure'] and a[1].strip() != 'keep' and rows[a[0]]['module'] in STAGE_MODULES):
             continue
         f, d = a[0], a[1].strip()
         if d == 'native' and rows[f]['field']:
