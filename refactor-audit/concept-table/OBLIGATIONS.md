@@ -56,3 +56,5 @@ More in core, from round 3, to compare with 7e197c2b:
 - Positional types kept because other files name them: `EntityOwnBundle`, `TombstoneOwnBundle`, `ChunkMarkdown`, `ChunkMaxChars`, `FoldS`, `TokensS`, `OfS`, `ValidCk`, `NormaliseS`, `NormaliseResult`.
 
 Model-answer fields done right so far: `AcquisitionSweepRules.Pick.doi`, `AgentProposals.ProposalAnswer.citekey` (raw, parsed at the check). Found and fixed, generic-call class: `ActivityRules` `e.goal.contains(g)`, `e.by.contains(...)`.
+
+From the core finisher, to compare with 7e197c2b: `MergePlanner` folds, renames and relinks go through `Citekey.option`, dropping a bundle citekey that fails `CitekeyRule` where master passed it through (bundles from another install could carry one: test this). The evidence check runs `Citekey.option` before `isCitekey`, so an invalid model citekey can get a different problem text.
