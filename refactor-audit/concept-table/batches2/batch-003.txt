@@ -1,0 +1,370 @@
+## CONCEPTS NEARBY
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.By (String)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision (String)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.DryRun (Boolean)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Ids (Long)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Kind (String)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Limit (Int)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Note (String)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Subject (String)
+com.histmersion.api.automation.ApprovalDigest.BulkFailed.Error (String)
+com.histmersion.api.automation.ApprovalDigest.BulkFailed.Id (Long)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Decided (Long)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Decision (String)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.DryRun (Boolean)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Left (Int)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Matched (Int)
+com.histmersion.api.automation.ApprovalDigest.Digest.At (String)
+com.histmersion.api.automation.ApprovalDigest.Digest.GoalPlansWait (String)
+com.histmersion.api.automation.ApprovalDigest.Digest.HeldForPerson (Int)
+com.histmersion.api.automation.ApprovalDigest.Digest.LastWritten (String)
+com.histmersion.api.automation.ApprovalDigest.Digest.Total (Int)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Count (Int)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy (String)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Ids (Long)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Kind (String)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Oldest (String)
+com.histmersion.api.automation.ApprovalDigest.Open.CreatedAt (String)
+com.histmersion.api.automation.ApprovalDigest.Open.Id (Long)
+com.histmersion.api.automation.ApprovalDigest.Open.Kind (String)
+com.histmersion.api.automation.ApprovalDigest.Open.Subject (String)
+com.histmersion.api.automation.ApprovalDigest.SubjectCount.Count (Int)
+com.histmersion.api.automation.ApprovalDigest.SubjectCount.Subject (String)
+com.histmersion.api.automation.Autopilot.ApprovalRule.Cap (String)
+com.histmersion.api.automation.Autopilot.ApprovalRule.Kind (String)
+com.histmersion.api.automation.Autopilot.ApprovalRule.Mode (String)
+com.histmersion.api.automation.Autopilot.AutopilotSet.By (String)
+com.histmersion.api.automation.Autopilot.AutopilotSet.On (Boolean)
+com.histmersion.api.automation.Autopilot.DrainInfo.By (String)
+com.histmersion.api.automation.Autopilot.DrainInfo.Drained (Boolean)
+com.histmersion.api.automation.Autopilot.DrainInfo.DrainedAt (String)
+com.histmersion.api.automation.Autopilot.DrainInfo.InFlight (Int)
+com.histmersion.api.automation.Autopilot.DrainInfo.Since (String)
+com.histmersion.api.automation.Autopilot.DrainSet.By (String)
+com.histmersion.api.automation.Autopilot.DrainSet.On (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.Backlog (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.By (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.Changes (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.LastLint (String)
+com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns (Int)
+com.histmersion.api.automation.Autopilot.EngineStatus.On (Boolean)
+com.histmersion.api.automation.Autopilot.EngineStatus.Since (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Doing (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.DoneLast7 (Int)
+com.histmersion.api.automation.Autopilot.FocusGoal.EtaDays (Int)
+com.histmersion.api.automation.Autopilot.FocusGoal.Open (Int)
+com.histmersion.api.automation.Autopilot.FocusGoal.Pinned (Boolean)
+com.histmersion.api.automation.Autopilot.FocusGoal.Priority (Int)
+com.histmersion.api.automation.Autopilot.FocusGoal.Since (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Slug (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Stage (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Status (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Title (String)
+com.histmersion.api.automation.Autopilot.FocusGoal.Why (String)
+com.histmersion.api.automation.Autopilot.FocusInfo.Changes (String)
+com.histmersion.api.automation.Autopilot.FocusInfo.Held (Int)
+com.histmersion.api.automation.Autopilot.FocusInfo.Max (Int)
+com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom (String)
+com.histmersion.api.automation.Autopilot.FocusInfo.Note (String)
+com.histmersion.api.automation.Autopilot.FocusInfo.On (Boolean)
+com.histmersion.api.automation.Autopilot.FocusInfo.Queued (Int)
+com.histmersion.api.automation.Autopilot.FocusSet.Action (String)
+com.histmersion.api.automation.Autopilot.FocusSet.By (String)
+com.histmersion.api.automation.Autopilot.FocusSet.Value (Int)
+com.histmersion.api.automation.Autopilot.FocusWaiting.Code (String)
+com.histmersion.api.automation.Autopilot.FocusWaiting.Pinned (Boolean)
+com.histmersion.api.automation.Autopilot.FocusWaiting.Slug (String)
+com.histmersion.api.automation.Autopilot.FocusWaiting.Why (String)
+com.histmersion.api.automation.Autopilot.GoalProgress.Articles (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.DoneLast7 (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.EtaDays (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.LastActivity (String)
+com.histmersion.api.automation.Autopilot.GoalProgress.Open (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.OpenApprovals (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.Parent (String)
+com.histmersion.api.automation.Autopilot.GoalProgress.Slug (String)
+com.histmersion.api.automation.Autopilot.GoalProgress.Sources (Int)
+com.histmersion.api.automation.Autopilot.GoalProgress.Status (String)
+com.histmersion.api.automation.Autopilot.GoalProgress.Title (String)
+com.histmersion.api.automation.Autopilot.ManagerBrief.Id (String)
+com.histmersion.api.automation.Autopilot.ManagerBrief.Kind (String)
+com.histmersion.api.automation.Autopilot.ManagerBrief.Note (String)
+com.histmersion.api.automation.Autopilot.ManagerBrief.State (String)
+com.histmersion.api.automation.Goal.Deleted.Value (Boolean)
+com.histmersion.api.automation.Goal.LinkKind.Wire (String)
+com.histmersion.api.automation.Goal.Notes (String)
+com.histmersion.api.automation.Goal.Patch.BudgetUsd (Double)
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter (String)
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Problems (String)
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Section (String)
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.CreatedAt (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.Note (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.Queue (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.Ref (String)
+com.histmersion.api.automation.Goal.Plans.GoalLink.Title (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.BudgetUsd (Double)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled (Boolean)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastNote (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRun (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRunAt (String)
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.NextRunAt (String)
+com.histmersion.api.automation.Goal.Plans.GoalView.BudgetUsd (Double)
+com.histmersion.api.automation.Goal.Plans.LinkAdd.Note (String)
+com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref (String)
+com.histmersion.api.automation.Goal.Plans.Plan.Dropped (String)
+com.histmersion.api.automation.Goal.Plans.Plan.Queries (String)
+com.histmersion.api.automation.Goal.Plans.Plan.Rationale (String)
+com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus (Boolean)
+com.histmersion.api.automation.Goal.Plans.PlannedWork.IsOa (Boolean)
+com.histmersion.api.automation.Goal.Plans.PlannedWork.Why (String)
+com.histmersion.api.automation.Goal.Plans.Removed.Value (Boolean)
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.BudgetUsd (Double)
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron (String)
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled (Boolean)
+com.histmersion.api.automation.Goal.Regions (String)
+com.histmersion.api.automation.Goal.Slug (String)
+com.histmersion.api.automation.Goal.StatusValue (String)
+com.histmersion.api.automation.Goal.Tags (String)
+com.histmersion.api.automation.Goal.Title (String)
+com.histmersion.api.automation.Goal.UpdatedAt (String)
+com.histmersion.api.automation.ItemStatus.Wire (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.By | base String | constructor-parameter
+    val sorted = as.sortBy(_.id)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Decision | base String | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.DryRun | base Boolean | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Ids | base Long | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Kind | base String | constructor-parameter
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Limit | base Int | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Note | base String | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkDecide.Subject | base String | constructor-parameter
+    final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.BulkFailed.Error | base String | constructor-parameter
+    final case class BulkFailed(id: BulkFailed.Id, error: BulkFailed.Error) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.ApprovalDigest.BulkFailed.Id | base Long | constructor-parameter
+    final case class BulkFailed(id: BulkFailed.Id, error: BulkFailed.Error) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Decided | base Long | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Decision | base String | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkResult.DryRun | base Boolean | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Left | base Int | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.BulkResult.Matched | base Int | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.Digest.At | base String | constructor-parameter
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.Digest.GoalPlansWait | base String | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.Digest.HeldForPerson | base Int | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.Digest.LastWritten | base String | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.Digest.Total | base Int | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.GroupWaiting | base String | method-parameter
+    def group(open: List[Open], checked: com.histmersion.api.automation.ApprovalDigest.GroupCheckedArg1 => com.histmersion.api.automation.ApprovalDigest.GroupCheckedResult, w
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Count | base Int | constructor-parameter
+    final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.ApprovalDigest.KindGroup.DecidedBy | base String | alias,constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Ids | base Long | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Kind | base String | constructor-parameter
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.KindGroup.Oldest | base String | constructor-parameter
+com.histmersion.api.automation.ApprovalDigest.LineResult | base String | method-result
+    def line(d: Digest): com.histmersion.api.automation.ApprovalDigest.LineResult =
+com.histmersion.api.automation.ApprovalDigest.Open.CreatedAt | base String | constructor-parameter
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.Open.Id | base Long | constructor-parameter
+    final case class BulkFailed(id: BulkFailed.Id, error: BulkFailed.Error) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.Open.Kind | base String | constructor-parameter
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.Open.Subject | base String | constructor-parameter
+    final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.ApprovalDigest.SubjectCount.Count | base Int | constructor-parameter
+    final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.ApprovalDigest.SubjectCount.Subject | base String | constructor-parameter
+    final case class SubjectCount(subject: SubjectCount.Subject, count: SubjectCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class Open(id: Open.Id, kind: Open.Kind, subject: Option[Open.Subject], createdAt: Open.CreatedAt)
+com.histmersion.api.automation.Autopilot.ApprovalRule.Cap | base String | constructor-parameter
+    final case class ApprovalRule(kind: ApprovalRule.Kind, mode: ApprovalRule.Mode, cap: ApprovalRule.Cap = _root_.com.histmersion.api.automation.Autopilot.ApprovalRule.Cap("
+com.histmersion.api.automation.Autopilot.ApprovalRule.Kind | base String | constructor-parameter
+    final case class ManagerBrief(id: ManagerBrief.Id, kind: ManagerBrief.Kind, state: ManagerBrief.State, note: Option[ManagerBrief.Note] = None)
+    final case class ApprovalRule(kind: ApprovalRule.Kind, mode: ApprovalRule.Mode, cap: ApprovalRule.Cap = _root_.com.histmersion.api.automation.Autopilot.ApprovalRule.Cap("
+com.histmersion.api.automation.Autopilot.ApprovalRule.Mode | base String | constructor-parameter
+    final case class ApprovalRule(kind: ApprovalRule.Kind, mode: ApprovalRule.Mode, cap: ApprovalRule.Cap = _root_.com.histmersion.api.automation.Autopilot.ApprovalRule.Cap("
+com.histmersion.api.automation.Autopilot.AutopilotSet.By | base String | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.AutopilotSet.On | base Boolean | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.DrainInfo.By | base String | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.DrainInfo.Drained | base Boolean | constructor-parameter
+com.histmersion.api.automation.Autopilot.DrainInfo.DrainedAt | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.DrainInfo.InFlight | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.DrainInfo.Since | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.DrainSet.By | base String | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.DrainSet.On | base Boolean | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.EngineStatus.AgentsEnabled | base Boolean | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.Backlog | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.BacklogDays | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.By | base String | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.EngineStatus.Changes | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.CronsEnabled | base Boolean | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.GoalPlansWait | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.IngestCap | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.IngestedToday | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.LastBackup | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.LastLint | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.ManagersEnabled | base Boolean | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.MaxConcurrentRuns | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.EngineStatus.On | base Boolean | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.EngineStatus.Since | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.Doing | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.DoneLast7 | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.EtaDays | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.Open | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.Pinned | base Boolean | constructor-parameter
+    final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why("
+com.histmersion.api.automation.Autopilot.FocusGoal.Priority | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.Since | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.Slug | base String | constructor-parameter
+    final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why("
+com.histmersion.api.automation.Autopilot.FocusGoal.Stage | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.Status | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.Title | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusGoal.Why | base String | constructor-parameter
+    final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why("
+com.histmersion.api.automation.Autopilot.FocusInfo.Changes | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusInfo.Held | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusInfo.Max | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusInfo.Note | base String | constructor-parameter
+    final case class ManagerBrief(id: ManagerBrief.Id, kind: ManagerBrief.Kind, state: ManagerBrief.State, note: Option[ManagerBrief.Note] = None)
+com.histmersion.api.automation.Autopilot.FocusInfo.On | base Boolean | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.FocusInfo.Queued | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusSet.Action | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusSet.By | base String | constructor-parameter
+    final case class AutopilotSet(on: AutopilotSet.On, by: Option[AutopilotSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    final case class DrainSet(on: DrainSet.On, by: Option[DrainSet.By] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Autopilot.FocusSet.Value | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.FocusWaiting.Code | base String | constructor-parameter
+    final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why("
+com.histmersion.api.automation.Autopilot.FocusWaiting.Pinned | base Boolean | constructor-parameter
+    final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why("
+com.histmersion.api.automation.Autopilot.FocusWaiting.Slug | base String | constructor-parameter
+    final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why("
+com.histmersion.api.automation.Autopilot.FocusWaiting.Why | base String | constructor-parameter
+    final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why("
+com.histmersion.api.automation.Autopilot.GoalProgress.Articles | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.DoneLast7 | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.EtaDays | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.LastActivity | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.Open | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.OpenApprovals | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.Parent | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.Slug | base String | constructor-parameter
+    final case class FocusWaiting(slug: FocusWaiting.Slug, code: FocusWaiting.Code, why: FocusWaiting.Why = _root_.com.histmersion.api.automation.Autopilot.FocusWaiting.Why("
+com.histmersion.api.automation.Autopilot.GoalProgress.Sources | base Int | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.Status | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.GoalProgress.Title | base String | constructor-parameter
+com.histmersion.api.automation.Autopilot.ManagerBrief.Id | base String | constructor-parameter
+    final case class ManagerBrief(id: ManagerBrief.Id, kind: ManagerBrief.Kind, state: ManagerBrief.State, note: Option[ManagerBrief.Note] = None)
+com.histmersion.api.automation.Autopilot.ManagerBrief.Kind | base String | constructor-parameter
+    final case class ManagerBrief(id: ManagerBrief.Id, kind: ManagerBrief.Kind, state: ManagerBrief.State, note: Option[ManagerBrief.Note] = None)
+    final case class ApprovalRule(kind: ApprovalRule.Kind, mode: ApprovalRule.Mode, cap: ApprovalRule.Cap = _root_.com.histmersion.api.automation.Autopilot.ApprovalRule.Cap("
+com.histmersion.api.automation.Autopilot.ManagerBrief.Note | base String | constructor-parameter
+    final case class ManagerBrief(id: ManagerBrief.Id, kind: ManagerBrief.Kind, state: ManagerBrief.State, note: Option[ManagerBrief.Note] = None)
+com.histmersion.api.automation.Autopilot.ManagerBrief.State | base String | constructor-parameter
+    final case class ManagerBrief(id: ManagerBrief.Id, kind: ManagerBrief.Kind, state: ManagerBrief.State, note: Option[ManagerBrief.Note] = None)
+com.histmersion.api.automation.Goal.Deleted.Value | base Boolean | constructor-parameter
+    final case class Removed(removed: Removed.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Goal.LinkKind.Wire | base String | constructor-parameter
+    enum LinkKind(val wire: LinkKind.Wire):
+    case Source extends LinkKind(_root_.com.histmersion.api.automation.Goal.LinkKind.Wire("source"))
+com.histmersion.api.automation.Goal.Notes | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Patch.BudgetUsd | base Double | constructor-parameter
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd:
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Filter | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Problems | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Section | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.GoalLink.CreatedAt | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.GoalLink.Note | base String | constructor-parameter
+    final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Goal.Plans.GoalLink.Queue | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.GoalLink.Ref | base String | constructor-parameter
+    final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Goal.Plans.GoalLink.Title | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.BudgetUsd | base Double | constructor-parameter
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd:
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.Cron | base String | constructor-parameter
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd:
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.Enabled | base Boolean | constructor-parameter
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd:
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastNote | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRun | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.LastRunAt | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.GoalSchedule.NextRunAt | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.GoalView.BudgetUsd | base Double | constructor-parameter
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd:
+com.histmersion.api.automation.Goal.Plans.LinkAdd.Note | base String | constructor-parameter
+    final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Goal.Plans.LinkAdd.Ref | base String | constructor-parameter
+    final case class LinkAdd(kind: LinkKind, ref: LinkAdd.Ref, note: Option[LinkAdd.Note] = None) derives KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Goal.Plans.Plan.Dropped | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.Plan.Queries | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.Plan.Rationale | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.PlannedWork.InCorpus | base Boolean | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.PlannedWork.IsOa | base Boolean | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.PlannedWork.Why | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Plans.Removed.Value | base Boolean | constructor-parameter
+    final case class Removed(removed: Removed.Value) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.BudgetUsd | base Double | constructor-parameter
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd:
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.Cron | base String | constructor-parameter
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd:
+com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled | base Boolean | constructor-parameter
+    final case class ScheduleSet(cron: ScheduleSet.Cron, enabled: ScheduleSet.Enabled = _root_.com.histmersion.api.automation.Goal.Plans.ScheduleSet.Enabled(true), budgetUsd:
+com.histmersion.api.automation.Goal.Regions | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Slug | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Stages.AllPart1 | base String | value
+    val all: scala.List[(com.histmersion.api.automation.Goal.Stages.AllPart1, com.histmersion.api.automation.Goal.Stages.AllPart2)] = scala.List(
+    { val refactorTuple6 = com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPar
+com.histmersion.api.automation.Goal.Stages.AllPart2 | base String | value
+    val all: scala.List[(com.histmersion.api.automation.Goal.Stages.AllPart1, com.histmersion.api.automation.Goal.Stages.AllPart2)] = scala.List(
+    { val refactorTuple6 = com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet"; (_root_.com.histmersion.api.automation.Goal.Stages.AllPar
+com.histmersion.api.automation.Goal.Stages.MeaningResult | base String | method-result
+    def meaning(status: com.histmersion.api.automation.Goal.Stages.MeaningStatus): Option[com.histmersion.api.automation.Goal.Stages.MeaningResult] = all.collectFirst { case 
+com.histmersion.api.automation.Goal.Stages.MeaningStatus | base String | method-parameter
+    def meaning(status: com.histmersion.api.automation.Goal.Stages.MeaningStatus): Option[com.histmersion.api.automation.Goal.Stages.MeaningResult] = all.collectFirst { case 
+com.histmersion.api.automation.Goal.Status.All | base String | value
+    val all: scala.List[com.histmersion.api.automation.Goal.Status.All] = scala.List(_root_.com.histmersion.api.automation.Goal.Status.All(Planned), _root_.com.histmersion.ap
+com.histmersion.api.automation.Goal.StatusValue | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Tags | base String | constructor-parameter
+com.histmersion.api.automation.Goal.Title | base String | constructor-parameter
+com.histmersion.api.automation.Goal.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.automation.ItemStatus.Wire | base String | constructor-parameter
+    enum ItemStatus(val wire: ItemStatus.Wire):
+    case Pending extends ItemStatus(_root_.com.histmersion.api.automation.ItemStatus.Wire("pending"))

@@ -1,0 +1,287 @@
+## CONCEPTS NEARBY
+com.histmersion.api.research.ReviewBadge.Detail (String)
+com.histmersion.api.research.ReviewBadge.Findings (Int)
+com.histmersion.api.research.ReviewBadge.Label (String)
+com.histmersion.api.research.ReviewBadge.OpenMajors (Int)
+com.histmersion.api.research.ReviewBadge.OpenMinors (Int)
+com.histmersion.api.research.ReviewBadge.Round (Int)
+com.histmersion.api.research.ReviewBadge.Runs (Int)
+com.histmersion.api.research.ReviewFinding.ClosedBy (String)
+com.histmersion.api.research.ReviewFinding.ClosedRound (Int)
+com.histmersion.api.research.ReviewFinding.ClosedRunNumber (Int)
+com.histmersion.api.research.ReviewFinding.Deferred (Boolean)
+com.histmersion.api.research.ReviewFinding.Fix (String)
+com.histmersion.api.research.ReviewFinding.Id (String)
+com.histmersion.api.research.ReviewFinding.Kind (String)
+com.histmersion.api.research.ReviewFinding.Note (String)
+com.histmersion.api.research.ReviewFinding.Outcome (String)
+com.histmersion.api.research.ReviewFinding.Problem (String)
+com.histmersion.api.research.ReviewFinding.Quote (String)
+com.histmersion.api.research.ReviewFinding.Reopened (Int)
+com.histmersion.api.research.ReviewFinding.Reviewer (String)
+com.histmersion.api.research.ReviewFinding.Severity (String)
+com.histmersion.api.research.ReviewFinding.Where (String)
+com.histmersion.api.research.ReviewGoal.Slug (String)
+com.histmersion.api.research.ReviewGoal.Status (String)
+com.histmersion.api.research.ReviewGoal.Title (String)
+com.histmersion.api.research.ReviewRound.Round (Int)
+com.histmersion.api.research.ReviewRound.Run (String)
+com.histmersion.api.research.ReviewRound.RunNumber (Int)
+com.histmersion.api.research.ReviewRound.StartedAt (String)
+com.histmersion.api.research.ReviewState.Meaning (String)
+com.histmersion.api.research.ReviewState.Wire (String)
+com.histmersion.api.settings.ConfigEdit.Change.Key (String)
+com.histmersion.api.settings.ConfigEdit.Change.Value (String)
+com.histmersion.api.settings.ConfigEdit.Credential.Form (String)
+com.histmersion.api.settings.ConfigEdit.Credential.Rule (String)
+com.histmersion.api.settings.ConfigEdit.Credential.Shown (String)
+com.histmersion.api.settings.ConfigEdit.Field.Default (String)
+com.histmersion.api.settings.ConfigEdit.Field.Doc (String)
+com.histmersion.api.settings.ConfigEdit.Field.Effective (String)
+com.histmersion.api.settings.ConfigEdit.Field.EnvVar (String)
+com.histmersion.api.settings.ConfigEdit.Field.Key (String)
+com.histmersion.api.settings.ConfigEdit.Field.Kind (String)
+com.histmersion.api.settings.ConfigEdit.Field.Locked (String)
+com.histmersion.api.settings.ConfigEdit.Field.Restart (String)
+com.histmersion.api.settings.ConfigEdit.Field.Section (String)
+com.histmersion.api.settings.ConfigEdit.Field.Source (String)
+com.histmersion.api.settings.ConfigEdit.Field.Value (String)
+com.histmersion.api.settings.ConfigEdit.Page.Exists (Boolean)
+com.histmersion.api.settings.ConfigEdit.Page.File (String)
+com.histmersion.api.settings.ConfigEdit.Page.Problems (String)
+com.histmersion.api.settings.ConfigEdit.Page.Restartable (Boolean)
+com.histmersion.api.settings.ConfigEdit.Page.SetupDue (Boolean)
+com.histmersion.api.settings.ConfigEdit.Page.Version (String)
+com.histmersion.api.settings.ConfigEdit.Restart.Accepted (Boolean)
+com.histmersion.api.settings.ConfigEdit.Restart.Message (String)
+com.histmersion.api.settings.ConfigEdit.RestartNote.Key (String)
+com.histmersion.api.settings.ConfigEdit.RestartNote.Why (String)
+com.histmersion.api.settings.ConfigEdit.Section.Doc (String)
+com.histmersion.api.settings.ConfigEdit.Section.Id (String)
+com.histmersion.api.settings.ConfigEdit.Source.Label (String)
+com.histmersion.api.settings.ConfigEdit.Source.Wire (String)
+com.histmersion.api.settings.ConfigEdit.Write.LiteralConsent (Boolean)
+com.histmersion.api.settings.ConfigEdit.Write.Reload (Boolean)
+com.histmersion.api.settings.ConfigEdit.Write.Version (String)
+com.histmersion.api.settings.ConfigEdit.Written.Backup (String)
+com.histmersion.api.settings.ConfigEdit.Written.Changed (String)
+com.histmersion.api.settings.ConfigEdit.Written.Created (Boolean)
+com.histmersion.api.settings.ConfigEdit.Written.File (String)
+com.histmersion.api.settings.ConfigEdit.Written.Restartable (Boolean)
+com.histmersion.api.settings.ConfigEdit.Written.Unchanged (String)
+com.histmersion.api.settings.ConfigEdit.Written.Version (String)
+com.histmersion.api.settings.ConfigEdit.Written.Warnings (String)
+com.histmersion.api.settings.ConfigFileInfo.Loaded (Boolean)
+com.histmersion.api.settings.ConfigFileInfo.Path (String)
+com.histmersion.api.settings.ConfigFileInfo.UnknownKeys (String)
+com.histmersion.api.settings.ReloadReport.Applied (String)
+com.histmersion.api.settings.ReloadReport.Draining (String)
+com.histmersion.api.settings.ReloadReport.Errors (String)
+com.histmersion.api.settings.ReloadReport.File (String)
+com.histmersion.api.settings.ReloadReport.Generation (Long)
+com.histmersion.api.settings.ReloadReport.Plugins (String)
+com.histmersion.api.settings.ReloadReport.Published (Boolean)
+com.histmersion.api.settings.ReloadReport.Rebuilt (String)
+com.histmersion.api.settings.ReloadReport.RestartOnly (String)
+com.histmersion.api.settings.ReloadReport.Warnings (String)
+com.histmersion.api.text.WikiLinks.Occurrence.Embed (Boolean)
+com.histmersion.api.text.WikiLinks.Occurrence.End (Int)
+com.histmersion.api.text.WikiLinks.Occurrence.Escaped (Boolean)
+com.histmersion.api.text.WikiLinks.Occurrence.Raw (String)
+com.histmersion.api.text.WikiLinks.Occurrence.Start (Int)
+com.histmersion.api.text.WikiLinks.Occurrence.Target (String)
+com.histmersion.api.views.AutopilotStatus.AgentsEnabled (Boolean)
+com.histmersion.api.views.AutopilotStatus.Backlog (Int)
+com.histmersion.api.views.AutopilotStatus.BacklogDays (Int)
+com.histmersion.api.views.AutopilotStatus.By (String)
+com.histmersion.api.views.AutopilotStatus.Changes (String)
+com.histmersion.api.views.AutopilotStatus.CronsEnabled (Boolean)
+com.histmersion.api.views.AutopilotStatus.GoalPlansWait (String)
+com.histmersion.api.views.AutopilotStatus.IngestCap (Int)
+com.histmersion.api.views.AutopilotStatus.IngestedToday (Int)
+com.histmersion.api.views.AutopilotStatus.LastBackup (String)
+com.histmersion.api.views.AutopilotStatus.LastLint (String)
+com.histmersion.api.views.AutopilotStatus.ManagersEnabled (Boolean)
+com.histmersion.api.views.AutopilotStatus.MaxConcurrentRuns (Int)
+com.histmersion.api.views.AutopilotStatus.On (Boolean)
+com.histmersion.api.views.AutopilotStatus.Since (String)
+com.histmersion.api.views.EventDetail.Names (String)
+com.histmersion.api.views.PlaceDetail.AsOf (Long)
+com.histmersion.api.views.PlaceDetail.Contested (Boolean)
+com.histmersion.api.views.PlaceDetail.Findings (Int)
+com.histmersion.api.views.PlaceDetail.Geometry (String)
+com.histmersion.api.views.PlaceDetail.HasBoundary (Boolean)
+com.histmersion.api.views.PlaceDetail.SiteType (String)
+com.histmersion.api.views.QueueListing.List (String)
+com.histmersion.api.views.ResolvedId.Id (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.research.ReviewBadge.Detail | base String | constructor-parameter
+com.histmersion.api.research.ReviewBadge.Findings | base Int | constructor-parameter
+com.histmersion.api.research.ReviewBadge.Label | base String | constructor-parameter
+com.histmersion.api.research.ReviewBadge.OpenMajors | base Int | constructor-parameter
+com.histmersion.api.research.ReviewBadge.OpenMinors | base Int | constructor-parameter
+com.histmersion.api.research.ReviewBadge.Round | base Int | constructor-parameter
+com.histmersion.api.research.ReviewBadge.Runs | base Int | constructor-parameter
+com.histmersion.api.research.ReviewFinding.ClosedBy | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.ClosedRound | base Int | constructor-parameter
+com.histmersion.api.research.ReviewFinding.ClosedRunNumber | base Int | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Deferred | base Boolean | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Fix | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Id | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Kind | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Note | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Outcome | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Problem | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Quote | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Reopened | base Int | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Reviewer | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Severity | base String | constructor-parameter
+com.histmersion.api.research.ReviewFinding.Where | base String | constructor-parameter
+com.histmersion.api.research.ReviewGoal.Slug | base String | constructor-parameter
+    final case class ReviewGoal(slug: ReviewGoal.Slug, title: ReviewGoal.Title, status: ReviewGoal.Status) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.ap
+com.histmersion.api.research.ReviewGoal.Status | base String | constructor-parameter
+    final case class ReviewGoal(slug: ReviewGoal.Slug, title: ReviewGoal.Title, status: ReviewGoal.Status) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.ap
+com.histmersion.api.research.ReviewGoal.Title | base String | constructor-parameter
+    final case class ReviewGoal(slug: ReviewGoal.Slug, title: ReviewGoal.Title, status: ReviewGoal.Status) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.ap
+com.histmersion.api.research.ReviewRound.Round | base Int | constructor-parameter
+com.histmersion.api.research.ReviewRound.Run | base String | constructor-parameter
+com.histmersion.api.research.ReviewRound.RunNumber | base Int | constructor-parameter
+com.histmersion.api.research.ReviewRound.StartedAt | base String | constructor-parameter
+com.histmersion.api.research.ReviewState.Meaning | base String | constructor-parameter
+    enum ReviewState(val wire: ReviewState.Wire, val meaning: ReviewState.Meaning):
+    case Unreviewed extends ReviewState(_root_.com.histmersion.api.research.ReviewState.Wire("unreviewed"), _root_.com.histmersion.api.research.ReviewState.Meaning("no review
+com.histmersion.api.research.ReviewState.Wire | base String | constructor-parameter
+    enum ReviewState(val wire: ReviewState.Wire, val meaning: ReviewState.Meaning):
+    case Unreviewed extends ReviewState(_root_.com.histmersion.api.research.ReviewState.Wire("unreviewed"), _root_.com.histmersion.api.research.ReviewState.Meaning("no review
+com.histmersion.api.settings.ConfigEdit.Change.Key | base String | constructor-parameter
+    final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives KindlingsCodecAsObject, KindlingsSchema
+    final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why) derives KindlingsCodecAsObject, KindlingsSchema
+com.histmersion.api.settings.ConfigEdit.Change.Value | base String | constructor-parameter
+    final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives KindlingsCodecAsObject, KindlingsSchema
+com.histmersion.api.settings.ConfigEdit.Credential.Form | base String | constructor-parameter
+    final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
+    def isSet: com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult = _root_.com.histmersion.api.settings.ConfigEdit.Credential.IsSetResult(form != _root_.com.histm
+com.histmersion.api.settings.ConfigEdit.Credential.Rule | base String | constructor-parameter
+    final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
+com.histmersion.api.settings.ConfigEdit.Credential.Shown | base String | constructor-parameter
+    final case class Credential(rule: Credential.Rule, form: Credential.Form, shown: Option[Credential.Shown] = None)
+com.histmersion.api.settings.ConfigEdit.Field.Default | base String | constructor-parameter
+    case Default extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("default"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("the defaul
+com.histmersion.api.settings.ConfigEdit.Field.Doc | base String | constructor-parameter
+    final case class Section(id: Section.Id, doc: Section.Doc = _root_.com.histmersion.api.settings.ConfigEdit.Section.Doc(""), fields: List[Field] = Nil)
+com.histmersion.api.settings.ConfigEdit.Field.Effective | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Field.EnvVar | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Field.Key | base String | constructor-parameter
+    final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives KindlingsCodecAsObject, KindlingsSchema
+    final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why) derives KindlingsCodecAsObject, KindlingsSchema
+com.histmersion.api.settings.ConfigEdit.Field.Kind | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Field.Locked | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Field.Restart | base String | constructor-parameter
+    final case class Restart(accepted: Restart.Accepted, message: Restart.Message) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.settings.ConfigEdit.Field.Section | base String | constructor-parameter
+    final case class Section(id: Section.Id, doc: Section.Doc = _root_.com.histmersion.api.settings.ConfigEdit.Section.Doc(""), fields: List[Field] = Nil)
+com.histmersion.api.settings.ConfigEdit.Field.Source | base String | constructor-parameter
+    enum Source(val wire: Source.Wire, val label: Source.Label):
+    case Default extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("default"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("the defaul
+com.histmersion.api.settings.ConfigEdit.Field.Value | base String | constructor-parameter
+    final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives KindlingsCodecAsObject, KindlingsSchema
+com.histmersion.api.settings.ConfigEdit.Page.Exists | base Boolean | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Page.File | base String | constructor-parameter
+    case File extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("file"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("the settings fil
+com.histmersion.api.settings.ConfigEdit.Page.Problems | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Page.Restartable | base Boolean | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Page.SetupDue | base Boolean | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Page.Version | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Restart.Accepted | base Boolean | constructor-parameter
+    final case class Restart(accepted: Restart.Accepted, message: Restart.Message) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.settings.ConfigEdit.Restart.Message | base String | constructor-parameter
+    final case class Restart(accepted: Restart.Accepted, message: Restart.Message) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.settings.ConfigEdit.RestartNote.Key | base String | constructor-parameter
+    final case class Change(key: Change.Key, value: Option[Change.Value] = None) derives KindlingsCodecAsObject, KindlingsSchema
+    final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why) derives KindlingsCodecAsObject, KindlingsSchema
+com.histmersion.api.settings.ConfigEdit.RestartNote.Why | base String | constructor-parameter
+    final case class RestartNote(key: RestartNote.Key, why: RestartNote.Why) derives KindlingsCodecAsObject, KindlingsSchema
+com.histmersion.api.settings.ConfigEdit.Section.Doc | base String | constructor-parameter
+    final case class Section(id: Section.Id, doc: Section.Doc = _root_.com.histmersion.api.settings.ConfigEdit.Section.Doc(""), fields: List[Field] = Nil)
+com.histmersion.api.settings.ConfigEdit.Section.Id | base String | constructor-parameter
+    final case class Section(id: Section.Id, doc: Section.Doc = _root_.com.histmersion.api.settings.ConfigEdit.Section.Doc(""), fields: List[Field] = Nil)
+com.histmersion.api.settings.ConfigEdit.Source.Label | base String | constructor-parameter
+    enum Source(val wire: Source.Wire, val label: Source.Label):
+    case Default extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("default"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("the defaul
+com.histmersion.api.settings.ConfigEdit.Source.Wire | base String | constructor-parameter
+    enum Source(val wire: Source.Wire, val label: Source.Label):
+    case Default extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("default"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("the defaul
+com.histmersion.api.settings.ConfigEdit.Write.LiteralConsent | base Boolean | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Write.Reload | base Boolean | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Write.Version | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Written.Backup | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Written.Changed | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Written.Created | base Boolean | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Written.File | base String | constructor-parameter
+    case File extends Source(_root_.com.histmersion.api.settings.ConfigEdit.Source.Wire("file"), _root_.com.histmersion.api.settings.ConfigEdit.Source.Label("the settings fil
+com.histmersion.api.settings.ConfigEdit.Written.Restartable | base Boolean | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Written.Unchanged | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Written.Version | base String | constructor-parameter
+com.histmersion.api.settings.ConfigEdit.Written.Warnings | base String | constructor-parameter
+com.histmersion.api.settings.ConfigFileInfo.Loaded | base Boolean | constructor-parameter
+com.histmersion.api.settings.ConfigFileInfo.Path | base String | constructor-parameter
+com.histmersion.api.settings.ConfigFileInfo.UnknownKeys | base String | constructor-parameter
+com.histmersion.api.settings.ReloadReport.Applied | base String | constructor-parameter
+com.histmersion.api.settings.ReloadReport.Draining | base String | constructor-parameter
+com.histmersion.api.settings.ReloadReport.Errors | base String | constructor-parameter
+com.histmersion.api.settings.ReloadReport.File | base String | constructor-parameter
+com.histmersion.api.settings.ReloadReport.Generation | base Long | constructor-parameter
+com.histmersion.api.settings.ReloadReport.Plugins | base String | constructor-parameter
+com.histmersion.api.settings.ReloadReport.Published | base Boolean | constructor-parameter
+com.histmersion.api.settings.ReloadReport.Rebuilt | base String | constructor-parameter
+com.histmersion.api.settings.ReloadReport.RestartOnly | base String | constructor-parameter
+com.histmersion.api.settings.ReloadReport.Warnings | base String | constructor-parameter
+com.histmersion.api.text.WikiLinks.NormalizeRaw | base String | method-parameter
+    def normalize(raw: com.histmersion.api.text.WikiLinks.NormalizeRaw): Option[com.histmersion.api.text.WikiLinks.NormalizeResult] =
+com.histmersion.api.text.WikiLinks.Occurrence.Embed | base Boolean | constructor-parameter
+com.histmersion.api.text.WikiLinks.Occurrence.End | base Int | constructor-parameter
+com.histmersion.api.text.WikiLinks.Occurrence.Escaped | base Boolean | constructor-parameter
+com.histmersion.api.text.WikiLinks.Occurrence.Raw | base String | constructor-parameter
+    val newRaw = lead + next + trail + raw.drop(name.length)
+com.histmersion.api.text.WikiLinks.Occurrence.Start | base Int | constructor-parameter
+com.histmersion.api.text.WikiLinks.Occurrence.Target | base String | constructor-parameter
+com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg3 | base String | method-parameter
+    def rewriteLinks(md: com.histmersion.api.text.WikiLinks.RewriteLinksMd)(render: (com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg1, Option[com.histmersion.api.tex
+    case Some(t) if m.group(1).isEmpty => (render(_root_.com.histmersion.api.text.WikiLinks.RewriteLinksRenderArg1((t).value), (explicit).map(refactorValue => _root_.com.hist
+com.histmersion.api.views.AutopilotStatus.AgentsEnabled | base Boolean | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.Backlog | base Int | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.BacklogDays | base Int | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.By | base String | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.Changes | base String | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.CronsEnabled | base Boolean | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.GoalPlansWait | base String | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.IngestCap | base Int | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.IngestedToday | base Int | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.LastBackup | base String | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.LastLint | base String | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.ManagersEnabled | base Boolean | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.MarkdownResult | base String | method-result
+    def markdown: com.histmersion.api.views.AutopilotStatus.MarkdownResult =
+com.histmersion.api.views.AutopilotStatus.MaxConcurrentRuns | base Int | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.On | base Boolean | constructor-parameter
+com.histmersion.api.views.AutopilotStatus.Since | base String | constructor-parameter
+com.histmersion.api.views.EventDetail.MarkdownResult | base String | method-result
+    def markdown: com.histmersion.api.views.EventDetail.MarkdownResult = com.histmersion.api.catalogue.EventsMarkdown.event(this, media.map(_.markdownLine))
+com.histmersion.api.views.EventDetail.Names | base String | constructor-parameter
+com.histmersion.api.views.PlaceDetail.AsOf | base Long | constructor-parameter
+com.histmersion.api.views.PlaceDetail.Contested | base Boolean | constructor-parameter
+com.histmersion.api.views.PlaceDetail.Findings | base Int | constructor-parameter
+com.histmersion.api.views.PlaceDetail.Geometry | base String | constructor-parameter
+com.histmersion.api.views.PlaceDetail.HasBoundary | base Boolean | constructor-parameter
+com.histmersion.api.views.PlaceDetail.SiteType | base String | constructor-parameter
+com.histmersion.api.views.QueueListing.List | base String | constructor-parameter
+com.histmersion.api.views.QueueListing.MarkdownResult | base String | method-result
+    def markdown: Option[com.histmersion.api.views.QueueListing.MarkdownResult] =
+com.histmersion.api.views.ResolvedId.Id | base String | constructor-parameter
+com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId | base String | method-parameter
+    def qidOfPlaceId(id: com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId): Option[com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult] =
+com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult | base String | method-result
+    def qidOfPlaceId(id: com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdId): Option[com.histmersion.domain.catalogue.places.Wikidata.QidOfPlaceIdResult] =
+com.histmersion.domain.library.Doi.NormalizeResult | base String | method-result
+    def normalize(raw: com.histmersion.domain.library.Doi.NormalizeRaw): Option[com.histmersion.domain.library.Doi.NormalizeResult] =

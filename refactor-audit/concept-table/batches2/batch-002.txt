@@ -1,0 +1,344 @@
+## CONCEPTS NEARBY
+com.histmersion.api.automation.Agents.ApprovalInfo.CreatedAt (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Current (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.DecidedAt (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.EdgeKind (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Evidence (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Id (Long)
+com.histmersion.api.automation.Agents.ApprovalInfo.Kind (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Note (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Quote (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Result (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.State (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Status (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Subject (String)
+com.histmersion.api.automation.Agents.ApprovalInfo.Target (String)
+com.histmersion.api.automation.Agents.CheckLevel.Wire (String)
+com.histmersion.api.automation.Agents.Decision.Wire (String)
+com.histmersion.api.automation.Agents.DecisionRequest.Note (String)
+com.histmersion.api.automation.Agents.DoctorCheck.Detail (String)
+com.histmersion.api.automation.Agents.DoctorCheck.Name (String)
+com.histmersion.api.automation.Agents.DoctorReport.Enabled (Boolean)
+com.histmersion.api.automation.Agents.DoctorReport.Online (Boolean)
+com.histmersion.api.automation.Agents.GenerateRequest.Out (String)
+com.histmersion.api.automation.Agents.GenerateRequest.Runtimes (String)
+com.histmersion.api.automation.Agents.GenerateResult.Definitions (String)
+com.histmersion.api.automation.Agents.GenerateResult.Dir (String)
+com.histmersion.api.automation.Agents.GenerateResult.Files (Int)
+com.histmersion.api.automation.Agents.GenerateResult.Removed (Int)
+com.histmersion.api.automation.Agents.GenerateResult.Runtimes (String)
+com.histmersion.api.automation.Agents.GenerateResult.Written (Int)
+com.histmersion.api.automation.Agents.MessageInfo.Content (String)
+com.histmersion.api.automation.Agents.MessageInfo.LatencyMs (Int)
+com.histmersion.api.automation.Agents.MessageInfo.N (Int)
+com.histmersion.api.automation.Agents.MessageInfo.Role (String)
+com.histmersion.api.automation.Agents.MessageInfo.Seq (Int)
+com.histmersion.api.automation.Agents.MessageInfo.ToolInput (String)
+com.histmersion.api.automation.Agents.MessageInfo.ToolName (String)
+com.histmersion.api.automation.Agents.MessageInfo.ToolResult (String)
+com.histmersion.api.automation.Agents.ModelOverride.Model (String)
+com.histmersion.api.automation.Agents.ModelOverride.Role (String)
+com.histmersion.api.automation.Agents.ModelRef.Model (String)
+com.histmersion.api.automation.Agents.ModelsInfo.Enabled (Boolean)
+com.histmersion.api.automation.Agents.ModelsInfo.MaxConcurrentRuns (Int)
+com.histmersion.api.automation.Agents.ModelsInfo.Now (String)
+com.histmersion.api.automation.Agents.ModelsInfo.Pipelines (String)
+com.histmersion.api.automation.Agents.ModelsInfo.Problems (String)
+com.histmersion.api.automation.Agents.Origin.Wire (String)
+com.histmersion.api.automation.Agents.PauseReason.Wire (String)
+com.histmersion.api.automation.Agents.ProbeRequest.Model (String)
+com.histmersion.api.automation.Agents.ProbeResult.Attempts (Int)
+com.histmersion.api.automation.Agents.ProbeResult.CostUsd (Double)
+com.histmersion.api.automation.Agents.ProbeResult.Finish (String)
+com.histmersion.api.automation.Agents.ProbeResult.Iterations (Int)
+com.histmersion.api.automation.Agents.ProbeResult.MatchesRecord (Boolean)
+com.histmersion.api.automation.Agents.ProbeResult.Millis (Long)
+com.histmersion.api.automation.Agents.ProbeResult.Model (String)
+com.histmersion.api.automation.Agents.ProbeResult.Problems (String)
+com.histmersion.api.automation.Agents.ProbeResult.RawAnswer (String)
+com.histmersion.api.automation.Agents.ProbeResult.ToolCalls (String)
+com.histmersion.api.automation.Agents.ProviderDoctor.Models (String)
+com.histmersion.api.automation.Agents.ProviderDoctor.Provider (String)
+com.histmersion.api.automation.Agents.ProviderDoctor.UpstreamModels (String)
+com.histmersion.api.automation.Agents.ProviderDoctor.Used (Boolean)
+com.histmersion.api.automation.Agents.RoleModel.Model (String)
+com.histmersion.api.automation.Agents.RoleModel.Problem (String)
+com.histmersion.api.automation.Agents.RoleModel.Ready (Boolean)
+com.histmersion.api.automation.Agents.RoleModel.Role (String)
+com.histmersion.api.automation.Agents.RunInfo.BudgetTokens (Long)
+com.histmersion.api.automation.Agents.RunInfo.BudgetUsd (Double)
+com.histmersion.api.automation.Agents.RunInfo.CostUsd (Double)
+com.histmersion.api.automation.Agents.RunInfo.CreatedAt (String)
+com.histmersion.api.automation.Agents.RunInfo.DryRun (Boolean)
+com.histmersion.api.automation.Agents.RunInfo.Error (String)
+com.histmersion.api.automation.Agents.RunInfo.HeartbeatAt (String)
+com.histmersion.api.automation.Agents.RunInfo.Id (String)
+com.histmersion.api.automation.Agents.RunInfo.Model (String)
+com.histmersion.api.automation.Agents.RunInfo.Origin (String)
+com.histmersion.api.automation.Agents.RunInfo.Pipeline (String)
+com.histmersion.api.automation.Agents.RunInfo.Progress (String)
+com.histmersion.api.automation.Agents.RunInfo.ResumeAt (String)
+com.histmersion.api.automation.Agents.RunInfo.Status (String)
+com.histmersion.api.automation.Agents.RunInfo.Target (String)
+com.histmersion.api.automation.Agents.RunInfo.TargetKind (String)
+com.histmersion.api.automation.Agents.RunInfo.UpdatedAt (String)
+com.histmersion.api.automation.Agents.RunInfo.Warnings (String)
+com.histmersion.api.automation.Agents.RunParams.AutoIngest (Int)
+com.histmersion.api.automation.Agents.RunParams.ChainReview (Boolean)
+com.histmersion.api.automation.Agents.RunParams.Hint (Long)
+com.histmersion.api.automation.Agents.RunParams.MaxArticles (Int)
+com.histmersion.api.automation.Agents.RunParams.MinSources (Int)
+com.histmersion.api.automation.Agents.RunParams.Notes (String)
+com.histmersion.api.automation.Agents.RunParams.OaBacklog (Boolean)
+com.histmersion.api.automation.Agents.RunParams.SubGoals (Int)
+com.histmersion.api.automation.Agents.RunRequest.BudgetTokens (Long)
+com.histmersion.api.automation.Agents.RunRequest.BudgetUsd (Double)
+com.histmersion.api.automation.Agents.RunRequest.DryRun (Boolean)
+com.histmersion.api.automation.Agents.RunRequest.Fix (Boolean)
+com.histmersion.api.automation.Agents.RunRequest.Kind (String)
+com.histmersion.api.automation.Agents.RunRequest.Model (String)
+com.histmersion.api.automation.Agents.RunRequest.Pipeline (String)
+com.histmersion.api.automation.Agents.RunRequest.Query (String)
+com.histmersion.api.automation.Agents.RunRequest.Rounds (Int)
+com.histmersion.api.automation.Agents.RunRequest.Tags (String)
+com.histmersion.api.automation.Agents.RunRequest.Target (String)
+com.histmersion.api.automation.Agents.RunRequest.Title (String)
+com.histmersion.api.automation.Agents.RunRequest.Topics (String)
+com.histmersion.api.automation.Agents.StepInfo.ActualModel (String)
+com.histmersion.api.automation.Agents.StepInfo.Attempt (Int)
+com.histmersion.api.automation.Agents.StepInfo.CostUsd (Double)
+com.histmersion.api.automation.Agents.StepInfo.Error (String)
+com.histmersion.api.automation.Agents.StepInfo.FinishedAt (String)
+com.histmersion.api.automation.Agents.StepInfo.FirstCallTokens (Long)
+com.histmersion.api.automation.Agents.StepInfo.Kind (String)
+com.histmersion.api.automation.Agents.StepInfo.Model (String)
+com.histmersion.api.automation.Agents.StepInfo.Name (String)
+com.histmersion.api.automation.Agents.StepInfo.Output (String)
+com.histmersion.api.automation.Agents.StepInfo.PromptHash (String)
+com.histmersion.api.automation.Agents.StepInfo.Seq (Int)
+com.histmersion.api.automation.Agents.StepInfo.StartedAt (String)
+com.histmersion.api.automation.Agents.StepInfo.Status (String)
+com.histmersion.api.automation.Agents.StepInfo.Turns (Int)
+com.histmersion.api.automation.Agents.StepKind.Wire (String)
+com.histmersion.api.automation.Agents.Usage.CacheRead (Long)
+com.histmersion.api.automation.Agents.Usage.CacheWrite (Long)
+com.histmersion.api.automation.Agents.Usage.Input (Long)
+com.histmersion.api.automation.Agents.Usage.Output (Long)
+com.histmersion.api.automation.Agents.WouldWrite.Payload (String)
+com.histmersion.api.automation.Agents.WouldWrite.What (String)
+com.histmersion.api.automation.AgentsApi.ActionsValue (String)
+com.histmersion.api.automation.Approval.DecidedBy.Describe (String)
+com.histmersion.api.automation.Approval.DecidedBy.Wire (String)
+com.histmersion.api.automation.Approval.Kind.Blocking (Boolean)
+com.histmersion.api.automation.Approval.Kind.Wire (String)
+com.histmersion.api.automation.Approval.Mode.Wire (String)
+com.histmersion.api.automation.Approval.State.Wire (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.automation.Agents.ApprovalInfo.CreatedAt | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.Current | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.DecidedAt | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.EdgeKind | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.Evidence | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.Id | base Long | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.Kind | base String | constructor-parameter
+    def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
+com.histmersion.api.automation.Agents.ApprovalInfo.Note | base String | constructor-parameter
+    final case class DecisionRequest(note: Option[DecisionRequest.Note] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Agents.ApprovalInfo.Quote | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.Result | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.State | base String | constructor-parameter
+    def isWaiting: com.histmersion.api.automation.Agents.RunInfo.IsWaitingResult = _root_.com.histmersion.api.automation.Agents.RunInfo.IsWaitingResult(status == com.histmers
+com.histmersion.api.automation.Agents.ApprovalInfo.Status | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.Subject | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ApprovalInfo.Target | base String | constructor-parameter
+com.histmersion.api.automation.Agents.CheckLevel.Wire | base String | constructor-parameter
+    enum PauseReason(val wire: PauseReason.Wire):
+    case Budget extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("budget"))
+com.histmersion.api.automation.Agents.Decision.Wire | base String | constructor-parameter
+    enum PauseReason(val wire: PauseReason.Wire):
+    case Budget extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("budget"))
+com.histmersion.api.automation.Agents.DecisionRequest.Note | base String | constructor-parameter
+    final case class DecisionRequest(note: Option[DecisionRequest.Note] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Agents.DoctorCheck.Detail | base String | constructor-parameter
+    final case class DoctorCheck(name: DoctorCheck.Name, level: CheckLevel, detail: DoctorCheck.Detail)
+com.histmersion.api.automation.Agents.DoctorCheck.Name | base String | constructor-parameter
+    final case class DoctorCheck(name: DoctorCheck.Name, level: CheckLevel, detail: DoctorCheck.Detail)
+com.histmersion.api.automation.Agents.DoctorReport.Enabled | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.DoctorReport.Online | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.GenerateRequest.Out | base String | constructor-parameter
+    final case class GenerateRequest(runtimes: List[GenerateRequest.Runtimes] = Nil, out: Option[GenerateRequest.Out] = None)
+com.histmersion.api.automation.Agents.GenerateRequest.Runtimes | base String | constructor-parameter
+    final case class GenerateRequest(runtimes: List[GenerateRequest.Runtimes] = Nil, out: Option[GenerateRequest.Out] = None)
+com.histmersion.api.automation.Agents.GenerateResult.Definitions | base String | constructor-parameter
+com.histmersion.api.automation.Agents.GenerateResult.Dir | base String | constructor-parameter
+com.histmersion.api.automation.Agents.GenerateResult.Files | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.GenerateResult.Removed | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.GenerateResult.Runtimes | base String | constructor-parameter
+    final case class GenerateRequest(runtimes: List[GenerateRequest.Runtimes] = Nil, out: Option[GenerateRequest.Out] = None)
+com.histmersion.api.automation.Agents.GenerateResult.Written | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.MessageInfo.Content | base String | constructor-parameter
+com.histmersion.api.automation.Agents.MessageInfo.LatencyMs | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.MessageInfo.N | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.MessageInfo.Role | base String | constructor-parameter
+    final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
+    def modelFor(role: Role): Option[com.histmersion.api.automation.Agents.RunInfo.ModelForResult] =
+com.histmersion.api.automation.Agents.MessageInfo.Seq | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.MessageInfo.ToolInput | base String | constructor-parameter
+com.histmersion.api.automation.Agents.MessageInfo.ToolName | base String | constructor-parameter
+com.histmersion.api.automation.Agents.MessageInfo.ToolResult | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ModelOverride.Model | base String | constructor-parameter
+    final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+    case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
+com.histmersion.api.automation.Agents.ModelOverride.Role | base String | constructor-parameter
+    final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
+    def modelFor(role: Role): Option[com.histmersion.api.automation.Agents.RunInfo.ModelForResult] =
+com.histmersion.api.automation.Agents.ModelRef.Model | base String | constructor-parameter
+    final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+    case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
+com.histmersion.api.automation.Agents.ModelsInfo.Enabled | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.ModelsInfo.MaxConcurrentRuns | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.ModelsInfo.Now | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ModelsInfo.Pipelines | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ModelsInfo.Problems | base String | constructor-parameter
+com.histmersion.api.automation.Agents.Origin.Wire | base String | constructor-parameter
+    enum PauseReason(val wire: PauseReason.Wire):
+    case Budget extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("budget"))
+com.histmersion.api.automation.Agents.PauseReason.Wire | base String | constructor-parameter
+    enum PauseReason(val wire: PauseReason.Wire):
+    case Budget extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("budget"))
+com.histmersion.api.automation.Agents.ProbeRequest.Model | base String | constructor-parameter
+    final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+    case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
+com.histmersion.api.automation.Agents.ProbeResult.Attempts | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.ProbeResult.CostUsd | base Double | constructor-parameter
+com.histmersion.api.automation.Agents.ProbeResult.Finish | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ProbeResult.Iterations | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.ProbeResult.MatchesRecord | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.ProbeResult.Millis | base Long | constructor-parameter
+com.histmersion.api.automation.Agents.ProbeResult.Model | base String | constructor-parameter
+    final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+    case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
+com.histmersion.api.automation.Agents.ProbeResult.Problems | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ProbeResult.RawAnswer | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ProbeResult.ToolCalls | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ProviderDoctor.Models | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ProviderDoctor.Provider | base String | constructor-parameter
+    case Provider extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("provider"))
+com.histmersion.api.automation.Agents.ProviderDoctor.UpstreamModels | base String | constructor-parameter
+com.histmersion.api.automation.Agents.ProviderDoctor.Used | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.RoleModel.Model | base String | constructor-parameter
+    final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+    case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
+com.histmersion.api.automation.Agents.RoleModel.Problem | base String | constructor-parameter
+    final case class RoleModel(role: RoleModel.Role, model: Option[RoleModel.Model], ready: RoleModel.Ready, problem: Option[RoleModel.Problem])
+com.histmersion.api.automation.Agents.RoleModel.Ready | base Boolean | constructor-parameter
+    final case class RoleModel(role: RoleModel.Role, model: Option[RoleModel.Model], ready: RoleModel.Ready, problem: Option[RoleModel.Problem])
+com.histmersion.api.automation.Agents.RoleModel.Role | base String | constructor-parameter
+    final case class ModelOverride(role: ModelOverride.Role, model: ModelOverride.Model) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
+    def modelFor(role: Role): Option[com.histmersion.api.automation.Agents.RunInfo.ModelForResult] =
+com.histmersion.api.automation.Agents.RunInfo.BudgetTokens | base Long | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.BudgetUsd | base Double | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.CostUsd | base Double | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.CreatedAt | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.DryRun | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.Error | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.HeartbeatAt | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.Id | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.Model | base String | constructor-parameter
+    final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+    case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
+com.histmersion.api.automation.Agents.RunInfo.Origin | base String | constructor-parameter
+    enum Origin(val wire: Origin.Wire):
+    case Person extends Origin(_root_.com.histmersion.api.automation.Agents.Origin.Wire("person"))
+com.histmersion.api.automation.Agents.RunInfo.Pipeline | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.Progress | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.ResumeAt | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.Status | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.Target | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.TargetKind | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.UpdatedAt | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunInfo.Warnings | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunParams.AutoIngest | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.RunParams.ChainReview | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.RunParams.Hint | base Long | constructor-parameter
+com.histmersion.api.automation.Agents.RunParams.MaxArticles | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.RunParams.MinSources | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.RunParams.Notes | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunParams.OaBacklog | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.RunParams.SubGoals | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.BudgetTokens | base Long | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.BudgetUsd | base Double | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.DryRun | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.Fix | base Boolean | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.Kind | base String | constructor-parameter
+    def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
+com.histmersion.api.automation.Agents.RunRequest.Model | base String | constructor-parameter
+    final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+    case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
+com.histmersion.api.automation.Agents.RunRequest.Pipeline | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.Query | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.Rounds | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.Tags | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.Target | base String | constructor-parameter
+com.histmersion.api.automation.Agents.RunRequest.Title | base String | constructor-parameter
+    final case class ProbeAnswer(citekey: com.histmersion.api.library.Citekey, title: com.histmersion.api.library.Title, year: Option[com.histmersion.api.catalogue.Year])
+com.histmersion.api.automation.Agents.RunRequest.Topics | base String | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.ActualModel | base String | constructor-parameter
+    case (Some(m), Some(a)) if _root_.com.histmersion.api.automation.Agents.StepInfo.ActualModel((m).value.drop((m).value.indexOf(':') + 1)) != a => _root_.com.histmersion.ap
+com.histmersion.api.automation.Agents.StepInfo.Attempt | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.CostUsd | base Double | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.Error | base String | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.FinishedAt | base String | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.FirstCallTokens | base Long | alias,constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.Kind | base String | constructor-parameter
+    def approvalKind: Option[Approval.Kind] = Approval.Kind.parse(kind)
+com.histmersion.api.automation.Agents.StepInfo.Model | base String | constructor-parameter
+    final case class ModelRef(provider: ProviderKind, model: ModelRef.Model):
+    case Some(k)              => Right(ModelRef(k, _root_.com.histmersion.api.automation.Agents.ModelRef.Model(m)))
+com.histmersion.api.automation.Agents.StepInfo.Name | base String | constructor-parameter
+    final case class DoctorCheck(name: DoctorCheck.Name, level: CheckLevel, detail: DoctorCheck.Detail)
+com.histmersion.api.automation.Agents.StepInfo.Output | base String | constructor-parameter
+    final case class Usage(input: Usage.Input = _root_.com.histmersion.api.automation.Agents.Usage.Input((0).toLong), output: Usage.Output = _root_.com.histmersion.api.automa
+com.histmersion.api.automation.Agents.StepInfo.PromptHash | base String | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.Seq | base Int | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.StartedAt | base String | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.Status | base String | constructor-parameter
+com.histmersion.api.automation.Agents.StepInfo.Turns | base Int | alias,constructor-parameter
+com.histmersion.api.automation.Agents.StepKind.Wire | base String | constructor-parameter
+    enum PauseReason(val wire: PauseReason.Wire):
+    case Budget extends PauseReason(_root_.com.histmersion.api.automation.Agents.PauseReason.Wire("budget"))
+com.histmersion.api.automation.Agents.Usage.CacheRead | base Long | constructor-parameter
+    final case class Usage(input: Usage.Input = _root_.com.histmersion.api.automation.Agents.Usage.Input((0).toLong), output: Usage.Output = _root_.com.histmersion.api.automa
+com.histmersion.api.automation.Agents.Usage.CacheWrite | base Long | constructor-parameter
+    final case class Usage(input: Usage.Input = _root_.com.histmersion.api.automation.Agents.Usage.Input((0).toLong), output: Usage.Output = _root_.com.histmersion.api.automa
+com.histmersion.api.automation.Agents.Usage.Input | base Long | constructor-parameter
+    final case class Usage(input: Usage.Input = _root_.com.histmersion.api.automation.Agents.Usage.Input((0).toLong), output: Usage.Output = _root_.com.histmersion.api.automa
+com.histmersion.api.automation.Agents.Usage.Output | base Long | constructor-parameter
+    final case class Usage(input: Usage.Input = _root_.com.histmersion.api.automation.Agents.Usage.Input((0).toLong), output: Usage.Output = _root_.com.histmersion.api.automa
+com.histmersion.api.automation.Agents.WouldWrite.Payload | base String | constructor-parameter
+    final case class WouldWrite(what: WouldWrite.What, payload: WouldWrite.Payload) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.Agents.WouldWrite.What | base String | constructor-parameter
+    final case class WouldWrite(what: WouldWrite.What, payload: WouldWrite.Payload) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.automation.AgentsApi.ActionsValue | base String | alias
+    val Actions: List[com.histmersion.api.automation.AgentsApi.Actions] = List(_root_.com.histmersion.api.automation.AgentsApi.ActionsValue("pause"), _root_.com.histmersion.a
+com.histmersion.api.automation.AgentsApi.ControlPart1Part2 | base String | lambda-parameter,value
+    lazy val control: PublicEndpoint[(com.histmersion.api.automation.AgentsApi.ControlPart1Part1, com.histmersion.api.automation.AgentsApi.ControlPart1Part2, Option[com.histm
+com.histmersion.api.automation.Approval.DecidedBy.Describe | base String | constructor-parameter
+    enum DecidedBy(val wire: DecidedBy.Wire, val describe: DecidedBy.Describe):
+    case Person extends DecidedBy(_root_.com.histmersion.api.automation.Approval.DecidedBy.Wire("person"), _root_.com.histmersion.api.automation.Approval.DecidedBy.Describe("
+com.histmersion.api.automation.Approval.DecidedBy.Wire | base String | constructor-parameter
+    enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking):
+    case StatusChange extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("status-change"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(fal
+com.histmersion.api.automation.Approval.Kind.Blocking | base Boolean | constructor-parameter
+    enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking):
+    case StatusChange extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("status-change"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(fal
+com.histmersion.api.automation.Approval.Kind.Wire | base String | constructor-parameter
+    enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking):
+    case StatusChange extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("status-change"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(fal
+com.histmersion.api.automation.Approval.Mode.Wire | base String | constructor-parameter
+    enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking):
+    case StatusChange extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("status-change"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(fal
+com.histmersion.api.automation.Approval.State.Wire | base String | constructor-parameter
+    enum Kind(val wire: Kind.Wire, val blocking: Kind.Blocking):
+    case StatusChange extends Kind(_root_.com.histmersion.api.automation.Approval.Kind.Wire("status-change"), _root_.com.histmersion.api.automation.Approval.Kind.Blocking(fal

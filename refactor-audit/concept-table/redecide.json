@@ -84,7 +84,6 @@
 "com.histmersion.api.checks.Lint.FormatItemsRowsPart3",
 "com.histmersion.api.checks.Lint.MarkdownResult",
 "com.histmersion.api.exchange.PlanMatchKind.LinesResult",
-"com.histmersion.api.instance.Version.Licence",
 "com.histmersion.api.jobs.JobDetail.SubjectResult",
 "com.histmersion.api.jobs.JobKindEntry.OfMeaning",
 "com.histmersion.api.jobs.JobKindEntry.OfSubjectResult",

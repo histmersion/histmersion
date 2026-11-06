@@ -1,0 +1,215 @@
+## CONCEPTS NEARBY
+com.histmersion.api.catalogue.PresetMenu.Group.InView (Boolean)
+com.histmersion.api.catalogue.PresetMenu.MinShareValue (Double)
+com.histmersion.api.catalogue.PresetRegion.Label (String)
+com.histmersion.api.catalogue.PresetRegion.Wire (String)
+com.histmersion.api.catalogue.RegionNode.Contested (Boolean)
+com.histmersion.api.catalogue.RegionNode.Id (String)
+com.histmersion.api.catalogue.RegionNode.Kind (String)
+com.histmersion.api.catalogue.RegionNode.Label (String)
+com.histmersion.api.catalogue.RegionNode.RootKindsValue (String)
+com.histmersion.api.catalogue.RegionNode.Withdrawn (Boolean)
+com.histmersion.api.catalogue.SiteTile.Basis (String)
+com.histmersion.api.catalogue.SiteTile.Id (String)
+com.histmersion.api.catalogue.SiteTile.Kind (String)
+com.histmersion.api.catalogue.SiteTile.Label (String)
+com.histmersion.api.catalogue.SiteTile.SiteType (String)
+com.histmersion.api.catalogue.SiteTypes.Report.Asked (Int)
+com.histmersion.api.catalogue.SiteTypes.Report.DryRun (Boolean)
+com.histmersion.api.catalogue.SiteTypes.Report.Failed (String)
+com.histmersion.api.catalogue.SiteTypes.Report.Pending (Int)
+com.histmersion.api.catalogue.SiteTypes.Report.Requests (Int)
+com.histmersion.api.catalogue.SiteTypes.Report.Untyped (Int)
+com.histmersion.api.catalogue.SiteTypes.Request.DryRun (Boolean)
+com.histmersion.api.catalogue.SiteTypes.Request.Limit (Int)
+com.histmersion.api.catalogue.SiteTypes.Request.Refresh (Boolean)
+com.histmersion.api.catalogue.SiteTypes.SiteType.Icon (String)
+com.histmersion.api.catalogue.SiteTypes.SiteType.Id (String)
+com.histmersion.api.catalogue.SiteTypes.SiteType.Label (String)
+com.histmersion.api.catalogue.SkippedPeriod.Detail (String)
+com.histmersion.api.catalogue.SkippedPeriod.Id (String)
+com.histmersion.api.catalogue.SkippedPeriod.Label (String)
+com.histmersion.api.catalogue.SkippedPeriod.SkippedCountValue (Int)
+com.histmersion.api.catalogue.TilesApi.TileAnswer.Bytes (Byte)
+com.histmersion.api.catalogue.TilesApi.TileAnswer.CacheControl (String)
+com.histmersion.api.catalogue.TilesApi.TileAnswer.ContentType (String)
+com.histmersion.api.catalogue.TilesApi.TileAnswer.Etag (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Context (Boolean)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Historicity (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.IfNoneMatch (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Kind (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Layer (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.License (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Provider (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.SiteType (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Text (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Tier (String)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Undated (Boolean)
+com.histmersion.api.catalogue.TilesApi.TileQuery.X (Long)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Y (Long)
+com.histmersion.api.catalogue.TilesApi.TileQuery.Z (Int)
+com.histmersion.api.checks.FormatCheck.Fix (Boolean)
+com.histmersion.api.checks.FormatCheck.Text (String)
+com.histmersion.api.checks.FormatIssue.Column (Int)
+com.histmersion.api.checks.FormatIssue.Excerpt (String)
+com.histmersion.api.checks.FormatIssue.Fix (String)
+com.histmersion.api.checks.FormatIssue.Line (Int)
+com.histmersion.api.checks.FormatIssue.Message (String)
+com.histmersion.api.checks.FormatReport.Fixed (String)
+com.histmersion.api.checks.FormatReport.Subject (String)
+com.histmersion.api.checks.FormatReport.Text (String)
+com.histmersion.api.checks.FormatRule.Description (String)
+com.histmersion.api.checks.FormatRule.Fixable (Boolean)
+com.histmersion.api.checks.FormatRule.Wire (String)
+com.histmersion.api.checks.Lint.AbbreviationsValue (String)
+com.histmersion.api.checks.Lint.LintFixResult.Applied (String)
+com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten (Int)
+com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved (Int)
+com.histmersion.api.checks.Lint.LintFixResult.FindingsPlaced (Int)
+com.histmersion.api.checks.Lint.LintFixResult.FindingsRegeocoded (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PlacesMerged (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PlacesReclassified (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PlacesRelocated (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PointAreasRemaining (Int)
+com.histmersion.api.checks.Lint.LintFixResult.PointAreasRemoved (Int)
+com.histmersion.api.checks.Lint.LintFixResult.Remaining (Int)
+com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed (Int)
+com.histmersion.api.checks.Lint.LintItem.Detail (String)
+com.histmersion.api.checks.Lint.LintReport.Fixed (String)
+com.histmersion.api.checks.Lint.LintRuleReport.Count (Int)
+com.histmersion.api.checks.Lint.LintRuleReport.Description (String)
+com.histmersion.api.checks.Lint.LintRuleReport.Rule (String)
+com.histmersion.api.checks.Lint.Rule.Description (String)
+com.histmersion.api.checks.Lint.Rule.Name (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.catalogue.PresetMenu.Group.InView | base Boolean | constructor-parameter
+    final case class Group(region: PresetRegion, presets: List[HistoricalPeriod], inView: Group.InView)
+com.histmersion.api.catalogue.PresetMenu.MinShareValue | base Double | alias
+    val MinShare: com.histmersion.api.catalogue.PresetMenu.MinShare = _root_.com.histmersion.api.catalogue.PresetMenu.MinShareValue(0.5)
+com.histmersion.api.catalogue.PresetMenu.SourceResult | base String | method-result
+    def source(p: HistoricalPeriod): Option[com.histmersion.api.catalogue.PresetMenu.SourceResult] =
+com.histmersion.api.catalogue.PresetRegion.Label | base String | constructor-parameter
+    enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, val box: Option[BBox]):
+    case Aegean extends PresetRegion(_root_.com.histmersion.api.catalogue.PresetRegion.Wire("aegean"), _root_.com.histmersion.api.catalogue.PresetRegion.Label("Aegean"), Some
+com.histmersion.api.catalogue.PresetRegion.Wire | base String | constructor-parameter
+    enum PresetRegion(val wire: PresetRegion.Wire, val label: PresetRegion.Label, val box: Option[BBox]):
+    case Aegean extends PresetRegion(_root_.com.histmersion.api.catalogue.PresetRegion.Wire("aegean"), _root_.com.histmersion.api.catalogue.PresetRegion.Label("Aegean"), Some
+com.histmersion.api.catalogue.RegionNode.Contested | base Boolean | constructor-parameter
+com.histmersion.api.catalogue.RegionNode.Id | base String | constructor-parameter
+com.histmersion.api.catalogue.RegionNode.Kind | base String | constructor-parameter
+com.histmersion.api.catalogue.RegionNode.Label | base String | constructor-parameter
+    def uncertainLabel(label: com.histmersion.api.catalogue.RegionNode.UncertainLabelLabel): com.histmersion.api.catalogue.RegionNode.UncertainLabelResult =
+com.histmersion.api.catalogue.RegionNode.RootKindsValue | base String | alias
+com.histmersion.api.catalogue.RegionNode.Withdrawn | base Boolean | constructor-parameter
+com.histmersion.api.catalogue.SiteTile.Basis | base String | constructor-parameter
+com.histmersion.api.catalogue.SiteTile.Id | base String | constructor-parameter
+com.histmersion.api.catalogue.SiteTile.Kind | base String | constructor-parameter
+com.histmersion.api.catalogue.SiteTile.Label | base String | constructor-parameter
+com.histmersion.api.catalogue.SiteTile.SiteType | base String | constructor-parameter
+com.histmersion.api.catalogue.SiteTypes.OfPlaceKind | base String | method-parameter
+com.histmersion.api.catalogue.SiteTypes.Report.Asked | base Int | constructor-parameter
+com.histmersion.api.catalogue.SiteTypes.Report.DryRun | base Boolean | constructor-parameter
+    final case class Request(dryRun: Request.DryRun = _root_.com.histmersion.api.catalogue.SiteTypes.Request.DryRun(false), limit: Option[Request.Limit] = None, refresh: Requ
+com.histmersion.api.catalogue.SiteTypes.Report.Failed | base String | constructor-parameter
+com.histmersion.api.catalogue.SiteTypes.Report.Pending | base Int | constructor-parameter
+com.histmersion.api.catalogue.SiteTypes.Report.Requests | base Int | constructor-parameter
+com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult | base String | method-result
+    def summary(r: Report): com.histmersion.api.catalogue.SiteTypes.Report.SummaryResult =
+com.histmersion.api.catalogue.SiteTypes.Report.Untyped | base Int | constructor-parameter
+com.histmersion.api.catalogue.SiteTypes.Request.DryRun | base Boolean | constructor-parameter
+    final case class Request(dryRun: Request.DryRun = _root_.com.histmersion.api.catalogue.SiteTypes.Request.DryRun(false), limit: Option[Request.Limit] = None, refresh: Requ
+com.histmersion.api.catalogue.SiteTypes.Request.Limit | base Int | constructor-parameter
+    final case class Request(dryRun: Request.DryRun = _root_.com.histmersion.api.catalogue.SiteTypes.Request.DryRun(false), limit: Option[Request.Limit] = None, refresh: Requ
+com.histmersion.api.catalogue.SiteTypes.Request.Refresh | base Boolean | constructor-parameter
+    final case class Request(dryRun: Request.DryRun = _root_.com.histmersion.api.catalogue.SiteTypes.Request.DryRun(false), limit: Option[Request.Limit] = None, refresh: Requ
+com.histmersion.api.catalogue.SiteTypes.SiteType.Icon | base String | alias,constructor-parameter
+    val IconResult: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Icon
+    final case class SiteType(id: SiteType.Id, label: SiteType.Label, icon: SiteType.Icon)
+com.histmersion.api.catalogue.SiteTypes.SiteType.Id | base String | alias,constructor-parameter
+    val ByIdPart1: _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id.type = _root_.com.histmersion.api.catalogue.SiteTypes.SiteType.Id
+    final case class SiteType(id: SiteType.Id, label: SiteType.Label, icon: SiteType.Icon)
+com.histmersion.api.catalogue.SiteTypes.SiteType.Label | base String | constructor-parameter
+    final case class SiteType(id: SiteType.Id, label: SiteType.Label, icon: SiteType.Icon)
+com.histmersion.api.catalogue.SkippedPeriod.Detail | base String | constructor-parameter
+    final case class SkippedPeriod(id: SkippedPeriod.Id, label: SkippedPeriod.Label, reason: Period.Skip, detail: SkippedPeriod.Detail)
+com.histmersion.api.catalogue.SkippedPeriod.Id | base String | constructor-parameter
+    final case class SkippedPeriod(id: SkippedPeriod.Id, label: SkippedPeriod.Label, reason: Period.Skip, detail: SkippedPeriod.Detail)
+com.histmersion.api.catalogue.SkippedPeriod.Label | base String | constructor-parameter
+    final case class SkippedPeriod(id: SkippedPeriod.Id, label: SkippedPeriod.Label, reason: Period.Skip, detail: SkippedPeriod.Detail)
+com.histmersion.api.catalogue.SkippedPeriod.SkippedCountValue | base Int | alias
+com.histmersion.api.catalogue.TilesApi.TileAnswer.Bytes | base Byte | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileAnswer.CacheControl | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileAnswer.ContentType | base String | constructor-parameter
+    val ContentType = "application/vnd.mapbox-vector-tile"
+com.histmersion.api.catalogue.TilesApi.TileAnswer.Etag | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Context | base Boolean | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Historicity | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.IfNoneMatch | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Kind | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Layer | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.License | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Provider | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.SiteType | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Text | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Tier | base String | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Undated | base Boolean | constructor-parameter
+    def withUndated: com.histmersion.api.catalogue.TilesApi.TileQuery.WithUndatedResult = _root_.com.histmersion.api.catalogue.TilesApi.TileQuery.WithUndatedResult(undated.co
+com.histmersion.api.catalogue.TilesApi.TileQuery.X | base Long | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Y | base Long | constructor-parameter
+com.histmersion.api.catalogue.TilesApi.TileQuery.Z | base Int | constructor-parameter
+com.histmersion.api.checks.FormatCheck.Fix | base Boolean | constructor-parameter
+    final case class FormatCheck(text: FormatCheck.Text, field: FormatField = FormatField.Body, fix: FormatCheck.Fix = _root_.com.histmersion.api.checks.FormatCheck.Fix(false
+com.histmersion.api.checks.FormatCheck.Text | base String | constructor-parameter
+    final case class FormatCheck(text: FormatCheck.Text, field: FormatField = FormatField.Body, fix: FormatCheck.Fix = _root_.com.histmersion.api.checks.FormatCheck.Fix(false
+com.histmersion.api.checks.FormatIssue.Column | base Int | constructor-parameter
+com.histmersion.api.checks.FormatIssue.Excerpt | base String | constructor-parameter
+com.histmersion.api.checks.FormatIssue.Fix | base String | constructor-parameter
+com.histmersion.api.checks.FormatIssue.Line | base Int | constructor-parameter
+com.histmersion.api.checks.FormatIssue.Message | base String | constructor-parameter
+com.histmersion.api.checks.FormatReport.Fixed | base String | constructor-parameter
+com.histmersion.api.checks.FormatReport.Subject | base String | constructor-parameter
+com.histmersion.api.checks.FormatReport.Text | base String | constructor-parameter
+com.histmersion.api.checks.FormatRule.Description | base String | constructor-parameter
+    enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fixable: FormatRule.Fixable, val description: FormatRule.Description):
+com.histmersion.api.checks.FormatRule.Fixable | base Boolean | constructor-parameter
+    enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fixable: FormatRule.Fixable, val description: FormatRule.Description):
+com.histmersion.api.checks.FormatRule.Wire | base String | constructor-parameter
+    enum FormatRule(val wire: FormatRule.Wire, val severity: FormatSeverity, val fixable: FormatRule.Fixable, val description: FormatRule.Description):
+    def fromWire(s: _root_.com.histmersion.api.WireEnumValues.FromWireS): _root_.scala.Option[FormatRule] = FormatRule.values.find(_.wire == _root_.com.histmersion.api.checks
+com.histmersion.api.checks.Lint.AbbreviationsValue | base String | alias
+com.histmersion.api.checks.Lint.FormatItemsRowsPart3 | base String | method-parameter
+    def formatItems(rows: List[(com.histmersion.api.checks.Lint.FormatItemsRowsPart1, FormatField, com.histmersion.api.checks.Lint.FormatItemsRowsPart3)], check: FormatChecke
+com.histmersion.api.checks.Lint.LintFixResult.Applied | base String | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.ChunksWritten | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.EdgesResolved | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.FindingsPlaced | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.FindingsRegeocoded | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.PlacesMerged | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.PlacesReclassified | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.PlacesRelocated | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.PointAreasRemaining | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.PointAreasRemoved | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.Remaining | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintFixResult.SourcesReindexed | base Int | constructor-parameter
+com.histmersion.api.checks.Lint.LintItem.Detail | base String | constructor-parameter
+    final case class LintItem(citekey: com.histmersion.api.library.Citekey, detail: LintItem.Detail) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json
+com.histmersion.api.checks.Lint.LintReport.Fixed | base String | constructor-parameter
+    final case class LintReport(rules: List[LintRuleReport], fixed: List[LintReport.Fixed] = Nil)
+com.histmersion.api.checks.Lint.LintRuleReport.Count | base Int | constructor-parameter
+    final case class LintRuleReport(rule: LintRuleReport.Rule, description: LintRuleReport.Description, count: LintRuleReport.Count, items: List[LintItem])
+    def sentenceCount(text: com.histmersion.api.checks.Lint.SentenceCountText): com.histmersion.api.checks.Lint.SentenceCountResult =
+com.histmersion.api.checks.Lint.LintRuleReport.Description | base String | constructor-parameter
+    final case class LintRuleReport(rule: LintRuleReport.Rule, description: LintRuleReport.Description, count: LintRuleReport.Count, items: List[LintItem])
+    final case class Rule(name: Rule.Name, description: Rule.Description)
+com.histmersion.api.checks.Lint.LintRuleReport.Rule | base String | constructor-parameter
+    val Names: _root_.com.histmersion.api.checks.Lint.Rule.Name.type = _root_.com.histmersion.api.checks.Lint.Rule.Name
+    final case class LintRuleReport(rule: LintRuleReport.Rule, description: LintRuleReport.Description, count: LintRuleReport.Count, items: List[LintItem])
+com.histmersion.api.checks.Lint.MarkdownResult | base String | method-result
+    def markdown(rep: LintReport): com.histmersion.api.checks.Lint.MarkdownResult =
+com.histmersion.api.checks.Lint.Rule.Description | base String | constructor-parameter
+    final case class LintRuleReport(rule: LintRuleReport.Rule, description: LintRuleReport.Description, count: LintRuleReport.Count, items: List[LintItem])
+    final case class Rule(name: Rule.Name, description: Rule.Description)
+com.histmersion.api.checks.Lint.Rule.Name | base String | alias,constructor-parameter
+    val Names: _root_.com.histmersion.api.checks.Lint.Rule.Name.type = _root_.com.histmersion.api.checks.Lint.Rule.Name
+    final case class Rule(name: Rule.Name, description: Rule.Description)

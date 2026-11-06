@@ -1,0 +1,324 @@
+## CONCEPTS NEARBY
+com.histmersion.api.Api.AggregateQuery.AsOf (Long)
+com.histmersion.api.Api.AggregateQuery.By (String)
+com.histmersion.api.Api.AggregateQuery.Depth (Int)
+com.histmersion.api.Api.AggregateQuery.Samples (Int)
+com.histmersion.api.Api.AggregateQuery.Size (Long)
+com.histmersion.api.Api.AggregateQuery.Unit (String)
+com.histmersion.api.Api.ArticleQuery.Kind (String)
+com.histmersion.api.Api.ArticleQuery.Text (String)
+com.histmersion.api.Api.AttestationQuery.Limit (Int)
+com.histmersion.api.Api.AttestationQuery.Offset (Int)
+com.histmersion.api.Api.AttestationQuery.TargetId (String)
+com.histmersion.api.Api.AttestationQuery.TargetType (String)
+com.histmersion.api.Api.Error.Code (String)
+com.histmersion.api.Api.Error.Message (String)
+com.histmersion.api.Api.EventQuery.Area (String)
+com.histmersion.api.Api.EventQuery.Context (Boolean)
+com.histmersion.api.Api.EventQuery.Historicity (String)
+com.histmersion.api.Api.EventQuery.Kind (String)
+com.histmersion.api.Api.EventQuery.PlaceId (String)
+com.histmersion.api.Api.EventQuery.Text (String)
+com.histmersion.api.Api.EventQuery.Tier (String)
+com.histmersion.api.Api.FindingsQuery.Region (String)
+com.histmersion.api.Api.GoalQuery.Limit (Int)
+com.histmersion.api.Api.GoalQuery.Offset (Int)
+com.histmersion.api.Api.GoalQuery.Status (String)
+com.histmersion.api.Api.MediaGeoQuery.From (Long)
+com.histmersion.api.Api.MediaGeoQuery.Kind (String)
+com.histmersion.api.Api.MediaGeoQuery.License (String)
+com.histmersion.api.Api.MediaGeoQuery.Limit (Int)
+com.histmersion.api.Api.MediaGeoQuery.Provider (String)
+com.histmersion.api.Api.MediaGeoQuery.To (Long)
+com.histmersion.api.Api.MediaQuery.Event (String)
+com.histmersion.api.Api.MediaQuery.License (String)
+com.histmersion.api.Api.MediaQuery.Limit (Int)
+com.histmersion.api.Api.MediaQuery.Offset (Int)
+com.histmersion.api.Api.MediaQuery.Place (String)
+com.histmersion.api.Api.MediaQuery.Provider (String)
+com.histmersion.api.Api.MediaQuery.Q (String)
+com.histmersion.api.Api.PassagesQuery.Context (Int)
+com.histmersion.api.Api.PassagesQuery.Limit (Int)
+com.histmersion.api.Api.PassagesQuery.Q (String)
+com.histmersion.api.Api.PassagesQuery.Regex (Boolean)
+com.histmersion.api.Api.PlacesGeoQuery.AsOf (Long)
+com.histmersion.api.Api.PlacesGeoQuery.From (Long)
+com.histmersion.api.Api.PlacesGeoQuery.Kind (String)
+com.histmersion.api.Api.PlacesGeoQuery.Limit (Int)
+com.histmersion.api.Api.PlacesGeoQuery.Pick (String)
+com.histmersion.api.Api.PlacesGeoQuery.To (Long)
+com.histmersion.api.Api.SourceViewQuery.Chars (Int)
+com.histmersion.api.Api.SourceViewQuery.FullText (Boolean)
+com.histmersion.api.Api.SourceViewQuery.Heading (String)
+com.histmersion.api.Api.SourceViewQuery.Offset (Int)
+com.histmersion.api.Api.SourceViewQuery.Section (String)
+com.histmersion.api.ByteCount (Long)
+com.histmersion.api.ConfidenceStyle.IconPart.D (String)
+com.histmersion.api.ConfidenceStyle.IconPart.Filled (Boolean)
+com.histmersion.api.ItemKind.Label (String)
+com.histmersion.api.ItemKind.Wire (String)
+com.histmersion.api.LatinFold.PairsValue (String)
+com.histmersion.api.ListPatch.Add (String)
+com.histmersion.api.ListPatch.Remove (String)
+com.histmersion.api.ListPatch.Replace (String)
+com.histmersion.api.LpfDataset.Citation (String)
+com.histmersion.api.LpfDataset.Licence (String)
+com.histmersion.api.LpfDataset.Title (String)
+com.histmersion.api.MapStack.Pane.Canvas (Boolean)
+com.histmersion.api.MapStack.Pane.Name (String)
+com.histmersion.api.MapStack.Pane.Point (Boolean)
+com.histmersion.api.Offset (Int)
+com.histmersion.api.OffsetPage.FullSetMaxValue (Int)
+com.histmersion.api.Paging.Page.CountsPart1 (String)
+com.histmersion.api.Paging.Page.CountsPart2 (Int)
+com.histmersion.api.Paging.Page.FacetsPart1 (String)
+com.histmersion.api.Paging.Page.FacetsPart2Part1 (String)
+com.histmersion.api.Paging.Page.FacetsPart2Part2 (Int)
+com.histmersion.api.Paging.Page.Next (String)
+com.histmersion.api.Paging.Page.Total (Int)
+com.histmersion.api.PeriodODataset.ParentsKey (String)
+com.histmersion.api.PeriodODataset.ParentsValue (String)
+com.histmersion.api.PeriodODataset.PresetsKey (String)
+com.histmersion.api.PeriodODataset.Version (Int)
+com.histmersion.api.RowCount (Int)
+com.histmersion.api.Sha256 (String)
+com.histmersion.api.SpatialHierarchyResult.EdgesCreated (Int)
+com.histmersion.api.SpatialHierarchyResult.Job (String)
+com.histmersion.api.SpatialHierarchyResult.PointPlaces (Int)
+com.histmersion.api.SpatialHierarchyResult.PolygonPlaces (Int)
+com.histmersion.api.StatusCount.Count (Int)
+com.histmersion.api.TableSize.Name (String)
+com.histmersion.api.Validity.StartUnknown (Boolean)
+com.histmersion.api.Wcag.AaTextValue (Double)
+com.histmersion.api.WebPaths.ItemsValue (String)
+com.histmersion.api.WebPaths.LegacyValue (String)
+com.histmersion.api.WebPaths.PlacesValue (String)
+com.histmersion.api.Years.NoYearZeroValue (String)
+com.histmersion.api.aliases.Aliases.RuleValue (String)
+com.histmersion.api.aliases.InstanceInfo.CreatedAt (String)
+com.histmersion.api.aliases.InstanceInfo.Label (String)
+com.histmersion.api.aliases.KeyWord (String)
+com.histmersion.api.aliases.LabelRename.To (String)
+com.histmersion.api.aliases.LabelRenamed.From (String)
+com.histmersion.api.aliases.LabelRenamed.Rewritten (String)
+com.histmersion.api.aliases.LabelRenamed.To (String)
+com.histmersion.api.aliases.RecordNoun (String)
+com.histmersion.api.aliases.UidRedirect.Kind (String)
+
+## TYPES TO DECIDE
+com.histmersion.api.Api.AggregateQuery.AsOf | base Long | alias,constructor-parameter
+    val TreeAsOf: _root_.com.histmersion.api.Api.AggregateQuery.AsOf.type = _root_.com.histmersion.api.Api.AggregateQuery.AsOf
+com.histmersion.api.Api.AggregateQuery.By | base String | constructor-parameter
+    val byPath = endpoints.groupBy(path).view.mapValues(_.map(method).distinct.sortBy(m => order.indexOf(m))).toMap
+com.histmersion.api.Api.AggregateQuery.Depth | base Int | constructor-parameter
+com.histmersion.api.Api.AggregateQuery.Samples | base Int | alias,constructor-parameter
+    val TreeSamples: _root_.com.histmersion.api.Api.AggregateQuery.Samples.type = _root_.com.histmersion.api.Api.AggregateQuery.Samples
+com.histmersion.api.Api.AggregateQuery.Size | base Long | constructor-parameter
+com.histmersion.api.Api.AggregateQuery.Unit | base String | alias,constructor-parameter
+    lazy val version: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Version.Info, Any] =
+    lazy val health: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Health, Any] =
+com.histmersion.api.Api.ArticleQuery.Kind | base String | constructor-parameter
+com.histmersion.api.Api.ArticleQuery.Text | base String | constructor-parameter
+com.histmersion.api.Api.AttestationQuery.Limit | base Int | constructor-parameter
+com.histmersion.api.Api.AttestationQuery.Offset | base Int | constructor-parameter
+com.histmersion.api.Api.AttestationQuery.TargetId | base String | constructor-parameter
+com.histmersion.api.Api.AttestationQuery.TargetType | base String | constructor-parameter
+com.histmersion.api.Api.Error.Code | base String | constructor-parameter
+    final case class Error(message: Error.Message, code: Option[Error.Code] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+    def hasCode(code: com.histmersion.api.Api.Error.HasCodeCode): PartialFunction[Any, com.histmersion.api.Api.Error.HasCodeResultPart2] =
+com.histmersion.api.Api.Error.Message | base String | alias,constructor-parameter
+    final case class Error(message: Error.Message, code: Option[Error.Code] = None) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.Api.EventQuery.Area | base String | constructor-parameter
+com.histmersion.api.Api.EventQuery.Context | base Boolean | constructor-parameter
+com.histmersion.api.Api.EventQuery.Historicity | base String | constructor-parameter
+com.histmersion.api.Api.EventQuery.Kind | base String | constructor-parameter
+com.histmersion.api.Api.EventQuery.PlaceId | base String | constructor-parameter
+com.histmersion.api.Api.EventQuery.Text | base String | constructor-parameter
+com.histmersion.api.Api.EventQuery.Tier | base String | constructor-parameter
+com.histmersion.api.Api.ExportArticlePart3 | base String | lambda-parameter,value
+    lazy val exportArticle: PublicEndpoint[com.histmersion.api.Api.ExportArticlePart1, com.histmersion.api.Api.Error, com.histmersion.api.Api.ExportArticlePart3, Any] =
+com.histmersion.api.Api.ExportSourcePart3 | base String | lambda-parameter,value
+    lazy val exportSource: PublicEndpoint[com.histmersion.api.Api.ExportSourcePart1, com.histmersion.api.Api.Error, com.histmersion.api.Api.ExportSourcePart3, Any] =
+com.histmersion.api.Api.FindingsQuery.Region | base String | constructor-parameter
+    final case class FindingsQuery(filter: Filter, region: Option[FindingsQuery.Region]):
+com.histmersion.api.Api.GoalQuery.Limit | base Int | constructor-parameter
+com.histmersion.api.Api.GoalQuery.Offset | base Int | constructor-parameter
+com.histmersion.api.Api.GoalQuery.Status | base String | constructor-parameter
+    lazy val backup: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Backup.Status, Any] =
+    lazy val backupStatus: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Backup.Status, Any] =
+com.histmersion.api.Api.Index.CurrentReadme | base String | method-parameter
+    def current(readme: com.histmersion.api.Api.Index.CurrentReadme): Option[com.histmersion.api.Api.Index.CurrentResult] =
+com.histmersion.api.Api.Index.CurrentResult | base String | method-result
+    def current(readme: com.histmersion.api.Api.Index.CurrentReadme): Option[com.histmersion.api.Api.Index.CurrentResult] =
+com.histmersion.api.Api.Index.MarkdownResult | base String | method-result
+    def markdown(endpoints: List[AnyEndpoint]): com.histmersion.api.Api.Index.MarkdownResult =
+com.histmersion.api.Api.Index.SpliceIndex | base String | method-parameter
+    def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Index.SpliceResultPart1, 
+com.histmersion.api.Api.Index.SpliceReadme | base String | method-parameter
+    def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Index.SpliceResultPart1, 
+com.histmersion.api.Api.Index.SpliceResultPart2 | base String | method-result
+    def splice(readme: com.histmersion.api.Api.Index.SpliceReadme, index: com.histmersion.api.Api.Index.SpliceIndex): Either[com.histmersion.api.Api.Index.SpliceResultPart1, 
+com.histmersion.api.Api.JobControlPart1Part1 | base String | value
+    lazy val jobControl: PublicEndpoint[(com.histmersion.api.Api.JobControlPart1Part1, com.histmersion.api.Api.JobControlPart1Part2), com.histmersion.api.Api.Error, JobInfo, 
+com.histmersion.api.Api.JobPart1 | base String | lambda-parameter,value
+    lazy val job: PublicEndpoint[com.histmersion.api.Api.JobPart1, com.histmersion.api.Api.Error, JobInfo, Any] =
+com.histmersion.api.Api.JobsPart1Part4 | base String | lambda-parameter,value
+com.histmersion.api.Api.MediaGeoQuery.From | base Long | constructor-parameter
+com.histmersion.api.Api.MediaGeoQuery.Kind | base String | constructor-parameter
+com.histmersion.api.Api.MediaGeoQuery.License | base String | constructor-parameter
+com.histmersion.api.Api.MediaGeoQuery.Limit | base Int | constructor-parameter
+com.histmersion.api.Api.MediaGeoQuery.Provider | base String | constructor-parameter
+com.histmersion.api.Api.MediaGeoQuery.To | base Long | constructor-parameter
+com.histmersion.api.Api.MediaQuery.Event | base String | constructor-parameter
+    lazy val renameEvent: PublicEndpoint[(com.histmersion.api.Api.RenameEventPart1Part1, LabelRename), com.histmersion.api.Api.Error, LabelRenamed, Any] =
+    lazy val getEvent: PublicEndpoint[com.histmersion.api.Api.GetEventPart1, com.histmersion.api.Api.Error, EventDetail, Any] =
+com.histmersion.api.Api.MediaQuery.License | base String | constructor-parameter
+com.histmersion.api.Api.MediaQuery.Limit | base Int | constructor-parameter
+com.histmersion.api.Api.MediaQuery.Offset | base Int | constructor-parameter
+com.histmersion.api.Api.MediaQuery.Place | base String | constructor-parameter
+    lazy val placeLinks: PublicEndpoint[com.histmersion.api.Api.PlaceLinksPart1, com.histmersion.api.Api.Error, List[Place.Link], Any] =
+    lazy val rebuildPlaces: PublicEndpoint[Unit, com.histmersion.api.Api.Error, Place.RebuildResult, Any] =
+com.histmersion.api.Api.MediaQuery.Provider | base String | constructor-parameter
+com.histmersion.api.Api.MediaQuery.Q | base String | constructor-parameter
+com.histmersion.api.Api.PassagesQuery.Context | base Int | constructor-parameter
+com.histmersion.api.Api.PassagesQuery.Limit | base Int | constructor-parameter
+com.histmersion.api.Api.PassagesQuery.Q | base String | constructor-parameter
+com.histmersion.api.Api.PassagesQuery.Regex | base Boolean | constructor-parameter
+com.histmersion.api.Api.PlacesGeoQuery.AsOf | base Long | constructor-parameter
+    val TreeAsOf: _root_.com.histmersion.api.Api.AggregateQuery.AsOf.type = _root_.com.histmersion.api.Api.AggregateQuery.AsOf
+com.histmersion.api.Api.PlacesGeoQuery.From | base Long | constructor-parameter
+com.histmersion.api.Api.PlacesGeoQuery.Kind | base String | constructor-parameter
+com.histmersion.api.Api.PlacesGeoQuery.Limit | base Int | constructor-parameter
+com.histmersion.api.Api.PlacesGeoQuery.Pick | base String | constructor-parameter
+com.histmersion.api.Api.PlacesGeoQuery.To | base Long | constructor-parameter
+com.histmersion.api.Api.SourceViewPart3 | base String | lambda-parameter,value
+    lazy val sourceView: PublicEndpoint[SourceViewQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.SourceViewPart3, Any] =
+com.histmersion.api.Api.SourceViewQuery.Chars | base Int | constructor-parameter
+com.histmersion.api.Api.SourceViewQuery.FullText | base Boolean | constructor-parameter
+com.histmersion.api.Api.SourceViewQuery.Heading | base String | constructor-parameter
+com.histmersion.api.Api.SourceViewQuery.Offset | base Int | constructor-parameter
+com.histmersion.api.Api.SourceViewQuery.Section | base String | constructor-parameter
+com.histmersion.api.ByteCount | base Long | constructor-parameter,method-result
+com.histmersion.api.ConfidenceStyle.IconPart.D | base String | constructor-parameter
+com.histmersion.api.ConfidenceStyle.IconPart.Filled | base Boolean | constructor-parameter
+    final case class IconPart(d: IconPart.D, filled: IconPart.Filled)
+    private val Ring = IconPart(_root_.com.histmersion.api.ConfidenceStyle.IconPart.D("M5 1a4 4 0 1 1 0 8a4 4 0 1 1 0-8z"), filled = _root_.com.histmersion.api.ConfidenceStyl
+com.histmersion.api.ItemKind.Label | base String | constructor-parameter
+    enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
+    case Source extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("source"), _root_.com.histmersion.api.ItemKind.Label("Source"))
+com.histmersion.api.ItemKind.Wire | base String | constructor-parameter
+    enum ItemKind(val wire: ItemKind.Wire, val label: ItemKind.Label):
+    case Source extends ItemKind(_root_.com.histmersion.api.ItemKind.Wire("source"), _root_.com.histmersion.api.ItemKind.Label("Source"))
+com.histmersion.api.LatinFold.PairsValue | base String | alias
+com.histmersion.api.ListPatch.Add | base String | constructor-parameter
+com.histmersion.api.ListPatch.Remove | base String | constructor-parameter
+com.histmersion.api.ListPatch.Replace | base String | constructor-parameter
+com.histmersion.api.LpfDataset.Citation | base String | constructor-parameter
+com.histmersion.api.LpfDataset.Licence | base String | constructor-parameter
+com.histmersion.api.LpfDataset.Title | base String | constructor-parameter
+com.histmersion.api.MapStack.Pane.Canvas | base Boolean | constructor-parameter
+    enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas):
+    case Areas extends Pane(_root_.com.histmersion.api.MapStack.Pane.Name("areas"), point = _root_.com.histmersion.api.MapStack.Pane.Point(false), canvas = _root_.com.histmer
+com.histmersion.api.MapStack.Pane.Name | base String | constructor-parameter
+    enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas):
+    case Areas extends Pane(_root_.com.histmersion.api.MapStack.Pane.Name("areas"), point = _root_.com.histmersion.api.MapStack.Pane.Point(false), canvas = _root_.com.histmer
+com.histmersion.api.MapStack.Pane.Point | base Boolean | constructor-parameter
+    enum Pane(val name: Pane.Name, val point: Pane.Point, val canvas: Pane.Canvas):
+    case Areas extends Pane(_root_.com.histmersion.api.MapStack.Pane.Name("areas"), point = _root_.com.histmersion.api.MapStack.Pane.Point(false), canvas = _root_.com.histmer
+com.histmersion.api.Offset | base Int | constructor-parameter,method-result
+com.histmersion.api.OffsetPage.FullSetMaxValue | base Int | alias
+    val FullSetMax: com.histmersion.api.OffsetPage.FullSetMax = _root_.com.histmersion.api.OffsetPage.FullSetMaxValue(500)
+com.histmersion.api.OffsetPage.MarkdownResult | base String | method-result
+    def markdown[A](p: OffsetPage, noun: com.histmersion.api.OffsetPage.MarkdownNoun, empty: com.histmersion.api.OffsetPage.MarkdownEmpty, items: List[A])(line: A => com.hist
+    case 0 => _root_.com.histmersion.api.OffsetPage.MarkdownResult((empty).value)
+com.histmersion.api.OpsApi.GoalsExportPart3 | base String | lambda-parameter,value
+    lazy val goalsExport: PublicEndpoint[Unit, Api.Error, com.histmersion.api.OpsApi.GoalsExportPart3, Any] =
+com.histmersion.api.OpsApi.QueueExportPart3 | base String | lambda-parameter,value
+    lazy val queueExport: PublicEndpoint[com.histmersion.api.OpsApi.QueueExportPart1, Api.Error, com.histmersion.api.OpsApi.QueueExportPart3, Any] =
+com.histmersion.api.Paging.DecodeCountsResultPart1 | base String | method-result
+    def decodeCounts(s: com.histmersion.api.Paging.DecodeCountsS): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.DecodeCountsResultPart
+    case Array(k, v) => v.trim.toIntOption.map({ val refactorTuple12 = k.trim -> _; (_root_.com.histmersion.api.Paging.DecodeCountsResultPart1(refactorTuple12._1), _root_.com
+com.histmersion.api.Paging.DecodeCountsResultPart2 | base Int | method-result
+    def decodeCounts(s: com.histmersion.api.Paging.DecodeCountsS): List[(com.histmersion.api.Paging.DecodeCountsResultPart1, com.histmersion.api.Paging.DecodeCountsResultPart
+    case Array(k, v) => v.trim.toIntOption.map({ val refactorTuple12 = k.trim -> _; (_root_.com.histmersion.api.Paging.DecodeCountsResultPart1(refactorTuple12._1), _root_.com
+com.histmersion.api.Paging.Page.CountResult | base Int | method-result
+    def count(state: com.histmersion.api.Paging.Page.CountState): com.histmersion.api.Paging.Page.CountResult = counts.collectFirst { case (s, n) if s == state => n }.getOrEl
+com.histmersion.api.Paging.Page.CountState | base String | method-parameter
+    def count(state: com.histmersion.api.Paging.Page.CountState): com.histmersion.api.Paging.Page.CountResult = counts.collectFirst { case (s, n) if s == state => n }.getOrEl
+com.histmersion.api.Paging.Page.CountsPart1 | base String | alias,constructor-parameter
+    val EncodeCountsCountsPart1: _root_.com.histmersion.api.Paging.Page.CountsPart1.type = _root_.com.histmersion.api.Paging.Page.CountsPart1
+    val FilteredCountsPart1: _root_.com.histmersion.api.Paging.Page.CountsPart1.type = _root_.com.histmersion.api.Paging.Page.CountsPart1
+com.histmersion.api.Paging.Page.CountsPart2 | base Int | alias,constructor-parameter
+    val EncodeCountsCountsPart2: _root_.com.histmersion.api.Paging.Page.CountsPart2.type = _root_.com.histmersion.api.Paging.Page.CountsPart2
+    val FilteredCountsPart2: _root_.com.histmersion.api.Paging.Page.CountsPart2.type = _root_.com.histmersion.api.Paging.Page.CountsPart2
+com.histmersion.api.Paging.Page.FacetResultPart1 | base String | method-result
+    def facet(name: com.histmersion.api.Paging.Page.FacetName): List[(com.histmersion.api.Paging.Page.FacetResultPart1, com.histmersion.api.Paging.Page.FacetResultPart2)] = (
+com.histmersion.api.Paging.Page.FacetsPart1 | base String | constructor-parameter
+    Page(total, (last).map(refactorValue4 => _root_.com.histmersion.api.Paging.Page.Next((refactorValue4).value)), counts, (facets.filter(_._2.nonEmpty)).map(refactorValue14 
+com.histmersion.api.Paging.Page.FacetsPart2Part1 | base String | constructor-parameter
+    Page(total, (last).map(refactorValue4 => _root_.com.histmersion.api.Paging.Page.Next((refactorValue4).value)), counts, (facets.filter(_._2.nonEmpty)).map(refactorValue14 
+com.histmersion.api.Paging.Page.FacetsPart2Part2 | base Int | constructor-parameter
+    Page(total, (last).map(refactorValue4 => _root_.com.histmersion.api.Paging.Page.Next((refactorValue4).value)), counts, (facets.filter(_._2.nonEmpty)).map(refactorValue14 
+com.histmersion.api.Paging.Page.FilteredFacetsPart2Part1 | base String | method-parameter
+com.histmersion.api.Paging.Page.FilteredStates | base String | method-parameter
+    filtered((counts).map(refactorValue2 => { val refactorTuple2 = refactorValue2; (_root_.com.histmersion.api.Paging.Page.CountsPart1((refactorTuple2._1).value), _root_.com.
+com.histmersion.api.Paging.Page.Next | base String | constructor-parameter
+    val NextHeader = "X-Next-Before"
+    Page(total, (last).map(refactorValue4 => _root_.com.histmersion.api.Paging.Page.Next((refactorValue4).value)), counts, (facets.filter(_._2.nonEmpty)).map(refactorValue14 
+com.histmersion.api.Paging.Page.OfCountsPart1 | base String | method-parameter
+    def of(counts: List[(com.histmersion.api.Paging.Page.OfCountsPart1, com.histmersion.api.Paging.Page.OfCountsPart2)], state: Option[com.histmersion.api.Paging.Page.OfState
+com.histmersion.api.Paging.Page.OfCountsPart2 | base Int | method-parameter
+    def of(counts: List[(com.histmersion.api.Paging.Page.OfCountsPart1, com.histmersion.api.Paging.Page.OfCountsPart2)], state: Option[com.histmersion.api.Paging.Page.OfState
+com.histmersion.api.Paging.Page.OfState | base String | method-parameter
+    def of(counts: List[(com.histmersion.api.Paging.Page.OfCountsPart1, com.histmersion.api.Paging.Page.OfCountsPart2)], state: Option[com.histmersion.api.Paging.Page.OfState
+com.histmersion.api.Paging.Page.Total | base Int | alias,constructor-parameter
+    val HeadingTotal: _root_.com.histmersion.api.Paging.Page.Total.type = _root_.com.histmersion.api.Paging.Page.Total
+    val TotalHeader = "X-Total-Count"
+com.histmersion.api.PeriodODataset.ParentsKey | base String | constructor-parameter
+com.histmersion.api.PeriodODataset.ParentsValue | base String | constructor-parameter
+com.histmersion.api.PeriodODataset.PresetsKey | base String | constructor-parameter
+com.histmersion.api.PeriodODataset.Version | base Int | constructor-parameter
+com.histmersion.api.RowCount | base Int | constructor-parameter,method-parameter,method-result,value,variable
+com.histmersion.api.Sha256 | base String | constructor-parameter
+com.histmersion.api.SpatialHierarchyResult.EdgesCreated | base Int | constructor-parameter
+com.histmersion.api.SpatialHierarchyResult.Job | base String | constructor-parameter
+com.histmersion.api.SpatialHierarchyResult.PointPlaces | base Int | constructor-parameter
+com.histmersion.api.SpatialHierarchyResult.PolygonPlaces | base Int | constructor-parameter
+com.histmersion.api.StatusCount.Count | base Int | constructor-parameter
+    final case class StatusCount(status: Source.Status, count: StatusCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.TableSize.Name | base String | constructor-parameter
+    final case class TableSize(name: TableSize.Name, bytes: com.histmersion.api.ByteCount) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.Validity.StartUnknown | base Boolean | constructor-parameter
+    final case class Validity(from: Option[com.histmersion.api.catalogue.Year], to: Option[com.histmersion.api.catalogue.Year], startUnknown: Validity.StartUnknown)
+com.histmersion.api.Wcag.AaTextValue | base Double | alias
+    val AaText: com.histmersion.api.Wcag.AaText = _root_.com.histmersion.api.Wcag.AaTextValue(4.5)
+com.histmersion.api.WebPaths.ItemsValue | base String | alias
+    val Items: Set[com.histmersion.api.WebPaths.Items] = Set(_root_.com.histmersion.api.WebPaths.ItemsValue("place"), _root_.com.histmersion.api.WebPaths.ItemsValue("event"),
+    case List(first, _) if Items(_root_.com.histmersion.api.WebPaths.ItemsValue((first).value)) => _root_.com.histmersion.api.WebPaths.IsAppResult(true)
+com.histmersion.api.WebPaths.LegacyValue | base String | alias
+    val Legacy: Set[com.histmersion.api.WebPaths.Legacy] = Set(_root_.com.histmersion.api.WebPaths.LegacyValue("acquire"), _root_.com.histmersion.api.WebPaths.LegacyValue("ta
+    case List(first) if Legacy(_root_.com.histmersion.api.WebPaths.LegacyValue((first).value))   => _root_.com.histmersion.api.WebPaths.IsAppResult(true)
+com.histmersion.api.WebPaths.PlacesValue | base String | alias
+    val Places: Set[com.histmersion.api.WebPaths.Places] = Set(_root_.com.histmersion.api.WebPaths.PlacesValue("explore"), _root_.com.histmersion.api.WebPaths.PlacesValue("li
+    case first :: _ if Places(_root_.com.histmersion.api.WebPaths.PlacesValue((first).value))    => _root_.com.histmersion.api.WebPaths.IsAppResult(true)
+com.histmersion.api.Years.NoYearZeroValue | base String | alias
+    val NoYearZero: com.histmersion.api.Years.NoYearZero = _root_.com.histmersion.api.Years.NoYearZeroValue("there is no year 0 (1 BCE is -1, 1 CE is 1)")
+com.histmersion.api.aliases.Aliases.RuleResult | base String | method-result
+    def rule(k: AliasKind): com.histmersion.api.aliases.Aliases.RuleResult =
+com.histmersion.api.aliases.Aliases.RuleValue | base String | alias
+com.histmersion.api.aliases.InstanceInfo.CreatedAt | base String | constructor-parameter
+    final case class InstanceInfo(id: UUID, label: Option[InstanceInfo.Label], createdAt: InstanceInfo.CreatedAt)
+com.histmersion.api.aliases.InstanceInfo.Label | base String | constructor-parameter
+    final case class InstanceInfo(id: UUID, label: Option[InstanceInfo.Label], createdAt: InstanceInfo.CreatedAt)
+com.histmersion.api.aliases.KeyWord | base String | constructor-parameter
+com.histmersion.api.aliases.LabelRename.To | base String | constructor-parameter
+    final case class LabelRename(to: LabelRename.To) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
+com.histmersion.api.aliases.LabelRenamed.From | base String | constructor-parameter
+    final case class LabelRenamed(entity: Bundle.Kind, from: LabelRenamed.From, to: LabelRenamed.To, rewritten: List[LabelRenamed.Rewritten] = Nil)
+com.histmersion.api.aliases.LabelRenamed.Rewritten | base String | constructor-parameter
+    final case class LabelRenamed(entity: Bundle.Kind, from: LabelRenamed.From, to: LabelRenamed.To, rewritten: List[LabelRenamed.Rewritten] = Nil)
+com.histmersion.api.aliases.LabelRenamed.To | base String | constructor-parameter
+    final case class LabelRenamed(entity: Bundle.Kind, from: LabelRenamed.From, to: LabelRenamed.To, rewritten: List[LabelRenamed.Rewritten] = Nil)
+com.histmersion.api.aliases.RecordNoun | base String | constructor-parameter
+com.histmersion.api.aliases.UidRedirect.Kind | base String | constructor-parameter
+    final case class UidRedirect(aliasUid: UUID, uid: UUID, kind: UidRedirect.Kind, mergeId: Option[UUID])
