@@ -143,9 +143,9 @@ object Filter:
       title: Option[com.histmersion.api.library.Filter.Title] = None,
       goal: Option[com.histmersion.api.research.ReviewGoal.Slug] = None
   ): Filter =
-    def clean(xs: List[String]) = xs.flatMap((_).value.split(",")).map(_.trim).filter(_.nonEmpty)
+    def clean(xs: List[String]) = xs.flatMap((_).split(",")).map(_.trim).filter(_.nonEmpty)
     Filter(
-      q = q.map((_).value.trim).filter((_).value.nonEmpty),
+      q = q.map((_).value.trim).filter((_).nonEmpty),
       tags = clean(tags),
       authors = clean(authors),
       places = clean(places),
@@ -157,7 +157,7 @@ object Filter:
       sort = sort.flatMap(Sort.parse).getOrElse(Sort.Relevance),
       limit = limit.getOrElse(0),
       offset = offset.getOrElse(0).max(0),
-      title = title.map((_).value.trim).filter((_).value.nonEmpty),
+      title = title.map((_).value.trim).filter((_).nonEmpty),
       goal = goal.map((_).value.trim).filter((_).value.nonEmpty)
     )
 

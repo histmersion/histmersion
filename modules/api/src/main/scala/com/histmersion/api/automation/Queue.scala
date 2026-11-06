@@ -249,8 +249,8 @@ object Queue:
     def flush(): Unit = { flushItem(); flushNote() }
 
     def push(segment: String, index: Int): Unit =
-      val i = math.min((index).value, stack.length)
-      stack = stack.take(i) :+ (segment).value
+      val i = math.min((index), stack.length)
+      stack = stack.take(i) :+ (segment)
 
     (text).value.linesIterator.foreach { line =>
       line match
@@ -277,7 +277,7 @@ object Queue:
     flush()
     out.result()
 
-  private def isBold(s: String): Boolean = ((s).value.startsWith("**") && (s).value.endsWith("**"))
+  private def isBold(s: String): Boolean = ((s).startsWith("**") && (s).value.endsWith("**"))
 
   private def entryDate(stack: Vector[String]): Option[com.histmersion.api.automation.Queue.EntryDate] =
     stack.headOption.flatMap (({
@@ -286,7 +286,7 @@ object Queue:
     }).value).value
 
   private def trimBlank(ls: List[String]): List[String] =
-    (ls.dropWhile((_).value.trim.isEmpty).reverse.dropWhile((_).value.trim.isEmpty).reverse).map(refactorValue15 => ((refactorValue15).value))
+    (ls.dropWhile((_).trim.isEmpty).reverse.dropWhile((_).trim.isEmpty).reverse).map(refactorValue15 => ((refactorValue15)))
 
   private def defaultPreamble(kind: Kind): com.histmersion.api.automation.Queue.Preamble = kind match
     case Kind.Acquire =>
@@ -336,7 +336,7 @@ object Queue:
       prev = p
       is.foreach(i => blocks += (if i.status == Note then Block.Note(i.text) else Block.Item(bullet(kind, i))))
     }
-    _root_.com.histmersion.api.automation.Queue.RenderResult((join(blocks.result())).value)
+    _root_.com.histmersion.api.automation.Queue.RenderResult((join(blocks.result())))
 
   private def headingLines(prev: Vector[String], next: Vector[String]): List[Block] =
     if next.isEmpty then Nil
@@ -345,7 +345,7 @@ object Queue:
       val from = firstDiff.getOrElse(next.length - 1)
       (from until next.length).toList.map { i =>
         val seg = next(i)
-        if ((isBold(((seg).value))) == (true)) then Block.Heading(seg)
+        if ((isBold(((seg)))) == (true)) then Block.Heading(seg)
         else Block.Heading(_root_.com.histmersion.api.automation.Queue.Block.Heading.Line(s"${"#" * (i + 2)} $seg"))
       }
 

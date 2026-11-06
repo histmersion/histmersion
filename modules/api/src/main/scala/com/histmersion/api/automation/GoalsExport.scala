@@ -39,7 +39,7 @@ object GoalsExport:
     val head = List(Header, Notice, summary(goals), "---")
     val known = goals.map(_.slug).toSet
     val body =
-      if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, ((depth).value), known, itemStatus))
+      if views.isEmpty then List("_No goals._") else tree(views).map((v, depth) => block(v, ((depth)), known, itemStatus))
     ((head ++ body).mkString("\n\n") + "\n")
 
   private[api] def summary(goals: List[Goal]): String =
@@ -60,7 +60,7 @@ object GoalsExport:
       (v, depth) :: children
         .getOrElse(Some(v.goal.slug), Nil)
         .filterNot(c => seen.contains(c.goal.slug))
-        .flatMap(c => walk(c, ((depth).value + 1), seen + c.goal.slug))
+        .flatMap(c => walk(c, ((depth) + 1), seen + c.goal.slug))
     val placed = roots.flatMap(r => walk(r, (0), Set(r.goal.slug)))
     val shown = placed.map(_._1.goal.slug).toSet
     val strays = views.filterNot(v => shown.contains(v.goal.slug)).sortBy(_.goal.slug).map(_ -> 0)
@@ -68,7 +68,7 @@ object GoalsExport:
 
   private def block(v: GoalView, depth: Int, known: Set[com.histmersion.api.research.ReviewGoal.Slug], itemStatus: Map[com.histmersion.api.automation.GoalsExport.BlockItemStatusPart1, com.histmersion.api.automation.GoalsExport.BlockItemStatusPart2]): String =
     val g = v.goal
-    val heading = s"${"#" * math.min((depth).value + 2, 6)} ${oneLine(g.title)}"
+    val heading = s"${"#" * math.min((depth) + 2, 6)} ${oneLine(g.title)}"
     val facts = List(
       Some(s"`${g.slug}` · ${g.status}"),
       Option(YearFmt.openPeriod(g.periodStart, g.periodEnd, (""))).filter(_.nonEmpty).map(p => s"**Period:** $p"),
@@ -141,4 +141,4 @@ object GoalsExport:
     val budget = s.budgetUsd.fold("")(b => s" · cap ${AgentsMarkdown.usd(b)} USD")
     (s"${s.kind.wire} · `${s.cron}` · $state$budget")
 
-  private def oneLine(s: String): String = ((s).value.linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" "))
+  private def oneLine(s: String): String = ((s).linesIterator.map(_.trim).filter(_.nonEmpty).mkString(" "))

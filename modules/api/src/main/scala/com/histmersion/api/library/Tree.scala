@@ -244,7 +244,7 @@ object Tree:
         .filterNot(seen.contains)
         .map(id => (id, at(id)))
         .filter((_, mine) => mine.nonEmpty)
-        .sortBy((id, mine) => (-(distinct(mine)).value, byId.get(id).fold("")(_.label.toLowerCase), id))
+        .sortBy((id, mine) => (-(distinct(mine)), byId.get(id).fold("")(_.label.toLowerCase), id))
         .flatMap { (id, mine) =>
           if drawnAt.contains(id) then None
           else
@@ -330,7 +330,7 @@ object Tree:
   private def order(a: com.histmersion.api.catalogue.Year, b: com.histmersion.api.catalogue.Year): (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year) = if a <= b then (_root_.com.histmersion.api.catalogue.Year((a).value), _root_.com.histmersion.api.catalogue.Year((b).value)) else (_root_.com.histmersion.api.catalogue.Year((b).value), _root_.com.histmersion.api.catalogue.Year((a).value))
 
   def parseBy(s: String): Option[List[String]] =
-    val parts = (s).value.split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList
+    val parts = (s).split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList
     if parts.nonEmpty && parts.forall(p => p == KindTime || p == KindRegion) && parts == parts.distinct
     then Some((parts).map(refactorValue11 => (refactorValue11)))
     else None

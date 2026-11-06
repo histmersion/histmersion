@@ -281,7 +281,7 @@ object ListFilters:
     */
   def escape(s: String): String =
     val b = new StringBuilder
-    (s).value.getBytes("UTF-8").foreach { byte =>
+    (s).getBytes("UTF-8").foreach { byte =>
       val c = (byte & 0xff).toChar
       if c > ' ' && c < 0x7f && c != '%' && c != ',' && c != '=' then b.append(c)
       else b.append(f"%%${byte & 0xff}%02X")
@@ -289,19 +289,19 @@ object ListFilters:
     (b.toString)
 
   def unescape(s: String): String =
-    if !(s).value.contains('%') then ((s).value)
+    if !(s).contains('%') then ((s))
     else
       val out = new java.io.ByteArrayOutputStream
       def hex(at: Int): Option[Int] =
         Option
-          .when((at).value + 3 <= (s).value.length)((s).value.substring((at).value + 1, (at).value + 3))
+          .when((at) + 3 <= (s).value.length)((s).substring((at).value + 1, (at).value + 3))
           .filter(_.forall(c => Character.digit(c, 16) >= 0))
           .map((Integer.parseInt(_, 16)))
       var i = 0
-      while i < (s).value.length do
+      while i < (s).length do
         (if s(i) == '%' then hex((i)) else None) match
-          case Some(b) => out.write((b).value); i += 3
-          case None    => (s).value.substring(i, i + 1).getBytes("UTF-8").foreach(x => out.write(x.toInt)); i += 1
+          case Some(b) => out.write((b)); i += 3
+          case None    => (s).substring(i, i + 1).getBytes("UTF-8").foreach(x => out.write(x.toInt)); i += 1
       (new String(out.toByteArray, "UTF-8"))
 
   def encodeFacets(fs: List[(com.histmersion.api.automation.ListFilters.FacetName, List[(com.histmersion.api.automation.ListFilters.Term, com.histmersion.api.RowCount)])]): com.histmersion.api.automation.ListFilters.EncodedFacets =
@@ -313,7 +313,7 @@ object ListFilters:
         case Array(f, v, n) if f.nonEmpty => n.trim.toIntOption.map(c => (f.trim, unescape((v)), c))
         case _                            => None
     }
-    triples.map(_._1).distinct.map(f => { val refactorTuple9 = f -> triples.collect { case (`f`, v, n) => v -> n }; (_root_.com.histmersion.api.automation.ListFilters.FacetName(refactorTuple9._1), (refactorTuple9._2).map(refactorValue62 => { val refactorTuple10 = refactorValue62; (_root_.com.histmersion.api.automation.ListFilters.Term((refactorTuple10._1).value), _root_.com.histmersion.api.RowCount(refactorTuple10._2)) })) })
+    triples.map(_._1).distinct.map(f => { val refactorTuple9 = f -> triples.collect { case (`f`, v, n) => v -> n }; (_root_.com.histmersion.api.automation.ListFilters.FacetName(refactorTuple9._1), (refactorTuple9._2).map(refactorValue62 => { val refactorTuple10 = refactorValue62; (_root_.com.histmersion.api.automation.ListFilters.Term((refactorTuple10._1)), _root_.com.histmersion.api.RowCount(refactorTuple10._2)) })) })
 
   def facetLine(label: com.histmersion.api.automation.ListFilters.FacetName, counts: List[(com.histmersion.api.automation.ListFilters.Term, com.histmersion.api.RowCount)]): com.histmersion.api.automation.ListFilters.FacetLine =
     if counts.isEmpty then _root_.com.histmersion.api.automation.ListFilters.FacetLine("")

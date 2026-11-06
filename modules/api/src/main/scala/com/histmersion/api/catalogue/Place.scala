@@ -415,7 +415,7 @@ object Place:
 
     def csv(rows: List[ManualPlaceName]): com.histmersion.api.catalogue.Place.Edits.Csv =
       def cell(s: String) =
-        if (s).value.exists(c => c == ',' || c == '"' || c == '\n') then "\"" + (s).value.replace("\"", "\"\"") + "\"" else s
+        if (s).exists(c => c == ',' || c == '"' || c == '\n') then "\"" + (s).replace("\"", "\"\"") + "\"" else s
       ("place_id,name,lang,why" :: rows.map(r =>
         List(r.placeId, r.name, r.lang, s"added by hand to ${r.label}").map(cell).mkString(",")
       ))

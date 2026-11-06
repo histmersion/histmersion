@@ -159,7 +159,7 @@ object Stalls:
 
   def classify(f: Facts): (com.histmersion.api.automation.Stalls.Stall.Code, com.histmersion.api.automation.Stalls.Stall.Action, com.histmersion.api.automation.Stalls.Stall.Why) =
     val g = f.slug
-    def waitOf(p: SchedWait => Boolean) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)).value })
+    def waitOf(p: SchedWait => Boolean) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)) })
     if ((f.draining) == _root_.com.histmersion.api.automation.Stalls.Facts.Draining(true)) then
       (_root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Drain), _root_.com.histmersion.api.automation.Stalls.Stall.Action("the agents are draining: nothing new starts"), _root_.com.histmersion.api.automation.Stalls.Stall.Why("histmersion agent autopilot undrain"))
     else if f.approvals.nonEmpty then
