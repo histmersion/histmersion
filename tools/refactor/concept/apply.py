@@ -41,6 +41,12 @@ RENDERER = re.compile(r'(Markdown|Export|Render)')
 POSITIONAL = re.compile(r'(Result|Part\d+|Arg\d+|Raw|Str|Value)$')
 PURE_KEPT = {f for f, r in rows.items() if r['pure'] and r['rule'] == 'keep' and f not in second}
 why = collections.Counter(); redecide = []; chain = {}
+KERNEL = {}
+if os.path.exists(f'{OUT}/concepts-kernel.txt'):
+    for l in open(f'{OUT}/concepts-kernel.txt'):
+        m = re.match(r'(\S+) \((.*)\)', l)
+        if m:
+            KERNEL[m.group(1)] = m.group(2)
 YEAR = 'com.histmersion.api.catalogue.Year'
 table, new = {}, collections.defaultdict(collections.Counter)
 for f, d in raw.items():
@@ -168,6 +174,13 @@ for t in list(newbase):
     if t not in idx0:
         continue
     b = newbase.pop(t)
+    if t in KERNEL:
+        if KERNEL[t] == b:
+            reused += 1; continue
+        for f, v in list(table.items()):
+            if v == t:
+                del table[f]
+        why['kernel target with another base'] += 1; continue
     if t in rows and t in PURE_KEPT and rows[t]['base'] == b:
         t2 = t; reused += 1
     else:
@@ -218,9 +231,9 @@ for path, fs in byPath.items():
             o2 = re.match(r'(\s*).*\]\s*(:?)\s*$', ls[i + 1])
             if fq in fs and o2 and not o2.group(2):
                 sp, n = m.group(1), m.group(2); t = table[fq]
-                if fq in second and t != 'native':
+                if fq in second and t != 'native' and rows[fq]['rule'] == 'keep':
                     out += [f'{sp}type {n} = {t}', f'{sp}val {n}: _root_.{t}.type = _root_.{t}']; aliased += 1
-                elif fq in second:
+                elif fq in second and rows[fq]['rule'] == 'keep':
                     b = PLAIN.get(rows[fq]['base'], rows[fq]['base'])
                     out += [f'{sp}type {n} = {b}', f'{sp}object {n}:', f'{sp}  inline def apply(v: {b}): {b} = v']; aliased += 1
                 else:
