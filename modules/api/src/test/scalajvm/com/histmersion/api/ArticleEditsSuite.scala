@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
 import com.histmersion.api.research.Article.Edits.*
 
 /** Edits anchored on an article's own text: the four operations, the anchor rules (exactly once, whitespace

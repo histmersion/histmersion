@@ -83,12 +83,12 @@ class WriteSuite extends munit.FunSuite:
   // ── tags: add / remove / replace ─────────────────────────────────────────────────────────────
   test("tags: remove drops, add appends, both dedupe and keep order"):
     val p = ListPatch(add = List(com.histmersion.api.Write.ListItem("sea-peoples"), com.histmersion.api.Write.ListItem("adna")), remove = List(com.histmersion.api.Write.ListItem("yamnaya")))
-    val out = Write.applyList(existing.tags, p)
+    val out = Write.applyList(existing.tags.map(t => com.histmersion.api.Write.ListItem(t.value)), p)
     assertEquals(out, List("adna", "sea-peoples"))
 
   test("tags: replace is the new baseline, then remove and add apply to it"):
     val p = ListPatch(add = List(com.histmersion.api.Write.ListItem("c")), remove = List(com.histmersion.api.Write.ListItem("b")), replace = Some(List(com.histmersion.api.Write.ListItem("a"), com.histmersion.api.Write.ListItem("b"))))
-    assertEquals(Write.applyList(existing.tags, p), List("a", "c"))
+    assertEquals(Write.applyList(existing.tags.map(t => com.histmersion.api.Write.ListItem(t.value)), p), List("a", "c"))
 
   test("tags: removing something that was also added removes it (remove wins)"):
     assertEquals(Write.applyList(List(com.histmersion.api.Write.ListItem("x")), ListPatch(add = List(com.histmersion.api.Write.ListItem("y")), remove = List(com.histmersion.api.Write.ListItem("y")))), List("x"))
@@ -372,7 +372,7 @@ class WriteSuite extends munit.FunSuite:
   // #745: {"doi":null} decoded to "absent" and was silently ignored
   test("metadata: an explicit null clears a nullable field; absent leaves it alone"):
     import io.circe.parser.decode
-    val ex = existing.modify(_.calibreId).setTo(Some("1805"))
+    val ex = existing.modify(_.calibreId).setTo(Some(com.histmersion.api.library.Source.CalibreId("1805")))
     val p = decode[Source.Patch](
       """{"metadata":{"doi":null,"venue":null,"year":null,"provenance":null,"calibreId":null}}"""
     ).toOption.get

@@ -77,7 +77,7 @@ class StorageSuite extends munit.FunSuite:
           e(Storage.Entry.Key("logs"), Some(Storage.Entry.Path("/d/logs")), com.histmersion.api.ByteCount(GB / 2), shrinkOf(com.histmersion.api.maintenance.Storage.Entry.Key("logs"), com.histmersion.api.maintenance.Storage.Advice.Keep(5)))
         )
       ),
-      volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(500 * GB), com.histmersion.api.ByteCount(4 * GB)), Storage.Volume("/other", com.histmersion.api.ByteCount(100 * GB), com.histmersion.api.ByteCount(50 * GB)))
+      volumes = List(Storage.Volume(vol, com.histmersion.api.ByteCount(500 * GB), com.histmersion.api.ByteCount(4 * GB)), Storage.Volume(Storage.Volume.Id("/other"), com.histmersion.api.ByteCount(100 * GB), com.histmersion.api.ByteCount(50 * GB)))
     )
     val hints = Storage.hints(r)
     assertEquals(hints.size, 1, hints)

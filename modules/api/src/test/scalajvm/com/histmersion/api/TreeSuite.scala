@@ -123,7 +123,7 @@ class TreeSuite extends munit.FunSuite:
 
   test("finer TIME children never report an overlap (spanning two buckets is the normal case)"):
     val t = Tree.timeTree(List(row(TreeRow.Key("a"), Year(-1550), Year(-1450))), Tree.TimeTreeFrom(-12000), Tree.TimeTreeTo(-500), Tree.TimeTreeDepth(3))
-    assert(t.forall(_.overlap == 0))
+    assert(t.forall(_.overlap.value == 0))
 
   // ── the region axis ──────────────────────────────────────────────────────────────────────────
 

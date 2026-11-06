@@ -36,7 +36,7 @@ class LintSuite extends munit.FunSuite:
     )
 
   test("an unknown rule is an error, never a silently clean report"):
-    val e = Lint.select(List(com.histmersion.api.checks.Lint.Rule.Name("no-findings"), com.histmersion.api.checks.Lint.Rule.Name("no-vibes"))).left.map(_.value).getOrElse("")
+    val e = Lint.select(List(com.histmersion.api.checks.Lint.Rule.Name("no-findings"), com.histmersion.api.checks.Lint.Rule.Name("no-vibes"))).fold(_.value, _ => "")
     assert(e.contains("no-vibes"), e)
     assert(e.contains("no-findings"), "the error lists the known rules")
 

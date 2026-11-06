@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
 import sttp.tapir.AnyEndpoint
 
 import java.nio.file.{Files, Path}

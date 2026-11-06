@@ -229,7 +229,7 @@ class WireSnapshotSuite extends munit.FunSuite:
       "briefResults" -> SearchMarkdown.briefResults(result),
       "briefResults empty" -> SearchMarkdown.briefResults(SearchResult(com.histmersion.api.RowCount(0), Nil)),
       "sourceFindingsOnly" -> SourcesMarkdown.sourceFindingsOnly(
-        Vector(finding, finding.modify(_.claim).setTo("Zq claim two."))
+        Vector(finding, finding.modify(_.claim).setTo(com.histmersion.api.library.Finding.Claim("Zq claim two.")))
       ),
       "sourceFindingsOnly empty" -> SourcesMarkdown.sourceFindingsOnly(Vector.empty),
       "graph" -> SourcesMarkdown.graph(graph),
@@ -309,7 +309,7 @@ class WireSnapshotSuite extends munit.FunSuite:
         Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("done"), com.histmersion.api.backup.Backup.Status.DurationMs(1500), Some(com.histmersion.api.ByteCount(4096)), Some(com.histmersion.api.Sha256("cd" * 32)), None, List(com.histmersion.api.backup.Backup.Result.Pruned("old.dump")))
       ),
       "backupStatus failed" -> Markdown.backupStatus(Backup.Status(com.histmersion.api.backup.Backup.Status.File("zq.dump"), com.histmersion.api.backup.Backup.State.Wire("failed"), com.histmersion.api.backup.Backup.Status.DurationMs(10), error = Some(com.histmersion.api.backup.Backup.Status.Error("zq error")))),
-      "event" -> event.markdown,
+      "event" -> event.markdown.value,
       "place" -> PlacesMarkdown.place(place),
       "event json" -> event.asJson.spaces2,
       "place json" -> place.asJson.spaces2,
@@ -329,9 +329,9 @@ class WireSnapshotSuite extends munit.FunSuite:
         .set(SkippedPeriod.SkippedCount, com.histmersion.api.catalogue.Period.ImportResult.SkippedCount(2))
         .set(com.histmersion.api.exchange.ExchangeJobKinds.PlanHash, Some(com.histmersion.api.exchange.MergePlan.PlanHash("zq-hash")))
         .set(VacuumPlan.Detail, Some(VacuumPlan(analyze = VacuumPlan.Analyze(true), tables = List(VacuumPlan.Tables("sources")))))
-        .set(com.histmersion.api.media.ImportJobKinds.Media, Some("a media run"))
-        .set(com.histmersion.api.catalogue.EventsJobKinds.Catalogue, Some("zq-catalogue"))
-        .set(JobDetail.Purpose, Some("zq_alpha_2001"))
+        .set(com.histmersion.api.media.ImportJobKinds.Media, Some(com.histmersion.api.jobs.JobKinds.Subject("a media run")))
+        .set(com.histmersion.api.catalogue.EventsJobKinds.Catalogue, Some(com.histmersion.api.jobs.JobKinds.Subject("zq-catalogue")))
+        .set(JobDetail.Purpose, Some(com.histmersion.api.jobs.JobKinds.Subject("zq_alpha_2001")))
         .asJson
         .spaces2
     )

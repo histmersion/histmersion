@@ -53,7 +53,7 @@ class AcquireChecksSuite extends munit.FunSuite:
     )
     assert(
       AcquireChecksMarkdown
-        .line(s.modify(_.note).setTo(Some("held while the autopilot drains")))
+        .line(s.modify(_.note).setTo(Some(com.histmersion.api.library.Acquire.Checks.RecheckStatus.Note("held while the autopilot drains"))))
         .endsWith("(held while the autopilot drains)")
     )
     assertEquals(

@@ -48,7 +48,7 @@ class MarkdownSuite extends munit.FunSuite:
 
   test("notes are rendered under a Notes heading, after the summary and before the findings"):
     val md =
-      SourcesMarkdown.source(detail.modify(_.notes).setTo(Some("  Our article about it.  ")), Vector(finding), fullText = false)
+      SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(com.histmersion.api.library.Source.Notes("  Our article about it.  "))), Vector(finding), fullText = false)
     assert(md.contains("## Notes\n\nOur article about it."), md)
     assert(md.indexOf("Systems collapse.") < md.indexOf("## Notes"), md)
     assert(md.indexOf("## Notes") < md.indexOf("## Findings (1)"), md)
@@ -56,14 +56,14 @@ class MarkdownSuite extends munit.FunSuite:
   test("no notes column, no heading"):
     val md = SourcesMarkdown.source(detail, Vector(finding), fullText = false)
     assert(!md.contains("## Notes"), md)
-    assertEquals(SourcesMarkdown.source(detail.modify(_.notes).setTo(Some("   ")), Vector.empty, false).contains("Notes"), false)
+    assertEquals(SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(com.histmersion.api.library.Source.Notes("   "))), Vector.empty, false).contains("Notes"), false)
 
   test("notes come before the full text, which stays last"):
-    val md = SourcesMarkdown.source(detail.modify(_.notes).setTo(Some("N")), Vector.empty, fullText = true)
+    val md = SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(com.histmersion.api.library.Source.Notes("N"))), Vector.empty, fullText = true)
     assert(md.indexOf("## Notes") < md.indexOf("BODY TEXT"), md)
 
   test("the header still carries the metadata, topics, regions and DOI"):
-    val md = SourcesMarkdown.source(detail.modify(_.notes).setTo(Some("N")), Vector.empty, fullText = false)
+    val md = SourcesMarkdown.source(detail.modify(_.notes).setTo(Some(com.histmersion.api.library.Source.Notes("N"))), Vector.empty, fullText = false)
     assert(md.contains("# 1177 BC"), md)
     assert(md.contains("[Eric H. Cline](/#author=Eric%20H.%20Cline)"), md)
     assert(md.contains("2014 · PUP · current · 1300 BCE–1100 BCE"), md)

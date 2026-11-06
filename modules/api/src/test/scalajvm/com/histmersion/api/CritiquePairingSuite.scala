@@ -119,7 +119,7 @@ class CritiquePairingSuite extends munit.FunSuite:
     assertEquals(repair(Article.Body("Alpha answers West's reading [[a2000_x]]." + cited), shared)._2, Nil)
     // with the year beside the name it means that one
     val dated = hits(Article.Body("Alpha answers West (2011) on the date [[a2000_x]]." + cited), r, es, w)
-    assertEquals(dated.filter(_.mechanical).map(_.missing), List("west2011_making"))
+    assertEquals(dated.filter(_.mechanical.value).map(_.missing), List("west2011_making"))
     // …but code never brings in a source the article cites nowhere: that is a writer's call
     val fresh = hits(com.histmersion.api.research.Article.Body("Alpha answers West (2011) on the date [[a2000_x]]."), r, es, w)
     assertEquals(fresh.map(h => (h.missing, h.mechanical)), List(("west2011_making", false)))

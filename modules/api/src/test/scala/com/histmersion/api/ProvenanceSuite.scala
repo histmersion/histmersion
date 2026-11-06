@@ -1,5 +1,6 @@
 package com.histmersion.api
 
+import com.histmersion.testsupport.ComparedByValue.given
 /** A provenance is free text; a file brought in from elsewhere classifies as a book. */
 
 import com.histmersion.api.library.Provenance
