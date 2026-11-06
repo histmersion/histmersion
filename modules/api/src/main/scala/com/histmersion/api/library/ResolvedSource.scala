@@ -13,8 +13,10 @@ final case class ResolvedSource(
     status: com.histmersion.api.library.Source.Status
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def ref: Source.Ref = Source.Ref(com.histmersion.api.library.Citekey(citekey), (doi).map(com.histmersion.api.library.Doi.apply), (authors).map((com).histmersion.api.library.AuthorName.apply), (year).map(com.histmersion.api.catalogue.Year.apply), com.histmersion.api.library.Title((title).value), status)
+  def ref: Source.Ref = Source.Ref(com.histmersion.api.library.Citekey(citekey), (doi).map(com.histmersion.api.library.Doi.apply), (authors).map((com).value.histmersion.api.library.AuthorName.apply), (year).map(com.histmersion.api.catalogue.Year.apply), com.histmersion.api.library.Title((title).value), status)
 
 object ResolvedSource:
   type Authors = Authors.T
   object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Title = com.histmersion.api.library.Title
+  val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title

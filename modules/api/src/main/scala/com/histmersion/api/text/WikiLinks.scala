@@ -10,6 +10,8 @@ object WikiLinks:
 
   type NormalizeRaw = NormalizeRaw.T
   object NormalizeRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RewriteLinksRenderArg3 = com.histmersion.api.text.WikiLinks.Alias
+  val RewriteLinksRenderArg3: _root_.com.histmersion.api.text.WikiLinks.Alias.type = _root_.com.histmersion.api.text.WikiLinks.Alias
 
   private val Citekey =
     """^(?=.*(?:_|\d{4}))[a-z][a-z0-9_]*$""".r
@@ -19,7 +21,7 @@ object WikiLinks:
   private val Link = """(!?)\\?\[\\?\[([^\[\]\n]+?)\\?\]\\?\]""".r
 
   /** Whether a target reads as a citekey (a four-digit year or an underscore in it) rather than an article's slug. */
-  def isCitekeyShaped(s: String): Boolean = (Citekey.matches((s)))
+  def isCitekeyShaped(s: String): Boolean = (Citekey.matches((s).value))
 
   /** One link in a text: where it is, what was written, whether it is an embed or escaped, and its target. */
   final case class Occurrence(
@@ -89,7 +91,7 @@ object WikiLinks:
           case -1 => (raw, None)
           case i  => (raw.take(i), Some(raw.drop(i + 1).trim))
         java.util.regex.Matcher.quoteReplacement(normalize(_root_.com.histmersion.api.text.WikiLinks.NormalizeRaw(targetPart)) match
-          case Some(t) if m.group(1).isEmpty => (render(_root_.com.histmersion.api.text.WikiLinks.Occurrence.Target((t).value), (explicit).map(refactorValue => _root_.com.histmersion.api.text.WikiLinks.Alias(refactorValue)), _root_.com.histmersion.api.text.WikiLinks.Alias(targetPart.takeWhile(_ != '#').trim)))
+          case Some(t) if m.group(1).isEmpty => (render(_root_.com.histmersion.api.text.WikiLinks.Occurrence.Target((t).value), (explicit).map(refactorValue => _root_.com.histmersion.api.text.WikiLinks.Alias(refactorValue)), _root_.com.histmersion.api.text.WikiLinks.Alias(targetPart.takeWhile(_ != '#').trim))).value
           case _                             => m.matched)
     ))
 

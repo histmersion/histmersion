@@ -53,4 +53,4 @@ object EventGeometry:
             case None     => Left(_root_.com.histmersion.api.catalogue.EventGeometry.Problem(s"geometry has no \"type\": expected an object such as $Example"))
 
   // a plain decimal, never `1.0E-4`, and never with a locale's comma
-  private def fmt(d: Double): String = (BigDecimal((d)).bigDecimal.stripTrailingZeros.toPlainString)
+  private def fmt(d: Double): String = (BigDecimal((d).value).bigDecimal.stripTrailingZeros.toPlainString)

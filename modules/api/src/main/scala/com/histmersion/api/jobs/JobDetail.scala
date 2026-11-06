@@ -27,6 +27,10 @@ object JobDetail:
   type PurposeText = PurposeText.T
   object PurposeText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Purpose = PurposeValue
+  type PurposeValue = com.histmersion.api.jobs.JobDetail.PurposeText
+  val PurposeValue: _root_.com.histmersion.api.jobs.JobDetail.PurposeText.type = _root_.com.histmersion.api.jobs.JobDetail.PurposeText
+  type SubjectResult = com.histmersion.api.jobs.JobKinds.Subject
+  val SubjectResult: _root_.com.histmersion.api.jobs.JobKinds.Subject.type = _root_.com.histmersion.api.jobs.JobKinds.Subject
 
   type ValuesKey = ValuesKey.T
   object ValuesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

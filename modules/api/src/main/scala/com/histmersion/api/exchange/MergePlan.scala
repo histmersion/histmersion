@@ -53,3 +53,6 @@ object MergePlan:
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
+  object Request:
+    type Bundle = com.histmersion.api.exchange.Bundle.Name
+    val Bundle: _root_.com.histmersion.api.exchange.Bundle.Name.type = _root_.com.histmersion.api.exchange.Bundle.Name

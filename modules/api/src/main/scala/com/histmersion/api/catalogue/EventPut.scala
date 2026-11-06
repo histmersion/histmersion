@@ -24,5 +24,7 @@ final case class EventPut(
 object EventPut:
 
 
+  type Geometry = com.histmersion.api.catalogue.EventPatch.Geometry
+  val Geometry: _root_.com.histmersion.api.catalogue.EventPatch.Geometry.type = _root_.com.histmersion.api.catalogue.EventPatch.Geometry
 
   given Codec.AsObject[EventPut] = StrictJson.codec(KindlingsCodecAsObject.derived[EventPut])

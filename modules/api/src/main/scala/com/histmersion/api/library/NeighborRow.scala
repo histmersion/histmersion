@@ -14,3 +14,6 @@ final case class NeighborRow(
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
 
+object NeighborRow:
+  type Direction = com.histmersion.api.library.ContradictionRow.Direction.Wire
+  val Direction: _root_.com.histmersion.api.library.ContradictionRow.Direction.Wire.type = _root_.com.histmersion.api.library.ContradictionRow.Direction.Wire

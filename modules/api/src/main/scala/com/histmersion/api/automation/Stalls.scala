@@ -33,6 +33,18 @@ object Stalls:
     type Slug = Slug.T
     object Slug extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+    type Title = com.histmersion.api.automation.Stalls.Facts.Title
+    val Title: _root_.com.histmersion.api.automation.Stalls.Facts.Title.type = _root_.com.histmersion.api.automation.Stalls.Facts.Title
+    type Status = com.histmersion.api.automation.Stalls.Facts.Status
+    val Status: _root_.com.histmersion.api.automation.Stalls.Facts.Status.type = _root_.com.histmersion.api.automation.Stalls.Facts.Status
+    type LastProgress = com.histmersion.api.automation.Stalls.Facts.LastProgress
+    val LastProgress: _root_.com.histmersion.api.automation.Stalls.Facts.LastProgress.type = _root_.com.histmersion.api.automation.Stalls.Facts.LastProgress
+    type IdleDays = com.histmersion.api.automation.Stalls.Facts.IdleDays
+    val IdleDays: _root_.com.histmersion.api.automation.Stalls.Facts.IdleDays.type = _root_.com.histmersion.api.automation.Stalls.Facts.IdleDays
+    type Code = Code.T
+    object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Action = Action.T
     object Action extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -40,6 +52,8 @@ object Stalls:
   final case class ReasonCount(code: ReasonCount.Code, count: ReasonCount.Count) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
   object ReasonCount:
+    type Code = com.histmersion.api.automation.Stalls.Stall.Code
+    val Code: _root_.com.histmersion.api.automation.Stalls.Stall.Code.type = _root_.com.histmersion.api.automation.Stalls.Stall.Code
     type Count = Count.T
     object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -79,6 +93,10 @@ object Stalls:
   final case class SchedWait(code: SchedWait.Code, why: SchedWait.Why, position: SchedWait.Position = _root_.com.histmersion.api.automation.Stalls.SchedWait.Position(0))
 
   object SchedWait:
+    type Code = com.histmersion.api.automation.Stalls.Stall.Code
+    val Code: _root_.com.histmersion.api.automation.Stalls.Stall.Code.type = _root_.com.histmersion.api.automation.Stalls.Stall.Code
+    type Why = com.histmersion.api.automation.Stalls.Stall.Why
+    val Why: _root_.com.histmersion.api.automation.Stalls.Stall.Why.type = _root_.com.histmersion.api.automation.Stalls.Stall.Why
     type Position = Position.T
     object Position extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -105,9 +123,21 @@ object Stalls:
     object ApprovalsAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ApprovalsNote = ApprovalsNote.T
     object ApprovalsNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Slug = com.histmersion.api.research.ReviewGoal.Slug
+    val Slug: _root_.com.histmersion.api.research.ReviewGoal.Slug.type = _root_.com.histmersion.api.research.ReviewGoal.Slug
+    type Title = Title.T
+    object Title extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = Status.T
+    object Status extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LastProgress = LastProgress.T
+    object LastProgress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type IdleDays = IdleDays.T
+    object IdleDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ApprovalsPart1 = ApprovalsPart1.T
     object ApprovalsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
+    type ApprovalsPart2 = com.histmersion.api.automation.Stalls.Facts.ApprovalsNote
+    val ApprovalsPart2: _root_.com.histmersion.api.automation.Stalls.Facts.ApprovalsNote.type = _root_.com.histmersion.api.automation.Stalls.Facts.ApprovalsNote
     type PersonHeld = PersonHeld.T
     object PersonHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Paused = Paused.T
@@ -129,7 +159,7 @@ object Stalls:
 
   def classify(f: Facts): (com.histmersion.api.automation.Stalls.Stall.Code, com.histmersion.api.automation.Stalls.Stall.Action, com.histmersion.api.automation.Stalls.Stall.Why) =
     val g = f.slug
-    def waitOf(p: SchedWait => Boolean) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)) })
+    def waitOf(p: SchedWait => Boolean) = f.waits.find({ val refactorFunction2 = p; (refactorValue2) => (refactorFunction2(refactorValue2)).value })
     if ((f.draining) == _root_.com.histmersion.api.automation.Stalls.Facts.Draining(true)) then
       (_root_.com.histmersion.api.automation.Stalls.Stall.Code(Code.Drain), _root_.com.histmersion.api.automation.Stalls.Stall.Action("the agents are draining: nothing new starts"), _root_.com.histmersion.api.automation.Stalls.Stall.Why("histmersion agent autopilot undrain"))
     else if f.approvals.nonEmpty then

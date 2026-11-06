@@ -14,6 +14,8 @@ object SkippedPeriod:
 
   /** The period presets an init job skipped (the first of them), in its detail. */
   type SkippedCount = SkippedCountValue
+  type SkippedCountValue = com.histmersion.api.catalogue.SkippedPeriod.SkippedCountCount
+  val SkippedCountValue: _root_.com.histmersion.api.catalogue.SkippedPeriod.SkippedCountCount.type = _root_.com.histmersion.api.catalogue.SkippedPeriod.SkippedCountCount
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -27,7 +27,7 @@ object PluginsMarkdown:
     val plugins = r.plugins.flatMap { p =>
       s"- ${line(p)}" :: (p.settings.map(s => s"    ${s.key} = ${s.value}") ++ p.warnings.map(w => s"    warning: $w"))
     }
-    val verdict = if ((r.ok) == (true)) && checks.forall((refactorCallback => (refactorCallback._1))) then "self-check passed" else "self-check FAILED"
+    val verdict = if ((r.ok) == (true)) && checks.forall((refactorCallback => (refactorCallback._1).value)) then "self-check passed" else "self-check FAILED"
     ((List(
       "# Histmersion self-check",
       "",

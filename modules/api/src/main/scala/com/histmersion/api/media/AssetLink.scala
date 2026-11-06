@@ -23,6 +23,8 @@ object AssetLink:
 
   type Id = Id.T
   object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Relation = com.histmersion.api.media.AssetRelation.Wire
+  val Relation: _root_.com.histmersion.api.media.AssetRelation.Wire.type = _root_.com.histmersion.api.media.AssetRelation.Wire
   type Xywh = Xywh.T
   object Xywh extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Notes = Notes.T

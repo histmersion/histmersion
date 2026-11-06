@@ -343,6 +343,14 @@ object Goal:
     given Codec.AsObject[Put] = StrictJson.codec(KindlingsCodecAsObject.derived[Put])
 
   object Stages:
+    type AllPart1 = com.histmersion.api.automation.Goal.Stage
+    val AllPart1: _root_.com.histmersion.api.automation.Goal.Stage.type = _root_.com.histmersion.api.automation.Goal.Stage
+    type AllPart2 = com.histmersion.api.automation.Goal.StageMeaning
+    val AllPart2: _root_.com.histmersion.api.automation.Goal.StageMeaning.type = _root_.com.histmersion.api.automation.Goal.StageMeaning
+    type MeaningResult = com.histmersion.api.automation.Goal.StageMeaning
+    val MeaningResult: _root_.com.histmersion.api.automation.Goal.StageMeaning.type = _root_.com.histmersion.api.automation.Goal.StageMeaning
+    type MeaningStatus = com.histmersion.api.automation.Goal.Stage
+    val MeaningStatus: _root_.com.histmersion.api.automation.Goal.Stage.type = _root_.com.histmersion.api.automation.Goal.Stage
 
     val all: scala.List[(com.histmersion.api.automation.Goal.Stage, com.histmersion.api.automation.Goal.StageMeaning)] = scala.List(
       { val refactorTuple6 = com.histmersion.api.automation.Goal.Status.Planned -> "created; nothing works on it yet"; (_root_.com.histmersion.api.automation.Goal.Stage(refactorTuple6._1), _root_.com.histmersion.api.automation.Goal.StageMeaning(refactorTuple6._2)) },

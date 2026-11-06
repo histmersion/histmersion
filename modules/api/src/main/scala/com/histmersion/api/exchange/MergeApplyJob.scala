@@ -25,6 +25,8 @@ object MergeApplyJob:
 
 
   type InterruptedText = InterruptedTextValue
+  type InterruptedTextValue = com.histmersion.api.exchange.MergeApplyJob.InterruptedMessage
+  val InterruptedTextValue: _root_.com.histmersion.api.exchange.MergeApplyJob.InterruptedMessage.type = _root_.com.histmersion.api.exchange.MergeApplyJob.InterruptedMessage
   type OfBundle = _root_.com.histmersion.api.exchange.Bundle.Name
   val OfBundle: _root_.com.histmersion.api.exchange.Bundle.Name.type = _root_.com.histmersion.api.exchange.Bundle.Name
   type OfPlanHash = _root_.com.histmersion.api.exchange.MergePlan.PlanHash
@@ -34,6 +36,12 @@ object MergeApplyJob:
   type OfError = _root_.com.histmersion.api.exchange.MergeApplyJob.Error
   val OfError: _root_.com.histmersion.api.exchange.MergeApplyJob.Error.type = _root_.com.histmersion.api.exchange.MergeApplyJob.Error
 
+  type Job = com.histmersion.api.SpatialHierarchyResult.Job.Id
+  val Job: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id
+  type Bundle = com.histmersion.api.exchange.Bundle.Name
+  val Bundle: _root_.com.histmersion.api.exchange.Bundle.Name.type = _root_.com.histmersion.api.exchange.Bundle.Name
+  type PlanHash = com.histmersion.api.exchange.MergePlan.PlanHash
+  val PlanHash: _root_.com.histmersion.api.exchange.MergePlan.PlanHash.type = _root_.com.histmersion.api.exchange.MergePlan.PlanHash
   type ElapsedMs = ElapsedMs.T
   object ElapsedMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Error = Error.T

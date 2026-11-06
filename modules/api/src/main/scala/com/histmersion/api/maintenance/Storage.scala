@@ -21,6 +21,8 @@ object Storage:
 
 
   type DefaultLowFreeBytes = DefaultLowFreeBytesValue
+  type DefaultLowFreeBytesValue = com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber
+  val DefaultLowFreeBytesValue: _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber.type = _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber
 
   val DefaultLowFreeBytes: com.histmersion.api.maintenance.Storage.DefaultLowFreeBytes = _root_.com.histmersion.api.maintenance.Storage.DefaultLowFreeBytesNumber(10L * 1000 * 1000 * 1000)
 

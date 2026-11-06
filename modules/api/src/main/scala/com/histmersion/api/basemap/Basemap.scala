@@ -107,6 +107,8 @@ object Basemap:
   object DropRule:
     type Spec = Spec.T
     object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Layer = com.histmersion.api.basemap.Basemap.Layer.Wire
+    val Layer: _root_.com.histmersion.api.basemap.Basemap.Layer.Wire.type = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire
     type Whole = Whole.T
     object Whole extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Drop = Drop.T
@@ -232,12 +234,20 @@ object Basemap:
   )
 
   object FetchQuery:
+    type Layer = com.histmersion.api.basemap.Basemap.Layer.Wire
+    val Layer: _root_.com.histmersion.api.basemap.Basemap.Layer.Wire.type = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire
+    type MaxZoom = com.histmersion.api.basemap.Basemap.Focus.MaxZoom
+    val MaxZoom: _root_.com.histmersion.api.basemap.Basemap.Focus.MaxZoom.type = _root_.com.histmersion.api.basemap.Basemap.Focus.MaxZoom
     type TerrainMaxZoom = TerrainMaxZoom.T
     object TerrainMaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Bbox = com.histmersion.api.basemap.Basemap.Focus.Bbox
+    val Bbox: _root_.com.histmersion.api.basemap.Basemap.Focus.Bbox.type = _root_.com.histmersion.api.basemap.Basemap.Focus.Bbox
     type DryRun = DryRun.T
     object DryRun extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type KeepAll = KeepAll.T
     object KeepAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Focus = com.histmersion.api.basemap.Basemap.Focus.Name
+    val Focus: _root_.com.histmersion.api.basemap.Basemap.Focus.Name.type = _root_.com.histmersion.api.basemap.Basemap.Focus.Name
 
   final case class Focus(
       name: Focus.Name,
@@ -254,6 +264,20 @@ object Basemap:
   object Focus:
     type Spec = Spec.T
     object Spec extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = com.histmersion.api.basemap.Basemap.LayerInfo.File
+    val File: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.File.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.File
+    type Bbox = Bbox.T
+    object Bbox extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinZoom = com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom
+    val MinZoom: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.MinZoom
+    type MaxZoom = MaxZoom.T
+    object MaxZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tiles = com.histmersion.api.basemap.Basemap.LayerInfo.Tiles
+    val Tiles: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Tiles.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Tiles
+    type FetchedAt = com.histmersion.api.basemap.Basemap.LayerInfo.FetchedAt
+    val FetchedAt: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.FetchedAt.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.FetchedAt
 
 
 
@@ -315,12 +339,26 @@ object Basemap:
 
   object LayerInfo:
 
+    type Layer = com.histmersion.api.basemap.Basemap.Layer.Wire
+    val Layer: _root_.com.histmersion.api.basemap.Basemap.Layer.Wire.type = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire
     type Present = Present.T
     object Present extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type File = File.T
+    object File extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MinZoom = MinZoom.T
+    object MinZoom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = com.histmersion.api.basemap.Basemap.Focus.MaxZoom
+    val MaxZoom: _root_.com.histmersion.api.basemap.Basemap.Focus.MaxZoom.type = _root_.com.histmersion.api.basemap.Basemap.Focus.MaxZoom
+    type Bbox = com.histmersion.api.basemap.Basemap.Focus.Bbox
+    val Bbox: _root_.com.histmersion.api.basemap.Basemap.Focus.Bbox.type = _root_.com.histmersion.api.basemap.Basemap.Focus.Bbox
+    type Tiles = Tiles.T
+    object Tiles extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type TileType = TileType.T
     object TileType extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Source = Source.T
     object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type FetchedAt = FetchedAt.T
+    object FetchedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Version = Version.T
     object Version extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Attribution = Attribution.T
@@ -348,6 +386,12 @@ object Basemap:
   object OnDemand:
     type Enabled = Enabled.T
     object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MaxZoom = com.histmersion.api.basemap.Basemap.Focus.MaxZoom
+    val MaxZoom: _root_.com.histmersion.api.basemap.Basemap.Focus.MaxZoom.type = _root_.com.histmersion.api.basemap.Basemap.Focus.MaxZoom
+    type Dir = Dir.T
+    object Dir extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Tiles = com.histmersion.api.basemap.Basemap.LayerInfo.Tiles
+    val Tiles: _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Tiles.type = _root_.com.histmersion.api.basemap.Basemap.LayerInfo.Tiles
     type MaxBytes = MaxBytes.T
     object MaxBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type OfflineUntil = OfflineUntil.T
@@ -357,12 +401,21 @@ object Basemap:
 
   final case class Region(name: Region.Name, bbox: Region.Bbox) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
+  object Region:
+    type Name = com.histmersion.api.basemap.Basemap.Focus.Name
+    val Name: _root_.com.histmersion.api.basemap.Basemap.Focus.Name.type = _root_.com.histmersion.api.basemap.Basemap.Focus.Name
+    type Bbox = com.histmersion.api.basemap.Basemap.Focus.Bbox
+    val Bbox: _root_.com.histmersion.api.basemap.Basemap.Focus.Bbox.type = _root_.com.histmersion.api.basemap.Basemap.Focus.Bbox
 
 
 
   final case class RemoveQuery(layer: RemoveQuery.Layer = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire("all"), focus: Option[RemoveQuery.Focus] = None, cache: RemoveQuery.Cache = _root_.com.histmersion.api.basemap.Basemap.RemoveQuery.Cache(false))
 
   object RemoveQuery:
+    type Layer = com.histmersion.api.basemap.Basemap.Layer.Wire
+    val Layer: _root_.com.histmersion.api.basemap.Basemap.Layer.Wire.type = _root_.com.histmersion.api.basemap.Basemap.Layer.Wire
+    type Focus = com.histmersion.api.basemap.Basemap.Focus.Name
+    val Focus: _root_.com.histmersion.api.basemap.Basemap.Focus.Name.type = _root_.com.histmersion.api.basemap.Basemap.Focus.Name
     type Cache = Cache.T
     object Cache extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -394,6 +447,10 @@ object Basemap:
 
     type Available = Available.T
     object Available extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Dir = com.histmersion.api.basemap.Basemap.OnDemand.Dir
+    val Dir: _root_.com.histmersion.api.basemap.Basemap.OnDemand.Dir.type = _root_.com.histmersion.api.basemap.Basemap.OnDemand.Dir
+    type Bbox = com.histmersion.api.basemap.Basemap.Focus.Bbox
+    val Bbox: _root_.com.histmersion.api.basemap.Basemap.Focus.Bbox.type = _root_.com.histmersion.api.basemap.Basemap.Focus.Bbox
     type FetchCommand = FetchCommand.T
     object FetchCommand extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FreeBytes = FreeBytes.T
@@ -414,5 +471,7 @@ object Basemap:
   object StyleState:
     type Id = Id.T
     object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Name = Name.T
+    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Missing = Missing.T
     object Missing extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

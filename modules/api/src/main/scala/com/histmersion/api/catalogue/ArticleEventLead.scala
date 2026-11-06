@@ -22,13 +22,21 @@ object ArticleEventLead:
   object Markdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
+  type MarkdownResult = com.histmersion.api.catalogue.ArticleEventLead.Markdown
+  val MarkdownResult: _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown.type = _root_.com.histmersion.api.catalogue.ArticleEventLead.Markdown
 
+  type Label = com.histmersion.api.catalogue.CatalogRecord.Label
+  val Label: _root_.com.histmersion.api.catalogue.CatalogRecord.Label.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Label
+  type Kind = com.histmersion.api.catalogue.CatalogRecord.Kind
+  val Kind: _root_.com.histmersion.api.catalogue.CatalogRecord.Kind.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Kind
   type Years = Years.T
   object Years extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Size = Size.T
   object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FindingsNear = FindingsNear.T
   object FindingsNear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Provider = com.histmersion.api.catalogue.CatalogRecord.Provider
+  val Provider: _root_.com.histmersion.api.catalogue.CatalogRecord.Provider.type = _root_.com.histmersion.api.catalogue.CatalogRecord.Provider
 
   def mentioned(body: com.histmersion.api.catalogue.ArticleEventLead.Body, names: List[com.histmersion.api.catalogue.EventEntry.Names]): Boolean =
     val b = (body).value.toLowerCase(java.util.Locale.ROOT)

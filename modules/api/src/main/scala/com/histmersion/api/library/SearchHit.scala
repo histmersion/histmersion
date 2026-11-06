@@ -23,5 +23,13 @@ final case class SearchHit(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object SearchHit:
+  type Topics = com.histmersion.api.library.Source.Topics
+  val Topics: _root_.com.histmersion.api.library.Source.Topics.type = _root_.com.histmersion.api.library.Source.Topics
+  type Regions = com.histmersion.api.library.Source.Regions
+  val Regions: _root_.com.histmersion.api.library.Source.Regions.type = _root_.com.histmersion.api.library.Source.Regions
+  type Summary = com.histmersion.api.library.Source.Summary
+  val Summary: _root_.com.histmersion.api.library.Source.Summary.type = _root_.com.histmersion.api.library.Source.Summary
+  type Snippet = com.histmersion.api.library.Search.Snippet
+  val Snippet: _root_.com.histmersion.api.library.Search.Snippet.type = _root_.com.histmersion.api.library.Search.Snippet
   type MatchedHeading = MatchedHeading.T
   object MatchedHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

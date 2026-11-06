@@ -8,7 +8,7 @@ package com.histmersion.api.aliases
 import com.histmersion.api.exchange.Bundle
 object AliasKinds:
 
-  private def kind(noun: String, idWord: String): AliasKind = AliasKind(RecordNoun((noun)), KeyWord((idWord)))
+  private def kind(noun: String, idWord: String): AliasKind = AliasKind(RecordNoun((noun).value), KeyWord((idWord).value))
 
   val SourceRecords: AliasKind = kind(("source"), ("citekey"))
   val ArticleRecords: AliasKind = kind(("article"), ("slug"))

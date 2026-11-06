@@ -22,7 +22,11 @@ object Tree:
 
 
   type MaxDepth = MaxDepthValue
+  type MaxDepthValue = com.histmersion.api.library.Tree.MaxDepthCount
+  val MaxDepthValue: _root_.com.histmersion.api.library.Tree.MaxDepthCount.type = _root_.com.histmersion.api.library.Tree.MaxDepthCount
   type MaxSamples = MaxSamplesValue
+  type MaxSamplesValue = com.histmersion.api.library.Tree.MaxSamplesCount
+  val MaxSamplesValue: _root_.com.histmersion.api.library.Tree.MaxSamplesCount.type = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
   type TimeTimeDepth = _root_.com.histmersion.api.library.Tree.Depth
   val TimeTimeDepth: _root_.com.histmersion.api.library.Tree.Depth.type = _root_.com.histmersion.api.library.Tree.Depth
   type TimeTimeSamples = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
@@ -38,6 +42,8 @@ object Tree:
   type TimeLevelSamples = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
   val TimeLevelSamples: _root_.com.histmersion.api.library.Tree.MaxSamplesCount.type = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
   type SplitRatio = SplitRatioValue
+  type SplitRatioValue = com.histmersion.api.library.Tree.SplitRatioAmount
+  val SplitRatioValue: _root_.com.histmersion.api.library.Tree.SplitRatioAmount.type = _root_.com.histmersion.api.library.Tree.SplitRatioAmount
   type RegionTreeAsOf = _root_.com.histmersion.api.catalogue.Year
   val RegionTreeAsOf: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
   type RegionTreeDepth = _root_.com.histmersion.api.library.Tree.Depth
@@ -60,6 +66,12 @@ object Tree:
   val RegionTimeTreeRoot: _root_.com.histmersion.api.library.Tree.NodeId.type = _root_.com.histmersion.api.library.Tree.NodeId
   type RegionsAsOf = _root_.com.histmersion.api.catalogue.Year
   val RegionsAsOf: _root_.com.histmersion.api.catalogue.Year.type = _root_.com.histmersion.api.catalogue.Year
+  type RegionsDepth = com.histmersion.api.library.Tree.MaxDepthCount
+  val RegionsDepth: _root_.com.histmersion.api.library.Tree.MaxDepthCount.type = _root_.com.histmersion.api.library.Tree.MaxDepthCount
+  type RegionsSamples = com.histmersion.api.library.Tree.MaxSamplesCount
+  val RegionsSamples: _root_.com.histmersion.api.library.Tree.MaxSamplesCount.type = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
+  type SampleOfN = com.histmersion.api.library.Tree.MaxSamplesCount
+  val SampleOfN: _root_.com.histmersion.api.library.Tree.MaxSamplesCount.type = _root_.com.histmersion.api.library.Tree.MaxSamplesCount
 
   val MaxDepth: com.histmersion.api.library.Tree.MaxDepth = _root_.com.histmersion.api.library.Tree.MaxDepthCount(3)
 
@@ -232,7 +244,7 @@ object Tree:
         .filterNot(seen.contains)
         .map(id => (id, at(id)))
         .filter((_, mine) => mine.nonEmpty)
-        .sortBy((id, mine) => (-(distinct(mine)), byId.get(id).fold("")(_.label.toLowerCase), id))
+        .sortBy((id, mine) => (-(distinct(mine)).value, byId.get(id).fold("")(_.label.toLowerCase), id))
         .flatMap { (id, mine) =>
           if drawnAt.contains(id) then None
           else
@@ -318,7 +330,7 @@ object Tree:
   private def order(a: com.histmersion.api.catalogue.Year, b: com.histmersion.api.catalogue.Year): (com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year) = if a <= b then (_root_.com.histmersion.api.catalogue.Year((a).value), _root_.com.histmersion.api.catalogue.Year((b).value)) else (_root_.com.histmersion.api.catalogue.Year((b).value), _root_.com.histmersion.api.catalogue.Year((a).value))
 
   def parseBy(s: String): Option[List[String]] =
-    val parts = (s).split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList
+    val parts = (s).value.split(",").map(_.trim.toLowerCase).filter(_.nonEmpty).toList
     if parts.nonEmpty && parts.forall(p => p == KindTime || p == KindRegion) && parts == parts.distinct
     then Some((parts).map(refactorValue11 => (refactorValue11)))
     else None

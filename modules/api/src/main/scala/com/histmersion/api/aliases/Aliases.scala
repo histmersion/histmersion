@@ -10,6 +10,10 @@ object Aliases:
   object RuleText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Rule = RuleValue
+  type RuleValue = com.histmersion.api.aliases.Aliases.RuleText
+  val RuleValue: _root_.com.histmersion.api.aliases.Aliases.RuleText.type = _root_.com.histmersion.api.aliases.Aliases.RuleText
+  type RuleResult = com.histmersion.api.aliases.Aliases.RuleText
+  val RuleResult: _root_.com.histmersion.api.aliases.Aliases.RuleText.type = _root_.com.histmersion.api.aliases.Aliases.RuleText
 
   val Rule: com.histmersion.api.aliases.Aliases.Rule =
     _root_.com.histmersion.api.aliases.Aliases.RuleText("The old one stays an alias: every read and every write that names it (put, patch, delete, rename, a " +

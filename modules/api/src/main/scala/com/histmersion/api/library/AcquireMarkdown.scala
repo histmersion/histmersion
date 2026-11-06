@@ -5,7 +5,7 @@ import com.histmersion.api.given
 object AcquireMarkdown:
 
 
-  private def esc(s: String): String = ((s).replace("|", "\\|").replace("\n", " ").trim)
+  private def esc(s: String): String = ((s).value.replace("|", "\\|").replace("\n", " ").trim)
   private def cell(s: Option[String]): String = esc(s.getOrElse("—"))
   private def num(n: Option[Int]): String = (n.map(_.toString).getOrElse("—"))
 
@@ -35,7 +35,7 @@ object AcquireMarkdown:
           if flag.isEmpty then "—" else flag
         )
       }
-      s"### ${(r).count} work(s) for “${esc(r.query)}”\n\n" +
+      s"### ${(r).value.count} work(s) for “${esc(r.query)}”\n\n" +
         table(List("citekey", "title", "year", "authors", "cited", "doi", "notes"), rows) +
         "\n\n_Ingest one with `histmersion ingest <doi>`; `in db` means the corpus already has it._"
 
@@ -87,7 +87,7 @@ object AcquireMarkdown:
           x.citekey.map(_.value.toString).map(k => s"`$k`").getOrElse("—")
         )
       }
-      s"### ${(r).count} reference(s) of ${esc(r.target)} · backend ${r.backend}\n\n" +
+      s"### ${(r).value.count} reference(s) of ${esc(r.target)} · backend ${r.backend}\n\n" +
         table(List("reference", "year", "doi", "in corpus"), rows) +
         s"\n\n_${r.resolved} of ${r.count} resolve to stored sources; ${edgeNote(r)}._"
 
@@ -176,7 +176,7 @@ object AcquireMarkdown:
       val caveat = "\n\n_Proposed edge kinds are **proposed — verify by reading** the citing paper. " +
         "The classification is based on citation contexts and intents from Semantic Scholar, which " +
         "can be wrong (e.g. a paper that cites another to disagree may still be classified as `cites`)._"
-      s"### ${(r).count} paper(s) citing ${esc(r.target)} · via ${r.backend}\n\n" +
+      s"### ${(r).value.count} paper(s) citing ${esc(r.target)} · via ${r.backend}\n\n" +
         table(List("★", "title", "year", "intents", "proposed edge", "doi", "in corpus"), rows) +
         (if ctx.isEmpty then "" else "\n\n**Citation contexts**\n" + ctx.mkString("\n")) +
         applied + caveat
@@ -192,7 +192,7 @@ object AcquireMarkdown:
           esc(i.creator.mkString(", ")).take(40)
         )
       )
-      s"### ${(r).count} archive.org item(s) for “${esc(r.query)}”\n\n" +
+      s"### ${(r).value.count} archive.org item(s) for “${esc(r.query)}”\n\n" +
         table(List("identifier", "title", "year", "creator"), rows) +
         "\n\n_Check one with `histmersion archive info <id>` before importing._"
 

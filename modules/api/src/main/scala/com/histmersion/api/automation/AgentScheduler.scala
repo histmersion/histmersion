@@ -34,6 +34,8 @@ object AgentScheduler:
     object Manager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type JobType = com.histmersion.api.jobs.JobKinds.Wire
+    val JobType: _root_.com.histmersion.api.jobs.JobKinds.Wire.type = _root_.com.histmersion.api.jobs.JobKinds.Wire
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Why = Why.T
@@ -63,6 +65,8 @@ object AgentScheduler:
     object Manager extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Kind = Kind.T
     object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type JobType = com.histmersion.api.jobs.JobKinds.Wire
+    val JobType: _root_.com.histmersion.api.jobs.JobKinds.Wire.type = _root_.com.histmersion.api.jobs.JobKinds.Wire
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Priority = Priority.T
@@ -101,6 +105,8 @@ object AgentScheduler:
         KindlingsSchema, com.histmersion.api.json.Schema
 
   object TypeLine:
+    type JobType = com.histmersion.api.jobs.JobKinds.Wire
+    val JobType: _root_.com.histmersion.api.jobs.JobKinds.Wire.type = _root_.com.histmersion.api.jobs.JobKinds.Wire
     type Label = Label.T
     object Label extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Weight = Weight.T

@@ -14,6 +14,8 @@ final case class AgentStateEntry(
       KindlingsSchema, com.histmersion.api.json.Schema
 
 object AgentStateEntry:
+  type Key = com.histmersion.api.Api.AgentState.Key
+  val Key: _root_.com.histmersion.api.Api.AgentState.Key.type = _root_.com.histmersion.api.Api.AgentState.Key
   type Value = Value.T
   object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type UpdatedAt = UpdatedAt.T

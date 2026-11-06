@@ -83,7 +83,7 @@ object SearchMarkdown:
       OffsetPage.markdown(p.page, ("finding(s)"), ("_No findings match that place/time._"), Nil)(_ => (""))
     else
       val body = geoResults(p.hits.toVector)
-      OffsetPage.header(p.page, ("finding(s)")) + (body).dropWhile(_ != '\n') + OffsetPage.footer(p.page)
+      OffsetPage.header(p.page, ("finding(s)")) + (body).value.dropWhile(_ != '\n') + OffsetPage.footer(p.page)
 
   def geoResults(hits: Vector[GeoHit]): String =
     if hits.isEmpty then ("_No findings match that place/time._")
@@ -134,6 +134,10 @@ object SearchMarkdown:
   final case class CollapsedBucket(start: CollapsedBucket.Start, end: CollapsedBucket.End, count: CollapsedBucket.Count, merged: CollapsedBucket.Merged)
 
   object CollapsedBucket:
+    type Start = com.histmersion.api.library.TimeBucket.Start
+    val Start: _root_.com.histmersion.api.library.TimeBucket.Start.type = _root_.com.histmersion.api.library.TimeBucket.Start
+    type End = com.histmersion.api.library.TimeBucket.End
+    val End: _root_.com.histmersion.api.library.TimeBucket.End.type = _root_.com.histmersion.api.library.TimeBucket.End
     type Count = Count.T
     object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
@@ -165,7 +169,7 @@ object SearchMarkdown:
       ((List(head, "", treeLines(h.tree, unit, (0)).mkString("\n"), "", note)).mkString("\n"))
 
   private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.Histogram.Unit, depth: Int): List[String] =
-    val pad = "  " * (depth)
+    val pad = "  " * (depth).value
     buckets.flatMap { b =>
       val over = if (b.overlap).value > 0 then s" · ${b.overlap} in more than one ${childNoun(b)}" else ""
       val when = if b.kind == _root_.com.histmersion.api.library.Bucket.Kind(Tree.KindTime) then ""
@@ -173,7 +177,7 @@ object SearchMarkdown:
       val id = b.placeId.map(i => s" `$i`").getOrElse("")
       val line = s"$pad- **${b.label}**${contestedMark(b.contested, b.label)}$id — " +
         s"${b.count} $unit$over$when"
-      val kids = treeLines(b.children, unit, ((depth) + 1))
+      val kids = treeLines(b.children, unit, ((depth).value + 1))
       val samps = b.samples.map(x => s"$pad  - ${x.citekey} — ${x.title}")
       line :: (kids ++ samps)
     }

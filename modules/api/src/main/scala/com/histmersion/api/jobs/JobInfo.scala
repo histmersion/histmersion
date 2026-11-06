@@ -28,6 +28,8 @@ object JobInfo:
 
   /** A job's kind as the wire names it (`ingest`, `merge-apply`); the server checks it against its registered kinds. */
 
+  type Status = com.histmersion.api.jobs.JobState.Wire
+  val Status: _root_.com.histmersion.api.jobs.JobState.Wire.type = _root_.com.histmersion.api.jobs.JobState.Wire
   type Progress = Progress.T
   object Progress extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Error = Error.T
@@ -37,5 +39,9 @@ object JobInfo:
   type UpdatedAt = UpdatedAt.T
   object UpdatedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  type Kind = com.histmersion.api.jobs.JobKinds.Wire
+  val Kind: _root_.com.histmersion.api.jobs.JobKinds.Wire.type = _root_.com.histmersion.api.jobs.JobKinds.Wire
 
   /** A job's id as the wire names it; the server checks it is one. */
+  type Id = com.histmersion.api.SpatialHierarchyResult.Job.Id
+  val Id: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id

@@ -30,4 +30,8 @@ object PlanMatchKind:
   object MatchLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ListedResult = ListedResult.T
   object ListedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LineResult = com.histmersion.api.exchange.PlanMatchKind.MatchLine
+  val LineResult: _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine.type = _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine
 
+  type LinesResult = com.histmersion.api.exchange.PlanMatchKind.MatchLine
+  val LinesResult: _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine.type = _root_.com.histmersion.api.exchange.PlanMatchKind.MatchLine

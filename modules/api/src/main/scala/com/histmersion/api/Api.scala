@@ -170,6 +170,18 @@ object Api:
 
   /** `region` is still sent by older links and clients; it is one more place name. */
 
+  type SourceViewPart3 = com.histmersion.api.library.Source.View
+  val SourceViewPart3: _root_.com.histmersion.api.library.Source.View.type = _root_.com.histmersion.api.library.Source.View
+  type ExportSourcePart3 = com.histmersion.api.library.Source.Export
+  val ExportSourcePart3: _root_.com.histmersion.api.library.Source.Export.type = _root_.com.histmersion.api.library.Source.Export
+  type ExportArticlePart3 = com.histmersion.api.research.Article.Export
+  val ExportArticlePart3: _root_.com.histmersion.api.research.Article.Export.type = _root_.com.histmersion.api.research.Article.Export
+  type JobPart1 = com.histmersion.api.SpatialHierarchyResult.Job.Id
+  val JobPart1: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id
+  type JobControlPart1Part1 = com.histmersion.api.SpatialHierarchyResult.Job.Id
+  val JobControlPart1Part1: _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id.type = _root_.com.histmersion.api.SpatialHierarchyResult.Job.Id
+  type JobsPart1Part4 = com.histmersion.api.Jobs.Filter
+  val JobsPart1Part4: _root_.com.histmersion.api.Jobs.Filter.type = _root_.com.histmersion.api.Jobs.Filter
 
   final case class FindingsQuery(filter: Filter, region: Option[FindingsQuery.Region]):
     def toFilter: Filter =
@@ -263,6 +275,8 @@ object Api:
       object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FullText = FullText.T
     object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Section = com.histmersion.api.library.Source.Section.Wire
+    val Section: _root_.com.histmersion.api.library.Source.Section.Wire.type = _root_.com.histmersion.api.library.Source.Section.Wire
     type Heading = Heading.T
     object Heading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Offset = Offset.T
@@ -358,6 +372,8 @@ object Api:
     object Unit extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Depth = Depth.T
     object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type AsOf = AsOf.T
+    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Samples = Samples.T
     object Samples extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Size = Size.T
@@ -612,6 +628,8 @@ object Api:
     object Kind:
       type Wire = Wire.T
       object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = com.histmersion.api.research.Article.Kind.Wire
+    val Kind: _root_.com.histmersion.api.research.Article.Kind.Wire.type = _root_.com.histmersion.api.research.Article.Kind.Wire
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -906,12 +924,18 @@ object Api:
   )
 
   object PlacesGeoQuery:
+    type Kind = com.histmersion.api.catalogue.Place.Kind.Wire
+    val Kind: _root_.com.histmersion.api.catalogue.Place.Kind.Wire.type = _root_.com.histmersion.api.catalogue.Place.Kind.Wire
+    type AsOf = com.histmersion.api.Api.AggregateQuery.AsOf
+    val AsOf: _root_.com.histmersion.api.Api.AggregateQuery.AsOf.type = _root_.com.histmersion.api.Api.AggregateQuery.AsOf
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Pick = com.histmersion.api.GeoPick.Wire
+    val Pick: _root_.com.histmersion.api.GeoPick.Wire.type = _root_.com.histmersion.api.GeoPick.Wire
 
   lazy val placesGeo: PublicEndpoint[PlacesGeoQuery, com.histmersion.api.Api.Error, com.histmersion.api.Api.PlacesGeo.Json, Any] =
     (base.get
@@ -1109,6 +1133,12 @@ object Api:
   object EventQuery:
     type Text = Text.T
     object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Kind = Kind.T
+    object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Historicity = com.histmersion.api.catalogue.Historicity.Wire
+    val Historicity: _root_.com.histmersion.api.catalogue.Historicity.Wire.type = _root_.com.histmersion.api.catalogue.Historicity.Wire
+    type PlaceId = com.histmersion.api.catalogue.Place.Id
+    val PlaceId: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
     type Tier = Tier.T
     object Tier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Context = Context.T
@@ -1239,6 +1269,8 @@ object Api:
     object Status:
       type Wire = Wire.T
       object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Status = com.histmersion.api.Api.GoalQuery.Status.Wire
+    val Status: _root_.com.histmersion.api.Api.GoalQuery.Status.Wire.type = _root_.com.histmersion.api.Api.GoalQuery.Status.Wire
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Offset = Offset.T
@@ -1460,12 +1492,16 @@ object Api:
   )
 
   object MediaGeoQuery:
+    type Kind = com.histmersion.api.Api.ArticleQuery.Kind.Wire
+    val Kind: _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire.type = _root_.com.histmersion.api.Api.ArticleQuery.Kind.Wire
     type From = From.T
     object From extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type To = To.T
     object To extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
     object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Provider = com.histmersion.api.media.MediaProvider.Id
+    val Provider: _root_.com.histmersion.api.media.MediaProvider.Id.type = _root_.com.histmersion.api.media.MediaProvider.Id
     type License = License.T
     object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1494,8 +1530,14 @@ object Api:
   )
 
   object MediaQuery:
+    type Provider = com.histmersion.api.media.MediaProvider.Id
+    val Provider: _root_.com.histmersion.api.media.MediaProvider.Id.type = _root_.com.histmersion.api.media.MediaProvider.Id
     type License = License.T
     object License extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Place = com.histmersion.api.catalogue.Place.Id
+    val Place: _root_.com.histmersion.api.catalogue.Place.Id.type = _root_.com.histmersion.api.catalogue.Place.Id
+    type Event = com.histmersion.api.catalogue.Event.Id
+    val Event: _root_.com.histmersion.api.catalogue.Event.Id.type = _root_.com.histmersion.api.catalogue.Event.Id
     type Q = Q.T
     object Q extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Limit = Limit.T
@@ -1646,6 +1688,8 @@ object Api:
       * `Matchable`), so the value is checked with a type test.
       */
 
+    type Message = com.histmersion.api.Api.Error.Problem
+    val Message: _root_.com.histmersion.api.Api.Error.Problem.type = _root_.com.histmersion.api.Api.Error.Problem
     type Code = Code.T
     object Code extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -1669,6 +1713,16 @@ object Api:
       given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type MarkdownResult = MarkdownResult.T
     object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type SpliceResultPart2 = com.histmersion.api.Api.Index.Readme
+    val SpliceResultPart2: _root_.com.histmersion.api.Api.Index.Readme.type = _root_.com.histmersion.api.Api.Index.Readme
+    type SpliceReadme = com.histmersion.api.Api.Index.Readme
+    val SpliceReadme: _root_.com.histmersion.api.Api.Index.Readme.type = _root_.com.histmersion.api.Api.Index.Readme
+    type SpliceIndex = com.histmersion.api.Api.Index.Block
+    val SpliceIndex: _root_.com.histmersion.api.Api.Index.Block.type = _root_.com.histmersion.api.Api.Index.Block
+    type CurrentResult = com.histmersion.api.Api.Index.Current
+    val CurrentResult: _root_.com.histmersion.api.Api.Index.Current.type = _root_.com.histmersion.api.Api.Index.Current
+    type CurrentReadme = com.histmersion.api.Api.Index.Readme
+    val CurrentReadme: _root_.com.histmersion.api.Api.Index.Readme.type = _root_.com.histmersion.api.Api.Index.Readme
 
     val Begin = "<!-- BEGIN API INDEX (generated by `just api-docs` — do not edit by hand) -->"
     val End = "<!-- END API INDEX -->"

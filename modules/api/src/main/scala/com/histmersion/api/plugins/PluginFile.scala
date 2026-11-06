@@ -6,3 +6,6 @@ import com.histmersion.api.given
 
 final case class PluginFile(file: PluginFile.File, sha256: com.histmersion.api.Sha256) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema
 
+object PluginFile:
+  type File = com.histmersion.api.automation.ProviderKind.Plugin.FilePath
+  val File: _root_.com.histmersion.api.automation.ProviderKind.Plugin.FilePath.type = _root_.com.histmersion.api.automation.ProviderKind.Plugin.FilePath
