@@ -41,7 +41,7 @@ final case class MediaRecord(
     rights: Either[MediaRecord.RightsPart1, Attribution],
     geography: List[(MediaRecord.GeographyPart1, MediaRecord.GeographyPart2)],
     period: Option[Period],
-    ids: List[(MediaRecord.IdsPart1, MediaRecord.IdsPart2)] = Nil,
+    ids: List[(com.histmersion.domain.catalogue.places.ExternalIds.Scheme, com.histmersion.domain.catalogue.places.ExternalIds.ExternalId)] = Nil,
     withheld: Option[MediaRecord.Withheld] = None,
     role: Option[MediaRecord.Role] = None
 )
@@ -65,10 +65,6 @@ object MediaRecord:
   object GeographyPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GeographyPart2 = GeographyPart2.T
   object GeographyPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdsPart1 = IdsPart1.T
-  object IdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IdsPart2 = IdsPart2.T
-  object IdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Withheld = Withheld.T
   object Withheld extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Role = Role.T

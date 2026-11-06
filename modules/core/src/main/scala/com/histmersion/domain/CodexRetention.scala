@@ -52,7 +52,7 @@ object CodexRetention:
     if keepDays.value <= 0 then Nil
     else
       val cutoff = nowMs.value - keepDays.value.toLong * DayMs
-      files.filter(f => inSessions(f.rel) && f.modifiedMs.value < cutoff).sortBy(_.modifiedMs.value)
+      files.filter(f => inSessions(f.rel) && f.modifiedMs.value < cutoff).sortBy(f => f.modifiedMs.value: Long)
 
   /** Pure: the SQLite databases at the home's top level (`state_5.sqlite`), not their `-wal`/`-shm`. */
   def sqliteFiles(names: List[com.histmersion.domain.CodexRetention.FileName]): List[com.histmersion.domain.CodexRetention.FileName] =

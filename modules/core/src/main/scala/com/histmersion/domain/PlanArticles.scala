@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.domain.library.Citekey
 
 import scala.annotation.tailrec

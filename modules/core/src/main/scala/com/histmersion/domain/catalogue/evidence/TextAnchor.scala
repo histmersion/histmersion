@@ -26,8 +26,8 @@ object TextAnchor:
 
   type ReanchorText = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Text
   val ReanchorText: _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Text.type = _root_.com.histmersion.domain.catalogue.evidence.TextAnchor.Text
-  type ReanchorHint = _root_.com.histmersion.Offset
-  val ReanchorHint: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
+  type ReanchorHint = ReanchorHint.T
+  object ReanchorHint extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def reanchor(
       text: com.histmersion.domain.catalogue.evidence.TextAnchor.ReanchorText,
@@ -66,7 +66,7 @@ object TextAnchor:
         Some(many.minBy { a =>
           val agree =
             commonSuffix(text.substring(0, a.start.value), prefix) + commonPrefix(text.substring(a.end.value), suffix)
-          (-agree, hint.fold(0)(h => math.abs(a.start.value - h)), a.start.value)
+          (-agree, hint.fold(0)(h => math.abs(a.start.value - h)), a.start.value: Int)
         })
 
   /** Every start index of `needle` in `hay`, overlapping ones included. */

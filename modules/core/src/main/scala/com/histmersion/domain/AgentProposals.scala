@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.library.{EdgesPatch, MetadataPatch}
 import com.histmersion.api.given
 

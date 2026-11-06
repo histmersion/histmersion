@@ -1,5 +1,6 @@
 package com.histmersion.domain
 
+import com.histmersion.api.json.NewtypeCodecs.given
 import hearth.kindlings.optics.syntax.*
 
 import com.histmersion.api.{Plural, WireEnum}
@@ -189,11 +190,14 @@ object ReviewArticle:
     * read a slice) and the sentence copied from it. Code checks the quote is in that record before the fixer sees it,
     * so the fixer can act on it without searching again.
     */
-  final case class EvidenceAnswer(citekey: com.histmersion.domain.library.Citekey, offset: Option[EvidenceAnswer.Offset] = None, quote: EvidenceAnswer.Quote)
+  final case class EvidenceAnswer(citekey: EvidenceAnswer.Citekey, offset: Option[EvidenceAnswer.Offset] = None, quote: EvidenceAnswer.Quote)
       derives KindlingsCodecAsObject
   object EvidenceAnswer:
-    type Offset = com.histmersion.Offset
-    val Offset: _root_.com.histmersion.Offset.type = _root_.com.histmersion.Offset
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      extension (c: Citekey) def normalised: String = c.value.trim.stripPrefix("[[").stripSuffix("]]").trim
+    type Offset = Offset.T
+    object Offset extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Quote = com.histmersion.domain.ReviewArticle.Evidence.Quote
     val Quote: _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote.type = _root_.com.histmersion.domain.ReviewArticle.Evidence.Quote
 
@@ -338,9 +342,12 @@ object ReviewArticle:
     * article's words, the AttrScore verdict, and the record's sentence it rests on. Code accepts it only when the step
     * really read that source ([[checkSpotChecks]]).
     */
-  final case class SpotCheckAnswer(citekey: com.histmersion.domain.library.Citekey, claim: SpotCheckAnswer.Claim, verdict: SpotCheckAnswer.Verdict, recordQuote: SpotCheckAnswer.RecordQuote)
+  final case class SpotCheckAnswer(citekey: SpotCheckAnswer.Citekey, claim: SpotCheckAnswer.Claim, verdict: SpotCheckAnswer.Verdict, recordQuote: SpotCheckAnswer.RecordQuote)
       derives KindlingsCodecAsObject
   object SpotCheckAnswer:
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      extension (c: Citekey) def normalised: String = c.value.trim.stripPrefix("[[").stripSuffix("]]").trim
     type Claim = com.histmersion.domain.ReviewArticle.SpotCheck.Claim
     val Claim: _root_.com.histmersion.domain.ReviewArticle.SpotCheck.Claim.type = _root_.com.histmersion.domain.ReviewArticle.SpotCheck.Claim
     type Verdict = com.histmersion.domain.ReviewArticle.SpotVerdictsValue
@@ -505,9 +512,12 @@ object ReviewArticle:
         )
       )
 
-  final case class RejectionAnswer(id: RejectionAnswer.Id, reason: RejectionAnswer.Reason, citekey: com.histmersion.domain.library.Citekey, quote: RejectionAnswer.Quote)
+  final case class RejectionAnswer(id: RejectionAnswer.Id, reason: RejectionAnswer.Reason, citekey: RejectionAnswer.Citekey, quote: RejectionAnswer.Quote)
       derives KindlingsCodecAsObject
   object RejectionAnswer:
+    type Citekey = Citekey.T
+    object Citekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      extension (c: Citekey) def normalised: String = c.value.trim
     type Id = com.histmersion.domain.ReviewArticle.Rejection.Id
     val Id: _root_.com.histmersion.domain.ReviewArticle.Rejection.Id.type = _root_.com.histmersion.domain.ReviewArticle.Rejection.Id
     type Reason = com.histmersion.domain.ReviewArticle.Rejection.Reason
@@ -1143,21 +1153,23 @@ object ReviewArticle:
   type EvidenceCheck = EvidenceAnswer => Either[String, Evidence]
 
   /** No evidence is checked (the cold reader has none). */
-  val NoEvidence: EvidenceCheck = e => Left(s"[[${e.citekey}]]: this reviewer cites no records")
+  val NoEvidence: EvidenceCheck = e => Left(s"[[${e.citekey.value}]]: this reviewer cites no records")
 
   /** The check every reviewer's evidence passes: a real citekey, and a quote that IS in its record (the OCR-tolerant
     * matcher the fixer's rejections use). `text` is the record as get_source shows it (summary, findings, notes, body).
     */
   def evidenceCheck(isCitekey: com.histmersion.domain.library.Citekey => Boolean, text: com.histmersion.domain.library.Citekey => Option[com.histmersion.domain.AgentVerify.SourceBody], minRatio: com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio): EvidenceCheck =
     e =>
-      val ck = e.citekey
+      val raw = Option(e.citekey).map(_.normalised).getOrElse("")
       val q = Option(e.quote).map(_.value.trim).getOrElse("")
-      if q.isEmpty then Left(s"[[$ck]]: no quote")
-      else if !isCitekey(ck) then Left(s"'$ck' is not a citekey")
+      if q.isEmpty then Left(s"[[$raw]]: no quote")
       else
-        text(ck).map(t => findQuote(q, t.value, minRatio)).filter(_.accepted) match
-          case Some(m) => Right(Evidence(ck, e.offset.filter(_.value >= 0), Evidence.Quote(q), m.ratio))
-          case None    => Left(s"the quote is not in the record of [[$ck]]: \"${q.take(80)}\"")
+        com.histmersion.domain.library.Citekey.option(raw).filter(isCitekey) match
+          case None     => Left(s"'$raw' is not a citekey")
+          case Some(ck) =>
+            text(ck).map(t => findQuote(q, t.value, minRatio)).filter(_.accepted) match
+              case Some(m) => Right(Evidence(ck, e.offset.flatMap(o => com.histmersion.Offset.option(o.value)), Evidence.Quote(q), m.ratio))
+              case None    => Left(s"the quote is not in the record of [[$ck]]: \"${q.take(80)}\"")
 
   /** Findings as stated → verified findings with code-assigned ids (`R1`…), plus what was dropped. A finding with no
     * problem, no `where`, or a severity outside the vocabulary is a problem to send back. Evidence that does not check
@@ -1278,9 +1290,11 @@ object ReviewArticle:
   def spotChecksRequired(min: com.histmersion.domain.ReviewArticle.SpotCheckMin, citedInCorpus: com.histmersion.domain.ReviewArticle.CitedInCorpusCount): com.histmersion.domain.ReviewArticle.SpotCheckCount = com.histmersion.domain.ReviewArticle.SpotCheckCount(math.max(0, math.min(min.value, citedInCorpus.value)))
 
   /** Does tool call `u` read the record of `ck`? A get_source or passages call whose input names it. */
-  def reads(u: AgentVerify.ToolUse, ck: com.histmersion.domain.library.Citekey): Boolean =
-    SpotCheckTools(SpotCheck.Tool(u.tool.value.trim)) && ck.value.nonEmpty &&
-      Option(u.input).exists(_.value.toLowerCase(java.util.Locale.ROOT).contains(ck.value.toLowerCase(java.util.Locale.ROOT)))
+  def reads(u: AgentVerify.ToolUse, ck: com.histmersion.domain.library.Citekey): Boolean = readsText(u, ck.value)
+
+  private def readsText(u: AgentVerify.ToolUse, ck: String): Boolean =
+    SpotCheckTools(SpotCheck.Tool(u.tool.value.trim)) && ck.nonEmpty &&
+      Option(u.input).exists(_.value.toLowerCase(java.util.Locale.ROOT).contains(ck.toLowerCase(java.util.Locale.ROOT)))
 
   /** Verify the spot-checks: each needs a cited citekey, the claim in the article, a verdict from [[SpotVerdicts]], a
     * tool call of this step that read that source ([[reads]]) and the record's sentence found in its record (`ev`, the
@@ -1296,25 +1310,26 @@ object ReviewArticle:
       last: com.histmersion.domain.ReviewArticle.CheckSpotChecksLast
   ): (List[SpotCheck], List[String], List[String]) =
     val results = as.zipWithIndex.map { (a, i) =>
-      val ck = a.citekey
+      val ck = Option(a.citekey).map(_.normalised).getOrElse("")
       val claim = Option(a.claim).map(_.value.trim).getOrElse("")
       val verdict = SpotVerdictsValue(Option(a.verdict).map(_.value.trim.toLowerCase(java.util.Locale.ROOT)).getOrElse(""))
       val label = s"spot-check ${i + 1} ([[$ck]])"
       val checked: Either[String, SpotCheck] =
-        if rule.cited.nonEmpty && !rule.cited.exists(_.value.equalsIgnoreCase(ck.value)) then
+        if ck.isEmpty then Left(s"spot-check ${i + 1}: no citekey")
+        else if rule.cited.nonEmpty && !rule.cited.exists(_.value.equalsIgnoreCase(ck)) then
           Left(s"$label: the article does not cite it — check a source it cites")
         else if !SpotVerdicts.contains(verdict) then
           Left(s"$label: verdict '${a.verdict}' is not one of ${SpotVerdicts.mkString(", ")}")
         else if claim.isEmpty || !findQuote(claim, rule.body.value, rule.minRatio).accepted then
           Left(s"$label: the claim is not in the article — copy the article's words exactly")
         else
-          rule.calls.find(reads(_, ck)) match
+          rule.calls.find(readsText(_, ck)) match
             case None =>
               Left(
                 s"$label: no get_source or passages call for it in this step — read the record before reporting what it says"
               )
             case Some(call) =>
-              ev(EvidenceAnswer(ck, None, Option(a.recordQuote).getOrElse(Evidence.Quote("")))) match
+              ev(EvidenceAnswer(EvidenceAnswer.Citekey(ck), None, Option(a.recordQuote).getOrElse(Evidence.Quote("")))) match
                 case Left(m)  => Left(s"$label: $m")
                 case Right(e) => Right(SpotCheck(e.citekey, SpotCheck.Claim(claim), verdict, e.quote, e.ratio, SpotCheck.Tool(call.tool.value.trim)))
       checked
@@ -2113,7 +2128,7 @@ object ReviewArticle:
     val unknown = (applied0 ++ a.rejected.map(r => Finding.Id(r.id.value.trim))).filterNot(ids).distinct.map(i => s"there is no finding '$i'")
     val rejections = a.rejected.map { r =>
       val id = Finding.Id(r.id.value.trim)
-      val ck = r.citekey
+      val ckText = r.citekey.normalised
       byId.get(id) match
         case None                                         => Left(id -> s"rejection of '$id': no such finding")
         case Some(f) if f.reviewer == Reviewer.Mechanical =>
@@ -2122,16 +2137,18 @@ object ReviewArticle:
           Left(id -> s"$id is a reader's confusion; it cannot be rejected — define or restructure instead")
         case Some(_) if Option(r.reason).forall(_.value.trim.isEmpty) =>
           Left(id -> s"rejection of $id gives no reason — say why the finding is wrong")
-        case Some(_) if !isCitekey(ck) => Left(id -> s"rejection of $id names '$ck', which is not a citekey")
-        case Some(_)                   =>
-          val q = Option(r.quote).map(_.value.trim).getOrElse("")
-          val hit = text(ck).map(t => findQuote(q, t.value, minRatio))
-          hit.filter(_.accepted) match
-            case Some(qm) => Right(Rejection(id, Rejection.Reason(r.reason.value.trim), ck, Rejection.Quote(q), qm.ratio))
-            case None     =>
-              Left(
-                id -> s"rejection of $id: the quote is not in the record of $ck — quote it exactly or apply the finding"
-              )
+        case Some(_) =>
+          com.histmersion.domain.library.Citekey.option(ckText).filter(isCitekey) match
+            case None     => Left(id -> s"rejection of $id names '$ckText', which is not a citekey")
+            case Some(ck) =>
+              val q = Option(r.quote).map(_.value.trim).getOrElse("")
+              val hit = text(ck).map(t => findQuote(q, t.value, minRatio))
+              hit.filter(_.accepted) match
+                case Some(qm) => Right(Rejection(id, Rejection.Reason(r.reason.value.trim), ck, Rejection.Quote(q), qm.ratio))
+                case None     =>
+                  Left(
+                    id -> s"rejection of $id: the quote is not in the record of $ck — quote it exactly or apply the finding"
+                  )
     }
     val rejectedOk = rejections.collect { case Right(r) => r }
     val rejectedBad = rejections.collect { case Left(v) => v }

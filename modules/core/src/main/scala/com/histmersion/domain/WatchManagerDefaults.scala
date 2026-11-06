@@ -12,9 +12,9 @@ final case class WatchManagerDefaults(maxRuns: WatchManagerDefaults.MaxRuns, aut
     ManagerConfig(
       maxRuns = Some(ManagerConfig.MaxRuns(maxRuns.value)),
       maxOpen = Some(ManagerConfig.MaxOpen(2 * maxRuns.value)),
-      maxFailures = Some(m.maxFailures),
+      maxFailures = Some(ManagerConfig.MaxFailures(m.maxFailures.value)),
       sweeps = Some(Sweep.values.toList.map(_.wire)),
-      autoIngest = Some(false),
+      autoIngest = Some(ManagerConfig.AutoIngest(false)),
       autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(autoIngestPerDay.value)),
       dailyUsd = ManagerPolicy.dailyCap(ManagerConfig(), m)
     )

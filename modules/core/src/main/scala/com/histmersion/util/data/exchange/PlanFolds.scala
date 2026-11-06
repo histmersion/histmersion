@@ -2,7 +2,7 @@ package com.histmersion.util.data.exchange
 
 import com.histmersion.api.exchange.Bundle
 
-import com.histmersion.api.exchange.{MergeDecision, MergeTally}
+import com.histmersion.api.exchange.{MergeDecision, MergeIssue, MergeTally}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
 
@@ -30,7 +30,7 @@ trait PlanFolds:
   def toLocal(u: UUID): UUID
 
   /** The decision in force for an issue that applies. */
-  def decisionIn(issue: com.histmersion.util.data.exchange.PlanFolds.DecisionInIssue): Option[MergeDecision]
+  def decisionIn(issue: MergeIssue.Id): Option[MergeDecision]
 
   /** What the apply does, counted. */
   def count(f: MergeTally => MergeTally): Unit
@@ -38,6 +38,3 @@ trait PlanFolds:
   /** This collection's row of a line stays as it is. */
   def keepLocal(foreign: UUID): Unit
 
-object PlanFolds:
-  type DecisionInIssue = DecisionInIssue.T
-  object DecisionInIssue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

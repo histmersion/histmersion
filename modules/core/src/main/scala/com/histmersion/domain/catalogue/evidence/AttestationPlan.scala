@@ -9,6 +9,7 @@ import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.PairQuestions
 import com.histmersion.util.data.exchange.PlanFolds
 import com.histmersion.util.data.exchange.PlanRun
+import com.histmersion.util.ocr.Chunk
 import com.histmersion.util.text.Anchor
 
 import hearth.kindlings.optics.syntax.*
@@ -80,7 +81,13 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
           val found = for
             txt <- body
             quote <- t.quote.filter(_.value.nonEmpty)
-            a <- TextAnchor.reanchor(txt, quote, t.prefix, t.suffix, t.charStart)
+            a <- TextAnchor.reanchor(
+              txt,
+              TextAnchor.Quote(quote.value),
+              t.prefix.map(p => TextAnchor.Prefix(p.value)),
+              t.suffix.map(s => TextAnchor.Suffix(s.value)),
+              t.charStart.map(c => TextAnchor.ReanchorHint(c.value))
+            )
           yield a
           found match
             case Some(a) =>
@@ -93,7 +100,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
                 List(t.uid),
                 List(l.uid),
                 if foreign then q.rightRev(t.uid) else q.localRev(t.uid),
-                kept.getOrElse(""),
+                kept,
                 tag
               )
               val att = IssueSide(
@@ -166,7 +173,7 @@ final class AttestationPlan(in: MergePlanner.Input) extends PlanRun:
             case None                                  => ()
             case Some(AnchorTry(_, _, Some(a), co, _)) =>
               attLine(t.uid) =
-                es => attIn(es, t.uid).modify(_.charStart).setTo(Some(Bundle.Attestation.CharStart(a.start.value))).modify(_.charEnd).setTo(Some(Bundle.Attestation.CharEnd(a.end.value))).modify(_.chunkOrd).setTo(co)
+                es => attIn(es, t.uid).modify(_.charStart).setTo(Some(Bundle.Attestation.CharStart(a.start.value))).modify(_.charEnd).setTo(Some(Bundle.Attestation.CharEnd(a.end.value))).modify(_.chunkOrd).setTo(co.map(o => Bundle.Attestation.ChunkOrd(o.value)))
               f.count(_.modify(_.attestationsReanchored).using(n => MergeTally.AttestationsReanchored(n.value + 1)))
             case Some(AnchorTry(_, _, None, _, issue)) =>
               issue.flatMap(f.decisionIn).map(_.kind) match
@@ -217,6 +224,6 @@ object AttestationPlan:
       att: com.histmersion.api.exchange.Bundle.Attestation,
       foreign: Boolean,
       anchor: Option[Anchor],
-      chunkOrd: Option[Bundle.Attestation.ChunkOrd],
+      chunkOrd: Option[Chunk.Ord],
       issue: Option[MergeIssue.Id]
   )

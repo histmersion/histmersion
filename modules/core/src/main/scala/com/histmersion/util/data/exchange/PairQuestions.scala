@@ -14,10 +14,10 @@ trait PairQuestions:
   def input: MergePlanner.Input
 
   /** The bundle's rev of one of its records. */
-  def rightRev(u: UUID): com.histmersion.util.data.exchange.PairQuestions.RightRevResult
+  def rightRev(u: UUID): BundlePlan.Ledger.ForeignRev
 
   /** The rev a record has here. */
-  def localRev(u: UUID): com.histmersion.util.data.exchange.PairQuestions.LocalRevResult
+  def localRev(u: UUID): BundlePlan.Local.Rev
 
   /** A uid this collection's rows have. */
   def here(u: UUID): Boolean
@@ -32,9 +32,5 @@ trait PairQuestions:
   def info(line: com.histmersion.util.data.exchange.PairQuestions.InfoLine): Unit
 
 object PairQuestions:
-  type RightRevResult = RightRevResult.T
-  object RightRevResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LocalRevResult = LocalRevResult.T
-  object LocalRevResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InfoLine = InfoLine.T
   object InfoLine extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

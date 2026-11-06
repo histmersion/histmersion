@@ -16,6 +16,7 @@ import com.histmersion.util.data.exchange.SourceFate
 import com.histmersion.util.data.exchange.SourcePair
 import hearth.kindlings.optics.syntax.*
 import com.histmersion.api.Plural
+import com.histmersion.domain.catalogue.evidence.TextAnchor
 import com.histmersion.api.exchange.{
   IssueCondition,
   IssueDetail,
@@ -38,6 +39,7 @@ import com.histmersion.api.given
 
 import BundlePlan.{Decision, Ledger, Local}
 import MergeFold.ArticleOutcome
+import com.histmersion.util.ocr.Chunk
 import com.histmersion.util.text.Anchor
 import com.histmersion.util.text.MinHash
 import com.histmersion.api.text.SafeName
@@ -85,10 +87,6 @@ import com.histmersion.api.exchange.Bundle
 object MergePlanner:
   type IssueExtra = IssueExtra.T
   object IssueExtra extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sketch = Sketch.T
-  object Sketch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WantedBody = WantedBody.T
-  object WantedBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** One row of `merge_ledger`: the foreign rev merged, the local uid it maps to, the local rev left. */
 
@@ -148,7 +146,7 @@ object MergePlanner:
       aliasTombstones: Map[Citekey, Input.AliasTombstonesValue] = Map.empty,
       /** OCR bodies (sha256 → text) of the pairs whose attestations must be re-anchored ([[bodiesWanted]]).
         */
-      bodies: Map[Input.BodiesKey, Input.BodiesValue] = Map.empty,
+      bodies: Map[Bundle.Source.BodySha256, TextAnchor.Text] = Map.empty,
       /** This collection's recorded versions of its articles (article uid → (sha256, body)), newest first: where a
         * common base for a three-way merge is looked for.
         */
@@ -156,13 +154,13 @@ object MergePlanner:
       /** Decisions an earlier `merge apply` carried out, by issue id (`merge_decisions`). */
       remembered: Map[MergeIssue.Id, MergeDecision] = Map.empty,
       /** `limits.chunk-chars`: to place a re-anchored attestation in its FTS chunk (0 leaves it unplaced). */
-      chunkChars: Input.ChunkChars = com.histmersion.domain.MergePlanner.Input.ChunkChars(0),
+      chunkChars: TextAnchor.ChunkChars = TextAnchor.ChunkChars(0),
       /** A bundle place (by uid) whose id is not here, but whose label and geometry name a place here (the database
         * compares the geometries): that place's id.
         */
-      placeMatches: Map[UUID, Input.PlaceMatchesValue] = Map.empty,
+      placeMatches: Map[UUID, Bundle.Place.Id] = Map.empty,
       /** Likewise for a named period: the same label and an overlapping span. */
-      periodMatches: Map[UUID, Input.PeriodMatchesValue] = Map.empty
+      periodMatches: Map[UUID, Bundle.Period.Id] = Map.empty
   ):
     def ownBundle: Boolean = manifest.instance.id == here.id
 
@@ -180,16 +178,6 @@ object MergePlanner:
     object Places extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type AliasTombstonesValue = AliasTombstonesValue.T
     object AliasTombstonesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BodiesKey = BodiesKey.T
-    object BodiesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BodiesValue = BodiesValue.T
-    object BodiesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ChunkChars = ChunkChars.T
-    object ChunkChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PlaceMatchesValue = PlaceMatchesValue.T
-    object PlaceMatchesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type PeriodMatchesValue = PeriodMatchesValue.T
-    object PeriodMatchesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A line's fate, for the importer: its uid in the bundle and here, its revs, the decision. */
   final case class Row(
@@ -216,11 +204,9 @@ object MergePlanner:
   /** One of THIS collection's attestations, moved because the merge keeps the bundle's body: its new place, or `None`
     * (kept without a place — `keep-unanchored`); `drop` deletes it.
     */
-  final case class AttestationFix(uid: UUID, anchor: Option[Anchor], chunkOrd: Option[AttestationFix.ChunkOrd], drop: AttestationFix.Drop)
+  final case class AttestationFix(uid: UUID, anchor: Option[Anchor], chunkOrd: Option[Chunk.Ord], drop: AttestationFix.Drop)
 
   object AttestationFix:
-    type ChunkOrd = ChunkOrd.T
-    object ChunkOrd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Drop = Drop.T
     object Drop extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -372,13 +358,34 @@ object MergePlanner:
       rightRev: Ledger.ForeignRev,
       leftRev: Local.Rev,
       extra: IssueExtra = IssueExtra("")
+  ): MergeIssue.Id = issueIdOf(kind, entity, right, left, rightRev.value, leftRev.value, extra)
+
+  /** As above for an issue about a body: the body kept (its sha256, or none) stands where the local rev does. */
+  def issueId(
+      kind: MergeIssue.Kind,
+      entity: Bundle.Kind,
+      right: List[UUID],
+      left: List[UUID],
+      rightRev: Ledger.ForeignRev,
+      keptBody: Option[Bundle.Source.BodySha256],
+      extra: IssueExtra
+  ): MergeIssue.Id = issueIdOf(kind, entity, right, left, rightRev.value, keptBody.fold("")(_.value), extra)
+
+  private def issueIdOf(
+      kind: MergeIssue.Kind,
+      entity: Bundle.Kind,
+      right: List[UUID],
+      left: List[UUID],
+      rightRev: String,
+      leftRev: String,
+      extra: IssueExtra
   ): MergeIssue.Id =
     val text = List(
       MergeIssue.Kind.wireOf(kind).value,
       right.map(_.toString).sorted.mkString(","),
       left.map(_.toString).sorted.mkString(","),
-      rightRev.value,
-      leftRev.value,
+      rightRev,
+      leftRev,
       extra.value
     ).mkString("\u0000")
     MergeIssue.Id(s"${letter(kind, entity).value}-${BundleFormat.sha256Hex(text).value.take(8)}")
@@ -431,22 +438,22 @@ object MergePlanner:
   /** The OCR bodies (by sha256) whose MinHash could decide whether two sources are one, as the kinds' rules say: the
     * database computes them before [[plan]].
     */
-  def sketchesWanted(in: Input, cfg: MergeSettings, rules: List[PlanRules]): Set[Sketch] =
-    PlanRuns(rules.map(_.start(in))).sketchesWanted(cfg).map(s => Sketch(s))
+  def sketchesWanted(in: Input, cfg: MergeSettings, rules: List[PlanRules]): Set[Bundle.Source.BodySha256] =
+    PlanRuns(rules.map(_.start(in))).sketchesWanted(cfg)
 
   /** The OCR bodies (by sha256) the plan must read for the kinds' rules (re-anchoring attestations): of the matched
     * pairs, as each kind's rules say.
     */
   def bodiesWanted(
       in: Input,
-      sketches: Map[Sketch, MinHash],
+      sketches: Map[Bundle.Source.BodySha256, MinHash],
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       rules: List[PlanRules]
-  ): Set[WantedBody] =
+  ): Set[Bundle.Source.BodySha256] =
     val run = PlanRuns(rules.map(_.start(in)))
-    val pairs = run.matchSources(sketches.map((k, v) => k.value -> v), cfg, resolutions.policy.editions)
-    run.bodiesWanted(pairs.map(p => (p.right, p.left))).map(b => WantedBody(b))
+    val pairs = run.matchSources(sketches, cfg, resolutions.policy.editions)
+    run.bodiesWanted(pairs.map(p => (p.right, p.left)))
 
   // ── the plan ────────────────────────────────────────────────────────────────────────────────
 
@@ -474,13 +481,12 @@ object MergePlanner:
 
   def plan(
       in: Input,
-      sketches: Map[Sketch, MinHash],
+      sketches: Map[Bundle.Source.BodySha256, MinHash],
       resolutions: MergeResolutions,
       cfg: MergeSettings,
       rules: List[PlanRules]
   ): Result =
     val run = PlanRuns(rules.map(_.start(in)))
-    val sketchesByHash: Map[String, MinHash] = sketches.map((k, v) => k.value -> v)
     val idOf = mapUid(in.uidAliases, in.ledger)
     val fes = in.foreign
     val rawRevs = fes.revs
@@ -501,7 +507,7 @@ object MergePlanner:
     def liveHere(u: UUID): Boolean = in.live(u) || (localRevs.contains(u) && !in.tombstoned(u))
 
     // ── 2. sources ──
-    val matched: List[SourcePair] = run.matchSources(sketchesByHash, cfg, policy.editions)
+    val matched: List[SourcePair] = run.matchSources(sketches, cfg, policy.editions)
     val sourcesByUid = in.sources.map(s => s.uid -> s).toMap
     def rightRev(u: UUID): Ledger.ForeignRev = Ledger.ForeignRev(rawRevs.get(u).map(_.rev).getOrElse(""))
     def localRev(u: UUID): Local.Rev = Local.Rev(localRevs.get(u).map(_.rev).getOrElse(""))
@@ -529,19 +535,19 @@ object MergePlanner:
     val km = MergeDecision.Kind
     val lr = List(km.KeepLeft, km.KeepRight)
     val info = List.newBuilder[String]
-    run.notices.foreach(info += _)
+    run.notices.foreach(info += _.value)
     val noted = info
     val pairQuestions = new PairQuestions:
       def input: Input = in
-      def rightRev(u: UUID): PairQuestions.RightRevResult = PairQuestions.RightRevResult(rawRevs.get(u).map(_.rev).getOrElse(""))
-      def localRev(u: UUID): PairQuestions.LocalRevResult = PairQuestions.LocalRevResult(localRevs.get(u).map(_.rev).getOrElse(""))
+      def rightRev(u: UUID): Ledger.ForeignRev = Ledger.ForeignRev(rawRevs.get(u).map(_.rev).getOrElse(""))
+      def localRev(u: UUID): Local.Rev = Local.Rev(localRevs.get(u).map(_.rev).getOrElse(""))
       def here(u: UUID): Boolean = localRevs.contains(u)
       def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
       def ask(issue: MergeIssue, importable: Set[MergeDecision.Kind]): Unit = add(Draft(issue, importable))
       def info(line: PairQuestions.InfoLine): Unit = noted += line.value
 
     // whether a pair is one work, the fields of a pair, a citekey taken: as the sources' rules ask
-    run.sourceQuestions(fates, sketchesByHash, cfg, pairQuestions)
+    run.sourceQuestions(fates, sketches, cfg, pairQuestions)
 
     // old citekeys of the bundle that name a different source here (issue id → the alias)
     val aliasIssues = Map.newBuilder[MergeIssue.Id, Citekey]
@@ -838,8 +844,8 @@ object MergePlanner:
       def input: Input = in
       def bundle: BundleEntities = fes
       def localized: BundleEntities = linesHere
-      def rightRev(u: UUID): PairQuestions.RightRevResult = pairQuestions.rightRev(u)
-      def localRev(u: UUID): PairQuestions.LocalRevResult = pairQuestions.localRev(u)
+      def rightRev(u: UUID): Ledger.ForeignRev = pairQuestions.rightRev(u)
+      def localRev(u: UUID): Local.Rev = pairQuestions.localRev(u)
       def here(u: UUID): Boolean = localRevs.contains(u)
       def inLocalized(u: UUID): Boolean = locRevs.contains(u)
       def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
@@ -1093,7 +1099,7 @@ object MergePlanner:
           case (_, Left(e))          => errors += s"$id: $e"; None
           case (Some(d), Right(dec)) =>
             val i = d.issue
-            val argOk: Either[String, Unit] = dec.kind match
+            val argOk: Either[MergePlan.ResolutionErrors, Unit] = dec.kind match
               case km.Map => run.citekeyArgument(i, dec).getOrElse(Right(()))
               case km.RenameRight | km.RenameLeft if run.argument(i, dec).isDefined => run.argument(i, dec).get
               case km.RenameRight | km.RenameLeft => run.citekeyArgument(i, dec).getOrElse(Right(()))
@@ -1103,7 +1109,7 @@ object MergePlanner:
               None
             else
               argOk match
-                case Left(e)  => errors += s"$id: $e"; None
+                case Left(e)  => errors += s"$id: ${e.value}"; None
                 case Right(_) => Some(id -> dec)
       }
       .toMap
@@ -1205,8 +1211,8 @@ object MergePlanner:
       def foldedTo(foreign: UUID): Option[UUID] = foldMap.get(foreign).map(_._1)
       def here(u: UUID): Boolean = localRevs.contains(u)
       def toLocal(u: UUID): UUID = mapped.getOrElse(u, u)
-      def decisionIn(issue: PlanFolds.DecisionInIssue): Option[MergeDecision] =
-        unconditional.get(MergeIssue.Id(issue.value)).flatMap(_.decision)
+      def decisionIn(issue: MergeIssue.Id): Option[MergeDecision] =
+        unconditional.get(issue).flatMap(_.decision)
       def count(f: MergeTally => MergeTally): Unit = tally = f(tally)
       def keepLocal(foreign: UUID): Unit = overrides(foreign) = Decision.Kept
 
@@ -1238,20 +1244,20 @@ object MergePlanner:
         case SourceFate.Gate(_, g) =>
           decisionIn(gateId(g)).filter(_.kind == km.Map).flatMap(_.argument).map(a => Citekey(a.value))
         case _ => None
-      mapTo.foreach { ck =>
+      mapTo.flatMap(ck => com.histmersion.domain.library.Citekey.option(ck.value).map(ck -> _)).foreach { (ck, domainCk) =>
         fold(r.uid, l.uid, Bundle.Kind.Source)
         foldedSources(r.uid) = l.uid
         finalCitekey(r.uid) = ck
         tally = tally.modify(_.sourcesMerged).using(n => MergeTally.SourcesMerged(n.value + 1))
         // the source field by field and its findings, as the sources' rules fold them
-        val keepRightBody = run.foldSources(r, l, ck.value, folds)
+        val keepRightBody = run.foldSources(r, l, domainCk, folds)
 
         // what the kinds own of the pair before the rest: the figures
         run.foldPairFirst(r, l, keepRightBody, folds)
 
         // what the kinds own of the pair: as the body question is decided
         val alt = run.bodyIssue(r.uid) match
-          case Some(id) => Some(decisionIn(MergeIssue.Id(id)).map(_.kind).getOrElse(km.KeepLeft))
+          case Some(id) => Some(decisionIn(id).map(_.kind).getOrElse(km.KeepLeft))
           case None     => None
         run.foldPair(r, l, alt, folds)
       }
@@ -1267,7 +1273,7 @@ object MergePlanner:
             else sourcesByUid.get(l).fold(s.citekey)(_.citekey)
           case _ => finalCitekey(s.uid) = renameRight.getOrElse(s.uid, s.citekey)
     }
-    renameRight.foreach((u, ck) => run.renamed(u, ck.value))
+    renameRight.foreach((u, ck) => com.histmersion.domain.library.Citekey.option(ck.value).foreach(run.renamed(u, _)))
     tally = tally.copy(sourcesRenamed = MergeTally.SourcesRenamed(renameRight.size + renames.result().size))
     // a finding id or an asset name a different record has here: the bundle's is renumbered / renamed
     val relabelled = scala.collection.mutable.ListBuffer.empty[String]
@@ -1284,7 +1290,16 @@ object MergePlanner:
       fes.sources.flatMap(s => finalCitekey.get(s.uid).filter(_ != s.citekey).map(s.citekey -> _)).toMap
     def rewrite(body: Bundle.Article.Body): Bundle.Article.Body =
       if ckMap.isEmpty then body
-      else Bundle.Article.Body(run.relinked(body.value, ckMap.map((k, v) => k.value -> v.value)))
+      else
+        run.relinked(
+          body,
+          ckMap.flatMap((k, v) =>
+            for
+              from <- com.histmersion.domain.library.Citekey.option(k.value)
+              to <- com.histmersion.domain.library.Citekey.option(v.value)
+            yield from -> to
+          )
+        )
 
     // articles, goals, queue items and events M4 merges by itself, and the decisions about the rest
     def articleFold(f: UUID, o: UUID, body: Option[Bundle.Article.Body], theirsWins: Boolean, review: Boolean): Unit =
@@ -1578,7 +1593,7 @@ object MergePlanner:
       .distinct
       .foreach(notes += _)
     // what the kinds' written lines need that is not coming (an event's gazetteer place)
-    run.problems(finalEs, inBundleLive, writes).foreach(fatal += _)
+    run.problems(finalEs, inBundleLive, writes).foreach(fatal += _.value)
     // two bundle lines onto one row here
     val ownUids = rawRevs.keySet ++ fes.tombstones.map(_.uid)
     mapped.toList
@@ -1717,7 +1732,7 @@ object MergePlanner:
       copies = copies.result().map(_(es0)),
       attestations = run.fixes,
       tombstones = run.tombstones,
-      bodyRenames = run.bodyRenames.view.mapValues(_.map((a, b) => (Bundle.Asset.Name(a), Bundle.Asset.Name(b)))).toMap,
+      bodyRenames = run.bodyRenames,
       reviews = reviews.toList,
       remember = issues
         .filter(i =>

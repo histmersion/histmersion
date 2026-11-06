@@ -376,8 +376,8 @@ object CompileArticle:
     val citesHere = cited(text, corpus.isCitekey)
     val citesAll = cited(body, corpus.isCitekey).toSet
     val allowed = evidence.used.toSet ++ cited(current, corpus.isCitekey)
-    val inFilterKeys = evidence.sources.map(_.citekey.value).toSet
-    val citesAllKeys = citesAll.map(_.value)
+    val inFilterKeys: Set[String] = evidence.sources.map(_.citekey.value).toSet
+    val citesAllKeys: Set[String] = citesAll.map(_.value)
     val stated = Option(a.reasons)
       .getOrElse(Nil)
       .map(r =>
