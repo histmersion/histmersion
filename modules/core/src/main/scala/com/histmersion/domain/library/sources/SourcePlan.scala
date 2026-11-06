@@ -82,8 +82,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       )
       val basis =
         if p.evidence.strongKey then p.evidence.strong.mkString(", ")
-        else s"score ${SourceMatcher.signed(p.evidence.score)}"
-      SourcePair(p.right.source, p.left.source, gate, p.evidence.strongKey, basis)
+        else s"score ${signedScore(p.evidence.score)}"
+      SourcePair(p.right.source, p.left.source, gate.map(g => SourcePair.Gate(g.value)), SourcePair.ByKey(p.evidence.strongKey), SourcePair.Basis(basis))
     }
 
   private def gateOf(p: Pair): MergeIssue.Id = MergePlanner.issueId(
@@ -106,8 +106,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
     pairOf.values.filter(_.outcome == Outcome.NeedsDecision).foreach { p =>
       val ev = p.evidence
       val title = MergeIssue.Title(
-        if p.flags.nonEmpty then s"the same work? ${p.flags.mkString("; ")} (score ${SourceMatcher.signed(ev.score)})"
-        else s"possibly the same work (score ${SourceMatcher.signed(ev.score)})"
+        if p.flags.nonEmpty then s"the same work? ${p.flags.mkString("; ")} (score ${signedScore(ev.score)})"
+        else s"possibly the same work (score ${signedScore(ev.score)})"
       )
       questions.ask(
         MergeIssue(
@@ -118,10 +118,10 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
           title,
           Some(MergeIssue.Detail.side(p.left.source)),
           Some(MergeIssue.Detail.side(p.right.source)),
-          (ev.why ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${SourceMatcher.signed(sc)})"))
+          (ev.why.map(_.value) ++ p.alsoLike.take(3).map((ck, sc) => s"also resembles $ck (score ${signedScore(sc)})"))
             .map(MergeIssue.Why(_)),
           List(km.Map, km.Both),
-          Option.when(ev.score >= cfg.autoMerge)(MergeDecision.withArg(km.Map, MergeDecision.Argument(p.left.source.citekey.value))),
+          Option.when(ev.score.value >= cfg.autoMerge.value)(MergeDecision.withArg(km.Map, MergeDecision.Argument(p.left.source.citekey.value))),
           detail = Some(IssueDetail(MergeIssue.Detail.sourceFields(p.left.source, p.right.source)))
         ),
         Set(km.Both)
@@ -225,7 +225,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         val sim = sketches
           .get(a)
           .zip(sketches.get(b))
-          .map((x, y) => s" (MinHash ${SourceMatcher.fixed(x.similarity(y), com.histmersion.domain.library.sources.SourceMatcher.Decimals(2))})")
+          .map((x, y) => s" (MinHash ${SourceMatcher.fixed(SourceMatcher.Figure(x.similarity(y).value), com.histmersion.domain.library.sources.SourceMatcher.Decimals(2))})")
           .getOrElse("")
         mk(
           MergeIssue.Kind.BodyDiffers,
@@ -258,7 +258,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         .map(l => SourceMatcher.evidence(Side(s, Set.empty), l, sketches, cfg.weights).score)
       val title = MergeIssue.Title(
         if asAlias then s"citekey ${s.citekey} is an old citekey (alias) of another source here"
-        else s"same citekey, different works" + score.fold("")(sc => s" (score ${SourceMatcher.signed(sc)})")
+        else s"same citekey, different works" + score.fold("")(sc => s" (score ${signedScore(sc)})")
       )
       val suggestion = renameSuggestion(s, in, fes)
       MergeIssue(
@@ -301,7 +301,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       Bundle.Kind.Source,
       questions.localized.sources.filter(s => questions.here(s.uid)),
       (s: com.histmersion.api.exchange.Bundle.Source) => s.uid,
-      (s: com.histmersion.api.exchange.Bundle.Source) => s.citekey,
+      (s: com.histmersion.api.exchange.Bundle.Source) => PlanQuestions.LabelTakenLabelResult(s.citekey.value),
       (s: com.histmersion.api.exchange.Bundle.Source) =>
         in.labels.citekeys.get(s.citekey).orElse(in.labels.aliases.get(s.citekey)),
       com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("citekey"),
@@ -328,7 +328,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
         val ck = dec.argument.map(_.value).getOrElse("")
         val labelsHere = in.labels.citekeys.keySet ++ in.labels.aliases.keySet ++ fes.sources.map(_.citekey)
         Some(
-          if !Citekeys.valid(ck) then Left(s"'$ck' is not a citekey (lower-case letters, digits and _)")
+          if !Citekeys.valid(Citekeys.ValidCk(ck)) then Left(s"'$ck' is not a citekey (lower-case letters, digits and _)")
           else if labelsHere(wire(ck)) then Left(s"'$ck' is already a citekey (or an old one) here or in the bundle")
           else Right(())
         )
@@ -346,7 +346,7 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
       .get(right.uid)
       .filterNot(_.evidence.strongKey)
       .foreach(_ => folds.count(_.modify(_.sourcesByScore).using(n => MergeTally.SourcesByScore(n.value + 1))))
-    val fieldDec = pairFieldIds.getOrElse(right.uid, Map.empty).flatMap((k, id) => folds.decisionIn(id).map(k -> _))
+    val fieldDec = pairFieldIds.getOrElse(right.uid, Map.empty).flatMap((k, id) => folds.decisionIn(PlanFolds.DecisionInIssue(id.value)).map(k -> _))
     val merged = fold(left, right, fieldDec, citekey)
     sourceLine(left.uid) = _ => merged
     merged.bodySha256 != left.bodySha256
@@ -389,8 +389,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             Some(p.left.citekey),
             if ev.strongKey then MatchMethod.StrongKey else MatchMethod.Score,
             MatchOutcome.AutoMerge,
-            Some(Source.Match.Score(ev.score)),
-            ev.why.map(Source.Match.Why(_))
+            Some(Source.Match.Score(ev.score.value)),
+            ev.why.map(w => Source.Match.Why(w.value))
           )
         )
       case SourceFate.Gate(p, g) =>
@@ -403,8 +403,8 @@ final class SourcePlan(in: MergePlanner.Input) extends PlanRun:
             Some(p.left.citekey),
             MatchMethod.Score,
             MatchOutcome.NeedsDecision,
-            Some(Source.Match.Score(ev.score)),
-            ev.why.map(Source.Match.Why(_)),
+            Some(Source.Match.Score(ev.score.value)),
+            ev.why.map(w => Source.Match.Why(w.value)),
             Some(Source.Match.Issue(g.value))
           )
         )
@@ -441,11 +441,17 @@ object SourcePlan:
     val claimed = in.foreign.sources.map(s => idOf(s.uid)).toSet
     val foreignAliases = in.foreign.aliases.groupMap(_.sourceUid)(_.alias)
     val localAliases = in.labels.aliases.toList.groupMap(_._2)(_._1)
-    val rights = unknown.map(s => Side(s, foreignAliases.getOrElse(s.uid, Nil).toSet))
+    val rights = unknown.map(s => Side(s, citekeysOf(foreignAliases.getOrElse(s.uid, Nil))))
     val lefts = in.sources
       .filterNot(s => claimed(s.uid) || in.tombstoned(s.uid))
-      .map(s => Side(s, localAliases.getOrElse(s.uid, Nil).toSet))
+      .map(s => Side(s, citekeysOf(localAliases.getOrElse(s.uid, Nil))))
     (rights, lefts)
+
+  private def citekeysOf(aliases: List[com.histmersion.api.library.Citekey]): Set[com.histmersion.domain.library.Citekey] =
+    aliases.flatMap(a => com.histmersion.domain.library.Citekey.option(a.value)).toSet
+
+  private def signedScore(score: SourceMatcher.Evidence.Score): SourceMatcher.Written =
+    SourceMatcher.signed(SourceMatcher.Evidence.Weight(score.value))
 
   private def trimmed[A](o: Option[A])(text: A => String): Option[String] = o.map(a => text(a).trim).filter(_.nonEmpty)
 

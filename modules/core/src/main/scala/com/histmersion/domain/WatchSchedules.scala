@@ -16,9 +16,6 @@ import com.histmersion.api.automation.Manager
   * sweeps.
   */
 object WatchSchedules:
-  type Gap = Gap.T
-  object Gap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
 
   def sweepOf(k: ScheduleKind): Sweep = k match
     case ScheduleKind.Currency    => Sweep.Currency
@@ -29,24 +26,14 @@ object WatchSchedules:
     case Sweep.Acquisition => ScheduleKind.Acquisition
 
   /** What a watcher has before the migration (None: it does not exist yet). */
-  final case class Existing(config: ManagerConfig, cron: Option[Existing.Cron], nextTick: Option[Existing.NextTick])
-
-  object Existing:
-    type Cron = Cron.T
-    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NextTick = NextTick.T
-    object NextTick extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final case class Existing(config: ManagerConfig, cron: Option[Cron.Text], nextTick: Option[ManagerPolicy.InstantText])
 
   /** The watcher a goal's schedules become: its config (sweeps, per-run budget), its cron and next firing, and what was
     * carried over or left out (the migration's event and log line).
     */
-  final case class Plan(config: ManagerConfig, cron: Option[Plan.Cron], nextTick: Option[Plan.NextTick], notes: List[Plan.Notes])
+  final case class Plan(config: ManagerConfig, cron: Option[Cron.Text], nextTick: Option[ManagerPolicy.InstantText], notes: List[Plan.Notes])
 
   object Plan:
-    type Cron = Cron.T
-    object Cron extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NextTick = NextTick.T
-    object NextTick extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Notes = Notes.T
     object Notes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -59,27 +46,27 @@ object WatchSchedules:
     */
   def migrate(existing: Option[Existing], schedules: List[GoalSchedule], now: Instant): Plan =
     val ordered = schedules.sortBy(_.kind.ordinal)
-    val on = ordered.filter(_.enabled)
-    val off = ordered.filterNot(_.enabled)
+    val on = ordered.filter(_.enabled.value)
+    val off = ordered.filterNot(_.enabled.value)
     val base = existing.map(_.config).getOrElse(ManagerConfig(sweeps = Some(Nil)))
     val had = existing.fold(List.empty[Sweep])(e => Sweep.of(e.config))
     val sweeps = Sweep.values.toList.filter(s => had.contains(s) || on.exists(x => sweepOf(x.kind) == s))
-    def gap(s: GoalSchedule): com.histmersion.domain.WatchSchedules.Gap =
-      Cron.parse(s.cron).toOption.flatMap(_.shortestGapMinutes(now)).getOrElse(Long.MaxValue)
-    val pick = (if on.nonEmpty then on else ordered).sortBy(s => (gap(s), s.kind.ordinal)).headOption
+    def gap(s: GoalSchedule): Cron.GapMinutes =
+      Cron.parse(Cron.Text(s.cron.value)).toOption.flatMap(_.shortestGapMinutes(now)).getOrElse(Cron.GapMinutes(Long.MaxValue))
+    val pick = (if on.nonEmpty then on else ordered).sortBy(s => (gap(s).value: Long, s.kind.ordinal)).headOption
     val keepOwn = existing.flatMap(_.cron).isDefined
-    val cron = existing.flatMap(_.cron).orElse(pick.map(_.cron))
+    val cron = existing.flatMap(_.cron).orElse(pick.map(s => Cron.Text(s.cron.value)))
     val next =
-      if keepOwn then existing.flatMap(_.nextTick) else pick.flatMap(s => Option.when(s.enabled)(s.nextRunAt).flatten)
+      if keepOwn then existing.flatMap(_.nextTick) else pick.flatMap(s => Option.when(s.enabled.value)(s.nextRunAt).flatten.map(n => ManagerPolicy.InstantText(n.value)))
     val budget = base.budgetUsd
-      .orElse(ordered.find(_.kind == ScheduleKind.Acquisition).flatMap(_.budgetUsd))
-      .orElse(ordered.flatMap(_.budgetUsd).headOption)
+      .orElse(ordered.find(_.kind == ScheduleKind.Acquisition).flatMap(_.budgetUsd.map(b => ManagerConfig.BudgetUsd(b.value))))
+      .orElse(ordered.flatMap(_.budgetUsd).headOption.map(b => ManagerConfig.BudgetUsd(b.value)))
     val notes =
       on.map(s => s"${s.kind.wire} schedule `${s.cron}` → the ${sweepOf(s.kind).itemKind} sweep") ++
         off.map(s => s"${s.kind.wire} schedule `${s.cron}` was off: not swept") ++
         (if keepOwn then
            ordered
-             .filter(s => !existing.flatMap(_.cron).contains(s.cron))
+             .filter(s => !existing.flatMap(_.cron).exists(_.value == s.cron.value))
              .map(s =>
                s"its cron `${existing.flatMap(_.cron).getOrElse("")}` kept over the ${s.kind.wire} schedule's `${s.cron}`"
              )
@@ -88,7 +75,7 @@ object WatchSchedules:
              .map(s =>
                s"one cron for both: `${pick.get.cron}` (fires most often) over the ${s.kind.wire} schedule's `${s.cron}`"
              ))
-    Plan(base.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(budget), cron, next, notes)
+    Plan(base.modify(_.sweeps).setTo(Some(sweeps.map(_.wire))).modify(_.budgetUsd).setTo(budget), cron, next, notes.map(Plan.Notes(_)))
 
   /** A watcher as the goal surfaces show its schedules: one per sweep it runs, with its cron, its next firing, its last
     * run (the item's) and a note saying whether it is paused.
@@ -105,13 +92,13 @@ object WatchSchedules:
         GoalSchedule(
           g,
           kindOf(s),
-          m.cron.getOrElse(""),
-          enabled = m.cron.isDefined,
-          m.config.budgetUsd,
-          m.nextTickAt,
-          it.filter(_.runId.isDefined).map(_.updatedAt),
-          it.flatMap(_.runId),
-          Some(note.take(500))
+          GoalSchedule.Cron(m.cron.fold("")(_.value)),
+          enabled = GoalSchedule.Enabled(m.cron.isDefined),
+          m.config.budgetUsd.map(b => GoalSchedule.BudgetUsd(b.value)),
+          m.nextTickAt.map(t => GoalSchedule.NextRunAt(t.value)),
+          it.filter(_.runId.isDefined).map(i => GoalSchedule.LastRunAt(i.updatedAt.value)),
+          it.flatMap(_.runId).map(r => GoalSchedule.LastRun(r.value)),
+          Some(GoalSchedule.LastNote(note.take(500)))
         )
       }
     }

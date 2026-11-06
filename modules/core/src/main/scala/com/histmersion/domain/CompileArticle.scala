@@ -51,7 +51,7 @@ object CompileArticle:
       quote: AgentProposals.Proposal.Quote,
       date: Option[ClaimAnswer.Date] = None,
       place: Option[ClaimAnswer.Place] = None,
-      confidence: Confidence.Wire
+      confidence: com.histmersion.domain.library.Confidence.Wire
   ) derives KindlingsCodecAsObject
   object ClaimAnswer:
     type Claim = Claim.T
@@ -120,7 +120,7 @@ object CompileArticle:
       val label = s"claim ${i + 1} (${Option(c.claim).map(_.value).getOrElse("").take(50)})"
       if Option(c.claim).forall(_.value.trim.isEmpty) then Left(Problem(s"$label: no claim"))
       else
-        AgentVerify.confidence(Option(c.confidence).getOrElse(Confidence.Wire(""))) match
+        AgentVerify.confidence(Option(c.confidence).getOrElse(com.histmersion.domain.library.Confidence.Wire(""))) match
           case Left(m)     => Left(Problem(s"$label: $m"))
           case Right(conf) =>
             val q = Option(c.quote).map(_.value.trim).getOrElse("")
@@ -368,7 +368,7 @@ object CompileArticle:
     val body = whole.getOrElse(text)
     val mech = ReviewArticle.mechanical(
       slug,
-      if mode == DraftMode.Create then ReviewArticle.Finding.Kind(kind.value) else ReviewArticle.Finding.Kind("index"),
+      if mode == DraftMode.Create then kind else Article.Kind.Wire("index"),
       body,
       t => com.histmersion.domain.research.Slug.option(t.value).exists(corpus.isTarget),
       generated = ReviewArticle.MechanicalGenerated(true)
@@ -381,9 +381,7 @@ object CompileArticle:
     val stated = Option(a.reasons)
       .getOrElse(Nil)
       .map(r =>
-        r.modify(
-          _.citekey).setTo(com.histmersion.api.library.Citekey(Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))).modify(_.reason).setTo(Coverage.Entry.Reason(Option(r.reason).map(_.value.trim).getOrElse("")))
-        )
+        r.modify(_.citekey).setTo(com.histmersion.api.library.Citekey(Option(r.citekey).map(_.value.trim.stripPrefix("[[").stripSuffix("]]").trim.toLowerCase).getOrElse(""))).modify(_.reason).setTo(Coverage.Entry.Reason(Option(r.reason).map(_.value.trim).getOrElse("")))
       )
     val reasonProblems = stated.flatMap { r =>
       if !inFilterKeys(r.citekey.value) then Some(s"a reason for [[${r.citekey}]], which is not a source of the claim table")

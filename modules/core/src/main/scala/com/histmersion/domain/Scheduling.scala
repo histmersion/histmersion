@@ -18,16 +18,10 @@ object Scheduling:
   object Budget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DailyBudget = DailyBudget.T
   object DailyBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DefaultBudget = DefaultBudget.T
-  object DefaultBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GoalBudget = GoalBudget.T
-  object GoalBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxConcurrent = MaxConcurrent.T
   object MaxConcurrent extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MonthlyBudget = MonthlyBudget.T
   object MonthlyBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ScheduleBudget = ScheduleBudget.T
-  object ScheduleBudget extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the scheduler does with a due schedule. `Skip` moves the schedule on to its next time; `Defer` leaves it due,
     * for the next tick.
@@ -63,23 +57,23 @@ object Scheduling:
       maxConcurrent: com.histmersion.domain.Scheduling.MaxConcurrent
   ): Decision =
     previous.filter(unsettled) match
-      case Some(s) => Decision.Skip(s"its previous run is still ${s.wire}")
+      case Some(s) => Decision.Skip(Decision.Skip.Reason(s"its previous run is still ${s.wire}"))
       case None    =>
-        if spentDay >= BigDecimal(dailyUsd) then
+        if spentDay >= BigDecimal(dailyUsd.value) then
           Decision.Skip(
-            s"today's agent spend (${AgentsMarkdown.usd(spentDay.toDouble)} USD) reached agents.budgets.daily-usd"
+            Decision.Skip.Reason(s"today's agent spend (${AgentsMarkdown.usd(spentDay.toDouble)} USD) reached agents.budgets.daily-usd")
           )
-        else if spentMonth >= BigDecimal(monthlyUsd) then
+        else if spentMonth >= BigDecimal(monthlyUsd.value) then
           Decision.Skip(
-            s"this month's agent spend (${AgentsMarkdown.usd(spentMonth.toDouble)} USD) reached agents.budgets.monthly-usd"
+            Decision.Skip.Reason(s"this month's agent spend (${AgentsMarkdown.usd(spentMonth.toDouble)} USD) reached agents.budgets.monthly-usd")
           )
-        else if active >= math.max(1, maxConcurrent) then
-          Decision.Defer(s"$active run(s) already queued or running (agents.max-concurrent-runs)")
+        else if active.value >= math.max(1, maxConcurrent.value) then
+          Decision.Defer(Decision.Defer.Reason(s"$active run(s) already queued or running (agents.max-concurrent-runs)"))
         else Decision.Start
 
   /** The cost cap of a scheduled run: the schedule's own, else the goal's, else the server default. */
-  def budget(schedule: Option[com.histmersion.domain.Scheduling.ScheduleBudget], goal: Option[com.histmersion.domain.Scheduling.GoalBudget], default: com.histmersion.domain.Scheduling.DefaultBudget): com.histmersion.domain.Scheduling.Budget =
-    schedule.orElse(goal).filter(_ > 0).getOrElse(default)
+  def budget(schedule: Option[com.histmersion.domain.Scheduling.Budget], goal: Option[com.histmersion.domain.Scheduling.Budget], default: com.histmersion.domain.Scheduling.Budget): com.histmersion.domain.Scheduling.Budget =
+    schedule.orElse(goal).filter(_.value > 0).getOrElse(default)
 
   // ── the acquisition items ───────────────────────────────────────────────────────────────────────
 

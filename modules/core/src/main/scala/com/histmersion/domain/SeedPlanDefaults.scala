@@ -8,8 +8,8 @@ final case class SeedPlanDefaults(maxArticles: SeedPlanDefaults.MaxArticles, min
   /** A seeding manager's settings when it saves none: its run limits and the plan's checks. */
   def managerDefaults(m: ManagerDefaults): ManagerConfig =
     ManagerConfig(
-      maxRuns = Some(m.seed.maxRuns),
-      maxOpen = Some(2 * m.seed.maxRuns),
+      maxRuns = Some(ManagerConfig.MaxRuns(m.seed.maxRuns.value)),
+      maxOpen = Some(ManagerConfig.MaxOpen(2 * m.seed.maxRuns.value)),
       maxFailures = Some(m.maxFailures),
       minSources = Some(minSources),
       maxArticles = Some(maxArticles),

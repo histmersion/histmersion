@@ -485,4 +485,4 @@ object ManagerPolicy:
     * item, oldest first.
     */
   def notesFor(hints: List[ManagerHint], itemId: com.histmersion.domain.ManagerPolicy.ItemId): List[ManagerHint] =
-    hints.filter(h => h.retiredAt.isEmpty && h.itemId.forall(_.value == itemId.value) && h.text.value.trim.nonEmpty).sortBy(_.id.value)
+    hints.filter(h => h.retiredAt.isEmpty && h.itemId.forall(_.value == itemId.value) && h.text.value.trim.nonEmpty).sortBy(h => h.id.value: Long)

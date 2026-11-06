@@ -17,33 +17,17 @@ package com.histmersion.util.ocr
   */
 object Chunker:
 
-  type ChunkBreadcrumbResult = ChunkBreadcrumbResult.T
-  object ChunkBreadcrumbResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ChunkEmitHeading = ChunkEmitHeading.T
-  object ChunkEmitHeading extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type ChunkMarkdown = ChunkMarkdown.T
   object ChunkMarkdown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ChunkMaxChars = ChunkMaxChars.T
   object ChunkMaxChars extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SplitResult = SplitResult.T
-  object SplitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SplitSection = SplitSection.T
-  object SplitSection extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SplitMax = _root_.com.histmersion.util.ocr.Chunker.HardSplitMax
-  val SplitMax: _root_.com.histmersion.util.ocr.Chunker.HardSplitMax.type = _root_.com.histmersion.util.ocr.Chunker.HardSplitMax
-  type HardSplitResult = HardSplitResult.T
-  object HardSplitResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HardSplitP = HardSplitP.T
-  object HardSplitP extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HardSplitMax = HardSplitMax.T
-  object HardSplitMax extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private val Heading = """^(#{1,6})\s+(.*?)\s*#*\s*$""".r
 
   def chunk(markdown: com.histmersion.util.ocr.Chunker.ChunkMarkdown, maxChars: com.histmersion.util.ocr.Chunker.ChunkMaxChars): List[Chunk] =
-    val max = math.max(1, maxChars)
-    val text = Option(markdown).getOrElse("").replace("\u0000", "").replace("\r\n", "\n").replace('\r', '\n')
+    val max = math.max(1, maxChars.value)
+    val text = Option(markdown.value).getOrElse("").replace("\u0000", "").replace("\r\n", "\n").replace('\r', '\n')
     if text.isBlank then Nil
     else
       val out = List.newBuilder[Chunk]
@@ -52,15 +36,15 @@ object Chunker:
       var stack = List.empty[(Int, String)]
       val buf = new StringBuilder
 
-      def breadcrumb: Option[com.histmersion.util.ocr.Chunker.ChunkBreadcrumbResult] =
+      def breadcrumb: Option[Chunk.Heading] =
         val path = stack.reverse.map(_._2).filter(_.nonEmpty)
-        if path.isEmpty then None else Some(path.mkString(" > "))
+        if path.isEmpty then None else Some(Chunk.Heading(path.mkString(" > ")))
 
-      def emit(heading: Option[com.histmersion.util.ocr.Chunker.ChunkEmitHeading]): Unit =
+      def emit(heading: Option[Chunk.Heading]): Unit =
         val section = buf.toString
         buf.clear()
         split(section, max).foreach { body =>
-          out += Chunk(ord, heading, body)
+          out += Chunk(Chunk.Ord(ord), heading, body)
           ord += 1
         }
 
@@ -76,7 +60,7 @@ object Chunker:
       out.result()
 
   /** Section text → bodies of at most `max` chars, cut on blank lines, then on whitespace. */
-  private def split(section: com.histmersion.util.ocr.Chunker.SplitSection, max: com.histmersion.util.ocr.Chunker.SplitMax): List[com.histmersion.util.ocr.Chunker.SplitResult] =
+  private def split(section: String, max: Int): List[Chunk.Body] =
     val paragraphs = section.split("\n[ \t]*\n").toList.map(_.trim).filter(_.nonEmpty)
     val out = List.newBuilder[String]
     val cur = new StringBuilder
@@ -96,12 +80,12 @@ object Chunker:
         cur.append(p)
     }
     flush()
-    out.result()
+    out.result().map(Chunk.Body(_))
 
   /** One over-long paragraph → pieces of at most `max` chars, cut at the last whitespace that fits. Index-based (no
     * repeated `substring` of the tail): a 5 MB body must not be quadratic.
     */
-  private def hardSplit(p: com.histmersion.util.ocr.Chunker.HardSplitP, max: com.histmersion.util.ocr.Chunker.HardSplitMax): List[com.histmersion.util.ocr.Chunker.HardSplitResult] =
+  private def hardSplit(p: String, max: Int): List[String] =
     val out = List.newBuilder[String]
     var start = 0
     while start < p.length do

@@ -25,24 +25,24 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
     through(runs, es)(_.localized(_, mapped))
 
-  override def notices: List[String] = runs.flatMap(_.notices)
+  override def notices: List[PairQuestions.InfoLine] = runs.flatMap(_.notices)
 
-  override def sketchesWanted(cfg: MergeSettings): Set[String] = runs.flatMap(_.sketchesWanted(cfg)).toSet
+  override def sketchesWanted(cfg: MergeSettings): Set[Bundle.Source.BodySha256] = runs.flatMap(_.sketchesWanted(cfg)).toSet
 
   override def matchSources(
-      sketches: Map[String, MinHash],
+      sketches: Map[Bundle.Source.BodySha256, MinHash],
       cfg: MergeSettings,
       editions: Option[EditionsPolicy]
   ): List[SourcePair] = runs.flatMap(_.matchSources(sketches, cfg, editions))
 
   override def sourceQuestions(
       fates: Map[UUID, SourceFate],
-      sketches: Map[String, MinHash],
+      sketches: Map[Bundle.Source.BodySha256, MinHash],
       cfg: MergeSettings,
       questions: PairQuestions
   ): Unit = runs.foreach(_.sourceQuestions(fates, sketches, cfg, questions))
 
-  override def bodyIssue(right: UUID): Option[String] = runs.iterator.flatMap(_.bodyIssue(right)).nextOption()
+  override def bodyIssue(right: UUID): Option[MergeIssue.Id] = runs.iterator.flatMap(_.bodyIssue(right)).nextOption()
 
   override def pairFirst(
       right: com.histmersion.api.exchange.Bundle.Source,
@@ -54,19 +54,19 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def labelsTakenFirst(questions: PlanQuestions): Unit = runs.foreach(_.labelsTakenFirst(questions))
 
-  override def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
+  override def citekeyArgument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
     runs.iterator.flatMap(_.citekeyArgument(issue, decision)).nextOption()
 
   /** Every run folds; the folded source takes the bundle's body when one of them says so. */
   override def foldSources(
       right: com.histmersion.api.exchange.Bundle.Source,
       left: com.histmersion.api.exchange.Bundle.Source,
-      citekey: String,
+      citekey: com.histmersion.domain.library.Citekey,
       folds: PlanFolds
   ): Boolean =
     runs.map(_.foldSources(right, left, citekey, folds)).exists(identity)
 
-  override def renamed(source: UUID, citekey: String): Unit = runs.foreach(_.renamed(source, citekey))
+  override def renamed(source: UUID, citekey: com.histmersion.domain.library.Citekey): Unit = runs.foreach(_.renamed(source, citekey))
 
   override def relabelFirst(fates: Map[UUID, SourceFate], relabels: PlanRelabels): Unit =
     runs.foreach(_.relabelFirst(fates, relabels))
@@ -76,14 +76,14 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def bodiesWanted(
       pairs: List[(com.histmersion.api.exchange.Bundle.Source, com.histmersion.api.exchange.Bundle.Source)]
-  ): Set[String] =
+  ): Set[Bundle.Source.BodySha256] =
     runs.flatMap(_.bodiesWanted(pairs)).toSet
 
   override def pair(
       right: com.histmersion.api.exchange.Bundle.Source,
       left: com.histmersion.api.exchange.Bundle.Source,
       cond: Option[IssueCondition],
-      bodyIssue: Option[String],
+      bodyIssue: Option[MergeIssue.Id],
       questions: PairQuestions
   ): Unit = runs.foreach(_.pair(right, left, cond, bodyIssue, questions))
 
@@ -97,7 +97,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def addedOnBoth(questions: PlanQuestions): Unit = runs.foreach(_.addedOnBoth(questions))
 
-  override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
+  override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
     runs.iterator.flatMap(_.argument(issue, decision)).nextOption()
 
   override def pairIssue(kind: MergeIssue.Kind): Boolean = runs.exists(_.pairIssue(kind))
@@ -123,7 +123,7 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities = through(runs, es)(_.lines(_, es0))
 
-  override def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[String] =
+  override def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[MergePlan.Problems] =
     runs.flatMap(_.problems(finalEs, live, writes))
 
   override def dropped: Set[UUID] = runs.flatMap(_.dropped).toSet
@@ -132,18 +132,15 @@ final class PlanRuns(runs: List[PlanRun]) extends PlanRun:
 
   override def tombstones: List[(UUID, Bundle.Kind, UUID)] = runs.flatMap(_.tombstones)
 
-  override def bodyRenames: Map[UUID, List[(String, String)]] = runs.flatMap(_.bodyRenames).toMap
+  override def bodyRenames: Map[UUID, List[(Bundle.Asset.Name, Bundle.Asset.Name)]] = runs.flatMap(_.bodyRenames).toMap
 
   override def planned(plan: MergePlan): MergePlan = runs.foldLeft(plan)((p, r) => r.planned(p))
 
-  override def relinked(text: String, citekeys: Map[String, String]): String =
-    @tailrec def loop(rest: List[PlanRun], t: com.histmersion.util.data.exchange.PlanRuns.RelinkedLoopT): com.histmersion.util.data.exchange.PlanRuns.RelinkedLoopResult = rest match
+  override def relinked(
+      text: Bundle.Article.Body,
+      citekeys: Map[com.histmersion.domain.library.Citekey, com.histmersion.domain.library.Citekey]
+  ): Bundle.Article.Body =
+    @tailrec def loop(rest: List[PlanRun], t: Bundle.Article.Body): Bundle.Article.Body = rest match
       case r :: tail => loop(tail, r.relinked(t, citekeys))
       case Nil       => t
     loop(runs, text)
-
-object PlanRuns:
-  type RelinkedLoopResult = RelinkedLoopResult.T
-  object RelinkedLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RelinkedLoopT = RelinkedLoopT.T
-  object RelinkedLoopT extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

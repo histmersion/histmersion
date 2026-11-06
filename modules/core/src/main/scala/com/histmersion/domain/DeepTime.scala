@@ -9,12 +9,14 @@ object DeepTime:
   object SignedYear extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** `None` for a year beyond what a `Year` holds — no source dates anything to it. */
 
-  def year(y: com.histmersion.domain.DeepTime.SignedYear): Option[Year] = Option.when(y.isValidInt)(Year(y.toInt))
+  def year(y: com.histmersion.domain.DeepTime.SignedYear): Option[Year] = yearOf(y.value)
+
+  private def yearOf(y: Long): Option[Year] = Option.when(y.isValidInt)(Year(y.toInt))
 
   /** The period between two years given in either order; `None` when either lies beyond a `Year`. */
   def span(a: com.histmersion.domain.DeepTime.SignedYear, b: com.histmersion.domain.DeepTime.SignedYear): Option[Period] =
     for
-      start <- year(a.min(b))
-      end <- year(a.max(b))
+      start <- yearOf(a.value.min(b.value))
+      end <- yearOf(a.value.max(b.value))
       period <- Period.from(start, end).toOption
     yield period

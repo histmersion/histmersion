@@ -2,7 +2,7 @@ package com.histmersion.domain.catalogue.events
 
 import com.histmersion.api.exchange.Bundle
 
-import com.histmersion.api.exchange.{IssueDetail, MergeDecision, MergeIssue}
+import com.histmersion.api.exchange.{IssueDetail, MergeDecision, MergeIssue, MergePlan}
 import com.histmersion.domain.{MergeFold, MergePlanner}
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.util.data.exchange.{PlanFolds, PlanMerge, PlanQuestions, PlanRun}
@@ -28,19 +28,19 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
   /** The same dating and place on both sides: one event. */
   private val SameEvent: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
-    def info(label: String, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.BundleLabel): String =
-      s"event $label: the same dating and place on both sides — one event, datings and participants unioned"
+    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
+      PlanMerge.InfoResult(s"event $label: the same dating and place on both sides — one event, datings and participants unioned")
 
   /** Under another id here, with the same label, dates and place: one event. */
   private val AcrossIds: PlanMerge = new PlanMerge:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit = merged(f, o, folds)
-    def info(label: String, bundleLabel: com.histmersion.domain.catalogue.events.EventPlan.BundleLabel): String =
-      s"event $label: the bundle's $bundleLabel has the same label, dates and place — one event"
+    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
+      PlanMerge.InfoResult(s"event $label: the bundle's $bundleLabel has the same label, dates and place — one event")
 
   private def merged(f: UUID, o: UUID, folds: PlanFolds): Unit =
     if f != o then folds.fold(f, o, Bundle.Kind.Event)
     eventLine(o) = es => foldEvent(localEvent(o), eventIn(es, o))
-    folds.count(_.modify(_.eventsMerged).using(_ + 1))
+    folds.count(_.modify(_.eventsMerged).using(n => com.histmersion.api.exchange.MergeTally.EventsMerged(n.value + 1)))
 
   override def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
     if kind != Bundle.Kind.Event then None
@@ -57,7 +57,7 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       Bundle.Kind.Event,
       q.localized.events,
       _.uid,
-      _.id,
+      e => PlanQuestions.LabelTakenLabelResult(e.id.value),
       e => in.labels.events.get(e.id),
       com.histmersion.util.data.exchange.PlanQuestions.LabelTakenWhat("event id"),
       List(km.KeepLeft, km.KeepRight, km.RenameRight),
@@ -72,11 +72,11 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
       .filter(e =>
         q.writesInitially(e.uid) && !q.merged(q.bundleUidOf(e.uid)) && in.labels.events.get(e.id).forall(_ == e.uid)
       )
-      .sortBy(_.id)
+      .sortBy(_.id.value)
       .foreach { e =>
         in.local.events
           .filter(l => !claimed(l.uid) && !q.inLocalized(l.uid) && sameEventAcrossIds(l, e))
-          .sortBy(_.id)
+          .sortBy(_.id.value)
           .headOption
           .foreach { l =>
             claimed += l.uid
@@ -84,14 +84,14 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
           }
       }
 
-  override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[String, Unit]] =
+  override def argument(issue: MergeIssue, decision: MergeDecision): Option[Either[MergePlan.ResolutionErrors, Unit]] =
     Option.when(
       issue.entity == Bundle.Kind.Event && (decision.kind == km.RenameRight || decision.kind == km.RenameLeft)
     ) {
-      val eid = decision.argument.getOrElse("")
+      val eid = decision.argument.map(_.value).getOrElse("")
       val idsHere = in.local.events.map(_.id).toSet ++ in.foreign.events.map(_.id)
-      if !SlugShape.matches(eid) then Left(s"'$eid' is not an event id (lower-case letters, digits, _ . -)")
-      else if idsHere(eid) then Left(s"'$eid' is already an event id here or in the bundle")
+      if !SlugShape.matches(eid) then Left(MergePlan.ResolutionErrors(s"'$eid' is not an event id (lower-case letters, digits, _ . -)"))
+      else if idsHere(Bundle.Event.Id(eid)) then Left(MergePlan.ResolutionErrors(s"'$eid' is already an event id here or in the bundle"))
       else Right(())
     }
 
@@ -105,34 +105,29 @@ final class EventPlan(in: MergePlanner.Input) extends PlanRun:
             eventIn(es, o).modify(_.id).setTo(localEvent(o).id).modify(_.origin).setTo(localEvent(o).origin),
             localEvent(o)
           )
-        folds.count(_.modify(_.eventsMerged).using(_ + 1))
+        folds.count(_.modify(_.eventsMerged).using(n => com.histmersion.api.exchange.MergeTally.EventsMerged(n.value + 1)))
       case (MergeIssue.Kind.LabelTaken, Bundle.Kind.Event, Some(d), Some(f), _) if d.kind == km.RenameRight =>
-        d.argument.foreach(eid => eventLine(f) = es => eventIn(es, f).modify(_.id).setTo(eid))
+        d.argument.foreach(eid => eventLine(f) = es => eventIn(es, f).modify(_.id).setTo(Bundle.Event.Id(eid.value)))
       case _ => ()
 
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.events)
       .setTo(
-        MergePlanner.replaced(es0.events, _.uid, eventLine, es0, (_: com.histmersion.api.exchange.Bundle.Event) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
+        MergePlanner.replaced(es0.events, _.uid, eventLine, es0, (_: com.histmersion.api.exchange.Bundle.Event) => true)
       )
 
   // gazetteer places: an event written must point at a place that is here or coming
-  override def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[String] =
+  override def problems(finalEs: BundleEntities, live: UUID => Boolean, writes: UUID => Boolean): List[MergePlan.Problems] =
     val placesComing = finalEs.places.filter(p => live(p.uid)).map(_.id).toSet ++ in.local.places.map(_.id)
     finalEs.events
       .filter(e => writes(e.uid))
       .flatMap(e => e.placeId.map(e.id -> _))
-      .filterNot((_, p) => in.places(p) || placesComing(p))
+      .filterNot((_, p) => in.places(MergePlanner.Input.Places(p.value)) || placesComing(p))
       .map((e, p) =>
-        s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first"
+        MergePlan.Problems(s"event $e: place '$p' is not in this gazetteer — run `histmersion init` (or import that place) first")
       )
 
 object EventPlan:
-  type BundleLabel = BundleLabel.T
-  object BundleLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  /** A label for an event id. */
-
   private val SlugShape = "^[a-z0-9][a-z0-9_.-]*$".r
 
   /** Two events with one id that say the same about when and where (§5.4): they are one. */
@@ -148,15 +143,18 @@ object EventPlan:
       r: com.histmersion.api.exchange.Bundle.Event
   ): Boolean =
     def outer(e: com.histmersion.api.exchange.Bundle.Event) = Some(
-      com.histmersion.api.exchange.Bundle.Range(e.notBefore.orElse(e.beginBy), e.notAfter.orElse(e.endFrom))
+      com.histmersion.api.exchange.Bundle.Range(
+        e.notBefore.map(y => com.histmersion.api.catalogue.Year(y.value)).orElse(e.beginBy.map(y => com.histmersion.api.catalogue.Year(y.value))),
+        e.notAfter.map(y => com.histmersion.api.catalogue.Year(y.value)).orElse(e.endFrom.map(y => com.histmersion.api.catalogue.Year(y.value)))
+      )
     )
     val place = (l.placeId, r.placeId, l.geom, r.geom) match
       case (Some(a), Some(b), _, _)       => a == b
       case (None, None, Some(a), Some(b)) => a == b
       case (None, None, None, None)       => true
       case _                              => false
-    val label = Fingerprint.of(l.label).value
-    label.nonEmpty && label == Fingerprint.of(r.label).value && MergeFold.overlap(outer(l), outer(r)) && place
+    val label = Fingerprint.of(Fingerprint.OfS(l.label.value)).value
+    label.nonEmpty && label == Fingerprint.of(Fingerprint.OfS(r.label.value)).value && MergeFold.overlap(outer(l), outer(r)) && place
 
   /** One event out of two: `winner`'s fields, the datings (per citekey), participants and outgoing edges of both — the
     * winner's where both have one.
@@ -169,13 +167,13 @@ object EventPlan:
       if winner.central.isDefined || winner.plusMinus.isDefined || winner.datingMethod.isDefined then winner else other
     winner.copy(
       datings = (winner.datings ++ other.datings.filterNot(d => winner.datings.exists(_.citekey == d.citekey)))
-        .sortBy(_.citekey),
+        .sortBy(_.citekey.value),
       participants = (winner.participants ++ other.participants.filterNot(p =>
         winner.participants.exists(w => w.actor == p.actor && w.role == p.role)
-      )).sortBy(p => (p.actor, p.role)),
+      )).sortBy(p => (p.actor.value, p.role.value)),
       edges =
         (winner.edges ++ other.edges.filterNot(e => winner.edges.exists(w => w.dstUid == e.dstUid && w.kind == e.kind)))
-          .sortBy(e => (e.dstUid.toString, e.kind)),
+          .sortBy(e => (e.dstUid.toString, e.kind.value)),
       description = winner.description.orElse(other.description),
       citekey = winner.citekey.orElse(other.citekey),
       sourceUid = if winner.citekey.isDefined then winner.sourceUid else other.sourceUid,

@@ -5,13 +5,15 @@ import com.histmersion.api.catalogue.CatalogProviderInfo
 object CatalogProvider:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Wire = Wire.T
-  object Wire extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val Gvp = "gvp"
-  val Noaa = "noaa"
-  val Wikidata = "wikidata"
-  val all: List[com.histmersion.domain.catalogue.events.CatalogProvider.Wire] = List(Gvp, Noaa, Wikidata)
+  private val GvpName = "gvp"
+  private val NoaaName = "noaa"
+  private val WikidataName = "wikidata"
+
+  val Gvp: CatalogProviderInfo.Id = CatalogProviderInfo.Id(GvpName)
+  val Noaa: CatalogProviderInfo.Id = CatalogProviderInfo.Id(NoaaName)
+  val Wikidata: CatalogProviderInfo.Id = CatalogProviderInfo.Id(WikidataName)
+  val all: List[CatalogProviderInfo.Id] = List(Gvp, Noaa, Wikidata)
 
   val infos: List[CatalogProviderInfo] = List(
     // volcano.si.edu (its terms page) did not answer on 2026-10-14; the Smithsonian's general Terms of
@@ -20,8 +22,10 @@ object CatalogProvider:
       Gvp,
       com.histmersion.api.catalogue.CatalogProviderInfo.Title("Smithsonian Global Volcanism Program"),
       com.histmersion.api.catalogue.CatalogProviderInfo.Licence("Smithsonian Terms of Use (non-commercial use with attribution)"),
-      "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
-        "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2",
+      CatalogProviderInfo.Citation(
+        "Global Volcanism Program, Volcanoes of the World (v. 5.x), Smithsonian Institution, compiled by Venzke, E. " +
+          "https://doi.org/10.5479/si.GVP.VOTW5-2024.5.2"
+      ),
       com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://volcano.si.edu")
     ),
     // a U.S. federal work: public domain; NCEI asks to be cited
@@ -29,8 +33,10 @@ object CatalogProvider:
       Noaa,
       com.histmersion.api.catalogue.CatalogProviderInfo.Title("NOAA NCEI Natural Hazards"),
       com.histmersion.api.catalogue.CatalogProviderInfo.Licence("public-domain"),
-      "National Geophysical Data Center / World Data Service: NCEI/WDS Global Significant Earthquake, Tsunami " +
-        "and Volcano Databases. NOAA National Centers for Environmental Information. https://doi.org/10.7289/V5TD9V7K",
+      CatalogProviderInfo.Citation(
+        "National Geophysical Data Center / World Data Service: NCEI/WDS Global Significant Earthquake, Tsunami " +
+          "and Volcano Databases. NOAA National Centers for Environmental Information. https://doi.org/10.7289/V5TD9V7K"
+      ),
       com.histmersion.api.catalogue.CatalogProviderInfo.Home("https://www.ngdc.noaa.gov/hazard/")
     ),
     CatalogProviderInfo(
@@ -42,12 +48,12 @@ object CatalogProvider:
     )
   )
 
-  def info(id: com.histmersion.domain.catalogue.events.CatalogProvider.Wire): Option[CatalogProviderInfo] = infos.find(_.id == id)
+  def info(id: CatalogProviderInfo.Id): Option[CatalogProviderInfo] = infos.find(_.id == id)
 
   /** Pure: the provider a request names (`smithsonian` and `volcano` for gvp, `ncei` for noaa). */
-  def parse(s: com.histmersion.domain.catalogue.events.CatalogProvider.Wire): Either[com.histmersion.domain.catalogue.events.CatalogProvider.Problem, com.histmersion.domain.catalogue.events.CatalogProvider.Wire] =
-    s.trim.toLowerCase(java.util.Locale.ROOT) match
-      case Gvp | "smithsonian" | "volcano" => Right(Gvp)
-      case Noaa | "ncei"                   => Right(Noaa)
-      case Wikidata | "wd"                 => Right(Wikidata)
-      case other                           => Left(s"unknown event catalogue '$other' (one of: ${all.mkString(", ")})")
+  def parse(s: CatalogProviderInfo.Id): Either[Problem, CatalogProviderInfo.Id] =
+    s.value.trim.toLowerCase(java.util.Locale.ROOT) match
+      case GvpName | "smithsonian" | "volcano" => Right(Gvp)
+      case NoaaName | "ncei"                   => Right(Noaa)
+      case WikidataName | "wd"                 => Right(Wikidata)
+      case other                           => Left(Problem(s"unknown event catalogue '$other' (one of: ${all.mkString(", ")})"))

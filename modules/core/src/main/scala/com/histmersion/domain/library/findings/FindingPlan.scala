@@ -66,8 +66,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
           Bundle.Kind.Finding,
           List(rf.uid),
           List(lf.uid),
-          questions.rightRev(rf.uid),
-          questions.localRev(lf.uid)
+          BundlePlan.Ledger.ForeignRev(questions.rightRev(rf.uid).value),
+          BundlePlan.Local.Rev(questions.localRev(lf.uid).value)
         )
         nearIssue(rf.uid) = id
         questions.ask(
@@ -76,9 +76,9 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
             MergeIssue.Kind.FindingNearDuplicate,
             MergeIssue.Severity.Default,
             Bundle.Kind.Finding,
-            s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(j, com.histmersion.domain.library.sources.SourceMatcher.FixedPlaces(2))})",
-            Some(IssueSide(lf.id, lf.uid, List(MergeIssue.Detail.preview(lf.claim)))),
-            Some(IssueSide(rf.id, rf.uid, List(MergeIssue.Detail.preview(rf.claim)))),
+            MergeIssue.Title(s"near-duplicate findings (claim words alike, Jaccard ${SourceMatcher.fixed(SourceMatcher.Figure(j.value), SourceMatcher.Decimals(2))})"),
+            Some(IssueSide(IssueSide.Label(lf.id.value), lf.uid, List(IssueSide.Lines(MergeIssue.Detail.preview(lf.claim.value))))),
+            Some(IssueSide(IssueSide.Label(rf.id.value), rf.uid, List(IssueSide.Lines(MergeIssue.Detail.preview(rf.claim.value))))),
             List(com.histmersion.api.exchange.MergeIssue.Why("by default both are kept; merge makes them one finding")),
             List(km.Both, km.Merge),
             Some(com.histmersion.api.exchange.MergeDecision.of(km.Both)),
@@ -87,17 +87,17 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
               Some(
                 IssueDetail(
                   List(
-                    IssueField("claim", Some(lf.claim), Some(rf.claim)),
+                    IssueField(IssueField.Field("claim"), Some(IssueField.Left(lf.claim.value)), Some(IssueField.Right(rf.claim.value))),
                     IssueField(
-                      "period",
-                      lf.period.map(x => MergeIssue.Detail.rangeText(Some(x))),
-                      rf.period.map(x => MergeIssue.Detail.rangeText(Some(x)))
+                      IssueField.Field("period"),
+                      lf.period.map(x => IssueField.Left(MergeIssue.Detail.rangeText(Some(x)))),
+                      rf.period.map(x => IssueField.Right(MergeIssue.Detail.rangeText(Some(x))))
                     ),
-                    IssueField("region", lf.region, rf.region),
+                    IssueField(IssueField.Field("region"), lf.region.map(x => IssueField.Left(x.value)), rf.region.map(x => IssueField.Right(x.value))),
                     IssueField(
-                      "confidence",
-                      lf.confidence.map(_.toString.toLowerCase),
-                      rf.confidence.map(_.toString.toLowerCase)
+                      IssueField.Field("confidence"),
+                      lf.confidence.map(c => IssueField.Left(c.toString.toLowerCase)),
+                      rf.confidence.map(c => IssueField.Right(c.toString.toLowerCase))
                     )
                   )
                 )
@@ -107,7 +107,9 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
         )
       case Match.Same(rf, lf) if rf.confidence.isDefined && lf.confidence.isDefined && rf.confidence != lf.confidence =>
         questions.info(
-          s"finding ${lf.id}: the same claim as the bundle's ${rf.id} at another confidence — the more cautious is kept"
+          PairQuestions.InfoLine(
+            s"finding ${lf.id}: the same claim as the bundle's ${rf.id} at another confidence — the more cautious is kept"
+          )
         )
       case _ => ()
     }
@@ -119,19 +121,19 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
   override def foldSources(
       right: com.histmersion.api.exchange.Bundle.Source,
       left: com.histmersion.api.exchange.Bundle.Source,
-      citekey: String,
+      citekey: com.histmersion.domain.library.Citekey,
       folds: PlanFolds
   ): Boolean =
     val ms = findingMatches.getOrElse(right.uid, Nil)
     def merging(rf: com.histmersion.api.exchange.Bundle.Finding) =
-      nearIssue.get(rf.uid).flatMap(folds.decisionIn).exists(_.kind == km.Merge)
+      nearIssue.get(rf.uid).flatMap(id => folds.decisionIn(PlanFolds.DecisionInIssue(id.value))).exists(_.kind == km.Merge)
     val renumbered =
       localFindingsOf.getOrElse(left.uid, Nil).map(f => Bundle.Finding.Id(s"$citekey#${f.id.value.dropWhile(_ != '#').drop(1)}")).toSet
     val incoming = ms.collect {
       case Match.Unmatched(rf)                  => rf
       case Match.Near(rf, _, _) if !merging(rf) => rf
     }
-    val ids = nextIds(com.histmersion.api.library.Citekey(citekey), assignedIds.toSet ++ renumbered, IdCount(incoming.size))
+    val ids = nextIds(com.histmersion.api.library.Citekey(citekey.value), assignedIds.toSet ++ renumbered, IdCount(incoming.size))
     assignedIds ++= ids
     incoming.zip(ids).foreach((rf, id) => findingLine(rf.uid) = es => findingIn(es, rf.uid).modify(_.id).setTo(id))
     ms.foreach {
@@ -145,7 +147,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     }
     false
 
-  override def renamed(source: UUID, citekey: String): Unit =
+  override def renamed(source: UUID, citekey: com.histmersion.domain.library.Citekey): Unit =
     in.foreign.findings
       .filter(_.sourceUid == source)
       .foreach(f =>
@@ -177,8 +179,8 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
           val id = nextIds(com.histmersion.api.library.Citekey(ck), assignedIds.toSet, IdCount(1)).head
           assignedIds += id
           findingLine(r.foreignUid) = es => findingIn(es, r.foreignUid).modify(_.id).setTo(id)
-          relabels.info(s"finding ${f.id}: that id is another finding's here — the bundle's arrives as $id")
-          relabels.relabelled(s"finding ${f.id} → $id")
+          relabels.info(PlanRelabels.InfoLine(s"finding ${f.id}: that id is another finding's here — the bundle's arrives as $id"))
+          relabels.relabelled(PlanRelabels.RelabelledLine(s"finding ${f.id} → $id"))
         }
       }
 
@@ -186,7 +188,7 @@ final class FindingPlan(in: MergePlanner.Input) extends PlanRun:
     es.modify(_.findings)
       .setTo(
         MergePlanner
-          .replaced(es0.findings, _.uid, findingLine, es0, (_: com.histmersion.api.exchange.Bundle.Finding) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
+          .replaced(es0.findings, _.uid, findingLine, es0, (_: com.histmersion.api.exchange.Bundle.Finding) => true)
       )
 
 object FindingPlan:
@@ -225,9 +227,9 @@ object FindingPlan:
     o.map(r => Bundle.Finding.Region(r.value.trim)).filter(_.value.nonEmpty)
 
   /** The claim as compared: folded, stopwords out, de-duplicated, sorted. */
-  def claimKey(claim: Bundle.Finding.Claim): ClaimKey = ClaimKey(MergeText.significant(MergeText.tokens(claim.value)).distinct.sorted.mkString(" "))
+  def claimKey(claim: Bundle.Finding.Claim): ClaimKey = ClaimKey(MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).distinct.sorted.mkString(" "))
 
-  private def claimWords(claim: Bundle.Finding.Claim): Set[String] = MergeText.significant(MergeText.tokens(claim.value)).toSet
+  private def claimWords(claim: Bundle.Finding.Claim): Set[String] = MergeText.significant(MergeText.tokens(MergeText.Text(claim.value))).map(_.value).toSet
 
   /** Great-circle distance in km. */
   def km(lon1: com.histmersion.api.catalogue.Longitude, lat1: com.histmersion.api.catalogue.Latitude, lon2: com.histmersion.api.catalogue.Longitude, lat2: com.histmersion.api.catalogue.Latitude): Distance =
@@ -246,7 +248,7 @@ object FindingPlan:
       withinKm: MergeSettings.FindingWithinKm
   ): Boolean =
     val points = for { x <- a.lon; y <- a.lat; u <- b.lon; v <- b.lat } yield km(x, y, u, v).within(withinKm)
-    val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(x.value) == MergeText.fingerprint(y.value))
+    val regions = text(a.region).zip(text(b.region)).map((x, y) => MergeText.fingerprint(MergeText.Text(x.value)) == MergeText.fingerprint(MergeText.Text(y.value)))
     points.orElse(regions).forall(identity) || points.contains(true) || regions.contains(true)
 
   /** Caution ranks: contested is the least sure, then low, medium, high. */
@@ -293,7 +295,7 @@ object FindingPlan:
           val w = claimWords(r.claim)
           ls.filterNot(l => taken(l.uid))
             .filter(l => l.period.isDefined && r.period.isDefined && MergeFold.overlap(l.period, r.period))
-            .map(l => l -> Match.Near.Jaccard(MergeText.jaccard(w, claimWords(l.claim))))
+            .map(l => l -> Match.Near.Jaccard(MergeText.jaccard(w, claimWords(l.claim)).value))
             .filter(_._2.value >= nearAtLeast.value)
             .sortBy((l, j) => (-j.value, l.id.value))
             .headOption match

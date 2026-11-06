@@ -42,24 +42,24 @@ object CodexRetention:
 
   /** Pure: is `rel` a file inside a transcript directory (never a file at the home's top level)? */
   def inSessions(rel: com.histmersion.domain.CodexRetention.FileInfo.Rel): Boolean =
-    val segs = rel.replace('\\', '/').split('/').toList.filter(_.nonEmpty)
-    segs.size >= 2 && SessionDirs.contains(segs.head) && !segs.contains("..")
+    val segs = rel.value.replace('\\', '/').split('/').toList.filter(_.nonEmpty)
+    segs.size >= 2 && SessionDirs.exists(_.value == segs.head) && !segs.contains("..")
 
   /** Pure: the transcripts last changed more than `keepDays` before `nowMs` — oldest first. A run in flight appends to
     * its own transcript, so its file is never this old. `keepDays` ≤ 0 keeps all.
     */
   def stale(files: List[FileInfo], nowMs: com.histmersion.domain.CodexRetention.NowMs, keepDays: com.histmersion.domain.CodexRetention.KeepDays): List[FileInfo] =
-    if keepDays <= 0 then Nil
+    if keepDays.value <= 0 then Nil
     else
-      val cutoff = nowMs - keepDays.toLong * DayMs
-      files.filter(f => inSessions(f.rel) && f.modifiedMs < cutoff).sortBy(_.modifiedMs)
+      val cutoff = nowMs.value - keepDays.value.toLong * DayMs
+      files.filter(f => inSessions(f.rel) && f.modifiedMs.value < cutoff).sortBy(_.modifiedMs.value)
 
   /** Pure: the SQLite databases at the home's top level (`state_5.sqlite`), not their `-wal`/`-shm`. */
   def sqliteFiles(names: List[com.histmersion.domain.CodexRetention.FileName]): List[com.histmersion.domain.CodexRetention.FileName] =
-    names.filter(n => !n.contains('/') && n.endsWith(".sqlite")).sorted
+    names.filter(n => !n.value.contains('/') && n.value.endsWith(".sqlite")).sortBy(_.value)
 
   /** Pure: is a retention pass due — none yet, or the last one `everyHours` or more ago? `everyHours` ≤ 0 turns the
     * automatic pass off.
     */
   def due(lastMs: Option[com.histmersion.domain.CodexRetention.LastMs], nowMs: com.histmersion.domain.CodexRetention.NowMs, everyHours: com.histmersion.domain.CodexRetention.EveryHours): Boolean =
-    everyHours > 0 && lastMs.forall(l => nowMs - l >= everyHours.toLong * 60 * 60 * 1000)
+    everyHours.value > 0 && lastMs.forall(l => nowMs.value - l.value >= everyHours.value.toLong * 60 * 60 * 1000)

@@ -2,9 +2,10 @@ package com.histmersion.domain.catalogue.places
 import com.histmersion.api.exchange.MergeIssue
 import com.histmersion.api.exchange.MergeDecision
 
-import com.histmersion.api.exchange.{IssueDetail, IssueSide, MergeIssue}
+import com.histmersion.api.exchange.{IssueDetail, IssueSide, MergeIssue, MergeTally}
 import com.histmersion.domain.MergePlanner
 import com.histmersion.util.data.exchange.BundleEntities
+import com.histmersion.util.data.exchange.PairQuestions
 import com.histmersion.util.data.exchange.PlanFolds
 import com.histmersion.util.data.exchange.PlanMerge
 import com.histmersion.util.data.exchange.PlanQuestions
@@ -28,7 +29,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   private val placeLine =
     scala.collection.mutable.Map.empty[UUID, BundleEntities => com.histmersion.api.exchange.Bundle.Place]
   private val renames =
-    scala.collection.mutable.ListBuffer.empty[(com.histmersion.api.exchange.Bundle.Place, String, Boolean)]
+    scala.collection.mutable.ListBuffer.empty[(com.histmersion.api.exchange.Bundle.Place, Bundle.Place.Id, Boolean)]
   private def placeIn(es: BundleEntities, u: UUID) = es.places.find(_.uid == u).get
 
   /** The same place: ours, with the bundle's names, parents, external ids and types. */
@@ -36,17 +37,17 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
     def fold(f: UUID, o: UUID, folds: PlanFolds): Unit =
       folds.fold(f, o, Bundle.Kind.Place)
       placeLine(o) = es => foldPlace(localPlace(o), placeIn(es, o))
-      folds.count(_.modify(_.placesMerged).using(_ + 1))
-    def info(label: com.histmersion.domain.catalogue.places.PlacePlan.InfoLabel, bundleLabel: com.histmersion.domain.catalogue.places.PlacePlan.InfoBundleLabel): com.histmersion.domain.catalogue.places.PlacePlan.InfoResult =
-      s"place $label: the bundle's $bundleLabel is the same place — one place, names unioned"
+      folds.count(_.modify(_.placesMerged).using(n => MergeTally.PlacesMerged(n.value + 1)))
+    def info(label: PlanMerge.InfoLabel, bundleLabel: PlanMerge.InfoBundleLabel): PlanMerge.InfoResult =
+      PlanMerge.InfoResult(s"place $label: the bundle's $bundleLabel is the same place — one place, names unioned")
 
   // a place the bundle renamed (its uid is here under another id, #888): the import follows the rename — unless the
   // new id is a different place's here; then ours keeps its id, and what the bundle points at the new id points at
   // ours. A bundle place matched to one here under another id: what points at it by id follows
   override def localized(es: BundleEntities, mapped: Map[UUID, UUID]): BundleEntities =
     renames ++= renamedPlaces(in.foreign.places, in.local.places, mapped.keySet)
-    val renameKept: Map[UUID, com.histmersion.domain.catalogue.places.PlacePlan.LocalizedRenameKeptPart2] = renames.collect { case (p, ours, true) => p.uid -> ours }.toMap
-    val placeIdMap: Map[com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart1, com.histmersion.domain.catalogue.places.PlacePlan.LocalizedPlaceIdMapPart2] =
+    val renameKept: Map[UUID, Bundle.Place.Id] = renames.collect { case (p, ours, true) => p.uid -> ours }.toMap
+    val placeIdMap: Map[Bundle.Place.Id, Bundle.Place.Id] =
       in.foreign.places.flatMap(p => in.placeMatches.get(p.uid).filter(_ != p.id).map(p.id -> _)).toMap ++
         renames.collect { case (p, ours, true) => p.id -> ours }
     val repointed = repoint(es, placeIdMap)
@@ -56,10 +57,10 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
         .modify(_.places)
         .setTo(repointed.places.map(p => renameKept.get(p.uid).fold(p)(ours => p.copy(id = ours))))
 
-  override def notices: List[String] =
+  override def notices: List[PairQuestions.InfoLine] =
     renames.toList.map { (p, ours, kept) =>
-      if kept then s"place $ours: renamed ${p.id} in the bundle, but here ${p.id} is another place — it keeps its id"
-      else s"place $ours: renamed ${p.id} in the bundle — renamed here too (the old id stays an alias)"
+      if kept then PairQuestions.InfoLine(s"place $ours: renamed ${p.id} in the bundle, but here ${p.id} is another place — it keeps its id")
+      else PairQuestions.InfoLine(s"place $ours: renamed ${p.id} in the bundle — renamed here too (the old id stays an alias)")
     }
 
   override def rowDetail(kind: Bundle.Kind, u: UUID, localized: BundleEntities): Option[IssueDetail] =
@@ -70,7 +71,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   // under another id is one when its label and geometry are
   override def addedOnBoth(q: PlanQuestions): Unit =
     val localPlaceById = in.local.places.map(p => p.id -> p).toMap
-    q.localized.places.filter(p => q.writesInitially(p.uid)).sortBy(_.id).foreach { p =>
+    q.localized.places.filter(p => q.writesInitially(p.uid)).sortBy(_.id.value).foreach { p =>
       val f = q.bundleUidOf(p.uid)
       localPlaceById.get(p.id).filter(_.uid != p.uid) match
         case Some(o) if samePlace(o, p) => q.merge(f, o.uid, SamePlace)
@@ -89,13 +90,17 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
               MergeIssue.Kind.PlaceDiffers,
               MergeIssue.Severity.Blocking,
               Bundle.Kind.Place,
-              s"place ${p.id} was added on both sides, " +
-                (if o.geom != p.geom then "with different geometries" else "with different time spans"),
-              Some(IssueSide(o.id, o.uid, List(o.label))),
-              Some(IssueSide(p.id, f, List(p.label))),
+              MergeIssue.Title(
+                s"place ${p.id} was added on both sides, " +
+                  (if o.geom != p.geom then "with different geometries" else "with different time spans")
+              ),
+              Some(IssueSide(IssueSide.Label(o.id.value), o.uid, List(IssueSide.Lines(o.label.value)))),
+              Some(IssueSide(IssueSide.Label(p.id.value), f, List(IssueSide.Lines(p.label.value)))),
               List(
-                "keep-left keeps this collection's place (the bundle's events point at it); keep-right takes the bundle's " +
-                  "geometry and span"
+                MergeIssue.Why(
+                  "keep-left keeps this collection's place (the bundle's events point at it); keep-right takes the bundle's " +
+                    "geometry and span"
+                )
               ),
               lr,
               detail = Some(MergeIssue.Detail.placeDetail(o, p))
@@ -113,7 +118,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
     (i.kind, i.entity, i.decision, i.right.map(_.uid), i.left.map(_.uid)) match
       case (MergeIssue.Kind.PlaceDiffers, Bundle.Kind.Place, Some(d), Some(f), Some(o)) =>
         folds.fold(f, o, Bundle.Kind.Place)
-        folds.count(_.modify(_.placesMerged).using(_ + 1))
+        folds.count(_.modify(_.placesMerged).using(n => MergeTally.PlacesMerged(n.value + 1)))
         if d.kind == km.KeepRight then
           placeLine(o) = es => foldPlace(placeIn(es, o).modify(_.origin).setTo(localPlace(o).origin), localPlace(o))
         else folds.keepLocal(f)
@@ -122,7 +127,7 @@ final class PlacePlan(in: MergePlanner.Input) extends PlanRun:
   override def lines(es: BundleEntities, es0: BundleEntities): BundleEntities =
     es.modify(_.places)
       .setTo(
-        MergePlanner.replaced(es0.places, _.uid, placeLine, es0, (_: com.histmersion.api.exchange.Bundle.Place) => com.histmersion.domain.MergePlanner.ReplacedKeep(true))
+        MergePlanner.replaced(es0.places, _.uid, placeLine, es0, (_: com.histmersion.api.exchange.Bundle.Place) => true)
       )
 
 object PlacePlan:
@@ -130,27 +135,8 @@ object PlacePlan:
   /** Events and places point at places by id: a bundle place matched to one here under another id is pointed at under
     * that id. Pure.
     */
-  type LocalizedRenameKeptPart2 = LocalizedRenameKeptPart2.T
-  object LocalizedRenameKeptPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LocalizedPlaceIdMapPart1 = LocalizedPlaceIdMapPart1.T
-  object LocalizedPlaceIdMapPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LocalizedPlaceIdMapPart2 = LocalizedPlaceIdMapPart2.T
-  object LocalizedPlaceIdMapPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type InfoResult = InfoResult.T
-  object InfoResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoLabel = InfoLabel.T
-  object InfoLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoBundleLabel = InfoBundleLabel.T
-  object InfoBundleLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepointPlacesPart1 = RepointPlacesPart1.T
-  object RepointPlacesPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RepointPlacesPart2 = RepointPlacesPart2.T
-  object RepointPlacesPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RenamedPlacesResultPart2 = RenamedPlacesResultPart2.T
-  object RenamedPlacesResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def repoint(es: BundleEntities, places: Map[com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart1, com.histmersion.domain.catalogue.places.PlacePlan.RepointPlacesPart2]): BundleEntities =
+  def repoint(es: BundleEntities, places: Map[Bundle.Place.Id, Bundle.Place.Id]): BundleEntities =
     if places.isEmpty then es
     else
       es.modify(_.events)
@@ -170,7 +156,7 @@ object PlacePlan:
       bundle: List[com.histmersion.api.exchange.Bundle.Place],
       here: List[com.histmersion.api.exchange.Bundle.Place],
       mapped: Set[UUID]
-  ): List[(com.histmersion.api.exchange.Bundle.Place, com.histmersion.domain.catalogue.places.PlacePlan.RenamedPlacesResultPart2, Boolean)] =
+  ): List[(com.histmersion.api.exchange.Bundle.Place, Bundle.Place.Id, Boolean)] =
     val ourId = here.map(p => p.uid -> p.id).toMap
     val owner = here.map(p => p.id -> p.uid).toMap
     bundle
@@ -194,9 +180,9 @@ object PlacePlan:
   ): com.histmersion.api.exchange.Bundle.Place =
     l.modify(
       _.names).setTo((l.names ++ r.names.filterNot(n => l.names.exists(m => m.name == n.name && m.lang == n.lang)))
-        .sortBy(n => (n.name, n.lang.getOrElse("")))).modify(_.relations).setTo((l.relations ++ r.relations.filterNot(x =>
+        .sortBy(n => (n.name.value, n.lang.fold("")(_.value)))).modify(_.relations).setTo((l.relations ++ r.relations.filterNot(x =>
         l.relations.exists(y => y.parentId == x.parentId && y.kind == x.kind)
       ))
-        .sortBy(x => (x.parentId, x.kind))).modify(_.links).setTo((l.links ++ r.links.filterNot(x => l.links.exists(y => y.scheme == x.scheme && y.externalId == x.externalId)))
-          .sortBy(x => (x.scheme, x.externalId))).modify(_.types).setTo((l.types ++ r.types.filterNot(x => l.types.exists(_.typeLabel == x.typeLabel))).sortBy(_.typeLabel)).modify(_.source).setTo(l.source.orElse(r.source)).modify(_.properties).setTo(l.properties.orElse(r.properties)).modify(_.rev).setTo(""
+        .sortBy(x => (x.parentId.value, x.kind.value))).modify(_.links).setTo((l.links ++ r.links.filterNot(x => l.links.exists(y => y.scheme == x.scheme && y.externalId == x.externalId)))
+          .sortBy(x => (x.scheme.value, x.externalId.value))).modify(_.types).setTo((l.types ++ r.types.filterNot(x => l.types.exists(_.typeLabel == x.typeLabel))).sortBy(_.typeLabel.value)).modify(_.source).setTo(l.source.orElse(r.source)).modify(_.properties).setTo(l.properties.orElse(r.properties)).modify(_.rev).setTo(Bundle.Place.Rev("")
     )

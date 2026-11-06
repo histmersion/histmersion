@@ -15,30 +15,27 @@ private[domain] object JsonRead:
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Number = Number.T
   object Number extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeEnd = RangeEnd.T
-  object RangeEnd extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeStart = RangeStart.T
-  object RangeStart extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Unencoded = Unencoded.T
   object Unencoded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def str(c: ACursor, k: com.histmersion.domain.JsonRead.Key): Option[com.histmersion.domain.JsonRead.Text] =
-    c.downField(k).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty)
+    c.downField(k.value).focus.flatMap(j => j.asString.orElse(j.asNumber.map(_.toString))).map(_.trim).filter(_.nonEmpty).map(Text(_))
   def strs(c: ACursor, k: com.histmersion.domain.JsonRead.Key): List[com.histmersion.domain.JsonRead.Text] =
-    c.downField(k)
+    c.downField(k.value)
       .focus
       .toList
       .flatMap(j => j.asArray.map(_.toList.flatMap(_.asString)).getOrElse(j.asString.toList))
       .map(_.trim)
       .filter(_.nonEmpty)
+      .map(Text(_))
   def long(c: ACursor, k: com.histmersion.domain.JsonRead.Key): Option[com.histmersion.domain.JsonRead.Number] =
-    c.downField(k).focus.flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.trim.toLongOption)))
+    c.downField(k.value).focus.flatMap(j => j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap(_.trim.toLongOption))).map(Number(_))
   def bool(c: ACursor, k: com.histmersion.domain.JsonRead.Key): Option[Boolean] =
-    c.downField(k).focus.flatMap(j => j.asBoolean.orElse(j.asString.map(_.trim.equalsIgnoreCase("true"))))
-  def enc(s: com.histmersion.domain.JsonRead.Unencoded): com.histmersion.domain.JsonRead.Encoded = URLEncoder.encode(s, UTF_8)
-  def range(a: Option[com.histmersion.domain.JsonRead.RangeStart], b: Option[com.histmersion.domain.JsonRead.RangeEnd]): Option[Period] =
+    c.downField(k.value).focus.flatMap(j => j.asBoolean.orElse(j.asString.map(_.trim.equalsIgnoreCase("true"))))
+  def enc(s: com.histmersion.domain.JsonRead.Unencoded): com.histmersion.domain.JsonRead.Encoded = Encoded(URLEncoder.encode(s.value, UTF_8))
+  def range(a: Option[com.histmersion.domain.DeepTime.SignedYear], b: Option[com.histmersion.domain.DeepTime.SignedYear]): Option[Period] =
     (a, b) match
       case (Some(x), Some(y)) => DeepTime.span(x, y)
       case (Some(x), None)    => DeepTime.span(x, x)

@@ -14,9 +14,6 @@ object CatalogMerge:
     * `years`, and their points are within `km`.
     */
 
-  type FitId = _root_.com.histmersion.domain.catalogue.Event.Id
-  val FitId: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
-
   final case class Tolerance(km: Tolerance.Km, years: Tolerance.Years)
 
   object Tolerance:
@@ -29,37 +26,44 @@ object CatalogMerge:
     * share it). `why` says what matched.
     */
   enum Placement:
-    case Existing(eventId: com.histmersion.domain.catalogue.Event.Id, why: Placement.Existing.Why)
-    case New(eventId: com.histmersion.domain.catalogue.Event.Id, why: Placement.New.Why)
+    case Existing(eventId: com.histmersion.domain.catalogue.Event.Id, why: Placement.Why)
+    case New(eventId: com.histmersion.domain.catalogue.Event.Id, why: Placement.Why)
     def eventId: com.histmersion.domain.catalogue.Event.Id
 
   object Placement:
-    object Existing:
-      type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object New:
-      type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def outer(ts: TimeSpan): Option[(Long, Long)] = ts.outer
+  private def outer(ts: TimeSpan): Option[(com.histmersion.api.catalogue.Year, com.histmersion.api.catalogue.Year)] = ts.outer
+
+  private def point(e: StoredEvent): (Option[com.histmersion.api.catalogue.Latitude], Option[com.histmersion.api.catalogue.Longitude]) =
+    (e.lat.map(l => com.histmersion.api.catalogue.Latitude(l.value)), e.lon.map(l => com.histmersion.api.catalogue.Longitude(l.value)))
+
+  private def outerYears(ts: TimeSpan): Option[(Long, Long)] = outer(ts).map((a, b) => (a.value, b.value))
 
   /** Pure: do two spans overlap once widened by `years`? An undated one overlaps nothing. */
-  def overlaps(a: TimeSpan, b: TimeSpan, years: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years): Boolean =
+  def overlaps(a: TimeSpan, b: TimeSpan, years: Tolerance.Years): Boolean =
     (outer(a), outer(b)) match
       case (Some((a0, a1)), Some((b0, b1))) =>
-        Years.shift(a0, -years) <= Years.shift(b1, years) && Years.shift(b0, -years) <= Years.shift(a1, years)
+        val back = Years.Shift(-years.value)
+        val forth = Years.Shift(years.value)
+        Years.shift(a0, back).value <= Years.shift(b1, forth).value &&
+        Years.shift(b0, back).value <= Years.shift(a1, forth).value
       case _ => false
 
   /** Pure: are two points within `km`? An unplaced one is near nothing. */
-  def near(a: (Option[com.histmersion.Latitude], Option[com.histmersion.Longitude]), b: (Option[com.histmersion.Latitude], Option[com.histmersion.Longitude]), km: com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km): Boolean =
+  def near(a: (Option[com.histmersion.api.catalogue.Latitude], Option[com.histmersion.api.catalogue.Longitude]), b: (Option[com.histmersion.api.catalogue.Latitude], Option[com.histmersion.api.catalogue.Longitude]), km: Tolerance.Km): Boolean =
     (a, b) match
-      case ((Some(la), Some(lo)), (Some(lb), Some(ob))) => Geocode.distanceKm(lo, la, ob, lb) <= km
+      case ((Some(la), Some(lo)), (Some(lb), Some(ob))) => Geocode.distanceKm(lo, la, ob, lb).value <= km.value
       case _                                            => false
 
   /** Two kinds are the same thing when their canonical kinds are equal (a siege is no battle here: Wikidata lists both
     * for one fight only when it says so through the item).
     */
-  private def sameKind(a: String, b: String): Boolean = EventTaxonomy.canonical(a) == EventTaxonomy.canonical(b)
+  private def canonical(kind: String): com.histmersion.api.catalogue.EventSummary.Kind =
+    EventTaxonomy.canonical(com.histmersion.api.catalogue.EventSummary.Kind(kind))
+
+  private def sameKind(a: String, b: String): Boolean = canonical(a) == canonical(b)
 
   /** Pure: how well a candidate's span and point fit a record's — the TIE-BREAK when several qualify, compared in this
     * order: the larger `score` (the overlap of the two outer spans over their union, 0…1: the one whose dating agrees
@@ -77,20 +81,20 @@ object CatalogMerge:
     type Id = com.histmersion.domain.catalogue.Event.Id
     val Id: _root_.com.histmersion.domain.catalogue.Event.Id.type = _root_.com.histmersion.domain.catalogue.Event.Id
 
-    given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score, f.years, f.km, f.id))
+    given Ordering[Fit] = Ordering.by((f: Fit) => (-f.score.value, f.years.value, f.km.value, f.id.value))
 
   /** Pure: the [[Fit]] of a candidate (`ts`, `lat`/`lon`, `id`) to a record. */
-  def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[com.histmersion.Latitude], lon: Option[com.histmersion.Longitude], id: com.histmersion.domain.catalogue.events.CatalogMerge.FitId): Fit =
-    val (score, years) = (outer(r.timeSpan), outer(ts)) match
+  def fit(r: CatalogRecord, ts: TimeSpan, lat: Option[com.histmersion.api.catalogue.Latitude], lon: Option[com.histmersion.api.catalogue.Longitude], id: Fit.Id): Fit =
+    val (score, years) = (outerYears(r.timeSpan), outerYears(ts)) match
       case (Some((a0, a1)), Some((b0, b1))) =>
         val inter = (a1.min(b1) - a0.max(b0) + 1).max(0).toDouble
         val union = (a1.max(b1) - a0.min(b0) + 1).toDouble
         (inter / union, math.abs((a0 + a1) / 2.0 - (b0 + b1) / 2.0))
       case _ => (0.0, Double.PositiveInfinity)
     val km = (r.lat, r.lon, lat, lon) match
-      case (Some(la), Some(lo), Some(lb), Some(ob)) => Geocode.distanceKm(lo, la, ob, lb)
+      case (Some(la), Some(lo), Some(lb), Some(ob)) => Geocode.distanceKm(lo, la, ob, lb).value
       case _                                        => Double.PositiveInfinity
-    Fit(score, years, km, id)
+    Fit(Fit.Score(score), Fit.Years(years), Fit.Km(km), id)
 
   /** Pure: where each record goes. A record joins, in this order of rules:
     *   1. the stored event that already holds its catalogue key;
@@ -106,33 +110,35 @@ object CatalogMerge:
     * in the list. The answer keeps the order of `records`.
     */
   def place(records: List[CatalogRecord], stored: List[StoredEvent], tol: Tolerance): List[(CatalogRecord, Placement)] =
-    val byKey = stored.flatMap(e => e.keys.map(_ -> e.id)).groupMap(_._1)(_._2).view.mapValues(_.min).toMap
+    val byKey = stored.flatMap(e => e.keys.map(_ -> e.id)).groupMap(_._1)(_._2).view.mapValues(_.minBy(_.value)).toMap
     val byWd = stored.flatMap(e => e.wikidata.map(_ -> e)).groupMap(_._1)(_._2)
     def best[A](cands: List[A])(f: A => Fit): Option[A] = cands.minByOption(f)
-    def ofStored(r: CatalogRecord)(e: StoredEvent): Fit = fit(r, e.timeSpan, e.lat, e.lon, e.id)
-    val order = records.zipWithIndex.sortBy((r, i) => (r.provider, r.providerId, i))
+    def ofStored(r: CatalogRecord)(e: StoredEvent): Fit =
+      fit(r, e.timeSpan, point(e)._1, point(e)._2, e.id)
+    val order = records.zipWithIndex.sortBy((r, i) => (r.provider.value, r.providerId.value, i))
     // `var`-free fold: the records placed so far, with where they went
     val placed = order.foldLeft(Vector.empty[(Int, CatalogRecord, Placement)]) { case (acc, (r, i)) =>
       def storedMatch: Option[Placement] =
         byKey
           .get(r.key)
-          .map(Placement.Existing(_, s"${r.provider} ${r.providerId} already recorded"))
+          .map(Placement.Existing(_, Placement.Why(s"${r.provider} ${r.providerId} already recorded")))
           .orElse(
             r.wikidata
               .flatMap(q => byWd.get(q))
               .flatMap(es => best(es)(ofStored(r)))
-              .map(e => Placement.Existing(e.id, s"same Wikidata item ${r.wikidata.get}"))
+              .map(e => Placement.Existing(e.id, Placement.Why(s"same Wikidata item ${r.wikidata.get}")))
           )
           .orElse(
             best(
               stored.filter(e =>
-                !e.keys.exists(_._1 == r.provider) && sameKind(e.kind, r.kind) &&
-                  overlaps(e.timeSpan, r.timeSpan, tol.years) && near((e.lat, e.lon), (r.lat, r.lon), tol.km)
+                !e.keys.exists(_._1 == r.provider) && sameKind(e.kind.value, r.kind.value) &&
+                  overlaps(e.timeSpan, r.timeSpan, tol.years) &&
+                  near(point(e), (r.lat, r.lon), tol.km)
               )
             )(ofStored(r))
               .map(e =>
                 Placement
-                  .Existing(e.id, s"same ${EventTaxonomy.canonical(r.kind)} at the same time and place as '${e.id}'")
+                  .Existing(e.id, Placement.Why(s"same ${canonical(r.kind.value)} at the same time and place as '${e.id}'"))
               )
           )
       def runMatch: Option[Placement] =
@@ -145,20 +151,20 @@ object CatalogMerge:
           .orElse(
             pick((o, _) =>
               o.provider != r.provider && o.group.isDefined && o.group == r.group &&
-                sameKind(o.kind, r.kind) && overlaps(o.timeSpan, r.timeSpan, tol.years)
+                sameKind(o.kind.value, r.kind.value) && overlaps(o.timeSpan, r.timeSpan, tol.years)
             )
           )
           .orElse(
             pick((o, _) =>
-              o.provider != r.provider && sameKind(o.kind, r.kind) &&
+              o.provider != r.provider && sameKind(o.kind.value, r.kind.value) &&
                 overlaps(o.timeSpan, r.timeSpan, tol.years) && near((o.lat, o.lon), (r.lat, r.lon), tol.km)
             )
           )
           .map {
-            case Placement.Existing(id, _) => Placement.Existing(id, "merged with another record of this run")
-            case Placement.New(id, _)      => Placement.New(id, "merged with another catalogue's record of it")
+            case Placement.Existing(id, _) => Placement.Existing(id, Placement.Why("merged with another record of this run"))
+            case Placement.New(id, _)      => Placement.New(id, Placement.Why("merged with another catalogue's record of it"))
           }
-      val p = storedMatch.orElse(runMatch).getOrElse(Placement.New(CatalogRecord.eventId(r), "new"))
+      val p = storedMatch.orElse(runMatch).getOrElse(Placement.New(com.histmersion.domain.catalogue.Event.Id.assume(CatalogRecord.eventId(r).value), Placement.Why("new")))
       acc :+ ((i, r, p))
     }
     placed.sortBy(_._1).map((_, r, p) => r -> p).toList

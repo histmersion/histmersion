@@ -670,9 +670,9 @@ object MergePlanner:
         MergeFold.ArticleBody(local.body.value),
         in.articleHistory
           .getOrElse(local.uid, Nil)
-          .map((sha, body) => (MergeFold.ArticleHistory(sha.value), MergeFold.ArticleHistory(body.value))),
+          .map((sha, body) => (sha, MergeFold.ArticleBody(body.value))),
         MergeFold.ArticleBody(rawArticle(foreignUid).body.value),
-        foreignHistory(foreignUid).map(sha => MergeFold.ArticleHistory(sha.value))
+        foreignHistory(foreignUid)
       )
     def baseOf(local: UUID, sha: Sha256): Option[Bundle.Article.Body] =
       in.articleHistory.getOrElse(local, Nil).find(_._1 == sha).map(_._2)
@@ -891,7 +891,7 @@ object MergePlanner:
         in.local.queue
           .filter(l =>
             l.list == q.list && !queueClaimed(l.uid) && !locRevs.contains(l.uid) &&
-              MergeFold.queueKey(MergeFold.QueueText(l.text.value)) == MergeFold.queueKey(MergeFold.QueueText(q.text.value))
+              MergeFold.queueKey(l.text) == MergeFold.queueKey(q.text)
           )
           .sortBy(_.uid.toString)
           .headOption

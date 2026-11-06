@@ -10,12 +10,12 @@ final case class WatchManagerDefaults(maxRuns: WatchManagerDefaults.MaxRuns, aut
   /** A watcher's settings when it saves none: every sweep, auto-ingest off, its cap. */
   def managerDefaults(m: ManagerDefaults): ManagerConfig =
     ManagerConfig(
-      maxRuns = Some(maxRuns),
-      maxOpen = Some(2 * maxRuns),
+      maxRuns = Some(ManagerConfig.MaxRuns(maxRuns.value)),
+      maxOpen = Some(ManagerConfig.MaxOpen(2 * maxRuns.value)),
       maxFailures = Some(m.maxFailures),
       sweeps = Some(Sweep.values.toList.map(_.wire)),
       autoIngest = Some(false),
-      autoIngestPerDay = Some(autoIngestPerDay),
+      autoIngestPerDay = Some(ManagerConfig.AutoIngestPerDay(autoIngestPerDay.value)),
       dailyUsd = ManagerPolicy.dailyCap(ManagerConfig(), m)
     )
 
@@ -24,7 +24,7 @@ final case class WatchManagerDefaults(maxRuns: WatchManagerDefaults.MaxRuns, aut
     */
   def ingestAllowance(c: ManagerConfig, ingestedToday: com.histmersion.domain.WatchManagerDefaults.IngestedToday): com.histmersion.domain.WatchManagerDefaults.IngestAllowance =
     if !c.autoIngest.contains(true) then com.histmersion.domain.WatchManagerDefaults.IngestAllowance(0)
-    else math.max(0, c.autoIngestPerDay.getOrElse(autoIngestPerDay) - math.max(0, ingestedToday))
+    else com.histmersion.domain.WatchManagerDefaults.IngestAllowance(math.max(0, c.autoIngestPerDay.fold(autoIngestPerDay.value)(_.value) - math.max(0, ingestedToday.value)))
 
 object WatchManagerDefaults:
   type IngestAllowance = IngestAllowance.T

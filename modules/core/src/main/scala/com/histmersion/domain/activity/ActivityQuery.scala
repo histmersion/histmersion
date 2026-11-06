@@ -11,19 +11,11 @@ final case class ActivityQuery(
     show: Activity.Show = Activity.Show.Everything,
     since: Option[Instant] = None,
     goal: Option[ActivityQuery.Goal] = None,
-    limit: ActivityQuery.Limit = Activity.DefaultLimit,
+    limit: ActivityQuery.Limit = ActivityQuery.Limit(Activity.DefaultLimit),
     before: Option[ActivityCursor] = None
 )
 
 object ActivityQuery:
-  type Before = Before.T
-  object Before extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Problem = Problem.T
-  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Show = Show.T
-  object Show extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Since = Since.T
-  object Since extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Goal = Goal.T
   object Goal extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Limit = Limit.T

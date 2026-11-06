@@ -169,7 +169,7 @@ object ArticleReviewStatus:
     l.entries
       .groupBy(e => (e.run, e.round))
       .toList
-      .sortBy { case ((run, round), _) => (number.getOrElse(run, Int.MaxValue), round.value) }
+      .sortBy { case ((run, round), _) => (number.getOrElse(run, Int.MaxValue), round.value: Int) }
       .map { case ((run, round), es) =>
         ReviewRound(
           ReviewRound.Run(run.value),

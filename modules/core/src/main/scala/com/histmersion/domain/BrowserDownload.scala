@@ -24,20 +24,24 @@ final case class BrowserDownload(
 
   /** The acquisition item's text: it names the DOI as a doi.org link, which is what finds the item again. */
   def text: com.histmersion.domain.BrowserDownload.Description =
-    s"${citation.value} https://doi.org/${doi.value} — ${oaStatus.value} open access" +
-      licence.fold("")(l => s", licence ${l.value}") +
-      s", at ${landing.value}; ${publisher.value} refuses downloads by scripts: download it in the browser, then " +
-      s"histmersion ingest <file> --citekey ${citekey.value}"
+    BrowserDownload.Description(
+      s"${citation.value} https://doi.org/${doi.value} — ${oaStatus.value} open access" +
+        licence.fold("")(l => s", licence ${l.value}") +
+        s", at ${landing.value}; ${publisher.value} refuses downloads by scripts: download it in the browser, then " +
+        s"histmersion ingest <file> --citekey ${citekey.value}"
+    )
 
 object BrowserDownload:
   type Citation = Citation.T
   object Citation extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Description = Description.T
   object Description extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfRefusingHostArg1 = OfRefusingHostArg1.T
-  object OfRefusingHostArg1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OfRefusingHostResult = OfRefusingHostResult.T
-  object OfRefusingHostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  /** An open-access location of a work, as the work lists it. */
+  type Location = Location.T
+  object Location extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  /** The host of a location, as the configuration names it. */
+  type Host = Host.T
+  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type LandingUrl = LandingUrl.T
   object LandingUrl extends RefinedType[String, Match["(?i)https?://\\S+"]]
@@ -59,29 +63,29 @@ object BrowserDownload:
     * locations is on a host that refuses scripts — `refusingHost(url)`, the host of a location when it is one of
     * `acquire.landing.browser-download-hosts` (that location is where the person downloads it).
     */
-  def of(work: WorkRef, citekey: Citekey, refusingHost: com.histmersion.domain.BrowserDownload.OfRefusingHostArg1 => Option[com.histmersion.domain.BrowserDownload.OfRefusingHostResult]): Option[BrowserDownload] =
+  def of(work: WorkRef, citekey: Citekey, refusingHost: Location => Option[Host]): Option[BrowserDownload] =
     val onRefusingHost =
-      (work.oaLocations ++ work.oaUrl.toList).distinct.flatMap(url => refusingHost(url).map(url -> _))
+      (work.oaLocations.map(l => Location(l.value)) ++ work.oaUrl.map(u => Location(u.value)).toList).distinct.flatMap(url => refusingHost(url).map(url -> _))
     for
-      status <- work.oaStatus.flatMap(s => OaStatus.option(s.trim.toLowerCase(java.util.Locale.ROOT)))
+      status <- work.oaStatus.flatMap(s => OaStatus.option(s.value.trim.toLowerCase(java.util.Locale.ROOT)))
       doi <- work.doi.flatMap(d => Doi.option(d.value.trim.toLowerCase(java.util.Locale.ROOT)))
       (url, host) <- onRefusingHost.headOption
-      landing <- LandingUrl.option(url)
-      publisher <- PublisherHost.option(host)
-      citation <- CitationText.option(citationOf(work, doi))
+      landing <- LandingUrl.option(url.value)
+      publisher <- PublisherHost.option(host.value)
+      citation <- CitationText.option(citationOf(work, doi).value)
     yield BrowserDownload(
       doi,
       citekey,
       landing,
       publisher,
       status,
-      work.oaLicence.flatMap(l => Licence.option(l.trim)),
+      work.oaLicence.flatMap(l => Licence.option(l.value.trim)),
       citation
     )
 
   /** `Author et al. (2019). Title.` — the DOI stands in for a missing title. */
   def citationOf(work: WorkRef, doi: Doi): com.histmersion.domain.BrowserDownload.Citation =
-    val who = work.authors.headOption.map(a => if work.authors.size > 1 then s"$a et al." else a)
+    val who = work.authors.headOption.map(a => if work.authors.size > 1 then s"${a.value} et al." else a.value)
     val head = List(who, work.year.map(y => s"($y)")).flatten.mkString(" ")
     val title = work.title.map(_.value.trim).filter(_.nonEmpty).getOrElse(doi.value)
-    s"${if head.isEmpty then "" else s"$head. "}$title."
+    Citation(s"${if head.isEmpty then "" else s"$head. "}$title.")

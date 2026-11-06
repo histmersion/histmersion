@@ -18,16 +18,16 @@ final case class TileCell(
     north: TileCell.North,
     undated: TileCell.Undated = com.histmersion.domain.catalogue.maptiles.TileCell.Undated(0)
 ):
-  def isItem: Boolean = n == 1
+  def isItem: Boolean = n.value == 1
 
 object TileCell:
 
   type Key = Key.T
   object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type X = X.T
-  object X extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Y = Y.T
-  object Y extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type X = com.histmersion.domain.catalogue.maptiles.TilePoint.X
+  val X: _root_.com.histmersion.domain.catalogue.maptiles.TilePoint.X.type = _root_.com.histmersion.domain.catalogue.maptiles.TilePoint.X
+  type Y = com.histmersion.domain.catalogue.maptiles.TilePoint.Y
+  val Y: _root_.com.histmersion.domain.catalogue.maptiles.TilePoint.Y.type = _root_.com.histmersion.domain.catalogue.maptiles.TilePoint.Y
   type N = N.T
   object N extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MidLo = MidLo.T

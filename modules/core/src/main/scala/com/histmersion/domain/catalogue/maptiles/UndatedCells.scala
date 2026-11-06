@@ -30,39 +30,40 @@ object UndatedCells:
   /** The total a tile would hold: every dated site and every undated one not counted among them. */
   def total(dated: List[GridCell], undated: List[GridCell]): com.histmersion.domain.catalogue.maptiles.UndatedCells.Total =
     @tailrec def loop(rest: List[GridCell], sum: com.histmersion.domain.catalogue.maptiles.UndatedCells.Total): com.histmersion.domain.catalogue.maptiles.UndatedCells.Total = rest match
-      case c :: tail => loop(tail, sum + c.n - c.dup)
+      case c :: tail => loop(tail, Total(sum.value + c.n.value - c.dup.value))
       case Nil       => sum
-    loop(dated, com.histmersion.domain.catalogue.maptiles.UndatedCells.Total(0L)) + undated.iterator.map(_.n.toLong).sum
+    Total(loop(dated, com.histmersion.domain.catalogue.maptiles.UndatedCells.Total(0L)).value + undated.iterator.map(_.n.value.toLong).sum)
 
   /** One square's cell: `dated` and `undated` of the same square, either missing. None when it holds nothing. */
   private[maptiles] def cellOf(z: com.histmersion.domain.catalogue.maptiles.TileCoord.Z, dated: Option[GridCell], undated: Option[GridCell]): Option[TileCell] =
-    val d = dated.fold(0)(_.n)
-    val dup = dated.fold(0)(_.dup)
-    val u = (undated.fold(0)(_.n) - dup).max(0)
+    val d = dated.fold(0)(_.n.value)
+    val dup = dated.fold(0)(_.dup.value)
+    val u = (undated.fold(0)(_.n.value) - dup).max(0)
     val n = d + u
     Option.when(n > 0) {
       val sumX =
-        dated.fold(0.0)(_.sumX) + undated.fold(0.0)(_.sumX) - (if undated.isDefined then dated.fold(0.0)(_.dupX)
+        dated.fold(0.0)(_.sumX.value) + undated.fold(0.0)(_.sumX.value) - (if undated.isDefined then dated.fold(0.0)(_.dupX.value)
                                                                else 0.0)
       val sumY =
-        dated.fold(0.0)(_.sumY) + undated.fold(0.0)(_.sumY) - (if undated.isDefined then dated.fold(0.0)(_.dupY)
+        dated.fold(0.0)(_.sumY.value) + undated.fold(0.0)(_.sumY.value) - (if undated.isDefined then dated.fold(0.0)(_.dupY.value)
                                                                else 0.0)
       val both = dated.toList ++ undated.toList
-      val key =
+      val key = TileCell.Key(
         if n > 1 then s"c$z/${both.head.gx}/${both.head.gy}"
-        else if u == 0 then dated.fold("")(_.one)
-        else undated.fold("")(_.one)
+        else if u == 0 then dated.fold("")(_.one.value)
+        else undated.fold("")(_.one.value)
+      )
       TileCell(
         key,
         math.floor(sumX / n).toInt,
         math.floor(sumY / n).toInt,
         n,
-        dated.flatMap(_.midLo),
-        dated.flatMap(_.midHi),
-        both.map(_.west).min,
-        both.map(_.south).min,
-        both.map(_.east).max,
-        both.map(_.north).max,
+        dated.flatMap(_.midLo).map(m => TileCell.MidLo(m.value)),
+        dated.flatMap(_.midHi).map(m => TileCell.MidHi(m.value)),
+        TileCell.West(both.map(b => (b.west.value: Double)).min),
+        TileCell.South(both.map(b => (b.south.value: Double)).min),
+        TileCell.East(both.map(b => (b.east.value: Double)).max),
+        TileCell.North(both.map(b => (b.north.value: Double)).max),
         undated = u
       )
     }

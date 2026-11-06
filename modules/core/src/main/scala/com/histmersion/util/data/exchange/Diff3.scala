@@ -11,38 +11,14 @@ package com.histmersion.util.data.exchange
   */
 object Diff3:
 
-  /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
-  type MergeLinesChunkCo = MergeLinesChunkCo.T
-  object MergeLinesChunkCo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeLinesChunkCa = MergeLinesChunkCa.T
-  object MergeLinesChunkCa extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeLinesChunkCb = MergeLinesChunkCb.T
-  object MergeLinesChunkCb extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type MatchingResult = MatchingResult.T
-  object MatchingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Int], _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type LinesResult = LinesResult.T
-  object LinesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinesS = LinesS.T
-  object LinesS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeBase = MergeBase.T
   object MergeBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeLeft = MergeLeft.T
   object MergeLeft extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MergeRight = MergeRight.T
   object MergeRight extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeLinesO = _root_.com.histmersion.util.data.exchange.Diff3.MatchingO
-  val MergeLinesO: _root_.com.histmersion.util.data.exchange.Diff3.MatchingO.type = _root_.com.histmersion.util.data.exchange.Diff3.MatchingO
-  type MergeLinesA = MergeLinesA.T
-  object MergeLinesA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MergeLinesB = MergeLinesB.T
-  object MergeLinesB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchingO = MatchingO.T
-  object MatchingO extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchingX = MatchingX.T
-  object MatchingX extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  /** One region of the merge: agreed text, or a conflict between the two sides over a base. */
   enum Hunk:
     case Agreed(lines: Vector[Hunk.Agreed.Lines])
     case Conflict(base: Vector[Hunk.Conflict.Base], left: Vector[Hunk.Conflict.Left], right: Vector[Hunk.Conflict.Right])
@@ -60,52 +36,50 @@ object Diff3:
       object Right extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Result(hunks: List[Hunk]):
-    def conflicts: com.histmersion.util.data.exchange.Diff3.Result.ConflictsResult = hunks.count(_.isInstanceOf[Hunk.Conflict])
-    def clean: Boolean = conflicts == 0
+    def conflicts: Result.ConflictCount = Result.ConflictCount(hunks.count(_.isInstanceOf[Hunk.Conflict]))
+    def clean: Boolean = conflicts.value == 0
 
     /** The merged text — only meaningful when [[clean]]. */
-    def text: com.histmersion.util.data.exchange.Diff3.Result.TextResult = render(_ => Vector.empty)
+    def text: Result.MergedText = Result.MergedText(render(_ => Vector.empty))
 
     /** The merged text with git-style conflict markers around every conflict. */
-    def marked(leftName: com.histmersion.util.data.exchange.Diff3.Result.MarkedLeftName, rightName: com.histmersion.util.data.exchange.Diff3.Result.MarkedRightName): com.histmersion.util.data.exchange.Diff3.Result.MarkedResult =
-      render { case Hunk.Conflict(b, l, r) =>
-        (s"<<<<<<< $leftName" +: l) ++ ("||||||| base" +: b) ++ ("=======" +: r) :+ s">>>>>>> $rightName"
-      }
+    def marked(leftName: Result.MarkedLeftName, rightName: Result.MarkedRightName): Result.MarkedText =
+      Result.MarkedText(render { case Hunk.Conflict(b, l, r) =>
+        (s"<<<<<<< $leftName" +: l.map(_.value)) ++ ("||||||| base" +: b.map(_.value)) ++ ("=======" +: r.map(_.value)) :+ s">>>>>>> $rightName"
+      })
 
-    private def render(conflict: Hunk.Conflict => Vector[com.histmersion.util.data.exchange.Diff3.Result.RenderConflictResult]): com.histmersion.util.data.exchange.Diff3.Result.RenderResult =
+    private def render(conflict: Hunk.Conflict => Vector[String]): String =
       hunks
         .flatMap {
-          case Hunk.Agreed(ls)  => ls
+          case Hunk.Agreed(ls)  => ls.map(_.value)
           case c: Hunk.Conflict => conflict(c)
         }
         .mkString("\n")
 
   object Result:
-    type ConflictsResult = ConflictsResult.T
-    object ConflictsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type TextResult = TextResult.T
-    object TextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type MarkedResult = MarkedResult.T
-    object MarkedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type ConflictCount = ConflictCount.T
+    object ConflictCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MergedText = MergedText.T
+    object MergedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type MarkedText = MarkedText.T
+    object MarkedText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MarkedLeftName = MarkedLeftName.T
     object MarkedLeftName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MarkedRightName = MarkedRightName.T
     object MarkedRightName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenderResult = RenderResult.T
-    object RenderResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RenderConflictResult = RenderConflictResult.T
-    object RenderConflictResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Lines of a text; a final newline is not an extra empty line. */
-  private def lines(s: com.histmersion.util.data.exchange.Diff3.LinesS): Vector[com.histmersion.util.data.exchange.Diff3.LinesResult] = s.split("\n", -1).toVector
+  private def lines(s: String): Vector[String] = s.split("\n", -1).toVector
 
-  def merge(base: com.histmersion.util.data.exchange.Diff3.MergeBase, left: com.histmersion.util.data.exchange.Diff3.MergeLeft, right: com.histmersion.util.data.exchange.Diff3.MergeRight): Result =
-    if left == right then Result(List(Hunk.Agreed(lines(left))))
-    else if left == base then Result(List(Hunk.Agreed(lines(right))))
-    else if right == base then Result(List(Hunk.Agreed(lines(left))))
-    else mergeLines(lines(base), lines(left), lines(right))
+  private def agreedOf(ls: Vector[String]): Hunk = Hunk.Agreed(ls.map(Hunk.Agreed.Lines(_)))
 
-  def mergeLines(o: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesO], a: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesA], b: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesB]): Result =
+  def merge(base: MergeBase, left: MergeLeft, right: MergeRight): Result =
+    if left.value == right.value then Result(List(agreedOf(lines(left.value))))
+    else if left.value == base.value then Result(List(agreedOf(lines(right.value))))
+    else if right.value == base.value then Result(List(agreedOf(lines(left.value))))
+    else mergeLines(lines(base.value), lines(left.value), lines(right.value))
+
+  private def mergeLines(o: Vector[String], a: Vector[String], b: Vector[String]): Result =
     val ma = matching(o, a)
     val mb = matching(o, b)
     val out = List.newBuilder[Hunk]
@@ -113,14 +87,14 @@ object Diff3:
     def flushAgreed(): Unit =
       val ls = agreed.result()
       agreed.clear()
-      if ls.nonEmpty then out += Hunk.Agreed(ls)
-    def chunk(co: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCo], ca: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCa], cb: Vector[com.histmersion.util.data.exchange.Diff3.MergeLinesChunkCb]): Unit =
+      if ls.nonEmpty then out += agreedOf(ls)
+    def chunk(co: Vector[String], ca: Vector[String], cb: Vector[String]): Unit =
       if ca == co then agreed ++= cb
       else if cb == co then agreed ++= ca
       else if ca == cb then agreed ++= ca
       else
         flushAgreed()
-        out += Hunk.Conflict(co, ca, cb)
+        out += Hunk.Conflict(co.map(Hunk.Conflict.Base(_)), ca.map(Hunk.Conflict.Left(_)), cb.map(Hunk.Conflict.Right(_)))
     // positions in base, left, right; each round consumes at least one line of one of them
     @annotation.tailrec
     def walk(io: Int, ia: Int, ib: Int): Unit =
@@ -144,7 +118,7 @@ object Diff3:
   /** For each line of `o`, the index of the line of `x` it is matched to by a longest common subsequence, or −1. The
     * common prefix and suffix are matched directly, so only the middle (where the edits are) costs the quadratic table.
     */
-  private def matching(o: Vector[com.histmersion.util.data.exchange.Diff3.MatchingO], x: Vector[com.histmersion.util.data.exchange.Diff3.MatchingX]): com.histmersion.util.data.exchange.Diff3.MatchingResult =
+  private def matching(o: Vector[String], x: Vector[String]): Array[Int] =
     val m = Array.fill(o.length)(-1)
     val pre = o.iterator.zip(x.iterator).takeWhile((p, q) => p == q).length
     (0 until pre).foreach(i => m(i) = i)

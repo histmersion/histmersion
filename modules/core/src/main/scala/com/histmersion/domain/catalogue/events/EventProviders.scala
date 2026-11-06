@@ -30,8 +30,8 @@ object EventProviders:
       */
 
 
-    def moreSpecific(order: List[String], a: String, b: String): String =
-      def rank(k: String) = order.indexOf(EventTaxonomy.canonical(k)) match
+    def moreSpecific(order: List[com.histmersion.api.catalogue.EventSummary.Kind], a: com.histmersion.api.catalogue.EventSummary.Kind, b: com.histmersion.api.catalogue.EventSummary.Kind): com.histmersion.api.catalogue.EventSummary.Kind =
+      def rank(k: com.histmersion.api.catalogue.EventSummary.Kind) = order.indexOf(EventTaxonomy.canonical(k)) match
         case -1 => Int.MaxValue
         case i  => i
       if rank(b) < rank(a) then b else a
@@ -42,10 +42,10 @@ object EventProviders:
         s"&languages=${enc(langs.mkString("|"))}&ids=${enc(ids.mkString("|"))}"
 
     /** Pure: each item's labels and aliases in the asked languages, distinct. */
-    def names(json: Json): Either[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.Problem, Map[String, List[String]]] =
+    def names(json: Json): Either[Problem, Map[String, List[String]]] =
       val c = json.hcursor
       c.downField("error").focus match
-        case Some(err) => Left(err.hcursor.get[String]("info").getOrElse("error"))
+        case Some(err) => Left(Problem(err.hcursor.get[String]("info").getOrElse("error")))
         case None      =>
           val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
           Right(ents.map { (id, e) =>
@@ -70,14 +70,14 @@ object EventProviders:
     /** Pure: the P31 classes of each item of a `wbgetentities` (props=claims) answer — what a site's type is refined
       * from ([[SiteTypes.wikidata]]); P279 likewise for a class.
       */
-    def claims(json: Json, property: com.histmersion.domain.catalogue.events.EventProviders.WikidataProperty): Either[com.histmersion.domain.catalogue.events.EventProviders.WikidataEvents.Problem, Map[String, List[String]]] =
+    def claims(json: Json, property: WikidataProperty): Either[Problem, Map[String, List[String]]] =
       val c = json.hcursor
       c.downField("error").focus match
-        case Some(err) => Left(err.hcursor.get[String]("info").getOrElse("error"))
+        case Some(err) => Left(Problem(err.hcursor.get[String]("info").getOrElse("error")))
         case None      =>
           val ents = c.downField("entities").focus.flatMap(_.asObject).map(_.toList).getOrElse(Nil)
           Right(ents.map { (id, e) =>
-            val sts = e.hcursor.downField("claims").downField(property).focus.flatMap(_.asArray).toList.flatten
+            val sts = e.hcursor.downField("claims").downField(property.value).focus.flatMap(_.asArray).toList.flatten
             id -> sts
               .filterNot(_.hcursor.get[String]("rank").toOption.contains("deprecated"))
               .flatMap(st =>
@@ -128,22 +128,20 @@ object EventProviders:
   def keep(r: CatalogRecord, t: Thresholds): Either[com.histmersion.domain.catalogue.events.EventProviders.Problem, Unit] =
     (r.lat, r.lon) match
       case (Some(la), Some(lo)) =>
-        def in(b: BBox) =
-          la >= b.minLat && la <= b.maxLat &&
-            (if b.crossesAntimeridian then lo >= b.minLon || lo <= b.maxLon else lo >= b.minLon && lo <= b.maxLon)
+        def in(b: BBox) = b.contains(lo, la)
         val inRegion = t.region.forall(in)
         if t.area.exists(b => !in(b)) then Left(com.histmersion.domain.catalogue.events.EventProviders.Problem("outside --bbox"))
         else
-          r.kind match
+          r.kind.value match
             case EventTaxonomy.Eruption =>
-              val min = if inRegion then t.regionVei else t.outsideVei
-              if min > 0 && r.vei.forall(_ < min) then
-                Left(s"VEI below $min${if inRegion then "" else " outside the region"}")
+              val min = if inRegion then t.regionVei.value else t.outsideVei.value
+              if min > 0 && r.vei.forall(_.value < min) then
+                Left(Problem(s"VEI below $min${if inRegion then "" else " outside the region"}"))
               else Right(())
             case EventTaxonomy.Earthquake =>
-              val min = if inRegion then t.regionMagnitude else t.outsideMagnitude
-              if min > 0 && r.magnitude.forall(_ < min) then
-                Left(s"magnitude below $min${if inRegion then "" else " outside the region"}")
+              val min = if inRegion then t.regionMagnitude.value else t.outsideMagnitude.value
+              if min > 0 && r.magnitude.forall(_.value < min) then
+                Left(Problem(s"magnitude below $min${if inRegion then "" else " outside the region"}"))
               else Right(())
             case _ => Right(())
       case _ => Left(com.histmersion.domain.catalogue.events.EventProviders.Problem("no position"))

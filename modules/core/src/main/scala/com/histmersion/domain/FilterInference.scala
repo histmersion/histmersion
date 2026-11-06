@@ -18,8 +18,6 @@ import com.histmersion.api.research.Article
   * with the measurements; on the last attempt nothing is proposed rather than a filter that failed.
   */
 object FilterInference:
-  type CitedIn = CitedIn.T
-  object CitedIn extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Last = Last.T
   object Last extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type LogLine = LogLine.T
@@ -28,30 +26,18 @@ object FilterInference:
   object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Sample = Sample.T
-  object Sample extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Total = Total.T
-  object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   final case class FilterAnswer(
       rationale: FilterAnswer.Rationale,
-      query: Option[FilterAnswer.Query] = None,
-      topics: List[FilterAnswer.Topics] = Nil,
-      tags: List[FilterAnswer.Tags] = Nil,
-      extraQueries: List[FilterAnswer.ExtraQueries] = Nil
+      query: Option[Article.Filter.Query] = None,
+      topics: List[Article.Filter.Topics] = Nil,
+      tags: List[Article.Filter.Tags] = Nil,
+      extraQueries: List[Article.Filter.ExtraQueries] = Nil
   ) derives KindlingsCodecAsObject
   object FilterAnswer:
     type Rationale = Rationale.T
     object Rationale extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Query = Query.T
-    object Query extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Topics = Topics.T
-    object Topics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Tags = Tags.T
-    object Tags extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type ExtraQueries = ExtraQueries.T
-    object ExtraQueries extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     given Schema[FilterAnswer] = KindlingsSchema
       .derived[FilterAnswer]
@@ -78,22 +64,18 @@ object FilterInference:
     object MinCitedShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** What the pipeline checkpoints: the proposal that passed, or None with why nothing did. */
-  final case class Inferred(proposal: Option[FilterProposal], problems: List[Inferred.Problems] = Nil)
+  final case class Inferred(proposal: Option[FilterProposal], problems: List[Problem] = Nil)
       derives KindlingsCodecAsObject
 
-  object Inferred:
-    type Problems = Problems.T
-    object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   /** The answer as a filter: tidied ([[ArticleFilter.normalise]]); Left = what is wrong with its shape. */
-  def filterOf(a: FilterAnswer): Either[List[com.histmersion.domain.FilterInference.Problem], Article.Filter] =
+  def filterOf(a: FilterAnswer): Either[List[Problem], Article.Filter] =
     val raw = Article.Filter(query = a.query, topics = a.topics, tags = a.tags, extraQueries = a.extraQueries)
     Article.Filter.normalise(raw) match
-      case Left(m)        => Left(List(m))
-      case Right(None)    => Left(List(com.histmersion.domain.FilterInference.Problem("the filter selects nothing: give a query, topics or tags")))
+      case Left(m)        => Left(List(Problem(m.value)))
+      case Right(None)    => Left(List(Problem("the filter selects nothing: give a query, topics or tags")))
       case Right(Some(f)) =>
-        val rationale = Option(a.rationale).forall(_.trim.isEmpty)
-        if rationale then Left(List("the rationale is empty — say why these sources are the article's")) else Right(f)
+        val rationale = Option(a.rationale).forall(_.value.trim.isEmpty)
+        if rationale then Left(List(Problem("the rationale is empty — say why these sources are the article's"))) else Right(f)
 
   /** Judge filter `f` of article `slug` by what it returns: `total` sources, of which the article's `cited` sources it
     * returns `citedIn`; `sample` = a few it returns the article does not cite. Left = the problems a retry should fix;
@@ -103,39 +85,56 @@ object FilterInference:
       slug: com.histmersion.domain.research.Slug,
       f: Article.Filter,
       rationale: com.histmersion.domain.FilterInference.FilterAnswer.Rationale,
-      total: com.histmersion.domain.FilterInference.Total,
+      total: FilterProposal.Total,
       cited: List[com.histmersion.domain.library.Citekey],
-      citedIn: Set[com.histmersion.domain.FilterInference.CitedIn],
-      sample: List[com.histmersion.domain.FilterInference.Sample],
+      citedIn: Set[com.histmersion.domain.library.Citekey],
+      sample: List[com.histmersion.domain.library.Citekey],
       limits: Limits,
-      last: com.histmersion.domain.FilterInference.Last
-  ): Either[List[com.histmersion.domain.FilterInference.Problem], Inferred] =
+      last: Last
+  ): Either[List[Problem], Inferred] =
     val missed = cited.filterNot(citedIn)
     val share = if cited.isEmpty then 1.0 else (cited.size - missed.size).toDouble / cited.size
     val problems = List(
-      Option.when(total < limits.minHits)(
-        s"${f.line} returns ${Plural.count(total, com.histmersion.api.Plural.CountSingular("source"))}; it must return at least " +
-          s"${limits.minHits} — widen it (fewer topics or tags, a broader query)"
+      Option.when(total.value < limits.minHits.value)(
+        Problem(
+          s"${f.line} returns ${Plural.count(Plural.CountN(total.value.toLong), Plural.CountSingular("source"))}; it must return at least " +
+            s"${limits.minHits} — widen it (fewer topics or tags, a broader query)"
+        )
       ),
-      Option.when(total > limits.maxHits)(
-        s"${f.line} returns $total sources; at most ${limits.maxHits} — narrow it " +
-          "(add a topic or tag, a sharper query)"
+      Option.when(total.value > limits.maxHits.value)(
+        Problem(
+          s"${f.line} returns $total sources; at most ${limits.maxHits} — narrow it " +
+            "(add a topic or tag, a sharper query)"
+        )
       ),
-      Option.when(share < limits.minCitedShare)(
-        f"${f.line} returns ${cited.size - missed.size} of the ${cited.size} sources " +
-          f"the article cites (${share * 100}%.0f%%); it must return at least ${limits.minCitedShare * 100}%.0f%% — it misses " +
-          missed.take(12).mkString(", ")
+      Option.when(share < limits.minCitedShare.value)(
+        Problem(
+          f"${f.line} returns ${cited.size - missed.size} of the ${cited.size} sources " +
+            f"the article cites (${share * 100}%.0f%%); it must return at least ${limits.minCitedShare.value * 100}%.0f%% — it misses " +
+            missed.take(12).mkString(", ")
+        )
       )
     ).flatten
     if problems.isEmpty then
       Right(
         Inferred(
-          Some(FilterProposal(slug, f, rationale.trim, total, cited.size, cited.size - missed.size, missed, sample))
+          Some(
+            FilterProposal(
+              Article.Slug(slug.value),
+              f,
+              FilterProposal.Rationale(rationale.value.trim),
+              total,
+              FilterProposal.Cited(cited.size),
+              FilterProposal.CitedIn(cited.size - missed.size),
+              missed.map(c => FilterProposal.Missed(c.value)),
+              sample.map(c => FilterProposal.Sample(c.value))
+            )
+          )
         )
       )
-    else if last then Right(Inferred(None, problems))
+    else if last.value then Right(Inferred(None, problems))
     else Left(problems)
 
   /** The worklog line of a run. */
   def logLine(slug: com.histmersion.domain.research.Slug, outcome: com.histmersion.domain.FilterInference.Outcome, runId: com.histmersion.domain.automation.Run.Id): com.histmersion.domain.FilterInference.LogLine =
-    s"infer-filter [[$slug]]: $outcome (agent run ${runId.take(8)})"
+    LogLine(s"infer-filter [[$slug]]: $outcome (agent run ${runId.value.take(8)})")
