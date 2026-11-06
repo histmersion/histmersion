@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class CritiqueRef(src: com.histmersion.api.library.Citekey, dst: com.histmersion.api.library.Citekey) derives KindlingsCodecAsObject, KindlingsSchema, com.histmersion.api.json.Schema:
   def wire: com.histmersion.api.research.CritiqueRef.Wire = _root_.com.histmersion.api.research.CritiqueRef.Wire(s"$src>$dst")

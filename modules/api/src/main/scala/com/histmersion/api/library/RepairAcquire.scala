@@ -5,6 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.automation.ManagersMarkdown
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 object RepairAcquire:
   type Markdown = Markdown.T
@@ -55,8 +56,8 @@ object RepairAcquire:
       kept: RepairResult.Kept = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Kept(0),
       untouched: RepairResult.Untouched = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Untouched(0),
       rows: List[RepairRow] = Nil,
-      backlog: RepairResult.Backlog = _root_.com.histmersion.api.library.RepairAcquire.RepairResult.Backlog(0),
-      backlogDays: Option[RepairResult.BacklogDays] = None
+      backlog: com.histmersion.api.automation.Managers.ManagerInfo.Backlog = _root_.com.histmersion.api.automation.Managers.ManagerInfo.Backlog(0),
+      backlogDays: Option[com.histmersion.api.automation.Managers.ManagerInfo.BacklogDays] = None
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema
 
@@ -71,10 +72,6 @@ object RepairAcquire:
     object Kept extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Untouched = Untouched.T
     object Untouched extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Backlog = Backlog.T
-    object Backlog extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BacklogDays = BacklogDays.T
-    object BacklogDays extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
 
   val Move = "move"
@@ -97,5 +94,7 @@ object RepairAcquire:
       s"- #${row.item} https://doi.org/${row.doi} · goal ${row.goals.mkString(", ")} · $what" +
         (if row.detail.value.nonEmpty then s": ${row.detail}" else "")
     }
-    if rows.isEmpty then head + "\n\n_No acquisition item created by a watcher's sweep is open._"
-    else head + "\n\n## Items\n\n" + rows.mkString("\n")
+    Markdown(
+      if rows.isEmpty then head + "\n\n_No acquisition item created by a watcher's sweep is open._"
+      else head + "\n\n## Items\n\n" + rows.mkString("\n")
+    )

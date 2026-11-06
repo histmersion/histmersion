@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 enum AgentMode(val wire: AgentMode.Wire):
   case Working extends AgentMode(_root_.com.histmersion.api.automation.AgentMode.Wire("working"))

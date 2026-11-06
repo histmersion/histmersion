@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** Re-indexing the whole corpus takes minutes, far past any HTTP timeout, so one call does a bounded slice. */
 final case class ReindexResult(sources: ReindexResult.Sources, chunks: ReindexResult.Chunks, lastCitekey: Option[ReindexResult.LastCitekey], remaining: ReindexResult.Remaining)

@@ -59,7 +59,7 @@ object Candidates:
 
   def richer(a: WorkRef, b: WorkRef): WorkRef =
     a.modify(
-      _.title).setTo(a.title.orElse(b.title)).modify(_.year).setTo(a.year.orElse(b.year)).modify(_.authors).setTo(if a.authors.nonEmpty then a.authors else b.authors).modify(_.venue).setTo(a.venue.orElse(b.venue)).modify(_.isOa).setTo(((a.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true)) || ((b.isOa) == _root_.com.histmersion.api.library.Source.Candidate.IsOa(true))).modify(_.abstractText).setTo(a.abstractText.orElse(b.abstractText)).modify(_.arxivId).setTo(a.arxivId.orElse(b.arxivId)).modify(_.openalexId).setTo(a.openalexId.orElse(b.openalexId)
+      _.title).setTo(a.title.orElse(b.title)).modify(_.year).setTo(a.year.orElse(b.year)).modify(_.authors).setTo(if a.authors.nonEmpty then a.authors else b.authors).modify(_.venue).setTo(a.venue.orElse(b.venue)).modify(_.isOa).setTo(WorkRef.IsOa(a.isOa.value || b.isOa.value)).modify(_.abstractText).setTo(a.abstractText.orElse(b.abstractText)).modify(_.arxivId).setTo(a.arxivId.orElse(b.arxivId)).modify(_.openalexId).setTo(a.openalexId.orElse(b.openalexId)
     )
 
   private def str(c: ACursor, k: String): Option[String] = (c.get[String]((k)).toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue4 => (refactorValue4))

@@ -16,9 +16,9 @@ object ReloadMarkdown:
       else List("Nothing in the config differs from what is running.")
     (List(head, "") ++ file ++ none ++
       list(("Errors (nothing was changed)"), r.errors.map(_.value)) ++
-      list("Applied", r.applied) ++
-      list("Changed, takes effect after a restart (not applied)", r.restartOnly) ++
-      list("Rebuilt", r.rebuilt) ++
-      list("Plugins registered again", r.plugins) ++
-      list("Still in use from the previous generation (closes when released)", r.draining) ++
-      list("Warnings", r.warnings)).mkString("\n")
+      list("Applied", r.applied.map(_.value)) ++
+      list("Changed, takes effect after a restart (not applied)", r.restartOnly.map(_.value)) ++
+      list("Rebuilt", r.rebuilt.map(_.value)) ++
+      list("Plugins registered again", r.plugins.map(_.value)) ++
+      list("Still in use from the previous generation (closes when released)", r.draining.map(_.value)) ++
+      list("Warnings", r.warnings.map(_.value))).mkString("\n")

@@ -13,7 +13,7 @@ object FormatMarkdown:
   def line(i: FormatIssue): com.histmersion.api.checks.FormatMarkdown.IssueLine =
     val sev = summon[WireEnumValues[FormatSeverity]].wire(i.severity)
     val fld = summon[WireEnumValues[FormatField]].wire(i.field)
-    val ex = if i.excerpt.isEmpty then "" else s" · `${i.excerpt.replace("`", "'")}`"
+    val ex = if i.excerpt.value.isEmpty then "" else s" · `${i.excerpt.value.replace("`", "'")}`"
     val fx = i.fix.fold("")(f => s" · fix: $f")
     _root_.com.histmersion.api.checks.FormatMarkdown.IssueLine(s"$fld L${i.line}:${i.column} $sev ${i.rule.wire} — ${i.message}$ex$fx")
 

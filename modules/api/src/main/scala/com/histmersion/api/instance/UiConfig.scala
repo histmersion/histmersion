@@ -5,6 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.catalogue.MapTilesUiConfig
 import com.histmersion.api.plugins.PluginsReport
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class UiConfig(
     tiles: UiConfig.Tiles,

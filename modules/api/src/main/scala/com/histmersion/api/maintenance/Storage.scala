@@ -63,7 +63,7 @@ object Storage:
 
   def addLocal(r: Storage.Report, local: List[Storage.Entry], volumes: List[Storage.Volume]): Storage.Report =
     val known = r.entries.flatMap(_.path).toSet
-    val add = local.filterNot(e => e.path.exists(known.contains)).map(_.modify(_.host).setTo("cli"))
+    val add = local.filterNot(e => e.path.exists(known.contains)).map(_.modify(_.host).setTo(Entry.Host("cli")))
     if add.isEmpty then r
     else
       withHints(
@@ -81,7 +81,7 @@ object Storage:
         r.backups
           .map(b =>
             Entry.Detail(Plural.count(_root_.com.histmersion.api.Plural.Count(b.count.value.toLong), _root_.com.histmersion.api.Plural.Noun.Singular("archive")).value + b.newest.fold("")(n => s", newest $n") +
-              s", keeps ${if b.keep > 0 then b.keep.toString else "every one"}")
+              s", keeps ${if b.keep.value > 0 then b.keep.toString else "every one"}")
           )
           .toList
       case "database" =>
@@ -183,7 +183,7 @@ object Storage:
       volumes: List[Volume] = Nil,
       backups: Option[BackupsUsage] = None,
       lowFreeBytes: com.histmersion.api.ByteCount = Storage.DefaultLowFreeBytes,
-      hints: List[Report.Hints] = Nil,
+      hints: List[Hint] = Nil,
       problems: List[Report.Problems] = Nil
   ) derives KindlingsCodecAsObject,
         KindlingsSchema,
@@ -206,8 +206,6 @@ object Storage:
     object Measuring extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type MeasuredAt = MeasuredAt.T
     object MeasuredAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Hints = Hints.T
-    object Hints extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Problems = Problems.T
     object Problems extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

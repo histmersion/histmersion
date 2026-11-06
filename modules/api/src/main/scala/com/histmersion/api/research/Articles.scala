@@ -119,7 +119,7 @@ object Articles:
       )
       reasons <- Coverage.Reason.merge(existing.reasons, patch.reasons).left.map(e => Problem(e))
     yield existing.modify(
-      _.title).setTo(patch.title.map(t => Article.Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title)).modify(_.kind).setTo(kind).modify(_.body).setTo(body).modify(_.summary).setTo(summary.orElse(existing.summary)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(Write.applyList(existing.tags, _))).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions).map(r => Article.Regions(r.value.trim)).filter(_.value.nonEmpty).distinct).modify(_.period).setTo(period).modify(_.filter).setTo(filter).modify(_.reasons).setTo(reasons
+      _.title).setTo(patch.title.map(t => Article.Title(t.value.trim)).filter(_.value.nonEmpty).getOrElse(existing.title)).modify(_.kind).setTo(kind).modify(_.body).setTo(body).modify(_.summary).setTo(summary.orElse(existing.summary)).modify(_.tags).setTo(patch.tags.fold(existing.tags)(lp => Write.applyList(existing.tags.map(t => Write.ListItem(t.value)), lp).map(i => Article.Tags(i.value)))).modify(_.regions).setTo(patch.regions.getOrElse(existing.regions).map(r => Article.Regions(r.value.trim)).filter(_.value.nonEmpty).distinct).modify(_.period).setTo(period).modify(_.filter).setTo(filter).modify(_.reasons).setTo(reasons
     )
 
   private def bodyOf(current: com.histmersion.api.research.Article.Body, patch: Article.Patch): Either[com.histmersion.api.research.Articles.Problem, com.histmersion.api.research.Article.Body] =

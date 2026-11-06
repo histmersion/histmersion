@@ -3,6 +3,7 @@ import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** An import: the record written (`source`), the item it is linked to, the entry it was linked to before
   * (`relinkedFrom`), the file taken (left in the collection, never modified), the cover, and the conversion queued

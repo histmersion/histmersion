@@ -59,7 +59,7 @@ object Years:
     val parsed = t match
       case Typed(num, era)    => signed((num), Option(_root_.com.histmersion.api.Years.Era.Wire(era)))
       case EraFirst(era, num) => signed((num), Some(_root_.com.histmersion.api.Years.Era.Wire(era)))
-      case _                  => Left(s"'${(raw).value.trim}' is not a year (e.g. 1300 BCE, 530 CE, -1300)")
+      case _                  => Left(Problem(s"'${(raw).value.trim}' is not a year (e.g. 1300 BCE, 530 CE, -1300)"))
     parsed.flatMap(y => if y.value == 0 then Left(Problem(s"'${(raw).value.trim}': $NoYearZero")) else Right(y))
 
   def isoAstronomical(xsd: com.histmersion.api.Years.Iso.Wire): Option[com.histmersion.api.Years.Astronomical] =

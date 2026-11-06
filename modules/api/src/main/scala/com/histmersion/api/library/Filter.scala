@@ -6,6 +6,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.BBox
 import com.histmersion.api.catalogue.Period
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class Filter(
     q: Option[Filter.Q] = None,

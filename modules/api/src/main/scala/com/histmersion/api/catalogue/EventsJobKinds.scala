@@ -3,6 +3,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** The events' jobs, as the catalogue registers them: a catalogue's import, and the re-dating of its events. */
 object EventsJobKinds:

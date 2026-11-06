@@ -19,11 +19,12 @@ import com.histmersion.api.catalogue.{
 }
 import com.histmersion.api.media.MediaThumb
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** An event's page as the server answers it: the catalogue's [[EventCard]] with the event's pictures. */
 final case class EventDetail(
     event: EventSummary,
-    geometry: Option[com.histmersion.api.catalogue.EventEntry.Geometry] = None,
+    geometry: Option[com.histmersion.api.catalogue.EventGeometry.Geojson] = None,
     parent: Option[EventSummary] = None,
     children: List[EventSummary] = Nil,
     datings: List[EventDating] = Nil,
@@ -31,8 +32,8 @@ final case class EventDetail(
     participants: List[EventParticipant] = Nil,
     wikidata: Option[com.histmersion.api.catalogue.EventEntry.Wikidata] = None,
     media: List[MediaThumb] = Nil,
-    tier: com.histmersion.api.catalogue.EventEntry.Tier = _root_.com.histmersion.api.catalogue.EventEntry.Tier(EventTier.Attested),
-    names: List[EventDetail.Names] = Nil,
+    tier: com.histmersion.api.catalogue.EventGeo.Tier = _root_.com.histmersion.api.catalogue.EventGeo.Tier(EventTier.Attested),
+    names: List[com.histmersion.api.catalogue.EventEntry.Names] = Nil,
     catalogue: List[EventCatalogueRef] = Nil,
     sources: List[EventSourceRef] = Nil,
     findings: List[EventFindingRef] = Nil,
@@ -48,5 +49,3 @@ object EventDetail:
   type MarkdownResult = MarkdownResult.T
   object MarkdownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type Names = Names.T
-  object Names extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

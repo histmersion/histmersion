@@ -5,6 +5,7 @@ import sttp.tapir.Schema
 import io.circe.Codec
 import com.histmersion.api.{StrictJson, TimeSpan}
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class EventPut(
     label: com.histmersion.api.catalogue.EventSummary.Label,

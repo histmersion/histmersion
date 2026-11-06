@@ -189,20 +189,20 @@ object Place:
     def parents: List[Summary]
     def children: List[Summary]
     def findings: com.histmersion.api.catalogue.Place.Counts.Findings
-    def asOf: Option[com.histmersion.api.catalogue.Place.Entry.AsOf]
-    def contested: Boolean
+    def asOf: Option[com.histmersion.api.catalogue.Year]
+    def contested: com.histmersion.api.catalogue.Place.Entry.Contested
     def footprints: List[Footprint]
     def links: List[Link]
     def types: List[Type]
     def counts: Option[Counts]
-    def hasBoundary: Boolean
+    def hasBoundary: com.histmersion.api.catalogue.Place.Entry.HasBoundary
     def descriptions: List[Description]
     def timeBasis: TimeBasis
     def locationPrecision: com.histmersion.api.catalogue.Place.Precision
     def siteType: Option[com.histmersion.api.catalogue.Place.Entry.SiteType]
     def record: Record
 
-    def pointOnlyArea: Boolean = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary)
+    def pointOnlyArea: Boolean = geometry.isDefined && Shape.pointOnlyArea(place.kind, hasBoundary.value)
 
     def shapeNote: Option[com.histmersion.api.catalogue.Place.Card.Note] =
       Option
@@ -407,8 +407,8 @@ object Place:
       geometry: Option[Entry.Geometry],
       parents: List[Summary],
       children: List[Summary],
-      findings: Entry.Findings,
-      asOf: Option[Entry.AsOf],
+      findings: Counts.Findings,
+      asOf: Option[com.histmersion.api.catalogue.Year],
       contested: Entry.Contested = _root_.com.histmersion.api.catalogue.Place.Entry.Contested(false),
       footprints: List[Footprint] = Nil,
       links: List[Link] = Nil,
@@ -427,10 +427,6 @@ object Place:
   object Entry:
     type Geometry = com.histmersion.api.catalogue.Place.Geometry
     val Geometry: _root_.com.histmersion.api.catalogue.Place.Geometry.type = _root_.com.histmersion.api.catalogue.Place.Geometry
-    type Findings = Findings.T
-    object Findings extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AsOf = AsOf.T
-    object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Contested = Contested.T
     object Contested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type HasBoundary = HasBoundary.T

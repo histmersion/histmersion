@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class EventPassage(start: EventPassage.Start, end: EventPassage.End, quote: EventPassage.Quote, name: EventPassage.Name, context: EventPassage.Context = _root_.com.histmersion.api.catalogue.EventPassage.Context(""))
     derives KindlingsCodecAsObject,

@@ -60,7 +60,7 @@ object TilesApi:
     object IfNoneMatch extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class TileAnswer(
-      bytes: Array[TileAnswer.Bytes],
+      bytes: Api.FileBytes,
       contentType: TileAnswer.ContentType,
       etag: TileAnswer.Etag,
       cacheControl: TileAnswer.CacheControl,
@@ -68,8 +68,6 @@ object TilesApi:
   )
 
   object TileAnswer:
-    type Bytes = Bytes.T
-    object Bytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Byte, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ContentType = com.histmersion.api.Api.ContentType
     val ContentType: _root_.com.histmersion.api.Api.ContentType.type = _root_.com.histmersion.api.Api.ContentType
     type Etag = Etag.T
@@ -94,7 +92,7 @@ object TilesApi:
       .in(query[Option[String]]("license"))
       .in(query[Option[Boolean]]("undated"))
       .in(header[Option[String]](HeaderNames.IfNoneMatch))
-      .mapInTo[TileQuery]
+      .mapIn { case (layer, z, x, y, filter, kind, tier, historicity, context, text, placeId, siteType, provider, license, undated, ifNoneMatch) => TileQuery(TileQuery.Layer(layer), TileQuery.Z(z), TileQuery.X(x), TileQuery.Y(y), filter, kind.map(TileQuery.Kind(_)), tier.map(TileQuery.Tier(_)), historicity.map(TileQuery.Historicity(_)), context.map(TileQuery.Context(_)), text.map(TileQuery.Text(_)), placeId.map(com.histmersion.api.catalogue.Place.Id(_)), siteType.map(TileQuery.SiteType(_)), provider.map(TileQuery.Provider(_)), license.map(TileQuery.License(_)), undated.map(TileQuery.Undated(_)), ifNoneMatch.map(TileQuery.IfNoneMatch(_))) }(v => (v.layer.value, v.z.value, v.x.value, v.y.value, v.filter, v.kind.map(_.value), v.tier.map(_.value), v.historicity.map(_.value), v.context.map(_.value), v.text.map(_.value), v.placeId.map(_.value), v.siteType.map(_.value), v.provider.map(_.value), v.license.map(_.value), v.undated.map(_.value), v.ifNoneMatch.map(_.value)))
       .errorOut(statusCode(StatusCode.BadRequest))
       .errorOut(jsonBody[Api.Error])
       .out(
@@ -103,7 +101,7 @@ object TilesApi:
           .and(header[String](HeaderNames.Etag))
           .and(header[String](HeaderNames.CacheControl))
           .and(statusCode)
-          .mapTo[TileAnswer]
+          .map { case (bytes, contentType, etag, cacheControl, status) => TileAnswer(Api.FileBytes(bytes), TileAnswer.ContentType(contentType), TileAnswer.Etag(etag), TileAnswer.CacheControl(cacheControl), status) }(v => (v.bytes.value, v.contentType.value, v.etag.value, v.cacheControl.value, v.status))
       )
 
   lazy val all: List[AnyEndpoint] = List(tile)

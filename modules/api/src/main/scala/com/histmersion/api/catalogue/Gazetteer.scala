@@ -5,6 +5,7 @@ import io.circe.{Json, JsonObject}
 import com.histmersion.api.{LpfDataset, Span, Validity}
 import com.histmersion.api.library.ExternalId
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.Plural
 import com.histmersion.api.WireEnum

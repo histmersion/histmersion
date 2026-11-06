@@ -6,6 +6,7 @@ import java.time.temporal.ChronoUnit
 import java.util.Locale
 import com.histmersion.api.Write
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Api
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema

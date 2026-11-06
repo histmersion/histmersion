@@ -1,6 +1,7 @@
 package com.histmersion.api.library
 import com.histmersion.api.{Csv, LatinFold}
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.Plural
 import com.histmersion.api.jobs.JobInfo
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
@@ -289,19 +290,15 @@ object Acquire:
 
   object Checks:
 
-    final case class AcquireCheck(item: AcquireCheck.Item, checkedAt: AcquireCheck.CheckedAt, outcome: AcquireCheck.Outcome, reason: AcquireCheck.Reason, checks: AcquireCheck.Checks = _root_.com.histmersion.api.library.Acquire.Checks.AcquireCheck.Checks(1))
+    final case class AcquireCheck(item: com.histmersion.api.automation.Queue.QueueItem.Id, checkedAt: AcquireCheck.CheckedAt, outcome: AcquireCheck.Outcome, reason: com.histmersion.api.automation.Queue.QueueItem.Reason, checks: AcquireCheck.Checks = _root_.com.histmersion.api.library.Acquire.Checks.AcquireCheck.Checks(1))
         derives KindlingsCodecAsObject,
           KindlingsSchema, com.histmersion.api.json.Schema
 
     object AcquireCheck:
-      type Item = Item.T
-      object Item extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type CheckedAt = CheckedAt.T
       object CheckedAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Outcome = Outcome.T
       object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Reason = Reason.T
-      object Reason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
       type Checks = Checks.T
       object Checks extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

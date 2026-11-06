@@ -6,6 +6,7 @@ import io.circe.Codec
 import sttp.tapir.Schema
 import com.histmersion.api.StrictJson
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class FindingsPatch(
     add: List[Finding.Input] = Nil,

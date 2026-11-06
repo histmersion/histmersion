@@ -5,6 +5,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.library.ResolvedSource
 import com.histmersion.api.research.ResolvedArticle
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class ResolvedId(
     id: ResolvedId.Id,

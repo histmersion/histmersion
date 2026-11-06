@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class TimeHistogram(
     from: TimeHistogram.From,
@@ -14,7 +15,7 @@ final case class TimeHistogram(
     unit: TimeHistogram.Unit = _root_.com.histmersion.api.library.Histogram.Unit("sources"),
     total: TimeHistogram.Total = _root_.com.histmersion.api.library.TimeHistogram.Total(0),
     depth: TimeHistogram.Depth = _root_.com.histmersion.api.library.TimeHistogram.Depth(0),
-    asOf: Option[TimeHistogram.AsOf] = None,
+    asOf: Option[com.histmersion.api.catalogue.Year] = None,
     tree: List[Bucket] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema
@@ -34,5 +35,3 @@ object TimeHistogram:
   object Total extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Depth = Depth.T
   object Depth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AsOf = com.histmersion.api.library.Time.AsOf
-  val AsOf: _root_.com.histmersion.api.library.Time.AsOf.type = _root_.com.histmersion.api.library.Time.AsOf

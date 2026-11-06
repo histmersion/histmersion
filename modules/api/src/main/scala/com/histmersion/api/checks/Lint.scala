@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 object Lint:
   type AbbreviationsText = AbbreviationsText.T
@@ -15,8 +16,6 @@ object Lint:
   object IssueCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ItemLimit = ItemLimit.T
   object ItemLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkTarget = LinkTarget.T
-  object LinkTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Paragraph = Paragraph.T
   object Paragraph extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
@@ -261,7 +260,7 @@ object Lint:
 
   def blank(s: Option[String]): Boolean = (s.forall((_).trim.isEmpty))
 
-  def suggest(target: com.histmersion.api.checks.Lint.LinkTarget, citekeys: Iterable[com.histmersion.api.library.Citekey], max: com.histmersion.api.checks.Lint.ItemLimit): List[com.histmersion.api.checks.Lint.Suggestion] =
+  def suggest(target: com.histmersion.api.library.Citekey, citekeys: Iterable[com.histmersion.api.library.Citekey], max: com.histmersion.api.checks.Lint.ItemLimit): List[com.histmersion.api.checks.Lint.Suggestion] =
     val t = (target).value.trim.toLowerCase
     if t.isEmpty || (max).value <= 0 then Nil
     else
@@ -283,7 +282,7 @@ object Lint:
         .toList
       (scored.sortBy((rank, negLen, ck) => (rank, negLen, (ck).value)).map(_._3).take((max).value)).map(refactorValue3 => _root_.com.histmersion.api.checks.Lint.Suggestion((refactorValue3).value))
 
-  def looksLikeCitekey(target: com.histmersion.api.checks.Lint.LinkTarget): Boolean = ("""\d{4}""".r.findFirstIn((target).value).isDefined)
+  def looksLikeCitekey(target: com.histmersion.api.library.Citekey): Boolean = ("""\d{4}""".r.findFirstIn((target).value).isDefined)
 
   def duplicates(rows: List[(com.histmersion.api.library.Citekey, com.histmersion.api.checks.Lint.DuplicateKey)], label: String): List[LintItem] =
     rows

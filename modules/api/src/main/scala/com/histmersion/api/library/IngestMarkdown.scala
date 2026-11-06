@@ -57,7 +57,7 @@ object IngestMarkdown:
       )
       val kinds = ListFilters.facetLine(_root_.com.histmersion.api.automation.ListFilters.FacetName("By kind"), page.facet(_root_.com.histmersion.api.library.Facet.Name("kind")).map((t, n) => (ListFilters.Term(t.value), _root_.com.histmersion.api.RowCount(n.value))))
       (List(s"### ${Paging.heading(_root_.com.histmersion.api.Paging.ShownCount(js.size), page.total, _root_.com.histmersion.api.Plural.Noun.Singular("job"), qualifier = status.map(_.value))}", "") ++
-        Option.when(kinds.nonEmpty)(List(kinds, "")).toList.flatten ++
+        Option.when(kinds.value.nonEmpty)(List(kinds.value, "")).toList.flatten ++
         List("| id | kind | subject | status | detail |", "|---|---|---|---|---|") ++ rows ++ older.toList.flatMap(o =>
           List("", o)
         ))

@@ -4,6 +4,7 @@ import sttp.tapir.Schema
 import sttp.tapir.SchemaType.SProduct
 import com.histmersion.api.RegisteredJobKinds
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import io.circe.{Decoder, Encoder, Json}
 import sttp.tapir.SchemaType.SProductField
 import sttp.tapir.{FieldName, Schema}

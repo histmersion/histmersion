@@ -3,6 +3,7 @@ import com.histmersion.api.given_Configuration
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** Import item `id` of a collection into the library: under `citekey` (else the generated one), its `format` (else the
   * collection's preference), converted unless `convert` is false, with its cover when `cover`, ticking off acquisition

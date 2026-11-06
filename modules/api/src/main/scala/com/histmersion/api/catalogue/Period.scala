@@ -1,5 +1,6 @@
 package com.histmersion.api.catalogue
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.StrictJson
 import com.histmersion.api.WireEnum

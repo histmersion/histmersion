@@ -2,6 +2,7 @@ package com.histmersion.api.instance
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class MapStartConfig(
     mode: MapStartMode.Wire = MapStartMode.Last.wire,

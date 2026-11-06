@@ -1,6 +1,7 @@
 package com.histmersion.api.library
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.StrictJson
 import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema

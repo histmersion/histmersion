@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class AssessRequest(id: AssessRequest.Id, apply: AssessRequest.Apply = _root_.com.histmersion.api.library.AssessRequest.Apply(false), forceStatus: AssessRequest.ForceStatus = _root_.com.histmersion.api.library.AssessRequest.ForceStatus(false))
     derives KindlingsCodecAsObject,

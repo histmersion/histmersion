@@ -4,6 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.library.Acquire
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** `latest` and `seen` are ISO-8601 UTC strings in one fixed format (`YYYY-MM-DDTHH:MM:SS.ffffffZ`, as the store
   * renders them), so they compare as strings.

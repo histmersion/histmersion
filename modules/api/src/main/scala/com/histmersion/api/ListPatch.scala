@@ -5,6 +5,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import io.circe.Codec
 import sttp.tapir.Schema
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class ListPatch(
     add: List[ListPatch.Add] = Nil,

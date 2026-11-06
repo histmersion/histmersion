@@ -116,7 +116,7 @@ object AssetLinks:
 
   def webBase(citekey: com.histmersion.api.library.Citekey): com.histmersion.api.media.AssetLinks.Url = _root_.com.histmersion.api.media.AssetLinks.Url(s"/source/${enc(((citekey).value))}/assets/")
 
-  def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.Url = (webBase(citekey)).value + enc(name.value)
+  def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.Url = _root_.com.histmersion.api.media.AssetLinks.Url((webBase(citekey)).value + enc(name.value))
 
   private def enc(s: String): String =
     (java.net.URLEncoder.encode((s), "UTF-8").replace("+", "%20"))

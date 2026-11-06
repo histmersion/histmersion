@@ -4,6 +4,7 @@ import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.Plural
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** @param dependencies
   *   `None` in a record written before dependencies were recorded

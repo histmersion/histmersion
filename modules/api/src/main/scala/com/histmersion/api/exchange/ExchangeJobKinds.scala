@@ -3,6 +3,7 @@ import com.histmersion.api.jobs.JobInfo
 import com.histmersion.api.jobs.JobKindEntry
 import com.histmersion.api.jobs.JobDetail
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 /** Data management's exchange jobs, as it registers them: the first-run import of reference data, and a merge apply.
   */

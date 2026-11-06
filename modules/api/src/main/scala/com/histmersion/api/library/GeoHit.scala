@@ -3,12 +3,13 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class GeoHit(
     citekey: com.histmersion.api.library.Citekey,
     title: GeoHit.Title,
     claim: GeoHit.Claim,
-    regionName: Option[GeoHit.RegionName],
+    regionName: Option[com.histmersion.api.catalogue.Place.Region],
     lon: Option[com.histmersion.api.catalogue.Longitude],
     lat: Option[com.histmersion.api.catalogue.Latitude],
     periodStart: Option[com.histmersion.api.catalogue.Year],
@@ -25,8 +26,6 @@ object GeoHit:
   val Title: _root_.com.histmersion.api.library.Title.type = _root_.com.histmersion.api.library.Title
   type Claim = Claim.T
   object Claim extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RegionName = RegionName.T
-  object RegionName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Significance = Significance.T
   object Significance extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SourceKind = SourceKind.T

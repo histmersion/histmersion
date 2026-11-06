@@ -11,7 +11,7 @@ object PlacesMarkdown:
   private[api] def kindWhen(s: Place.Summary): String =
     if s.dating == Place.Dating.Stated then kindOf(s.kind, s.periodStart, s.periodEnd) else (s"${s.kind} · ${s.when}")
 
-  def places(rows: Vector[Place.Hit], asOf: Option[com.histmersion.api.catalogue.Place.Entry.AsOf] = None): String =
+  def places(rows: Vector[Place.Hit], asOf: Option[com.histmersion.api.catalogue.Year] = None): String =
     if rows.isEmpty then ("_No matching places._")
     else
       val items = rows.map { h =>
@@ -127,7 +127,7 @@ object PlacesMarkdown:
 
   def place(d: Place.Card, tree: Vector[Place.TreeRow] = Vector.empty): String =
     val p = d.place
-    val header = s"# ${p.label}${contestedMark((((d.contested) == (true)) || ((p.contested) == _root_.com.histmersion.api.catalogue.Place.Summary.Contested(true))), p.label.value)}" +
+    val header = s"# ${p.label}${contestedMark(d.contested.value || p.contested.value, p.label.value)}" +
       s"\n\n_`${p.id}` · ${kindWhen(p)}" +
       s" · ${d.findings} finding(s)${asOfNote(d.asOf)}_"
     val what = d.descriptions.headOption.map(x => s"\n\n${x.text}").getOrElse("")

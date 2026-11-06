@@ -99,7 +99,7 @@ object SourcesMarkdown:
         .map { n =>
           val year = n.year.map(y => s" ($y)").getOrElse("")
           val st = n.status.map(s => s" _[${s.wire}]_").getOrElse("")
-          val depth = if n.depth > 0 then s" d=${n.depth}" else " **root**"
+          val depth = if n.depth.value > 0 then s" d=${n.depth}" else " **root**"
           s"- [[${n.id}]]$year$st$depth${n.title.map(t => s" — $t").getOrElse("")}"
         }
         .mkString("\n")
@@ -122,7 +122,7 @@ object SourcesMarkdown:
       val items = result.rows.map { r =>
         val edge = (r.direction, r.kind, r.otherCitekey) match
           case (Some(dir), Some(k), Some(other)) =>
-            val arrow = if dir == "out" then "→" else "←"
+            val arrow = if dir == _root_.com.histmersion.api.library.ContradictionRow.Direction.Wire("out") then "→" else "←"
             val otherInfo = List(
               r.otherTitle.map(_.value).getOrElse(""),
               r.otherYear.map(_.toString).getOrElse(""),

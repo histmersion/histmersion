@@ -7,6 +7,7 @@ import sttp.tapir.Schema
 import com.histmersion.api.WireEnumValues
 import com.histmersion.api.WireEnum
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 import com.histmersion.api.research.Article
 
 object Agents:
@@ -763,10 +764,10 @@ object Agents:
     def withArticleProposal(payload: Option[io.circe.Json]): Option[ApprovalInfo] =
       if approvalKind.exists((refactorCallback => ((refactorCallback.proposesFilter) == (true)))) then
         val f = payload.flatMap(_.as[Article.Plans.FilterProposal].toOption)
-        Some(this.modify(_.filter).setTo(f).modify(_.evidence).setTo(f.map(_.rationale).getOrElse("")))
+        Some(this.modify(_.filter).setTo(f).modify(_.evidence).setTo(ApprovalInfo.Evidence(f.map(_.rationale.value).getOrElse(""))))
       else if approvalKind.exists((refactorCallback => ((refactorCallback.proposesArticles) == (true)))) then
         val p = payload.flatMap(_.as[Article.Plans.ArticlePlan].toOption)
-        Some(this.modify(_.articles).setTo(p).modify(_.evidence).setTo(p.map(_.rationale).getOrElse("")))
+        Some(this.modify(_.articles).setTo(p).modify(_.evidence).setTo(ApprovalInfo.Evidence(p.map(_.rationale.value).getOrElse(""))))
       else None
 
   object ApprovalInfo:

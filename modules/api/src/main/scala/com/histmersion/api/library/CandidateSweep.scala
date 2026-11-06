@@ -3,6 +3,7 @@ import hearth.kindlings.circederivation.KindlingsCodecAsObject
 import hearth.kindlings.tapirschemaderivation.KindlingsSchema
 import sttp.tapir.Schema
 import com.histmersion.api.given
+import com.histmersion.api.json.NewtypeCodecs.given
 
 final case class CandidateSweep(
     goal: CandidateSweep.Goal,
@@ -30,6 +31,9 @@ object CandidateSweep:
   type SkippedKey = SkippedKey.T
   object SkippedKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
+    given _root_.io.circe.KeyEncoder[T] = _root_.io.circe.KeyEncoder.encodeKeyString.contramap(_.value)
+    given _root_.io.circe.KeyDecoder[T] = _root_.io.circe.KeyDecoder.decodeKeyString.map(SkippedKey(_))
+    given Schema[Map[T, SkippedValue]] = Schema.schemaForMap(_.value)
   type SkippedValue = SkippedValue.T
   object SkippedValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Unseen = Unseen.T
