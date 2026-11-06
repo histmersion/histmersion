@@ -49,7 +49,7 @@ object Years:
       .trim
     def isBce(era: com.histmersion.api.Years.Era.Wire) = (era).value.matches(EraBce)
     def signed(num: String, era: Option[com.histmersion.api.Years.Era.Wire]): Either[com.histmersion.api.Years.Problem, com.histmersion.api.library.Tree.Year] =
-      (num).value.toLongOption.toRight(s"'${(raw).value.trim}' is not a year").flatMap { n =>
+      (num).toLongOption.toRight(s"'${(raw).value.trim}' is not a year").flatMap { n =>
         era match
           case None                => Right(n)
           case Some(e) if isBce(e) => Right(-math.abs(n))
@@ -69,7 +69,7 @@ object Years:
     digits.toLongOption.map(v => if neg then _root_.com.histmersion.api.Years.Astronomical(-v) else _root_.com.histmersion.api.Years.Astronomical(v))
 
   def parseIso(raw: com.histmersion.api.Years.Iso.Wire): Option[com.histmersion.api.Years.Astronomical] =
-    (raw).value.trim.toLongOption.map(_root_.com.histmersion.api.Years.Astronomical((fromAstronomical).value))
+    (raw).value.trim.toLongOption.map(_root_.com.histmersion.api.Years.Astronomical((fromAstronomical)))
 
   def fromJson(j: Json, text: com.histmersion.api.Years.Text => Option[com.histmersion.api.library.Tree.Year]): Option[com.histmersion.api.library.Tree.Year] =
     (j.asNumber.flatMap(_.toLong).orElse(j.asString.flatMap({ val refactorFunction = text; (refactorValue) => (refactorFunction(_root_.com.histmersion.api.Years.Text(refactorValue))).map(refactorValue2 => (refactorValue2).value) })).orElse(j.asNumber.map(_.toDouble.round))).map(refactorValue4 => _root_.com.histmersion.api.library.Tree.Year(refactorValue4))

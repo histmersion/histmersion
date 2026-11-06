@@ -99,8 +99,8 @@ object Geocode:
   private val Aside = "\\([^)]*\\)".r
 
   def key(s: String): com.histmersion.api.catalogue.Geocode.Key =
-    val b = new StringBuilder((s).value.length)
-    Aside.replaceAllIn((s).value, " ").foreach { c =>
+    val b = new StringBuilder((s).length)
+    Aside.replaceAllIn((s), " ").foreach { c =>
       if Apostrophes.contains(_root_.com.histmersion.api.catalogue.Geocode.Apostrophes(_root_.com.histmersion.api.catalogue.Geocode.ApostrophesValue(c))) then ()
       else if Separators.contains(_root_.com.histmersion.api.catalogue.Geocode.Separators(_root_.com.histmersion.api.catalogue.Geocode.SeparatorsValue(c))) then b += ' '
       else LatinFold.foldChar((c)).foreach(f => b += (if f >= 'A' && f <= 'Z' then (f + 32).toChar else f))
@@ -194,7 +194,7 @@ object Geocode:
     )
 
   def compassBox(dropped: String): Option[(com.histmersion.api.catalogue.Geocode.Compass.Fraction, com.histmersion.api.catalogue.Geocode.Compass.Fraction, com.histmersion.api.catalogue.Geocode.Compass.Fraction, com.histmersion.api.catalogue.Geocode.Compass.Fraction)] =
-    val words = (dropped).value.split("[\\s\\-]+").map({ val refactorFunction = key; (refactorValue7) => refactorFunction((refactorValue7)) }).filter((_).value.nonEmpty).toList
+    val words = (dropped).split("[\\s\\-]+").map({ val refactorFunction = key; (refactorValue7) => refactorFunction((refactorValue7)) }).filter((_).value.nonEmpty).toList
     val dirs = words.flatMap(w => Compass.get(_root_.com.histmersion.api.catalogue.Geocode.Compass.Direction((w).value.stripSuffix("ern"))).orElse(Compass.get(_root_.com.histmersion.api.catalogue.Geocode.Compass.Direction((w).value))))
     dirs match
       case List(box) => Some({ val refactorTuple10 = box; (_root_.com.histmersion.api.catalogue.Geocode.Compass.Fraction((refactorTuple10._1).value), _root_.com.histmersion.api.catalogue.Geocode.Compass.Fraction((refactorTuple10._2).value), _root_.com.histmersion.api.catalogue.Geocode.Compass.Fraction((refactorTuple10._3).value), _root_.com.histmersion.api.catalogue.Geocode.Compass.Fraction((refactorTuple10._4).value)) })
@@ -255,7 +255,7 @@ object Geocode:
     def overlaps(p: Period): Boolean = from.forall(_ <= p.end) && to.forall(_ >= p.start)
 
     def gap(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.Gap =
-      if (overlaps(p)).value then _root_.com.histmersion.api.catalogue.Geocode.Candidate.Gap(0L)
+      if (overlaps(p)) then _root_.com.histmersion.api.catalogue.Geocode.Candidate.Gap(0L)
       else to.filter((_).value < p.start).map((p.start).value - _).orElse(from.filter((_).value > p.end).map((_).value - p.end)).getOrElse(_root_.com.histmersion.api.catalogue.Geocode.Candidate.Gap(0L))
 
   object Candidate:
@@ -358,8 +358,8 @@ object Geocode:
 
   def distanceKm(lon1: com.histmersion.api.catalogue.Geocode.Longitude, lat1: com.histmersion.api.catalogue.Geocode.Latitude, lon2: com.histmersion.api.catalogue.Geocode.Longitude, lat2: com.histmersion.api.catalogue.Geocode.Latitude): com.histmersion.api.catalogue.Geocode.DistanceKm =
     val r = 6371.0
-    val dLat = math.toRadians(((lat2).value - (lat1).value).value)
-    val dLon = math.toRadians(((lon2).value - (lon1).value).value)
+    val dLat = math.toRadians(((lat2).value - (lat1).value))
+    val dLon = math.toRadians(((lon2).value - (lon1).value))
     val a = math.pow(math.sin(dLat / 2), 2) +
       math.cos(math.toRadians((lat1).value)) * math.cos(math.toRadians(lat2)) * math.pow(math.sin(dLon / 2), 2)
     _root_.com.histmersion.api.catalogue.Geocode.DistanceKm(2 * r * math.asin(math.min(1.0, math.sqrt(a))))

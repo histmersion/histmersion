@@ -68,7 +68,7 @@ object BasemapMarkdown:
         s"${o.tiles} tiles, ${Backup.humanBytes(o.bytes)} of ${Backup.humanBytes(o.maxBytes)} at `${o.dir}`" +
         o.offlineUntil.fold(".")(t => s" — the provider was unreachable; asked again after $t.")
 
-  def plain(html: String): String = ((html).value.replaceAll("<[^>]+>", ""))
+  def plain(html: String): String = ((html).replaceAll("<[^>]+>", ""))
 
   def removed(r: Basemap.Removed): com.histmersion.api.Markdown.Text =
     if r.removed.isEmpty then _root_.com.histmersion.api.Markdown.Text("Nothing to remove: no base-map file is downloaded.")

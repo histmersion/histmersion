@@ -169,7 +169,7 @@ object SearchMarkdown:
       _root_.com.histmersion.api.Markdown.Text((List(head, "", treeLines(h.tree, unit, (0)).mkString("\n"), "", note)).mkString("\n"))
 
   private[api] def treeLines(buckets: List[Bucket], unit: com.histmersion.api.library.Histogram.Unit, depth: Int): List[String] =
-    val pad = "  " * (depth).value
+    val pad = "  " * (depth)
     buckets.flatMap { b =>
       val over = if (b.overlap).value > 0 then s" · ${b.overlap} in more than one ${childNoun(b)}" else ""
       val when = if b.kind == _root_.com.histmersion.api.library.Bucket.Kind(Tree.KindTime) then ""
@@ -177,7 +177,7 @@ object SearchMarkdown:
       val id = b.placeId.map(i => s" `$i`").getOrElse("")
       val line = s"$pad- **${b.label}**${contestedMark(b.contested, b.label)}$id — " +
         s"${b.count} $unit$over$when"
-      val kids = treeLines(b.children, unit, ((depth).value + 1))
+      val kids = treeLines(b.children, unit, ((depth) + 1))
       val samps = b.samples.map(x => s"$pad  - ${x.citekey} — ${x.title}")
       line :: (kids ++ samps)
     }

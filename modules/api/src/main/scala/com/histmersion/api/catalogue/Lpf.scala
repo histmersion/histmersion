@@ -72,7 +72,7 @@ object Lpf:
     * 8601 dates with month and day (`"-0500-01-01"`) are astronomical and converted via [[fromIso]].
     */
   def parseYear(raw: String): Option[com.histmersion.api.library.Tree.Year] =
-    val t = Circa.replaceFirstIn((raw).value.trim.toLowerCase, "")
+    val t = Circa.replaceFirstIn((raw).trim.toLowerCase, "")
     if t.isEmpty then None
     else
       val isIso = IsoDate.findFirstIn(t).isDefined
@@ -142,7 +142,7 @@ object Lpf:
     (keys.iterator.flatMap(k => o(k).flatMap(_.asString)).map(_.trim).find(_.nonEmpty)).map(refactorValue25 => (refactorValue25))
 
   private def slug(s: String): com.histmersion.api.research.ReviewGoal.Slug =
-    _root_.com.histmersion.api.research.ReviewGoal.Slug((s).value.trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
+    _root_.com.histmersion.api.research.ReviewGoal.Slug((s).trim.toLowerCase.replaceAll("[^a-z0-9]+", "_").replaceAll("^_+|_+$", "").take(64))
 
   private def propertyPeriod(o: JsonObject): Option[Span] =
     def fromPair(a: Option[com.histmersion.api.library.Tree.Year], b: Option[com.histmersion.api.library.Tree.Year]): Option[Span] = (a, b) match
@@ -189,7 +189,7 @@ object Lpf:
         })
     }
     val alts = str(props, "alt_names", "altNames", "NAME_ALT", "nameAlt").toList
-      .flatMap((_).value.split("[|;]").toList)
+      .flatMap((_).split("[|;]").toList)
       .map(_.trim)
       .filter(_.nonEmpty)
       .map(Place.Name(_root_.com.histmersion.api.catalogue.Place.Name.Value(_)))
@@ -292,7 +292,7 @@ object Lpf:
       json: String,
       defaultKind: com.histmersion.api.catalogue.Lpf.ParseDefaultKind = _root_.com.histmersion.api.catalogue.Lpf.ParseDefaultKind(com.histmersion.api.catalogue.Place.Kind.Region)
   ): Either[com.histmersion.api.catalogue.Lpf.Problem, List[Place.Input]] =
-    io.circe.parser.parse((json).value).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
+    io.circe.parser.parse((json)).left.map(e => s"invalid JSON: ${e.getMessage}").flatMap { doc =>
       val found: Option[List[Json]] =
         doc.asArray
           .map(_.toList)

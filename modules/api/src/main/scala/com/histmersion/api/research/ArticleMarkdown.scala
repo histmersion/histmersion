@@ -44,7 +44,7 @@ object ArticleMarkdown:
 
   private def chipLinksList(values: List[String], hashKey: String): String =
     values
-      .filter((_).value.nonEmpty)
+      .filter((_).nonEmpty)
       .map(v => s"[${Label.display(v).replace("[", "\\[").replace("]", "\\]")}](/#$hashKey=${Markdown.enc(v)})")
       .mkString(", ")
 
@@ -64,7 +64,7 @@ object ArticleMarkdown:
     val out = List.newBuilder[String]
 
     if show.contains("summary") then
-      a.summary.map(_.trim).filter(_.nonEmpty).foreach(s => out += s"_${(stripMd(s)).value.take(200)}_")
+      a.summary.map(_.trim).filter(_.nonEmpty).foreach(s => out += s"_${(stripMd(s)).take(200)}_")
 
     if show.contains("body") then
       val body = a.body.trim
@@ -97,7 +97,7 @@ object ArticleMarkdown:
     else _root_.com.histmersion.api.Markdown.Text(result.mkString("\n\n"))
 
   private def stripMd(s: String): String =
-    ((s).value.replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
+    ((s).replaceAll("""\[\[([^\]|]+)\|([^\]]+)\]\]""", "$2")
       .replaceAll("""\[\[([^\]]+)\]\]""", "$1")
       .replaceAll("""\[([^\]]+)\]\([^)]+\)""", "$1")
       .replaceAll("""[*_]{1,2}""", "")
