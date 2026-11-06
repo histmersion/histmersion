@@ -40,3 +40,10 @@ Test input to review: `BundleTar.header(..., ByteCount.assume(-1L))` keeps the o
 - `MergePlanner` `matched0` went to `List[String]`; `AgentVerify` is reached through private String helpers in `ReviewArticle` (G3 will move these onto types).
 
 Found and fixed, generic-call class: `Merged.deferred.contains(f.id)` was always false.
+
+More in core, from round 2, to compare with 7e197c2b:
+- `PlanGoal.WorkAnswer.doi` is a constrained `Doi`: same class as the model-answer citekeys. Every model-answer type needs its fields raw until normalised.
+- `ManagerPolicy.released`: an `untilSource` that is not a valid citekey now counts as "source does not exist".
+- `SourceMatcher.sha` uses `Sha256.option`: a malformed original sha no longer counts as a strong key.
+- `seed:`/`watch:` manager-id format now exists twice (`ManagerRow.Id` and api `Goal.Ref`).
+- `MergeFold.hull` picks min or max year instead of `math.min`/`max`.
