@@ -1,0 +1,27 @@
+## modules/api/src/main/scala/com/histmersion/api/library/CitationLint.scala
+15:27 [E007] 15 |        val near = suggest(e.dst.value.toString, citekeys.map(_.value.toString), maxSuggestions) / |                    Found:    String / |                    Required: com.histmersion.api.checks.Lint.LinkTarget
+15:62 [E007] 15 |        val near = suggest(e.dst.value.toString, citekeys.map(_.value.toString), maxSuggestions) / |                         Found:    String / |                         Required: com.histmersion.api.library.Citekey.T
+15:81 [E007] 15 |        val near = suggest(e.dst.value.toString, citekeys.map(_.value.toString), maxSuggestions) / |Found:    (maxSuggestions : com.histmersion.api.library.CitationLint.SuggestionLimit) / |Required: com.histmersion.api.checks.Lint.ItemLimit
+17:30 [E007] 17 |          if looksLikeCitekey(e.dst.value.toString) then "no such source" / |                    Found:    String / |                    Required: com.histmersion.api.checks.Lint.LinkTarget
+20:17 [E007] 20 |        LintItem(e.src.value.toString, s"${e.kind} → ${e.dst.value.toString} ($what)$tail") / |                 Found:    String / |                 Required: com.histmersion.api.library.Citekey
+20:39 [E007] 20 |        LintItem(e.src.value.toString, s"${e.kind} → ${e.dst.value.toString} ($what)$tail") / |               Found:    String / |               Required: com.histmersion.api.checks.Lint.LintItem.Detail
+
+## modules/api/src/main/scala/com/histmersion/api/library/CandidatesMarkdown.scala
+17:47 [E008] 17 |        c.abstractText.fold("")(a => s"\n  ${a.take(400)}${if a.length > 400 then "…" else ""}") / |value take is not a member of com.histmersion.api.library.Source.Candidate.AbstractText, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+17:64 [E008] 17 |        c.abstractText.fold("")(a => s"\n  ${a.take(400)}${if a.length > 400 then "…" else ""}") / |value length is not a member of com.histmersion.api.library.Source.Candidate.AbstractText, but could be made available as an extension method. / |The following import might make progress towards fixing the problem:
+
+## modules/api/src/main/scala/com/histmersion/api/Markdown.scala
+78:39 [E007] 78 |    asOf.map(y => s" · as of ${fmtYear(y)}").getOrElse("") / |          Found:    (y : com.histmersion.api.catalogue.Place.Entry.AsOf) / |          Required: com.histmersion.api.catalogue.Year
+
+## modules/api/src/main/scala/com/histmersion/api/catalogue/EventsJobKinds.scala
+11:171 [E172] 11 |  val Catalogue: JobDetail.Field[Option[com.histmersion.api.jobs.JobKinds.Subject]] = JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("events"),  / |No given instance of type io.circe.Encoder[Option[com.histmersion.api.jobs.JobKinds.Subject]] was found for parameter encoder of constructor Field in class Field. / |I found: / |    io.circe.Encoder.encodeIterable[com.histmersion.api.jobs.JobKinds.Subject.T, / |      Option]( / |      io.circe.Encoder.importedEncoder[com.histmersion.api.jobs.JobKinds.Subject.T](
+
+## modules/api/src/main/scala/com/histmersion/api/jobs/JobDetail.scala
+31:113 [E172] 31 |    com.histmersion.api.jobs.JobDetail.Field(_root_.com.histmersion.api.jobs.JobDetail.Field.Name("about"), None) / |No given instance of type io.circe.Encoder[Option[com.histmersion.api.jobs.JobKinds.Subject]] was found for parameter encoder of constructor Field in class Field. / |I found: / |    io.circe.Encoder.encodeIterable[com.histmersion.api.jobs.JobKinds.Subject.T, / |      Option]( / |      io.circe.Encoder.importedEncoder[com.histmersion.api.jobs.JobKinds.Subject.T](
+
+## modules/api/src/main/scala/com/histmersion/api/media/AssetLinks.scala
+119:164 [E007] 119 |  def url(citekey: com.histmersion.api.media.AssetLinks.UrlCitekey, name: com.histmersion.api.media.AssetLinks.UrlName): com.histmersion.api.media.AssetLinks.Url = ( / |                    Found:    String / |                    Required: com.histmersion.api.media.AssetLinks.Url
+
+## modules/api/src/main/scala/com/histmersion/api/views/QueueListing.scala
+22:102 [E172] 22 |    Queue.Kind.parse(list).map(k => Queue.markdown(k, items, checks.map(c => c.item -> c.reason).toMap)) / |Cannot prove that (com.histmersion.api.library.Acquire.Checks.AcquireCheck.Item, / |  com.histmersion.api.library.Acquire.Checks.AcquireCheck.Reason) <:< (com.histmersion.api.automation.Queue.QueueItem.Id.T, V). / |where:    V is a type variable with constraint <: com.histmersion.api.automation.Queue.QueueItem.Reason.T / 49 errors found / (api / Compile / compileIncremental) Compilation failed
+
