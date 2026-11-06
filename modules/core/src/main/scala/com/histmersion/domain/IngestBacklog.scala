@@ -13,16 +13,12 @@ import java.time.Instant
   * list. The pure rules; the supervisor reads the facts and writes the result.
   */
 object IngestBacklog:
-  type DayAllowance = DayAllowance.T
-  object DayAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DaysToDrain = DaysToDrain.T
   object DaysToDrain extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DrainHorizon = DrainHorizon.T
   object DrainHorizon extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DrainLimit = DrainLimit.T
   object DrainLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DrainedToday = DrainedToday.T
-  object DrainedToday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OwnAllowance = OwnAllowance.T
   object OwnAllowance extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
@@ -41,16 +37,19 @@ object IngestBacklog:
 
   val NoLegalCopy = "no legal open-access copy of"
 
-  def isNoLegalCopy(message: com.histmersion.domain.IngestBacklog.Problem): Boolean = Option(message).exists(_.trim.startsWith(NoLegalCopy))
+  def isNoLegalCopy(message: com.histmersion.domain.IngestBacklog.Problem): Boolean =
+    Option(message).exists(m => startsWithNoLegalCopy(m.value))
+
+  private def startsWithNoLegalCopy(text: String): Boolean = text.trim.startsWith(NoLegalCopy)
 
   /** What a watcher's next sweep may ingest of its NEW finds: what is left of its own allowance (`own`) and of the
     * shared one (`shared`, the autopilot's; None = no shared cap), each after the backlog that drains under it first —
     * the watcher's own pending items (`ownBacklog`) and every drainable watcher's (`allBacklog`). Never negative.
     */
   def sweepAllowance(own: com.histmersion.domain.IngestBacklog.OwnAllowance, shared: Option[com.histmersion.domain.IngestBacklog.SharedAllowance], ownBacklog: com.histmersion.domain.IngestBacklog.Lane.Backlog, allBacklog: com.histmersion.domain.IngestBacklog.TotalBacklog): com.histmersion.domain.IngestBacklog.SweepAllowance =
-    val mine = own - math.max(0, ownBacklog)
-    val all = shared.fold(Int.MaxValue)(_ - math.max(0, allBacklog))
-    math.max(0, math.min(mine, all))
+    val mine = own.value - math.max(0, ownBacklog.value)
+    val all = shared.fold(Int.MaxValue)(_.value - math.max(0, allBacklog.value))
+    SweepAllowance(math.max(0, math.min(mine, all)))
 
   /** One pending backlog item, as the drain sees it. */
   final case class Entry(id: Entry.Id, managerId: Entry.ManagerId, priority: Entry.Priority, notBefore: Option[Instant])
@@ -69,15 +68,15 @@ object IngestBacklog:
     * share: an ingest fetches a file, so a tick takes only a few).
     */
   def drain(entries: List[Entry], ownLeft: Map[com.histmersion.domain.IngestBacklog.Entry.ManagerId, com.histmersion.domain.IngestBacklog.Lane.LeftToday], shared: Option[com.histmersion.domain.IngestBacklog.SharedAllowance], now: Instant, max: com.histmersion.domain.IngestBacklog.DrainLimit): List[Entry] =
-    val ordered = entries.filter(_.notBefore.forall(!_.isAfter(now))).sortBy(e => (-e.priority, e.id))
-    @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[com.histmersion.domain.IngestBacklog.Entry.ManagerId, com.histmersion.domain.IngestBacklog.Lane.LeftToday], sh: Option[com.histmersion.domain.IngestBacklog.SharedAllowance]): List[Entry] =
+    val ordered = entries.filter(_.notBefore.forall(!_.isAfter(now))).sortBy(e => (-e.priority.value, e.id.value: Long))
+    @tailrec def take(rest: List[Entry], acc: Vector[Entry], left: Map[Entry.ManagerId, Int], sh: Option[Int]): List[Entry] =
       rest match
         case Nil       => acc.toList
         case e :: tail =>
           val mine = left.getOrElse(e.managerId, 0)
-          if acc.size >= math.max(0, max) || mine <= 0 || sh.exists(_ <= 0) then take(tail, acc, left, sh)
+          if acc.size >= math.max(0, max.value) || mine <= 0 || sh.exists(_ <= 0) then take(tail, acc, left, sh)
           else take(tail, acc :+ e, left.updated(e.managerId, mine - 1), sh.map(_ - 1))
-    take(ordered, Vector.empty, ownLeft, shared)
+    take(ordered, Vector.empty, ownLeft.view.mapValues(_.value).toMap, shared.map(_.value))
 
   /** Where a legal open-access pick goes when it is not ingested now: nowhere new when it is in the corpus already,
     * onto the open acquisition item that names its DOI (the goal linked to it), into the backlog entry another watcher
@@ -119,33 +118,40 @@ object IngestBacklog:
     * failed `maxFailures` times), or another try after the backoff.
     */
   enum Failure:
-    case ToAcquire(why: Failure.ToAcquire.Why)
-    case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Failure.Retry.Why)
+    case ToAcquire(why: Failure.Why)
+    case Retry(notBefore: Instant, failures: Failure.Retry.Failures, why: Failure.Why)
 
   object Failure:
-    object ToAcquire:
-      type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Why = Why.T
+    object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     object Retry:
       type Failures = Failures.T
       object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Why = Why.T
-      object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def onFailure(
       message: com.histmersion.domain.IngestBacklog.Problem,
       failures: com.histmersion.domain.IngestBacklog.Failure.Retry.Failures,
-      maxFailures: com.histmersion.domain.ManagerDefaults.MaxFailures,
-      backoffMinutes: com.histmersion.domain.ManagerDefaults.BackoffMinutes,
-      maxBackoffMinutes: com.histmersion.domain.ManagerDefaults.MaxBackoffMinutes,
+      maxFailures: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxFailures,
+      backoffMinutes: com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes,
+      maxBackoffMinutes: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes,
       now: Instant
   ): Failure =
-    val why = Option(message).map(_.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
-    if isNoLegalCopy(why) then Failure.ToAcquire(why)
+    val why = Option(message).map(_.value.trim).filter(_.nonEmpty).getOrElse("the ingest failed").take(500)
+    if startsWithNoLegalCopy(why) then Failure.ToAcquire(Failure.Why(why))
     else
-      val n = math.max(0, failures) + 1
-      if n >= math.max(1, maxFailures) then Failure.ToAcquire(s"$why (${Plural.count(n, com.histmersion.api.Plural.CountSingular("try"), com.histmersion.api.Plural.CountPlural("tries"))})")
-      else Failure.Retry(now.plus(ManagerPolicy.backoff(backoffMinutes, maxBackoffMinutes, n)), n, why)
+      val n = math.max(0, failures.value) + 1
+      if n >= math.max(1, maxFailures.value) then
+        Failure.ToAcquire(
+          Failure.Why(
+            s"$why (${Plural.count(Plural.CountN(n.toLong), Plural.CountSingular("try"), Plural.CountPlural("tries"))})"
+          )
+        )
+      else
+        Failure.Retry(
+          now.plus(ManagerPolicy.backoff(backoffMinutes, maxBackoffMinutes, ManagerPolicy.Next.Retry.Failures(n))),
+          Failure.Retry.Failures(n),
+          Failure.Why(why)
+        )
 
   /** One watcher's share of the drain: its backlog, its own daily cap, and what is left of it today. */
   final case class Lane(backlog: Lane.Backlog, perDay: Lane.PerDay, leftToday: Lane.LeftToday)
@@ -170,14 +176,16 @@ object IngestBacklog:
       horizon: com.histmersion.domain.IngestBacklog.DrainHorizon = com.histmersion.domain.IngestBacklog.DrainHorizon(3650)
   ): Option[com.histmersion.domain.IngestBacklog.DaysToDrain] =
     @annotation.tailrec
-    def go(bs: Vector[com.histmersion.domain.IngestBacklog.Lane.Backlog], day: Int): Option[com.histmersion.domain.IngestBacklog.DaysToDrain] =
-      if bs.forall(_ <= 0) then Some(math.max(0, day - 1))
-      else if day > horizon then None
+    def go(bs: Vector[Int], day: Int): Option[DaysToDrain] =
+      if bs.forall(_ <= 0) then Some(DaysToDrain(math.max(0, day - 1)))
+      else if day > horizon.value then None
       else
-        val caps = lanes.map(l => math.max(0, if day == 0 then l.leftToday else l.perDay)).toVector
-        val share = (if day == 0 then sharedLeftToday.orElse(sharedPerDay) else sharedPerDay).map(math.max(0, _))
+        val caps = lanes.map(l => math.max(0, if day == 0 then l.leftToday.value else l.perDay.value)).toVector
+        val share =
+          (if day == 0 then sharedLeftToday.map(_.value).orElse(sharedPerDay.map(_.value))
+           else sharedPerDay.map(_.value)).map(math.max(0, _))
         val order = bs.indices.sortBy(i => -bs(i))
-        @tailrec def drainDay(rest: List[com.histmersion.domain.IngestBacklog.DayAllowance], cur: Vector[Int], room: com.histmersion.domain.IngestBacklog.DayAllowance): Vector[com.histmersion.domain.IngestBacklog.DrainedToday] =
+        @tailrec def drainDay(rest: List[Int], cur: Vector[Int], room: Int): Vector[Int] =
           rest match
             case Nil       => cur
             case i :: tail =>
@@ -187,8 +195,8 @@ object IngestBacklog:
         val next = drainDay(order.toList, bs, share.getOrElse(Int.MaxValue))
         if day > 0 && next == bs then None // nothing drains on a full day: it never will
         else go(next, day + 1)
-    val start = lanes.map(l => math.max(0, l.backlog)).toVector
-    if start.forall(_ == 0) then Some(com.histmersion.domain.IngestBacklog.DaysToDrain(0)) else go(start, 0)
+    val start = lanes.map(l => math.max(0, l.backlog.value)).toVector
+    if start.forall(_ == 0) then Some(DaysToDrain(0)) else go(start, 0)
 
   // ── the one-shot repair (`agent autopilot repair-acquire`) ─────────────────────────────────────
 
@@ -203,7 +211,7 @@ object IngestBacklog:
       watcher: RepairFacts.Watcher,
       watcherExists: RepairFacts.WatcherExists,
       watcherAutoIngest: RepairFacts.WatcherAutoIngest,
-      inCorpus: Option[RepairFacts.InCorpus]
+      inCorpus: Option[com.histmersion.domain.library.Citekey]
   )
 
   object RepairFacts:
@@ -217,8 +225,6 @@ object IngestBacklog:
     object WatcherExists extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type WatcherAutoIngest = WatcherAutoIngest.T
     object WatcherAutoIngest extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type InCorpus = InCorpus.T
-    object InCorpus extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   enum RepairAction:
     /** Into the watcher's ingest backlog; the acquisition item leaves the list. */
@@ -236,10 +242,11 @@ object IngestBacklog:
       object Why extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def repairAction(f: RepairFacts): RepairAction =
-    if !f.isOa then RepairAction.Keep(com.histmersion.domain.IngestBacklog.RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))
+    if !f.isOa.value then RepairAction.Keep(com.histmersion.domain.IngestBacklog.RepairAction.Keep.Why("no legal open-access copy known: it stays on the acquisition list"))
     else
       f.inCorpus match
         case Some(ck)                     => RepairAction.Remove(ck)
-        case None if !f.watcherExists     => RepairAction.Keep(s"its watcher ${f.watcher} no longer exists")
-        case None if !f.watcherAutoIngest => RepairAction.Keep(s"its watcher ${f.watcher} does not auto-ingest")
-        case None                         => RepairAction.Move
+        case None if !f.watcherExists.value => RepairAction.Keep(RepairAction.Keep.Why(s"its watcher ${f.watcher} no longer exists"))
+        case None if !f.watcherAutoIngest.value =>
+          RepairAction.Keep(RepairAction.Keep.Why(s"its watcher ${f.watcher} does not auto-ingest"))
+        case None                               => RepairAction.Move

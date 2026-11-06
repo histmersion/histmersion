@@ -90,7 +90,8 @@ object GoalFocus:
   object Work:
 
     type ItemId = ItemId.T
-    object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ItemId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given Ordering[T] = Ordering.by[T, Long](_.value)
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Person = Person.T
@@ -100,7 +101,8 @@ object GoalFocus:
     type PersonHeld = PersonHeld.T
     object PersonHeld extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Approval = Approval.T
-    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given Ordering[T] = Ordering.by[T, Long](_.value)
     type ApprovalByPerson = ApprovalByPerson.T
     object ApprovalByPerson extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -221,7 +223,7 @@ object GoalFocus:
     goals.map { g =>
       val arts = articles.getOrElse(g.slug, Nil)
       g.modify(
-        _.sources).setTo(sources.getOrElse(g.slug, Facts.Sources(0))).modify(_.articles).setTo(Facts.Articles(arts.size)).modify(_.unreviewed).setTo(Facts.Unreviewed(arts.count(a => !passed(a)))).modify(_.compileOpen).setTo(compileOpen.getOrElse(g.slug, Facts.CompileOpen(0))).modify(_.work).setTo(byGoal.getOrElse(g.slug, Nil).sortBy(_.itemId.value)).modify(_.lastStop).setTo(lastStops.get(g.slug)
+        _.sources).setTo(sources.getOrElse(g.slug, Facts.Sources(0))).modify(_.articles).setTo(Facts.Articles(arts.size)).modify(_.unreviewed).setTo(Facts.Unreviewed(arts.count(a => !passed(a)))).modify(_.compileOpen).setTo(compileOpen.getOrElse(g.slug, Facts.CompileOpen(0))).modify(_.work).setTo(byGoal.getOrElse(g.slug, Nil).sortBy(_.itemId)).modify(_.lastStop).setTo(lastStops.get(g.slug)
       )
     }
 
@@ -290,7 +292,7 @@ object GoalFocus:
             Fit.Waits(Code.Idle, com.histmersion.domain.GoalFocus.Fit.Waits.Why("idle: nothing for a model to do until its cron fires or new sources arrive"))
       else if runnable.isEmpty then
         val ids = (allowed ++ allowed
-          .flatMap(blockers(_, f.work))).flatMap(w => w.approval.filter(_ => w.approvalByPerson.value)).distinct.sortBy(_.value)
+          .flatMap(blockers(_, f.work))).flatMap(w => w.approval.filter(_ => w.approvalByPerson.value)).distinct.sorted
         if ids.nonEmpty then
           Fit.Waits(Code.Person, Reason(s"waits for a person: ${ids.map(i => s"approval #$i").mkString(", ")}"))
         else Fit.Waits(Code.Held, com.histmersion.domain.GoalFocus.Fit.Waits.Why("its items are held by a person"))

@@ -24,75 +24,53 @@ import com.histmersion.api.exchange.Bundle
 object MergeFold:
   type ArticleBody = ArticleBody.T
   object ArticleBody extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArticleHistory = ArticleHistory.T
-  object ArticleHistory extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConflictCount = ConflictCount.T
   object ConflictCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Difference = Difference.T
-  object Difference extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Member = Member.T
-  object Member extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Name = Name.T
-  object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type QueueKey = QueueKey.T
   object QueueKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type QueueText = QueueText.T
-  object QueueText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RangeWidth = RangeWidth.T
-  object RangeWidth extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Tag = Tag.T
-  object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnionKey = UnionKey.T
-  object UnionKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── small rules ─────────────────────────────────────────────────────────────────────────────
 
   /** The richer of two spellings of one value: more words (a subtitle), then more letters outside ASCII (diacritics
     * kept), then more capitals (title case); a tie keeps the left.
     */
-
-  type UnionTagsL = _root_.com.histmersion.domain.MergeFold.Member
-  val UnionTagsL: _root_.com.histmersion.domain.MergeFold.Member.type = _root_.com.histmersion.domain.MergeFold.Member
-  type UnionTagsR = _root_.com.histmersion.domain.MergeFold.Member
-  val UnionTagsR: _root_.com.histmersion.domain.MergeFold.Member.type = _root_.com.histmersion.domain.MergeFold.Member
-  type UnionNamesL = _root_.com.histmersion.domain.MergeFold.Member
-  val UnionNamesL: _root_.com.histmersion.domain.MergeFold.Member.type = _root_.com.histmersion.domain.MergeFold.Member
-  type UnionNamesR = _root_.com.histmersion.domain.MergeFold.Member
-  val UnionNamesR: _root_.com.histmersion.domain.MergeFold.Member.type = _root_.com.histmersion.domain.MergeFold.Member
-
-  def richer(l: com.histmersion.domain.MergeFold.Text, r: com.histmersion.domain.MergeFold.Text): com.histmersion.domain.MergeFold.Text =
-    def score(s: com.histmersion.domain.MergeFold.Text) =
-      (Fingerprint.tokens(s).size, s.count(c => c.isLetter && c > 127), s.count(_.isUpper), s.length)
+  def richer[A](l: A, r: A)(text: A => String): A =
+    def score(a: A) =
+      val s = text(a)
+      (Fingerprint.tokens(Fingerprint.TokensS(s)).size, s.count(c => c.isLetter && c > 127), s.count(_.isUpper), s.length)
     if summon[Ordering[(Int, Int, Int, Int)]].gt(score(r), score(l)) then r else l
 
   /** Left's values, then right's that are not already there (compared after `key`). */
-  def union(l: List[com.histmersion.domain.MergeFold.Member], r: List[com.histmersion.domain.MergeFold.Member], key: com.histmersion.domain.MergeFold.UnionKey => com.histmersion.domain.MergeFold.UnionKey): List[com.histmersion.domain.MergeFold.Member] =
+  def union[A](l: List[A], r: List[A], key: A => String): List[A] =
     val seen = l.map(key).toSet
     (l ++ r.filterNot(x => seen(key(x)))).distinctBy(key)
 
   /** Tags compared after the canonical-tag normaliser (`non-canonical-tag`). */
-  def unionTags(l: List[com.histmersion.domain.MergeFold.UnionTagsL], r: List[com.histmersion.domain.MergeFold.UnionTagsR]): List[com.histmersion.domain.MergeFold.Tag] = union(l, r, Lint.normaliseTag)
+  def unionTags[A](l: List[A], r: List[A])(text: A => String): List[A] =
+    union(l, r, a => Lint.normaliseTag(Lint.Tag(text(a))).value)
 
   /** Topics and regions compared folded. */
-  def unionNames(l: List[com.histmersion.domain.MergeFold.UnionNamesL], r: List[com.histmersion.domain.MergeFold.UnionNamesR]): List[com.histmersion.domain.MergeFold.Name] = union(l, r, s => Fingerprint.fold(s.trim))
+  def unionNames[A](l: List[A], r: List[A])(text: A => String): List[A] =
+    union(l, r, a => Fingerprint.fold(Fingerprint.FoldS(text(a).trim)).value)
 
-  private def text(o: Option[com.histmersion.domain.MergeFold.Text]): Option[com.histmersion.domain.MergeFold.Text] = o.map(_.trim).filter(_.nonEmpty)
+  private def trimmed[A](o: Option[A])(text: A => String): Option[String] = o.map(a => text(a).trim).filter(_.nonEmpty)
 
   /** The smallest range covering both; an open bound stays open. */
   def hull(a: Bundle.Range, b: Bundle.Range): Bundle.Range =
-    Bundle.Range(a.start.zip(b.start).map((x, y) => math.min(x, y)), a.end.zip(b.end).map((x, y) => math.max(x, y)))
+    Bundle.Range(
+      a.start.zip(b.start).map((x, y) => if x.value <= y.value then x else y),
+      a.end.zip(b.end).map((x, y) => if x.value >= y.value then x else y)
+    )
 
   /** Two ranges share a year (an open bound reaches any year; no range is compatible with any). */
   def overlap(a: Option[Bundle.Range], b: Option[Bundle.Range]): Boolean =
     a.zip(b).forall { (x, y) =>
-      x.start.zip(y.end).forall((s, e) => s <= e) && y.start.zip(x.end).forall((s, e) => s <= e)
+      x.start.zip(y.end).forall((s, e) => s.value <= e.value) && y.start.zip(x.end).forall((s, e) => s.value <= e.value)
     }
 
   /** The narrower of two ranges (an open one is the widest); a missing one is no choice. */
   def narrower(a: Option[Bundle.Range], b: Option[Bundle.Range]): Option[Bundle.Range] =
-    def width(r: Bundle.Range): com.histmersion.domain.MergeFold.RangeWidth = r.start.zip(r.end).map((s, e) => e - s).getOrElse(Long.MaxValue)
+    def width(r: Bundle.Range): Long = r.start.zip(r.end).map((s, e) => e.value - s.value).getOrElse(Long.MaxValue)
     (a, b) match
       case (Some(x), Some(y)) => Some(if width(y) < width(x) then y else x)
       case _                  => a.orElse(b)
@@ -107,11 +85,11 @@ object MergeFold:
   def foldGoal(
       l: Bundle.Goal,
       r: Bundle.Goal,
-      from: com.histmersion.domain.automation.Goal.Status.Wire,
+      from: com.histmersion.domain.MergePlanner.Row.Label,
       planDecision: Option[MergeDecision.Kind] = None
   ): Bundle.Goal =
-    def rank(s: com.histmersion.domain.automation.Goal.Status.Wire) = Goal.Status.all.indexOf(s)
-    val notes = (text(l.notes), text(r.notes)) match
+    def rank(s: Bundle.Goal.Status) = Goal.Status.all.map(_.value).indexOf(s.value)
+    val notes = (trimmed(l.notes)(_.value), trimmed(r.notes)(_.value)) match
       case (Some(a), Some(b)) if a == b || a.contains(b) => Some(a)
       case (Some(a), Some(b))                            => Some(s"$a\n\n### From $from\n\n$b")
       case (a, b)                                        => a.orElse(b)
@@ -120,9 +98,26 @@ object MergeFold:
       case PlanOutcome.Differ if planDecision.contains(MergeDecision.Kind.KeepRight) => (r.plan, r.planApprovedAt)
       case _                                                                         => (l.plan, l.planApprovedAt)
     keepLocalSchedules(
-      l.modify(
-        _.status).setTo(if rank(r.status) > rank(l.status) then r.status else l.status).modify(_.notes).setTo(notes).modify(_.tags).setTo(unionTags(l.tags, r.tags)).modify(_.regions).setTo(unionNames(l.regions, r.regions)).modify(_.period).setTo(l.period.orElse(r.period)).modify(_.parentUid).setTo(l.parentUid.orElse(r.parentUid)).modify(_.plan).setTo(plan).modify(_.planApprovedAt).setTo(approved).modify(_.budgetUsd).setTo(l.budgetUsd.orElse(r.budgetUsd)).modify(_.rev).setTo(""
-      ),
+      l.modify(_.status)
+        .setTo(if rank(r.status) > rank(l.status) then r.status else l.status)
+        .modify(_.notes)
+        .setTo(notes.map(Bundle.Goal.Notes(_)))
+        .modify(_.tags)
+        .setTo(unionTags(l.tags, r.tags)(_.value))
+        .modify(_.regions)
+        .setTo(unionNames(l.regions, r.regions)(_.value))
+        .modify(_.period)
+        .setTo(l.period.orElse(r.period))
+        .modify(_.parentUid)
+        .setTo(l.parentUid.orElse(r.parentUid))
+        .modify(_.plan)
+        .setTo(plan)
+        .modify(_.planApprovedAt)
+        .setTo(approved)
+        .modify(_.budgetUsd)
+        .setTo(l.budgetUsd.orElse(r.budgetUsd))
+        .modify(_.rev)
+        .setTo(Bundle.Goal.Rev("")),
       r
     )
 
@@ -147,8 +142,8 @@ object MergeFold:
       case (Some(a), Some(b)) if a == b => PlanOutcome.Ours
       case _                            =>
         (l.planApprovedAt, r.planApprovedAt) match
-          case (Some(a), Some(b)) if b > a => PlanOutcome.Theirs
-          case (Some(a), Some(b)) if a > b => PlanOutcome.Ours
+          case (Some(a), Some(b)) if b.value > a.value => PlanOutcome.Theirs
+          case (Some(a), Some(b)) if a.value > b.value => PlanOutcome.Ours
           case _                           => PlanOutcome.Differ
 
   /** `l`'s links and `r`'s that `l` lacks (one link per kind and target: the uid when it has one, else the label), in a
@@ -159,13 +154,13 @@ object MergeFold:
     def key(k: Bundle.GoalLink) = (k.kind, k.refUid.fold(k.ref)(_.toString))
     val ls = l.links.getOrElse(Nil)
     val links = (ls ++ r.links.getOrElse(Nil).filterNot(x => ls.exists(y => key(y) == key(x))))
-      .sortBy(k => (k.kind, k.ref, k.refUid.fold("")(_.toString)))
+      .sortBy(k => (k.kind.value, k.ref.value, k.refUid.fold("")(_.toString)))
     val ss = l.schedules.getOrElse(Nil)
-    val schedules = (ss ++ r.schedules.getOrElse(Nil).filterNot(x => ss.exists(_.kind == x.kind))).sortBy(_.kind)
+    val schedules = (ss ++ r.schedules.getOrElse(Nil).filterNot(x => ss.exists(_.kind == x.kind))).sortBy(_.kind.value)
     l.modify(_.links).setTo(Option(links).filter(_.nonEmpty)).modify(_.schedules).setTo(Option(schedules).filter(_.nonEmpty))
 
   /** The schedules of one kind that both goals have and that differ: (kind, ours, theirs). */
-  def scheduleDifferences(l: Bundle.Goal, r: Bundle.Goal): List[(com.histmersion.domain.MergeFold.Difference, Bundle.GoalSchedule, Bundle.GoalSchedule)] =
+  def scheduleDifferences(l: Bundle.Goal, r: Bundle.Goal): List[(Bundle.GoalSchedule.Kind, Bundle.GoalSchedule, Bundle.GoalSchedule)] =
     l.schedules
       .getOrElse(Nil)
       .flatMap(a => r.schedules.getOrElse(Nil).find(_.kind == a.kind).filter(_ != a).map(b => (a.kind, a, b)))
@@ -173,14 +168,22 @@ object MergeFold:
   // ── queue items ─────────────────────────────────────────────────────────────────────────────
 
   /** A queue item's text as compared: folded, whitespace collapsed. */
-  def queueKey(t: com.histmersion.domain.MergeFold.QueueText): com.histmersion.domain.MergeFold.QueueKey = Fingerprint.fold(t).trim.replaceAll("\\s+", " ")
+  def queueKey(t: Bundle.QueueItem.Text): com.histmersion.domain.MergeFold.QueueKey =
+    QueueKey(Fingerprint.fold(Fingerprint.FoldS(t.value)).value.trim.replaceAll("\\s+", " "))
 
   /** One queue item out of two: `done` anywhere is done. */
   def foldQueue(l: Bundle.QueueItem, r: Bundle.QueueItem): Bundle.QueueItem =
-    val done = l.status == Queue.Done || r.status == Queue.Done
-    l.modify(
-      _.status).setTo(if done then Queue.Done else l.status).modify(_.doneAt).setTo(if l.status == Queue.Done then l.doneAt else if done then r.doneAt else l.doneAt).modify(_.topic).setTo(l.topic.orElse(r.topic)).modify(_.reason).setTo(l.reason.orElse(r.reason)).modify(_.rev).setTo(""
-    )
+    val done = l.status.value == Queue.Done || r.status.value == Queue.Done
+    l.modify(_.status)
+      .setTo(if done then Bundle.QueueItem.Status(Queue.Done) else l.status)
+      .modify(_.doneAt)
+      .setTo(if l.status.value == Queue.Done then l.doneAt else if done then r.doneAt else l.doneAt)
+      .modify(_.topic)
+      .setTo(l.topic.orElse(r.topic))
+      .modify(_.reason)
+      .setTo(l.reason.orElse(r.reason))
+      .modify(_.rev)
+      .setTo(Bundle.QueueItem.Rev(""))
 
   // ── articles (§5.4) ─────────────────────────────────────────────────────────────────────────
 
@@ -221,11 +224,11 @@ object MergeFold:
     */
   def articleOutcome(
       localBody: com.histmersion.domain.MergeFold.ArticleBody,
-      localHistory: List[(com.histmersion.domain.MergeFold.ArticleHistory, com.histmersion.domain.MergeFold.ArticleHistory)],
+      localHistory: List[(com.histmersion.Sha256, com.histmersion.domain.MergeFold.ArticleBody)],
       foreignBody: com.histmersion.domain.MergeFold.ArticleBody,
-      foreignHistory: Set[com.histmersion.domain.MergeFold.ArticleHistory]
+      foreignHistory: Set[com.histmersion.Sha256]
   ): ArticleOutcome =
-    val (ls, fs) = (BundleFormat.sha256Hex(localBody), BundleFormat.sha256Hex(foreignBody))
+    val (ls, fs) = (shaOf(localBody), shaOf(foreignBody))
     if ls == fs then ArticleOutcome.Same
     else if localHistory.exists(_._1 == fs) then ArticleOutcome.Ours
     else if foreignHistory(ls) then ArticleOutcome.Theirs
@@ -233,13 +236,26 @@ object MergeFold:
       localHistory.find((sha, _) => foreignHistory(sha)) match
         case None              => ArticleOutcome.NoBase
         case Some((sha, base)) =>
-          val m = Diff3.merge(base, localBody, foreignBody)
-          if m.clean then ArticleOutcome.Merged(m.text, sha) else ArticleOutcome.Conflict(m.conflicts, sha)
+          val m = Diff3.merge(Diff3.MergeBase(base.value), Diff3.MergeLeft(localBody.value), Diff3.MergeRight(foreignBody.value))
+          if m.clean then ArticleOutcome.Merged(ArticleBody(m.text.value), sha)
+          else ArticleOutcome.Conflict(ConflictCount(m.conflicts.value), sha)
+
+  private def shaOf(body: com.histmersion.domain.MergeFold.ArticleBody): com.histmersion.Sha256 =
+    com.histmersion.Sha256.assume(BundleFormat.sha256Hex(body.value).value)
 
   /** The fields of an article folded around a chosen body: left's title and kind, the summary that is there, tags and
     * regions unioned.
     */
   def foldArticle(l: Bundle.Article, r: Bundle.Article, body: com.histmersion.domain.MergeFold.ArticleBody): Bundle.Article =
-    l.modify(
-      _.body).setTo(body).modify(_.summary).setTo(if text(l.summary).isDefined then l.summary else r.summary.orElse(l.summary)).modify(_.tags).setTo(unionTags(l.tags, r.tags)).modify(_.regions).setTo(unionNames(l.regions, r.regions)).modify(_.period).setTo(l.period.orElse(r.period)).modify(_.rev).setTo(""
-    )
+    l.modify(_.body)
+      .setTo(Bundle.Article.Body(body.value))
+      .modify(_.summary)
+      .setTo(if trimmed(l.summary)(_.value).isDefined then l.summary else r.summary.orElse(l.summary))
+      .modify(_.tags)
+      .setTo(unionTags(l.tags, r.tags)(_.value))
+      .modify(_.regions)
+      .setTo(unionNames(l.regions, r.regions)(_.value))
+      .modify(_.period)
+      .setTo(l.period.orElse(r.period))
+      .modify(_.rev)
+      .setTo(Bundle.Article.Rev(""))

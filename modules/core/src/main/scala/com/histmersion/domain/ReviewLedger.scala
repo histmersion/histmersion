@@ -513,7 +513,7 @@ object ReviewLedger:
           .map(e => s"- ${e.id} ${e.finding.severity.wire}: ${e.finding.problem.value.trim.take(160)}")
           .mkString("\n")
       case OpenStyle.Full =>
-        "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), com.histmersion.domain.ReviewLedger.Closure.Round(0)), notes(l)) +
+        "Open findings:\n" + findingsText(merged(l.modify(_.entries).setTo(open), com.histmersion.domain.ReviewLedger.Closure.Round(0)), notes(l).map((id, n) => id.value -> n)) +
           (if open.exists(_.claimed.value) then
              "\n(The fixer claims to have fixed: " + open.filter(_.claimed.value).map(_.id).mkString(", ") + ".)"
            else "")

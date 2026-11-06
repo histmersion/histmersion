@@ -15,8 +15,6 @@ object Highlight:
   object MarkCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Term = Term.T
   object Term extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Text = Text.T
-  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Terms worth highlighting, from a `websearch_to_tsquery` style query: `"quoted phrases"` stay phrases, `-excluded`
     * terms and the `or`/`and` operators are dropped. Longest first, so a phrase wins over its own words.
@@ -32,7 +30,7 @@ object Highlight:
 
   def terms(q: com.histmersion.domain.Highlight.Term): List[com.histmersion.domain.Highlight.Term] =
     val phrase = """(-?)"([^"]*)"""".r
-    val src = Option(q).getOrElse("")
+    val src = Option(q).fold("")(_.value)
     val phrases = phrase.findAllMatchIn(src).filter(_.group(1).isEmpty).map(_.group(2)).toList
     val bare = phrase.replaceAllIn(src, " ").split("""\s+""").toList
     val words = bare.filterNot(_.startsWith("-")).map(_.replaceAll("""^\W+|\W+$""", ""))
@@ -41,6 +39,7 @@ object Highlight:
       .filter(t => t.nonEmpty && !Operators(t.toLowerCase))
       .distinctBy(_.toLowerCase)
       .sortBy(-_.length)
+      .map(Term(_))
 
   private val Operators = Set("or", "and", "not")
 
@@ -49,34 +48,35 @@ object Highlight:
 
   /** Wrap each occurrence of `terms` in the text of `html` in `<mark id="hl<n>">`. */
   def marks(html: com.histmersion.domain.Highlight.MarksHtml, terms: List[com.histmersion.domain.Highlight.MarksTerms]): (com.histmersion.domain.Highlight.Html, com.histmersion.domain.Highlight.MarkCount) =
-    if html.isEmpty || terms.isEmpty then (html, com.histmersion.domain.Highlight.MarkCount(0))
+    val src = html.value
+    if src.isEmpty || terms.isEmpty then (html, com.histmersion.domain.Highlight.MarkCount(0))
     else
       val re = pattern(terms)
       // java.lang.StringBuilder: scala's has no append(CharSequence, from, to), and would
       // silently auto-tuple the three arguments into append(Any).
-      val sb = new java.lang.StringBuilder(html.length + 32)
+      val sb = new java.lang.StringBuilder(src.length + 32)
       var i = 0
       var n = 0
-      while i < html.length do
-        html.charAt(i) match
+      while i < src.length do
+        src.charAt(i) match
           case '<' =>
-            val skipTo = verbatimEnd(html, i)
-            sb.append(html, i, skipTo)
+            val skipTo = verbatimEnd(src, i)
+            sb.append(src, i, skipTo)
             i = skipTo
           case _ =>
-            val end = html.indexOf('<', i) match
-              case -1 => html.length
+            val end = src.indexOf('<', i) match
+              case -1 => src.length
               case k  => k
-            n += markText(html.substring(i, end), re, sb, n)
+            n += markText(src.substring(i, end), re, sb, n)
             i = end
-      (sb.toString, n)
+      (com.histmersion.domain.Highlight.Html(sb.toString), com.histmersion.domain.Highlight.MarkCount(n))
 
   /** Case-insensitive match of any term at a word start, extended over the rest of the word so a stemmed hit ("egypt" →
     * "Egyptian") is highlighted whole. Phrases allow any run of whitespace.
     */
   private def pattern(terms: List[com.histmersion.domain.Highlight.Term]): scala.util.matching.Regex =
     val alts = terms
-      .map(t => java.util.regex.Pattern.quote(t))
+      .map(t => java.util.regex.Pattern.quote(t.value))
       .map(_.replaceAll("""\s+""", """\\E\\s+\\Q"""))
       .mkString("|")
     s"""(?iu)\\b(?:$alts)\\w*""".r
@@ -84,7 +84,7 @@ object Highlight:
   /** Append `text` to `sb` with matches wrapped; entities are left alone. `soFar` is the number of marks already
     * emitted (ids continue from there). Returns how many marks this call added.
     */
-  private def markText(text: com.histmersion.domain.Highlight.Text, re: scala.util.matching.Regex, sb: java.lang.StringBuilder, soFar: Int): Int =
+  private def markText(text: String, re: scala.util.matching.Regex, sb: java.lang.StringBuilder, soFar: Int): Int =
     var n = 0
     Entity.split(text).foreach {
       case Left(entity) => sb.append(entity)
@@ -108,7 +108,7 @@ object Highlight:
   /** End index (exclusive) of the verbatim run starting at `<` — a whole tag, or a whole `<script>`/`<style>` element
     * including its content.
     */
-  private def verbatimEnd(html: com.histmersion.domain.Highlight.Html, at: com.histmersion.domain.Offset): com.histmersion.domain.Offset =
+  private def verbatimEnd(html: String, at: Int): Int =
     val lower = html.regionMatches(true, at, "<script", 0, 7) -> html.regionMatches(true, at, "<style", 0, 6)
     val close = lower match
       case (true, _) => Some("</script>")
@@ -129,7 +129,7 @@ object Highlight:
     private val Re = """&(?:#\d+|#[xX][0-9a-fA-F]+|[A-Za-z][A-Za-z0-9]{1,31});""".r
 
     /** Split text into `Left(entity)` (copy verbatim) and `Right(plain)` (highlightable) pieces. */
-    def split(text: com.histmersion.domain.Highlight.Text): List[Either[com.histmersion.domain.Highlight.Text, com.histmersion.domain.Highlight.Text]] =
+    def split(text: String): List[Either[String, String]] =
       val out = List.newBuilder[Either[String, String]]
       var last = 0
       Re.findAllMatchIn(text).foreach { m =>

@@ -21,12 +21,12 @@ final case class Cron(
 ):
 
   private def dayMatches(d: LocalDate): Boolean =
-    val dom = days.contains(d.getDayOfMonth)
-    val dow = weekdays.contains(d.getDayOfWeek.getValue % 7) // java: Monday = 1 … Sunday = 7 → 0
-    months.contains(d.getMonthValue) && {
-      if anyDay && anyWeekday then true
-      else if anyDay then dow
-      else if anyWeekday then dom
+    val dom = days.contains(Cron.Days(d.getDayOfMonth))
+    val dow = weekdays.contains(Cron.Weekdays(d.getDayOfWeek.getValue % 7)) // java: Monday = 1 … Sunday = 7 → 0
+    months.contains(Cron.Months(d.getMonthValue)) && {
+      if anyDay.value && anyWeekday.value then true
+      else if anyDay.value then dow
+      else if anyWeekday.value then dom
       else dom || dow
     }
 
@@ -42,11 +42,11 @@ final case class Cron(
       .filter(dayMatches)
       .flatMap { d =>
         val first = d == day0
-        hours.iterator.filter(h => !first || h >= start.getHour).flatMap { h =>
-          val sameHour = first && h == start.getHour
+        hours.iterator.filter(h => !first || h.value >= start.getHour).flatMap { h =>
+          val sameHour = first && h.value == start.getHour
           minutes.iterator
-            .filter(m => !sameHour || m >= start.getMinute)
-            .map(m => d.atTime(h, m).toInstant(ZoneOffset.UTC))
+            .filter(m => !sameHour || m.value >= start.getMinute)
+            .map(m => d.atTime(h.value, m.value).toInstant(ZoneOffset.UTC))
         }
       }
       .nextOption()
@@ -55,25 +55,16 @@ final case class Cron(
     * a schedule that would run too often is refused.
     */
   def shortestGapMinutes(from: Instant, n: com.histmersion.domain.Cron.SampleCount = com.histmersion.domain.Cron.SampleCount(48)): Option[com.histmersion.domain.Cron.GapMinutes] =
-    val times = Iterator.iterate(next(from))(_.flatMap(next)).takeWhile(_.isDefined).map(_.get).take(n).toList
-    times.zip(times.drop(1)).map((a, b) => ChronoUnit.MINUTES.between(a, b)).minOption
+    val times = Iterator.iterate(next(from))(_.flatMap(next)).takeWhile(_.isDefined).map(_.get).take(n.value).toList
+    times.zip(times.drop(1)).map((a, b) => ChronoUnit.MINUTES.between(a, b)).minOption.map(Cron.GapMinutes(_))
 
 object Cron:
-  type FieldText = FieldText.T
-  object FieldText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type GapMinutes = GapMinutes.T
   object GapMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SampleCount = SampleCount.T
   object SampleCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  /** How far ahead [[Cron.next]] looks: four years and a day covers every leap-day expression. */
-  type FieldNumResultPart2 = FieldNumResultPart2.T
-  object FieldNumResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type FieldResultPart2 = FieldResultPart2.T
-  object FieldResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   type Text = Text.T
   object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Minutes = Minutes.T
@@ -91,6 +82,7 @@ object Cron:
   type AnyWeekday = AnyWeekday.T
   object AnyWeekday extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
+  /** How far ahead [[Cron.next]] looks: four years and a day covers every leap-day expression. */
   val HorizonDays = 4 * 366 + 1
 
   private val Shortcuts = Map(
@@ -101,26 +93,18 @@ object Cron:
     "@monthly" -> "0 0 1 * *"
   )
 
-  final private case class Field(name: Field.Name, min: Field.Min, max: Field.Max)
-
-  object Field:
-    type Name = Name.T
-    object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Min = Min.T
-    object Min extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Max = Max.T
-    object Max extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  final private case class Field(name: String, min: Int, max: Int)
   private val Fields = List(
-    Field(com.histmersion.domain.Cron.Field.Name("minute"), com.histmersion.domain.Cron.Field.Min(0), com.histmersion.domain.Cron.Field.Max(59)),
-    Field(com.histmersion.domain.Cron.Field.Name("hour"), com.histmersion.domain.Cron.Field.Min(0), com.histmersion.domain.Cron.Field.Max(23)),
-    Field(com.histmersion.domain.Cron.Field.Name("day of month"), com.histmersion.domain.Cron.Field.Min(1), com.histmersion.domain.Cron.Field.Max(31)),
-    Field(com.histmersion.domain.Cron.Field.Name("month"), com.histmersion.domain.Cron.Field.Min(1), com.histmersion.domain.Cron.Field.Max(12)),
-    Field(com.histmersion.domain.Cron.Field.Name("day of week"), com.histmersion.domain.Cron.Field.Min(0), com.histmersion.domain.Cron.Field.Max(7))
+    Field("minute", 0, 59),
+    Field("hour", 0, 23),
+    Field("day of month", 1, 31),
+    Field("month", 1, 12),
+    Field("day of week", 0, 7)
   )
 
   /** One field → its values, or why not. */
-  private def field(raw: com.histmersion.domain.Cron.FieldText, f: Field): Either[com.histmersion.domain.Cron.Problem, Set[com.histmersion.domain.Cron.FieldResultPart2]] =
-    def num(s: com.histmersion.domain.Cron.FieldText): Either[com.histmersion.domain.Cron.Problem, com.histmersion.domain.Cron.FieldNumResultPart2] =
+  private def field(raw: String, f: Field): Either[String, Set[Int]] =
+    def num(s: String): Either[String, Int] =
       s.toIntOption
         .filter(n => n >= f.min && n <= f.max)
         .toRight(s"${f.name}: '$s' is not a number from ${f.min} to ${f.max}")
@@ -150,29 +134,31 @@ object Cron:
 
   /** Parse an expression (or a shortcut). */
   def parse(raw: com.histmersion.domain.Cron.Text): Either[com.histmersion.domain.Cron.Problem, Cron] =
-    val t = Option(raw).map(_.trim).getOrElse("")
+    val t = Option(raw).map(_.value.trim).getOrElse("")
     val expr = Shortcuts.getOrElse(t.toLowerCase, t)
     val parts = expr.split("\\s+").toList.filter(_.nonEmpty)
     if parts.size != 5 then
       Left(
-        s"'$t' is not a cron expression: give five fields (minute hour day-of-month month day-of-week, in UTC) " +
-          s"or one of ${Shortcuts.keys.toList.sorted.mkString(", ")}"
+        Problem(
+          s"'$t' is not a cron expression: give five fields (minute hour day-of-month month day-of-week, in UTC) " +
+            s"or one of ${Shortcuts.keys.toList.sorted.mkString(", ")}"
+        )
       )
     else
       val parsed = parts.zip(Fields).map((p, f) => field(p, f))
       parsed.collectFirst { case Left(m) => m } match
-        case Some(m) => Left(s"'$t': $m")
+        case Some(m) => Left(Problem(s"'$t': $m"))
         case None    =>
           val v = parsed.collect { case Right(s) => s }
           val c = Cron(
-            t,
-            v(0).toList.sorted,
-            v(1).toList.sorted,
-            v(2),
-            v(3),
-            v(4).map(_ % 7),
-            anyDay = parts(2) == "*",
-            anyWeekday = parts(4) == "*"
+            Text(t),
+            v(0).toList.sorted.map(Minutes(_)),
+            v(1).toList.sorted.map(Hours(_)),
+            v(2).map(Days(_)),
+            v(3).map(Months(_)),
+            v(4).map(x => Weekdays(x % 7)),
+            anyDay = AnyDay(parts(2) == "*"),
+            anyWeekday = AnyWeekday(parts(4) == "*")
           )
-          if c.next(Instant.parse("2000-01-01T00:00:00Z")).isEmpty then Left(s"'$t' never fires")
+          if c.next(Instant.parse("2000-01-01T00:00:00Z")).isEmpty then Left(Problem(s"'$t' never fires"))
           else Right(c)

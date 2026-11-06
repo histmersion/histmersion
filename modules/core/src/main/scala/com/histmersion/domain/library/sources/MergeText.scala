@@ -10,82 +10,55 @@ import com.histmersion.api.given
   */
 object MergeText:
 
+  /** A name, title or venue as written, before it is folded for comparison. */
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** A text in lower case with its diacritics removed (`Güterbock` → `guterbock`). */
+  type Folded = Folded.T
+  object Folded extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** One folded alphanumeric word. */
+  type Token = Token.T
+  object Token extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** A text as its folded words joined by single spaces. */
+  type Words = Words.T
+  object Words extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** The blocking key of a title: its first three significant words, sorted. */
+  type TitleKey = TitleKey.T
+  object TitleKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** A surname as one word (`lopezruiz`), or its last word. */
+  type SurnameKey = SurnameKey.T
+  object SurnameKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** How alike two texts are, in [0, 1]. */
+  type Similarity = Similarity.T
+  object Similarity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** A DOI as a source writes it: bare, `doi:`-prefixed or as a resolver URL. */
+  type WrittenDoi = WrittenDoi.T
+  object WrittenDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** A DOI as a key: no resolver prefix, no `doi:`, lower case. */
+  type DoiKey = DoiKey.T
+  object DoiKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
   // ── folding ──────────────────────────────────────────────────────────────────────────────────
 
   /** Lower case, diacritics removed (`Güterbock` → `guterbock`, `López` → `lopez`): [[Fingerprint.fold]]. */
-  type SamePersonSplitsResultPart1 = SamePersonSplitsResultPart1.T
-  object SamePersonSplitsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SamePersonSplitsResultPart2 = SamePersonSplitsResultPart2.T
-  object SamePersonSplitsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsPairResult = AuthorsPairResult.T
-  object AuthorsPairResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Isbn13Check13D = Isbn13Check13D.T
-  object Isbn13Check13D extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  type FoldResult = FoldResult.T
-  object FoldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FoldS = FoldS.T
-  object FoldS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TokensResult = TokensResult.T
-  object TokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TokensS = TokensS.T
-  object TokensS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FingerprintResult = FingerprintResult.T
-  object FingerprintResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FingerprintS = FingerprintS.T
-  object FingerprintS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignificantResult = SignificantResult.T
-  object SignificantResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SignificantTs = SignificantTs.T
-  object SignificantTs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MainTitleResult = MainTitleResult.T
-  object MainTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitleKeyResult = TitleKeyResult.T
-  object TitleKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TitleKeyTitle = _root_.com.histmersion.domain.Title
-  val TitleKeyTitle: _root_.com.histmersion.domain.Title.type = _root_.com.histmersion.domain.Title
-  type Particles = Particles.T
-  object Particles extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Suffixes = Suffixes.T
-  object Suffixes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NameTokensResult = NameTokensResult.T
-  object NameTokensResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NameTokensS = _root_.com.histmersion.domain.library.sources.MergeText.TokensS
-  val NameTokensS: _root_.com.histmersion.domain.library.sources.MergeText.TokensS.type = _root_.com.histmersion.domain.library.sources.MergeText.TokensS
-  type PersonRaw = PersonRaw.T
-  object PersonRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GivenCompatibleA = GivenCompatibleA.T
-  object GivenCompatibleA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GivenCompatibleB = GivenCompatibleB.T
-  object GivenCompatibleB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SurnameKeysResult = SurnameKeysResult.T
-  object SurnameKeysResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SurnameKeysRaw = _root_.com.histmersion.domain.library.sources.MergeText.PersonRaw
-  val SurnameKeysRaw: _root_.com.histmersion.domain.library.sources.MergeText.PersonRaw.type = _root_.com.histmersion.domain.library.sources.MergeText.PersonRaw
-  type AuthorsA = AuthorsA.T
-  object AuthorsA extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AuthorsB = AuthorsB.T
-  object AuthorsB extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JaroWinklerResult = JaroWinklerResult.T
-  object JaroWinklerResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JaroWinklerS1 = JaroWinklerS1.T
-  object JaroWinklerS1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JaroWinklerS2 = JaroWinklerS2.T
-  object JaroWinklerS2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type JaccardResult = JaccardResult.T
-  object JaccardResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoiKeyResult = DoiKeyResult.T
-  object DoiKeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Isbn13Raw = Isbn13Raw.T
-  object Isbn13Raw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-  def fold(s: com.histmersion.domain.library.sources.MergeText.FoldS): com.histmersion.domain.library.sources.MergeText.FoldResult = Fingerprint.fold(s)
+  def fold(s: Text): Folded = Folded(Fingerprint.fold(Fingerprint.FoldS(s.value)).value)
 
   /** Folded alphanumeric tokens, in order. */
-  def tokens(s: com.histmersion.domain.library.sources.MergeText.TokensS): List[com.histmersion.domain.library.sources.MergeText.TokensResult] = Fingerprint.tokens(s)
+  def tokens(s: Text): List[Token] = Fingerprint.tokens(Fingerprint.TokensS(s.value)).map(t => Token(t.value))
+
+  /** The folded words of a text, joined by single spaces. */
+  def words(s: Text): Words = Words(tokens(s).map(_.value).mkString(" "))
 
   /** OpenRefine's key-collision fingerprint: folded tokens, de-duplicated, sorted, joined. */
-  def fingerprint(s: com.histmersion.domain.library.sources.MergeText.FingerprintS): com.histmersion.domain.library.sources.MergeText.FingerprintResult = Fingerprint.of(s).value
+  def fingerprint(s: Text): Fingerprint = Fingerprint.of(Fingerprint.OfS(s.value))
 
   private val stopwords: Set[String] = Set(
     "a",
@@ -140,17 +113,19 @@ object MergeText:
     "e"
   )
 
-  def significant(ts: List[com.histmersion.domain.library.sources.MergeText.SignificantTs]): List[com.histmersion.domain.library.sources.MergeText.SignificantResult] = ts.filterNot(stopwords)
+  def significant(ts: List[Token]): List[Token] = ts.filterNot(t => stopwords(t.value))
 
   // ── titles ───────────────────────────────────────────────────────────────────────────────────
 
   /** The main title: cut at the first `:`, ` - `, ` — `, ` – ` or `. ` (a subtitle follows). */
-  def mainTitle(title: com.histmersion.domain.Title): com.histmersion.domain.library.sources.MergeText.MainTitleResult =
-    val cuts = List(":", " - ", " — ", " – ", ". ", "? ").flatMap(c => Option(title.indexOf(c)).filter(_ > 0))
-    cuts.minOption.fold(title)(i => title.take(i)).trim
+  def mainTitle(title: com.histmersion.domain.Title): com.histmersion.domain.Title =
+    val text = title.value
+    val cuts = List(":", " - ", " — ", " – ", ". ", "? ").flatMap(c => Option(text.indexOf(c)).filter(_ > 0))
+    com.histmersion.domain.Title(cuts.minOption.fold(text)(i => text.take(i)).trim)
 
   /** The blocking key of a title: the first three significant tokens of the main title, sorted. */
-  def titleKey(title: com.histmersion.domain.library.sources.MergeText.TitleKeyTitle): com.histmersion.domain.library.sources.MergeText.TitleKeyResult = significant(tokens(mainTitle(title))).take(3).sorted.mkString(" ")
+  def titleKey(title: com.histmersion.domain.Title): TitleKey =
+    TitleKey(significant(tokens(Text(mainTitle(title).value))).take(3).map(_.value).sorted.mkString(" "))
 
   // ── personal names ───────────────────────────────────────────────────────────────────────────
 
@@ -158,88 +133,80 @@ object MergeText:
     * surname is known (`Surname, Given`) or guessed (`Given Surname`, where a multi-word surname cannot be told from a
     * middle name).
     */
-  final case class Person(surname: List[Person.Surname], forenames: List[Person.Forenames], surnameKnown: Person.SurnameKnown):
+  final case class Person(surname: List[Token], forenames: List[Token], surnameKnown: Person.SurnameKnown):
     /** The surname as one key (`lopezruiz`). */
-    def key: com.histmersion.domain.library.sources.MergeText.Person.KeyResult = surname.mkString
-    def all: List[com.histmersion.domain.library.sources.MergeText.Person.AllResult] = forenames ++ surname
+    def key: SurnameKey = SurnameKey(surname.map(_.value).mkString)
+    def all: List[Token] = forenames ++ surname
 
   object Person:
-    type KeyResult = KeyResult.T
-    object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AllResult = AllResult.T
-    object AllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
-    type Surname = Surname.T
-    object Surname extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Forenames = Forenames.T
-    object Forenames extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type SurnameKnown = SurnameKnown.T
     object SurnameKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Words that belong to a surname when they come before it (`van`, `de la`). */
-  private val particles: Set[com.histmersion.domain.library.sources.MergeText.Particles] =
+  private val particles: Set[String] =
     Set(
-      com.histmersion.domain.library.sources.MergeText.Particles("van"),
-      com.histmersion.domain.library.sources.MergeText.Particles("von"),
-      com.histmersion.domain.library.sources.MergeText.Particles("der"),
-      com.histmersion.domain.library.sources.MergeText.Particles("den"),
-      com.histmersion.domain.library.sources.MergeText.Particles("de"),
-      com.histmersion.domain.library.sources.MergeText.Particles("del"),
-      com.histmersion.domain.library.sources.MergeText.Particles("della"),
-      com.histmersion.domain.library.sources.MergeText.Particles("di"),
-      com.histmersion.domain.library.sources.MergeText.Particles("da"),
-      com.histmersion.domain.library.sources.MergeText.Particles("du"),
-      com.histmersion.domain.library.sources.MergeText.Particles("la"),
-      com.histmersion.domain.library.sources.MergeText.Particles("le"),
-      com.histmersion.domain.library.sources.MergeText.Particles("ter"),
-      com.histmersion.domain.library.sources.MergeText.Particles("ten"),
-      com.histmersion.domain.library.sources.MergeText.Particles("bin"),
-      com.histmersion.domain.library.sources.MergeText.Particles("ibn"),
-      com.histmersion.domain.library.sources.MergeText.Particles("al"),
-      com.histmersion.domain.library.sources.MergeText.Particles("el"),
-      com.histmersion.domain.library.sources.MergeText.Particles("dos"),
-      com.histmersion.domain.library.sources.MergeText.Particles("das"),
-      com.histmersion.domain.library.sources.MergeText.Particles("zu"),
-      com.histmersion.domain.library.sources.MergeText.Particles("vom"),
-      com.histmersion.domain.library.sources.MergeText.Particles("st")
+      "van",
+      "von",
+      "der",
+      "den",
+      "de",
+      "del",
+      "della",
+      "di",
+      "da",
+      "du",
+      "la",
+      "le",
+      "ter",
+      "ten",
+      "bin",
+      "ibn",
+      "al",
+      "el",
+      "dos",
+      "das",
+      "zu",
+      "vom",
+      "st"
     )
 
-  private val suffixes: Set[com.histmersion.domain.library.sources.MergeText.Suffixes] = Set(com.histmersion.domain.library.sources.MergeText.Suffixes("jr"), com.histmersion.domain.library.sources.MergeText.Suffixes("sr"), com.histmersion.domain.library.sources.MergeText.Suffixes("ii"), com.histmersion.domain.library.sources.MergeText.Suffixes("iii"), com.histmersion.domain.library.sources.MergeText.Suffixes("iv"))
+  private val suffixes: Set[String] = Set("jr", "sr", "ii", "iii", "iv")
 
-  private def nameTokens(s: com.histmersion.domain.library.sources.MergeText.NameTokensS): List[com.histmersion.domain.library.sources.MergeText.NameTokensResult] =
-    tokens(s).filterNot(t => t.forall(_.isDigit)).filterNot(suffixes)
+  private def nameTokens(s: String): List[Token] =
+    tokens(Text(s)).filterNot(t => t.value.forall(_.isDigit)).filterNot(t => suffixes(t.value))
 
   /** Parse `Surname, Given, 1850-1928`, `Given Surname`, `H. G. Guterbock`, `Lopez-Ruiz, Carolina`. Life dates and
     * Jr./Sr. are dropped; hyphens split a double surname into its words, so `López-Ruiz` and `Lopez Ruiz` compare
     * equal. `None` for an empty name.
     */
-  def person(raw: com.histmersion.domain.library.sources.MergeText.PersonRaw): Option[Person] =
+  def person(name: com.histmersion.domain.AuthorName): Option[Person] =
+    val raw = name.value
     val parts = raw.split(",").toList.map(_.trim).filter(_.nonEmpty)
     parts match
       case Nil                                                       => None
       case first :: rest if rest.exists(p => nameTokens(p).nonEmpty) =>
         val surname = nameTokens(first)
         val forenames = rest.flatMap(nameTokens)
-        Option.when(surname.nonEmpty)(Person(surname, forenames, surnameKnown = com.histmersion.domain.library.sources.MergeText.Person.SurnameKnown(true)))
+        Option.when(surname.nonEmpty)(Person(surname, forenames, surnameKnown = Person.SurnameKnown(true)))
       case _ =>
         val ts = nameTokens(raw)
         ts match
           case Nil       => None
-          case List(one) => Some(Person(List(one), Nil, surnameKnown = com.histmersion.domain.library.sources.MergeText.Person.SurnameKnown(true)))
+          case List(one) => Some(Person(List(one), Nil, surnameKnown = Person.SurnameKnown(true)))
           case _         =>
             // the best guess: the last word, with any particles right before it — a guess still
             // (`Carolina Lopez Ruiz`), so `samePerson` tries every trailing run
             val (front, last) = (ts.init, ts.last)
-            val parts = front.reverse.takeWhile(particles).reverse
+            val parts = front.reverse.takeWhile(t => particles(t.value)).reverse
             val forenames = front.dropRight(parts.length)
-            Some(Person(parts :+ last, forenames, surnameKnown = com.histmersion.domain.library.sources.MergeText.Person.SurnameKnown(false)))
+            Some(Person(parts :+ last, forenames, surnameKnown = Person.SurnameKnown(false)))
 
   /** Given names compatible: pairwise, the same initial, and where both are written out, the same name (or one a prefix
     * of the other). Missing forenames are compatible with anything.
     */
-  def givenCompatible(a: List[com.histmersion.domain.library.sources.MergeText.GivenCompatibleA], b: List[com.histmersion.domain.library.sources.MergeText.GivenCompatibleB]): Boolean =
+  def givenCompatible(a: List[Token], b: List[Token]): Boolean =
     a.zip(b).forall { (x, y) =>
-      x.head == y.head && (x.length == 1 || y.length == 1 || x.startsWith(y) || y.startsWith(x))
+      x.value.head == y.value.head && (x.value.length == 1 || y.value.length == 1 || x.value.startsWith(y.value) || y.value.startsWith(x.value))
     }
 
   /** Two names the same person: the surnames agree (for a guessed surname, any trailing run of its words may be the
@@ -247,30 +214,30 @@ object MergeText:
     * compatible. Pure.
     */
   def samePerson(a: Person, b: Person): Boolean =
-    def splits(p: Person): List[(List[com.histmersion.domain.library.sources.MergeText.SamePersonSplitsResultPart1], List[com.histmersion.domain.library.sources.MergeText.SamePersonSplitsResultPart2])] =
-      if p.surnameKnown then List(p.surname -> p.forenames)
+    def splits(p: Person): List[(List[Token], List[Token])] =
+      if p.surnameKnown.value then List(p.surname -> p.forenames)
       else
         val all = p.all
         (1 to all.length).toList.map(n => all.takeRight(n) -> all.dropRight(n))
     splits(a).exists { (sa, ga) =>
-      splits(b).exists((sb, gb) => sa.mkString == sb.mkString && givenCompatible(ga, gb))
+      splits(b).exists((sb, gb) => sa.map(_.value).mkString == sb.map(_.value).mkString && givenCompatible(ga, gb))
     }
 
   /** The blocking keys of a first author: the surname as one word and its last word. */
-  def surnameKeys(raw: com.histmersion.domain.library.sources.MergeText.SurnameKeysRaw): Set[com.histmersion.domain.library.sources.MergeText.SurnameKeysResult] =
-    person(raw).toSet.flatMap(p => Set(p.key, p.surname.last))
+  def surnameKeys(name: com.histmersion.domain.AuthorName): Set[SurnameKey] =
+    person(name).toSet.flatMap(p => Set(p.key, SurnameKey(p.surname.last.value)))
 
   /** How two author lists agree, as the score of §5.2 reads it. */
   enum AuthorAgreement:
     case Same, FirstAuthor, Overlap, Disjoint, Unknown
 
-  def authors(a: List[com.histmersion.domain.library.sources.MergeText.AuthorsA], b: List[com.histmersion.domain.library.sources.MergeText.AuthorsB]): AuthorAgreement =
+  def authors(a: List[com.histmersion.domain.AuthorName], b: List[com.histmersion.domain.AuthorName]): AuthorAgreement =
     val pa = a.flatMap(person)
     val pb = b.flatMap(person)
     if pa.isEmpty || pb.isEmpty then AuthorAgreement.Unknown
     else
       // a greedy one-to-one pairing; author lists are short
-      @tailrec def pair(rest: List[Person], n: Int, left: List[Person]): com.histmersion.domain.library.sources.MergeText.AuthorsPairResult =
+      @tailrec def pair(rest: List[Person], n: Int, left: List[Person]): Int =
         rest match
           case Nil       => n
           case p :: tail =>
@@ -287,7 +254,9 @@ object MergeText:
   // ── string similarity ────────────────────────────────────────────────────────────────────────
 
   /** Jaro-Winkler similarity in [0, 1] (Winkler 1990: prefix scale 0.1, up to 4 characters). */
-  def jaroWinkler(s1: com.histmersion.domain.library.sources.MergeText.JaroWinklerS1, s2: com.histmersion.domain.library.sources.MergeText.JaroWinklerS2): com.histmersion.domain.library.sources.MergeText.JaroWinklerResult =
+  def jaroWinkler(first: Words, second: Words): Similarity = Similarity(jaroWinklerOf(first.value, second.value))
+
+  private def jaroWinklerOf(s1: String, s2: String): Double =
     if s1 == s2 then 1.0
     else if s1.isEmpty || s2.isEmpty then 0.0
     else
@@ -311,31 +280,31 @@ object MergeText:
         val prefix = s1.zip(s2).take(4).takeWhile((x, y) => x == y).length
         jaro + prefix * 0.1 * (1 - jaro)
 
-  def jaccard[A](a: Set[A], b: Set[A]): com.histmersion.domain.library.sources.MergeText.JaccardResult =
-    if a.isEmpty && b.isEmpty then 1.0 else (a intersect b).size.toDouble / (a union b).size
+  def jaccard[A](a: Set[A], b: Set[A]): Similarity =
+    Similarity(if a.isEmpty && b.isEmpty then 1.0 else (a intersect b).size.toDouble / (a union b).size)
 
   // ── identifiers ──────────────────────────────────────────────────────────────────────────────
 
   /** A DOI as a key — as V032's `histmersion_doi_key`: no resolver prefix, no `doi:`, lower case. */
-  def doiKey(doi: com.histmersion.domain.library.Doi): Option[com.histmersion.domain.library.sources.MergeText.DoiKeyResult] =
+  def doiKey(doi: WrittenDoi): Option[DoiKey] =
     Option(
-      doi.trim
+      doi.value.trim
         .toLowerCase(java.util.Locale.ROOT)
         .replaceFirst("^(https?://(dx\\.)?doi\\.org/|doi:\\s*)", "")
-    ).filter(_.nonEmpty)
+    ).filter(_.nonEmpty).map(k => DoiKey(k))
 
   /** An ISBN as ISBN-13 digits; an ISBN-10 is converted. `None` when it is not a valid ISBN. */
-  def isbn13(raw: com.histmersion.domain.library.sources.MergeText.Isbn13Raw): Option[com.histmersion.domain.library.Isbn] =
-    val s = raw.filter(c => c.isDigit || c == 'X' || c == 'x').toUpperCase(java.util.Locale.ROOT)
-    def check13(d: com.histmersion.domain.library.sources.MergeText.Isbn13Check13D): Boolean =
+  def isbn13(raw: com.histmersion.domain.library.Isbn): Option[com.histmersion.domain.library.Isbn] =
+    val s = raw.value.filter(c => c.isDigit || c == 'X' || c == 'x').toUpperCase(java.util.Locale.ROOT)
+    def check13(d: String): Boolean =
       d.length == 13 && d.forall(_.isDigit) &&
         d.zipWithIndex.map((c, i) => (c - '0') * (if i % 2 == 0 then 1 else 3)).sum % 10 == 0
-    if s.length == 13 then Option.when(check13(s))(s)
+    if s.length == 13 then Option.when(check13(s))(com.histmersion.domain.library.Isbn(s))
     else if s.length == 10 && s.init.forall(_.isDigit) then
       val ok = s.zipWithIndex.map((c, i) => (if c == 'X' then 10 else c - '0') * (10 - i)).sum % 11 == 0
       Option.when(ok) {
         val core = "978" + s.init
         val sum = core.zipWithIndex.map((c, i) => (c - '0') * (if i % 2 == 0 then 1 else 3)).sum
-        core + ((10 - sum % 10) % 10).toString
+        com.histmersion.domain.library.Isbn(core + ((10 - sum % 10) % 10).toString)
       }
     else None

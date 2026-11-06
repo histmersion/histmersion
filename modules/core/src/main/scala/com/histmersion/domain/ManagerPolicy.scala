@@ -20,14 +20,8 @@ object ManagerPolicy:
   object ActiveAll extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type BlockReason = BlockReason.T
   object BlockReason extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Budget = Budget.T
-  object Budget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Capacity = Capacity.T
   object Capacity extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CronText = CronText.T
-  object CronText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DailyCap = DailyCap.T
-  object DailyCap extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DueCount = DueCount.T
   object DueCount extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type InFlightCount = InFlightCount.T
@@ -62,17 +56,37 @@ object ManagerPolicy:
   object Tag extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Topic = Topic.T
   object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Unsettled = Unsettled.T
-  object Unsettled extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Attempts = Attempts.T
+  object Attempts extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ApprovalId = ApprovalId.T
+  object ApprovalId extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemNote = ItemNote.T
+  object ItemNote extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemOutcome = ItemOutcome.T
+  object ItemOutcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ItemTask = ItemTask.T
+  object ItemTask extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+
+  /** What an item of a manager does: reviews an article, infers its coverage filter, plans a goal, proposes its articles,
+    * sweeps for acquisitions or checks currency.
+    */
+  type ItemKind = ItemKind.T
+  object ItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    val ArticleReview: ItemKind = ItemKind(com.histmersion.api.automation.Managers.ArticleReview)
+    val InferFilter: ItemKind = ItemKind(com.histmersion.api.automation.Managers.InferFilter)
+    val ProposeArticles: ItemKind = ItemKind(com.histmersion.api.automation.Managers.ProposeArticles)
+    val PlanGoalItem: ItemKind = ItemKind(com.histmersion.api.automation.Managers.PlanGoalItem)
+    val AcquisitionSweep: ItemKind = ItemKind(com.histmersion.api.automation.Managers.AcquisitionSweep)
+    val CurrencyCheck: ItemKind = ItemKind(com.histmersion.api.automation.Managers.CurrencyCheck)
+
+  /** The count of `n` `singular` (`3 runs`). */
+  private[domain] def counted(n: Int, singular: String): Plural.Phrase =
+    Plural.count(Plural.Count(n.toLong), Plural.CountSingular(singular))
 
   /** A manager's settings in effect (the saved config over `agents.managers.<kind>`). The review manager uses them all;
     * the enrich and seeding managers their run limits, failures and backoff (their items run once each: no rounds, no
     * refill).
     */
-
-  type GoalKinds = GoalKindsValue
-  type GoalKindsValue = GoalKindsValue.T
-  object GoalKindsValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class ReviewSettings(
       maxRuns: ReviewSettings.MaxRuns,
@@ -123,20 +137,20 @@ object ManagerPolicy:
     object InferFilter extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def forKind(k: Manager.Kind, c: ManagerConfig, m: ManagerDefaults): ReviewSettings =
-      val maxRuns = math.max(0, c.maxRuns.getOrElse(simple(k, m).maxRuns))
+      val maxRuns = math.max(0, c.maxRuns.fold(simple(k, m).maxRuns.value)(_.value))
       ReviewSettings(
-        maxRuns,
-        math.max(maxRuns, c.maxOpen.getOrElse(2 * maxRuns)),
+        MaxRuns(maxRuns),
+        MaxOpen(math.max(maxRuns, c.maxOpen.fold(2 * maxRuns)(_.value))),
         com.histmersion.domain.ManagerPolicy.ReviewSettings.Rounds(1),
         com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRunsPerArticle(1),
         com.histmersion.domain.ManagerPolicy.ReviewSettings.NoProgressRuns(1),
         com.histmersion.domain.ManagerPolicy.ReviewSettings.ReopenLimit(1),
-        math.max(0, c.cooldownMinutes.getOrElse(0)),
+        CooldownMinutes(math.max(0, c.cooldownMinutes.fold(0)(_.value))),
         com.histmersion.domain.ManagerPolicy.ReviewSettings.LowWater(0),
         com.histmersion.domain.ManagerPolicy.ReviewSettings.RefillBatch(0),
-        math.max(1, c.maxFailures.getOrElse(m.maxFailures)),
-        math.max(1, m.backoffMinutes),
-        math.max(1, m.maxBackoffMinutes)
+        MaxFailures(math.max(1, c.maxFailures.fold(m.maxFailures.value)(_.value))),
+        BackoffMinutes(math.max(1, m.backoffMinutes.value)),
+        MaxBackoffMinutes(math.max(1, m.maxBackoffMinutes.value))
       )
 
     private def simple(k: Manager.Kind, m: ManagerDefaults): ManagerRunDefaults = k match
@@ -149,9 +163,9 @@ object ManagerPolicy:
     def defaultsFor(k: Manager.Kind, m: ManagerDefaults): ManagerConfig =
       val s = simple(k, m)
       ManagerConfig(
-        maxRuns = Some(s.maxRuns),
-        maxOpen = Some(2 * s.maxRuns),
-        maxFailures = Some(m.maxFailures),
+        maxRuns = Some(ManagerConfig.MaxRuns(s.maxRuns.value)),
+        maxOpen = Some(ManagerConfig.MaxOpen(2 * s.maxRuns.value)),
+        maxFailures = Some(ManagerConfig.MaxFailures(m.maxFailures.value)),
         dailyUsd = dailyCap(ManagerConfig(), m)
       )
 
@@ -183,30 +197,34 @@ object ManagerPolicy:
   /** A cron a person sets: it parses, and it fires no more often than every `minIntervalMinutes`
     * (`agents.scheduler.min-interval-minutes`).
     */
-  def checkCron(text: com.histmersion.domain.ManagerPolicy.CronText, now: Instant, minIntervalMinutes: com.histmersion.domain.ManagerPolicy.MinIntervalMinutes): Either[com.histmersion.domain.ManagerPolicy.Problem, Cron] =
+  def checkCron(text: Cron.Text, now: Instant, minIntervalMinutes: com.histmersion.domain.ManagerPolicy.MinIntervalMinutes): Either[Cron.Problem, Cron] =
     Cron.parse(text).flatMap { c =>
-      c.shortestGapMinutes(now).filter(_ < minIntervalMinutes) match
+      c.shortestGapMinutes(now).filter(_.value < minIntervalMinutes.value) match
         case Some(gap) =>
           Left(
-            s"'$text' would fire every $gap minute(s); the least is $minIntervalMinutes " +
-              "(agents.scheduler.min-interval-minutes)"
+            Cron.Problem(
+              s"'$text' would fire every $gap minute(s); the least is $minIntervalMinutes " +
+                "(agents.scheduler.min-interval-minutes)"
+            )
           )
         case None => Right(c)
     }
 
   /** A manager's own daily cap in effect: its `dailyUsd`, else `agents.managers.daily-usd`; 0 = none. */
-  def dailyCap(c: ManagerConfig, m: ManagerDefaults): Option[com.histmersion.domain.ManagerPolicy.DailyCap] =
-    c.dailyUsd.orElse(Option(m.dailyUsd)).filter(_ > 0)
+  def dailyCap(c: ManagerConfig, m: ManagerDefaults): Option[ManagerConfig.DailyUsd] =
+    c.dailyUsd.orElse(Some(ManagerConfig.DailyUsd(m.dailyUsd.value))).filter(_.value > 0)
 
   /** Why a manager starts nothing more today, if it does not: its runs' metered spend this UTC day reached its daily
     * cap. Plan-billed calls cost 0 USD, so this caps metered spend only.
     */
-  def dailyBlock(cap: Option[com.histmersion.domain.ManagerPolicy.DailyCap], spentToday: BigDecimal): Option[com.histmersion.domain.ManagerPolicy.BlockReason] =
+  def dailyBlock(cap: Option[ManagerConfig.DailyUsd], spentToday: BigDecimal): Option[com.histmersion.domain.ManagerPolicy.BlockReason] =
     cap
-      .filter(c => spentToday >= BigDecimal(c))
+      .filter(c => spentToday >= BigDecimal(c.value))
       .map(c =>
-        s"budget: its spend today (${ManagersMarkdown.usd(spentToday.toDouble)} USD, metered calls only) reached its daily-usd " +
-          s"(${ManagersMarkdown.usd(c)}); it starts again tomorrow (UTC)"
+        com.histmersion.domain.ManagerPolicy.BlockReason(
+          s"budget: its spend today (${ManagersMarkdown.usd(spentToday.toDouble)} USD, metered calls only) reached its daily-usd " +
+            s"(${ManagersMarkdown.usd(c.value)}); it starts again tomorrow (UTC)"
+        )
       )
 
   /** The start of `now`'s UTC day (what a daily cap counts from). */
@@ -215,49 +233,31 @@ object ManagerPolicy:
   /** What the next step of an item is, once its run settled. */
   enum Next:
     /** Run it again (not before `notBefore`). */
-    case Again(notBefore: Option[Instant], state: ItemState, note: Next.Again.Note)
+    case Again(notBefore: Option[Instant], state: ItemState, note: ItemNote)
 
     /** It reached its end. */
-    case Done(outcome: Next.Done.Outcome, state: ItemState)
+    case Done(outcome: ItemOutcome, state: ItemState)
 
     /** It stops here; `task` is the backlog line a person acts on (None: nothing to act on). */
-    case Stop(outcome: Next.Stop.Outcome, task: Option[Next.Stop.Task], state: ItemState)
+    case Stop(outcome: ItemOutcome, task: Option[ItemTask], state: ItemState)
 
     /** Its run failed: try again after the backoff (`failures` counted). */
-    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: Next.Retry.Note)
+    case Retry(notBefore: Instant, failures: Next.Retry.Failures, note: ItemNote)
 
     /** Its run left a proposal for a person (approval `approval`): the item is held until it is decided, then settled
       * with the decision — never run again for it.
       */
-    case Wait(approval: Next.Wait.Approval, note: Next.Wait.Note)
+    case Wait(approval: ApprovalId, note: ItemNote)
 
   object Next:
-    object Again:
-      type Note = Note.T
-      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object Done:
-      type Outcome = Outcome.T
-      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object Stop:
-      type Outcome = Outcome.T
-      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Task = Task.T
-      object Task extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     object Retry:
       type Failures = Failures.T
       object Failures extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Note = Note.T
-      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object Wait:
-      type Approval = Approval.T
-      object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Note = Note.T
-      object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** `base · 2^(failures-1)` minutes, at most `max`. */
   def backoff(baseMinutes: com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes, maxMinutes: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes, failures: com.histmersion.domain.ManagerPolicy.Next.Retry.Failures): Duration =
-    val exp = math.min(30, math.max(0, failures - 1))
-    val mins = math.min(maxMinutes.toLong, baseMinutes.toLong * (1L << exp))
+    val exp = math.min(30, math.max(0, failures.value - 1))
+    val mins = math.min(maxMinutes.value.toLong, baseMinutes.value.toLong * (1L << exp))
     Duration.ofMinutes(math.max(1L, mins))
 
   // ── the one-run items (infer-filter, extend, enrich, propose, compile) ───────────────────────────
@@ -267,32 +267,14 @@ object ManagerPolicy:
     * look at, if anything).
     */
   enum StepFacts:
-    case Finished(outcome: StepFacts.Finished.Outcome)
-    case Waiting(approval: StepFacts.Waiting.Approval, what: StepFacts.Waiting.What)
-    case NotDone(outcome: StepFacts.NotDone.Outcome, task: Option[StepFacts.NotDone.Task])
+    case Finished(outcome: ItemOutcome)
+    case Waiting(approval: ApprovalId, what: ItemNote)
+    case NotDone(outcome: ItemOutcome, task: Option[ItemTask])
 
     /** Its work was refused by a check that a new run may pass (a draft the autopilot's checks rejected): run it again
       * after the backoff, counted as a failure, stopped with a task after `maxFailures`.
       */
-    case Redo(outcome: StepFacts.Redo.Outcome)
-
-  object StepFacts:
-    object Finished:
-      type Outcome = Outcome.T
-      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object Waiting:
-      type Approval = Approval.T
-      object Approval extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type What = What.T
-      object What extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object NotDone:
-      type Outcome = Outcome.T
-      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-      type Task = Task.T
-      object Task extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    object Redo:
-      type Outcome = Outcome.T
-      object Outcome extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    case Redo(outcome: ItemOutcome)
 
   /** Evaluate a one-run item (`label` = its kind, for the texts) after its run settled `status`: done → finished, held
     * for an approval, or stopped; failed → retried after the backoff, stopped with a task after `maxFailures`;
@@ -315,59 +297,63 @@ object ManagerPolicy:
         facts match
           case StepFacts.Finished(o)      => Next.Done(o, state)
           case StepFacts.Waiting(id, w)   => Next.Wait(id, w)
-          case StepFacts.NotDone(o, task) => Next.Stop(o, task.map(_.take(2000)), state)
+          case StepFacts.NotDone(o, task) => Next.Stop(o, task.map(t => ItemTask(t.value.take(2000))), state)
           case StepFacts.Redo(o)          =>
-            val n = failures + 1
-            if n >= s.maxFailures then
+            val n = failures.value + 1
+            if n >= s.maxFailures.value then
               Next.Stop(
-                s"stopped: $o (${Plural.count(n, com.histmersion.api.Plural.CountSingular("attempt"))})",
+                ItemOutcome(s"stopped: $o (${counted(n, "attempt")})"),
                 Some(
-                  s"$label manager item stopped [[$target]]: $o, ${Plural.count(n, com.histmersion.api.Plural.CountSingular("attempt"))} (agent run ${run.take(8)})"
-                    .take(2000)
+                  ItemTask(
+                    s"$label manager item stopped [[$target]]: $o, ${counted(n, "attempt")} (agent run ${run.value.take(8)})"
+                      .take(2000)
+                  )
                 ),
                 state
               )
             else
               Next.Retry(
-                now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, n)),
-                n,
-                s"$o ($n of ${s.maxFailures}); again"
+                now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
+                Next.Retry.Failures(n),
+                ItemNote(s"$o ($n of ${s.maxFailures}); again")
               )
-      case Run.State.Cancelled => Next.Stop(com.histmersion.domain.ManagerPolicy.Next.Stop.Outcome("stopped: its run was cancelled"), None, state)
+      case Run.State.Cancelled => Next.Stop(ItemOutcome("stopped: its run was cancelled"), None, state)
       case _                   =>
-        val n = failures + 1
-        val why = error.filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
-        if n >= s.maxFailures then
+        val n = failures.value + 1
+        val why = error.map(_.value).filter(_.nonEmpty).fold("")(e => s": ${e.take(300)}")
+        if n >= s.maxFailures.value then
           Next.Stop(
-            s"stopped: ${Plural.count(n, com.histmersion.api.Plural.CountSingular("failed run"))}$why",
+            ItemOutcome(s"stopped: ${counted(n, "failed run")}$why"),
             Some(
-              s"$label manager item stopped [[$target]] after ${Plural.count(n, com.histmersion.api.Plural.CountSingular("failed run"))}$why (agent run ${run.take(8)})"
+              ItemTask(
+                s"$label manager item stopped [[$target]] after ${counted(n, "failed run")}$why (agent run ${run.value.take(8)})"
+              )
             ),
             state
           )
         else
           Next.Retry(
-            now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, n)),
-            n,
-            s"run failed ($n of ${s.maxFailures})$why"
+            now.plus(backoff(s.backoffMinutes, s.maxBackoffMinutes, Next.Retry.Failures(n))),
+            Next.Retry.Failures(n),
+            ItemNote(s"run failed ($n of ${s.maxFailures})$why")
           )
 
   /** How an approval a held item waits for was decided, as its outcome (None: still open). */
   def decided(state: com.histmersion.domain.automation.Approval.State.Wire, result: Option[com.histmersion.domain.automation.Approval.Outcome]): Option[com.histmersion.domain.automation.Approval.Outcome] =
     Approval.State.parse(state).filter(_ != Approval.State.Open).map { st =>
-      st.wire + result.filter(_.nonEmpty).fold("")(r => s": ${r.take(300)}")
+      Approval.Outcome(st.wire.value + result.map(_.value).filter(_.nonEmpty).fold("")(r => s": ${r.take(300)}"))
     }
 
   /** Must an item of `kind` on `target` wait — an article's review while an infer-filter item for the same article is
     * still open (pending, held or active), a goal's article proposal while its plan-goal item is? `open` = the
     * manager's open items (kind, target).
     */
-  def waitsFor(kind: com.histmersion.domain.automation.Approval.Kind.Wire, target: com.histmersion.domain.ManagerPolicy.Candidate.Target, open: List[(com.histmersion.domain.automation.Approval.Kind.Wire, com.histmersion.domain.ManagerPolicy.Candidate.Target)]): Boolean =
-    (kind == ArticleReview && open.contains((InferFilter, target))) ||
-      (kind == ProposeArticles && open.contains((PlanGoalItem, target)))
+  def waitsFor(kind: ItemKind, target: com.histmersion.domain.ManagerPolicy.Candidate.Target, open: List[(ItemKind, com.histmersion.domain.ManagerPolicy.Candidate.Target)]): Boolean =
+    (kind == ItemKind.ArticleReview && open.contains((ItemKind.InferFilter, target))) ||
+      (kind == ItemKind.ProposeArticles && open.contains((ItemKind.PlanGoalItem, target)))
 
   /** The item kinds whose target is a goal. */
-  val GoalKinds: Set[com.histmersion.domain.ManagerPolicy.GoalKinds] = Set(PlanGoalItem, ProposeArticles, AcquisitionSweep, CurrencyCheck)
+  val GoalKinds: Set[ItemKind] = Set(ItemKind.PlanGoalItem, ItemKind.ProposeArticles, ItemKind.AcquisitionSweep, ItemKind.CurrencyCheck)
 
   /** Must an item of `kind` (whose pipeline is `pipeline`) wait for the unsettled runs on its target (their pipelines)?
     * On an article or a source: any of them (one writer at a time). On a goal — its plan, its article proposal, its
@@ -375,7 +361,7 @@ object ManagerPolicy:
     * and acquisition items), so a plan waiting days for a person does not stop its watcher, nor a sweep the proposal
     * (which waits for the plan through [[waitsFor]]).
     */
-  def blocks(kind: com.histmersion.domain.automation.Approval.Kind.Wire, pipeline: com.histmersion.domain.automation.Pipeline.Wire, unsettled: Seq[com.histmersion.domain.ManagerPolicy.Unsettled]): Boolean =
+  def blocks(kind: ItemKind, pipeline: com.histmersion.domain.automation.Pipeline.Wire, unsettled: Seq[com.histmersion.domain.automation.Pipeline.Wire]): Boolean =
     if GoalKinds(kind) then unsettled.contains(pipeline) else unsettled.nonEmpty
 
   // ── dispatch ───────────────────────────────────────────────────────────────────────────────────
@@ -385,7 +371,8 @@ object ManagerPolicy:
 
   object Candidate:
     type Id = Id.T
-    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object Id extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
     type Target = Target.T
     object Target extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Priority = Priority.T
@@ -398,7 +385,7 @@ object ManagerPolicy:
     * the oldest.
     */
   def order(cs: List[Candidate]): List[Candidate] =
-    cs.sortBy(c => (-c.priority, c.notBefore.map(_.toEpochMilli).getOrElse(Long.MinValue), c.id))
+    cs.sortBy(c => (-c.priority.value, c.notBefore.map(_.toEpochMilli).getOrElse(Long.MinValue), c.id))
 
   /** How many runs a manager may start now: the global room (`maxConcurrent` minus every agent run queued or running, a
     * person's too), its own (`maxRuns` minus its queued/running; `maxOpen` minus every unsettled one, paused and
@@ -407,25 +394,27 @@ object ManagerPolicy:
   def capacity(
       maxConcurrent: com.histmersion.domain.ManagerPolicy.MaxConcurrent,
       activeAll: com.histmersion.domain.ManagerPolicy.ActiveAll,
-      maxRuns: com.histmersion.domain.ManagerRunDefaults.MaxRuns,
+      maxRuns: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxRuns,
       mineRunning: com.histmersion.domain.ManagerPolicy.MineRunning,
       maxOpen: com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxOpen,
       mineOpen: com.histmersion.domain.ManagerPolicy.MineOpen,
       poolCap: Option[com.histmersion.domain.ManagerPolicy.PoolCap]
   ): com.histmersion.domain.ManagerPolicy.Capacity =
-    List(
-      maxConcurrent - activeAll,
-      maxRuns - mineRunning,
-      maxOpen - mineOpen,
-      poolCap.fold(Int.MaxValue)(_ - mineRunning)
-    ).min.max(0)
+    com.histmersion.domain.ManagerPolicy.Capacity(
+      List(
+        maxConcurrent.value - activeAll.value,
+        maxRuns.value - mineRunning.value,
+        maxOpen.value - mineOpen.value,
+        poolCap.fold(Int.MaxValue)(_.value - mineRunning.value)
+      ).min.max(0)
+    )
 
   /** Several managers sharing the global room: one item from each in turn (in the order given), each within its own
     * `cap`, until `room` is used or nothing is left.
     */
   def roundRobin[M, A](queues: List[(M, com.histmersion.domain.ManagerPolicy.Quota, List[A])], room: com.histmersion.domain.ManagerPolicy.Room): List[(M, A)] =
     @annotation.tailrec
-    def go(qs: List[(M, com.histmersion.domain.ManagerPolicy.Quota, List[A])], left: Int, acc: Vector[(M, A)]): Vector[(M, A)] =
+    def go(qs: List[(M, Int, List[A])], left: Int, acc: Vector[(M, A)]): Vector[(M, A)] =
       val live = qs.filter((_, cap, as) => cap > 0 && as.nonEmpty)
       if left <= 0 || live.isEmpty then acc
       else
@@ -435,19 +424,23 @@ object ManagerPolicy:
           if take.exists(_._1 == m) then (m, cap - 1, as.tail) else q
         }
         go(rest, left - take.size, acc ++ picked)
-    go(queues, math.max(0, room), Vector.empty).toList
+    go(queues.map((m, quota, as) => (m, quota.value, as)), math.max(0, room.value), Vector.empty).toList
 
   /** Is a hold over: its date passed, or the source it waits for exists. A hold with neither waits for a person's
     * release.
     */
   def released(h: Hold, now: Instant, sourceExists: com.histmersion.domain.library.Citekey => Boolean): Boolean =
     h.until
-      .flatMap(parseInstant)
-      .exists(!_.isAfter(now)) || h.untilSource.map(_.trim).filter(_.nonEmpty).exists(sourceExists)
+      .flatMap(u => parseInstant(InstantText(u.value)))
+      .exists(!_.isAfter(now)) || h.untilSource
+      .map(_.value.trim)
+      .filter(_.nonEmpty)
+      .flatMap(u => com.histmersion.domain.library.Citekey.option(u))
+      .exists(sourceExists)
 
   /** `2026-11-01` (UTC midnight) or an ISO instant. */
   def parseInstant(s: com.histmersion.domain.ManagerPolicy.InstantText): Option[Instant] =
-    val t = s.trim
+    val t = s.value.trim
     scala.util
       .Try(Instant.parse(t))
       .toOption
@@ -461,32 +454,35 @@ object ManagerPolicy:
       pending: com.histmersion.domain.ManagerPolicy.PendingCount,
       due: com.histmersion.domain.ManagerPolicy.DueCount,
       inFlight: com.histmersion.domain.ManagerPolicy.InFlightCount,
-      budget: Option[com.histmersion.domain.ManagerPolicy.Budget]
+      budget: Option[com.histmersion.domain.ManagerPolicy.BlockReason]
   ): com.histmersion.domain.ManagerPolicy.StatusNote =
     if state == Manager.State.Stopped then com.histmersion.domain.ManagerPolicy.StatusNote("stopped")
     else if state == Manager.State.Paused then
-      (if inFlight > 0 then s"paused (${Plural.count(inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight)" else com.histmersion.domain.ManagerPolicy.StatusNote("paused")
-    )
+      com.histmersion.domain.ManagerPolicy.StatusNote(
+        if inFlight.value > 0 then s"paused (${counted(inFlight.value, "run")} in flight)" else "paused"
+      )
     else
-      budget.orElse(starved.map(s => s"starved: $s")).getOrElse {
-        if pending == 0 && inFlight == 0 then "idle"
-        else if due > 0 && capacity == 0 then
-          s"at capacity (${Plural.count(inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight, $pending pending)"
-        else if pending > 0 then
-          s"$pending pending" + (if inFlight > 0 then s", ${Plural.count(inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight" else "")
-        else s"${Plural.count(inFlight, com.histmersion.api.Plural.CountSingular("run"))} in flight"
-      }
+      com.histmersion.domain.ManagerPolicy.StatusNote(
+        budget.map(_.value).orElse(starved.map(s => s"starved: $s")).getOrElse {
+          if pending.value == 0 && inFlight.value == 0 then "idle"
+          else if due.value > 0 && capacity.value == 0 then
+            s"at capacity (${counted(inFlight.value, "run")} in flight, $pending pending)"
+          else if pending.value > 0 then
+            s"$pending pending" + (if inFlight.value > 0 then s", ${counted(inFlight.value, "run")} in flight" else "")
+          else s"${counted(inFlight.value, "run")} in flight"
+        }
+      )
 
   // ── hints ──────────────────────────────────────────────────────────────────────────────────────
 
   /** Does a structured hint effect name this target (by slug, or by one of its tags/topics/goals)? */
   def matches(e: HintEffect, target: com.histmersion.domain.ManagerPolicy.Candidate.Target, tags: List[com.histmersion.domain.ManagerPolicy.Tag], topics: List[com.histmersion.domain.ManagerPolicy.Topic], goals: List[com.histmersion.domain.automation.Goal.Slug]): Boolean =
     def eq(a: String, b: String) = a.trim.equalsIgnoreCase(b.trim)
-    e.targets.exists(eq(_, target)) || e.tag.exists(t => tags.exists(eq(_, t))) ||
-    e.topic.exists(t => topics.exists(eq(_, t))) || e.goal.exists(g => goals.exists(eq(_, g)))
+    e.targets.exists(t => eq(t.value, target.value)) || e.tag.exists(t => tags.exists(x => eq(x.value, t.value))) ||
+    e.topic.exists(t => topics.exists(x => eq(x.value, t.value))) || e.goal.exists(g => goals.exists(x => eq(x.value, g.value)))
 
   /** The notes a run is given: the manager's live standing hints and unconsumed once-hints, manager-wide or about this
     * item, oldest first.
     */
   def notesFor(hints: List[ManagerHint], itemId: com.histmersion.domain.ManagerPolicy.ItemId): List[ManagerHint] =
-    hints.filter(h => h.retiredAt.isEmpty && h.itemId.forall(_ == itemId) && h.text.trim.nonEmpty).sortBy(_.id)
+    hints.filter(h => h.retiredAt.isEmpty && h.itemId.forall(_.value == itemId.value) && h.text.value.trim.nonEmpty).sortBy(_.id.value)
