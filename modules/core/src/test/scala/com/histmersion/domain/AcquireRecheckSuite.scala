@@ -15,7 +15,7 @@ import java.time.Instant
 class AcquireRecheckSuite extends munit.FunSuite:
 
   private val now = Instant.parse("2026-10-27T12:00:00Z")
-  private val Gen = "g1"
+  private val Gen = LastCheck.Generation("g1")
   private def daysAgo(d: Int) = now.minusSeconds(d.toLong * 86400L)
   private val settings = Settings(
     enabled = com.histmersion.domain.AcquireRecheck.Settings.Enabled(true),
@@ -43,8 +43,8 @@ class AcquireRecheckSuite extends munit.FunSuite:
     val c = generation(List(com.histmersion.domain.AcquireRecheck.GenerationPart("unpaywall:open plugin=oa-unpaywall 1.0")))
     assertEquals(a, generation(List(com.histmersion.domain.AcquireRecheck.GenerationPart("unpaywall:open plugin=oa-unpaywall 1.0"), com.histmersion.domain.AcquireRecheck.GenerationPart("core:open plugin=oa-core 1.0 api-key="))))
     assert(a != b && a != c && b != c)
-    assertEquals(a.length, 16)
-    assert(a.forall(ch => ch.isDigit || ('a' to 'f').contains(ch)), a)
+    assertEquals(a.value.length, 16)
+    assert(a.value.forall(ch => ch.isDigit || ('a' to 'f').contains(ch)), a)
 
   test("the next time something falls due: the earliest window's end among the items of this generation"):
     val checks = List(LastCheck(daysAgo(1), Gen), LastCheck(daysAgo(3), Gen), LastCheck(daysAgo(1), com.histmersion.domain.AcquireRecheck.LastCheck.Generation("g0")))
@@ -54,7 +54,7 @@ class AcquireRecheckSuite extends munit.FunSuite:
   test(
     "closing rules: in the corpus with its original → closed; metadata only → fetched into that source; else a new one"
   ):
-    val held = Map("10.1/a" -> Held(com.histmersion.domain.library.Citekey("a2020_x"), hasOriginal = com.histmersion.domain.AcquireRecheck.Held.HasOriginal(true)), "10.1/b" -> Held(com.histmersion.domain.library.Citekey("b2021_y"), hasOriginal = com.histmersion.domain.AcquireRecheck.Held.HasOriginal(false)))
+    val held = Map(com.histmersion.domain.library.Doi("10.1/a") -> Held(com.histmersion.domain.library.Citekey("a2020_x"), hasOriginal = com.histmersion.domain.AcquireRecheck.Held.HasOriginal(true)), com.histmersion.domain.library.Doi("10.1/b") -> Held(com.histmersion.domain.library.Citekey("b2021_y"), hasOriginal = com.histmersion.domain.AcquireRecheck.Held.HasOriginal(false)))
     assertEquals(action(List(com.histmersion.domain.library.Doi("10.1/a")), held.get), Action.Close(com.histmersion.domain.library.Citekey("a2020_x")))
     assertEquals(action(List(com.histmersion.domain.library.Doi("10.1/b")), held.get), Action.Fetch(com.histmersion.domain.library.Doi("10.1/b"), Some(com.histmersion.domain.library.Citekey("b2021_y"))))
     assertEquals(
@@ -65,29 +65,29 @@ class AcquireRecheckSuite extends munit.FunSuite:
     assertEquals(action(Nil, held.get), Action.NoDoi)
 
   test("a failed legal ingest: no legal copy, or no answer"):
-    assertEquals(failure(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found"), Outcome.NoCopy)
+    assertEquals(failure(IngestBacklog.Problem(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")), Outcome.NoCopy)
     assertEquals(failure(com.histmersion.domain.IngestBacklog.Problem("HTTP 503 from the converter")), Outcome.Failed)
     assertEquals(Outcome.values.toList.flatMap(o => Outcome.parse(o.wire)), Outcome.values.toList)
 
   test("the reason: the day, what was found and what each fetcher answered"):
     val msg = s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found — unpaywall: no copy — none; " +
       "landing: refused — bot-protection 403"
-    assertEquals(answers(msg), "unpaywall: no copy — none; landing: refused — bot-protection 403")
+    assertEquals(answers(IngestBacklog.Problem(msg)), "unpaywall: no copy — none; landing: refused — bot-protection 403")
     assertEquals(
-      reason(now, Outcome.NoCopy, msg),
+      reason(now, Outcome.NoCopy, Detail(msg)),
       "checked 2026-10-27: no legal copy (unpaywall: no copy — none; landing: refused — bot-protection 403)"
     )
     assertEquals(
-      reason(now, Outcome.NoCopy, s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found"),
+      reason(now, Outcome.NoCopy, Detail(s"${IngestBacklog.NoLegalCopy} 10.1/x: no legal open-access PDF found")),
       "checked 2026-10-27: no legal copy (no legal open-access PDF found)"
     )
     assertEquals(
       reason(now, Outcome.Closed, com.histmersion.domain.AcquireRecheck.Detail("a2020_x")),
       "checked 2026-10-27: in the corpus with its original as [[a2020_x]] — closed"
     )
-    assert(reason(now, Outcome.Fetched, com.histmersion.domain.AcquireRecheck.Detail("unpaywall")).contains("a legal copy found (unpaywall)"))
+    assert(reason(now, Outcome.Fetched, com.histmersion.domain.AcquireRecheck.Detail("unpaywall")).value.contains("a legal copy found (unpaywall)"))
     assertEquals(reason(now, Outcome.Failed, com.histmersion.domain.AcquireRecheck.Detail("HTTP 503")), "checked 2026-10-27: no answer (HTTP 503)")
-    assert(reason(now, Outcome.NoCopy, msg + ("; x" * 400)).length <= 500)
+    assert(reason(now, Outcome.NoCopy, Detail(msg + ("; x" * 400))).value.length <= 500)
 
   test("a pass's allowance: the day's cap, the pass's, and the shared allowance after the backlog, within the share"):
     assertEquals(allowance(settings, checkedToday = com.histmersion.domain.AcquireRecheck.CheckedToday(0), shared = None), 3, "the pass's cap")
@@ -169,15 +169,15 @@ class AcquireRecheckSuite extends munit.FunSuite:
 
   test("a capped job: only the due items, no more than it planned less what it tried already"):
     val since = now.minusSeconds(3600L)
-    val cs = (1 to 6).toList.map(i => Candidate(i, if i == 6 then Some(LastCheck(now, Gen)) else None))
-    val due = (c: Candidate) => c.item != 2
+    val cs = (1 to 6).toList.map(i => Candidate(Candidate.Item(i), if i == 6 then Some(LastCheck(now, Gen)) else None))
+    val due = (c: Candidate) => c.item.value != 2
     assertEquals(jobPicks(JobPlan(all = com.histmersion.domain.AcquireRecheck.JobPlan.All(false), com.histmersion.domain.AcquireRecheck.JobPlan.UpTo(4), since), cs, com.histmersion.domain.AcquireRecheck.Tally.Tried(0), due).map(_.item), List(1, 3, 4, 5))
     assertEquals(jobPicks(JobPlan(all = com.histmersion.domain.AcquireRecheck.JobPlan.All(false), com.histmersion.domain.AcquireRecheck.JobPlan.UpTo(4), since), cs, com.histmersion.domain.AcquireRecheck.Tally.Tried(3), due).map(_.item), List(1), "resumed after 3 tries")
     assertEquals(jobPicks(JobPlan(all = com.histmersion.domain.AcquireRecheck.JobPlan.All(false), com.histmersion.domain.AcquireRecheck.JobPlan.UpTo(4), since), cs, com.histmersion.domain.AcquireRecheck.Tally.Tried(9), due), Nil)
 
   test("which stopped job a later one takes up: a restart's interrupted one, or one the drain stopped"):
-    assert(resumable(com.histmersion.api.jobs.JobState.Wire("failed"), Some(com.histmersion.api.jobs.JobState.Interrupted)))
-    assert(resumable(com.histmersion.api.jobs.JobState.Wire("failed"), Some(StoppedDraining)))
+    assert(resumable(com.histmersion.api.jobs.JobState.Wire("failed"), Some(com.histmersion.domain.AcquireRecheck.Problem(com.histmersion.api.jobs.JobState.Interrupted))))
+    assert(resumable(com.histmersion.api.jobs.JobState.Wire("failed"), Some(com.histmersion.domain.AcquireRecheck.Problem(StoppedDraining))))
     assert(!resumable(com.histmersion.api.jobs.JobState.Wire("failed"), Some(com.histmersion.domain.AcquireRecheck.Problem("the acquisition toolset is not connected: nothing tried"))))
     assert(!resumable(com.histmersion.api.jobs.JobState.Wire("failed"), Some(com.histmersion.domain.AcquireRecheck.Problem("a restore started; stopped"))))
     assert(!resumable(com.histmersion.api.jobs.JobState.Wire("done"), None))
@@ -187,10 +187,10 @@ class AcquireRecheckSuite extends munit.FunSuite:
     val t = Tally(total = com.histmersion.domain.AcquireRecheck.Tally.Total(453))
       .add(Outcome.Closed, com.histmersion.domain.AcquireRecheck.Detail("a2020_x"))
       .add(Outcome.Fetched, com.histmersion.domain.AcquireRecheck.Detail("unpaywall"))
-      .add(Outcome.NoCopy, "none")
+      .add(Outcome.NoCopy, Detail("none"))
       .add(
         Outcome.Failed,
-        "HTTP 429 Too Many Requests from api.example.invalid — retry after 3600 seconds, said the upstream"
+        Detail("HTTP 429 Too Many Requests from api.example.invalid — retry after 3600 seconds, said the upstream")
       )
     assertEquals(t.tried, 3)
     assertEquals(

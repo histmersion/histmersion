@@ -40,7 +40,7 @@ class EventScaleSuite extends munit.FunSuite:
 
   test("the kind decides first: battle, siege, destruction local; migration, change, era, war regional"):
     List("battle", "siege", "destruction", "Destruction", "construction", "founding").foreach(k =>
-      assertEquals(EventScale.ofKind(k), Some(EventScale.Local), k)
+      assertEquals(EventScale.ofKind(com.histmersion.api.catalogue.EventSummary.Kind(k)), Some(EventScale.Local), k)
     )
     List(
       "migration",
@@ -55,8 +55,8 @@ class EventScaleSuite extends munit.FunSuite:
       "polity_formation",
       "period",
       "reign"
-    ).foreach(k => assertEquals(EventScale.ofKind(k), Some(EventScale.Regional), k))
-    List("event", "natural_disaster", "treaty", "").foreach(k => assertEquals(EventScale.ofKind(k), None, k))
+    ).foreach(k => assertEquals(EventScale.ofKind(com.histmersion.api.catalogue.EventSummary.Kind(k)), Some(EventScale.Regional), k))
+    List("event", "natural_disaster", "treaty", "").foreach(k => assertEquals(EventScale.ofKind(com.histmersion.api.catalogue.EventSummary.Kind(k)), None, k))
 
   test("the place's kind: a site or feature is local, a region, polity or people regional"):
     assertEquals(EventScale.ofPlaceKind(com.histmersion.api.catalogue.Place.Kind.Wire("site")), Some("local"))
@@ -71,36 +71,36 @@ class EventScaleSuite extends munit.FunSuite:
 
   test("effective: stated, then kind, then own geometry, then place kind, then sub-event, then local"):
     def eff(
-        stated: Option[String] = None,
-        kind: String = "event",
+        stated: Option[com.histmersion.api.catalogue.EventSummary.Scale] = None,
+        kind: com.histmersion.api.catalogue.EventScale.EffectiveKind = com.histmersion.api.catalogue.EventScale.EffectiveKind("event"),
         parent: Boolean = false,
-        place: Option[String] = None,
-        geom: Option[String] = None
+        place: Option[com.histmersion.api.catalogue.Place.Kind.Wire] = None,
+        geom: Option[com.histmersion.api.catalogue.EventScale.GeometryType] = None
     ) =
       EventScale.effective(stated, kind, parent, place, geom)
-    assertEquals(eff(stated = Some("regional"), kind = "battle"), "regional")
-    assertEquals(eff(stated = Some("nonsense"), kind = "battle"), "local", "an unparsable stated value is ignored")
-    assertEquals(eff(kind = "battle", place = Some("region")), "local", "a battle at a region is still local")
-    assertEquals(eff(kind = "war", place = Some("site")), "regional", "a war at its capital is still regional")
-    assertEquals(eff(kind = "event", parent = true), "local", "a part of a larger event, nothing else said")
+    assertEquals(eff(stated = Some(com.histmersion.api.catalogue.EventSummary.Scale("regional")), kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("battle")), "regional")
+    assertEquals(eff(stated = Some(com.histmersion.api.catalogue.EventSummary.Scale("nonsense")), kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("battle")), "local", "an unparsable stated value is ignored")
+    assertEquals(eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("battle"), place = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region"))), "local", "a battle at a region is still local")
+    assertEquals(eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("war"), place = Some(com.histmersion.api.catalogue.Place.Kind.Wire("site"))), "regional", "a war at its capital is still regional")
+    assertEquals(eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("event"), parent = true), "local", "a part of a larger event, nothing else said")
     assertEquals(
-      eff(kind = "natural_disaster", parent = true, place = Some("region")),
+      eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("natural_disaster"), parent = true, place = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region"))),
       "regional",
       "a drought within a collapse, at a region, is regional"
     )
     assertEquals(
-      eff(kind = "event", place = Some("region"), geom = Some("POINT")),
+      eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("event"), place = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region")), geom = Some(com.histmersion.api.catalogue.EventScale.GeometryType("POINT"))),
       "local",
       "its own point is what the map draws it at"
     )
-    assertEquals(eff(kind = "natural_disaster", place = Some("site")), "local")
-    assertEquals(eff(kind = "natural_disaster", place = Some("region")), "regional")
-    assertEquals(eff(kind = "event", geom = Some("POLYGON")), "regional")
-    assertEquals(eff(kind = "event"), "local")
+    assertEquals(eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("natural_disaster"), place = Some(com.histmersion.api.catalogue.Place.Kind.Wire("site"))), "local")
+    assertEquals(eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("natural_disaster"), place = Some(com.histmersion.api.catalogue.Place.Kind.Wire("region"))), "regional")
+    assertEquals(eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("event"), geom = Some(com.histmersion.api.catalogue.EventScale.GeometryType("POLYGON"))), "regional")
+    assertEquals(eff(kind = com.histmersion.api.catalogue.EventScale.EffectiveKind("event")), "local")
 
   test("EventGeometry: a point is GeoJSON, longitude first; lat/lon and geometry exclude each other"):
-    assertEquals(EventGeometry.point(36.5, -1.25), Right("""{"type":"Point","coordinates":[-1.25,36.5]}"""))
-    assertEquals(EventGeometry.point(1e-4, 0.0), Right("""{"type":"Point","coordinates":[0,0.0001]}"""))
+    assertEquals(EventGeometry.point(com.histmersion.api.catalogue.Latitude(36.5), com.histmersion.api.catalogue.Longitude(-1.25)), Right("""{"type":"Point","coordinates":[-1.25,36.5]}"""))
+    assertEquals(EventGeometry.point(com.histmersion.api.catalogue.Latitude(1e-4), com.histmersion.api.catalogue.Longitude(0.0)), Right("""{"type":"Point","coordinates":[0,0.0001]}"""))
     assert(EventGeometry.point(com.histmersion.api.catalogue.Latitude(91), com.histmersion.api.catalogue.Longitude(0)).isLeft)
     assert(EventGeometry.point(com.histmersion.api.catalogue.Latitude(0), com.histmersion.api.catalogue.Longitude(181)).isLeft)
     assertEquals(EventGeometry.of(None, None, None), Right(None))
@@ -111,16 +111,16 @@ class EventScaleSuite extends munit.FunSuite:
 
   test("EventGeometry.check: GeoJSON geometries pass; WKT, Features and non-JSON are refused (#2554)"):
     val pt = """{"type":"Point","coordinates":[36.5,34.55]}"""
-    assertEquals(EventGeometry.check(s"  $pt\n"), Right(pt))
-    assert(EventGeometry.check("""{"type":"MultiPolygon","coordinates":[]}""").isRight)
+    assertEquals(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson(s"  $pt\n")), Right(pt))
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("""{"type":"MultiPolygon","coordinates":[]}""")).isRight)
     val wkt = EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("POINT(36.5 34.55)"))
-    assert(wkt.left.exists(_.contains("not WKT")), wkt.toString)
-    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("srid=4326;polygon((0 0,1 0,1 1,0 0))")).left.exists(_.contains("not WKT")))
-    assert(EventGeometry.check("""{"type":"Feature","geometry":null}""").left.exists(_.contains("not a Feature")))
-    assert(EventGeometry.check("""{"type":"Circle"}""").left.exists(_.contains("'Circle'")))
-    assert(EventGeometry.check("""{"coordinates":[1,2]}""").left.exists(_.contains("no \"type\"")))
+    assert(wkt.left.exists(_.value.contains("not WKT")), wkt.toString)
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("srid=4326;polygon((0 0,1 0,1 1,0 0))")).left.exists(_.value.contains("not WKT")))
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("""{"type":"Feature","geometry":null}""")).left.exists(_.value.contains("not a Feature")))
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("""{"type":"Circle"}""")).left.exists(_.value.contains("'Circle'")))
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("""{"coordinates":[1,2]}""")).left.exists(_.value.contains("no \"type\"")))
     assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("[1,2]")).isLeft)
-    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("near Kadesh")).left.exists(_.contains("not GeoJSON")))
+    assert(EventGeometry.check(com.histmersion.api.catalogue.EventGeometry.Geojson("near Kadesh")).left.exists(_.value.contains("not GeoJSON")))
 
   test("EventGeo.outer: the outer span, one known end alone, nothing when undated"):
     assertEquals((TimeSpan(Some(com.histmersion.api.catalogue.Year(-1300)), Some(com.histmersion.api.catalogue.Year(-1290)), Some(com.histmersion.api.catalogue.Year(-1260)), Some(com.histmersion.api.catalogue.Year(-1250)))).outer, Some((-1300L, -1250L)))

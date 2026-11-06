@@ -41,13 +41,13 @@ class CandidatesSuite extends munit.FunSuite:
 
   test("one sweep's works: once each by key with every watch that found it; no id, retracted and known left out"):
     val found = List(
-      "openalex query \"x\"" -> w("10.1234/a", by = List("Ann")),
-      "crossref query \"x\"" -> w("10.1234/A", title = "Other title"),
-      "openalex citing 10.9999/z" -> w("10.1234/a"),
-      "openalex query \"x\"" -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
-      "openalex query \"x\"" -> w("10.1234/r").modify(_.isRetracted).setTo(true),
-      "europepmc query \"x\"" -> w("10.1234/known"),
-      "arxiv query \"x\"" -> WorkRef(arxivId = Some(com.histmersion.api.library.Source.Candidate.ArxivId("2401.00001")), title = (Some("P")).map(com.histmersion.api.library.Title.apply))
+      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("openalex query \"x\"") -> w("10.1234/a", by = List("Ann")),
+      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("crossref query \"x\"") -> w("10.1234/A", title = "Other title"),
+      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("openalex citing 10.9999/z") -> w("10.1234/a"),
+      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("openalex query \"x\"") -> WorkRef(title = (Some("no doi")).map(com.histmersion.api.library.Title.apply)),
+      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("openalex query \"x\"") -> w("10.1234/r").modify(_.isRetracted).setTo(true),
+      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("europepmc query \"x\"") -> w("10.1234/known"),
+      com.histmersion.domain.library.acquisition.CandidateDedupe.FoundBy("arxiv query \"x\"") -> WorkRef(arxivId = Some(com.histmersion.api.library.Source.Candidate.ArxivId("2401.00001")), title = (Some("P")).map(com.histmersion.api.library.Title.apply))
     )
     val (kept, skipped) = com.histmersion.domain.library.acquisition.CandidateDedupe.dedupe(found, Set(com.histmersion.domain.library.Doi("10.1234/known")))
     assertEquals(
@@ -161,7 +161,7 @@ class CandidatesSuite extends munit.FunSuite:
         com.histmersion.api.library.CandidateSweep.Found(3),
         com.histmersion.api.library.CandidateSweep.Added(2),
         com.histmersion.api.library.CandidateSweep.Again(1),
-        Map("retracted" -> 1),
+        Map(com.histmersion.api.library.CandidateSweep.SkippedKey("retracted") -> com.histmersion.api.library.CandidateSweep.SkippedValue(1)),
         com.histmersion.api.library.CandidateSweep.Unseen(5)
       )
     )

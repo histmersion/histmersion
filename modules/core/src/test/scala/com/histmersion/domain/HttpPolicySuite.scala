@@ -13,6 +13,7 @@ class HttpPolicySuite extends munit.FunSuite:
   import HttpPolicy.Step
 
   private val now = Instant.parse("2026-10-10T12:00:00Z")
+  private var noPem: HttpPolicy.PemText = scala.compiletime.uninitialized
 
   test("the User-Agent never carries an e-mail, whatever the setting says"):
     assertEquals(HttpPolicy.userAgent(com.histmersion.domain.HttpPolicy.UserAgent("histmersion/0.1 (mailto:someone@example.org)")), "histmersion/0.1")
@@ -58,6 +59,6 @@ class HttpPolicySuite extends munit.FunSuite:
     val text = s"junk\n-----BEGIN CERTIFICATE-----\n$body\n-----END CERTIFICATE-----\n" +
       "-----BEGIN PRIVATE KEY-----\nAAAA\n-----END PRIVATE KEY-----\n" +
       s"-----BEGIN TRUSTED CERTIFICATE-----\n$body\n-----END TRUSTED CERTIFICATE-----"
-    assertEquals(HttpPolicy.pemCertificates(text).map(new String(_)), List("not really DER", "not really DER"))
+    assertEquals(HttpPolicy.pemCertificates(HttpPolicy.PemText(text)).map(c => new String(c.value)), List("not really DER", "not really DER"))
     assertEquals(HttpPolicy.pemCertificates(com.histmersion.domain.HttpPolicy.PemText("")), Nil)
-    assertEquals(HttpPolicy.pemCertificates(null), Nil)
+    assertEquals(HttpPolicy.pemCertificates(noPem), Nil)

@@ -33,21 +33,21 @@ class BackupSuite extends munit.FunSuite:
     val a = Backup.fileName(Instant.parse("2026-08-25T09:00:00Z"))
     val b = Backup.fileName(Instant.parse("2026-08-25T10:00:00Z"))
     val c = Backup.fileName(Instant.parse("2026-09-01T00:00:00Z"))
-    assertEquals(List(c, a, b).sorted, List(a, b, c))
+    assertEquals(List(c, a, b).sortBy(_.value), List(a, b, c))
 
   // #772: the listing sorted by NAME, so `keep-before-…` was "the newest backup" for ever
   test("backups list newest first by when they were taken, not by name"):
     val mtime = Instant.parse("2026-10-02T12:00:00Z")
-    val keep = "keep-before-schema-024-20260925T085045Z.dump"
+    val keep = Backup.Result.File("keep-before-schema-024-20260925T085045Z.dump")
     assertEquals(Backup.takenAt(keep, mtime), Instant.parse("2026-09-25T08:50:45Z"))
     assertEquals(Backup.takenAt(com.histmersion.api.backup.Backup.Result.File("my-own.dump"), mtime), mtime) // no stamp in the name: its mtime
-    def info(n: String, at: String) = Backup.Info(n, com.histmersion.api.ByteCount(1), at)
+    def info(n: Backup.Result.File, at: Backup.Info.CreatedAt) = Backup.Info(n, com.histmersion.api.ByteCount(1), at)
     val rows = List(
-      info(keep, "2026-09-25T08:50:45Z"),
-      info("histmersion-20261001T080000Z.dump", "2026-10-01T08:00:00Z"),
-      info("histmersion-20261002T090000Z.dump", "2026-10-02T09:00:00Z"),
-      info("histmersion-20261002T090000Z-2.dump", "2026-10-02T09:00:00Z"),
-      info("my-own.dump", "2026-09-30T00:00:00Z")
+      info(keep, Backup.Info.CreatedAt("2026-09-25T08:50:45Z")),
+      info(Backup.Result.File("histmersion-20261001T080000Z.dump"), Backup.Info.CreatedAt("2026-10-01T08:00:00Z")),
+      info(Backup.Result.File("histmersion-20261002T090000Z.dump"), Backup.Info.CreatedAt("2026-10-02T09:00:00Z")),
+      info(Backup.Result.File("histmersion-20261002T090000Z-2.dump"), Backup.Info.CreatedAt("2026-10-02T09:00:00Z")),
+      info(Backup.Result.File("my-own.dump"), Backup.Info.CreatedAt("2026-09-30T00:00:00Z"))
     )
     assertEquals(
       Backup.newestFirst(rows).map(_.file),
@@ -61,18 +61,19 @@ class BackupSuite extends munit.FunSuite:
     )
 
   test("a generated name passes the validator (round-trip)"):
-    assertEquals(Backup.safeName(Backup.fileName(Instant.now())).map(_ => "ok"), Right("ok"))
+    assertEquals(Backup.safeName(Backup.Name(Backup.fileName(Instant.now()).value)).map(_ => "ok"), Right("ok"))
 
   test("uniqueName only kicks in on a collision, and its result is still a safe name"):
     val at = Instant.parse("2026-08-25T14:51:12Z")
     val name = Backup.fileName(at)
-    assertEquals(Backup.uniqueName(name, _ => false), name)
-    assertEquals(Backup.uniqueName(name, Set(name)), "histmersion-20260825T145112Z-2.dump")
+    val asName = Backup.Name(name.value)
+    assertEquals(Backup.uniqueName(asName, _ => false), name)
+    assertEquals(Backup.uniqueName(asName, Set(name)), "histmersion-20260825T145112Z-2.dump")
     assertEquals(
-      Backup.uniqueName(name, Set(name, "histmersion-20260825T145112Z-2.dump")),
+      Backup.uniqueName(asName, Set(name, Backup.Result.File("histmersion-20260825T145112Z-2.dump"))),
       "histmersion-20260825T145112Z-3.dump"
     )
-    assert(Backup.safeName(Backup.uniqueName(name, Set(name))).isRight)
+    assert(Backup.safeName(Backup.Name(Backup.uniqueName(asName, Set(name)).value)).isRight)
 
   // ── the path-traversal gate ──────────────────────────────────────────────────────────────────
 
@@ -97,18 +98,18 @@ class BackupSuite extends munit.FunSuite:
       "histmersion-`id`.dump",
       "histmersion;rm -rf.dump"
     )
-    bad.foreach(n => assert(Backup.safeName(n).isLeft, s"should have been rejected: '$n'"))
+    bad.foreach(n => assert(Backup.safeName(Backup.Name(n)).isLeft, s"should have been rejected: '$n'"))
 
   test("safeName rejects a missing name, a wrong extension and an over-long name"):
     assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("")).isLeft)
     assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("   ")).isLeft)
     assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("histmersion.sql")).isLeft)
     assert(Backup.safeName(com.histmersion.api.backup.Backup.Name(".dump")).isLeft) // extension only
-    assert(Backup.safeName("a" * 200 + ".dump").isLeft)
+    assert(Backup.safeName(Backup.Name("a" * 200 + ".dump")).isLeft)
 
   test("safeName's message says what is wrong"):
-    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("../x.dump")).left.exists(_.contains("no directories")))
-    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("x.sql")).left.exists(_.contains(".dump")))
+    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("../x.dump")).left.exists(_.value.contains("no directories")))
+    assert(Backup.safeName(com.histmersion.api.backup.Backup.Name("x.sql")).left.exists(_.value.contains(".dump")))
 
   // ── JDBC URL → pg_dump arguments ─────────────────────────────────────────────────────────────
 
@@ -148,14 +149,14 @@ class BackupSuite extends munit.FunSuite:
     assert(Backup.parseJdbc(com.histmersion.api.backup.Backup.JdbcUrl("")).isLeft)
 
   test("the configured default URL parses (reference.conf and the parser agree)"):
-    assert(Backup.parseJdbc(AppConfig.load().db.url).isRight)
+    assert(Backup.parseJdbc(Backup.JdbcUrl(AppConfig.load().db.url.value)).isRight)
 
   // ── how pg_restore's exit code is read ───────────────────────────────────────────────────────
 
   private val skew = List(
-    """pg_restore: error: could not execute query: ERROR:  unrecognized configuration parameter "transaction_timeout"""",
-    "Command was: SET transaction_timeout = 0;",
-    "pg_restore: warning: errors ignored on restore: 1"
+    Backup.ToolOutput("""pg_restore: error: could not execute query: ERROR:  unrecognized configuration parameter "transaction_timeout""""),
+    Backup.ToolOutput("Command was: SET transaction_timeout = 0;"),
+    Backup.ToolOutput("pg_restore: warning: errors ignored on restore: 1")
   )
 
   test("restoreOutcome: a clean run has no warnings"):
@@ -166,16 +167,16 @@ class BackupSuite extends munit.FunSuite:
     val out = Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(1), skew)
     assert(out.isRight, out.toString)
     assertEquals(out.toOption.get.size, 2) // the error line and the summary; not the bare "Command was:"
-    assert(out.toOption.get.exists(_.contains("transaction_timeout")), out.toString)
+    assert(out.toOption.get.exists(_.value.contains("transaction_timeout")), out.toString)
 
   test("restoreOutcome: exit 1 WITHOUT that summary is a failure, quoting the output"):
     val out = Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(1), List(com.histmersion.api.backup.Backup.ToolOutput("pg_restore: error: could not open input file: No such file")))
     assert(out.isLeft, out.toString)
-    assert(out.left.exists(_.contains("could not open input file")), out.toString)
-    assert(out.left.exists(_.contains("exit 1")), out.toString)
+    assert(out.left.exists(_.value.contains("could not open input file")), out.toString)
+    assert(out.left.exists(_.value.contains("exit 1")), out.toString)
 
   test("restoreOutcome: a failure with no output at all still says something"):
-    assert(Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(2), Nil).left.exists(_.contains("exit 2")))
+    assert(Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(2), Nil).left.exists(_.value.contains("exit 2")))
 
   test("restoreOutcome: warnings keep only the notable lines, trimmed"):
     val out = Backup.restoreOutcome(com.histmersion.api.backup.Backup.ExitCode(0), List(com.histmersion.api.backup.Backup.ToolOutput(""), com.histmersion.api.backup.Backup.ToolOutput("  pg_restore: warning: x  "), com.histmersion.api.backup.Backup.ToolOutput("chatter")))
@@ -228,11 +229,11 @@ class BackupSuite extends munit.FunSuite:
 
   test("toPrune: the oldest beyond `keep`, ordered by stamp then same-second suffix, ours only"):
     val names = List(
-      "histmersion-20260103T000000Z-2.dump",
-      "histmersion-20260101T000000Z.dump",
-      "notes.dump",
-      "histmersion-20260103T000000Z.dump",
-      "histmersion-20260102T000000Z.dump"
+      Backup.Result.File("histmersion-20260103T000000Z-2.dump"),
+      Backup.Result.File("histmersion-20260101T000000Z.dump"),
+      Backup.Result.File("notes.dump"),
+      Backup.Result.File("histmersion-20260103T000000Z.dump"),
+      Backup.Result.File("histmersion-20260102T000000Z.dump")
     )
     assertEquals(
       Backup.toPrune(names, com.histmersion.api.backup.Backup.Retention(2)),

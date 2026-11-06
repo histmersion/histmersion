@@ -48,7 +48,7 @@ class EventDatingSuite extends munit.FunSuite:
     )
 
   test("precision: ± ≤ 50 precise, ≤ 500 approximate, more imprecise; the stated ± or the widest window"):
-    def p(ts: TimeSpan, pm: Option[Long] = None) = EventPrecision.of(ts, pm)
+    def p(ts: TimeSpan, pm: Option[com.histmersion.api.catalogue.EventSummary.PlusMinus] = None) = EventPrecision.of(ts, pm)
     assertEquals(p(TimeSpan(Some(com.histmersion.api.catalogue.Year(79)), Some(com.histmersion.api.catalogue.Year(79)), Some(com.histmersion.api.catalogue.Year(79)), Some(com.histmersion.api.catalogue.Year(79)))), EventPrecision.Precise)
     assertEquals(p(TimeSpan(Some(com.histmersion.api.catalogue.Year(-1624)), None, None, Some(com.histmersion.api.catalogue.Year(-1596)))), EventPrecision.Precise, "± 14")
     assertEquals(
@@ -78,10 +78,10 @@ class EventDatingSuite extends munit.FunSuite:
     assertEquals(p(TimeSpan()), EventPrecision.Undated)
     assertEquals(
       List(EventPrecision.Precise, EventPrecision.Approximate, EventPrecision.Imprecise, EventPrecision.Undated)
-        .map(EventPrecision.mapped),
+        .map(k => EventPrecision.mapped(com.histmersion.api.catalogue.EventSummary.Precision(k))),
       List(true, true, false, false)
     )
-    assertEquals(EventPrecision.label(EventPrecision.Imprecise), Some("imprecise date"))
+    assertEquals(EventPrecision.label(com.histmersion.api.catalogue.EventSummary.Precision(EventPrecision.Imprecise)), Some("imprecise date"))
 
   // ── corrections ────────────────────────────────────────────────────────────────────────────
 
@@ -100,11 +100,11 @@ class EventDatingSuite extends munit.FunSuite:
       com.histmersion.api.catalogue.Correction.TargetKind("event"),
       com.histmersion.api.catalogue.Correction.TargetId("gvp_1"),
       com.histmersion.api.catalogue.Correction.Field("label"),
-      y.noSpaces,
-      x.noSpaces,
-      Correction.Status.Conflict,
+      com.histmersion.api.catalogue.Correction.Value(y.noSpaces),
+      com.histmersion.api.catalogue.Correction.UpstreamValue(x.noSpaces),
+      com.histmersion.api.catalogue.Correction.StatusValue(Correction.Status.Conflict),
       Some(com.histmersion.api.catalogue.Correction.Upstream("gvp")),
-      Some(z.noSpaces)
+      Some(com.histmersion.api.catalogue.Correction.UpstreamNow(z.noSpaces))
     )
     assertEquals(
       Corrections.describe(c),
@@ -119,8 +119,8 @@ class EventDatingSuite extends munit.FunSuite:
       com.histmersion.api.catalogue.CatalogRecord.Label("Eruption of Zz"),
       com.histmersion.api.catalogue.CatalogRecord.Kind("volcanic eruption"),
       TimeSpan(Some(com.histmersion.api.catalogue.Year(1)), None, None, Some(com.histmersion.api.catalogue.Year(3))),
-      Some(10.5),
-      Some(20.25),
+      Some(com.histmersion.api.catalogue.Latitude(10.5)),
+      Some(com.histmersion.api.catalogue.Longitude(20.25)),
       description = Some("x")
     )
     val up = EventFields.upstream(r)
@@ -130,7 +130,7 @@ class EventDatingSuite extends munit.FunSuite:
       EventPatch(
         label = Some(com.histmersion.api.catalogue.EventSummary.Label("Zz")),
         kind = Some(com.histmersion.api.catalogue.EventSummary.Kind("Volcanic eruption")),
-        geometry = Some("""{"type":"Point","coordinates":[20.25, 10.5]}"""),
+        geometry = Some(EventPatch.Geometry("""{"type":"Point","coordinates":[20.25, 10.5]}""")),
         description = Some("")
       )
     )
@@ -143,19 +143,33 @@ class EventDatingSuite extends munit.FunSuite:
   // ── deterministic merge ────────────────────────────────────────────────────────────────────
 
   private val tol = CatalogMerge.Tolerance(com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Km(60), com.histmersion.domain.catalogue.events.CatalogMerge.Tolerance.Years(30))
-  private def rec(p: String, id: String, y: Long, lat: Double, lon: Double, group: Option[String] = None) =
+  private def rec(
+      p: CatalogRecord.Provider,
+      id: CatalogRecord.ProviderId,
+      y: com.histmersion.api.catalogue.Year,
+      lat: com.histmersion.api.catalogue.Latitude,
+      lon: com.histmersion.api.catalogue.Longitude,
+      group: Option[CatalogRecord.Group] = None
+  ) =
     CatalogRecord(
       p,
       id,
       com.histmersion.api.catalogue.CatalogRecord.Url(""),
-      s"$p $id",
+      CatalogRecord.Label(s"$p $id"),
       com.histmersion.api.catalogue.CatalogRecord.Kind("eruption"),
       TimeSpan(Some(y), Some(y), Some(y), Some(y)),
       Some(lat),
       Some(lon),
       group = group
     )
-  private def ev(id: String, y0: Long, y1: Long, lat: Double, lon: Double, wd: Option[String] = None) =
+  private def ev(
+      id: com.histmersion.domain.catalogue.Event.Id,
+      y0: com.histmersion.api.catalogue.Year,
+      y1: com.histmersion.api.catalogue.Year,
+      lat: com.histmersion.Latitude,
+      lon: com.histmersion.Longitude,
+      wd: Option[com.histmersion.api.catalogue.CatalogRecord.Wikidata] = None
+  ) =
     StoredEvent(
       id,
       com.histmersion.domain.catalogue.events.StoredEvent.Kind("eruption"),
@@ -171,37 +185,37 @@ class EventDatingSuite extends munit.FunSuite:
     "merge: several stored events qualify — the best fit wins (overlap, then |Δt|, then km, then id), never the first"
   ):
     // both overlap -1610 within the tolerance; `zz_b` fits its span better
-    val a = ev("zz_a", -1700, -1500, 36.4, 25.4)
-    val b = ev("zz_b", -1615, -1605, 36.45, 25.45)
-    val r = rec("gvp", "1", -1610, 36.4, 25.4)
+    val a = ev(com.histmersion.domain.catalogue.Event.Id("zz_a"), com.histmersion.api.catalogue.Year(-1700), com.histmersion.api.catalogue.Year(-1500), com.histmersion.Latitude(36.4), com.histmersion.Longitude(25.4))
+    val b = ev(com.histmersion.domain.catalogue.Event.Id("zz_b"), com.histmersion.api.catalogue.Year(-1615), com.histmersion.api.catalogue.Year(-1605), com.histmersion.Latitude(36.45), com.histmersion.Longitude(25.45))
+    val r = rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), com.histmersion.api.catalogue.Year(-1610), com.histmersion.api.catalogue.Latitude(36.4), com.histmersion.api.catalogue.Longitude(25.4))
     assertEquals(CatalogMerge.place(List(r), List(a, b), tol).head._2.eventId, "zz_b")
     assertEquals(CatalogMerge.place(List(r), List(b, a), tol).head._2.eventId, "zz_b")
     // the same span: the nearer wins; the same span and point: the smaller id
-    val c = ev("zz_c", -1615, -1605, 36.40, 25.40)
+    val c = ev(com.histmersion.domain.catalogue.Event.Id("zz_c"), com.histmersion.api.catalogue.Year(-1615), com.histmersion.api.catalogue.Year(-1605), com.histmersion.Latitude(36.40), com.histmersion.Longitude(25.40))
     assertEquals(CatalogMerge.place(List(r), List(b, c), tol).head._2.eventId, "zz_c")
-    val d = ev("zz_0", -1615, -1605, 36.40, 25.40)
+    val d = ev(com.histmersion.domain.catalogue.Event.Id("zz_0"), com.histmersion.api.catalogue.Year(-1615), com.histmersion.api.catalogue.Year(-1605), com.histmersion.Latitude(36.40), com.histmersion.Longitude(25.40))
     assertEquals(CatalogMerge.place(List(r), List(c, d), tol).head._2.eventId, "zz_0")
     // two stored events of one Wikidata item: the best fit, not whichever came last
-    val w1 = ev("zz_w1", -1615, -1605, 36.4, 25.4, Some("Q1"))
-    val w2 = ev("zz_w2", -1200, -1100, 36.4, 25.4, Some("Q1"))
-    val rw = rec("wikidata", "Q1", -1610, 36.4, 25.4).modify(_.wikidata).setTo(Some("Q1"))
+    val w1 = ev(com.histmersion.domain.catalogue.Event.Id("zz_w1"), com.histmersion.api.catalogue.Year(-1615), com.histmersion.api.catalogue.Year(-1605), com.histmersion.Latitude(36.4), com.histmersion.Longitude(25.4), Some(com.histmersion.api.catalogue.EventEntry.Wikidata("Q1")))
+    val w2 = ev(com.histmersion.domain.catalogue.Event.Id("zz_w2"), com.histmersion.api.catalogue.Year(-1200), com.histmersion.api.catalogue.Year(-1100), com.histmersion.Latitude(36.4), com.histmersion.Longitude(25.4), Some(com.histmersion.api.catalogue.EventEntry.Wikidata("Q1")))
+    val rw = rec(CatalogRecord.Provider("wikidata"), CatalogRecord.ProviderId("Q1"), com.histmersion.api.catalogue.Year(-1610), com.histmersion.api.catalogue.Latitude(36.4), com.histmersion.api.catalogue.Longitude(25.4)).modify(_.wikidata).setTo(Some(com.histmersion.api.catalogue.EventEntry.Wikidata("Q1")))
     assertEquals(CatalogMerge.place(List(rw), List(w1, w2), tol).head._2.eventId, "zz_w1")
     assertEquals(CatalogMerge.place(List(rw), List(w2, w1), tol).head._2.eventId, "zz_w1")
 
   test("merge: shuffled records and shuffled stored events place identically"):
     val records = List(
-      rec("gvp", "1", -1610, 36.4, 25.4, Some("volcano:1")),
-      rec("gvp", "2", -1600, 36.4, 25.4, Some("volcano:1")),
-      rec("noaa", "volcano:5", -1608, 36.41, 25.39, Some("volcano:1")),
-      rec("noaa", "volcano:6", -1601, 36.41, 25.39, Some("volcano:1")),
-      rec("wikidata", "Q9", -1605, 36.40, 25.41),
-      rec("gvp", "3", -79, 40.8, 14.4),
-      rec("noaa", "volcano:7", -79, 40.82, 14.42)
+      rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("1"), com.histmersion.api.catalogue.Year(-1610), com.histmersion.api.catalogue.Latitude(36.4), com.histmersion.api.catalogue.Longitude(25.4), Some(CatalogRecord.Group("volcano:1"))),
+      rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("2"), com.histmersion.api.catalogue.Year(-1600), com.histmersion.api.catalogue.Latitude(36.4), com.histmersion.api.catalogue.Longitude(25.4), Some(CatalogRecord.Group("volcano:1"))),
+      rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:5"), com.histmersion.api.catalogue.Year(-1608), com.histmersion.api.catalogue.Latitude(36.41), com.histmersion.api.catalogue.Longitude(25.39), Some(CatalogRecord.Group("volcano:1"))),
+      rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:6"), com.histmersion.api.catalogue.Year(-1601), com.histmersion.api.catalogue.Latitude(36.41), com.histmersion.api.catalogue.Longitude(25.39), Some(CatalogRecord.Group("volcano:1"))),
+      rec(CatalogRecord.Provider("wikidata"), CatalogRecord.ProviderId("Q9"), com.histmersion.api.catalogue.Year(-1605), com.histmersion.api.catalogue.Latitude(36.40), com.histmersion.api.catalogue.Longitude(25.41)),
+      rec(CatalogRecord.Provider("gvp"), CatalogRecord.ProviderId("3"), com.histmersion.api.catalogue.Year(-79), com.histmersion.api.catalogue.Latitude(40.8), com.histmersion.api.catalogue.Longitude(14.4)),
+      rec(CatalogRecord.Provider("noaa"), CatalogRecord.ProviderId("volcano:7"), com.histmersion.api.catalogue.Year(-79), com.histmersion.api.catalogue.Latitude(40.82), com.histmersion.api.catalogue.Longitude(14.42))
     )
     val stored = List(
-      ev("zz_thera", -1650, -1550, 36.4, 25.4),
-      ev("zz_thera2", -1620, -1590, 36.42, 25.42),
-      ev("zz_vesuvius", -80, -78, 40.8, 14.4)
+      ev(com.histmersion.domain.catalogue.Event.Id("zz_thera"), com.histmersion.api.catalogue.Year(-1650), com.histmersion.api.catalogue.Year(-1550), com.histmersion.Latitude(36.4), com.histmersion.Longitude(25.4)),
+      ev(com.histmersion.domain.catalogue.Event.Id("zz_thera2"), com.histmersion.api.catalogue.Year(-1620), com.histmersion.api.catalogue.Year(-1590), com.histmersion.Latitude(36.42), com.histmersion.Longitude(25.42)),
+      ev(com.histmersion.domain.catalogue.Event.Id("zz_vesuvius"), com.histmersion.api.catalogue.Year(-80), com.histmersion.api.catalogue.Year(-78), com.histmersion.Latitude(40.8), com.histmersion.Longitude(14.4))
     )
     val expected = CatalogMerge.place(records, stored, tol).map((r, p) => r.key -> p).toMap
     val rnd = Random(1449)
@@ -215,17 +229,17 @@ class EventDatingSuite extends munit.FunSuite:
 
   test("the owner record of an event: the one its id is named after, else the lowest of its catalogue's"):
     assertEquals(
-      CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("gvp_2"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List("gvp" -> "1", "gvp" -> "2", "noaa" -> "x")),
-      Some("gvp" -> "2")
+      CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("gvp_2"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List(CatalogRecord.Provider("gvp") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("1"), CatalogRecord.Provider("gvp") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("2"), CatalogRecord.Provider("noaa") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("x"))),
+      Some(CatalogRecord.Provider("gvp") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("2"))
     )
     assertEquals(
-      CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("renamed"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List("noaa" -> "x", "gvp" -> "9", "gvp" -> "10")),
-      Some("gvp" -> "10")
+      CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("renamed"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List(CatalogRecord.Provider("noaa") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("x"), CatalogRecord.Provider("gvp") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("9"), CatalogRecord.Provider("gvp") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("10"))),
+      Some(CatalogRecord.Provider("gvp") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("10"))
     )
-    assertEquals(CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("x"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List("noaa" -> "x")), None)
+    assertEquals(CatalogRecord.owner(com.histmersion.api.catalogue.CatalogRecord.EventId("x"), com.histmersion.api.catalogue.CatalogRecord.Provider("gvp"), List(CatalogRecord.Provider("noaa") -> com.histmersion.api.catalogue.EventCatalogueRef.ProviderId("x"))), None)
 
   test("an item read in two Wikidata classes keeps the more specific kind, whichever class is read last"):
-    val order = List("naval_battle", "siege", "battle", "revolt", "war")
+    val order = List("naval_battle", "siege", "battle", "revolt", "war").map(k => com.histmersion.api.catalogue.EventSummary.Kind(k))
     val more = EventProviders.WikidataEvents.moreSpecific(order, _, _)
     assertEquals(more(com.histmersion.api.catalogue.EventSummary.Kind("naval_battle"), com.histmersion.api.catalogue.EventSummary.Kind("battle")), "naval_battle")
     assertEquals(more(com.histmersion.api.catalogue.EventSummary.Kind("battle"), com.histmersion.api.catalogue.EventSummary.Kind("naval_battle")), "naval_battle")

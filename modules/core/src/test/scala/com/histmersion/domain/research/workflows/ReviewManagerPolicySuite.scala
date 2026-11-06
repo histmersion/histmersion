@@ -38,31 +38,31 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     maxBackoffMinutes = com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360)
   )
 
-  private def f(id: String, r: Reviewer, kind: String = "synth", sev: Severity = Severity.Major) =
-    Finding(id, r, sev, kind, s"where $id", s"quote of $id", s"problem $id", com.histmersion.domain.ReviewArticle.Finding.Fix("fix"))
+  private def f(id: Finding.Id, r: Reviewer, kind: Finding.Kind = Finding.Kind("synth"), sev: Severity = Severity.Major) =
+    Finding(id, r, sev, kind, Finding.Where(s"where ${id.value}"), Finding.Quote(s"quote of ${id.value}"), Finding.Problem(s"problem ${id.value}"), com.histmersion.domain.ReviewArticle.Finding.Fix("fix"))
 
   private def facts(
-      open: Int,
-      reopened: Int = 0,
-      escalated: Int = 0,
-      onlyMissing: Boolean = false,
-      pairs: Option[Int] = None
+      open: ReviewFacts.OpenMajors,
+      reopened: ReviewFacts.MaxReopened = ReviewFacts.MaxReopened(0),
+      escalated: ReviewFacts.Escalated = ReviewFacts.Escalated(0),
+      onlyMissing: ReviewFacts.OnlyMissingCritiques = ReviewFacts.OnlyMissingCritiques(false),
+      pairs: Option[ReviewFacts.OpenPairs] = None
   ) =
     Some(ReviewFacts(open, reopened, escalated, onlyMissing, pairs))
 
   private def eval(
       st: ItemState = ItemState(),
-      attempts: Int = 1,
+      attempts: ManagerPolicy.Attempts = ManagerPolicy.Attempts(1),
       status: RunState = RunState.Done,
-      fs: Option[ReviewFacts] = facts(2),
-      task: Option[String] = Some("review-article [[tin]]: 2 open MAJORs — …"),
-      failures: Int = 0,
-      error: Option[String] = None
+      fs: Option[ReviewFacts] = facts(ReviewFacts.OpenMajors(2)),
+      task: Option[ManagerPolicy.ItemTask] = Some(ManagerPolicy.ItemTask("review-article [[tin]]: 2 open MAJORs — …")),
+      failures: Next.Retry.Failures = Next.Retry.Failures(0),
+      error: Option[ManagerPolicy.Problem] = None
   ) =
     evaluateReview(s, com.histmersion.domain.research.Slug("tin"), attempts, failures, st, com.histmersion.domain.automation.Run.Id("run-1234567890"), status, error, fs, task, now)
 
   test("no open MAJOR: done, converged after k runs"):
-    eval(fs = facts(0), attempts = 2) match
+    eval(fs = facts(ReviewFacts.OpenMajors(0)), attempts = ManagerPolicy.Attempts(2)) match
       case Next.Done(o, st) =>
         assertEquals(o, "converged after 2 runs")
         assertEquals(st.history.map(_.after), List(0))
@@ -74,7 +74,7 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         assertEquals(nb, Some(now.plusSeconds(1800)))
         assertEquals(st.history, List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("run-1234567890"), Some(com.histmersion.api.automation.Managers.RunMark.Before(5)), com.histmersion.api.automation.Managers.RunMark.After(2))))
         assertEquals(st.before, None)
-        assert(note.contains("2 open MAJORs"), note)
+        assert(note.value.contains("2 open MAJORs"), note)
       case other => fail(other.toString)
 
   test("stop rules: omission churn — only missing-critique MAJORs AND the open critique pairs did not go down"):
@@ -84,11 +84,11 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)),
       pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(5))
     )
-    eval(st = stalled, attempts = 2, fs = facts(2, onlyMissing = true, pairs = Some(5))) match
+    eval(st = stalled, attempts = ManagerPolicy.Attempts(2), fs = facts(ReviewFacts.OpenMajors(2), onlyMissing = ReviewFacts.OnlyMissingCritiques(true), pairs = Some(ReviewFacts.OpenPairs(5)))) match
       case Next.Stop(o, Some(t), st) =>
-        assert(o.contains("omission churn") && o.contains("did not go down over 2 runs (now 5)"), o)
-        assert(t.startsWith("review-article [[tin]]: 2 open MAJORs"), t)
-        assert(t.contains("review manager stopped: omission churn"), t)
+        assert(o.value.contains("omission churn") && o.value.contains("did not go down over 2 runs (now 5)"), o)
+        assert(t.value.startsWith("review-article [[tin]]: 2 open MAJORs"), t)
+        assert(t.value.contains("review manager stopped: omission churn"), t)
         assertEquals(
           st.history.last,
           RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("run-1234567890"), Some(com.histmersion.api.automation.Managers.RunMark.Before(2)), com.histmersion.api.automation.Managers.RunMark.After(2), churn = com.histmersion.api.automation.Managers.RunMark.Churn(true), pairsBefore = Some(com.histmersion.api.automation.Managers.RunMark.PairsBefore(5)), pairsAfter = Some(com.histmersion.api.automation.Managers.RunMark.PairsAfter(5)))
@@ -102,14 +102,14 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)),
       pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(6))
     )
-    eval(st = going, attempts = 2, fs = facts(2, onlyMissing = true, pairs = Some(3))) match
+    eval(st = going, attempts = ManagerPolicy.Attempts(2), fs = facts(ReviewFacts.OpenMajors(2), onlyMissing = ReviewFacts.OnlyMissingCritiques(true), pairs = Some(ReviewFacts.OpenPairs(3)))) match
       case Next.Again(_, st, note) =>
-        assert(note.contains("3 open critique pairs"), note)
+        assert(note.value.contains("3 open critique pairs"), note)
         assertEquals(st.history.last.pairsAfter, Some(3))
       case other => fail(other.toString)
     // one run is no window: the first run's churn never stops it
     assert(
-      eval(st = ItemState(before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)), pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(4))), fs = facts(2, onlyMissing = true, pairs = Some(4)))
+      eval(st = ItemState(before = Some(com.histmersion.api.automation.Managers.ItemState.Before(2)), pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(4))), fs = facts(ReviewFacts.OpenMajors(2), onlyMissing = ReviewFacts.OnlyMissingCritiques(true), pairs = Some(ReviewFacts.OpenPairs(4))))
         .isInstanceOf[Next.Again]
     )
     // counts unknown (runs evaluated before the checklist): no evidence of a stall
@@ -120,41 +120,41 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       before = Some(com.histmersion.api.automation.Managers.ItemState.Before(3)),
       pairsBefore = Some(com.histmersion.api.automation.Managers.ItemState.PairsBefore(6))
     )
-    assert(eval(st = flat, attempts = 2, fs = facts(3, pairs = Some(3))).isInstanceOf[Next.Stop])
+    assert(eval(st = flat, attempts = ManagerPolicy.Attempts(2), fs = facts(ReviewFacts.OpenMajors(3), pairs = Some(ReviewFacts.OpenPairs(3)))).isInstanceOf[Next.Stop])
     // max runs per article still stops it
-    assert(eval(st = going, attempts = 3, fs = facts(2, onlyMissing = true, pairs = Some(3))).isInstanceOf[Next.Stop])
+    assert(eval(st = going, attempts = ManagerPolicy.Attempts(3), fs = facts(ReviewFacts.OpenMajors(2), onlyMissing = ReviewFacts.OnlyMissingCritiques(true), pairs = Some(ReviewFacts.OpenPairs(3)))).isInstanceOf[Next.Stop])
 
   test("stop rules: escalated, reopened to the limit, max runs per article, no progress"):
     def stopped(n: Next) = n match
-      case Next.Stop(o, t, _) => assert(t.isDefined); o
+      case Next.Stop(o, t, _) => assert(t.isDefined); o.value
       case other              => fail(other.toString)
-    assert(stopped(eval(fs = facts(1, escalated = 1))).contains("escalated"))
-    assert(stopped(eval(fs = facts(1, reopened = 2))).contains("reopened 2 times"))
-    assert(stopped(eval(attempts = 3)).contains("max-runs-per-article 3"))
+    assert(stopped(eval(fs = facts(ReviewFacts.OpenMajors(1), escalated = ReviewFacts.Escalated(1)))).contains("escalated"))
+    assert(stopped(eval(fs = facts(ReviewFacts.OpenMajors(1), reopened = ReviewFacts.MaxReopened(2)))).contains("reopened 2 times"))
+    assert(stopped(eval(attempts = ManagerPolicy.Attempts(3))).contains("max-runs-per-article 3"))
     // two runs, open MAJORs 3 → 3 → 3: no progress over the window of 2
     val hist = ItemState(history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(3)), com.histmersion.api.automation.Managers.RunMark.After(3))), before = Some(com.histmersion.api.automation.Managers.ItemState.Before(3)))
-    assert(stopped(eval(st = hist, attempts = 2, fs = facts(3))).contains("did not go down over 2 runs"))
+    assert(stopped(eval(st = hist, attempts = ManagerPolicy.Attempts(2), fs = facts(ReviewFacts.OpenMajors(3)))).contains("did not go down over 2 runs"))
     // 4 → 3 → 2: progress, so again
     val better = ItemState(history = List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(4)), com.histmersion.api.automation.Managers.RunMark.After(3))), before = Some(com.histmersion.api.automation.Managers.ItemState.Before(3)))
-    assert(eval(st = better, attempts = 2, fs = facts(2)).isInstanceOf[Next.Again])
+    assert(eval(st = better, attempts = ManagerPolicy.Attempts(2), fs = facts(ReviewFacts.OpenMajors(2))).isInstanceOf[Next.Again])
     assert(!noProgress(List(RunMark(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), Some(com.histmersion.api.automation.Managers.RunMark.Before(3)), com.histmersion.api.automation.Managers.RunMark.After(3))), com.histmersion.domain.ManagerPolicy.ReviewSettings.NoProgressRuns(2))) // one run is no window of two
 
   test("a stop with no ledger line still files a task naming the article and the run"):
-    eval(fs = facts(1, escalated = 1), task = None) match
+    eval(fs = facts(ReviewFacts.OpenMajors(1), escalated = ReviewFacts.Escalated(1)), task = None) match
       case Next.Stop(_, Some(t), _) =>
-        assert(t.startsWith("review manager stopped [[tin]]: ") && t.contains("run-1234"), t)
+        assert(t.value.startsWith("review manager stopped [[tin]]: ") && t.value.contains("run-1234"), t)
       case other => fail(other.toString)
 
   test("failed runs back off exponentially; the max-failures-th stops the item with a task"):
-    eval(status = RunState.Failed, fs = None, error = Some("boom")) match
+    eval(status = RunState.Failed, fs = None, error = Some(ManagerPolicy.Problem("boom"))) match
       case Next.Retry(nb, n, note) =>
-        assertEquals((nb, n), (now.plusSeconds(15 * 60), 1)); assert(note.contains("boom"))
+        assertEquals((nb, n), (now.plusSeconds(15 * 60), 1)); assert(note.value.contains("boom"))
       case other => fail(other.toString)
-    eval(status = RunState.Failed, fs = None, failures = 1) match
-      case Next.Retry(nb, 2, _) => assertEquals(nb, now.plusSeconds(30 * 60))
+    eval(status = RunState.Failed, fs = None, failures = Next.Retry.Failures(1)) match
+      case Next.Retry(nb, n, _) if n.value == 2 => assertEquals(nb, now.plusSeconds(30 * 60))
       case other                => fail(other.toString)
-    eval(status = RunState.Failed, fs = None, failures = 2) match
-      case Next.Stop(o, Some(t), _) => assert(o.contains("3 failed runs") && t.contains("3 failed runs"), (o, t))
+    eval(status = RunState.Failed, fs = None, failures = Next.Retry.Failures(2)) match
+      case Next.Stop(o, Some(t), _) => assert(o.value.contains("3 failed runs") && t.value.contains("3 failed runs"), (o, t))
       case other                    => fail(other.toString)
     assertEquals(ManagerPolicy.backoff(com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes(15), com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360), com.histmersion.domain.ManagerPolicy.Next.Retry.Failures(10)).toMinutes, 360L)
     assertEquals(ManagerPolicy.backoff(com.histmersion.domain.ManagerPolicy.ReviewSettings.BackoffMinutes(15), com.histmersion.domain.ManagerPolicy.ReviewSettings.MaxBackoffMinutes(360), com.histmersion.domain.ManagerPolicy.Next.Retry.Failures(1)).toMinutes, 15L)
@@ -165,9 +165,9 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
       case _                     => false)
 
   test("facts from a ledger: open majors, reopen counts, escalation, whether every open MAJOR is a missing-critique"):
-    val run = "run-a"
-    val sk = f("S1", Reviewer.Skeptic, MissingCritique)
-    val sk2 = f("S2", Reviewer.Skeptic, MissingCritique)
+    val run = com.histmersion.domain.automation.Run.Id("run-a")
+    val sk = f(Finding.Id("S1"), Reviewer.Skeptic, MissingCritique)
+    val sk2 = f(Finding.Id("S2"), Reviewer.Skeptic, MissingCritique)
     val l1 = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), List(sk), run, com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
     val l2 = applyChecks(
       applyFix(l1, Fix(com.histmersion.domain.ReviewArticle.Fix.Body("b"), Nil, List(com.histmersion.domain.ReviewArticle.Finding.Id("S1")), Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Notes(""), com.histmersion.domain.ReviewArticle.Fix.WordsBefore(1), com.histmersion.domain.ReviewArticle.Fix.WordsAfter(1)), run, com.histmersion.domain.ReviewLedger.ApplyFixRound(1)),
@@ -178,29 +178,29 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
     )
     val l3 = absorb(
       l2,
-      List(sk2.modify(_.quote).setTo("another passage entirely").modify(_.where).setTo("elsewhere").modify(_.problem).setTo("omits X's critique")),
+      List(sk2.modify(_.quote).setTo(Finding.Quote("another passage entirely")).modify(_.where).setTo(Finding.Where("elsewhere")).modify(_.problem).setTo(Finding.Problem("omits X's critique"))),
       run,
       com.histmersion.domain.ReviewLedger.Closure.Round(3)
     )._1
-    val fx = ReviewFacts.of(l3, Some(com.histmersion.domain.research.workflows.ReviewManagerPolicy.ReviewFacts.(4)))
+    val fx = ReviewFacts.of(l3, Some(ReviewFacts.OpenPairs(4)))
     assertEquals((fx.openMajors, fx.onlyMissingCritiques, fx.openPairs), (1, true, Some(4)))
     // a rules MAJOR among them: not only missing critiques
-    val mixed = absorb(l3, List(f("R1", Reviewer.Rules)), run, com.histmersion.domain.ReviewLedger.Closure.Round(3))._1
-    assert(!ReviewFacts.of(mixed).onlyMissingCritiques)
+    val mixed = absorb(l3, List(f(Finding.Id("R1"), Reviewer.Rules)), run, com.histmersion.domain.ReviewLedger.Closure.Round(3))._1
+    assert(!ReviewFacts.of(mixed).onlyMissingCritiques.value)
     // nothing open: not "only missing critiques" either
-    assert(!ReviewFacts.of(l2).onlyMissingCritiques)
+    assert(!ReviewFacts.of(l2).onlyMissingCritiques.value)
     // a missing-critique of any pass or run counts (the pairs decide whether it is churn)
-    assert(ReviewFacts.of(l1).onlyMissingCritiques)
+    assert(ReviewFacts.of(l1).onlyMissingCritiques.value)
 
   test("selection order: open MAJORs, never reviewed, stale; an article without a filter gets infer-filter first"):
     val picks = select(
-      majors = List("a" -> 3, "b" -> 1),
+      majors = List(com.histmersion.domain.research.Slug("a") -> ReviewFacts.OpenMajors(3), com.histmersion.domain.research.Slug("b") -> ReviewFacts.OpenMajors(1)),
       unreviewed = List(com.histmersion.domain.research.Slug("c"), com.histmersion.domain.research.Slug("a")),
-      stale = List("d" -> "old"),
+      stale = List(com.histmersion.domain.research.Slug("d") -> Pick.Why("old")),
       batch = com.histmersion.domain.ManagerPolicy.ReviewSettings.RefillBatch(10),
       inferFilter = com.histmersion.domain.ManagerPolicy.ReviewSettings.InferFilter(true),
-      hasFilter = Set("a", "d"),
-      inferredBefore = Set("c")
+      hasFilter = Set(com.histmersion.domain.research.Slug("a"), com.histmersion.domain.research.Slug("d")),
+      inferredBefore = Set(com.histmersion.domain.research.Slug("c"))
     )
     assertEquals(
       picks.map(p => (p.kind, p.target, p.priority)),
@@ -212,10 +212,10 @@ class ReviewManagerPolicySuite extends munit.FunSuite:
         (ArticleReview, "d", StalePriority)
       )
     )
-    assert(picks.find(_.target == "d").get.why.startsWith("stale"))
+    assert(picks.find(_.target == com.histmersion.domain.research.Slug("d")).get.why.value.startsWith("stale"))
     // the batch counts reviews; inferFilter off adds none
     assertEquals(
-      select(List("a" -> 1, "b" -> 1), List(com.histmersion.domain.research.Slug("c")), Nil, com.histmersion.domain.ManagerPolicy.ReviewSettings.RefillBatch(2), inferFilter = com.histmersion.domain.ManagerPolicy.ReviewSettings.InferFilter(false), _ => false, _ => false).map(_.target),
+      select(List(com.histmersion.domain.research.Slug("a") -> ReviewFacts.OpenMajors(1), com.histmersion.domain.research.Slug("b") -> ReviewFacts.OpenMajors(1)), List(com.histmersion.domain.research.Slug("c")), Nil, com.histmersion.domain.ManagerPolicy.ReviewSettings.RefillBatch(2), inferFilter = com.histmersion.domain.ManagerPolicy.ReviewSettings.InferFilter(false), _ => false, _ => false).map(_.target),
       List("a", "b")
     )
 

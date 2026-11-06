@@ -25,18 +25,20 @@ import com.histmersion.api.research.Coverage
   */
 class ReviewConvergenceSuite extends munit.FunSuite:
 
+  private val minRatio = com.histmersion.domain.ReviewArticle.CritiqueRule.MinRatio(0.9)
+
   private def live(slug: String): Ledger =
     decode[Ledger](scala.io.Source.fromResource(s"review/ledger-$slug.json")(using scala.io.Codec.UTF8).mkString)
       .fold(e => fail(s"$slug: $e"), identity)
 
   test("live ledgers decode — entries written before §6.9 have no not-fixed count and no deferral"):
     val a = live("achilles_origins")
-    assertEquals(a.entries.map(_.id).sorted, List("C12", "R8", "S3", "S4", "S5", "S6"))
-    assert(a.entries.forall(e => e.notFixedCount == 0 && e.deferred.isEmpty))
+    assertEquals(a.entries.map(_.id).sortBy(_.value), List("C12", "R8", "S3", "S4", "S5", "S6"))
+    assert(a.entries.forall(e => e.notFixedCount.value == 0 && e.deferred.isEmpty))
     assertEquals(a.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S6")).flatMap(_.finding.pair).map(_.wire), Some("kelly2021_gods>bachvarova2016_hittite"))
     // and round-trips with the new fields
     assertEquals(decode[Ledger](a.asJson.noSpaces).map(_.entries.size), Right(6))
-    assertEquals(live("gods_and_migrations").entries.count(_.reopened > 0), 3)
+    assertEquals(live("gods_and_migrations").entries.count(_.reopened.value > 0), 3)
 
   // ── the final pass defers what it finds new ────────────────────────────────────────────────────
 
@@ -47,21 +49,21 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     // (reopened), S35–S37 raised for the first time by the final pass
     val g = live("gods_and_migrations")
     val before = g.modify(_.entries).setTo(g.entries
-        .filterNot(e => Set("S35", "S36", "S37")(e.id))
+        .filterNot(e => Set("S35", "S36", "S37")(e.id.value))
         .map(e =>
-          if e.reopened > 0 then e.modify(_.status).setTo(Status.Fixed).modify(_.reopened).setTo(e.reopened - 1).modify(_.notFixed).setTo(None) else e
+          if e.reopened.value > 0 then e.modify(_.status).setTo(Status.Fixed).modify(_.reopened).setTo(Entry.Reopened(e.reopened.value - 1)).modify(_.notFixed).setTo(None) else e
         )
     )
     val after = g // the final pass absorbed: S24/S31/S7 reopened, S35–S37 new
-    val regression = (f: Finding) => f.id == "S37"
+    val regression = (f: Finding) => f.id.value == "S37"
     val (d, ids) = deferFinal(before, after, com.histmersion.domain.automation.Run.Id("run-9"), regression)
-    assertEquals(ids.sorted, List("S35", "S36"))
-    assertEquals(d.entries.filter(_.deferred.contains("run-9")).map(_.id).sorted, List("S35", "S36"))
+    assertEquals(ids.sortBy(_.value), List("S35", "S36"))
+    assertEquals(d.entries.filter(_.deferred.contains("run-9")).map(_.id).sortBy(_.value), List("S35", "S36"))
     // the run's verdict counts them as minor; the next run sees them as open MAJORs
     val m = merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(3), run = Some(com.histmersion.domain.automation.Run.Id("run-9")))
-    assertEquals(m.deferred.sorted, List("S35", "S36"))
-    assert(!m.majors.exists(f => Set("S35", "S36")(f.id)))
-    assertEquals(m.majors.map(_.id).sorted, List("S24", "S31", "S37", "S7"))
+    assertEquals(m.deferred.sortBy(_.value), List("S35", "S36"))
+    assert(!m.majors.exists(f => Set("S35", "S36")(f.id.value)))
+    assertEquals(m.majors.map(_.id).sortBy(_.value), List("S24", "S31", "S37", "S7"))
     assertEquals(merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(1), run = Some(com.histmersion.domain.automation.Run.Id("run-10"))).majors.size, 6)
     assertEquals(d.openMajors.size, 6, "still open MAJOR in the ledger: the next run's work")
     // an open minor the final pass raised to MAJOR is new too
@@ -70,17 +72,17 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         .get
         .copy(finding = after.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S35")).get.finding.copy(severity = Severity.Minor))
     )
-    assertEquals(deferFinal(minorBefore, after, com.histmersion.domain.automation.Run.Id("run-9"), _ => false)._2.sorted, List("S35", "S36", "S37"))
+    assertEquals(deferFinal(minorBefore, after, com.histmersion.domain.automation.Run.Id("run-9"), _ => false)._2.sortBy(_.value), List("S35", "S36", "S37"))
 
   test("a run whose only open MAJORs are deferred ends below MAJOR; its backlog item says they are deferred"):
     val g = live("gods_and_migrations")
-    val only = g.modify(_.entries).setTo(g.entries.filter(e => Set("S35", "S36")(e.id)))
+    val only = g.modify(_.entries).setTo(g.entries.filter(e => Set("S35", "S36")(e.id.value)))
     val (d, _) = deferFinal(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("gods_and_migrations")), only, com.histmersion.domain.automation.Run.Id("run-9"), _ => false)
     assertEquals(merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(3), run = Some(com.histmersion.domain.automation.Run.Id("run-9"))).verdict, Verdict.Minor)
     val task = taskText(d, com.histmersion.domain.automation.Run.Id("run-9")).get
-    assert(task.startsWith("review-article [[gods_and_migrations]]: 2 open MAJORs — "), task)
-    assert(task.contains("[new in the final pass: deferred to the next run]"), task)
-    assert(!taskText(d, com.histmersion.domain.automation.Run.Id("run-10")).get.contains("deferred"), "a later run's item does not repeat it")
+    assert(task.value.startsWith("review-article [[gods_and_migrations]]: 2 open MAJORs — "), task)
+    assert(task.value.contains("[new in the final pass: deferred to the next run]"), task)
+    assert(!taskText(d, com.histmersion.domain.automation.Run.Id("run-10")).get.value.contains("deferred"), "a later run's item does not repeat it")
 
   test("finalRegression: a pair the run had answered and broke; a factual error in the text the run wrote"):
     def p(state: CritiqueState) = CritiquePair(
@@ -100,16 +102,16 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       com.histmersion.domain.ReviewArticle.Finding.Fix("x"),
       pair = Some(CritiqueRef(com.histmersion.api.library.Citekey("chang2015"), com.histmersion.api.library.Citekey("gray2003_language")))
     )
-    assert(finalRegression(f, List(p(CritiqueState.Addressed)), List(p(CritiqueState.Open)), com.histmersion.domain.ReviewArticle.Fix.Body(""), 0.9))
+    assert(finalRegression(f, List(p(CritiqueState.Addressed)), List(p(CritiqueState.Open)), com.histmersion.domain.ReviewArticle.Fix.Body(""), minRatio))
     assert(
-      !finalRegression(f, List(p(CritiqueState.Open)), List(p(CritiqueState.Open)), com.histmersion.domain.ReviewArticle.Fix.Body(""), 0.9),
+      !finalRegression(f, List(p(CritiqueState.Open)), List(p(CritiqueState.Open)), com.histmersion.domain.ReviewArticle.Fix.Body(""), minRatio),
       "open from the start: a discovery"
     )
     val fact = Finding(com.histmersion.domain.ReviewArticle.Finding.Id("S9"), Reviewer.Skeptic, Severity.Major, com.histmersion.domain.ReviewArticle.Finding.Kind("date"), com.histmersion.domain.ReviewArticle.Finding.Where("w"), com.histmersion.domain.ReviewArticle.Finding.Quote("dated to 1320 BCE by the cargo"), com.histmersion.domain.ReviewArticle.Finding.Problem("p"), com.histmersion.domain.ReviewArticle.Finding.Fix("x"))
-    assert(finalRegression(fact, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."), 0.9))
-    assert(!finalRegression(fact, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Body("Another passage altogether, edited."), 0.9))
+    assert(finalRegression(fact, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."), minRatio))
+    assert(!finalRegression(fact, Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Body("Another passage altogether, edited."), minRatio))
     assert(
-      !finalRegression(fact.modify(_.kind).setTo("lost"), Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."), 0.9),
+      !finalRegression(fact.modify(_.kind).setTo(com.histmersion.domain.ReviewArticle.Finding.Kind("lost")), Nil, Nil, com.histmersion.domain.ReviewArticle.Fix.Body("The wreck was dated to 1320 BCE by the cargo."), minRatio),
       "a reader's confusion in edited text is a discovery, not a factual regression"
     )
 
@@ -124,17 +126,17 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       CritiqueState.Open
     )
     val checks = List(
-      Check(com.histmersion.domain.ReviewArticle.Check.Id("S6"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("Gilan nevertheless identifies"), "Gilan's criticism is now described"),
+      Check(com.histmersion.domain.ReviewArticle.Check.Id("S6"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("Gilan nevertheless identifies"), com.histmersion.domain.ReviewArticle.Check.Note("Gilan's criticism is now described")),
       Check(com.histmersion.domain.ReviewArticle.Check.Id("S4"), fixed = com.histmersion.domain.ReviewArticle.Check.Fixed(true), com.histmersion.domain.ReviewArticle.Check.Quote("q"), com.histmersion.domain.ReviewArticle.Check.Note("n"))
     )
     val (held, ws) = holdPairChecks(checks, a.entries.map(_.finding), List(open))
     assertEquals(held.map(c => (c.id, c.fixed)), List(("S6", false), ("S4", true)))
     assert(
-      held.head.note
+      held.head.note.value
         .startsWith("[[kelly2021_gods]] and [[bachvarova2016_hittite]] are still not cited in one paragraph"),
       held.head.note
     )
-    assert(held.head.note.contains("the reviewer: Gilan's criticism is now described"), held.head.note)
+    assert(held.head.note.value.contains("the reviewer: Gilan's criticism is now described"), held.head.note)
     assertEquals(ws.size, 1)
     // addressed now: the check stands
     assertEquals(
@@ -149,11 +151,12 @@ class ReviewConvergenceSuite extends munit.FunSuite:
 
   // ── the regression guard ───────────────────────────────────────────────────────────────────────
 
-  private val tinBefore =
+  private val tinBefore = com.histmersion.domain.ReviewArticle.Fix.Body(
     """Tin reached the Aegean by sea [[knapp2016_tin]]; [[zz2024_iso]] traces it to Central Asia.
       |
       |The date of the wreck is about 1320 BCE [[knapp2016_tin]].
       |""".stripMargin
+  )
 
   private def ledgerWith(es: Entry*) = Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin"), es.toList)
   private val pairFixed = Entry(
@@ -189,31 +192,35 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     Status.Fixed,
     closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("rules"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("r"), com.histmersion.domain.ReviewLedger.Closure.Note(""), com.histmersion.domain.ReviewLedger.Closure.Quote("The date of the wreck is about 1320 BCE [[knapp2016_tin]]")))
   )
-  private def together(b: String, r: CritiqueRef) = Critiques.together(b, r, Some(_))
-  private def cites(b: String, ck: String) = AgentVerify.wikilinks(b).contains(ck)
+  private def together(b: com.histmersion.domain.ReviewArticle.Fix.Body, r: CritiqueRef) =
+    Critiques.together(b, r, t => Some(com.histmersion.api.library.Citekey(t.value)))
+  private def cites(b: com.histmersion.domain.ReviewArticle.Fix.Body, ck: com.histmersion.domain.library.Citekey) =
+    AgentVerify.wikilinks(AgentVerify.Text(b.value)).exists(_.value == ck.value)
 
   test("guard: a closed pair split apart, a fixed text written back, a citation the fix rests on dropped"):
     val l = ledgerWith(pairFixed, textFixed)
-    assertEquals(guard(l, tinBefore, tinBefore, together, cites, 0.9), Nil)
-    val split =
-      tinBefore.replace("; [[zz2024_iso]] traces it to Central Asia.", ".\n\nIt came from Central Asia [[zz2024_iso]].")
-    assertEquals(guard(l, tinBefore, split, together, cites, 0.9).map(_.id), List("S1"))
-    assert(guard(l, tinBefore, split, together, cites, 0.9).head.why.contains("no longer cited in one paragraph"))
-    val back = tinBefore.replace("The date of the wreck is about 1320 BCE", "The date of the wreck is argued")
+    assertEquals(guard(l, tinBefore, tinBefore, together, cites, minRatio), Nil)
+    val split = com.histmersion.domain.ReviewArticle.Fix.Body(
+      tinBefore.value.replace("; [[zz2024_iso]] traces it to Central Asia.", ".\n\nIt came from Central Asia [[zz2024_iso]].")
+    )
+    assertEquals(guard(l, tinBefore, split, together, cites, minRatio).map(_.id), List("S1"))
+    assert(guard(l, tinBefore, split, together, cites, minRatio).head.why.value.contains("no longer cited in one paragraph"))
+    val back = com.histmersion.domain.ReviewArticle.Fix.Body(tinBefore.value.replace("The date of the wreck is about 1320 BCE", "The date of the wreck is argued"))
     assertEquals(
-      guard(l, tinBefore, back, together, cites, 0.9).map(r => (r.id, r.why.take(24))),
+      guard(l, tinBefore, back, together, cites, minRatio).map(r => (r.id, r.why.value.take(24))),
       List(("R1", "the text it fixed is bac"))
     )
-    val dropped =
-      tinBefore.replace(" [[zz2024_iso]] traces it to Central Asia", " an isotope study traces it to Central Asia")
-    val g = guard(l, tinBefore, dropped, together, cites, 0.9)
+    val dropped = com.histmersion.domain.ReviewArticle.Fix.Body(
+      tinBefore.value.replace(" [[zz2024_iso]] traces it to Central Asia", " an isotope study traces it to Central Asia")
+    )
+    val g = guard(l, tinBefore, dropped, together, cites, minRatio)
     assertEquals(g.map(_.id), List("S1"))
     // open and set-aside findings are not guarded
-    assertEquals(guard(ledgerWith(pairFixed.modify(_.status).setTo(Status.Open)), tinBefore, split, together, cites, 0.9), Nil)
+    assertEquals(guard(ledgerWith(pairFixed.modify(_.status).setTo(Status.Open)), tinBefore, split, together, cites, minRatio), Nil)
 
   // ── the fixer's guards ─────────────────────────────────────────────────────────────────────────
 
-  private val body =
+  private val body = com.histmersion.domain.ReviewArticle.Fix.Body(
     """Tin reached the Aegean by sea [[knapp2016_tin]].
       |
       |Kullmann answers West's reading of the cargo [[zz2015_kull]].
@@ -230,26 +237,34 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       |
       |- none
       |""".stripMargin
+  )
 
   private val keys = Set("knapp2016_tin", "zz2024_iso", "zz2015_kull", "zz2011_west", "zz2020_new", "zz2021_crit")
-  private val corpus = BodyCorpus(keys, keys, _ => Nil)
+  private val isKey = (ck: com.histmersion.domain.library.Citekey) => keys(ck.value)
+  private val isTarget = (s: com.histmersion.domain.research.Slug) => keys(s.value)
+  private val corpus = BodyCorpus(isKey, isTarget, _ => Nil)
   private val edges = List(
     Coverage.Edge(com.histmersion.api.library.Citekey("zz2024_iso"), com.histmersion.api.research.Coverage.Edge.Kind("refutes"), com.histmersion.api.library.Citekey("knapp2016_tin")),
     Coverage.Edge(com.histmersion.api.library.Citekey("zz2015_kull"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("zz2011_west")),
     Coverage.Edge(com.histmersion.api.library.Citekey("zz2021_crit"), com.histmersion.api.research.Coverage.Edge.Kind("challenges"), com.histmersion.api.library.Citekey("zz2020_new"))
   )
-  private val works: String => Option[CritiquePairing.Work] = Map(
-    "zz2011_west" -> CritiquePairing.Work(com.histmersion.api.library.Citekey("zz2011_west"), List(com.histmersion.api.research.CritiquePairing.Work.Names("West")), Some(com.histmersion.api.catalogue.Year(2011))),
-    "zz2015_kull" -> CritiquePairing.Work(com.histmersion.api.library.Citekey("zz2015_kull"), List(com.histmersion.api.research.CritiquePairing.Work.Names("Kullmann")), Some(com.histmersion.api.catalogue.Year(2015)))
+  private val works: com.histmersion.api.library.Citekey => Option[CritiquePairing.Work] = Map(
+    com.histmersion.api.library.Citekey("zz2011_west") -> CritiquePairing.Work(com.histmersion.api.library.Citekey("zz2011_west"), List(com.histmersion.api.research.CritiquePairing.Work.Names("West")), Some(com.histmersion.api.catalogue.Year(2011))),
+    com.histmersion.api.library.Citekey("zz2015_kull") -> CritiquePairing.Work(com.histmersion.api.library.Citekey("zz2015_kull"), List(com.histmersion.api.research.CritiquePairing.Work.Names("Kullmann")), Some(com.histmersion.api.catalogue.Year(2015)))
   ).get
-  private def pairsOf(b: String) = Critiques.build(b, t => Some(t).filter(keys), edges, Nil)
+  private val resolve = (t: Article.Link.Target) => Some(t.value).filter(keys).map(com.histmersion.api.library.Citekey(_))
+  private def pairsOf(b: com.histmersion.domain.ReviewArticle.Fix.Body) = Critiques.build(b, resolve, edges, Nil)
   private def guards(l: Ledger) = FixGuards(
     pairsOf,
-    (b0, b1) => guard(l, b0, b1, (b, r) => Critiques.find(pairsOf(b), r).exists(!_.open), cites, 0.9),
-    b => CritiquePairing.repair(b, CritiquePairing.hits(b, t => Some(t).filter(keys), edges, works))
+    (b0, b1) => guard(l, b0, b1, (b, r) => Critiques.find(pairsOf(b), r).exists(!_.open), cites, minRatio),
+    b => CritiquePairing.repair(b, CritiquePairing.hits(b, resolve, edges, works))
   )
 
-  private def mcFinding(id: String, pair: String, quote: String = "Tin reached the Aegean by sea") =
+  private def mcFinding(
+      id: com.histmersion.domain.ReviewArticle.Finding.Id,
+      pair: CritiqueRef.Wire,
+      quote: com.histmersion.domain.ReviewArticle.Finding.Quote = com.histmersion.domain.ReviewArticle.Finding.Quote("Tin reached the Aegean by sea")
+  ) =
     Finding(
       id,
       Reviewer.Skeptic,
@@ -261,22 +276,22 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       com.histmersion.domain.ReviewArticle.Finding.Fix("cite the critic"),
       pair = CritiqueRef.parse(pair).toOption
     )
-  private def edit(op: String, anchor: String, text: String) =
+  private def edit(op: Article.Edits.Op.Wire, anchor: Article.Edits.EditAnswer.Anchor, text: Article.Edits.EditAnswer.Text) =
     Article.Edits.EditAnswer(Article.Edits.Op.parse(op).get, anchor, Some(text))
-  private def fix(m: Merged, a: FixerAnswer, last: Boolean, l: Ledger = Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin"))) =
-    checkFix(a, m, com.histmersion.domain.research.Slug("tin"), body, com.histmersion.domain.ReviewArticle.Snapshot.Kind("concept"), corpus, keys, _ => None, 0.9, last, None, pairsOf(body), Some(guards(l)))
+  private def fix(m: Merged, a: FixerAnswer, last: LastRound, l: Ledger = Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin"))) =
+    checkFix(a, m, com.histmersion.domain.research.Slug("tin"), body, com.histmersion.domain.ReviewArticle.Snapshot.Kind("concept"), corpus, isKey, _ => None, minRatio, last, None, pairsOf(body), Some(guards(l)))
 
   test(
     "fixer: a missing critique listed as applied with its pair still apart goes back; on the last attempt it is not fixed, with why"
   ):
-    val m = Merged(com.histmersion.domain.ReviewArticle.Merged.Round(1), Verdict.Major, List(mcFinding("S1", "zz2024_iso>knapp2016_tin")), None, Nil, Nil)
+    val m = Merged(com.histmersion.domain.ReviewArticle.Merged.Round(1), Verdict.Major, List(mcFinding(Finding.Id("S1"), CritiqueRef.Wire("zz2024_iso>knapp2016_tin"))), None, Nil, Nil)
     // the fixer describes the isotope study in a new paragraph, apart from the claim: the pair stays open
     val apart = FixerAnswer(
       List(
         edit(
-          "insertAfter",
-          "Tin reached the Aegean by sea [[knapp2016_tin]].",
-          "\n\nAn isotope study disagrees [[zz2024_iso]]."
+          Article.Edits.Op.Wire("insertAfter"),
+          Article.Edits.EditAnswer.Anchor("Tin reached the Aegean by sea [[knapp2016_tin]]."),
+          Article.Edits.EditAnswer.Text("\n\nAn isotope study disagrees [[zz2024_iso]].")
         )
       ),
       List(com.histmersion.domain.ReviewArticle.Finding.Id("S1")),
@@ -284,7 +299,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Nil,
       com.histmersion.domain.ReviewArticle.FixerAnswer.Notes("")
     )
-    val back = fix(m, apart, last = false)
+    val back = fix(m, apart, last = LastRound(false))
     assert(
       back.left.exists(
         _.exists(
@@ -295,13 +310,13 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       ),
       back
     )
-    val (kept, ws) = fix(m, apart, last = true).toOption.get
+    val (kept, ws) = fix(m, apart, last = LastRound(true)).toOption.get
     assertEquals(
       (kept.applied, kept.notFixed),
       (
         Nil,
         List(
-          WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("S1"), "listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph")
+          WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("S1"), com.histmersion.domain.ReviewArticle.WontFix.Reason("listed as applied, but [[zz2024_iso]] and [[knapp2016_tin]] are not cited in one paragraph"))
         )
       )
     )
@@ -312,16 +327,16 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assertEquals(
       after
         .entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1"))
-        .map(e => (e.claimed, e.notFixedCount, e.notFixed.exists(_.contains("pass 1: listed as applied")))),
+        .map(e => (e.claimed, e.notFixedCount, e.notFixed.exists(_.value.contains("pass 1: listed as applied")))),
       Some((false, 1, true))
     )
     // beside the claim, it stands
     val beside = FixerAnswer(
       List(
         edit(
-          "replace",
-          "Tin reached the Aegean by sea [[knapp2016_tin]].",
-          "Tin reached the Aegean by sea [[knapp2016_tin]]; an isotope study disagrees [[zz2024_iso]]."
+          Article.Edits.Op.Wire("replace"),
+          Article.Edits.EditAnswer.Anchor("Tin reached the Aegean by sea [[knapp2016_tin]]."),
+          Article.Edits.EditAnswer.Text("Tin reached the Aegean by sea [[knapp2016_tin]]; an isotope study disagrees [[zz2024_iso]].")
         )
       ),
       List(com.histmersion.domain.ReviewArticle.Finding.Id("S1")),
@@ -329,7 +344,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Nil,
       com.histmersion.domain.ReviewArticle.FixerAnswer.Notes("")
     )
-    assertEquals(fix(m, beside, last = false).map(_._1.applied), Right(List("S1")))
+    assertEquals(fix(m, beside, last = LastRound(false)).map(_._1.applied), Right(List("S1")))
 
   test(
     "fixer: the pairing repair answers a named partner itself — the finding is 'repaired' and claimed for its re-check"
@@ -337,17 +352,17 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     val m = Merged(
       com.histmersion.domain.ReviewArticle.Merged.Round(1),
       Verdict.Major,
-      List(mcFinding("S1", "zz2015_kull>zz2011_west", "Kullmann answers West's reading of the cargo")),
+      List(mcFinding(Finding.Id("S1"), CritiqueRef.Wire("zz2015_kull>zz2011_west"), Finding.Quote("Kullmann answers West's reading of the cargo"))),
       None,
       Nil,
       Nil
     )
     // the fixer leaves it alone (it set nothing aside, applied nothing): the repair cites West where the paragraph names him
     val nothing = FixerAnswer(Nil, Nil, Nil, Nil, com.histmersion.domain.ReviewArticle.FixerAnswer.Notes(""))
-    val (f, _) = fix(m, nothing, last = false).toOption.get
-    assert(f.body.contains("Kullmann answers West's reading of the cargo [[zz2015_kull]] [[zz2011_west]]."), f.body)
+    val (f, _) = fix(m, nothing, last = LastRound(false)).toOption.get
+    assert(f.body.value.contains("Kullmann answers West's reading of the cargo [[zz2015_kull]] [[zz2011_west]]."), f.body)
     assertEquals((f.repaired, f.notFixed), (List("S1"), Nil))
-    assert(f.repairs.head.contains("cite [[zz2011_west]] there (fixable)"), f.repairs)
+    assert(f.repairs.head.value.contains("cite [[zz2011_west]] there (fixable)"), f.repairs)
     val l = applyFix(absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("r"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1, f, com.histmersion.domain.ReviewLedger.ApplyFixRun("r"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     assertEquals(l.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).map(_.claimed), Some(true))
 
@@ -364,13 +379,13 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     val adds = List(
       edit(
-        "insertAfter",
-        "Where the tin was mined is open [[knapp2016_tin]].",
-        " A newer study proposes Cornwall [[zz2020_new]]."
+        Article.Edits.Op.Wire("insertAfter"),
+        Article.Edits.EditAnswer.Anchor("Where the tin was mined is open [[knapp2016_tin]]."),
+        Article.Edits.EditAnswer.Text(" A newer study proposes Cornwall [[zz2020_new]].")
       )
     )
     val bare = FixerAnswer(adds, List(com.histmersion.domain.ReviewArticle.Finding.Id("R1")), Nil, Nil, com.histmersion.domain.ReviewArticle.FixerAnswer.Notes(""))
-    val back = fix(m, bare, last = false)
+    val back = fix(m, bare, last = LastRound(false))
     assert(
       back.left.exists(
         _.exists(
@@ -389,11 +404,11 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         )
       )
     )
-    val (f, ws) = fix(m, aside, last = false).toOption.get
+    val (f, ws) = fix(m, aside, last = LastRound(false)).toOption.get
     assertEquals((f.pairsAside.map(_.ref.wire), ws), (List("zz2021_crit>zz2020_new"), Nil))
     // on the last attempt it is kept, with the warning
     assert(
-      fix(m, bare, last = true).toOption.get._2.exists(_.contains("whose recorded critiques no paragraph discusses"))
+      fix(m, bare, last = LastRound(true)).toOption.get._2.exists(_.contains("whose recorded critiques no paragraph discusses"))
     )
 
   test("fixer: edits that reopen a closed finding go back; on the last attempt they are dropped and the rest is kept"):
@@ -422,8 +437,16 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Nil
     )
     val gloss =
-      edit("replace", "Tin reached the Aegean by sea", "Tin, the scarce half of bronze, reached the Aegean by sea")
-    val undo = edit("replace", "The date of the wreck is about 1320 BCE", "The date of the wreck is argued")
+      edit(
+        Article.Edits.Op.Wire("replace"),
+        Article.Edits.EditAnswer.Anchor("Tin reached the Aegean by sea"),
+        Article.Edits.EditAnswer.Text("Tin, the scarce half of bronze, reached the Aegean by sea")
+      )
+    val undo = edit(
+      Article.Edits.Op.Wire("replace"),
+      Article.Edits.EditAnswer.Anchor("The date of the wreck is about 1320 BCE"),
+      Article.Edits.EditAnswer.Text("The date of the wreck is argued")
+    )
     val a = FixerAnswer(List(gloss, undo), List(com.histmersion.domain.ReviewArticle.Finding.Id("C1")), Nil, Nil, com.histmersion.domain.ReviewArticle.FixerAnswer.Notes(""))
     val back = checkFix(
       a,
@@ -432,9 +455,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       body,
       com.histmersion.domain.ReviewArticle.Snapshot.Kind("concept"),
       corpus,
-      keys,
+      isKey,
       _ => None,
-      0.9,
+      minRatio,
       last = com.histmersion.domain.ReviewArticle.LastRound(false),
       None,
       pairsOf(body),
@@ -453,15 +476,15 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       body,
       com.histmersion.domain.ReviewArticle.Snapshot.Kind("concept"),
       corpus,
-      keys,
+      isKey,
       _ => None,
-      0.9,
+      minRatio,
       last = com.histmersion.domain.ReviewArticle.LastRound(true),
       None,
       pairsOf(body),
       Some(guards(l))
     ).toOption.get
-    assert(f.body.contains("Tin, the scarce half of bronze") && f.body.contains("about 1320 BCE"), f.body)
+    assert(f.body.value.contains("Tin, the scarce half of bronze") && f.body.value.contains("about 1320 BCE"), f.body)
     assert(ws.exists(_.contains("edit(s) 2 dropped: they reopened R1")), ws)
 
   test("fixer: every open finding it leaves unanswered is recorded not fixed, with why — never silently skipped"):
@@ -486,9 +509,9 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       Nil,
       Nil
     )
-    val a = FixerAnswer(List(edit("replace", "Tin reached", "Tin, a metal, reached")), List(com.histmersion.domain.ReviewArticle.Finding.Id("C1")), Nil, Nil, com.histmersion.domain.ReviewArticle.FixerAnswer.Notes(""))
-    assert(fix(m, a, last = false).left.exists(_.contains("major finding R1 is neither applied nor rejected")))
-    val (f, _) = fix(m, a, last = true).toOption.get
+    val a = FixerAnswer(List(edit(Article.Edits.Op.Wire("replace"), Article.Edits.EditAnswer.Anchor("Tin reached"), Article.Edits.EditAnswer.Text("Tin, a metal, reached"))), List(com.histmersion.domain.ReviewArticle.Finding.Id("C1")), Nil, Nil, com.histmersion.domain.ReviewArticle.FixerAnswer.Notes(""))
+    assert(fix(m, a, last = LastRound(false)).left.exists(_.contains("major finding R1 is neither applied nor rejected")))
+    val (f, _) = fix(m, a, last = LastRound(true)).toOption.get
     assertEquals(
       f.notFixed,
       List(WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("R1"), com.histmersion.domain.ReviewArticle.WontFix.Reason("the fixer neither applied nor rejected it")), WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("C2"), com.histmersion.domain.ReviewArticle.WontFix.Reason("the fixer did not answer it")))
