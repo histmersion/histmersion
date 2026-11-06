@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The `opencode` provider: `opencode run --agent <role> --format json` on the generated config. `chatgptLogin`: its

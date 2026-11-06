@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The findings step's guards against the failure kinds a smaller extractor showed (#1424): an answer whose places

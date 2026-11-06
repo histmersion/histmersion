@@ -28,7 +28,7 @@ object ConfigTextEdit:
         unchanged: List[SettingKey]
     ): Either[SettingError, EditedText] =
       rest match
-        case Nil          => Right(EditedText(EditedText.Text(endsLikeAFile(text.value, doc.render)), changed.reverse, unchanged.reverse))
+        case Nil          => Right(EditedText(ConfigFileState.Text(endsLikeAFile(text.value, doc.render)), changed.reverse, unchanged.reverse))
         case edit :: tail =>
           (written(current, edit.key, here), edit) match
             case (Written.Substituted(_), _) => Left(SettingError.Substitution(edit.key))

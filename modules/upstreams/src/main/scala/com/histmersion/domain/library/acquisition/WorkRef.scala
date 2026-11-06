@@ -5,7 +5,7 @@ final case class WorkRef(
     arxivId: Option[WorkRef.ArxivId] = None,
     title: Option[WorkRef.Title] = None,
     year: Option[com.histmersion.plugin.Year] = None,
-    authors: List[WorkRef.Authors] = Nil,
+    authors: List[com.histmersion.plugin.WorkKey.Authors] = Nil,
     venue: Option[WorkRef.Venue] = None,
     citedByCount: Option[WorkRef.CitedByCount] = None,
     isOa: WorkRef.IsOa = _root_.com.histmersion.domain.library.acquisition.WorkRef.IsOa(false),
@@ -26,8 +26,6 @@ object WorkRef:
   val ArxivId: _root_.com.histmersion.upstreams.ArxivId.type = _root_.com.histmersion.upstreams.ArxivId
   type Title = com.histmersion.plugin.WorkKey.Title
   val Title: _root_.com.histmersion.plugin.WorkKey.Title.type = _root_.com.histmersion.plugin.WorkKey.Title
-  type Authors = Authors.T
-  object Authors extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Venue = Venue.T
   object Venue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CitedByCount = CitedByCount.T

@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The Storage part of About (`histmersion about`, `/api/about`, the web About window): how often the server measures

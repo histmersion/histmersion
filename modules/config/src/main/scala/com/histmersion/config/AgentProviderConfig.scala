@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Embedded research agents (docs/research-embedded-agents.md §5.3). OFF by default: with `enabled = false` the server

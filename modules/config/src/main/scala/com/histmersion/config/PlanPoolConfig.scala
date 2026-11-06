@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** One plan pool: a floor (% that must stay LEFT) per window kind (`five_hour=25, seven_day=25`; Codex windows by

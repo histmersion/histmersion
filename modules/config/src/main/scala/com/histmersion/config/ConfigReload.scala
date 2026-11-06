@@ -3,6 +3,7 @@ package com.histmersion.config
 import org.ekrich.config.{Config, ConfigFactory, ConfigRenderOptions}
 
 import scala.jdk.CollectionConverters.*
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The config side of an in-place reload (docs/research-plugins.md §3.5), pure: which settings differ between the

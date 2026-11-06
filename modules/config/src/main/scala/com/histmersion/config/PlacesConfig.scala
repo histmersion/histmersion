@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The gazetteer (plan §1.6a). `pointToleranceKm` is how close a finding must be to a POINT place (a Pleiades site has
@@ -42,8 +43,8 @@ object PlacesConfig:
   object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
     extension (l: T)
       def isPositive: Boolean = l.value > 0
-      def atLeastOne: T = apply(l.value.max(1))
-      def atMost(cap: T): T = apply(l.value.min(cap.value))
+      def atLeastOne: T = GeoLimit(l.value.max(1))
+      def atMost(cap: T): T = GeoLimit(l.value.min(cap.value))
 
   type PointToleranceKm = PointToleranceKm.T
   object PointToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]

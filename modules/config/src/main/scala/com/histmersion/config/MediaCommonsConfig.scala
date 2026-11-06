@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 final case class MediaCommonsConfig(apiUrl: MediaCommonsConfig.ApiUrl, batch: MediaCommonsConfig.Batch, maxlag: MediaCommonsConfig.Maxlag, licences: MediaCommonsConfig.Licences) derives ConfigReader

@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Pictures that depict an event (`media.depicts`): Commons files whose structured data says `P180 depicts` the event's

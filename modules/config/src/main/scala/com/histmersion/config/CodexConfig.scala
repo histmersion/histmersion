@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The `codex` provider: the person's own `codex` CLI (`codex exec --json`), on the ChatGPT plan login of a

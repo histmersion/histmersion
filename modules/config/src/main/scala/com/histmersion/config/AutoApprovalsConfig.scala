@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The caps and the thresholds of the checked auto approvals ([[AgentApprovalsConfig.checked]]): at most

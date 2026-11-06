@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Application config, modelled as case classes and read from HOCON (sconfig) via Kindlings derivation. Defaults + env

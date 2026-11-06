@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** A research area's watcher (`agents.managers.watch`, docs/research-process-managers.md §4 (c)): its runs at once, the

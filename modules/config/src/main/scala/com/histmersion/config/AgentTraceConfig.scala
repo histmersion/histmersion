@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** What a run's trace keeps: a tool result is truncated to `maxToolResultChars` before it is stored, and traced

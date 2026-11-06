@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** What one tool call of an agent step may return (every runtime: the agent MCP endpoint a run token reaches and the

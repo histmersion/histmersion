@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Host-side Calibre integration (the ONE local integration the CLI is allowed — Calibre lives on the user's machine,

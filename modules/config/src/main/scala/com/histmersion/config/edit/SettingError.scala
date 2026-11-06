@@ -4,10 +4,10 @@ package com.histmersion.config.edit
   * is the answer.
   */
 enum SettingError:
-  case BadKey(why: SettingError.BadKey.Why)
+  case BadKey(why: SettingKey.Problem)
   case UnknownKey(key: SettingKey, closest: List[SettingKey])
   case NotAValue(key: SettingKey)
-  case BadValue(key: SettingKey, why: SettingError.BadValue.Why)
+  case BadValue(key: SettingKey, why: SettingValue.Problem)
   case WrongKind(key: SettingKey, want: SettingKind, got: SettingKind)
 
   /** The credential itself would go into the file: its environment variable is the place. */
@@ -69,14 +69,6 @@ enum SettingError:
 object SettingError:
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  object BadKey:
-    type Why = com.histmersion.config.edit.SettingError.Problem
-    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
-
-  object BadValue:
-    type Why = com.histmersion.config.edit.SettingError.Problem
-    val Why: _root_.com.histmersion.config.edit.SettingError.Problem.type = _root_.com.histmersion.config.edit.SettingError.Problem
-
   object CredentialInFile:
     type EnvVar = com.histmersion.config.edit.SettingField.EnvVar
     val EnvVar: _root_.com.histmersion.config.edit.SettingField.EnvVar.type = _root_.com.histmersion.config.edit.SettingField.EnvVar

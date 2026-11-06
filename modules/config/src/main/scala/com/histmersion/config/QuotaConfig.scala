@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Subscription pools (docs/research-plan-quotas.md §5): a snapshot older than `staleMinutes` is unknown; a window with

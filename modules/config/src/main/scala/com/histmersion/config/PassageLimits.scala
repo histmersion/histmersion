@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `passages` (#954): the defaults and caps of a caller's `limit` (passages shown) and `context` (characters around a

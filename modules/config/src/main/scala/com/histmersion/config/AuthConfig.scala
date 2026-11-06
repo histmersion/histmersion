@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** API key authentication. When `apiKey` is non-empty the server gates every write method (POST/PUT/PATCH/DELETE)

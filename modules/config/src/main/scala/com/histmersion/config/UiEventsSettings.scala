@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `ui.events`: the events on the map in playback — how long a local and a regional event fade (seconds of playback),

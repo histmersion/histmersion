@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** One LLM step's loop: iterations of the tool loop, output tokens per call, and how often a typed answer that fails

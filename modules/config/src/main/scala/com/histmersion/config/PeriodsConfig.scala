@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** Named periods (#719): where `periods fetch periodo` downloads the PeriodO dump, the authorities it imports by

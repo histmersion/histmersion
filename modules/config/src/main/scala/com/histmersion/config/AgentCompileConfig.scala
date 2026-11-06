@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `compile-article`: the filter is read up to `maxSources` sources (one extraction each), each extraction sees

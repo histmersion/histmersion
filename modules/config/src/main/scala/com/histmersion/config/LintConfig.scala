@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** `histmersion lint`: how much of each rule's offending set is LISTED (the count is always complete) and how many

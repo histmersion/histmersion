@@ -1,5 +1,6 @@
 package com.histmersion.config
 
+import com.histmersion.config.NewtypeReaders.given
 import hearth.kindlings.sconfigderivation.ConfigReader
 
 /** The source matcher of `merge plan` (docs/research-merge-import.md §5.2): Fellegi–Sunter-style log-weights with

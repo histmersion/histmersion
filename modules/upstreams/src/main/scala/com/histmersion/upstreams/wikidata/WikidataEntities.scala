@@ -53,5 +53,6 @@ object WikidataEntities:
               }
             val pictures = props.toList.sortBy(_.value).flatMap(statementsOf)
             val category = WikidataStatement.best(statementsOf(_root_.com.histmersion.upstreams.wikidata.WikidataStatement.Property(CommonsCategory)), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(1)).headOption.map(st => _root_.com.histmersion.upstreams.wikidata.WikidataItem.CommonsCategory(st.file.value))
-            Some(key -> WikidataItem(_root_.com.histmersion.upstreams.wikidata.WikidataItem.Id(key), pictures, category))
+            val id = WikidataItem.Id(key)
+            Some(id -> WikidataItem(id, pictures, category))
         }.toMap)
