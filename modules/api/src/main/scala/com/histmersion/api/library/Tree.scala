@@ -188,7 +188,7 @@ object Tree:
   private def overlaps(row: TreeRow, from: com.histmersion.api.library.Tree.OverlapsFrom, to: com.histmersion.api.library.Tree.OverlapsTo): com.histmersion.api.library.Tree.OverlapsResult =
     Aggregate.span(row.toPeriodRow).exists((a, b) => a <= to && b >= from)
 
-  def midpoint(start: com.histmersion.api.library.Tree.MidpointStart, end: com.histmersion.api.library.Tree.MidpointEnd): com.histmersion.api.library.Tree.MidpointResult = (start).value + Math.floorDiv((end).value - (start).value, 2L)
+  def midpoint(start: com.histmersion.api.library.Tree.MidpointStart, end: com.histmersion.api.library.Tree.MidpointEnd): com.histmersion.api.library.Tree.MidpointResult = _root_.com.histmersion.api.library.Tree.MidpointResult((start).value + Math.floorDiv((end).value - (start).value, 2L))
 
   def timeTime(rows: List[TreeRow], from: com.histmersion.api.library.Tree.TimeTimeFrom, to: com.histmersion.api.library.Tree.TimeTimeTo, depth: com.histmersion.api.library.Tree.TimeTimeDepth, samples: com.histmersion.api.library.Tree.TimeTimeSamples = _root_.com.histmersion.api.library.Tree.TimeTimeSamples(0)): List[Bucket] =
     val (lo, hi) = order(from, to)
@@ -308,7 +308,7 @@ object Tree:
     val byId = nodes.iterator.map(n => n.id -> n).toMap
     def live(id: com.histmersion.api.library.Tree.RegionsLiveId) = byId.get(id).exists(n => coversAsOf(n.period, asOf))
     val edges = relations.filter(r =>
-      r.kind == Place.Relation.PartOf && coversAsOf(r.period, asOf) && live(r.childId) && live(r.parentId)
+      r.kind == _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf) && coversAsOf(r.period, asOf) && live(r.childId) && live(r.parentId)
     )
     val kidsOf = edges.groupMap(_.parentId)(_.childId).view.mapValues(_.distinct).toMap
     val parents = edges.groupMap(_.childId)(_.parentId).view.mapValues(_.distinct).toMap

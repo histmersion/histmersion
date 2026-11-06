@@ -17,7 +17,7 @@ object ScheduleKind:
   type FromWireS = FromWireS.T
   object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.automation.ScheduleKind.ParseS): Option[ScheduleKind] = values.find(_.wire == (s).value.trim.toLowerCase)
+  def parse(s: com.histmersion.api.automation.ScheduleKind.ParseS): Option[ScheduleKind] = values.find(_.wire == _root_.com.histmersion.api.automation.ScheduleKind.Wire((s).value.trim.toLowerCase))
   given WireEnumValues[ScheduleKind]:
     def all: Array[ScheduleKind] = ScheduleKind.values
     def wire(e: ScheduleKind): com.histmersion.api.automation.ScheduleKind.WireResult = e.wire

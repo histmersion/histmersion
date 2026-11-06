@@ -41,7 +41,7 @@ object Candidates:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.library.Candidates.WatchKind.ParseS): Option[WatchKind] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.WatchKind.Wire((s).value.trim.toLowerCase))
 
   enum State(val wire: State.Wire):
     case New extends State(_root_.com.histmersion.api.library.Candidates.State.Wire("new"))
@@ -55,7 +55,7 @@ object Candidates:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.library.Candidates.State.ParseS): Option[State] = values.find(_.wire == _root_.com.histmersion.api.library.Candidates.State.Wire((s).value.trim.toLowerCase))
 
   val Indexes: List[com.histmersion.api.library.Candidates.Indexes] = List(_root_.com.histmersion.api.library.Candidates.Indexes("openalex"), _root_.com.histmersion.api.library.Candidates.Indexes("crossref"), _root_.com.histmersion.api.library.Candidates.Indexes("europepmc"), _root_.com.histmersion.api.library.Candidates.Indexes("arxiv"), _root_.com.histmersion.api.library.Candidates.Indexes("core"))
 

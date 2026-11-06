@@ -181,7 +181,7 @@ object EventTaxonomy:
 
   def condition(filter: Option[com.histmersion.api.catalogue.EventTaxonomy.ConditionFilter]): Option[KindCondition] =
     filter.map((_).value.trim.toLowerCase(java.util.Locale.ROOT)).filter(_.nonEmpty).map { f =>
-      val natural = (kinds.filter(_.group == Natural).map(_.kind) ++
+      val natural = (kinds.filter(_.group == _root_.com.histmersion.api.catalogue.EventTaxonomy.Kind.Group(Natural)).map(_.kind) ++
         aliases.collect { case (a, v) if byKind.get(v).exists(_.group == Natural) => a }).distinct.sorted
       if f == Natural then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(false))
       else if f == Human then KindCondition(natural, negate = _root_.com.histmersion.api.catalogue.EventTaxonomy.KindCondition.Negate(true))

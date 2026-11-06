@@ -243,7 +243,7 @@ object RepositoryLanding:
   /** A host entry matches the host itself or any subdomain of it. */
   def matchesHost(host: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost, entry: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostEntry): com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostResult =
     val e = (entry).value.trim.toLowerCase.stripPrefix(".")
-    e.nonEmpty && (host == e || (host).value.endsWith("." + e))
+    e.nonEmpty && (host == _root_.com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost(e) || (host).value.endsWith("." + e))
 
   /** Pure: the lower-case host of an absolute http(s) URL. */
   /** The host of `url` when it is one of `hosts` or a subdomain of one. */

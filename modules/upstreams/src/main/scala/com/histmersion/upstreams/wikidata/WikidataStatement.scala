@@ -15,7 +15,8 @@ object WikidataStatement:
   type Preferred = Preferred.T
   object Preferred extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Order = Order.T
-  object Order extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object Order extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Int](_.value)
 
   def best(statements: List[WikidataStatement], per: com.histmersion.upstreams.wikidata.WikidataStatement.BestPer): List[WikidataStatement] =
     val preferred = statements.filter((_.preferred).value)

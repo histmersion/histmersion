@@ -323,7 +323,8 @@ object KeePassXcVault:
   type ReadAllBatchedPart2Part2 = ReadAllBatchedPart2Part2.T
   object ReadAllBatchedPart2Part2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ConnectedResult = ConnectedResult.T
-  object ConnectedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object ConnectedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
   type WithYubiKeyResultPart1 = WithYubiKeyResultPart1.T
   object WithYubiKeyResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type WithYubiKeyWhat = WithYubiKeyWhat.T

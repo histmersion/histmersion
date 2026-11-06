@@ -19,7 +19,7 @@ object Manager:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Manager.Kind.ParseS): Option[Kind] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Manager.Kind.ParseS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.automation.Manager.Kind.Wire((s).value.trim.toLowerCase))
 
   /** The person's switch: `paused` starts nothing new (in-flight runs go on unless paused with them), `stopped`
     * cancelled its in-flight runs and items.
@@ -36,4 +36,4 @@ object Manager:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Manager.State.ParseS): Option[State] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Manager.State.ParseS): Option[State] = values.find(_.wire == _root_.com.histmersion.api.automation.Manager.State.Wire((s).value.trim.toLowerCase))

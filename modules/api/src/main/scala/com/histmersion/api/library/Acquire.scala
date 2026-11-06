@@ -211,7 +211,7 @@ object Acquire:
           }, then histmersion ingest <file> --citekey $citekey"
     }
 
-  def flagged(verdict: com.histmersion.api.library.Acquire.FlaggedVerdict): com.histmersion.api.library.Acquire.FlaggedResult = verdict == Verdicts.Retracted || verdict == Verdicts.Corrected
+  def flagged(verdict: com.histmersion.api.library.Acquire.FlaggedVerdict): com.histmersion.api.library.Acquire.FlaggedResult = verdict == _root_.com.histmersion.api.library.Acquire.FlaggedVerdict(Verdicts.Retracted) || verdict == _root_.com.histmersion.api.library.Acquire.FlaggedVerdict(Verdicts.Corrected)
 
   def recommendation(verdict: com.histmersion.api.library.Acquire.RecommendationVerdict, citedByCount: Option[com.histmersion.api.library.Acquire.RecommendationCitedByCount]): com.histmersion.api.library.Acquire.RecommendationResult =
     val cited = citedByCount.fold("no citation data")(c => s"$c citation(s)")

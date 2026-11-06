@@ -376,7 +376,7 @@ object Lpf:
       fields += "relations" -> Json.arr(in.relations.map { r =>
         Json.fromFields(
           List(
-            "relationType" -> Json.fromString(if r.kind == Place.Relation.PartOf then "gvp:broaderPartitive"
+            "relationType" -> Json.fromString(if r.kind == _root_.com.histmersion.api.catalogue.Place.Relation.Kind(Place.Relation.PartOf) then "gvp:broaderPartitive"
             else r.kind),
             "relationTo" -> Json.fromString(r.parentId)
           ) ++

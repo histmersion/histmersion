@@ -37,15 +37,16 @@ object ProviderKind:
   type NamesResult = NamesResult.T
   object NamesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NamesKnown = NamesKnown.T
-  object NamesKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object NamesKnown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
 
   val values: List[ProviderKind] = List(Anthropic, OpenAI, Local, ClaudeCode, Codex, Opencode)
 
   /** A provider name: one of the host's, else one of the `known` plugin providers' (lower case). */
   def parse(s: com.histmersion.domain.automation.ProviderKind.ParseS, known: Set[com.histmersion.domain.automation.ProviderKind.ParseKnown] = Set.empty): Option[ProviderKind] =
     val t = (s).value.trim.toLowerCase
-    values.find(_.wire == t).orElse(Option.when(known(_root_.com.histmersion.domain.automation.ProviderKind.ParseKnown(t)))(Plugin(_root_.com.histmersion.domain.automation.ProviderKind.Plugin.Name(t))))
+    values.find(_.wire == _root_.com.histmersion.domain.automation.ProviderKind.Wire(t)).orElse(Option.when(known(_root_.com.histmersion.domain.automation.ProviderKind.ParseKnown(t)))(Plugin(_root_.com.histmersion.domain.automation.ProviderKind.Plugin.Name(t))))
 
   /** The names a reference may use, for an error message: the host's, then the plugins'. */
   def names(known: Set[com.histmersion.domain.automation.ProviderKind.NamesKnown] = Set.empty): com.histmersion.domain.automation.ProviderKind.NamesResult =
-    (values.map(_.wire) ++ known.toList.sorted.filterNot(k => values.exists(_.wire == k))).mkString(", ")
+    _root_.com.histmersion.domain.automation.ProviderKind.NamesResult((values.map(_.wire) ++ known.toList.sorted.filterNot(k => values.exists(_.wire == k))).mkString(", "))

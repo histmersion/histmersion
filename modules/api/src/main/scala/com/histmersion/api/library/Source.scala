@@ -595,7 +595,7 @@ object Source:
 
     def parse(s: com.histmersion.api.library.Source.Section.ParseS): Option[com.histmersion.api.library.Source.Section.ParseResult] =
       val lower = (s).value.trim.toLowerCase
-      all.find(_ == lower)
+      all.find(_ == _root_.com.histmersion.api.library.Source.Section.All(lower))
 
   final case class WithFindings(
       source: Detail,

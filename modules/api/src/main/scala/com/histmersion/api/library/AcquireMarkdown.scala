@@ -271,7 +271,7 @@ object AcquireMarkdown:
     val pdf = r.pdf match
       case Some(p) =>
         s"**PDF:** ${p.source}${p.url.map(u => s" — $u").getOrElse("")} (${Plural.count(p.bytes, _root_.com.histmersion.api.Plural.CountSingular("byte"))})"
-      case None if r.steps.exists(s => s.step == "fetch" && s.ok) =>
+      case None if r.steps.exists(s => s.step == _root_.com.histmersion.api.library.Ingest.Step.Value("fetch") && s.ok) =>
         "**PDF:** not fetched — the source already has its original"
       case None => "**PDF:** none found through legal open access"
     // No stripMargin: `assessment` embeds tables, whose rows start with '|'.

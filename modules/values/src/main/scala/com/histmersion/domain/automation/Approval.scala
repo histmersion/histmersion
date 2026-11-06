@@ -55,7 +55,7 @@ object Approval:
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.domain.automation.Approval.Kind.ParseS): Option[Kind] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.automation.Approval.Kind.ParseS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.domain.automation.Approval.Kind.Wire((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
@@ -76,7 +76,7 @@ object Approval:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.domain.automation.Approval.Mode.ParseS): Option[Mode] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.automation.Approval.Mode.ParseS): Option[Mode] = values.find(_.wire == _root_.com.histmersion.domain.automation.Approval.Mode.Wire((s).value.trim.toLowerCase))
 
   /** `Failed` = a person approved it but applying it failed (the source changed or went away); the reason is kept in
     * `result`.
@@ -94,7 +94,7 @@ object Approval:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.domain.automation.Approval.State.ParseS): Option[State] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.automation.Approval.State.ParseS): Option[State] = values.find(_.wire == _root_.com.histmersion.domain.automation.Approval.State.Wire((s).value.trim.toLowerCase))
 
   /** Who decided an approval. `Autopilot` = the checked auto approvals (their note starts [[AutopilotNote]]); `Auto` =
     * applied the moment it was proposed, by an `agents.approvals.*` mode of `auto` (its result starts [[AutoResult]]);
@@ -126,7 +126,7 @@ object Approval:
     /** The result of a proposal applied at once (`Approvals.propose`, an `auto` mode). */
     val AutoResult = "applied automatically"
 
-    def parse(s: com.histmersion.domain.automation.Approval.DecidedBy.ParseS): Option[DecidedBy] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.domain.automation.Approval.DecidedBy.ParseS): Option[DecidedBy] = values.find(_.wire == _root_.com.histmersion.domain.automation.Approval.DecidedBy.Wire((s).value.trim.toLowerCase))
 
     /** Who decided an approval in `state` with this `note` and `result`; `None` while it is open. The SQL that filters
       * and counts by it says the same (`AgentRepo`).

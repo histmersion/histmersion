@@ -47,7 +47,7 @@ object Managers:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Managers.ItemOrigin.ParseS): Option[ItemOrigin] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Managers.ItemOrigin.ParseS): Option[ItemOrigin] = values.find(_.wire == _root_.com.histmersion.api.automation.Managers.ItemOrigin.Wire((s).value.trim.toLowerCase))
 
   object Feed:
     val Started = "started"
@@ -136,7 +136,7 @@ object Managers:
     object OfItemKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def parse(s: com.histmersion.api.automation.Managers.Sweep.ParseS): Option[Sweep] =
-      values.find(x => x.wire == (s).value.trim.toLowerCase || x.itemKind == (s).value.trim.toLowerCase)
+      values.find(x => x.wire == _root_.com.histmersion.api.automation.Managers.Sweep.Wire((s).value.trim.toLowerCase) || x.itemKind == _root_.com.histmersion.api.automation.Managers.Sweep.ItemKind((s).value.trim.toLowerCase))
     def ofItem(kind: com.histmersion.api.automation.Managers.Sweep.OfItemKind): Option[Sweep] = values.find(_.itemKind == kind)
 
     def of(c: ManagerConfig): List[Sweep] =
@@ -160,7 +160,7 @@ object Managers:
       case ArticleExtend                        => Some(Extend)
       case SourceEnrich | "source"              => Some(Enrich)
       case ProposeArticles | "propose" | "plan" => Some(Seed)
-      case other                                => values.find(_.wire == other)
+      case other                                => values.find(_.wire == _root_.com.histmersion.api.automation.Managers.EnqueueKind.Wire(other))
 
   final case class ArticleSpec(title: com.histmersion.api.research.Article.Title, kind: com.histmersion.api.research.Article.KindValue, filter: Article.Filter, why: ArticleSpec.Why = _root_.com.histmersion.api.automation.Managers.ArticleSpec.Why(""))
       derives KindlingsCodecAsObject,
@@ -422,14 +422,14 @@ object Managers:
           case Nil            => ItemCounts(pending, held, active, done, stopped, failed, cancelled)
           case (s, n) :: tail =>
             ItemStatus.parse(s) match
-              case Some(ItemStatus.Pending)   => loop(tail, (pending).value + (n).value, held, active, done, stopped, failed, cancelled)
-              case Some(ItemStatus.Held)      => loop(tail, pending, (held).value + (n).value, active, done, stopped, failed, cancelled)
-              case Some(ItemStatus.Active)    => loop(tail, pending, held, (active).value + (n).value, done, stopped, failed, cancelled)
-              case Some(ItemStatus.Done)      => loop(tail, pending, held, active, (done).value + (n).value, stopped, failed, cancelled)
-              case Some(ItemStatus.Stopped)   => loop(tail, pending, held, active, done, (stopped).value + (n).value, failed, cancelled)
-              case Some(ItemStatus.Failed)    => loop(tail, pending, held, active, done, stopped, (failed).value + (n).value, cancelled)
+              case Some(ItemStatus.Pending)   => loop(tail, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopPending((pending).value + (n).value), held, active, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Held)      => loop(tail, pending, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopHeld((held).value + (n).value), active, done, stopped, failed, cancelled)
+              case Some(ItemStatus.Active)    => loop(tail, pending, held, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopActive((active).value + (n).value), done, stopped, failed, cancelled)
+              case Some(ItemStatus.Done)      => loop(tail, pending, held, active, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopDone((done).value + (n).value), stopped, failed, cancelled)
+              case Some(ItemStatus.Stopped)   => loop(tail, pending, held, active, done, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopStopped((stopped).value + (n).value), failed, cancelled)
+              case Some(ItemStatus.Failed)    => loop(tail, pending, held, active, done, stopped, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopFailed((failed).value + (n).value), cancelled)
               case Some(ItemStatus.Cancelled) =>
-                loop(tail, pending, held, active, done, stopped, failed, (cancelled).value + (n).value)
+                loop(tail, pending, held, active, done, stopped, failed, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopCancelled((cancelled).value + (n).value))
               case None => loop(tail, pending, held, active, done, stopped, failed, cancelled)
       loop(rows, _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopPending(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopHeld(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopActive(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopDone(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopStopped(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopFailed(0), _root_.com.histmersion.api.automation.Managers.ItemCounts.OfLoopCancelled(0))
 

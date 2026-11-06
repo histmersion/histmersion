@@ -42,7 +42,7 @@ object AgentMode:
 
   def parse(s: com.histmersion.api.automation.AgentMode.ParseS): Option[AgentMode] =
     val t = (s).value.trim.toLowerCase
-    values.find(m => m.wire == t || m.toString.toLowerCase == t)
+    values.find(m => m.wire == _root_.com.histmersion.api.automation.AgentMode.Wire(t) || m.toString.toLowerCase == t)
 
   def of(autopilotOn: com.histmersion.api.automation.AgentMode.OfAutopilotOn, draining: com.histmersion.api.automation.AgentMode.OfDraining): AgentMode =
     if !(autopilotOn).value then Paused else if (draining).value then Finishing else Working

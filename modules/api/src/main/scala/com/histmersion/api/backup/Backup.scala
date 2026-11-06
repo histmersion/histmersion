@@ -185,7 +185,7 @@ object Backup:
       .filter(_.nonEmpty)
       .filter(l => l.toLowerCase.contains("error") || l.toLowerCase.contains("warning"))
     val completed = output.exists(l => IgnoredErrors.findFirstMatchIn(l).isDefined)
-    if exit == 0 || completed then Right((notable).map(refactorValue9 => _root_.com.histmersion.api.backup.Backup.RestoreOutcomeResultPart2(refactorValue9)))
+    if exit == _root_.com.histmersion.api.backup.Backup.RestoreOutcomeExit(0) || completed then Right((notable).map(refactorValue9 => _root_.com.histmersion.api.backup.Backup.RestoreOutcomeResultPart2(refactorValue9)))
     else Left(_root_.com.histmersion.api.backup.Backup.RestoreOutcomeResultPart1(s"pg_restore failed (exit $exit): ${notable.takeRight(5).mkString("; ")}"))
 
   val CodeMaintenance = "maintenance"

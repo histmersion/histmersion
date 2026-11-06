@@ -2,6 +2,8 @@ package compilerfixture
 
 object Contract:
   @main def verifyCompilerRepairs(): Unit =
+    OrderedChecks.check()
+    ComparisonConstruction.check()
     assert(Owned.raw(Owned.Text("one")) == "one")
     assert(Owned.alias(Owned.Text("alias")) == "alias")
     assert(Owned.upper(Owned.Text("one")) == "ONE")

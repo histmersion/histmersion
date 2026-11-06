@@ -320,7 +320,8 @@ object Calibre:
   type IdentifiersValueResult = IdentifiersValueResult.T
   object IdentifiersValueResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IdentifiersValueIdsPart1 = IdentifiersValueIdsPart1.T
-  object IdentifiersValueIdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object IdentifiersValueIdsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
   type IdentifiersValueIdsPart2 = IdentifiersValueIdsPart2.T
   object IdentifiersValueIdsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type NormaliseAuthorResult = NormaliseAuthorResult.T
@@ -511,7 +512,7 @@ object Calibre:
 
   /** `type:value,type:value`, as `--field identifiers:` takes it, in a stable order. */
   def identifiersValue(ids: Map[com.histmersion.plugins.calibre.Calibre.IdentifiersValueIdsPart1, com.histmersion.plugins.calibre.Calibre.IdentifiersValueIdsPart2]): com.histmersion.plugins.calibre.Calibre.IdentifiersValueResult =
-    ids.toList.sortBy(_._1).map((k, v) => s"$k:$v").mkString(",")
+    _root_.com.histmersion.plugins.calibre.Calibre.IdentifiersValueResult(ids.toList.sortBy(_._1).map((k, v) => s"$k:$v").mkString(","))
 
   /** Role words a library or a publisher appends to a name: `eds.`, `trans.`, `Hrsg.`. The short ones need their dot —
     * `Smith, Ed` is a man called Ed.

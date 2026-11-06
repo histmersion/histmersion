@@ -25,7 +25,7 @@ final case class Coverage(
     critiques: List[CritiquePair] = Nil
 ) derives KindlingsCodecAsObject,
       KindlingsSchema, com.histmersion.api.json.Schema:
-  def capped: com.histmersion.api.research.Coverage.CappedResult = (checked).value < (total).value
+  def capped: com.histmersion.api.research.Coverage.CappedResult = _root_.com.histmersion.api.research.Coverage.CappedResult((checked).value < (total).value)
   def unplaced: List[com.histmersion.api.research.Coverage.UnplacedResult] = drift.filter(_.kind == DriftKind.Unplaced).flatMap(_.citekeys)
 object Coverage:
 
@@ -72,7 +72,8 @@ object Coverage:
     type MergeCurrentPart2 = MergeCurrentPart2.T
     object MergeCurrentPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ListMPart1 = ListMPart1.T
-    object ListMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object ListMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
     type ListMPart2 = ListMPart2.T
     object ListMPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 

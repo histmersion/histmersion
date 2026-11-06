@@ -9,7 +9,7 @@ object UpstreamQuotaMarkdown:
   type LineResult = LineResult.T
   object LineResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def name(upstream: com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream): com.histmersion.api.library.UpstreamQuotaMarkdown.NameResult = if upstream == "core" then _root_.com.histmersion.api.library.UpstreamQuotaMarkdown.NameResult("CORE") else upstream
+  private def name(upstream: com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream): com.histmersion.api.library.UpstreamQuotaMarkdown.NameResult = if upstream == _root_.com.histmersion.api.library.UpstreamQuotaMarkdown.NameUpstream("core") then _root_.com.histmersion.api.library.UpstreamQuotaMarkdown.NameResult("CORE") else upstream
 
   def line(q: UpstreamQuota): com.histmersion.api.library.UpstreamQuotaMarkdown.LineResult =
     val spent = q.lookupTokens + q.searchTokens

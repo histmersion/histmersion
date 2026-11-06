@@ -122,7 +122,7 @@ object Geocode:
     def parse(s: com.histmersion.api.catalogue.Geocode.KindHint.ParseS): KindHint =
       val t = (s).value.trim.toLowerCase(java.util.Locale.ROOT)
       values
-        .find(_.wire == t)
+        .find(_.wire == _root_.com.histmersion.api.catalogue.Geocode.KindHint.WireResult(t))
         .getOrElse(t match
           case "city" | "town" | "settlement" | "village" | "temple" | "fort" | "sanctuary" | "cemetery" => Site
           case "country" | "area" | "province" | "landscape" | "valley" | "plain" | "island"             => Region
@@ -134,7 +134,7 @@ object Geocode:
       def all: Array[KindHint] = KindHint.values
       def wire(e: KindHint): com.histmersion.api.catalogue.Geocode.KindHint.WireResult = e.wire
       def fromWire(s: com.histmersion.api.catalogue.Geocode.KindHint.FromWireS): Option[KindHint] =
-        KindHint.values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+        KindHint.values.find(_.wire == _root_.com.histmersion.api.catalogue.Geocode.KindHint.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
     given Encoder[KindHint] = WireEnum.encoder
     given Decoder[KindHint] = WireEnum.decoder
     given Schema[KindHint] = WireEnum.schema
@@ -306,7 +306,7 @@ object Geocode:
   ):
     def undated: com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult = _root_.com.histmersion.api.catalogue.Geocode.Candidate.UndatedResult(from.isEmpty && to.isEmpty)
 
-    def span: com.histmersion.api.catalogue.Geocode.Candidate.SpanResult = (for a <- from; b <- to yield (b).value - (a).value).getOrElse((_root_.com.histmersion.api.catalogue.Geocode.Candidate.SpanResult(Long.MaxValue / 4)).value)
+    def span: com.histmersion.api.catalogue.Geocode.Candidate.SpanResult = _root_.com.histmersion.api.catalogue.Geocode.Candidate.SpanResult((for a <- from; b <- to yield (b).value - (a).value).getOrElse((_root_.com.histmersion.api.catalogue.Geocode.Candidate.SpanResult(Long.MaxValue / 4)).value))
     def overlaps(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.OverlapsResult = from.forall(_ <= p.end) && to.forall(_ >= p.start)
 
     def gap(p: Period): com.histmersion.api.catalogue.Geocode.Candidate.GapResult =
@@ -347,22 +347,22 @@ object Geocode:
     object GridCell extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   private def broad(kind: com.histmersion.api.catalogue.Geocode.BroadKind) =
-    kind == com.histmersion.api.catalogue.Place.Kind.Region || kind == com.histmersion.api.catalogue.Place.Kind.Polity
+    kind == _root_.com.histmersion.api.catalogue.Geocode.BroadKind(com.histmersion.api.catalogue.Place.Kind.Region) || kind == _root_.com.histmersion.api.catalogue.Geocode.BroadKind(com.histmersion.api.catalogue.Place.Kind.Polity)
 
   def tierOf(importSource: Option[com.histmersion.api.catalogue.Geocode.TierOfImportSource]): com.histmersion.api.catalogue.Geocode.TierOfResult = Gazetteer.rank(Place.Match("", importSource))
 
-  def isPlaceholder(c: Candidate, placeholderMin: com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin): com.histmersion.api.catalogue.Geocode.IsPlaceholderResult = c.dimension == 0 && c.shared >= placeholderMin
+  def isPlaceholder(c: Candidate, placeholderMin: com.histmersion.api.catalogue.Geocode.IsPlaceholderPlaceholderMin): com.histmersion.api.catalogue.Geocode.IsPlaceholderResult = c.dimension == _root_.com.histmersion.api.catalogue.Geocode.Candidate.Dimension(0) && c.shared >= placeholderMin
 
   private def kindRank(kind: com.histmersion.api.catalogue.Geocode.KindRankKind, hint: KindHint): com.histmersion.api.catalogue.Geocode.KindRankResult = hint match
     case KindHint.Site =>
-      if kind == com.histmersion.api.catalogue.Place.Kind.Site then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0)
-      else if kind == com.histmersion.api.catalogue.Place.Kind.Feature then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(1)
+      if kind == _root_.com.histmersion.api.catalogue.Geocode.KindRankKind(com.histmersion.api.catalogue.Place.Kind.Site) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0)
+      else if kind == _root_.com.histmersion.api.catalogue.Geocode.KindRankKind(com.histmersion.api.catalogue.Place.Kind.Feature) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(1)
       else _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(2)
     case KindHint.Water =>
-      if kind == com.histmersion.api.catalogue.Place.Kind.Feature then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0)
-      else if kind == com.histmersion.api.catalogue.Place.Kind.Site then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(1)
+      if kind == _root_.com.histmersion.api.catalogue.Geocode.KindRankKind(com.histmersion.api.catalogue.Place.Kind.Feature) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0)
+      else if kind == _root_.com.histmersion.api.catalogue.Geocode.KindRankKind(com.histmersion.api.catalogue.Place.Kind.Site) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(1)
       else _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(2)
-    case _ => if broad(kind) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0) else if kind == com.histmersion.api.catalogue.Place.Kind.Feature then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(1) else _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(2)
+    case _ => if broad(kind) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(0) else if kind == _root_.com.histmersion.api.catalogue.Geocode.KindRankKind(com.histmersion.api.catalogue.Place.Kind.Feature) then _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(1) else _root_.com.histmersion.api.catalogue.Geocode.KindRankResult(2)
 
   private def timeRank(c: Candidate, at: Option[Period]): (com.histmersion.api.catalogue.Geocode.TimeRankResultPart1, com.histmersion.api.catalogue.Geocode.TimeRankResultPart2) = at match
     case None    => if c.undated then (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(0), _root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart2(0L)) else (_root_.com.histmersion.api.catalogue.Geocode.TimeRankResultPart1(1), -c.span)

@@ -22,7 +22,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
           case Left(e)  => Left(CoreFailure.Failed(e))
           case Right(a) =>
             quota.observe(a.status, a.headers)
-            if a.status == 429 then
+            if a.status == _root_.com.histmersion.plugin.Plugin.HttpResponse.Status(429) then
               Left(
                 CoreFailure.Skipped(
                   _root_.com.histmersion.upstreams.core.CoreFailure.Skipped.Why(quota.waitingUntil.fold("CORE answered HTTP 429")(u => s"CORE answered HTTP 429; not asked until $u"))

@@ -39,7 +39,7 @@ object AutopilotMarkdown:
 
   def focus(f: FocusInfo): com.histmersion.api.automation.AutopilotMarkdown.FocusResult =
     val head = s"## Focus: ${if f.on then s"at most ${f.max} active goals" else "not in force"}" +
-      (if f.maxFrom == "person" then " (set by a person)" else " (agents.autopilot.max-active-goals)")
+      (if f.maxFrom == _root_.com.histmersion.api.automation.Autopilot.FocusInfo.MaxFrom("person") then " (set by a person)" else " (agents.autopilot.max-active-goals)")
     val lines = List(
       f.note.map(n => s"_${n}_"),
       Option.when(f.held > 0)(

@@ -60,7 +60,7 @@ object BundleMarkdown:
     val verb =
       if r.problems.nonEmpty then "**Refused** — nothing was written"
       else if r.dryRun then "**Dry run** — nothing was written; this is what an import would do"
-      else if r.changed == 0 then "**Nothing to change** — this instance already has everything in the bundle"
+      else if r.changed == _root_.com.histmersion.api.exchange.Bundle.ImportResult.ChangedResult(0) then "**Nothing to change** — this instance already has everything in the bundle"
       else
         s"**Imported** — ${Plural.count(r.changed, _root_.com.histmersion.api.Plural.CountSingular("row"))} changed" + r.mergeId.map(m => s" (merge $m)").getOrElse("")
     val rows = r.counts.map(c =>

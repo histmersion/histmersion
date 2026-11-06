@@ -147,18 +147,18 @@ object Query:
     while i < n do
       val c = (sql).value.charAt(i)
       if depth > 0 then
-        if c == '*' && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == '/' then { depth -= 1; cur.append("*/"); i += 2 }
-        else if c == '/' && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == '*' then { depth += 1; cur.append("/*"); i += 2 }
+        if c == '*' && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == _root_.com.histmersion.api.library.Query.StatementsAtResult('/') then { depth -= 1; cur.append("*/"); i += 2 }
+        else if c == '/' && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == _root_.com.histmersion.api.library.Query.StatementsAtResult('*') then { depth += 1; cur.append("/*"); i += 2 }
         else { cur.append(c); i += 1 }
-      else if c == '-' && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == '-' then
+      else if c == '-' && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == _root_.com.histmersion.api.library.Query.StatementsAtResult('-') then
         while i < n && (sql).value.charAt(i) != '\n' do { cur.append((sql).value.charAt(i)); i += 1 }
-      else if c == '/' && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == '*' then { depth += 1; cur.append("/*"); i += 2 }
+      else if c == '/' && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == _root_.com.histmersion.api.library.Query.StatementsAtResult('*') then { depth += 1; cur.append("/*"); i += 2 }
       else if c == '\'' || c == '"' then
         cur.append(c); i += 1
         var closed = false
         while i < n && !closed do
           val q = (sql).value.charAt(i)
-          if q == c && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == c then { cur.append(c).append(c); i += 2 }
+          if q == c && at(_root_.com.histmersion.api.library.Query.StatementsAtK(i + 1)) == _root_.com.histmersion.api.library.Query.StatementsAtResult(c) then { cur.append(c).append(c); i += 2 }
           else if q == c then { cur.append(c); i += 1; closed = true }
           else { cur.append(q); i += 1 }
       else if c == '$' then

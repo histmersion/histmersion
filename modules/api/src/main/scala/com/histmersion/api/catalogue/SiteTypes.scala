@@ -403,7 +403,7 @@ object SiteTypes:
       wikidataClass: Option[com.histmersion.api.catalogue.SiteTypes.OfWikidataClass],
       p31: List[com.histmersion.api.catalogue.SiteTypes.OfP31] = Nil
   ): Option[com.histmersion.api.catalogue.SiteTypes.OfResult] =
-    if placeKind != com.histmersion.api.catalogue.Place.Kind.Site && placeKind != com.histmersion.api.catalogue.Place.Kind.Feature
+    if placeKind != _root_.com.histmersion.api.catalogue.SiteTypes.OfPlaceKind(com.histmersion.api.catalogue.Place.Kind.Site) && placeKind != _root_.com.histmersion.api.catalogue.SiteTypes.OfPlaceKind(com.histmersion.api.catalogue.Place.Kind.Feature)
     then None
     else
       stored

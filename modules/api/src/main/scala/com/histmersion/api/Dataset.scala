@@ -12,7 +12,7 @@ object Dataset:
   type OfParamRaw = OfParamRaw.T
   object OfParamRaw extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.Dataset.ParseS): Option[Dataset] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+  def parse(s: com.histmersion.api.Dataset.ParseS): Option[Dataset] = values.find(_.wire == _root_.com.histmersion.api.Dataset.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   def ofParam(raw: Option[com.histmersion.api.Dataset.OfParamRaw]): Either[Api.Error, Dataset] =
     raw.map((_).value.trim).filter(_.nonEmpty) match

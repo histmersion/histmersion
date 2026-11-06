@@ -121,7 +121,7 @@ object MergeIssue:
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
       def wire(e: Kind): com.histmersion.api.exchange.MergeIssue.Kind.WireResult = wireOf(e)
-      def fromWire(s: com.histmersion.api.exchange.MergeIssue.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == (s).value.trim)
+      def fromWire(s: com.histmersion.api.exchange.MergeIssue.Kind.FromWireS): Option[Kind] = Kind.values.find(k => wireOf(k) == _root_.com.histmersion.api.exchange.MergeIssue.Kind.WireOfResult((s).value.trim))
 
   /** How much an issue holds the merge up. */
   enum Severity:

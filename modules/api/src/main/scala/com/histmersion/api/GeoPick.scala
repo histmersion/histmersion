@@ -48,7 +48,7 @@ object GeoPick:
   type ResolveTo = ResolveTo.T
   object ResolveTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def parse(s: com.histmersion.api.GeoPick.ParseS): Option[GeoPick] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+  def parse(s: com.histmersion.api.GeoPick.ParseS): Option[GeoPick] = values.find(_.wire == _root_.com.histmersion.api.GeoPick.WireResult((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
 
   given WireEnumValues[GeoPick]:
     def all: Array[GeoPick] = GeoPick.values
@@ -61,7 +61,7 @@ object GeoPick:
   def yearOf(pick: GeoPick, lo: com.histmersion.api.GeoPick.YearOfLo, hi: com.histmersion.api.GeoPick.YearOfHi): com.histmersion.api.GeoPick.YearOfResult = pick match
     case Start => lo
     case End   => hi
-    case _     => ((lo).value + (hi).value) / 2
+    case _     => _root_.com.histmersion.api.GeoPick.YearOfResult(((lo).value + (hi).value) / 2)
 
   def resolve(asOf: Option[com.histmersion.api.GeoPick.ResolveAsOf], from: Option[com.histmersion.api.GeoPick.ResolveFrom], to: Option[com.histmersion.api.GeoPick.ResolveTo], pick: GeoPick): GeoTime =
     val span = (from, to) match

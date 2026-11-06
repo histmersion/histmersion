@@ -145,8 +145,8 @@ object Jats:
         val end = (xml).value.indexOf('>', i)
         val name = (xml).value.substring(i + 2, if end < 0 then n else end).trim
         // tolerant: close up to the matching open element; a stray close tag is ignored
-        if stack.exists(_.name == name) && stack.size > 1 then
-          while stack.head.name != name do close()
+        if stack.exists(_.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name(name)) && stack.size > 1 then
+          while stack.head.name != _root_.com.histmersion.upstreams.jats.Jats.Elem.Name(name) do close()
           close()
         i = if end < 0 then n else end + 1
       else if (xml).value.charAt(i) == '<' then
@@ -175,7 +175,7 @@ object Jats:
 
   private def after(s: com.histmersion.upstreams.jats.Jats.AfterS, token: com.histmersion.upstreams.jats.Jats.AfterToken, from: com.histmersion.upstreams.jats.Jats.AfterFrom): com.histmersion.upstreams.jats.Jats.AfterResult =
     val j = (s).value.indexOf((token).value, (from).value)
-    if j < 0 then _root_.com.histmersion.upstreams.jats.Jats.AfterResult((s).value.length) else j + (token).value.length
+    if j < 0 then _root_.com.histmersion.upstreams.jats.Jats.AfterResult((s).value.length) else _root_.com.histmersion.upstreams.jats.Jats.AfterResult(j + (token).value.length)
 
   /** The `>` that ends a tag, ignoring one inside a quoted attribute value. */
   private def tagEnd(s: com.histmersion.upstreams.jats.Jats.TagEndS, from: com.histmersion.upstreams.jats.Jats.TagEndFrom): com.histmersion.upstreams.jats.Jats.TagEndResult =
@@ -269,7 +269,7 @@ object Jats:
     // an element's own title is rendered by whoever owns it (sec, abstract, ack, caption)
     e.children.flatMap {
       case Text(s)                                           => Option(collapse(s)).filter(_.nonEmpty).toVector
-      case c: Elem if c.name == "title" || c.name == "label" => Vector.empty
+      case c: Elem if c.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("title") || c.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("label") => Vector.empty
       case c: Elem                                           => block(c, level)
     }
 
@@ -360,11 +360,11 @@ object Jats:
     (c.kid("title").map(runText).toVector ++ c.kids("p").map(runText)).filter(_.nonEmpty)
 
   private def table(t: Elem): Vector[com.histmersion.upstreams.jats.Jats.TableResult] =
-    def rows(e: Elem): Vector[Elem] = e.elems.flatMap(c => if c.name == "tr" then Vector(c) else rows(c))
+    def rows(e: Elem): Vector[Elem] = e.elems.flatMap(c => if c.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("tr") then Vector(c) else rows(c))
     val all = rows(t)
       .map(
         _.elems
-          .filter(c => c.name == "td" || c.name == "th")
+          .filter(c => c.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("td") || c.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("th"))
           .map(c => (runText(c)).value.replace("|", "\\|"))
       )
       .filter(_.nonEmpty)
@@ -377,7 +377,7 @@ object Jats:
 
   private def formula(e: Elem): Option[com.histmersion.upstreams.jats.Jats.FormulaResult] =
     def find(x: Elem): Option[Elem] =
-      if x.name == "tex-math" then Some(x) else x.elems.iterator.flatMap(find).nextOption()
+      if x.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("tex-math") then Some(x) else x.elems.iterator.flatMap(find).nextOption()
     find(e).map(t => collapse(text(t)).stripPrefix("$").stripSuffix("$").trim).filter(_.nonEmpty)
 
   private def refList(e: Elem, level: com.histmersion.upstreams.jats.Jats.RefListLevel, parent: Option[com.histmersion.upstreams.jats.Jats.RefListParent] = None): Vector[com.histmersion.upstreams.jats.Jats.RefListResult] =
@@ -396,19 +396,19 @@ object Jats:
     * issue and a page range read as one field (`522(7555):167–172`).
     */
   private def citation(c: Elem): com.histmersion.upstreams.jats.Jats.CitationResult =
-    if c.name != "element-citation" then runText(c)
+    if c.name != _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("element-citation") then runText(c)
     else
       val fields: Vector[(com.histmersion.upstreams.jats.Jats.CitationFieldsPart1, com.histmersion.upstreams.jats.Jats.CitationFieldsPart2)] = c.elems.flatMap {
-        case g if g.name == "person-group" =>
+        case g if g.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("person-group") =>
           val names = g.elems
             .flatMap {
-              case n if n.name == "name" => Some(personName(n))
-              case n if n.name == "etal" => Some("et al.")
+              case n if n.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("name") => Some(personName(n))
+              case n if n.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("etal") => Some("et al.")
               case n                     => Some(runText(n))
             }
             .filter(_.nonEmpty)
           Option.when(names.nonEmpty)({ val refactorTuple = "person-group" -> names.mkString(", "); (_root_.com.histmersion.upstreams.jats.Jats.CitationFieldsPart1(refactorTuple._1), _root_.com.histmersion.upstreams.jats.Jats.CitationFieldsPart2(refactorTuple._2)) })
-        case p if p.name == "pub-id" =>
+        case p if p.name == _root_.com.histmersion.upstreams.jats.Jats.Elem.Name("pub-id") =>
           Option.when(p.attr("pub-id-type").contains("doi"))("doi" -> ("doi:" + runText(p)))
         case x => Some(x.name -> runText(x))
       }

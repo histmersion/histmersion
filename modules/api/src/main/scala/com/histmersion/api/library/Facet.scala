@@ -44,6 +44,6 @@ object Facet:
       case Provenance => _root_.com.histmersion.api.library.Facet.Field.LabelResult("provenance")
 
     def parse(s: com.histmersion.api.library.Facet.Field.ParseS): Option[Field] =
-      values.find(f => label(f) == (s).value.trim.toLowerCase || f.toString.equalsIgnoreCase((s).value.trim))
+      values.find(f => label(f) == _root_.com.histmersion.api.library.Facet.Field.LabelResult((s).value.trim.toLowerCase) || f.toString.equalsIgnoreCase((s).value.trim))
 
     val all: List[com.histmersion.api.library.Facet.Field.All] = values.toList.map(label)

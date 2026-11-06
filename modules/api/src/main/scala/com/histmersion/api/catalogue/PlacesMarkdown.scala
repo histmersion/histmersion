@@ -123,7 +123,7 @@ object PlacesMarkdown:
     val head =
       if r.reset then s"reset **${r.label}** `${r.placeId}` to what its source says: $kind, $period$point"
       else s"set **${r.label}** `${r.placeId}`: $kind, $period$point — kept by every re-seed and re-import"
-    val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
+    val lost = if r.unlocated == _root_.com.histmersion.api.catalogue.Place.OverrideChanged.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
     _root_.com.histmersion.api.catalogue.PlacesMarkdown.PlaceOverrideChangedResult(s"$head\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
 
   def placeGone(r: Place.Gone): com.histmersion.api.catalogue.PlacesMarkdown.PlaceGoneResult =
@@ -131,7 +131,7 @@ object PlacesMarkdown:
       case Some(into) =>
         s"merged **${r.label}** `${r.placeId}` into **${r.intoLabel.getOrElse(into)}** `$into` — `${r.placeId}` now resolves to it"
       case None => s"removed **${r.label}** `${r.placeId}`"
-    val lost = if r.unlocated == 0 then "" else s"; **${r.unlocated}** of them now have no place at all"
+    val lost = if r.unlocated == _root_.com.histmersion.api.catalogue.Place.Gone.Unlocated(0) then "" else s"; **${r.unlocated}** of them now have no place at all"
     _root_.com.histmersion.api.catalogue.PlacesMarkdown.PlaceGoneResult(s"$head; no re-seed brings it back\n\nfindings matched again: ${r.findingsBefore} → ${r.findingsAfter}$lost")
 
   def placeOverrides(rows: List[Place.Override]): com.histmersion.api.catalogue.PlacesMarkdown.PlaceOverridesResult =

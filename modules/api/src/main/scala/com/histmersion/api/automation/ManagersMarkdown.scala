@@ -107,7 +107,7 @@ object ManagersMarkdown:
           .fold("")(a => s" until approval #$a is decided") + Option(h.reason).filter(_.nonEmpty).fold("")(r => s": $r")
     )
     val nb = i.notBefore.fold("")(t => s" · not before $t")
-    val kind = if i.kind == ArticleReview then "" else s" (${i.kind})"
+    val kind = if i.kind == _root_.com.histmersion.api.automation.Managers.ManagerItem.Kind(ArticleReview) then "" else s" (${i.kind})"
     s"#${i.id} ${i.target}$kind · ${i.status} · priority ${i.priority} · ${i.attempts} run(s)" +
       (if i.failures > 0 then s", ${i.failures} failed" else "") + run + hold + nb +
       i.outcome.filter(_.nonEmpty).fold("")(o => s" · $o")
@@ -126,7 +126,7 @@ object ManagersMarkdown:
     if p.events.isEmpty then _root_.com.histmersion.api.automation.ManagersMarkdown.EventsResult("_No events._") else _root_.com.histmersion.api.automation.ManagersMarkdown.EventsResult(p.events.map(e => s"- ${event(e)}").mkString("\n"))
 
   def effect(e: HintEffect): com.histmersion.api.automation.ManagersMarkdown.EffectResult =
-    if e.action == HintEffect.Config then _root_.com.histmersion.api.automation.ManagersMarkdown.EffectResult(s"settings: ${e.config.fold("none")(configLine)}")
+    if e.action == _root_.com.histmersion.api.automation.Managers.HintEffect.Action(HintEffect.Config) then _root_.com.histmersion.api.automation.ManagersMarkdown.EffectResult(s"settings: ${e.config.fold("none")(configLine)}")
     else
       e.action + (e.targets ++ e.tag.map(t => s"tag $t") ++ e.topic.map(t => s"topic $t") ++
         e.goal.map(g => s"goal $g")).mkString(" ", ", ", "") + e.until.fold("")(u => s" until $u") +

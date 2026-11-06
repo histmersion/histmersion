@@ -97,7 +97,7 @@ object Bundle:
       case Place          => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("P")
       case Period         => _root_.com.histmersion.api.exchange.Bundle.Kind.LetterOfResult("N")
 
-    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def fromWire(s: com.histmersion.api.exchange.Bundle.Kind.FromWireS): Option[Kind] = values.find(_.wire == _root_.com.histmersion.api.exchange.Bundle.Kind.WireResult((s).value.trim.toLowerCase))
 
     given WireEnumValues[Kind]:
       def all: Array[Kind] = Kind.values
@@ -627,7 +627,7 @@ object Bundle:
     object NewerThere extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     def candidateStatus(here: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere, there: com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusThere): com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusResult =
-      if here == "proposed" then there else here
+      if here == _root_.com.histmersion.api.exchange.Bundle.EventSets.CandidateStatusHere("proposed") then there else here
 
     /** Timestamps share one fixed-width UTC format, so text order is time order. */
     def newer(here: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerHere], there: Option[com.histmersion.api.exchange.Bundle.EventSets.NewerThere]): com.histmersion.api.exchange.Bundle.EventSets.NewerResult = (here, there) match

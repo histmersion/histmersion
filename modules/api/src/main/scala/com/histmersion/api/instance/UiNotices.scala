@@ -51,7 +51,7 @@ object UiNotices:
     type WiresResult = WiresResult.T
     object WiresResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.instance.UiNotices.Board.ParseS): Option[Board] = values.find(_.wire == Option(s).map((_).value.trim.toLowerCase).getOrElse(""))
+    def parse(s: com.histmersion.api.instance.UiNotices.Board.ParseS): Option[Board] = values.find(_.wire == _root_.com.histmersion.api.instance.UiNotices.Board.Wire(Option(s).map((_).value.trim.toLowerCase).getOrElse("")))
     def wires: List[com.histmersion.api.instance.UiNotices.Board.WiresResult] = values.toList.map(_.wire)
 
   final case class Counter(
@@ -82,8 +82,8 @@ object UiNotices:
 
     /** The agents at a glance, as the top bar says it. */
     def wording: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult =
-      def runs(n: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingRunsN) = if n == 1 then "1 run" else s"$n runs"
-      if !(on).value || (draining && running == 0) then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult("Agents paused")
+      def runs(n: com.histmersion.api.instance.UiNotices.AgentsGlance.WordingRunsN) = if n == _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingRunsN(1) then "1 run" else s"$n runs"
+      if !(on).value || (draining && running == _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.Running(0)) then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult("Agents paused")
       else if (draining).value then s"Agents finishing current work · ${runs(running)}"
       else if (running).value > 0 then s"Agents working · ${runs(running)}"
       else if (queued).value > 0 then _root_.com.histmersion.api.instance.UiNotices.AgentsGlance.WordingResult(s"Agents working · $queued waiting")

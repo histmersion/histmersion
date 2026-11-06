@@ -55,8 +55,8 @@ object Agents:
       derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def +(o: Usage): Usage =
-      Usage((input).value + (o.input).value, (output).value + (o.output).value, (cacheRead).value + (o.cacheRead).value, (cacheWrite).value + (o.cacheWrite).value)
-    def total: com.histmersion.api.automation.Agents.Usage.TotalResult = (input).value + (output).value
+      Usage(_root_.com.histmersion.api.automation.Agents.Usage.Input((input).value + (o.input).value), _root_.com.histmersion.api.automation.Agents.Usage.Output((output).value + (o.output).value), _root_.com.histmersion.api.automation.Agents.Usage.CacheRead((cacheRead).value + (o.cacheRead).value), _root_.com.histmersion.api.automation.Agents.Usage.CacheWrite((cacheWrite).value + (o.cacheWrite).value))
+    def total: com.histmersion.api.automation.Agents.Usage.TotalResult = _root_.com.histmersion.api.automation.Agents.Usage.TotalResult((input).value + (output).value)
 
     def budgeted(cacheReadWeight: com.histmersion.api.automation.Agents.Usage.BudgetedCacheReadWeight): com.histmersion.api.automation.Agents.Usage.BudgetedResult =
       math.max(0L, (input).value - (cacheRead).value) + output + math.round(cacheRead.toDouble * math.max(0.0, cacheReadWeight))
@@ -235,7 +235,7 @@ object Agents:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Agents.Origin.ParseS): Option[Origin] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Agents.Origin.ParseS): Option[Origin] = values.find(_.wire == _root_.com.histmersion.api.automation.Agents.Origin.Wire((s).value.trim.toLowerCase))
 
   final case class ProbeRequest(citekey: com.histmersion.api.library.Citekey, model: Option[ProbeRequest.Model] = None)
       derives KindlingsCodecAsObject,
@@ -536,7 +536,7 @@ object Agents:
   ) derives KindlingsCodecAsObject,
         KindlingsSchema, com.histmersion.api.json.Schema:
     def modelText: com.histmersion.api.automation.Agents.StepInfo.ModelTextResult = (model, actualModel) match
-      case (Some(m), Some(a)) if (m).value.drop((m).value.indexOf(':') + 1) != a => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult(s"$m → $a")
+      case (Some(m), Some(a)) if _root_.com.histmersion.api.automation.Agents.StepInfo.ActualModel((m).value.drop((m).value.indexOf(':') + 1)) != a => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult(s"$m → $a")
       case (Some(m), _)                                          => m
       case (None, Some(a))                                       => a
       case (None, None)                                          => _root_.com.histmersion.api.automation.Agents.StepInfo.ModelTextResult("")
@@ -775,7 +775,7 @@ object Agents:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Agents.Decision.ParseS): Option[Decision] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Agents.Decision.ParseS): Option[Decision] = values.find(_.wire == _root_.com.histmersion.api.automation.Agents.Decision.Wire((s).value.trim.toLowerCase))
 
   final case class ApprovalInfo(
       id: ApprovalInfo.Id,

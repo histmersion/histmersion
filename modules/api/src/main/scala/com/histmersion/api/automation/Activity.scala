@@ -33,7 +33,7 @@ object Activity:
     type ParseS = ParseS.T
     object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.Activity.EntryKind.ParseS): Option[EntryKind] = values.find(_.wire == (s).value.trim.toLowerCase)
+    def parse(s: com.histmersion.api.automation.Activity.EntryKind.ParseS): Option[EntryKind] = values.find(_.wire == _root_.com.histmersion.api.automation.Activity.EntryKind.Wire((s).value.trim.toLowerCase))
 
   enum Writer(val wire: Writer.Wire):
     case Agent extends Writer(_root_.com.histmersion.api.automation.Activity.Writer.Wire("agent"))
@@ -62,7 +62,7 @@ object Activity:
 
     def parse(s: com.histmersion.api.automation.Activity.Show.ParseS): Option[Show] =
       val t = (s).value.trim.toLowerCase
-      values.find(v => v.wire == t || v.toString.toLowerCase == t)
+      values.find(v => v.wire == _root_.com.histmersion.api.automation.Activity.Show.Wire(t) || v.toString.toLowerCase == t)
 
   final case class Entry(
       key: Entry.Key,

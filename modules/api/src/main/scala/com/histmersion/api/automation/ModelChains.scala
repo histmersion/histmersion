@@ -90,7 +90,7 @@ object ModelChains:
     type FromWireS = FromWireS.T
     object FromWireS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    def parse(s: com.histmersion.api.automation.ModelChains.Measure.ParseS): Option[Measure] = values.find(_.wire == (s).value.trim.toLowerCase(java.util.Locale.ROOT))
+    def parse(s: com.histmersion.api.automation.ModelChains.Measure.ParseS): Option[Measure] = values.find(_.wire == _root_.com.histmersion.api.automation.ModelChains.Measure.Wire((s).value.trim.toLowerCase(java.util.Locale.ROOT)))
     given WireEnumValues[Measure]:
       def all: Array[Measure] = Measure.values
       def wire(e: Measure): com.histmersion.api.automation.ModelChains.Measure.WireResult = e.wire
@@ -302,7 +302,8 @@ object ModelChains:
 
   object Spend:
     type At = At.T
-    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object At extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
     type Tokens = Tokens.T
     object Tokens extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -320,7 +321,8 @@ object ModelChains:
     type Usable = Usable.T
     object Usable extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type FreesAt = FreesAt.T
-    object FreesAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    object FreesAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+      given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.scala.Long](_.value)
 
   private def measureOf(s: Spend, m: Measure): BigDecimal = m match
     case Measure.Tokens => BigDecimal(s.tokens)
@@ -341,7 +343,7 @@ object ModelChains:
             (left - measureOf(s, limit.measure), Some(s.at + windowMs))
           }
           .collectFirst { case (left, Some(at)) if left < threshold => at }
-    LimitState(limit, used, (limit.amount - used).max(0), reserve, usable, freesAt)
+    LimitState(limit, used, (limit.amount - used).max(0), reserve, _root_.com.histmersion.api.automation.ModelChains.LimitState.Usable(usable), (freesAt).map(refactorValue16 => _root_.com.histmersion.api.automation.ModelChains.LimitState.FreesAt(refactorValue16)))
 
   def states(a: Allowance, spends: Seq[Spend], now: com.histmersion.api.automation.ModelChains.StatesNow): List[LimitState] =
     a.limits.map(limitState(_, a.reservePct, spends, now))
