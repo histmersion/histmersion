@@ -382,7 +382,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
     )
     val in0 = input(es)
     val in = in0.modify(
-      _.local).setTo(in0.local.modify(_.attestations).setTo(List(att("t-home", "h-kuhrt", com.histmersion.api.exchange.Bundle.Attestation.Quote("home's OCR"), home)))).modify(_.bodies).setTo(Map(BundleFormat.sha256Hex(workBody) -> workBody, BundleFormat.sha256Hex(homeBody) -> homeBody)
+      _.local).setTo(in0.local.modify(_.attestations).setTo(List(att("t-home", "h-kuhrt", com.histmersion.api.exchange.Bundle.Attestation.Quote("home's OCR"), home)))).modify(_.bodies).setTo(Map(com.histmersion.api.exchange.Bundle.Source.BodySha256(BundleFormat.sha256Hex(workBody).value) -> com.histmersion.domain.catalogue.evidence.TextAnchor.Text(workBody), com.histmersion.api.exchange.Bundle.Source.BodySha256(BundleFormat.sha256Hex(homeBody).value) -> com.histmersion.domain.catalogue.evidence.TextAnchor.Text(homeBody))
     )
     val r0 = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     val body = issue(r0.plan, Issue.Kind.BodyDiffers, IssueSide.Label("kuhrt1995_near"))
@@ -465,7 +465,7 @@ class MergePlannerSuite extends munit.FunSuite with Bounded:
       Some(BundlePlan.Rev(BundleFormat.stamp(shared).rev))
     ))
     val in = in0.modify(
-      _.ledger).setTo(ledgered).modify(_.local).setTo(in0.local.modify(_.articles).setTo(in0.local.articles :+ ours)).modify(_.articleHistory).setTo(Map(shared.uid -> List(baseSha -> Bundle.Article.Body(base)))
+      _.ledger).setTo(ledgered).modify(_.local).setTo(in0.local.modify(_.articles).setTo(in0.local.articles :+ ours)).modify(_.articleHistory).setTo(Map(shared.uid -> List(com.histmersion.Sha256.assume(baseSha.value) -> Bundle.Article.Body(base)))
     )
     val r = MergePlanner.plan(in, sketches, MergeResolutions(), cfg, List(CataloguePlan, LibraryPlan, ResearchPlan))
     assert(!r.plan.issues.exists(_.left.exists(_.label == IssueSide.Label("zz_shared"))), r.plan.issues.mkString("\n"))

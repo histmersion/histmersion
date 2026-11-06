@@ -201,7 +201,7 @@ class AcquireSuite extends munit.FunSuite:
   private def csv = scala.io.Source.fromResource("acquire/retraction_watch.csv").mkString
 
   test("Retraction Watch CSV parses by header name, through quoted commas and newlines"):
-    val rows = Acquire.parseRetractionWatch(csv).flatMap(r => com.histmersion.domain.library.acquisition.Ident.doi(com.histmersion.domain.library.acquisition.Ident.Written(r.doi.value)).map(d => Acquire.RetractionRow(com.histmersion.api.library.Doi(d.value), r.reason, r.date, r.nature)))
+    val rows = Acquire.parseRetractionWatch(csv)
     assertEquals(rows.size, 3)
     assertEquals(rows.head.doi, "10.1177/1758835919874651")
     assertEquals(rows.head.nature, Some("Retraction"))
@@ -250,7 +250,7 @@ class AcquireSuite extends munit.FunSuite:
           t.value.startsWith("A et al. (2019).") && t.value.contains("— open access, but") && !t.value.contains(" at https://doi.org")
         )
     )
-    assertEquals(Acquire.browserDownloadText(w.modify(_.isOa).setTo(false), com.histmersion.api.library.Doi("10.3390/rel10040258"), com.histmersion.api.library.Citekey("k")), None)
+    assertEquals(Acquire.browserDownloadText(w.modify(_.isOa).setTo(com.histmersion.api.library.WorkRef.IsOa(false)), com.histmersion.api.library.Doi("10.3390/rel10040258"), com.histmersion.api.library.Citekey("k")), None)
 
   test("browserDownloadText: a fetcher's refusal says where to download it and under which licence"):
     val w = WorkRef(

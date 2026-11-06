@@ -178,7 +178,7 @@ class CompareRunsSuite extends munit.FunSuite:
         model = Some(Step.Model("m"))
       ),
       // a checkpoint older than the counts: what it kept is what it checked
-      step(6, Step.Name("findings-3"), output = Some(Step.Output(VerifiedFindings(List(vf(VerifiedFinding.Claim("d")), vf(VerifiedFinding.Claim("e"))), None, None).asJson.noSpaces)), model = Some(Step.Model("m"))),
+      step(6, Step.Name("findings-3"), output = Some(Step.Output(io.circe.Json.obj("findings" -> List(vf(VerifiedFinding.Claim("d")), vf(VerifiedFinding.Claim("e"))).asJson).noSpaces)), model = Some(Step.Model("m"))),
       // an answer that was not JSON checked nothing
       step(7, Step.Name("findings-4"), Step.Status("failed"), output = None, model = Some(Step.Model("m")), error = Some(Step.Error("the answer is not the JSON")))
     )
@@ -229,7 +229,7 @@ class CompareRunsSuite extends munit.FunSuite:
         com.histmersion.api.library.Finding.Input(com.histmersion.api.library.Finding.Claim("Copper came from Cyprus."))
       ),
       List(
-        GeocodeChoice(com.histmersion.domain.EnrichSource.GeocodeChoice.Claim("Tin came by sea."), com.histmersion.domain.EnrichSource.GeocodeChoice.Asked("Uluburun"), Some(com.histmersion.domain.catalogue.Place.Id("p1")), Some(com.histmersion.domain.EnrichSource.GeocodeChoice.Label("Uluburun")), None),
+        GeocodeChoice(com.histmersion.domain.EnrichSource.GeocodeChoice.Claim("Tin came by sea."), com.histmersion.domain.EnrichSource.GeocodeChoice.Asked("Uluburun"), Some(com.histmersion.domain.catalogue.Place.Id.assume("p1")), Some(com.histmersion.domain.EnrichSource.GeocodeChoice.Label("Uluburun")), None),
         GeocodeChoice(com.histmersion.domain.EnrichSource.GeocodeChoice.Claim("Copper came from Cyprus."), com.histmersion.domain.EnrichSource.GeocodeChoice.Asked("Atlantis"), None, None, None)
       ),
       "Notes [[x2020]]."

@@ -130,4 +130,4 @@ class MediaProvidersSuite extends munit.FunSuite:
     assert(md.contains("**Not stored**\n- licence cc-by-nc not allowed for wikimedia-commons: 1"), md)
     assert(md.contains("**Failed**\n- x: y"), md)
     assert(!md.contains("**Stored:**"), "a dry run stores nothing")
-    assert(MediaMarkdown.mediaImportReport(r.modify(_.dryRun).setTo(false).modify(_.stored).setTo(com.histmersion.api.media.MediaImportReport.Stored(2))).contains("**Stored:** 2 new"))
+    assert(MediaMarkdown.mediaImportReport(r.modify(_.dryRun).setTo(com.histmersion.api.library.RepairAcquire.RepairRequest.DryRun(false)).modify(_.stored).setTo(com.histmersion.api.media.MediaImportReport.Stored(2))).contains("**Stored:** 2 new"))

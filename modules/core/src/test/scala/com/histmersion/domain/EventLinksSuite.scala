@@ -52,10 +52,10 @@ class EventLinksSuite extends munit.FunSuite:
     )
 
   test("a finding weighs 1 at the event's place and time, 0 at the edge of the window"):
-    assertEquals(EventMatcher.findingWeight(EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("f"), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(0), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(0)), w), 1.0)
-    assertEquals(EventMatcher.findingWeight(EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("f"), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(75), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(0)), w), 0.5)
-    assertEquals(EventMatcher.findingWeight(EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("f"), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(75), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(50)), w), 0.25)
-    assertEquals(EventMatcher.findingWeight(EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("f"), com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(200), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(0)), w), 0.0)
+    assertEquals(EventMatcher.findingWeight(EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("f"), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(0), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(0)), w), 1.0)
+    assertEquals(EventMatcher.findingWeight(EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("f"), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(75), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(0)), w), 0.5)
+    assertEquals(EventMatcher.findingWeight(EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("f"), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(75), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(50)), w), 0.25)
+    assertEquals(EventMatcher.findingWeight(EventMatcher.NearFinding(com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Id("f"), com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.Km(200), com.histmersion.domain.catalogue.evidence.EventMatcher.NearFinding.YearGap(0)), w), 0.0)
 
   test("candidates: a name in the text outweighs nearby findings; findings alone are capped; weak ones dropped"):
     val near = List(
@@ -107,11 +107,11 @@ class EventLinksSuite extends munit.FunSuite:
     )
     assertEquals(l.actions.map(_.kind), List("discover", "acquire", "goal"))
     assertEquals(l.actions.head.command, "histmersion discover search \"Eruption of Santorini\" --not-in-db")
-    val withProposed = EventLeads.of(f.modify(_.proposed).setTo(2)).get
+    val withProposed = EventLeads.of(f.modify(_.proposed).setTo(com.histmersion.api.catalogue.LeadFacts.Proposed(2))).get
     assert(withProposed.text.value.contains("2 sources possibly discuss it (unconfirmed)"))
     assertEquals(withProposed.actions.last.command, "histmersion events links gvp_13879")
     assertEquals(EventLeads.of(f.modify(_.tier).setTo(com.histmersion.api.catalogue.LeadFacts.Tier(EventTier.Attested))), None)
-    assertEquals(EventLeads.of(f.modify(_.attesting).setTo(1)), None)
+    assertEquals(EventLeads.of(f.modify(_.attesting).setTo(com.histmersion.api.catalogue.LeadFacts.Attesting(1))), None)
     assertEquals(EventLeads.size(None, Some(com.histmersion.api.catalogue.LeadFacts.Magnitude(7.25))), Some("M 7.3"))
 
   test("an article names an event by any of its names, ignoring case; short names do not count"):

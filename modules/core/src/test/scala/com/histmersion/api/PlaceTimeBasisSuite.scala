@@ -73,10 +73,10 @@ class PlaceTimeBasisSuite extends munit.FunSuite:
     val p = com.histmersion.api.catalogue.Place.Summary(com.histmersion.api.catalogue.Place.Id("x"), com.histmersion.api.catalogue.Place.Summary.Label("Anatolia"), com.histmersion.api.catalogue.Place.Summary.Kind(Place.Kind.Region), None, None, None, com.histmersion.api.catalogue.Place.Summary.Names(""))
     val d = PlaceDetail(p, None, Nil, Nil, com.histmersion.api.catalogue.Place.Counts.Findings(0), Some(com.histmersion.api.catalogue.Year(-2500L)), timeBasis = Findings)
     assert(d.datedByFindings)
-    assert(!d.modify(_.asOf).setTo((None: _root_.scala.Option[_root_.scala.Long])).datedByFindings)
+    assert(!d.modify(_.asOf).setTo(None).datedByFindings)
     assert(!d.modify(_.timeBasis).setTo(Dated).datedByFindings)
-    assert(PlacesMarkdown.place(d).contains(FindingsNote), PlacesMarkdown.place(d))
-    assert(!PlacesMarkdown.place(d.modify(_.asOf).setTo((None: _root_.scala.Option[_root_.scala.Long]))).contains(FindingsNote))
+    assert(PlacesMarkdown.place(d).contains(FindingsNote.value), PlacesMarkdown.place(d))
+    assert(!PlacesMarkdown.place(d.modify(_.asOf).setTo(None)).contains(FindingsNote.value))
 
   test("places.modern-from is configured, 1500 by default"):
     assertEquals(AppConfig.load().places.modernFrom, 1500L)

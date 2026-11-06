@@ -205,16 +205,16 @@ class EnrichSourceSuite extends munit.FunSuite:
     assertEquals(proposal, None)
     assert(fields.contains("1 finding(s)") && !fields.contains("notes"), fields)
     // a tag the source already has is neither re-sent nor reported
-    val (p2, fields2, _) = patch(loaded.modify(_.tags).setTo(List("tin")), classified, Nil, None)
+    val (p2, fields2, _) = patch(loaded.modify(_.tags).setTo(List(com.histmersion.domain.EnrichSource.Tag("tin"))), classified, Nil, None)
     assertEquals(p2.tags, None)
     assert(!fields2.contains("tags"), fields2)
 
   test("patch: a status other than current/foundational is proposed to a person, not written"):
     val (p, _, proposal) =
-      patch(loaded, classified.modify(_.status).setTo(Source.Status.Debunked).modify(_.statusEvidence).setTo("refuted by X"), Nil, None)
+      patch(loaded, classified.modify(_.status).setTo(Source.Status.Debunked).modify(_.statusEvidence).setTo(com.histmersion.domain.EnrichSource.Classified.StatusEvidence("refuted by X")), Nil, None)
     assertEquals(p.metadata, None)
     assertEquals(proposal, Some("debunked: refuted by X"))
-    val (p2, _, prop2) = patch(loaded.modify(_.status).setTo("contested"), classified, Nil, None)
+    val (p2, _, prop2) = patch(loaded.modify(_.status).setTo(com.histmersion.api.library.Source.Status.Wire("contested")), classified, Nil, None)
     assertEquals(p2.metadata, None) // never overwrites an assessed status
     assertEquals(prop2, Some("current: cited"))
 

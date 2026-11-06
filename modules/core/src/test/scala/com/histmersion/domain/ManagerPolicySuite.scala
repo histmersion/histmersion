@@ -107,7 +107,7 @@ class ManagerPolicySuite extends munit.FunSuite:
 
   test("evaluateStep: done → finished, held for an approval, or stopped; failed backs off then stops; cancelled stops"):
     def ev(st: RunState, f: StepFacts, failures: Next.Retry.Failures = Next.Retry.Failures(0)) =
-      evaluateStep(s, StepLabel(InferFilter), com.histmersion.domain.ManagerPolicy.Candidate.Target("tin"), failures, ItemState(), com.histmersion.domain.automation.Run.Id("run-1234567890"), st, Some(com.histmersion.domain.ManagerPolicy.Problem("boom")), f, now)
+      evaluateStep(s, StepLabel(InferFilter), com.histmersion.domain.ManagerPolicy.Candidate.Target("tin"), failures, ItemState(), com.histmersion.domain.automation.Run.Id("ccf9dbcf-a45c-e9ef-aef8-3e7aff5d2a57"), st, Some(com.histmersion.domain.ManagerPolicy.Problem("boom")), f, now)
     assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.Finished(com.histmersion.domain.ManagerPolicy.ItemOutcome("ok"))), Next.Done(com.histmersion.domain.ManagerPolicy.ItemOutcome("ok"), ItemState()))
     assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.Waiting(com.histmersion.domain.ManagerPolicy.ApprovalId(7), com.histmersion.domain.ManagerPolicy.ItemNote("waits"))), Next.Wait(com.histmersion.domain.ManagerPolicy.ApprovalId(7), com.histmersion.domain.ManagerPolicy.ItemNote("waits")))
     assertEquals(ev(com.histmersion.domain.automation.Run.State.Done, StepFacts.NotDone(com.histmersion.domain.ManagerPolicy.ItemOutcome("no"), None)), Next.Stop(com.histmersion.domain.ManagerPolicy.ItemOutcome("no"), None, ItemState()))

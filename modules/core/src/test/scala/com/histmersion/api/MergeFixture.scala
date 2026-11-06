@@ -6,13 +6,13 @@ import com.histmersion.config.*
 import com.histmersion.domain.*
 import com.histmersion.config.given
 import com.histmersion.domain.given
-import io.scalaland.chimney.dsl.*
 
 import MergePlanner.{Input, Labels, LedgerEntry}
 
 import java.util.UUID
 import com.histmersion.api.exchange.MergeDecision.Kind as DecisionKind
 import com.histmersion.util.data.exchange.BundleFormat
+import com.histmersion.util.data.exchange.MatchWeights
 import com.histmersion.util.data.exchange.BundleEntities
 import com.histmersion.api.exchange.{Bundle, MergePlan}
 import com.histmersion.api.library.Source
@@ -24,7 +24,44 @@ import com.histmersion.api.exchange.MergeIssue as Issue
   */
 object MergeFixture:
 
-  val cfg: MergeSettings = AppConfig.load().merge.transformInto[MergeSettings]
+  private def settings(c: MergeConfig): MergeSettings =
+    MergeSettings(
+      MergeSettings.AutoMerge(c.autoMerge.value),
+      MergeSettings.NewAtMost(c.newAtMost.value),
+      MergeSettings.MinhashSize(c.minhashSize.value),
+      MergeSettings.FindingNearAtLeast(c.findingNearAtLeast.value),
+      MergeSettings.FindingWithinKm(c.findingWithinKm.value),
+      MatchWeights(
+      MatchWeights.TitleFingerprint(c.weights.titleFingerprint.value),
+      MatchWeights.TitleMain(c.weights.titleMain.value),
+      MatchWeights.TitleSimilar(c.weights.titleSimilar.value),
+      MatchWeights.TitleSimilarAtLeast(c.weights.titleSimilarAtLeast.value),
+      MatchWeights.TitleTokens(c.weights.titleTokens.value),
+      MatchWeights.TitleTokensAtLeast(c.weights.titleTokensAtLeast.value),
+      MatchWeights.TitleDiffers(c.weights.titleDiffers.value),
+      MatchWeights.AuthorsSame(c.weights.authorsSame.value),
+      MatchWeights.AuthorsFirst(c.weights.authorsFirst.value),
+      MatchWeights.AuthorsOverlap(c.weights.authorsOverlap.value),
+      MatchWeights.AuthorsDisjoint(c.weights.authorsDisjoint.value),
+      MatchWeights.YearEqual(c.weights.yearEqual.value),
+      MatchWeights.YearNear(c.weights.yearNear.value),
+      MatchWeights.YearReprint(c.weights.yearReprint.value),
+      MatchWeights.YearFar(c.weights.yearFar.value),
+      MatchWeights.VenueEqual(c.weights.venueEqual.value),
+      MatchWeights.VenueDiffers(c.weights.venueDiffers.value),
+      MatchWeights.BodySame(c.weights.bodySame.value),
+      MatchWeights.BodySameAtLeast(c.weights.bodySameAtLeast.value),
+      MatchWeights.BodyEdition(c.weights.bodyEdition.value),
+      MatchWeights.BodyEditionAtLeast(c.weights.bodyEditionAtLeast.value),
+      MatchWeights.BodyDiffers(c.weights.bodyDiffers.value),
+      MatchWeights.BodyDiffersBelow(c.weights.bodyDiffersBelow.value),
+      MatchWeights.Alias(c.weights.alias.value)
+      ),
+      MergeSettings.PlaceWithinKm(c.placeWithinKm.value),
+      MergeSettings.PlaceOverlapAtLeast(c.placeOverlapAtLeast.value)
+    )
+
+  val cfg: MergeSettings = settings(AppConfig.load().merge)
 
   val work: UUID = UUID.fromString("0191a2f0-0000-7000-8000-000000000001")
   val home: UUID = UUID.fromString("0193c0f0-0000-7000-8000-000000000002")
@@ -137,10 +174,10 @@ object MergeFixture:
   // ── the shared history: a source and a goal both sides got from an earlier import ──
   val sharedOriginal: Bundle.Source =
     src("shared", "zzshared2001_alpha", "Alpha", List("Doe, John"), Some(2001), summary = Some("as imported"))
-  val sharedThere: Bundle.Source = sharedOriginal.modify(_.summary).setTo(Some("edited at work"))
-  val sharedHere: Bundle.Source = sharedOriginal.modify(_.summary).setTo(Some("edited at home"))
+  val sharedThere: Bundle.Source = sharedOriginal.modify(_.summary).setTo(Some(Bundle.Source.Summary("edited at work")))
+  val sharedHere: Bundle.Source = sharedOriginal.modify(_.summary).setTo(Some(Bundle.Source.Summary("edited at home")))
   val goalOriginal: Bundle.Goal = goal("goal-shared", "zz_shared_goal", "Shared goal")
-  val goalHere: Bundle.Goal = goalOriginal.modify(_.notes).setTo(Some("edited at home"))
+  val goalHere: Bundle.Goal = goalOriginal.modify(_.notes).setTo(Some(Bundle.Goal.Notes("edited at home")))
 
   /** The bundle from work. */
   val foreign: BundleEntities = BundleEntities(

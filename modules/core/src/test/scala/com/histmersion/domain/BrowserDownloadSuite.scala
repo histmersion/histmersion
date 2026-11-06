@@ -49,13 +49,13 @@ class BrowserDownloadSuite extends munit.FunSuite:
         "at https://www.mdpi.com/2077-1444/10/4/258; mdpi.com refuses downloads by scripts: download it in the browser, " +
         "then histmersion ingest <file> --citekey greener2019_archaeology"
     )
-    assertEquals(Scheduling.dois(b.text), Set("10.3390/rel10040258"), "the DOI the acquisition list finds it by")
+    assertEquals(Scheduling.dois(b.text.value), Set(com.histmersion.domain.library.Doi("10.3390/rel10040258")), "the DOI the acquisition list finds it by")
 
   test("diamond counts as gold; no licence, no title: the item says what it knows"):
-    val w = mdpi.modify(_.oaStatus).setTo(Some("Diamond")).modify(_.oaLicence).setTo(None).modify(_.title).setTo(None).modify(_.authors).setTo(Nil).modify(_.year).setTo(None)
+    val w = mdpi.modify(_.oaStatus).setTo(Some(com.histmersion.api.library.WorkRef.OaStatus("Diamond"))).modify(_.oaLicence).setTo(None).modify(_.title).setTo(None).modify(_.authors).setTo(Nil).modify(_.year).setTo(None)
     val text = BrowserDownload.of(w, ck, Refusing).map(_.text).getOrElse(fail("not a browser download"))
     assert(
-      text.startsWith(
+      text.value.startsWith(
         "10.3390/rel10040258. https://doi.org/10.3390/rel10040258 — diamond open access, at https://www.mdpi.com/"
       ),
       text
@@ -63,14 +63,14 @@ class BrowserDownloadSuite extends munit.FunSuite:
 
   test("not a browser download: hybrid, green or bronze; no DOI; no open location on a refusing host; no hosts"):
     List("hybrid", "green", "bronze", "closed").foreach(s =>
-      assertEquals(BrowserDownload.of(mdpi.modify(_.oaStatus).setTo(Some(s)), ck, Refusing), None, s)
+      assertEquals(BrowserDownload.of(mdpi.modify(_.oaStatus).setTo(Some(com.histmersion.api.library.WorkRef.OaStatus(s))), ck, Refusing), None, s)
     )
     assertEquals(BrowserDownload.of(mdpi.modify(_.oaStatus).setTo(None), ck, Refusing), None)
     assertEquals(BrowserDownload.of(mdpi.modify(_.doi).setTo(None), ck, Refusing), None)
     assertEquals(
       BrowserDownload.of(
         mdpi.modify(
-          _.oaUrl).setTo(Some("https://doi.org/10.3390/rel10040258")).modify(_.oaLocations).setTo(List("https://zenodo.org/records/1")
+          _.oaUrl).setTo(Some(com.histmersion.api.library.WorkRef.OaUrl("https://doi.org/10.3390/rel10040258"))).modify(_.oaLocations).setTo(List(com.histmersion.api.library.WorkRef.OaLocations("https://zenodo.org/records/1"))
         ),
         ck,
         Refusing
@@ -79,7 +79,7 @@ class BrowserDownloadSuite extends munit.FunSuite:
     )
     assertEquals(BrowserDownload.of(mdpi, ck, refusing(Nil)), None)
     assertEquals(
-      BrowserDownload.of(mdpi.modify(_.oaUrl).setTo(Some("https://notmdpi.com/x")).copy(oaLocations = Nil), ck, Refusing),
+      BrowserDownload.of(mdpi.modify(_.oaUrl).setTo(Some(com.histmersion.api.library.WorkRef.OaUrl("https://notmdpi.com/x"))).copy(oaLocations = Nil), ck, Refusing),
       None,
       "a host matches itself and its subdomains only"
     )

@@ -132,7 +132,7 @@ class GoalFocusSuite extends munit.FunSuite:
     assertEquals(active(select(goals, s3.modify(_.max).setTo(Settings.Max(1)))), List("p1", "p2"), "pins past the cap")
 
   test("no cap (max 0): every candidate is active"):
-    assertEquals(select((1 to 12).toList.map(i => g(Goal.Slug(s"g$i"))), s3.modify(_.max).setTo(Settings.Max(0))).active.size, 12)
+    assertEquals(select((1 to 12).toList.map(i => g(Goal.Slug.assume(s"g$i"))), s3.modify(_.max).setTo(Settings.Max(0))).active.size, 12)
 
   // ── the active set holds; what frees a slot ────────────────────────────────────────────────────
 

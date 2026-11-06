@@ -25,7 +25,7 @@ class PlanArticlesSuite extends munit.FunSuite:
 
   private def slug(s: String) = ArticleAnswer.Slug(s)
   private def topics(ts: String*) = ts.toList.map(ArticleAnswer.Topics(_))
-  private def citekeys(ks: String*) = ks.map(com.histmersion.domain.library.Citekey(_)).toSet
+  private def citekeys(ks: String*) = ks.map(com.histmersion.domain.library.Citekey.assume(_)).toSet
 
   test(
     "check: invalid slugs, empty titles, filterless articles go back; a duplicate is dropped; last keeps what passed"
@@ -107,5 +107,5 @@ class PlanArticlesSuite extends munit.FunSuite:
     assert(p2.dropped.head.value.contains("75%"), p2.dropped)
 
   test("overlap: the share of mine the other holds"):
-    assertEquals(overlap(Set(com.histmersion.domain.library.Citekey("a"), com.histmersion.domain.library.Citekey("b")), Set(com.histmersion.domain.library.Citekey("b"), com.histmersion.domain.library.Citekey("c"))), 0.5)
-    assertEquals(overlap(Set.empty, Set(com.histmersion.domain.library.Citekey("a"))), 0.0)
+    assertEquals(overlap(Set(com.histmersion.domain.library.Citekey.assume("a"), com.histmersion.domain.library.Citekey.assume("b")), Set(com.histmersion.domain.library.Citekey.assume("b"), com.histmersion.domain.library.Citekey.assume("c"))), 0.5)
+    assertEquals(overlap(Set.empty, Set(com.histmersion.domain.library.Citekey.assume("a"))), 0.0)

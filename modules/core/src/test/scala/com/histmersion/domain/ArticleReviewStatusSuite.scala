@@ -26,7 +26,7 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
   test("an empty ledger and no item is still not reviewed; a cancelled item is no item"):
     assertEquals(badge(Facts(ledger = Some(ledgerFacts))).state, ReviewState.Unreviewed)
     assertEquals(badge(Facts(item = Some(ItemFacts(ItemStatus.Cancelled)))).state, ReviewState.Unreviewed)
-    val reviewed = Some(ledgerFacts.modify(_.openMajors).setTo(2).modify(_.findings).setTo(5).modify(_.runs).setTo(1))
+    val reviewed = Some(ledgerFacts.modify(_.openMajors).setTo(ArticleReviewStatus.LedgerFacts.OpenMajors(2)).modify(_.findings).setTo(ArticleReviewStatus.LedgerFacts.Findings(5)).modify(_.runs).setTo(ArticleReviewStatus.LedgerFacts.Runs(1)))
     assertEquals(badge(Facts(Some(ItemFacts(ItemStatus.Cancelled)), reviewed)).state, ReviewState.MajorsOpen)
 
   test("a pending item that never ran is queued"):
@@ -141,20 +141,20 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
     List(
       Entry(
         finding(com.histmersion.domain.ReviewArticle.Finding.Id("R1"), Reviewer.Rules, Severity.Major),
-        com.histmersion.domain.ReviewLedger.Entry.Run("run-a"),
+        com.histmersion.domain.ReviewLedger.Entry.Run("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59"),
         com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Fixed,
-        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("rules"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("run-a"), com.histmersion.domain.ReviewLedger.Closure.Note("fixed in ¶2")))
+        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("rules"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59"), com.histmersion.domain.ReviewLedger.Closure.Note("fixed in ¶2")))
       ),
       Entry(
         finding(com.histmersion.domain.ReviewArticle.Finding.Id("S1"), Reviewer.Skeptic, Severity.Major),
-        com.histmersion.domain.ReviewLedger.Entry.Run("run-a"),
+        com.histmersion.domain.ReviewLedger.Entry.Run("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59"),
         com.histmersion.domain.ReviewLedger.Entry.Round(1),
         Status.Rejected,
-        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), com.histmersion.domain.ReviewLedger.Closure.Run("run-b"), com.histmersion.domain.ReviewLedger.Closure.Note("the record says otherwise")))
+        closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("fixer"), com.histmersion.domain.ReviewLedger.Closure.Round(1), com.histmersion.domain.ReviewLedger.Closure.Run("6025c753-7a4c-04dd-8ac3-22285ab559dc"), com.histmersion.domain.ReviewLedger.Closure.Note("the record says otherwise")))
       ),
-      Entry(finding(com.histmersion.domain.ReviewArticle.Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("run-a"), com.histmersion.domain.ReviewLedger.Entry.Round(2)),
-      Entry(finding(com.histmersion.domain.ReviewArticle.Finding.Id("M1"), Reviewer.Mechanical, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("run-b"), com.histmersion.domain.ReviewLedger.Entry.Round(1), deferred = Some(com.histmersion.domain.automation.Run.Id("run-b")), reopened = com.histmersion.domain.ReviewLedger.Entry.Reopened(1))
+      Entry(finding(com.histmersion.domain.ReviewArticle.Finding.Id("C1"), Reviewer.ColdReader, Severity.Minor), com.histmersion.domain.ReviewLedger.Entry.Run("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59"), com.histmersion.domain.ReviewLedger.Entry.Round(2)),
+      Entry(finding(com.histmersion.domain.ReviewArticle.Finding.Id("M1"), Reviewer.Mechanical, Severity.Major), com.histmersion.domain.ReviewLedger.Entry.Run("6025c753-7a4c-04dd-8ac3-22285ab559dc"), com.histmersion.domain.ReviewLedger.Entry.Round(1), deferred = Some(com.histmersion.domain.automation.Run.Id("6025c753-7a4c-04dd-8ac3-22285ab559dc")), reopened = com.histmersion.domain.ReviewLedger.Entry.Reopened(1))
     )
   )
 
@@ -162,7 +162,7 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
     assertEquals(LedgerFacts.of(ledger), LedgerFacts(openMajors = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMajors(1), openMinors = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.OpenMinors(1), findings = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Findings(4), runs = com.histmersion.domain.ArticleReviewStatus.LedgerFacts.Runs(2)))
 
   test("the history groups findings by run and pass, oldest first, with what became of each"):
-    val h = history(ledger, Map(com.histmersion.domain.automation.Run.Id("run-a") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-01T10:00:00Z"), com.histmersion.domain.automation.Run.Id("run-b") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-02T10:00:00Z")))
+    val h = history(ledger, Map(com.histmersion.domain.automation.Run.Id("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-01T10:00:00Z"), com.histmersion.domain.automation.Run.Id("6025c753-7a4c-04dd-8ac3-22285ab559dc") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-02T10:00:00Z")))
     assertEquals(
       h.map(r => (r.runNumber, r.round, r.findings.map(_.id))),
       List((1, 1, List("R1", "S1")), (1, 2, List("C1")), (2, 1, List("M1")))
@@ -174,13 +174,13 @@ class ArticleReviewStatusSuite extends munit.FunSuite:
       ("skeptic", "rejected", "the record says otherwise", Some("fixer"), Some(2), Some(1))
     )
     val m1 = h.last.findings.head
-    assert(m1.deferred && m1.outcome == "open" && m1.reopened == 1, m1.toString)
+    assert(m1.deferred.value && m1.outcome.value == "open" && m1.reopened.value == 1, m1.toString)
 
   test("runs order by their start; a run with no record left goes first; otherwise ledger order"):
     assertEquals(
-      runOrder(ledger, Map(com.histmersion.domain.automation.Run.Id("run-a") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-03T00:00:00Z"), com.histmersion.domain.automation.Run.Id("run-b") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-02T00:00:00Z"))),
-      List("run-b", "run-a")
+      runOrder(ledger, Map(com.histmersion.domain.automation.Run.Id("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-03T00:00:00Z"), com.histmersion.domain.automation.Run.Id("6025c753-7a4c-04dd-8ac3-22285ab559dc") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-02T00:00:00Z"))),
+      List("6025c753-7a4c-04dd-8ac3-22285ab559dc", "f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59")
     )
-    assertEquals(runOrder(ledger, Map(com.histmersion.domain.automation.Run.Id("run-a") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-03T00:00:00Z"))), List("run-b", "run-a"))
-    assertEquals(runOrder(ledger, Map.empty), List("run-a", "run-b"))
+    assertEquals(runOrder(ledger, Map(com.histmersion.domain.automation.Run.Id("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59") -> com.histmersion.api.research.ReviewRound.StartedAt("2026-10-03T00:00:00Z"))), List("6025c753-7a4c-04dd-8ac3-22285ab559dc", "f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59"))
+    assertEquals(runOrder(ledger, Map.empty), List("f6ab9fa2-e87c-81f0-98bc-de62a7eb2f59", "6025c753-7a4c-04dd-8ac3-22285ab559dc"))
     assertEquals(history(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("zz-empty")), Map.empty), Nil)

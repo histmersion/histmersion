@@ -56,15 +56,15 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     val after = g // the final pass absorbed: S24/S31/S7 reopened, S35–S37 new
     val regression = (f: Finding) => f.id.value == "S37"
-    val (d, ids) = deferFinal(before, after, com.histmersion.domain.automation.Run.Id("run-9"), regression)
+    val (d, ids) = deferFinal(before, after, com.histmersion.domain.automation.Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), regression)
     assertEquals(ids.sortBy(_.value), List("S35", "S36"))
-    assertEquals(d.entries.filter(_.deferred.contains("run-9")).map(_.id).sortBy(_.value), List("S35", "S36"))
+    assertEquals(d.entries.filter(_.deferred.contains(com.histmersion.domain.automation.Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"))).map(_.id).sortBy(_.value), List("S35", "S36"))
     // the run's verdict counts them as minor; the next run sees them as open MAJORs
-    val m = merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(3), run = Some(com.histmersion.domain.automation.Run.Id("run-9")))
+    val m = merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(3), run = Some(com.histmersion.domain.automation.Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b")))
     assertEquals(m.deferred.sortBy(_.value), List("S35", "S36"))
     assert(!m.majors.exists(f => Set("S35", "S36")(f.id.value)))
     assertEquals(m.majors.map(_.id).sortBy(_.value), List("S24", "S31", "S37", "S7"))
-    assertEquals(merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(1), run = Some(com.histmersion.domain.automation.Run.Id("run-10"))).majors.size, 6)
+    assertEquals(merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(1), run = Some(com.histmersion.domain.automation.Run.Id("cc1deb80-c51f-5da7-a8a6-4eeb589e61b3"))).majors.size, 6)
     assertEquals(d.openMajors.size, 6, "still open MAJOR in the ledger: the next run's work")
     // an open minor the final pass raised to MAJOR is new too
     val minorBefore = before.modify(_.entries).setTo(before.entries :+ after
@@ -72,17 +72,17 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         .get
         .copy(finding = after.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S35")).get.finding.copy(severity = Severity.Minor))
     )
-    assertEquals(deferFinal(minorBefore, after, com.histmersion.domain.automation.Run.Id("run-9"), _ => false)._2.sortBy(_.value), List("S35", "S36", "S37"))
+    assertEquals(deferFinal(minorBefore, after, com.histmersion.domain.automation.Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), _ => false)._2.sortBy(_.value), List("S35", "S36", "S37"))
 
   test("a run whose only open MAJORs are deferred ends below MAJOR; its backlog item says they are deferred"):
     val g = live("gods_and_migrations")
     val only = g.modify(_.entries).setTo(g.entries.filter(e => Set("S35", "S36")(e.id.value)))
-    val (d, _) = deferFinal(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("gods_and_migrations")), only, com.histmersion.domain.automation.Run.Id("run-9"), _ => false)
-    assertEquals(merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(3), run = Some(com.histmersion.domain.automation.Run.Id("run-9"))).verdict, Verdict.Minor)
-    val task = taskText(d, com.histmersion.domain.automation.Run.Id("run-9")).get
+    val (d, _) = deferFinal(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("gods_and_migrations")), only, com.histmersion.domain.automation.Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), _ => false)
+    assertEquals(merged(d, com.histmersion.domain.ReviewLedger.Closure.Round(3), run = Some(com.histmersion.domain.automation.Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"))).verdict, Verdict.Minor)
+    val task = taskText(d, com.histmersion.domain.automation.Run.Id("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b")).get
     assert(task.value.startsWith("review-article [[gods_and_migrations]]: 2 open MAJORs — "), task)
     assert(task.value.contains("[new in the final pass: deferred to the next run]"), task)
-    assert(!taskText(d, com.histmersion.domain.automation.Run.Id("run-10")).get.value.contains("deferred"), "a later run's item does not repeat it")
+    assert(!taskText(d, com.histmersion.domain.automation.Run.Id("cc1deb80-c51f-5da7-a8a6-4eeb589e61b3")).get.value.contains("deferred"), "a later run's item does not repeat it")
 
   test("finalRegression: a pair the run had answered and broke; a factual error in the text the run wrote"):
     def p(state: CritiqueState) = CritiquePair(
@@ -145,7 +145,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       List(true, true)
     )
     // the ledger counts it as not fixed
-    val l = applyChecks(a, Reviewer.Skeptic, held, com.histmersion.domain.ReviewLedger.ApplyChecksRun("run-9"), com.histmersion.domain.ReviewLedger.ApplyChecksRound(2))
+    val l = applyChecks(a, Reviewer.Skeptic, held, com.histmersion.domain.ReviewLedger.ApplyChecksRun("6b1be16f-dd42-3eaf-e8d4-b3ef493b567b"), com.histmersion.domain.ReviewLedger.ApplyChecksRound(2))
     assertEquals(l.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S6")).map(e => (e.status, e.notFixedCount)), Some((Status.Open, 1)))
     assertEquals(l.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S4")).map(_.status), Some(Status.Fixed))
 
@@ -171,10 +171,10 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       com.histmersion.domain.ReviewArticle.Finding.Fix("cite it"),
       pair = Some(CritiqueRef(com.histmersion.api.library.Citekey("zz2024_iso"), com.histmersion.api.library.Citekey("knapp2016_tin")))
     ),
-    com.histmersion.domain.ReviewLedger.Entry.Run("r"),
+    com.histmersion.domain.ReviewLedger.Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
     com.histmersion.domain.ReviewLedger.Entry.Round(1),
     Status.Fixed,
-    closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("skeptic"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("r"), com.histmersion.domain.ReviewLedger.Closure.Note(""), com.histmersion.domain.ReviewLedger.Closure.Quote("[[zz2024_iso]] traces it to Central Asia")))
+    closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("skeptic"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.Closure.Note(""), com.histmersion.domain.ReviewLedger.Closure.Quote("[[zz2024_iso]] traces it to Central Asia")))
   )
   private val textFixed = Entry(
     Finding(
@@ -187,10 +187,10 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       com.histmersion.domain.ReviewArticle.Finding.Problem("no date"),
       com.histmersion.domain.ReviewArticle.Finding.Fix("give the year")
     ),
-    com.histmersion.domain.ReviewLedger.Entry.Run("r"),
+    com.histmersion.domain.ReviewLedger.Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
     com.histmersion.domain.ReviewLedger.Entry.Round(1),
     Status.Fixed,
-    closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("rules"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("r"), com.histmersion.domain.ReviewLedger.Closure.Note(""), com.histmersion.domain.ReviewLedger.Closure.Quote("The date of the wreck is about 1320 BCE [[knapp2016_tin]]")))
+    closed = Some(Closure(com.histmersion.domain.ReviewLedger.Closure.By("rules"), com.histmersion.domain.ReviewLedger.Closure.Round(2), com.histmersion.domain.ReviewLedger.Closure.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.Closure.Note(""), com.histmersion.domain.ReviewLedger.Closure.Quote("The date of the wreck is about 1320 BCE [[knapp2016_tin]]")))
   )
   private def together(b: com.histmersion.domain.ReviewArticle.Fix.Body, r: CritiqueRef) =
     Critiques.together(b, r, t => Some(com.histmersion.api.library.Citekey(t.value)))
@@ -322,8 +322,8 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     )
     assert(ws.exists(_.contains("kept despite")), ws)
     // the ledger: not claimed, not fixed once more
-    val l = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("r"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
-    val after = applyFix(l, kept, com.histmersion.domain.ReviewLedger.ApplyFixRun("r"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
+    val l = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
+    val after = applyFix(l, kept, com.histmersion.domain.ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     assertEquals(
       after
         .entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1"))
@@ -363,7 +363,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
     assert(f.body.value.contains("Kullmann answers West's reading of the cargo [[zz2015_kull]] [[zz2011_west]]."), f.body)
     assertEquals((f.repaired, f.notFixed), (List("S1"), Nil))
     assert(f.repairs.head.value.contains("cite [[zz2011_west]] there (fixable)"), f.repairs)
-    val l = applyFix(absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("r"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1, f, com.histmersion.domain.ReviewLedger.ApplyFixRun("r"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
+    val l = applyFix(absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1, f, com.histmersion.domain.ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     assertEquals(l.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).map(_.claimed), Some(true))
 
   test(
@@ -423,7 +423,7 @@ class ReviewConvergenceSuite extends munit.FunSuite:
         com.histmersion.domain.ReviewArticle.Finding.Problem("no date"),
         com.histmersion.domain.ReviewArticle.Finding.Fix("give the year")
       ),
-      com.histmersion.domain.ReviewLedger.Entry.Run("r"),
+      com.histmersion.domain.ReviewLedger.Entry.Run("4b43b0ae-e356-24cd-95b9-10189b3dc231"),
       com.histmersion.domain.ReviewLedger.Entry.Round(1),
       Status.Fixed
     )
@@ -516,14 +516,14 @@ class ReviewConvergenceSuite extends munit.FunSuite:
       f.notFixed,
       List(WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("R1"), com.histmersion.domain.ReviewArticle.WontFix.Reason("the fixer neither applied nor rejected it")), WontFix(com.histmersion.domain.ReviewArticle.WontFix.Id("C2"), com.histmersion.domain.ReviewArticle.WontFix.Reason("the fixer did not answer it")))
     )
-    val l = applyFix(absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("r"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1, f, com.histmersion.domain.ReviewLedger.ApplyFixRun("r"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
+    val l = applyFix(absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1, f, com.histmersion.domain.ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     assertEquals(
       l.entries.map(e => (e.id, e.claimed, e.notFixedCount)),
       List(("R1", false, 1), ("C1", true, 0), ("C2", false, 1))
     )
     assert(notes(l)(com.histmersion.domain.ReviewArticle.Finding.Id("R1")).contains("pass 1: the fixer neither applied nor rejected it"), notes(l))
     // twice not fixed: stubborn, and the note says how often
-    val twice = applyFix(l, f, com.histmersion.domain.ReviewLedger.ApplyFixRun("r"), com.histmersion.domain.ReviewLedger.ApplyFixRound(2))
+    val twice = applyFix(l, f, com.histmersion.domain.ReviewLedger.ApplyFixRun("4b43b0ae-e356-24cd-95b9-10189b3dc231"), com.histmersion.domain.ReviewLedger.ApplyFixRound(2))
     assertEquals(
       stubborn(
         twice.modify(_.entries).setTo(twice.entries.map(e => e.modify(_.finding).setTo(e.finding.modify(_.pair).setTo(Some(CritiqueRef(com.histmersion.api.library.Citekey("a2000_x"), com.histmersion.api.library.Citekey("b2001_y"))))))

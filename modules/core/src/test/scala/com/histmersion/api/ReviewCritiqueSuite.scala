@@ -463,8 +463,8 @@ class ReviewCritiqueSuite extends munit.FunSuite:
         pairs
       ).isLeft
     )
-    val l = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("run-1"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
-    val closed = applyFix(l, fix, com.histmersion.domain.ReviewLedger.ApplyFixRun("run-1"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
+    val l = absorb(Ledger(com.histmersion.domain.ReviewLedger.Ledger.Slug("tin")), m.findings, com.histmersion.domain.automation.Run.Id("5b746968-0d99-0015-9c65-3ddb9ff22ae7"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1
+    val closed = applyFix(l, fix, com.histmersion.domain.ReviewLedger.ApplyFixRun("5b746968-0d99-0015-9c65-3ddb9ff22ae7"), com.histmersion.domain.ReviewLedger.ApplyFixRound(1))
     val e = closed.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get
     assertEquals(
       (e.status, e.closed.map(c => (c.by, c.note, c.quote))),
@@ -479,14 +479,14 @@ class ReviewCritiqueSuite extends munit.FunSuite:
     )
     // raised again as a MINOR (its pair now reasoned): stays set aside; raised again MAJOR: re-opened, with why
     assertEquals(
-      absorb(closed, List(e.finding.modify(_.severity).setTo(Severity.Minor)), com.histmersion.domain.automation.Run.Id("run-2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get.status,
+      absorb(closed, List(e.finding.modify(_.severity).setTo(Severity.Minor)), com.histmersion.domain.automation.Run.Id("13d17bd3-fd7e-e870-9798-400086850fa9"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get.status,
       Status.SetAside
     )
-    val again = absorb(closed, List(e.finding), com.histmersion.domain.automation.Run.Id("run-2"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get
+    val again = absorb(closed, List(e.finding), com.histmersion.domain.automation.Run.Id("13d17bd3-fd7e-e870-9798-400086850fa9"), com.histmersion.domain.ReviewLedger.Closure.Round(1))._1.entry(com.histmersion.domain.ReviewArticle.Finding.Id("S1")).get
     assertEquals((again.status, again.notFixed), (Status.Open, Some("set aside before: Cited for the date only.")))
 
   test("a ledger written before the checklist still decodes (no pair, no set-aside)"):
     val old =
-      """{"slug":"tin","entries":[{"finding":{"id":"S1","reviewer":"skeptic","severity":"major","kind":"missing-critique","where":"w","quote":"q","problem":"p","fix":"f","evidence":[],"escalated":false},"run":"r","round":1,"status":"open","claimed":false,"notFixed":null,"reopened":0,"closed":null}],"lessons":[],"task":null}"""
+      """{"slug":"tin","entries":[{"finding":{"id":"S1","reviewer":"skeptic","severity":"major","kind":"missing-critique","where":"w","quote":"q","problem":"p","fix":"f","evidence":[],"escalated":false},"run":"4b43b0ae-e356-24cd-95b9-10189b3dc231","round":1,"status":"open","claimed":false,"notFixed":null,"reopened":0,"closed":null}],"lessons":[],"task":null}"""
     val l = io.circe.parser.decode[Ledger](old).toOption.get
     assertEquals(l.entries.map(_.finding.pair), List(None))

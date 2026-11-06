@@ -1,6 +1,7 @@
 package com.histmersion.domain
 
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.StoredIdCodecs.given
 import com.histmersion.api.given
 
 import hearth.kindlings.circederivation.KindlingsCodecAsObject

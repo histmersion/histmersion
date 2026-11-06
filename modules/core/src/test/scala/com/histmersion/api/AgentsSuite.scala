@@ -261,7 +261,7 @@ class AgentsSuite extends munit.FunSuite:
       actualModel = Some(com.histmersion.api.automation.Agents.StepInfo.ActualModel("claude-haiku-5-5"))
     )
     assertEquals(s.modelText, "claude-code:haiku → claude-haiku-5-5")
-    assertEquals(s.modify(_.actualModel).setTo(Some("haiku")).modelText, "claude-code:haiku")
+    assertEquals(s.modify(_.actualModel).setTo(Some(com.histmersion.api.automation.Agents.StepInfo.ActualModel("haiku"))).modelText, "claude-code:haiku")
     assertEquals(s.modify(_.actualModel).setTo(None).modelText, "claude-code:haiku")
     assertEquals(s.modify(_.model).setTo(None).modelText, "claude-haiku-5-5")
     assertEquals(StepInfo(com.histmersion.api.automation.Agents.StepInfo.Seq(1), com.histmersion.api.automation.Agents.StepInfo.Name("load"), com.histmersion.api.automation.Agents.StepInfo.Kind("code"), com.histmersion.api.automation.Agents.StepInfo.Attempt(1), com.histmersion.api.automation.Agents.StepInfo.Status("done")).modelText, "")
@@ -280,7 +280,7 @@ class AgentsSuite extends munit.FunSuite:
     )
     val d = RunDetail(
       RunInfo(com.histmersion.api.automation.Agents.RunInfo.Id("r1"), com.histmersion.api.automation.Agents.RunInfo.Pipeline("enrich-source"), com.histmersion.api.automation.Agents.RunInfo.Target("x2020"), com.histmersion.api.automation.Agents.RunInfo.Status("done")),
-      List(s, s.modify(_.seq).setTo(3).modify(_.firstCallTokens).setTo((None: _root_.scala.Option[_root_.scala.Long])).modify(_.turns).setTo(None)),
+      List(s, s.modify(_.seq).setTo(com.histmersion.api.automation.Agents.StepInfo.Seq(3)).modify(_.firstCallTokens).setTo(None).modify(_.turns).setTo(None)),
       Nil
     )
     val md = AgentsMarkdown.run(d, withMessages = false)
@@ -328,5 +328,5 @@ class AgentsSuite extends munit.FunSuite:
       md
     )
     assert(
-      !AgentsMarkdown.run(d.modify(_.run).setTo(r.modify(_.dryRun).setTo(false)).modify(_.steps).setTo(Nil), withMessages = false).contains("dry run")
+      !AgentsMarkdown.run(d.modify(_.run).setTo(r.modify(_.dryRun).setTo(com.histmersion.api.automation.Agents.RunInfo.DryRun(false))).modify(_.steps).setTo(Nil), withMessages = false).contains("dry run")
     )

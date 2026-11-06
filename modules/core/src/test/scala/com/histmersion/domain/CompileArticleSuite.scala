@@ -359,12 +359,12 @@ class CompileArticleSuite extends munit.FunSuite:
     )
     val d = Goal.Plans.ArticleDraft(com.histmersion.api.research.Article.Slug("tin"), DraftMode.Create, com.histmersion.api.research.Article.Title("Tin"), com.histmersion.api.research.Article.Kind.Wire("concept"), com.histmersion.api.automation.Goal.Plans.ArticleDraft.Text("x"), cited = List(com.histmersion.api.library.Citekey("a"), com.histmersion.api.library.Citekey("b")))
     assert(
-      logLine(d, written = com.histmersion.domain.CompileArticle.Written(true), com.histmersion.domain.CompileArticle.Reason("created"), Some(com.histmersion.domain.automation.Run.Id("abcdef123")), com.histmersion.domain.automation.Run.Id("run12345xyz")).value.contains(
+      logLine(d, written = com.histmersion.domain.CompileArticle.Written(true), com.histmersion.domain.CompileArticle.Reason("created"), Some(com.histmersion.domain.automation.Run.Id("abcdef12-fc74-0955-ef4d-fad670250ff4")), com.histmersion.domain.automation.Run.Id("bc1cc32f-a9bb-9592-ac46-36b5b5c5da01")).value.contains(
         "compiled a new article from 2 source(s); review run abcdef12 started"
       )
     )
     assert(
-      logLine(d, written = com.histmersion.domain.CompileArticle.Written(false), com.histmersion.domain.CompileArticle.Reason("the draft was rejected"), None, com.histmersion.domain.automation.Run.Id("r")).value.contains(
+      logLine(d, written = com.histmersion.domain.CompileArticle.Written(false), com.histmersion.domain.CompileArticle.Reason("the draft was rejected"), None, com.histmersion.domain.automation.Run.Id("4b43b0ae-e356-24cd-95b9-10189b3dc231")).value.contains(
         "nothing written — the draft was rejected"
       )
     )

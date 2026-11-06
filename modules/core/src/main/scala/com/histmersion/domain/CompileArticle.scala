@@ -17,6 +17,7 @@ import com.histmersion.api.library.Source
 import com.histmersion.api.research.Article
 import com.histmersion.api.research.Coverage
 import com.histmersion.api.json.NewtypeCodecs.given
+import com.histmersion.util.json.StoredIdCodecs.given
 
 /** The `compile-article` pipeline's typed answers and its pure logic (docs/research-embedded-agents.md §4.5, §14; the
   * five phases of `docs/writing-guide.md`): the claim table (one extraction per source, every claim with a quote code
