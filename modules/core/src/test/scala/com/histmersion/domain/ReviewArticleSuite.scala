@@ -953,7 +953,7 @@ class ReviewArticleSuite extends munit.FunSuite:
   test("spot-checks: an uncited source, a claim not in the article, a bad verdict or a quote not in the record fails"):
     val calls = List(read("knapp2016_tin"), read("tin2024_iso"), read("atlantis"))
     def problem(a: SpotCheckAnswer) =
-      checkSpotChecks(List(a), rule(calls, required = 1), spotEv, last = com.histmersion.domain.ReviewArticle.CheckSpotChecksLast(false))._2.drop(1).head
+      checkSpotChecks(List(a), rule(calls, required = com.histmersion.domain.ReviewArticle.SpotRule.Required(1)), spotEv, last = com.histmersion.domain.ReviewArticle.CheckSpotChecksLast(false))._2.drop(1).head
     assert(problem(spotTin.modify(_.citekey).setTo(SpotCheckAnswer.Citekey("atlantis"))).contains("the article does not cite it"))
     assert(
       problem(spotTin.modify(_.claim).setTo(SpotCheckAnswer.Claim("Tin reached Crete by land in the Iron Age")))

@@ -67,8 +67,8 @@ class PlaceReviewSuite extends munit.FunSuite:
     // a linked Wikidata item dates an undated one
     val gs = PlaceReview.propose(
       ev(
-        "pleiades_1000",
-        "Germania Superior",
+        com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id("pleiades_1000"),
+        com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Germania Superior"),
         "province",
         items = List(LinkedItem(com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.Ref("wikidata:Q153553"), Some(com.histmersion.domain.catalogue.places.PlaceReview.LinkedItem.ItemClass("Q1620908")), DeepTime.span(com.histmersion.domain.DeepTime.SignedYear(83L), com.histmersion.domain.DeepTime.SignedYear(297L))))
       )
@@ -97,8 +97,8 @@ class PlaceReviewSuite extends munit.FunSuite:
     assertEquals(
       PlaceReview.propose(
         ev(
-          "pleiades_1001939",
-          "Palaestina I",
+          com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Id("pleiades_1001939"),
+          com.histmersion.domain.catalogue.places.PlaceReview.Evidence.Label("Palaestina I"),
           "province",
           kind = Place.Kind.Wire(Place.Kind.Polity),
           start = Some(DeepTime.SignedYear(300L)),

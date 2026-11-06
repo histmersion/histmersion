@@ -176,16 +176,16 @@ class SchedulerPolicySuite extends munit.FunSuite:
     val r = res(Resources.MaxRuns(3)).modify(_.poolCap).setTo(Map(Candidate.Pools("chatgpt-plan") -> Resources.PoolCapValue(2), Candidate.Pools("claude-plan") -> Resources.PoolCapValue(2))).modify(_.poolUsed).setTo(Map(Candidate.Pools("chatgpt-plan") -> Resources.PoolUsedValue(2)))
     val d = run(cs, r, settings(GoalFirst), now)(ok)
     assertEquals(ids(d), List(2L))
-    assertEquals(d.waitOf(1).map(_.code), Some(Code.Pool))
-    assert(d.waitOf(1).exists(_.why.value.contains("chatgpt-plan")))
-    assertEquals(d.waitOf(3).map(w => (w.code, w.why)), Some((Code.Blocked, "reviewer chain below its plan floor")))
+    assertEquals(d.waitOf(com.histmersion.domain.SchedulerPolicy.Candidate.Id(1)).map(_.code), Some(Code.Pool))
+    assert(d.waitOf(com.histmersion.domain.SchedulerPolicy.Candidate.Id(1)).exists(_.why.value.contains("chatgpt-plan")))
+    assertEquals(d.waitOf(com.histmersion.domain.SchedulerPolicy.Candidate.Id(3)).map(w => (w.code, w.why)), Some((Code.Blocked, "reviewer chain below its plan floor")))
 
   test("a pool fills within one pass: the second item on it waits"):
     val cs = List(c(Candidate.Id(1), pools = List(Candidate.Pools("p"))), c(Candidate.Id(2), pools = List(Candidate.Pools("p"))), c(Candidate.Id(3)))
     val d = run(cs, res(Resources.MaxRuns(3)).modify(_.poolCap).setTo(Map(Candidate.Pools("p") -> Resources.PoolCapValue(1))), settings(GoalFirst), now)(ok)
     assertEquals(ids(d).toSet, Set(1L, 3L))
-    assertEquals(d.waitOf(2).map(_.code), Some(Code.Pool))
-    assertEquals(d.waitOf(2).map(_.behind), Some(List("#1 article-review t1")))
+    assertEquals(d.waitOf(com.histmersion.domain.SchedulerPolicy.Candidate.Id(2)).map(_.code), Some(Code.Pool))
+    assertEquals(d.waitOf(com.histmersion.domain.SchedulerPolicy.Candidate.Id(2)).map(_.behind), Some(List("#1 article-review t1")))
 
   test("only runs that run or are queued occupy places: occupied comes off maxRuns"):
     val cs = List(c(Candidate.Id(1)), c(Candidate.Id(2)), c(Candidate.Id(3)))
@@ -199,7 +199,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
         ok
       )
     assertEquals(ids(d), List(1L, 3L))
-    assertEquals(d.waitOf(2).map(_.code), Some(Code.Manager))
+    assertEquals(d.waitOf(com.histmersion.domain.SchedulerPolicy.Candidate.Id(2)).map(_.code), Some(Code.Manager))
 
   test("stop (drain, a budget): nothing starts, everything waits with the reason, in order"):
     val cs = List(c(Candidate.Id(1), goal = Some(Candidate.Goal("b")), created = day(9)), c(Candidate.Id(2), goal = Some(Candidate.Goal("a")), created = day(1)))
@@ -214,7 +214,7 @@ class SchedulerPolicySuite extends munit.FunSuite:
       if x.id.value == 1 then Left("another run writes its target") else Right(())
     )
     assertEquals(ids(d), List(2L))
-    assertEquals(d.waitOf(1).map(_.code), Some(Code.Busy))
+    assertEquals(d.waitOf(com.histmersion.domain.SchedulerPolicy.Candidate.Id(1)).map(_.code), Some(Code.Busy))
 
   test("order: the whole queue as it would start with unlimited room, deterministic"):
     val cs = List(

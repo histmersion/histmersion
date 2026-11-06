@@ -285,7 +285,7 @@ class EmptyAnswerFieldsSuite extends munit.FunSuite:
       recheck(RecheckAnswer(List(CheckAnswer(com.histmersion.domain.ReviewArticle.CheckAnswer.Id("R1"), fixed = com.histmersion.domain.ReviewArticle.CheckAnswer.Fixed(false), com.histmersion.domain.ReviewArticle.CheckAnswer.Quote("Tin reached the Aegean"), com.histmersion.domain.ReviewArticle.CheckAnswer.Note(""))))).left.toOption.get
     assert(noNote.contains("check of R1: no note — say why it is not fixed (the fixer reads it)"), noNote)
     val ok = CheckAnswer(com.histmersion.domain.ReviewArticle.CheckAnswer.Id("R1"), fixed = com.histmersion.domain.ReviewArticle.CheckAnswer.Fixed(true), com.histmersion.domain.ReviewArticle.CheckAnswer.Quote("Tin reached the Aegean"), com.histmersion.domain.ReviewArticle.CheckAnswer.Note(""))
-    val noWhere = recheck(RecheckAnswer(List(ok), List(finding(where = "")))).left.toOption.get
+    val noWhere = recheck(RecheckAnswer(List(ok), List(finding(where = com.histmersion.domain.ReviewArticle.FindingAnswer.Where(""))))).left.toOption.get
     assert(noWhere.exists(_.contains("no where stated")), noWhere)
     assertEquals(
       recheck(RecheckAnswer(List(ok), Nil, List(com.histmersion.domain.ReviewArticle.Recheck.Lessons(""), com.histmersion.domain.ReviewArticle.Recheck.Lessons(" "), com.histmersion.domain.ReviewArticle.Recheck.Lessons("Gloss the term where it first appears.")))).map(_._1.lessons),

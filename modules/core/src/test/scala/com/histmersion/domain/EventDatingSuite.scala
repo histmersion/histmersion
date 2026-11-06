@@ -121,7 +121,7 @@ class EventDatingSuite extends munit.FunSuite:
       TimeSpan(Some(com.histmersion.api.catalogue.Year(1)), None, None, Some(com.histmersion.api.catalogue.Year(3))),
       Some(com.histmersion.api.catalogue.Latitude(10.5)),
       Some(com.histmersion.api.catalogue.Longitude(20.25)),
-      description = Some("x")
+      description = Some(com.histmersion.api.catalogue.CatalogRecord.Description("x"))
     )
     val up = EventFields.upstream(r)
     assertEquals(up.keySet, EventFields.all.toSet)
@@ -131,7 +131,7 @@ class EventDatingSuite extends munit.FunSuite:
         label = Some(com.histmersion.api.catalogue.EventSummary.Label("Zz")),
         kind = Some(com.histmersion.api.catalogue.EventSummary.Kind("Volcanic eruption")),
         geometry = Some(EventPatch.Geometry("""{"type":"Point","coordinates":[20.25, 10.5]}""")),
-        description = Some("")
+        description = Some(com.histmersion.api.catalogue.EventSummary.Description(""))
       )
     )
     assertEquals(p.keySet, Set(EventFields.Label, EventFields.Kind, EventFields.Geometry, EventFields.Description))
