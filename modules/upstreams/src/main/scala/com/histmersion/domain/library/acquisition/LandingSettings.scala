@@ -20,22 +20,16 @@ final case class LandingSettings(
 ) derives ConfigReader:
   def rules: RepositoryLanding.Rules =
     RepositoryLanding.Rules(
-      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((allowHosts).value)),
-      (LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHosts).value)) ++ LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHostsExtra).value))).distinct,
-      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((academicHostWords).value)),
-      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((generators).value)),
-      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyGenerators).value)),
-      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((denyHostWords).value)),
-      LandingSettings.entries(_root_.com.histmersion.domain.library.acquisition.LandingSettings.EntriesList((oaPublisherHosts).value))
+      LandingSettings.entries(allowHosts.value).map(RepositoryLanding.HostPattern(_)),
+      (LandingSettings.entries(denyHosts.value).map(RepositoryLanding.HostPattern(_)) ++ LandingSettings.entries(denyHostsExtra.value).map(RepositoryLanding.HostPattern(_))).distinct,
+      LandingSettings.entries(academicHostWords.value).map(RepositoryLanding.HostWord(_)),
+      LandingSettings.entries(generators.value).map(RepositoryLanding.Rules.Generators(_)),
+      LandingSettings.entries(denyGenerators.value).map(RepositoryLanding.Rules.DenyGenerators(_)),
+      LandingSettings.entries(denyHostWords.value).map(RepositoryLanding.HostWord(_)),
+      LandingSettings.entries(oaPublisherHosts.value).map(RepositoryLanding.HostPattern(_))
     )
 
 object LandingSettings:
-  /** A comma-separated list's entries, trimmed and lower-case. */
-  type EntriesResult = EntriesResult.T
-  object EntriesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EntriesList = EntriesList.T
-  object EntriesList extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-
   type Enabled = Enabled.T
   object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type MaxPages = MaxPages.T
@@ -57,5 +51,6 @@ object LandingSettings:
   type OaPublisherHosts = OaPublisherHosts.T
   object OaPublisherHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def entries(list: com.histmersion.domain.library.acquisition.LandingSettings.EntriesList): List[com.histmersion.domain.library.acquisition.LandingSettings.EntriesResult] =
+  /** A comma-separated list's entries, trimmed and lower-case. */
+  private def entries(list: String): List[String] =
     Option(list).getOrElse("").split(",").toList.map(_.trim.toLowerCase).filter(_.nonEmpty)

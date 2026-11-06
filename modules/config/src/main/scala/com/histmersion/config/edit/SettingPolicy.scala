@@ -49,12 +49,12 @@ object SettingPolicy:
         case SecretRule.Reference       =>
           v match
             case SettingValue.Text(t) =>
-              SecretForm.reference(t).left.map(SettingError.NotAReference(key, _)).flatMap {
-                case SecretForm.Literal if !literalConsent => Left(SettingError.LiteralNeedsConsent(key))
+              SecretForm.reference(t.value).left.map(why => SettingError.NotAReference(key, SettingError.NotAReference.Why(why))).flatMap {
+                case SecretForm.Literal if !literalConsent.value => Left(SettingError.LiteralNeedsConsent(key))
                 case SecretForm.Literal                    =>
                   Right(
                     List(
-                      s"${key.relative} holds the key itself (value:): anyone who can read the settings file can read it."
+                      Note(s"${key.relative} holds the key itself (value:): anyone who can read the settings file can read it.")
                     )
                   )
                 case _ => Right(Nil)

@@ -65,8 +65,8 @@ object ConfigSchema:
     val fields = nodes.collect { case (path, v, false) =>
       SettingKey.either(path.mkString(".")).toOption.map { key =>
         val line = v.origin.lineNumber
-        val dflt = Try(resolved.getValue(key.hoconPath)).toOption.flatMap(SettingValue.fromConfig)
-        val kind = Try(resolved.getValue(key.hoconPath)).toOption.map(SettingKind.of).getOrElse(SettingKind.Text)
+        val dflt = Try(resolved.getValue(key.hoconPath.value)).toOption.flatMap(SettingValue.fromConfig)
+        val kind = Try(resolved.getValue(key.hoconPath.value)).toOption.map(SettingKind.of).getOrElse(SettingKind.Text)
         SettingField(
           key,
           kind,

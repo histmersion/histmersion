@@ -30,7 +30,7 @@ final case class UpstreamSettings(
   def contact: Option[com.histmersion.upstreams.settings.UpstreamSettings.ContactEmail] = (Option(contactEmail).map((_).value.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.upstreams.settings.UpstreamSettings.ContactEmail(refactorValue))
 
   /** The `mailto` value; empty without a contact, and [[Url]] drops an empty parameter. */
-  def mailto: com.histmersion.upstreams.settings.UpstreamSettings.ContactEmail = contact.getOrElse("")
+  def mailto: com.histmersion.upstreams.settings.UpstreamSettings.ContactEmail = contact.getOrElse(UpstreamSettings.ContactEmail(""))
 
 object UpstreamSettings:
 

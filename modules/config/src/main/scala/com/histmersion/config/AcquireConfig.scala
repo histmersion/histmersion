@@ -46,15 +46,15 @@ final case class AcquireConfig(
   /** The contact e-mail, when one is configured. It is a per-install setting (never in the repo), so a blank default
     * means "anonymous": no polite pool, and no Unpaywall, which refuses requests without an e-mail.
     */
-  def contact: Option[com.histmersion.config.AcquireConfig.ContactEmail] = Option(contactEmail).map(_.trim).filter(_.nonEmpty)
+  def contact: Option[com.histmersion.config.AcquireConfig.ContactEmail] = Option(contactEmail).map(_.value.trim).filter(_.nonEmpty).map(AcquireConfig.ContactEmail(_))
 
   /** The `mailto` value; empty without a contact, and `Url` drops an empty parameter. */
-  def mailto: com.histmersion.config.AcquireConfig.ContactEmail = contact.getOrElse("")
+  def mailto: com.histmersion.config.AcquireConfig.ContactEmail = contact.getOrElse(AcquireConfig.ContactEmail(""))
 
   /** The acquisition chain's order: the source-fetcher ids `chain` lists (comma-separated); fetchers it does not name
     * run after these, in plugin registration order.
     */
-  def chainIds: List[com.histmersion.config.AcquireConfig.ChainId] = chain.entries
+  def chainIds: List[com.histmersion.config.AcquireConfig.ChainId] = chain.entries.map(e => AcquireConfig.ChainId(e.value))
 
 object AcquireConfig:
   type ChainId = ChainId.T

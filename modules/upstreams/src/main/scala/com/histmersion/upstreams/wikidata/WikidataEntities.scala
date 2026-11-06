@@ -10,19 +10,12 @@ import java.nio.charset.StandardCharsets.UTF_8
 object WikidataEntities:
   type Api = Api.T
   object Api extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ItemsProp = ItemsProp.T
-  object ItemsProp extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Maxlag = Maxlag.T
   object Maxlag extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Problem = Problem.T
   object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The Commons category property. */
-
-  type ItemsProps = ItemsProps.T
-  object ItemsProps extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]:
-    given _root_.scala.math.Ordering[T] = _root_.scala.math.Ordering.by[T, _root_.java.lang.String](_.value)
-
   val CommonsCategory = "P373"
 
   private def enc(s: String): String = (URLEncoder.encode((s), UTF_8))
@@ -36,7 +29,7 @@ object WikidataEntities:
     * that was asked, with the statements of its target). `props` are the picture properties to keep; P373 is always
     * read. An API error is `Left("code: info")`.
     */
-  def items(json: Json, props: Set[com.histmersion.upstreams.wikidata.WikidataEntities.ItemsProp]): Either[com.histmersion.upstreams.wikidata.WikidataEntities.Problem, Map[com.histmersion.upstreams.wikidata.WikidataItem.Id, WikidataItem]] =
+  def items(json: Json, props: Set[com.histmersion.upstreams.wikidata.WikidataStatement.Property]): Either[com.histmersion.upstreams.wikidata.WikidataEntities.Problem, Map[com.histmersion.upstreams.wikidata.WikidataItem.Id, WikidataItem]] =
     val c = json.hcursor
     c.downField("error").focus match
       case Some(err) =>
@@ -56,9 +49,9 @@ object WikidataEntities:
                 val snak = s.downField("mainsnak")
                 val v = snak.downField("datavalue").get[String]("value").toOption.map(_.trim).filter(_.nonEmpty)
                 if rank == "deprecated" || snak.get[String]("snaktype").toOption.exists(_ != "value") then None
-                else v.map(WikidataStatement(p, _root_.com.histmersion.upstreams.wikidata.WikidataStatement.File(_), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.Preferred(rank == "preferred"), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.Order(i)))
+                else v.map(f => WikidataStatement(p, _root_.com.histmersion.upstreams.wikidata.WikidataStatement.File(f), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.Preferred(rank == "preferred"), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.Order(i)))
               }
-            val pictures = props.toList.sorted.flatMap(statementsOf)
-            val category = WikidataStatement.best(statementsOf(_root_.com.histmersion.upstreams.wikidata.WikidataStatement.Property(CommonsCategory)), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(1)).headOption.map(_.file)
+            val pictures = props.toList.sortBy(_.value).flatMap(statementsOf)
+            val category = WikidataStatement.best(statementsOf(_root_.com.histmersion.upstreams.wikidata.WikidataStatement.Property(CommonsCategory)), _root_.com.histmersion.upstreams.wikidata.WikidataStatement.BestPer(1)).headOption.map(st => _root_.com.histmersion.upstreams.wikidata.WikidataItem.CommonsCategory(st.file.value))
             Some(key -> WikidataItem(_root_.com.histmersion.upstreams.wikidata.WikidataItem.Id(key), pictures, category))
         }.toMap)

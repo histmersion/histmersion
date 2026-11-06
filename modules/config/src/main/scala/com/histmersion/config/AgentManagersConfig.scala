@@ -16,7 +16,7 @@ final case class AgentManagersConfig(
     seed: SimpleManagerConfig,
     /** A watcher's run limit; the library reads the rest of `agents.managers.watch`. */
     watch: SimpleManagerConfig,
-    dailyUsd: AgentManagersConfig.DailyUsd = 0
+    dailyUsd: AgentManagersConfig.DailyUsd = AgentManagersConfig.DailyUsd(0)
 ) derives ConfigReader
 
 object AgentManagersConfig:

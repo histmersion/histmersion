@@ -22,13 +22,18 @@ object CoverChoice:
 
   def choose(
       calibreCover: Option[com.histmersion.domain.media.covers.CoverChoice.Pick.Calibre.Path],
-      exists: String => Boolean,
+      exists: Pick.Calibre.Path => Boolean,
       isbns: List[com.histmersion.domain.library.Isbn],
       oclc: Option[com.histmersion.domain.media.covers.OpenLibrary.Oclc]
   ): Option[Pick] =
     calibreCover
-      .map(_.trim)
-      .filter(p => p.nonEmpty && exists(p))
-      .map(Pick.Calibre(_))
-      .orElse(isbns.flatMap(OpenLibrary.isbn).headOption.map(Pick.OpenLibrary("isbn", _)))
-      .orElse(oclc.flatMap(OpenLibrary.oclc).map(Pick.OpenLibrary("oclc", _)))
+      .map(_.value.trim)
+      .filter(p => p.nonEmpty && exists(Pick.Calibre.Path(p)))
+      .map(p => Pick.Calibre(Pick.Calibre.Path(p)))
+      .orElse(
+        isbns
+          .flatMap(OpenLibrary.isbn)
+          .headOption
+          .map(i => Pick.OpenLibrary(Pick.OpenLibrary.Kind("isbn"), Pick.OpenLibrary.Id(i.value)))
+      )
+      .orElse(oclc.flatMap(OpenLibrary.oclc).map(o => Pick.OpenLibrary(Pick.OpenLibrary.Kind("oclc"), Pick.OpenLibrary.Id(o.value))))

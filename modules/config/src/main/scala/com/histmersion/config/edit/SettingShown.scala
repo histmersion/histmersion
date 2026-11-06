@@ -6,57 +6,35 @@ package com.histmersion.config.edit
   * reference where that may be shown.
   */
 final case class SettingShown(
-    key: SettingShown.Key,
-    section: SettingShown.Section,
-    kind: SettingShown.Kind,
-    doc: SettingShown.Doc,
-    default: Option[SettingShown.Default],
-    value: Option[SettingShown.Value],
-    effective: Option[SettingShown.Effective],
+    key: SettingKey,
+    section: SettingField.Section,
+    kind: SettingKind.Wire,
+    doc: SettingField.Doc,
+    default: Option[SettingValue.Hocon],
+    value: Option[SettingValue.Hocon],
+    effective: Option[SettingValue.Hocon],
     source: SettingShown.Source,
-    envVar: Option[SettingShown.EnvVar],
-    restart: Option[SettingShown.Restart],
+    envVar: Option[SettingField.EnvVar],
+    restart: Option[SettingField.Restart],
     credentialRule: Option[SettingShown.CredentialRule],
     credentialForm: Option[SettingShown.CredentialForm],
-    credentialShown: Option[SettingShown.CredentialShown],
-    locked: Option[SettingShown.Locked]
+    credentialShown: Option[SettingReading.Shown],
+    locked: Option[SettingError.Problem]
 )
 
 object SettingShown:
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Section = Section.T
-  object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Kind = Kind.T
-  object Kind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Doc = Doc.T
-  object Doc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Default = Default.T
-  object Default extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Value = Value.T
-  object Value extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Effective = Effective.T
-  object Effective extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Source = Source.T
   object Source extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EnvVar = EnvVar.T
-  object EnvVar extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Restart = Restart.T
-  object Restart extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CredentialRule = CredentialRule.T
   object CredentialRule extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CredentialForm = CredentialForm.T
   object CredentialForm extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CredentialShown = CredentialShown.T
-  object CredentialShown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Locked = Locked.T
-  object Locked extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(r: SettingReading): SettingShown =
     val f = r.field
     val secret = r.credential.isDefined
     SettingShown(
-      key = f.key.value,
+      key = f.key,
       section = f.section,
       kind = f.kind.wire,
       doc = f.doc,
@@ -64,17 +42,17 @@ object SettingShown:
       value = Option.unless(secret)(r.inFile.map(_.hocon)).flatten,
       effective = Option.unless(secret)(r.effective.map(_.hocon)).flatten,
       source = r.source match
-        case SettingSource.Default     => "default"
-        case SettingSource.File        => "file"
-        case SettingSource.Environment => "environment",
+        case SettingSource.Default     => SettingShown.Source("default")
+        case SettingSource.File        => SettingShown.Source("file")
+        case SettingSource.Environment => SettingShown.Source("environment"),
       envVar = f.envVar,
       restart = f.restart,
       credentialRule = r.credential.map(_ =>
         f.secret match
-          case SecretRule.FromEnvironment => "environment"
-          case _                          => "reference"
+          case SecretRule.FromEnvironment => SettingShown.CredentialRule("environment")
+          case _                          => SettingShown.CredentialRule("reference")
       ),
-      credentialForm = r.credential.map(_.wire),
+      credentialForm = r.credential.map(c => SettingShown.CredentialForm(c.wire)),
       credentialShown = r.shown,
       locked = r.locked.map(_.message)
     )

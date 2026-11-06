@@ -22,19 +22,15 @@ object SafePath:
   /** `Right(resolved)` when `candidate` is inside `base`, or when `base` is not configured. Relative candidates are
     * resolved against `base` when there is one.
     */
-  type ConfineBase = ConfineBase.T
-  object ConfineBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfineCandidate = ConfineCandidate.T
-  object ConfineCandidate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithinBase = WithinBase.T
-  object WithinBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ConfiguredBase = ConfiguredBase.T
-  object ConfiguredBase extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Base = Base.T
+  object Base extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Candidate = Candidate.T
+  object Candidate extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def confine(base: Option[com.histmersion.util.storage.SafePath.ConfineBase], candidate: com.histmersion.util.storage.SafePath.ConfineCandidate): Either[com.histmersion.util.storage.SafePath.Problem, Path] =
-    val root = base.map(_.trim).filter(_.nonEmpty)
-    val raw = Option(candidate).map(_.trim).getOrElse("")
-    if raw.isEmpty then Left("no path given")
+  def confine(base: Option[com.histmersion.util.storage.SafePath.Base], candidate: com.histmersion.util.storage.SafePath.Candidate): Either[com.histmersion.util.storage.SafePath.Problem, Path] =
+    val root = base.map(_.value.trim).filter(_.nonEmpty)
+    val raw = Option(candidate).map(_.value.trim).getOrElse("")
+    if raw.isEmpty then Left(Problem("no path given"))
     else
       root match
         case None      => Right(Paths.get(raw).toAbsolutePath.normalize)
@@ -44,14 +40,14 @@ object SafePath:
             case r if r.isAbsolute => r.normalize
             case r                 => b.resolve(r).toAbsolutePath.normalize
           if p.startsWith(b) then Right(p)
-          else Left(s"'$candidate' is outside the configured corpus directory ($dir)")
+          else Left(Problem(s"'$candidate' is outside the configured corpus directory ($dir)"))
 
   /** The same test for an already-built [[Path]] — what the frontmatter reader needs. */
-  def within(base: Option[com.histmersion.util.storage.SafePath.WithinBase], candidate: Path): Boolean =
-    base.map(_.trim).filter(_.nonEmpty) match
+  def within(base: Option[com.histmersion.util.storage.SafePath.Base], candidate: Path): Boolean =
+    base.map(_.value.trim).filter(_.nonEmpty) match
       case None      => true
       case Some(dir) =>
         candidate.toAbsolutePath.normalize.startsWith(Paths.get(dir).toAbsolutePath.normalize)
 
   /** Whether confinement is switched on at all — the caller logs a warning when it is not. */
-  def configured(base: Option[com.histmersion.util.storage.SafePath.ConfiguredBase]): Boolean = base.exists(_.trim.nonEmpty)
+  def configured(base: Option[com.histmersion.util.storage.SafePath.Base]): Boolean = base.exists(_.value.trim.nonEmpty)

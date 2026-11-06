@@ -8,7 +8,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * of the watchers' ingest backlog one managers' tick ingests at most (`drainPerTick`: each fetches a file, so a tick
   * takes only a few; the daily caps bound the day).
   */
-final case class WatchManagerConfig(maxRuns: WatchManagerConfig.MaxRuns, cron: WatchManagerConfig.Cron, autoIngestPerDay: WatchManagerConfig.AutoIngestPerDay, drainPerTick: WatchManagerConfig.DrainPerTick = 3)
+final case class WatchManagerConfig(maxRuns: WatchManagerConfig.MaxRuns, cron: WatchManagerConfig.Cron, autoIngestPerDay: WatchManagerConfig.AutoIngestPerDay, drainPerTick: WatchManagerConfig.DrainPerTick = WatchManagerConfig.DrainPerTick(3))
     derives ConfigReader
 
 object WatchManagerConfig:

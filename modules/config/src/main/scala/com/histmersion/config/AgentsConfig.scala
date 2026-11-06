@@ -2,7 +2,7 @@ package com.histmersion.config
 
 import hearth.kindlings.sconfigderivation.ConfigReader
 
-given ConfigReader[ScheduledRefresh] = summon[ConfigReader[Int]].emap(ScheduledRefresh.fromMinutes)
+given ConfigReader[ScheduledRefresh] = summon[ConfigReader[Minutes]].emap(m => ScheduledRefresh.fromMinutes(m).left.map(_.value))
 
 final case class AgentsConfig(
     enabled: AgentsConfig.Enabled,

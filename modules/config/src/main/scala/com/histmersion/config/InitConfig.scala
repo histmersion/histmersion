@@ -8,7 +8,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * `land`, `periodo`).
   */
 final case class InitConfig(auto: InitConfig.Auto, dataDir: InitConfig.DataDir, fetchSources: InitConfig.FetchSources) derives ConfigReader:
-  def sources: List[com.histmersion.config.InitConfig.FetchSource] = PeriodsConfig.split(fetchSources)
+  def sources: List[com.histmersion.config.InitConfig.FetchSource] = Option(fetchSources.value).toList.flatMap(_.split(",").toList).map(_.trim).filter(_.nonEmpty).distinct.map(InitConfig.FetchSource(_))
 
 object InitConfig:
   type FetchSource = FetchSource.T

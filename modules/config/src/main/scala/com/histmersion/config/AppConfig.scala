@@ -56,7 +56,7 @@ object AppConfig:
     */
   def loadWithUserFile(): Either[ConfigLayers.Problem, LoadedConfig] =
     val env = ConfigFactory.systemEnvironment()
-    loadWithUserFile(env, UserPaths.configFile(lookup(env)))
+    loadWithUserFile(env, UserPaths.configFile(Environment.of(env).lookup))
 
   /** The same with an explicit environment and file (tests; `file = None`: no location). */
   def loadWithUserFile(env: org.ekrich.config.Config, file: Option[java.nio.file.Path]): Either[ConfigLayers.Problem, LoadedConfig] =
@@ -126,7 +126,7 @@ object AppConfig:
       _ <- ConfigLayers.typeCheck(keys.settings, asFiled, known).left.map(inFile)
       merged <- resolved(ConfigLayers.merged(reference, user, env)).left.map(inFile)
       cfg <- decode(merged).left.map(inFile)
-    yield LoadedConfig(cfg, UserConfigFile(p, loaded = UserConfigFile.Loaded(true), keys.unknown), user, env, ConfigReload.settings(merged))
+    yield LoadedConfig(cfg, UserConfigFile(p, loaded = UserConfigFile.Loaded(true), keys.unknown.map(u => UserConfigFile.UnknownKeys(u.value))), user, env, ConfigReload.settings(merged))
 
   /** An environment `Config` as a lookup (its keys are variable names, not paths). */
   def lookup(env: org.ekrich.config.Config): String => Option[String] =

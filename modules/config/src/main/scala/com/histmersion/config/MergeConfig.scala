@@ -23,13 +23,13 @@ final case class MergeConfig(
     /** A place of the bundle with no id here is the same as a place here with its label and kind when the two points
       * are this close (km)…
       */
-    placeWithinKm: MergeConfig.PlaceWithinKm = 5.0,
+    placeWithinKm: MergeConfig.PlaceWithinKm = MergeConfig.PlaceWithinKm(5.0),
     /** …or the two shapes overlap this much (intersection over union). */
-    placeOverlapAtLeast: MergeConfig.PlaceOverlapAtLeast = 0.8,
+    placeOverlapAtLeast: MergeConfig.PlaceOverlapAtLeast = MergeConfig.PlaceOverlapAtLeast(0.8),
     /** How long `POST /api/merge/apply` waits for the apply (its backup first) before it answers `running` with the job
       * to follow (`GET /api/merge/apply/{job}`).
       */
-    applyWaitSeconds: MergeConfig.ApplyWaitSeconds = 20
+    applyWaitSeconds: MergeConfig.ApplyWaitSeconds = MergeConfig.ApplyWaitSeconds(20)
 ) derives ConfigReader
 
 object MergeConfig:

@@ -21,19 +21,19 @@ final case class CodexConfig(
     useApiKey: CodexConfig.UseApiKey,
     timeoutSeconds: CodexConfig.TimeoutSeconds,
     appServer: CodexConfig.AppServer,
-    toolOutputTokens: CodexConfig.ToolOutputTokens = 0,
-    baseInstructions: CodexConfig.BaseInstructions = "lean",
+    toolOutputTokens: CodexConfig.ToolOutputTokens = CodexConfig.ToolOutputTokens(0),
+    baseInstructions: CodexConfig.BaseInstructions = CodexConfig.BaseInstructions("lean"),
     /** Run transcripts older than this many days are deleted from the home (#2582); 0 keeps all. */
-    keepSessionsDays: CodexConfig.KeepSessionsDays = 14,
+    keepSessionsDays: CodexConfig.KeepSessionsDays = CodexConfig.KeepSessionsDays(14),
     /** Vacuum the home's SQLite files (with [[sqlite]]) in the same pass. */
-    vacuum: CodexConfig.Vacuum = true,
+    vacuum: CodexConfig.Vacuum = CodexConfig.Vacuum(true),
     /** At most one pass this often, after a step, while no run uses the home; 0 = never by itself. */
-    retentionEveryHours: CodexConfig.RetentionEveryHours = 24,
+    retentionEveryHours: CodexConfig.RetentionEveryHours = CodexConfig.RetentionEveryHours(24),
     /** The `sqlite3` executable the vacuum runs. */
-    sqlite: CodexConfig.Sqlite = "sqlite3"
+    sqlite: CodexConfig.Sqlite = CodexConfig.Sqlite("sqlite3")
 ) derives ConfigReader:
   /** `builtin` (any case) keeps Codex's own base prompt; anything else is `lean`. */
-  def leanBase: Boolean = !baseInstructions.trim.equalsIgnoreCase("builtin")
+  def leanBase: Boolean = !baseInstructions.value.trim.equalsIgnoreCase("builtin")
 
 object CodexConfig:
 

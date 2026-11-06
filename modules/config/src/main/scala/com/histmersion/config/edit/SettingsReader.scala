@@ -38,25 +38,25 @@ object SettingsReader:
       case Written.Substituted(_) => (None, Some(SettingError.Substitution(key)))
       case Written.Elsewhere(f)   =>
         (
-          Try(state.parsed.getValue(key.hoconPath)).toOption.flatMap(SettingValue.fromConfig),
+          Try(state.parsed.getValue(key.hoconPath.value)).toOption.flatMap(SettingValue.fromConfig),
           Some(SettingError.FromInclude(key, f))
         )
-    val fromEnv = field.envVar.exists(v => env.hasPath(v))
+    val fromEnv = field.envVar.exists(v => env.hasPath(v.value))
     val source =
       if fromEnv then SettingSource.Environment
       else if inFile.isDefined || locked.isDefined then SettingSource.File
       else SettingSource.Default
-    val effective = Try(merged.getValue(key.hoconPath)).toOption.flatMap(SettingValue.fromConfig)
+    val effective = Try(merged.getValue(key.hoconPath.value)).toOption.flatMap(SettingValue.fromConfig)
     val text = effective.collect { case SettingValue.Text(t) => t }.getOrElse("")
     val credential = Option.when(field.secret != SecretRule.NotSecret)(SecretForm.of(text, field.secret))
-    val shown = credential.flatMap(_ => SecretForm.shown(text, field.secret))
+    val shown = credential.flatMap(_ => SecretForm.shown(text, field.secret).map(SettingReading.Shown(_)))
     SettingReading(field, inFile, effective, source, credential, shown, locked)
 
   /** The keys the file writes inside the open blocks (each plugin's own settings, …). */
   def openKeys(parsed: Config): List[SettingKey] =
     ConfigLayers.OpenBlocks
       .flatMap { block =>
-        val path = ConfigUtil.joinPath(block.asJava)
+        val path = ConfigUtil.joinPath(block.map(_.value).asJava)
         Try(parsed.getValue(path)).toOption.collect { case o: ConfigObject => leaves(o, block) }.getOrElse(Nil)
       }
       .flatMap(ws => SettingKey.either(ws.mkString(".")).toOption)
@@ -65,7 +65,7 @@ object SettingsReader:
   private def leaves(o: ConfigObject, prefix: List[com.histmersion.config.edit.SettingKey.Segment]): List[List[com.histmersion.config.edit.SettingKey.Segment]] =
     Try(o.keySet.asScala.toList.sorted).getOrElse(Nil).flatMap { k =>
       Option(o.get(k)) match
-        case Some(child: ConfigObject) => leaves(child, prefix :+ k)
-        case Some(_)                   => List(prefix :+ k)
+        case Some(child: ConfigObject) => leaves(child, prefix :+ SettingKey.Segment(k))
+        case Some(_)                   => List(prefix :+ SettingKey.Segment(k))
         case None                      => Nil
     }

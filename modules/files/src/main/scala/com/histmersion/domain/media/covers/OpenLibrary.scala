@@ -16,8 +16,6 @@ object OpenLibrary:
   object CoverSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type CoverUrl = CoverUrl.T
   object CoverUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Key = Key.T
-  object Key extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Oclc = Oclc.T
   object Oclc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PageUrl = PageUrl.T
@@ -28,22 +26,23 @@ object OpenLibrary:
     */
 
   def isbn(raw: com.histmersion.domain.library.Isbn): Option[com.histmersion.domain.library.Isbn] =
-    val s = raw.trim.toUpperCase(Locale.ROOT).filter(c => c.isDigit || c == 'X')
-    Option(s).filter(x => (x.length == 10 && x.init.forall(_.isDigit)) || (x.length == 13 && x.forall(_.isDigit)))
+    val s = raw.value.trim.toUpperCase(Locale.ROOT).filter(c => c.isDigit || c == 'X')
+    Option(s).filter(x => (x.length == 10 && x.init.forall(_.isDigit)) || (x.length == 13 && x.forall(_.isDigit))).map(com.histmersion.domain.library.Isbn(_))
 
   /** Pure: an OCLC number — its digits (`ocm00012345`, `(OCoLC)12345` → `12345`). */
   def oclc(raw: com.histmersion.domain.media.covers.OpenLibrary.Oclc): Option[com.histmersion.domain.media.covers.OpenLibrary.Oclc] =
-    Option(raw.trim.dropWhile(!_.isDigit).takeWhile(_.isDigit).dropWhile(_ == '0')).filter(_.nonEmpty)
+    Option(raw.value.trim.dropWhile(!_.isDigit).takeWhile(_.isDigit).dropWhile(_ == '0')).filter(_.nonEmpty).map(Oclc(_))
 
   /** Pure: what to ask for — by ISBN first (the API's own preference), else by OCLC number. */
-  def key(isbnRaw: Option[com.histmersion.domain.library.Isbn], oclcRaw: Option[com.histmersion.domain.media.covers.OpenLibrary.Oclc]): Option[(com.histmersion.domain.media.covers.OpenLibrary.Key, com.histmersion.domain.media.covers.OpenLibrary.Key)] =
-    isbnRaw.flatMap(isbn).map("isbn" -> _).orElse(oclcRaw.flatMap(oclc).map("oclc" -> _))
+  def key(isbnRaw: Option[com.histmersion.domain.library.Isbn], oclcRaw: Option[com.histmersion.domain.media.covers.OpenLibrary.Oclc]): Option[(com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Kind, com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Id)] =
+    isbnRaw.flatMap(isbn).map(i => CoverChoice.Pick.OpenLibrary.Kind("isbn") -> CoverChoice.Pick.OpenLibrary.Id(i.value))
+      .orElse(oclcRaw.flatMap(oclc).map(o => CoverChoice.Pick.OpenLibrary.Kind("oclc") -> CoverChoice.Pick.OpenLibrary.Id(o.value)))
 
   /** Pure: a cover's URL; a missing cover answers 404. */
   def coverUrl(base: com.histmersion.domain.media.covers.OpenLibrary.BaseUrl, kind: com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Kind, id: com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Id, size: com.histmersion.domain.media.covers.OpenLibrary.CoverSize): com.histmersion.domain.media.covers.OpenLibrary.CoverUrl =
-    s"${base.stripSuffix("/")}/b/$kind/${URLEncoder.encode(id, UTF_8)}-${size.trim.toUpperCase(Locale.ROOT).take(1)}.jpg?default=false"
+    CoverUrl(s"${base.value.stripSuffix("/")}/b/${kind.value}/${URLEncoder.encode(id.value, UTF_8)}-${size.value.trim.toUpperCase(Locale.ROOT).take(1)}.jpg?default=false")
 
   /** Pure: the book's page, for the credit line's link. */
   def pageUrl(base: com.histmersion.domain.media.covers.OpenLibrary.BaseUrl, kind: com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Kind, id: com.histmersion.domain.media.covers.CoverChoice.Pick.OpenLibrary.Id): com.histmersion.domain.media.covers.OpenLibrary.PageUrl =
-    if kind == "isbn" then s"${base.stripSuffix("/")}/isbn/$id"
-    else s"${base.stripSuffix("/")}/search?q=oclc%3A${URLEncoder.encode(id, UTF_8)}"
+    if kind.value == "isbn" then PageUrl(s"${base.value.stripSuffix("/")}/isbn/${id.value}")
+    else PageUrl(s"${base.value.stripSuffix("/")}/search?q=oclc%3A${URLEncoder.encode(id.value, UTF_8)}")

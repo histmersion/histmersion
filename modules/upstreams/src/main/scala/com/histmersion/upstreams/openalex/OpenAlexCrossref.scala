@@ -5,6 +5,7 @@ import com.histmersion.upstreams.http.Url
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.settings.UpstreamSettings
 import com.histmersion.upstreams.http.json
+import com.histmersion.upstreams.landing.RepositoryLanding
 import com.histmersion.plugin.Plugin
 
 /** OpenAlex and Crossref: search, a work's metadata, its deposited reference list, its amendment notices, and
@@ -15,7 +16,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
 
   private def mailto = "mailto" -> cfg.mailto.value
 
-  private def getJson(url: String): Either[WorkLookup.Problem, Json] = http.json(url).left.map(WorkLookup.Problem(_))
+  private def getJson(url: RepositoryLanding.Candidate.Url): Either[WorkLookup.Problem, Json] = http.json(url.value).left.map(WorkLookup.Problem(_))
 
   def search(query: com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchQuery, since: Option[com.histmersion.plugin.Year], sort: Option[com.histmersion.upstreams.openalex.OpenAlexCrossref.SearchSort], limit: com.histmersion.upstreams.PageSize): Either[WorkLookup.Problem, List[WorkRef]] =
     // relevance keeps results ON TOPIC; sorting purely by citations surfaces mega-cited but tangential
@@ -25,7 +26,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
     val from = since.getOrElse(com.histmersion.plugin.Year(cfg.defaults.minYear.value))
     getJson(
         Url(
-          cfg.openalex.url,
+          RepositoryLanding.Candidate.Url(cfg.openalex.url.value),
           _root_.com.histmersion.upstreams.http.Url.UrlPath("/works"),
           "search" -> (query).value,
           "per-page" -> math.max(1, math.min((limit).value, 50)).toString,
@@ -57,7 +58,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
     else Nil
     getJson(
         Url(
-          cfg.crossref.url,
+          RepositoryLanding.Candidate.Url(cfg.crossref.url.value),
           _root_.com.histmersion.upstreams.http.Url.UrlPath("/works"),
           (List(
             "query" -> query.value,
@@ -91,7 +92,7 @@ final class OpenAlexCrossref(cfg: UpstreamSettings, http: Plugin.Http, log: Plug
         ids.grouped(50).toList.flatMap { chunk =>
           getJson(
               Url(
-                cfg.openalex.url,
+                RepositoryLanding.Candidate.Url(cfg.openalex.url.value),
                 _root_.com.histmersion.upstreams.http.Url.UrlPath("/works"),
                 "filter" -> ("openalex_id:" + chunk.mkString("|")),
                 "select" -> "doi,display_name,publication_year",

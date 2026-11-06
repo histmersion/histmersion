@@ -19,7 +19,7 @@ final case class SettingField(
     secret: SecretRule
 ):
   /** The top-level block it is in (`backups` of `histmersion.backups.keep`). */
-  def section: com.histmersion.config.edit.SettingField.Section = key.segments.lift(1).getOrElse("")
+  def section: com.histmersion.config.edit.SettingField.Section = SettingField.Section(key.segments.lift(1).map(_.value).getOrElse(""))
 
 object SettingField:
   type Section = Section.T

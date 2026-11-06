@@ -15,7 +15,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 final case class AgentProviderConfig(baseUrl: AgentProviderConfig.BaseUrl, apiKey: AgentProviderConfig.ApiKey, strictTools: AgentProviderConfig.StrictTools, timeoutSeconds: AgentProviderConfig.TimeoutSeconds)
     derives ConfigReader:
   override def toString: String =
-    s"AgentProviderConfig($baseUrl, apiKey=${if apiKey.isEmpty then "unset" else "<redacted>"}, " +
+    s"AgentProviderConfig($baseUrl, apiKey=${if apiKey.value.isEmpty then "unset" else "<redacted>"}, " +
       s"strictTools=$strictTools, timeoutSeconds=$timeoutSeconds)"
 
 object AgentProviderConfig:

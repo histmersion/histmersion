@@ -14,12 +14,13 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 final case class TlsConfig(systemTrust: TlsConfig.SystemTrust, extraCaFile: TlsConfig.ExtraCaFile) derives ConfigReader:
   def extraCa: Option[com.histmersion.config.TlsConfig.ExtraCaFile] =
     Option(extraCaFile)
-      .map(_.trim)
+      .map(_.value.trim)
       .filter(_.nonEmpty)
       .map(p => if p.startsWith("~") then System.getProperty("user.home") + p.drop(1) else p)
+      .map(TlsConfig.ExtraCaFile(_))
 
   /** Anything beyond the JDK's roots asked for? */
-  def custom: Boolean = systemTrust || extraCa.isDefined
+  def custom: Boolean = systemTrust.value || extraCa.isDefined
 
 object TlsConfig:
 

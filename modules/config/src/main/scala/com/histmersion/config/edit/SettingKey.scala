@@ -31,24 +31,24 @@ object SettingKey extends RefinedType[String, SettingKeyRule]:
 
   /** A key as a person or a client typed it: `backups.keep` and `histmersion.backups.keep` are the same key. */
   def parse(raw: com.histmersion.config.edit.SettingKey.ParseRaw): Either[com.histmersion.config.edit.SettingKey.Problem, SettingKey] =
-    val t = Option(raw).getOrElse("").trim
+    val t = Option(raw).map(_.value).getOrElse("").trim
     val full = if t == Root || t.startsWith(s"$Root.") then t else s"$Root.$t"
     either(full).left.map(_ =>
-      s"'$t' is not a setting's name: dot-separated words of letters, digits, '_' and '-', such as backups.keep"
+      Problem(s"'$t' is not a setting's name: dot-separated words of letters, digits, '_' and '-', such as backups.keep")
     )
 
   extension (k: SettingKey)
     /** The path's words, `histmersion` first. */
-    def segments: List[com.histmersion.config.edit.SettingKey.Segment] = k.value.split('.').toList
+    def segments: List[com.histmersion.config.edit.SettingKey.Segment] = k.value.split('.').toList.map(Segment(_))
 
     /** The key without `histmersion.`, as the documentation names it. */
-    def relative: com.histmersion.config.edit.SettingKey.Relative = k.value.stripPrefix(s"$Root.")
+    def relative: com.histmersion.config.edit.SettingKey.Relative = Relative(k.value.stripPrefix(s"$Root."))
 
     /** The last word: `keep` of `histmersion.backups.keep`. */
     def leaf: com.histmersion.config.edit.SettingKey.Segment = segments.last
 
     /** The path in HOCON's own syntax, each word quoted where HOCON needs it (`"1password"`). */
-    def hoconPath: com.histmersion.config.edit.SettingKey.HoconPath = ConfigUtil.joinPath(segments.asJava)
+    def hoconPath: com.histmersion.config.edit.SettingKey.HoconPath = HoconPath(ConfigUtil.joinPath(segments.map(_.value).asJava))
 
     /** Is this key `other` or under it? */
     def within(other: SettingKey): Boolean = k.value == other.value || k.value.startsWith(other.value + ".")
@@ -57,4 +57,4 @@ object SettingKey extends RefinedType[String, SettingKeyRule]:
 
   /** Words of a HOCON path (quoted segments unquoted), when `path` is one. */
   def fromHocon(path: com.histmersion.config.edit.SettingKey.HoconPath): Option[SettingKey] =
-    Try(ConfigUtil.splitPath(path).asScala.toList).toOption.flatMap(ws => either(ws.mkString(".")).toOption)
+    Try(ConfigUtil.splitPath(path.value).asScala.toList).toOption.flatMap(ws => either(ws.mkString(".")).toOption)

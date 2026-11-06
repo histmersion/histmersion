@@ -28,18 +28,22 @@ final case class PlacesConfig(
     modernFrom: PlacesConfig.ModernFrom,
     sources: PlaceSourcesConfig,
     placeholderAreaShare: PlacesConfig.PlaceholderAreaShare,
-    geoMaxLimit: PlacesConfig.GeoMaxLimit,
+    geoMaxLimit: PlacesConfig.GeoLimit,
     fetchTimeoutSeconds: PlacesConfig.FetchTimeoutSeconds,
     fetchConnectTimeoutSeconds: PlacesConfig.FetchConnectTimeoutSeconds
 ) derives ConfigReader:
   /** `/api/places/geo`'s `limit` into `[1, geoMaxLimit]`; absent or `<= 0` is `dflt` (itself capped). */
   def geoLimit(requested: Option[com.histmersion.config.PlacesConfig.GeoLimit], dflt: com.histmersion.config.PlacesConfig.GeoLimit): com.histmersion.config.PlacesConfig.GeoLimit =
-    val cap = math.max(1, geoMaxLimit)
-    requested.filter(_ > 0).getOrElse(dflt).max(1).min(cap)
+    val cap = geoMaxLimit.atLeastOne
+    requested.filter(_.isPositive).getOrElse(dflt).atLeastOne.atMost(cap)
 
 object PlacesConfig:
   type GeoLimit = GeoLimit.T
-  object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  object GeoLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]:
+    extension (l: T)
+      def isPositive: Boolean = l.value > 0
+      def atLeastOne: T = apply(l.value.max(1))
+      def atMost(cap: T): T = apply(l.value.min(cap.value))
 
   type PointToleranceKm = PointToleranceKm.T
   object PointToleranceKm extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -63,8 +67,6 @@ object PlacesConfig:
   object ModernFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PlaceholderAreaShare = PlaceholderAreaShare.T
   object PlaceholderAreaShare extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeoMaxLimit = GeoMaxLimit.T
-  object GeoMaxLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FetchTimeoutSeconds = FetchTimeoutSeconds.T
   object FetchTimeoutSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type FetchConnectTimeoutSeconds = FetchConnectTimeoutSeconds.T

@@ -2,6 +2,7 @@ package com.histmersion.upstreams.archiveorg
 import com.histmersion.plugin.FetchedFile
 import com.histmersion.domain.library.acquisition.Endpoint
 import com.histmersion.upstreams.http.Url
+import com.histmersion.upstreams.landing.RepositoryLanding.Candidate
 import com.histmersion.upstreams.parse.AcquireParse
 import com.histmersion.upstreams.http.json
 import com.histmersion.plugin.Plugin
@@ -18,15 +19,17 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
     http
       .json(
         Url(
-          archive.url,
+          Candidate.Url(archive.url.value),
           _root_.com.histmersion.upstreams.http.Url.UrlPath("/advancedsearch.php"),
           "q" -> s"($query) AND mediatype:texts",
           "fl[]" -> "identifier",
           "rows" -> rows.toString,
           "output" -> "json",
           "sort[]" -> "downloads desc"
-        )
+        ).value
       )
+      .left
+      .map(ArchiveOrg.Problem(_))
       .map(AcquireParse.archiveSearch)
       // the search index returns only identifiers reliably; the item metadata (title, creator,
       // restriction) comes from /metadata, one call per hit
@@ -34,19 +37,21 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   def info(id: com.histmersion.upstreams.ArchiveId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, ArchiveItem] =
     val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
-    http.json(Url(archive.url, _root_.com.histmersion.upstreams.http.Url.UrlPath(s"/metadata/$ident"))).map(AcquireParse.archiveItem(ident, _))
+    http.json(Url(Candidate.Url(archive.url.value), _root_.com.histmersion.upstreams.http.Url.UrlPath(s"/metadata/$ident")).value).left.map(ArchiveOrg.Problem(_)).map(AcquireParse.archiveItem(ident, _))
 
   def download(id: com.histmersion.upstreams.ArchiveId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, FetchedFile] =
     val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
     val url = Url(
-      archive.url,
-      s"/download/$ident/" + java.net.URLEncoder
-        .encode(file, "UTF-8")
-        .replace("+", "%20")
+      Candidate.Url(archive.url.value),
+      _root_.com.histmersion.upstreams.http.Url.UrlPath(
+        s"/download/$ident/" + java.net.URLEncoder
+          .encode(file.value, "UTF-8")
+          .replace("+", "%20")
+      )
     )
-    http.get(url).flatMap { b =>
-      if b.length < 10240 then Left(s"archive.org returned only ${b.length} bytes for $file")
-      else Right(FetchedFile(_root_.com.histmersion.plugin.FetchedFile.Source("archive_org"), Some(url), b, _root_.com.histmersion.plugin.FetchedFile.Extension((file).value.toLowerCase.split("\\.").lastOption.getOrElse("pdf"))))
+    http.get(Plugin.Http.GetUrl(url.value)).left.map(e => ArchiveOrg.Problem(e.value)).flatMap { b =>
+      if b.value.length < 10240 then Left(ArchiveOrg.Problem(s"archive.org returned only ${b.value.length} bytes for $file"))
+      else Right(FetchedFile(_root_.com.histmersion.plugin.FetchedFile.Source("archive_org"), Some(FetchedFile.Url(url.value)), FetchedFile.Bytes(b.value), _root_.com.histmersion.plugin.FetchedFile.Extension((file).value.toLowerCase.split("\\.").lastOption.getOrElse("pdf"))))
     }
 
 object ArchiveOrg:

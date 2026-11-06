@@ -8,7 +8,7 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   * `plugin add group:artifact:version`; `curl` downloads (`plugin add <url>`).
   */
 final case class CliPluginsConfig(installDir: CliPluginsConfig.InstallDir, mavenRepos: CliPluginsConfig.MavenRepos, curl: CliPluginsConfig.Curl) derives ConfigReader:
-  def repos: List[com.histmersion.config.CliPluginsConfig.MavenRepo] = mavenRepos.split(",").toList.map(_.trim).filter(_.nonEmpty)
+  def repos: List[com.histmersion.config.CliPluginsConfig.MavenRepo] = mavenRepos.value.split(",").toList.map(_.trim).filter(_.nonEmpty).map(MavenRepo(_))
 
 object CliPluginsConfig:
   type MavenRepo = MavenRepo.T

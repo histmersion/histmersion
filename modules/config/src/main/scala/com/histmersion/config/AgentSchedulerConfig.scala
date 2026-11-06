@@ -24,22 +24,22 @@ final case class AgentSchedulerConfig(
       * (`poolOvercommit` × its max-calls-in-flight), the places kept for goals still gathering their sources
       * (`gatheringSlots`), and how many recent starts the shares are counted over (`shareWindow`).
       */
-    strategy: AgentSchedulerConfig.Strategy = "type-balanced",
-    agingHours: AgentSchedulerConfig.AgingHours = 24,
-    maxWaitHours: AgentSchedulerConfig.MaxWaitHours = 72,
-    minShare: AgentSchedulerConfig.MinShare = 0.05,
+    strategy: AgentSchedulerConfig.Strategy = AgentSchedulerConfig.Strategy("type-balanced"),
+    agingHours: AgentSchedulerConfig.AgingHours = AgentSchedulerConfig.AgingHours(24),
+    maxWaitHours: AgentSchedulerConfig.MaxWaitHours = AgentSchedulerConfig.MaxWaitHours(72),
+    minShare: AgentSchedulerConfig.MinShare = AgentSchedulerConfig.MinShare(0.05),
     typeWeights: AgentSchedulerConfig.TypeWeights = AgentSchedulerConfig.DefaultWeights,
     typePriorities: AgentSchedulerConfig.TypePriorities = AgentSchedulerConfig.DefaultPriorities,
-    poolOvercommit: AgentSchedulerConfig.PoolOvercommit = 2,
-    gatheringSlots: AgentSchedulerConfig.GatheringSlots = 1,
-    shareWindow: AgentSchedulerConfig.ShareWindow = 100,
+    poolOvercommit: AgentSchedulerConfig.PoolOvercommit = AgentSchedulerConfig.PoolOvercommit(2),
+    gatheringSlots: AgentSchedulerConfig.GatheringSlots = AgentSchedulerConfig.GatheringSlots(1),
+    shareWindow: AgentSchedulerConfig.ShareWindow = AgentSchedulerConfig.ShareWindow(100),
     /** Seed before the plan (#3762 proposal 5): goals with no source run the deterministic candidate search and queue
       * legal open-access ingests before their plan is approved — at most `seedGoalsPerTick` goals a tick (0 = off),
       * each at most once per `seedEveryHours`, at most `seedIngestPerGoal` works each.
       */
-    seedGoalsPerTick: AgentSchedulerConfig.SeedGoalsPerTick = 2,
-    seedEveryHours: AgentSchedulerConfig.SeedEveryHours = 24,
-    seedIngestPerGoal: AgentSchedulerConfig.SeedIngestPerGoal = 5
+    seedGoalsPerTick: AgentSchedulerConfig.SeedGoalsPerTick = AgentSchedulerConfig.SeedGoalsPerTick(2),
+    seedEveryHours: AgentSchedulerConfig.SeedEveryHours = AgentSchedulerConfig.SeedEveryHours(24),
+    seedIngestPerGoal: AgentSchedulerConfig.SeedIngestPerGoal = AgentSchedulerConfig.SeedIngestPerGoal(5)
 ) derives ConfigReader
 
 object AgentSchedulerConfig:
@@ -83,10 +83,10 @@ object AgentSchedulerConfig:
   type SeedIngestPerGoal = SeedIngestPerGoal.T
   object SeedIngestPerGoal extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  val DefaultWeights = "review=3, compile=3, enrich=3, propose=2, goal-plan=2, sweep=2, extend=1, filter=1, currency=1"
+  val DefaultWeights: TypeWeights = TypeWeights("review=3, compile=3, enrich=3, propose=2, goal-plan=2, sweep=2, extend=1, filter=1, currency=1")
 
   /** The job types' priorities when none are configured: finish first (a review before a compile before a proposal …),
     * the order the focus used.
     */
-  val DefaultPriorities =
-    "review=9, compile=8, extend=7, filter=6, propose=5, goal-plan=4, enrich=3, sweep=2, currency=1"
+  val DefaultPriorities: TypePriorities =
+    TypePriorities("review=9, compile=8, extend=7, filter=6, propose=5, goal-plan=4, enrich=3, sweep=2, currency=1")

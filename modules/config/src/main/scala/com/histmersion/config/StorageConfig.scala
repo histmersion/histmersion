@@ -16,7 +16,7 @@ final case class StorageConfig(
     topTables: StorageConfig.TopTables,
     lowFreeGb: StorageConfig.LowFreeGb
 ) derives ConfigReader:
-  def lowFreeBytes: com.histmersion.ByteCount = (lowFreeGb * 1e9).toLong
+  def lowFreeBytes: com.histmersion.ByteCount = com.histmersion.ByteCount.option((lowFreeGb.value * 1e9).toLong).getOrElse(com.histmersion.ByteCount.zero)
 
 object StorageConfig:
 

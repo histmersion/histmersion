@@ -16,14 +16,12 @@ enum SecretRule:
   case Reference
 
 object SecretRule:
-  type Leaf = Leaf.T
-  object Leaf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The words a credential's key is called by. */
 
   private val Names = Set("api-key", "password", "session", "service-account-token", "token", "secret")
 
-  def looksSecret(leaf: com.histmersion.config.edit.SecretRule.Leaf): Boolean =
-    Names(leaf) || leaf.endsWith("-api-key") || leaf.endsWith("-password") || leaf.endsWith("-token")
+  def looksSecret(leaf: SettingKey.Segment): Boolean =
+    Names(leaf.value) || leaf.value.endsWith("-api-key") || leaf.value.endsWith("-password") || leaf.value.endsWith("-token")
 
   /** The rule for `key`: a plugin's credential is a reference; any other is the value itself. */
   def of(key: SettingKey): SecretRule =

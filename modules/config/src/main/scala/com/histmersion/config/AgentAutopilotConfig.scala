@@ -23,34 +23,34 @@ import hearth.kindlings.sconfigderivation.ConfigReader
   *     lists the next `focusQueueShown` waiting goals.
   */
 final case class AgentAutopilotConfig(
-    ensureMinutes: AgentAutopilotConfig.EnsureMinutes = 5,
-    ingestPerDay: AgentAutopilotConfig.IngestPerDay = 20,
-    watchIngestPerDay: AgentAutopilotConfig.WatchIngestPerDay = 5,
-    watchCron: AgentAutopilotConfig.WatchCron = "@weekly",
-    seedCron: AgentAutopilotConfig.SeedCron = "@weekly",
-    finishedWatchCron: AgentAutopilotConfig.FinishedWatchCron = "@monthly",
-    extendMinNew: AgentAutopilotConfig.ExtendMinNew = 3,
-    backupHours: AgentAutopilotConfig.BackupHours = 24,
-    lintHours: AgentAutopilotConfig.LintHours = 24,
-    maxActiveGoals: AgentAutopilotConfig.MaxActiveGoals = 8,
-    focusRatio: AgentAutopilotConfig.FocusRatio = 3,
-    maxOpenSubGoals: AgentAutopilotConfig.MaxOpenSubGoals = 5,
-    focusQueueShown: AgentAutopilotConfig.FocusQueueShown = 10,
+    ensureMinutes: AgentAutopilotConfig.EnsureMinutes = AgentAutopilotConfig.EnsureMinutes(5),
+    ingestPerDay: AgentAutopilotConfig.IngestPerDay = AgentAutopilotConfig.IngestPerDay(20),
+    watchIngestPerDay: AgentAutopilotConfig.WatchIngestPerDay = AgentAutopilotConfig.WatchIngestPerDay(5),
+    watchCron: AgentAutopilotConfig.WatchCron = AgentAutopilotConfig.WatchCron("@weekly"),
+    seedCron: AgentAutopilotConfig.SeedCron = AgentAutopilotConfig.SeedCron("@weekly"),
+    finishedWatchCron: AgentAutopilotConfig.FinishedWatchCron = AgentAutopilotConfig.FinishedWatchCron("@monthly"),
+    extendMinNew: AgentAutopilotConfig.ExtendMinNew = AgentAutopilotConfig.ExtendMinNew(3),
+    backupHours: AgentAutopilotConfig.BackupHours = AgentAutopilotConfig.BackupHours(24),
+    lintHours: AgentAutopilotConfig.LintHours = AgentAutopilotConfig.LintHours(24),
+    maxActiveGoals: AgentAutopilotConfig.MaxActiveGoals = AgentAutopilotConfig.MaxActiveGoals(8),
+    focusRatio: AgentAutopilotConfig.FocusRatio = AgentAutopilotConfig.FocusRatio(3),
+    maxOpenSubGoals: AgentAutopilotConfig.MaxOpenSubGoals = AgentAutopilotConfig.MaxOpenSubGoals(5),
+    focusQueueShown: AgentAutopilotConfig.FocusQueueShown = AgentAutopilotConfig.FocusQueueShown(10),
     /** `ingestPerDay` scaled to the ingest backlog ([[AutopilotPolicy.scaledCap]]; 0 = fixed), at most the ceiling. */
-    ingestBacklogShare: AgentAutopilotConfig.IngestBacklogShare = 0,
-    ingestCeiling: AgentAutopilotConfig.IngestCeiling = 100,
+    ingestBacklogShare: AgentAutopilotConfig.IngestBacklogShare = AgentAutopilotConfig.IngestBacklogShare(0.0),
+    ingestCeiling: AgentAutopilotConfig.IngestCeiling = AgentAutopilotConfig.IngestCeiling(100),
     /** The UTC hour after which the day's approval digest is written to the worklog (-1 = never). */
-    digestHour: AgentAutopilotConfig.DigestHour = 7,
+    digestHour: AgentAutopilotConfig.DigestHour = AgentAutopilotConfig.DigestHour(7),
     /** The stall report's default: a goal with no progress in this many days is stalled. */
-    stallDays: AgentAutopilotConfig.StallDays = 3,
+    stallDays: AgentAutopilotConfig.StallDays = AgentAutopilotConfig.StallDays(3),
     /** #3763: once a goal's articles are all compiled and reviewed, its next article is proposed — at most once per
       * this many hours after its last proposal settled (0 = never by itself; the seeding cron still fires).
       */
-    nextArticleHours: AgentAutopilotConfig.NextArticleHours = 24,
+    nextArticleHours: AgentAutopilotConfig.NextArticleHours = AgentAutopilotConfig.NextArticleHours(24),
     /** Goal plans are offered (a plan-goal run started, an open goal plan decided by code) only while at most this many
       * goals with an approved plan are unfinished (0 = no limit).
       */
-    maxUnfinishedGoals: AgentAutopilotConfig.MaxUnfinishedGoals = 10
+    maxUnfinishedGoals: AgentAutopilotConfig.MaxUnfinishedGoals = AgentAutopilotConfig.MaxUnfinishedGoals(10)
 ) derives ConfigReader
 
 object AgentAutopilotConfig:

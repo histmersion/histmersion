@@ -20,7 +20,7 @@ final case class ServerConfig(
     requestTimeoutSeconds: ServerConfig.RequestTimeoutSeconds,
     shutdownGraceSeconds: ServerConfig.ShutdownGraceSeconds,
     sourceUrl: ServerConfig.SourceUrl,
-    restartExitCode: ServerConfig.RestartExitCode = 75
+    restartExitCode: ServerConfig.RestartExitCode = ServerConfig.RestartExitCode(75)
 ) derives ConfigReader
 
 object ServerConfig:

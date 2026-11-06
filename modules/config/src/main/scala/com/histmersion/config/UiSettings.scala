@@ -22,12 +22,12 @@ final case class UiSettings(
     tabletMaxWidthPx: UiSettings.TabletMaxWidthPx,
     events: UiEventsSettings,
     mapTiles: UiMapTilesSettings,
-    countersPollSeconds: UiSettings.CountersPollSeconds = 30,
-    jobPollMs: UiSettings.JobPollMs = 1000,
-    tilesTone: UiSettings.TilesTone = "light",
-    docsUrl: UiSettings.DocsUrl = "",
-    baseMapSource: UiSettings.BaseMapSource = "auto",
-    mapStart: UiMapStartSettings = UiMapStartSettings("last", 37.0, 30.0, 5, "Anatolia")
+    countersPollSeconds: UiSettings.CountersPollSeconds = UiSettings.CountersPollSeconds(30),
+    jobPollMs: UiSettings.JobPollMs = UiSettings.JobPollMs(1000),
+    tilesTone: UiSettings.TilesTone = UiSettings.TilesTone("light"),
+    docsUrl: UiSettings.DocsUrl = UiSettings.DocsUrl(""),
+    baseMapSource: UiSettings.BaseMapSource = UiSettings.BaseMapSource("auto"),
+    mapStart: UiMapStartSettings = UiMapStartSettings(UiMapStartSettings.Mode("last"), UiMapStartSettings.Lat(37.0), UiMapStartSettings.Lon(30.0), UiMapStartSettings.Zoom(5.0), UiMapStartSettings.Label("Anatolia"))
 ) derives ConfigReader
 
 object UiSettings:

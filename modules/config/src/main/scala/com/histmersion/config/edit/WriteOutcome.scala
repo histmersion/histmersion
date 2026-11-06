@@ -26,8 +26,8 @@ final case class WriteOutcome(
     backup: Option[WriteOutcome.Backup],
     version: FileVersion,
     created: WriteOutcome.Created,
-    restart: List[(SettingKey, WriteOutcome.RestartPart2)],
-    warnings: List[WriteOutcome.Warnings]
+    restart: List[(SettingKey, SettingField.Restart)],
+    warnings: List[WriteOutcome.Note]
 ):
   def wrote: Boolean = changed.nonEmpty
 
@@ -50,10 +50,6 @@ object WriteOutcome:
   object Backup extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type Created = Created.T
   object Created extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RestartPart2 = RestartPart2.T
-  object RestartPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type Warnings = Warnings.T
-  object Warnings extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(
       file: com.histmersion.config.edit.WriteOutcome.OfFile,
@@ -63,14 +59,14 @@ object WriteOutcome:
       edited: EditedText,
       backup: Option[com.histmersion.config.edit.WriteOutcome.OfBackup],
       notes: List[com.histmersion.config.edit.WriteOutcome.Note],
-      created: com.histmersion.config.edit.WriteOutcome.OfCreated = false
+      created: com.histmersion.config.edit.WriteOutcome.OfCreated = WriteOutcome.OfCreated(false)
   ): WriteOutcome =
     val fields = edited.changed.flatMap(schema.field)
     val shadowed = fields.flatMap(f =>
       f.envVar
-        .filter(v => env.hasPath(v))
+        .filter(v => env.hasPath(v.value))
         .map(v =>
-          s"The environment variable $v also sets ${f.key.relative}, and wins over the settings file while it is set."
+          Note(s"The environment variable $v also sets ${f.key.relative}, and wins over the settings file while it is set.")
         )
     )
     WriteOutcome(

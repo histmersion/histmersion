@@ -5,6 +5,7 @@ import io.circe.Json
 import java.nio.charset.StandardCharsets.UTF_8
 import com.histmersion.domain.library.acquisition.CoreEndpoint
 import com.histmersion.upstreams.http.Url
+import com.histmersion.upstreams.landing.RepositoryLanding.Candidate
 import com.histmersion.plugin.Plugin
 
 /** CORE's `search/works` with a key, through the server's CORE budget (`quota`) — the one way Histmersion calls CORE.
@@ -13,13 +14,13 @@ import com.histmersion.plugin.Plugin
 final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota):
 
   /** One search for `purpose` (`lookup`: a work's download URLs by its DOI; `search`: a saved query). */
-  def searchWorks(key: com.histmersion.upstreams.core.CoreApi.SearchWorksKey, query: com.histmersion.upstreams.core.CoreApi.SearchWorksQuery, limit: com.histmersion.upstreams.PageSize, purpose: com.histmersion.upstreams.core.CoreApi.SearchWorksPurpose): Either[CoreFailure, Json] =
-    val url = Url(core.url, _root_.com.histmersion.upstreams.http.Url.UrlPath("/search/works/"), "q" -> (query).value, "limit" -> limit.toString)
+  def searchWorks(key: com.histmersion.upstreams.core.CoreApi.SearchWorksKey, query: com.histmersion.upstreams.core.CoreApi.SearchWorksQuery, limit: com.histmersion.upstreams.PageSize, purpose: UpstreamQuota.TakePurpose): Either[CoreFailure, Json] =
+    val url = Url(Candidate.Url(core.url.value), _root_.com.histmersion.upstreams.http.Url.UrlPath("/search/works/"), "q" -> (query).value, "limit" -> limit.toString)
     quota.take(purpose) match
-      case Left(why) => Left(CoreFailure.Skipped(why))
+      case Left(why) => Left(CoreFailure.Skipped(CoreFailure.Skipped.Why(why.value)))
       case Right(_)  =>
-        http.fetch(url, Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (_root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1(refactorTuple._1), _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2(refactorTuple._2)) })) match
-          case Left(e)  => Left(CoreFailure.Failed(e))
+        http.fetch(Plugin.Http.GetUrl(url.value), Map({ val refactorTuple = "Authorization" -> s"Bearer $key"; (_root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart1(refactorTuple._1), _root_.com.histmersion.plugin.Plugin.Http.GetHeadersPart2(refactorTuple._2)) })) match
+          case Left(e)  => Left(CoreFailure.Failed(CoreFailure.Failed.Why(e.value)))
           case Right(a) =>
             quota.observe(a.status, a.headers)
             if a.status == _root_.com.histmersion.plugin.Plugin.HttpResponse.Status(429) then
@@ -29,10 +30,10 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
                 )
               )
             else if (a.status).value >= 400 then
-              Left(CoreFailure.Failed(s"$url: HTTP ${a.status} ${String(a.body.take(200), UTF_8)}"))
+              Left(CoreFailure.Failed(CoreFailure.Failed.Why(s"$url: HTTP ${a.status} ${String(a.body.value.take(200), UTF_8)}")))
             else
               io.circe.parser
-                .parse(String(a.body, UTF_8))
+                .parse(String(a.body.value, UTF_8))
                 .left
                 .map(e => CoreFailure.Failed(_root_.com.histmersion.upstreams.core.CoreFailure.Problem(s"$url returned unparseable JSON: ${e.getMessage}")))
 
@@ -41,5 +42,3 @@ object CoreApi:
   object SearchWorksKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchWorksQuery = SearchWorksQuery.T
   object SearchWorksQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchWorksPurpose = SearchWorksPurpose.T
-  object SearchWorksPurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

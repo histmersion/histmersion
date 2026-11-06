@@ -13,4 +13,4 @@ object CommaList extends RefinedType[String, Pure]:
 
   extension (list: CommaList)
     def entries: List[com.histmersion.config.CommaList.Entry] =
-      list.value.split(",").toList.map(_.trim.toLowerCase).filter(_.nonEmpty)
+      list.value.split(",").toList.map(_.trim.toLowerCase).filter(_.nonEmpty).map(Entry(_))
