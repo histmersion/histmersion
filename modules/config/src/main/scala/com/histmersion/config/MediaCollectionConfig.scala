@@ -30,7 +30,7 @@ final case class MediaCollectionConfig(
     excludeTypes: MediaCollectionConfig.ExcludeTypes = ""
 ) derives ConfigReader:
   /** [[refusalBackoffSeconds]] as milliseconds; an entry that is not a positive number is dropped. */
-  def refusalBackoffMs: List[com.histmersion.config.MediaCollectionConfig.RefusalBackoffMsResult] =
+  def refusalBackoffMs: List[com.histmersion.config.MediaCollectionConfig.RefusalBackoffMs] =
     Option(refusalBackoffSeconds).toList
       .flatMap(_.split(","))
       .map(_.trim)
@@ -39,8 +39,8 @@ final case class MediaCollectionConfig(
       .map(_ * 1000)
 
 object MediaCollectionConfig:
-  type RefusalBackoffMsResult = RefusalBackoffMsResult.T
-  object RefusalBackoffMsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type RefusalBackoffMs = RefusalBackoffMs.T
+  object RefusalBackoffMs extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Enabled = Enabled.T
   object Enabled extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

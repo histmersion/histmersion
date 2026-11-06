@@ -29,20 +29,18 @@ final case class WriteOutcome(
     restart: List[(SettingKey, WriteOutcome.RestartPart2)],
     warnings: List[WriteOutcome.Warnings]
 ):
-  def wrote: com.histmersion.config.edit.WriteOutcome.WroteResult = changed.nonEmpty
+  def wrote: Boolean = changed.nonEmpty
 
 object WriteOutcome:
+  type Note = Note.T
+  object Note extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** What `edited` did to `file`, now at `version`: the restart-only settings among the changed ones, and the warnings
     * — `notes`, and an environment variable of `env` that sets a changed setting too (and wins over the file).
     */
-  type WroteResult = WroteResult.T
-  object WroteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfFile = _root_.com.histmersion.config.edit.WriteOutcome.File
   val OfFile: _root_.com.histmersion.config.edit.WriteOutcome.File.type = _root_.com.histmersion.config.edit.WriteOutcome.File
   type OfBackup = _root_.com.histmersion.config.edit.WriteOutcome.Backup
   val OfBackup: _root_.com.histmersion.config.edit.WriteOutcome.Backup.type = _root_.com.histmersion.config.edit.WriteOutcome.Backup
-  type OfNotes = OfNotes.T
-  object OfNotes extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OfCreated = _root_.com.histmersion.config.edit.WriteOutcome.Created
   val OfCreated: _root_.com.histmersion.config.edit.WriteOutcome.Created.type = _root_.com.histmersion.config.edit.WriteOutcome.Created
 
@@ -64,7 +62,7 @@ object WriteOutcome:
       version: FileVersion,
       edited: EditedText,
       backup: Option[com.histmersion.config.edit.WriteOutcome.OfBackup],
-      notes: List[com.histmersion.config.edit.WriteOutcome.OfNotes],
+      notes: List[com.histmersion.config.edit.WriteOutcome.Note],
       created: com.histmersion.config.edit.WriteOutcome.OfCreated = false
   ): WriteOutcome =
     val fields = edited.changed.flatMap(schema.field)

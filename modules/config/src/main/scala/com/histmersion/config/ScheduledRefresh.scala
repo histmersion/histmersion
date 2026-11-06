@@ -8,13 +8,11 @@ enum ScheduledRefresh:
   case Every(interval: RefreshIntervalMinutes)
 
 object ScheduledRefresh:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   /** The configured minutes: 0 = off. */
-  type FromMinutesResultPart1 = FromMinutesResultPart1.T
-  object FromMinutesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FromMinutesMinutes = FromMinutesMinutes.T
-  object FromMinutesMinutes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  def fromMinutes(minutes: com.histmersion.config.ScheduledRefresh.FromMinutesMinutes): Either[com.histmersion.config.ScheduledRefresh.FromMinutesResultPart1, ScheduledRefresh] =
+  def fromMinutes(minutes: com.histmersion.config.Minutes): Either[com.histmersion.config.ScheduledRefresh.Problem, ScheduledRefresh] =
     if minutes == 0 then Right(Off)
     else
       RefreshIntervalMinutes

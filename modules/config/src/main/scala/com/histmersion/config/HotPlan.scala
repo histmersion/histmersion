@@ -5,65 +5,23 @@ package com.histmersion.config
   * swaps the values; this decides what and in which order.
   */
 object HotPlan:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Does a changed key concern a node that declares `key`? The same key, a key under it, or a block above it (a whole
     * block replaced by a value, or removed).
     */
-  type OrderGoResultPart1 = OrderGoResultPart1.T
-  object OrderGoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderGoResultPart2 = OrderGoResultPart2.T
-  object OrderGoResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderGoDone = OrderGoDone.T
-  object OrderGoDone extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CycleWalkResult = CycleWalkResult.T
-  object CycleWalkResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CycleWalkAt = CycleWalkAt.T
-  object CycleWalkAt extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CycleWalkPath = CycleWalkPath.T
-  object CycleWalkPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependentsGrowResult = DependentsGrowResult.T
-  object DependentsGrowResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependentsGrowAcc = DependentsGrowAcc.T
-  object DependentsGrowAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type KeyMatchesResult = KeyMatchesResult.T
-  object KeyMatchesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyMatchesChanged = KeyMatchesChanged.T
-  object KeyMatchesChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type KeyMatchesKey = KeyMatchesKey.T
-  object KeyMatchesKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderResultPart1 = OrderResultPart1.T
-  object OrderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OrderResultPart2 = OrderResultPart2.T
-  object OrderResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CycleResult = CycleResult.T
-  object CycleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CycleByNamePart1 = CycleByNamePart1.T
-  object CycleByNamePart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TouchedResult = TouchedResult.T
-  object TouchedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TouchedChanged = TouchedChanged.T
-  object TouchedChanged extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependentsResult = DependentsResult.T
-  object DependentsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DependentsRoots = DependentsRoots.T
-  object DependentsRoots extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanResultPart1 = PlanResultPart1.T
-  object PlanResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanResultPart2 = PlanResultPart2.T
-  object PlanResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PlanChanged = _root_.com.histmersion.config.HotPlan.TouchedChanged
-  val PlanChanged: _root_.com.histmersion.config.HotPlan.TouchedChanged.type = _root_.com.histmersion.config.HotPlan.TouchedChanged
-  type PlanForced = PlanForced.T
-  object PlanForced extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PlanChanged = _root_.com.histmersion.config.ConfigReload.ChangedKey
+  val PlanChanged: _root_.com.histmersion.config.ConfigReload.ChangedKey.type = _root_.com.histmersion.config.ConfigReload.ChangedKey
 
-  def keyMatches(changed: com.histmersion.config.HotPlan.KeyMatchesChanged, key: com.histmersion.config.HotPlan.KeyMatchesKey): com.histmersion.config.HotPlan.KeyMatchesResult =
+  def keyMatches(changed: com.histmersion.config.ConfigReload.ChangedKey, key: com.histmersion.config.ConfigReload.Key): Boolean =
     changed == key || changed.startsWith(key + ".") || key.startsWith(changed + ".")
 
   /** The nodes in an order where every node comes after the nodes it depends on (declaration order among independent
     * ones). Refused: a name used twice, a dependency on no node, a cycle (named).
     */
-  def order(nodes: List[HotNode]): Either[com.histmersion.config.HotPlan.OrderResultPart1, List[com.histmersion.config.HotPlan.OrderResultPart2]] =
+  def order(nodes: List[HotNode]): Either[com.histmersion.config.HotPlan.Problem, List[com.histmersion.config.HotNode.Name]] =
     val names = nodes.map(_.name)
     val dup = names.diff(names.distinct).distinct
     val known = names.toSet
@@ -74,7 +32,7 @@ object HotPlan:
       val byName = nodes.map(n => n.name -> n).toMap
       // Kahn's algorithm, always taking the first ready node in declaration order: deterministic
       @annotation.tailrec
-      def go(left: List[HotNode], done: Vector[com.histmersion.config.HotPlan.OrderGoDone]): Either[com.histmersion.config.HotPlan.OrderGoResultPart1, List[com.histmersion.config.HotPlan.OrderGoResultPart2]] =
+      def go(left: List[HotNode], done: Vector[com.histmersion.config.HotNode.Name]): Either[com.histmersion.config.HotPlan.Problem, List[com.histmersion.config.HotNode.Name]] =
         if left.isEmpty then Right(done.toList)
         else
           val doneSet = done.toSet
@@ -84,10 +42,10 @@ object HotPlan:
       go(nodes, Vector.empty)
 
   /** One cycle among `left` (every node of which waits on another of them), as a closed path. */
-  private def cycle(left: List[HotNode], byName: Map[com.histmersion.config.HotPlan.CycleByNamePart1, HotNode]): List[com.histmersion.config.HotPlan.CycleResult] =
+  private def cycle(left: List[HotNode], byName: Map[com.histmersion.config.HotNode.Name, HotNode]): List[com.histmersion.config.HotPlan.Problem] =
     val waiting = left.map(_.name).toSet
     @annotation.tailrec
-    def walk(at: com.histmersion.config.HotPlan.CycleWalkAt, path: Vector[com.histmersion.config.HotPlan.CycleWalkPath]): List[com.histmersion.config.HotPlan.CycleWalkResult] =
+    def walk(at: com.histmersion.config.HotNode.Name, path: Vector[com.histmersion.config.HotNode.Name]): List[com.histmersion.config.HotPlan.Problem] =
       val i = path.indexOf(at)
       if i >= 0 then (path.drop(i) :+ at).toList
       else
@@ -97,13 +55,13 @@ object HotPlan:
     walk(left.head.name, Vector.empty)
 
   /** The nodes a set of changed keys concerns directly. */
-  def touched(nodes: List[HotNode], changed: Iterable[com.histmersion.config.HotPlan.TouchedChanged]): Set[com.histmersion.config.HotPlan.TouchedResult] =
+  def touched(nodes: List[HotNode], changed: Iterable[com.histmersion.config.ConfigReload.ChangedKey]): Set[com.histmersion.config.HotNode.Name] =
     nodes.filter(n => n.keys.exists(k => changed.exists(c => keyMatches(c, k)))).map(_.name).toSet
 
   /** `roots` and every node that depends on one of them, transitively. */
-  def dependents(nodes: List[HotNode], roots: Set[com.histmersion.config.HotPlan.DependentsRoots]): Set[com.histmersion.config.HotPlan.DependentsResult] =
+  def dependents(nodes: List[HotNode], roots: Set[com.histmersion.config.HotNode.Name]): Set[com.histmersion.config.HotNode.Name] =
     @annotation.tailrec
-    def grow(acc: Set[com.histmersion.config.HotPlan.DependentsGrowAcc]): Set[com.histmersion.config.HotPlan.DependentsGrowResult] =
+    def grow(acc: Set[com.histmersion.config.HotNode.Name]): Set[com.histmersion.config.HotNode.Name] =
       val more = nodes.filter(n => !acc(n.name) && n.deps.exists(acc)).map(_.name)
       if more.isEmpty then acc else grow(acc ++ more)
     grow(roots)
@@ -114,8 +72,8 @@ object HotPlan:
   def plan(
       nodes: List[HotNode],
       changed: Iterable[com.histmersion.config.HotPlan.PlanChanged],
-      forced: Set[com.histmersion.config.HotPlan.PlanForced] = Set.empty
-  ): Either[com.histmersion.config.HotPlan.PlanResultPart1, List[com.histmersion.config.HotPlan.PlanResultPart2]] =
+      forced: Set[com.histmersion.config.HotNode.Name] = Set.empty
+  ): Either[com.histmersion.config.HotPlan.Problem, List[com.histmersion.config.HotNode.Name]] =
     order(nodes).map { ordered =>
       val rebuild = dependents(nodes, touched(nodes, changed) ++ forced.intersect(nodes.map(_.name).toSet))
       ordered.filter(rebuild)

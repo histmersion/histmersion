@@ -33,11 +33,9 @@ final case class CodexConfig(
     sqlite: CodexConfig.Sqlite = "sqlite3"
 ) derives ConfigReader:
   /** `builtin` (any case) keeps Codex's own base prompt; anything else is `lean`. */
-  def leanBase: com.histmersion.config.CodexConfig.LeanBaseResult = !baseInstructions.trim.equalsIgnoreCase("builtin")
+  def leanBase: Boolean = !baseInstructions.trim.equalsIgnoreCase("builtin")
 
 object CodexConfig:
-  type LeanBaseResult = LeanBaseResult.T
-  object LeanBaseResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Command = Command.T
   object Command extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -18,21 +18,17 @@ import java.util.zip.{GZIPInputStream, GZIPOutputStream}
   * zstd (which the design named) would need a JNI library; gzip is in the JDK.
   */
 object BundleTar:
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type HeaderPutOff = HeaderPutOff.T
-  object HeaderPutOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeaderPutS = HeaderPutS.T
   object HeaderPutS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseHeaderFieldResult = ParseHeaderFieldResult.T
   object ParseHeaderFieldResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseHeaderFieldOff = ParseHeaderFieldOff.T
-  object ParseHeaderFieldOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseHeaderFieldLen = ParseHeaderFieldLen.T
   object ParseHeaderFieldLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseHeaderOctalResult = ParseHeaderOctalResult.T
   object ParseHeaderOctalResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseHeaderOctalOff = ParseHeaderOctalOff.T
-  object ParseHeaderOctalOff extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type ParseHeaderOctalLen = ParseHeaderOctalLen.T
   object ParseHeaderOctalLen extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
@@ -44,18 +40,10 @@ object BundleTar:
   type MaxSize = MaxSizeValue
   type MaxSizeValue = MaxSizeValue.T
   object MaxSizeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeaderResultPart1 = HeaderResultPart1.T
-  object HeaderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HeaderName = HeaderName.T
   object HeaderName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HeaderSize = HeaderSize.T
-  object HeaderSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseHeaderResultPart1 = ParseHeaderResultPart1.T
-  object ParseHeaderResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type PaddingResult = PaddingResult.T
   object PaddingResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PaddingSize = PaddingSize.T
-  object PaddingSize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   val Block = 512
   val MaxName = 100
@@ -64,13 +52,13 @@ object BundleTar:
   val MaxSize: com.histmersion.util.data.exchange.BundleTar.MaxSize = (1L << 33) - 1
 
   /** One ustar header for a regular file. Pure. */
-  def header(name: com.histmersion.util.data.exchange.BundleTar.HeaderName, size: com.histmersion.util.data.exchange.BundleTar.HeaderSize): Either[com.histmersion.util.data.exchange.BundleTar.HeaderResultPart1, com.histmersion.util.data.exchange.BundleTar.HeaderResultPart2] =
+  def header(name: com.histmersion.util.data.exchange.BundleTar.HeaderName, size: com.histmersion.ByteCount): Either[com.histmersion.util.data.exchange.BundleTar.Problem, com.histmersion.util.data.exchange.BundleTar.HeaderResultPart2] =
     val nameBytes = name.getBytes(UTF_8)
     if nameBytes.length > MaxName then Left(s"$name: name longer than $MaxName bytes")
     else if size < 0 || size > MaxSize then Left(s"$name: size $size is outside 0..$MaxSize")
     else
       val h = new Array[Byte](Block)
-      def put(off: com.histmersion.util.data.exchange.BundleTar.HeaderPutOff, s: com.histmersion.util.data.exchange.BundleTar.HeaderPutS): Unit =
+      def put(off: com.histmersion.Offset, s: com.histmersion.util.data.exchange.BundleTar.HeaderPutS): Unit =
         val b = s.getBytes(US_ASCII)
         System.arraycopy(b, 0, h, off, b.length)
       System.arraycopy(nameBytes, 0, h, 0, nameBytes.length)
@@ -92,17 +80,17 @@ object BundleTar:
   object Entry:
     type Name = Name.T
     object Name extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type Size = Size.T
-    object Size extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type Size = com.histmersion.ByteCount
+    val Size: _root_.com.histmersion.ByteCount.type = _root_.com.histmersion.ByteCount
 
   /** Parse a header block. `Right(None)` is the end-of-archive (an all-zero block). Pure. */
-  def parseHeader(h: com.histmersion.util.data.exchange.BundleTar.ParseHeaderH): Either[com.histmersion.util.data.exchange.BundleTar.ParseHeaderResultPart1, Option[Entry]] =
+  def parseHeader(h: com.histmersion.util.data.exchange.BundleTar.ParseHeaderH): Either[com.histmersion.util.data.exchange.BundleTar.Problem, Option[Entry]] =
     if h.length != Block then Left(s"short header (${h.length} bytes)")
     else if h.forall(_ == 0) then Right(None)
     else
-      def field(off: com.histmersion.util.data.exchange.BundleTar.ParseHeaderFieldOff, len: com.histmersion.util.data.exchange.BundleTar.ParseHeaderFieldLen): com.histmersion.util.data.exchange.BundleTar.ParseHeaderFieldResult =
+      def field(off: com.histmersion.Offset, len: com.histmersion.util.data.exchange.BundleTar.ParseHeaderFieldLen): com.histmersion.util.data.exchange.BundleTar.ParseHeaderFieldResult =
         String(h.slice(off, off + len).takeWhile(_ != 0), UTF_8)
-      def octal(off: com.histmersion.util.data.exchange.BundleTar.ParseHeaderOctalOff, len: com.histmersion.util.data.exchange.BundleTar.ParseHeaderOctalLen): Option[com.histmersion.util.data.exchange.BundleTar.ParseHeaderOctalResult] =
+      def octal(off: com.histmersion.Offset, len: com.histmersion.util.data.exchange.BundleTar.ParseHeaderOctalLen): Option[com.histmersion.util.data.exchange.BundleTar.ParseHeaderOctalResult] =
         val s = String(h.slice(off, off + len), US_ASCII).takeWhile(c => c != '\u0000').trim
         if s.isEmpty then Some(0L) else scala.util.Try(java.lang.Long.parseLong(s, 8)).toOption
       val stored = octal(148, 8)
@@ -116,7 +104,7 @@ object BundleTar:
       else if typeflag != '0' && typeflag != '\u0000' then Left(s"$name: not a regular file (type '$typeflag')")
       else octal(124, 12).toRight(s"$name: unreadable size").map(size => Some(Entry(name, size)))
 
-  def padding(size: com.histmersion.util.data.exchange.BundleTar.PaddingSize): com.histmersion.util.data.exchange.BundleTar.PaddingResult = ((Block - (size % Block)) % Block).toInt
+  def padding(size: com.histmersion.ByteCount): com.histmersion.util.data.exchange.BundleTar.PaddingResult = ((Block - (size % Block)) % Block).toInt
 
   // ── writing ────────────────────────────────────────────────────────────────────────────────
 
@@ -124,7 +112,7 @@ object BundleTar:
   final class Writer(out: OutputStream):
     private val gz = GZIPOutputStream(out, 1 << 16)
 
-    def entry(name: com.histmersion.util.data.exchange.BundleTar.Writer.EntryName, size: com.histmersion.util.data.exchange.BundleTar.Writer.EntrySize)(body: OutputStream => Unit): Either[com.histmersion.util.data.exchange.BundleTar.Writer.EntryResultPart1, Unit] =
+    def entry(name: com.histmersion.util.data.exchange.BundleTar.Writer.EntryName, size: com.histmersion.ByteCount)(body: OutputStream => Unit): Either[com.histmersion.util.data.exchange.BundleTar.Writer.Problem, Unit] =
       header(name, size).flatMap { h =>
         gz.write(h)
         val counted = Counting(gz)
@@ -135,7 +123,7 @@ object BundleTar:
           Right(())
       }
 
-    def bytes(name: com.histmersion.util.data.exchange.BundleTar.Writer.BytesName, data: com.histmersion.util.data.exchange.BundleTar.Writer.BytesData): Either[com.histmersion.util.data.exchange.BundleTar.Writer.BytesResultPart1, Unit] =
+    def bytes(name: com.histmersion.util.data.exchange.BundleTar.Writer.BytesName, data: com.histmersion.util.data.exchange.BundleTar.Writer.BytesData): Either[com.histmersion.util.data.exchange.BundleTar.Writer.Problem, Unit] =
       entry(name, data.length.toLong)(_.write(data))
 
     /** Two zero blocks end the archive; then the gzip trailer. Does not close `out`. */
@@ -145,31 +133,25 @@ object BundleTar:
       gz.flush()
 
   object Writer:
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type BytesData = BytesData.T
     object BytesData extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type EntryResultPart1 = EntryResultPart1.T
-    object EntryResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type EntryName = EntryName.T
     object EntryName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type EntrySize = EntrySize.T
-    object EntrySize extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type BytesResultPart1 = BytesResultPart1.T
-    object BytesResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type BytesName = BytesName.T
     object BytesName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Counts what passes through, and never closes the stream underneath. */
   final private class Counting(underlying: OutputStream) extends OutputStream:
     // a var: the running byte count of a stream, read once after the body has written
-    var count: com.histmersion.util.data.exchange.BundleTar.Counting.Count = 0L
+    var count: com.histmersion.ByteCount = 0L
     override def write(b: Int): Unit = { underlying.write(b); count += 1 }
     override def write(b: Array[Byte], off: Int, len: Int): Unit = { underlying.write(b, off, len); count += len }
     override def close(): Unit = ()
 
   object Counting:
-    type Count = Count.T
-    object Count extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── reading ────────────────────────────────────────────────────────────────────────────────
 
@@ -178,10 +160,10 @@ object BundleTar:
   final class Reader(in: InputStream):
     private val gz = GZIPInputStream(in, 1 << 16)
     // the entry being read and how much of it (plus padding) is still ahead
-    private var remaining: com.histmersion.util.data.exchange.BundleTar.Reader.Remaining = 0L
+    private var remaining: com.histmersion.ByteCount = 0L
     private var pad: com.histmersion.util.data.exchange.BundleTar.Reader.Pad = 0
 
-    def next(): Either[com.histmersion.util.data.exchange.BundleTar.Reader.NextResultPart1, Option[Entry]] =
+    def next(): Either[com.histmersion.util.data.exchange.BundleTar.Reader.Problem, Option[Entry]] =
       scala.util
         .Try {
           skipFully(remaining + pad)
@@ -234,7 +216,7 @@ object BundleTar:
       else if n < Block then throw EOFException(s"partial header ($n bytes)")
       else Some(h)
 
-    private def skipFully(n: com.histmersion.util.data.exchange.BundleTar.Reader.SkipFullyN): Unit =
+    private def skipFully(n: com.histmersion.ByteCount): Unit =
       var left = n
       while left > 0 do
         val k = gz.skip(left)
@@ -244,16 +226,12 @@ object BundleTar:
         else left -= k
 
   object Reader:
+    type Problem = Problem.T
+    object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ReadAllResult = ReadAllResult.T
     object ReadAllResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
     type ReadBlockResult = ReadBlockResult.T
     object ReadBlockResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-    type Remaining = Remaining.T
-    object Remaining extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
     type Pad = Pad.T
     object Pad extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type NextResultPart1 = NextResultPart1.T
-    object NextResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type SkipFullyN = SkipFullyN.T
-    object SkipFullyN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]

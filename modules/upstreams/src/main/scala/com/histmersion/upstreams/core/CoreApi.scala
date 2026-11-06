@@ -13,8 +13,8 @@ import com.histmersion.plugin.Plugin
 final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota):
 
   /** One search for `purpose` (`lookup`: a work's download URLs by its DOI; `search`: a saved query). */
-  def searchWorks(key: com.histmersion.upstreams.core.CoreApi.SearchWorksKey, query: com.histmersion.upstreams.core.CoreApi.SearchWorksQuery, limit: com.histmersion.upstreams.core.CoreApi.SearchWorksLimit, purpose: com.histmersion.upstreams.core.CoreApi.SearchWorksPurpose): Either[CoreFailure, Json] =
-    val url = Url(core.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath("/search/works/"), "q" -> (query).value, "limit" -> limit.toString)
+  def searchWorks(key: com.histmersion.upstreams.core.CoreApi.SearchWorksKey, query: com.histmersion.upstreams.core.CoreApi.SearchWorksQuery, limit: com.histmersion.PageSize, purpose: com.histmersion.upstreams.core.CoreApi.SearchWorksPurpose): Either[CoreFailure, Json] =
+    val url = Url(core.url, _root_.com.histmersion.upstreams.http.Url.UrlPath("/search/works/"), "q" -> (query).value, "limit" -> limit.toString)
     quota.take(purpose) match
       case Left(why) => Left(CoreFailure.Skipped(why))
       case Right(_)  =>
@@ -25,7 +25,7 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
             if a.status == _root_.com.histmersion.plugin.Plugin.HttpResponse.Status(429) then
               Left(
                 CoreFailure.Skipped(
-                  _root_.com.histmersion.upstreams.core.CoreFailure.Skipped.Why(quota.waitingUntil.fold("CORE answered HTTP 429")(u => s"CORE answered HTTP 429; not asked until $u"))
+                  _root_.com.histmersion.upstreams.core.CoreFailure.Problem(quota.waitingUntil.fold("CORE answered HTTP 429")(u => s"CORE answered HTTP 429; not asked until $u"))
                 )
               )
             else if (a.status).value >= 400 then
@@ -34,14 +34,12 @@ final class CoreApi(core: CoreEndpoint, http: Plugin.Http, quota: UpstreamQuota)
               io.circe.parser
                 .parse(String(a.body, UTF_8))
                 .left
-                .map(e => CoreFailure.Failed(_root_.com.histmersion.upstreams.core.CoreFailure.Failed.Why(s"$url returned unparseable JSON: ${e.getMessage}")))
+                .map(e => CoreFailure.Failed(_root_.com.histmersion.upstreams.core.CoreFailure.Problem(s"$url returned unparseable JSON: ${e.getMessage}")))
 
 object CoreApi:
   type SearchWorksKey = SearchWorksKey.T
   object SearchWorksKey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchWorksQuery = SearchWorksQuery.T
   object SearchWorksQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchWorksLimit = SearchWorksLimit.T
-  object SearchWorksLimit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchWorksPurpose = SearchWorksPurpose.T
   object SearchWorksPurpose extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

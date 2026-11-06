@@ -10,7 +10,7 @@ import scala.jdk.CollectionConverters.*
   */
 final case class UserConfigFile(path: Option[Path], loaded: UserConfigFile.Loaded, unknownKeys: List[UserConfigFile.UnknownKeys] = Nil):
   /** One line per ignored key, for the log. */
-  def warnings: List[com.histmersion.config.UserConfigFile.WarningsResult] =
+  def warnings: List[com.histmersion.config.UserConfigFile.Problem] =
     val where = path.fold("the config file")(_.toString)
     unknownKeys.map { k =>
       val hint =
@@ -19,8 +19,8 @@ final case class UserConfigFile(path: Option[Path], loaded: UserConfigFile.Loade
     }
 
 object UserConfigFile:
-  type WarningsResult = WarningsResult.T
-  object WarningsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Loaded = Loaded.T
   object Loaded extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]

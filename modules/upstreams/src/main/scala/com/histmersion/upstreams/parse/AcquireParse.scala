@@ -15,102 +15,42 @@ import com.histmersion.upstreams.unpaywall.OaAccess
   * field yields `None`/`Nil`, never an exception, because upstreams do change shape.
   */
 object AcquireParse:
+  type Abstract = Abstract.T
+  object Abstract extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PmcVersion = PmcVersion.T
+  object PmcVersion extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WantedFileKind = WantedFileKind.T
+  object WantedFileKind extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type WikiRefIdentifier = WikiRefIdentifier.T
+  object WikiRefIdentifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Wikitext = Wikitext.T
+  object Wikitext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   // ── small cursor helpers ────────────────────────────────────────────────────────────────────
-  type StrResult = StrResult.T
-  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IntResult = IntResult.T
-  object IntResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BoolResult = BoolResult.T
-  object BoolResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StringsResult = StringsResult.T
-  object StringsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TailResult = TailResult.T
-  object TailResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type TailUri = TailUri.T
-  object TailUri extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenalexAbstractResult = OpenalexAbstractResult.T
-  object OpenalexAbstractResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenalexOaLocationsResult = OpenalexOaLocationsResult.T
-  object OpenalexOaLocationsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OpenalexPdfUrlsResult = OpenalexPdfUrlsResult.T
-  object OpenalexPdfUrlsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArxivIdFromUrlResult = ArxivIdFromUrlResult.T
-  object ArxivIdFromUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArxivIdFromUrlUrl = ArxivIdFromUrlUrl.T
-  object ArxivIdFromUrlUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InlineMarkupResult = InlineMarkupResult.T
-  object InlineMarkupResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InlineMarkupS = InlineMarkupS.T
-  object InlineMarkupS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GluedPageNumberResult = GluedPageNumberResult.T
-  object GluedPageNumberResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GluedPageNumberS = GluedPageNumberS.T
-  object GluedPageNumberS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripTagsResult = StripTagsResult.T
-  object StripTagsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StripTagsS = StripTagsS.T
-  object StripTagsS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnpaywallResultPart1 = UnpaywallResultPart1.T
-  object UnpaywallResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type UnpaywallResultPart2 = UnpaywallResultPart2.T
-  object UnpaywallResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type EuropePmcFree = EuropePmcFreeValue
   type EuropePmcFreeValue = EuropePmcFreeValue.T
   object EuropePmcFreeValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EuropepmcHitDoi = EuropepmcHitDoi.T
-  object EuropepmcHitDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PmcLatestVersionResult = PmcLatestVersionResult.T
-  object PmcLatestVersionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PmcLatestVersionListXml = PmcLatestVersionListXml.T
-  object PmcLatestVersionListXml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PmcLatestVersionPmcid = PmcLatestVersionPmcid.T
-  object PmcLatestVersionPmcid extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PmcObjectS3 = PmcObjectS3.T
-  object PmcObjectS3 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CoreDownloadUrlsResult = CoreDownloadUrlsResult.T
-  object CoreDownloadUrlsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type S2NextResult = S2NextResult.T
-  object S2NextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ArchiveItemIdentifier = ArchiveItemIdentifier.T
-  object ArchiveItemIdentifier extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PickArchiveFileWant = PickArchiveFileWant.T
-  object PickArchiveFileWant extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikiTitleResult = WikiTitleResult.T
-  object WikiTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikiTextResult = WikiTextResult.T
-  object WikiTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikiRefsResultPart1 = WikiRefsResultPart1.T
-  object WikiRefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikiRefsResultPart2 = WikiRefsResultPart2.T
-  object WikiRefsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikiRefsWikitext = WikiRefsWikitext.T
-  object WikiRefsWikitext extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikiPageTitleResult = WikiPageTitleResult.T
-  object WikiPageTitleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WikiPageTitleUrl = WikiPageTitleUrl.T
-  object WikiPageTitleUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  private def str(c: ACursor, keys: String*): Option[com.histmersion.upstreams.parse.AcquireParse.StrResult] =
-    (keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.upstreams.parse.AcquireParse.StrResult(refactorValue))
-  private def int(c: ACursor, keys: String*): Option[com.histmersion.upstreams.parse.AcquireParse.IntResult] =
-    (keys.foldLeft(c)(_.downField(_)).as[Int].toOption).map(refactorValue2 => _root_.com.histmersion.upstreams.parse.AcquireParse.IntResult(refactorValue2))
-  private def bool(c: ACursor, keys: String*): com.histmersion.upstreams.parse.AcquireParse.BoolResult =
-    _root_.com.histmersion.upstreams.parse.AcquireParse.BoolResult(keys.foldLeft(c)(_.downField(_)).as[Boolean].toOption.getOrElse(false))
+  private def str(c: ACursor, keys: String*): Option[String] =
+    (keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))
+  private def int(c: ACursor, keys: String*): Option[Int] =
+    (keys.foldLeft(c)(_.downField(_)).as[Int].toOption).map(refactorValue2 => (refactorValue2))
+  private def bool(c: ACursor, keys: String*): Boolean =
+    (keys.foldLeft(c)(_.downField(_)).as[Boolean].toOption.getOrElse(false))
   private def arr(c: ACursor, keys: String*): List[Json] =
     keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
-  private def strings(c: ACursor, keys: String*): List[com.histmersion.upstreams.parse.AcquireParse.StringsResult] =
-    (arr(c, keys*).flatMap(_.asString).map(_.trim).filter(_.nonEmpty)).map(refactorValue3 => _root_.com.histmersion.upstreams.parse.AcquireParse.StringsResult(refactorValue3))
+  private def strings(c: ACursor, keys: String*): List[String] =
+    (arr(c, keys*).flatMap(_.asString).map(_.trim).filter(_.nonEmpty)).map(refactorValue3 => (refactorValue3))
 
   /** The trailing path segment of an OpenAlex URI (`https://openalex.org/W123` → `W123`). */
-  private def tail(uri: com.histmersion.upstreams.parse.AcquireParse.TailUri): com.histmersion.upstreams.parse.AcquireParse.TailResult = (uri).value.split("/").lastOption.getOrElse(uri)
+  private def tail(uri: String): String = (uri).value.split("/").lastOption.getOrElse(uri)
 
   // ── OpenAlex ────────────────────────────────────────────────────────────────────────────────
 
   /** OpenAlex ships abstracts as an inverted index (`word -> [positions]`) because publishers forbid redistributing the
     * running text. Re-ordering the positions restores it — the same trick `discover.py::_abstract` used.
     */
-  def openalexAbstract(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.OpenalexAbstractResult] =
+  def openalexAbstract(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.Abstract] =
     (json.asObject
       .map { o =>
         val words = o.toList.flatMap { (w, positions) =>
@@ -119,14 +59,14 @@ object AcquireParse:
         words.sortBy(_._1).map(_._2).mkString(" ")
       }
       .map(_.trim)
-      .filter(_.nonEmpty)).map(refactorValue4 => _root_.com.histmersion.upstreams.parse.AcquireParse.OpenalexAbstractResult(refactorValue4))
+      .filter(_.nonEmpty)).map(refactorValue4 => _root_.com.histmersion.upstreams.parse.AcquireParse.Abstract(refactorValue4))
 
   /** One OpenAlex `work` → the normalised [[WorkRef]] (the port of `discover.py::normalize_work`). */
   def openalexWork(json: Json): WorkRef =
     val c = json.hcursor
     val authors = arr(c, "authorships").flatMap(a => str(a.hcursor, "author", "display_name"))
     val doi = str(c, "doi").flatMap(Identifiers.doi)
-    val title = str(c, "display_name").map({ val refactorFunction2 = inlineMarkup; (refactorValue6) => refactorFunction2(_root_.com.histmersion.upstreams.parse.AcquireParse.InlineMarkupS((refactorValue6).value)) })
+    val title = str(c, "display_name").map({ val refactorFunction2 = inlineMarkup; (refactorValue6) => refactorFunction2(((refactorValue6).value)) })
     val year = int(c, "publication_year")
     WorkRef(
       doi = doi,
@@ -135,7 +75,7 @@ object AcquireParse:
       arxivId = (str(c.downField("best_oa_location"), "landing_page_url").toList ++
         str(c, "open_access", "oa_url").toList ++
         arr(c, "locations").flatMap(l => str(l.hcursor, "landing_page_url")))
-        .flatMap({ val refactorFunction3 = arxivIdFromUrl; (refactorValue7) => refactorFunction3(_root_.com.histmersion.upstreams.parse.AcquireParse.ArxivIdFromUrlUrl((refactorValue7).value)) })
+        .flatMap({ val refactorFunction3 = arxivIdFromUrl; (refactorValue7) => refactorFunction3(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue7).value)) })
         .headOption,
       title = title,
       year = year,
@@ -151,16 +91,16 @@ object AcquireParse:
       referencedWorks = strings(c, "referenced_works").map(tail),
       oaLocations = openalexOaLocations(c),
       oaLicence = str(c.downField("best_oa_location"), "license").orElse(
-        arr(c, "locations").filter(l => ((bool(l.hcursor, "is_oa")) == _root_.com.histmersion.upstreams.parse.AcquireParse.BoolResult(true))).flatMap(l => str(l.hcursor, "license")).headOption
+        arr(c, "locations").filter(l => ((bool(l.hcursor, "is_oa")) == (true))).flatMap(l => str(l.hcursor, "license")).headOption
       )
     )
 
   /** The open locations' landing pages and PDFs, the best location first. */
-  private def openalexOaLocations(c: ACursor): List[com.histmersion.upstreams.parse.AcquireParse.OpenalexOaLocationsResult] =
+  private def openalexOaLocations(c: ACursor): List[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url] =
     val best = c.downField("best_oa_location")
     val open = arr(c, "locations").filter(l => (bool(l.hcursor, "is_oa")).value)
     ((List(str(best, "landing_page_url"), str(best, "pdf_url")).flatten ++
-      open.flatMap(l => List(str(l.hcursor, "landing_page_url"), str(l.hcursor, "pdf_url")).flatten)).distinct).map(refactorValue17 => _root_.com.histmersion.upstreams.parse.AcquireParse.OpenalexOaLocationsResult((refactorValue17).value))
+      open.flatMap(l => List(str(l.hcursor, "landing_page_url"), str(l.hcursor, "pdf_url")).flatten)).distinct).map(refactorValue17 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue17).value))
 
   /** An OpenAlex `/works` search page. */
   def openalexWorks(json: Json): List[WorkRef] =
@@ -169,16 +109,16 @@ object AcquireParse:
   /** OA locations OpenAlex knows about, best first — catches green-OA repository PDFs (PMC, bioRxiv) that Unpaywall's
     * `best_oa_location` sometimes misses.
     */
-  def openalexPdfUrls(json: Json): List[com.histmersion.upstreams.parse.AcquireParse.OpenalexPdfUrlsResult] =
+  def openalexPdfUrls(json: Json): List[com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls] =
     val c = json.hcursor
     val oa = str(c, "open_access", "oa_url").toList
     val best = str(c.downField("best_oa_location"), "pdf_url").toList
     val rest = arr(c, "locations").flatMap(l => str(l.hcursor, "pdf_url"))
-    ((best ++ oa ++ rest).distinct).map(refactorValue18 => _root_.com.histmersion.upstreams.parse.AcquireParse.OpenalexPdfUrlsResult((refactorValue18).value))
+    ((best ++ oa ++ rest).distinct).map(refactorValue18 => _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls((refactorValue18).value))
 
-  private def arxivIdFromUrl(url: com.histmersion.upstreams.parse.AcquireParse.ArxivIdFromUrlUrl): Option[com.histmersion.upstreams.parse.AcquireParse.ArxivIdFromUrlResult] =
+  private def arxivIdFromUrl(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): Option[com.histmersion.domain.library.ArxivId] =
     if !(url).value.toLowerCase.contains("arxiv.org") then None
-    else Identifiers.arxiv(_root_.com.histmersion.upstreams.identifiers.Identifiers.ArxivRaw((url).value.split("/").lastOption.getOrElse("").stripSuffix(".pdf")))
+    else Identifiers.arxiv(_root_.com.histmersion.upstreams.identifiers.Identifiers.ArxivText((url).value.split("/").lastOption.getOrElse("").stripSuffix(".pdf")))
 
   /** Citing works from OpenAlex (`filter=cites:<id>`) — the fallback when Semantic Scholar is down or rate-limited.
     * OpenAlex has no citation intents, so every row has an empty context (the host classifies it as `cites`).
@@ -209,7 +149,7 @@ object AcquireParse:
         List(str(h, "given"), str(h, "family")).flatten.mkString(" ").trim
       }
       .filter(_.nonEmpty)
-    val title = strings(c, "title").headOption.map({ val refactorFunction4 = inlineMarkup; (refactorValue23) => refactorFunction4(_root_.com.histmersion.upstreams.parse.AcquireParse.InlineMarkupS((refactorValue23).value)) }).map({ val refactorFunction5 = gluedPageNumber; (refactorValue26) => refactorFunction5(_root_.com.histmersion.upstreams.parse.AcquireParse.GluedPageNumberS((refactorValue26).value)) })
+    val title = strings(c, "title").headOption.map({ val refactorFunction4 = inlineMarkup; (refactorValue23) => refactorFunction4(((refactorValue23).value)) }).map({ val refactorFunction5 = gluedPageNumber; (refactorValue26) => refactorFunction5(((refactorValue26).value)) })
     val year = arr(c, "issued", "date-parts").headOption
       .flatMap(_.asArray)
       .flatMap(_.headOption)
@@ -229,22 +169,22 @@ object AcquireParse:
   /** Titles carry inline markup (`<i>c</i>. 1200 BC`, `H<sub>2</sub>O`): drop the tags WITHOUT a space — they sit
     * inside words — and collapse what is left.
     */
-  private[upstreams] def inlineMarkup(s: com.histmersion.upstreams.parse.AcquireParse.InlineMarkupS): com.histmersion.upstreams.parse.AcquireParse.InlineMarkupResult =
-    _root_.com.histmersion.upstreams.parse.AcquireParse.InlineMarkupResult((s).value.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim)
+  private[upstreams] def inlineMarkup(s: String): com.histmersion.domain.Title =
+    _root_.com.histmersion.domain.Title((s).value.replaceAll("<[^>]+>", "").replaceAll("\\s+", " ").trim)
 
   /** Some publishers deposit a chapter title with its first page glued on: "109Writing and Religion in …". Digits
     * running straight into a capitalised word are that page; "1177 B.C." (a space) and "3.2 ka" are left alone.
     */
-  private[upstreams] def gluedPageNumber(s: com.histmersion.upstreams.parse.AcquireParse.GluedPageNumberS): com.histmersion.upstreams.parse.AcquireParse.GluedPageNumberResult =
-    _root_.com.histmersion.upstreams.parse.AcquireParse.GluedPageNumberResult((s).value.replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", ""))
+  private[upstreams] def gluedPageNumber(s: String): com.histmersion.domain.Title =
+    _root_.com.histmersion.domain.Title((s).value.replaceFirst("^\\d{1,4}(?=\\p{Lu}\\p{Ll})", ""))
 
   /** A Crossref `works?query=` page → the works on it (the search fallback when OpenAlex is down). */
   def crossrefWorks(json: Json): List[WorkRef] =
     json.hcursor.downField("message").downField("items").values.toList.flatten.map(crossrefWork)
 
   /** Crossref abstracts are JATS XML fragments. */
-  private def stripTags(s: com.histmersion.upstreams.parse.AcquireParse.StripTagsS): com.histmersion.upstreams.parse.AcquireParse.StripTagsResult =
-    _root_.com.histmersion.upstreams.parse.AcquireParse.StripTagsResult((s).value.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim)
+  private def stripTags(s: String): String =
+    ((s).value.replaceAll("<[^>]+>", " ").replaceAll("\\s+", " ").trim)
 
   /** The deposited `reference[]` array — structured, often carrying DOIs, and free of tokens. */
   def crossrefReferences(json: Json): List[RefRow] =
@@ -274,11 +214,11 @@ object AcquireParse:
 
   /** `(pdf urls best-first, oa_status)`. Unpaywall's `best_oa_location` first, then every other location it lists.
     */
-  def unpaywall(json: Json): (List[com.histmersion.upstreams.parse.AcquireParse.UnpaywallResultPart1], Option[com.histmersion.upstreams.parse.AcquireParse.UnpaywallResultPart2]) =
+  def unpaywall(json: Json): (List[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url], Option[com.histmersion.upstreams.unpaywall.OaAccess.Status]) =
     val c = json.hcursor
     val best = str(c.downField("best_oa_location"), "url_for_pdf").toList
     val rest = arr(c, "oa_locations").flatMap(l => str(l.hcursor, "url_for_pdf"))
-    (((best ++ rest).distinct).map(refactorValue32 => _root_.com.histmersion.upstreams.parse.AcquireParse.UnpaywallResultPart1((refactorValue32).value)), (str(c, "oa_status")).map(refactorValue33 => _root_.com.histmersion.upstreams.parse.AcquireParse.UnpaywallResultPart2((refactorValue33).value)))
+    (((best ++ rest).distinct).map(refactorValue32 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue32).value)), (str(c, "oa_status")).map(refactorValue33 => _root_.com.histmersion.upstreams.unpaywall.OaAccess.Status((refactorValue33).value)))
 
   /** Unpaywall's verdict on one DOI: whether a free copy exists, its `oa_status` (`gold`, `green`, …, `closed`) and the
     * best location — the PDF when there is one, else its landing page.
@@ -300,7 +240,7 @@ object AcquireParse:
   /** The `search?query=DOI:"…"&resultType=core` hit whose DOI IS the one asked for (a DOI query can match a correction
     * or a comment that cites it).
     */
-  def europepmcHit(json: Json, doi: com.histmersion.upstreams.parse.AcquireParse.EuropepmcHitDoi): Option[EuropePmcHit] =
+  def europepmcHit(json: Json, doi: com.histmersion.domain.library.Doi): Option[EuropePmcHit] =
     val want = Identifiers.doi(doi)
     arr(json.hcursor, "resultList", "result")
       .find(r => want.isDefined && str(r.hcursor, "doi").flatMap(Identifiers.doi) == want)
@@ -313,7 +253,7 @@ object AcquireParse:
           if isPdf && free then str(h, "url").filter((_).value.startsWith("http")) else None
         }.distinct
         EuropePmcHit(
-          (str(c, "pmcid").map((_).value.toUpperCase).filter(PmcId.matches)).map(refactorValue31 => _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.Pmcid(refactorValue31)),
+          (str(c, "pmcid").map((_).value.toUpperCase).filter(PmcId.matches)).map(refactorValue31 => _root_.com.histmersion.domain.library.Pmcid(refactorValue31)),
           _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.IsOpenAccess(str(c, "isOpenAccess").contains("Y")),
           pdfs
         )
@@ -324,11 +264,11 @@ object AcquireParse:
   /** The newest version NCBI publishes of `pmcid`, from an S3 `ListObjectsV2` answer for the prefix `metadata/<pmcid>.`
     * (keys `metadata/PMC123.1.json`, `metadata/PMC123.2.json`, …).
     */
-  def pmcLatestVersion(listXml: com.histmersion.upstreams.parse.AcquireParse.PmcLatestVersionListXml, pmcid: com.histmersion.upstreams.parse.AcquireParse.PmcLatestVersionPmcid): Option[com.histmersion.upstreams.parse.AcquireParse.PmcLatestVersionResult] =
+  def pmcLatestVersion(listXml: com.histmersion.upstreams.jats.Jats.Xml, pmcid: com.histmersion.domain.library.Pmcid): Option[com.histmersion.upstreams.parse.AcquireParse.PmcVersion] =
     if !PmcId.matches((pmcid).value) then None
     else
       val key = ("<Key>metadata/" + pmcid + """\.(\d+)\.json</Key>""").r
-      (key.findAllMatchIn((listXml).value).flatMap(m => m.group(1).toIntOption).maxOption).map(refactorValue37 => _root_.com.histmersion.upstreams.parse.AcquireParse.PmcLatestVersionResult(refactorValue37))
+      (key.findAllMatchIn((listXml).value).flatMap(m => m.group(1).toIntOption).maxOption).map(refactorValue37 => _root_.com.histmersion.upstreams.parse.AcquireParse.PmcVersion(refactorValue37))
 
   /** A dataset metadata record (`metadata/<pmcid>.<v>.json`). */
   def pmcRecord(json: Json): Option[PmcRecord] =
@@ -339,20 +279,20 @@ object AcquireParse:
         bool(c, "is_pmc_openaccess"),
         bool(c, "is_manuscript"),
         str(c, "license_code"),
-        str(c, "pdf_url").flatMap({ val refactorFunction8 = pmcObject; (refactorValue39) => refactorFunction8(_root_.com.histmersion.upstreams.parse.AcquireParse.PmcObjectS3((refactorValue39).value)) }),
-        str(c, "xml_url").flatMap({ val refactorFunction9 = pmcObject; (refactorValue40) => refactorFunction9(_root_.com.histmersion.upstreams.parse.AcquireParse.PmcObjectS3((refactorValue40).value)) })
+        str(c, "pdf_url").flatMap({ val refactorFunction8 = pmcObject; (refactorValue39) => refactorFunction8(_root_.com.histmersion.upstreams.pmc.PmcObject.Key((refactorValue39).value)) }),
+        str(c, "xml_url").flatMap({ val refactorFunction9 = pmcObject; (refactorValue40) => refactorFunction9(_root_.com.histmersion.upstreams.pmc.PmcObject.Key((refactorValue40).value)) })
       )
     }
 
   /** `s3://pmc-oa-opendata/PMC1.1/PMC1.1.pdf?md5=…` → the key and the MD5. Only the shapes the dataset uses are
     * accepted, so a record can never point a download outside an article's own folder.
     */
-  def pmcObject(s3: com.histmersion.upstreams.parse.AcquireParse.PmcObjectS3): Option[PmcObject] =
+  def pmcObject(s3: com.histmersion.upstreams.pmc.PmcObject.Key): Option[PmcObject] =
     S3Url.findFirstMatchIn((s3).value.trim).map(m => PmcObject(_root_.com.histmersion.upstreams.pmc.PmcObject.Key(m.group(1)), Option(m.group(2)).map(_root_.com.histmersion.upstreams.pmc.PmcObject.Md5(_.toLowerCase))))
 
   private val S3Url = """^s3://[a-z0-9.-]+/(PMC\d+\.\d+/[A-Za-z0-9_-][A-Za-z0-9._-]*)(?:\?md5=([0-9a-fA-F]{32}))?$""".r
 
-  def coreDownloadUrls(json: Json): List[com.histmersion.upstreams.parse.AcquireParse.CoreDownloadUrlsResult] =
+  def coreDownloadUrls(json: Json): List[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url] =
     arr(json.hcursor, "results").flatMap(r => str(r.hcursor, "downloadUrl"))
 
   // ── Semantic Scholar ────────────────────────────────────────────────────────────────────────
@@ -377,7 +317,7 @@ object AcquireParse:
     }
 
   /** `next` offset of an S2 page, absent on the last page. */
-  def s2Next(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.S2NextResult] = (int(json.hcursor, "next")).map(refactorValue49 => _root_.com.histmersion.upstreams.parse.AcquireParse.S2NextResult((refactorValue49).value))
+  def s2Next(json: Json): Option[com.histmersion.Offset] = (int(json.hcursor, "next")).map(refactorValue49 => _root_.com.histmersion.Offset((refactorValue49).value))
 
   // ── archive.org ─────────────────────────────────────────────────────────────────────────────
 
@@ -387,7 +327,7 @@ object AcquireParse:
     * but never downloaded here. The Python tool refused at exactly this point and so do we — there is no DRM
     * circumvention anywhere in this pipeline.
     */
-  def archiveItem(identifier: com.histmersion.upstreams.parse.AcquireParse.ArchiveItemIdentifier, json: Json): ArchiveItem =
+  def archiveItem(identifier: com.histmersion.domain.library.ArchiveId, json: Json): ArchiveItem =
     val c = json.hcursor
     val m = c.downField("metadata")
     val yr = str(m, "year").orElse(str(m, "date")).map((_).value.take(4)).filter(_.forall(_.isDigit)).map(_.toInt)
@@ -406,9 +346,9 @@ object AcquireParse:
       identifier = identifier,
       title = str(m, "title"),
       creator = creators,
-      year = (yr).map(refactorValue46 => _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Year(refactorValue46)),
+      year = (yr).map(refactorValue46 => _root_.com.histmersion.Year(refactorValue46)),
       publisher = str(m, "publisher"),
-      description = str(m, "description").map({ val refactorFunction11 = stripTags; (refactorValue55) => refactorFunction11(_root_.com.histmersion.upstreams.parse.AcquireParse.StripTagsS((refactorValue55).value)) }).map((refactorCallback => _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Description((refactorCallback).value.take(500)))),
+      description = str(m, "description").map({ val refactorFunction11 = stripTags; (refactorValue55) => refactorFunction11(((refactorValue55).value)) }).map((refactorCallback => _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Description((refactorCallback).value.take(500)))),
       _root_.com.histmersion.upstreams.archiveorg.ArchiveItem.LendingOnly(lendingOnly = str(m, "access-restricted-item").exists((_).value.equalsIgnoreCase("true")) ||
         (bool(c, "is_dark")).value),
       files = files
@@ -423,7 +363,7 @@ object AcquireParse:
           identifier = id,
           title = str(h, "title"),
           creator = (str(h, "creator").toList ++ strings(h, "creator")).distinct,
-          year = str(h, "year").map((_).value.take(4)).filter(_.forall(_.isDigit)).map(_root_.com.histmersion.upstreams.archiveorg.ArchiveItem.Year(_.toInt))
+          year = str(h, "year").map((_).value.take(4)).filter(_.forall(_.isDigit)).map(_root_.com.histmersion.Year(_.toInt))
         )
       }
     }
@@ -431,7 +371,7 @@ object AcquireParse:
   /** Pick the best downloadable file: a clean text format (EPUB, or the OCR'd `_text.pdf`) beats the giant raw image
     * scan, unless the caller asks for a specific format. Returns the file name.
     */
-  def pickArchiveFile(files: List[ArchiveFile], want: Option[com.histmersion.upstreams.parse.AcquireParse.PickArchiveFileWant]): Option[ArchiveFile] =
+  def pickArchiveFile(files: List[ArchiveFile], want: Option[com.histmersion.upstreams.parse.AcquireParse.WantedFileKind]): Option[ArchiveFile] =
     def ext(f: ArchiveFile) = f.name.toLowerCase.split("\\.").lastOption.getOrElse("")
     val epubs = files.filter(ext(_) == "epub")
     val textPdfs = files.filter(_.name.toLowerCase.endsWith("_text.pdf"))
@@ -448,23 +388,23 @@ object AcquireParse:
   private val ArxivInText = """(?i)arxiv\s*[:=]\s*([0-9]{4}\.[0-9]{4,5})""".r
 
   /** The article title from `action=parse&prop=wikitext` (after redirects). */
-  def wikiTitle(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.WikiTitleResult] = (str(json.hcursor.downField("parse"), "title")).map(refactorValue58 => _root_.com.histmersion.upstreams.parse.AcquireParse.WikiTitleResult((refactorValue58).value))
+  def wikiTitle(json: Json): Option[com.histmersion.domain.Title] = (str(json.hcursor.downField("parse"), "title")).map(refactorValue58 => _root_.com.histmersion.domain.Title((refactorValue58).value))
 
-  def wikiText(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.WikiTextResult] =
-    (json.hcursor.downField("parse").downField("wikitext").downField("*").as[String].toOption).map(refactorValue48 => _root_.com.histmersion.upstreams.parse.AcquireParse.WikiTextResult(refactorValue48))
+  def wikiText(json: Json): Option[com.histmersion.upstreams.parse.AcquireParse.Wikitext] =
+    (json.hcursor.downField("parse").downField("wikitext").downField("*").as[String].toOption).map(refactorValue48 => _root_.com.histmersion.upstreams.parse.AcquireParse.Wikitext(refactorValue48))
 
   /** Harvest every DOI and arXiv id cited by a Wikipedia article's wikitext. Citations trail punctuation (`|`, `}}`,
     * `.`) into the match, so each hit goes through [[Identifiers.doi]].
     */
-  def wikiRefs(wikitext: com.histmersion.upstreams.parse.AcquireParse.WikiRefsWikitext): (List[com.histmersion.upstreams.parse.AcquireParse.WikiRefsResultPart1], List[com.histmersion.upstreams.parse.AcquireParse.WikiRefsResultPart2]) =
-    val dois = DoiInText.findAllIn((wikitext).value).toList.flatMap({ val refactorFunction12 = Identifiers.doi; (refactorValue59) => refactorFunction12(_root_.com.histmersion.upstreams.identifiers.Identifiers.DoiRaw(refactorValue59)) }).distinct.sorted
+  def wikiRefs(wikitext: com.histmersion.upstreams.parse.AcquireParse.Wikitext): (List[com.histmersion.upstreams.parse.AcquireParse.WikiRefIdentifier], List[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url]) =
+    val dois = DoiInText.findAllIn((wikitext).value).toList.flatMap({ val refactorFunction12 = Identifiers.doi; (refactorValue59) => refactorFunction12(_root_.com.histmersion.upstreams.identifiers.Identifiers.DoiText(refactorValue59)) }).distinct.sorted
     val arxiv = ArxivInText.findAllMatchIn((wikitext).value).map(_.group(1)).toList.distinct.sorted
-    (dois, (arxiv).map(refactorValue60 => _root_.com.histmersion.upstreams.parse.AcquireParse.WikiRefsResultPart2(refactorValue60)))
+    (dois, (arxiv).map(refactorValue60 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url(refactorValue60)))
 
   /** The Wikipedia page title of an article URL (`…/wiki/Late_Bronze_Age_collapse`). */
-  def wikiPageTitle(url: com.histmersion.upstreams.parse.AcquireParse.WikiPageTitleUrl): Option[com.histmersion.upstreams.parse.AcquireParse.WikiPageTitleResult] =
+  def wikiPageTitle(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): Option[com.histmersion.domain.Title] =
     val s = (url).value.trim.stripSuffix("/")
     (Option(if s.contains("/wiki/") then s.split("/wiki/").last else s)
       .map(_.split("[?#]").head)
       .map(_.trim)
-      .filter(_.nonEmpty)).map(refactorValue52 => _root_.com.histmersion.upstreams.parse.AcquireParse.WikiPageTitleResult(refactorValue52))
+      .filter(_.nonEmpty)).map(refactorValue52 => _root_.com.histmersion.domain.Title(refactorValue52))

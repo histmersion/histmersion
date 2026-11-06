@@ -46,7 +46,7 @@ final case class BundleEntities(
   /** Every file's NDJSON payload, in [[BundleFiles.all]] order — empty files included, so a bundle always has the same
     * set of entries.
     */
-  def payloads: List[(com.histmersion.util.data.exchange.BundleEntities.PayloadsResultPart1, com.histmersion.util.data.exchange.BundleEntities.PayloadsResultPart2)] =
+  def payloads: List[(com.histmersion.util.data.exchange.BundleEntities.BlobPath, com.histmersion.util.data.exchange.BundleEntities.Payload)] =
     def stamped[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.stamp(_).line))
     def plain[A: Encoder.AsObject](as: List[A]) = BundleFormat.ndjson(as.map(BundleFormat.line(_)))
     List(
@@ -80,7 +80,7 @@ final case class BundleEntities(
 
   /** uid → (kind, rev, label) of every stamped entity. */
   def revs: Map[UUID, Rev] =
-    def of[A: Encoder.AsObject](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => com.histmersion.util.data.exchange.BundleEntities.RevsOfLabelResult) =
+    def of[A: Encoder.AsObject](k: Bundle.Kind, as: List[A])(uid: A => UUID, label: A => com.histmersion.util.data.exchange.BundleEntities.Rev.Label) =
       as.map(a => uid(a) -> Rev(k, BundleFormat.stamp(a).rev, label(a)))
     (of(Bundle.Kind.Source, sources)(_.uid, _.citekey) ++
       of(Bundle.Kind.Finding, findings)(_.uid, _.id) ++
@@ -99,7 +99,7 @@ final case class BundleEntities(
   def uids: Set[UUID] = revs.keySet
 
   /** sha256 → what it is, for every blob these lines reference. */
-  def blobRefs: Map[com.histmersion.util.data.exchange.BundleEntities.BlobRefsResultPart1, List[BlobUse]] =
+  def blobRefs: Map[com.histmersion.util.data.exchange.BundleEntities.BlobPath, List[BlobUse]] =
     (sources.flatMap(s =>
       s.bodySha256.map(_ -> BlobUse.Body(s.uid)).toList ++
         s.originalSha256.zip(s.originalExt).map((sha, ext) => sha -> BlobUse.Original(s.uid, ext)).toList
@@ -111,7 +111,7 @@ final case class BundleEntities(
   /** The newest change these lines carry — the manifest's `asOf`. Timestamps share one fixed-width UTC format, so text
     * order is time order.
     */
-  def asOf: Option[com.histmersion.util.data.exchange.BundleEntities.AsOfResult] =
+  def asOf: Option[com.histmersion.util.data.exchange.BundleEntities.AsOf] =
     (sources.map(_.updatedAt) ++ findings.map(_.updatedAt) ++ assessments.map(_.checkedAt) ++
       aliases.map(_.createdAt) ++ articles.map(_.updatedAt) ++ versions.map(_.updatedAt) ++
       assets.map(_.updatedAt) ++ assetLinks.map(_.updatedAt) ++ attestations.map(_.updatedAt) ++
@@ -128,9 +128,9 @@ final case class BundleEntities(
     * here; a required one makes the line impossible to write.
     */
   def references: List[Reference] =
-    def req(kind: Bundle.Kind, uid: UUID, owner: UUID, from: com.histmersion.util.data.exchange.BundleEntities.ReferencesReqFrom) =
+    def req(kind: Bundle.Kind, uid: UUID, owner: UUID, from: com.histmersion.util.data.exchange.BundleEntities.Reference.From) =
       Reference(kind, uid, owner, from, required = true)
-    def opt(kind: Bundle.Kind, uid: UUID, owner: UUID, from: com.histmersion.util.data.exchange.BundleEntities.ReferencesOptFrom) =
+    def opt(kind: Bundle.Kind, uid: UUID, owner: UUID, from: com.histmersion.util.data.exchange.BundleEntities.Reference.From) =
       Reference(kind, uid, owner, from, required = false)
     findings.map(f => req(Bundle.Kind.Source, f.sourceUid, f.uid, s"finding ${f.id}")) ++
       edges.map(e => opt(Bundle.Kind.Source, e.dstUid, e.srcUid, s"edge ${e.kind}")) ++
@@ -163,33 +163,19 @@ final case class BundleEntities(
     references.filterNot(r => own(r.uid))
 
 object BundleEntities:
+  type AsOf = AsOf.T
+  object AsOf extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type BlobPath = BlobPath.T
+  object BlobPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Payload = Payload.T
+  object Payload extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Stamped = Stamped.T
+  object Stamped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type RevsOfLabelResult = RevsOfLabelResult.T
-  object RevsOfLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencesReqFrom = ReferencesReqFrom.T
-  object ReferencesReqFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReferencesOptFrom = ReferencesOptFrom.T
-  object ReferencesOptFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeReadPath = DecodeReadPath.T
-  object DecodeReadPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeReadStamped = DecodeReadStamped.T
-  object DecodeReadStamped extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PayloadsResultPart2 = PayloadsResultPart2.T
-  object PayloadsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodePayloadsPart2 = DecodePayloadsPart2.T
-  object DecodePayloadsPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type PayloadsResultPart1 = PayloadsResultPart1.T
-  object PayloadsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BlobRefsResultPart1 = BlobRefsResultPart1.T
-  object BlobRefsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AsOfResult = AsOfResult.T
-  object AsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeResultPart2 = DecodeResultPart2.T
-  object DecodeResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodePayloadsPart1 = DecodePayloadsPart1.T
-  object DecodePayloadsPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Rev(kind: Bundle.Kind, rev: Rev.Value, label: Rev.Label)
 
@@ -231,9 +217,9 @@ object BundleEntities:
   /** Decode the payloads read from a bundle; every bad line is reported (`<file>:<line>: why`), the good ones kept. A
     * missing file is an empty one.
     */
-  def decode(payloads: Map[com.histmersion.util.data.exchange.BundleEntities.DecodePayloadsPart1, com.histmersion.util.data.exchange.BundleEntities.DecodePayloadsPart2]): (BundleEntities, List[com.histmersion.util.data.exchange.BundleEntities.DecodeResultPart2]) =
+  def decode(payloads: Map[com.histmersion.util.data.exchange.BundleEntities.BlobPath, com.histmersion.util.data.exchange.BundleEntities.Payload]): (BundleEntities, List[com.histmersion.util.data.exchange.BundleEntities.Problem]) =
     val problems = List.newBuilder[String]
-    def read[A: Decoder](path: com.histmersion.util.data.exchange.BundleEntities.DecodeReadPath, stamped: com.histmersion.util.data.exchange.BundleEntities.DecodeReadStamped): List[A] =
+    def read[A: Decoder](path: com.histmersion.util.data.exchange.Bundle.Kind.EntryPath, stamped: com.histmersion.util.data.exchange.BundleEntities.Stamped): List[A] =
       payloads.get(path).toList.flatMap(BundleFormat.splitLines).zipWithIndex.flatMap { (l, i) =>
         BundleFormat.decodeLine[A](l, stamped) match
           case Right(a) => Some(a)

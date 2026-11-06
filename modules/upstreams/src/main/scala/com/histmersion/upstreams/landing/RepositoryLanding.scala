@@ -21,110 +21,58 @@ import io.circe.{ACursor, Json}
   * acquisition queue as before. Everything here is pure and total.
   */
 object RepositoryLanding:
+  type Host = Host.T
+  object Host extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type HostPattern = HostPattern.T
+  object HostPattern extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Href = Href.T
+  object Href extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Html = Html.T
+  object Html extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaContent = MetaContent.T
+  object MetaContent extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaName = MetaName.T
+  object MetaName extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type PageBytes = PageBytes.T
+  object PageBytes extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZenodoLocator = ZenodoLocator.T
+  object ZenodoLocator extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type ZenodoRecordId = ZenodoRecordId.T
+  object ZenodoRecordId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** A landing page to resolve; `repository` = an OA index (OpenAlex `source.type`, Unpaywall `host_type`) says the
     * location is a repository, `publisher` = it says a journal's or a publisher's (such a page is never read, unless it
     * is an open-access publisher's — [[oaPublisherPage]]); `open` = the index says the location is open access
     * (OpenAlex `is_oa`; every Unpaywall `oa_location` is).
     */
-  type LooksLikeHtmlB = LooksLikeHtmlB.T
-  object LooksLikeHtmlB extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Array[_root_.scala.Byte], _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type PublisherSourceTypes = PublisherSourceTypesValue
   type PublisherSourceTypesValue = PublisherSourceTypesValue.T
   object PublisherSourceTypesValue extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WordLabelResult = WordLabelResult.T
-  object WordLabelResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WordLabelLabel = WordLabelLabel.T
-  object WordLabelLabel extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WordLabelW = WordLabelW.T
-  object WordLabelW extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesHostResult = MatchesHostResult.T
-  object MatchesHostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesHostHost = MatchesHostHost.T
-  object MatchesHostHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MatchesHostEntry = MatchesHostEntry.T
-  object MatchesHostEntry extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OnHostResult = OnHostResult.T
-  object OnHostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type OnHostUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.HostUrl
   val OnHostUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.HostUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.HostUrl
-  type OnHostHosts = OnHostHosts.T
-  object OnHostHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HostResult = HostResult.T
-  object HostResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type HostUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
   val HostUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
-  type StrResult = StrResult.T
-  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type NotPdfPathU = NotPdfPathU.T
-  object NotPdfPathU extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DataciteUrlResult = DataciteUrlResult.T
-  object DataciteUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OaPublisherPageResult = OaPublisherPageResult.T
-  object OaPublisherPageResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type HandleUrlResult = HandleUrlResult.T
-  object HandleUrlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZenodoRecordIdResult = ZenodoRecordIdResult.T
-  object ZenodoRecordIdResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ZenodoRecordIdUrlOrDoi = ZenodoRecordIdUrlOrDoi.T
-  object ZenodoRecordIdUrlOrDoi extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaTagsResultPart1 = MetaTagsResultPart1.T
-  object MetaTagsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaTagsResultPart2 = MetaTagsResultPart2.T
-  object MetaTagsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type MetaTagsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  val MetaTagsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  type DecodeResult = DecodeResult.T
-  object DecodeResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DecodeS = DecodeS.T
-  object DecodeS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeneratorsResult = GeneratorsResult.T
-  object GeneratorsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GeneratorsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  val GeneratorsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  type CitationPdfUrlsResult = CitationPdfUrlsResult.T
-  object CitationPdfUrlsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CitationPdfUrlsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  val CitationPdfUrlsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  type CitationPdfUrlsPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
-  val CitationPdfUrlsPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
-  type AbsoluteResult = AbsoluteResult.T
-  object AbsoluteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AbsoluteHref = AbsoluteHref.T
-  object AbsoluteHref extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type AbsolutePageUrl = AbsolutePageUrl.T
-  object AbsolutePageUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsRepositoryResult = IsRepositoryResult.T
-  object IsRepositoryResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsRepositoryPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
-  val IsRepositoryPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
-  type IsRepositoryIndexSaysRepository = IsRepositoryIndexSaysRepository.T
-  object IsRepositoryIndexSaysRepository extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IsRepositoryHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  val IsRepositoryHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  type PdfsOfResult = PdfsOfResult.T
-  object PdfsOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type PdfsOfPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
-  val PdfsOfPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
-  type PdfsOfIndexSaysRepository = _root_.com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryIndexSaysRepository
-  val PdfsOfIndexSaysRepository: _root_.com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryIndexSaysRepository.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryIndexSaysRepository
-  type PdfsOfHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  val PdfsOfHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml
-  type PdfsOfOaPublisher = PdfsOfOaPublisher.T
-  object PdfsOfOaPublisher extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GalleyPdfUrlsResult = GalleyPdfUrlsResult.T
-  object GalleyPdfUrlsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GalleyPdfUrlsHtml = GalleyPdfUrlsHtml.T
-  object GalleyPdfUrlsHtml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type GalleyPdfUrlsPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
-  val GalleyPdfUrlsPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl
-  type OjsDownloadResult = OjsDownloadResult.T
-  object OjsDownloadResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type OjsDownloadUrl = OjsDownloadUrl.T
-  object OjsDownloadUrl extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LooksLikeHtmlResult = LooksLikeHtmlResult.T
-  object LooksLikeHtmlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type MetaTagsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  val MetaTagsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  type GeneratorsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  val GeneratorsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  type CitationPdfUrlsHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  val CitationPdfUrlsHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  type CitationPdfUrlsPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  val CitationPdfUrlsPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  type IsRepositoryPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  val IsRepositoryPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  type IsRepositoryHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  val IsRepositoryHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  type PdfsOfPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  val PdfsOfPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  type PdfsOfIndexSaysRepository = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository
+  val PdfsOfIndexSaysRepository: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository
+  type PdfsOfHtml = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  val PdfsOfHtml: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Html
+  type GalleyPdfUrlsPageUrl = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
+  val GalleyPdfUrlsPageUrl: _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url.type = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url
 
   final case class Candidate(url: Candidate.Url, repository: Candidate.Repository, publisher: Candidate.Publisher = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(false), open: Candidate.Open = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(false))
 
@@ -162,61 +110,37 @@ object RepositoryLanding:
       denyHostWords: List[Rules.DenyHostWords] = Nil,
       oaPublisherHosts: List[Rules.OaPublisherHosts] = Nil
   ):
-    def allowed(host: com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedHost): com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedResult = allowHosts.exists(d => matchesHost(host, d))
+    def allowed(host: com.histmersion.upstreams.landing.RepositoryLanding.Host): Boolean = allowHosts.exists(d => matchesHost(host, d))
 
     /** An open-access publisher whose open locations may be read (`oa-publisher-hosts`, #2550). */
-    def oaPublisher(host: com.histmersion.upstreams.landing.RepositoryLanding.Rules.OaPublisherHost): com.histmersion.upstreams.landing.RepositoryLanding.Rules.OaPublisherResult = oaPublisherHosts.exists(d => matchesHost(host, d))
+    def oaPublisher(host: com.histmersion.upstreams.landing.RepositoryLanding.Host): Boolean = oaPublisherHosts.exists(d => matchesHost(host, d))
 
     /** A publisher's host: a denied host or its subdomain, or — unless the host is allowed — a label that is or starts
       * with a denied word (`press.…`, `journals.…`: a university press on a `.edu`).
       */
-    def denied(host: com.histmersion.upstreams.landing.RepositoryLanding.Rules.DeniedHost): com.histmersion.upstreams.landing.RepositoryLanding.Rules.DeniedResult =
+    def denied(host: com.histmersion.upstreams.landing.RepositoryLanding.Host): Boolean =
       denyHosts.exists(d => matchesHost(host, d)) ||
-        (!((allowed(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedHost((host).value))) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.AllowedResult(true)) && (host).value.split('.').toList.dropRight(1).exists(l => denyHostWords.exists(w => wordLabel(_root_.com.histmersion.upstreams.landing.RepositoryLanding.WordLabelLabel(l), w))))
+        (!((allowed(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Host((host).value))) == (true)) && (host).value.split('.').toList.dropRight(1).exists(l => denyHostWords.exists(w => wordLabel((l), w))))
 
     /** A university's host: `.edu` (`.edu.au` too), `.ac.<cc>`, or a label that is a configured word ([[wordLabel]]:
       * `repository`, `eprints`, `pure`, `opus4`, `uni-tuebingen` for `uni-`).
       */
-    def academic(host: com.histmersion.upstreams.landing.RepositoryLanding.Rules.AcademicHost): com.histmersion.upstreams.landing.RepositoryLanding.Rules.AcademicResult =
+    def academic(host: com.histmersion.upstreams.landing.RepositoryLanding.Host): Boolean =
       val labels = (host).value.split('.').toList
       labels.contains("edu") || labels.dropRight(1).lastOption.contains("ac") ||
-      labels.dropRight(1).exists(l => academicHostWords.exists(w => wordLabel(_root_.com.histmersion.upstreams.landing.RepositoryLanding.WordLabelLabel(l), w)))
+      labels.dropRight(1).exists(l => academicHostWords.exists(w => wordLabel((l), w)))
 
     /** A platform `generator` tag that names a repository (`DSpace 6.3`) — and not a journal's. */
-    def repositoryGenerator(gs: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.RepositoryGeneratorGs]): com.histmersion.upstreams.landing.RepositoryLanding.Rules.RepositoryGeneratorResult =
+    def repositoryGenerator(gs: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.Generators]): Boolean =
       val low = gs.map((_).value.toLowerCase)
       !low.exists(g => denyGenerators.exists(d => (d).value.nonEmpty && g.contains(d))) &&
       low.exists(g => generators.exists(p => (p).value.nonEmpty && g.contains(p)))
 
     /** A journal platform's page (`Open Journal Systems`): a publisher's, whatever its host. */
-    def journalGenerator(gs: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.JournalGeneratorGs]): com.histmersion.upstreams.landing.RepositoryLanding.Rules.JournalGeneratorResult =
-      _root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.JournalGeneratorResult(gs.map((_).value.toLowerCase).exists(g => denyGenerators.exists(d => (d).value.nonEmpty && g.contains(d))))
+    def journalGenerator(gs: List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.Generators]): Boolean =
+      (gs.map((_).value.toLowerCase).exists(g => denyGenerators.exists(d => (d).value.nonEmpty && g.contains(d))))
 
   object Rules:
-    type AllowedResult = AllowedResult.T
-    object AllowedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AllowedHost = AllowedHost.T
-    object AllowedHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OaPublisherResult = OaPublisherResult.T
-    object OaPublisherResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type OaPublisherHost = OaPublisherHost.T
-    object OaPublisherHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeniedResult = DeniedResult.T
-    object DeniedResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type DeniedHost = DeniedHost.T
-    object DeniedHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AcademicResult = AcademicResult.T
-    object AcademicResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type AcademicHost = AcademicHost.T
-    object AcademicHost extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RepositoryGeneratorResult = RepositoryGeneratorResult.T
-    object RepositoryGeneratorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type RepositoryGeneratorGs = RepositoryGeneratorGs.T
-    object RepositoryGeneratorGs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type JournalGeneratorResult = JournalGeneratorResult.T
-    object JournalGeneratorResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type JournalGeneratorGs = JournalGeneratorGs.T
-    object JournalGeneratorGs extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
     type AllowHosts = AllowHosts.T
     object AllowHosts extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
@@ -237,30 +161,30 @@ object RepositoryLanding:
     * `pure-portal`), or, for a word ending in `-`, any label it starts (`uni-` → `uni-koeln`)? Never a longer word
     * (`pure` is not `purepharma`, `press` is not `pressreader`).
     */
-  def wordLabel(label: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelLabel, w: com.histmersion.upstreams.landing.RepositoryLanding.WordLabelW): com.histmersion.upstreams.landing.RepositoryLanding.WordLabelResult =
-    _root_.com.histmersion.upstreams.landing.RepositoryLanding.WordLabelResult((w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
+  def wordLabel(label: String, w: String): Boolean =
+    ((w).value.nonEmpty && (label == w || ((w).value.endsWith("-") && (label).value.startsWith((w).value)) ||
       ((label).value.startsWith((w).value) && (label).value.length > (w).value.length && { val c = (label).value.charAt((w).value.length); c == '-' || c.isDigit })))
 
   /** A host entry matches the host itself or any subdomain of it. */
-  def matchesHost(host: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost, entry: com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostEntry): com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostResult =
+  def matchesHost(host: com.histmersion.upstreams.landing.RepositoryLanding.Host, entry: com.histmersion.upstreams.landing.RepositoryLanding.HostPattern): Boolean =
     val e = (entry).value.trim.toLowerCase.stripPrefix(".")
-    _root_.com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostResult(e.nonEmpty && (host == _root_.com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost(e) || (host).value.endsWith("." + e)))
+    (e.nonEmpty && (host == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Host(e) || (host).value.endsWith("." + e)))
 
   /** Pure: the lower-case host of an absolute http(s) URL. */
   /** The host of `url` when it is one of `hosts` or a subdomain of one. */
-  def onHost(url: com.histmersion.upstreams.landing.RepositoryLanding.OnHostUrl, hosts: List[com.histmersion.upstreams.landing.RepositoryLanding.OnHostHosts]): Option[com.histmersion.upstreams.landing.RepositoryLanding.OnHostResult] = host(url).filter(h => hosts.exists(matchesHost(_root_.com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostHost((h).value), _root_.com.histmersion.upstreams.landing.RepositoryLanding.MatchesHostEntry((_).value))))
+  def onHost(url: com.histmersion.upstreams.landing.RepositoryLanding.OnHostUrl, hosts: List[com.histmersion.upstreams.landing.RepositoryLanding.HostPattern]): Option[com.histmersion.upstreams.landing.RepositoryLanding.HostPattern] = host(url).filter(h => hosts.exists(matchesHost(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Host((h).value), _root_.com.histmersion.upstreams.landing.RepositoryLanding.HostPattern((_).value))))
 
-  def host(url: com.histmersion.upstreams.landing.RepositoryLanding.HostUrl): Option[com.histmersion.upstreams.landing.RepositoryLanding.HostResult] =
-    "(?i)^https?://([^/?#:]+)".r.findFirstMatchIn((url).value.trim).map(_root_.com.histmersion.upstreams.landing.RepositoryLanding.HostResult(_.group(1).toLowerCase.stripPrefix("www.")))
+  def host(url: com.histmersion.upstreams.landing.RepositoryLanding.HostUrl): Option[com.histmersion.upstreams.landing.RepositoryLanding.Host] =
+    "(?i)^https?://([^/?#:]+)".r.findFirstMatchIn((url).value.trim).map(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Host(_.group(1).toLowerCase.stripPrefix("www.")))
 
   // ── which pages ────────────────────────────────────────────────────────────────────────────
 
-  private def str(c: ACursor, keys: String*): Option[com.histmersion.upstreams.landing.RepositoryLanding.StrResult] =
-    (keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue => _root_.com.histmersion.upstreams.landing.RepositoryLanding.StrResult(refactorValue))
+  private def str(c: ACursor, keys: String*): Option[String] =
+    (keys.foldLeft(c)(_.downField(_)).as[String].toOption.map(_.trim).filter(_.nonEmpty)).map(refactorValue => (refactorValue))
   private def arr(c: ACursor, keys: String*): List[Json] =
     keys.foldLeft(c)(_.downField(_)).values.map(_.toList).getOrElse(Nil)
 
-  private def notPdfPath(u: com.histmersion.upstreams.landing.RepositoryLanding.NotPdfPathU) = !(u).value.toLowerCase.split("[?#]").head.endsWith(".pdf")
+  private def notPdfPath(u: String) = !(u).value.toLowerCase.split("[?#]").head.endsWith(".pdf")
 
   /** Pure: the landing pages an OpenAlex work names — each location's landing page, and a `pdf_url` that is a record
     * page (no `.pdf`: the direct step already tried it as a file) — best location first, repositories marked.
@@ -274,7 +198,7 @@ object RepositoryLanding:
       val repo = kind.contains("repository")
       val pub = kind.exists(PublisherSourceTypes)
       val open = h.downField("is_oa").as[Boolean].contains(true)
-      (str(h, "pdf_url").filter(_root_.com.histmersion.upstreams.landing.RepositoryLanding.NotPdfPathU((notPdfPath).value)).toList ++ str(h, "landing_page_url").toList)
+      (str(h, "pdf_url").filter(((notPdfPath).value)).toList ++ str(h, "landing_page_url").toList)
         .map(Candidate(_, _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(repo), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(pub), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(open)))
     })
 
@@ -286,12 +210,12 @@ object RepositoryLanding:
       val h = l.hcursor
       val repo = str(h, "host_type").contains("repository")
       val pub = str(h, "host_type").contains("publisher")
-      (str(h, "url_for_pdf").filter(_root_.com.histmersion.upstreams.landing.RepositoryLanding.NotPdfPathU((notPdfPath).value)).toList ++ str(h, "url_for_landing_page").toList)
+      (str(h, "url_for_pdf").filter(((notPdfPath).value)).toList ++ str(h, "url_for_landing_page").toList)
         .map(Candidate(_, _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository(repo), _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(pub), open = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(true)))
     })
 
   /** Pure: where a DataCite DOI resolves (`data.attributes.url` of `api.datacite.org/dois/<doi>`). */
-  def dataciteUrl(json: Json): Option[com.histmersion.upstreams.landing.RepositoryLanding.DataciteUrlResult] = (str(json.hcursor, "data", "attributes", "url")).map(refactorValue2 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.DataciteUrlResult((refactorValue2).value))
+  def dataciteUrl(json: Json): Option[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url] = (str(json.hcursor, "data", "attributes", "url")).map(refactorValue2 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue2).value))
 
   /** Candidates by URL, the first of each kept; repository if any index says so, publisher only if one says so and none
     * says repository, open if any says so.
@@ -310,17 +234,17 @@ object RepositoryLanding:
   /** Pure: is this an open-access publisher's OPEN location (#2550) — read although it is a publisher's: an index says
     * it is open, and its host is on `oa-publisher-hosts`.
     */
-  def oaPublisherPage(c: Candidate, rules: Rules): com.histmersion.upstreams.landing.RepositoryLanding.OaPublisherPageResult = ((c.open) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(true)) && host(c.url).exists(rules.oaPublisher)
+  def oaPublisherPage(c: Candidate, rules: Rules): Boolean = ((c.open) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Open(true)) && host(c.url).exists(rules.oaPublisher)
 
   /** Pure: where the DOI handle API (`doi.org/api/handles/<doi>?type=URL`) says a DOI resolves — its first URL value.
     * Read only for an open location on an OA publisher, so a `doi.org` link is still never followed blind.
     */
-  def handleUrl(json: Json): Option[com.histmersion.upstreams.landing.RepositoryLanding.HandleUrlResult] =
+  def handleUrl(json: Json): Option[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url] =
     (arr(json.hcursor, "values").iterator
       .map(_.hcursor)
       .filter(v => str(v, "type").contains("URL"))
       .flatMap(v => str(v, "data", "value"))
-      .nextOption()).map(refactorValue3 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.HandleUrlResult((refactorValue3).value))
+      .nextOption()).map(refactorValue3 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((refactorValue3).value))
 
   // ── Zenodo ─────────────────────────────────────────────────────────────────────────────────
 
@@ -330,9 +254,9 @@ object RepositoryLanding:
   /** Pure: the Zenodo record id of a record URL (`zenodo.org/record/3695551`, `…/records/…`) or of a Zenodo DOI
     * (`10.5281/zenodo.3695551`, bare or as a `doi.org` URL).
     */
-  def zenodoRecordId(urlOrDoi: com.histmersion.upstreams.landing.RepositoryLanding.ZenodoRecordIdUrlOrDoi): Option[com.histmersion.upstreams.landing.RepositoryLanding.ZenodoRecordIdResult] =
+  def zenodoRecordId(urlOrDoi: com.histmersion.upstreams.landing.RepositoryLanding.ZenodoLocator): Option[com.histmersion.upstreams.landing.RepositoryLanding.ZenodoRecordId] =
     val t = (urlOrDoi).value.trim
-    ZenodoRecord.findFirstMatchIn(t).orElse(ZenodoDoi.findFirstMatchIn(t)).map(_root_.com.histmersion.upstreams.landing.RepositoryLanding.ZenodoRecordIdResult(_.group(1)))
+    ZenodoRecord.findFirstMatchIn(t).orElse(ZenodoDoi.findFirstMatchIn(t)).map(_root_.com.histmersion.upstreams.landing.RepositoryLanding.ZenodoRecordId(_.group(1)))
 
   /** Pure: the PDF files of a Zenodo record, when its files are open (`metadata.access_right: open`, or the newer
     * `access.files: public`); restricted, embargoed or closed records give none.
@@ -363,7 +287,7 @@ object RepositoryLanding:
   /** Pure: the `<meta>` tags of a page as (name or property, lower-cased; content), in order — whatever order the
     * attributes come in, entities in the content decoded.
     */
-  def metaTags(html: com.histmersion.upstreams.landing.RepositoryLanding.MetaTagsHtml): List[(com.histmersion.upstreams.landing.RepositoryLanding.MetaTagsResultPart1, com.histmersion.upstreams.landing.RepositoryLanding.MetaTagsResultPart2)] =
+  def metaTags(html: com.histmersion.upstreams.landing.RepositoryLanding.MetaTagsHtml): List[(com.histmersion.upstreams.landing.RepositoryLanding.MetaName, com.histmersion.upstreams.landing.RepositoryLanding.MetaContent)] =
     MetaTag.findAllMatchIn((html).value.take(MaxHead)).toList.flatMap { m =>
       val attrs = Attr
         .findAllMatchIn(m.group(1))
@@ -374,15 +298,15 @@ object RepositoryLanding:
         .toMap
       for
         key <- attrs.get("name").orElse(attrs.get("property")).map(_.trim.toLowerCase).filter(_.nonEmpty)
-        content <- attrs.get("content").map({ val refactorFunction = decode; (refactorValue5) => refactorFunction(_root_.com.histmersion.upstreams.landing.RepositoryLanding.DecodeS(refactorValue5)) }).map((_).value.trim)
-      yield { val refactorTuple = key -> content; (_root_.com.histmersion.upstreams.landing.RepositoryLanding.MetaTagsResultPart1(refactorTuple._1), _root_.com.histmersion.upstreams.landing.RepositoryLanding.MetaTagsResultPart2(refactorTuple._2)) }
+        content <- attrs.get("content").map({ val refactorFunction = decode; (refactorValue5) => refactorFunction((refactorValue5)) }).map((_).value.trim)
+      yield { val refactorTuple = key -> content; (_root_.com.histmersion.upstreams.landing.RepositoryLanding.MetaName(refactorTuple._1), _root_.com.histmersion.upstreams.landing.RepositoryLanding.MetaContent(refactorTuple._2)) }
     }
 
   /** The part of a page the tags are read from: an item page's `<head>` sits well inside this. */
   val MaxHead = 400000
 
-  private def decode(s: com.histmersion.upstreams.landing.RepositoryLanding.DecodeS): com.histmersion.upstreams.landing.RepositoryLanding.DecodeResult =
-    _root_.com.histmersion.upstreams.landing.RepositoryLanding.DecodeResult((s).value.replace("&amp;", "&")
+  private def decode(s: String): String =
+    ((s).value.replace("&amp;", "&")
       .replace("&quot;", "\"")
       .replace("&#39;", "'")
       .replace("&apos;", "'")
@@ -392,30 +316,30 @@ object RepositoryLanding:
       .replace("&#47;", "/"))
 
   /** Pure: the page's `generator` tags (`DSpace 6.3`, `EPrints 3.4`). */
-  def generators(html: com.histmersion.upstreams.landing.RepositoryLanding.GeneratorsHtml): List[com.histmersion.upstreams.landing.RepositoryLanding.GeneratorsResult] = metaTags(html).collect { case (refactorPattern, g) if (refactorPattern.value == "generator") && ((g).value.nonEmpty) => _root_.com.histmersion.upstreams.landing.RepositoryLanding.GeneratorsResult((g).value) }
+  def generators(html: com.histmersion.upstreams.landing.RepositoryLanding.GeneratorsHtml): List[com.histmersion.upstreams.landing.RepositoryLanding.Rules.Generators] = metaTags(html).collect { case (refactorPattern, g) if (refactorPattern.value == "generator") && ((g).value.nonEmpty) => _root_.com.histmersion.upstreams.landing.RepositoryLanding.Rules.Generators((g).value) }
 
   /** Pure: the `citation_pdf_url`s a page names, made absolute against `pageUrl`, http(s) only. */
-  def citationPdfUrls(html: com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsHtml, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsPageUrl): List[com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsResult] =
-    (metaTags(html).collect { case (refactorPattern2, u) if (refactorPattern2.value == "citation_pdf_url") && ((u).value.nonEmpty) => absolute(_root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteHref((u).value), pageUrl) }.flatten.distinct).map(refactorValue6 => _root_.com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsResult((refactorValue6).value))
+  def citationPdfUrls(html: com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsHtml, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.CitationPdfUrlsPageUrl): List[com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls] =
+    (metaTags(html).collect { case (refactorPattern2, u) if (refactorPattern2.value == "citation_pdf_url") && ((u).value.nonEmpty) => absolute(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Href((u).value), pageUrl) }.flatten.distinct).map(refactorValue6 => _root_.com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls((refactorValue6).value))
 
   /** Pure: `href` against the page it is on (`/bitstream/…` → `https://host/bitstream/…`). */
-  def absolute(href: com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteHref, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.AbsolutePageUrl): Option[com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteResult] =
+  def absolute(href: com.histmersion.upstreams.landing.RepositoryLanding.Href, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): Option[com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url] =
     val h = (href).value.trim
-    if "(?i)^https?://".r.findPrefixOf(h).isDefined then Some(_root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteResult(h))
+    if "(?i)^https?://".r.findPrefixOf(h).isDefined then Some(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url(h))
     else
       val origin = "(?i)^(https?://[^/?#]+)".r.findFirstMatchIn((pageUrl).value.trim).map(_.group(1))
-      if h.startsWith("//") then Some(_root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteResult((pageUrl).value.trim.takeWhile(_ != ':') + ":" + h))
-      else if h.startsWith("/") then origin.map(_root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteResult(_ + h))
+      if h.startsWith("//") then Some(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url((pageUrl).value.trim.takeWhile(_ != ':') + ":" + h))
+      else if h.startsWith("/") then origin.map(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url(_ + h))
       else if h.isEmpty || h.contains(":") then None
       else
         val dir = (pageUrl).value.trim.split("[?#]").head
-        Some(_root_.com.histmersion.upstreams.landing.RepositoryLanding.AbsoluteResult(dir.substring(0, dir.lastIndexOf('/') + 1) + h))
+        Some(_root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url(dir.substring(0, dir.lastIndexOf('/') + 1) + h))
 
   /** Pure: may `citation_pdf_url` be read on this page? Never on a denied (publisher) host nor a journal platform's
     * page (`deny-generators`: Open Journal Systems); otherwise when an OA index calls the location a repository, the
     * host is allowed or academic, or the page names a repository platform as its generator.
     */
-  def isRepository(pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl, indexSaysRepository: com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryIndexSaysRepository, html: com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryHtml, rules: Rules): com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryResult =
+  def isRepository(pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryPageUrl, indexSaysRepository: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Repository, html: com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryHtml, rules: Rules): Boolean =
     host(pageUrl).exists { h =>
       val gs = generators(html)
       !rules.denied(h) && !rules.journalGenerator(gs) &&
@@ -432,15 +356,15 @@ object RepositoryLanding:
       indexSaysRepository: com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfIndexSaysRepository,
       html: com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfHtml,
       rules: Rules,
-      oaPublisher: com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfOaPublisher = _root_.com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfOaPublisher(false)
-  ): List[com.histmersion.upstreams.landing.RepositoryLanding.PdfsOfResult] =
+      oaPublisher: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Publisher(false)
+  ): List[com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls] =
     if (oaPublisher).value then
       val own = host(pageUrl)
       (citationPdfUrls(html, pageUrl) ++ galleyPdfUrls(html, pageUrl))
         .map(ojsDownload)
         .distinct
         .filter(u => host(u).exists(h => own.contains(h) || rules.oaPublisher(h)))
-    else if !((isRepository(pageUrl, indexSaysRepository, html, rules)) == _root_.com.histmersion.upstreams.landing.RepositoryLanding.IsRepositoryResult(true)) then Nil
+    else if !((isRepository(pageUrl, indexSaysRepository, html, rules)) == (true)) then Nil
     else citationPdfUrls(html, pageUrl).filterNot(u => host(u).exists(rules.denied))
 
   private val GalleyLink = "(?is)<a\\s+([^>]*)>".r
@@ -451,7 +375,7 @@ object RepositoryLanding:
     * OJS 3.5+ theme lists as JSON (`{"label":"PDF","href":…}`, escaped inside an attribute) — made absolute against
     * `pageUrl`, http(s) only.
     */
-  def galleyPdfUrls(html: com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsHtml, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsPageUrl): List[com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsResult] =
+  def galleyPdfUrls(html: com.histmersion.upstreams.landing.RepositoryLanding.Html, pageUrl: com.histmersion.upstreams.landing.RepositoryLanding.GalleyPdfUrlsPageUrl): List[com.histmersion.upstreams.europepmc.EuropePmcHit.PdfUrls] =
     val page = (html).value.take(MaxHead)
     val links = GalleyLink
       .findAllMatchIn(page)
@@ -464,7 +388,7 @@ object RepositoryLanding:
           }
           .toMap
         val cls = attrs.getOrElse("class", "").toLowerCase.split("\\s+").toSet
-        attrs.get("href").filter(_ => cls("obj_galley_link") && cls("pdf")).map({ val refactorFunction3 = decode; (refactorValue7) => refactorFunction3(_root_.com.histmersion.upstreams.landing.RepositoryLanding.DecodeS(refactorValue7)) })
+        attrs.get("href").filter(_ => cls("obj_galley_link") && cls("pdf")).map({ val refactorFunction3 = decode; (refactorValue7) => refactorFunction3((refactorValue7)) })
       }
       .toList
     val unescaped = page.replace("\\u0022", "\"").replace("&quot;", "\"").replace("\\\\/", "/").replace("\\/", "/")
@@ -474,9 +398,9 @@ object RepositoryLanding:
   /** Pure: an OJS galley's viewer URL (`…/article/view/<article>/<galley>`, an HTML page around the PDF) as its
     * download (`…/article/download/<article>/<galley>`); any other URL as it is.
     */
-  def ojsDownload(url: com.histmersion.upstreams.landing.RepositoryLanding.OjsDownloadUrl): com.histmersion.upstreams.landing.RepositoryLanding.OjsDownloadResult = _root_.com.histmersion.upstreams.landing.RepositoryLanding.OjsDownloadResult(OjsView.replaceFirstIn((url).value, "/article/download/$1/$2"))
+  def ojsDownload(url: com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url): com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url = _root_.com.histmersion.upstreams.landing.RepositoryLanding.Candidate.Url(OjsView.replaceFirstIn((url).value, "/article/download/$1/$2"))
 
   /** Pure: does a non-PDF answer look like an HTML page (worth reading for its tags)? */
-  def looksLikeHtml(b: com.histmersion.upstreams.landing.RepositoryLanding.LooksLikeHtmlB): com.histmersion.upstreams.landing.RepositoryLanding.LooksLikeHtmlResult =
+  def looksLikeHtml(b: com.histmersion.upstreams.landing.RepositoryLanding.PageBytes): Boolean =
     val head = new String(b.take(2048), "ISO-8859-1").toLowerCase
     head.contains("<html") || head.contains("<!doctype html") || head.contains("<head") || head.contains("<meta")

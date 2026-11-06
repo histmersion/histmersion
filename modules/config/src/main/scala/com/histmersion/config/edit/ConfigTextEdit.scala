@@ -14,78 +14,16 @@ import scala.util.Try
   */
 object ConfigTextEdit:
 
-  type InFileStyleLoopResult = InFileStyleLoopResult.T
-  object InFileStyleLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFileStyleLoopRest = InFileStyleLoopRest.T
-  object InFileStyleLoopRest extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFileStyleLoopSeenPart1 = InFileStyleLoopSeenPart1.T
-  object InFileStyleLoopSeenPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFileStyleLoopSeenPart2 = InFileStyleLoopSeenPart2.T
-  object InFileStyleLoopSeenPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFileStyleLoopAcc = InFileStyleLoopAcc.T
-  object InFileStyleLoopAcc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLoopResult = CountLoopResult.T
-  object CountLoopResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLoopFrom = CountLoopFrom.T
-  object CountLoopFrom extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountLoopN = CountLoopN.T
-  object CountLoopN extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrittenDownPath = WrittenDownPath.T
-  object WrittenDownPath extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrittenDownSeen = WrittenDownSeen.T
-  object WrittenDownSeen extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ApplyText = ApplyText.T
-  object ApplyText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ApplyHereResult = ApplyHereResult.T
-  object ApplyHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFileStyleResult = InFileStyleResult.T
-  object InFileStyleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFileStyleBefore = InFileStyleBefore.T
-  object InFileStyleBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InFileStyleAfter = InFileStyleAfter.T
-  object InFileStyleAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommentsResult = CommentsResult.T
-  object CommentsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CommentsText = CommentsText.T
-  object CommentsText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EndsLikeAFileResult = EndsLikeAFileResult.T
-  object EndsLikeAFileResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EndsLikeAFileBefore = EndsLikeAFileBefore.T
-  object EndsLikeAFileBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EndsLikeAFileAfter = EndsLikeAFileAfter.T
-  object EndsLikeAFileAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IntendedResultPart1 = IntendedResultPart1.T
   object IntendedResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type VerifyHereResult = VerifyHereResult.T
-  object VerifyHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type VerifyIntendedPart1 = VerifyIntendedPart1.T
   object VerifyIntendedPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropsVerbatimResult = DropsVerbatimResult.T
-  object DropsVerbatimResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropsVerbatimBefore = DropsVerbatimBefore.T
-  object DropsVerbatimBefore extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DropsVerbatimAfter = DropsVerbatimAfter.T
-  object DropsVerbatimAfter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountResult = CountResult.T
-  object CountResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountText = CountText.T
-  object CountText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type CountWhat = CountWhat.T
-  object CountWhat extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IncludesResult = IncludesResult.T
-  object IncludesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IncludesText = IncludesText.T
-  object IncludesText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WrittenHereResult = WrittenHereResult.T
-  object WrittenHereResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FileOfResult = FileOfResult.T
-  object FileOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def apply(
-      text: com.histmersion.config.edit.ConfigTextEdit.ApplyText,
+      text: com.histmersion.config.edit.ConfigFileState.Text,
       current: Config,
-      here: ConfigOrigin => com.histmersion.config.edit.ConfigTextEdit.ApplyHereResult,
+      here: ConfigOrigin => Boolean,
       edits: List[SettingEdit]
   ): Either[SettingError, EditedText] =
     @tailrec def loop(
@@ -128,9 +66,9 @@ object ConfigTextEdit:
   /** The lines an edit ADDED, in the file's own style: `key {` and `key = value` where sconfig writes `key : {` and
     * `key : value`. Only lines not in `before` are touched, and only when the result reads the same.
     */
-  private def inFileStyle(before: com.histmersion.config.edit.ConfigTextEdit.InFileStyleBefore, after: com.histmersion.config.edit.ConfigTextEdit.InFileStyleAfter): com.histmersion.config.edit.ConfigTextEdit.InFileStyleResult =
+  private def inFileStyle(before: String, after: String): String =
     val old = before.linesIterator.toList.groupBy(identity).view.mapValues(_.size).toMap
-    @tailrec def loop(rest: List[com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopRest], seen: Map[com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopSeenPart1, com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopSeenPart2], acc: List[com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopAcc]): List[com.histmersion.config.edit.ConfigTextEdit.InFileStyleLoopResult] =
+    @tailrec def loop(rest: List[String], seen: Map[String, Int], acc: List[String]): List[String] =
       rest match
         case Nil          => acc.reverse
         case line :: tail =>
@@ -175,10 +113,10 @@ object ConfigTextEdit:
       if comments(pruned.render) < comments(root.render) then root else pruned
     else root
 
-  private def comments(text: com.histmersion.config.edit.ConfigTextEdit.CommentsText): com.histmersion.config.edit.ConfigTextEdit.CommentsResult = text.linesIterator.count(l => l.contains("#") || l.contains("//"))
+  private def comments(text: String): Int = text.linesIterator.count(l => l.contains("#") || l.contains("//"))
 
   /** A file that ended with a line break (or had no text) still does. */
-  private def endsLikeAFile(before: com.histmersion.config.edit.ConfigTextEdit.EndsLikeAFileBefore, after: com.histmersion.config.edit.ConfigTextEdit.EndsLikeAFileAfter): com.histmersion.config.edit.ConfigTextEdit.EndsLikeAFileResult =
+  private def endsLikeAFile(before: String, after: String): String =
     if after.nonEmpty && !after.endsWith("\n") && (before.isEmpty || before.endsWith("\n")) then after + "\n" else after
 
   /** What each key is to hold after `edits` (`None`: taken out); the last change of a key wins. */
@@ -193,7 +131,7 @@ object ConfigTextEdit:
     */
   def verify(
       parsed: Config,
-      here: ConfigOrigin => com.histmersion.config.edit.ConfigTextEdit.VerifyHereResult,
+      here: ConfigOrigin => Boolean,
       edited: EditedText,
       intended: Map[com.histmersion.config.edit.ConfigTextEdit.VerifyIntendedPart1, Option[SettingValue]]
   ): Either[SettingError, Unit] =
@@ -212,21 +150,21 @@ object ConfigTextEdit:
   /** Did an edit take out a substitution or an include the file had (a key written twice, once with `${…}`, its plain
     * value being the one that counts)? Those are kept exactly, so such a change is refused.
     */
-  private def dropsVerbatim(before: com.histmersion.config.edit.ConfigTextEdit.DropsVerbatimBefore, after: com.histmersion.config.edit.ConfigTextEdit.DropsVerbatimAfter): com.histmersion.config.edit.ConfigTextEdit.DropsVerbatimResult =
+  private def dropsVerbatim(before: String, after: String): Boolean =
     count(after, "${") < count(before, "${") || count(after, "+=") < count(before, "+=") ||
       includes(after) < includes(before)
 
-  private def count(text: com.histmersion.config.edit.ConfigTextEdit.CountText, what: com.histmersion.config.edit.ConfigTextEdit.CountWhat): com.histmersion.config.edit.ConfigTextEdit.CountResult =
-    @tailrec def loop(from: com.histmersion.config.edit.ConfigTextEdit.CountLoopFrom, n: com.histmersion.config.edit.ConfigTextEdit.CountLoopN): com.histmersion.config.edit.ConfigTextEdit.CountLoopResult = text.indexOf(what, from) match
+  private def count(text: String, what: String): Int =
+    @tailrec def loop(from: Int, n: Int): Int = text.indexOf(what, from) match
       case -1 => n
       case i  => loop(i + what.length, n + 1)
     loop(0, 0)
 
-  private def includes(text: com.histmersion.config.edit.ConfigTextEdit.IncludesText): com.histmersion.config.edit.ConfigTextEdit.IncludesResult = text.linesIterator.count(_.trim.startsWith("include"))
+  private def includes(text: String): Int = text.linesIterator.count(_.trim.startsWith("include"))
 
   /** Where the file (read with its includes, unresolved) writes `key`. */
-  def written(current: Config, key: SettingKey, here: ConfigOrigin => com.histmersion.config.edit.ConfigTextEdit.WrittenHereResult): Written =
-    @tailrec def down(obj: ConfigObject, path: List[com.histmersion.config.edit.ConfigTextEdit.WrittenDownPath], seen: List[com.histmersion.config.edit.ConfigTextEdit.WrittenDownSeen]): Written =
+  def written(current: Config, key: SettingKey, here: ConfigOrigin => Boolean): Written =
+    @tailrec def down(obj: ConfigObject, path: List[com.histmersion.config.edit.SettingKey.Segment], seen: List[String]): Written =
       path match
         case Nil          => Written.Nowhere
         case word :: rest =>
@@ -247,5 +185,5 @@ object ConfigTextEdit:
                   case other => if here(other.origin) then Written.Nowhere else Written.Elsewhere(fileOf(other.origin))
     down(current.root, key.segments, Nil)
 
-  private def fileOf(o: ConfigOrigin): com.histmersion.config.edit.ConfigTextEdit.FileOfResult =
+  private def fileOf(o: ConfigOrigin): com.histmersion.config.edit.SettingsFile.Path =
     Option(o.filename).orElse(Option(o.url).map(_.toString)).getOrElse(o.description)

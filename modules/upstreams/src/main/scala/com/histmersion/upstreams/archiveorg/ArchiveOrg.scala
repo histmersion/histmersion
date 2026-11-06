@@ -10,16 +10,16 @@ import com.histmersion.plugin.Plugin
 final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
 
   /** `https://archive.org/details/<id>` or a bare identifier. */
-  private def identifier(s: com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS): com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierResult =
+  private def identifier(s: com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS): com.histmersion.domain.library.ArchiveId =
     val t = (s).value.trim
-    _root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierResult((if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head)
+    _root_.com.histmersion.domain.library.ArchiveId((if t.contains("/details/") then t.split("/details/").last else t).split("[/?#]").head)
 
-  def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchRows): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchResultPart1, List[ArchiveItem]] =
+  def search(query: com.histmersion.upstreams.archiveorg.ArchiveOrg.SearchQuery, rows: com.histmersion.PageSize): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, List[ArchiveItem]] =
     http
       .json(
         Url(
           archive.url,
-          _root_.com.histmersion.upstreams.http.Url.ApplyPath("/advancedsearch.php"),
+          _root_.com.histmersion.upstreams.http.Url.UrlPath("/advancedsearch.php"),
           "q" -> s"($query) AND mediatype:texts",
           "fl[]" -> "identifier",
           "rows" -> rows.toString,
@@ -32,11 +32,11 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
       // restriction) comes from /metadata, one call per hit
       .map(_.map(i => info(i.identifier).getOrElse(i)))
 
-  def info(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.InfoResultPart1, ArchiveItem] =
+  def info(id: com.histmersion.domain.library.ArchiveId): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, ArchiveItem] =
     val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
-    http.json(Url(archive.url, _root_.com.histmersion.upstreams.http.Url.ApplyPath(s"/metadata/$ident"))).map(AcquireParse.archiveItem(ident, _))
+    http.json(Url(archive.url, _root_.com.histmersion.upstreams.http.Url.UrlPath(s"/metadata/$ident"))).map(AcquireParse.archiveItem(ident, _))
 
-  def download(id: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadResultPart1, FetchedFile] =
+  def download(id: com.histmersion.domain.library.ArchiveId, file: com.histmersion.upstreams.archiveorg.ArchiveOrg.DownloadFile): Either[com.histmersion.upstreams.archiveorg.ArchiveOrg.Problem, FetchedFile] =
     val ident = identifier(_root_.com.histmersion.upstreams.archiveorg.ArchiveOrg.IdentifierS((id).value))
     val url = Url(
       archive.url,
@@ -50,23 +50,11 @@ final class ArchiveOrg(archive: Endpoint, http: Plugin.Http):
     }
 
 object ArchiveOrg:
-  type IdentifierResult = IdentifierResult.T
-  object IdentifierResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type IdentifierS = IdentifierS.T
   object IdentifierS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchResultPart1 = SearchResultPart1.T
-  object SearchResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type SearchQuery = SearchQuery.T
   object SearchQuery extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SearchRows = SearchRows.T
-  object SearchRows extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoResultPart1 = InfoResultPart1.T
-  object InfoResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type InfoId = InfoId.T
-  object InfoId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadResultPart1 = DownloadResultPart1.T
-  object DownloadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DownloadId = DownloadId.T
-  object DownloadId extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
   type DownloadFile = DownloadFile.T
   object DownloadFile extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

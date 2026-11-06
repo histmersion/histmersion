@@ -15,22 +15,14 @@ final case class PassageLimits(
     regexTimeoutMs: PassageLimits.RegexTimeoutMs
 ) derives ConfigReader:
   /** `limit` into `[1, maxLimit]`; absent or `<= 0` is the default. */
-  def limitOf(requested: Option[com.histmersion.config.PassageLimits.LimitOfRequested]): com.histmersion.config.PassageLimits.LimitOfResult =
+  def limitOf(requested: Option[com.histmersion.config.PassageLimits.Limit]): com.histmersion.config.PassageLimits.Limit =
     requested.filter(_ > 0).getOrElse(limit).max(1).min(math.max(1, maxLimit))
 
   /** `context` into `[0, maxContext]`; absent or negative is the default. */
-  def contextOf(requested: Option[com.histmersion.config.PassageLimits.ContextOfRequested]): com.histmersion.config.PassageLimits.ContextOfResult =
+  def contextOf(requested: Option[com.histmersion.config.PassageLimits.Context]): com.histmersion.config.PassageLimits.Context =
     requested.filter(_ >= 0).getOrElse(context).max(0).min(math.max(0, maxContext))
 
 object PassageLimits:
-  type LimitOfResult = LimitOfResult.T
-  object LimitOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LimitOfRequested = LimitOfRequested.T
-  object LimitOfRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContextOfResult = ContextOfResult.T
-  object ContextOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ContextOfRequested = ContextOfRequested.T
-  object ContextOfRequested extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Limit = Limit.T
   object Limit extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

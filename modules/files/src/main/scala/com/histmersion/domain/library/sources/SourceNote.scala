@@ -22,112 +22,70 @@ import com.histmersion.api.library.{Edge, Finding, Source}
   * not in the note: it lives in `md/<citekey>/paper.md`, referenced by `md_path`.
   */
 object SourceNote:
+  type Body = Body.T
+  object Body extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Frontmatter = Frontmatter.T
+  object Frontmatter extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type FullText = FullText.T
+  object FullText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type LinkTarget = LinkTarget.T
+  object LinkTarget extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Text = Text.T
+  object Text extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Topic = Topic.T
+  object Topic extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Yaml = Yaml.T
+  object Yaml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** Frontmatter key order — matches the notes the research wiki already writes. */
-  type NoteResult = NoteResult.T
-  object NoteResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FrontmatterResult = FrontmatterResult.T
-  object FrontmatterResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindingResultPart1 = FindingResultPart1.T
-  object FindingResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseFileConfineTo = ParseFileConfineTo.T
-  object ParseFileConfineTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
-  val ParseNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.SplitText.type = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
-  type ParseNoteFallbackCitekey = _root_.com.histmersion.domain.library.sources.SourceNote.ToSourceFallbackCitekey
-  val ParseNoteFallbackCitekey: _root_.com.histmersion.domain.library.sources.SourceNote.ToSourceFallbackCitekey.type = _root_.com.histmersion.domain.library.sources.SourceNote.ToSourceFallbackCitekey
-  type YamlMapResultPart1 = YamlMapResultPart1.T
-  object YamlMapResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type YamlMapText = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
-  val YamlMapText: _root_.com.histmersion.domain.library.sources.SourceNote.SplitText.type = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
-  type LinkTargetsResultPart1 = LinkTargetsResultPart1.T
-  object LinkTargetsResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkTargetsResultPart2 = LinkTargetsResultPart2.T
-  object LinkTargetsResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LinkTargetsNoteText = LinkTargetsNoteText.T
-  object LinkTargetsNoteText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type EdgesOfMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val EdgesOfMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  type EdgesOfNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText
-  val EdgesOfNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText.type = _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText
-  type WithLinkedTopicsResult = WithLinkedTopicsResult.T
-  object WithLinkedTopicsResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithLinkedTopicsTopics = WithLinkedTopicsTopics.T
-  object WithLinkedTopicsTopics extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type WithLinkedTopicsNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText
-  val WithLinkedTopicsNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText.type = _root_.com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText
-  type FullTextResult = FullTextResult.T
-  object FullTextResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FullTextMPart1 = FullTextMPart1.T
-  object FullTextMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FullTextConfineTo = FullTextConfineTo.T
-  object FullTextConfineTo extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtractYamlResult = ExtractYamlResult.T
-  object ExtractYamlResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ExtractYamlText = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
-  val ExtractYamlText: _root_.com.histmersion.domain.library.sources.SourceNote.SplitText.type = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
-  type BodyOfResult = BodyOfResult.T
-  object BodyOfResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type BodyOfText = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
-  val BodyOfText: _root_.com.histmersion.domain.library.sources.SourceNote.SplitText.type = _root_.com.histmersion.domain.library.sources.SourceNote.SplitText
-  type SplitResultPart1 = SplitResultPart1.T
-  object SplitResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SplitResultPart2 = SplitResultPart2.T
-  object SplitResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type SplitText = SplitText.T
-  object SplitText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseResultPart1 = ParseResultPart1.T
-  object ParseResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ParseYaml = ParseYaml.T
-  object ParseYaml extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RawMPart1 = RawMPart1.T
-  object RawMPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type RawK = RawK.T
-  object RawK extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrResult = StrResult.T
-  object StrResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type StrMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val StrMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  type StrK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  val StrK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  type ListResult = ListResult.T
-  object ListResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ListMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val ListMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  type ListK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  val ListK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  type IntResult = IntResult.T
-  object IntResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type IntMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val IntMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  type IntK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  val IntK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  type LongResult = LongResult.T
-  object LongResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type LongMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val LongMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  type LongK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  val LongK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  type DoubleResult = DoubleResult.T
-  object DoubleResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Double, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type DoubleMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val DoubleMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  type DoubleK = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  val DoubleK: _root_.com.histmersion.domain.library.sources.SourceNote.RawK.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawK
-  type PeriodMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val PeriodMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  type ToSourceMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val ToSourceMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  type ToSourceFallbackCitekey = ToSourceFallbackCitekey.T
-  object ToSourceFallbackCitekey extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type FindingsMPart1 = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
-  val FindingsMPart1: _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1.type = _root_.com.histmersion.domain.library.sources.SourceNote.RawMPart1
+  type ParseNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  val ParseNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  type ParseNoteFallbackCitekey = _root_.com.histmersion.domain.library.Citekey
+  val ParseNoteFallbackCitekey: _root_.com.histmersion.domain.library.Citekey.type = _root_.com.histmersion.domain.library.Citekey
+  type YamlMapText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  val YamlMapText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  type EdgesOfMPart1 = String
+  val EdgesOfMPart1: String.type = String
+  type EdgesOfNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  val EdgesOfNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  type WithLinkedTopicsNoteText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  val WithLinkedTopicsNoteText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  type ExtractYamlText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  val ExtractYamlText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  type BodyOfText = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  val BodyOfText: _root_.com.histmersion.domain.library.sources.SourceNote.Text.type = _root_.com.histmersion.domain.library.sources.SourceNote.Text
+  type StrMPart1 = String
+  val StrMPart1: String.type = String
+  type StrK = String
+  val StrK: String.type = String
+  type ListMPart1 = String
+  val ListMPart1: String.type = String
+  type ListK = String
+  val ListK: String.type = String
+  type IntMPart1 = String
+  val IntMPart1: String.type = String
+  type IntK = String
+  val IntK: String.type = String
+  type LongMPart1 = String
+  val LongMPart1: String.type = String
+  type LongK = String
+  val LongK: String.type = String
+  type DoubleMPart1 = String
+  val DoubleMPart1: String.type = String
+  type DoubleK = String
+  val DoubleK: String.type = String
+  type PeriodMPart1 = String
+  val PeriodMPart1: String.type = String
+  type ToSourceMPart1 = String
+  val ToSourceMPart1: String.type = String
+  type FindingsMPart1 = String
+  val FindingsMPart1: String.type = String
 
-  def note(s: Source): com.histmersion.domain.library.sources.SourceNote.NoteResult =
+  def note(s: Source): com.histmersion.domain.library.sources.SourceNote.Text =
     frontmatterOf(s).note(s.notes.map(_.trim).filter(_.nonEmpty))
 
   /** The YAML block between the `---` fences (with a trailing newline). */
-  def frontmatter(s: Source): com.histmersion.domain.library.sources.SourceNote.FrontmatterResult = frontmatterOf(s).yaml
+  def frontmatter(s: Source): com.histmersion.domain.library.sources.SourceNote.Frontmatter = frontmatterOf(s).yaml
 
   private def frontmatterOf(s: Source): Frontmatter =
     Frontmatter(
@@ -155,7 +113,7 @@ object SourceNote:
       )
     )
 
-  private def finding(f: Finding): java.util.Map[com.histmersion.domain.library.sources.SourceNote.FindingResultPart1, Any] =
+  private def finding(f: Finding): java.util.Map[String, Any] =
     val m = new java.util.LinkedHashMap[String, Any]()
     m.put("claim", f.claim)
     m.put("region", f.region.orNull)
@@ -175,7 +133,7 @@ object SourceNote:
     * AGENT writes — and it used to be resolved and read with no bound at all. `None` keeps the old behaviour, for the
     * host-side workflow where the server legitimately sees the user's own tree.
     */
-  def parseFile(p: Path, confineTo: Option[com.histmersion.domain.library.sources.SourceNote.ParseFileConfineTo])(using files: com.histmersion.util.storage.TextFiles): Option[Source] =
+  def parseFile(p: Path, confineTo: Option[String])(using files: com.histmersion.util.storage.TextFiles): Option[Source] =
     val text = files.read(p)
     val fallbackCitekey = p.getFileName.toString.stripSuffix(".md")
     parseNote(text, fallbackCitekey).map(src => src.modify(_.ocrMarkdown).setTo(fullText(p, yamlMap(text), confineTo)))
@@ -193,7 +151,7 @@ object SourceNote:
       )
     }
 
-  private def yamlMap(text: com.histmersion.domain.library.sources.SourceNote.YamlMapText): Map[com.histmersion.domain.library.sources.SourceNote.YamlMapResultPart1, Any] = extractYaml(text).map(parse).getOrElse(Map.empty)
+  private def yamlMap(text: com.histmersion.domain.library.sources.SourceNote.YamlMapText): Map[String, Any] = extractYaml(text).map(parse).getOrElse(Map.empty)
 
   private val CkLink = """\[\[([a-z][a-z0-9]*_[a-z0-9_]+)(?:\|[^\]]*)?\]\]""".r
   private val RelTag = """^(refutes|challenges|updates|supersedes)_(.+)$""".r
@@ -203,7 +161,7 @@ object SourceNote:
     * `[[bronze_age_collapse]]` — is a TOPIC. Topic slugs used to become `references` edges to things that are not
     * sources.
     */
-  private def linkTargets(citekey: com.histmersion.domain.library.Citekey, noteText: com.histmersion.domain.library.sources.SourceNote.LinkTargetsNoteText): (List[com.histmersion.domain.library.sources.SourceNote.LinkTargetsResultPart1], List[com.histmersion.domain.library.sources.SourceNote.LinkTargetsResultPart2]) =
+  private def linkTargets(citekey: com.histmersion.domain.library.Citekey, noteText: com.histmersion.domain.library.sources.SourceNote.Text): (List[com.histmersion.domain.library.sources.SourceNote.LinkTarget], List[com.histmersion.domain.library.sources.SourceNote.LinkTarget]) =
     CkLink
       .findAllMatchIn(noteText)
       .map(_.group(1))
@@ -220,14 +178,14 @@ object SourceNote:
     (superseded ++ rel ++ links).distinct
 
   /** The note's topics plus the topic slugs its body links to, without case-insensitive duplicates. */
-  private def withLinkedTopics(topics: List[com.histmersion.domain.library.sources.SourceNote.WithLinkedTopicsTopics], citekey: com.histmersion.domain.library.Citekey, noteText: com.histmersion.domain.library.sources.SourceNote.WithLinkedTopicsNoteText): List[com.histmersion.domain.library.sources.SourceNote.WithLinkedTopicsResult] =
+  private def withLinkedTopics(topics: List[com.histmersion.domain.library.sources.SourceNote.Topic], citekey: com.histmersion.domain.library.Citekey, noteText: com.histmersion.domain.library.sources.SourceNote.WithLinkedTopicsNoteText): List[com.histmersion.domain.library.sources.SourceNote.Text] =
     val have = topics.map(_.toLowerCase).toSet
     topics ++ linkTargets(citekey, noteText)._2.filterNot(t => have(t.toLowerCase))
 
   /** Read the converted body `md/<citekey>/paper.md` (path in `md_path`, relative to the repo root = three parents up
     * from `wiki/sources/<ck>.md`). None if absent.
     */
-  private def fullText(notePath: Path, m: Map[com.histmersion.domain.library.sources.SourceNote.FullTextMPart1, Any], confineTo: Option[com.histmersion.domain.library.sources.SourceNote.FullTextConfineTo])(using files: com.histmersion.util.storage.TextFiles): Option[com.histmersion.domain.library.sources.SourceNote.FullTextResult] =
+  private def fullText(notePath: Path, m: Map[String, Any], confineTo: Option[String])(using files: com.histmersion.util.storage.TextFiles): Option[com.histmersion.domain.library.sources.SourceNote.FullText] =
     str(m, "md_path").flatMap { rel =>
       Option(notePath.getParent)
         .flatMap(a => Option(a.getParent))
@@ -239,14 +197,14 @@ object SourceNote:
         .map(_.filterNot(_.toInt == 0)) // Postgres text rejects NUL bytes (present in some OCR output)
     }
 
-  private def extractYaml(text: com.histmersion.domain.library.sources.SourceNote.ExtractYamlText): Option[com.histmersion.domain.library.sources.SourceNote.ExtractYamlResult] = split(text).map(_._1)
+  private def extractYaml(text: com.histmersion.domain.library.sources.SourceNote.ExtractYamlText): Option[com.histmersion.domain.library.sources.SourceNote.Yaml] = split(text).map(_._1)
 
   /** The Markdown after the closing `---` fence: the note's article (`notes`). */
-  private def bodyOf(text: com.histmersion.domain.library.sources.SourceNote.BodyOfText): Option[com.histmersion.domain.library.sources.SourceNote.BodyOfResult] =
+  private def bodyOf(text: com.histmersion.domain.library.sources.SourceNote.BodyOfText): Option[com.histmersion.domain.library.sources.SourceNote.Body] =
     split(text).map(_._2).map(_.trim).filter(_.nonEmpty)
 
   /** Split a note into (yaml, body). `None` when there is no frontmatter fence at all. */
-  private def split(text: com.histmersion.domain.library.sources.SourceNote.SplitText): Option[(com.histmersion.domain.library.sources.SourceNote.SplitResultPart1, com.histmersion.domain.library.sources.SourceNote.SplitResultPart2)] =
+  private def split(text: com.histmersion.domain.library.sources.SourceNote.Text): Option[(com.histmersion.domain.library.sources.SourceNote.Yaml, com.histmersion.domain.library.sources.SourceNote.Body)] =
     val t = text.stripPrefix("﻿")
     if !t.startsWith("---") then None
     else
@@ -261,29 +219,29 @@ object SourceNote:
           case i  => after.substring(i + 1)
         Some((rest.substring(0, end), body))
 
-  private def parse(yaml: com.histmersion.domain.library.sources.SourceNote.ParseYaml): Map[com.histmersion.domain.library.sources.SourceNote.ParseResultPart1, Any] =
+  private def parse(yaml: com.histmersion.domain.library.sources.SourceNote.Yaml): Map[String, Any] =
     Option(new Yaml().load[AnyRef](yaml)) match
       case Some(m: java.util.Map[?, ?]) => m.asScala.toMap.map((k, v) => k.toString -> v)
       case _                            => Map.empty
 
   // ── null-safe accessors over a decoded YAML map ─────────────────────────────────────────────
   // decoded YAML values are type-tested (E165, #879): `asMatchable` states that is intended
-  private def raw(m: Map[com.histmersion.domain.library.sources.SourceNote.RawMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.RawK): Option[Matchable] =
+  private def raw(m: Map[String, Any], k: String): Option[Matchable] =
     m.get(k).flatMap(v => Option(v)).map(_.asMatchable)
-  private def str(m: Map[com.histmersion.domain.library.sources.SourceNote.StrMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.StrK): Option[com.histmersion.domain.library.sources.SourceNote.StrResult] =
+  private def str(m: Map[com.histmersion.domain.library.sources.SourceNote.StrMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.StrK): Option[String] =
     raw(m, k).map(_.toString).filter(s => s.nonEmpty && s != "null")
-  private def list(m: Map[com.histmersion.domain.library.sources.SourceNote.ListMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.ListK): List[com.histmersion.domain.library.sources.SourceNote.ListResult] = raw(m, k) match
+  private def list(m: Map[com.histmersion.domain.library.sources.SourceNote.ListMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.ListK): List[String] = raw(m, k) match
     case Some(l: java.util.List[?]) => l.asScala.toList.flatMap(x => Option(x)).map(_.toString)
     case _                          => Nil
-  private def int(m: Map[com.histmersion.domain.library.sources.SourceNote.IntMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.IntK): Option[com.histmersion.domain.library.sources.SourceNote.IntResult] = raw(m, k) match
+  private def int(m: Map[com.histmersion.domain.library.sources.SourceNote.IntMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.IntK): Option[Int] = raw(m, k) match
     case Some(n: java.lang.Number) => Some(n.intValue)
     case Some(o)                   => o.toString.toIntOption
     case None                      => None
-  private def long(m: Map[com.histmersion.domain.library.sources.SourceNote.LongMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.LongK): Option[com.histmersion.domain.library.sources.SourceNote.LongResult] = raw(m, k) match
+  private def long(m: Map[com.histmersion.domain.library.sources.SourceNote.LongMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.LongK): Option[Long] = raw(m, k) match
     case Some(n: java.lang.Number) => Some(n.longValue)
     case Some(o)                   => o.toString.toLongOption
     case None                      => None
-  private def double(m: Map[com.histmersion.domain.library.sources.SourceNote.DoubleMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.DoubleK): Option[com.histmersion.domain.library.sources.SourceNote.DoubleResult] = raw(m, k) match
+  private def double(m: Map[com.histmersion.domain.library.sources.SourceNote.DoubleMPart1, Any], k: com.histmersion.domain.library.sources.SourceNote.DoubleK): Option[Double] = raw(m, k) match
     case Some(n: java.lang.Number) => Some(n.doubleValue)
     case Some(o)                   => o.toString.toDoubleOption
     case None                      => None
@@ -298,7 +256,7 @@ object SourceNote:
       case (Some(a), Some(b))           => Some(Period(b, a))
       case _                            => None
 
-  private def toSource(m: Map[com.histmersion.domain.library.sources.SourceNote.ToSourceMPart1, Any], fallbackCitekey: com.histmersion.domain.library.sources.SourceNote.ToSourceFallbackCitekey): Source =
+  private def toSource(m: Map[com.histmersion.domain.library.sources.SourceNote.ToSourceMPart1, Any], fallbackCitekey: com.histmersion.domain.library.Citekey): Source =
     val citekey = str(m, "citekey").getOrElse(fallbackCitekey)
     Source(
       citekey = com.histmersion.api.library.Citekey(citekey),

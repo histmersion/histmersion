@@ -16,11 +16,9 @@ final case class StorageConfig(
     topTables: StorageConfig.TopTables,
     lowFreeGb: StorageConfig.LowFreeGb
 ) derives ConfigReader:
-  def lowFreeBytes: com.histmersion.config.StorageConfig.LowFreeBytesResult = (lowFreeGb * 1e9).toLong
+  def lowFreeBytes: com.histmersion.ByteCount = (lowFreeGb * 1e9).toLong
 
 object StorageConfig:
-  type LowFreeBytesResult = LowFreeBytesResult.T
-  object LowFreeBytesResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Long, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type TtlSeconds = TtlSeconds.T
   object TtlSeconds extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Int, _root_.io.github.iltotore.iron.constraint.any.Pure]

@@ -33,8 +33,6 @@ final case class CoreServiceConfig(
     exhaustedPauseSeconds: Seconds,
     maxWaitSeconds: Seconds
 ) derives ConfigReader:
-  def key: Option[com.histmersion.config.CoreServiceConfig.KeyResult] = Option(apiKey.value: String).map(_.trim).filter(_.nonEmpty)
+  def key: Option[com.histmersion.config.ApiKey] = Option(apiKey.value: String).map(_.trim).filter(_.nonEmpty)
 
 object CoreServiceConfig:
-  type KeyResult = KeyResult.T
-  object KeyResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

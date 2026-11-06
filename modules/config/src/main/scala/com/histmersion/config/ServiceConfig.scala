@@ -6,5 +6,5 @@ import hearth.kindlings.sconfigderivation.ConfigReader
 final case class ServiceConfig(url: ServiceConfig.Url) derives ConfigReader
 
 object ServiceConfig:
-  type Url = Url.T
-  object Url extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Url = com.histmersion.config.ServiceUrl
+  val Url: _root_.com.histmersion.config.ServiceUrl.type = _root_.com.histmersion.config.ServiceUrl

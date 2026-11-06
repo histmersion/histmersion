@@ -19,11 +19,11 @@ final case class SettingField(
     secret: SecretRule
 ):
   /** The top-level block it is in (`backups` of `histmersion.backups.keep`). */
-  def section: com.histmersion.config.edit.SettingField.SectionResult = key.segments.lift(1).getOrElse("")
+  def section: com.histmersion.config.edit.SettingField.Section = key.segments.lift(1).getOrElse("")
 
 object SettingField:
-  type SectionResult = SectionResult.T
-  object SectionResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Section = Section.T
+  object Section extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   type Doc = Doc.T
   object Doc extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]

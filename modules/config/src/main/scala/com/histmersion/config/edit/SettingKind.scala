@@ -21,8 +21,6 @@ object SettingKind:
   type Describe = Describe.T
   object Describe extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
-  type ParseS = ParseS.T
-  object ParseS extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   def of(v: ConfigValue): SettingKind = v.valueType match
     case ConfigValueType.STRING  => Text
@@ -32,4 +30,4 @@ object SettingKind:
     case ConfigValueType.OBJECT  => Block
     case _                       => Any
 
-  def parse(s: com.histmersion.config.edit.SettingKind.ParseS): Option[SettingKind] = values.find(_.wire == s.trim.toLowerCase)
+  def parse(s: com.histmersion.config.edit.SettingKind.Wire): Option[SettingKind] = values.find(_.wire == s.trim.toLowerCase)

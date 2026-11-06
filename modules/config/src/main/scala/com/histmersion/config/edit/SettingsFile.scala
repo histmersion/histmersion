@@ -8,7 +8,7 @@ import org.ekrich.config.{Config, ConfigOrigin}
   */
 trait SettingsFile:
   /** Where the file is, as messages and the settings page name it. */
-  def shown: com.histmersion.config.edit.SettingsFile.ShownResult
+  def shown: com.histmersion.config.edit.SettingsFile.Shown
 
   /** The file as it is now: its text (`None`: not there yet), its version, and its settings as parsed with its
     * includes, unresolved.
@@ -20,24 +20,24 @@ trait SettingsFile:
     * file's permissions. A symbolic link at the file stays: the file it points to is changed. The `.bak`, when one was
     * kept.
     */
-  def replace(text: com.histmersion.config.edit.SettingsFile.ReplaceText, existed: com.histmersion.config.edit.SettingsFile.ReplaceExisted)(
+  def replace(text: com.histmersion.config.edit.ConfigFileState.Text, existed: com.histmersion.config.edit.SettingsFile.Existed)(
       check: SettingsFile.Staged => Either[SettingError, Unit]
-  ): Either[SettingError, Option[com.histmersion.config.edit.SettingsFile.ReplaceResultPart2]]
+  ): Either[SettingError, Option[com.histmersion.config.edit.ConfigFileState.Text]]
 
 object SettingsFile:
+  type Existed = Existed.T
+  object Existed extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Path = Path.T
+  object Path extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Problem = Problem.T
+  object Problem extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+  type Shown = Shown.T
+  object Shown extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   /** The new text, written beside the file: as parsed with its includes (`Left` when it does not read), which origins
     * are the text itself (not a file it includes), and what loading it as the settings file gives under an environment,
     * its messages naming the file it is to replace.
     */
-  type ShownResult = ShownResult.T
-  object ShownResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceResultPart2 = ReplaceResultPart2.T
-  object ReplaceResultPart2 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceText = ReplaceText.T
-  object ReplaceText extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
-  type ReplaceExisted = ReplaceExisted.T
-  object ReplaceExisted extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
 
   final case class Staged(
       parsed: Either[SettingError, Config],
@@ -48,5 +48,5 @@ object SettingsFile:
   object Staged:
     type OwnResult = OwnResult.T
     object OwnResult extends _root_.io.github.iltotore.iron.RefinedType[_root_.scala.Boolean, _root_.io.github.iltotore.iron.constraint.any.Pure]
-    type LoadResultPart1 = LoadResultPart1.T
-    object LoadResultPart1 extends _root_.io.github.iltotore.iron.RefinedType[_root_.java.lang.String, _root_.io.github.iltotore.iron.constraint.any.Pure]
+    type LoadResultPart1 = com.histmersion.config.edit.SettingsFile.Problem
+    val LoadResultPart1: _root_.com.histmersion.config.edit.SettingsFile.Problem.type = _root_.com.histmersion.config.edit.SettingsFile.Problem
